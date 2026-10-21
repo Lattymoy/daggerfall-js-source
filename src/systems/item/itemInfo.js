@@ -46,6 +46,8 @@ import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from '../artifactEff
 import { isRestItem, restItemLines } from '../rest/restItems.js'; import { isPortalStone, portalStoneLines } from '../portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
 import { maskText } from '../../net/nameFilter.js';   // TEXT-F1: a name a player typed, its words starred
 import { isWalletItem, WALLET_CARD_LINES } from '../walletItem.js';   // WALLET1: the wallet's card
+import { isSoulCake, isHearthOffering, SOUL_CAKE_TEXT } from '../festival/soulCake.js';   // WITCH1: the festival's two items' cards
+import { isStarglass, STARGLASS_TEXT } from '../starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's card
 import { isWeirKey } from '../eliteGates/weirKey.js'; import { EG_TEXT } from '../../net/eliteGates/egLaw.js';   // AUDIT EG V (c, L8-6): the Weir Key's card and its line (Elite-Gates.md section 5)
 import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES, isCardPack, CARD_PACK_LINES } from '../iliac/iliacItems.js';   // CARDS8: a card's name and lines, the binder's
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from '../survival/items.js';   // SURV5: the survival items' own info box
@@ -842,6 +844,9 @@ export function survivalInfoTokens(item) {
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
   else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it
+  else if (isSoulCake(item)) for (const text of SOUL_CAKE_TEXT.cake()) out.push({ text, center: true });   // WITCH1
+  else if (isHearthOffering(item)) for (const text of SOUL_CAKE_TEXT.offering()) out.push({ text, center: true });   // WITCH1
+  else if (isStarglass(item)) for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true });   // AUDIT STAR I2
   else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8
   else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8
@@ -859,7 +864,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers

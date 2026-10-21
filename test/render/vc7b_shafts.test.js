@@ -172,7 +172,8 @@ test('VC7b: THE DECK PUBLISHES THE SKY MAP once a sweep has filled it - its alph
   c.sweeps = 1;
   assert.equal(c.shadow.sky.id, 'sky', 'a sweep done: the sky map rides the deck');
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /if \(clouds\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow\);/, 'the one door every host\'s deck comes through - it carries every field the getter publishes');
+  // PIN MOVED (OW-HORIZON, 2026-10-20): and the ground past the square, the far ring's own dim
+  assert.match(shared, /if \(clouds\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow, \{ far: farCoverSun\(\) \}\);/, 'the one door every host\'s deck comes through - it carries every field the getter publishes');
 });
 
 test('VC7b: THE DOOR - `?haze=off`, read where the lane\'s other doors are, carried to the air pass', () => {

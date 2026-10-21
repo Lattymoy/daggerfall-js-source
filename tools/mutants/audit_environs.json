@@ -219,7 +219,7 @@
   {
     "name": "AUDIT-ENVIRONS-I5-program-at-the-draw",
     "file": "src/scenes/snowfallHost.js",
-    "old": "            renderer.prepareTerrainSnow?.();\n",
+    "old": "      renderer.prepareTerrainSnow?.();\n",
     "new": "",
     "tests": [
       "test/systems/audit_environs.test.js"

@@ -114,7 +114,7 @@ const HARDCODED = {
   'src/net/homeLaw.js': 3,
   'src/net/homeVoteLaw.js': 11,
   'src/net/houseLaw.js': 1,
-  'src/net/iliac/iliacCards.js': 65,   // KG-SET: the set's words moved to systems/iliac/iliacCardWords.js; EG-E: the Battlespire's thirteen lords' names (+13), their words there too since the merge of main
+  'src/net/iliac/iliacCards.js': 68,   // WITCH1: the Witches' Festival's six cards' names (+3, the three of two words - their rules and flavour are iliacCardWords.js's, routed); KG-SET: the set's words moved to systems/iliac/iliacCardWords.js; EG-E: the Battlespire's thirteen lords' names (+13), their words there too since the merge of main
   'src/net/iliac/iliacHand.js': 13,
   'src/net/journalPage.js': 16,
   'src/net/mail.js': 3,
@@ -212,6 +212,7 @@ const HARDCODED = {
   'src/render/retroPass.js': 1,
   'src/render/riteSmoke.js': 1,
   'src/render/shipFlagPass.js': 1,
+  'src/render/starfall/starfallPass.js': 3,   // STAR4: its shaders' sources, as every pass's (AUDIT STARFALL R3: the ring's vertex stage reads its bearings' count, one fewer)
   'src/render/superDungeon/sdArenaGlow.js': 1,
   'src/render/superDungeon/sdBeam.js': 1,
   'src/render/superDungeon/sdHalo.js': 2,
@@ -306,9 +307,9 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 349,
+  'src/scenes/world.js': 347,   // FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL
   'src/scenes/worldModes.js': 83,
-  'src/systems/aetheric.js': 115,
+  'src/systems/aetheric.js': 151,   // WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
   'src/systems/allyCast.js': 5,
   'src/systems/answerPipeline.js': 1,
@@ -373,6 +374,7 @@ const HARDCODED = {
   'src/systems/features.js': 127,
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
+  'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
   'src/systems/foeTitle.js': 1,
   'src/systems/foraging/foragingInstall.js': 8,
   'src/systems/foraging/foragingLaw.js': 64,
@@ -504,13 +506,14 @@ const HARDCODED = {
   'src/systems/sigil/sigil.js': 8,
   'src/systems/sigil/sigilBroker.js': 8,
   'src/systems/sigil/sigilSetPowers.js': 24,
-  'src/systems/sigil/sigilSets.js': 99,
+  'src/systems/sigil/sigilSets.js': 116,   // WITCH1: the Wyrd's Raiment - its name, its prince, its three tiers' names and lines (+9), as every set's; STAR7: +8, the Starspun Weave's name, role, tiers and their words, as every set's
   'src/systems/smithItems.js': 26,
   'src/systems/snowfall.js': 12,
   'src/systems/snowfallRuntime.js': 10,
   'src/systems/spell/spellEffects.js': 29,
   'src/systems/eliteGates/spireKit.js': 1,
   'src/systems/staleChunk.js': 6,
+  'src/systems/starfall/starglass.js': 1,   // AUDIT STAR I1: Starfall Glass's name - an item's canonical name is its row's, as the Soul Cake's and the Weir Key's
   'src/systems/startDungeon.js': 1,
   'src/systems/statusReadout.js': 2,
   'src/systems/steedCare.js': 16,
@@ -646,7 +649,7 @@ const HARDCODED = {
   'src/ui/guildServiceWindow.js': 1,
   'src/ui/guildServiceWindows.js': 8,
   'src/ui/hallOfRecords.js': 4,
-  'src/ui/haulCards.js': 15,
+  'src/ui/haulCards.js': 14,   // AUDIT STAR W2: the cap's card through the text core
   'src/ui/heldMap.js': 42,
   'src/ui/heraldryArt.js': 4,
   'src/ui/hitNumbers.js': 1,
@@ -697,8 +700,9 @@ const HARDCODED = {
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 30,
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 30,
+  'src/ui/professions/profPages.js': 31,   // FB1020c ONE-SAVE: the kept words, moved here from the world host
   'src/ui/profileBadge.js': 4,
+  'src/ui/profileIcons.js': 4,   // WITCH1: the four profile icons' names (ICON_TEXT) - the badge's words, as playerBadge.js's titles and auras
   'src/ui/profileWindow.js': 14,
   'src/ui/provinceMap.js': 5,
   'src/ui/quest/questHerald.js': 6,
@@ -786,7 +790,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 43,   // NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's
+  'src/world/eliteGates/pseudoArchives.js': 46,   // WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

@@ -1519,6 +1519,13 @@ export function createComeSailAwayRuntime(deps) {
       // for one). FIELD BUGS 2026-10-02 ASTERN (a departure): back asks the STERN's, the water she backs into - asking the
       // bow's, a bow run onto a shoal or a rock's foot refused the one way off it, and the centre's water let her row on in
       // HELM-LADDER: the oars pull at their rung (a journey's as the autorun does), not while a key is held
+      // FB1020c OAR-RUNG (the field: "ships drift off if you fast travel without full sails"): THE AUTORUN TAKES THE OARS
+      // FROM THE KEPT RUNG. The Overworld's crossing rows through the autorun (world.js tvSeaSail, seaHelm.js `row`) and
+      // never knew the rung HELM-LADDER keeps: a helm left on her oars kept them pulling past the journey's end (a Large
+      // Galley rowed on unsteered at 7.8 m/s), and one left backing water turned the hand's rudder about (backing, the
+      // helm answers the other way, below) so no journey arrived. While the autorun pulls she has no rung of her own;
+      // let go, she rests, as the mod's MoveForwards let go left her.
+      if (deps.input?.toggleAutorun) state.oarThrottle = 0;
       if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 0)) num3 = 1;
       else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 2)) num3 = -1;
       if (has('Run')) {

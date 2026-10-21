@@ -152,18 +152,18 @@
   {
     "name": "GATE-MIX-warm-all-at-once",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "    else if (!crystalTried) makeCrystalPass();\n    else if (!portalTried) makePortalPass();",
-    "new": "    makeCrystalPass();\n    makePortalPass();",
+    "old": "    if (!parallelCompile(gl)) { warmDoors[warmed++](); return; }",
+    "new": "    if (!parallelCompile(gl)) { for (const door of warmDoors) door(); warmed = warmDoors.length; return; }",
     "tests": [
       "test/net/gate/gatemix_targets.test.js"
     ],
-    "why": "three passes' compiles in one frame"
+    "why": "three passes' compiles in one frame, where the driver cannot compile beside the frames (SHADER-STALL: where it can, they start together and block none)"
   },
   {
     "name": "GATE-MIX-warm-outside-court",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "    if (!gl || !feet()) return;\n    if (!fxTried)",
-    "new": "    if (!gl) return;\n    if (!fxTried)",
+    "old": "    if (!gl || !feet()) return;",
+    "new": "    if (!gl) return;",
     "tests": [
       "test/net/gate/gatemix_targets.test.js"
     ],

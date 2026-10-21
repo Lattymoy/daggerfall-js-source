@@ -549,3 +549,28 @@ level, a lambda of the host's, left for the enemy table (`characters/enemy/enemy
 roads' harness reads it too (its own copy still asked `>= 128` after DEX1 gave the host the bit). `bootWorld` 36,185 ->
 36,183 logical lines, at its ceiling, which stays; the relay re-hashed in place (world233 then, world234 since SD-SEA's merge; enemyBasics.js is in its
 bundle); the C1 pin and its mutants re-aimed, two more for the subscriptions.
+
+## STAR0's move - the exterior town map's door out of bootWorld (2026-10-20)
+
+THE STARFALL (`11-Multiplayer/Starfall.md`) wires a new world event into the streaming host, and `bootWorld` stood at
+its ceiling with no room (36,183 of 36,183 logical lines). Its own wiring comes after a move, OW-DUNGEON-SIZE's way:
+`toggleExteriorAutomap` - the M key's town map outside (DFU's `DaggerfallUI.cs:633-650`), one member that writes nothing
+of the host's - went to `src/scenes/exteriorAutomapToggle.js` (`createExteriorAutomapToggle(host)`) by
+`tools/hostMove.mjs`: fourteen names by value, seven live (`activeQuestIds`, `hudArt`, `partyOnMaps`, `questBridge`,
+`renameMapBuilding`, `topicTree`, `townBoardMarks` - consts made below it, read at their use), the toggle returned.
+67 logical lines freed (36,183 -> 36,116). The ceiling stays; the Starfall's wiring takes its share back (section
+STAR5 of its page). Three pin files read the host whole now (`test/hostText.mjs`: `auditdisc28_quests`, `automap_ext`,
+`town_marks`), two of their quotes in the moved spelling (`host.activeQuestIds`, `host.topicTree`,
+`host.townBoardMarks`); eleven mutant records re-aimed by the tool.
+
+## The Starfall's wiring in bootWorld (STAR4-STAR7, 2026-10-20)
+
+STAR0's 67 lines bought the room; the Starfall spends 54 of them (36,116 -> 36,170 of 36,183). Its host
+(`src/scenes/starfall/starfallHost.js`) and its rewards (`starRewards.js`, made by the host) read the world's bindings by
+name - one adapter object, its settled bindings by value and every live one through a getter (TDZ: `chatNotice` is made
+below the construction) - so the host's scope holds the adapter and one hook at each door it uses: the frame, the
+lights, the draw, the sky, the flash, the senses' candidates, the compass, the held map, the Timers, the grass, the
+hub's event, the cell's words, the spoils' crash door and the realm save's two hooks, and one sound in the set powers'
+voice. The spoils' one lock moved OUT of the host to its pool's own home (`src/scenes/spoilsPool.js` `spoilsLock`), so
+every pool's host takes the same one. At the merge with main (2026-10-20) - main's FIRM-STARS had raised the ceiling to 36,187 for its
+one statement, and DEX's audit had brought `bootWorld` down to its ceiling - the host stands at 36,174 of 36,187.

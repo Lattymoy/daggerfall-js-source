@@ -187,7 +187,7 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
      */
     reward(quest, dfItem, resource = null) {
       if (!isStamped(quest)) return;
-      if (resource?.itemName === 'letter') return;
+      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next line waits an hour from it
       const sheet = sheetFor(quest.questName);
       if (sheet) observe(quest, sheet, probe);
       if (sheet && dfItem && !quest.ql.paid) {

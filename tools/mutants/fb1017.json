@@ -52,8 +52,8 @@
   {
     "name": "KEY-LAW-row-unread",
     "file": "src/systems/item/itemLaw.js",
-    "old": "...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW]).map",
-    "new": "...DEEP_WATERS_FISH_TEMPLATES]).map",
+    "old": "...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map",
+    "new": "...DEEP_WATERS_FISH_TEMPLATES, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
       "test/server/fb1017_keylaw_lift.test.js"
@@ -63,7 +63,7 @@
   {
     "name": "KEY-LAW-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 7;",
+    "old": "export const ITEM_LAW_VERSION = 8;",
     "new": "export const ITEM_LAW_VERSION = 6;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",

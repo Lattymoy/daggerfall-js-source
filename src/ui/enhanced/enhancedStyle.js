@@ -43,6 +43,7 @@ import { pageHas } from '../../systems/pageQuery.js';   // PERF-URL: the page's 
 import { paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's row in its violet
 import { TIER_MARKS, tierMarkCss } from '../lootTierMarks.js';   // LOOT-MARKS: the quick loot's tier gem and wash
 import { SUPPORT_MARKS_CSS } from '../supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
@@ -1242,6 +1243,9 @@ ${badgeCss()}
 .card .acctportrait canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%;
   image-rendering: pixelated; }
 .card .acctportrait.hasface { background: #0a0c11; }   /* the face fills the well - no night glow behind it */
+.card .acctportrait svg.accticon { position: absolute; inset: 0; width: 100%; height: 100%; }   /* WITCH1: a profile icon worn fills the well */
+.card .acticon { display: inline-flex; align-items: center; gap: 6px; }   /* WITCH1: an icon's button - its picture, then its word */
+.card .acticon svg.acticonart { flex: none; width: 22px; height: 22px; }
 .card .acctsilhouette { position: absolute; inset: 0; }
 .card .acctsilhouette::before { content: ''; position: absolute; left: 31%; top: 16%; width: 38%; height: 40%;
   border-radius: 48% 48% 44% 44%; background: #3a424d; }
@@ -2455,6 +2459,7 @@ ${badgeCss()}
   box-shadow: 0 0 0 2px var(--iron), 0 3px 10px rgba(0,0,0,0.65);
   transition: border-color 120ms, box-shadow 120ms, transform 120ms;
 }
+.px-portrait svg.px-icon { position: absolute; inset: 0; width: 100%; height: 100%; }   /* WITCH1: a profile icon worn, in the face's place */
 .px-portrait canvas {
   position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%;
   object-fit: cover; object-position: 50% 20%;
@@ -2693,7 +2698,7 @@ ${SUPPORT_MARKS_CSS}
 .px-timerswin .tm-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 14px; position: relative;
   border-bottom: 1px solid rgba(125,116,96,0.25); }
 .px-timerswin .tm-row::before { content: '\\25c6'; position: absolute; left: 0; top: 12px; font-size: 9px; color: var(--tm-kind, #9c937d); }
-.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
+.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-star { --tm-kind: ${STAR_VIOLET_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
 .px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; }
 .px-timerswin .tm-row.live { background: rgba(192,138,62,0.08); }
 .px-timerswin .tm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

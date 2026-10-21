@@ -83,7 +83,7 @@
   {
     "name": "AUDIT-QL-VOICE-an-endgame-place-back",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "'A witnessed step is done in a Dagon’s Breach, an Elite Breach’s Redoubts, the Abyss Dungeon’s Shattered Hour or against the Sea Serpent. The account service checks it against that place’s own record before it pays.'",
+    "old": "'A witnessed step is done in a Dagon’s Breach, an Elite Breach’s Redoubts, the Abyss Dungeon’s Shattered Hour, against the Sea Serpent or at a fallen star. The account service checks it against that place’s own record before it pays.'",
     "new": "'Done in an endgame place: the account service checks it against that place’s own record before it pays'",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js"

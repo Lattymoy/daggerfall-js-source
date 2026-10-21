@@ -160,7 +160,7 @@ is a possession bought for up to two hundred thousand gold; losing one to a luck
 Daggerfall never deals.
 
 **The shipwright** (AUDIT NAV1, `systems/naval/navalYard.js`, `ui/naval/navalYardWindow.js`): at the helm in a port town's
-waters (the host's `nearPort`), her way under YARD_SPEED and no hostile ship near, Activate opens his yard - the
+waters (the host's `nearPort`, or a board port within SEA_RING - FB1020c BERTH-RING, `03-World/Captains-Sea.md`), her way under YARD_SPEED and no hostile ship near, Activate opens his yard - the
 plate's hint names him. He sells her HULL and CANVAS back by the point (REPAIR_PRICE), HANDS by the man and FIRE
 BARRELS by the barrel (BARREL_PRICE) - each as much as the purse pays for (coins and letters of credit, DFU's
 DeductGoldAmount), never past her whole; MAKE HER WHOLE buys the four in YARD_ORDER as far as the purse goes. **Her

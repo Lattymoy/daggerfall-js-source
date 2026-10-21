@@ -92,7 +92,7 @@
 // worn by a row nobody has looked at since.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, AURAS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
+import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
 import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
@@ -100,6 +100,7 @@ import { SERPENT_HONOUR_TITLE, SERPENT_HONOUR_AURA } from './serpents.js';   // 
 import { EG_HONOUR, EG_HONOUR_TITLES, EG_HONOUR_AURA, EG_CHAMPION_TITLE, EG_FIRST_TITLE, EG_FIRST_AURA } from './egHonours.js';   // EG-E2: the Spire's honours on the row
 import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the row
 import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // QL12: the questlines' titles on the row
+import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -376,8 +377,18 @@ export function titlesHeld(player, env) {
   // QL12: THE QUESTLINES' - a line's title laid on the row by the claim that witnessed its last step (questlines.js
   // claimQl, `ql_titles`), held for good; a guest's claim writes nothing, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle) for (const t of QL_TITLES) if (Number(player?.ql_titles) & qlTitleBit(t)) held.push(t);
+  // WITCH1: THE WITCHES' FESTIVAL'S - Witchwarden bought from a Wyrd Sister (`fest_wares`), and Hearthkeeper once the
+  // account's offerings have given HEARTHKEEPER_GIVEN cakes (`fest_given`), held for good; a guest buys and gives nothing
+  if (typeof player?.handle === 'string' && player.handle) {
+    for (const t of festivalKeys(player, 'title')) if (!held.includes(t)) held.push(t);
+    if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);
+  }
   return held;
 }
+/** WITCH1: the title an account's Hearth Offerings earn (net/identityToken.js TITLES's spelling). */
+export const HEARTHKEEPER_TITLE = 'hearthkeeper';
+/** WITCH1: the keys of one kind among the festival's account wares a row bought (festivalLaw.js FESTIVAL_WARES). */
+const festivalKeys = (/** @type {any} */ player, /** @type {string} */ kind) => festivalWaresHeld(player?.fest_wares).filter((id) => id.startsWith(`${kind}:`)).map((id) => id.slice(kind.length + 1));
 
 /** SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): THE
  *  DEVELOPERS' AURA - held while the handle is in DEVELOPER_HANDLES, as the developer title and glyph are, and gone on
@@ -402,7 +413,30 @@ export function aurasHeld(player, env) {
   for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);
   // SERPENT5: THE MAELSTROM - the Old Coil's second grant, laid on the row as Coilbreaker is, held for good
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)) held.push('maelstrom');
+  if (typeof player?.handle === 'string' && player.handle) for (const a of festivalKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // WITCH1: Witchfire, bought
   return held;
+}
+
+/** WITCH1 (bible/06-Systems/Witches-Festival.md): THE PROFILE ICONS THIS PLAYER HOLDS - the festival's bought from a Wyrd
+ *  Sister (`fest_wares`), and the Soul Cake once the account has taken SOULCAKE_TAKEN cakes from other players' offerings
+ *  (`fest_taken`). A registered account's alone. In ICONS's order. */
+export const SOULCAKE_ICON = 'soulcake';
+export function iconsHeld(/** @type {any} */ player) {
+  if (!(typeof player?.handle === 'string' && player.handle)) return [];
+  const own = new Set(festivalKeys(player, 'icon'));
+  if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);
+  return ICONS.filter((i) => own.has(i));
+}
+/** WITCH1: the icon this player WEARS - the stored one, while they hold it (titleWorn's law). */
+export function iconWorn(/** @type {any} */ player) {
+  const i = player?.icon;
+  return typeof i === 'string' && i && iconsHeld(player).includes(i) ? i : undefined;
+}
+/** WITCH1: what a player may wear as their icon - the refusal word, or null; `null` (the character's face) always. */
+export function iconRefusal(/** @type {unknown} */ icon, /** @type {any} */ player) {
+  if (icon === null) return null;
+  if (typeof icon !== 'string' || !ICONS.includes(icon)) return 'no-icon';
+  return iconsHeld(player).includes(icon) ? null : 'not-held';
 }
 /** WB9g: the aura this player WEARS - the stored one, while they hold it (titleWorn's law). AEGIS: held by a list too. */
 export function auraWorn(player, env) {
@@ -483,6 +517,8 @@ export const wardrobeOf = (player, env, nowS) => ({
   auras: aurasHeld(player, env),   // AEGIS: a list's aura beside the Broker's
   aura: auraWorn(player, env) ?? null,
   insignia: insigniaHeld(player?.insignia),
+  icons: iconsHeld(player),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
+  icon: iconWorn(player) ?? null,
 });
 
 export { TITLES, GLYPHS };

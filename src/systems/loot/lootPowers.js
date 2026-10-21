@@ -303,7 +303,7 @@ function again(target, damage, word) {
   const door = playerDoor();
   const f = recordOf(door, target);
   const n = Math.max(1, Math.round(damage));
-  if (!f?.dead) showFollowUp(n, word);   // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone
+  if (!f?.dead) showFollowUp(n, word, target);   // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands
   if (f) { if (!f.dead) door.hurtFoe(f, n); return; }
   oweFoe(target, n);   // FIELD BUGS 2026-10-12g OPEN-HAND: a body the relay runs (the gate's Warden) - its host's claim carries it
 }

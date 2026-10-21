@@ -35,7 +35,7 @@ function rig() {
   const state = { aboard: true, passengers: 0, mode: 'exterior', busy: false, originShift: [0, 0, 0], entered: [] };
   const deps = {
     available: () => true,
-    boats: () => s.rt.AllBoats, sailing: () => s.rt.isSailing(), disembarking: () => !!s.rt.state.disembarking,
+    boats: () => s.rt.AllBoats, csa: () => s.rt,   // FB1020c CABIN-FOES: the helm read off the runtime
     aboard: () => state.aboard, passengers: () => state.passengers, mode: () => state.mode, busy: () => state.busy,
     feet: () => [101, 39, 202], yaw: () => 0.7, nearby: () => true,
     toNative: (p) => p.map((v, i) => v - state.originShift[i]),
@@ -423,7 +423,8 @@ test('existing bank Transport callback enters the launched deed boat through the
     cabinLink: { close: () => calls.push('close link') }, _teleporting: false,
     hudFade: { smashHUDToBlack: () => {}, fadeHUDFromBlack: () => calls.push('fade') },
     _teleportToPixel: async (x, y) => calls.push(['pixel', x, y]), state: { worldCoords: (p) => ({ x: p[0], z: p[2] }), compensation: [0, 0, 0] },
-    csaSyncColliders: () => {}, CSA_TRIGGER_MODEL: TRIGGER_MODEL, player, cam, csaLocalOf: localOf, csaDeckPose: deckPose, townTalk: { say: (line) => said.push(line) } };
+    csaSyncColliders: () => {}, CSA_TRIGGER_MODEL: TRIGGER_MODEL, player, cam, csaLocalOf: localOf, csaDeckPose: deckPose, townTalk: { say: (line) => said.push(line) },
+    navalHostileNear: () => false, CABIN_REFUSAL };   // FB1020c CABIN-FOES: no hostile ship near
   const enter = new Function(...Object.keys(args), `return (${worldFunction('enterLinkedBankCabin')});`)(...Object.values(args));
   const saved = JSON.stringify(r.s.rt.getSaveData());
   assert.equal(await enter(), true);

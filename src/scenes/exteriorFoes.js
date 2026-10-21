@@ -94,7 +94,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
 import { puppetLead } from './puppetLead.js';   // DESYNC-ZERO: a moving puppet leads its last word
 import { bindQuestFoeHost, isPrivateQuestFoe, placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // B1: quest foes ride this pool; CURSE-SYNC: a world quest's ride as the world's; RVN6: a band placed about its master
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RVN6: PlaceFoeFreely's ring, a camp member's law
-import { validSites, validSiteTags, isRiteSite, WOD_CAMP_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
+import { validSites, validSiteTags, isRiteSite, isStarSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
 import { validRaidTags, validAlliedIds, RAID_PUPPETS_MAX } from '../world/raidShared.js';   // RAID2: a town's raid, shared
 import { isShipmate } from '../combat/friendlyFire.js';   // SHIPMATES: my crew named on the wire, and never the swing's
 import { campTagsOf, validCampTags } from '../world/campShared.js';   // OW6: a camp rides tagged, and an heir takes it as a camp
@@ -107,6 +107,7 @@ import { revenantMayYield, beginYield, yieldStep, slipEvent, kneelPose, beginExe
 import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt away, or gathered through a portal
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
 import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
+import { STAR_CIRCLE_SHARE } from '../net/starfall/starfallLaw.js';   // STAR5: a master's circle's ward
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
 import { isBodyFoe, foeActor, foeFx, foeWireLook, applyWireLook } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
@@ -988,7 +989,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // runs BEFORE DecreaseHealth (WeaponManager.cs:576-596, :627), and
     // HandleAttackFromSource runs after it unconditionally (:630), so
     // a fully absorbed blow still knocks back and still turns the foe.
-    const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);
+    // STAR5 (bible/11-Multiplayer/Starfall.md section 4): A MASTER'S CIRCLE WARDS IT - while any of its circle stands
+    // (`circleWard`, scenes/starfall/starfallHost.js) it takes STAR_CIRCLE_SHARE of every blow, its owner's and a peer's
+    // through it alike; a kill is no blow (PSCALE1 DOORS-1)
+    const warded = !_whole && damage > 0 && f.circleWard?.() ? Math.max(1, Math.round(damage * STAR_CIRCLE_SHARE)) : damage;
+    const healthDamage = bypassShield ? warded : damageShieldPool(f.entity, warded);
     // AUDIT PSCALE1 (Mac: "Whoever fights it"): every player's blow names a fighter - mine, and a peer's through
     // applyHit - here where the owner hears them all
     if (fromPlayer) noteFighter(f, peer ? peerId : PARTY_ME, _now());
@@ -1808,7 +1813,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           if (blowConnects(f.ai, meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG)))) {
             applyDamageToNonPlayer(f, _foeTarget, {
               weapon: fwpn, direction: ffwd, rolls,
-              calculateAttackDamage: _foeTarget.civilian ? QUARRY_BLOW : calculateAttackDamage,   // WATCH-PROTECTS: a townsperson falls to one landed blow, as DFU's civilian does to the player's
+              calculateAttackDamage: _foeTarget.civilian || _foeTarget.starWard ? QUARRY_BLOW : calculateAttackDamage,   // WATCH-PROTECTS: a townsperson falls to one landed blow, as DFU's civilian does to the player's; STAR5: a blow on a fallen star is one blow, its light's (scenes/starfall/starfallHost.js)
               // the TARGET's own pool owns its death chain: an
               // encounter foe routes to damageFoe, a watchman to the
               // guard pool's door (the host wires that through the
@@ -2587,12 +2592,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return out;
   }
   /** The puppets standing or building for an owner - the cap's count (B3). */
-  function livePuppetsOf(from, watch = false, camp = false, deep = false, quest = false, raid = false) {   // RAID2: and a raid's   // AUDIT WATCH1 A1: the watch counted apart from the foes; WOD7: and a shared camp's; DEEP-SHARE: and the deep's; QUEST-PARTY: and a shared quest's
+  function livePuppetsOf(from, watch = false, camp = false, deep = false, quest = false, raid = false, star = false) {   // RAID2: and a raid's   // AUDIT WATCH1 A1: the watch counted apart from the foes; WOD7: and a shared camp's; DEEP-SHARE: and the deep's; QUEST-PARTY: and a shared quest's
     const kind = (t, site, dp, qq, rd) => (site ? 'camp' : qq ? 'quest' : rd ? 'raid' : dp ? 'deep' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');
-    const want = camp ? 'camp' : quest ? 'quest' : raid ? 'raid' : deep ? 'deep' : watch ? 'watch' : 'foe';
+    const kindOf = (t, site, dp, qq, rd) => (site && isStarSite(site) ? 'star' : kind(t, site, dp, qq, rd));   // AUDIT STARFALL C7: a fallen star's, apart from the camps'
+    const want = star ? 'star' : camp ? 'camp' : quest ? 'quest' : raid ? 'raid' : deep ? 'deep' : watch ? 'watch' : 'foe';
     let n = 0;
-    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead && kind(f.mobileType, f.site, f._pupDeep, f._pupQuest, f._pupRaid) === want) n++;
-    for (const [k, r] of _pupPending) if (k.startsWith(from + ':') && kind(r.t, r._site, r._deep, r._quest, r._raid) === want) n++;
+    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead && kindOf(f.mobileType, f.site, f._pupDeep, f._pupQuest, f._pupRaid) === want) n++;
+    for (const [k, r] of _pupPending) if (k.startsWith(from + ':') && kindOf(r.t, r._site, r._deep, r._quest, r._raid) === want) n++;
     return n;
   }
   /** FOE-FORGE: a foe of `from`'s I took over (adopt) that still lives - counted against its owner's total and marks. */
@@ -2710,7 +2716,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (_pupPending.has(key)) { _pupPending.set(key, { ...r, ls: r.ls ?? _pupPending.get(key).ls, lw: r.lw ?? _pupPending.get(key).lw, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site, _deep: _pupPending.get(key)._deep, _quest: _pupPending.get(key)._quest, _raid: _pupPending.get(key)._raid, _camp: campTags.get(r.i) ?? _pupPending.get(key)._camp, _cp: _pupPending.get(key)._cp }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build   OW6: and its camp, the newest word
       if (r.d === 1 || r.t === undefined || !ENEMY_BASICS[r.t] || !r.f) continue;
       if (heldOf(from) >= PEER_PUPPETS_TOTAL_MAX) { if (site) refused.add(site); continue; }   // FOE-FORGE: every allowance together, and what I took of theirs
-      if (site && livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX) { refused.add(site); continue; }   // WOD7: a shared camp's foes under their own allowance
+      if (site && (isStarSite(site) ? livePuppetsOf(from, false, false, false, false, false, true) >= WOD_STAR_PUPPETS_MAX : livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX)) { refused.add(site); continue; }   // WOD7: a shared camp's foes under their own allowance - AUDIT STARFALL C7: a fallen star's under its own, the most its law stands
       const deep = deepIds.has(r.i);
       const raidKey = raidTags.get(r.i) ?? null;   // RAID2: a raid's raider stands under the raid's allowance
       if (!site && (qt ? livePuppetsOf(from, false, false, false, true) >= QUEST_PUPPETS_MAX : deep ? livePuppetsOf(from, false, false, true) >= DEEP_PUPPETS_MAX : r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : raidKey ? livePuppetsOf(from, false, false, false, false, true) >= RAID_PUPPETS_MAX : livePuppetsOf(from) >= ENCOUNTER_PUPPETS_MAX)) continue;   // DEEP-SHARE: the deep's, its own   // AUDIT WATCH1 A1: the watch has its own allowance - under one cap the foes spent it first and no watchman ever stood; WOD7: a camp's, its own

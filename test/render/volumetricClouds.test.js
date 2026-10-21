@@ -176,7 +176,9 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(len \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m (SLAB-SPAN: over the length of its own spans)');
   for (const q of Object.values(QUALITY)) assert.ok(q.shadowSteps >= 8 && q.shadowSteps <= 24, 'the tier\'s count is the floor under the ceiling');
   // the far ring stands outside the square: a cover-derived dim on the slab's own law
-  assert.match(shared, /farSunFactor\(\) \{\s*\n\s*if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return 1 - 0\.7 \* Math\.pow\(weatherRowNow\?\.cover \?\? 0, 1\.6\);/);
+  // PIN MOVED (OW-HORIZON, 2026-10-20): the law named once (farCoverSun), the deck's `far` its second reader
+  assert.match(shared, /const farCoverSun = \(\) => 1 - 0\.7 \* Math\.pow\(weatherRowNow\?\.cover \?\? 0, 1\.6\);/);
+  assert.match(shared, /farSunFactor\(\) \{\s*\n\s*if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return farCoverSun\(\);/);
   assert.match(read('src/scenes/world.js'), /sunScale: renderer\._sunScale \* sky\.farSunFactor\(\), sunColor: renderer\._sunColor,/, 'the ring takes it');
   assert.match(vc, /this\.white = new Uint8Array\(this\.q\.shadow \* this\.q\.shadow \* 4\)\.fill\(255\);/, 'the targets start all light by UPLOAD');
   assert.match(vc, /this\.shadowMap = createRenderTarget\(gl, this\.q\.shadow, this\.q\.shadow, \{ filter: 'LINEAR', wrap: 'CLAMP_TO_EDGE', data: this\.white \}\);/);

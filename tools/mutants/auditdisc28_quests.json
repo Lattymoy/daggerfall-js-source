@@ -159,7 +159,7 @@
   },
   {
     "name": "AD28Q-K2-map-not-restamped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/exteriorAutomapToggle.js",
     "old": "    restampQuestNames(locId, { ...questBuildingSource, currentMapID: () => dfLoc.mapTableData?.mapId ?? 0 });   // the plan's own town\n",
     "new": "",
     "tests": [

@@ -143,7 +143,7 @@ test('SHADOW-FANG grant: SirMcMobdon alone holds it, case-folded, title and glyp
   assert.equal(titleWorn(row('SirMcMobdon', { title: 'shadowfang' }), env), 'shadowfang');
   assert.equal(equipRefusal('shadowfang', row('SirMcMobdon'), env), null, 'theirs to wear');
   assert.equal(equipRefusal('apostle', row('SirMcMobdon'), env), 'not-held');
-  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['shadowfang'], title: 'shadowfang', glyphs: ['shadowfang'], auras: ['shadowcloak'], aura: null, insignia: [] });   // WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on
+  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['shadowfang'], title: 'shadowfang', glyphs: ['shadowfang'], auras: ['shadowcloak'], aura: null, insignia: [], icons: [], icon: null });   // PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on
   for (const h of ['Dutchess', 'SquidKamer', 'Lattymoy', 'Stranger']) {
     assert.ok(!titlesHeld(row(h), env).includes('shadowfang'), `${h} does not hold it`);
     assert.ok(!glyphsOf(row(h), env, nowS).includes('shadowfang'));

@@ -188,7 +188,11 @@ export function egHudModel(E, me, now, { inSpire = false, witness = false, potio
     const left = E.wk > 0 ? egCountAt(E, now) : EG_COUNT_START_MS;
     const lastWord = E.op + EG_LAST_WORD_MS - now;
     const { line, sub } = stageLines(E, spec, now);
-    const n = E.co.length, standing = egLivingCount(E);
+    // FIELD BUGS 2026-10-20d (AUDIT FB1020d L1-3): THE COMPANY THE TRACKER COUNTS - the whole called company until the breach's first
+    // wake, its entrants after it, when the door is closed to the rest (net/eliteGates/egLaw.js egAdmits): as the gather counts it
+    // (net/eliteGates/egLink.js egGatherOf), and as the herald and the Descent do. A member called who never came is no company
+    const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;
+    const n = co.length, standing = egLivingCount(E);
     const held = !(E.ca > 0);
     const seal = lastWord < left;
     const shown = seal ? lastWord : left;
@@ -205,7 +209,7 @@ export function egHudModel(E, me, now, { inSpire = false, witness = false, potio
       kicker: `${E.rh ? `${EG_TEXT.name} - Rehearsal` : EG_TEXT.name}${spec ? ` - ${EG_BANDS[spec.band]?.name ?? ''}` : ''}`,
       title: spec ? `Circle ${egCircleOfHall(E.h)} - Hall ${egSlotOfHall(E.h)}: ${spec.name}` : 'The Battlespire',
       count: E.sg === 'end' ? '' : `${held ? 'Held ' : ''}${seal ? 'Last word ' : ''}${ms(shown)}`, countCls,
-      line: witLine || line, sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub, company: n > 1 ? `${standing} of ${n} standing\n${egCompanyRows(E)}` : '',
+      line: witLine || line, sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub, company: n > 1 ? `${standing} of ${n} standing\n${egCompanyRows({ ...E, co })}` : '',
       run: runLine, dec: E.sg === 'rest' ? egNextCircleText(E) : dec.length ? `Decrees: ${dec.join(', ')}` : '', mark: marks.join(' - '),   // AUDIT EG V (L2-11): a rest's beacon
     };
   }

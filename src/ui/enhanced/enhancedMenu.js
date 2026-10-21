@@ -238,6 +238,8 @@ import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
 import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { profileBadge, portraitSave, liveCharacter, characterLine } from '../profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
+import { profileIconNode } from '../profileIcons.js';   // WITCH1: a profile icon worn, in the mark's portrait
+import { ownIcon } from '../../systems/ownGlyphs.js';   // WITCH1: the icon the stored session says this device's player wears
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
@@ -1132,13 +1134,21 @@ function profileCharacter() {
   return mode === 'pause' ? liveCharacter(playerEntity) : newestPortraitSave();
 }
 
+/** WITCH1: THE PORTRAIT the corner mark and the card wear - the profile icon worn (ui/profileIcons.js, the stored session's
+ *  word), else the character's face asked for as a COPY (the Continue pane's tile may draw this very face). */
+function portraitOf(save) {
+  const icon = ownIcon(appStorage());
+  if (icon) return Promise.resolve(profileIconNode(document, icon));
+  return save ? loadFace(save, { scale: 2, copy: true }) : null;
+}
+
 function profileMark() {
   const who = storedSession(appStorage());
   const save = profileCharacter();
   return profileBadge(document, {
     session: who,
     save,
-    face: save ? loadFace(save, { scale: 2, copy: true }) : null,   // a COPY: the Continue pane's tile may draw this very face
+    face: portraitOf(save),   // WITCH1: the icon worn, else the face
     onOpen: () => { accountOpen = true; render(); },
   });
 }

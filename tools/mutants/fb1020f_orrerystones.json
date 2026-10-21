@@ -1,0 +1,92 @@
+[
+  {
+    "name": "ORRERY-STONES-shift-unread",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "[spec.x0 + q.x - SD_STONE_POS[j].x,",
+    "new": "[q.x - SD_STONE_POS[j].x,",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the hall's own x unread: every stone stood a whole hall away from its spot, its levers with it"
+  },
+  {
+    "name": "ORRERY-STONES-box-at-the-hours-place",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "return { min: [b.min[0] + d[0], b.min[1] + d[1], b.min[2] + d[2]], max: [b.max[0] + d[0], b.max[1] + d[1], b.max[2] + d[2]] };",
+    "new": "return { min: b.min, max: b.max };",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "a handle's box left where the Hour stands its stone: the drawn lever with nothing to press, the report's empty air the other way about"
+  },
+  {
+    "name": "ORRERY-STONES-forward-back-swapped",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "key: `egstone:${H.spec.h}:${s.j}:${side > 0 ? 'f' : 'b'}`",
+    "new": "key: `egstone:${H.spec.h}:${s.j}:${side > 0 ? 'b' : 'f'}`",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the right lever turning the stone back: the Hour's forward is the right of one who faces it"
+  },
+  {
+    "name": "ORRERY-STONES-not-solid",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "try { collider?.addMesh?.(`eg:orrery:${H.spec.h}`, positions, indices, identity()); }",
+    "new": "try { void collider; }",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "a stone drawn and walked through - AUDIT SD II's own finding on the Hour's stones"
+  },
+  {
+    "name": "ORRERY-STONES-drawn-at-the-hours-place",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "for (const d of [s.body, s.bezel]) if (d) carry(still(d.object.matrix), s.d);",
+    "new": "for (const d of [s.body, s.bezel]) if (d) still(d.object.matrix);",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the stone drawn where the Hour stands it, its levers pressed in the empty air of its spot"
+  },
+  {
+    "name": "ORRERY-STONES-hand-at-the-hours-place",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "if (s.hand) carry(handMatrix(s.j, h, s.hand.object.matrix), s.d);",
+    "new": "if (s.hand) handMatrix(s.j, h, s.hand.object.matrix);",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the hand drawn on the Hour's stone, not this one"
+  },
+  {
+    "name": "ORRERY-STONES-hands-never-posed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      orrery.frame(dt);   // ORRERY-STONES",
+    "new": "      void dt;   // ORRERY-STONES",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the hands frozen at the start: a turn the room took never shown on its stone"
+  },
+  {
+    "name": "ORRERY-STONES-truth-unread",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "if (objs.h > H.spec.h && H.o) return H.o.truth;",
+    "new": "if (objs.h > H.spec.h && H.o) return H.want;",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "a hall behind the company keeps whatever hours were last seen, never the true ones its door opened on"
+  },
+  {
+    "name": "ORRERY-STONES-words-across-the-sign",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egGivenAt(b, centre, tg, centre[1] + egBodyHeight(b, tg) + EG_STONE_TOP_M)",
+    "new": "egGivenAt(b, centre, tg)",
+    "tests": [
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "a stone's name and hour at an errand's height, across its own sign"
+  }
+]

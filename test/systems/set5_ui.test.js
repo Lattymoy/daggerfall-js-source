@@ -153,7 +153,7 @@ test('SET5 the HUD\'s chips for the powers: a window running burns (the Rampage\
   T = 10;
   reportPlayerKill({}); reportPlayerKill({});
   T = 10.4;
-  assert.deepEqual(setHudChips(e), [{ key: 'rampage', set: 'dagon', name: 'Rampage II', text: '12s', state: 'active' }]);
+  assert.deepEqual(setHudChips(e), [{ key: 'rampage', set: 'dagon', name: 'Rampage II', text: '12s', state: 'active', tier: 2 }]);   // PIN MOVED (AUDIT STAR S2): a chip carries its tier, which the HUD's card reads
   assert.deepEqual(setHudChips({ ...e, peer: 'p1' }), [], 'a peer\'s entity');
   setSetsDueling(true);
   assert.deepEqual(setHudChips(e), [], 'a duel');
@@ -165,9 +165,9 @@ test('SET5 the HUD\'s chips for the powers: a window running burns (the Rampage\
   T = 0;
   hurtPlayer(m, 50);
   T = 1;
-  assert.deepEqual(setHudChips(m), [{ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: '3s', state: 'active' }]);
+  assert.deepEqual(setHudChips(m), [{ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: '3s', state: 'active', tier: 2 }]);
   T = 4;
-  assert.deepEqual(setHudChips(m), [{ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: '4:56', state: 'recovering' }]);
+  assert.deepEqual(setHudChips(m), [{ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: '4:56', state: 'recovering', tier: 2 }]);
   T = 299;
   assert.equal(setHudChips(m)[0].text, '1s');
   T = 300;
@@ -192,7 +192,7 @@ test('SET5 the HUD\'s chips for the powers: a window running burns (the Rampage\
   const n = wear(player(), ...BODY.slice(0, 6).map((t) => piece(t, 'nocturnal')));
   setPlayerDoor({ foes: () => [], feet: () => [0, 0, 0], hurtFoe: () => {}, castOnPlayer: () => {}, player: () => n });
   reportPlayerKill({});
-  assert.deepEqual(setHudChips(n), [{ key: 'eventide', set: 'nocturnal', name: 'Eventide', text: '30s', state: 'recovering' }]);
+  assert.deepEqual(setHudChips(n), [{ key: 'eventide', set: 'nocturnal', name: 'Eventide', text: '30s', state: 'recovering', tier: 2 }]);
   fresh();
 });
 

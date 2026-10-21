@@ -133,6 +133,8 @@ export const raidStrikeRid = (key) => `raid:${key}`;
  *   raid - the receipt's raid_cleanses row, stamped with this claim's nonce: the key at ?p, the nonce at ?p+1.
  *   serpent - SERPENT-SET: the receipt's serpent_kills row, stamped with this claim's nonce: its day at ?p, the nonce at
  *          ?p+1.
+ *   star - STAR7: the receipt's stars_held row, stamped with this claim's nonce: its star (`night.star`) at ?p, the nonce
+ *          at ?p+1.
  *   eg - EG-E1: the receipt's eg_redoubts row, stamped with this claim's nonce, and PAID (the account's first of that
  *          Redoubt this arena week - egEconomy.js): its breach at ?p, its Redoubt at ?p+1, the nonce at ?p+2. A nonce, never
  *          the gate's second (AUDIT SILVER-WAYS A1: a refused re-claim in the same second passed that).
@@ -142,6 +144,7 @@ const CLAIM_GUARDS = Object.freeze({
   raid: (p) => `EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,
   serpent: (p) => `EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,
   eg: (p) => `EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?${p} AND account = ?1 AND w = ?${p + 1} AND nonce = ?${p + 2} AND paid = 1)`,
+  star: (p) => `EXISTS (SELECT 1 FROM stars_held WHERE star = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,
 });
 
 /**
@@ -181,6 +184,14 @@ export function gateStrikeStatement(ctx, player, env, gameDay) {
 export function raidStrikeStatement(ctx, player, env, key, nonce) {
   if (!strikesFor(player, env) || typeof key !== 'string' || typeof nonce !== 'string') return null;
   return combatStrikeStatement(ctx, player, 'raid', raidStrikeRid(key), [key, nonce]);
+}
+/** STAR7: a fallen star's line id - its night and star (stars.js starKeyOf), under the service's own `:`. */
+export const starStrikeRid = (key) => `star:${key}`;
+/** STAR7: a fallen star's receipt, counted - 30 silver under the day's combat cap, in claimStar's own batch and only while
+ *  the stars_held row this claim stamped with `nonce` stands. Null where Marks are not this account's. */
+export function starStrikeStatement(ctx, player, env, key, nonce) {
+  if (!strikesFor(player, env) || typeof key !== 'string' || typeof nonce !== 'string') return null;
+  return combatStrikeStatement(ctx, player, 'star', starStrikeRid(key), [key, nonce]);
 }
 /** SERPENT-SET: a serpent's line id - its day, under the service's own `:`. */
 export const serpentStrikeRid = (day) => `serpent:${day}`;

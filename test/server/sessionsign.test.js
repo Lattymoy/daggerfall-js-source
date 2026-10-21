@@ -46,12 +46,13 @@ const HOT = (character) => [
   ['/v1/prof/pixels', { character, pixels: [[500, 200], [501, 200]] }],
   ['/v1/chapters/list', { character }],
   ['/v1/seats/list', {}],
+  ['/v1/festival/town', { mapId: 7 }],   // PIN MOVED (WITCH1): a town's Hearth Offerings, asked as its homes are
 ];
 
 test('SESSION-SIGN the oracle: every hot route answers under a pass exactly as under the lookup - for a guest, an account, a developer, a newcomer a week can not yet witness and a muted one, with the switches on and at `dev`, in a town with a home - and asks no lookup; the first ask, the lookup\'s, hands the pass back, exposed to the page; a banned account is handed none (mutants: a field the pass leaves out; the handle; the registration; the mute; a route added; the mint before the ban)', async () => {
   assert.deepEqual(HOT('c').map(([path]) => path), [...PASS_PATHS], 'the oracle asks every hot route there is');
   for (const sw of ['on', 'dev']) {
-    const t = await stand({ DEVELOPER_HANDLES: 'mac', BOARD_OPEN: sw, SEATS_OPEN: sw, CHAPTERS_OPEN: sw, PROFESSIONS_OPEN: sw });
+    const t = await stand({ DEVELOPER_HANDLES: 'mac', BOARD_OPEN: sw, SEATS_OPEN: sw, CHAPTERS_OPEN: sw, PROFESSIONS_OPEN: sw, FESTIVAL_OPEN: sw });
     try {
       const guest = await t.s.guest();
       const eve = await t.s.seated('eve');
@@ -60,6 +61,8 @@ test('SESSION-SIGN the oracle: every hot route answers under a pass exactly as u
       const muted = await t.s.seated('mute');
       const banned = await t.s.seated('bann');
       assert.equal((await t.s.seatHome(eve, { mapId: 7, buildingKey: 300, region: 17, price: 5000 })).status, 200, 'a home in the town the oracle reads');
+      // WITCH1 (PIN MOVED): and a Hearth Offering at its door, so the town's offerings answer each account its own way
+      t.raw.prepare('INSERT INTO fest_offerings (map_id, building_key, player, char_id, stock, placed_at) SELECT map_id, building_key, player, char_id, 3, ? FROM homes WHERE map_id = 7 AND building_key = 300').run(T0);
       t.raw.prepare('UPDATE players SET registered_at = ? WHERE id IN (?, ?, ?, ?)').run(T0 - 30 * 86400, eve.id, mac.id, muted.id, banned.id);
       t.raw.prepare('UPDATE players SET registered_at = ? WHERE id = ?').run(T0 - 3600, newcomer.id);
       t.raw.prepare('UPDATE players SET muted_until = ? WHERE id = ?').run(T0 + 86400, muted.id);

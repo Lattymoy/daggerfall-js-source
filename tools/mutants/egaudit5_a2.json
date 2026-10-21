@@ -296,8 +296,8 @@
   {
     "name": "EGA5A2-herald-news-no-start",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "t: secs(now - B.wk), ew: B.ew ?? 0, o: B.o ?? ''",
-    "new": "t: secs(now - B.wk), o: B.o ?? ''",
+    "old": "t: secs(now - B.wk), ew: B.ew ?? 0, ...heraldCompany(B)",
+    "new": "t: secs(now - B.wk), ...heraldCompany(B)",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],
@@ -326,8 +326,8 @@
   {
     "name": "EGA5A2-herald-fold-drops-rd",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "else owe({ kind: 'rd', o: e.o, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
-    "new": "else owe({ kind: 'rd', o: e.o, w: e.w, h: e.h, t: e.t });",
+    "old": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
+    "new": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t });",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],

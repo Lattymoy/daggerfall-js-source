@@ -210,8 +210,8 @@
   {
     "name": "UI1-the-shop-at-another-surfaces-box",
     "file": "src/ui/enhanced/enhancedTrade.js",
-    "old": "linePicture(line, { box: SLOT_BOX.row, onReady: render })",
-    "new": "linePicture(line, { box: SLOT_BOX.loot, onReady: render })",
+    "old": "linePicture(line, { box: SLOT_BOX.row, onReady: landed })",
+    "new": "linePicture(line, { box: SLOT_BOX.loot, onReady: landed })",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "AUDIT-UI-A3-a-repaint-on-every-resize",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "if (sig !== fitSig) { fitSig = sig; if (host) render(); }",
-    "new": "if (sig !== fitSig || true) { fitSig = sig; if (host) render(); }",
+    "old": "if (sig !== fitSig) { fitSig = sig; rowSizes.clear(); if (host) render(); }",
+    "new": "if (sig !== fitSig || true) { fitSig = sig; rowSizes.clear(); if (host) render(); }",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]

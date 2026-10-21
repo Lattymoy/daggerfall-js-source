@@ -118,10 +118,19 @@ export function stepBudget({ allowance, played, gain, band, enforce = true }) {
  * @param {any} db @param {string} playerId @param {number} [pieces]
  */
 export async function grantSpoils(db, playerId, pieces = 0) {
-  await db.prepare(
+  await spoilsGrantStatement(db, playerId, pieces).run();
+}
+/**
+ * THE FILL AS ONE STATEMENT (AUDIT STARFALL B3): a claim whose own batch writes its receipt's row runs it IN that batch,
+ * held to the row by `guard` (an SQL condition of the batch's, its parameters `binds` from ?5 on) - run after the batch,
+ * a failure between the two (a 5xx, an isolate gone) lost the fill for good, the retry answered `claimed`.
+ * @param {any} db @param {string} playerId @param {number} [pieces] @param {string|null} [guard] @param {...unknown} binds
+ */
+export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...binds) {
+  return db.prepare(
     'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'
-    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL',
-  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0)))).run();   // AUDIT WB14 (WIRE-6): and a portent's pieces
+    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL' + (guard ? ` AND (${guard})` : ''),
+  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))), ...binds);   // AUDIT WB14 (WIRE-6): and a portent's pieces
 }
 
 /** LW15 (bible/06-Systems/Living-World-II.md "LW15"): THE SERVICE'S OWN FAUCETS - gold it pays that no player paid (a

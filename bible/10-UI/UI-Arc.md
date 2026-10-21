@@ -19857,6 +19857,11 @@ mounted pack); mutants `tools/mutants/virt.json` (42: 41 dead, 1 equivalent as r
 `ui1.json`'s UI1-the-second-waiter-dropped and AUDIT-UI-A4-the-cache-unbounded, `shiftstow.json`'s
 AUDIT-WAGON-FILTER-S8.
 
+TRADE-VIRT (2026-10-20, `07-Rendering/Performance-Priority.md` TRADE-VIRT) carried this law to the shop counter and the
+trade between players, which had kept both causes, and gave the landing its one home: `ui/enhanced/landingTiles.js` -
+the pack's `liveTile` asks it (`_waitingTiles`, `tileLanded` and `paintLandedTiles` above are its `waiting`, `landed`
+and `pass` now), and each counter keeps its own by it. The tile pin's fakes moved to `test/virtFakes.mjs`.
+
 ### AUDIT VIRT (2026-10-16, "Please audit this")
 
 Four lenses read the slice cold, each against HEAD and the tree before it, in node and in Chromium: the windowing law

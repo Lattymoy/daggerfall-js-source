@@ -219,15 +219,18 @@ test('CARP-YARD THE POOL: the joinery stood as a yard is - its timber under its 
   y.dispose();
 });
 
-test('CARP-YARD THE BENCH IS A STATION WHERE THE FEET STAND AT IT: workbenchNear answers the joinery whose bench is within YARD_REACH across the ground and YARD_BENCH_RISE up or down - nothing farther, nothing above it on a roof, nothing with no feet; a Stable has no bench (mutants: the reach unread, the rise unread)', () => {
+test('CARP-YARD THE BENCH IS A STATION WHERE THE FEET STAND AT IT: workbenchNear answers the joinery one of whose doors is within YARD_REACH across the ground and YARD_BENCH_RISE up or down - nothing farther, nothing above it on a roof, nothing with no feet; a Stable has no bench (mutants: the reach unread, the rise unread)', () => {
   const site = { key: '7:carpenter', kind: 'carpenter', x: 100, z: 50, yaw: 180, comp: 0, regionIndex: 17, race: 'Breton', keeper: KEEPER };
   const stable = { key: '7:stable', kind: 'stable', x: 140, z: 50, yaw: 0, comp: 0, regionIndex: 17, race: 'Breton', keeper: KEEPER };
   const { y } = rig([site, stable]);
   y.frame();
   const bb = benchBoxOf(), mid = yardToScene([100, 2, 50], 180, (bb[0] + bb[3]) / 2, 0, (bb[2] + bb[5]) / 2);
   assert.equal(y.workbenchNear([mid[0], 2, mid[2] + 1]), site, 'at the bench');
-  assert.equal(y.workbenchNear([mid[0] + YARD_REACH - 0.01, 2, mid[2]]), site, 'at the reach');
-  assert.equal(y.workbenchNear([mid[0] + YARD_REACH + 0.01, 2, mid[2]]), null, 'past it');
+  // PIN MOVED (FB1020c BENCH-DOORS): the reach is measured to the nearest point of a door's box, never the bench's middle -
+  // these two stand east of the bench's end, where the carpenter and the board are farther still
+  const end = y.targets().find((t) => t.key === 'yard:7:carpenter|bench').aabb.max[0];
+  assert.equal(y.workbenchNear([end + YARD_REACH - 0.01, 2, mid[2]]), site, 'at the reach');
+  assert.equal(y.workbenchNear([end + YARD_REACH + 0.01, 2, mid[2]]), null, 'past it');
   assert.equal(y.workbenchNear([mid[0], 2 + YARD_BENCH_RISE + 0.01, mid[2]]), null, 'over it, on its roof');
   assert.equal(y.workbenchNear([mid[0], 2 - YARD_BENCH_RISE - 0.01, mid[2]]), null, 'under it');
   assert.equal(y.workbenchNear(null), null);

@@ -155,6 +155,7 @@ test('QL11 THE SWEEP, both ways: every kind has a producer in src/; every produc
     'gambit-won': ['src/scenes/gambitTableGame.js'],
     'gem-socketed': ['src/systems/reforge.js'],
     'herb-gathered': ['src/scenes/herbHost.js', 'src/systems/foraging/foragingInstall.js'],
+    'heart-star-held': ['src/net/starfall/starClaims.js'],   // T-A: the Heart-Star held, beside its `star-held` in one turn (test/net/starfall/star7_claims.test.js)
     'hour-broken': ['src/net/superDungeon/sdClaims.js'],
     'ore-mined': ['src/scenes/mineHost.js'],
     'piece-crafted': ['src/net/profBook.js'],
@@ -166,9 +167,11 @@ test('QL11 THE SWEEP, both ways: every kind has a producer in src/; every produc
     'rite-broken': ['src/net/gate/gateClaims.js'],
     'serpent-slain': ['src/net/serpent/serpentClaims.js'],
     'ship-struck': ['src/scenes/naval/navalHost.js'],
+    'star-held': ['src/net/starfall/starClaims.js'],   // STAR8: a fallen star's receipt the service counted (STAR7's carrier - test/net/starfall/star7_claims.test.js)
     'star-taken': ['src/net/firmament/firmamentBook.js'],
     'valkynaz-felled': ['src/scenes/eliteGates/egClient.js'],
     'wood-chopped': ['src/scenes/treeHost.js', 'src/systems/foraging/foragingInstall.js'],
+    'wyrd-met': ['src/scenes/witchesHost.js'],   // AUDIT STAR8 T1: a Wyrd Sister's window opened, the festival's own module (test/scenes/witch1_host.test.js drives it)
   });
   // the hosts that carry one: a line each, never more (test/scenes/hostceiling.test.js holds their length)
   const lines = (f) => readFileSync(join(ROOT, f), 'utf8').split('\n').filter((l) => /\bnoteAct\(/.test(l) && !/^\s*(\/\/|\*)/.test(l)).length;
@@ -195,7 +198,8 @@ test('QL11 the kinds: ACT_IDS is the leaf\'s keys, frozen; each kind lower-case 
   assert.ok(Object.isFrozen(ACT_KINDS) && Object.isFrozen(ACT_IDS));
   for (const k of ACT_IDS) assert.match(k, /^[a-z]+(-[a-z]+)*$/, k);
   for (const k of ACT_IDS) assert.ok(typeof ACT_KINDS[k] === 'string' && ACT_KINDS[k].length > 0, `${k} has its family`);
-  assert.equal(ACT_IDS.length, 23);
+  assert.equal(ACT_IDS.length, 26);   // PIN MOVED (STAR8): and star-held, a fallen star held; PIN MOVED (AUDIT STAR8 T1): and wyrd-met, a Wyrd Sister's window; PIN MOVED (T-A): and heart-star-held, the Heart-Star held
+  assert.equal(ACT_KINDS['heart-star-held'], ACT_KINDS['star-held'], 'T-A: the Heart-Star\'s act the endgame\'s, as its star\'s - one family, so the festival\'s finds hear the two as one deed');
   assert.ok(!Object.hasOwn(ACT_KINDS, 'wagon-hauled'), 'no feature sells a wagon\'s load (qlActs.js says why)');
   assert.ok(Object.hasOwn(ACT_KINDS, 'valkynaz-felled'), 'the Weir Road\'s third step waits on it');
 });

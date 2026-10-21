@@ -578,7 +578,11 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
   assert.equal(findHarbour({ rect: rectOf(E.veilhaven(), 4, 3), isWater }), null, 'the Bay\'s reach falls short of it - the isle\'s own is asked');
   const w = hostText('src/scenes/world.js');
   assert.match(w, /town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);
-  assert.match(rd('src/systems/naval/harbourBook.js'), /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), \.\.\.\(near\.reach \? \{ reach: near\.reach \} : \{\}\) \}\)/);
+  // PIN MOVED (FB1020c HARBOUR-REACH): the book sounds the reach it is handed (its own, HARBOUR_REACH without one), and an
+  // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js)
+  const book = rd('src/systems/naval/harbourBook.js');
+  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach \}\);/);
+  assert.match(book, /far = own === HARBOUR_REACH \? portRingReach\(near\.rect\) : 0;/);
   assert.match(w, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');
 });
 

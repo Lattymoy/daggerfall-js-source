@@ -51,13 +51,20 @@ test('GATE-MIX: a Hellfire on five players in his third phase (ten marks) is hea
   c.destroy?.();
 });
 
-/** A WebGL2 stand-in that answers every call and counts the programs linked. */
-function countingGl() {
+/** A WebGL2 stand-in that answers every call and counts the programs linked. SHADER-STALL: `parallel` - it compiles
+ *  beside the frames (KHR_parallel_shader_compile), and says a program is done only once `finish()` has been called. */
+function countingGl({ parallel = false } = {}) {
   const linked = [];
+  let finished = false;
+  const ext = { COMPLETION_STATUS_KHR: 0x91B1 };
   const gl = new Proxy({}, {
     get(_, k) {
       if (k === 'linked') return linked;
-      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'finish') return () => { finished = true; };
+      if (k === 'getExtension') return (n) => (parallel && n === 'KHR_parallel_shader_compile' ? ext : null);
+      if (k === 'isContextLost') return () => false;
+      if (k === 'getProgramParameter') return (p, pn) => (pn === ext.COMPLETION_STATUS_KHR ? finished : true);
+      if (k === 'getShaderParameter') return () => true;
       if (k === 'linkProgram') return (p) => linked.push(p);
       if (typeof k === 'string' && /^[A-Z_0-9]+$/.test(k)) return 1;   // the constants
       if (k === 'getUniformLocation' || k === 'getAttribLocation') return () => ({});
@@ -67,9 +74,10 @@ function countingGl() {
   return gl;
 }
 
-test('GATE-MIX: the court\'s passes are compiled as I stand in it - one a frame, under the step\'s veil as much as after it, before any attack - and never again at his first landing, the first Reckoning or his fall (mutants: the warm-up unwired; all three in one frame; built again where they are drawn)', () => {
+test('GATE-MIX: the court\'s passes are compiled as I stand in it - one a frame, under the step\'s veil as much as after it, before any attack - and never again at his first landing, the first Reckoning or his fall; SHADER-STALL: where the driver compiles beside the frames, all three started together as I come in and each built once its compile is done (mutants: the warm-up unwired; all three in one frame where it cannot; built again where they are drawn; the warm outside the court)', () => {
+  for (const parallel of [false, true]) {
   destroyGateBossBar();
-  const gl = countingGl();
+  const gl = countingGl({ parallel });
   const link = { st: GATE_STATE_EMPTY, state() { return this.st; } };
   const clock = { t: 0 };
   let veil = true, inside = false;
@@ -86,10 +94,14 @@ test('GATE-MIX: the court\'s passes are compiled as I stand in it - one a frame,
   inside = true;
   const per = [];
   for (let i = 0; i < 5; i++) { clock.t += 16; const was = linked(); if (i === 2) veil = false; c.frame(); per.push(linked() - was); }
-  assert.deepEqual(per, [2, 2, 2, 0, 0], 'the sparks and the meteor, then the crystals, then the way home\'s fire - two programs a pass, one pass a frame');
+  // PIN MOVED (SHADER-STALL, render/glProgram.js compiledPass): one pass a frame where the driver cannot compile beside the
+  // frames; where it can, the three passes' six programs started in the first frame I stand here
+  assert.deepEqual(per, parallel ? [6, 0, 0, 0, 0] : [2, 2, 2, 0, 0], parallel ? 'the three passes\' compiles started together' : 'the sparks and the meteor, then the crystals, then the way home\'s fire - two programs a pass, one pass a frame');
+  if (parallel) gl.finish();
   // the fight: a landing and the Reckoning drawn - nothing compiled for them now
   link.st = { ...GATE_STATE_EMPTY, day: 700, boss: 'ruhn', hp: 900, max: 1000, fighters: 3, wrathAt: 10_000_000, atk: { i: 1, a: ATTACKS.slam.id, at: 10_000, x: 0, z: 0, yw: 0, tg: [] } };
   const after = linked();
   for (const t of [9000, 10_005, 10_200]) { clock.t = t; c.frame(); }
   assert.equal(linked(), after, 'his first landing compiles nothing');
+  }
 });

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "CABIN-FOES-the-enemies-arm-dropped",
+    "file": "src/systems/sailingCabin.js",
+    "old": "  if (hostile) return CABIN_REFUSAL.enemies;\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_cabinfoes.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-FOES-read-before-the-helm",
+    "file": "src/systems/sailingCabin.js",
+    "old": "  if (sailing || disembarking) return CABIN_REFUSAL.helm;",
+    "new": "  if (hostile) return CABIN_REFUSAL.enemies;\n  if (sailing || disembarking) return CABIN_REFUSAL.helm;",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_cabinfoes.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-FOES-the-door-reads-no-hostile",
+    "file": "src/scenes/sailingCabin.js",
+    "old": "aboard: deps.aboard(boat), hostile: !!deps.hostile?.(),",
+    "new": "aboard: deps.aboard(boat), hostile: false,",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_cabinfoes.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-FOES-the-world-hands-no-hostile",
+    "file": "src/scenes/world.js",
+    "old": "    csa: () => csaRuntime, hostile: navalHostileNear,",
+    "new": "    csa: () => csaRuntime, hostile: () => false,",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_cabinfoes.test.js"
+    ]
+  },
+  {
+    "name": "CABIN-FOES-the-bank-door-asks-the-helm-alone",
+    "file": "src/scenes/world.js",
+    "old": "    if (csaRuntime.isSailing() || navalHostileNear()) { townTalk.say(",
+    "new": "    if (csaRuntime.isSailing()) { townTalk.say(",
+    "tests": [
+      "test/systems/comeSailAway/fb1020c_cabinfoes.test.js"
+    ]
+  }
+]

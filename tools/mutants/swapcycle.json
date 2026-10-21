@@ -1,0 +1,23 @@
+[
+  { "name": "SWAP-CYCLE-drop-moves-start", "file": "src/systems/skillSwap.js",
+    "old": "  const rise = Math.max(0, levelUpSkillSum(entity) - held);", "new": "  const rise = levelUpSkillSum(entity) - held;",
+    "tests": ["test/systems/swapcycle.test.js"], "why": "the reported law: a trained skill given up keeps its training on the level, and its place earns the same levels again - level 223" },
+  { "name": "SWAP-CYCLE-raise-lowers", "file": "src/systems/advancement.js",
+    "old": "if (!(entity.currentLevelUpSkillSum >= sum)) entity.currentLevelUpSkillSum = sum;", "new": "entity.currentLevelUpSkillSum = sum;",
+    "tests": ["test/systems/swapcycle.test.js"], "why": "the stored sum falls with the class's: a swap undone loses its ground for good" },
+  { "name": "SWAP-CYCLE-rise-from-class-sum", "file": "src/systems/skillSwap.js",
+    "old": "  const held = heldSum(entity);", "new": "  const held = levelUpSkillSum(entity);",
+    "tests": ["test/systems/swapcycle.test.js"], "why": "a trained skill brought in after a drop moves the sums instead of winning the ground back" },
+  { "name": "SWAP-CYCLE-no-catch-up", "file": "src/systems/skillSwap.js",
+    "old": "  return held >= sum ? held : sum;", "new": "  return held;",
+    "tests": ["test/systems/swapcycle.test.js"], "why": "points no raise has stored yet absorbed by the swap" },
+  { "name": "SWAP-CYCLE-shortfall-class-only", "file": "src/systems/skillSwap.js",
+    "old": "Math.max(0, heldSum(entity) - levelUpSkillSum({", "new": "Math.max(0, levelUpSkillSum(entity) - levelUpSkillSum({",
+    "tests": ["test/systems/swapcycle.test.js"], "why": "the form's number blind to an earlier swap's ground" },
+  { "name": "SWAP-CYCLE-ground-unsaid", "file": "src/ui/growth/specGuide.js",
+    "old": "    ...(short > 0 ? [t('growth.swap.ground',", "new": "    ...(false ? [t('growth.swap.ground',",
+    "tests": ["test/ui/growth/fb1019b_swappage.test.js"], "why": "the swap's cost to the level unsaid" },
+  { "name": "SWAP-CYCLE-virtue-unread", "file": "src/ui/growth/specGuide.js",
+    "old": "    shortfall: (out, inn) => (usesVirtueLeveling(entity) ? 0 : swapShortfall(entity, out, inn)),", "new": "    shortfall: (out, inn) => swapShortfall(entity, out, inn),",
+    "tests": ["test/systems/swapcycle.test.js"], "why": "Oblivion's bar told of a sum that levels nothing" }
+]

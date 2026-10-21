@@ -221,7 +221,7 @@ as lead and are recorded as such; each is one line to change if Mac calls otherw
 |---|---|---|
 | Height band | 150-450 m, default 260 | Mac's call 1; 260 frames a town and its gates |
 | Ceiling | cloud base (VC_PROFILE[weather].base) less 60 m, floor 40 m, none = 450 | "Below the clouds" - the deck the sky really draws; a lid weather still leaves a view |
-| Tilt | 30-75 degrees down, default 52 | the design's 45-60 widened so a drag can look out to the far ring or straight down on a town |
+| Tilt | 15-75 degrees down, default 52 (30-75 until OW-HORIZON, 2026-10-20) | the design's 45-60 widened so a drag can look out to the far ring or straight down on a town; OW-HORIZON lowered the floor so a drag looks out to the horizon |
 | Clearance | 25 m over the ground under the eye AND over a ridge halfway to the traveller | the eye never inside a hill, the traveller never behind one |
 | Focus | eased at rate 10; a move past 60 m taken whole | a fast travel or respawn is a cut, never a sweep over unbuilt leagues |
 | Rise / fall | 1.2 s / 0.8 s, smoothstepped from the head's own eye | out of and back into the body's camera, whichever mwView answers |
@@ -468,7 +468,9 @@ stand on the horizon, and drawing both would be the storm twice.
 view's fog ends at most 4,800 m out (the linear rows at the furthest grid) and the eye
 stands back at most 779 m (450 m at 30 degrees): 5,579 m, inside the square. Under an exp
 fog nothing is seen past the edge at all. So every shadow on the ground in the view is
-already the clouds' own; the pin holds the arithmetic.
+already the clouds' own; the pin holds the arithmetic. (Superseded by OW-HORIZON, 2026-10-20: under the view a linear
+row's haze now runs to the far ring's rim and the tilt goes down to 15 degrees, so the ground past the square is seen -
+it takes the far ring's own cover law there, the map easing into it over the square's rim; below.)
 
 **Lightning where the storm is - the strikes were already placed there** (WEATHER3d's
 distant storms, DISC20-D, from the weather map's thunder systems). What was wrong was the
@@ -2623,3 +2625,85 @@ run's arrival); the governor's mounts given the town (`ow6_slowdown` - run IN a 
 band's x20 no reason, the ground's lower cap the reason - `ow_lead`, `ow_loadowed`, `ow_queueowed`, `ow_toggle`, `tv_wasd`,
 `fb0929d_toroads`) and `tv2_click_to_move`'s route-line and cap pins moved; `tools/mutants/ow_townwalk.json` (46) and
 `tools/mutants/audit_owrevisited_walk.json` (35: 34 dead, one recorded equivalent).
+
+## OW-HORIZON - as far as the eye can see, from the air (2026-10-20, the owner)
+
+The owner: "the overworld map as it stands doesnt allow you to see as far as the eye can see, this needs to change
+without impacting performance". Measured over the real ARENA2 (Daggerfall, 13:00, clear): from the Overworld's eye
+every league past the fourth kilometre was one pale wash, and the camera would not look up past 30 degrees down.
+
+**Why the view stopped short - three laws, each right for the eye it was made for** (`scenes/travelHorizon.js` header):
+- **The haze.** DFU's sunny and overcast rows are a LINEAR fog, 0 to 2,400 m - the edge of its draw distance, tuned for
+  TerrainDistance 3 (EV4 grew it to 2,400 x TD/3: 4,000 m at the default Land View). TV1 measured it from the traveller
+  (the weather is the traveller's), so it closed about 100 m inside the streamed grid, and the far ring past it (EV8)
+  stood at its 85% haze hold. Right at the eye, where the grid's edge is the horizon; from 260-450 m up, a wall.
+- **The lens.** The world is drawn through a 6,000 m far plane. From a raised eye standing back from the traveller the
+  grid's far corners lie past it - hidden only because the haze had already closed.
+- **The tilt.** The camera stopped at 30 degrees down, so as not to show that wall (TV1's own reason).
+
+**The law - the haze is the horizon's under the view.** `horizonFog(row, view)`: under the view, and only for a LINEAR
+row, the fog's end runs out to TV_HAZE_END - the far ring's nearest rim (`render/farRing.js` RING_RIM_END, 28,016.64 m),
+where the ring already closes its land into the sky. So the streamed land, the far ring and the sea past it fog by ONE
+ramp from the traveller to the horizon (`render/horizonHaze.js` horizonHaze, FAR-SEA1's law, which the streamed sea
+already takes). `horizonPlanes` / `horizonProj`: the lens's far plane grows to TV_LENS_FAR (12,000 m: the grid's
+farthest corner at the widest Land View is 8,110 m from the traveller, the eye at most 1,739 m back from them at the new
+floor) and its near plane to TV_LENS_NEAR (2 m: the eye keeps 25 m over its ground, so nothing stands nearer but the
+rain wrapped round it - the depth step 8 km out is 1.9 m, against 4.8 m at 4 km through the eye's 0.2). All of it eases
+with the view's rise and fall (`viewShare`, the eye's own smoothstep of its blend), so nothing pops as the camera
+leaves the head or comes back to it. The host (`scenes/world.js`) takes the row and the lens through them - the lens now
+after the view's frame, which says how far up the view stands.
+
+**The camera** (`player/travelCamera.js`). TV_TILT_MIN is 15 degrees: at 15 and DFU's 65-degree lens the horizon stands
+about a third of the way down the picture, the traveller still at its centre. Looking out that low, the line of sight
+from the eye to the traveller is 1.7 km long and skims the land, so the clearance (TV1 / AUDIT DEEP T1-4) asks its far
+half - from its middle to the eye - every TV_CLEAR_SPAN (100 m, `clearSteps`) where it asked the middle and the eye
+alone: a hill three quarters of the way back stood between the eye and the traveller with the middle clear. The near
+half is still not asked (a point a share s along rises s for every metre the eye does - a crest at the traveller's feet
+is no lift's to clear; asking it steepened the default view on 93 of 403 rolling-hill samples, the far half alone on
+none, and a cliff's lift is the same).
+
+**The clouds' shadows past their square** (`render/cloudShadow.js`). The clouds' map is a 13.1 km square on the
+traveller's pixel; TV4 measured every shadow in the view inside it - true while the haze closed at 4.8 km. Past it every
+program now takes the far law, `uCloudShadowFar` (the deck's `far`: `scenes/shared.js` farCoverSun, the far ring's own
+cover law, cover^1.6 - the same number its dim always was), and inside the square's rim (CLOUD_SHADOW_RIM, from 80% of
+its half-side, 5.24 km) the map eases into it, so a cloud's shadow never ends on a straight line. A program never told
+(the air's shafts, the grass about the eye) reads (0, 0): full sun past the square and the map to its edge, as before.
+The renderer tells every program that lights by the sun (the terrain, the meshes, the characters, the flats, the
+decals, the ground's snow, the water).
+
+**The far ring - hazed from the traveller, shaded by the clouds, standing where the grid is not yet**
+(`render/farRing.js`, `render/enhancedLighting.js` EL_FAR_RING_FS):
+- Its haze is measured from the point the world's fog is (`uHazeFrom`: the renderer's focus while the view is up, the
+  eye otherwise), so the ring and the land beside it read one distance.
+- It takes the clouds' map where the map knows the ground and the far law past it (`RING_CLOUD_GLSL`, `ringSun`) - its
+  sea too (`ringSea`'s sun scale). It had one flat dim, a dappled grid against a flat ring, hidden only by the haze.
+- Its hole is the BUILT pixels' (`inHole`, `footprintBuilt`): a pixel the stream still owes is the ring's until its own
+  ground stands - drawn at the far plane, so its coarse cell shows only through the gap, where the sky showed before.
+  The hole is punched again when the built set's keys change (`BuiltPixels`, the host's `built`: a Map counting a key
+  added or removed - its size alone stood still when one pixel dropped and another landed between two frames).
+
+**The click reaches the land the view shows** (`horizonHit`, TV_PICK_REACH = TV_HAZE_END): a ground pick out to the
+haze's end over `tvGroundAt(x, z, false)` - the built grid's ground and the far ring's heights past it, the sea's own
+surface left to the curtains - where it reached the lens's old 6,000 m over the built grid alone, so a click on a
+distant field said "beyond what you can see". The click and the waypoint menu's.
+
+**What is not changed.** An EXPONENTIAL row is weather - rain, snow, fog, a sandstorm - and stays the traveller's,
+exactly as TV1 measured it (the ring stands down under it, as ever). On the ground every function in
+`travelHorizon.js` hands back what it was given - the same row object, the same 0.2 / 6,000 lens - and the fog closes
+at most 4,800 m out, inside the square's rim, so the far law is never seen there. Two things change at the eye too, both
+the same fix: the ring's nearest leagues inside the clouds' square take the map's shadow (under the ring's 85% hold),
+and a pixel the stream still owes shows the ring's coarse ground instead of the sky.
+
+**The cost.** Nothing new is drawn: the haze and the lens are numbers the frame already sends, the ring's pass (one
+draw) was drawn under the view before, the far law is one uniform and one smoothstep in shaders that already read the
+map, and the ring's fragment shader reads the map once. The camera's clearance asks at most ten points a pass where it
+asked two. A hole re-punch is 0.38 ms on the CPU (measured, 400 punches) and comes once a pixel built or dropped -
+beside a pixel's own build, which is tens of milliseconds.
+
+A departure from TV1's haze (DFU has no raised camera; its own eye's fog is untouched): Port-Ledger row OW-HORIZON.
+Proof: `test/render/owhorizon.test.js` (10: the haze, the lens, the camera's far half, the shadows' far law and its rim,
+the ring's sun and haze, the ring's hole and its key, the click, the host's wiring), `tools/mutants/owhorizon.json`
+(32, all dead); pins moved with their laws (TV_TILT_MIN 15 in `tv1_travel_view`, the lens line, TV4's shadow
+arithmetic rewritten as the far law, every `_csLoc` a triple - `blood1_decals`, `el1_enhancedlighting`, `el4_frame`,
+`enhancedSky`, `grasslit2`, `vc7b_shafts`, `volumetricClouds`, `water`, `dwf_audit`, `weatherfront`, `tv2_click_to_move`,
+`farring`, `audit_farsea1`, `farsea1`).

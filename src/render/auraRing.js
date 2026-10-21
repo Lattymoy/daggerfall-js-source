@@ -185,7 +185,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -632,6 +632,27 @@ export function beaconLit(a, t) {
   return { k, age };
 }
 
+// WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE's measures - a coven's green fire round the feet,
+// tallow candles burning in its ring, and the violet motes the night's sorcery sends up off it.
+export const WITCHFIRE_R = 0.78;          // the ring the fire burns on, m
+export const WITCH_CANDLES = 7;           // the candles standing in it
+export const WITCHFIRE_H = 1.6;           // the wall: the tongues low, the motes past the chest
+export const WITCH_MOTES = 18;
+/** Its rates: the ring's turn, the candles' flicker, the motes' rise and the fire's breath. */
+export const WITCH_HZ = Object.freeze({ turn: 1 / 20, flicker: 1 / 2, mote: 1 / 6, breath: 1 / 5 });
+/** Its fire's flow up the wall and round the ring, in lattice cells a second (the Dagon fire's measure, AURA_FLOW). */
+export const WITCH_FLOW = Object.freeze({ rise: 1.5, ground: 1.25 });
+export const witchfireRatesWhole = () => [...Object.values(WITCH_HZ), ...Object.values(WITCH_FLOW)].every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** Its colours (ui/playerBadge.js): the moor's moss, the coven's green fire and its pale heart, the violet of its motes,
+ *  the tallow's flame. */
+export const WITCH_RGB = Object.freeze({
+  moss: Object.freeze(WITCH_MOSS.slice(0, 3)), fire: Object.freeze(WITCH_FIRE.slice(0, 3)), glow: Object.freeze(WITCH_GLOW.slice(0, 3)),
+  violet: Object.freeze(WITCH_VIOLET.slice(0, 3)), tallow: Object.freeze(HEARTH_TALLOW.slice(0, 3)),
+});
+/** WITCH1: which candle stands nearest the ground's angle `a` (radians), 0..WITCH_CANDLES-1 - the shader's own pick
+ *  (witchGround). Pure. */
+export const witchCandleAt = (a) => Math.floor((((a / (Math.PI * 2)) % 1) + 1) % 1 * WITCH_CANDLES + 0.5) % WITCH_CANDLES;
+
 // WIKIMAID (2026-10-17, for SylviaBun: "a purple aura with bunnies"): THE LILAC WARREN's measures.
 export const WARREN_R = 0.8;              // the ring the rabbits hop round, m - clear of the body, inside the fire's
 export const WARREN_RING_M = 0.022;       // the ring's line
@@ -797,7 +818,8 @@ export const AURA_LOOK = Object.freeze({
   beaconlight: Object.freeze({ kind: 9, ringR: BEACONLIGHT_R, flameH: BEACON_H, glyphs: 0 }),   // EG-E2: the beacons at the feet, their motes on the strip
   burningstair: Object.freeze({ kind: 10, ringR: STAIR_R, flameH: STAIR_H, glyphs: 0 }),   // EG-E2: the stair at the feet, its embers falling on the strip
   firstlight: Object.freeze({ kind: 11, ringR: DAWN_R, flameH: DAWN_H, glyphs: 0 }),   // EG-E2: the dawn's ring at the feet, its veil on the strip
-  lilacwarren: Object.freeze({ kind: 12, ringR: WARREN_R, flameH: WARREN_H, glyphs: WARREN_BUNNIES, shade: true }),   // WIKIMAID: the ring and the tracks at the feet, the sparkles on the strip, the rabbits the third draw - premultiplied, so a rabbit stays lilac
+  lilacwarren: Object.freeze({ kind: 12, ringR: WARREN_R, flameH: WARREN_H, glyphs: WARREN_BUNNIES, shade: true }),
+  witchfire: Object.freeze({ kind: 13, ringR: WITCHFIRE_R, flameH: WITCHFIRE_H, glyphs: 0 }),   // WITCH1: the green fire and its candles at the feet, its tongues and violet motes on the strip   // WIKIMAID: the ring and the tracks at the feet, the sparkles on the strip, the rabbits the third draw - premultiplied, so a rabbit stays lilac
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -1874,6 +1896,61 @@ vec3 wingHalo(vec2 p, float away) {
  *  cloakCross), so it is laid after them. */
 const WARREN_EDGES = glyphEdges(WARREN_BUNNY.path);
 const wv2 = (a, i = 0) => `vec2(${g3(a[i])}, ${g3(a[i + 1])})`;
+/** WITCH1: WITCHFIRE - a ground (`p` metres about the feet) and a wall (the strip: `q` = (u round, v up)), added whole,
+ *  kindled within. The fire is Dagon's own noise (fbmP over the ring's lattice), in the coven's green. */
+const WITCH_GLSL = `
+const vec3 WF_MOSS = ${v3(WITCH_RGB.moss)};
+const vec3 WF_FIRE = ${v3(WITCH_RGB.fire)};
+const vec3 WF_GLOW = ${v3(WITCH_RGB.glow)};
+const vec3 WF_VIOLET = ${v3(WITCH_RGB.violet)};
+const vec3 WF_TALLOW = ${v3(WITCH_RGB.tallow)};
+vec3 witchRamp(float v) { vec3 c = mix(WF_MOSS * 0.4, WF_FIRE, smoothstep(0.15, 0.6, v)); return mix(c, WF_GLOW, smoothstep(0.7, 1.0, v)); }
+float witchBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(WITCH_HZ.breath)}); }
+vec3 witchGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float breath = witchBreath();
+  // THE POOL: the moss's dark green under the feet
+  vec3 col = WF_MOSS * exp(-r * r / 0.4) * 0.35 * breath;
+  if (r > 0.05) {
+    float a = atan(p.y, p.x);
+    float u = fract(a / TAU + uTime ${hzGlsl(WITCH_HZ.turn)});
+    // THE FIRE: a band of green flame on the ring, its noise flowing round and out
+    float flow = fbmP(vec2(u * ${AURA_ROUND.ground.toFixed(1)} + floor(uSeed * 7.0), r * 3.0 - uTime * ${WITCH_FLOW.ground.toFixed(3)}), vec2(${AURA_ROUND.ground.toFixed(1)}, ${(WITCH_FLOW.ground * AURA_CLOCK_PERIOD).toFixed(1)}));
+    float band = 1.0 - smoothstep(0.0, 0.22, abs(r - uRingR - (flow - 0.5) * 0.14));
+    float heat = band * (0.35 + 0.65 * flow);
+    col += witchRamp(clamp(heat, 0.0, 1.0)) * heat * 0.9 * breath;
+    // THE CANDLES: tallow flames standing in the ring, each guttering on its own beat (witchCandleAt)
+    float k = mod(floor(fract(a / TAU) * ${WITCH_CANDLES.toFixed(1)} + 0.5), ${WITCH_CANDLES.toFixed(1)});   // AUDIT WITCH1 E5: the first candle one candle, never two halves out of step (witchCandleAt's wrap)
+    float ak = k / ${WITCH_CANDLES.toFixed(1)} * TAU;
+    vec2 d = p - vec2(cos(ak), sin(ak)) * uRingR;
+    float flick = 0.75 + 0.25 * sin(uTime * TAU ${hzGlsl(WITCH_HZ.flicker)} * (1.0 + mod(k, 3.0)) + k * 2.3);
+    col += WF_TALLOW * exp(-dot(d, d) / 0.0016) * 1.1 * flick;
+  }
+  return col * uKindle * (1.0 - smoothstep(uGroundR - 0.25, uGroundR, r));
+}
+vec3 witchWall(vec2 q) {
+  float u = fract(q.x + uTime ${hzGlsl(WITCH_HZ.turn)}), v = q.y;
+  // THE TONGUES: green flame, low - gone by the knee
+  float n = fbmP(vec2(u * ${AURA_ROUND.flames.toFixed(1)} + floor(uSeed * 5.0), v * 1.6 - uTime * ${WITCH_FLOW.rise.toFixed(3)}), vec2(${AURA_ROUND.flames.toFixed(1)}, ${(WITCH_FLOW.rise * AURA_CLOCK_PERIOD).toFixed(1)}));
+  float th = 0.3 + v * 2.2;
+  float body = smoothstep(th - 0.06, th + 0.1, n), core = smoothstep(th + 0.06, th + 0.22, n);
+  vec3 col = (witchRamp(0.35 + 0.5 * core) * body * 0.7 + WF_GLOW * core * 0.25) * pow(max(0.0, 1.0 - v * 2.5), 1.2);
+  // THE MOTES: violet, rising off the ring past the chest, each at its own place and pace, swaying as they climb
+  float circ = TAU * uRingR, motes = 0.0;
+  for (int m = 0; m < ${WITCH_MOTES}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 73.31 + 1.3) * 43758.5453), h2 = fract(sin(fm * 29.17 + 4.1) * 24634.6345);
+    float mv = fract(uTime ${hzGlsl(WITCH_HZ.mote)} * (1.0 + mod(fm, 3.0)) + h2);
+    vec2 dm = vec2((fract(q.x - h1 + 0.5) - 0.5) * circ + 0.05 * sin(TAU * (mv * 2.0 + h1)), (v - mv) * uFlameH);
+    motes += exp(-dot(dm, dm) / 0.00035) * (1.0 - mv) * smoothstep(0.0, 0.06, mv);
+  }
+  col += (WF_VIOLET * 0.8 + WF_GLOW * 0.15) * motes;
+  // kindled UP: the fire rising from the feet
+  return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;
+}
+`;
+
 const WARREN_GLSL = `
 const vec3 WR_AMETHYST = ${v3(WARREN_RGB.amethyst)};
 const vec3 WR_LILAC = ${v3(WARREN_RGB.lilac)};
@@ -2157,8 +2234,9 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}
 void main() {
+  if (uAura == 13) { vec3 c = uKind == 0 ? witchGround(vP) : witchWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // WITCH1: Witchfire, added whole, kindled within
   if (uAura == 12) { vec4 c = uKind == 0 ? warrenGround(vP) : uKind == 1 ? warrenWall(vP) : warrenBunny(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // WIKIMAID: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the ground fades in, the sparkles rise, the rabbits come up - node's law)
   if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
   if (uAura == 3) {   // SHADOW-CLOAK: premultiplied - the light it adds, and how much the shadow covers; both fogged

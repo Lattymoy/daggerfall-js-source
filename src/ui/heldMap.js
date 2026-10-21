@@ -194,6 +194,8 @@ import { mapUiScale } from './map/mapScale.js';   // FIELD BUGS 2026-10-09e MAP-
 import { getPref } from '../systems/uiPrefs.js';
 import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's CustomScreenRect, the pillarbox's screen
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
+import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
+import { STAR_CARD_TEXT } from '../systems/starfall/starWords.js';   // STAR6: its legend's word
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
@@ -699,6 +701,9 @@ export class HeldMapWindow {
     // EVENT-TIP: the raided towns (the host's `raids`, on the same poll), and the card under the pointer
     this._raids = [];
     this._raidsKey = '';
+    // STAR6: the night's fallen stars (the host's `stars`, on the same poll) - each its card, the raids' reader's
+    this._stars = [];
+    this._starsKey = '';
     // GUIDE5: where the quests point (the host's `quests`, on the same poll) - each place the player's map holds
     this._quests = [];
     this._questsKey = '';
@@ -1336,6 +1341,7 @@ export class HeldMapWindow {
           lodes: this._lodes,   // MINE-PERKS
           pois: this._pois,   // POI-2
           raids: this._raids,   // EVENT-TIP: the towns under attack
+          stars: this._stars,   // STAR6: the night's fallen stars
           quests: this._quests,   // GUIDE5: where the quests point
           vendor: this._vendor,   // HOME-VENDOR: the trader's waypoint
           travellers: this._trav.filter((t) => playersOnMaps() && playerShown(t)).map((t) => ({ x: t.x, y: t.y, name: t.name, color: TV_KIN_COLORS[t.kin] ?? TRAVELLER_MARK_CSS, journey: t.journey, ship: t.ship })),   // TV3; OWS1: at sea, a ship; OW-WHO: the players' filters; OW-KIN: a friend's and a guild-mate's in theirs
@@ -2065,6 +2071,10 @@ export class HeldMapWindow {
     const raids = readRaidMarks(this.deps.raids, this._size);
     const raidsKey = raidMarksKey(raids);
     if (raidsKey !== this._raidsKey) { this._raidsKey = raidsKey; this._raids = raids; gateMoved = true; this._dirty = true; }
+    // STAR6: and the night's stars - an omen, a fall, a hold while the map stands open
+    const stars = readRaidMarks(this.deps.stars, this._size);
+    const starsKey = raidMarksKey(stars);
+    if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader
     const quests = readQuestMarks(this.deps.quests, this._size).map((m) => ({ ...m, tip: readTip(m.tip),
@@ -2113,7 +2123,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2176,6 +2186,11 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = RAID_MARK_CSS;
       leg.append(dot, el('span', 'hmlegtext', RAID_LEGEND_TEXT));
+    }
+    if (this._stars.length) {   // STAR6: and a fallen star
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = STAR_VIOLET_CSS;
+      leg.append(dot, el('span', 'hmlegtext', STAR_CARD_TEXT.legend()));
     }
     // GUIDE5: and a quest's place - the legend's dot turned to the mark's own diamond. AUDIT GUIDE U16: both kinds, as
     // the sheet draws them - the followed quest's filled with the pen's ink, the rest hollow, each edged in gold
@@ -2463,6 +2478,18 @@ export class HeldMapWindow {
     for (const m of this._raids) {
       const [x, y] = toPaper(this._view, m.x, m.y);
       const d = Math.min((x - sx) ** 2 + (y - sy) ** 2, (x - sx) ** 2 + (y - 18 - sy) ** 2);
+      if (d < bestD) { best = m; bestD = d; }
+    }
+    return best;
+  }
+
+  /** STAR6: the fallen star under the cursor - its mark on its pixel (inkMap.js paintStarMark), within the location
+   *  marks' own reach. */
+  _starAt(sx, sy) {
+    let best = null, bestD = RAID_HIT_PX * RAID_HIT_PX;
+    for (const m of this._stars) {
+      const [x, y] = toPaper(this._view, m.x, m.y);
+      const d = (x - sx) ** 2 + (y - sy) ** 2;
       if (d < bestD) { best = m; bestD = d; }
     }
     return best;
@@ -3740,6 +3767,9 @@ export class HeldMapWindow {
     // EVENT-TIP: a raided town answers as its raid (the card names the town); a press still picks the town under it
     const raid = this._raidAt(sx, sy);
     if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };
+    // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)
+    const star = this._starAt(sx, sy);
+    if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };
     // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it
     const quest = this._questAt(sx, sy);
     if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };

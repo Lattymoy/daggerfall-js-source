@@ -191,8 +191,8 @@
   {
     "name": "TOWN-MARKS-the-door-drops-the-boards",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "        boards: deps.townBoards ?? null,",
-    "new": "        boards: null,",
+    "old": "    boards: deps.townBoards ?? null,",
+    "new": "    boards: null,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TOWN-MARKS-the-door-drops-the-homes",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "        homes: deps.townHomes ?? null,",
-    "new": "        homes: null,",
+    "old": "    homes: deps.townHomes ?? null,",
+    "new": "    homes: null,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "TOWN-MARKS-the-door-drops-the-version",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "        homesVersion: deps.townHomesVersion ?? null,",
-    "new": "        homesVersion: null,",
+    "old": "    homesVersion: deps.townHomesVersion ?? null,",
+    "new": "    homesVersion: null,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
@@ -226,16 +226,16 @@
   },
   {
     "name": "TOWN-MARKS-the-homes-never-asked",
-    "file": "src/scenes/world.js",
-    "old": "    onlineHomes?.ensure(dfLoc.mapTableData?.mapId);   // TOWN-MARKS",
-    "new": "    void 0;   // TOWN-MARKS",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    onlineHomes?.ensure(here.mapId);   // TOWN-MARKS: a town heard",
+    "new": "    void 0;   // TOWN-MARKS: a town heard",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
   },
   {
     "name": "TOWN-MARKS-the-registry-never-read",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/exteriorAutomapToggle.js",
     "old": "          const h = onlineHomes.homeAt(mapId, buildingKey);",
     "new": "          const h = null;",
     "tests": [
@@ -244,7 +244,7 @@
   },
   {
     "name": "TOWN-MARKS-the-bank-house-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/exteriorAutomapToggle.js",
     "old": "regionIndex: dfLoc.regionIndex, houses: playerEntity.houses ?? null,",
     "new": "regionIndex: dfLoc.regionIndex, houses: null,",
     "tests": [

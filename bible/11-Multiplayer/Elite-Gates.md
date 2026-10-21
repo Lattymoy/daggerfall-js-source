@@ -886,6 +886,11 @@ The Battlemages' library, its heart an **Orrery** drawn by `orreryOf` (`src/net/
   every five Redoubts) and four at rank II, never past the default.
 - **The judge**: EG4 extracts the pure judge, `orreryJudge`, out of `_sdTurn` in `server/src/index.js` (reach,
   settle, rights, `orreryStep`). The Hour's room and the Spire's both call it.
+- **The stones on the screen** (FIELD BUGS 2026-10-20f ORRERY-STONES, `scenes/eliteGates/egOrrery.js`): the law lays the six
+  stones at the Hour's own ring and bearings (11 m; 30 to 330 degrees), so each stands as the Hour's own stone j - its
+  relief, dial and hand, its crown gear, its two levers - carried to its spot by a translation, on its own floor, solid.
+  Its levers ARE the handles (forward on the right as one faces it), and its hand shows the room's hours. The handles
+  were boxes in the air beside a gold disc, with nothing drawn there.
 - **Pressure**: `ceil(n/4)` Harriers rise every 15 s while the lock stands, so the members off the stones guard the
   members on them. The wave is Harriers alone (`egWaveKinds`' `only`), with Swarm-Mother's Binder beside them.
 - **Everyone works**: any member in reach may turn any stone, and the company is one thread: the Spire's judge keeps
@@ -3009,12 +3014,37 @@ heralds, it posts to the gate's webhook and falls back to the gate's role, pingi
 
 - a company taking Redoubt 10, 20, 30...: *<opener>'s company took Redoubt 10 of the Battlespire (Hall 50) in
   1:51:20.* - the time since the breach's first hall woke, so a breach begun deeper says where it began: *... in 20:04,
-  from Redoubt 9.* (the news carries its start, `ew`; First of the Spire's post says it too - AUDIT EG V);
+  from Redoubt 9.* (the news carries its start, `ew`; First of the Spire's post says it too - AUDIT EG V). A company of
+  one is named as one: *Mara took Redoubt 20 of the Battlespire (Hall 100) alone in 40:00, from Redoubt 10.*
+  (LONE-HERALD, below);
 - a new top of the Descent in any bracket;
 - *First of the Spire*, and *the Lone Beacon*;
 - a band's seal lifted: *The way below the Galleries is open.*
 
 An opening is never heralded: a company's breach is its own.
+
+**LONE-HERALD (FIELD BUGS 2026-10-20d, `01-Overview/bugs/Field-Bugs-2026-10-20d.md`; audited, AUDIT FB1020d): a company
+of one is posted as one.** A player says they took Redoubt 20 alone and that the Spire counted it a company. The channel's
+post for every tenth Redoubt was *<opener>'s company took Redoubt N*: a Redoubt's news carried no size, so one member got
+the words eight do. The news now says the company's entrants (`n` - the Descent's count, "Who counts" above: every member
+admitted, earning or not). It leads with an entrant's name, the opener's where the opener entered and else the first who
+did, since an opener who never stepped in is not of the company that went (`net/eliteGates/egBrain.js` `heraldCompany`;
+AUDIT FB1020d L1-1 for two or more). The hub's read keeps the size (`validEgHeraldTell`, 0 when a room before this relay
+did not say it) and its reckoning hands it on. Three posts word a company of one alone:
+- the tenth Redoubt's: *Mara took Redoubt 20 of the Battlespire (Hall 100) alone in 40:00, from Redoubt 10.*
+- First of the Spire's: *Mara is the first ever to take Redoubt 10 of the Battlespire (Hall 50), alone, in 1:17:40.*,
+  with no list of one name;
+- a seal's: *Mara is the first through, alone.*
+
+Two or more, and news with no size, keep *<first entrant>'s company*. The tracker counts the same company (AUDIT FB1020d
+L1-3, `ui/eliteGates/egHud.js` `egHudModel`): the whole called company until the first wake, then its entrants alone,
+the gather's rule (`egGatherOf`), so a called member who never came is no row and no *of N*. First of the Spire's letter
+says *You were the first ever...* (L1-4). Unchanged:
+- a company of one is still a company to the law (section 13.2, THE ERRAND FLOOR; section 6.1);
+- the boards rank as they did - a breach begun past Hall 1 is on the Depths, never the Descent's Alone, and a companion
+  who came and went still makes a company of two.
+
+Relay `world236` (`world235` on its branch, renumbered past the Starfall's at the merge).
 
 **EG-E2 record (2026-10-12): the feats, the Annals, the honours and the boards.** The account's half of section 19's
 honours and this section's boards, in `server-account/src/egHonours.js` (claim-time logic apart from `claimEg`, one seam
@@ -3139,7 +3169,11 @@ everything"*.)
 The gate's trust law, kept whole, and where it was not enough for one life, widened:
 
 - **Blows on lords and the legion**: `applyHit`'s hand and purse, the bucket by the level claim times the Vestiges'
-  capped factor, a melee pose within reach, from a pose on a fight floor of the current fight (section 11.7). The
+  capped factor, a melee pose within reach, from a pose on a fight floor of the current fight (section 11.7). What
+  each blow landed is told to its striker alone (`eland`, `net/eliteGates/egBrain.js` egBlow - a refused blow lands 0), and
+  the striker's screen shows that number, never its claim: a blow's number is the room's word, as a duel's is the
+  referee's (FIELD BUGS 2026-10-20f LANDED-WORD). A lord an errand holds at a threshold answers what it lost
+  (`egLordHit`), so the word, the recap and a Court's chart count that. The
   blow's kind `r` is the client's word (`HIT_KINDS`), so a Vestige that reads it must not gain from a lie. Sweeping
   Arc, Bladestorm and Counterstroke read melee, and the relay already checks a melee blow's reach. Long Sight, Hunter's
   Mark, Spotter and Deadeye read arrows and spells, and also need more than 12 m between the poses, where a forged kind
@@ -3182,7 +3216,9 @@ The gate's trust law, kept whole, and where it was not enough for one life, wide
   - **speed**: no step faster than the fast build's run times 1.1, plus a push;
   - **air**: no airborne stretch past `EG_AIR_MAX_S` (2.5 s);
   - **blindness**: a `ts` gap over 0.4 s is BLIND and judges nothing either way. A crossing more than 30% blind opens
-    no door, and records `m.blind`;
+    no door, and records `m.blind`. A gap from held ground to held ground within `EG_FAIR_SNAP_M` (2.5 m) is a member
+    STANDING STILL and is never blind (`egStillGap` - FIELD BUGS 2026-10-20f FAIR-STILL): a client says no pose while
+    nothing about it changes, and a crossing waited out at its timed pieces read as unseen, so its door never opened;
   - **the crossing**: its time against `EG_CROSS_MIN(spec, road)` (section 10.5) rides the receipt's `m`, and gates
     nothing until EG21;
   - **after a restart**: the accumulator is saved to storage. After the room is re-woken, a member at the end plate
@@ -3190,7 +3226,9 @@ The gate's trust law, kept whole, and where it was not enough for one life, wide
     recorded as `m.wake`. A hall woken after every member passed the last island never deadlocks;
   - **repeats**: a member whose trail breaks the law again within a hall has their hits refused for 5 s;
   - poses between a member's `down` and their next `here` are never judged; a pose sent mid-stair belongs to no hall;
-  - an unfair trail opens no door, and its measures ride the receipt (`m`).
+  - an unfair trail opens no door, and its measures ride the receipt (`m`). A member at the door on a trail it refuses
+    is told why, once a hall, to it alone (`efair`: the break's reason - `speed`, `air`, `void` - else `blind`;
+    `net/eliteGates/egBrain.js` doorWord - FIELD BUGS 2026-10-20f DOOR-WORD). It had been refused in silence.
 - **Every pose-gated credit needs a fair trail** from the last island: the door, `down`, a cache, THE GOLD RUN, a
   niche, a Memento carried, the Reliquary Vault, the High Road's cache.
 - **A hall cleared**: only the relay says so (the legion broken, the lock solved, the champion or the lord fallen, a
@@ -3445,6 +3483,8 @@ height rides a word the fight already says, so the frames stay as many as they w
 | `ask`, `asked`, `tally` | room -> all | the company's word: asked, answered, counted |
 | `egot`, `run`, `rise`, `eping`, `pz`, `eheal` | room -> all (a gift to one) | a gift (a shard, a tonic, a Cantrip, lumen, a Reliquary, a page, Long Step's word), a member's run, a recall's rise, a ping, the Orrery, the room's heals |
 | `{k:'toll', q, h}` | room -> one | the pull's toll (section 10.6) |
+| `{k:'eland', i, d}` | room -> one | what my blow on body `i` landed, whole points - the striker's number (section 21; FIELD BUGS 2026-10-20f LANDED-WORD; world237, `EG_LAND_RELAY_MIN`) |
+| `{k:'efair', w}` | room -> one | why the door will not take me: `speed`, `air`, `void` or `blind` (section 21; FIELD BUGS 2026-10-20f DOOR-WORD) |
 | `{k:'end', why, at, ds, dm}` | room -> all | why: `'tear'` (the count spent), `'gone'` (every member out: fallen twice, forsaken or home), `'wipe'` (no living member), `'home'` (THE COVENANT'S PATIENCE), `'seal'` (THE SEAL), `'rehearsal'` (a Rehearsal's end), `'last'` (the last word) or `'void'` (a force deploy, an unknown `egv`, no hall ever woken); each member's part (`ds`) and a lord's fall's chart (`dm`) |
 
 The hub's own three (`open`, `void`, `claimed`) spend a bucket of their own at the social acts' rate (`egHubGate`:
@@ -6214,7 +6254,8 @@ recap's board line, the first-time lines once an account, and First of the Spire
   - an account `EG_FIRST_HANDLES` names is written its letter at its next balance's read, once (0093's one-a-send
     index);
   - the words are fixed, the developers', with no item: *Your company was the first ever to take Redoubt 10 of the
-    Battlespire. The Spire remembers.* The title and Firstlight are the account's by the list;
+    Battlespire. The Spire remembers.* (*You were the first ever...* since AUDIT FB1020d L1-4: the first company came
+    alone, `01-Overview/bugs/Field-Bugs-2026-10-20d.md`). The title and Firstlight are the account's by the list;
   - `post.js`, `net/postLaw.js` and the Accounts arc's SERVER-POST record now say so.
 
 **Where it departs from this page, said plainly.**

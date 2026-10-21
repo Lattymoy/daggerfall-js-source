@@ -424,13 +424,15 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
   const cs = read('src/render/cloudShadow.js');
   assert.match(cs, /export const CLOUD_SHADOW_GLSL = `/, 'one home for the text');
   assert.doesNotMatch(r, /const CLOUD_SHADOW_GLSL = `/, 'and only one - the renderer keeps no copy');
-  assert.ok(r.indexOf("import { CLOUD_SHADOW_GLSL } from './cloudShadow.js'") >= 0 && r.indexOf("import { CLOUD_SHADOW_GLSL } from './cloudShadow.js'") < r.indexOf('const FS = `'), 'imported before the first shader that reads it');
+  const imp = r.indexOf("import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js'");   // PIN MOVED (OW-HORIZON, 2026-10-20): and the deck's far law beside it
+  assert.ok(imp >= 0 && imp < r.indexOf('const FS = `'), 'imported before the first shader that reads it');
   assert.match(read('src/render/airPass.js'), /import \{ CLOUD_SHADOW_GLSL \} from '\.\/cloudShadow\.js';/, 'VC6c: the shafts read the same field the ground does');
   assert.equal((r.match(/diff \*= cloudShadowAt\(vWorldPos\);/g) || []).length, 3, 'the mesh, the character and the terrain: a cloud dims the SUN and leaves the ambient alone');
   assert.match(r, /uBBSun \* cloudShadowAt\(vBBWorld\)/, 'the flats: the sun\u2019s half of the tint, shadowed');
   // OFF is free and cannot change classic: the amount 0 returns before the sample
   assert.match(cs, /if \(uCloudShadowRect\.w <= 0\.0\) return 1\.0;/);
-  assert.match(cs, /if \(uv\.x < 0\.0 \|\| uv\.y < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y > 1\.0\) return 1\.0;/, 'outside the square, no shadow');
+  // PIN MOVED (OW-HORIZON, 2026-10-20): outside the square the far law - in a program never told it (0, 0), full sun as before
+  assert.match(cs, /float far = told \? uCloudShadowFar\.x : 1\.0;\n\s*if \(uv\.x < 0\.0 \|\| uv\.y < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y > 1\.0\) return far;/, 'outside the square, no shadow');
   assert.match(r, /this\._cloudShadow = null;/);
   assert.match(r, /setCloudShadow\(d\) \{ d = d \?\? null; if \(d !== this\._cloudShadow\) \{ this\._cloudShadow = d; this\._csStamp\+\+; \} \}/, 'numbers and handles only - it binds nothing');
   assert.match(r, /s\.draws = 0; s\.programBinds = 0; s\.vaoBinds = 0; s\.texBinds = 0;[\s\S]{0,700}?if \(this\._cloudShadow\) \{ this\._deckOwed = this\._cloudShadow; this\._cloudShadow = null; this\._csStamp\+\+; \}/, 'the deck is a FRAME\u2019s: beginFrame drops it, so an interior never inherits an exterior\u2019s map (VC6c: into _deckOwed, which the air pass\u2019s owed image reads and _beginLane then drops)');
@@ -445,7 +447,7 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
   assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
   assert.match(sky, /time: state\.seconds \?\? 0,/);
   const sharedSrc = read('src/scenes/shared.js');
-  assert.match(sharedSrc, /if \(clouds\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow\);/, 'the deck carries the map and its square');
+  assert.match(sharedSrc, /if \(clouds\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow, \{ far: farCoverSun\(\) \}\);/, 'the deck carries the map and its square');   // PIN MOVED (OW-HORIZON, 2026-10-20): and the far law past it
   assert.match(sharedSrc, /if \(clouds\) return 1;   \/\/ VC4/, 'no global dim on top of the per-surface shadow');
   // both hosts hand it over immediately before the terrain draw, and
   // hand over NOTHING when there is no enhanced sky

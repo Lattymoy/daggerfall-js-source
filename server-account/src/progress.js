@@ -220,6 +220,7 @@ export function progressSpentOf(path, a) {
   switch (path) {
     case '/v1/renown/xp': add('renown', n(a.credited)); break;
     case '/v1/raid/claim': if (a.recorded === true) { add('raid', 1); add('renown', n(a.renown?.credited)); } break;
+    case '/v1/star/claim': if (a.recorded === true) add('renown', n(a.renown?.credited)); break;   // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)
     case '/v1/seats/bounty': if (n(a.paid)) add('bounty', 1); break;
     case '/v1/seats/orc-camp': if (a.counted === true) add('camp', 1); break;
     case '/v1/seats/watch': add('watch', n(a.counted)); break;

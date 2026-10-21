@@ -200,7 +200,7 @@
   {
     "name": "BAL9c-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 7;",
+    "old": "export const ITEM_LAW_VERSION = 8;",
     "new": "export const ITEM_LAW_VERSION = 2;",
     "tests": [
       "test/systems/tech1_roster.test.js",
@@ -210,7 +210,7 @@
   {
     "name": "BAL9c-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct164';",
+    "old": "export const ACCOUNT_VERSION = 'acct165';",
     "new": "export const ACCOUNT_VERSION = 'acct120';",
     "tests": [
       "test/systems/tech1_roster.test.js"

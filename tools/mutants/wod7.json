@@ -103,8 +103,8 @@
   {
     "name": "WOD7-camp-under-encounter-cap",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (site && livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX) { refused.add(site); continue; }",
-    "new": "      if (site && livePuppetsOf(from) >= CELL_PUPPETS_MAX) { refused.add(site); continue; }",
+    "old": "      if (site && (isStarSite(site) ? livePuppetsOf(from, false, false, false, false, false, true) >= WOD_STAR_PUPPETS_MAX : livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX)) { refused.add(site); continue; }",
+    "new": "      if (site && (isStarSite(site) ? livePuppetsOf(from, false, false, false, false, false, true) >= WOD_STAR_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) { refused.add(site); continue; }",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]

@@ -2797,7 +2797,10 @@ distorts". The causes, landing in the same frames - his big landings, a wave ris
   fire (`render/gate/gatePass.js` GatePassRenderer) were each compiled in the frame that first drew them - the first
   landing of the fight, the first Reckoning, his fall - two programs each, and a compile is a frame's hitch. Now each is
   made as I stand in the court, one pass a frame (the step's veil is over the screen for the first of them); the draws
-  still make one that was not, and a pass that would not build is tried once, as before.
+  still make one that was not, and a pass that would not build is tried once, as before. SHADER-STALL
+  (`07-Rendering/Performance-Priority.md`) asks each through its door: where the driver compiles beside the frames, the
+  three passes' compiles start together as I come in and each is built once its own is done; where it cannot, one a
+  frame as here.
 
 - **The night's bodies made ready** (`gateSpriteWarm.js:"export function createSpriteWarm({ getTexture = null, uploadRecordFrame = null, has = () => false } = {}) {"`).
   His host's, his Flame's and his own sprites were fetched when their first body was drawn (a wave's first rising, the

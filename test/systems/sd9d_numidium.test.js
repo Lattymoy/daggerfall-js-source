@@ -65,7 +65,7 @@ const seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)
 // ── the law and the records ───────────────────────────────────────────
 
 test('SD9d THE LAW: The Brass of Numidium after the serpent\'s - Aetheric, Kagrenac its patron, the Hourbreaker\'s brass its colour, no raiding party\'s, never a world set; Dwemer Brass, Gearward and The Hour Turns at 2, 4 and 6 pieces, each a whole pair from Faint to Ascendant, every brief inside BRIEF_MAX at every stage (mutants: a tier\'s number; a world set)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-2), ['numidium', 'panoply'], 'the Brass Remnant\'s own - PIN MOVED (EG15): the Battlemage\'s Panoply after it');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-4), ['numidium', 'panoply', 'wyrd', 'starspun'], 'the Brass Remnant\'s own - PIN MOVED (EG15): the Battlemage\'s Panoply after it - PIN MOVED (WITCH1): the Wyrd\'s Raiment after that - PIN MOVED (STAR7): the Starspun Weave last');
   const s = setById('numidium');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['numidium', 'The Brass of Numidium', 'Kagrenac', '#b5862f', true, false, 'What the Warp kept of the Walking Brass']);

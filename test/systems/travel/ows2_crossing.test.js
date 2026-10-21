@@ -18,13 +18,13 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_COST, SEA_KINDS } from '../../../src/systems/travel/travelRoute.js';
 import { seaHelmStep, createSeaHelm, SEA_HELM, foldDeg, headingOf, squareOnly } from '../../../src/systems/seaHelm.js';
-import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { spawnBoat, Boat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
-import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_ACTIONS, HANDLING, WATER_LEVEL } from '../../../src/systems/comeSailAway/comeSailAway.js';
+import { WATER_LEVEL } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { createComeSailAwayPool } from '../../../src/scenes/comeSailAway/comeSailAwayPool.js';
 import { createTravelOptions, SEA_LEG_SIZE, SEA_LEG_LO, SEA_SPOT_SIZE } from '../../../src/systems/travel/travelOptions.js';
 import { TRAVEL_VIEW_TEXT, travelTripLine } from '../../../src/scenes/travelView.js';
 import { quatRotate } from '../../../src/world/quat.js';
+import { sea, sailTo, ctxFor } from '../../csaCrossing.mjs';   // FB1020c OAR-RUNG: the crossing's scene, shared
 
 // PIN MOVED (AUDIT OW5 G2): the Overworld's own lines are said through tvSay - held at the scale they are said at
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -167,66 +167,7 @@ test('OWS2 helm: the oars - to turn the boat more than the sails can (the sails 
 
 // ── THE MOD'S OWN HELM, SAILED BY THOSE KEYS ALONE ──────────────────────────────────────────────────────────────────
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
-const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
-const openWater = () => ({ mapPixelX: 10, mapPixelY: 20, position: [0, 0, 0], tileMap: new Uint8Array(128 * 128), sampleHeight: () => 20 });
-
-/** csa_sailing's scripted scene, trimmed: open water everywhere, the keys held as a set, a quarter second a frame. */
-function sea({ ipnm = false, heights = () => 20 } = {}) {
-  const held = new Set(), started = new Set();
-  const player = { position: [1, 2, 3], yaw: 0, frozen: 0 };
-  const t = { ...openWater(), sampleHeight: heights };
-  const input = { has: (a) => held.has(a), started: (a) => started.has(a), horizontal: () => 0, vertical: () => 0, toggleAutorun: false };
-  const out = { hud: [], fatigue: 0, packed: [], removed: [] };
-  const rt = createComeSailAwayRuntime({
-    pool: { models: MODELS, ready: () => true, spawnNow: (boat, p) => { spawnBoat(boat, ctxFor(p)); return boat; }, remove: (b) => out.removed.push(b) },
-    player: () => ({ position: [...player.position], rotation: [0, Math.sin((player.yaw * Math.PI) / 360), 0, Math.cos((player.yaw * Math.PI) / 360)] }),
-    camera: () => ({ position: [0, 50, 0], forward: [0, -1, 0] }),
-    currentMapPixel: () => ({ X: 10, Y: 20 }), isPlayerInside: () => false, blockWaterLevel: () => NO_WATER_LEVEL, iliacPuddleNoMore: () => ipnm,
-    raycast: () => null, playerTerrain: () => t, terrainAt: () => t, terrains: () => [t], heightMapValue: () => 255, worldCompensation: () => [0, 0, 0],
-    hudText: (s) => out.hud.push(s), midScreenText: () => {}, log: () => {}, random: { range: (min) => min }, time: () => 0, persistentDungeonBoats: () => false,
-    packedItems: { serialize: (i) => i, deserialize: (r) => r }, dt: () => 0.25, setting: (key) => ({ 'Waves.Enable': false })[key], input,
-    helm: { setPlayerPosition: (p) => { player.position = [...p]; }, setFacing: (y) => { player.yaw = y; }, turnPlayer: (d) => { player.yaw += d; }, freeze: (s) => { player.frozen = s; }, frozen: () => player.frozen > 0, stopRunning: () => {}, footsteps: () => {}, alignToGround: () => {} },
-    transport: { isFoot: () => true, setFoot: () => {}, hasHorse: () => false, hasCart: () => false },
-    ship: { owns: () => true, assign: () => {}, removePermanentScene: () => {} },
-    entity: { isFemale: () => false, carriedWeight: () => 10, wagonWeight: () => 0, decreaseFatigue: (n) => { out.fatigue += n; } },
-    cargoWeight: () => 0, sphereCastAll: () => [], enemies: () => [], timeScale: () => 1, setTimeScale: () => {}, messageBox: () => {},
-    items: { create: (templateIndex) => ({ templateIndex, UID: 900 + out.packed.length, message: 0 }), addToPlayer: (item) => out.packed.push(item) },
-  });
-  return { rt, held, started, input, out, player, terrain: t };
-}
-
-/** The journey's hand at the mod's helm: the keys the helm says, pressed as the host presses them, until the boat is
- *  within 60 m of a mark `dist` metres off `markDeg`, the wind blowing toward `windDeg`. The game's seconds it took. */
-function sailTo(hull, windDeg, markDeg, { dist = 600, windLen = 1.5, maxS = 1500 } = {}) {
-  const s = sea();
-  const boat = s.rt.PlaceBoat([0, 34, 0], [0, 0, 1], hull, 0, null);
-  s.rt.StartSailing(boat);
-  const wr = (windDeg * Math.PI) / 180, mr = (markDeg * Math.PI) / 180;
-  const mark = [Math.sin(mr) * dist, Math.cos(mr) * dist];
-  const st = createSeaHelm();
-  const dt = 0.25;
-  for (let t = 0; t < maxS; t += dt) {
-    s.rt.state.windVectorTarget = [Math.sin(wr) * windLen, 0, Math.cos(wr) * windLen];
-    s.rt.state.windVectorCurrent = [...s.rt.state.windVectorTarget];
-    const p = boat.GameObject.position, fw = quatRotate(boat.GameObject.rotation, [0, 0, 1]);
-    if (Math.hypot(mark[0] - p[0], mark[1] - p[2]) < 60) return { t, fatigue: s.out.fatigue };
-    const v = s.rt.state.velocityCurrent ?? [0, 0, 0], w = s.rt.state.windVectorCurrent, cargo = s.rt.state.boatCargoMod;
-    const cmd = seaHelmStep(st, {
-      heading: headingOf(fw[0], fw[2]), bearing: headingOf(mark[0] - p[0], mark[1] - p[2]), wind: [w[0], w[2]], hasSails: boat.Sails.length > 0,
-      squareOnly: squareOnly(boat), sailsUp: s.rt.state.sailPosition > 0, canSail: s.rt.CanSail(boat), way: v[2], dt,
-      crewed: boat.crewed, oarWay: HANDLING.moveSpeedOar * boat.modifierMoveSpeedOar * cargo, sailWay: HANDLING.moveSpeedSail * boat.modifierMoveSpeedSail * cargo * Math.hypot(w[0], w[2]),
-    });
-    s.held.clear(); s.started.clear();
-    if (cmd.turn > 0) s.held.add('MoveRight'); else if (cmd.turn < 0) s.held.add('MoveLeft');
-    s.input.toggleAutorun = cmd.row;
-    if (cmd.sails) s.started.add(BOAT_ACTIONS.toggleSail);
-    s.rt.endOfFrame(); s.rt.fixedUpdate(); s.rt.update(); s.rt.lateUpdate();
-  }
-  return null;
-}
+// the scene and the hand moved whole to test/csaCrossing.mjs (FB1020c OAR-RUNG sails them too): `sea`, `sailTo`, `ctxFor`
 
 test('OWS2 at the mod\'s own helm: the Large Boat (a lateen, no crew) reaches a mark 600 m off in every wind - before it, across it, and dead into it by beating - by the rudder, the sail and the oars\' keys alone; the Large Galley\'s crew rows it there in any', () => {
   for (const windDeg of [0, 90, 135, 180]) {

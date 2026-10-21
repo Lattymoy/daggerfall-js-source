@@ -205,7 +205,7 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   const part = (head) => { const at = r.slice(r.indexOf(head)); return at.slice(0, at.indexOf('\n  }\n')); };
   assert.match(r, /import \{ packWaterMask, WATER_DRAW_MASK_TABLE \} from '\.\.\/world\/water\/waterCorners\.js';/, 'MAC2: the corner table\'s one home is the world leaf the player\'s feet share - WATER-DRAW1: and the PASS takes the draw\'s half of it, not the feet\'s');
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
-  assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\],/, 'VC4\'s recorded gap, closed (EL7: in the one uniform table both water programs take)');
+  assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\), u\('uCloudShadowFar'\)\],/, 'VC4\'s recorded gap, closed (EL7: in the one uniform table both water programs take)');   // PIN MOVED (OW-HORIZON, 2026-10-20): and the far law past the square
   assert.match(r, /this\._csLoc\.water = this\._ws\.cloud;/);
   // PERF-EXT13: the pass's body is the LIST's - every visible pixel's water in one call - and drawWaterSurface
   // hands it one row (the town host, the lab)

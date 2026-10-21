@@ -299,6 +299,28 @@ test('AUDIT ENVIRONS I5: the snow and the wind cost themselves, never the frame 
   assert.match(read('src/render/renderer.js'), /prepareTerrainSnow\(\) \{ this\._ensureTerrainSnow\(\); \}/);
 });
 
+test('SHADER-STALL the snow\'s surface is made the first frame its program\'s compile is done - started as the masks land, never a frame waiting on it; a renderer that cannot say makes it at once, as it was (mutants: the surface made while it compiles; never made after)', async () => {
+  const gl = new Proxy({}, { get: (_, k) => {
+    if (typeof k === 'string' && k.startsWith('create')) return () => ({ id: Math.random() });
+    if (typeof k === 'string' && k.toUpperCase() === k) return 1;
+    return () => {};
+  } });
+  let prepared = 0, started = 0, done = false;
+  const renderer = { prepareTerrainSnow: () => { prepared++; }, startTerrainSnow: () => { started++; return () => done; }, endUiRun() {}, markForeignPass() {}, drawSnow() {} };
+  await quiet(async () => {
+    const { host, frame } = await standingHost(hostGround(), { gl, renderer, loadAlbedo: async () => ({ width: 64, height: 64 }) });
+    assert.equal(started, 1, 'its program started as the masks landed');
+    assert.equal(prepared, 0, 'not built while it compiles');
+    assert.equal(host.surface, null, 'nor its surface made');
+    done = true;
+    frame();
+    assert.equal(prepared, 1, 'built the frame it is done');
+    assert.ok(host.surface, 'and the surface stands');
+    frame();
+    assert.equal(prepared, 1, 'once');
+  });
+});
+
 test('AUDIT ENVIRONS I2 + I7: a teleport\'s new frame carries the snow, the wind and the haze by its move (state.init\'s initOffset) as a recentre carries them - the old place\'s tracks stay on the old place, the arrival\'s first stamp no trench - and the haze\'s layer held while airborne rides a recentre\'s height (mutants: the snow left in the old frame; the layer left behind)', () => {
   const world = syntheticWorld();
   const rt = new SnowfallRuntime({ world, coverage: coverage(), frameBudgetMs: Infinity });

@@ -11,6 +11,6 @@
    "old": "      mwViewFirstPerson();   // MW-MAP1: into the head before the window's first tick asks the arm\n", "new": "", "tests": ["test/ui/town/mwmap1.test.js"] },
  { "name": "MWMAP1-the-building-hands-the-outdoor-rig", "file": "src/scenes/worldModes.js",
    "old": "        holder: sheetHolderOf(() => interiorWeapon),", "new": "        holder: sheetHolderOf(() => dungeonCtx?.weaponRig?.() ?? null),", "tests": ["test/ui/town/mwmap1.test.js"] },
- { "name": "MWMAP1-the-world-M-has-no-holder-again", "file": "src/scenes/world.js",
+ { "name": "MWMAP1-the-world-M-has-no-holder-again", "file": "src/scenes/exteriorAutomapToggle.js",
    "old": "      holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V\n", "new": "", "tests": ["test/ui/town/mwmap1.test.js"] }
 ]

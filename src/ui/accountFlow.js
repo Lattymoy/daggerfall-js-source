@@ -43,7 +43,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipGlyph, adoptIdentity, unlinkPatreon,
+  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
   newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
   chooseNameAs,   // NAME-AS: which name the room reads
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
@@ -53,6 +53,7 @@ import { handleLooksLikeEmail } from '../net/handleShape.js';   // HANDLE-EMAIL:
 import { ACCEPTED, TERMS_URL, PRIVACY_URL } from '../net/legalLaw.js';   // TERMS1: the documents a new account agrees to
 import { t, localizedTable } from '../systems/textManager.js';   // L10N4: the card's words in the player's language, read when they are drawn
 import { AURA_TEXT } from './playerBadge.js';   // SHADOW-CLOAK (AUDIT): an aura's name in the card's note
+import { ICON_TEXT } from './profileIcons.js';   // WITCH1: an icon's name in the card's note
 
 /** Every stage this card can be on. Exported because a pin that
  *  enumerates them by hand is a pin that stops covering the one added
@@ -299,7 +300,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     // top-right button reads the stored session. This is the next answer
     // that states the name after a registration (acknowledging the code
     // lands here), and it is the service's own word, so it is adopted.
-    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn
+    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn
     // ACC3c: THE WARDROBE IS ITS OWN FIELD, exactly as the service
     // answers it - what this account HOLDS, what it WEARS, and what is
     // true of it. Held beside `account` rather than folded into it,
@@ -339,7 +340,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     const was = self.patreon;
     const d = r.data;
     self.account = d.account;
-    adoptIdentity(storage, { name: d.account?.name, kind: d.account?.kind, glyphs: d.wardrobe?.glyphs, glyphsOff: d.wardrobe?.glyphsOff, aura: auraStated(d.wardrobe), secret: asked });   // `start`'s word, adopted as it adopts it
+    adoptIdentity(storage, { name: d.account?.name, kind: d.account?.kind, glyphs: d.wardrobe?.glyphs, glyphsOff: d.wardrobe?.glyphsOff, aura: auraStated(d.wardrobe), icon: iconStated(d.wardrobe), secret: asked });   // `start`'s word, adopted as it adopts it
     self.wardrobe = d.wardrobe ?? null;
     self.patreon = d.patreon ?? null;
     if (self.patreonWaiting && self.patreon?.linked && (!was?.linked || String(was.titles) !== String(self.patreon.titles))) {
@@ -365,7 +366,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.patreonWaiting = false;
       self.busy = false;
       self.note = t('account.flow.patreonUnlinked', 'Patreon unlinked.');
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });   // a lapsed tier's glyph off my own screen at once
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });   // a lapsed tier's glyph off my own screen at once
       changed();
       return true;
     } catch {
@@ -406,7 +407,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // WB9g: the auras ride the same answer
       self.busy = false;
       self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: want }) : t('account.flow.titleRemoved', 'Title removed.');
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });   // WB9g: my own screen's word, from the answer (AUDIT B4: into the session that asked)
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });   // WB9g: my own screen's word, from the answer (AUDIT B4: into the session that asked)
       changed();
       return true;
     } catch {
@@ -432,7 +433,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff ?? [], ...auraHalf(r.data) };   // absent is none
       self.busy = false;
       self.note = on ? t('account.flow.glyphShown', 'Glyph shown.') : t('account.flow.glyphHidden', 'Glyph hidden.');
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });   // my own screen's word: the shown glyphs dress my werewolf
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });   // my own screen's word: the shown glyphs dress my werewolf
       changed();
       return true;
     } catch {
@@ -444,9 +445,14 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
   const glyphHalf = (d) => (Array.isArray(d?.glyphsOff) ? { glyphsOff: d.glyphsOff } : {});
   /** WB9g: the aura half of a wardrobe answer - what a service since acct38 says (its auras held, the one worn, the
    *  Broker's insignia owned), or nothing from one before it. */
-  const auraHalf = (d) => (Array.isArray(d?.auras) ? { auras: d.auras, aura: d.aura ?? null, insignia: Array.isArray(d.insignia) ? d.insignia : [] } : {});
+  const auraHalf = (d) => (Array.isArray(d?.auras) ? { auras: d.auras, aura: d.aura ?? null, insignia: Array.isArray(d.insignia) ? d.insignia : [], ...iconHalf(d) } : {});
+  /** WITCH1: the icon half of a wardrobe answer - the profile icons held and the one worn, or nothing from a service
+   *  before acct162. */
+  const iconHalf = (d) => (Array.isArray(d?.icons) ? { icons: d.icons, icon: d.icon ?? null } : {});
   /** WB9g: the aura a wardrobe answer says is worn (null for none), or undefined from a service before acct38. */
   function auraStated(d) { return Array.isArray(d?.auras) ? (d.aura ?? null) : undefined; }
+  /** WITCH1: the icon a wardrobe answer says is worn (null for the face), or undefined from a service before acct162. */
+  function iconStated(d) { return Array.isArray(d?.icons) ? (d.icon ?? null) : undefined; }
   /**
    * WB9g - WEAR ONE AURA, OR NONE: `equip`'s law at the feet (Mac: "an animated burning ground aura that circles the
    * ground where your character stands"). It asks; the service decides what is held; the answer replaces the wardrobe;
@@ -465,7 +471,33 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.busy = false;
       self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });
+      changed();
+      return true;
+    } catch {
+      return refuse(accountRefusalText('offline'));
+    }
+  };
+
+  /**
+   * WITCH1 (bible/06-Systems/Witches-Festival.md) - WEAR ONE PROFILE ICON, OR NONE: the aura's law, in the portrait well.
+   * It asks; the service decides what is held; the answer replaces the wardrobe; pressing the one worn takes it off (the
+   * character's face again). The stored session learns it (adoptIdentity), so the corner mark and the card show it at
+   * once; another player's Inspect card from the next hello, as a title.
+   */
+  self.wearIcon = async (icon) => {
+    if (self.busy || self.stage !== 'in') return false;
+    const want = self.wardrobe?.icon === icon ? null : (icon ?? null);
+    const asked = secret();
+    self.busy = true; self.error = ''; self.note = ''; changed();
+    try {
+      const r = await ask(() => equipIcon(door(), want));
+      if (!r) return false;
+      if (!r.ok) return refuse(accountRefusalText(r.error));
+      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
+      self.busy = false;
+      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: ICON_TEXT[want] ?? want }) : t('account.flow.iconRemoved', 'Icon removed.');
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
       return true;
     } catch {

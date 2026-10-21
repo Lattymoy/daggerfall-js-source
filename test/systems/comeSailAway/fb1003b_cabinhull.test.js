@@ -101,7 +101,7 @@ async function rig() {
   // the shipped access, over this world: the cabin record and the landing are its own
   const entered = [];
   const access = createSailingCabinAccess({
-    available: () => true, boats: () => s.rt.AllBoats, sailing: () => s.rt.isSailing(), disembarking: () => !!s.rt.state.disembarking,
+    available: () => true, boats: () => s.rt.AllBoats, csa: () => s.rt,   // FB1020c CABIN-FOES: the helm read off the runtime
     aboard: () => player.grounded && String(player.groundKey).startsWith(`csaBoat:${w.boatId(own)}:`), mode: () => modes.mode, busy: () => false,
     nearby: () => true, feet: () => [...player.pos], yaw: () => 0.3, toNative: (p) => [...p], fromNative: (p) => [...p],
     enterInterior: async (c) => { entered.push(c); return true; }, say: () => {},

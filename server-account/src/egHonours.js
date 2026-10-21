@@ -332,7 +332,7 @@ export const EG_FIRST_POST = Object.freeze({
   batch: 'spire-first',
   subject: 'First of the Spire',
   body: [
-    'Your company was the first ever to take Redoubt 10 of the Battlespire. The Spire remembers.',
+    'You were the first ever to take Redoubt 10 of the Battlespire. The Spire remembers.',   // AUDIT FB1020d L1-4: a company's words or one's - the first company came alone (SPIRE-FIRST)
     '',
     'Your title, First of the Spire, and its aura, Firstlight, are yours to wear - choose them on your profile.',
     '',

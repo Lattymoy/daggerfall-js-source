@@ -74,8 +74,8 @@
   {
     "name": "EGZK-his-fall-untold",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "if (res.got && res.b) egLordHit(f.F,",
-    "new": "if (false) egLordHit(f.F,",
+    "old": "if (res.got && res.b) return { ...res, got: egLordHit(f.F,",
+    "new": "if (false) return { ...res, got: egLordHit(f.F,",
     "tests": [
       "test/net/eliteGates/egz_lords.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGZK-the-threat-unweighed",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "{ threatX: o.threatX ?? 1 });",
-    "new": "{ threatX: 1 });",
+    "old": "{ threatX: o.threatX ?? 1 }) };",
+    "new": "{ threatX: 1 }) };",
     "tests": [
       "test/net/eliteGates/egz_lords.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "EGZK-the-director-never-joins",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home })) return out;\n",
+    "old": "  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home })) return land(0);\n",
     "new": "\n",
     "tests": [
       "test/net/eliteGates/egz_lords.test.js"

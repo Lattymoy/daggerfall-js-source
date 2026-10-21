@@ -900,15 +900,17 @@ export function egLordHitX(F, L, sub, pose, r, now) {
 /**
  * A BLOW ON A LORD LANDED (`got` what the purse let through): its threat, an errand's hold on the next threshold, the
  * Armsmaster's Riposte, the Spellmaster's images, a mirror's crack, a fall (the Twins' fifteen seconds, the survivor's
- * raise). Answers the frames.
+ * raise). Its frames into `out`; answers what the lord LOST - FIELD BUGS 2026-10-20f LANDED-WORD: an errand's held line takes
+ * back what fell past it, and the seam answered the purse's whole, so the recap, a Court's chart and the earned share counted
+ * blows the lord never felt while it was held.
  */
 export function egLordHit(F, spec, L, sub, name, got, pose, now, here, out, ctx = {}) {
   if (L.hpFloor != null && L.hp < L.hpFloor) { got -= L.hpFloor - L.hp; L.hp = L.hpFloor; }
   L.threat[sub] = (L.threat[sub] ?? 0) + got * (ctx.threatX ?? 1);
   if (!egHas(L, EG_FL.mirror)) KITS[L.key]?.hit?.(F, spec, L, sub, got, pose, now, here, out, ctx);   // AUDIT EG IV (lane1 #10): a mirror's blow is no duel's
-  if (L.hp > 1e-6) return;
+  if (L.hp > 1e-6) return got;
   L.hp = 0;
-  if (egHas(L, EG_FL.mirror)) { egGone(F, [L], EG_GONE.slain, name, now, out); KITS[L.key]?.mirrorDown?.(F, L, now, out); return; }
+  if (egHas(L, EG_FL.mirror)) { egGone(F, [L], EG_GONE.slain, name, now, out); KITS[L.key]?.mirrorDown?.(F, L, now, out); return got; }
   L.fellAt = now; egSaid(L, L.ph, now);   // EG-ZJ: its fall's instant on the wire (AUDIT EG V, lane1 #6: and the Twins' "Together" reads it)
   endChallenge(F, L, now, out, false, true);   // AUDIT EG V (lane1 #1): a fallen lord's duel ends with it - its ring never stands ownerless
   egSetFl(F, L, EG_FL.fell, true, out);
@@ -918,11 +920,12 @@ export function egLordHit(F, spec, L, sub, name, got, pose, now, here, out, ctx 
   if (left.length) {
     const P = egLordsPairOf(F), mate = P && (L.i === P.a || L.i === P.b) ? egBodyById(F, L.i === P.a ? P.b : P.a) : null;
     if (mate && mate.hp > 0) { F.mem.twinFellAt = now; say(out, 'twinfell', { n: egBossName(L.key, L.pt) }); }
-    return;
+    return got;
   }
   F.mem.lordsFell = 1;
   for (const m of egLordsOf(F).filter((x) => egHas(x, EG_FL.mirror))) egGone(F, [m], EG_GONE.crumbled, '', now, out);
   out.push({ k: 'efell', i: L.i, at: now, n: name });
+  return got;
 }
 
 // ── the kits ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -1893,7 +1896,8 @@ export const EG_EARN_HALLS = 3;
  *                                                     member's purse `o.p`, the Vestiges' weight `o.x`, the bucket's `o.bx`)
  *                                                     times the lord's own (egLordHitX), and what lands told the lord
  *                                                     (egLordHit - `o.name`, `o.here`, `o.threatX`, its words in `o.out`) -
- *                                                     answers egHitBody's `{ got, b }`
+ *                                                     answers egHitBody's `{ got, b }`, `got` what the lord lost (an
+ *                                                     errand's held line takes back what fell past it - LANDED-WORD)
  *   step(f, now, bodies, rng) -> frames[]             the lords' beat over the census (egLordsStep, `f.ctx` its context)
  *   stateOf(f)                                        the whole fight at the view's clock (`efs`), as a joiner is told it
  *   judge(f, bodies, now) -> [{sub, share, ...}]      the fight's blows on the relay's shared-time trails (net/bossRef.js
@@ -1914,7 +1918,7 @@ export const EG_SEAM = bossSeam('eg', {
     const L = egBodyById(f.F, o.i);
     if (!L || L.role !== EG_ROLE.lord) return { got: 0, b: null };
     const res = egHitBody(f.F, f.spec, o.p, o.i, d, r, pose, now, seq, (o.x ?? 1) * egLordHitX(f.F, L, sub, pose, r, now), o.bx ?? 1);
-    if (res.got && res.b) egLordHit(f.F, f.spec, res.b, sub, o.name ?? '', res.got, pose, now, o.here ?? [], o.out ?? [], { threatX: o.threatX ?? 1 });
+    if (res.got && res.b) return { ...res, got: egLordHit(f.F, f.spec, res.b, sub, o.name ?? '', res.got, pose, now, o.here ?? [], o.out ?? [], { threatX: o.threatX ?? 1 }) };   // FIELD BUGS 2026-10-20f LANDED-WORD: what the lord lost, a held line's part taken back
     return res;
   },
   step: (f, now, bodies, rng) => { const out = []; egLordsStep(f.F, f.spec, now, bodies, rng, out, f.ctx); return out; },

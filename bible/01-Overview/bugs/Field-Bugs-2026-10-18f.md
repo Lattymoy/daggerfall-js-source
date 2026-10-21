@@ -233,7 +233,7 @@ wherever the relay lands nothing: a Vengeful Shade (warded from its rise), a hel
 Court lord asleep in its ring.
 
 FIXED. One law: the relay's strike rule is `egBodies.js:"export function egStruckOff(view, b, x, y, z) {"`, called by
-`egBrain.js:"if (egStruckOff(view, body, p.x, p.y, p.z)) return out;"`, and the screen asks the same rule plus the
+`egBrain.js:"if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);"`, and the screen asks the same rule plus the
 flags the relay takes nothing through and a lord asleep (`egBodies.js:"export function egStrikeTurned(view, b, x, y, z, now = 0, spec = null) {"`).
 Each frame `egFight.js:"function turnStandIn(t, b) {"` marks a target's stand-in `warded` when the relay would refuse a
 blow from my feet; every heal and power already refuses a warded target, and Vampiric Effect now does too

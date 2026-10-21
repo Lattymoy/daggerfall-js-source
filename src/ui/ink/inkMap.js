@@ -51,6 +51,7 @@ import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from '../quest/questMarks.js';   // G
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel beside its mark
 import { paintVendorMark } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's coin
 import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js';   // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
 /** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen
@@ -1124,6 +1125,8 @@ export function paintInkOverlay(ctx, view, opts) {
   for (const b of opts.pois ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, POI_INK);
   // EVENT-TIP: the towns under attack, over the ring and under the party - a member standing in one reads over it
   for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);
+  // STAR6: the night's fallen stars, beside the raids - none ever falls in a town
+  for (const m of opts.stars ?? []) if (visible(m.x, m.y)) paintStarMark(ctx, view, m, pulse);
   // GUIDE5: where the quests point, over the raids and under the party - the diamond above its place, the followed
   // quest's filled
   for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);
@@ -1274,6 +1277,27 @@ export function paintRaidMark(ctx, view, m, pulse = 0) {
   ctx.moveTo(x + s, cy - s); ctx.lineTo(x - s, cy + s);   // the other, its hilt at the lower left
   ctx.moveTo(x + h - g, cy + h + g); ctx.lineTo(x + h + g, cy + h - g);   // each guard square across its blade
   ctx.moveTo(x - h - g, cy + h - g); ctx.lineTo(x - h + g, cy + h + g);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** STAR6: A FALLEN STAR - a four-pointed star in its violet on its pixel, a ring breathing about it as the gate's does,
+ *  outlined in the pen's ink so it reads on any parchment. Skin. */
+export function paintStarMark(ctx, view, m, pulse = 0) {
+  const [x, y] = toPaper(view, m.x, m.y);
+  const r = 7, w = 2.2;
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = STAR_VIOLET_CSS;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y - r); ctx.lineTo(x + w, y - w); ctx.lineTo(x + r, y); ctx.lineTo(x + w, y + w);
+  ctx.lineTo(x, y + r); ctx.lineTo(x - w, y + w); ctx.lineTo(x - r, y); ctx.lineTo(x - w, y - w); ctx.closePath();
+  ctx.fillStyle = STAR_VIOLET_CSS;
+  ctx.fill();
+  ctx.strokeStyle = PEN.line;
+  ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
 }

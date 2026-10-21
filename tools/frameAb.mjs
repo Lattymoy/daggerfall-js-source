@@ -31,6 +31,12 @@ const rows = [
   ['  _sunCandidates', /^_sunCandidates /],   // AUDIT PERF-ON4 (sun lens 4): the sun's walk, outside its replays
   ['  _candidateQuads', /^_candidateQuads /],
   ['drawBillboards', /^drawBillboards /],
+  // SNOW-BUDGET (bible/07-Rendering/Performance-Priority.md): the weather's share of the frame - the snow the ground keeps
+  ['the snow (all its asks)', /^(at|tick|winterAt|winterNear|buries) src\/scenes\/snowCoverHost\.js/],
+  ['  the snowpack advance', /^advance src\/systems\/weather\/snowpack\.js/],
+  ['  the feet\'s snow', /^winterAt src\/scenes\/snowCoverHost\.js/],
+  ['  the grass\'s snow', /^buries src\/scenes\/snowCoverHost\.js/],
+  ['the falling weather', /^(draw|update) src\/render\/(precipitation|rainCurtains|windWisps|lightningBolts)\.js/],
   ['garbage collector', /^\(garbage collector\)/],
 ];
 const f = (x) => x.toFixed(3).padStart(8);

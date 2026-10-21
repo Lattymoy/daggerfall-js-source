@@ -213,6 +213,12 @@ The window's lines are kept for its own points alone (PACK-5: a region come back
 the player left it). The lane is asked of the law itself until the first frame reads it; a pixel built under the other
 lane is re-skinned once (HOST-N1). A clock run backwards starts the packs again from their origin.
 
+SNOW-BUDGET (2026-10-20, `07-Rendering/Performance-Priority.md` SNOW-BUDGET) made `budgetMs` a budget kept. `advance` read
+its deadline only between whole steps of the window, ~10 ms each, so a frame's 3 ms ran a step at the least. Each of a
+frame's readers (the tick, the feet's `winterAt`, the mod's `winterNear`) also ran its own. Now a step's points stop at
+the deadline, and the asks within `frameMs` share one budget. The packs are unchanged. The drawn cover reads the slope
+only where the snowline lays snow.
+
 **The terrain.** The frame's lines are ONE small texture every terrain fragment reads at its own place
 (`renderer.js` `setSnowFrame`, shadowed per program - GROUND-7: it was six uniforms a draw); a draw hands only its first
 world tile (`drawOf`). Each climate's ground binds its TWIN (`arrayOf`; `twinLayers`, `twinKey`): one 112-layer array,

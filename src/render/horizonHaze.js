@@ -71,9 +71,10 @@ export const SEA_HAZE_BAND = 1.0;
 /** FAR-SEA1: what both lanes' far-ring fragment shaders read for the ring's sea and the horizon's haze - the vertex
  *  shader's sea weight, its world point and the sea's body (render/farRing.js VS: the camera climate's water texel
  *  under the water's tint), the eye in the same frame, the sky the water reflects, the water's Fresnel at normal
- *  incidence, and whether there is a sky to reflect at all. ringSea(ambient, sunColor, moonColor) is the sea's colour
- *  in the water's own (classic) space: the FS hands it the frame's light as the water takes it. It reads the FS's own
- *  uLightDir, uSunScale, uMoonDir and uMoonScale, declared before this block. */
+ *  incidence, and whether there is a sky to reflect at all. ringSea(ambient, sunColor, moonColor, sunScale) is the sea's
+ *  colour in the water's own (classic) space: the FS hands it the frame's light as the water takes it, and the sun's
+ *  scale at its point (OW-HORIZON: render/cloudShadow.js ringSun - the clouds' shadow on it, as on the land). It reads
+ *  the FS's own uLightDir, uMoonDir and uMoonScale, declared before this block. */
 export const RING_SEA_GLSL = `in float vSea;
 in vec3 vWorld;
 in vec3 vSeaBody;
@@ -84,10 +85,10 @@ uniform float uSeaF0;
 uniform float uSeaLook;   // 1 with a sky to reflect (and the Enhanced water on), 0 without (the sea lit as ground, as before)
 ${SEA_LOOK_GLSL}
 ${HORIZON_HAZE_GLSL}
-vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor) {
+vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor, float sunScale) {
   vec3 V = normalize(uEye - vWorld);   // the normal is up: the facing and the reflected ray's height are V.y
-  vec3 lit = vSeaBody * seaLight(ambient, sunColor, uSunScale * max(uLightDir.y, 0.0), moonColor, uMoonScale * max(uMoonDir.y, 0.0));
+  vec3 lit = vSeaBody * seaLight(ambient, sunColor, sunScale * max(uLightDir.y, 0.0), moonColor, uMoonScale * max(uMoonDir.y, 0.0));
   vec3 H = normalize(uLightDir + V);
   vec3 Hm = normalize(uMoonDir + V);
-  return seaSky(lit, V.y, uSkyZenith, uSkyHorizon, uSeaF0) + seaGlints(sunColor, seaSunLobe(H.y) * uSunScale, moonColor, seaMoonLobe(Hm.y) * uMoonScale);
+  return seaSky(lit, V.y, uSkyZenith, uSkyHorizon, uSeaF0) + seaGlints(sunColor, seaSunLobe(H.y) * sunScale, moonColor, seaMoonLobe(Hm.y) * uMoonScale);
 }`;

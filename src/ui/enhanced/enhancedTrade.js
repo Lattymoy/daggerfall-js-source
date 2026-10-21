@@ -42,6 +42,8 @@ import { SLOT_BOX } from '../iconFit.js';   // UI1: the row's picture box
 import { fittedImg } from '../textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { landingTiles } from './landingTiles.js';   // TRADE-VIRT: a picture into its tile, not a repaint of the counter
+import { virtualRows } from '../virtualRows.js';   // TRADE-VIRT: a long list draws the rows on screen
 import { overlayAction } from '../input.js';
 import { audio } from '../../systems/audio.js';
 import { enhancedSoundsOn } from '../../systems/enhancedSounds.js';
@@ -172,11 +174,11 @@ function stagedForCost() {
 
 function localList() {
   const equipped = deps.isEquipped ?? (() => false);
-  const held = remoteItems();
+  const held = new Set(remoteItems());   // TRADE-VIRT: asked once a piece of the pack - a Set, not a walk of the lot each
   const onTab = (it) => tabAccepts(it, tab);
   const pack = (deps.packItems?.() ?? []).filter((it) => !equipped(it) && localListAccepts(mode, it, {
     accepts: deps.accepts, enchanted: deps.enchanted,
-  }) && onTab(it) && !held.includes(it));
+  }) && onTab(it) && !held.has(it));
   return inBuy() ? [...basket.filter((it) => !equipped(it) && onTab(it)), ...pack] : pack;
 }
 function remoteList() {
@@ -779,9 +781,16 @@ export function repairReadyLine(c) {
 
 // ── ROWS ──────────────────────────────────────────────────────────
 
+/** TRADE-VIRT (bible/07-Rendering/Performance-Priority.md TRADE-VIRT): a row's picture is put into its tile when it lands
+ *  (ui/enhanced/landingTiles.js) - its `onReady` was `render`, and a cold counter of 300 pieces repainted itself 273
+ *  times while its pictures came in, every row each time. */
+const tiles = landingTiles((t, landed) => drawTile(t.line, t.grid, landed), { alive: () => !!host });
 function itemTile(line) {
-  const pic = tradeView === 'grid' ? linePicture(line, { box: SLOT_BOX.grid, onReady: render })   // MENU-ORDER: a tile's picture, the pack grid's box
-    : linePicture(line, { box: SLOT_BOX.row, onReady: render });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model; UI1: fitted to the row's box
+  return tiles.tile({ line, grid: tradeView === 'grid' });
+}
+function drawTile(line, grid, landed) {
+  const pic = grid ? linePicture(line, { box: SLOT_BOX.grid, onReady: landed })   // MENU-ORDER: a tile's picture, the pack grid's box
+    : linePicture(line, { box: SLOT_BOX.row, onReady: landed });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model; UI1: fitted to the row's box
   if (pic) {
     const tile = el('span', 'tile has-icon');
     tile.append(fittedImg(pic));
@@ -796,6 +805,7 @@ function itemTile(line) {
 function itemRow(item, from) {
   const line = itemLine(item, deps.entity);
   const row = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: the shelf's icons wear their tier too
+  row._tradeItem = item;   // TRADE-VIRT: the row's piece, for whoever reads the drawn rows (the probe, the pins)
   const tile = itemTile(line);
   const bar = wearBar(item);   // WEAR-UI: what a piece will fetch starts with how worn it is - said before the click
   if (bar) { tile.append(bar); row.classList.add('hasbar'); }
@@ -819,8 +829,8 @@ function itemRow(item, from) {
   }
   // SHOP-HOVER: the pack's own hover card over every row of both lists - the piece's stats, its affixes, its set and
   // what it would change against what is worn - the shelf's and my own alike (systems' one infoCard)
-  row.onmouseenter = () => { tile.removeAttribute?.('title'); showItemHover(item, { entity: deps.entity, getQuest: deps.getQuest ?? null }, row, from === 'local' ? 'local' : 'shop'); };
-  row.onmouseleave = () => hideItemHover();
+  row.onmouseenter = () => { hoverRow = row; row.querySelector?.('.tile')?.removeAttribute?.('title'); showItemHover(item, { entity: deps.entity, getQuest: deps.getQuest ?? null }, row, from === 'local' ? 'local' : 'shop'); };
+  row.onmouseleave = () => { hoverRow = null; hideItemHover(); };
   if (selected?.item === item) row.classList.add('picked');
   // A single click reads the item (the tooltip strip below the lists);
   // a double click - or the footer's primary button, reaching for
@@ -863,9 +873,9 @@ function localCol() {
   }
   col.append(tabsEl);
   const list = el('div', 'remotelist');
-  if (!items.length) list.append(el('p', 'packempty', 'Nothing here fits this page.'));
-  for (const it of items) list.append(itemRow(it, 'local'));
   col.append(list);
+  if (!items.length) list.append(el('p', 'packempty', 'Nothing here fits this page.'));
+  else keepList(virtualRows(list, items, (it) => itemRow(it, 'local'), { onAim: rowsMoved, sizes: sizesOf(`local:${tradeView}`) }));   // TRADE-VIRT: a long pack draws the rows on screen
   return col;
 }
 
@@ -886,11 +896,30 @@ function remoteCol() {
   head.append(who);
   col.append(head);
   const list = el('div', 'remotelist');
-  if (!items.length) list.append(el('p', 'packempty', 'Nothing staged yet.'));
-  for (const it of items) list.append(itemRow(it, 'remote'));
   col.append(list);
+  if (!items.length) list.append(el('p', 'packempty', 'Nothing staged yet.'));
+  else keepList(virtualRows(list, items, (it) => itemRow(it, 'remote'), { onAim: rowsMoved, sizes: sizesOf(`remote:${tradeView}`) }));   // TRADE-VIRT: and a long shelf
   return col;
 }
+
+/** TRADE-VIRT: THE LONG LISTS ON SCREEN (ui/virtualRows.js, VIRT's law for the pack): past `VIRTUAL_MIN` rows a list draws
+ *  the rows in its visible band and a margin round it. A repaint lets go of them before it builds, measures the new ones
+ *  before it gives a scroll back and aims them after; a resize repaints (the layout's columns and pitch measured again). */
+let lists = [];
+const keepList = (v) => { lists.push(v); return v; };
+const dropLists = () => { for (const v of lists) v.dispose(); lists = []; };
+const syncLists = (opts) => { for (const v of lists) v.sync(opts); };
+/** A hover card whose row the window took away goes with it (AUDIT VIRT's `rowsMoved`). */
+let hoverRow = null;
+const rowsMoved = () => { if (hoverRow && hoverRow.isConnected === false) { hoverRow = null; hideItemHover(); } };
+/** AUDIT TRADE-VIRT: each long list's rows' heights by item, kept across the window's repaints - one set a list and a
+ *  view (the grid's tiles are not the list's rows) - so a repaint's spacers are the ones it replaces (ui/virtualRows.js
+ *  `sizes`). */
+const rowSizes = new Map();
+const sizesOf = (key) => { let m = rowSizes.get(key); if (!m) rowSizes.set(key, (m = new WeakMap())); return m; };
+/** AUDIT TRADE-VIRT: a resize measures the long lists again, as the pack's does - it repainted the window, and a repaint
+ *  took the focus out of the How-many field and lost the key typed next (the old window never listened). */
+const onResize = () => { if (host) syncLists({ remeasure: true }); };
 
 /** MENU-ORDER: a row's own price - the shelf's at a counter that sells, the player's piece's where this counter buys,
  *  repairs or identifies it (quotePriceFor's law, the strip's own figure) - or null where a press would move nothing. */
@@ -1007,6 +1036,8 @@ function render() {
   // back to its top every time.
   const prevScroll = Array.from(host.querySelectorAll('.packcol')).map((c) => c.scrollTop);
   repairEst = repairEstimatesNow();   // UXB1-K: one scheduler pass for every row this paint draws
+  dropLists();   // TRADE-VIRT: the old DOM's windows and waiting tiles go with it
+  tiles.clear();
   host.innerHTML = '';
   const shell = el('div', 'px-home px-over trade-shell');
   shell.dataset.view = tradeView;   // MENU-ORDER
@@ -1049,7 +1080,9 @@ function render() {
   }
   shell.append(win);
   host.append(shell);
+  syncLists({ draw: false });   // TRADE-VIRT: the long lists measured and their spacers stood, so the scroll given back is the whole list's
   host.querySelectorAll('.packcol').forEach((c, i) => { if (prevScroll[i] != null) c.scrollTop = prevScroll[i]; });
+  syncLists();   // and the rows at that scroll drawn
   unregisterOutside();
   unregisterOutside = closeOnOutsideTap(shell, '.px-win', () => { if (!box) close(); });
 }
@@ -1093,6 +1126,7 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   render();
   keyHandler = onKey;
   globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  globalThis.addEventListener?.('resize', onResize);   // TRADE-VIRT
   return {
     repaint: render,
     unmount() {
@@ -1102,6 +1136,10 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
       if (host) clear();
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       keyHandler = null;
+      globalThis.removeEventListener?.('resize', onResize);
+      dropLists();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
+      tiles.clear();
+      hoverRow = null;
       unregisterOutside();
       unregisterOutside = () => {};
       host = null;

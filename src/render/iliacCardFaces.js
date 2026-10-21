@@ -776,6 +776,25 @@ const GLYPHS = {
     for (const m of [1, -1]) poly(ctx, [[-0.2, 0], [-0.28, 0.07 * m], [-0.4, 0.07 * m], [-0.32, 0]]);
     part(ctx);
   },
+  // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): the Witches' Festival's two - a coven's cauldron, a tallow candle
+  witch(ctx) {        // a coven's cauldron: the black pot on its three legs, its rim, its brew bubbling over (the mage's hat is the mage's)
+    ctx.moveTo(-0.36, -0.06); ctx.lineTo(0.36, -0.06); ctx.quadraticCurveTo(0.38, 0.3, 0, 0.36); ctx.quadraticCurveTo(-0.38, 0.3, -0.36, -0.06);
+    ctx.closePath(); part(ctx);
+    poly(ctx, [[-0.42, -0.16], [0.42, -0.16], [0.42, -0.07], [-0.42, -0.07]]); part(ctx);
+    for (const m of [1, -1]) poly(ctx, [[0.19 * m, 0.3], [0.29 * m, 0.3], [0.33 * m, 0.46], [0.26 * m, 0.46]]);
+    poly(ctx, [[-0.04, 0.34], [0.04, 0.34], [0.03, 0.46], [-0.03, 0.46]]); part(ctx);
+    circ(ctx, -0.14, -0.26, 0.08); circ(ctx, 0.06, -0.33, 0.06); circ(ctx, 0.2, -0.24, 0.045); circ(ctx, -0.02, -0.45, 0.035); part(ctx);
+  },
+  candle(ctx) {       // a tallow candle on its dish: the flame and its halo, the wick, the stub with a drip run down it
+    ctx.moveTo(0, -0.46); ctx.quadraticCurveTo(0.11, -0.3, 0.06, -0.2); ctx.quadraticCurveTo(0, -0.14, -0.06, -0.2);
+    ctx.quadraticCurveTo(-0.11, -0.3, 0, -0.46); ctx.closePath(); part(ctx);
+    ctx.moveTo(-0.13, -0.12); ctx.lineTo(0.13, -0.12); ctx.lineTo(0.13, 0.3); ctx.lineTo(-0.13, 0.3); ctx.closePath();
+    ctx.moveTo(0.13, -0.08); ctx.quadraticCurveTo(0.2, 0.0, 0.17, 0.12); ctx.quadraticCurveTo(0.14, 0.16, 0.13, 0.08); ctx.closePath();
+    part(ctx);
+    ctx.moveTo(-0.4, 0.32); ctx.quadraticCurveTo(0, 0.28, 0.4, 0.32); ctx.quadraticCurveTo(0.42, 0.4, 0, 0.42); ctx.quadraticCurveTo(-0.42, 0.4, -0.4, 0.32); ctx.closePath();
+    part(ctx);
+    ctx.moveTo(0.18, -0.31); ctx.arc(0, -0.31, 0.18, 0, TAU); line(ctx, 0.02);
+  },
 };
 
 /** One painter per emblem, `(ctx, cx, cy, size, ink)`: the glyph `size` across, centred on (cx, cy), in `ink`. */
@@ -808,8 +827,8 @@ export const EMBLEM_PAINTERS = Object.freeze(Object.fromEntries(Object.entries(G
  * EMBLEM_PAINTERS' keys in their order: the first set's 34 (its beetle gone - no card is an insect once the scorpion
  * has its own), then AUDIT CARDS-5's 14 (razor, staff, book, claymore, rose, daedric, scorpion, bat, boar, tree,
  * gargoyle, banish, recall, sun), then CARDS9's 3 (gate, serpent, gear - the bosses' own), then KG-SET's 6 (bear, cat,
- * spider, fish, mummy, bow - the nine The King's Gambit brought into the set) - net/iliac/iliacCards.js CARD_EMBLEMS, the
- * same list. 'prince', the moon and the star, is
+ * spider, fish, mummy, bow - the nine The King's Gambit brought into the set), then WITCH1's 2 (witch, candle - the
+ * Witches' Festival's) - net/iliac/iliacCards.js CARD_EMBLEMS, the same list. 'prince', the moon and the star, is
  * Azura's own; 'daedric' is the sigil of a Prince who has no picture of their own.
  */
 export const EMBLEM_KEYS = Object.freeze(Object.keys(GLYPHS));

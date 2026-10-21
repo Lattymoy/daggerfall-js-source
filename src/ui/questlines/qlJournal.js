@@ -244,8 +244,8 @@ export function qlLineDetail(doc, line, { titleText = (k) => k } = {}) {
   // UI-12: what a witness is, said once on the page (a hover is no press, and a pad has none) - and what "not yet seen" asks
   // AUDIT QUESTLINES VOICE-QL: the places by name, never "an endgame place" (Voice.md rule 3) - the witnesses of
   // net/questlineClaims.js QL_WITNESS_KINDS: a Dagon's Breach (its rite, its close), an Elite Breach's Redoubts (a
-  // Valkynaz's among them), the Abyss Dungeon's Shattered Hour (the Brass Remnant), the Sea Serpent
-  if ((line.steps ?? []).some((s) => s.witnessed)) box.append(el(doc, 'p', 'px-qline-what', t('ql.journal.stepWitnessedTitle', 'A witnessed step is done in a Dagon’s Breach, an Elite Breach’s Redoubts, the Abyss Dungeon’s Shattered Hour or against the Sea Serpent. The account service checks it against that place’s own record before it pays.')));
+  // Valkynaz's among them), the Abyss Dungeon's Shattered Hour (the Brass Remnant), the Sea Serpent, a fallen star (STAR8)
+  if ((line.steps ?? []).some((s) => s.witnessed)) box.append(el(doc, 'p', 'px-qline-what', t('ql.journal.stepWitnessedTitle', 'A witnessed step is done in a Dagon’s Breach, an Elite Breach’s Redoubts, the Abyss Dungeon’s Shattered Hour, against the Sea Serpent or at a fallen star. The account service checks it against that place’s own record before it pays.')));   // STAR8: and a fallen star
   const unseen = (line.steps ?? []).some((s) => s.unseen);
   if (unseen) box.append(el(doc, 'p', 'px-qobj-reward', t('ql.journal.stepUnseenWhy', 'Not yet seen: the account service has no record of that deed since this questline began. Do it again and it will count.')));
   if (line.outcome) {

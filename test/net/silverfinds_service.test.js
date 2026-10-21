@@ -90,7 +90,7 @@ test('SILVER-FINDS the law: a harvest finds 2-5 one time in ten, 30 a day; a loo
   assert.deepEqual(MARKS_FAUCETS.gather, { chance: 0.1, amount: [2, 5], perDay: 30 });
   assert.deepEqual(MARKS_FAUCETS.find, { chance: { corpse: 0.05, pile: 0.12, search: 0.15 }, amount: [1, 4], perDay: 20 });
   assert.deepEqual([MARKS_KINDS.gather, MARKS_KINDS.find], ['mint', 'mint']);
-  assert.deepEqual(MARKS_COMBAT.kinds, ['gate', 'raid', 'serpent', 'eg'], 'a find is no combat strike');   // PIN MOVED (EG-E1): the Spire's Redoubts strike under the combat cap
+  assert.deepEqual(MARKS_COMBAT.kinds, ['gate', 'raid', 'serpent', 'eg', 'star'], 'a find is no combat strike');   // PIN MOVED (STAR7): a fallen star held is one; PIN MOVED (EG-E1): the Spire's Redoubts strike under the combat cap
   // the harvest's: the chance roll's edge, then the amount's whole range off its roll
   assert.deepEqual([gatherFindOf(0.0999, 0), gatherFindOf(0.1, 0), gatherFindOf(0.5, 0)], [2, 0, 0]);
   assert.deepEqual([0, 0.2499, 0.25, 0.5, 0.75, 0.9999].map((u) => gatherFindOf(0, u)), [2, 2, 3, 4, 5, 5]);

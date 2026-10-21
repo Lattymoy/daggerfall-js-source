@@ -1,0 +1,110 @@
+[
+  {
+    "name": "FB1020c-ONE-SAVE-a-save-a-put-in-again",
+    "file": "src/net/profBook.js",
+    "old": "    if (tracked() && typeof carry.flush === 'function' && !landed) {",
+    "new": "    if (tracked() && typeof carry.flush === 'function') {",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-the-asks-before-the-save",
+    "file": "src/net/profBook.js",
+    "old": "        if (tracked() && typeof carry.flush === 'function') {\n          let saved = false;",
+    "new": "        if (false) {\n          let saved = false;",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-the-takes-kept-when-unsaved",
+    "file": "src/net/profBook.js",
+    "old": "              try { undo?.(); } catch (e) { console.warn('[prof] a deposit would not give back', e); }",
+    "new": "              void undo;",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-the-rest-asked-into-the-silence",
+    "file": "src/net/profBook.js",
+    "old": "            if (r?.kept === true) silent = true;",
+    "new": "            if (false) silent = true;",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-busy-said-over-a-bad-count",
+    "file": "src/net/profBook.js",
+    "old": "error: qtyOk(a?.qty) ? 'deposit-busy' : 'bad-qty'",
+    "new": "error: 'deposit-busy'",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-the-counter-on-any-order",
+    "file": "src/net/profBook.js",
+    "old": "const own = counter === true && order === 'work';",
+    "new": "const own = counter === true;",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-a-save-an-input-again",
+    "file": "src/net/profBook.js",
+    "old": "      const answers = plan.length ? await this.depositMany(plan) : [];",
+    "new": "      const answers = []; for (const one of plan) answers.push(...(await this.depositMany([one])));",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-moved-lost",
+    "file": "src/net/profBook.js",
+    "old": "      for (const [i, r] of answers.entries()) if (r?.ok) moved += plan[i].qty;",
+    "new": "      void answers.entries;",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-a-provider-call-a-material",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const answers = plan.length ? await p.deposit(plan) : [];",
+    "new": "      const answers = []; for (const one of plan) answers.push(...(await p.deposit([one])));",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-put-in-a-call-a-part",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const answers = (await p.deposit?.(plan)) ?? [];",
+    "new": "      const answers = []; for (const one of plan) answers.push(...((await p.deposit?.([one])) ?? []));",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-the-host-plan-not-the-batch",
+    "file": "src/scenes/world.js",
+    "old": "deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => ",
+    "new": "deposit: async (plan) => (await Promise.all(plan.map((d) => profBook.deposit(d.material, d.qty, d)))).map((r, i) => ",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-ONE-SAVE-the-kept-words-two-homes",
+    "file": "src/scenes/world.js",
+    "old": "  const BAG_DEPOSIT_KEPT_TEXT = BAG_PAGE_WORDS.kept;",
+    "new": "  const BAG_DEPOSIT_KEPT_TEXT = 'The counting-house is slow to answer. Your goods are on their way to the Stores.';",
+    "tests": [
+      "test/systems/professions/fb1020c_onesave.test.js"
+    ]
+  }
+]

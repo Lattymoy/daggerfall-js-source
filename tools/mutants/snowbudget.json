@@ -1,0 +1,38 @@
+[
+  {
+    "name": "SB-the-deadline-only-between-steps",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "      if (k > 0 && now() >= deadline) { this._partial = `${spin ? 's' : 'm'}${t0}`; return false; }   // SNOW-BUDGET: the rest the next call's\n",
+    "new": "",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  },
+  {
+    "name": "SB-a-budget-a-reader",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "      ready = lattice.advance(window, t, budgetFor(budgetMs), clock);",
+    "new": "      ready = lattice.advance(window, t, budgetMs, clock);",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  },
+  {
+    "name": "SB-the-next-frame-no-budget",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "    if (w - spendFrom >= SNOW_COVER.frameMs) { spendFrom = w; spent = 0; }",
+    "new": "    if (spendFrom === -Infinity) { spendFrom = w; spent = 0; }",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  },
+  {
+    "name": "SB-the-slope-read-first",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "    if (cover <= 0) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  }
+]

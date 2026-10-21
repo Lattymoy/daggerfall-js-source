@@ -326,5 +326,35 @@
       "test/server/ql12_claim.test.js"
     ],
     "why": "AUDIT QUESTLINES SERVICE-7 (c)"
+  },
+  {
+    "name": "B2-the-order-unasked",
+    "file": "server-account/src/questlines.js",
+    "old": "AND done_at IS NULL AND (${witness}) AND ${inOrder}`)",
+    "new": "AND done_at IS NULL AND (${witness})`)",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT STARFALL B2: an end waits while an earlier witnessed step of its line is not done"
+  },
+  {
+    "name": "B2-the-steps-before-unread",
+    "file": "server-account/src/questlines.js",
+    "old": "return l ? Object.keys(l.witness).map(Number).filter((s) => s < step).sort((a, b) => a - b) : [];",
+    "new": "return [];",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT STARFALL B2: the witnessed steps an end waits on are its line's before it"
+  },
+  {
+    "name": "B2-one-earlier-step-enough",
+    "file": "server-account/src/questlines.js",
+    "old": "AND b.done_at IS NOT NULL) = ${before.length}` : '1';",
+    "new": "AND b.done_at IS NOT NULL) >= 1` : '1';",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT STARFALL B2: every earlier witnessed step done, never one of them"
   }
 ]

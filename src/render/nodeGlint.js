@@ -34,7 +34,7 @@
 // no sheen crosses; the fog and the jungle's haze fade it as they fade the node; and it is as bright as the light where
 // the node stands, never under the flats' own floor, its sheen out in the dark (GLINT-LIGHT). Not a DFU member.
 import { bbVertexShader, FLAT_LIGHT_FLOOR } from './renderer.js';
-import { buildProgram } from './glProgram.js';
+import { buildProgram, startPrograms } from './glProgram.js';
 import { BAYER_GLSL } from './orderedDither.js';
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { billboardKey } from './billboardKey.js';
@@ -462,12 +462,17 @@ function mul4(a, b, out) {
   return out;
 }
 
+/** SHADER-STALL: the pass's two programs, the mask's and the light's, as its constructor builds them - what the host
+ *  starts ahead of the build (createNodeGlintPass; render/glProgram.js startPrograms). */
+export const NODE_GLINT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[NODE_MASK_VS, NODE_MASK_FS], [NODE_GLINT_VS, NODE_GLINT_FS]]));
+
 export class NodeGlintRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.mask = buildProgram(gl, NODE_MASK_VS, NODE_MASK_FS, 'node glint mask');
-    this.light = buildProgram(gl, NODE_GLINT_VS, NODE_GLINT_FS, 'node glint light');
+    const [mask, light] = NODE_GLINT_PROGRAMS;
+    this.mask = buildProgram(gl, mask[0], mask[1], 'node glint mask');
+    this.light = buildProgram(gl, light[0], light[1], 'node glint light');
     /** @type {Record<string, WebGLUniformLocation|null>} */
     this.um = {};
     for (const n of MASK_UNIFORMS) this.um[n] = gl.getUniformLocation(this.mask, n);
@@ -789,17 +794,18 @@ const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdl
  * THE WORLD HOST'S PASS: the gathering host's marks each frame - a mark with its pictures lit by its glints, a mark with
  * none lit by the glow (`glow`, nodeGlow.js's pass - a body drawn as a 3D character; the pass builds its own, so the host
  * wires one pass and bootWorld holds no glow of its own - HOST-SPLIT), each kindling as it first stands near
- * (nodeGlows). The programs are built at IDLE once a node is first lit (PERF-WARM's law) - nothing is lit until they
- * stand; a glint that will not build costs the glint, never the game (its marks go to the glow). A pass that ran is a
+ * (nodeGlows). The programs are STARTED once a node is first lit, and the pass built at IDLE once the driver says they
+ * are done (`start`, SHADER-STALL: render/glProgram.js startPrograms - PERF-WARM's idle alone held a frame for the whole
+ * compile, 5.65 s of a player's) - nothing is lit until they stand; a glint that will not build costs the glint, never the game (its marks go to the glow). A pass that ran is a
  * foreign pass. `draw(marks)` answers how many it lit; `marks` null forgets every node.
  * @param {any} renderer
  * @param {{ glow?: { draw: (marks: any) => number, dispose?: () => void } | null, now?: () => number, build?: (gl: any) => NodeGlintRenderer,
- *   idle?: (fn: () => void) => void, reduced?: (nowS: number) => boolean }} [o]
+ *   start?: (gl: any) => () => boolean, idle?: (fn: () => void) => void, reduced?: (nowS: number) => boolean }} [o]
  */
-export function createNodeGlintPass(renderer, { glow: handed, now = () => performance.now() / 1000, build = (gl) => new NodeGlintRenderer(gl), idle = idleCall, reduced = reducedMotionReader() } = {}) {
+export function createNodeGlintPass(renderer, { glow: handed, now = () => performance.now() / 1000, build = (gl) => new NodeGlintRenderer(gl), start = (gl) => startPrograms(gl, NODE_GLINT_PROGRAMS), idle = idleCall, reduced = reducedMotionReader() } = {}) {
   const glow = handed === undefined ? createNodeGlowPass(renderer) : handed;   // the glow its own when the host hands none - and freed with it (AUDIT NODE-GLINT)
   const state = createNodeGlowState(), list = /** @type {any[]} */ ([]), bare = /** @type {any[]} */ ([]), pictured = /** @type {any[]} */ ([]);
-  let pass = /** @type {NodeGlintRenderer|null} */ (null), asked = false, dead = false, failed = false;
+  let pass = /** @type {NodeGlintRenderer|null} */ (null), asked = false, dead = false, failed = false, ready = /** @type {(() => boolean)|null} */ (null);
   const make = () => {
     if (dead) return;
     try { pass = build(renderer.gl); } catch (e) { failed = true; console.warn('[prof] the nodes\' glint would not build', e?.message ?? e); pass = null; }
@@ -811,7 +817,7 @@ export function createNodeGlintPass(renderer, { glow: handed, now = () => perfor
       if (marks) for (const m of marks) (failed || !m?.pictures?.length ? bare : pictured).push(m);
       glow?.draw(marks ? bare : null);   // a node with no picture to light keeps its glow
       const t = now();
-      if (!asked && pictured.length) { asked = true; idle(make); }   // the first node lit: the compile, at idle
+      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) { asked = true; idle(make); }   // the first node lit: the compile started; the build at idle once it is done
       if (!nodeGlows(marks ? pictured : null, renderer._camPos, t, state, list).length || !pass) return 0;
       const n = pass.draw(list, renderer, t % 60, reduced(t));
       renderer.markForeignPass();

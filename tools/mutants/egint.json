@@ -173,8 +173,8 @@
   {
     "name": "EGINT-repeat-hits-land",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  if (!p || egFairRefuses(fairOfMember(B, sub), now)) return out;",
-    "new": "  if (!p) return out;",
+    "old": "  if (egFairRefuses(fairOfMember(B, sub), now)) return land(0);",
+    "new": "  if (false) return land(0);",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]

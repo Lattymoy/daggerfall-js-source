@@ -361,16 +361,22 @@ one weapon skill"*), through Mac; asked, Mac: *"Paid skill swap"*. Record: `01-O
 - **The law** (`systems/skillSwap.js`): one class skill the character has not mastered out, one miscellaneous skill in,
   in the same group (the 2/2/1 slots stand); a mastered skill never leaves; the values stay; the career becomes the
   character's own copy, saved whole and marked `swapped`, so an heir keeps it (`legacy/family.js` careerFields, AUDIT
-  SUGGESTIONS-1019 L5-4) and its household still wears the class. Both stored level sums move by what the swap moved the sum, so the level and the
-  progress to the next stand. `SKILL_SWAP_GOLD` 100,000, paid as section 10's reset is (coins, letters, online the
-  Empire's account).
+  SUGGESTIONS-1019 L5-4) and its household still wears the class. The level and the progress to the next stand, and a
+  skill's training leaves with it (SWAP-CYCLE, `01-Overview/bugs/Field-Bugs-2026-10-20g.md`): the stored current sum is
+  the sum the level stands on, which no swap and no raise lowers; a swap moves both sums only by what it takes the
+  class's sum above it (a trained outsider brought in pays no level), and the ground a swap gives up is the class's
+  skills' to make up before the next level comes any closer - so no cycle of swaps passes the class's own ceiling.
+  `SKILL_SWAP_GOLD` 100,000, paid as section 10's reset is (coins, letters, online the Empire's account).
 - **The page** (`ui/growth/specGuide.js` drawSkillSwap): under the Specialisations page's paths - *Change a class skill*,
   the two picks, *Swap · 100,000 gold*, asked first, refused (the press disabled, saying why) short of the gold. A
   family whose class can never meet a path says, under its headline, that a class skill can be changed below - only
   where one swap would open a path (`swapOpens`, AUDIT SUGGESTIONS-1019 L5-1). A swap into a group whose mastery slots
   are spent, and offline with Master Skills off one that starts or ends DFU's 95 lock, is said beside the picks and in
-  the ask: a warning, not a refusal - a swap can be wanted for leveling alone (AUDIT L5-1, L5-2).
+  the ask: a warning, not a refusal - a swap can be wanted for leveling alone (AUDIT L5-1, L5-2). So is a swap that leaves the class's skills under the sum the
+  level stands on, with the points they make up first (SWAP-CYCLE; none on Oblivion's bar, where the sum levels
+  nothing).
 - Pins: `test/systems/fb1019b_skillswap.test.js`, the page drawn in `test/ui/growth/fb1019b_swappage.test.js`, the audit's
-  laws in `test/systems/fb1019b_audit.test.js`; `tools/mutants/fb1019b_skillswap.json`, `fb1019b_audit.json`. Audit:
+  laws in `test/systems/fb1019b_audit.test.js`, the level's law in `test/systems/swapcycle.test.js`;
+  `tools/mutants/fb1019b_skillswap.json`, `fb1019b_audit.json`, `swapcycle.json`. Audit:
   `01-Overview/audits/Audit-Suggestions-1019.md`.
 

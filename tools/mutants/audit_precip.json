@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-9-the-stream-s-ground",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M, normalY(x, z));",
-    "new": "const c = drawnCover(p.px, p.py, lx, lz, heightAt(x, z) - stateOf().compensation[1] - SEA_LEVEL_M, normalY(x, z));",
+    "old": "const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M, x, z);",
+    "new": "const c = drawnCover(p.px, p.py, lx, lz, heightAt(x, z) - stateOf().compensation[1] - SEA_LEVEL_M, x, z);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

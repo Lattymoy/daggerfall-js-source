@@ -261,6 +261,14 @@ import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenD
 // bible/03-World/Raiding-Parties.md, "The relay holds the raid (RAID3)".
 import { raidWordFits, raidWordSane, raidSig, raidLedgerId, raidEvictPick, newRaidLedger, foldRaidWord, raidCleansed, raidEarned, raidTop, raidLedgerState, raidLedgerEndMinute, raidDayOfKey, RAID_KEEP_MS, RAID_LEDGERS_MAX, RAID_LEDGERS_BY_MAX, RAID_SAVE_MS, RAID_DAY_MINUTES, RAID_ACCOUNTS_MAX, raidDaySlots, raidOnSlot, raidDayIds, readRaidTowns, raidTownsHash, RAID_TOWNS_SHA_RE } from '../../src/net/raid/raidLaw.js';   // RAID-ROLL: the day's roll
 import { mintRaidReceipt, readRaidReceipt } from '../../src/net/raid/raidReceipt.js';
+// STAR3 (2026-10-20, the owner: "something coming from the sky and crashing into the ground, where people need to defend
+// the objective in a wave based format with a boss topping off the encounter at the end"): TWO FILES JOIN THE BUNDLE -
+// net/starfall/starfallLaw.js (when a star falls, where in its pixel, and the ledger its cell keeps - pure law, it imports
+// wire.js and gateLaw.js, both here) and net/starfall/starReceipt.js (a star held, the relay's signature again under the
+// gate's one key - it imports identityToken.js and starfallLaw.js). bible/11-Multiplayer/Starfall.md section 5.
+import { starOk, starHeard, starMayMake, starLostAt, starNear, starTimes, newStarLedger, starLedgerSane, foldStarWord, stepStar, starOver, starSettled, starPlaceFor, starEarned, starTop, starLedgerState, starLedgerId, starHeldWord, starNightGoneAt, P_HELD } from '../../src/net/starfall/starfallLaw.js';
+import { mintStarReceipt, readStarReceipt } from '../../src/net/starfall/starReceipt.js';
+import { starRelayGate, validStarOut, STAR_INTERNAL_HELD, STAR_TELL_RETRY_MS, STAR_LEDGER_PREFIX, starLedgerKey, STAR_LEDGERS_MAX, STAR_SAVE_MS, STAR_KEEP_MS, STAR_HELD_KEY, STAR_HELD_MAX, STAR_RC_PREFIX, starReceiptKeyOf, STAR_RC_KEEP, STAR_RC_KEEP_MS, STAR_COUNT_MAX } from './relay.js';
 import { mintWatchReceipt, watchDue, watchPixelOk } from '../../src/net/watchReceipt.js';
 import { newIliacTable, iliacSit, iliacStand, iliacCommit, iliacTick as iliacTableTick, iliacNextAt, iliacEmpty, iliacLook, iliacSeatOf, iliacSitRefusal, iliacVouch, iliacGone, iliacBack, iliacVoid } from '../../src/net/iliac/iliacTable.js';   // CARDS10: THE RELAY DEALS ILIAC HAND - iliacTable.js imports the rules (iliacHand.js, iliacCards.js) and Hold'em's bounds; AUDIT CARDS-6: a sit's refusal asked first, a vouch again, a seat kept for a blink
 import { newGambitTable, gambitSit, gambitSitRefusal, gambitReady, gambitReadyRefusal, gambitUnready, gambitCommand, gambitForfeit, gambitStand, gambitVoid, gambitTick as gambitTableTick, gambitNextAt, gambitEmpty, gambitLook, gambitSeatOf, gambitTableValid } from '../../src/net/gambit/gambitTable.js';   // KG5: THE RELAY RUNS THE KING'S GAMBIT - gambitTable.js imports the law (kingsGambit.js, which brings enemyBasics.js and mathf.js) and Hold'em's bounds
@@ -841,6 +849,7 @@ export class Room {
     this._noEgRc = new Bounded(HUB_KEEP_MAX);   // EG-ZA: and no breach receipt held (dropped whole when one is written)
     this._noSerpentRcpt = new Bounded(HUB_KEEP_MAX);   // SCALE5a: and no serpent receipt - the one receipt every hub hello still read from storage (dropped whole when one is written)
     this._noRaidRcpt = new Bounded(HUB_KEEP_MAX); // SCALE2b: and no raid receipts
+    this._noStarRcpt = new Bounded(HUB_KEEP_MAX); // STAR3: and no star receipts (dropped whole when one is written)
     this._worldMemo = undefined;   // SCALE2b: the stored world, raw, as `_worldRaw` read it (undefined: not read this wake)
     this._parks = null;            // SCALE2b: a cell's parked teams, key -> record - a promise of the one list a wake
     this._wardenAt = undefined;    // WARDEN1: when the cell's next road team falls due (null: none waits; undefined: its teams not read this wake)
@@ -970,6 +979,10 @@ export class Room {
     this._raidDays = new Map();     // RAID-ROLL: a cell's copy of each day's whole roll from the hub - day -> { ids: Set|null, at }
     this._raidTownsKept = undefined; // RAID-ROLL: the hub's towns table - undefined unread, null none kept, else the regions
     this._raidDayRolls = new Map(); // RAID-ROLL: the hub's day -> [raid identity] off the kept table - a few days at most
+    this._stars = new Bounded(4 * STAR_LEDGERS_MAX);   // STAR3: a cell's star ledgers read so far (net/starfall/starfallLaw.js), identity -> ledger|null - never a settled one (`_starKeep`); storage is the truth
+    this._starSavedAt = new Bounded(4 * STAR_LEDGERS_MAX);   // STAR3: when each was last written (a word that moves nothing writes at most every STAR_SAVE_MS)
+    this._starHolding = new Set();  // STAR3: the stars whose hold is being minted - a word that lands meanwhile is not heard (the raid's _raidCleaning)
+    this._starHeld = undefined;     // STAR3: the hub's held stars of the nights still standing, [n, s, px, py, at] - undefined: not read yet
     this._raidTownsUp = new Map();  // RAID-ROLL: the hub's table pieces in flight, a socket's - ws -> { n, parts }
     this._raidCleans = undefined;   // RAID3: the hub's cleansed raids ([key, at, sig] - AUDIT RAID R1), read once - undefined: not read yet
     this._wdun = null;              // PVPDUNGEONS: the hub's halls record (net/wild/wildLaw.js wdun*) - read once a wake
@@ -1002,6 +1015,7 @@ export class Room {
     if (path === GATE_INTERNAL_FELL) return this._gateFellInternal(request);   // WB3: a gate's kill, said to the hub
     if (path === SERPENT_INTERNAL_FELL) return this._serpentFellInternal(request);   // SERPENT1: the serpent's kill, said to the hub
     if (path === RAID_INTERNAL_CLEAN) return this._raidCleanInternal(request);   // RAID3: a raid's cleanse, said to the hub
+    if (path === STAR_INTERNAL_HELD) return this._starHeldInternal(request);   // STAR3: a fallen star held, said to the hub
     if (path === RELAY_INTERNAL_CFG) return json(await this._relayCfgOf());   // SCALE5b: a boss's room asking the hub for the relay's settings
     if (path === HUB_INTERNAL_UP) return this._hubUpInternal(request);   // SCALE5c: a shard's hellos, frames and closes, to the bus
     if (path === HUB_INTERNAL_POLL) return this._hubPollInternal(request);   // HUB-PULL: a shard asking for its sockets' frames - the bus never calls a shard
@@ -1349,6 +1363,10 @@ export class Room {
     // AUDIT RAID R2: and this account's raid receipts the hub holds - an earner who was not in the town's cell at the
     // cleanse, or whose link dropped at it, is handed them here (the account service counts each once)
     if (sub) { try { await this._raidReceiptsTo(ws, sub, now); } catch (e) { console.warn('[hub] raid receipts failed', e?.message ?? e); } }
+    // STAR3: the night's held stars - a star this player's machine would stand open is gold, and never sprung again - and
+    // this account's star receipts the hub holds (an earner whose link dropped at the hold is handed them here)
+    { try { const l = await this._starHeldOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'star', k: 'hds', l })); } catch (e) { console.warn('[hub] star word failed', e?.message ?? e); } }
+    if (sub) { try { await this._starReceiptsTo(ws, sub, now); } catch (e) { console.warn('[hub] star receipts failed', e?.message ?? e); } }
     // RAID-ROLL: and, while the hub holds no towns table its operator pinned, the ask for one by its hash - any
     // client whose own table hashes to it hands it over (the relay never holds the game's files)
     { try { const h = await this._raidTownsWanted(); if (h) this._send(ws, JSON.stringify({ t: 'raid', k: 'tw', h })); } catch (e) { console.warn('[hub] raid towns ask failed', e?.message ?? e); } }
@@ -2891,7 +2909,9 @@ export class Room {
   async _alarmRest() {
     const riteDue = await this._riteTellHub(Date.now());   // WB12d: a broken rite its hub has not heard (AUDIT BROKER-CAGE R4: not riteOwed - that is the circle's own test)
     const sdOwed = await this._sdTellHub(Date.now());   // SD3: a Hollow found its hub has not heard
-    if (await this._raidSweep(Date.now())) { if (riteDue) await this._riteArm(Date.now() + RITE_TELL_RETRY_MS); if (sdOwed) await this._sdCellArm(Date.now() + SD_TELL_RETRY_MS); return; }   // RAID3: a cell's alarm is its raids' ends, and a cleanse its hub has not heard - never past the rite's retry, nor a find's
+    const starDue = await this._starSweep(Date.now());   // STAR3: a cell's stars - a deadline passed, a hold its hub has not heard, a ledger to forget
+    if (await this._raidSweep(Date.now())) { if (riteDue) await this._riteArm(Date.now() + RITE_TELL_RETRY_MS); if (sdOwed) await this._sdCellArm(Date.now() + SD_TELL_RETRY_MS); if (starDue) await this._starArm(starDue); return; }   // RAID3: a cell's alarm is its raids' ends, and a cleanse its hub has not heard - never past the rite's retry, nor a find's, nor a star's
+    if (starDue) return;   // STAR3: a cell that keeps a star forgets nothing yet - its alarm is the star's (armed by its sweep)
     for (const [, b] of this._all()) if (b.id) return;
     const m = await this.state.storage.list({ prefix: 'world:' });
     const dead = [...m.keys()];
@@ -2905,7 +2925,7 @@ export class Room {
    *  next hello, as a drain's is. The cursors ride storage; a full page is followed SWEEP_STEP_MS later, an empty one
    *  ACCOUNT_SWEEP_MS later from the start. */
   async _sweepHub(now) {
-    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall']));   // AUDIT WBX2 M9: one read (EG-ZA: and the breach receipts' cursor; AUDIT EG IV: and the calls')
+    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc']));   // AUDIT WBX2 M9: one read (EG-ZA: and the breach receipts' cursor; AUDIT EG IV: and the calls'; STAR3: and the star receipts')
     const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null, gcur = cur.get('sweep:gaterc') ?? null, rcur = cur.get('sweep:raidrc') ?? null, scur = cur.get('sweep:serpentrc') ?? null;
     const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
     const dead = [], idle = []; let alast = null;
@@ -2951,9 +2971,14 @@ export class Room {
     const calls = await this.state.storage.list({ prefix: egCallKey(''), limit: SWEEP_PAGE, ...(ccur ? { startAfter: ccur } : {}) });
     let clast = null;
     for (const [k, v] of calls) { clast = k; if (!(v?.until > now)) dead.push(k); }
+    // STAR3: and an account's star receipts once none is still kept for its hello (the raid's keep, its own shape)
+    const tcur = cur.get('sweep:starrc') ?? null;
+    const trc = await this.state.storage.list({ prefix: STAR_RC_PREFIX, limit: SWEEP_PAGE, ...(tcur ? { startAfter: tcur } : {}) });
+    let tlast = null;
+    for (const [k, v] of trc) { tlast = k; if (!raidRcLive(v, now).length) dead.push(k); }
     for (let i = 0; i < dead.length; i += SWEEP_PAGE) await this.state.storage.delete(dead.slice(i, i + SWEEP_PAGE));
-    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE || drc.size >= SWEEP_PAGE || erc.size >= SWEEP_PAGE || calls.size >= SWEEP_PAGE;
-    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null, 'sweep:sdrc': drc.size >= SWEEP_PAGE ? dlast : null, 'sweep:egrc': erc.size >= SWEEP_PAGE ? elast : null, 'sweep:egcall': calls.size >= SWEEP_PAGE ? clast : null });
+    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE || drc.size >= SWEEP_PAGE || erc.size >= SWEEP_PAGE || calls.size >= SWEEP_PAGE || trc.size >= SWEEP_PAGE;
+    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null, 'sweep:sdrc': drc.size >= SWEEP_PAGE ? dlast : null, 'sweep:egrc': erc.size >= SWEEP_PAGE ? elast : null, 'sweep:egcall': calls.size >= SWEEP_PAGE ? clast : null, 'sweep:starrc': trc.size >= SWEEP_PAGE ? tlast : null });
     await this.state.storage.setAlarm(now + (more ? SWEEP_STEP_MS : ACCOUNT_SWEEP_MS));
   }
 
@@ -3109,12 +3134,13 @@ export class Room {
     if (c.gi) await this._loadGuildOuts(nowS);   // AUDIT MERGE-PLUS A3: the holds a wake left in storage
     const guild = c.gi && !this._guildOutAfter(c.gi, c.gm, c.i) ? { gi: c.gi, gt: c.gt, gm: c.gm } : {};
     // WB9g: and the aura at their feet - `au`, the one the token signed for (stamped by `badged` beside the title)
+    // WITCH1: and the profile icon worn - `pi`, the one the token signed for (stamped by `badged` beside the aura)
     // SEAT1c: `ts`, a seat title's claim; GLYPH-WEAR: `gx`, the glyphs taken off - `badged` leaves them out of every row, `glyphs` stays whole for the rights
     // LEGACY7 part two: and the house - `hn`, `hc`, `hb`, `hg`, the line the realm character is of (stamped by `badged`)
     const house = c.hn ? { hn: c.hn, ...(c.hc ? { hc: c.hc } : {}), ...(c.hb ? { hb: c.hb } : {}), ...(c.hg ? { hg: c.hg } : {}) } : {};
     // AUDIT LEGACY III O1: and the realm character itself - `ci`, beside the realm's yes alone (identityToken.js claimsValid)
     // INT7: and its ARMS (`wa`, the judged pack's most reach and its bow) - every referee's clip of a blow between players
-    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
+    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
   }
 
   /** The verifying key, imported once. Shared by the hello and by
@@ -3490,7 +3516,7 @@ export class Room {
         // AUDIT SCALE II R2-4: and kept, so a woken instance whose sockets say nothing still knows it
         if (this._hubKeyKept !== this._hubKey) { this._hubKeyKept = this._hubKey; try { await this.state.storage.put(HUB_KEY_KEY, this._hubKey); } catch { this._hubKeyKept = null; } }
       }
-      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, sub: who.subject, ...(instParty ? { ip: 1 } : {}), ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)
+      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, sub: who.subject, ...(instParty ? { ip: 1 } : {}), ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)
       if (!chat && m.pose && this._trailing({ key: a.key, sub: who.subject })) this._trailPose(ws, m.pose, now);   // AUDIT INT11: a fighter's socket new to the room stands where its hello put it, from now - on its trail, or none says when
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
@@ -4097,6 +4123,7 @@ export class Room {
       try { await this._riteWord(ws, a, m, now); } catch (e) { console.warn('[rite] word failed', e?.message ?? e); }
       return;
     }
+    if (m.t === 'star') return this._starFrame(ws, a, m);   // STAR3: a word at a fallen star, to its cell - a method of its own
     if (m.t === 'eg') {
       // EG-PLAY: AN ELITE BREACH - the open, to the hub alone (the service's signed order); a member's admission, door, way
       // home and blows, to its breach's room alone (anywhere else junk), on the breach's own bucket
@@ -9666,6 +9693,255 @@ export class Room {
     if (!kept.length) { await this.state.storage.delete(k); return; }
     if (!Array.isArray(v) || kept.length !== v.length) await this.state.storage.put(k, kept);
     for (const e of kept) this._send(ws, JSON.stringify({ t: 'raid', k: 'rc', r: e.r }));
+  }
+
+  // ───────────────────────────── STAR3: A FALLEN STAR ─────────────────────────────
+  /** A WORD AT A FALLEN STAR (`{t:'star', n, k, px, py, lv, s, o, kn, wc, hb, mf}`, net/wire.js validStarIn - bible/11-
+   *  Multiplayer/Starfall.md section 5): on its own bucket, deeper than the client's (the same strikes), in a cell alone
+   *  (anywhere else junk: a correct client says none there), credited to the VERIFIED account. */
+  async _starFrame(ws, a, m) {
+    const now = Date.now();
+    if (!this._spend(ws, now, starRelayGate, 'starBucket', 'starDrops', 'too many star frames')) return;
+    if (!isCellRoom(a.key)) { this._junk(ws); return; }
+    try { await this._starWord(ws, a, m, now); } catch (e) { console.warn('[star] word failed', e?.message ?? e); }
+  }
+  /**
+   * THE WORD, JUDGED AND FOLDED (the raid's law and the rite's): heard in the star's own cell alone and never in a layer,
+   * inside the star's life (net/starfall/starfallLaw.js starHeard - its landing to its deadline and the grace, inside the
+   * window). A star is its whole tuple - the night, the star, its pixel - and its ledger is made only before its deadline
+   * (starMayMake) by a word whose socket's pose stands at the star the law places in that pixel (starNear), in a place the
+   * cell can give. A word from off the star is heard (its speaker stands there no longer) and counts nothing. A ledger that
+   * moved is written and said to the cell, else the speaker is answered with it - the speaker's copy with its own
+   * account's credited blows (`hm`); the master's fall holds it (`_starHold`), and a word on a star held from an account
+   * that earned it is answered with its receipt again (a reconnect that missed it).
+   */
+  async _starWord(ws, a, m, now) {
+    if (worldRoom(m.px, m.py) !== a.key) { this._junk(ws); return; }
+    // NO STAR IN A LAYER (AUDIT SCALE II R3-3, the raid's and the rite's law): a layer is another object for the same cell,
+    // and a ledger of its own would be a second fight for one star - its own waves, its own hold, its own receipts. An
+    // honest client says its word there, so nobody is struck
+    if (a.ly) return;
+    if (!starHeard(m.n, m.k, now)) return;   // before its landing, past its deadline and the grace, or outside the window: nothing read, kept or said
+    const id = starLedgerId(m);
+    const here = !!a.pose && starNear(m.n, m.k, m.px, m.py, a.pose.x, a.pose.z);
+    const acct = typeof a.sub === 'string' && a.sub ? a.sub : `id:${a.id}`;
+    let led = await this._starLedgerOf(id);
+    const fresh = !led;
+    if (!led) {
+      if (!here) return;   // made only at the star
+      if (!starMayMake(m.n, m.k, now)) return;   // never past its deadline: the grace hears a ledger's last words, it makes none
+      if (!(await this._starMakeRoom(now, acct))) return;   // no place for it now
+      led = newStarLedger(m, now, acct);
+      this._stars.set(id, led);
+    }
+    const moved = foldStarWord(led, acct, a.name ?? '', m, here, now);
+    if (led.p === P_HELD && !led.said) { await this._starHold(led, now); return; }   // held: said once its receipts are minted - a word that lands mid-mint is said nothing until then
+    if (fresh || moved || (!starOver(led) && now - (this._starSavedAt.get(id) ?? 0) >= STAR_SAVE_MS)) await this._starSave(led, now);
+    const mine = starLedgerState(led, acct);   // the speaker's: its own account's credited blows ride it (`hm`)
+    if (moved) this._starFan(starLedgerState(led), ws, mine);
+    else this._send(ws, JSON.stringify({ t: 'star', ...mine }));
+    const r = led.said && typeof a.sub === 'string' ? led.rc[a.sub] : null;
+    if (r) this._send(ws, JSON.stringify({ t: 'star', k: 'rc', r }));
+  }
+  /** A star's ledger in this cell by its identity (starLedgerId), or null - the instance's copy, else storage's (read once,
+   *  kept then). */
+  async _starLedgerOf(id) {
+    if (this._stars.has(id)) return this._stars.get(id);
+    const v = await this.state.storage.get(starLedgerKey(id));
+    const led = starLedgerSane(v) && starLedgerId(v) === id ? v : null;
+    this._starKeep(id, led);
+    return led;
+  }
+  /** A ledger read, kept in hand - or not, once settled (starfallLaw.js starSettled): nothing moves it again, and a cell
+   *  may keep hundreds over (starPlaceFor), which would push its live stars' copies out of `_stars`. */
+  _starKeep(id, led) { if (!led || !starSettled(led)) this._stars.set(id, led); }
+  /** A listed ledger (`k` its key, `v` what storage holds) as the instance holds it - its copy, else the one read, kept
+   *  then - or null for a value that is no ledger of the law's under its own key. */
+  _starListed(k, v) {
+    if (!starLedgerSane(v) || starLedgerKey(starLedgerId(v)) !== k) return null;
+    const id = starLedgerId(v);
+    const had = this._stars.get(id);
+    if (had) return had;
+    this._starKeep(id, v);
+    return v;
+  }
+  /** When a ledger is forgotten, on the relay's clock: its deadline, and STAR_KEEP_MS past it. */
+  _starEndsAt(led) { return starTimes(led.n, led.k).endAt + STAR_KEEP_MS; }
+  /** The soonest thing a ledger owes: its hold minted or its hub told (again), its loss at its deadline and the grace
+   *  (starLostAt), else its forgetting. */
+  _starDueOf(led, now) {
+    if (led.p === P_HELD && !led.told) return now + STAR_TELL_RETRY_MS;
+    return starOver(led) ? this._starEndsAt(led) : starLostAt(led.n, led.k);
+  }
+  /** This cell's alarm, armed for `at` unless it already is, sooner. */
+  async _starArm(at) {
+    try { const had = await this.state.storage.getAlarm(); if (had == null || had > at) await this.state.storage.setAlarm(at); }
+    catch (e) { console.warn('[star] arm', e?.message ?? e); }
+  }
+  /** A ledger to storage, and the alarm armed for the soonest thing it owes. */
+  async _starSave(led, now) {
+    const id = starLedgerId(led);
+    this._starSavedAt.set(id, now);
+    await this.state.storage.put(starLedgerKey(id), led);
+    await this._starArm(this._starDueOf(led, now));
+  }
+  /** A NEW STAR'S PLACE in this cell, for a ledger `by` would make - answers whether there is one. Every ledger past its end
+   *  is forgotten first; then the law's place (net/starfall/starfallLaw.js starPlaceFor): a star over costs none and is
+   *  kept to its end, so its receipts are never minted twice nor its fight run again (the raid's AUDIT RAID R3); a live
+   *  one costs one, and gives it up only when nobody stands at it. With none, the new star waits. */
+  async _starMakeRoom(now, by) {
+    const m = await this.state.storage.list({ prefix: STAR_LEDGER_PREFIX });
+    const kept = [];
+    for (const [k, v] of m) {
+      const led = this._starListed(k, v);
+      if (led && now < this._starEndsAt(led)) { kept.push(led); continue; }
+      await this.state.storage.delete(k);
+      if (led) this._stars.delete(starLedgerId(led));
+    }
+    const { ok, out } = starPlaceFor(kept, by, now);
+    if (out) { const id = starLedgerId(out); await this.state.storage.delete(starLedgerKey(id)); this._stars.set(id, null); }
+    return ok;
+  }
+  /** A star word to everyone hello'd in the cell - `mine` in its place to the socket `from` that spoke. */
+  _starFan(o, from = null, mine = null) {
+    const s = JSON.stringify({ t: 'star', ...o }), own = mine ? JSON.stringify({ t: 'star', ...mine }) : s;
+    for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, ws === from ? own : s);
+  }
+  /** Each account's newest hello'd socket here, of the accounts `rc` holds a receipt for (AUDIT WBX S4: one tab an
+   *  account). */
+  _starNewest(rc) {
+    const newest = new Map();
+    for (const [ws, b] of [...this._all()]) {
+      if (!b.id || typeof b.sub !== 'string' || !Object.hasOwn(rc, b.sub)) continue;
+      const had = newest.get(b.sub);
+      if (!had || (b.since ?? 0) >= (had.b.since ?? 0)) newest.set(b.sub, { ws, b });
+    }
+    return newest;
+  }
+  /** THE HOLD, SAID ONCE - the raid's cleanse's law (AUDIT WB A10): each earner's receipt minted (net/starfall/
+   *  starReceipt.js - the seed the relay's own, the level its last word at the star said) and the ledger kept WITH them
+   *  before a word of it is said; then the ledger and `hd` to everyone in the cell, each earner's receipt to its account's
+   *  newest socket here, and the hub told until it answers - the receipts ride that word, so the hub hands each to its
+   *  account wherever it stands. A socket no account vouched for is on the count and never on the record. */
+  async _starHold(led, now) {
+    const id = starLedgerId(led);
+    if (this._starHolding.has(id)) return;   // being minted: the alarm's sweep met it mid-mint (each caller asks `said` first)
+    this._starHolding.add(id);
+    try {
+      const earned = starEarned(led);
+      const key = await this._receiptKeyOf();
+      const nowS = Math.floor(now / 1000);
+      led.rc = {};
+      for (const [acct, r] of earned) {
+        if (acct.startsWith('id:')) continue;
+        try { led.rc[acct] = await mintStarReceipt({ n: led.n, k: led.k, s: acct, c: rand32(), l: r.lv }, key, { subtle: crypto.subtle, nowS }); }
+        catch (e) { console.warn('[star] receipt refused', e?.message ?? e); }
+      }
+      led.top = starTop(earned); led.hn = earned.length; led.said = true;
+      await this._starSave(led, now);
+    } finally { this._starHolding.delete(id); }
+    this._starFan(starLedgerState(led));
+    this._starFan(starHeldWord(led));
+    for (const [sub, { ws }] of this._starNewest(led.rc)) this._send(ws, JSON.stringify({ t: 'star', k: 'rc', r: led.rc[sub] }));
+    await this._starTellHubOnce(led, now);
+  }
+  /** The hub told of a hold, and it kept - once it has answered (a beat of the alarm tells it again). */
+  async _starTellHubOnce(led, now) {
+    if (led.told || !led.said) return;
+    if (!(await this._starTellHub({ ...starHeldWord(led), rc: led.rc }))) { await this._starArm(now + STAR_TELL_RETRY_MS); return; }
+    led.told = true;
+    await this._starSave(led, now);
+  }
+  /** The hub's door (the raid's): a relay built without the binding keeps the cell's own word. */
+  async _starTellHub(body) {
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return true;
+    try { const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${STAR_INTERNAL_HELD}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) })); return !!res?.ok; }
+    catch (e) { console.warn('[star] hub', e?.message ?? e); return false; }
+  }
+  /** A CELL'S ALARM for its stars: every ledger past its end forgotten; one past its deadline unheld lost at dawn, and said
+   *  (nobody stood there to say a word that would step it); a hold whose mint never finished finished, and one its hub has
+   *  not heard told again. Answers when the next is owed - 0 when this room keeps no star (the alarm is somebody else's). */
+  async _starSweep(now) {
+    const m = await this.state.storage.list({ prefix: STAR_LEDGER_PREFIX });
+    if (!m.size) return 0;
+    let next = Infinity;
+    for (const [k, v] of m) {
+      const led = this._starListed(k, v);
+      if (!led || now >= this._starEndsAt(led)) { await this.state.storage.delete(k); if (led) this._stars.delete(starLedgerId(led)); continue; }
+      if (stepStar(led, now)) { await this._starSave(led, now); this._starFan(starLedgerState(led)); }
+      if (led.p === P_HELD && !led.said) await this._starHold(led, now);
+      else await this._starTellHubOnce(led, now);
+      next = Math.min(next, this._starDueOf(led, now));
+    }
+    if (next === Infinity) return 0;
+    await this._starArm(next);
+    return next;
+  }
+  /** THE HUB'S held stars of the nights still standing - `[n, s, px, py, at]` - read once, a night's let go once its last
+   *  star is gone (net/starfall/starfallLaw.js starNightGoneAt). */
+  async _starHeldOf(now) {
+    if (this._starHeld === undefined) { const v = await this.state.storage.get(STAR_HELD_KEY); if (this._starHeld === undefined) this._starHeld = Array.isArray(v) ? v : []; }   // a read never undoes a hold kept while it was out
+    this._starHeld = this._starHeld.filter((e) => Array.isArray(e) && e.length === 5 && starOk(e[0], e[1]) && now < starNightGoneAt(e[0]));
+    return this._starHeld;
+  }
+  /** THE HUB'S HALF: a star held, from its cell. Its earners' receipts are kept and handed first (a word told again keeps
+   *  and hands none twice); then, while its night stands, everyone online hears it once and it is kept for a hello - the
+   *  list written BEFORE the hub's copy moves (AUDIT RAID R7). Projected through the wire's own law, as a client would. */
+  async _starHeldInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { /* refused below */ }
+    const hd = validStarOut({ k: 'hd', n: body?.n, s: body?.s, px: body?.px, py: body?.py, at: body?.at, top: body?.top, c: body?.c });
+    if (!hd) return json({ ok: false }, 400);
+    const now = Date.now();
+    await this._starReceiptsKeep(hd, body?.rc, now);
+    if (!(now < starNightGoneAt(hd.n))) return json({ ok: true });   // told after its night: its receipts kept, and nothing to say
+    const list = await this._starHeldOf(now);
+    if (list.some((e) => e[0] === hd.n && e[1] === hd.s && e[2] === hd.px && e[3] === hd.py)) return json({ ok: true });   // told again: the cell missed the answer, not news
+    const next = [...list, [hd.n, hd.s, hd.px, hd.py, hd.at]];
+    while (next.length > STAR_HELD_MAX) next.shift();
+    await this.state.storage.put(STAR_HELD_KEY, next);
+    this._starHeld = next;
+    const said = JSON.stringify({ t: 'star', ...hd });
+    for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);
+    return json({ ok: true });
+  }
+  /** A HOLD'S RECEIPTS, KEPT BY THE HUB for their accounts (the raid's AUDIT RAID R2): each checked for its own account and
+   *  star (the relay's own mint, read back - an unsigned one no service would take), kept under its account's key (the
+   *  newest STAR_RC_KEEP, each for STAR_RC_KEEP_MS) and handed at once to its account's newest socket here. One kept
+   *  already is neither kept nor handed again. */
+  async _starReceiptsKeep(hd, rc, now) {
+    if (!rc || typeof rc !== 'object' || Array.isArray(rc)) return;
+    const fresh = [];
+    for (const [acct, r] of Object.entries(rc).slice(0, STAR_COUNT_MAX)) {
+      const c = validStarOut({ k: 'rc', r }) ? readStarReceipt(r) : null;
+      if (c && c.signed && c.s === acct && c.night === hd.n && c.star === hd.s) fresh.push([acct, r]);
+    }
+    if (!fresh.length) return;
+    const had = new Map();
+    for (let i = 0; i < fresh.length; i += 128) for (const [k, v] of await this.state.storage.get(fresh.slice(i, i + 128).map(([acct]) => starReceiptKeyOf(acct)))) had.set(k, v);
+    const puts = [], hand = {};
+    for (const [acct, r] of fresh) {
+      const k = starReceiptKeyOf(acct);
+      const kept = raidRcLive(had.get(k), now);   // the raid's keep, its own shape: [{ r, until }]
+      if (kept.some((e) => e.r === r)) continue;
+      puts.push([k, [...kept, { r, until: now + STAR_RC_KEEP_MS }].slice(-STAR_RC_KEEP)]);
+      hand[acct] = r;
+    }
+    if (puts.length) this._noStarRcpt.clear();   // receipts are being written - nobody's 'none' stands
+    for (let i = 0; i < puts.length; i += 128) await this.state.storage.put(Object.fromEntries(puts.slice(i, i + 128)));
+    for (const [sub, { ws }] of this._starNewest(hand)) this._send(ws, JSON.stringify({ t: 'star', k: 'rc', r: hand[sub] }));
+  }
+  /** An account's kept star receipts to its hello - the good ones handed, the rest let go. */
+  async _starReceiptsTo(ws, sub, now) {
+    if (this._noStarRcpt.has(sub)) return;   // asked before and none held - no write since says otherwise
+    const k = starReceiptKeyOf(sub);
+    const v = await this.state.storage.get(k);
+    if (v === undefined) { this._noStarRcpt.set(sub, 1); return; }
+    const kept = raidRcLive(v, now);
+    if (!kept.length) { await this.state.storage.delete(k); return; }
+    if (!Array.isArray(v) || kept.length !== v.length) await this.state.storage.put(k, kept);
+    for (const e of kept) this._send(ws, JSON.stringify({ t: 'star', k: 'rc', r: e.r }));
   }
 
   // ───────────────────────────── WILD1: THE ROOM'S REMAINS ─────────────────────────────

@@ -13,6 +13,7 @@ import { sdRoomKey, sdFirst, sdRise, sdFind, sdFell, SD_NO_FALLEN, SD_NO_CLOSED,
 import { SD_ARENA, realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { sdRiftWord, SD_FALLEN_KEY, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../../src/world/superDungeon/sdDungeon.js';
+import { sdSlotsKept } from '../../../src/systems/superDungeon/sdSlots.js';
 import { SD_REALM_TEXT } from '../../../src/world/superDungeon/sdRealm.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -89,10 +90,9 @@ test('SD-ONELIFE THE RIFT\'S WORD: a slot whose Hour this player died in is refu
 });
 
 test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour I die in kept on the device (its own key, the last few, once each), the Rift asked with it, no Resurrect raising me in the Hour, and the death\'s words say it is for good (mutants: the death unkept; kept in the session alone; the Rift blind to it; a Resurrect in the Hour)', () => {
-  const block = W.slice(W.indexOf('  const sdSlotsKept = (key) => {'), W.indexOf('\n  };\n', W.indexOf('  const sdSlotsKept = (key) => {')) + 5);
   const store = new Map();
   const appStorage = () => ({ getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) });
-  const make = new Function('appStorage', 'SD_ENTERED_MAX', '_accountSds', `${block}\nreturn sdSlotsKept;`)(appStorage, SD_ENTERED_MAX, { me: () => null });   // AUDIT SD III (H1, PIN MOVED): the signed-in account's - none here, the device's
+  const make = (key) => sdSlotsKept(key, () => null, appStorage);   // AUDIT SD III (H1, PIN MOVED): the signed-in account's - none here, the device's. PIN MOVED (WITCH1): out of the world host whole, to systems/superDungeon/sdSlots.js
   const fallen = make(SD_FALLEN_KEY);
   fallen.add(7); fallen.add(7);
   assert.equal(fallen.has(7), true);
@@ -101,7 +101,7 @@ test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour
   assert.equal(JSON.parse(store.get(SD_FALLEN_KEY)).length, SD_ENTERED_MAX, 'the last few');
   assert.equal(make(SD_FALLEN_KEY).has(19), true, 'a reload reads it back');
   assert.notEqual(SD_FALLEN_KEY, SD_ENTERED_KEY);
-  assert.match(W, /const _sdFallen = sdSlotsKept\(SD_FALLEN_KEY\);/);
+  assert.match(W, /const _sdFallen = sdSlotsKept\(SD_FALLEN_KEY, \(\) => _accountSds\.me\(\)\);/);   // PIN MOVED (WITCH1): the account handed in
   assert.match(W, /if \(_deathWasOnline == null\)[^\n]*\n\s*\{ const hourSlot = modes\?\.sdRealmSlot\?\.\(\) \?\? null; if \(hourSlot != null\) _sdFallen\.add\(hourSlot\); \}/, 'kept the frame I die');   // AUDIT SD III (PIN MOVED): under D-ONLINE1's capture, which stays the death block's first statement (AUDIT WORLD B6, MWBODY1)
   assert.match(W, /const seen = \{ entered: _sdEntered\.has\(s\), fallen: _sdFallen\.has\(s\) \};\n\s*return \{ word: sdRiftWord\(rec, s, now, seen\),[^\n]*look: riftLook\(rec, s, now, seen\),/, 'the Rift asked with it');   // SD-LOOK (PIN MOVED): and its look told the same
   assert.match(W, /const rez = social\?\.acct && madeRuleHere\('resurrect'\) !== 'refused' \? rezFor\(social\.others\(\), social\.acct, _rezSeen\) \?\? legacyHost\?\.raised\(\) \?\? null : null;[^\n]*\n\s*if \(rez && legacyHost\?\.raise\(rez\) !== false\) \{ resurrectInPlace\(rez\); return; \}/, 'no Resurrect in the Hour');   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js) - the Hour's row refuses it (and the Spire's)   // AUDIT SD III (PIN MOVED): asked of the call, the rise MWBODY1's own line. PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): the rise asks Project Legacy first (legacyHost.js raise) - the Hour's law unchanged

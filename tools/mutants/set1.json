@@ -2,8 +2,8 @@
   {
     "name": "SET1-a-set-out-of-the-records-order",
     "file": "src/systems/sigil/sigil.js",
-    "old": "export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply']);",
-    "new": "export const SIGIL_SET_IDS = Object.freeze(['dagon', 'malacath', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply']);",
+    "old": "export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun']);",
+    "new": "export const SIGIL_SET_IDS = Object.freeze(['dagon', 'malacath', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun']);",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ],

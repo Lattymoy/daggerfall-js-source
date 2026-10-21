@@ -124,6 +124,7 @@ import { BOAT_GLYPH_URL } from '../boatMarks.js';   // BOAT-MARK: my boats on th
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT1: the sea serpent on the strip, in its ring's green
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon on the strip, in its ring's brass
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet, its compass mark's
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -334,6 +335,27 @@ function drawSdMark(sd, playerXZ, heading01) {
   if (!sd || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
   if (node.style.display === 'none') node.style.display = '';
   const at = Math.min(1, Math.max(0, compassMarkerLerp(sd, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// STAR6: A FALLEN STAR'S MARK - the nearest of the night's stars in the player's region, from its omen until it is gone
+// (scenes/starfall/starfallHost.js compassMark): a four-pointed star in its violet, never the gate's diamond nor the
+// Hollow's ring; the gate's bearing law, hidden never removed.
+const starMarkCss = () => 'position:absolute;top:50%;width:11px;height:11px;margin:-6px 0 0 -6px;pointer-events:none;'
+  + `background:${STAR_VIOLET_CSS};clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);`
+  + 'filter:drop-shadow(0 0 4px rgba(185,162,255,0.9))';
+function drawStarMark(st, playerXZ, heading01) {
+  if (!parts.starMark) {
+    const node = el('i', 'hud-star');
+    node.style.cssText = starMarkCss();
+    parts.compass.append(node);
+    parts.starMark = node;
+  }
+  const node = parts.starMark;
+  if (!st || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(st, playerXZ, heading01)));
   const l = `${(at * 100).toFixed(1)}%`;
   if (node.style.left !== l) node.style.left = l;
 }
@@ -967,7 +989,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, archMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
+  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, archMark: null, serpentMark: null, sdMark: null, starMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
     temp: { el: temp, glyph: tempGlyph, num: tempNum, word: tempWord, mark: tempMark },   // TEMP-UI: the temperature plate
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
     renown, renownBox, renownFill, renownGhost, renownNum, adv,
@@ -1141,6 +1163,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   drawArchMark(opts.arch ?? null, opts.playerXZ ?? null, heading01);   // EG-F
   drawSerpentMark(opts.serpent ?? null, opts.playerXZ ?? null, heading01);   // SERPENT1
   drawSdMark(opts.sd ?? null, opts.playerXZ ?? null, heading01);   // SD2c
+  drawStarMark(opts.star ?? null, opts.playerXZ ?? null, heading01);   // STAR6
   drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5
   drawWayOutMark(opts.wayOut ?? null, opts.playerXZ ?? null, heading01);   // WAYOUT1
   drawPartyMarks(opts.party ?? null, opts.playerXZ ?? null, heading01);   // COMPASS-PARTY
@@ -1514,12 +1537,19 @@ function bindStatEnding(stat) {
 }
 
 let _setPowers = null;   // STATUS-TIPS: systems/sigil/sigilSetPowers.js, once a card has asked
-/** STATUS-TIPS: a set power's tier in its worn numbers ("Each kill adds 6% weapon damage..."), by the chip's name. */
-function setPowerLine(tile) {
+/** AUDIT STAR S2: a set power's tile's set and tier - the tier its chip carries (systems/sigil/sigilSetPowers.js
+ *  setHudChips), never found by the chip's name: 'Veil' and 'Reprieve' begin no tier's name, nor does any name
+ *  in the player's language. Null for a tile of no set (a technique's, a Legendary power's) or no tier. */
+export function setTileTier(tile) {
   const set = setById(tile?.set);
-  if (!set) return null;
-  const i = set.tiers.findIndex((x) => String(tile.name ?? '').startsWith(x.name));
-  if (i < 0) return null;
+  const i = tile?.tier;
+  return set && Number.isInteger(i) && i >= 0 && i < set.tiers.length ? { set, i } : null;
+}
+/** STATUS-TIPS: a set power's tier in its worn numbers ("Each kill adds 6% weapon damage..."), by the tier its chip carries. */
+function setPowerLine(tile) {
+  const at = setTileTier(tile);
+  if (!at) return null;
+  const { set, i } = at;
   // the set powers' module is read when a card first asks (a static edge from the HUD into it closes a ring through the
   // world clock at load - sigilSetPowers registers a round hook as it loads)
   if (!_setPowers) { import('../../systems/sigil/sigilSetPowers.js').then((m) => { _setPowers = m; }).catch(() => {}); return null; }

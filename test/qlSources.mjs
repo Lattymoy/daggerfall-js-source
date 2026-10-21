@@ -2,7 +2,7 @@
 // twin of scenes/quest/questData.js (browser-only: Vite's glob), for the sheets' and the branches' pins. The same order
 // of reads: DFU's vendored quests with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests with
 // Foraging's (FORAGE-FIX), and - while the questlines' switch is on - a flagship quest's branch (qlPatches.js). And a
-// machine that knows every line the pack says: DFU's 82, Jagget's four (Foraging's quests), the questlines' five (AUDIT QUESTLINES DOC-29: said three).
+// machine that knows every line the pack says: DFU's 82, Jagget's four (Foraging's quests), the questlines' six (AUDIT QUESTLINES DOC-29: said three; AUDIT STAR8 S1: `ql gone`).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

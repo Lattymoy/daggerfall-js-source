@@ -182,6 +182,13 @@ roads: where a tree stands still never hangs on the switch. LPT-FIT
 (2026-10-07, `03-World/Roads.md`) draws every tree - a location's too - no
 wider than the room its root has from the roads, tracks and streets: a
 scale under the tree's own variety, never a move.
+FB1020c TRUNK-FIT (2026-10-20, `03-World/Roads.md`) draws a location's
+tree no wider than the room its TRUNK has from the town's own solid things -
+a fountain, a well, a crate, PROP-BODIES' bodies - by each prototype's trunk
+where it meets the ground (`world/lptCrowns.js` LPT_TRUNKS, its one-sided
+sub-meshes cut by the root's plane, baked beside the crowns): the mod's 504_12
+stands a trunk 3.42 m about its root, and Crossleigh's fountain, 1.58 m from
+one, stood inside it.
 
 ## Performance
 

@@ -1244,7 +1244,7 @@ test('PX21e: the loot window never scrolls - it grows, then widens, and its head
   assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
   assert.match(css, /\.loot-win \.remotelist \{ flex: 1; min-height: 0; overflow-y: auto;/);
   assert.match(src, /const list = el\('div', 'remotelist'\);/);
-  assert.match(src, /const v = keepList\(virtualRows\(list, shown, \(it\) => itemRow\(it, 'remote'\), \{ onAim: rowsMoved \}\)\);/);   // WAGON-FILTER: the rows a store's filter shows, into the same list; VIRT: a long one as a window
+  assert.match(src, /const v = keepList\(virtualRows\(list, shown, \(it\) => itemRow\(it, 'remote'\), \{ onAim: rowsMoved, sizes: sizesOf\('remote'\) \}\)\);/);   // WAGON-FILTER: the rows a store's filter shows, into the same list; VIRT: a long one as a window; PIN MOVED (AUDIT TRADE-VIRT, 2026-10-20): its rows' heights kept across repaints
   assert.doesNotMatch(src, /for \(const it of remote\.items\) col\.append\(/, 'the rows left the column');
   // A LONG PILE WIDENS rather than scrolling.
   assert.match(src, /export const LOOT_ONE_COLUMN = 8;/);

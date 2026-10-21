@@ -99,7 +99,7 @@ const swing = (e, weapon, target, n = 100) => { const d = setBlow(weapon, n, e, 
 // ─── THE LAW ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('SERPENT-SET the law: Sethrakul\'s Coilscale after the raids\' three - Aetheric, Satakal its patron, no raiding party\'s, never a world set; Sea-Scale, Constrict and Shed Skin at 2, 4 and 6 pieces, each a whole pair from Faint to Ascendant, every brief inside BRIEF_MAX at every stage (mutants: the set out of the record; a world set; a raid\'s; a tier\'s number)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-3), ['coilscale', 'numidium', 'panoply'], 'the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED), EG15\'s Battlemage\'s Panoply after that (PIN MOVED)');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-5), ['coilscale', 'numidium', 'panoply', 'wyrd', 'starspun'], 'the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED), EG15\'s Battlemage\'s Panoply after that (PIN MOVED), WITCH1\'s Wyrd\'s Raiment (PIN MOVED), STAR7\'s Starspun Weave last (PIN MOVED)');
   const s = setById('coilscale');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['coilscale', "Sethrakul's Coilscale", 'Satakal', '#3a9ad9', true, false, 'The Old Coil, shed and worn']);

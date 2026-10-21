@@ -211,7 +211,11 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
       if (entity.skills[i] === 100 && entity.career.primarySkills.includes(i)) onMastery?.(i);
     }
   }
-  if (raised.length) entity.currentLevelUpSkillSum = levelUpSkillSum(entity);
+  // SWAP-CYCLE (2026-10-20): the stored sum is the sum the level stands on, and a raise never lowers it. DFU's never could
+  // fall (a permanent skill only rises), so for a class as made nothing changes; a class skill given up for a less
+  // trained one (skillSwap.js) lowers the class's sum, and its ground is made up before the level moves again - stored
+  // where it fell, the swap undone would lose that ground for good, and the bar would read a lower level's fraction.
+  if (raised.length) { const sum = levelUpSkillSum(entity); if (!(entity.currentLevelUpSkillSum >= sum)) entity.currentLevelUpSkillSum = sum; }
   // L-slice (AUDIT 23 entity-9): the tail check runs on EVERY pass
   // that clears the 360-minute gate, raise or no raise (RaiseSkills
   // :1413 sits outside the skill loop) - which is what re-offers the

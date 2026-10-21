@@ -8,6 +8,25 @@
 
 Newest first.
 
+**2026-10-20 - AUDIT PERF-PASS (the performance pass, pull request #1078: TRIP-PICKS, the BOOT-FREEZE slices,
+TRADE-VIRT, SHADER-STALL, SNOW-BUDGET and the GATE-MIX merge).** The owner: *"I need you to audit this and ensure this is
+perfect and fidelity isnt lost"*. Four cold lanes on a frozen head (7e5cdfcb80), read-only, each against the code before
+its slice and over the freeware ARENA2 where it reads the game's files - the trading windows in Chromium beside the
+parent's, the doors over a fake context with and without the extension, the snowpack lock-step through whole snow years,
+the boot's slices over every region, location, town file and trip on the real map. The worst three, fidelity: a trade
+list whose rows are not one height scrolled into blank stretches and moved rows under the pointer (ui/virtualRows.js now
+measures every row and holds the one under the eye); the Elite Breach's telegraphs and crystals could be missing for a
+whole compile while a lord's blow wound up (a pass the game is played by is now built the frame it is needed, and started
+at the boot's idle so that build waits on nothing); a budgeted snowpack kept a melted point's old pack (a cut step is now
+stepped whole). The rest: a landed tile's tooltip, a resize that repainted the trade windows (a lost key, a stack count
+reset), a second compile from a warm a draw had beaten, a failed pass's programs kept, the veil's warm doing less, the
+court's warm spending a frame on a built pass, the snow's blink across a lattice cell (and the Snowfall mod's winter the
+calendar's meanwhile), an unbounded memory of road choices (200 MB at the map's whole). The boot's lane found no loss:
+every region and location, both packs' town files, every rect walk and fit window, 674,856 road orders and 224,560 trips,
+the same. Every finding fixed and pinned, or recorded with its reason, in `07-Rendering/Performance-Priority.md` (the
+AUDIT paragraphs under TRIP-PICKS, TRADE-VIRT, SHADER-STALL and SNOW-BUDGET). Mutants: `audit_perfpass.json` 27, all dead;
+13 older records re-aimed at the new code, dead.
+
 **2026-10-19 - AUDIT PLAN-1000 lanes E-H (SESSION-SIGN; lanes B-D's fixes; COURT-WATCH and CHECKPOINT-5; lane A's
 fixes and the branch whole).** Mac: *"Lets do a comprehensive audit and ensure perfection"*. Four more cold lanes on
 frozen worktrees - two of the slices had had no cold read at all (COURT-WATCH, CHECKPOINT-5, and lane A's own fixes) -

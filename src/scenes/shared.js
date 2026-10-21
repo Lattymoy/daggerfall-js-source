@@ -96,7 +96,7 @@ import { installSmithing } from '../systems/smithItems.js';   // PROF3: the Repa
 import { installCooking, dishStaminaFactor } from '../systems/cookItems.js';   // PROF9: a dish eaten, and the Tart's stamina
 import { installHealingSupply } from '../systems/healingSupply.js';   // POTION-COMMON: Potions of Healing in the loot
 import { installRaidingParties } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties' save slot
-import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js'; import '../systems/eliteGates/weirKey.js';   // EG-PLAY: and the Weir Key's (575) - its Use the world host's opener, every other host's 'cold'
+import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js'; import '../systems/eliteGates/weirKey.js'; import '../systems/festival/soulCake.js';   // WITCH1: and the Witches' Festival's two (2000, 2001); EG-PLAY: and the Weir Key's (575) - its Use the world host's opener, every other host's 'cold'
    // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
 import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
@@ -315,6 +315,9 @@ export function createSkyController(gl, params) {
   let dynamicMoons = null;   // DS1: the moons' places for the world's moonlight, from the mod's own orbits
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  /** VC4: the sun past the clouds' shadow map - the row's cover on the slab's own coverage law (cover^1.6: a sunny 0.32
+   *  loses a tenth of its sun, an overcast 0.94 two thirds). The far ring's dim, and (OW-HORIZON) the deck's `far`. */
+  const farCoverSun = () => 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
   const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
   const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds (CLK1: game minutes x WIND_SECONDS_PER_MINUTE)
   let weatherAt = null;     // the mod's real-second clock (DS1, 1:1 - BLBSkybox reads Time.deltaTime)
@@ -543,7 +546,7 @@ export function createSkyController(gl, params) {
      *  the dome's own occlusion when the clouds are off. */
     farSunFactor() {
       if (!clouds) return this.sunFactor();
-      return 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
+      return farCoverSun();
     },
     offsetOrigin(offset) { clouds?.offsetOrigin(offset); },
     /** WEATHER3d: a distant storm's strike lights its own cloud - `{ x, z, r, strength }` in the host's world metres,
@@ -714,8 +717,9 @@ export function createSkyController(gl, params) {
           const cloudSky = cb.row === weatherRowNow ? enhancedSky.state : { ...skyState({ minuteOfDay, weather: cb.word, classicMinutes: extra?.classicMinutes ?? 0, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb.row }), horizon: enhancedSky.state.horizon };
           clouds.setState(cloudSky, cb.row, cb.word, easeDt, driftXZ, (extra?.flash ?? 0) + dreadGlow, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells; EVENT1: the red strikes' glow
         }
-        // VC4: the ground's deck carries the slab's own shadow map and its square
-        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
+        // VC4: the ground's deck carries the slab's own shadow map and its square; OW-HORIZON: and the ground past the
+        // square, the far ring's own dim (farCoverSun), so the streamed ground beyond the map is lit as the ring is
+        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow, { far: farCoverSun() });
         return;
       }
       let frame = params.has('window')

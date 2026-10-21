@@ -155,7 +155,7 @@
   {
     "name": "GILDED2-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 7;",
+    "old": "export const ITEM_LAW_VERSION = 8;",
     "new": "export const ITEM_LAW_VERSION = 4;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",

@@ -30,7 +30,9 @@ test('TRADE-LOC II: the trade window\'s row says a letter\'s worth under its nam
   const t = src('src/ui/enhanced/enhancedPlayerTrade.js');
   // the one row builder both lists and both offers draw through (`row(item, side, count)`)
   assert.match(t, /const row = \(item, side, count = null\) => \{[\s\S]{0,700}const sub = \[letterWorthLine\(item\), line\.material, line\.word\]\.filter\(Boolean\)\.join\(' · '\);[^\n]*\n\s+if \(sub\) mid\.append\(el\('small', null, sub\)\);/);
-  for (const call of ["list.append(row(it, 'pack'));", "list.append(row(e.item, 'offer', e.count));", "list.append(row(it, 'theirs'));"]) assert.ok(t.includes(call), `${call} - the pack, my offer and theirs draw through the one row`);
+  // PIN MOVED (TRADE-VIRT): each list drawn through its window (`fill`, ui/virtualRows.js), the one row its build
+  // PIN MOVED (AUDIT TRADE-VIRT, 2026-10-20): each named - its rows' heights kept by name across repaints
+  for (const call of ["fill(list, items, (it) => row(it, 'pack'), 'pack');", "fill(list, entries(), (e) => row(e.item, 'offer', e.count), 'offer');", "fill(list, session.theirs.items, (it) => row(it, 'theirs'), 'theirs');"]) assert.ok(t.includes(call), `${call} - the pack, my offer and theirs draw through the one row`);
   const inv = src('src/ui/enhanced/enhancedInventory.js');
   assert.match(inv, /  pair\('Armour', line\.armour\);\n  pair\('Worth', letterWorthGold\(picked\)\);/, 'the card\'s headline pair - a letter is its worth');
 });

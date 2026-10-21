@@ -167,6 +167,12 @@ export function spoilsList(seed, level, claims = null) {
  *  record store; a store that throws or answers junk is a record never kept. AUDIT WB A6: a write the storage refuses
  *  (a full quota, a private window) is kept in this session's memory instead and read back from there - the session
  *  still knows its spent receipts and its records, and a later write that lands takes over. */
+/** AUDIT WBX S4: the spoils given outside a court, one tab at a time - two tabs of one account on one device each checked
+ *  the store before the other had written it, and both gave them (the Web Locks API; without it, at once). One lock for
+ *  every pool's grant: the gate's, the raids', the serpent's, the Hour's, the stars' (STAR7 moved it here from the world
+ *  host, so each pool's host takes the same one). */
+export const spoilsLock = (fn) => { const locks = globalThis.navigator?.locks; return locks?.request ? locks.request('wb5.spoils', () => fn()) : Promise.resolve().then(fn); };
+
 export function spoilsStore(storage) {
   const mem = new Map();
   return {
@@ -464,7 +470,8 @@ export function createSpoilsPool({
     /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that came while its court was not this player's to stand in
      *  (cast out before the kill, gone, told by the hub's next hello): the same pieces, straight into the pack, said
      *  once. Once a receipt, as the burst is; answers whether they were given. RAID4b: `roll` answers the pieces instead
-     *  (a town's thanks - raidSpoils.js raidSpoilsList), asked only for a receipt not yet spent, and `text` is said. */
+     *  (a town's thanks - raidSpoils.js raidSpoilsList), asked only for a receipt not yet spent, and `text` is said.
+     *  @param {{ day: any, seed?: number, level?: number, acct?: string, roll?: (() => any[]) | null, text?: string, owner?: any, kept?: string | null, claims?: any }} o */
     grant({ day, seed, level, acct = '', roll = null, text = SPOILS_TEXT.granted, owner = undefined, kept = null, claims = null }) {
       if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again
       const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite

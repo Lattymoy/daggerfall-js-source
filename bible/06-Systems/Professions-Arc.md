@@ -792,8 +792,8 @@ Orange, Mushroom, Egg - Foraging's own, `06-Systems/Foraging.md`) - and every di
 **Fisherman's Supper** - 2 Raw Fish, 1 Egg, 1 Green Leaves: Agility +5 for 2 hours; **Orchard Tart** - 2 Apple, 1 Egg,
 1 Yellow Berries: stamina regained +20% for 4 hours; **Feast of the Hearth** (rank 70) - 4 Raw Meat, 4 Raw Fish, 2
 Apple, 2 Orange, 2 Mushroom, 2 Egg: the whole party (the party's buff frame, PARTY-BUFFS) Strength, Endurance and
-Willpower +5 for a game day. C&C's own cooking at a fire (its Raw Fish and Raw Meat from the pack) is C&C's, untouched,
-and earns no Cooking XP - the service did not see it.
+Willpower +5 for a game day. C&C's own cooking at a fire (its Raw Fish and Raw Meat from the pack, or the Materials
+Bag - BAG-COOK, section 35) is C&C's, untouched, and earns no Cooking XP - the service did not see it.
 
 **Alchemy** - two doors, one book. DFU's own potion maker (pack ingredients) stays 1:1 and earns nothing online,
 because the service never sees it. The profession's door is the **brewing act** at an alchemy station: the
@@ -3269,7 +3269,9 @@ three). What sections 3.2, 3.3, 4.8, 9.3 and 9.4 left open for PROF9, DECIDED he
 - **What PROF9 is.** 15's row - Cooking - whole: the fire and its four dishes (9.3), the pan (9.4), the dishes as items and
   what eating them does, the feast at the party's table; the Cooking track and its four specialisations practised. C&C's
   own cooking at a fire - a Raw Fish from the pack turned to Cooked Fish (`scenes/camps.js` openCook) - is the mod's,
-  untouched, and earns nothing (9.3: "the service did not see it").
+  untouched, and earns nothing (9.3: "the service did not see it"). BAG-COOK (FIELD BUGS 2026-10-20c, "raw fish cant be
+  cooked over fires"): since BAG1 a haul's Raw Fish goes into the Materials Bag first, and the list read the pack alone;
+  it reads the pack, then the bag, and the cooked food goes into the pack (`06-Systems/Materials-Bag.md` section 16).
 - **The fire** (9.3: "any campfire, hearth or brazier"). DECIDED: any LIT fire within C&C's own reach of its flame
   (`survival/camp.js` BY_FIRE_REACH, 4 m) - anyone's campfire, a peer's included, and the world's braziers and fire bowls
   (`survival/hearth.js`, HEARTH1's records) - in the street and the wilderness (`scenes/world.js` cookFireHere), a building
@@ -4090,6 +4092,11 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   Loom beside each station - every piece the craft tempers, its step, its input and XP, Temper pressed or the rank said,
   the input short said; Reforge with Essence at the enchanting station - its rank below 50, each line a press from it,
   the Essence short said. The station's fee is a temper's and a reforge's, as a craft's and a disenchant's.
+  TEMPER-CARRIED (FIELD BUGS 2026-10-20c): the two temper sections stood in the station list of a book that carries
+  nothing, and every live book carries since BAG1, whose page (`profPages.js` drawCarryStores) listed neither - the
+  temper was drawn nowhere in the game. The carrying page lists both beside the anvil and the loom
+  (`profPages.js:"    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // FB1020c TEMPER-CARRIED: the tailor's"`).
+  Pinned by `test/ui/fb1020c_tempercarried.test.js`; `tools/mutants/fb1020c_tempercarried.json`.
 - **The four hosts**: `scenes/world.js` wired (the pack's pieces - not worn, no market act kept on them - and the step and
   the line laid on the answer); `worldModes.js` holds the stations the pages read and no piece of its own; `exterior.js`
   and `dungeonContext.js` hold no station - none to wire.

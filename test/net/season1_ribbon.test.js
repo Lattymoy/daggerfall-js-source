@@ -135,8 +135,8 @@ test('SEASON1 THE BANNER RIBBON ON THE TOKEN AND THE RELAY: a claim set may carr
   assert.equal('rb' in slyJoin, false, 'a frame that only types one gets none');
   // the wiring by source - the relay's two reads
   const relay = src('server/src/index.js');
-  assert.match(relay, /glyphs: c\.g, gx: c\.gx, au: c\.au, rb: c\.rb, mu, lv: c\.lv,/);
-  assert.match(relay, /au: who\.au, \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv,/);
+  assert.match(relay, /glyphs: c\.g, gx: c\.gx, au: c\.au, pi: c\.pi, rb: c\.rb, mu, lv: c\.lv,/);   // PIN MOVED (WITCH1): the profile icon worn beside the aura
+  assert.match(relay, /au: who\.au, \.\.\.\(who\.pi \? \{ pi: who\.pi \} : \{\}\), \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv,/);   // PIN MOVED (WITCH1): the profile icon worn beside the aura
 });
 
 test('SEASON1 THE BANNER RIBBON ON THE PAGE: the mint\'s answer hands mine to the page (null for none, nothing from an older service); the session keeps a peer\'s off the welcome and each hello (one taken off is gone), remembers it past a re-stand, and answers `ribbonOf`; the name point carries it; the bitmap face draws a band the run\'s width in the field colour under the name, edged in the border colour, none for none; the DOM face a band under the name row in both colours, written when it changes and off for none (mutants: the minter; the session\'s reads; the point; the bands; the DOM\'s colours and its off)', async () => {

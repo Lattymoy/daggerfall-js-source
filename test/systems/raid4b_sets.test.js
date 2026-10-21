@@ -318,16 +318,16 @@ test('RAID4b the HUD\'s chips: No Escape\'s mark while it stands, Iron Hide\'s w
   at(0);
   assert.deepEqual(setHudChips(t), []);
   reportPlayerKill(RAT);
-  assert.deepEqual(setHudChips(t), [{ key: 'mark', set: 'thieftaker', name: 'No Escape', text: '10s', state: 'active' }]);
+  assert.deepEqual(setHudChips(t), [{ key: 'mark', set: 'thieftaker', name: 'No Escape', text: '10s', state: 'active', tier: 2 }]);   // PIN MOVED (AUDIT STAR S2): a chip carries its tier, which the HUD's card reads
   fresh(); online(1);
   const o = wearSet(player(), 'orcsbane', 6);
   door([], { me: o });
   at(0);
   reportPlayerKill(RAT);
-  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '10', state: 'active' }]);
+  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '10', state: 'active', tier: 2 }]);
   setDamageMod(o, 10);
   at(0.5);
-  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '1:00', state: 'recovering' }]);
+  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '1:00', state: 'recovering', tier: 2 }]);
   reportPlayerKill(RAT);
   at(61);
   reportPlayerKill(RAT);

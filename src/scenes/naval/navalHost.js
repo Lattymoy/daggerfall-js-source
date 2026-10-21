@@ -24,7 +24,9 @@
 //   where() -> { px, py, region, day, nearPort, capitals, cityLights }  the waters: the map pixel, its region, the day
 //                                number (the seeds and notoriety's decay), a port within reach, the three capitals'
 //                                pixels (navalShips.js crownOf), the lanterns' hour (SHIP-WATCH: the night's too - a
-//                                lit ship seen far, a dark one close, shipWatch.js)
+//                                lit ship seen far, a dark one close, shipWatch.js); `port` the board's port lain at
+//                                (CAPT-BOARD) - FB1020c BERTH-RING: within SEA_RING, the berth's ring, where `nearPort`
+//                                is a place the port's data flags within a pixel (inPortWaters reads the two)
 //   say(text, seconds), mid(text, seconds)     the HUD's line and the mid-screen word
 //   audio: { play3d(key, pos, vol, opts), loop3d(key, pos, vol, opts) -> handle }
 //   flame(pos) -> { move(pos), retire() }       a deck fire - Daggerfall's own fire flat (scenes/naval/navalFlames.js)
@@ -474,7 +476,7 @@ export const heaveToDecel = (v) => Math.min(CSA_BRAKE_MAX, Math.max(HEAVE_TO_DEC
  *  asks more than CSA_BRAKE_MAX (a storm's: a Carrack on her quarter at 38.9 m/s runs 37.7 m). The heave-to is offered by
  *  where it leaves her (heaveFor): offered beside a struck ship at that way, she ran past BOARD_RANGE of her. */
 export const heaveToRun = (v) => Math.max(0, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * heaveToDecel(v)));
-/** AUDIT NAV1 (the helm): THE SHIPWRIGHT stands at a port - a port town's waters (`where().nearPort`), her way under
+/** AUDIT NAV1 (the helm): THE SHIPWRIGHT stands at a port - a port town's waters (`inPortWaters` - FB1020c BERTH-RING), her way under
  *  YARD_SPEED (she lies to his quay) and no hostile ship near (systems/naval/navalYard.js). */
 export const YARD_SPEED = 2.5;
 export const RAM_MEMORY_S = 0.6;
@@ -2761,9 +2763,14 @@ export function createNavalHost(deps) {
 
   // ── the shipwright, and the mending at sea (AUDIT NAV1, the helm) ────────────────────────────────────────────────
   let mending = false;   // my helm's boat mended this frame
+  /** FB1020c BERTH-RING: whether she lies in a port's waters - a place the port's data flags within a pixel of hers
+   *  (`nearPort`, Come Sail Away's own reading, kept) or a board port within SEA_RING (`port`, the world's navalPortHere -
+   *  the ring the port law reads: at twelve board ports no Small Ship finds water within a pixel). The berth, the shipwright and the
+   *  crew's port ask this one question; the sea's traffic and its waters (`nearPort` alone) ask another. */
+  const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };
   /** Whether the shipwright stands for my boat: a port's waters, her way under YARD_SPEED, no hostile ship near. */
   function yardHere(boat) {
-    if (!enabled || !boat || !where().nearPort) return false;
+    if (!enabled || !boat || !inPortWaters()) return false;
     const v = boatPose(boat).velocity;
     return Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostileNearMe();
   }
@@ -2792,7 +2799,7 @@ export function createNavalHost(deps) {
     s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());   // CAPT-CREW: her posts aboard, by their holders' service - CAPTAIN-TREE: and her captain's drill
     if (b === boatInPlay()) {
       const v = boatPose(b).velocity;
-      c.tick(d, { inPort: !!where().nearPort && Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostile, atSea: !where().nearPort, wear: s.worth.wear });
+      c.tick(d, { inPort: inPortWaters() && Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostile, atSea: !inPortWaters(), wear: s.worth.wear });   // FB1020c BERTH-RING: the berth's own port
     }
   }
   /** SEA-REPAIR: her hands at the repairs she was ordered to make - her carpenter's stores spent as the work is done
@@ -2815,7 +2822,7 @@ export function createNavalHost(deps) {
    *  work is done or the stores give out under it); `underFire` - DAMAGE CONTROL, the order's work with a hostile ship
    *  near at SEA_REPAIR_UNDER_FIRE of the pace, her fires left burning and a wreck a wreck until the fight is over. */
   function repairStep(b, s, d, { auto = false, underFire = false, inPlay = null } = {}) {
-    if (where().nearPort) return;   // AUDIT CC-D1: in port the shipwright is the repairs (the order stands for the open sea)
+    if (inPortWaters()) return;   // AUDIT CC-D1: in port the shipwright is the repairs (the order stands for the open sea) - FB1020c BERTH-RING: the shipwright's own port
     if (auto && !wantsRepair(s.damage)) return;
     const stores = deps.stores?.count?.(b) ?? 0;
     if (auto && s.credit <= 1e-9 && stores <= 0) return;   // nothing to work with: the free mending stands, unsaid
@@ -2853,7 +2860,7 @@ export function createNavalHost(deps) {
     let said = null;
     if (order === CREW_ORDERS.repair) {
       if (!wantsRepair(st.damage)) said = `${who}No repairs needed, Captain.`;
-      else if (where().nearPort) said = `${who}We're in port, Captain. The shipwright can do the repairs.`;   // AUDIT CC-D1
+      else if (inPortWaters()) said = `${who}We're in port, Captain. The shipwright can do the repairs.`;   // AUDIT CC-D1 (FB1020c BERTH-RING: the shipwright's own port)
       else if (st.credit <= 1e-9 && (deps.stores?.count?.(boat) ?? 0) <= 0) said = `${who}We've no carpenter's stores aboard, Captain.`;
       if (said) { deps.say?.(said, 4); return { ok: false, said }; }
     }

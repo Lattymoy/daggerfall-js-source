@@ -157,8 +157,9 @@ import { t, localizedText, formatMessage, formatNumber } from '../../systems/tex
  *   CRAFT4: the pack's known Magic and Rare pieces an Enchanter reforges with Essence, each line it may roll
  * @property {(offer: { item: any, name: string, tier: string }, index: number) => Promise<{ ok: boolean, text: string }>} [essenceReforge]
  *   CRAFT4: a line rolled again for Arcane Essence
- * @property {(key: string, qty: number, order?: string) => Promise<{ ok: boolean, text: string, kept?: boolean }>} [deposit]   BAG1: carried units of a
- *   material - out of the bag and the pack - into the Stores
+ * @property {(plan: { material: string, qty: number, order: string }[]) => Promise<{ ok: boolean, text: string, kept?: boolean }[]>} [deposit]   BAG1:
+ *   carried units of a material - out of the bag and the pack - into the Stores; FB1020c ONE-SAVE: a plan of put-ins as
+ *   one batch (profBook.js depositMany - one save for them all), one answer a put-in, in order
  * @property {() => boolean} [inTown]   BAG1: whether the Stores are reached here - in a town, indoors or out
  * @property {(key: string) => number} [room]   BAG1: how many more units of a material the bag and the pack can take
  * @property {(key: string) => number} [carriedHeld]   BAG1: how many units of a material the bag and the pack hold
@@ -250,6 +251,9 @@ export const BAG_PAGE_WORDS = Object.freeze({
   emptied: (moved, left) => `${moved.toLocaleString('en-US')} moved into your pack.${left > 0 ? ` ${left.toLocaleString('en-US')} stay in your bag: your pack can carry no more.` : ''}`,
   /** AUDIT2 BAG1 U1: a material whose Stores are full, passed over by Put everything in without asking */
   storesFull: 'Your Stores can\'t hold any more of it.',
+  /** FB1020c ONE-SAVE: a put-in the counting-house has not answered yet - its goods out of the bag, asked again later (the
+   *  world host's BAG_DEPOSIT_KEPT_TEXT, this its one home) */
+  kept: 'The counting-house is slow to answer. Your goods are on their way to the Stores.',
   /** AUDIT BAG1: what went in, and each material that would not with its reason - a refusal partway said only itself, and
    *  the units that had gone in were never said; `stop` the counting-house's silence, which ends the run */
   allInDone: (n, refused = [], stop = null) => [
@@ -1001,8 +1005,9 @@ function drawCarryStores(detail, rerender, kit) {
       _stores.busy = true; rerender();
       // AUDIT BAG1: a material refused (its Stores full) is said and passed over - the rest still go in; the counting-house
       // silent (a deposit kept) ends the run, its goods on their way
-      let moved = 0, stop = null;
-      const refused = [];
+      // FB1020c ONE-SAVE: every put-in planned first, then ONE batch (the provider's deposit - profBook.js depositMany): one
+      // save for them all, where a put-in a material each waited on a save of the whole game, in series, every button held
+      const refused = [], plan = [];
       for (const r of storesRows(carryRows(book, p.carriedHeld, p.heldKeys), {}, p.name)) {
         // AUDIT2 BAG1 U1: as many as the Stores have room for - a material whose Stores are full is said, never asked
         let room = storesRoomOf(book, r);
@@ -1010,16 +1015,20 @@ function drawCarryStores(detail, rerender, kit) {
         if (held > 0 && room < 1) { refused.push({ name: r.name, text: BAG_PAGE_WORDS.storesFull }); continue; }
         // LOOT-LOOSE: what the service counts by `all` (every origin as it was), then the rest held as loose (`work`)
         for (const [n, order] of /** @type {[number, string][]} */ ([[r.carried, 'all'], [r.uncounted | 0, 'work']])) {
-          let left = Math.min(n, room);
-          while (left > 0) {
-            const q = Math.min(left, DEPOSIT_MAX);
-            const res = await p.deposit(r.material, q, order);
-            if (!res?.ok) { if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); left = -1; break; }
-            moved += q; left -= q; room -= q;
+          for (let left = Math.min(n, room); left > 0; left -= DEPOSIT_MAX) {
+            const qty = Math.min(left, DEPOSIT_MAX);
+            plan.push({ material: r.material, qty, order, name: r.name });
+            room -= qty;
           }
-          if (stop || left < 0) break;
         }
-        if (stop) break;
+      }
+      const answers = plan.length ? await p.deposit(plan) : [];
+      let moved = 0, stop = null;
+      const said = new Set();
+      for (const [i, res] of answers.entries()) {
+        if (res?.ok) moved += plan[i].qty;
+        else if (res?.kept) stop ??= res.text ?? null;
+        else if (!said.has(plan[i].material)) { said.add(plan[i].material); refused.push({ name: plan[i].name, text: res?.text ?? null }); }
       }
       _stores.busy = false;
       _stores.word = BAG_PAGE_WORDS.allInDone(moved, refused, stop);
@@ -1068,14 +1077,15 @@ function drawCarryStores(detail, rerender, kit) {
     put.disabled = _stores.busy || !town || inMost < 1 || !p.deposit;
     put.title = !town ? BAG_WORDS.town : pick.carried + (pick.uncounted | 0) > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : '';
     // LOOT-LOOSE: the counted units first, by `all` (a `work` order moves no gold's), then the loose by `work`
+    // FB1020c ONE-SAVE: the two as one batch - one save
     put.onclick = run(async () => {
       const q = Math.max(1, Math.min(_stores.qty, inMost)), counted = Math.min(q, pick.carried);
-      let res = counted > 0 ? await p.deposit?.(pick.material, counted, 'all') : null;
-      if (q > counted && (!res || res.ok)) {
-        const loose = await p.deposit?.(pick.material, q - counted, 'work');
-        res = loose?.ok && res?.ok ? { ...loose, text: BAG_PAGE_WORDS.allInDone(q) } : loose;
-      }
-      return res;
+      const plan = [...(counted > 0 ? [{ material: pick.material, qty: counted, order: 'all' }] : []), ...(q > counted ? [{ material: pick.material, qty: q - counted, order: 'work' }] : [])];
+      const answers = (await p.deposit?.(plan)) ?? [];
+      const failed = answers.find((res) => !res?.ok);
+      const went = answers.reduce((n, res, i) => n + (res?.ok ? plan[i].qty : 0), 0);
+      if (failed) return went > 0 ? { ...failed, text: BAG_PAGE_WORDS.allInDone(went, [], failed.text ?? null) } : failed;
+      return answers.length > 1 ? { ...answers[1], text: BAG_PAGE_WORDS.allInDone(q) } : answers[0];
     });
     if (withdrawable(pick.material)) bar.append(qty, take, put);
     detail.append(bar);
@@ -1094,8 +1104,10 @@ function drawCarryStores(detail, rerender, kit) {
   drawStationTiles(detail, rerender, kit, [   // MENU-ORDER
     ['forge', (d) => drawForge(d, rerender, kit)],
     ['anvil', (d) => drawAnvil(d, rerender, kit)],
+    ['temper-anvil', (d) => drawTemper(d, rerender, kit, 'anvil')],   // FB1020c TEMPER-CARRIED: CRAFT4's temper, here too - every live book carries
     ['workbench', (d) => drawWorkbench(d, rerender, kit)],
     ['loom', (d) => drawLoom(d, rerender, kit)],
+    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // FB1020c TEMPER-CARRIED: the tailor's
     ['mason', (d) => drawMasonBench(d, rerender, kit)],
     ['fire', (d) => drawCookFire(d, rerender, kit)],
     ['jeweller', (d) => drawJewellerBench(d, rerender, kit)],
@@ -2432,7 +2444,7 @@ function drawCookFire(detail, rerender, { el, divider }) {
     box.append(go, quick);
     detail.append(box);
   }
-  detail.append(el('p', 'px-note', t('prof.page.fire.sources', 'Raw Meat comes from skinning, Raw Fish from the net, the Mushroom, the Egg, the Apple and the Orange from the Basket, and herbs from their patches. All go to your Stores. A Raw Fish from your pack cooked over the flame is a plain meal and gives no Cooking experience.')));
+  detail.append(el('p', 'px-note', t('prof.page.fire.sources', 'Raw Meat comes from skinning, Raw Fish from the net, the Mushroom, the Egg, the Apple and the Orange from the Basket, and herbs from their patches. All go into your Materials Bag, then your pack. A Raw Fish from your pack or bag cooked over the flame is a plain meal and gives no Cooking experience.')));   // FB1020c BAG-COOK: the bag first since BAG1, and the fire's Cook food reads it
   if (elsewhere && !_cook.act) detail.append(el('p', 'px-note', handsLine(elsewhere)));
   if (_cook.word) detail.append(el('p', 'prof-word', _cook.word));
 }

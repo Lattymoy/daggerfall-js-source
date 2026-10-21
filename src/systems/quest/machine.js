@@ -319,6 +319,12 @@ export { QUEST_MESSAGES } from './quest.js';   // QuestMachine.cs:260's enum, de
 /** QuestMachine.cs:45 - how often DFU ticks quest logic per second
  *  of real time. The host paces tick() by this. */
 export const TICKS_PER_SECOND = 10;
+/** AUDIT STAR8 S1: how many of the machine's ticks a quest foe's behaviour may go undriven and still stand (questFoeStands)
+ *  - five minutes of play. A body stands while its pool drives its behaviour (resourceBehaviour.js update, each frame it
+ *  lives); a cull, a teleport's sweep or a load that did not bring it back stops that, and none of them says so to the
+ *  behaviour (exteriorFoes.js clearLive drops its records whole). Long enough for a load's revived foe to come back
+ *  behind its art, and for a pool its mode does not drive (an exterior foe while the player stands in a building). */
+export const FOE_STANDS_TICKS = 5 * 60 * TICKS_PER_SECOND;
 /** DaggerfallDateTime: tombstoned quests expire after one week. One
  *  home in systems/gameDate.js since V1 - re-exported here because
  *  the quest lane reads it by this name. */
@@ -411,6 +417,7 @@ export class QuestMachine {
     // must not be kept alive here) - a shared-quest resync relinks the ones standing on the quest it rebuilds
     this._behaviourRefs = new Set();
     this._behaviourSweepAt = BEHAVIOUR_SWEEP_MIN;   // AUDIT 68 S29-behaviour-registry-leak: the size that prunes it next
+    this.beat = 0;   // AUDIT STAR8 S1: the ticks this machine has run - a behaviour's own `beat` is the last it was driven at
     this.questsToInvoke = [];
     // QUEST1: quest names currently kept in LIVE sync with a party -
     // set on both a fresh receive AND on a manual share (bidirectional:
@@ -494,6 +501,10 @@ export class QuestMachine {
     return {
       showPopup: (q, tokens) => this.deps.showPopup?.(q, tokens),
       questFoeKilled: (q, foe, n) => this.deps.questFoeKilled?.(q, foe, n),   // QUEST-NOTE: a quest's foe fell
+      // AUDIT STAR8 S1 (the questlines' `ql gone`, systems/questlines/qlActions.js QlGone): whether any of a quest's Foe
+      // stands in a scene now - a behaviour on it (resourceBehaviour.js, one a body: a wave minted and still placing, a
+      // load's foe revived before its art), not destroyed, not fallen, and driven by its pool within FOE_STANDS_TICKS
+      questFoeStands: (q, foe) => this._liveBehaviours(q?.uid).some((b) => b.targetSymbol?.name === foe?.symbol?.name && !b.isFoeDead && this.beat - (b.beat ?? 0) <= FOE_STANDS_TICKS),
       showPrompt: (q, message, respond) => this.deps.showPrompt?.(q, message, respond),
       // QG1: PromptMulti's 2-4 button box - BUTTONS.RCI record
       // numbers out, the clicked record number back
@@ -1556,6 +1567,7 @@ export class QuestMachine {
 
   /** One machine tick (QuestMachine.cs Tick). */
   tick() {
+    this.beat++;   // AUDIT STAR8 S1 (questFoeStands)
     // Invoke scheduled quests (QuestMachine.cs StartQuest:719-725):
     // Start, then the talk-topic registration, then the live table.
     // The questor-behaviour relink that follows in C# is scene work

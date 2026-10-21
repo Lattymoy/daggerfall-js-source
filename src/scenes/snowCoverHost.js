@@ -42,7 +42,8 @@ import { snowCoverAt, SNOW_TILE_ROW0 } from '../render/snowCoverGlsl.js';
  * while the world stands up about them (no ground under their feet yet); `nowMinutes` how often the pack now is read
  * again for the frames (game minutes - the cover moves over hours); `ease` the seconds a shown line takes to reach a new
  * one (the line walks with the weather, never jumps; a point first read shows its own); `winter` the cover a pixel's
- * buildings wear winter from.
+ * buildings wear winter from. SNOW-BUDGET: `frameMs` - the asks within that much of the clock of the first of them are
+ * one frame's, and share its budget (createSnowCoverHost's `budgetFor`).
  */
 export const SNOW_COVER = Object.freeze({
   spacing: 2,
@@ -52,6 +53,7 @@ export const SNOW_COVER = Object.freeze({
   nowMinutes: 5,
   ease: 0.6,
   winter: 0.5,
+  frameMs: 12,
 });
 /** The PLACE-LRU key of a ground set's twin (renderer.js uploadTileArray: its summer records, then its winter ones). */
 export const twinKey = (summer) => `twin:${summer}`;
@@ -85,15 +87,17 @@ export function twinLayers(summer, winter) {
 /**
  * @param {{ renderer: any, climateAt: (px: number, py: number) => number, mapHeight: number, stateOf: () => any,
  *   builtOf: () => Map<string, any>, heightAt: (x: number, z: number) => number, owns: () => boolean,
- *   markReskin: (key: string) => void, now: () => number, place?: () => { px: number, py: number }, arriving?: () => boolean }} deps
+ *   markReskin: (key: string) => void, now: () => number, place?: () => { px: number, py: number }, arriving?: () => boolean,
+ *   clock?: () => number }} deps
  *   `climateAt` the map's climate index; `stateOf()` the stream's state, `builtOf()` its pixels and `heightAt` its ground
  *   at a scene point (asked, never held); `owns()` whether the snow lane runs (weatherSim.js precipLawOn - the enhanced
  *   lane's law, with a host that handed the air its map); `markReskin(key)` the snow's re-skin of one pixel in place (world.js
  *   _reskin.skin - AUDIT PRECIP HOST-7); `now()` THE ONE CLOCK - the event minute the snow is read at; `place()` the player's pixel, for a build
  *   that asks before the first frame (`settle`); `arriving()` whether the world is still standing up (no ground under the
- *   player) - a build's wait then takes the arrival's budget (SNOW_COVER.arriveMs)
+ *   player) - a build's wait then takes the arrival's budget (SNOW_COVER.arriveMs); `clock()` the frames' budget's clock
+ *   (performance.now's - SNOW-BUDGET)
  */
-export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, builtOf, heightAt, owns, markReskin, now, place = null, arriving = null }) {
+export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, builtOf, heightAt, owns, markReskin, now, place = null, arriving = null, clock = () => performance.now() }) {
   const lattice = new SnowpackLattice({ climateAt, spacing: SNOW_COVER.spacing });
   const S = SNOW_COVER.spacing, R = SNOW_COVER.radius, SIDE = 2 * R + 1, STEP = SNOWPACK.stepMinutes;
   /** each window point's snowlines: `target` the pack now's, `shown` eased toward it (the frames'), `build` the pack's at
@@ -143,14 +147,32 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
     l.build[0] = _line[0]; l.build[1] = _line[1]; l.build[2] = _line[2];
     if (!l.shown) l.shown = Float32Array.from(l.target);
   };
+  /** SNOW-BUDGET (2026-10-20, a player via the owner: "something about our weather system affecting fps"): ONE BUDGET A
+   *  FRAME, WHOEVER ASKS. The frame's tick, the feet (`winterAt`, three a frame) and the Snowfall mod's winter
+   *  (`winterNear`) each integrated the window for a budget of its own - and while a window caught up its year each ran a
+   *  whole step at the least (snowpack.js advance), four steps a frame. Now the asks within SNOW_COVER.frameMs of the
+   *  first of them share one budget, the largest any of them asks (the tick's, or the arrival's): each spends what is
+   *  left of it. A build's wait (`settle`) keeps the breather's own. `clock` performance.now's. */
+  let spendFrom = -Infinity, spent = 0;
+  const budgetFor = (ms) => {
+    const w = clock();
+    if (w - spendFrom >= SNOW_COVER.frameMs) { spendFrom = w; spent = 0; }
+    return Math.max(0, ms - spent);
+  };
   /**
-   * THE SNOW AT `t` (AUDIT PRECIP HOST-1): the window about pixel (px, py) integrated to it within `budgetMs`, and - once
-   * it stands there - its lines read at `t` whenever they were read at another minute: `force` (a build's wait) at once,
-   * the frames every SNOW_COVER.nowMinutes. Answers whether the window stands at `t` and (`force`) was read there.
+   * THE SNOW AT `t` (AUDIT PRECIP HOST-1): the window about pixel (px, py) integrated to it within `budgetMs` (SNOW-BUDGET:
+   * the frame's, shared - `force`, a build's wait, its own), and - once it stands there - its lines read at `t` whenever
+   * they were read at another minute: `force` at once, the frames every SNOW_COVER.nowMinutes. Answers whether the window
+   * stands at `t` and (`force`) was read there.
    */
   function at(px, py, t, budgetMs, force) {
     windowAbout(px, py, t);
-    ready = lattice.advance(window, t, budgetMs);
+    if (force) ready = lattice.advance(window, t, budgetMs, clock);
+    else {
+      const w0 = clock();
+      ready = lattice.advance(window, t, budgetFor(budgetMs), clock);
+      spent += clock() - w0;
+    }
     if (!ready) return false;
     if (nowRead === null || t < nowRead || t - nowRead >= (force ? 1e-9 : SNOW_COVER.nowMinutes)) {
       nowRead = t;
@@ -178,10 +200,16 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
    *  slope and patches). */
   const coverAt = (x, z, altitude, which = 'shown') => (lane() ? coverAtHeight(lineAt(x, z, _l, which), altitude) : 0);
   /** The ground's cover as it is DRAWN at pixel (px, py)'s local (lx, lz), `altitude` m above the sea, its normal's y
-   *  `ny` (render/snowCoverGlsl.js snowCoverAt: the slope's shed and the patches with it - AUDIT PRECIP GROUND-3). */
-  const drawnCover = (px, py, lx, lz, altitude, ny) => {
-    const [x, z] = fieldOf(px, py, lx, lz), [ox, oz] = ecoOrigin(px, py);
-    return snowCoverAt(coverAtHeight(lineAt(x, z, _l), altitude), ny, lx, lz, ox, oz);
+   *  the stream's at scene point (sx, sz) (normalY; render/snowCoverGlsl.js snowCoverAt: the slope's shed and the patches
+   *  with it - AUDIT PRECIP GROUND-3). SNOW-BUDGET: the slope read only where the snowline lays any cover at that height -
+   *  snowCoverAt answers 0 for none whatever the slope, and the slope is four of the stream's heights, read for every
+   *  blade the grass placed. */
+  const drawnCover = (px, py, lx, lz, altitude, sx, sz) => {
+    const [x, z] = fieldOf(px, py, lx, lz);
+    const cover = coverAtHeight(lineAt(x, z, _l), altitude);
+    if (cover <= 0) return 0;
+    const [ox, oz] = ecoOrigin(px, py);
+    return snowCoverAt(cover, normalY(sx, sz), lx, lz, ox, oz);
   };
   /** The ground's normal's y at scene point (x, z), off the stream's own heights (a metre either way). */
   const normalY = (x, z) => {
@@ -254,7 +282,11 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
      *  stands at now (`anchor` [x, z]: the frame a snow lying on the ground reads it in - GROUND-9), the lattice's spacing
      *  in tiles, the world height's offset to metres above the sea; null off the lane or before the window is read. */
     frame() {
-      if (!lane() || !centre || nowRead === null) return null;
+      // AUDIT SNOW-BUDGET F2: the window's KEPT lines are drawn while it catches up after a move - a step of a lattice
+      // cell (two map pixels) let every point but its new edge's keep its lines, and the frame drew no snow at all until
+      // the window stood at the clock's minute again (0.4-1.2 s of summer ground, every two pixels walked; the Snowfall
+      // mod's winter the calendar's meanwhile). A point not read yet is bare ground (lineOf), as it always was
+      if (!lane() || !centre || !lines.size) return null;
       const i0 = centre[0] - R, j0 = centre[1] - R;
       if (texGen !== gen || texI !== i0 || texJ !== j0) {
         for (let j = 0; j < SIDE; j++) {
@@ -348,7 +380,7 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
      *  off the lane. */
     buries(p, lx, lz, x, z, y) {
       if (!lane()) return false;
-      const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M, normalY(x, z));
+      const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M, x, z);
       return c > 0 && c >= flatDraw(p.px, p.py, lx, lz);
     },
     /** WHETHER SNOW LIES under the player at scene point `pos` - the ground as drawn there past a half: on the lane the
@@ -361,7 +393,7 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
       const t = now();
       if (Number.isFinite(t) && nowRead !== t) at(px, py, t, SNOW_COVER.budgetMs, false);
       const tr = state.pixelTranslation(px, py, [0, 0, 0]);
-      return drawnCover(px, py, pos[0] - tr[0], pos[2] - tr[2], pos[1] - c[1] - SEA_LEVEL_M, normalY(pos[0], pos[2])) >= 0.5;
+      return drawnCover(px, py, pos[0] - tr[0], pos[2] - tr[2], pos[1] - c[1] - SEA_LEVEL_M, pos[0], pos[2]) >= 0.5;
     },
     /** WHETHER SNOW LIES ABOUT THE PLAYER for what keeps a winter of its own - the Snowfall mod's `winter` (its gate, its
      *  snowpack; a change resets its depths and its tracks): AUDIT PRECIP GROUND-9 - on the lane, whether the snow lies on
@@ -375,7 +407,7 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
       if (!lane()) return fallback;
       const t = now();
       if (place && Number.isFinite(t) && nowRead !== t) { const { px, py } = place(); at(px, py, t, SNOW_COVER.budgetMs, false); }
-      if (nowRead === null) return fallback;
+      if (!centre || !lines.size) return fallback;   // AUDIT SNOW-BUDGET F2: the lines the window kept across a move answer while it catches up - not the calendar's
       for (const pt of window) {
         const l = lines.get(latticeKey(pt.i, pt.j))?.shown;
         if (l && l[0] - 0.25 * Math.max(1, l[1] - l[0]) < pt.ceil) return true;

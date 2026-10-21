@@ -31,9 +31,11 @@ export function sailingCabinEntry(blocks, saved, fromNative, guest = false) {
 export function createSailingCabinAccess(deps) {
   let entering = false;
   const boatFor = (c) => deps.boats().find((b) => b.uid === c.uid && b.hull === c.hull && hasSailingCabin(b) && deps.nearby(b));
+  // FB1020c CABIN-FOES: the helm read off the runtime itself (`csa()` - Come Sail Away's, or null), and `hostile()` a
+  // hostile ship near the player on her deck (the world's navalHostileNear)
   const reason = (boat) => !deps.available() ? CABIN_REFUSAL.unavailable : cabinEntryRefusal(boat, {
-    boats: deps.boats(), sailing: deps.sailing(), disembarking: deps.disembarking(),
-    aboard: deps.aboard(boat),
+    boats: deps.boats(), sailing: !!deps.csa?.()?.isSailing?.(), disembarking: !!deps.csa?.()?.state?.disembarking,
+    aboard: deps.aboard(boat), hostile: !!deps.hostile?.(),
   });
   return {
     reason,

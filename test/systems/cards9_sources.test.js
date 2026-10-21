@@ -6,6 +6,7 @@
 // the Gate's Warden, the Sea Serpent and the Abyss Dungeon's Brass Remnant each draw for their own card LAST in their
 // hoard, so every roll before it is what it was.
 import { test } from 'node:test';
+import { FESTIVAL_CARD_IDS } from '../../src/net/festivalLaw.js';   // WITCH1: the festival's cards, sold and never packed
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ILIAC_CARDS, ILIAC_LOCATIONS, STARTER_DECK, cardById, ILIAC_TIERS } from '../../src/net/iliac/iliacCards.js';
@@ -81,7 +82,8 @@ test('CARDS9 the pack: template 583, stackable, weightless, its lines; five card
   const pooled = Object.values(PACK_POOL).flat();
   for (const id of BOSS_CARD_IDS) assert.ok(!pooled.includes(id), `${id} is found, never in a pack`);
   for (const loc of ILIAC_LOCATIONS) assert.ok(!pooled.includes(loc.id), 'no holding');
-  assert.equal(pooled.length, ILIAC_CARDS.length - BOSS_CARD_IDS.length, 'every other card can come in one');
+  assert.equal(pooled.length, ILIAC_CARDS.length - BOSS_CARD_IDS.length - FESTIVAL_CARD_IDS.length, 'every other card can come in one');   // PIN MOVED (WITCH1): the Witches' Festival's six are the Wyrd Sister's alone
+  for (const id of FESTIVAL_CARD_IDS) assert.ok(!pooled.includes(id), `${id} in no pack`);
   // the draws: a tier, then a card - the first four from the common and magic table, the fifth from the top
   const s = script([0.1, 0, 0.9, 0, 0.1, 0.999, 0.75, 0.5, 0.5, 0]);
   const ids = rollPackCards(s);

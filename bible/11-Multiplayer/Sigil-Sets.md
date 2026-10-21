@@ -303,6 +303,64 @@ Reprieve, Unbroken, The Hour Turns and Shed Skin are no timers - spent there, ea
 its chip reads *Redoubt*; out of that breach its own timer governs again. The HUD's chip shows the Reprieve's shield (its
 points) while it holds, then its recovery; its sound is a Shield spell's own cast. A Spire lord's blow is a foe's to it (section 8, AUDIT EG V).
 
+## 6f. The Starfall's own set (STAR7, 2026-10-20)
+
+`Starfall.md` section 6: one more Aetheric set, the law's thirteenth, **The Starspun Weave** - the coven's thread, turned
+on the coven - and its patron Mephala, the Webspinner, whose covens wind black thread about a fallen star to draw its
+light home: the Weave is that thread, cut from the stars they lost and laid over pale plate. Nine fixed records of Elven make, light as the thread
+is - the seven body pieces, a buckler and a ONE-HANDED Shortsword, so all nine are worn at once - every affix at the
+Legendary band's FLOOR (armour 12, an attribute 10, a resistance 35, a skill 20, weight 35, damage 20) and the
+Spindle-Blade's blow the band's floor too (7): the raiding parties' measure, since a star is held three times an hour
+while the festival runs. One resistance of an element at most, and never poison - the 2-piece tier carries it. Nothing
+drops it but a held star: its spoils carry a piece a quarter of the time (the raids' own share), the Heart-Star's every
+time, rolled after everything they rolled before (`systems/aetheric.js` `STARSPUN_SET_PIECES`, `STARSPUN_SET_CHANCE`,
+`rollStarspunPiece`; the spoils `systems/starfall/starSpoils.js`). No world drop, shelf or Broker rolls one.
+
+The Starspun Cowl, the Right and Left Pauldrons of the Weave, The Starspun Cuirass, The Spinner's Hands, Greaves of the
+Silent Strand, Boots of the Long Fall, The Web-Buckler (Buckler), The Spindle-Blade (Shortsword).
+
+| pieces | ability | Faint -> Ascendant |
+|---|---|---|
+| 2 | **Spinner's Thread** - poison resistance, Agility | +10 -> +30; +2 -> +6 |
+| 4 | **Bound in Silk** - every 4th weapon blow of yours that LANDS on the same foe is the one the web holds still: that blow deals more, and its landing cuts the count back to none, whatever its weight. Only a blow that counts whole lays a strand (an off hand's part-blow lays none). Every foe holds its own count (Constrict's law), which falls away 8 s after your last blow on it; a foe's death ends its own; a bow's blow counts | +60% -> +140% |
+| 6 | **Mephala's Veil** - a foe's blow that takes you under 30% of your health (from at or over it, still standing - never a killing blow, a saved one, a fall or a spell) hides you in the web: Chameleon on you, Eventide's own spell under the Veil's name, its rounds and one more (AUDIT SET M5); then it must recover. Never one of the Spire's death saves: it hides you, it saves no life | 2 -> 4 rounds (10 -> 20 s); recovers 240 -> 120 s |
+
+Bound in Silk is read where every blow is (the BLOW modifier) and counted where a blow lands (the STRIKE listener) - the
+blow after three strands is the held one, so a blow that never lands spends nothing. The held blow is the BLOW's whatever
+its weight, so its landing cuts the count whatever its weight (AUDIT STAR S1: the cut had waited on a blow that counts
+whole, so an off hand's part-blow on three strands took the bonus and left the three standing, and the next blow took it
+again). The Veil is cast through the door Eventide's shadow takes (`systems/playerDoor.js` `castOnPlayer`), and heard as
+its cast; it says what it does (*Mephala's Veil! Chameleon for 10 s.*), and its spell's name and its chip's (*Veil*) are
+the player's language's (`sigilSetPowers.js` VEIL_TEXT). The HUD's chip shows the Veil's recovery.
+
+**Every chip carries its tier** (AUDIT STAR S2): `setHudChips` sets each chip's `tier` (CHIP_TIER, the 6-piece's index),
+`ui/hud/hudStatus.js` carries it onto the tile, and the hover card reads the tier by it (`ui/enhanced/enhancedHud.js`
+setTileTier). It had found the tier by the chip's name as a prefix of a tier's, so *Veil* and *Reprieve* (*Battlemage's
+Reprieve*) found none, and no chip named in another language found its tier at all.
+
+**DESIGN NOTE - the full-health guard wakes the Veil** (AUDIT STAR S3). A foe's blow from full health that would kill
+leaves the player standing at 1 (the guard in `characters/playerEntity.js` hurtPlayer). That is no death save - the HURT
+listener hears it unsaved - so the blow crosses the Veil's line and the Veil hides the player at 1, as Shed Skin heals
+them there. Kept on purpose: hiding at 1 health is what the Veil is for.
+
+## 6g. The Witches' Festival's own set (WITCH1, 2026-10-20)
+
+`06-Systems/Witches-Festival.md`, "The Wyrd's Raiment": the law's twelfth set, **The Wyrd's Raiment** - what the Glenmoril
+Wyrd wear to the Witches' Festival, its patron the Wyrd themselves (`sigilSets.js` `wyrd`, `sigil.js` `SIGIL_SET_IDS`
+before the Weave). Nine fixed records (`systems/aetheric.js` `WYRD_SET_PIECES`), Legendary at least: hood, mantles,
+cuirass, gloves, greaves, boots, the Hearth-Ward shield and the Witchmoon Athame. Leather, a witch's and a caster's (the
+Athame Elven). Sold by the Wyrd Sisters at the taverns' doors for Soul Cakes, BOUND to the buyer as the Broker's wares
+are, and never a drop.
+
+| pieces | ability | Faint -> Ascendant |
+|---|---|---|
+| 2 | **Wyrd-Sight** - Willpower and magic resistance | +2 -> +6; +5 -> +15 |
+| 4 | **Tallow-Ward** - your weapon deals more to the undead, the Daedra and the atronachs (`systems/festival/festivalFoes.js` hallowedFoe) | +10% -> +30% |
+| 6 | **Soul Harvest** - a kill restores a share of your health and magicka; then it must recover | 8% -> 20%; recovers 40 -> 20 s |
+
+Through the same seams: Wyrd-Sight the FOLD, Tallow-Ward the BLOW, Soul Harvest the KILL listener (`sigilSetPowers.js`).
+Its words are the festival's (`systems/festival/festivalWords.js` HARVEST_TEXT - its name, its proc, its recovery's end).
+
 ## 7. The Sigil Broker - Sigil Stones buy the day's stock (SET7)
 
 A Daedra trader (the game has no Dremora sprite; a Daedra Seducer stands in) is held at each breach's faithful's
@@ -1048,3 +1106,19 @@ account Worker's bundle, so the account deploy's path filter names it (ACC4). At
 one home now (ONE EXPORT): Discipline's return calls `manaMine`, `systems/loot/lootPowers.js` reads it as `gainMana`, and
 `eg15_panoply`'s pins and EG15-return-share were re-aimed and judged dead (`Elite-Gates.md` section 31's note after
 AUDIT EG IV).
+
+### STAR7 - the Starfall's own set (2026-10-20)
+
+**The Starspun Weave** (section 6f): the law's thirteenth set, the Wyrd's Raiment (WITCH1, section 6g) its twelfth (`sigilSets.js` `starspun`, `sigil.js` `SIGIL_SET_IDS` last), its
+nine records (`aetheric.js` `STARSPUN_SET_PIECES`, `AETHERIC_RECORDS` last) and its drop (`rollStarspunPiece`, the Heart-Star's
+`always`), its three powers through the seams (`sigilSetPowers.js`: the FOLD, `stranded` and the BLOW's read, `veil` on the
+HURT listener, the round's "ready again", the chip). Pinned by `test/systems/starfall/star7_rewards.test.js`; the order pins of
+SET1, SERPENT-SET, SD9d and EG15 moved for it. Mutants in `tools/mutants/star7.json`.
+
+### AUDIT STAR - the Weave's powers and the chips, read again (2026-10-20)
+
+Bound in Silk's cut on the held blow's landing, whatever its weight; the Veil's words (its effect, its spell's and chip's
+names through the text core); every chip's tier, which the HUD's card reads; the full-health guard's Veil kept as designed
+(section 6f); the Wyrd's Raiment given its section (6g) and the Weave its right heading and count. Pinned by
+`test/systems/starfall/auditstar.test.js`, and the chips' pins of SET5 and RAID4b moved for the tier. Mutants in
+`tools/mutants/auditstar.json`.

@@ -857,10 +857,15 @@ void main() {
 }`;
 
 /** THE PASS: one program, one quad, one instance buffer, re-filled per frame. */
+/** SHADER-STALL: the pass's one program, as its constructor builds it - what the warm starts ahead of the build
+ *  (scenes/hostMagic.js; render/glProgram.js startPrograms). */
+export const SPELL_IMPACT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[SPELL_FX_VS, SPELL_FX_FS]]));
+
 export class SpellImpactPass {
   constructor(gl) {
     this.gl = gl;
-    this.prog = buildProgram(gl, SPELL_FX_VS, SPELL_FX_FS, 'spell impact');
+    const [[vs, fs]] = SPELL_IMPACT_PROGRAMS;
+    this.prog = buildProgram(gl, vs, fs, 'spell impact');
     this.u = {};
     for (const n of ['uVP', 'uEye', 'uRight', 'uUp', 'uMinRad', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();

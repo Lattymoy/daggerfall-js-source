@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-DEEP2-D4-a-coast-sinks-the-veil",
     "file": "src/scenes/world.js",
-    "old": "    if (!deepWaters) return g;\n",
-    "new": "    if (!deepWaters) return g;\n    if (!tvWater(worldCoordToMapPixel(n.x, n.z).x, worldCoordToMapPixel(n.x, n.z).y)) return g;\n",
+    "old": "    if (!deepWaters || !sea) return g;\n",
+    "new": "    if (!deepWaters || !sea) return g;\n    if (!tvWater(worldCoordToMapPixel(n.x, n.z).x, worldCoordToMapPixel(n.x, n.z).y)) return g;\n",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],

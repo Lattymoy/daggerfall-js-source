@@ -173,8 +173,8 @@
   {
     "name": "PROP-BODIES-the-extent-not-the-picture",
     "file": "src/world/propBodies.js",
-    "old": "      let n = 0;\n      for (let x = 0; x < bmp.width; x++) if (bmp.data[y * bmp.width + x] !== 0) n++;",
-    "new": "      let a = -1, n = 0;\n      for (let x = 0; x < bmp.width; x++) if (bmp.data[y * bmp.width + x] !== 0) { if (a < 0) a = x; n = x - a + 1; }",
+    "old": "      let n = 0;\n      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) n++;",
+    "new": "      let a = -1, n = 0;\n      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) { if (a < 0) a = x; n = x - a + 1; }",
     "tests": [
       "test/player/propbodies.test.js"
     ]

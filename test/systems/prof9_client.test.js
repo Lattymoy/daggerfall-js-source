@@ -498,7 +498,8 @@ test('PROF9 wiring: the fire is any lit one (the street\'s camps and braziers, a
   const c = src('src/scenes/camps.js');
   assert.match(c, /const r = spendCampNight\(best\.rec, now\(\), fieldCook\?\.\(\) === true\);\n\s+if \(r\.kept\) return true;/);
   // C&C's own cooking: the camp's and the brazier's own list, the mod's law, no profession in it
-  assert.match(c, /const r = cookFood\(raw\[i\], items, \{ skillet: hasSkillet\(items\) \}\);/);
+  // PIN MOVED (FB1020c BAG-COOK): the raw food from the pack or the Materials Bag, the cooked into the pack
+  assert.match(c, /const r = cookFood\(it, from, \{ skillet: hasSkillet\(items\), into: items \}\);/);
   assert.doesNotMatch(c, /profBook|recipeLaw|professionLaw/);
   const sh = src('src/scenes/shared.js');
   assert.match(sh, /\n {2}installCooking\(\);   \/\/ PROF9/);

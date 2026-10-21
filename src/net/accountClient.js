@@ -40,7 +40,7 @@
 
 import { HANDLE_RE } from './handleShape.js';
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
-import { AURAS } from './identityToken.js';   // WB9g: the auras that exist - a stored one is one of them, or none
+import { AURAS, ICONS } from './identityToken.js';   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { banRangeText, bannedText } from './safety/safetyLaw.js';   // SAFE4: a ban's bound in its refusal's sentence, from its home; AUDIT SAFE CLIENT-2: and the ban itself
@@ -209,6 +209,18 @@ const REFUSAL_WORDS = {
   // WB9g, the Broker's insignia (server-account/src/accounts.js buyInsignia, equipAura)
   'no-aura': () => t('account.refusal.noAura', 'The account service does not know that aura. The game may need updating.'),
   'no-glyph': () => t('account.refusal.noGlyph', 'The account service does not know that glyph. The game may need updating.'),   // GLYPH-WEAR
+  // WITCH1, the Witches' Festival (server-account/src/festival.js) - the festival's own words, its keys shared with
+  // systems/festival/festivalWords.js so the sentence is one in every language
+  'no-icon': () => t('account.refusal.noIcon', 'The account service does not know that icon. The game may need updating.'),
+  source: () => t('account.refusal.source', 'The account service does not know that. The game may need updating.'),
+  rid: () => t('account.refusal.rid', 'That request could not be read. Try again.'),
+  ware: () => t('festival.refusal.ware', 'The Wyrd Sister has no such thing.'),
+  cakes: () => t('festival.refusal.cakes', 'You need more Soul Cakes.'),
+  home: () => t('festival.refusal.home', 'Set it out at your own home.'),
+  set: () => t('festival.refusal.set', 'An offering already stands here.'),
+  full: () => t('festival.refusal.full', 'The bowl is full.'),
+  own: () => t('festival.refusal.own', 'This offering is your own.'),
+  item: () => t('festival.refusal.item', 'You have no Hearth Offering.'),
   'no-name-as': () => t('account.refusal.noNameAs', 'The account service does not know that choice of name. The game may need updating.'),   // NAME-AS
   'no-insignia': () => t('account.refusal.noInsignia', 'The Broker does not sell that any more. The game may need updating.'),
   owned: () => t('account.refusal.owned', 'Your account already owns that.'),
@@ -911,6 +923,7 @@ export const D1_BOOKMARK_READS = new Map([
   ['/v1/realm/unions', 'POST'],
   ['/v1/saves', 'GET'],
   ['/v1/arena/board', 'POST'],
+  ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings
 ]);
 let _d1Mark = { secret: null, mark: null };
 /** AUDIT SCALE II A-2: how many times the page's bookmark has been forgotten - a read's answer is kept only under the
@@ -1078,6 +1091,7 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}), ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(Number.isSafeInteger(data?.at) ? { at: data.at } : {}), ...(typeof data?.card === 'string' ? { card: data.card } : {}),   // AUDIT WB A5: and the rung, where the service names one; REALM P2.2: and a realm record's sequence; AUDIT2 GUILD2 S7: and when a refused act may come again; AUDIT CARDS-6 D7: and the card a short deck lacks
       ...(Number.isSafeInteger(data?.position) ? { position: data.position } : {}), ...(Number.isSafeInteger(data?.wait) ? { wait: data.wait } : {}),   // AUDIT SCALE II L4a: the sign-in line's place and its wait (ADMIT-LINE's `queue`)
       ...(Array.isArray(data?.keeps) ? { keeps: data.keeps.filter((k) => typeof k === 'string').slice(0, 16) } : {}),   // GUILD3c: and everything that holds a guild that would go
+      ...(Number.isSafeInteger(data?.cakes) ? { cakes: data.cakes } : {}), ...(Number.isSafeInteger(data?.bowls) ? { bowls: data.bowls } : {}),   // WITCH1: a festival refusal's counts, the pack's faces
       ...(data?.error === 'banned' ? heardBan(data) : {}),   // AUDIT SAFE CLIENT-2: a ban's end and its reason
       status: res.status };
   }
@@ -1168,6 +1182,9 @@ export const equipTitle = (io, title) => call(io, '/v1/account/title', { title: 
 /** WB9g: wear one of the Broker's auras, or none - `{ ok, titles, title, glyphs, auras, aura, insignia }`, the wardrobe
  *  after the write. */
 export const equipAura = (io, aura) => call(io, '/v1/account/aura', { aura: aura ?? null });
+/** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
+ *  `not-held` for an icon this account does not hold. */
+export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
 /** GLYPH-WEAR (2026-10-02, Mac: "players can also equip/unequip their glyphs"): show one glyph (`on` true) or hide it -
  *  the wardrobe after the write (`glyphs` still all that is true, `glyphsOff` the ones taken off). The service refuses
  *  `not-held` for a glyph that is not true of this account. */
@@ -1252,9 +1269,9 @@ export function storedSession(storage) {
  *  NEVER PART OF THIS - `register`, `recover` and `newRecoveryCodes`
  *  hand them back and they are the screen's to show and the player's to
  *  write down. */
-export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, nameAsAt }) {
+export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt }) {
   try {
-    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; NAME-AS: `nameAsAt` likewise
+    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
     return true;
   } catch { return false; }
 }
@@ -1310,10 +1327,13 @@ export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs
  * guessed - the world host says hello again when it moves (scenes/world.js nameAsFrame), so the room reads the new name
  * now. Only ever forward: an older stamp is no news.
  *
+ * WITCH1 (2026-10-20): AND THE PROFILE ICON WORN (`icon`, null for the character's face), by the aura's law - the
+ * profile mark and the account card read it here (systems/ownGlyphs.js ownIcon).
+ *
  * @param {any} storage
- * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, nameAsAt?: number, secret?: string }} [who]
+ * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
  */
-export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, nameAsAt, secret } = {}) {
+export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, icon, nameAsAt, secret } = {}) {
   const was = storedSession(storage);
   if (!was) return false;
   if (typeof secret === 'string' && was.secret !== secret) return false;
@@ -1323,9 +1343,10 @@ export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, na
   const off = Array.isArray(glyphsOff) ? glyphsOff : [];   // GLYPH-WEAR
   if (Array.isArray(glyphs)) next.glyphs = glyphs.filter((g) => typeof g === 'string' && g.length <= 24 && !off.includes(g)).slice(0, 16);
   if (aura !== undefined) next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;   // WB9g: one that exists, or none
+  if (icon !== undefined) next.icon = typeof icon === 'string' && ICONS.includes(icon) ? icon : null;   // WITCH1: likewise
   if (Number.isSafeInteger(nameAsAt) && nameAsAt > 0 && !(Number.isSafeInteger(was.nameAsAt) && was.nameAsAt >= nameAsAt)) next.nameAsAt = nameAsAt;   // NAME-AS: forward only
   const sameGlyphs = (next.glyphs ?? []).join('+') === (was.glyphs ?? []).join('+');
-  const sameAura = (next.aura ?? null) === (was.aura ?? null);
+  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null);   // WITCH1: and the icon
   if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;   // nothing to write, and a write is a storage event every open tab hears
   return keepSession(storage, next);
 }
@@ -1588,6 +1609,8 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           ...(Array.isArray(answer.data.glyphsOff) ? { glyphsOff: answer.data.glyphsOff } : {}),   // absent for none
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
+          // WITCH1: the profile icon I wear (null for the face) - absent from a service before acct165, which says nothing
+          ...('icon' in answer.data ? { icon: typeof answer.data.icon === 'string' ? answer.data.icon : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
           ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),
           // LEGACY7: the house my realm character wears (null for none) - absent from a service before acct87
@@ -1750,6 +1773,24 @@ export function accountSerpents({ fetch, storage }) {
   };
 }
 
+/** STAR7: a fallen star's receipt the relay signed for this account, carried to the service with the character that held
+ *  it and this device's claim id (the spoils' key) - `{ recorded, held, renown, spoils, marks, order }`, or
+ *  `{ recorded: false, why, held, spoils }` (`claimed`, `guest`, `day-full`). */
+export const claimStarReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/star/claim', { receipt, character, name, ...(cid ? { cid } : {}) });
+
+/**
+ * STAR7: THE STARS' ONE CALL, bound to this device's stored session (the serpents' own shape). With no session there is no
+ * account to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and net/starfall/starClaims.js keeps the
+ * receipt for when there is one.
+ */
+export function accountStars({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt, character, name = null, cid = null) => { const i = io(); return i ? claimStarReceipt(i, receipt, character, name, cid) : { ok: false, error: 'no-session' }; },
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
 /** SD9b: a Brass Remnant's receipt the relay signed for this account, carried to the service - `{ recorded, slot, title,
  *  aura, broken }`, or `{ recorded: false, why }` (`claimed`, `guest`). */
 export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receipt });
@@ -1817,6 +1858,28 @@ export function accountEg({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     sink: (piece) => post('/v1/eg/sink', { piece }),   // EG-E1: the Broker's Panoply piece, once a week
     find: (tier) => post('/v1/eg/find', { tier }),   // EG-E3: a dungeon elite's find (section 5) - `{ found, keys, asks }`
     first: (bits) => post('/v1/eg/first', { bits }),   // EG-ZF: the first-time lines shown, kept once an account (section 27.7) - `{ first }`
+    me: () => storedSession(storage)?.id ?? null,
+    guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
+  };
+}
+
+/**
+ * WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL (server-account/src/festival.js) through the one
+ * door - the account's cakes and what they bought, a find, a sale by its request id, a town's Hearth Offerings and the
+ * four moves on one. Every answer is `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session is `no-session`,
+ * never a throw.
+ */
+export function accountFestival({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    mine: () => post('/v1/festival/mine', {}),
+    find: (source) => post('/v1/festival/find', { source }),
+    buy: (ware, rid) => post('/v1/festival/buy', { ware, rid }),
+    town: (mapId) => post('/v1/festival/town', { mapId }),
+    set: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/set', { mapId, buildingKey, character }),
+    fill: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/fill', { mapId, buildingKey, character }),
+    takeIn: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/take-in', { mapId, buildingKey, character }),
+    take: ({ mapId, buildingKey }) => post('/v1/festival/offering/take', { mapId, buildingKey }),
     me: () => storedSession(storage)?.id ?? null,
     guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
   };

@@ -479,8 +479,8 @@
   {
     "name": "LW9-AUDIT-F1-range",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, res.job) ?? [3, 12];",
-    "new": "  const [rMin, rMax] = TRIP_RANGE_PX[res.job] ?? [3, 12];",
+    "old": "  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, job) ?? [3, 12];",
+    "new": "  const [rMin, rMax] = TRIP_RANGE_PX[job] ?? [3, 12];",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]

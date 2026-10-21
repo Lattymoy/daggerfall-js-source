@@ -84,8 +84,8 @@
   {
     "name": "RAID4-route-no-order",
     "file": "server-account/src/index.js",
-    "old": "        let order = null;\n        if (r.renown?.rose) {",
-    "new": "        let order = null;\n        if (false) {",
+    "old": "        await progressSpent(ctx, who.player.id, path, r);   // INT17: a cleanse, and the Renown it paid\n        let order = null;\n        if (r.renown?.rose) {",
+    "new": "        await progressSpent(ctx, who.player.id, path, r);   // INT17: a cleanse, and the Renown it paid\n        let order = null;\n        if (false) {",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "RAID4-inspect-without-raids",
     "file": "server-account/src/index.js",
-    "old": ", raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id) }",
-    "new": ", serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id) }",
+    "old": ", raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id) }",
+    "new": ", serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id) }",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]

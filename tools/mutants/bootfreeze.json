@@ -1,0 +1,38 @@
+[
+  {
+    "name": "BF-every-gap-a-split",
+    "file": "tools/bootFreezeProbe.mjs",
+    "old": "    if (!cur || (ts[i] - cur.end) / 1000 > idleGapMs) {",
+    "new": "    if (!cur || ts[i] - cur.end > 0) {",
+    "tests": [
+      "test/tooling/bootfreeze_probe.test.js"
+    ]
+  },
+  {
+    "name": "BF-the-mark-never-found",
+    "file": "tools/bootFreezeProbe.mjs",
+    "old": "callFrame.functionName === '__bootFreezeFirstFrame') { firstAt = ts[i]; break; }",
+    "new": "callFrame.functionName === '__never') { firstAt = ts[i]; break; }",
+    "tests": [
+      "test/tooling/bootfreeze_probe.test.js"
+    ]
+  },
+  {
+    "name": "BF-a-recursing-function-counted-twice",
+    "file": "tools/bootFreezeProbe.mjs",
+    "old": "        if (GENERIC.has(k) || seen.has(k)) continue;",
+    "new": "        if (GENERIC.has(k)) continue;",
+    "tests": [
+      "test/tooling/bootfreeze_probe.test.js"
+    ]
+  },
+  {
+    "name": "BF-the-bookkeeping-a-function",
+    "file": "tools/bootFreezeProbe.mjs",
+    "old": "const GENERIC = new Set(['(root)', '(program)', '(idle)', '(garbage collector)']);",
+    "new": "const GENERIC = new Set(['(root)', '(idle)', '(garbage collector)']);",
+    "tests": [
+      "test/tooling/bootfreeze_probe.test.js"
+    ]
+  }
+]

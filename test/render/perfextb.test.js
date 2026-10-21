@@ -461,7 +461,7 @@ function waterScene(lane) {
   return { H, r, rows, wu };
 }
 
-test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels through drawWaterSurfaces upload uView, uProj, uTime, uLift, uSunScale and uSwell ONCE each, set the polygon offset once, and uModel ten times, in at most 150 GL calls (the base: no list at all, and the one-surface path 70 a pixel)', () => {
+test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels through drawWaterSurfaces upload uView, uProj, uTime, uLift, uSunScale and uSwell ONCE each, set the polygon offset once, and uModel ten times, in at most 151 GL calls (the base: no list at all, and the one-surface path 70 a pixel)', () => {
   assert.equal(typeof Renderer.prototype.drawWaterSurfaces, 'function', 'the list door exists');
   for (const lane of [false, true]) {
     const { H, r, rows, wu } = waterScene(lane);
@@ -475,7 +475,7 @@ test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels th
     assert.equal(H.draws.length, 10, 'a draw a pixel');
     assert.equal(n('bindTexture:1000/TEXTURE_2D_ARRAY'), 6, 'the ground array on unit 0 once a run of one climate (none, A A, B B B, A A, B, A)');
     assert.equal(n('bindTexture:1002/TEXTURE_2D'), 10, 'a tilemap a pixel, on unit 2');
-    assert.ok(H.count() <= 150, `${lane ? 'lane' : 'classic'}: ${H.count()} GL calls for ten water pixels`);
+    assert.ok(H.count() <= 151, `${lane ? 'lane' : 'classic'}: ${H.count()} GL calls for ten water pixels`);   // PIN MOVED (OW-HORIZON, 2026-10-20): +1 the cloud deck's far law (uCloudShadowFar), once a frame with the map
     H.reset();
     r.drawWaterSurfaces(rows, 0, 6.4, wu);
     assert.equal(H.count(), 0, 'no water in sight: not one GL call, as when no pixel called');

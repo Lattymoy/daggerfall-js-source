@@ -248,7 +248,8 @@ test('EG-G2 THE DANGER PALETTES, THE FILL AND THE QUIET COMPANY (sections 25.4 a
   assert.equal(calm.fillK, 1, 'outside a trial, no quiet share');
   const sh = { points: [], origin: [0, 0], end: [0, 0] }; assert.ok(fillStamp(sh, ['d', 1, 2, 3]) && sh.r === 3);
   // the fight's pass is the Spire's stage, never the gate's
-  assert.match(readFileSync(new URL('../../../src/scenes/eliteGates/egFight.js', import.meta.url), 'utf8'), /pass = new GateTelegraphRenderer\(gl, \{ spire: true \}\);/);
+  // PIN MOVED (SHADER-STALL, render/glProgram.js compiledPass): built through the door once the Spire's program is done
+  assert.match(readFileSync(new URL('../../../src/scenes/eliteGates/egFight.js', import.meta.url), 'utf8'), /compiledPass\(gl, telegraphPrograms\(true\), \(\) => new GateTelegraphRenderer\(gl, \{ spire: true \}\)/);
 });
 
 test('EG-G2 THE LAB CHECK (section 25.2): the danger edge against the magma and against a burning pool, a haven against a danger fill, the place\'s white against solid gold and against the gone - each pair told apart (CIE ΔE at least 12) at 10 m and 30 m of every band\'s fog, in colour, and under deuteranopia, protanopia and tritanopia with the palette meant for it; in ?grey the white against the danger edge by luminance alone; the colour-blind presets separate under their own simulation where the Standard\'s red against gold would not (mutants: the deutan preset\'s safety moved onto its edge; the floor dropped from the fog)', () => {

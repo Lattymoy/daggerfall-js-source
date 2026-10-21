@@ -1,8 +1,8 @@
 [
   {
     "name": "SD20F-H1-the-devices-key",
-    "file": "src/scenes/world.js",
-    "old": "const keyNow = () => { const me = _accountSds.me(); return me ? `${key}:${me}` : key; };",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "const keyNow = () => { const id = me(); return id ? `${key}:${id}` : key; };",
     "new": "const keyNow = () => key;",
     "tests": [
       "test/scenes/superDungeon/sd20f_hosts.test.js"
@@ -10,7 +10,7 @@
   },
   {
     "name": "SD20F-H1-read-once",
-    "file": "src/scenes/world.js",
+    "file": "src/systems/superDungeon/sdSlots.js",
     "old": "if (!r || r.raw !== raw) {",
     "new": "if (!r) {",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "SD20F-H1-the-session-forgets",
-    "file": "src/scenes/world.js",
+    "file": "src/systems/superDungeon/sdSlots.js",
     "old": "has: (s) => { const k = keyNow(); return stored(k).has(s) || !!own.get(k)?.has(s); },",
     "new": "has: (s) => { const k = keyNow(); return stored(k).has(s); },",
     "tests": [

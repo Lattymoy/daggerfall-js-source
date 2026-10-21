@@ -62,8 +62,9 @@ import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, allyCast
 import { hasResurrect, RESURRECT_REACH, RESURRECT_TEXT, pickFallenBody } from '../systems/resurrect.js';   // RESURRECT1: a fallen party member's body is the target   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { betterAmbience } from '../systems/betterAmbience.js';   // IMPACTFEEL: the camera kick a landing spell gives
-import { SpellImpactFx, SpellImpactPass, elementFxKind, IMPACT_FX_KINDS } from '../render/spellImpactFx.js';
+import { SpellImpactFx, SpellImpactPass, SPELL_IMPACT_PROGRAMS, elementFxKind, IMPACT_FX_KINDS } from '../render/spellImpactFx.js';
 import { warmPrograms } from '../render/warmPrograms.js';   // PERF-COMPILE1: the impact pass at idle
+import { startPrograms } from '../render/glProgram.js';   // SHADER-STALL: and built once its compile is done
 import { orbColourFrom } from '../characters/thunderlockIds.js';   // ART-COLOUR: a missile archive's own colour, the Thunderlock orb's sampler   // IMPACTFX: a landing spell in light - its element's spray, a heal's rising lines
 import { createSpellImpactSounds } from '../systems/spell/spellImpactSound.js';   // IMPACTFX: ...and heard
 import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
@@ -583,7 +584,9 @@ export function createPlayerMagic({
   // PERF-COMPILE1 (2026-10-10, stutter): the pass built at idle, not on the frame of the first spell that lands - every
   // engine (each dungeon entered makes one) paid its compile mid-fight. A browser's idle queue only (node's tests have
   // none); a teardown before it runs stops it (fxBroken), and a pass that will not build is left to the draw to report.
-  if (renderer?.gl && globalThis.requestIdleCallback) void warmPrograms([() => { if (!fxPass && !fxBroken) fxPass = new SpellImpactPass(renderer.gl); }], { alive: () => !fxBroken });
+  // SHADER-STALL (render/glProgram.js startPrograms): its program started at that idle and the pass built once the
+  // driver says it is done - the idle task waited the whole compile, 2.3-7.6 s of the real game's first seconds here
+  if (renderer?.gl && globalThis.requestIdleCallback) void warmPrograms([{ start: () => startPrograms(renderer.gl, SPELL_IMPACT_PROGRAMS), run: () => { if (!fxPass && !fxBroken) fxPass = new SpellImpactPass(renderer.gl); }, need: () => !fxPass && !fxBroken }], { alive: () => !fxBroken });   // AUDIT SHADER-STALL: a spell's draw built it first - the warm stands down
   const impactSounds = createSpellImpactSounds(audio);
   // ART-COLOUR: EACH ELEMENT'S BURST WEARS ITS OWN ART'S COLOUR. Once per element, the first time a missile of it flies
   // or lands, its archive (375-379, missileArchive) is asked for (it is warm by then: the missile itself draws from it)

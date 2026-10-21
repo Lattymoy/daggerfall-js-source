@@ -86,7 +86,9 @@ test('AUDIT DW-F E5-1/E5-4: the view the loot and the guards test is the one the
   // PIN MOVED (SPYGLASS, 2026-10-11): the frame's lens narrowed by the captain's glass while it is up - the spawners keep the
   // wide one, so nothing they place pops into the view the glass comes down from
   // PIN MOVED (GLASS-CLEAR, 2026-10-11): and its near plane the glass's focus - the eye's own 0.2 while it is down
-  assert.match(w, /const proj = mirrorProjectionX\(perspective\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, 6000\)\);/, 'the frame draws through the same lens - the glass\'s narrowing on it while the glass is up (AUDIT CAPTAIN\'S SEA H22)');
+  // PIN MOVED (OW-HORIZON, 2026-10-20): through scenes/travelHorizon.js horizonProj - mat4's mirrored perspective, the eye's planes on the ground
+  // (WORLD_NEAR's 0.2, WORLD_FAR's 6000) and the travel view's under it
+  assert.match(w, /const proj = horizonProj\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, tvf\);/, 'the frame draws through the same lens - the glass\'s narrowing on it while the glass is up (AUDIT CAPTAIN\'S SEA H22)');
   assert.match(w, /for \(let i = 0; i < 3; i\+\+\) _dwEyeOffset\[i\] = mwv\.eye\[i\] - cam\.pos\[i\];/, 'the camera machine\'s eye, relative (a crossing moves cam.pos, not the offset)');
   assert.match(w, /if \(_dwLootVel\.last\) for \(let i = 0; i < 3; i\+\+\) _dwLootVel\.last\[i\] \+= r\.offset\[i\];/, 'FloatingOrigin moves the player by transform: no velocity');
   assert.match(w, /dwLoot\?\.pump\(f\);[^\n]*\n\s+dwLootLetGoVelocity\(\);/, 'indoors: the way out is a reposition');

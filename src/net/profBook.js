@@ -652,31 +652,87 @@ export function createProfBook({ door, storage = null, character = () => null, n
      * depositStores): the items taken out of the bag and then the pack first, `held` what they held before, the request
      * asked; given back on the service's refusal. An answer that never comes keeps them out and asks again at the next
      * settle (pendingDeposits). `order` 'all' (the Stores page's Put in) or 'spend' (a craft's shortfall - never gold's).
+     * FB1020c ONE-SAVE: a batch of one (depositMany, below) - its answer the batch's one; every guard and word is the
+     * batch's.
      * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean }>}
      */
     async deposit(material, qty, { order = 'all', counter = false } = {}) {
-      if (!carry) return { ok: false, error: 'bad-held' };
+      return (await this.depositMany([{ material, qty, order, counter }]))[0];
+    },
+    /**
+     * FB1020c ONE-SAVE: CARRIED UNITS INTO THE STORES, MANY PUT-INS UNDER ONE SAVE - each `{ material, qty, order?,
+     * counter? }` as `deposit` takes one, answered one answer a put-in, in order. Each is taken out of the bag and the
+     * pack and STAMPED into the save with its id (AUDIT2 BAG1 K3/K7/H2: takeCarried - a page that boots that save later
+     * knows the items went), and kept; then ONE checkpoint that LANDS every take before any is asked (H2's order: the
+     * take saved before the ask); then each asked in turn. A checkpoint refused gives every take back whole - none was
+     * sent, nothing moved (`deposit-unsaved`). The first answer kept (the counting-house silent, the account's minute
+     * spent) leaves the rest unasked and kept (`deposit-kept`): their takes are in the landed save, and the next settle
+     * asks them. A deposit a material each waited on a checkpoint of the whole save each, in series - the Stores page's
+     * Put everything in held every button for a checkpoint and more a material (FB1020c, "storing your goods makes the
+     * buttons get stuck for a long time").
+     * @param {{ material: string, qty: number, order?: string, counter?: boolean }[]} list
+     * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean }[]>}
+     */
+    async depositMany(list) {
+      const asks = Array.isArray(list) ? list : [];
+      const each = (error) => asks.map(() => ({ ok: false, error }));
+      if (!carry) return each('bad-held');
       const c = character();
-      if (!c || !account()) return { ok: false, error: 'no-session' };
-      if (!Number.isSafeInteger(qty) || qty < 1 || qty > DEPOSIT_MAX) return { ok: false, error: 'bad-qty' };
-      if (_depositBusy) return { ok: false, error: 'deposit-busy' };   // AUDIT2 BAG1 K12: never "busy with another craft"
+      if (!c || !account()) return each('no-session');
+      const qtyOk = (qty) => Number.isSafeInteger(qty) && qty >= 1 && qty <= DEPOSIT_MAX;
+      if (_depositBusy) return asks.map((a) => ({ ok: false, error: qtyOk(a?.qty) ? 'deposit-busy' : 'bad-qty' }));   // AUDIT2 BAG1 K12: never "busy with another craft"
       _depositBusy = true;
       try {
         const key = slot();
-        const id = rid();
-        // AUDIT2 BAG1 K3/K7/H2: the take STAMPED into the save with the deposit's id (takeCarried), so a page that boots a
-        // save later knows whether that save saw the items go: a refusal gives back exactly what the stamp says left, and a
-        // save with no stamp never saw them go (askDeposit). Never a copy, never a loss: the `before` count this replaced
-        // lost a harvest's units minted since, and two deposits' shortfalls shared one
-        // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces only for a station's own put-in (`counter`), spent there and then
-        const took = carry.take(material, qty, id, order, counter === true && order === 'work');
-        if (took.taken < qty) { took.back(); return { ok: false, error: 'carried-short' }; }
-        const d = { id, character: c, material, qty, order, ...(counter === true && order === 'work' ? { counter: true } : {}) };
-        depositBacks.set(d.id, took.back);
         const kept = keptOf(key);
-        kept.deposits.push(d);
+        /** @type {{ id?: string, error?: string, character?: string, material?: string, qty?: number, order?: string, counter?: boolean }[]} */
+        const ds = asks.map(({ material, qty, order = 'all', counter = false } = /** @type {any} */ ({})) => {
+          if (!qtyOk(qty)) return { error: 'bad-qty' };
+          const id = rid();
+          // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces only for a station's own put-in (`counter`), spent there and then
+          const own = counter === true && order === 'work';
+          // AUDIT2 BAG1 K3/K7/H2: the take STAMPED into the save with the deposit's id (takeCarried), so a page that boots a
+          // save later knows whether that save saw the items go: a refusal gives back exactly what the stamp says left, and a
+          // save with no stamp never saw them go (askDeposit). Never a copy, never a loss: the `before` count this replaced
+          // lost a harvest's units minted since, and two deposits' shortfalls shared one
+          const took = carry.take(material, qty, id, order, own);
+          if (took.taken < qty) { took.back(); return { error: 'carried-short' }; }
+          depositBacks.set(id, took.back);
+          const d = { id, character: c, material, qty, order, ...(own ? { counter: true } : {}) };
+          kept.deposits.push(d);
+          return d;
+        });
+        const live = ds.filter((d) => d.id);
+        if (!live.length) return ds.map((d) => ({ ok: false, error: d.error }));
         writeKept(kept, key);
-        return await askDeposit(d, key, { first: true });
+        if (tracked() && typeof carry.flush === 'function') {
+          let saved = false;
+          try { saved = (await carry.flush()) === true; } catch { saved = false; }
+          if (!saved) {
+            const k0 = keptOf(key);
+            k0.deposits = k0.deposits.filter((x) => !live.some((d) => d.id === x.id));
+            writeKept(k0, key);
+            for (const d of [...live].reverse()) {
+              const undo = depositBacks.get(d.id);
+              depositBacks.delete(d.id);
+              try { undo?.(); } catch (e) { console.warn('[prof] a deposit would not give back', e); }
+              carry.unstamp?.(d.id);
+            }
+            return ds.map((d) => ({ ok: false, error: d.id ? 'deposit-unsaved' : d.error }));
+          }
+        }
+        const out = [];
+        let silent = false;
+        for (const d of ds) {
+          if (!d.id) out.push({ ok: false, error: d.error });
+          else if (silent) out.push({ ok: false, error: 'deposit-kept', kept: true });
+          else {
+            const r = await askDeposit(d, key, { saved: true });
+            if (r?.kept === true) silent = true;
+            out.push(r);
+          }
+        }
+        return out;
       } finally { _depositBusy = false; }
     },
     /** BAG1: how many deposits wait on the service's answer, their items out of the bag (AUDIT2: a stray stamp's too). */
@@ -707,19 +763,19 @@ export function createProfBook({ door, storage = null, character = () => null, n
       // spends them - said by the answer's `moved`
       const carriedFor = (k) => (work === true ? this.carriedWorkable(k) : this.carriedUsable(k));
       for (const [k, n] of need) if (n - inStores(k) > carriedFor(k)) return { ok: false, error: 'materials-short', material: k };
-      let moved = 0;
+      // FB1020c ONE-SAVE: every shortfall in one batch - one save for them all, never one a material
+      const plan = [];
       for (const [k, n] of need) {
-        let left = n - inStores(k);
-        while (left > 0) {
-          const q = Math.min(left, DEPOSIT_MAX);
-          const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend', counter: work === true });
-          // AUDIT BAG1 B8: a put-in whose answer has not come is no shortfall - its items are on their way, and said so
-          if (!r?.ok) return { ok: false, error: r?.kept === true ? 'deposit-kept' : (r?.error ?? 'offline'), material: k, kept: r?.kept === true, moved };
-          left -= q;
-          moved += q;
-        }
+        for (let left = n - inStores(k); left > 0; left -= DEPOSIT_MAX) plan.push({ material: k, qty: Math.min(left, DEPOSIT_MAX), order: work === true ? 'work' : 'spend', counter: work === true });
       }
-      return { ok: true, moved };
+      const answers = plan.length ? await this.depositMany(plan) : [];
+      let moved = 0;
+      for (const [i, r] of answers.entries()) if (r?.ok) moved += plan[i].qty;
+      const i = answers.findIndex((r) => !r?.ok);
+      if (i < 0) return { ok: true, moved };
+      const r = answers[i];
+      // AUDIT BAG1 B8: a put-in whose answer has not come is no shortfall - its items are on their way, and said so
+      return { ok: false, error: r?.kept === true ? 'deposit-kept' : (r?.error ?? 'offline'), material: plan[i].material, kept: r?.kept === true, moved };
     },
 
     // ─── A CRAFT AT THE ANVIL (PROF3) ───────────────────────────────
@@ -1195,8 +1251,10 @@ export function createProfBook({ door, storage = null, character = () => null, n
    *  saved, and the save still holds the items - or the stamp was settled elsewhere: either way there is nothing to ask
    *  and nothing to move, and the deposit is let go. A stamp heard is read and taken off in one turn - the entity's own
    *  once - and a refusal gives back every unit it took (the page's own undo, or into the bag, the pack and past the
-   *  pack's weight - giveCarried, B5's law). A landing moves no item: the stamp says they went. */
-  async function askDeposit(d, key, { first = false } = {}) {
+   *  pack's weight - giveCarried, B5's law). A landing moves no item: the stamp says they went.
+   *  FB1020c ONE-SAVE: `saved` - the take is in a save that landed already (depositMany's one checkpoint), so none is
+   *  asked here; a first ask whose checkpoint is refused is the batch's to give back. */
+  async function askDeposit(d, key, { saved: landed = false } = {}) {
     if (tracked() && !carry.stamped(d.id)) {
       const k0 = keptOf(key);
       k0.deposits = k0.deposits.filter((x) => x.id !== d.id);
@@ -1206,21 +1264,11 @@ export function createProfBook({ door, storage = null, character = () => null, n
     }
     // AUDIT2 BAG1 H2: THE TAKE SAVED BEFORE THE ASK - realmGoldAct's order. A deposit that landed while the realm record still
     // held its items, the page then gone before the next checkpoint, booted a save with the items in it AND the units in the
-    // Stores. Not saved (a checkpoint refused, the network): a first ask is undone whole (never sent, nothing moved); one
-    // asked before may have landed, so it is kept and asked again at the next settle
-    if (tracked() && typeof carry.flush === 'function') {
+    // Stores. Not saved (a checkpoint refused, the network): a first ask is undone whole by its batch (never sent, nothing
+    // moved - depositMany); one asked before may have landed, so it is kept and asked again at the next settle
+    if (tracked() && typeof carry.flush === 'function' && !landed) {
       let saved = false;
       try { saved = (await carry.flush()) === true; } catch { saved = false; }
-      if (!saved && first) {
-        const k0 = keptOf(key);
-        k0.deposits = k0.deposits.filter((x) => x.id !== d.id);
-        writeKept(k0, key);
-        const undo = depositBacks.get(d.id);
-        depositBacks.delete(d.id);
-        try { undo?.(); } catch (e) { console.warn('[prof] a deposit would not give back', e); }
-        carry.unstamp?.(d.id);
-        return { ok: false, error: 'deposit-unsaved' };
-      }
       if (!saved) return { ok: false, error: 'deposit-kept', kept: true };
     }
     const r = await ask(() => door.deposit(d.character, d.material, d.qty, heldNow(d.material, null, d.counter === true), d.order, d.id, seenNow(d.material)), key);

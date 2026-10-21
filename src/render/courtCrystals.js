@@ -230,11 +230,16 @@ function mat4Multiply(out, a, b) {
   return out;
 }
 
+/** SHADER-STALL: the pass's two programs, the crystal's and its glow's, as its constructor builds them - what a host
+ *  starts ahead of the build (render/glProgram.js compiledPass). */
+export const CRYSTAL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[CRYSTAL_VS, CRYSTAL_FS], [CRYSTAL_GLOW_VS, CRYSTAL_GLOW_FS]]));
+
 export class CourtCrystalRenderer {
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, CRYSTAL_VS, CRYSTAL_FS, 'crystal');
-    this.glowProgram = buildProgram(gl, CRYSTAL_GLOW_VS, CRYSTAL_GLOW_FS, 'crystal glow');
+    const [crystal, glow] = CRYSTAL_PROGRAMS;
+    this.program = buildProgram(gl, crystal[0], crystal[1], 'crystal');
+    this.glowProgram = buildProgram(gl, glow[0], glow[1], 'crystal glow');
     this.u = {}; this.g = {};
     for (const n of ['uVP', 'uAt', 'uYaw', 'uGrow', 'uBroke', 'uEye', 'uColor', 'uHp', 'uFlash', 'uSeed', 'uTime', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     for (const n of ['uVP', 'uKind', 'uA', 'uB', 'uW', 'uEye', 'uColor', 'uAlpha', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.g[n] = gl.getUniformLocation(this.glowProgram, n);

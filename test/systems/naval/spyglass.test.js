@@ -301,7 +301,11 @@ test('SPYGLASS the world: the Spyglass action appended, a port row in Come Sail 
   // PIN MOVED (AUDIT CAPTAIN'S SEA S2/S3/S16): the host's own door and a finger's Lower press it too; a finger's Magnify turns it
   assert.match(w, /const pressedNow = hccActionPressed\('Spyglass'\) \|\| navalTouchGlass\(\) \|\| glassDoorPress \|\| \(taps\.lower && spyglass\.up\);\n\s+glassDoorPress = false;\n\s+if \(pressedNow && \(spyglass\.up \|\| spyglassAllowed\(\)\)\) spyglass\.up = !spyglass\.up;\n\s+if \(spyglass\.up && !spyglassAllowed\(\)\) spyglass\.up = false;\n[^\n]*\n\s+mwViewHoldFirst\(spyglass\.up\);\n\s+spyglass\.lens = easeLens\(spyglass\.lens, spyglass\.up \? spyglass\.zoom : 1, dt\);/);
   assert.match(w, /naval\.glass\(dt, \{ up: spyglass\.up, zoom: spyglass\.zoom, field, near: spyglass\.near \}\)/);   // PIN MOVED (AUDIT CAPTAIN'S SEA S19): and its field; PIN MOVED (GLASS-CLEAR): and its focus
-  assert.match(w, /spyglassStep\(dt\);[^\n]*\n\s+const proj = mirrorProjectionX\(perspective\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, 6000\)\);/, 'the step before the lens is taken');   // PIN MOVED (GLASS-CLEAR): its near the glass's focus
+  // PIN MOVED (GLASS-CLEAR): its near the glass's focus; PIN MOVED (OW-HORIZON, 2026-10-20): the lens through
+  // scenes/travelHorizon.js horizonProj, taken after the travel view's frame (its planes grow under the view) - still
+  // after the glass's step
+  const stepAt = w.indexOf('spyglassStep(dt);'), lensAt = w.indexOf('const proj = horizonProj(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, tvf);');
+  assert.ok(stepAt > 0 && lensAt > stepAt, 'the step before the lens is taken');
   assert.match(w, /sky\.draw\([^\n]*glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect,/, 'the sky through the glass');
   assert.match(w, /fovY: glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), aspect: worldAspect,/, 'the far ring through it');
   assert.equal((w.match(/lookScale\(\) \* glassLookScale\(spyglass\.lens\)/g) || []).length, 2, 'the mouse\'s look and the finger\'s and pad\'s');

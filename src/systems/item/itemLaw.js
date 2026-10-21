@@ -69,12 +69,15 @@ import { FORAGING_TEMPLATES } from '../foraging/foragingLaw.js';
 import { REST_ITEM_ROWS } from '../rest/restItemRows.js';
 import { DEEP_WATERS_FISH_TEMPLATES } from '../deepWater/deepWatersFishRows.js';
 import { WEIR_KEY_LAW_ROW } from '../eliteGates/weirKeyRow.js';   // KEY-LAW: the Weir Key's home pulls the Spire's law and its picture in
+import { SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW } from '../festival/festivalRows.js';   // WITCH1: the festival's home pulls its pictures and the texture door in
+import { STARGLASS_LAW_ROW } from '../starfall/starglassRow.js';   // STAR7: Starglass's home pulls its picture in - the Weir Key's way
 // THE PORT'S OWN TEMPLATES register as their homes load (itemTemplates.js registerCustomTemplates). A headless reader -
 // the account service - loads none of the game, so the homes that register at import are imported here for exactly
 // that; the four whose homes pull the UI in (foraging, rest, Deep Waters' fish, Roleplay & Realism: Items) hand the law
 // their rows from leaves instead, read beside the registry (lawTemplate) and never put into it - so a client with the
 // mod switched off does not start knowing its items. The Weir Key's (KEY-LAW, FIELD BUGS 2026-10-17) is read beside
-// it too: its home (systems/eliteGates/weirKey.js) pulls the Spire's law and its picture in.
+// it too: its home (systems/eliteGates/weirKey.js) pulls the Spire's law and its picture in - and Starglass's (STAR7), whose
+// home (systems/starfall/starglass.js) pulls its picture in.
 import '../professions/profTemplates.js';
 import '../survival/items.js';
 import '../thunderlock.js';
@@ -99,13 +102,15 @@ import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  on, so a finding a law of 4 made against one is a finding to ask again. MAKER-KEPT moved it to 6: an Aetheric piece of a
  *  record the item maker took before AETHERIC-MAKER keeps the maker's rows laid on it then (MAKER_ERA_AETHERIC). KEY-LAW
  *  moved it to 7: the Weir Key (575) is a template the law knows headless - law 6 found every one 'template' on the
- *  account service, which loads none of its home (FIELD BUGS 2026-10-17). */
-export const ITEM_LAW_VERSION = 7;
+ *  account service, which loads none of its home (FIELD BUGS 2026-10-17). WITCH1 moved it to 8: the Witches' Festival's
+ *  Soul Cake (2000) and Hearth Offering (2001) are templates the law knows headless, and the Wyrd's Raiment's nine
+ *  records (systems/aetheric.js WYRD_SET_PIECES) are lawful from it on. */
+export const ITEM_LAW_VERSION = 8;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
 /** The templates whose homes cannot load headless, by index - their rows, as the homes register them. */
-const LAW_ONLY = new Map(/** @type {any[]} */ ([...RRI_TEMPLATES, ...FORAGING_TEMPLATES, ...REST_ITEM_ROWS, ...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW]).map((t) => [t.index, t]));
+const LAW_ONLY = new Map(/** @type {any[]} */ ([...RRI_TEMPLATES, ...FORAGING_TEMPLATES, ...REST_ITEM_ROWS, ...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map((t) => [t.index, t]));
 /** A template the port knows: the live registry's row, or a law-only row. */
 export const lawTemplate = (/** @type {unknown} */ i) => (Number.isInteger(i) ? templateByIndex(i) ?? LAW_ONLY.get(/** @type {number} */ (i)) ?? null : null);
 

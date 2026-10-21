@@ -27,6 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAGES, FIELDS, FIELD_SPEC, AGREEMENTS, AGREEMENT_SPEC, recoveryCodesText, recoveryCodesFileName } from '../accountFlow.js';   // RECOVERY-SET: the codes as the saved file says them
+import { profileIconNode, ICON_TEXT } from '../profileIcons.js';   // WITCH1: the profile icons, worn in the portrait well
 import { TITLE_TEXT, AURA_TEXT, glyphBadges, glyphArtNode, badgeClass } from '../playerBadge.js';   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
 import { duelRecordText } from '../../net/duel/duelRecord.js';   // DUEL1: the account card's K/D row
 import { renownText, renownProgressText, renownProgress } from '../../net/renown.js';   // RENOWN1: Renown, left of the name and in its rows
@@ -36,6 +37,7 @@ import { raidRecordText } from '../../net/raid/raidClaims.js';   // RAID4: and i
 import { t, localizedTable, intlLocale } from '../../systems/textManager.js';   // L10N4: the card's words in the player's language, read when it is drawn
 import { serpentRecordText } from '../../net/serpent/serpentClaims.js';   // AUDIT SERPENT D4: and its serpents-slain row
 import { sdRecordText } from '../../net/superDungeon/sdClaims.js';   // SD9b: and its Hours-broken row
+import { starRecordText } from '../../net/starfall/starClaims.js';   // STAR7: and its stars-held row
 
 /** RENOWN-CHAR (Mac: "Can we make renown per character again"): the card's Renown tracks as the service sends them -
  *  its characters', the most recently played first - or none: none earned yet, or a service from RENOWN-ACCOUNT's day
@@ -207,9 +209,12 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
     /** @type {Promise<any>} */ (face).then((art) => { if (art) { faceArt = art; if (flow.stage === 'in') paint(); } }).catch(() => {});
   }
   function portrait() {
-    const well = el('div', faceArt ? 'acctportrait hasface' : 'acctportrait');
+    // WITCH1: a profile icon worn stands in the well in the face's place (ui/profileIcons.js), the face kept for when it is
+    // taken off
+    const icon = typeof flow.wardrobe?.icon === 'string' ? profileIconNode(doc, flow.wardrobe.icon, 'accticon') : null;
+    const well = el('div', icon || faceArt ? 'acctportrait hasface' : 'acctportrait');
     well.setAttribute?.('aria-hidden', 'true');
-    well.append(faceArt ?? el('span', 'acctsilhouette'));
+    well.append(icon ?? faceArt ?? el('span', 'acctsilhouette'));
     return well;
   }
 
@@ -337,8 +342,9 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
     const w = flow.wardrobe;
     const held = Array.isArray(w?.titles) ? w.titles : [];
     const glyphs = glyphBadges(w);
+    const icons = Array.isArray(w?.icons) ? w.icons : [];   // WITCH1: the profile icons held
     const auras = Array.isArray(w?.auras) ? w.auras : [];   // WB9g: the Broker's auras this account owns; AEGIS: and a listed title's (PRIMARCH: the Golden Radiance; SHADOW-CLOAK: the Holo Shadow Cloak; SERAPH-WINGS: a developer's Seraph Wings)
-    if (!held.length && !glyphs.length && !auras.length) return;
+    if (!held.length && !glyphs.length && !auras.length && !icons.length) return;
 
     const box = el('div', 'acctwear');
     if (held.length) {
@@ -381,6 +387,25 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
         b.setAttribute('aria-pressed', worn ? 'true' : 'false');
         b.title = worn ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: AURA_TEXT[key] ?? key });
         b.onclick = () => flow.wearAura(key);
+        row.append(b);
+      }
+      box.append(row);
+    }
+    if (icons.length) {
+      // WITCH1: AN ICON IS WORN AS AN AURA IS - one at a time, pressed on, pressed off - in the portrait well
+      box.append(el('span', 'fieldlabel', t('account.wear.icon', 'Icon')));
+      const row = el('div', 'acctwearrow');
+      for (const key of icons) {
+        const worn = w.icon === key;
+        const b = keyedAs(el('button', ['acttitle', 'acticon', ...(worn ? ['worn'] : [])].join(' ')), `icon:${key}`);
+        const art = profileIconNode(doc, key, 'acticonart', 22);
+        if (art) { art.setAttribute('aria-hidden', 'true'); b.append(art); }   // its word stands beside it: read once
+        b.append(el('span', 'acticonword', ICON_TEXT[key] ?? key));
+        b.type = 'button';
+        b.disabled = !!flow.busy;
+        b.setAttribute('aria-pressed', worn ? 'true' : 'false');
+        b.title = worn ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: ICON_TEXT[key] ?? key });
+        b.onclick = () => flow.wearIcon(key);
         row.append(b);
       }
       box.append(row);
@@ -641,6 +666,10 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       // (net/superDungeon/sdClaims.js carries the receipts). A service from before it says nothing.
       const hours = sdRecordText(flow.account.sds);
       if (hours) row(t('account.card.hours', 'Hours broken'), hours);
+      // STAR7: the fallen stars this account held - each a master's fall the relay signed and this service counted once
+      // (net/starfall/starClaims.js carries the receipts). A service from before it says nothing.
+      const stars = starRecordText(flow.account.stars);
+      if (stars) row(t('account.card.stars', 'Stars held'), stars);
       // MARKS1: the account's Marks - the server's currency, struck for acts a server witnessed (PROF0 10.5). Null where
       // Marks are not this account's (a guest, the service's switch), and a service from before it says nothing.
       if (Number.isSafeInteger(flow.account.marks)) row(t('account.card.silver', 'Silver'), marksText(flow.account.marks));

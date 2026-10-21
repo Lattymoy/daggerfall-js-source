@@ -12,7 +12,7 @@
   {
     "name": "KEY-FACE-the-load-folds-nothing",
     "file": "src/systems/save/save.js",
-    "old": "  const strayKeys = foldStrayWeirKeys(repairLists.filter((l) => l !== entity.items), arrayOf(snap.sceneCache?.scenes).map((s) => s?.decorOwn));\n",
+    "old": "  const strayKeys = foldStrayWeirKeys(strayLists, strayRooms);\n",
     "new": "  const strayKeys = 0;\n",
     "why": "a save from before the fix keeps its stowed faces, and carried back they show keys the account never held",
     "tests": [
@@ -22,8 +22,8 @@
   {
     "name": "KEY-FACE-the-pack-folded-too",
     "file": "src/systems/save/save.js",
-    "old": "foldStrayWeirKeys(repairLists.filter((l) => l !== entity.items), ",
-    "new": "foldStrayWeirKeys(repairLists, ",
+    "old": "const strayLists = repairLists.filter((l) => l !== entity.items), ",
+    "new": "const strayLists = repairLists, ",
     "why": "the pack's own face folded with the strays",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "KEY-FACE-a-rooms-own-things-unread",
     "file": "src/systems/save/save.js",
-    "old": "foldStrayWeirKeys(repairLists.filter((l) => l !== entity.items), arrayOf(snap.sceneCache?.scenes).map((s) => s?.decorOwn));",
-    "new": "foldStrayWeirKeys(repairLists.filter((l) => l !== entity.items));",
+    "old": "foldStrayWeirKeys(strayLists, strayRooms);",
+    "new": "foldStrayWeirKeys(strayLists);",
     "why": "a face set out in a room (decorOwn - one item a piece, no list) kept, and taken down it comes back to the pack",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"

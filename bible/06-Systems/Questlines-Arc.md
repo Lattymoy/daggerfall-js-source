@@ -279,6 +279,16 @@ claiming no line of the shipped corpus (`test/systems/questlines/ql4_actions.tes
   "Welcome to the family"), the refusal says the story in a message of its own (1903 - L0A01L00, P0A01L00, B0B70Y14,
   B0B70Y16, B0B50Y11, A0C01Y03).
 - `ql name _person_ <Given_Name>` - a questline giver by their own name (Ysolde Marnhel wrote the breach's book).
+  `ql name _foe_ <Name> [female|male]` names a Foe the same way, and the gender word sets a class enemy's (DFU's Foe.cs
+  SetFoeName rolls a class foe 55% male; a gender on a monster is refused with a warning) - the Starfall's Spinner and
+  her Sisters (`11-Multiplayer/Starfall.md` section 7, STAR8).
+- `ql gone _foe_ [_foe_ ...]` (AUDIT STAR8 S1) - a trigger: true once one of the foes named (one to four) has stood in a
+  scene, none stands now, and the first is not all killed. A foe stands while its pool drives its behaviour
+  (`resourceBehaviour.js` update, stamping the machine's `beat`) within `FOE_STANDS_TICKS` (five minutes of play - a load's
+  revived foe comes back behind its art inside it) and it has not fallen (`machine.js` hook `questFoeStands`): a cull, a
+  teleport's sweep (`exteriorFoes.js` clearLive tells a behaviour nothing) or a load that did not bring it back stops
+  that. What it saw is saved. QLTF02 clears its ambush on it, so the Coven on the Bluff is called again rather than its
+  spindle lost with a Spinner the world took.
 
 AS BUILT: the design's `ql reward` was not needed. GivePc's own moment reaches the layer for every reward a script pays
 (`questReward`: the gold scaled by the outcome the quest's state holds then, before a party's split - AUDIT QUESTLINES
@@ -409,14 +419,25 @@ bare-named task); they are the QUESTLINES row's Ledger B list.
 
 Each line names its lore as `Elite-Gates.md` section 3 does: **canon** (UESP and Daggerfall's own data), and **the
 port's own**, said so wherever it is said. A line is DATA (`qlLines.js` QL_LINES): its steps' quests and titles, its lead
-and giver, its tier, and when it OPENS - a level, another line finished, online. Its steps are scripts on DFU's machine
+and giver, its tier, and when it OPENS - a level, another line finished, online, a live event running (`opens.event`,
+STAR8). Its steps are scripts on DFU's machine
 (`src/systems/questlines/quests/<QUEST>.txt`, read by the one loader - `scenes/quest/questData.js`'s glob) with a sheet
 each (`sheets/questlines.json`), stamped as every quest is. A step's title is its quest's DisplayName in English, the
 pins holding the two to one word.
 
 THE RUNNER (`qlLineRunner.js`, made by the layer): each tick after the machine's, a line whose gate holds begins - one
-new line an hour of the character's time at most (AUDIT QUESTLINES LINES-17: every eligible line began on one tick) -
-and its step's quest is scheduled; a step that ends well starts the next an hour of the character's time later
+new line an hour of the character's time at most (AUDIT QUESTLINES LINES-17: every eligible line began on one tick),
+counted from the last letter a line handed the player as well as from the last line begun, and none while a begun
+line's first letter is still on its way (FB1020c LETTER-PACE, FIELD BUGS 2026-10-20c: "4 different notes from
+townsfolk ... while in a town for 5 minutes"; `qlLineRunner.js:"export function letterOnItsWay(quest) {"`, heard at
+GivePc's moment through `qlLayer.js:"if (resource?.itemName === 'letter') { runner.lettered(quest); return; }"`).
+Every line opens with a courier's letter, and GivePc holds a letter until the player stands in a town, outdoors, by day
+(GivePc.cs:78-97), then hands each over 40 to 500 ticks later: LINES-17 spaced the STARTS, so the letters of every line
+begun at night (online the sky's night is half of every real hour), indoors or in the wild landed together, six in 36
+seconds at a dawn on the real bridge. Now they come an hour of the character's time and the courier's wait apart - online
+about seven real minutes - and no two lines' first letters are ever held at once. Pinned by `test/systems/questlines/fb1020c_letterpace.test.js`
+(`tools/mutants/fb1020c_letterpace.json`). A line begun has its step's quest scheduled; a step that ends well starts the
+next an hour of the character's time later
 (STEP_GAP_S); one that ends badly is offered again a day later (RETRY_GAP_S) - a failure is never a dead end. A step's
 quest that will not begin here (its script will not parse - a place this region lacks), or one gone without its end
 (an error terminated it), is offered again a day later as well, never every tick, and the window says it could not
@@ -546,6 +567,7 @@ sweeps `src/` both ways and pins where each is said:
 | arena-won | a ladder bout won - this screen's own, or the relay's `pve` bout; never the pit's practice nor a bout between players (`scenes/arena/arenaBouts.js`; AUDIT QUESTLINES ACTS-6) |
 | revenant-knelt | one of the player's own revenants made to kneel, whoever struck the blow that broke it - a revenant is the player's own and comes for them alone (`scenes/exteriorFoes.js`, and `dungeonContext.js` underground), its record answering the yield (`systems/revenant/revenantFate.js` beginYield; AUDIT QUESTLINES ACTS-7, decided) |
 | star-taken | a star the service now holds, each star once, counted by the book whose change took it and kept by account and character across a reload (`net/firmament/firmamentBook.js`; AUDIT QUESTLINES ACTS-5: one star given back and taken again counted each time) |
+| wyrd-met | a Wyrd Sister's window opened at a tavern's door, the Witches' Festival's (`scenes/witchesHost.js` shop, the festival's own module; AUDIT STAR8 T1: The Thirteenth of Frostfall's letter waits on it) - never a Soul Cake find (`systems/festival/festivalClient.js` ACT_NOT_FOUND) |
 | rite-broken, breach-closed | a gate receipt counted (`net/gate/gateClaims.js`) - `rite`, or `r: 1`; `dealt` or `stood` |
 | elite-foe-slain | an elite foe of an Elite-tier dungeon killed by the player's blow (`systems/questlines/qlEliteFoe.js`, which the dungeon host hands its place in one line - AUDIT QUESTLINES ACTS-8: the whole condition stood in buildDungeonContext) |
 | redoubt-taken, valkynaz-felled | a Redoubt receipt counted, Rehearsals excluded (`scenes/eliteGates/egClient.js`, at the module's scope - ACTS-8) |
@@ -571,6 +593,24 @@ online (10) - each step waits, saying so ("Opens with Loot rarity on.", "Opens a
 
 **The work that is already work** - bounties, writs, harbour contracts, revenant errands, caravans - stays its own
 system; the window's rail already holds its rows.
+
+### 4.6 THE THIRTEENTH OF FROSTFALL (`thirteenthFrostfall`, tier 3, level 6, online, the Starfall's - STAR8)
+
+Morwen, a Wyrd Sister of Glenmoril - the Witches' Festival's Glenmoril Wyrd, whose sisters keep the taverns' doors. A
+line of its own group (`festival`) that opens only while the Starfall runs (`opens.event: 'starfall'`), its star steps
+waiting outside it, and the window drawing it outside its event only once begun (UI-Calm's law). A star step the
+Festival ends under is set aside, fail-free, and taken up again at the next (AUDIT STAR8 S2: the runner's
+`keepSeason` - its quest set aside as the journal's Abandon sets one, `aside` on the line's record, its row "Opens during
+the Witches' Festival."; a step the player set aside stays theirs). Canon: the Witches' Festival on the 13th of
+Frostfall, the Glenmoril Witches, the Sisters of the Bluff, the Order of Arkay. The port's own: the fallen stars and the
+covens' thread. The whole of it is `11-Multiplayer/Starfall.md` section 7.
+
+| Step | What the player does | Witness |
+|---|---|---|
+| QLTF01 Music in the Woods | Morwen's letter from a Wyrd Sister at a tavern's door (`ql act wyrd-met 1` - her window opened), or her raven's note if a star is held first; hold a fallen star (`ql act star-held 1`); reach the Glenmoril Coven | star |
+| QLTF02 The Coven on the Bluff | slay the Spinner at the Coven on the Bluff - her spindle the player's as she falls, the Sisters of the Bluff -10, a coven gone unfought called again (`ql gone`); unwind a length (`unwound`, greater pay) or give it whole (`wound`, the Glenmoril Witches +3) | |
+| QLTF03 Three Stars | hold three more stars (`ql act star-held 3`) - the line's title, Starwarden; and, never a gate, the Heart-Star (`ql act heart-star-held 1`: `heart`, greater pay, "Heart-Star Ring") | stars3 |
+| QLTF04 What the Thread Is Worth | burn the spindle (`burned`, the Glenmoril Witches +10, "Morwen's Hunt-Charm"), sell it to the Mages Guild (`guild`, greater pay, "Starglass Rod") or take it to a priest of Arkay in Arkay's own temple (`templeArkay`; `temple`, the Order of Arkay +5, "Thread-Cutter") | |
 
 ## 5. The rewards (AS BUILT - `src/systems/questlines/qlRewards.js`)
 
@@ -635,8 +675,8 @@ the holder's own stamp reads it at the receipt (AUDIT QUESTLINES REWARD-1: it wa
 
 Weir Keys and titles are the account service's (`Wallet.md`, `Sigil-Sets.md`). QL pays them through one module,
 `server-account/src/questlines.js` (`claimQl`), and one route, `POST /v1/ql/claim { line, step, phase, choice? }`, behind
-a session. The law both ends share is `src/net/questlineClaims.js`: `QL_SERVICE_LINES` names the five lines the service
-pays (the Cycle's three, the Hour, the Old Coil), each witnessed step's kind, the title and the step that pays it, and the
+a session. The law both ends share is `src/net/questlineClaims.js`: `QL_SERVICE_LINES` names the six lines the service
+pays (the Cycle's three, the Hour, the Old Coil, the Thirteenth of Frostfall - STAR8), each witnessed step's kind, the title and the step that pays it, and the
 Covens' Hoard's key. An end of a step it pays nothing is answered `{ why: 'unpaid' }`; a guest's end `{ why: 'guest' }`,
 nothing paid - and on the client a line the service pays opens only for a registered account (section 4, LINES-2).
 
@@ -650,7 +690,12 @@ nothing paid - and on the client a line the service pays opens only for a regist
   or after the LINE's first opening - an end whose own opening never landed is read against the line's (AUDIT QUESTLINES
   SERVICE-2) - and in the line's order: newer than the receipt that witnessed an earlier step, older than one that
   witnessed a later, so one receipt witnesses one step (`seen_at`; AUDIT QUESTLINES SERVICE-5: one rite-breaking fight
-  paid both of the Burning Doors' steps). A receipt row's `at` is the second it was CLAIMED (every producer writes its
+  paid both of the Burning Doors' steps). THE WITNESS-ORDER RULE (AUDIT STARFALL B2): an end is not witnessed while an
+  earlier WITNESSED step of its line is not done (`server-account/src/questlines.js:"export function qlStepsBefore(lineId, step) {"`):
+  the earlier step's receipt is the window's floor only once it is laid, and a later step's end asked first read its
+  window from the line's opening, so one receipt witnessed both (the Thirteenth of Frostfall's three stars took its
+  first, the Weir Road's three Redoubts took its first). Answered `{ witnessed: false }`, and the runner asks again; the
+  ceiling still reads a later step done before the rule (a row acct159-164 wrote). A receipt row's `at` is the second it was CLAIMED (every producer writes its
   own clock), so a receipt held unclaimed counts from its claim - a receipt lives a week. Witnessed: `done_at` and
   `seen_at` laid with the outcome's `choice` (the first an end carries) - `{ witnessed: true }`; else `{ witnessed:
   false }`, nothing written, and the runner files the step `unseen` (the window's to say, section 6) and asks again, as
@@ -660,17 +705,21 @@ nothing paid - and on the client a line the service pays opens only for a regist
 - **The witnesses.** `rite` a Dagon's Breach's rite broken (`gate_kills`, the rite's row or a fighter's two embers);
   `breach` a Dagon's Breach closed (a kill's row); `redoubt` an Elite Breach's Redoubt taken, `redoubts3` three, and
   `valkynaz` a Valkynaz's Redoubt (`eg_redoubts`, every fifth; never a Rehearsal's); `hour` an Hour broken (`sd_kills`);
-  `serpent` the Sea Serpent slain (`serpent_kills`). The Covens' Hoard's last step has no receipt of its own: it is
+  `serpent` the Sea Serpent slain (`serpent_kills`); `star` a fallen star held, `stars3` three (`stars_held`, the
+  Starfall's - STAR8). The Covens' Hoard's last step has no receipt of its own: it is
   witnessed once the Burning Doors is witnessed whole - its title, Doorwarden, held on the account (AUDIT QUESTLINES
   SERVICE-4: it read the breach step alone, so a direct client had the key with no rite broken).
 - **A title once an account, for good** (AUDIT QUESTLINES SERVICE-8, LINES-22: this said "once a character" - the titles
   and the steps are the account's, and a second character's witnessed steps answer off the first's rows). A line's bit
   on `players.ql_titles`, laid on the claim of its `titleAt` step once that step and every witnessed step before it are
-  done - asked on each of those claims, so a line witnessed out of order still pays it when its last step lands.
+  done - asked on each of those claims, so a line whose steps were done out of order before the witness-order rule
+  still pays it when its last step lands. The Starwarden's write also lays its purse of Soul Cakes while the festival is
+  open (`Witches-Festival.md`, "The Starwarden's purse").
   Doorwarden (the Burning Doors), Covenbane (the Covens' Hoard, at its end), Weirwalker (the Weir Road), Witness of the
-  Hour (the Hour) and Satakal's Witness (the Old Coil) - the badge's words (`ui/playerBadge.js` TITLE_TEXT; the vocabulary
+  Hour (the Hour), Satakal's Witness (the Old Coil) and Starwarden (the Thirteenth of Frostfall, at its three stars -
+  STAR8) - the badge's words (`ui/playerBadge.js` TITLE_TEXT; the vocabulary
   spells the last two `hourwitness` and `satakalwitness` - AUDIT QUESTLINES SERVICE-9, DOC-2: this named them by those
-  keys); the relay knows them from world228 (`src/net/identityToken.js` TITLES; world222 on the branch, renumbered past main's at the merges). A title paid is the house's
+  keys); the relay knows them from world228 (`src/net/identityToken.js` TITLES; world222 on the branch, renumbered past main's at the merges), Starwarden from the Starfall's relay (STAR8). A title paid is the house's
   HONOUR-BANNER and a HUD line, as every title grant is (AUDIT QUESTLINES SERVICE-7: it was a HUD line alone). A title
   step's later end answers the line's title HELD (`titleHeld`) where this claim did not lay it, and the runner tells it
   only for a claim an earlier attempt of which went unanswered - offline, a timeout, a 5xx, or an end a load asks again
@@ -790,6 +839,7 @@ gear only for the quests whose page says so (UI-4). Every string through `t()`, 
 | **QL5-QL10 THE WAVES** | 248 sheets in fourteen families; the 66 flagship branches | `ql1_sheets` (the sets exact) |
 | **QL11 THE ACTS** | the acts feed, its kinds and their producers | `ql11_acts` |
 | **QL12-QL16 THE QUESTLINES** | the registry and runner; thirty-five scripts in thirteen lines; the service's claim and its titles and key; `QUESTLINES_OPEN` | `ql12_lines`, `ql12_claim` |
+| **STAR8 THE THIRTEENTH OF FROSTFALL** | the Starfall's line: four scripts, `opens.event`, the `starfall` need, `star-held`, the `star`/`stars3` witnesses, Starwarden, `ql name` for a foe (section 4.6; `11-Multiplayer/Starfall.md` section 7) | `star8_frostfall`, `ql12_claim` |
 | **AUDIT QUESTLINES** (2026-10-19) | eight lanes' 151 findings, each fixed, decided or left and said (`01-Overview/audits/Audit-Questlines.md`) | `ql1_law`, `ql3_rewards`, `ql4_flow`, `ql2_pause`, and the audit's pins in every file above |
 
 ## 10. The owner's calls (taken at the record's defaults - "Develop this all")

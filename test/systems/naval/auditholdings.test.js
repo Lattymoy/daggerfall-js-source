@@ -310,7 +310,8 @@ test('AUDIT HOLDINGS O1: a harbour is sounded only once every pixel its scan rea
   const world = read('src/scenes/world.js');
   assert.match(world, /for \(let i = 0; i <= nx; i\+\+\) for \(let k = 0; k <= nz; k\+\+\) if \(!csaPixelAt\(x0 \+ \(sx \* i\) \/ nx, z0 \+ \(sz \* k\) \/ nz\)\) return false;/);
   assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
-  assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(\) => \{\n\s+const x0 = rect\.minX - reach, z0 = rect\.minZ - reach, sx = rect\.maxX - rect\.minX \+ 2 \* reach, sz = rect\.maxZ - rect\.minZ \+ 2 \* reach;/, 'every pixel of that reach built');
+  // PIN MOVED (FB1020c HARBOUR-REACH): any reach the book asks it at - its own, or the port law's ring's - every pixel built
+  assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(r = reach\) => \{[^\n]*\n\s+const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
 });
 
 test('AUDIT HOLDINGS Q1: the gangway runs square to her side at her waist and touches nothing but where it rests - every edge, face and rope of it clear of her colliders and of the quay\'s, a ship\'s climbing from the deck at GANGWAY_SLOPE, a boat\'s stepping down from the kerb\'s edge onto her gunwale over the water; the cargo never in its lane', async () => {

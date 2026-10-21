@@ -2,8 +2,8 @@
   {
     "name": "SD9D-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'orcsbane', 'coilscale', 'numidium', 'panoply']);",
-    "new": "'orcsbane', 'coilscale', 'panoply']);",
+    "old": "'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun']);",
+    "new": "'orcsbane', 'coilscale', 'panoply', 'wyrd', 'starspun']);",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "SD9D-not-a-record",
     "file": "src/systems/aetheric.js",
-    "old": "...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
-    "new": "...SERPENT_SET_PIECES, ...PANOPLY_SET_PIECES]);",
+    "old": "...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES]);",
+    "new": "...SERPENT_SET_PIECES, ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES]);",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ],

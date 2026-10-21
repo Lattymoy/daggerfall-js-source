@@ -357,14 +357,16 @@ export class MapsFile {
 
     if (this.autoDiscard && this._lastRegion !== -1) this.discardRegion(this._lastRegion);
 
-    // Four consecutive records per region.
+    // Four consecutive records per region. REGION-VIEWS: read where MAPS.BSA holds them - the readers below only ever
+    // read them, and with one region resident (autoDiscard) every walk over the regions copied all four again - 357 KB
+    // a region on the mean, 2.3 MB the Wrothgarian Mountains' and 2.1 MB Daggerfall's: 364 regions read by a boot's 40th frame.
     const record = region * 4;
     const rec = {
       name: REGION_NAMES[region],
-      mapPItem: this._bsa.getRecordBytes(record),
-      mapDItem: this._bsa.getRecordBytes(record + 1),
-      mapTable: this._bsa.getRecordBytes(record + 2),
-      mapNames: this._bsa.getRecordBytes(record + 3),
+      mapPItem: this._bsa.getRecordView(record),
+      mapDItem: this._bsa.getRecordView(record + 1),
+      mapTable: this._bsa.getRecordView(record + 2),
+      mapNames: this._bsa.getRecordView(record + 3),
       dfRegion: null,
     };
     if (

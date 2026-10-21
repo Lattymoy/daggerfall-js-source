@@ -2222,7 +2222,7 @@ good. You wake before the Abyss Dungeon's door."*) and is final for that Hollow 
   whether they were in: *"The Hour will not take you back."* (`net/superDungeon/sdLaw.js` `SD_NO_FALLEN`) - a refusal the page takes
   as final, so it casts out with those words. A world cell's death marks nothing.
 - **The page keeps the slot.** The frame I die in the Hour keeps its slot on the device (`SD_FALLEN_KEY`, the last
-  SD_ENTERED_MAX, one memory with the slots gone through - `scenes/world.js` `sdSlotsKept`); the Rift asks with it
+  SD_ENTERED_MAX, one memory with the slots gone through - `systems/superDungeon/sdSlots.js` `sdSlotsKept`, out of `scenes/world.js` for WITCH1's room); the Rift asks with it
   (`world/superDungeon/sdDungeon.js` `sdRiftWord`'s `fallen`) and says the realm's words before the step, found or collapsing, though
   I went through.
 - **No Resurrect in the Hour.** A body raised in place would stand in a fight its death has left; the death's way out

@@ -67,12 +67,16 @@ export function footShare(t, record, size) {
   if (known.has(key)) return known.get(key);
   const bmp = t.getDFBitmap(record, 0);
   let share = 2 * COVER_RADIUS_FRAC;
-  if (bmp?.data && bmp.width > 0 && bmp.height > 0) {
+  // a classic record's own cutout (index 0), or - a painted stand-in's, which has no index (systems/textureReplacement.js
+  // vendorTextureFile: `data` null beside its `rgba`, top-down as `data` is) - its own alpha (AUDIT WITCH1 D7: a festival
+  // ward-staff, a 2 px post, stood a body as wide as its whole picture's cover)
+  const solid = bmp?.data ? (/** @type {number} */ i) => bmp.data[i] !== 0 : bmp?.rgba?.length >= bmp?.width * bmp?.height * 4 ? (/** @type {number} */ i) => bmp.rgba[i * 4 + 3] !== 0 : null;
+  if (solid && bmp.width > 0 && bmp.height > 0) {
     const perRow = size.h / bmp.height, spans = [];
     const lo = Math.max(0, bmp.height - Math.round(Math.min(size.h, CAPSULE_HEIGHT) / perRow)), hi = bmp.height - 1 - Math.round(STEP_OFFSET / perRow);
     for (let y = lo; y <= hi; y++) {
       let n = 0;
-      for (let x = 0; x < bmp.width; x++) if (bmp.data[y * bmp.width + x] !== 0) n++;
+      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) n++;
       spans.push(n / bmp.width);
     }
     if (spans.length) { spans.sort((p, q) => p - q); share = spans[spans.length >> 1]; }

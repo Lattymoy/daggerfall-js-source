@@ -193,8 +193,8 @@
   {
     "name": "RIBBON-ix-token",
     "file": "server-account/src/index.js",
-    "old": "          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n          ...(rb ? { rb } : {}),\n",
-    "new": "          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n",
+    "old": "          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ...(rb ? { rb } : {}),\n",
+    "new": "          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],
@@ -270,8 +270,8 @@
   {
     "name": "RIBBON-rl-named",
     "file": "server/src/index.js",
-    "old": "glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu,",
-    "new": "glyphs: c.g, gx: c.gx, au: c.au, mu,",
+    "old": "glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu,",
+    "new": "glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, mu,",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "RIBBON-rl-attach",
     "file": "server/src/index.js",
-    "old": "au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
-    "new": "au: who.au, lv: who.lv,",
+    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "new": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), lv: who.lv,",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "RIBBON-on-peer",
     "file": "src/net/online.js",
-    "old": "au: readAura(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "au: readAura(p), lv: readRenown(p),",
+    "old": "au: readAura(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), pi: readIcon(p), lv: readRenown(p),",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "RIBBON-on-memory",
     "file": "src/net/online.js",
-    "old": "gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
-    "new": "gt: p.gt ?? null, au: p.au ?? null, house: p.house ?? null, sub: p.sub",
+    "old": "gt: p.gt ?? null, au: p.au ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "new": "gt: p.gt ?? null, au: p.au ?? null, pi: p.pi ?? null, house: p.house ?? null, sub: p.sub",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],
@@ -334,8 +334,8 @@
   {
     "name": "RIBBON-on-restood",
     "file": "src/net/online.js",
-    "old": "gt: knew.gt, au: knew.au, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
-    "new": "gt: knew.gt, au: knew.au, ...(knew.house ?? {}), sub: knew.sub",
+    "old": "gt: knew.gt, au: knew.au, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "new": "gt: knew.gt, au: knew.au, pi: knew.pi, ...(knew.house ?? {}), sub: knew.sub",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],

@@ -92,8 +92,8 @@
  {
   "name": "SESSIONSIGN-paths-plus-account",
   "file": "server-account/src/sessionPass.js",
-  "old": "'/v1/seats/list']);",
-  "new": "'/v1/seats/list', '/v1/account']);",
+  "old": "'/v1/seats/list', '/v1/festival/town']);",
+  "new": "'/v1/seats/list', '/v1/festival/town', '/v1/account']);",
   "tests": [
    "test/server/sessionsign.test.js"
   ],

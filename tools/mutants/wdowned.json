@@ -1,0 +1,110 @@
+[
+  {
+    "name": "WDO-owned-ignored",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "  let root = owned ? base : clone(base);",
+    "new": "  let root = clone(base);",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDO-a-towns-base-copied",
+    "file": "src/formats/worldData/worldDataPack.js",
+    "old": "null, { owned: base?.[0] === 'l' });",
+    "new": "null, { owned: false });",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDO-a-kept-block-laid-on",
+    "file": "src/formats/worldData/worldDataPack.js",
+    "old": "null, { owned: base?.[0] === 'l' });",
+    "new": "null, { owned: base?.[0] === 'l' || base?.[0] === 'b' });",
+    "tests": [
+      "test/formats/worldData/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WDO-a-kept-file-laid-on",
+    "file": "src/formats/worldData/worldDataPack.js",
+    "old": "null, { owned: base?.[0] === 'l' });",
+    "new": "null, { owned: base?.[0] === 'l' || base?.[0] === 'f' });",
+    "tests": [
+      "test/formats/worldData/wd3_pack.test.js"
+    ]
+  },
+  {
+    "name": "WDC-minus-zero-kept",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "    case 'number': return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;",
+    "new": "    case 'number': return Number.isFinite(x) ? x : null;",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-nan-kept",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "    case 'number': return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;",
+    "new": "    case 'number': return x === 0 ? 0 : x;",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-undefined-kept-in-an-array",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "      out[i] = x === undefined ? null : x;",
+    "new": "      out[i] = x;",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-a-boxed-value-walked",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "  if (proto !== Object.prototype && proto !== null) return NOT_PLAIN;",
+    "new": "",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-a-proto-key-walked",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "    if (k === '__proto__') return NOT_PLAIN;\n",
+    "new": "",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-no-depth-bound",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "  if (depth > COPY_DEPTH || typeof v.toJSON === 'function') return NOT_PLAIN;",
+    "new": "  if (typeof v.toJSON === 'function') return NOT_PLAIN;",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-toJSON-walked",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "  if (depth > COPY_DEPTH || typeof v.toJSON === 'function') return NOT_PLAIN;",
+    "new": "  if (depth > COPY_DEPTH) return NOT_PLAIN;",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  },
+  {
+    "name": "WDC-the-round-trip-for-every-tree",
+    "file": "src/formats/worldData/worldDataJson.js",
+    "old": "  const c = copiedTree(v, 0);",
+    "new": "  const c = NOT_PLAIN;",
+    "tests": [
+      "test/formats/worldData/wdowned.test.js"
+    ]
+  }
+]

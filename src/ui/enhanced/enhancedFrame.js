@@ -139,6 +139,8 @@ export const FRAME_ROLES = {
     'body .fmt-tip', 'body .fmt-say', 'body .fmt-hint',
     // EG-PLUS: the call's tracker, a plate over the world, and a section inside a breach window
     'body .eg-hud', 'body .eg-k-sec',
+    // STAR6: the fallen star's tracker, a plate over the world (ui/starfall/starTracker.js)
+    'body .star-hud',
     '.px-sys .cmp-sheet'],   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
   // panels that carry a brass edge on the left as their own mark
   panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line

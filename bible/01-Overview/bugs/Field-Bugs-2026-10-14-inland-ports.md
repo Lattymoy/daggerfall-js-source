@@ -50,7 +50,7 @@ FIXED, at the root:
   a freeport's town keeps its places.
 - A PORT TOWN IS ONE THE OPEN SEA BEARS ON (`portSites.js:"export function portTownOnSea(loc, hasPort, isSea) {"`): a
   port by its data (`portTownByData`, unchanged) with a pixel of the open sea within SEA_RING of its own
-  (`portSites.js:"export function seaBears(px, py, isSea) {"`) - the ring the placement reads its bearing off, so every
+  (`fortLaw.js:"export function seaBears(px, py, isSea) {"`, re-exported by `portSites.js` since FB1020c BERTH-RING) - the ring the placement reads its bearing off, so every
   port town has a seaward edge, Mac's "Town's seaward edge". The host asks it in both places a town's places are decided
   (`world.js:"const portOnSea = (dfLocation) =>"`: the pixel's build and `townPlacesFor`), and the bearing is read off the
   open sea too (`world.js:"const bearing = seaBearing(lp.x, lp.y, openSea);"`), so a lake behind a coastal town never

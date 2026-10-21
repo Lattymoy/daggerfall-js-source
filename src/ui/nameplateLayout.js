@@ -107,6 +107,12 @@ const clearOfPlaced = (p, tryOff, plates, skip) => {
   return plates.every((q) => q === p || q === skip || !q.placed || !nameplatesIntersect(probe, q));
 };
 
+/** FB1020c STAR-PLATE: THE SURRENDER'S OWN WORD - what a plate the solver could not clear is lettered as
+ *  (DaggerfallExteriorAutomapWindow.cs:900-904, `textLabel.Text = "*"`), its building's name kept for the pointer
+ *  (:870-878, a zero-delay tooltip). ONE HOME: both town maps letter it from here, so a surrendered plate is a mark on
+ *  either skin, never nothing. */
+export const STAR_PLATE = '*';
+
 /**
  * The solver: 3 outer iterations (:1149); each places the
  * zero-collision plates, untangles 1-vs-1 pairs (both half-shifted

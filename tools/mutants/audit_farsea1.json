@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-FAR-SEA1-L1-the-lane-sea-through-the-tonemap",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor), sea);",
-    "new": "  if (sea > 0.0) shown = mix(shown, elEncode(elTonemapRGB(ringSea(uAmbient, uSunColor, uMoonColor) * ex)), sea);",
+    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);",
+    "new": "  if (sea > 0.0) shown = mix(shown, elEncode(elTonemapRGB(ringSea(uAmbient, uSunColor, uMoonColor, sun) * ex)), sea);",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"

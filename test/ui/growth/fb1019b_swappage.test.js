@@ -98,3 +98,23 @@ test('AUDIT L5-1 THE HINT\'S LAW: a class with no weapon skill and every mastery
   assert.match(texts(detail, 'gr-headline').join(' '), /can't master two weapon skills/);
   assert.ok(!texts(detail, 'gr-fine').some((x) => /change one of your class skills/.test(x)));
 });
+
+test('SWAP-CYCLE THE GROUND, SAID: a swap that leaves the class\'s skills under the sum the level stands on says how many points they make up first - beside the picks and in the ask - and an even swap says nothing of it (mutant: the ground unsaid)', () => {
+  const e = frank();
+  e.skills[LB] = 6;
+  const { detail, asked } = page(e);
+  const pickPair = (out, inn) => {
+    const [o] = swapBox(detail).children.filter((n) => n.tagName === 'SELECT');
+    o.value = String(out); o.onchange?.();
+    const [, i] = swapBox(detail).children.filter((n) => n.tagName === 'SELECT');
+    i.value = String(inn); i.onchange?.();
+  };
+  const ground = 'Your level stays, but your class skills then earn nothing toward your next level until they make up 34 points.';
+  pickPair(ET, LB);   // a primary at 40 for a skill at 6
+  assert.ok(texts(swapBox(detail), 'gr-swap-warn').includes(ground));
+  pressSwap(detail).onclick();
+  assert.ok(asked[0].rows.includes(ground));
+  e.skills[LB] = 40;
+  pickPair(ET, LB);
+  assert.ok(!texts(swapBox(detail), 'gr-swap-warn').some((x) => /make up/.test(x)), 'nothing given up: nothing said');
+});

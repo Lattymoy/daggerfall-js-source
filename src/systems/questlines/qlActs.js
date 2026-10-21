@@ -41,6 +41,7 @@ export const ACT_KINDS = Object.freeze({
   'arena-won': 'world',   // a ladder bout won in the Arena (never a bout between players - AUDIT QUESTLINES ACTS-6)
   'revenant-knelt': 'world',   // a revenant made to kneel
   'star-taken': 'world',   // a star taken on the Firmament - each star once (never one given back and taken again - AUDIT QUESTLINES ACTS-5)
+  'wyrd-met': 'world',   // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (festivalClient.js ACT_NOT_FOUND)
   // the endgame (each also a receipt the service holds - section 5.3)
   'rite-broken': 'endgame',   // Dagon's Faithful's rite broken before the breach opened
   'breach-closed': 'endgame',   // a Dagon's Breach closed
@@ -49,6 +50,8 @@ export const ACT_KINDS = Object.freeze({
   'valkynaz-felled': 'endgame',   // a Valkynaz's Redoubt taken in an Elite Breach
   'hour-broken': 'endgame',   // the Brass Remnant broken in the Shattered Hour
   'serpent-slain': 'endgame',   // the Sea Serpent slain
+  'star-held': 'endgame',   // a fallen star held through its master's fall (the Starfall - STAR8)
+  'heart-star-held': 'endgame',   // the Heart-Star held - the Witches' Night's last star; said in the same turn as its `star-held`, so the festival's finds count one deed (festivalClient.js ONE DEED, ONE FIND)
 });
 export const ACT_IDS = Object.freeze(Object.keys(ACT_KINDS));
 
@@ -56,11 +59,18 @@ let _sink = null;
 /** The bridge's registration: `fn(kind, n)` hears every act (the layer's act). Null unregisters. */
 export function setActSink(fn) { _sink = typeof fn === 'function' ? fn : null; }
 
+/** WITCH1 (bible/06-Systems/Witches-Festival.md): THE OTHER HEARERS - a feature that answers every act as it is said
+ *  (the Witches' Festival's finds, systems/festival/festivalClient.js), beside the one sink, by name; null unregisters. A
+ *  hearer moves no quest and is answered nothing: the count noteAct answers is still the quests'. */
+const _hearers = new Map();
+export function hearActs(name, fn) { if (typeof fn === 'function') _hearers.set(name, fn); else _hearers.delete(name); }
+
 /** A feature's word: the player did `kind` (`n` times). Answers how many running quests heard it (0: none - or no
  *  quests on this page). A kind this file does not name is refused with a warning, never counted. */
 export function noteAct(kind, n = 1) {
   if (!Object.hasOwn(ACT_KINDS, kind)) { console.warn(`[questlines] no act "${kind}"`); return 0; }
   const count = Math.floor(Number(n) || 0);
+  if (count > 0) for (const fn of _hearers.values()) { try { fn(kind, count); } catch (e) { console.warn(`[questlines] a hearer of "${kind}" threw (${e?.message ?? e})`); } }
   if (count <= 0 || !_sink) return 0;
   try { return _sink(kind, count) | 0; } catch (e) { console.warn(`[questlines] the act "${kind}" was not heard (${e?.message ?? e})`); return 0; }
 }

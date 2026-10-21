@@ -1,0 +1,294 @@
+[
+  {
+    "name": "OWH-the-row-stretched-on-the-ground",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "  if (!(s > 0) || row?.mode !== 'linear' || !(row.end < TV_HAZE_END)) return row;",
+    "new": "  if (row?.mode !== 'linear' || !(row.end < TV_HAZE_END)) return row;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-weather-stretched",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "  if (!(s > 0) || row?.mode !== 'linear' || !(row.end < TV_HAZE_END)) return row;",
+    "new": "  if (!(s > 0) || !(row.end < TV_HAZE_END)) return row;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-haze-unease",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "  return { ...row, end: row.end + (TV_HAZE_END - row.end) * s };",
+    "new": "  return { ...row, end: TV_HAZE_END };",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-far-plane-kept",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "  return [Math.max(near, near + (TV_LENS_NEAR - near) * s), WORLD_FAR + (TV_LENS_FAR - WORLD_FAR) * s];",
+    "new": "  return [Math.max(near, near + (TV_LENS_NEAR - near) * s), WORLD_FAR];",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-near-plane-kept",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "  return [Math.max(near, near + (TV_LENS_NEAR - near) * s), WORLD_FAR + (TV_LENS_FAR - WORLD_FAR) * s];",
+    "new": "  return [near, WORLD_FAR + (TV_LENS_FAR - WORLD_FAR) * s];",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-lens-unease",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "  return [Math.max(near, near + (TV_LENS_NEAR - near) * s), WORLD_FAR + (TV_LENS_FAR - WORLD_FAR) * s];",
+    "new": "  return [TV_LENS_NEAR, TV_LENS_FAR];",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-reach-kept",
+    "file": "src/scenes/travelHorizon.js",
+    "old": "export const horizonHit = (eye, dir, ground) => groundHit(eye, dir, ground, { maxDist: TV_PICK_REACH });",
+    "new": "export const horizonHit = (eye, dir, ground) => groundHit(eye, dir, ground);",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-floor-kept-at-30",
+    "file": "src/player/travelCamera.js",
+    "old": "export const TV_TILT_MIN = (15 * Math.PI) / 180;",
+    "new": "export const TV_TILT_MIN = (30 * Math.PI) / 180;",
+    "tests": [
+      "test/render/owhorizon.test.js",
+      "test/render/tv1_travel_view.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-middle-alone",
+    "file": "src/player/travelCamera.js",
+    "old": "    const n = clearSteps(Math.hypot(eye[0] - focus[0], eye[1] - focus[1], eye[2] - focus[2]));",
+    "new": "    const n = 1;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-near-half-asked",
+    "file": "src/player/travelCamera.js",
+    "old": "      const s = 0.5 + k / (2 * n);",
+    "new": "      const s = (k + 1) / (n + 1);",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-far-law-untold",
+    "file": "src/render/cloudShadow.js",
+    "old": "  float far = told ? uCloudShadowFar.x : 1.0;",
+    "new": "  float far = 1.0;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-no-rim",
+    "file": "src/render/cloudShadow.js",
+    "old": "  return mix(t, far, smoothstep(${CLOUD_SHADOW_RIM.toFixed(2)}, 1.0, max(e.x, e.y)));",
+    "new": "  return t;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-untold-told",
+    "file": "src/render/cloudShadow.js",
+    "old": "  if (!told) return t;\n",
+    "new": "",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-map-unread-on-the-ring",
+    "file": "src/render/cloudShadow.js",
+    "old": "float ringSun() { return uSunScale * cloudShadowAt(vWorld) / max(uCloudFar, 0.05); }",
+    "new": "float ringSun() { return uSunScale; }",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-far-law-divided-twice",
+    "file": "src/render/cloudShadow.js",
+    "old": "float ringSun() { return uSunScale * cloudShadowAt(vWorld) / max(uCloudFar, 0.05); }",
+    "new": "float ringSun() { return uSunScale * cloudShadowAt(vWorld) / max(uCloudFar * uCloudFar, 0.05); }",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-deck-far-unread",
+    "file": "src/render/cloudShadow.js",
+    "old": "export const cloudFarOf = (deck) => (deck?.map && Number.isFinite(deck.far) ? Math.min(1, Math.max(0, deck.far)) : 1);",
+    "new": "export const cloudFarOf = (deck) => 1;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-haze-from-the-eye",
+    "file": "src/render/farRing.js",
+    "old": "  vDist = uHazeFrom.w > 0.5 ? length(world - uHazeFrom.xyz) : length(view.xyz);",
+    "new": "  vDist = length(view.xyz);",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-focus-unsent",
+    "file": "src/render/farRing.js",
+    "old": "    gl.uniform4fv(this.u.uHazeFrom, this.renderer?.focus ?? NO_FOCUS);",
+    "new": "    gl.uniform4fv(this.u.uHazeFrom, NO_FOCUS);",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-deck-unbound",
+    "file": "src/render/farRing.js",
+    "old": "    if (deck?.map) { gl.activeTexture(gl.TEXTURE0 + RING_CLOUD_UNIT); gl.bindTexture(gl.TEXTURE_2D, deck.map); gl.activeTexture(gl.TEXTURE0); }\n",
+    "new": "",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-built-pixels-unread",
+    "file": "src/render/farRing.js",
+    "old": "  if (!built) return true;\n  const w = 2 * holeRadius + 1, k",
+    "new": "  if (built || !built) return true;\n  const w = 2 * holeRadius + 1, k",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-key-blind-to-builds",
+    "file": "src/render/farRing.js",
+    "old": "    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;",
+    "new": "    const key = `${holeX},${holeY},${holeRadius}`;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-key-by-size",
+    "file": "src/render/farRing.js",
+    "old": "    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;",
+    "new": "    const key = `${holeX},${holeY},${holeRadius},${built ? built.size : -1}`;",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-a-replace-counted",
+    "file": "src/render/farRing.js",
+    "old": "  set(k, v) { if (!this.has(k)) this.changes++; return super.set(k, v); }",
+    "new": "  set(k, v) { this.changes++; return super.set(k, v); }",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-a-miss-counted",
+    "file": "src/render/farRing.js",
+    "old": "  delete(k) { const had = super.delete(k); if (had) this.changes++; return had; }",
+    "new": "  delete(k) { const had = super.delete(k); this.changes++; return had; }",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-an-empty-clear-counted",
+    "file": "src/render/farRing.js",
+    "old": "  clear() { if (this.size) this.changes++; super.clear(); }",
+    "new": "  clear() { this.changes++; super.clear(); }",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-host-map-plain",
+    "file": "src/scenes/world.js",
+    "old": "  const built = new BuiltPixels(); // key -> pixel entry (OW-HORIZON: a Map counting its keys' changes - the far ring's hole is keyed by them)",
+    "new": "  const built = new Map(); // key -> pixel entry (OW-HORIZON: a Map counting its keys' changes - the far ring's hole is keyed by them)",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-host-fog-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    const fogNow = horizonFog(wxNow.fog, tvf);",
+    "new": "    const fogNow = wxNow.fog;",
+    "tests": [
+      "test/render/owhorizon.test.js",
+      "test/systems/weatherfront.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-host-ring-laneonly",
+    "file": "src/scenes/world.js",
+    "old": "new FarRingRenderer(renderer.gl, { renderer })",
+    "new": "new FarRingRenderer(renderer.gl, { lane: renderer.lightingLane })",
+    "tests": [
+      "test/render/owhorizon.test.js",
+      "test/ui/farring.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-host-hole-blind",
+    "file": "src/scenes/world.js",
+    "old": "        farRing.punchHole(state.current.x, state.current.y, state.terrainDistance, built);",
+    "new": "        farRing.punchHole(state.current.x, state.current.y, state.terrainDistance);",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-renderer-untold",
+    "file": "src/render/renderer.js",
+    "old": "    if (farLoc) gl.uniform2f(farLoc, cloudFarOf(cs), 1);   // OW-HORIZON: the ground past the square - told\n",
+    "new": "",
+    "tests": [
+      "test/render/owhorizon.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-deck-carries-no-far",
+    "file": "src/scenes/shared.js",
+    "old": "Object.assign(enhancedSky.cloudShadow, clouds.shadow, { far: farCoverSun() });",
+    "new": "Object.assign(enhancedSky.cloudShadow, clouds.shadow);",
+    "tests": [
+      "test/render/owhorizon.test.js",
+      "test/render/vc7b_shafts.test.js"
+    ]
+  },
+  {
+    "name": "OWH-the-click-asks-the-sea-margin",
+    "file": "src/scenes/world.js",
+    "old": "    if (!deepWaters || !sea) return g;",
+    "new": "    if (!deepWaters) return g;",
+    "tests": [
+      "test/render/tv4_weather_above.test.js"
+    ]
+  }
+]

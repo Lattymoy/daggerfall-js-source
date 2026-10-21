@@ -142,8 +142,8 @@
   {
     "name": "QUEST-MARKERS-enter-markers-unsorted",
     "file": "src/scenes/worldModes.js",
-    "old": "    return [...others, ...[...(ctx.enterMarkers ?? [])].sort((a, b) => d2(a) - d2(b))];",
-    "new": "    return [...others, ...(ctx.enterMarkers ?? [])];",
+    "old": "    return Object.assign([...others, ...[...(ctx.enterMarkers ?? [])].sort((a, b) => d2(a) - d2(b))], {",
+    "new": "    return Object.assign([...others, ...(ctx.enterMarkers ?? [])], {",
     "tests": [
       "test/systems/quest/fb1004d_questmarkers.test.js"
     ],

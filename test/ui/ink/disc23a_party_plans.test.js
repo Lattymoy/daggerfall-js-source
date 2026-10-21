@@ -12,7 +12,6 @@
 // hosts' wiring by source.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { createAutomapSheet } from '../../../src/ui/automap/automapSheet.js';
 import { createTownSheet } from '../../../src/ui/town/townSheet.js';
 import { readPartyBodies, PARTY_MARK_CSS, PARTY_LEGEND_TEXT } from '../../../src/ui/partyMapMarks.js';
@@ -20,8 +19,9 @@ import { toPaper, CARET_R } from '../../../src/ui/ink/inkMap.js';
 import { FLOOR_PARTY_DOT } from '../../../src/ui/ink/inkAutomap.js';
 import { BLOCK_PX, WORLD_PER_PX } from '../../../src/ui/ink/inkTown.js';
 import { RMB_DIMENSION } from '../../../src/formats/blocksFile.js';
+import { hostText } from '../../hostText.mjs';
 
-const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
 
 /** A canvas that records every call with the pen it was made in. */
 function recordingCtx() {
@@ -167,8 +167,9 @@ test('DISC23-A: the hosts hand the plans the party\'s bodies - the dungeon, the 
   // the one host reading: a party member's peer body, in this scene's frame, with its facing
   assert.match(world, /const partyNear = \(\) => \{\s*\n(?:\s*if \(!social\?\.party\) return \[\];[^\n]*\n)?\s*const near = peersNear\(\);[\s\S]*?for \(const m of social\.others\(\)\) \{\s*\n\s*const peer = near\.find\(\(p\) => m\.peers\?\.includes\(p\.id\)\);/);
   assert.match(world, /yaw: online\?\.peers\.get\(peer\.id\)\?\.shown\?\.yaw \?\? 0 \}\);/);
-  // the town: the player's own subtraction, into the location's frame
-  assert.match(world, /townParty: \(\) => partyOnMaps\(\)\.map\(\(m\) => \(\{ \.\.\.m, feet: \[m\.feet\[0\] - t\[0\] - b\.locOrigin\[0\], m\.feet\[1\] - t\[1\] - b\.locOrigin\[1\], m\.feet\[2\] - t\[2\] - b\.locOrigin\[2\]\] \}\)\),/);
+  // the town: the player's own subtraction, into the location's frame - PIN MOVED (STAR0): in the toggle's module, the host's
+  // live binding by its name (scenes/exteriorAutomapToggle.js)
+  assert.match(world, /townParty: \(\) => host\.partyOnMaps\(\)\.map\(\(m\) => \(\{ \.\.\.m, feet: \[m\.feet\[0\] - t\[0\] - b\.locOrigin\[0\], m\.feet\[1\] - t\[1\] - b\.locOrigin\[1\], m\.feet\[2\] - t\[2\] - b\.locOrigin\[2\]\] \}\)\),/);
   assert.match(world, /partyNear: \(\) => partyOnMaps\(\),/);   // AUDIT (pre-merge) I-E: the plans mark those drawn here
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /selfId: \(\) => host\.selfId\?\.\(\) \?\? null, party: \(\) => host\.partyNear\?\.\(\) \?\? \[\],/, 'the dungeon\'s opts');

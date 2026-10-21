@@ -1,0 +1,20 @@
+[
+  {
+    "name": "FB1020c-TEMPER-CARRIED-the-anvil-row-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    ['temper-anvil', (d) => drawTemper(d, rerender, kit, 'anvil')],   // FB1020c TEMPER-CARRIED",
+    "new": "    // ",
+    "tests": [
+      "test/ui/fb1020c_tempercarried.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-TEMPER-CARRIED-the-loom-row-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // FB1020c TEMPER-CARRIED",
+    "new": "    // ",
+    "tests": [
+      "test/ui/fb1020c_tempercarried.test.js"
+    ]
+  }
+]

@@ -507,8 +507,8 @@
   {
     "name": "ACS-C11-cook",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "atSea: !where().nearPort, wear: s.worth.wear });",
-    "new": "atSea: !where().nearPort, wear: 1 });",
+    "old": "atSea: !inPortWaters(), wear: s.worth.wear });",
+    "new": "atSea: !inPortWaters(), wear: 1 });",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1231,8 +1231,8 @@
   {
     "name": "ACS-H1-book",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "...(near.reach ? { reach: near.reach } : {})",
-    "new": "...{}",
+    "old": "const own = near.reach ?? HARBOUR_REACH;",
+    "new": "const own = HARBOUR_REACH;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

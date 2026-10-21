@@ -2,8 +2,8 @@
   {
     "name": "EG15-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'numidium', 'panoply']);",
-    "new": "'numidium']);",
+    "old": "'numidium', 'panoply', 'wyrd', 'starspun']);",
+    "new": "'numidium', 'wyrd', 'starspun']);",
     "why": "the set no sigil may name: every Panoply piece refused",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "EG15-not-a-record",
     "file": "src/systems/aetheric.js",
-    "old": "...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
-    "new": "...NUMIDIUM_SET_PIECES]);",
+    "old": "...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES]);",
+    "new": "...NUMIDIUM_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES]);",
     "why": "a Panoply piece no reader knows - forged to the wire",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"

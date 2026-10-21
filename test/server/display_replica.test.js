@@ -20,6 +20,7 @@ const DISPLAY_READS = [
   ['/v1/homes/decor', 'POST', { mapId: 1, buildingKey: 1 }], ['/v1/prof/pixels', 'POST', { pixels: [[402, 151]] }],
   ['/v1/market/vendors', 'POST', { region: 17 }], ['/v1/marks/balance', 'POST', {}], ['/v1/guilds/invites', 'POST', {}],
   ['/v1/realm/lineages', 'POST', {}], ['/v1/realm/unions', 'POST', {}], ['/v1/saves', 'GET', null], ['/v1/arena/board', 'POST', {}],
+  ['/v1/festival/town', 'POST', { mapId: 1 }],   // PIN MOVED (WITCH1): and a town's Hearth Offerings
 ];
 const send = (S, path, { method = 'POST', secret, body = {}, mark = null } = {}) => S.fetch(`https://accounts.invalid${path}`, {
   method, headers: { authorization: `Bearer ${secret}`, ...(method === 'POST' ? { 'content-type': 'application/json' } : {}), ...(mark ? { 'x-d1-bookmark': mark } : {}) }, body: method === 'POST' ? JSON.stringify(body) : undefined,

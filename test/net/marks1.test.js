@@ -119,7 +119,7 @@ test('MARKS1 the law: a balance holds 10,000,000; the gate strikes 50 (SILVER-WA
 
 test('MARKS1: GOLD NEVER BUYS MARKS - no kind, route, table or statement takes gold in and strikes a Mark', () => {
   // PROF1 built the second: a Court writ's pay, struck for units the service took out of the Stores (test/prof1_service)
-  assert.deepEqual(Object.entries(MARKS_KINDS).filter(([, way]) => way === 'mint').map(([k]) => k), ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode', 'serpent', 'gather', 'find', 'eg'], 'the faucets built - each a witnessed act but SILVER-FINDS\' two (a gathering\'s find, a loot find), bounded by the service\'s dice and the day');   // PIN MOVED (AUDIT-SEATS): a siege's relay-signed Honours and an Incursion's agreed gate days, registered at last; PIN MOVED (SILVER-WAYS): a raid's receipt, a guild's deed, a Motherlode's Watch; PIN MOVED (EG-E1): a Redoubt of the Elite Breach, the relay's receipt
+  assert.deepEqual(Object.entries(MARKS_KINDS).filter(([, way]) => way === 'mint').map(([k]) => k), ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode', 'serpent', 'gather', 'find', 'eg', 'star'], 'the faucets built - each a witnessed act but SILVER-FINDS\' two (a gathering\'s find, a loot find), bounded by the service\'s dice and the day');   // PIN MOVED (AUDIT-SEATS): a siege's relay-signed Honours and an Incursion's agreed gate days, registered at last; PIN MOVED (SILVER-WAYS): a raid's receipt, a guild's deed, a Motherlode's Watch; PIN MOVED (EG-E1): a Redoubt of the Elite Breach, the relay's receipt
   assert.ok(![...ROUTES].some((r) => r.startsWith('/v1/marks/') && /buy|purchase|gold/i.test(r)), 'no route to buy Drakes');
   const marks = src('server-account/src/marks.js').replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
   // PIN MOVED (SILVER-WAYS): the gate's statement became the combat strike's, the gate's and the raid's alone, and the
@@ -127,7 +127,7 @@ test('MARKS1: GOLD NEVER BUYS MARKS - no kind, route, table or statement takes g
   const mints = [...marks.matchAll(/SELECT 'mint', NULL, '(?:account|guild)', [^,]+, '([^']+)'/g)].map((m) => m[1]);
   // PIN MOVED (SILVER-FINDS): a third - the finds' (a gathering's and a loot's), each the service's dice under its day
   assert.deepEqual(mints, ['${kind}', 'guild-deed', '${kind}'], 'the service strikes Drakes in three statements, the combat strike\'s, the deed\'s and the finds\'');
-  assert.deepEqual([...marks.matchAll(/combatStrikeStatement\(ctx, player, '([a-z]+)'/g)].map((m) => m[1]), ['gate', 'raid', 'serpent', 'eg'], 'the combat strike, a gate\'s, a raid\'s, (SERPENT-SET) a serpent\'s and (EG-E1, PIN MOVED) a Redoubt\'s');
+  assert.deepEqual([...marks.matchAll(/combatStrikeStatement\(ctx, player, '([a-z]+)'/g)].map((m) => m[1]), ['gate', 'raid', 'star', 'serpent', 'eg'], 'the combat strike, a gate\'s, a raid\'s, (STAR7, PIN MOVED) a fallen star\'s, (SERPENT-SET) a serpent\'s and (EG-E1, PIN MOVED) a Redoubt\'s');
   assert.deepEqual([...marks.matchAll(/findStrikeStatement\(ctx, player, '([a-z]+)'/g)].map((m) => m[1]), ['gather', 'find'], 'SILVER-FINDS: the finds\' strike, a gathering\'s and a loot\'s');
   assert.doesNotMatch(src('server-account/migrations/0025_marks.sql'), /'gold'/, 'the ledger has no gold end');
   assert.match(src('server-account/migrations/0025_marks.sql'), /src_kind TEXT NOT NULL CHECK \(src_kind IN \('mint', 'account', 'guild'\)\)/);

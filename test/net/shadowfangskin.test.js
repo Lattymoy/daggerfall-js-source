@@ -310,7 +310,7 @@ test('SHADOW-FANG whose skin: my own is the account service\'s last word on this
   assert.equal(ownWerewolfSkin(storage), 'shadowfang');
   adoptIdentity(storage, { glyphs: [], secret: 'x' });
   assert.equal(ownWerewolfSkin(storage), null, 'a grant taken off is gone here too');
-  assert.match(rd('src/ui/accountFlow.js'), /adoptIdentity\(storage, \{ name: r\.data\.account\?\.name, kind: r\.data\.account\?\.kind, glyphs: r\.data\.wardrobe\?\.glyphs, glyphsOff: r\.data\.wardrobe\?\.glyphsOff, aura: auraStated\(r\.data\.wardrobe\), secret: asked \}\);/, 'the wardrobe states them, for the session that asked (WB9g: and the aura worn beside them)');
+  assert.match(rd('src/ui/accountFlow.js'), /adoptIdentity\(storage, \{ name: r\.data\.account\?\.name, kind: r\.data\.account\?\.kind, glyphs: r\.data\.wardrobe\?\.glyphs, glyphsOff: r\.data\.wardrobe\?\.glyphsOff, aura: auraStated\(r\.data\.wardrobe\), icon: iconStated\(r\.data\.wardrobe\), secret: asked \}\);/, 'the wardrobe states them, for the session that asked (WB9g: and the aura worn beside them; PIN MOVED (WITCH1): and the profile icon)');
   // PIN MOVED (NAME-AS): the mint's answer still rides whole (`...who` - the glyphs with it); the stored session keeps
   // the ACCOUNT's name beside them, the room's going to the live sessions
   assert.match(rd('src/net/accountClient.js'), /adoptIdentity\(storage, \{ \.\.\.who, name: who\.accountName \?\? who\.name, secret: session\.secret \}\);/, 'and every mint');

@@ -232,8 +232,8 @@
   {
     "name": "AS2-R3-3-layer-raid",
     "file": "server/src/index.js",
-    "old": "    if (a.ly) return;\n",
-    "new": "",
+    "old": "    if (a.ly) return;\n    if (!raidWordFits(",
+    "new": "    if (!raidWordFits(",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],

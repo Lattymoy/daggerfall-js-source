@@ -266,7 +266,7 @@ test('AUDIT MARTIAL L1 L6 / L2 F2: a signature\'s HUD chip makes nothing a frame
 
 test('AUDIT MARTIAL L1 N1, L1 N3, L4 N3: a follow-up owed a body the relay runs shows its number; "blows and arrows" where arrows pay; Blackjack\'s "twice" is its number; Hallowed Strike\'s mace says its +25 to hit (mutants: the number in the record\'s branch alone; Blackjack\'s times moved)', () => clean(() => {
   const powers = src('src/systems/martialPowers.js');
-  const shown = powers.indexOf('  if (!f?.dead) showFollowUp(n, word);'), branch = powers.indexOf('  if (f) { if (!f.dead) door.hurtFoe(f, n); return; }');
+  const shown = powers.indexOf('  if (!f?.dead) showFollowUp(n, word, entity);'), branch = powers.indexOf('  if (f) { if (!f.dead) door.hurtFoe(f, n); return; }');
   assert.ok(shown >= 0 && branch > shown, 'the number before the record\'s branch (the loot\'s again, ROSE-SEEN)');
   const W = (id) => MP.martialWords(id);
   assert.match(W('blademaster').passive, /blows or arrows/); assert.match(W('cutthroat').passive, /blows and arrows/);

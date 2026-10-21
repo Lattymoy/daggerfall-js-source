@@ -1,0 +1,324 @@
+[
+ {
+  "name": "AUDIT-STAR-W1-circle-pronoun",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "'The Flesh Atronach calls its circle. Break it!'",
+  "new": "'The Flesh Atronach calls her circle. Break it!'",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W1-circle-article",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "'The Daedra Lord calls its circle. Break it!'",
+  "new": "'Daedra Lord calls its circle. Break it!'",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W1-host-shared-line",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "sayAt(S, `circle${i}`, M.circle()); });",
+  "new": "sayAt(S, `circle${i}`, M.call()); });",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js",
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W4-wave4-old",
+  "file": "src/systems/starfall/starWords.js",
+  "old": "t('starfall.wave.4', 'Mephala\\'s own join the fight.')",
+  "new": "t('starfall.wave.4', 'Mephala\\'s own come for the star.')",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W4-seducer-old",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "'Mephala sends a Daedra Seducer!'",
+  "new": "'A Daedra Seducer comes for the star!'",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W2-cap-english-handed",
+  "file": "src/net/marksBook.js",
+  "old": "{ cap: MARKS_COMBAT.perDay }),   // STAR7",
+  "new": "{ cap: marksText(MARKS_COMBAT.perDay) }),   // STAR7",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js",
+   "test/net/silverways_client.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W2-cap-label-frozen",
+  "file": "src/ui/haulCards.js",
+  "old": "export const haulCappedText = () => t('haul.capped', 'Daily silver cap reached');",
+  "new": "export const haulCappedText = () => 'Daily silver cap reached';",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W3-guest-explains",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "'Star not recorded. Add a username within a week to keep it.'",
+  "new": "'This star is not on your record yet. Only registered accounts keep one. Add a username this week and it counts.'",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W5-day-full-old",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "'You have held enough stars for today.'",
+  "new": "'You have been counted for every star one day allows.'",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W5-recorded-old",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "t('starfall.claim.recorded', 'Star recorded. Stars held: {n}.', { n })",
+  "new": "t('starfall.claim.recorded', 'The star is on your record. Stars held: {n}.', { n })",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W5-spoils-glass-alone",
+  "file": "src/systems/starfall/starSpoils.js",
+  "old": "t('starfall.spoils.granted', 'The star\\'s spoils are in your pack.')",
+  "new": "t('starfall.spoils.granted', 'Starglass from the fallen star is in your pack.')",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js",
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-S1-cut-whole-only",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  if (had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed",
+  "new": "  if (whole && had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-S1-part-blow-lays",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+  "new": "  else if (true) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-S1-strike-unweighed",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  stranded(attacker, target, info?.blow !== false);",
+  "new": "  stranded(attacker, target, true);",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W6-veil-rounds-not-seconds",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  say(VEIL_TEXT.proc(v.rounds * ROUND_SECONDS));",
+  "new": "  say(VEIL_TEXT.proc(v.rounds));",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js",
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W6-veil-chip-english",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "name: VEIL_TEXT.chip(), text: time(st.veilRecoverLeft)",
+  "new": "name: 'Veil', text: time(st.veilRecoverLeft)",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W6-veil-spell-english",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "export const veilBundle = (rounds) => ({ ...eventideBundle(rounds), name: VEIL_TEXT.spell() });",
+  "new": "export const veilBundle = (rounds) => ({ ...eventideBundle(rounds), name: \"Mephala's Veil\" });",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-S2-chip-tierless",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  for (const c of out) c.tier = CHIP_TIER;\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js",
+   "test/systems/set5_ui.test.js",
+   "test/systems/raid4b_sets.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-S2-tile-tierless",
+  "file": "src/ui/hud/hudStatus.js",
+  "old": "set: c.set ?? null, tier: Number.isInteger(c.tier) ? c.tier : null });",
+  "new": "set: c.set ?? null, tier: null });",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-S2-card-by-name",
+  "file": "src/ui/enhanced/enhancedHud.js",
+  "old": "  const i = tile?.tier;",
+  "new": "  const i = set?.tiers.findIndex((x) => String(tile?.name ?? '').startsWith(x.name));",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U3-bar-words-english",
+  "file": "src/ui/starfall/starBar.js",
+  "old": "    wardedText: STAR_CARD_TEXT.warded(), fallenText: STAR_CARD_TEXT.felled(),",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U3-bar-ward-unread",
+  "file": "src/ui/gate/gateBossBar.js",
+  "old": "model.warded ? model.wardedText ?? BOSS_BAR_TEXT.warded",
+  "new": "model.warded ? BOSS_BAR_TEXT.warded",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-I1-glass-name-shared",
+  "file": "src/systems/starfall/starglass.js",
+  "old": "name: 'Starfall Glass', worldTextureArchive",
+  "new": "name: 'Starglass', worldTextureArchive",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js",
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-I2-glass-card-silent",
+  "file": "src/systems/item/itemInfo.js",
+  "old": "  else if (isStarglass(item)) for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true });   // AUDIT STAR I2\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-I2-glass-classic-box",
+  "file": "src/systems/item/itemInfo.js",
+  "old": "|| isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
+  "new": "|| isHearthOffering(item)) record = survivalInfoTokens(item);",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-I2-glass-enhanced-card",
+  "file": "src/ui/enhanced/enhancedInventory.js",
+  "old": "|| isStarglass(item) || isFestivalFace(item) ? { survival:",
+  "new": "|| isFestivalFace(item) ? { survival:",
+  "tests": [
+   "test/systems/starfall/auditstar.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U2-plate-live",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "  parts.phase.setAttribute?.('aria-live', 'polite');",
+  "new": "  root.setAttribute?.('aria-live', 'polite');",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-W7-gauge-unnamed",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "parts.gauge.textContent = gauge; moved = true; }",
+  "new": "moved = true; }",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-card-unread",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "const under = (line) => `calc(${line}px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px))`;",
+  "new": "const under = (line) => `calc(${line}px + env(safe-area-inset-top, 0px))`;",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-party-unstepped",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "const lower = 'max(var(--dfquest-h, 0px), var(--dfstar-h, 0px))'",
+  "new": "const lower = 'var(--dfquest-h, 0px)'",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-under-bar-dropped",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "  ${BAR_UP} .star-hud { --star-floor: max(24%, 162px); }\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-card-over-bar",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "@media (max-width: 1000px) { ${BAR_UP}:has(.star-hud.on) .qtrack { visibility: hidden; } }\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-moved-card-unmeasured",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "if (moved || at !== shown.at) { shown.at = at; publish(doc, true); }",
+  "new": "if (moved) { shown.at = at; publish(doc, true); }",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-hidden-unpublished",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "root.className = 'star-hud'; publish(doc, false); } return; }",
+  "new": "root.className = 'star-hud'; } return; }",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR-U1-on-kept-hidden",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "shown.cls = ''; root.className = 'star-hud'; publish(doc, false);",
+  "new": "shown.cls = ''; publish(doc, false);",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ }
+]

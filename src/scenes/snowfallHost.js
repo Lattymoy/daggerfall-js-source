@@ -186,6 +186,20 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     for (const k of bodies.keys()) if (!lying.has(k)) bodies.delete(k);
   }
 
+  /** SHADER-STALL (render/glProgram.js startPrograms): the snow's surface, made the first time its program's compile is
+   *  done (`snowReady`, started as the masks land) - the frame the masks landed in waited the whole compile, 0.3-5.6 s of
+   *  the real game's first seconds here. Built where AUDIT ENVIRONS I5 built it: a driver that will not build the program
+   *  costs the snow, never the frame. */
+  let snowReady = null, albedoIn = null;
+  function makeSurface() {
+    snowReady = null;
+    try {   // AUDIT ENVIRONS I5: the snow's program built now, beside its surface - a driver that will not build it costs the snow, never the frame
+      renderer.prepareTerrainSnow?.();
+      surface = new SnowfallSurface(gl, renderer);
+      if (albedoIn) surface.setAlbedo(albedoIn);
+    } catch (e) { surface?.dispose(); surface = null; console.warn('[snowfall] the snow surface would not build - the snow is kept, never drawn:', e?.message ?? e); }
+  }
+
   function start() {
     if (asked || !enhanced || !world) return;
     asked = true;
@@ -194,11 +208,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
         if (disposed) return;   // a later boot's host stands now
         runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: readSettings() });
         if (gl && renderer) {
-          try {   // AUDIT ENVIRONS I5: the snow's program built now, beside its surface - a driver that will not build it costs the snow, never the frame
-            renderer.prepareTerrainSnow?.();
-            surface = new SnowfallSurface(gl, renderer);
-            if (albedo) surface.setAlbedo(albedo);
-          } catch (e) { surface?.dispose(); surface = null; console.warn('[snowfall] the snow surface would not build - the snow is kept, never drawn:', e?.message ?? e); }
+          albedoIn = albedo;
+          snowReady = renderer.startTerrainSnow?.() ?? (() => true);   // SHADER-STALL: its program started now, the surface made once it is compiled
+          if (snowReady()) makeSurface();
         }
         if (pending) { runtime.restoreSaveData(pending, 0); pending = null; }
         completePending = true;   // the mod's late Initialize: RestoreTrackData, then CompleteSession - on the frame's own clock
@@ -285,6 +297,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       gameSecondsNow = Math.floor(f.seconds ?? 0);
       start();
       if (!runtime) return;
+      if (snowReady?.()) makeSurface();   // SHADER-STALL: the surface the frame its program is compiled
       try { tick(f); } catch (e) {
         broken = true; surface?.dispose(); surface = null;
         console.warn('[snowfall] a snow frame threw - the snow stops here, its save kept:', e?.stack ?? e);

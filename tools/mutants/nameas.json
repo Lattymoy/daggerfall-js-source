@@ -157,7 +157,7 @@
   {
     "name": "NAMEAS-the-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct164';",
+    "old": "export const ACCOUNT_VERSION = 'acct165';",
     "new": "export const ACCOUNT_VERSION = 'acct121';",
     "tests": [
       "test/server/duel_record.test.js",
@@ -204,8 +204,8 @@
   {
     "name": "NAMEAS-keepSession-drops-the-stamp",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon })",
     "tests": [
       "test/net/nameas_client.test.js"
     ]

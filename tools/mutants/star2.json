@@ -1,0 +1,92 @@
+[
+  {
+    "name": "STAR2-the-seam-unchecked",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "  if (bag[0] === bagRound(round - 1, len)[len - 1]) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-the-round-roll-fixed",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "gateHash(STAR_SALT, round, 11, i)",
+    "new": "gateHash(STAR_SALT, 0, 11, i)",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-a-coven-in-the-open-zone",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "coven({ id: 'alcaire', region: 34,",
+    "new": "coven({ id: 'alcaire', region: 16,",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-a-member-renamed",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "'Sister of the Bluff')",
+    "new": "'Sisters of the Bluff')",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-the-stars-bunched",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) >= STAR_APART_PX;",
+    "new": "Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) >= 0;",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-the-gate-site-ignored",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "if (gate && !apart(gate, px, py)) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-one-town-for-all",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "return !strict || !towns.has(scan.townAt[id]);",
+    "new": "return true;",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-the-day-off-by-one",
+    "file": "src/systems/starfall/starfallNight.js",
+    "old": "nightDayOfYear(n) === WITCHES_FESTIVAL_DAY;",
+    "new": "nightDayOfYear(n) === WITCHES_FESTIVAL_DAY + 1;",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-the-heart-star-the-first",
+    "file": "src/systems/starfall/starfallNight.js",
+    "old": "export const HEART_STAR = STAR_PER_NIGHT - 1;",
+    "new": "export const HEART_STAR = 0;",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  },
+  {
+    "name": "STAR2-the-dusk-read-at-midnight",
+    "file": "src/systems/starfall/starfallNight.js",
+    "old": "skyClassicMinutes(n * STAR_HOUR_MS + STAR_FALLS_MS[0])",
+    "new": "skyClassicMinutes(n * STAR_HOUR_MS)",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  }
+]

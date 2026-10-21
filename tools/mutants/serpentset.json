@@ -2,8 +2,8 @@
   {
     "name": "SERPENT-SET-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply']);",
-    "new": "'thieftaker', 'orcsbane', 'numidium', 'panoply']);",
+    "old": "'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun']);",
+    "new": "'thieftaker', 'orcsbane', 'numidium', 'panoply', 'wyrd', 'starspun']);",
     "why": "the set no sigil may name: every Coilscale piece refused off the wire",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "SERPENT-SET-not-a-record",
     "file": "src/systems/aetheric.js",
-    "old": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
-    "new": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);",
+    "old": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES]);",
+    "new": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES]);",
     "why": "a Coilscale piece no reader knows - forged to the wire",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -235,8 +235,8 @@
   {
     "name": "SERPENT-SET-the-bow-refused",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;",
-    "new": "  if (ranged(weapon)) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
+    "old": "  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  stranded(attacker, target, info?.blow !== false);   // STAR7: Bound in Silk - a strand a blow that counts whole; AUDIT STAR S1: the held blow's landing cuts the count whatever its weight\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;",
+    "new": "  if (ranged(weapon)) return;\n  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)\n  stranded(attacker, target, info?.blow !== false);   // STAR7: Bound in Silk - a strand a blow that counts whole; AUDIT STAR S1: the held blow's landing cuts the count whatever its weight\n  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone",
     "why": "PIN MOVED (AUDIT FB1018f L3-3): the guard above reads the ward too; a bow's blow never tightens it",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -460,8 +460,8 @@
   {
     "name": "SERPENT-SET-cap-apart",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 }",
-    "new": "kinds: Object.freeze(['gate', 'raid', 'eg']), perDay: 150 }",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'eg', 'star']), perDay: 150 }",
     "why": "the serpents outside the day's cap - and every serpent strike counted for nothing toward it",
     "note": "EG-E1 (PIN MOVED): the Spire's Redoubts under the same cap - re-aimed by content; the serpents alone dropped.",
     "tests": [

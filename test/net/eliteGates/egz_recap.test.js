@@ -374,7 +374,7 @@ test('EG-ZF service: FIRST OF THE SPIRE\'S LETTER (section 19 - "granted as Hour
   assert.deepEqual(post(van).map((p) => ({ ...p })), [{ batch: EG_FIRST_POST.batch, sender: POST_SENDER, subject: 'First of the Spire', body: EG_FIRST_POST.body, item: null, sent_at: now() }], 'once, the developers\' words');
   assert.deepEqual(post(other), [], 'never to one the list does not name');
   assert.ok(EG_FIRST_POST.subject.length <= POST_SUBJECT_MAX && EG_FIRST_POST.body.length <= POST_BODY_MAX);
-  assert.match(EG_FIRST_POST.body, /^Your company was the first ever to take Redoubt 10 of the Battlespire\. The Spire remembers\.\n\nYour title, First of the Spire, and its aura, Firstlight, are yours to wear - choose them on your profile\.\n\n- The Developers$/);
+  assert.match(EG_FIRST_POST.body, /^You were the first ever to take Redoubt 10 of the Battlespire\. The Spire remembers\.\n\nYour title, First of the Spire, and its aura, Firstlight, are yours to wear - choose them on your profile\.\n\n- The Developers$/);
   const box = await S.fetch('https://accounts.invalid/v1/post/box', { method: 'GET', headers: { authorization: `Bearer ${van.secret}` } });
   const heads = (await box.json()).post;
   assert.deepEqual(heads.map((p) => [p.subject, p.from, p.item, p.read]), [['First of the Spire', POST_SENDER, null, false]], 'in the mailbox beside the hourglass');

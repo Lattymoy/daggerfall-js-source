@@ -530,8 +530,8 @@
   {
     "name": "SPY-W-lens-unnarrowed",
     "file": "src/scenes/world.js",
-    "old": "    const proj = mirrorProjectionX(perspective(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, 6000));",
-    "new": "    const proj = mirrorProjectionX(perspective(fieldOfView() + climbFeel.fovRad(), worldAspect, spyglass.near, 6000));",
+    "old": "    const proj = horizonProj(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, tvf);",
+    "new": "    const proj = horizonProj(fieldOfView() + climbFeel.fovRad(), worldAspect, spyglass.near, tvf);",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]

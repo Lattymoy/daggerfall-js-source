@@ -51,6 +51,9 @@ test('EG-ZN THE BUDGET, MEASURED (section 11.9, as EG-G2 measured): over 60 circ
   // more a record a dithering piece touches, still under the Hour's 82
   assert.deepEqual([Math.round((whole / n) * 100) / 100, wholeWorst], [11.7, 12], 'the circle whole: one draw a record, as before');
   assert.deepEqual([Math.round((one / pieces) * 100) / 100, oneWorst], [16.17, 24], 'one piece dithering');
-  assert.deepEqual([Math.round((frame / n) * 10) / 10, frameWorst, frameOccWorst], [32.9, 39, 51]);   // PIN MOVED at the merge with EG-ZL (its Drift chains, Beat phases and tells are kinds of the batch): 20.7, 30, 34 before
+  // PIN MOVED (FIELD BUGS 2026-10-20f ORRERY-STONES, scenes/eliteGates/egOrrery.js): an Athenaeum's six stones stand, two batched kinds
+  // of two records each (the stones and their bezels; the hands and the crown gears that turn) - four draws a circle that lays one:
+  // 32.9, 39, 51 before
+  assert.deepEqual([Math.round((frame / n) * 10) / 10, frameWorst, frameOccWorst], [33.8, 43, 55]);   // PIN MOVED at the merge with EG-ZL (its Drift chains, Beat phases and tells are kinds of the batch): 20.7, 30, 34 before
   assert.ok(frameOccWorst < 82, 'under the Hour\'s own frame');
 });

@@ -2,8 +2,8 @@
   {
     "name": "VIRT-the-spacers-gap-not-taken-off",
     "file": "src/ui/virtualRows.js",
-    "old": "    top = spacer(top, above > 0 ? above * pitch - gap : 0, true);",
-    "new": "    top = spacer(top, above > 0 ? above * pitch : 0, true);",
+    "old": "    top = spacer(top, above > 0 ? span(0, above) - gap : 0, true);",
+    "new": "    top = spacer(top, above > 0 ? span(0, above) : 0, true);",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "VIRT-the-foot-gap-not-taken-off",
     "file": "src/ui/virtualRows.js",
-    "old": "    foot = spacer(foot, below > 0 ? below * pitch - gap : 0, false);",
-    "new": "    foot = spacer(foot, below > 0 ? below * pitch : 0, false);",
+    "old": "    foot = spacer(foot, below < lines ? span(below, lines) - gap : 0, false);",
+    "new": "    foot = spacer(foot, below < lines ? span(below, lines) : 0, false);",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "VIRT-the-window-rebuilt-inside-its-margin",
     "file": "src/ui/virtualRows.js",
-    "old": "    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) { place(); return; }",
-    "new": "    if (false) { place(); return; }",
+    "old": "    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) { place(); return false; }",
+    "new": "    if (false) { place(); return false; }",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -101,26 +101,26 @@
   {
     "name": "VIRT-a-landing-repaints-the-pack",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  const tile = itemTile(line, box, tileLanded, snap);\n  if (!tile.classList.contains('has-icon')) _waitingTiles.set(tile, { line, box, snap });",
-    "new": "  const tile = itemTile(line, box, render, snap);\n  if (!tile.classList.contains('has-icon')) _waitingTiles.set(tile, { line, box, snap });",
+    "old": "const _tiles = landingTiles((t, landed) => itemTile(t.line, t.box, landed, t.snap), { alive: () => !!host });",
+    "new": "const _tiles = landingTiles((t) => itemTile(t.line, t.box, render, t.snap), { alive: () => !!host });",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "VIRT-the-tile-left-on-its-initials",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    tile.replaceWith(fresh);",
-    "new": "    void fresh;",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "      tile.replaceWith(fresh);",
+    "new": "      void fresh;",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "VIRT-the-wear-bar-lost",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    if (bar) fresh.append(bar);",
-    "new": "    void bar;",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "      if (bar) fresh.append(bar);",
+    "new": "      void bar;",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-VIRT-the-partial-line-not-counted",
     "file": "src/ui/virtualRows.js",
-    "old": "    const below = lines - Math.ceil(end / cols);",
-    "new": "    const below = lines - Math.floor(end / cols);",
+    "old": "    const below = Math.ceil(end / cols);",
+    "new": "    const below = Math.floor(end / cols);",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -300,18 +300,18 @@
   },
   {
     "name": "AUDIT-VIRT-the-still-waiting-tiles-thrown-away",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
-    "new": "    void 0;",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "      if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
+    "new": "      void 0;",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
   },
   {
     "name": "AUDIT-VIRT-a-frame-a-landing",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (_tilesQueued) return;",
-    "new": "  void _tilesQueued;",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "    if (queued) return;",
+    "new": "    void queued;",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]

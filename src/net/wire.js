@@ -195,7 +195,7 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
-import { TITLES, GLYPHS, GLYPHS_MAX, AURAS, titleClaimed, seatTitleClaimOk, renownIssuable } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back   // RENOWN1: and the level's bound, `badged` and `readRenown` alike
+import { TITLES, GLYPHS, GLYPHS_MAX, AURAS, ICONS, titleClaimed, seatTitleClaimOk, renownIssuable } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back   // RENOWN1: and the level's bound, `badged` and `readRenown` alike
 import { nameAllowed, maskText, textCaught } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it; TEXT-F1: and a player's words are starred inside sanitizeChat and wordsLine, the same way - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 import { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX } from './dice.js';   // DICE1: the dice's law - one home for both ends (dice.js imports nothing, so the worker's graph stays flat)
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
@@ -1534,7 +1534,10 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world235';   // GRANT-SLEEP and its audit (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects", then "Audit this"; renumbered at the merges past the versions of main to world234 (DEX1) - world225, world226, world228, world229, world230, world231 then world234 on its branch; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md ROOM-SLEEP; NOT YET DEPLOYED): a cell's spawn-grant measure posts its window at the first frame or close once it is due, at the cell's drain, and a case's evidence at its own door (AUDIT GRANT-SLEEP S1: GRANT-ASKS' line crossed, a tally) - never on the ten-minute timer GRANT2 armed, which held each room that took a mint awake ten minutes from its window's first fold. No frame changes shape: deploy in either order.
+export const RELAY_VERSION = 'world238';   // GRANT-SLEEP and its audit (2026-10-20, the owner: "the server cost is skyrocketing", then "Its the durable objects", then "Audit this"; renumbered at the merges past the versions of main to world237 - world225, world226, world228, world229, world230, world231, world234 then world235 on its branch; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md ROOM-SLEEP; NOT YET DEPLOYED): a cell's spawn-grant measure posts its window at the first frame or close once it is due, at the cell's drain, and a case's evidence at its own door (AUDIT GRANT-SLEEP S1: GRANT-ASKS' line crossed, a tally) - never on the ten-minute timer GRANT2 armed, which held each room that took a mint awake ten minutes from its window's first fold. No frame changes shape: deploy in either order.
+// world237: world237: FIELD BUGS 2026-10-20f (2026-10-20, bible/01-Overview/bugs/Field-Bugs-2026-10-20f.md, from ilovemybonk's word on the Elite Breach in #general; world236 on its branch, renumbered past LONE-HERALD's world236 at the merge; NOT YET DEPLOYED): LANDED-WORD - an Elite Breach's room tells a striker what each of its blows landed (`eland`, to it alone - net/eliteGates/egBrain.js egBlow), and a lord an errand holds at a threshold answers what it lost (net/eliteGates/egLords.js egLordHit), so the word, the recap and a Court's chart count that; FAIR-STILL - the fair trail reads a member's silence from held ground to held ground within the snap as standing still, never blind (net/eliteGates/egFair.js egStillGap); DOOR-WORD - a member at the door on a trail it refuses is told why, once a hall (`efair`, to it alone - egBrain.js doorWord). A page facing a relay before it keeps its claims (EG_LAND_RELAY_MIN); an older page drops both words. Deploy the relay first or with the pages
+// world236: FIELD BUGS 2026-10-20d LONE-HERALD (2026-10-20, a player in the Discord: "I JUST HIT REDOUBT 20 SOLO AND BECAUSE I DID IT WRONG ITS SEEN AS COMPANY"; bible/01-Overview/bugs/Field-Bugs-2026-10-20d.md, audited (AUDIT FB1020d: a company that went without its opener led by its first entrant); world235 on its branch, renumbered past THE WITCHES' FESTIVAL AND ITS STARFALL's world235 at the merge; NOT YET DEPLOYED): a Valkynaz Redoubt's herald news says its company's entrants (`n`, the Descent's count) and leads a company of one with its member's name (net/eliteGates/egBrain.js heraldCompany), the hub's read keeps the size (net/eliteGates/egHerald.js validEgHeraldTell) and its reckoning hands it to the posts, so the tenth Redoubt's post, First of the Spire and a seal lifted say a company of one alone - the room-to-hub tell grows a field; no frame a client reads changes shape, and either end may deploy first (a tell with no size is posted as a company, as it was).
+// world235: THE WITCHES' FESTIVAL AND ITS STARFALL, one release - WITCH1 (2026-10-20, the owner: "develop our first live event"; bible/06-Systems/Witches-Festival.md; world231, world233 then world234 on its branch, renumbered past main's world231 (NAME-WORDS), world232 (GAUNTLET-PLATES), world233 (SD-SEA) and world234 (DEX1) at the merges; NOT YET DEPLOYED) - the token's vocabulary grows: the Witchwarden and Hearthkeeper titles (TITLES), the Witchfire aura (AURAS), and a profile icon worn (`pi`, ICONS - the relay's hello carries it to the room beside the aura), and the Iliac Hand's festival cards and their two emblems (iliacCards.js); an older relay drops `pi` and refuses a token naming a word it does not hold, so client and relay move together. STAR3 (2026-10-20, the owner: "something coming from the sky and crashing into the ground, where people need to defend the objective in a wave based format with a boss topping off the encounter at the end"; bible/11-Multiplayer/Starfall.md sections 5, 9 and 13; world233 on its branch, renumbered past SD-SEA's world233 and DEX1's world234 at the merge, and one release with WITCH1's world235 when the festival's pull request was folded in; NOT YET DEPLOYED): THE STARFALL - a word at a fallen star (`star`) to its cell, which keeps the star's ledger (net/starfall/starfallLaw.js - the gathering, the waves and their breath, the master, the light, who defended), says it to the cell (`st`), mints each earner's receipt at the master's fall (`j1`, net/starfall/starReceipt.js - the gate's one key) and tells the hub (STAR_INTERNAL_HELD), which says the hold to everyone online (`hd`) and keeps the night's held stars (`hds`) and each account's receipts for a hello; STAR8 (bible/11-Multiplayer/Starfall.md section 7): TITLES gains `starwarden` (net/identityToken.js - the Thirteenth of Frostfall's title), so this relay reads a token wearing it. Deploy the relay first: a client says no star word to a relay older than STAR_RELAY_MIN (one would close the socket on it), and an older client drops the `star` frame
 // world234: DEX1 (2026-10-19, Mac: "I want to implement this as our next mod 1:1"; bible/04-Characters/Enemy-Expansion.md; world225 on its branch, renumbered past main's world225-world233 at the merges; NOT YET DEPLOYED): a foe's kind on the wire is MobileTypes' u16 (FOE_TYPE_MAX), so a mod's enemies (Daggerfall Enemy Expansion's 256-398) cross - it was 255; the enemy table the relay reads takes a mod's rows (characters/enemy/customEnemies.js joins the bundle) and carries MobileBehaviour's one home; a mod's monster past 255 throws no class's telegraphed blow (ai/blowShapes.js); the relay's foe bounds hold the mod's classic rows too (net/foeBounds.js, six profiles, no table read) and King's Gambit's roster reads the vanilla rows by name (VANILLA_ENEMY_BASICS). DEX4a (2026-10-20, grown in place): a cast's spell index is a standard spell's to a u16 (SPELL_INDEX_MAX), so a foe casting a mod's spell (Daggerfall Enemy Expansion's 500-503) crosses - it was a u8, SPELLS.STD's. DEX5b (2026-10-20, grown in place): a dead foe's record may say its body GONE (`bg` - 1 risen, 2 burnt to its ash), a mod's corpse prefab's word to every copy (validFoeRecord). AUDIT DEX D3 (2026-10-20, grown in place): and the room's memory keeps it (validSharedFoe), so an arrival lays no body the room saw rise or burn.
 // world233: SD-SEA (FIELD BUGS 2026-10-20b, world226 on its branch, renumbered past world226-world232 at the merges; NOT YET DEPLOYED; bible/01-Overview/bugs/Field-Bugs-2026-10-20b.md; the owner: "Abyss Dungeons dont seem to be spawning anymore"): the Abyss Dungeon's census never chooses a region with no town to rise by (net/superDungeon/sdLaw.js SD_TOWNLESS_REGIONS, pickSdRegion) - the sea's above all, every water pixel's region (High Rock sea coast), whose crowd aboard ships raised Hollows that stood by no city on any client. No frame changes shape. Deploy relay before clients or after: a client of this build stands a record an older relay raised there by the Bay's great cities (scenes/superDungeon/sdHost.js).
 // world232: FIELD BUGS 2026-10-19f GAUNTLET-PLATES (2026-10-19, a player's private report; world224 on its branch, renumbered past main's world224 (LAYERED-GEAR and VOICE2), world225 (GAUNTLET-SLAIN), world226 (LORD-SHARES), world227 (PLAIN-SWEEP), world228 (QL12), world229 (WB14b), world230 (OW-CHASE-RANGE) and world231 (NAME-WORDS) at the merges; bible/01-Overview/bugs/Field-Bugs-2026-10-19f.md, bible/11-Multiplayer/Elite-Gates.md section 8.3; world231 before it; NOT YET DEPLOYED): a Gauntlet's progress word says each plate's state - `silenced`, plate by plate in `spots.pillar`'s order, 1 once its Caster is silenced (net/eliteGates/egBrain.js trialStep, from the wake), so every screen marks the plates still to hold and dims a held one; no hall's bytes move (the objective naming the plates is the screen's own, ui/eliteGates/egHud.js egObjectiveText - net/eliteGates/egLaw.js EG_OBJECTIVES keeps the spec's word). Either end may deploy first: an older client passes the word through egProgress (a short list) and reads nothing from it, and a client facing world231 or older draws every plate the hall lays while a Caster is left
@@ -2092,7 +2095,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2214,6 +2217,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'rite before hello' };
     const r = validRiteIn(m);
     return r ? { t: 'rite', ...r } : { error: 'bad rite' };
+  }
+  if (m.t === 'star') {   // STAR3: a word at a fallen star, to its cell - projected by validStarIn; the cell's ledger (net/starfall/starfallLaw.js) judges where and when
+    if (!hasHello) return { error: 'star before hello' };
+    const r = validStarIn(m);
+    return r ? { t: 'star', ...r } : { error: 'bad star' };
   }
   if (m.t === 'eg') {   // EG-PLAY: a word on an Elite Breach - the open to the hub, a member's admission, door and blows to its room - projected by validEgIn; the hub and the room's director (net/eliteGates/egBrain.js) judge it
     if (!hasHello) return { error: 'eg before hello' };
@@ -2720,6 +2728,9 @@ export function badged(row, from) {
   // WB9g: AND THE AURA WORN, by the title's law - off the verified token alone, one of the known or nothing
   const au = from?.au;
   if (typeof au === 'string' && AURAS.includes(au)) row.au = au;
+  // WITCH1: AND THE PROFILE ICON WORN, by the aura's law - off the verified token alone, one of the known or nothing
+  const pi = from?.pi;
+  if (typeof pi === 'string' && ICONS.includes(pi)) row.pi = pi;
   // SEASON1 part two (Seats-Arc 9.1): AND A SEASON'S BANNER RIBBON, by the same law - off the verified token alone, two
   // of the sixteen colours or nothing
   if (ribbonClaimOk(from?.rb)) row.rb = from.rb;
@@ -2741,6 +2752,9 @@ export { readHouse };
 /** WB9g: the aura a row carries, as a client reads it back - `badged`'s other half; null for none, and for a word the
  *  vocabulary does not hold (a stranger's word about themselves). */
 export const readAura = (row) => (typeof row?.au === 'string' && AURAS.includes(row.au) ? row.au : null);
+/** WITCH1: the profile icon a row carries, as a client reads it back - `badged`'s other half; null for none (the face),
+ *  and for a word the vocabulary does not hold (a stranger's word about themselves). */
+export const readIcon = (row) => (typeof row?.pi === 'string' && ICONS.includes(row.pi) ? row.pi : null);
 /** SEASON1 part two: the banner ribbon a row carries, as a client reads it back - `badged`'s other half; null for none,
  *  and for anything but two of the sixteen colours (a stranger's word about themselves). */
 export const readRibbon = (row) => (ribbonClaimOk(row?.rb) ? row.rb : null);
@@ -5250,6 +5264,120 @@ export const RITE_HUB_CIRCLES_MAX = 8;
 export const RITE_ASK_EVERY_MS = 15_000;
 export const RITE_ASK_TIMEOUT_MS = 2_000;
 
+// ═══ STAR3: THE STARFALL ═════════════════════════════════════════════════════════════════════════════════════════════
+//
+// (2026-10-20, the owner: "something coming from the sky and crashing into the ground, where people need to defend the
+// objective in a wave based format with a boss topping off the encounter at the end" - bible/11-Multiplayer/Starfall.md
+// sections 5 and 9.) A player at a fallen star says the star's word (`star`) to the star's CELL - the raid's and the
+// rite's law: on its own bucket, believed from a pose at the star (net/starfall/starfallLaw.js starNear) inside the
+// star's life. The cell keeps the star's ledger (the gathering, the waves and their breath, the master, the light, who
+// defended - starfallLaw.js foldStarWord), says it to the cell as it moves (`st`), and at the master's fall mints each
+// earner's receipt (`j1`, net/starfall/starReceipt.js), says the star held (`hd`), hands the receipts (`rc`) and tells the
+// hub, which says it to everyone online and keeps the night's held stars (`hds`) and each account's receipts for a hello.
+// This module imports no law (the law imports it), so the law's bounds below are written again and pinned equal.
+/** The first relay that keeps a star. An older one CLOSES the socket on the frame, so a client says none to it. */
+export const STAR_RELAY_MIN = 235;
+export const relaySupportsStar = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= STAR_RELAY_MIN; };
+/** The star's own bucket: a word every STAR_WORD_MS (2 s), one at a change, and a second's slack. */
+export const STAR_HZ_MAX = 2;
+export const starGate = (bucket, nowMs) => tokenGate(bucket, nowMs, STAR_HZ_MAX);
+/** The relay's bucket is DEEPER than the client's - the same rate, twice the burst (the rite's AUDIT WB12d L4). */
+export const STAR_RELAY_BURST = 4;
+export const starRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, STAR_HZ_MAX, STAR_RELAY_BURST);
+/** The law's bounds, pinned equal (starfallLaw.js STAR_PER_NIGHT, STAR_WAVES, STAR_LEVEL_MAX, STAR_KILLS_WIRE_MAX,
+ *  STAR_BLOWS_WIRE_MAX, STAR_TOP_MAX, STAR_ACCOUNTS_MAX, STAR_LIGHT and the phases' count). */
+export const STAR_STARS_MAX = 3;
+export const STAR_WAVES_MAX = 4;
+export const STAR_LEVEL_WIRE_MAX = 60;
+export const STAR_KILLS_MAX = 99;
+export const STAR_BLOWS_MAX = 9999;
+export const STAR_TOP_WIRE_MAX = 3;
+export const STAR_COUNT_MAX = 64;
+export const STAR_LIGHT_MAX = 100;
+export const STAR_PHASE_MAX = 6;
+/** A night's bound: an hour's index of the relay's clock - far past any date this game will see. */
+const STAR_NIGHT_MAX = 2 ** 31;
+const nightOk = (n) => Number.isSafeInteger(n) && n > 0 && n < STAR_NIGHT_MAX;
+const flag = (v) => v === 0 || v === 1;
+/**
+ * A client's star word, projected: `{n, k, px, py, lv, s, o, kw, kn, wc, hb, mf}` - the night and the star, its pixel,
+ * the speaker's level, 1 once it struck one of the star's foes, 1 while it owns them, the wave its deaths belong to (0
+ * none) and the deaths it saw of it, the wave it saw cleared (0 none), the blows its foes have landed on the star, 1 once
+ * it saw the master fall - or null.
+ */
+export function validStarIn(m) {
+  if (!m || typeof m !== 'object' || !nightOk(m.n) || !intIn(m.k, 0, STAR_STARS_MAX - 1)) return null;
+  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !intIn(m.lv, 1, STAR_LEVEL_WIRE_MAX)) return null;
+  if (!flag(m.s) || !flag(m.o) || !flag(m.mf) || !intIn(m.kw, 0, STAR_WAVES_MAX) || !intIn(m.kn, 0, STAR_KILLS_MAX) || !intIn(m.wc, 0, STAR_WAVES_MAX) || !intIn(m.hb, 0, STAR_BLOWS_MAX)) return null;
+  return { n: m.n, k: m.k, px: m.px, py: m.py, lv: m.lv, s: m.s, o: m.o, kw: m.kw, kn: m.kn, wc: m.wc, hb: m.hb, mf: m.mf };
+}
+/** What a cell or the hub says of a star: `st` its ledger, `hd` held, `rc` an earner's receipt, `hds` the night's held. */
+export const STAR_OUT_KINDS = Object.freeze(['st', 'hd', 'rc', 'hds']);
+/** A receipt's bound on the wire and its shape (net/starfall/starReceipt.js STAR_RECEIPT_MAX, STAR_RECEIPT_V - pinned equal). */
+export const STAR_RECEIPT_WIRE_MAX = 400;
+const STAR_RECEIPT_RE = /^j1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
+/** The held stars the hub keeps and says at a hello - a night's and the night before's, three each, and room. */
+export const STAR_HELD_MAX = 12;
+const starWhere = (m) => nightOk(m.n) && intIn(m.s, 0, STAR_STARS_MAX - 1) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499);
+const msOk = (v) => Number.isSafeInteger(v) && v >= 0;
+/** The names a held star carries, junk never hiding one (the rite's AUDIT WB12d L8). */
+const starTopOf = (top) => (Array.isArray(top) ? top.filter((x) => typeof x === 'string' && x).slice(0, STAR_TOP_WIRE_MAX).map(sanitizeName) : []);
+/**
+ * A cell's or the hub's star word, projected for the client - or null:
+ *   `{k:'st', n, s, px, py, p, w, wz, kn, wl, lt, nd, b, ow, hc, hd, lo, why, hm?}` the ledger (starfallLaw.js
+ *   starLedgerState) - `hm`, to the socket that spoke alone, its own account's credited blows;
+ *   `{k:'hd', n, s, px, py, at, top, c}` held, by whom (the first few named, `c` how many);
+ *   `{k:'rc', r}` an earner's receipt; `{k:'hds', l: [[n, s, px, py, at], ...]}` the held stars the hub keeps.
+ */
+export function validStarOut(m) {
+  if (!m || typeof m !== 'object' || !STAR_OUT_KINDS.includes(m.k)) return null;
+  if (m.k === 'rc') return typeof m.r === 'string' && m.r.length <= STAR_RECEIPT_WIRE_MAX && STAR_RECEIPT_RE.test(m.r) ? { k: 'rc', r: m.r } : null;
+  if (m.k === 'hds') {
+    if (!Array.isArray(m.l)) return null;
+    const l = m.l.slice(0, STAR_HELD_MAX).filter((e) => Array.isArray(e) && e.length === 5 && starWhere({ n: e[0], s: e[1], px: e[2], py: e[3] }) && msOk(e[4]) && e[4] > 0);
+    return { k: 'hds', l: l.map((e) => [e[0], e[1], e[2], e[3], e[4]]) };
+  }
+  if (!starWhere(m)) return null;
+  if (m.k === 'hd') {
+    if (!msOk(m.at) || m.at <= 0) return null;
+    const top = starTopOf(m.top);
+    return { k: 'hd', n: m.n, s: m.s, px: m.px, py: m.py, at: m.at, top, c: intIn(m.c, top.length, STAR_COUNT_MAX) ? m.c : top.length };
+  }
+  if (!intIn(m.p, 0, STAR_PHASE_MAX) || !intIn(m.w, 0, STAR_WAVES_MAX) || !intIn(m.wz, 0, 9) || !intIn(m.kn, 0, STAR_KILLS_MAX)) return null;
+  if (!(Number.isSafeInteger(m.wl) && m.wl >= -1) || !intIn(m.lt, 0, STAR_LIGHT_MAX) || !intIn(m.nd, 0, STAR_COUNT_MAX) || !intIn(m.b, 1, 3)) return null;
+  if (!flag(m.ow) || !intIn(m.hc, 0, STAR_BLOWS_MAX) || !msOk(m.hd) || !msOk(m.lo) || !intIn(m.why, 0, 2)) return null;
+  if (m.hm !== undefined && !intIn(m.hm, 0, STAR_BLOWS_MAX)) return null;
+  const st = { k: 'st', n: m.n, s: m.s, px: m.px, py: m.py, p: m.p, w: m.w, wz: m.wz, kn: m.kn, wl: m.wl, lt: m.lt, nd: m.nd, b: m.b, ow: m.ow, hc: m.hc, hd: m.hd, lo: m.lo, why: m.why };
+  return m.hm === undefined ? st : { ...st, hm: m.hm };
+}
+/** The door from a star's cell to the hub: a star held, its earners' receipts riding it (the raid's door). */
+export const STAR_INTERNAL_HELD = '/internal/star/held';
+/** How soon a cell whose hub did not answer tells it again (the raid's number). */
+export const STAR_TELL_RETRY_MS = 5000;
+/** Where a cell keeps its stars' ledgers (never `world:` or `raid:` - those prefixes are swept), and how many LIVE at once:
+ *  a cell is sixteen pixels square, and a night's three stars may fall in one. A star over costs no place (starfallLaw.js
+ *  starPlaceFor, which bounds what is kept). */
+export const STAR_LEDGER_PREFIX = 'star:';
+export const starLedgerKey = (id) => `${STAR_LEDGER_PREFIX}${id}`;
+export const STAR_LEDGERS_MAX = 4;
+/** One account makes at most this many of a cell's live ledgers at once (the raid's RAID_LEDGERS_BY_MAX): the star it
+ *  stands at and the next, never every place a cell has. Its stars over count to nothing - a night's third is its own. */
+export const STAR_LEDGERS_BY_MAX = 2;
+/** An account stands at the star its last word in the cell came from for this long after it (starfallLaw.js
+ *  starStoodAt). A full cell gives a new ledger the place of a live one nobody stands at - never one somebody does. */
+export const STAR_IDLE_MS = 60_000;
+/** A word that moves nothing but its speaker's moment is written at most this often (the raid's RAID_SAVE_MS). */
+export const STAR_SAVE_MS = 5_000;
+/** A ledger outlives its star this long past its deadline - its receipts handed again to an account that comes back. */
+export const STAR_KEEP_MS = 10 * 60 * 1000;
+/** Where the hub keeps the held stars, and each account's star receipts - the newest STAR_RC_KEEP, each for
+ *  STAR_RC_KEEP_MS (the raid's law: an earner whose link dropped at the hold is handed them at its next hello). */
+export const STAR_HELD_KEY = 'starheld';
+export const STAR_RC_PREFIX = 'starrc:';
+export const starReceiptKeyOf = (acct) => `${STAR_RC_PREFIX}${acct}`;
+export const STAR_RC_KEEP = 9;
+export const STAR_RC_KEEP_MS = 24 * 60 * 60 * 1000;
+
 // ═══ OW6L: THE OVERWORLD'S LEDGER, KEPT BY THE RELAY ═════════════════════════════════════════════
 //
 // (2026-09-29, the product owner: "Everything needs that persistence between players in the overworld.") ONE FRAME
@@ -5975,7 +6103,10 @@ export const EG_FIGHT_KINDS = Object.freeze(['efs', 'ead', 'emv', 'ehp', 'edie',
  *  pinned under it: wire.js imports no law of the Spire's), and the most gaps a hall's chain numbers. */
 export const EG_SB_WIRE_MS = 10_000;
 export const EG_GAP_WIRE_MAX = 999;
-export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'toll']);   // EG-ZI: `toll` the pull's toll, to its member
+export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'toll', 'eland', 'efair']);   // EG-ZI: `toll` the pull's toll, to its member; FIELD BUGS 2026-10-20f: `eland` what a blow landed and `efair` why the door will not take me, each to its member
+/** FIELD BUGS 2026-10-20f DOOR-WORD: the door's words to a member it will not take (net/eliteGates/egFair.js EG_FAIR_WORDS, pinned
+ *  equal: wire.js imports no law of the Spire's). */
+export const EG_FAIR_WIRE_WORDS = Object.freeze(['blind', 'speed', 'air', 'void']);
 /** EG-ZI (Elite-Gates.md section 10.6): the most quarters a pull's toll says (net/eliteGates/egLaw.js EG_TOLL_QUARTERS - pinned equal:
  *  wire.js imports no law of the Spire's). */
 export const EG_TOLL_WIRE_MAX = 4;
@@ -6032,6 +6163,11 @@ export const EG_HUB_KINDS = Object.freeze(['open', 'void', 'claimed']);
  *  believed it could open, and the relay closed the socket on the `eg`. */
 export const EG_RELAY_MIN = 213;
 export const relaySupportsEg = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EG_RELAY_MIN; };
+/** FIELD BUGS 2026-10-20f LANDED-WORD: the first relay that tells a striker what each blow on a breach's body landed (`eland`) - a
+ *  page facing an older one keeps showing its claims (a page that waited for a word an older relay never says would show none).
+ *  `world237` - `world236` on its branch until the merge past LONE-HERALD's world236, which says no `eland`. */
+export const EG_LAND_RELAY_MIN = 237;
+export const relaySupportsEgLand = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EG_LAND_RELAY_MIN; };
 /** The door the hub opens a breach's room through (HCC-PARK's doors' law - the public worker forwards /room/<key> alone). */
 export const EG_INTERNAL_OPEN = '/internal/eg/open';
 /** Where a breach's room keeps its breach, and where the hub keeps an account's live call (AUDIT EG IV, lane3 #9: swept by
@@ -6331,6 +6467,9 @@ export function validEgOut(m) {
     case 'pz': return Array.isArray(m.st) && m.st.length === 6 && m.st.every((h) => intIn(h, 0, 11)) && intIn(m.f, 0, 99) && intIn(m.lit, 0, 6) ? { k: 'pz', st: [...m.st], f: m.f, lit: m.lit, ok: m.ok === 1 ? 1 : 0, x: m.x === 1 ? 1 : 0, by: egText(m.by ?? '', 48) ?? '' } : null;
     case 'eheal': return finite(m.p) && m.p >= -1 && m.p <= 1 ? { k: 'eheal', p: m.p, why: typeof m.why === 'string' && /^[a-z]{0,12}$/.test(m.why) ? m.why : '' } : null;
     case 'toll': return intIn(m.q, 1, EG_TOLL_WIRE_MAX) && intIn(m.h, 1, EG_HALL_WIRE_MAX) ? { k: 'toll', q: m.q, h: m.h } : null;   // EG-ZI: the pull's toll - its quarters of the road, the hall it was taken from
+    // FIELD BUGS 2026-10-20f LANDED-WORD: what my blow on body `i` landed - the room's whole points, never past a body's health
+    case 'eland': return intIn(m.i, 1, 1e9) && intIn(m.d, 0, EG_HP_MAX) ? { k: 'eland', i: m.i, d: m.d } : null;
+    case 'efair': return EG_FAIR_WIRE_WORDS.includes(m.w) ? { k: 'efair', w: m.w } : null;   // FIELD BUGS 2026-10-20f DOOR-WORD
     default: return null;
   }
 }

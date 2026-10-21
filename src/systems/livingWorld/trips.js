@@ -584,28 +584,8 @@ export function ownTrip(res, home, k, world, { mpm }) {
       if (sea !== null) return sea;   // undefined (the map unread) or the passage; none that fits, the road's trip
     }
   }
-  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, res.job) ?? [3, 12];
-  const near = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
-    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)
-    .filter((t) => roadBound(res.job, home, t));   // LW9: a patrol keeps its region, a noble goes to a court, a minstrel to a tavern's town
-  if (!near.length) return null;
-  /** @type {Record<string, number>} */
-  const weights = {};
-  for (const t of near) {
-    const d = Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
-    const size = Math.pow(Math.max(1, t.blocks | 0), 0.7);
-    let w = res.job === 'merchant' ? size / (1 + d / 8) : res.job === 'pilgrim' ? ((world.templeTown?.(t) ? 6 : 0.2) * size) / (1 + d / 12) : 1 / (1 + d / 10);
-    if (res.job === 'adventurer') w = size / (1 + d / 6);
-    else if (res.job === 'patrol' || res.job === 'noble' || res.job === 'minstrel') w = size / (1 + d / 8);   // LW9
-    weights[String(t.mapId)] = w;
-  }
-  // the pick, then the towns nearer than it, the farthest of them first - the trip most like the one chosen that fits
-  const pick = pickWeighted(rng, weights);
-  const first = near.find((t) => String(t.mapId) === pick);
-  if (!first) return null;
-  const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
-  const nearer = near.filter((t) => t !== first && dist(t) < dist(first)).sort((a, b) => dist(b) - dist(a) || a.mapId - b.mapId);
-  const order = [first, ...nearer];
+  const order = roadOrder(rng, home, res.job, world);
+  if (!order) return null;
   const [sLo, sHi] = rowOf(STAY_DAYS, ROAD_STAY_DAYS, res.job) ?? [1, 1];
   const stay = rollInt(rng, sLo, sHi);
   const departH = res.job === 'adventurer' ? 6 + rng() * 2 : 7 + rng() * 2;
@@ -632,6 +612,92 @@ export function ownTrip(res, home, k, world, { mpm }) {
       outT0, outT1, backT0, backT1, trim0, trim1 };
   }
   return null;
+}
+
+/** TRIP-PICKS (2026-10-12, a profile of a player's live client from launch into the world: the first world frame froze
+ *  2.7 s and the frames after it 2.8 s more, the Living World planning its roads' day): A TRAVELLER'S ROAD CHOICES FROM
+ *  ITS TOWN - the towns in its job's ring it may go to (`roadBound`), each one's weight, in the order `pickWeighted` reads
+ *  a `{ mapId: weight }` object (its keys' own), and the towns the farther first (then the lower map id). The same for
+ *  every traveller of the job and every cycle (the trip world's towns are the map's), so kept by the world, the town and
+ *  the job: made again for each trip, it was a filter of the towns near, their weights, a walk of the weights' keys and a
+ *  sort by distance, every traveller of every town the roads asked, in one frozen frame. Null: no town in reach.
+ *  AUDIT TRIP-PICKS (2026-10-20): KEPT AS THE HOST'S OTHER LIVING WORLD MEMORIES ARE, BOUNDED - ROAD_CHOICES_KEPT towns'
+ *  worth, the longest unasked let go first (a town's choices are pure: asked again, made again the same). Unbounded, a
+ *  session that roamed the Bay held every town's: 21.6 KB a town and job, 200 MB at the map's whole (the audit's
+ *  measure). Each is leaner too: a town's distance is asked of the town (roadOrder), not kept in a map beside it.
+ *  @param {LwTown} home @param {string} job @param {TripWorld} world
+ *  @returns {{ picks: { town: LwTown, w: number }[], total: number, farFirst: { town: LwTown, d: number }[] } | null} */
+const _roadChoices = new WeakMap();
+/** AUDIT TRIP-PICKS: the towns' choices a trip world keeps - a stop asks about fifty towns (the median within its reach)
+ *  for each of the four jobs that choose a road, so some ten stops' worth; past it the longest unasked quarter goes. */
+export const ROAD_CHOICES_KEPT = 2048;
+export function roadChoices(home, job, world) {
+  let byHome = _roadChoices.get(world);
+  if (!byHome) _roadChoices.set(world, (byHome = new Map()));
+  const key = `${home.mapId}:${job}`;
+  const kept = byHome.get(key);
+  if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }   // the newest asked
+  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, job) ?? [3, 12];
+  const near = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
+    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)
+    .filter((t) => roadBound(job, home, t));   // LW9: a patrol keeps its region, a noble goes to a court, a minstrel to a tavern's town
+  if (!near.length) { keepChoices(byHome, key, null); return null; }
+  const dist = new Map(near.map((t) => [t, Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0))]));
+  /** @type {Record<string, number>} */
+  const weights = {};
+  /** @type {Map<string, LwTown>} the first town of each key, as `near.find` answers a picked key */
+  const townOf = new Map();
+  for (const t of near) {
+    const d = /** @type {number} */ (dist.get(t));
+    const size = Math.pow(Math.max(1, t.blocks | 0), 0.7);
+    let w = job === 'merchant' ? size / (1 + d / 8) : job === 'pilgrim' ? ((world.templeTown?.(t) ? 6 : 0.2) * size) / (1 + d / 12) : 1 / (1 + d / 10);
+    if (job === 'adventurer') w = size / (1 + d / 6);
+    else if (job === 'patrol' || job === 'noble' || job === 'minstrel') w = size / (1 + d / 8);   // LW9
+    const k = String(t.mapId);
+    weights[k] = w;
+    if (!townOf.has(k)) townOf.set(k, t);
+  }
+  const picks = [];
+  let total = 0;
+  for (const k in weights) if (weights[k] > 0) { total += weights[k]; picks.push({ town: /** @type {LwTown} */ (townOf.get(k)), w: weights[k] }); }
+  const farFirst = near.map((t) => ({ town: t, d: /** @type {number} */ (dist.get(t)) })).sort((a, b) => b.d - a.d || a.town.mapId - b.town.mapId);
+  const choices = { picks, total, farFirst };
+  keepChoices(byHome, key, choices);
+  return choices;
+}
+/** AUDIT TRIP-PICKS: a town's choices kept, and past ROAD_CHOICES_KEPT the quarter longest unasked let go (a Map walks its
+ *  keys in the order they were last set - roadChoices sets a kept one again when it is asked). */
+function keepChoices(byHome, key, choices) {
+  byHome.set(key, choices);
+  if (byHome.size <= ROAD_CHOICES_KEPT) return;
+  for (const k of byHome.keys()) { byHome.delete(k); if (byHome.size <= ROAD_CHOICES_KEPT * 0.75) break; }
+}
+
+/** TRIP-PICKS: `pickWeighted` over a town's kept choices - the same draw (none when no weight is above zero, and then
+ *  no draw taken) answering the town where it answered the key. @param {() => number} rng
+ *  @param {{ picks: { town: LwTown, w: number }[], total: number }} choices @returns {LwTown|null} */
+function pickChoice(rng, { picks, total }) {
+  if (!(total > 0)) return null;
+  let r = rng() * total;
+  let last = null;
+  for (const p of picks) {
+    last = p.town;
+    r -= p.w;
+    if (r < 0) return p.town;
+  }
+  return last;
+}
+
+/** TRIP-PICKS: a traveller's towns to try in a cycle - the pick, then the towns nearer than it, the farthest of them
+ *  first (the trip most like the one chosen that fits); null for none (no town in reach, or no weight above zero).
+ *  @param {() => number} rng @param {LwTown} home @param {string} job @param {TripWorld} world @returns {LwTown[]|null} */
+export function roadOrder(rng, home, job, world) {
+  const choices = roadChoices(home, job, world);
+  if (!choices) return null;
+  const first = pickChoice(rng, choices);
+  if (!first) return null;
+  const d0 = Math.hypot((first.px ?? 0) - (home.px ?? 0), (first.py ?? 0) - (home.py ?? 0));   // the choices' own distance (roadChoices), asked of the town
+  return [first, ...choices.farFirst.filter((c) => c.town !== first && c.d < d0).map((c) => c.town)];
 }
 
 /** LW5b: the way of a trip with no road under it - a passage by sea. */

@@ -2102,7 +2102,8 @@ test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the
   assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, this\._decalLights\);/, 'the installed decal program’s cap: sixteen classic, forty-eight lane, sixteen for a foreign lane with no twin');
   assert.match(r, /decalLights: src\.decalFs \? \(src\.maxLights \?\? CLASSIC_MAX_LIGHTS\) : CLASSIC_MAX_LIGHTS,/, 'the set carries the cap its decal program declares');
   assert.match(r, /decal: elLocs\(set\.decal\)/, 'the decal’s lane uniforms are looked up with the set');
-  assert.match(r, /this\._csLoc\.decal = \[gl\.getUniformLocation\(set\.decal, 'uCloudShadowMap'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowRect'\)\];/, 'and its cloud pair');
+  // PIN MOVED (OW-HORIZON, 2026-10-20): and the far law's third - the ground past the clouds' square (render/cloudShadow.js uCloudShadowFar)
+  assert.match(r, /this\._csLoc\.decal = \[gl\.getUniformLocation\(set\.decal, 'uCloudShadowMap'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowRect'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowFar'\)\];/, 'and its cloud pair');
   assert.match(r, /this\.decalProgram = set\.decal;\s*\n\s*this\._decal = this\._decalLocs\(set\.decal\);/, 'the program and its table are the installed set’s');
   assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows the whole fog set the lane’s finish reads');
   // the classic program is untouched by all of this: no lane uniform in it

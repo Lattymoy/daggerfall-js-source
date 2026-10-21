@@ -172,7 +172,7 @@ test('AUDIT pre-merge I-A + I-E + I-F by source: a building\'s sheet opens the b
   assert.equal((m.match(/openInteriorSheet\b/g) ?? []).length, 4, 'its definition and its three takers - the pack, the pause bag, F5');
   assert.doesNotMatch(m, /host\.makeCharSheet\?\.\(\)/, 'none left on the street\'s pack');
   assert.match(w, /const partyOnMaps = \(\) => partyNear\(\)\.filter\(\(m\) => !_hiddenPeers\.has\(m\.id\)\);/);
-  assert.match(w, /townParty: \(\) => partyOnMaps\(\)\.map\(/, 'the town map');
+  assert.match(w, /townParty: \(\) => host\.partyOnMaps\(\)\.map\(/, 'the town map');   // PIN MOVED (STAR0): the town map's door left bootWorld for scenes/exteriorAutomapToggle.js, which reads the host's members off `host`
   assert.match(w, /partyNear: \(\) => partyOnMaps\(\),/, 'the dungeon\'s and the building\'s plans');
   assert.match(w, /if \(tabId === 'local'\) return localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\);/, 'the Nearby list');
   assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(\(p\) => \(\{ id: p\.id, name: peerName\(p\.id\)/, 'the page\'s readers');

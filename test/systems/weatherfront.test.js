@@ -259,7 +259,7 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
     assert.match(h, /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/, `${host}: what falls is what the front shows`);
     assert.match(h, /if \(precip\.enhanced\) \{\s*\n\s*precip\.intensity = fx\.intensity;/, `${host}: the intensity is set inside the enhanced branch only`);
     assert.match(h, /precip\.drawFall\(precipShown, proj, view/, `${host}: the draw takes the shown mode (PRECIP1: the fall at the air's snow share)`);
-    assert.match(h, /const fogNow = wxNow\.fog;/, `${host}: the fog row is the front's`);
+    assert.match(h, host.endsWith('world.js') ? /const fogNow = horizonFog\(wxNow\.fog, tvf\);/ : /const fogNow = wxNow\.fog;/, `${host}: the fog row is the front's`);   // PIN MOVED (OW-HORIZON, 2026-10-20): the streaming host's through the travel view's horizon - the row itself on the ground
     assert.doesNotMatch(h.slice(h.indexOf('function frame(now)')), /[^.]weatherSun\b(?!\s*=)/, `${host}: no frame consumer reads the raw sun scale any more`);
     assert.doesNotMatch(h.slice(h.indexOf('function frame(now)')), /\bweatherFog\b(?!\s*=)/, `${host}: no frame consumer reads the raw fog row any more`);
     // AUDIT PRECIP FALL-3 (PIN MOVED): the world host's terms through phaseTerms - the word's own numbers off the law's

@@ -25,7 +25,8 @@ test('SCALE4g the routes a replica may serve, by route AND method: the mint and 
     // PIN MOVED (DISPLAY-REPLICA, 2026-10-13): and the display reads and the arena's board (test/server/display_replica.test.js)
     ['/v1/homes/town', 'POST'], ['/v1/homes/mine', 'POST'], ['/v1/homes/rooms', 'POST'], ['/v1/homes/decor', 'POST'], ['/v1/prof/pixels', 'POST'],
     ['/v1/market/vendors', 'POST'], ['/v1/marks/balance', 'POST'], ['/v1/guilds/invites', 'POST'], ['/v1/realm/lineages', 'POST'], ['/v1/realm/unions', 'POST'],
-    ['/v1/saves', 'GET'], ['/v1/arena/board', 'POST']]);
+    ['/v1/saves', 'GET'], ['/v1/arena/board', 'POST'],
+    ['/v1/festival/town', 'POST']]);   // PIN MOVED (WITCH1): and a town's Hearth Offerings (test/server/display_replica.test.js)
   const opened = [];
   const raw = { prepare: () => ({}), withSession(c) { if (c === 'refused') throw new Error('D1_ERROR: bad bookmark'); opened.push(c); return { prepare: () => ({}), getBookmark: () => 'b' }; } };
   assert.equal(routeDb(raw, '/v1/renown/xp', 'POST', MARK(3)), raw, 'a write route: the binding');

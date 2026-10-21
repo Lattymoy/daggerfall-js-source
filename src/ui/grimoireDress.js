@@ -1308,6 +1308,7 @@ ${G} .wb-boss-bar.sea .wb-boss-track { background: ${v('vialMagickaEmpty')} 0 0 
 ${G} .wb-boss-bar.sea .wb-boss-fill { background: ${v('vialMagicka')} 0 0 / ${px(86)} 100% no-repeat, #2f5fb4 !important; }
 ${G} .wb-boss-bar.sea .wb-boss-ghost { background: ${v('vialMagicka')} 0 0 / ${px(86)} 100% no-repeat, #142a5a !important; }
 ${G} .wb-boss-bar.brass .wb-boss-fill { filter: sepia(1) saturate(1.8) hue-rotate(-6deg) brightness(1.08); }
+${G} .wb-boss-bar.star .wb-boss-fill, ${G} .wb-boss-bar.star .wb-boss-ghost { filter: hue-rotate(255deg) saturate(0.85) brightness(1.12); }
 ${G} .wb-boss-mark { top: 0; bottom: 0; width: ${px(1, 'gq')}; background: rgba(20,11,4,0.8) !important; }
 ${G} .wb-boss-name { color: ${T.yellow}; letter-spacing: 0.02em; text-transform: none;
   text-shadow: -1px 0 0 #120804, 1px 0 0 #120804, 0 -1px 0 #120804, 0 1px 0 #120804, 1px 2px 0 rgba(0,0,0,0.6); }

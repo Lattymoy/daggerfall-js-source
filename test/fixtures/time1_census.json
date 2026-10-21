@@ -26,6 +26,12 @@
    "why": "the serpent's sighting, rising, storm and sounding as relay ms"
   },
   {
+   "file": "src/systems/starfall/starfallNight.js",
+   "has": "export const nightDayOfYear = (n) => dayOfYearFromMinutes(Math.floor(skyClassicMinutes(",
+   "clock": "sky",
+   "why": "the Starfall's Witches' Night - a star night whose dusk lands on the sky calendar's Witches Festival, the Heart-Star's (STAR1)"
+  },
+  {
    "file": "src/net/nodeLaw.js",
    "has": "Math.floor(skyClassicMinutes(day",
    "clock": "sky",
@@ -1202,6 +1208,18 @@
    "has": "const lines = lampLines(Math.floor(worldMinutes() / MINUTES_PER_DAY));",
    "clock": "event",
    "why": "the lamp's words for the day (LAMP-KEEPER II)"
+  },
+  {
+   "file": "src/scenes/witchesHost.js",
+   "has": "const day = dayOfYearFromMinutes(Math.floor(skyMinutes())), night = deadWalk(day, nowMs()) ? day : -1;",
+   "clock": "sky",
+   "why": "WITCH1: a night the dead walk - the sky's 13 Frostfall or 3 Hearthfire (the day the service's own find reads, skyDayAt) or the festival's own eve on the relay's clock"
+  },
+  {
+   "file": "src/scenes/witchesHost.js",
+   "has": "night: () => deadWalk(dayOfYearFromMinutes(Math.floor(skyMinutes())), nowMs()),",
+   "clock": "sky",
+   "why": "WITCH1: the Wyrd Sister's window says the night the dead walk"
   }
  ]
 }

@@ -326,7 +326,7 @@ export function needGlyph(chip) {
 /**
  * @typedef {{ key: string, kind: 'buff'|'debuff'|'set'|'warn'|'danger'|'more', name: string, foot: string|null,
  *   blink: boolean, item: boolean, recovering: boolean, spell: number|null, glyph: string|null, set: string|null,
- *   bundle: number|null, endable: boolean, say: string|null, cost: boolean }} StatusTile
+ *   tier?: number|null, bundle: number|null, endable: boolean, say: string|null, cost: boolean }} StatusTile
  */
 /**
  * The widget's tiles, in the order the foot row read them: the spells (mine, then others'), the set powers, the
@@ -353,7 +353,7 @@ export function statusTiles({ spells = [], powers = [], afflictions = [], needs 
     item: !!e.item, spell: Number.isInteger(e.icon) && e.icon >= 0 ? e.icon : null,
     bundle: e.bundleId ?? null, endable: !!e.endable && e.bundleId != null,   // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)
   }));
-  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null });
+  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null, tier: Number.isInteger(c.tier) ? c.tier : null });   // AUDIT STAR S2: and its tier, which the card reads
   for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });   // TELL9: a bleed's ticks
   // NEED-TIER: and how bad, at its foot ("2/3" - Hungry of Peckish, Hungry, Starving), as a spell's rounds are: the glyph
   // is one picture for every stage and the name goes where there is no room, so the foot is what says it there

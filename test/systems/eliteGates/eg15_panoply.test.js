@@ -20,7 +20,7 @@ import {
   setById, raidSetOf, tierValues, setSetsDueling, _resetSigilSetsForTests,
 } from '../../../src/systems/sigil/sigilSets.js';
 import {
-  AETHERIC_RECORDS, REGALIA, RAID_SET_PIECES, SERPENT_SET_PIECES, NUMIDIUM_SET_PIECES, PANOPLY_SET_PIECES, aethericById, aethericMaterial,
+  AETHERIC_RECORDS, REGALIA, RAID_SET_PIECES, SERPENT_SET_PIECES, NUMIDIUM_SET_PIECES, PANOPLY_SET_PIECES, WYRD_SET_PIECES, STARSPUN_SET_PIECES, aethericById, aethericMaterial,
   mintAetheric, mintPanoplyPiece, panoplyPieceById, validSetMarks, AETHERIC,
 } from '../../../src/systems/aetheric.js';
 import { EG_PANOPLY_KEYS, EG_PANOPLY_IDS } from '../../../src/net/eliteGates/egPay.js';
@@ -95,7 +95,7 @@ const FIRE = { name: 'Fireball', element: 0 }, FROST = { name: 'Frostbite', elem
 // ── the law and the records ───────────────────────────────────────────
 
 test('EG15 THE LAW: The Battlemage\'s Panoply after the Brass - Aetheric, the Imperial Battlemages its patron, Battlemage blue its colour, no raiding party\'s, never a world set; Bearing, Discipline and Reprieve at 2, 4 and 6 pieces with the design\'s numbers Faint to Ascendant, every brief inside BRIEF_MAX at every stage, plain, no recovery in its words (mutants: a tier\'s number; a world set; the colour)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-1), ['panoply'], 'the Spire\'s own, last');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-3), ['panoply', 'wyrd', 'starspun'], 'the Spire\'s own - PIN MOVED (WITCH1): the Wyrd\'s Raiment after it - PIN MOVED (STAR7): the Starspun Weave after that');
   const s = setById('panoply');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['panoply', 'The Battlemage\'s Panoply', 'The Imperial Battlemages', '#5c7cc4', true, false, 'What the Kyn took from the Battlemages']);
@@ -146,7 +146,7 @@ test('EG15 THE RECORDS: nine in the places\' order under the pay law\'s own ids 
   assert.ok(!PANOPLY_SET_PIECES.some((r) => r.affixes.some((a) => a.id === 'resist')), 'no resistance on a piece - Bearing raises every one');
   for (const r of PANOPLY_SET_PIECES) assert.ok(typeof r.lore === 'string' && r.lore.length > 20 && r.lore.length <= 100, `${r.id}: a line of lore`);
   const upTo = REGALIA.length + RAID_SET_PIECES.length + SERPENT_SET_PIECES.length + NUMIDIUM_SET_PIECES.length;
-  assert.deepEqual(AETHERIC_RECORDS, [...AETHERIC_RECORDS.slice(0, upTo), ...PANOPLY_SET_PIECES], 'the Battlemages\' last');
+  assert.deepEqual(AETHERIC_RECORDS, [...AETHERIC_RECORDS.slice(0, upTo), ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES], 'the Battlemages\' - PIN MOVED (WITCH1): then the Wyrd\'s - PIN MOVED (STAR7): then the Starspun Weave');
   assert.deepEqual(AETHERIC_RECORDS.slice(0, upTo), [...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);
   assert.equal(new Set(AETHERIC_RECORDS.map((r) => r.id)).size, AETHERIC_RECORDS.length, 'every id its own');
 });

@@ -96,7 +96,7 @@ test('KG-SET the nine, as the record writes them: their numbers, tags, pictures 
     assert.deepEqual([cardRules(c), cardFlavor(c)], [rules, flavor], `${id}: its words`);
     assert.equal(FOE_CARDS[MOBILE_TYPES[foe]], id, `${foe} drops its own card`);
   }
-  assert.deepEqual(CARD_EMBLEMS.slice(-6), ['bear', 'cat', 'spider', 'fish', 'mummy', 'bow'], 'six pictures of their own');
+  assert.deepEqual(CARD_EMBLEMS.slice(-8, -2) /* PIN MOVED (WITCH1): the witch and the candle joined the list last */, ['bear', 'cat', 'spider', 'fish', 'mummy', 'bow'], 'six pictures of their own');
   assert.deepEqual([...EMBLEM_KEYS], [...CARD_EMBLEMS], 'each one painted');
 });
 

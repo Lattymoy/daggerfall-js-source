@@ -30,8 +30,12 @@ export const TV_HEIGHT_MIN = 150;
 export const TV_HEIGHT_MAX = 450;
 export const TV_HEIGHT_DEFAULT = 260;
 /** The tilt band (radians below the horizon). Past 75 degrees the view is a plan and every standing flat is a
- *  sliver; under 30 the horizon takes the top of the screen and the grid's edge shows. */
-export const TV_TILT_MIN = (30 * Math.PI) / 180;
+ *  sliver. OW-HORIZON (2026-10-20, the owner: "the overworld map as it stands doesnt allow you to see as far as the eye
+ *  can see"): the floor was 30, because under it the horizon took the top of the screen and the grid's edge showed -
+ *  the haze closed 100 m inside the grid. The haze now runs on over the far ring to where its land meets the sky
+ *  (scenes/travelHorizon.js), so a drag looks out to the horizon: at 15 (and DFU's 65-degree lens) it stands about
+ *  a third of the way down the picture, the traveller still at its centre. */
+export const TV_TILT_MIN = (15 * Math.PI) / 180;
 export const TV_TILT_MAX = (75 * Math.PI) / 180;
 export const TV_TILT_DEFAULT = (52 * Math.PI) / 180;
 /** Under a cloud deck the camera stays this far below its base - the clouds are ALWAYS overhead, so the sky dome,
@@ -73,6 +77,15 @@ export const TV_TURN_RATE = 6;
  *  much a step (radians) - ground behind the eye rising steeper than the tilt climbs faster than any lift. */
 export const TV_CLEAR_PASSES = 8;
 export const TV_CLEAR_TILT_STEP = (5 * Math.PI) / 180;
+/** OW-HORIZON: the line of sight's far half - from its middle up to the eye - is asked at most this far apart (metres).
+ *  At 52 degrees and 260 m the line is 330 m long and its middle and the eye were enough; looking out at 15 degrees
+ *  from 450 m it is 1.7 km, low over the land, and a hill three quarters of the way back stood between the eye and the
+ *  traveller with the middle clear. The near half is not asked, as it never was: a crest just behind the traveller
+ *  is no lift's to clear (a point a share s along rises s for every metre the eye does - near the feet, nothing). */
+export const TV_CLEAR_SPAN = 100;
+/** How many steps the far half of a line of sight `len` long is asked in: the shares 1/2 + k/(2n), k = 0..n - the
+ *  middle and the eye always (n 1, the old law's two points), and no two further apart than TV_CLEAR_SPAN. */
+export const clearSteps = (len) => Math.max(1, Math.ceil((Number.isFinite(len) ? len : 0) / (2 * TV_CLEAR_SPAN)));
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 /** The shortest signed turn from `a` to `b`, in (-PI, PI]. */
@@ -127,8 +140,9 @@ export function eyeFor(focus, yaw, tilt, height) {
 
 /**
  * THE GROUND UNDER THE EYE. `heightAt(x, z)` is the host's terrain (-Infinity where no pixel is built yet - an
- * unbuilt pixel is no obstacle, it has no ground to hit). The eye and the midpoint of the line down to the focus
- * each keep TV_GROUND_CLEAR over theirs; the height grows until both do (a ridge between the camera and the
+ * unbuilt pixel is no obstacle, it has no ground to hit). The eye and the points along the line down to the focus
+ * (its middle and, OW-HORIZON, its far half at TV_CLEAR_SPAN - clearSteps) each keep TV_GROUND_CLEAR over theirs;
+ * the height grows until all do (a ridge between the camera and the
  * traveller would otherwise hide the traveller behind it). Pass after pass, because a taller eye stands further
  * back and over other ground (AUDIT DEEP T1-4: two passes left the eye inside a hill whose slope out-climbed them).
  * @returns {number} the height the eye must take - never less than the one asked for
@@ -146,8 +160,12 @@ function clearing(focus, yaw, tilt, height, heightAt) {
       // a point `share` of the way from focus to eye stands at focus.y + share * h; lifting h lifts it by share
       return share > 0 ? (g + TV_GROUND_CLEAR - y) / share : 0;
     };
-    const mid = [(eye[0] + focus[0]) / 2, (eye[1] + focus[1]) / 2, (eye[2] + focus[2]) / 2];
-    const lift = Math.max(0, need(eye[0], eye[2], eye[1], 1), need(mid[0], mid[2], mid[1], 0.5));
+    let lift = 0;
+    const n = clearSteps(Math.hypot(eye[0] - focus[0], eye[1] - focus[1], eye[2] - focus[2]));
+    for (let k = 0; k <= n; k++) {
+      const s = 0.5 + k / (2 * n);
+      lift = Math.max(lift, need(focus[0] + (eye[0] - focus[0]) * s, focus[2] + (eye[2] - focus[2]) * s, focus[1] + (eye[1] - focus[1]) * s, s));
+    }
     if (!(lift > 0)) return { h, clear: true };
     h += lift;
   }

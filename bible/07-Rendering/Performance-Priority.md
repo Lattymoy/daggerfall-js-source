@@ -46,6 +46,17 @@ PERF-HIDE (2026-10-12, a capture of a player's client standing still for four mi
 frame rate climbs for some twenty seconds) dyes a horse look's pictures in under half the CPU, byte for byte the same
 pictures. Its section is after PERF-DYE.
 
+BOOT-FREEZE (2026-10-20, the owner: "Just do #854 and do your own performance pass in the same PR. You need to install
+the freeware and go deep") is the first pass of this page measured IN THE REAL GAME - the freeware ARENA2 booted in
+Chromium under a CPU profile (`tools/bootFreezeProbe.mjs`) - and it carries #854's TRIP-PICKS with it. Four changes, none
+of them a change to what a player sees, every answer the old one: BOOT-RECTS (the boot's two rect walks read each block
+once), WD-OWNED (a town file's edits laid on its own base, and a kept base copied by a walk), REGION-VIEWS (a MAPS
+region's records read where MAPS.BSA holds them) and FIT-BITS (the Bay's fit on the picture counted 32 cells a word).
+Their sections are after TRIP-PICKS'. The same pass took two reports the owner handed on: TRADE-VIRT (a player's audit of
+the trading windows: the rows on screen drawn, a picture into its tile) and SHADER-STALL (a player's capture: a pass
+built in play never waits on its compile), and SNOW-BUDGET (its second word: the snow the ground keeps holds to its
+frame budget). Their sections are after FIT-BITS'.
+
 ## How the pass was run
 
 NOT IN THE REAL GAME. The frame probe (`tools/frameProbe.mjs`, PERF-NEXT's recipe) needs the freeware ARENA2, and its
@@ -1058,9 +1069,480 @@ the build's (one ask); the boot's wiring by source. Mutants: `tools/mutants/boot
 `housing.json`'s HOME-RENT-the-character-unsent re-aimed (killed by the new pins too); `home1`, `legacy7_online` and
 `wd3_online`'s source pins moved with the code.
 
+## TRIP-PICKS — a traveller's road choices, the same answer for less
+
+*A player (2026-10-12): "vamos checar se da para melhorar o loading, eu vou abrir o jogo e voce mede o tempo que
+demorou e por que" - the installed client (0.1.8217, an online character) captured from the process's launch into the
+world through the debugging port: browser Tracing on one connection, the page's CPU profile, network and console on
+another.*
+
+**Found.** From the character's click to the first world frame took 11.5 s (most of it the boot's network, its own
+change); the first world frame then froze 2.7 s, and after two seconds of play the frames froze 2.8 s more - the Living
+World planning its roads' day (`livingTown.js _roadsOf` -> the host's `tripsOf` -> `trips.js visitorsOf` -> `memoTrip`
+-> `ownTrip`), what HOLY-DAYS left standing. Of those 5.5 s, ~3.7 s were one part of `ownTrip`, made again for every trip
+of every traveller of every town the roads asked: the towns near filtered by the job's ring and `roadBound`, each one
+weighed, `seed.js pickWeighted` walking the `{ mapId: weight }` object's keys (1.5 s of it by itself), and the towns
+nearer than the pick sorted by distance with a `Math.hypot` at each comparison. None of it is the traveller's: the ring,
+the weights and the order are the town's, the job's and the trip world's.
+
+**The fix.** `trips.js roadChoices` keeps them by the trip world (a WeakMap, as `templesNear`), the town and the job:
+the towns in reach, each one's weight in the order `pickWeighted` reads the object's keys, their total summed in that
+order, and the towns by distance (the farther first, then the lower map id). `roadOrder` draws off them: `pickChoice` is
+`pickWeighted`'s draw over the kept list (no draw taken when no weight is above zero), and the nearer towns are the kept
+order filtered, which is the old sort's - the sort is stable, and the kept order filtered keeps it. `ownTrip` asks
+`roadOrder`. The Living World's trips are every client's alike, so nothing may move: every answer is the old one.
+
+**Measured.** In node 22 over the suite's synthetic map (`test/lwRoads.mjs` synthMap, 14 x 14 towns three pixels apart
+and a far haven, their regions spread over 62, with dives and the sea; `townsNear` kept as the host keeps it), every
+town's trips for 90 days and every town's visitors for 20, cold, five runs: the same 133,851 trips and 17,067 visits to
+the byte on both (a digest of every trip's id, kind, goal, times and party, and every visit's times); the whole
+2,008 -> 1,344 ms best; `ownTrip`, `pickWeighted` and the distance sort 3.9 s -> 0.95 s of the five runs' profile
+(`roadChoices` 0.24 s of it). In the client, a live A/B: two local builds of the same main (f5a7f183d), one with
+this change, each launched fresh and booted into the world with the same online character on the same machine, the
+same capture on both (main-thread tasks over 100 ms from the trace, `tripsOf`'s share of each from the CPU profile, the
+20 s after the boot's last step):
+
+| | main | TRIP-PICKS |
+|---|---|---|
+| click -> the boot's last step | 12.24 s | 12.54 s (the network's; this change is after it) |
+| the first world frame | 2,765 ms (trips 1,944) | 1,105 ms (trips 304) |
+| the frozen frames after it | 920 + 924 + 176 + 125 ms | 202 + 202 ms |
+| frozen in all after the boot | 5,011 ms | 1,617 ms |
+| of it the trips | 3,966 ms | 624 ms |
+
+One run each: the trips are the same answers on both, so the work is the same work, and the rest of the frames
+(the first frame's ~800 ms beside the trips, the boot's 1.3 s reading the map) stand alike on both.
+
+Pins: `test/systems/livingWorld/trippicks.test.js` (2) - `roadOrder` against the old law restated, for every town of a mixed map (gaps,
+jitter, ties of distance, three regions, courts and temples, ids out of the grid's order), every job and an unlisted
+one, 12 draws each, the dice left where the old law left them; `roadChoices` asked of the world once a town and a job,
+another job and another world asking for themselves. Mutants: `tools/mutants/trippicks.json`, 7, all dead.
+
+**AUDIT TRIP-PICKS (2026-10-20, the owner: "ensure this is perfect and fidelity isnt lost").** A cold lane compared the
+whole `ownTrip` of every traveller of every town on the real map (9,373 towns, 224,560 trips over four cycles) and
+674,856 `roadOrder` calls against main's law: byte for byte the same, the dice left where they were. Its one finding was
+memory: the choices were kept for the session, never let go - 21.6 KB a town and job, 200 MB had every town been asked.
+Now a trip world keeps `ROAD_CHOICES_KEPT` (2,048) towns' worth, the longest unasked quarter let go past it (a town's
+choices are pure: asked again, made again the same), and an entry is leaner (a town's distance asked of the town, not a
+map beside it). Re-run over the whole map with the bound evicting throughout: 674,856 orders and 224,560 trips, none
+different. Its nits (one map id one place, as `templesNear` already reads; FIT-BITS and WD-COPY on inputs the game never
+passes) recorded. Pin: `trippicks.test.js` (+1, the bound and its order). Mutants: `audit_perfpass.json`'s ATP, dead;
+`trippicks.json`'s wrong-town record re-aimed, dead.
+
+## BOOT-FREEZE — the boot's freezes, measured in the real game
+
+*The owner (2026-10-20): "Just do #854 and do your own performance pass in the same PR. You need to install the freeware
+and go deep."*
+
+**How it was run - in the real game.** `sh tools/fetch-data.sh` put the freeware ARENA2 at `/home/claude/dfdata/arena2`
+(the zip's host answers this container now; PERF-PRIORITY's pass could not reach it). `tools/bootFreezeProbe.mjs` boots a
+scene over it in Chromium (SwiftShader) under ONE CPU profile, from the page's first byte until the stream has stood
+idle twenty frames past the first world frame (or `MAX_S`), and reads the main thread's long tasks off the profile itself:
+a run of samples that are not `(idle)`, closed by an idle gap past 4 ms, each attributed by its samples' stacks
+(inclusive, a function once a sample). The first world frame is marked IN the profile - `__frame` turning from 0 calls
+`__bootFreezeFirstFrame`, whose samples give its time on the profile's own clock - because that frame is the one #854's
+player froze on, and the world's own `__shotReady` waits for the whole stream, which at the real build slice under
+SwiftShader is hours. Knightstale at 15:00, a new character, the town packs on as the game ships them. The figures are
+this machine's CPU, and the frames are SwiftShader's: GPU-process work (a shader's compile, a texture's upload) lands in
+whichever task first waits on it - the sea's wave program's 9-10 s compile was `buildProgram`'s in one run and a
+canvas's `toDataURL` in the next - so the A/B below reads the script's own functions, never the frozen totals after the
+first frame.
+
+**Found** (main, the first profile; and counted, through a probe-only transform of the readers):
+- one 11.6 s task in the boot: `bootWorld`'s two rect walks - the Eltheric isles' 7,538 templates (2.7 s) and Deep
+  Waters' coastal towns (2.2 s), 23,676 blocks asked of BlocksFile (BOOT-RECTS) - and the world-data door rebuilding
+  every town a pack edits as the index reads the world's 15,260 locations: 8,349 rebuilds, each laid on a deep copy, 2.6 s
+  of copying (WD-OWNED);
+- 283 MB slice-copied out of the BSAs before the first frame; MAPS.BSA's regions read 257 times by then and 364 by the
+  40th frame (REGION-VIEWS);
+- the first world frame's `fitBayToPicture`, 772 ms of its own (FIT-BITS), and the roads' day (TRIP-PICKS, #854, above).
+
+**Measured: A/B in the real game** - the same probe on main (016dba12d) and on this branch, one arm after the other with
+nothing else running; inclusive ms of the script's own functions, before the first world frame and (+) after it:
+
+| | main | this branch |
+|---|---|---|
+| the boot: the main thread busy | 40,448 | 32,192 |
+| its largest task | 12,570 | 7,159 |
+| `bootWorld` | 8,883 | 5,567 |
+| the isles' rects (`etherPlaceRects`) | 3,036 | 1,218 |
+| Deep Waters' rects (`deepWatersLocationRects`) | 2,209 | 1,557 |
+| `patchJson` (the door's copies) | 2,782 | 1,135 |
+| the BSAs' copies (`getRecordBytes`) | 442 + 205 | 43 + 0 |
+| MAPS regions read (`loadRegion`) | 249 + 238 | 107 + 37 |
+| the Bay's fit (`fitBayToPicture`, the first frame) | 569 | 293 |
+| the roads' day (`townTrips`) | 457 + 30 | 394 + 0 |
+| the spot check's hashes (`packFileSha256`) | 1,223 | 834 |
+
+One run each, and a second A/B before WD-COPY and FIT-BITS landed agreed: the boot busy 45,780 -> 34,757 ms, its largest
+task 19,100 -> 7,130 ms. In node over the real data, each change below has its own figures and its own proof that every
+answer is the old one.
+
+Pins: `test/tooling/bootfreeze_probe.test.js` (2) - the probe's reading of a profile; mutants `tools/mutants/bootfreeze.json`, 4, all dead.
+The probe judges its own runs (`test/tooling/probehygiene.test.js` T3): no first world frame in the profile, or a page that threw, is no
+measurement.
+
+## BOOT-RECTS — the boot's two rect walks read each block once
+
+**Found.** Two walks of the boot ask SetLocationTiles' rect of thousands of locations: the Eltheric isles' templates
+(`etherWatersBake.js etherPlaceRects`, 7,538 of them) and the Bay's coastal towns for Deep Waters
+(`deepWatersClient.js deepWatersLocationRects`). BlocksFile keeps ONE parsed block (autoDiscard, as `BlocksFile.cs:32`),
+so a walk parsed a block again - and dried its puddles again (PUDDLE-DRY) - every time its name came round: the isles'
+templates name 384 blocks.
+
+**The fix.** `terrainTiles.js locationRectReader` keeps each block's ground tiles - the one thing SetLocationTiles reads of
+it - for the walk, and lets them go with it. A block reads alike at every location the world-data door reads it at,
+save where a layout pin stands (`worldDataReplacement.js pinnedHere`): a town a pin stands at (the door's new
+`locationPinned`), one the door cannot place (no integer indices) and a door that cannot say all read through, as before.
+BlocksFile keeps its one slot - `rmbLayout.js attachWindmillRecord` and others rely on a fresh parse. The isles' walk is
+read as a clone of each template is (`as`), and the host's own tilemap for it went with the walk.
+
+**Measured.** In node over the real data, every rect the same: the 7,538 templates 2,675 -> 1,178 ms with the town packs on
+(3,905 -> 178 ms off), every town of the Bay 49.4 -> 4.2 s; with 3,367 towns pinned, the same in order and shuffled,
+throws included.
+
+Pins: `test/world/terrain/bootrects.test.js` (5); mutants `tools/mutants/bootrects.json`, 7, all dead; `ether_deep`'s source pin and
+ED-world-unsaid re-aimed.
+
+## WD-OWNED — a town file's edits laid on its own base, and a kept base copied by a walk
+
+**Found.** The index reads every location of the world, and each town a pack edits is rebuilt then
+(`worldDataPack.js rebuild`): its classic location read afresh, made DFU's JSON (`locationToDfuJson`) and the author's edits
+laid on it through `patchJson` - which deep-copied its base first. A location's base is made for that one file and held
+nowhere else: 7,727 copies of 40 MB of JSON nothing shared, 513 ms in node. And a block's base is the classic block's JSON
+kept for the next file, so its copy is owed - but it was a JSON round trip, 63% of a replaced block's build (509 of 813
+ms over the isles' walk).
+
+**The fix.** `patchJson` takes `owned`: the caller's own plain tree is laid on in place; `rebuild` passes it for a
+location's base alone (a block's and a file's bases are kept, and copied). Measured first: not one location base of
+either pack holds a value a JSON round trip changes, and its helpers make every node fresh. WD-COPY: the copy a kept base
+is laid on is walked, ~4x the round trip's speed (637 -> 164 ms over the packs' 387 block bases), writing exactly what the
+round trip writes - a number JSON cannot write null and -0 as 0, an undefined left out of an object and null in an array,
+keys in the round trip's order; whatever it cannot vouch for (a boxed value, a toJSON, a `__proto__` key, a bigint, a tree
+past `COPY_DEPTH`) is the round trip's own, throws and all.
+
+**Measured.** Every file of both packs still rebuilds the author's file sha256 for sha256
+(`test/formats/worldData/wd3_pack.test.js` with ARENA2_PATH: 7,526 and 1,021 files).
+
+Pins: `test/formats/worldData/wdowned.test.js` (4); mutants `tools/mutants/wdowned.json`, 12, all dead (a kept block and a kept file
+laid on among them, killed by `wd3_pack`'s own pins).
+
+## REGION-VIEWS — a MAPS region's records read where MAPS.BSA holds them
+
+**Found.** MapsFile keeps one region resident (autoDiscard, as `MapsFile.cs`), so every walk over the regions read every
+region again - the boot's map dictionary and index, a quest's places (`findQuestLocation`), the ports (`navalPortList`),
+the sea lanes, the raids - and each read COPIED its four records: 357 KB a region on the mean (2.3 MB the Wrothgarian
+Mountains', 2.1 MB Daggerfall's), 22 MB a walk. ~0.5 s of the copies' own time in the profile, beside their collection.
+
+**The fix.** The readers only ever read a region's records (every DataView over them takes its offset), so
+`BsaFile.getRecordView` hands a record over as a view of the archive's bytes, held whole for its life anyway;
+`getRecordBytes` stays the copy (DFU's ReadBytes) every other reader takes - a block's automap is edited in place.
+
+**Measured.** In node, every region and every classic location of MAPS.BSA - 30,564 reads - the same off views as off
+copies; a walk of every region 29.0 -> 14.4 ms.
+
+Pins: `test/formats/regionviews.test.js` (2); mutants `tools/mutants/regionviews.json`, 4, all dead.
+
+## FIT-BITS — the Bay's fit on the picture counted 32 cells a word
+
+**Found.** The boot fits the Bay's land on the player's own picture of Tamriel (`tamrielLand.js fitBayToPicture`,
+TAMRIEL4) as its first world frame stands: 25 scales, 49 x 49 offsets, up to 2,178 cells each, compared a cell at a time -
+772 ms of pure self time in that frame.
+
+**The fix.** The inside's score is counted a word at a time: the picture's rows as two bitsets (the pixels that ARE 1 and
+that ARE 0 - a cell agrees only with its own value, so a picture holding anything else counts as it did), each window's
+32 pixels joined across a word boundary, the last word's tail cleared, a popcount. The same counts, so the same fit, ties
+to the same first offset in the same walk.
+
+**Measured.** Over the real data: (38, 57) x15.5, 1,537 of 2,048 inside, 190 of 192 along the seam (`tamriel4`'s ARENA2
+pin) in 157-205 ms against 707-717 ms; 300 random fits the same, 19.8 -> 3.8 s.
+
+Pins: `test/world/fitbits.test.js` (2, the old law restated); mutants `tools/mutants/fitbits.json`, 6, all dead.
+
+### What the boot still pays, ranked
+
+None of these moves the picture; each needs its own pass.
+1. **The snow's settle** - 2.4-2.7 s of the boot here: a year of the snowpack at the arrival's window
+   (`snowCoverHost.js settle` -> `snowpack.js advance` -> the weather's systems, `weatherMap.js drawCells` and its draws). A
+   seeded simulation AUDIT PRECIP already thinned; an exact cut must keep every draw, so it is its own pass.
+2. **The door's first build of each replaced block** - ~1.8 s of the two walks after BOOT-RECTS, beside the stream's:
+   the expand and `blockFromJson` past WD-COPY's copy. The walks need a block's ground alone, which the ops that reach it
+   could rebuild without the rest.
+3. **The GPU's** - the sea's programs compiled at idle (taken by SHADER-STALL, below), the ground's tile array uploaded
+   (`uploadTileArray`), and the classic dial's art read back off a canvas (`dialClassicArt.js wearClassicDial`'s
+   `toDataURL`: 7.3-8.3 s of the first task after the first world frame here, a round trip that pays the GPU process's
+   queue; a 2D canvas kept in memory, `willReadFrequently`, would read back without one).
+4. **A ground set's puddle masks** - 0.5-1.1 s, at the boot and again when the stream meets a new climate or season
+   (`world.js groundLayersOf`): `puddleMask.js cleanMask` allocates an array a texel it walks, `shoreWaterColours` counts
+   2.6 million texels into a Map.
+5. **The world-data spot check** - `packFileSha256`'s canonical JSON of one block in eight, ~0.8 s across the boot.
+
+## TRADE-VIRT — the trading windows draw the rows on screen, and a picture lands in its tile
+
+*A player's audit of the NPC and player-to-player trading windows, handed on by the owner (2026-10-20: "Someone also
+sent this"): "full UI rebuilds on every click, missing list virtualization, and repeated rendering when item icons
+load", with a synthetic prototype's 28.7x/14.4x. Its claims were read against the code and measured in the windows
+themselves before anything was taken.*
+
+**Found.** All three claims held, and the third was worse than reported. The shop counter (`ui/enhanced/enhancedTrade.js`)
+and the trade between players (`ui/enhanced/enhancedPlayerTrade.js`) rebuild their DOM on every state change (the shape
+`ui/domRepaint.js` says why), and both drew every row of every list. Both handed a cold picture's `onReady` the
+window's whole repaint, so a pack whose pictures come in one by one repainted itself once a picture. The counter's
+`onReady` was `render` itself, which the fitted-picture door (`ui/textureCanvas.js`) dedupes. The trade between players
+gave each row a fresh closure, and the door wakes up to WAKE_MAX (8) waiters a picture, each a whole repaint that signed
+the rows up again: 2,160 repaints of a 300-piece pack, 193 s before its last picture stood. A verb of mine in the trade
+between players also painted twice: the session's `onChange` is the host's repaint, and it fired inside the verb before
+the verb's own repaint.
+
+**The fix.** VIRT's law (`10-UI/UI-Arc.md`, the pack's) carried to both windows, and its landing given one home:
+- `ui/enhanced/landingTiles.js` - a tile drawn on its initials waits with what it was drawn from; a landing asks for ONE
+  pass on the next frame, which swaps each waiting tile for the one `draw` makes now, its wear bar carried. The pack's
+  `liveTile` asks it too (its `_waitingTiles`/`tileLanded`/`paintLandedTiles` are the module's `waiting`/`landed`/`pass`).
+- `ui/virtualRows.js` over every list of both windows (past VIRTUAL_MIN, 120): the rows in the visible band and a
+  margin. A repaint lets go of the lists it replaces (their scroll listeners), measures the new ones before it gives a
+  scroll back (`sync({ draw: false })`) and aims them after; a resize repaints; the unmount lets go of every one.
+- The trade between players paints once a verb of mine: `acting` quiets the session's call inside the verb, and a
+  change the host asks for of its own (the peer's) paints at once.
+- The counter's pack filter asks one Set a paint for what the counter holds, not a walk of the lot each piece.
+Nothing a player sees changed: the same rows in the same places, the same pictures, the same moves.
+
+**Measured** in Chromium over the freeware ARENA2's pictures (`tools/tradePerfProbe.mjs`: the windows mounted as the game
+mounts them over N real pieces, every weapon in every metal and armour piece in every material; a shelf of 0.65 N at the
+counter that sells; the real TradeSession for the trade between players). Settled is every row's picture in, a click is
+a preview to the frame, a move is a double click to the frame (a sale staged, a piece bought, an offer made). Main
+(fc2a29e0c7, #1068's merge) and this branch, one after the other, nothing else running:
+
+| window, pieces | settled (repaints) | a click | a move |
+|---|---|---|---|
+| sell 300 | 26.5 s (273) -> 0.30 s (1) | 106 -> 43 ms | 224 -> 95 ms |
+| sell 1,000 | 106 s (292) -> 0.43 s (1) | 348 -> 57 ms | 550 -> 70 ms |
+| buy 300 | 43.7 s (292) -> 0.50 s (1) | 156 -> 55 ms | 391 -> 84 ms |
+| buy 700 | 107 s (292) -> 0.55 s (1) | 809 -> 50 ms | 2,881 -> 101 ms |
+| buy 1,000 | 120 s (292) -> 0.41 s (1) | 421 -> 52 ms | 858 -> 103 ms |
+| players 100 | 19.6 s (760) -> 0.37 s (1) | 60 -> 43 ms | 135 -> 75 ms |
+| players 300 | 193 s (2,160; a 4.3 s task) -> 0.30 s (1) | 92 -> 37 ms | 148 -> 97 ms |
+| players 700 | 498 s (2,323; a 7.6 s task) -> 0.29 s (1) | 234 -> 29 ms | 459 -> 57 ms |
+| players 1,000 | not settled in 28 min (stopped) -> 0.30 s (1) | - -> 26 ms | - -> 61 ms |
+
+At 1,000 pieces the buy window's DOM is 953 nodes where it was 15,445 (96 rows drawn of 1,650). Below the threshold a
+list is drawn whole by the same code it was, and the first read of a 100-piece click looked 10-15 ms slower here. That
+was the JIT: main's repaint storm while its pictures came in (156 repaints) had warmed `render` before the clicks were
+timed. Warmed alike (150 repaints first), five runs a tree, the sell window at 100: a click's render 34.3 ms on main and
+33.6 here (35 clicks each), a repaint 29.2 and 28.0 (300 each).
+
+**Not taken.** The audit's incremental mount (rows kept across a selection) and its per-row caches: the repaint stays the
+codebase's shape (`ui/domRepaint.js`), and with the lists windowed a repaint costs the rows on screen, not the lot. The
+classic counter (`ui/native/nativeTrade.js`, its P2) draws a few slots on a canvas and was not measured.
+
+Pins: `test/ui/enhanced/tradevirt.test.js` (7), and the pack's `test/systems/virt_pack.test.js` over the shared fakes
+(`test/virtFakes.mjs`). Mutants: `tools/mutants/tradevirt.json`, 14, all dead; `virt.json`'s
+VIRT-a-landing-repaints-the-pack and AUDIT-VIRT-a-frame-a-landing re-aimed at the module, dead. `fb1011_tradeloc`'s pin
+on the player trade's rows moved with them.
+
+**AUDIT TRADE-VIRT (2026-10-20, the owner: "I need you to audit this and ensure this is perfect and fidelity isnt lost").**
+A cold lane ran the windows of this commit and of its parent side by side in Chromium over the freeware ARENA2's pictures.
+What it found, and what was done:
+- **A list whose rows are not one height scrolled wrongly** (the worst: fidelity). `ui/virtualRows.js` took ONE pitch off
+  the first two lines drawn, and a trade's rows are not one height - a book's title wraps to a second line (68 px against
+  52), a phone's weapons run 52, 64 and 82. With a two-line title first, 23 of 60 wheel stops of a 300-row shelf showed
+  blank rows (the whole list at the worst), rows jumped up to 36 px as lines came and went, a click's repaint moved the
+  rows under a still pointer so a double click took the next piece ("Plain Robes" for the book clicked), and the
+  scrollbar was 336 px short. Now every row's height is measured as it is drawn and kept by its item (`sizes` - each
+  window keeps one a list, and a view, across its repaints, so a repaint's spacers are the ones it replaces); a line is
+  its tallest row and the gap; a line never drawn is taken at the mean of those that were; each aim reads the lines it
+  drew, holds still the row the eye is on (the scroll moves with the spacer above it), and asks the band again until it
+  is covered. A list of one height is laid as before. The pack's lists (VIRT) take the same law and keep their own heights.
+- **A landed picture's tile kept the browser's tooltip** over the hover card: the row's hover took the title off the
+  tile it was built with, and a landing swaps the tile in place. It takes it off the tile the row shows now.
+- **A resize repainted the shop**, taking the focus out of the How-many field (the next key lost), **and the trade
+  between players**, putting a typed stack count back to the whole stack. Both now measure their long lists again, as
+  the pack does, and repaint nothing - the old windows never listened.
+- Checked and faithful: Tab and Shift+Tab through 400 rows (better than before - the old window lost the focus to the
+  pictures' repaints), the pad's spatial steps, lists of 0, 119, 120 and 121, a buy from a 200-piece shelf, the grid view
+  of one height, selection, wear bars, figures, `held` as a Set, landings after a close, during a scroll and mid-pass,
+  the `acting` flag's try/finally, the gold field. The stacked layout (1,100 px wide or less) still jumps its lists to the
+  top at a click - in the old tree too (`.packlists` scrolls them and the repaint gives back each `.packcol`'s): recorded,
+  not this slice's.
+Pins: `test/ui/virtheights.test.js` (7: a list of three heights, its first the tallest, covered at every stop, down and up
+and in one or three columns; a sync never moves what is on the screen; rows reached from the top at the whole list's place
+and the whole list's height; a repaint over the kept heights; one height as before; a resize lets the heights go; a jump
+past tall first rows covered in one sync), `test/ui/enhanced/tradevirt.test.js` (+2: the landed tile's title, the resize).
+Mutants: `tools/mutants/audit_perfpass.json`'s ATV records, all dead; `virt.json`'s four and `tradevirt.json`'s two
+re-aimed at the new code, dead.
+
+## SHADER-STALL — a pass built in play never waits on its compile
+
+*A player's capture, handed on by the owner (2026-10-20: "told there are shader conflicts"): "the load problem is a
+bunch if fucking shaders ive stripped out like 5 diffrent shader and i dont lag oon load up" - "Gate shader
+initialization: 11.43-second stall", "Node-outline shader initialization: 5.65-second stall".*
+
+**Found.** No conflict: no two passes fight over a program. Every pass built its programs through `render/glProgram.js
+buildProgram`, whose LINK_STATUS read (PERF-COMPILE1's one sync point) is a round trip. It holds the page's thread until
+the GPU process has compiled and linked the program, and everything queued ahead of it. A pass built in play froze the
+game for its compile:
+- the world's gate fire the first frame a gate stands (online: the first frames after the load);
+- the gate court's telegraph, built with the court (online: the boot), and its portal, his blows and the crystals
+  (and the Elite Gates' telegraphs and crystals) at their first frame, mid-fight;
+- the veil, built whole at idle the first frame a gate stands;
+- the nodes' outline at idle, the first node ringed (the nodes' glint since NODE-GLINT, the first node lit);
+- PERF-COMPILE1's idle warms: the sea's four programs and the spells' impact pass;
+- the snow's terrain program, the moment its masks land.
+
+PERF-WARM's idle moved a compile off the frame that needed it onto one that did not, and the main thread still waited the
+whole compile. D3D11's compiler takes seconds over a pass's shaders where SwiftShader takes milliseconds. A player who
+strips the passes strips the waits, which is the report's own test.
+
+**The fix.** `KHR_parallel_shader_compile` (every Chromium on a GPU, the desktop app's Electron included: ANGLE compiles
+on threads of its own) lets the page ask whether a program is done without waiting (COMPLETION_STATUS_KHR).
+`glProgram.js startPrograms` starts a pass's programs and answers that question; `buildProgram` takes the started
+program for the same sources instead of compiling its own, so a pass's constructor (unchanged) reads a link already
+made. `compiledPass` is the host's door: the pass built the first time it is wanted AND its programs are done.
+`warmPrograms` takes named steps (`{ start, run }`): it runs a step once its programs are done, asking again at each
+idle. Each pass lists its programs beside its constructor (GATE_PASS_PROGRAMS, telegraphPrograms, GATE_FX_PROGRAMS,
+GATE_VEIL_PROGRAMS, CRYSTAL_PROGRAMS, NODE_GLINT_PROGRAMS - NODE_OUTLINE_PROGRAMS until main's NODE-GLINT moved the nodes' outline to `render/nodeGlint.js`, 2026-10-20, the same two-program pass and the same door - CSA_PART/WAVE_PROGRAMS, SPELL_IMPACT_PROGRAMS), and the
+constructor builds from that list, so the list can't drift from what the constructor compiles. Each of the builds above
+goes through the door; the veil's warm makes its context and starts its program, and the step's build takes it. A pass
+waiting on its compile draws nothing for those frames: the gate's fire, a blow's sparks, the snow's surface stand a
+frame or two late. A browser that cannot say (no extension) is answered "done" at once and waits as it always did.
+
+**Measured.** SwiftShader is not D3D11, so the claim is in two parts: what the door does to a wait, and what the real
+game waited on here.
+- A compile alone (a 340 ms fragment program, a page with nothing else): read at once, the main thread froze 341 ms.
+  Through the door, a poll took 0.1-0.4 ms, the read after it 0.1 ms, and a 4 ms timer ticked through the compile with an
+  8 ms worst gap.
+- Behind the GPU process's queue (six 64 MB texture uploads; a getError round trip 650-685 ms): a poll took 0 ms, a fence
+  0 ms. The poll waits on neither the compile nor the queue.
+- The real game (`tools/compileStallProbe.mjs knight`: Knightstale booted over the freeware ARENA2 with ANGLE's parallel
+  compile on, as a GPU's Chromium has it, every program read timed and named; main and this branch one after the
+  other). After the first world frame the main thread waited on programs 9,033, 8,797 and 114 ms on main (the sea's warm
+  7,127 ms in one run, the spells' 7,558 ms in another); on this branch 14 and 477 ms. The 477 is one uniform lookup of
+  the snow's program, built after its compile: the lookup is a round trip, and it paid the queue's work.
+- The passes no scene here stands (`compileStallProbe.mjs passes`, each in a context of its own): built at once, the
+  gate's fire waited 19 ms, the telegraphs 12-14, his blows 9, the veil 5, the outline 15; through the door 2-3 ms each.
+  These are SwiftShader's milliseconds; the player's driver took 11.4 and 5.7 seconds over the same reads.
+
+**Not changed.** The renderer's own programs, built in its constructor behind the loading screen (2.6-3.1 s here, the
+same on both), and the passes the other scenes build in play (the Spire's, the Hour's, the arenas') keep their builds.
+Each can take the door by listing its programs; `compileStallProbe.mjs` names what still waits.
+
+GATE-MIX (#1082, merged into this branch beside it) had moved the court's sparks, crystals and portal to the arrival,
+one build a frame: its warm now asks each through its door - where the driver compiles beside the frames the three
+start together and block none, and where it cannot, one a frame as it had it (`gatemix_targets`' pin moved to hold both).
+
+Pins: `test/render/shaderstall.test.js` (11), the snow's in `test/systems/audit_environs.test.js`, the court's warm in
+`test/net/gate/gatemix_targets.test.js`. Mutants: `tools/mutants/shaderstall.json`, 17, all dead; `gatemix.json`'s three
+warm records re-aimed at the doors, dead. Source pins moved with the code: `wbx_gate_fixes` (the court's portal),
+`eglook_lines` (the Spire's telegraph).
+
+**AUDIT SHADER-STALL (2026-10-20, the owner: "ensure this is perfect and fidelity isnt lost").** A cold lane read the
+doors against the code before them, over a fake context with and without the extension. What it found, and what was done:
+- **The Elite Breach's telegraphs and crystals could be missing for the whole compile** (the worst: a gameplay loss). Their
+  programs started in the hall's first drawn frame, and a door answers null until the driver is done - seconds on D3D11,
+  while a lord's first blow (`EG_LORD_WAKE_MS`, 2.5 s after he wakes) wound up and landed with no telegraph drawn. Where
+  before the screen had frozen and every drawn frame showed them. Now **a pass the game is played by is never skipped
+  for a compile**: `compiledPass`'s `get(true)` builds it the frame it is needed whatever the driver says (the wait every
+  build had before the slice), and the fights ask so - the Spire's telegraph when a shape is to be drawn and its crystals,
+  the court's telegraph in a fight, his blows' sparks, its crystals and the way in and home. And none of them should
+  have to wait: `render/playPrograms.js` STARTS them - with a gate's fire and the nodes' glint, and the snow's surface -
+  at the renderer's idle warm, where the driver compiles beside the frames, minutes before a player meets them; where it
+  cannot, nothing is started early (a compile queued on its thread holds the frames after it) and each is built the
+  first time it is asked for, as before the slice. So the later appearances the lane listed (a gate's fire, the court's
+  way in, the nodes' ring, the snow's surface) are started long before they are wanted.
+- **A warm whose pass a draw built first started a second compile** of the programs the build had taken (the spells'
+  impact pass, the sea's): a warm step may say whether it is still `need`ed, and stands down when its pass stands.
+- **A pass whose build threw kept its other programs** started for good: its door lets them go (`releasePrograms`).
+- **The veil's warm only started its program**, and the step's frame read its link, found its uniforms and made its
+  buffers - the work AUDIT WB D5's warm had taken off that frame. The warm builds it at an idle once the driver says its
+  program is done (where it cannot say, at the next idle, as WB D5 had it), and never once the veil is gone.
+- **The court's warm (the merge with GATE-MIX)** spent a frame on a pass the draw had already built: it skips a settled door.
+- Checked and faithful: the no-extension path builds every pass in the frame it did, by the same reads; the failure
+  words; a lost context; the program lists against their constructors; one start shared across doors and breaches;
+  both sides of the GATE-MIX merge.
+Pins: `test/render/auditshaderstall.test.js` (8), `shaderstall`'s spells' warm pin moved (its `need`), `wbx_gate_fixes`' on
+the portal's door. Mutants: `tools/mutants/audit_perfpass.json`'s ASS records, all dead; `shaderstall.json`'s four and
+`gatemix.json`'s one re-aimed, dead.
+
+## SNOW-BUDGET — the snow the ground keeps holds to its frame budget
+
+*The same capture, handed on by the owner (2026-10-20): "something about our weather system affecting fps".*
+
+**Found.** The real game's frames after the arrival (the profile of `compileStallProbe.mjs knight` with PROFILE) were led
+by the snowpack (PRECIP3/PRECIP4, `bible/07-Rendering/Biome-Precipitation.md`, two days old). In one run, over 43 s:
+- `snowCoverHost.js at` -> `snowpack.js advance` -> `_step`: 525 ms;
+- the feet's `winterAt`: 273 ms;
+- the grass's `buries`: 175 ms;
+
+of a world frame of 1,353 ms. `SNOW_COVER.budgetMs` is 3 ms a frame, but it was not kept, for three reasons:
+- `advance` read its deadline only after a whole step of the window (121 points), so a frame ran a step at the least.
+- Every reader in a frame ran a budget of its own: the tick, the feet three times (`winterAt`, called before the tick),
+  and the Snowfall mod's `winterNear`.
+- The drawn cover read the ground's slope (`normalY`, four of the stream's heights) for every grass blade and every
+  footstep, before asking whether the snowline laid any snow there at all.
+
+**The fix.** Three changes, and no pack moved:
+- `snowpack.js _step` stops at the deadline between points. The rest carry on in the next call, and each point's
+  history is its own, so every pack is the one one call makes. A call still moves at least one point, so a build's wait
+  with no slice left goes on.
+- `snowCoverHost.js budgetFor` gives the asks within `SNOW_COVER.frameMs` (12) one budget between them; a build's
+  `settle` keeps the breather's own.
+- `drawnCover` reads the slope only where the cover is above nothing. `snowCoverAt` answers 0 for no cover whatever the
+  slope.
+
+**Measured.** In node, over the real law (`snowCoverHost.js` and `snowpack.js` from this branch and from its base,
+Woodlands in late winter, an 11 x 11 window caught up while a frame asks as the world frame does - the feet three
+times, the tick, the mod's winter; two runs each):
+
+| | base | SNOW-BUDGET |
+|---|---|---|
+| the snow a frame, median | 18.3 / 18.9 ms | 0.24 / 0.27 ms |
+| p99 | 61 / 66 ms | 5.9 / 6.2 ms |
+| frames over 8 ms | 120 of 121 / 142 of 142 | 6 / 5 |
+
+The window stands in more frames: the year's integration is the same work, spread at the budget the law always named.
+In the real game's minute after the arrival (`compileStallProbe.mjs knight` with PROFILE, two runs a tree) the
+catch-up had finished inside the boot (`settle`, the arrival's budget), so the two trees spent the same there. The
+snow's share of that minute was the grass's `buries`: 394-457 ms. Of its 410 ms on this branch, 231 are still the
+slope's heights, because snow lay in that run. Settled (`frameProbe.mjs knight`, 930 s in), the snow is 0.08 ms of a
+25 ms world frame.
+
+**What it still pays, ranked.**
+1. The weather map's births (`weatherMap.js systemsSpanWalk` -> `birthsIn`): one node of the walk took 65 ms in node,
+   paid once (memoized), and the walk reads its deadline only between nodes. These are the 5-6 frames still over 8 ms.
+2. The grass's slope under snow: `buries` asks the world's `heightAt` four times a blade, a pixel found by a string key
+   each time. The blade's own pixel holds the same samples (a read inside `bootWorld`, under its ceiling).
+3. A ground set's winter twin (`snowCoverHost.js twinLayers` -> `fit`): 88-173 ms of the minute.
+
+Pins: `test/systems/weather/snowbudget.test.js` (5). Mutants: `tools/mutants/snowbudget.json`, 4, all dead. Tooling:
+`tools/frameAb.mjs` reads the snow's and the falling weather's share of a frame.
+
+**AUDIT SNOW-BUDGET (2026-10-20, the owner: "ensure this is perfect and fidelity isnt lost").** A cold lane ran the
+lattice lock-step against one unbudgeted, and the old code beside the new, a step at a time through whole snow years.
+What it found, and what was done:
+- **The packs were not the ones one call makes** (F1). A step the deadline cut part-way judged its REST quiet on its own -
+  the snowy points in the part already stepped - and skipped it, keeping the `prev` of a point whose snow had melted out
+  the step before (2.7 mm against 0 on a ramp of Woodlands ground, at the 541st step of its year; 33 of 62 windows the
+  lane tried). Seen only above the cell's highest ground, but a pack that hung on the machine's speed. Now a step cut
+  part-way is stepped whole: its rest is never judged again (`_partial` carries the verdict), and a step finished on the
+  quiet path leaves none part-way. Lock-step, the three windows that diverged meet at every step, the counts with them.
+- **The snow blinked longer as the window moved** (F2). Every lattice cell walked (two map pixels) the window let the
+  frame draw no snow at all until it stood at the clock's minute again - an old blink, made longer by the budget (0.4 s
+  became 1.1 s at 60 Hz where no build was waiting), and the Snowfall mod's winter took the calendar's meanwhile (a turn
+  resets its tracks). Now the lines the window kept across the move are drawn, and answer the mod, while it catches up;
+  a window with nothing kept (the first, a jump) draws none, as ever.
+- The shared budget's frame detection (F3): a 144 Hz frame inside the 12 ms window integrates a point, and a slow frame
+  can open a second budget - never more than the old code spent. Recorded.
+- The test's reader stood in another lattice cell than the tick's (F4): moved to the tick's own pixel.
+- Checked and faithful: `drawnCover`'s early return (1,152,072 comparisons, old against new: none differ); unbudgeted
+  packs; a moving window and a clock set back; `settle` and `force`; steady play.
+Pins: `test/systems/weather/snowbudget.test.js` (+2: lock-step to the 560th step of the lane's own window, and the kept
+lines across a move). Mutants: `tools/mutants/audit_perfpass.json`'s ASB records, all dead.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
   with `TREE=` the base, then this branch (`node tools/frameAb.mjs` reads the two) - the frame's own script time
   is what PERF-V8 moves, and a crowded town with yards is where PERF-YARD, PERF-INST and PERF-COL2 show.
+- **BOOT-FREEZE's A/B on a GPU**: `ARENA2_PATH=... node tools/bootFreezeProbe.mjs knight` with `TREE=` the base, then this
+  branch - SwiftShader cannot say what a driver pays for the sea's compile and the ground's upload (What the boot still
+  pays, 3), and a real GPU's frames are the ones a player waits through.
 - **The picture's levers** above (1, 4, 6b, 7) are yours - and 5's distance is the Other players card's now (PEER-RANGE): each trades a little of what is seen for frame time.
