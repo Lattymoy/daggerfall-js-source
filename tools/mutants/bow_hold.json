@@ -1,0 +1,30 @@
+[
+  {
+    "name": "BOW-HOLD-the-chain-s-order-back",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "  else if (weaponAnimTime > 8000) adjusted -= 20;   // BOW-HOLD: ahead of the > 5000 arm, where the C# has it behind\n  else if (weaponAnimTime > 5000) adjusted -= 10;\n",
+    "new": "  else if (weaponAnimTime > 5000) adjusted -= 10;\n  else if (weaponAnimTime > 8000) adjusted -= 20;\n",
+    "tests": [
+      "test/systems/rr1_realism.test.js",
+      "test/systems/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "BOW-HOLD-the-8-s-line-moved",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "  else if (weaponAnimTime > 8000) adjusted -= 20;   // BOW-HOLD",
+    "new": "  else if (weaponAnimTime >= 8000) adjusted -= 20;   // BOW-HOLD",
+    "tests": [
+      "test/systems/rr1_realism.test.js"
+    ]
+  },
+  {
+    "name": "BOW-HOLD-the-long-hold-s-penalty-softened",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
+    "old": "  else if (weaponAnimTime > 8000) adjusted -= 20;   // BOW-HOLD",
+    "new": "  else if (weaponAnimTime > 8000) adjusted -= 10;   // BOW-HOLD",
+    "tests": [
+      "test/systems/rr1_realism.test.js"
+    ]
+  }
+]
