@@ -96,8 +96,14 @@ test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustm
   armoured._mods = { ...newMods(), armorParts: [0, 0, 0, 4, 0, 0, 0] };
   assert.equal(pcaaoArmorToHit(armoured, 3), 96, 'four points on the chest: four harder to hit there');
   assert.equal(pcaaoArmorToHit(armoured, 2), 100, 'none on the other parts');
+  // ENCHANT-SIGN (issue #1096): the mod's own `100 - Increased - Decreased` made Strengthens Armor (Increased -5) five
+  // points EASIER to hit; the channels add, as FormulaHelper.cs:1158 adds them, so the two cores agree on every item
   armoured._enchantMods = { increasedArmorMod: -5, decreasedArmorMod: 0 };
-  assert.equal(pcaaoArmorToHit(armoured, 3), 101, 'a Strengthens item: the mod\'s own 100 - Increased - Decreased, verbatim, beside the points');
+  assert.equal(pcaaoArmorToHit(armoured, 3), 91, 'a Strengthens item: 100 + Increased (-5) - the four points: harder to hit, not easier');
+  armoured._enchantMods = { increasedArmorMod: 0, decreasedArmorMod: 5 };
+  assert.equal(pcaaoArmorToHit(armoured, 3), 101, 'a Weakens channel of +5 (the value WeakensArmor.cs:25 names): easier to hit');
+  armoured._enchantMods = { increasedArmorMod: -5, decreasedArmorMod: 5 };
+  assert.equal(pcaaoArmorToHit(armoured, 3), 96, 'both: they cancel, as the stock core cancels them');
   assert.equal(pcaaoArmorToHit(cls, 3), 60, 'a class enemy: a flat 60');
   mon.armorValues = [10, 20, 30, 40, 50, 60, 70];
   assert.equal(pcaaoArmorToHit(mon, 4), 50, 'a monster: its part');
