@@ -9,6 +9,12 @@
 //      the action's own call - without the action's unhide and without its cull). The fault this answers: a party's
 //      shared-quest resync (machine.updateSharedQuest) replaces each Place's siteDetails with the partner's copy, and
 //      the targets written here after it are gone while the `place` action, complete, never runs again.
+//      CREATE-HOME (FIELD BUGS 2026-10-22b, "Delivery/Courier Quest Cannot Be Completed"): and every `create npc` that
+//      has run names its person's generated home (CreateNpc.cs -> Person.PlaceAtHome) - 38 corpus quests `create npc`
+//      48 people, and 44 of them (the courier's recipient among them) no `place npc` ever places; the pass had read the
+//      `place` actions alone, and answered "Nothing was missing" over a recipient no marker held. A person put back is
+//      assigned there too, where no Place is assigned them (both actions' own SetAssignedPlaceSymbol): the talk's Where
+//      is reads that.
 //   2. A SITE LINK THE QUEST NEVER GOT. The placement actions reserve a link only when `hasSiteLink` finds none AT THE
 //      SITE - any quest's - so a second quest placing where a first already had leans on the first's link, and when
 //      the first ends, the second's people, items and foes stand nowhere. One link per (quest, Place) holding targets.
@@ -32,7 +38,11 @@ import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's a
 import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
 import { t } from '../textManager.js';   // QUEST-ELSEWHERE: its line in the player's language
 
-const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
+const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol', CreateNpc: 'npcSymbol' });
+
+/** CREATE-HOME: the Place a completed `create npc` put its person at - their generated home (Person.PlaceAtHome), never
+ *  a questor's or an individual's, whom PlaceAtHome refuses. */
+const homeOf = (person) => (person?.isPerson && !person.isQuestor && !person.isIndividualNPC ? person.getHomePlace?.() ?? null : null);
 
 /** A quest still running: neither complete nor tombstoned. */
 export const questRunning = (quest) => !!quest && !quest.questComplete && !quest.questTombstoned;
@@ -81,7 +91,7 @@ export function placementIntents(quest) {
       const field = PLACEMENTS[a?.typeName];
       if (!field || !a.isComplete) continue;
       const res = quest.getResource?.(a[field]);
-      const place = quest.getPlace?.(a.placeSymbol);
+      const place = a.typeName === 'CreateNpc' ? homeOf(res) : quest.getPlace?.(a.placeSymbol);   // CREATE-HOME: `create npc` names no Place - its person's home is where it put them
       if (!res || !place) continue;
       const name = res.symbol?.name;
       const prev = out.get(name);
@@ -107,6 +117,7 @@ export function putBackPlacements(quest, env = {}, report = { people: 0, items: 
   for (const [name, it] of placementIntents(quest)) {
     if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;
     try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }   // a Place with no markers throws: that one is not repairable here
+    if (it.res.isPerson && !it.res.assignedPlaceSymbol) it.res.setAssignedPlaceSymbol?.(it.place.symbol);   // CREATE-HOME: where the talk's Where is looks for them (topicTree.js assembleTopicListPerson)
     held.add(name);
     if (it.res.isPerson) report.people++;
     else if (it.res.isItem) report.items++;

@@ -40,7 +40,7 @@
  {
   "name": "GRASS-PATH1-the-mask-never-leaves-the-kernel",
   "file": "src/world/terrain/terrainGen.js",
-  "old": "    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says",
+  "old": "    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)",
   "new": "    paths: null,",
   "tests": [
    "test/world/terrain/grasspath.test.js"
@@ -105,8 +105,8 @@
  {
   "name": "PERF10-the-empty-free-list-breaks-again-and-leaves-a-hole",
   "file": "src/render/labGrass.js",
-  "old": "        let slot = free.pop();\n        if (slot === undefined) {",
-  "new": "        let slot = free.pop();\n        if (slot === undefined) break;\n        if (false) {",
+  "old": "        if (free.length) return take ? free.pop() : free[free.length - 1];",
+  "new": "        if (true) return take ? free.pop() : free[free.length - 1];",
   "tests": [
    "test/world/terrain/grasspath.test.js"
   ]
@@ -114,8 +114,8 @@
  {
   "name": "PERF10-the-eviction-takes-the-nearest-standing-cell-instead-of-the-farthest",
   "file": "src/render/labGrass.js",
-  "old": "            if (hd > farD) { farD = hd; far = held; farKey = k; }",
-  "new": "            if (hd < farD) { farD = hd; far = held; farKey = k; }",
+  "old": "          if (hd > farD) { farD = hd; far = held; farKey = k; }",
+  "new": "          if (hd < farD) { farD = hd; far = held; farKey = k; }",
   "tests": [
    "test/world/terrain/grasspath.test.js"
   ]

@@ -196,7 +196,7 @@ test('AUDIT 32 P8/R4: Standard-bearer\'s Silk says what it waits on; the Outfitt
     drawProfessionsPage(again, () => {}, kit);
     const t = again.textContent;
     assert.match(t, /Linen clothing; the Rat's skins; the Fishing-Netrank 0/);
-    assert.match(t, /the Bat's and the Bear's skinsrank 10/);
+    assert.match(t, /the Bat's, the Bear's, the Wolf's and the Boar's skinsrank 10/);   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the mod's Wolf Pelt and Boar Hide cut skins too
     assert.match(t, /The Tiger's skinsrank 25/);
     root.remove(); again.remove();
   } finally { resetProfPages(); setProfessionsPages(null); }

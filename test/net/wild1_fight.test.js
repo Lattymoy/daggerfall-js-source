@@ -118,12 +118,15 @@ test('WILD1 remains: the room\'s word stands a pile that takes nothing; a take t
   assert.deepEqual(pack, [{ group: 'Ingredients', templateIndex: 5, stackCount: 1 }], 'what the window moved is out again until the room gives it');
   book.onWord({ k: 'got', r: 'rrrrrr01', i: 0, it: { group: 'Armor', templateIndex: 101 } });
   book.onWord({ k: 'rm', r: 'rrrrrr01', i: 0, n: 1 });
+  // another's takes were the room's first: each word moves the pile in place - the room's count less my take in flight
+  // (FIELD BUGS 2026-10-20h REMAINS-TAKE) - and the last record gone takes the pile; then mine is refused
+  book.onWord({ k: 'rm', r: 'rrrrrr01', i: 1, n: 1 });
+  assert.equal(pile.items[0].stackCount, 3, 'six, less one another took, less my two in flight');
+  book.onWord({ k: 'rm', r: 'rrrrrr01', i: 1, n: 5 });
+  assert.equal(pile.dead, true);
   book.onWord({ k: 'no', r: 'rrrrrr01', i: 1 });
   assert.deepEqual(pack.map((x) => x.templateIndex), [5, 101], 'the won record arrives; the lost one never does');
   assert.ok(said.includes('Someone took that first.'));
-  // another's take moves the pile in place, and the last record gone takes the pile
-  book.onWord({ k: 'rm', r: 'rrrrrr01', i: 1, n: 4 });
-  assert.equal(pile.dead, true);
 });
 
 test('WILD1 remains: an ask that never left puts the record back on the pile; a room change takes every pile', () => {

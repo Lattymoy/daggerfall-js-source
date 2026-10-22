@@ -11,7 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { settleChallenge, doPenance, penanceHelps, PENANCE_POINTS } from '../../src/systems/standing.js';
+import { settleChallenge, sentenceMends, doPenance, penanceHelps, PENANCE_POINTS } from '../../src/systems/standing.js';
 import { createStandingWatch, STANDING_LOOK_MS, installLegalNotices } from '../../src/scenes/standingHost.js';
 import { createRegionConditions } from '../../src/systems/region/regionConditions.js';
 import { lowerRepForCrime, raiseRepForSentence, raisePeopleForAnswer, CRIMES, REPUTATION_LOSS_PER_CRIME, MARKED_CRIMES } from '../../src/systems/court.js';
@@ -70,6 +70,14 @@ test('FINE-PEOPLE: the reporter\'s fine - a murder and an assault charged (the l
     assert.equal(settleChallenge(p, REGION), PENANCE_POINTS);
     assert.deepEqual(names(p), [-law + 10, -half + 5, -half + 5], '11 owed at -23, 9 at -18: the two steps the half of the ten');
   } finally { off(); }
+});
+
+test('FINE-PEOPLE (AUDIT FB1021d SM-5): a sentence\'s mend (SENTENCE-MENDS) gives the People their half as the fine does - the one law, mendToLine (mutants: the People\'s half the fine\'s alone)', () => {
+  const p = charged([CRIMES.Murder, CRIMES.Assault]);
+  const law = REPUTATION_LOSS_PER_CRIME[CRIMES.Murder] + REPUTATION_LOSS_PER_CRIME[CRIMES.Assault];
+  const half = Math.trunc(REPUTATION_LOSS_PER_CRIME[CRIMES.Murder] / 2) + Math.trunc(REPUTATION_LOSS_PER_CRIME[CRIMES.Assault] / 2);
+  assert.equal(sentenceMends(p, REGION, { from: -law }), PENANCE_POINTS);
+  assert.deepEqual(names(p), [-law + 5, -half + 3, -half + 3], 'served: the law +5, the People and the kingdom +3, as the fine\'s');
 });
 
 test('FINE-PEOPLE: a temple\'s penance gives the People half its points too; never past 0 - an answer mends a charge and buys no favour; a law mended by fewer points gives fewer back; no faction store, nothing thrown', () => {

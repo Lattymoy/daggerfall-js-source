@@ -2,7 +2,7 @@
   {
     "name": "HOST-SPLIT-a-ceiling-under-its-host",
     "file": "test/scenes/hostceiling.test.js",
-    "old": "['src/scenes/world.js', 'bootWorld', 36_171, MODULE]",
+    "old": "['src/scenes/world.js', 'bootWorld', 36_158, MODULE]",
     "new": "['src/scenes/world.js', 'bootWorld', 35_900, MODULE]",
     "tests": [
       "test/scenes/hostceiling.test.js"
@@ -48,7 +48,7 @@
   {
     "name": "HOST-SPLIT-NAVAL-the-sail-runtime-ceiling-dropped",
     "file": "test/scenes/hostceiling.test.js",
-    "old": "  ['src/systems/comeSailAway/comeSailAway.js', 'createComeSailAwayRuntime', 2_783, MODULE],   // the Come Sail Away runtime, one scope (AUDIT HOST-SPLIT NAVAL)\n",
+    "old": "  ['src/systems/comeSailAway/comeSailAway.js', 'createComeSailAwayRuntime', 2_780, MODULE],   // the Come Sail Away runtime, one scope (AUDIT HOST-SPLIT NAVAL); BOAT-OWN (FIELD BUGS 2026-10-21c): 3 logical lines out - her boats' Animators and particle systems to scenes/comeSailAway/farLife.js createBoatLives - 2,783 -> 2,780\n",
     "new": "",
     "tests": [
       "test/scenes/hostceiling.test.js"

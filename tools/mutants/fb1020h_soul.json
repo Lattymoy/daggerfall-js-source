@@ -1,0 +1,213 @@
+[
+  {
+    "name": "SOUL-LAW-mod-unread",
+    "file": "src/systems/item/itemLaw.js",
+    "old": " || MOD_SOULS.has(/** @type {number} */ (v))",
+    "new": "",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the report: the mod's fifty unread - an Ogre's soul a finding, its trapper's trading frozen"
+  },
+  {
+    "name": "SOUL-LAW-list-empty",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "const MOD_SOULS = new Set(DEX_ENEMY_IDS);",
+    "new": "const MOD_SOULS = new Set();",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the law's list of the fifty left empty"
+  },
+  {
+    "name": "SOUL-LAW-forged-taken",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "(/** @type {number} */ (v) >= 0 && /** @type {number} */ (v) < SOUL_COUNT)",
+    "new": "(/** @type {number} */ (v) >= 0 && /** @type {number} */ (v) < 400)",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the ranges widened past the creatures: a soul no creature has taken"
+  },
+  {
+    "name": "SOUL-LAW-law-unmoved",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "export const ITEM_LAW_VERSION = 9;",
+    "new": "export const ITEM_LAW_VERSION = 8;",
+    "tests": [
+      "test/systems/item/int1_itemlaw.test.js",
+      "test/systems/tech1_roster.test.js"
+    ],
+    "why": "the law loosened under its old number - law 8's findings never asked again, and no service named for it"
+  },
+  {
+    "name": "SOUL-LAW-ids-classic-kept",
+    "file": "src/systems/enemyExpansion/dexIds.js",
+    "old": "if (!isClassicEnemyId(id)) ids.add(id);",
+    "new": "ids.add(id);",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the classic lines the mod edits read as enemies of its own"
+  },
+  {
+    "name": "SOUL-LAW-ids-monsters-only",
+    "file": "src/systems/enemyExpansion/dexIds.js",
+    "old": "if (!name.endsWith('.mdb.csv')) continue;",
+    "new": "if (!name.startsWith('MonsterBase')) continue;",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the mod's people (ClassBase, 384-398) unread - a Bounty Hunter's soul a finding"
+  },
+  {
+    "name": "SOUL-LAW-ids-column",
+    "file": "src/systems/enemyExpansion/dexIds.js",
+    "old": "const col = table.column('ID');",
+    "new": "const col = table.column('Level');",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the tables read by another column"
+  },
+  {
+    "name": "TRADE-WHOLE-wire-piecewise",
+    "file": "src/systems/tradePack.js",
+    "old": "      return wholeLot(recs);",
+    "new": "      return validLootList(recs);",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the report's hand-to-hand trade: the refused gem set out on the table, never on the wire - lost at the commit"
+  },
+  {
+    "name": "TRADE-WHOLE-unwire-piecewise",
+    "file": "src/systems/tradePack.js",
+    "old": "unwire(records) { const items = wholeLot(records);",
+    "new": "unwire(records) { const items = validLootList(records);",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "a peer's lot shown less the piece the law refuses"
+  },
+  {
+    "name": "TRADE-WHOLE-count-unasked",
+    "file": "src/systems/tradePack.js",
+    "old": "return items && items.length === records.length ? items : null;",
+    "new": "return items;",
+    "tests": [
+      "test/systems/item/fb1020h_soul.test.js"
+    ],
+    "why": "the lot clamped piece by piece"
+  },
+  {
+    "name": "SOUL-LIFT-soul-unread",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "WHERE json_extract(j.value, '$.code') = 'soul' AND json_extract(j.value, '$.t') IN (274, 133)))\n  OR EXISTS",
+    "new": "WHERE json_extract(j.value, '$.code') = 'nothing' AND json_extract(j.value, '$.t') IN (274, 133)))\n  OR EXISTS",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "the soul's finding unread: no hold lifted"
+  },
+  {
+    "name": "SOUL-LIFT-star-other",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "OR (json_extract(j.value, '$.code') = 'soul' AND json_extract(j.value, '$.t') IN (274, 133))",
+    "new": "OR (json_extract(j.value, '$.code') = 'soul' AND json_extract(j.value, '$.t') IN (274))",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "Azura's Star's soul read as a finding of another kind"
+  },
+  {
+    "name": "SOUL-LIFT-any-soul",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "OR (json_extract(j.value, '$.code') = 'soul' AND json_extract(j.value, '$.t') IN (274, 133))",
+    "new": "OR (json_extract(j.value, '$.code') = 'soul')",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "a soul in a dagger (a forgery law 9 still finds) read as the gem's"
+  },
+  {
+    "name": "SOUL-LIFT-key-other",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "\n      OR (json_extract(j.value, '$.code') = 'template' AND json_extract(j.value, '$.t') = 575))));",
+    "new": "));",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "law 6's Weir Key, lifted twice, counted as a strike again"
+  },
+  {
+    "name": "SOUL-LIFT-keylift-zeroes",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "NOT IN ('auto-hold', 'key-lift')",
+    "new": "NOT IN ('auto-hold')",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "0130's lift read as a clear - the strike it kept lost"
+  },
+  {
+    "name": "SOUL-LIFT-strikes-zeroed",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "SELECT MIN(c.strikes + 3 * c.law_holds, soul_lift.other)",
+    "new": "SELECT MIN(c.strikes + 3 * c.law_holds, 0)",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "every strike lifted, a forged piece's among them"
+  },
+  {
+    "name": "SOUL-LIFT-fade-dropped",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "THEN k.other_at END",
+    "new": "THEN NULL END",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "the kept strike's fade counted from nothing"
+  },
+  {
+    "name": "SOUL-LIFT-three-ignored",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "DELETE FROM soul_lift WHERE other >= 3",
+    "new": "DELETE FROM soul_lift WHERE other >= 4",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "a week three other findings made lifted with the soul's"
+  },
+  {
+    "name": "SOUL-LIFT-timed-act",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "AND json_extract(s.detail, '$.act') = 'timed');",
+    "new": "AND json_extract(s.detail, '$.act') = 'never');",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "a week an act made lifted"
+  },
+  {
+    "name": "SOUL-LIFT-staff",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "WHERE (c.held IS NULL OR c.held <> 'staff') AND",
+    "new": "WHERE (c.held IS NULL OR c.held <> 'nobody') AND",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "staff's hold written over"
+  },
+  {
+    "name": "SOUL-LIFT-hold-left",
+    "file": "server-account/migrations/0143_soul_lift.sql",
+    "old": "  held = CASE WHEN held = 'law' AND (law_sig IS NULL OR law_sig IN ('soul:274', 'soul:133', 'soul:133,soul:274')) THEN NULL ELSE held END,",
+    "new": "  held = held,",
+    "tests": [
+      "test/server/fb1020h_soullift.test.js"
+    ],
+    "why": "the week lifted and the hold the soul made left standing"
+  }
+]

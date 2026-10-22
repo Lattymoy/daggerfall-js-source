@@ -105,6 +105,7 @@ import { NAVAL_SFX, NAVAL_CLASSIC, NAVAL_FIRE_LOOP, NAVAL_SINK_LOOP, navalSoundR
 import { raiderPlan, raiderClassOf, RAIDER_DROP_M } from '../../systems/naval/navalRaiders.js';
 import { pursue } from '../../systems/naval/seaLanes.js';   // AUDIT BAY A6: a packet steered along her leg
 import { FADE_FLATS } from '../comeSailAway/comeSailAwayPool.js';   // AUDIT BAY A13/A14: what of a fading ship goes at half
+import { NEAR_LIFE_M, FAR_LIFE_EVERY, farLifeStep } from '../comeSailAway/farLife.js';   // BOAT-FAR: her rigging's life by her range, the pool's law too
 import { segmentOfTarget } from '../serpentHost.js';   // SERPENT1: a sea serpent's segment among the shots' targets
 import { intoDeck, outOfDeck, mainLevel, DECK_STEP } from '../../systems/naval/navalDeck.js';   // AUDIT NAV2 F36: the feet in her deck's frame (aboardShip); QUAYS: her rail where the gangway lands
 import { CAPSULE_RADIUS } from '../../player/motor.js';   // AUDIT GN-D3: aboard under her main deck, a body's own reach (standsOn)
@@ -122,6 +123,7 @@ import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my vol
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
 import { liveryCode } from '../../systems/naval/shipLivery.js';
 import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { createBerthWatch } from './navalBerth.js';   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the berth, still or not, and the helm let go in port
 
 /** The record's name in the save's per-mod slot (systems/modSaveData.js) - the port's own, as the Sigil Broker's is. */
 export const NAVAL_SAVE_VENDOR = 'NavalCombat';
@@ -237,12 +239,10 @@ export const HIT_BURST_MAX = 3;
  *  1.6, under a holed ball's 2.5). */
 export const GUN_KICK = Object.freeze({ long: 1.1, heavy: 1.6, swivel: 0.45, chain: 0.9 });
 export const BLAST_SHAKE = 3.2;
-/** AUDIT NAV1 (the presentation, #17): HER RIGGING'S LIFE BY HER RANGE - past NEAR_LIFE_M of the eye a ship's animators
- *  and particle systems step every FAR_LIFE_EVERY frames with the time they missed: her sails' billow and her flag's
- *  wisps are too small to see there, and the traffic sits 650-1900 m out (five far war galleys cost 5.7 ms a frame on
- *  the CPU, their rigging stepped as a near one's). */
-export const NEAR_LIFE_M = 600;
-export const FAR_LIFE_EVERY = 4;
+/** AUDIT NAV1 (the presentation, #17): HER RIGGING'S LIFE BY HER RANGE - NEAR_LIFE_M and FAR_LIFE_EVERY, born here and
+ *  re-exported: BOAT-FAR moved them and the law's step (farLifeStep) to scenes/comeSailAway/farLife.js, which the Come
+ *  Sail Away pool and the peers' boats read as poseShip does. */
+export { NEAR_LIFE_M, FAR_LIFE_EVERY };
 /** NAV-FAR-AI (2026-10-12, a player's live client walking the coast: the captains of the sea's ships were 12% of the
  *  main thread and some 29% of what it allocated - every ship of mine, every frame, the adopted ones hundreds of km off
  *  among them): A FAR CAPTAIN KEEPS HER WATCH EVERY FAR_LIFE_EVERY FRAMES, on the time she missed (never more than
@@ -834,7 +834,9 @@ export function createNavalHost(deps) {
   function boatPose(boat) {
     const r = csa();
     const rot = boat.GameObject.rotation;
-    const local = boat === r?.state?.CurrentBoat && sailing() ? (r.state.velocityCurrent ?? [0, 0, 0]) : [0, 0, 0];
+    // FIELD BUGS 2026-10-21b VOYAGE-HOLD: a boat aground lies still - the runtime keeps her last way (Come Sail Away moves
+    // a beached boat by none of it), and a Small Ship run ashore at the helm read 9.86 m/s: never a berth, and leagues logged
+    const local = boat === r?.state?.CurrentBoat && sailing() && !r.IsBeached?.(boat) ? (r.state.velocityCurrent ?? [0, 0, 0]) : [0, 0, 0];
     return { position: boat.GameObject.position, rotation: rot, velocity: quatRotate(rot, local), hull: boat.hull };
   }
   const yawOfRot = (rot) => { const f = quatRotate(rot, [0, 0, 1]); return Math.atan2(f[0], f[2]); };
@@ -1475,7 +1477,7 @@ export function createNavalHost(deps) {
     if (clock - lastSiteCheck < SITE_CHECK_S) return;
     lastSiteCheck = clock;
     const w = where();
-    if (boat && w.port && yardHere(boat)) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });   // a delivery's port
+    berths.step(boat, w.port);   // a delivery's port, a voyage's end (navalBerth.js: still or not, and the helm let go there)
     const sites = deps.captain?.sites?.() ?? [];
     const live = new Set(sites.map((x) => x.id));
     for (const id of [...siteStood.keys()]) if (!live.has(id)) siteStood.delete(id);
@@ -2196,12 +2198,12 @@ export function createNavalHost(deps) {
     if (b.LightOn !== lit && (b.Lights?.length ?? 0) > 0) setLights(b, lit);
     // AUDIT NAV1 (the presentation, #17): her animators found once, as her particle systems are (her whole tree was
     // walked for them every frame: 0.44 ms of a far galley's, for her three); past NEAR_LIFE_M both step every
-    // FAR_LIFE_EVERY frames, with the time they missed - each ship on her own frame of the stride (her number's)
-    e.lifeDt += dt;
-    if (!eye || dist2d(s.pos, eye) <= NEAR_LIFE_M || (e.lifeN = (e.lifeN + 1) % FAR_LIFE_EVERY) === 0) {
-      for (const a of (b.animators ??= boatAnimators(b))) a.update(e.lifeDt);
-      for (const ps of (b.particleSystems ??= boatParticleSystems(b))) ps.step(e.lifeDt);
-      e.lifeDt = 0;
+    // FAR_LIFE_EVERY frames, with the time they missed - each ship on her own frame of the stride (her number's).
+    // BOAT-FAR: the law read from scenes/comeSailAway/farLife.js, the one the pool and the peers' boats read
+    const lived = farLifeStep(e, dt, s.pos, eye);
+    if (lived !== null) {
+      for (const a of (b.animators ??= boatAnimators(b))) a.update(lived);
+      for (const ps of (b.particleSystems ??= boatParticleSystems(b))) ps.step(lived);
     }
     // her fires follow her deck as she heels, lists and trims; the burn breathes embers and smoke. AUDIT NAV1 (the
     // presentation): she burns on as she goes down, each fire out as the sea reaches its place on her (FLAME_AWASH) -
@@ -2768,6 +2770,9 @@ export function createNavalHost(deps) {
    *  the ring the port law reads: at twelve board ports no Small Ship finds water within a pixel). The berth, the shipwright and the
    *  crew's port ask this one question; the sea's traffic and its waters (`nearPort` alone) ask another. */
   const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };
+  /** VOYAGE-HOLD: the berth said to the captain (navalBerth.js) - still under her own way alone, the current's none of it. */
+  const berths = createBerthWatch({ lies: (b) => yardHere(b), clear: () => !hostileNearMe(), event: (ev) => deps.captain?.event?.(ev),
+    ownWay: (b) => { const r = csa(); return b === r?.state?.CurrentBoat && !r.IsBeached?.(b) ? Math.hypot(...(r.state.MoveVectorCurrent ?? r.state.velocityCurrent ?? [0, 0, 0])) : 0; } });
   /** Whether the shipwright stands for my boat: a port's waters, her way under YARD_SPEED, no hostile ship near. */
   function yardHere(boat) {
     if (!enabled || !boat || !inPortWaters()) return false;

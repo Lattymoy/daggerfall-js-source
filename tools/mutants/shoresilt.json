@@ -16,8 +16,8 @@
   {
     "name": "SHORESILT-the-dry-tiles-unasked",
     "file": "src/world/puddleMask.js",
-    "old": "  for (const [k, n] of wet.c) if ((dry.c.get(k) ?? 0) / dry.total < SHORE_DRY_RATIO * n / wet.total) water.add(k);",
-    "new": "  for (const [k] of wet.c) water.add(k);",
+    "old": "  wet.c.forEach((k, n) => { if (dry.c.get(k) / dry.total < SHORE_DRY_RATIO * n / wet.total) water.add(k); });",
+    "new": "  wet.c.forEach((k) => { water.add(k); });",
     "tests": ["test/world/shoresilt.test.js"]
   },
   {
@@ -37,8 +37,8 @@
   {
     "name": "SHORESILT-the-upload-skips-the-shores",
     "file": "src/world/puddleMask.js",
-    "old": "  return markShoreWater(out);",
-    "new": "  return out;",
+    "old": "  return yield* markShoreWaterSteps(out);   // SHORE-SILT",
+    "new": "  return out;   // SHORE-SILT",
     "tests": ["test/world/shoresilt.test.js"]
   },
   {
@@ -51,7 +51,7 @@
   {
     "name": "SHORESILT-a-paletted-mod-carried",
     "file": "src/world/puddleMask.js",
-    "old": "  return palettedSet(modLayers) ? markShoreWater(out) : out;",
+    "old": "  return palettedSet(modLayers) ? yield* markShoreWaterSteps(out) : out;",
     "new": "  return out;",
     "tests": ["test/world/shoresilt.test.js"]
   },

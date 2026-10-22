@@ -58,6 +58,15 @@ nothing. A copy given a fresh id is a new piece to the ledger, and a new piece i
 
 ### INT1 - the item law (`src/systems/item/itemLaw.js`)
 
+SOUL-LAW (FIELD BUGS 2026-10-20h, law 9, `acct166`; `01-Overview/bugs/Field-Bugs-2026-10-20h.md`; the Discord's "Soul Trap (Ogre)"):
+a Soul Gem or Azura's Star may hold the soul of one of Daggerfall Enemy Expansion's fifty (the Ogre is 282), whose ids
+the law reads headless from the mod's own tables (`src/systems/enemyExpansion/dexIds.js`) - law 8 took DFU's MobileTypes
+alone, so every such gem was a 'soul' finding and its trapper's trade was held, with a strike. Migration 0143 lifts what
+that finding alone laid, read as 0130 reads (0130's own lift, which kept strikes, ends no count), and keeps the soul's
+signature, as 0125 kept the key's. TRADE-WHOLE, found on the way: a trade's pack clamps its lot whole
+(`src/systems/tradePack.js` wholeLot) - a piece the law refuses is said and kept off the table, never set out on it to ride
+no wire.
+
 KEY-LAW (2026-10-17, law 7, `acct151`; `01-Overview/bugs/Field-Bugs-2026-10-17.md`; slick: "flagged by the new key
 thing"): the Weir Key's row (`src/systems/eliteGates/weirKeyRow.js`, a leaf) is read beside the registry, as the rest's,
 Deep Waters' fish and the two mods' are - this service loads none of the key's home, so law 6 found every Weir Key a

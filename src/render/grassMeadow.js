@@ -217,9 +217,11 @@ export const MEADOW_SEED = 64;
 export const MEADOW_SLOPE_FLOOR = 0.3;
 
 /** the lab's own wind law (LAB_GRASS_VS): the lean a metre a second of wind gives a blade's top, over its height, and
- *  the most of it a gust adds (push = |wind| x (0.55 + gust x 0.75), gust 0..1) */
-export const LAB_LEAN_PER_PUSH = 0.055;
-export const LAB_GUST_MAX = 0.55 + 0.75;
+ *  the most of it a gust adds (push = |wind| x (0.6 + gust x 0.45), gust 0..1). SWAY-SOFT (2026-10-21, Mac: "make the
+ *  grass sway more subtle"): 0.055 and 0.55 + 0.75 before - the top leans under half as far at a full gust, and the
+ *  gust pulses 1.75x over the steady push where it pulsed 2.4x */
+export const LAB_LEAN_PER_PUSH = 0.032;
+export const LAB_GUST_MAX = 0.6 + 0.45;
 /** the lab's own standing lean, per axis (the lean lane holds +-LEAN_SPAN / 2 = 0.25): the most it carries a card's
  *  top sideways, over its side */
 const LEAN_MAX = Math.hypot(0.25, 0.25);

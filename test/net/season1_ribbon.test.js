@@ -135,7 +135,7 @@ test('SEASON1 THE BANNER RIBBON ON THE TOKEN AND THE RELAY: a claim set may carr
   assert.equal('rb' in slyJoin, false, 'a frame that only types one gets none');
   // the wiring by source - the relay's two reads
   const relay = src('server/src/index.js');
-  assert.match(relay, /glyphs: c\.g, gx: c\.gx, au: c\.au, pi: c\.pi, rb: c\.rb, mu, lv: c\.lv,/);   // PIN MOVED (WITCH1): the profile icon worn beside the aura
+  assert.match(relay, /glyphs: c\.g, gx: c\.gx, au: c\.au, pi: c\.pi, rb: c\.rb, mu, lt, lv: c\.lv,/);   // PIN MOVED (LEASE1): the time of the word on the mute beside it; PIN MOVED (WITCH1): the profile icon worn beside the aura
   assert.match(relay, /au: who\.au, \.\.\.\(who\.pi \? \{ pi: who\.pi \} : \{\}\), \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv,/);   // PIN MOVED (WITCH1): the profile icon worn beside the aura
 });
 

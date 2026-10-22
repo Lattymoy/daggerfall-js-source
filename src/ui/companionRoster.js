@@ -37,7 +37,7 @@ import { ownMinutes, sharedClockOn } from '../systems/worldTick.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { giftablePieces, giveSwornGear, takeSwornGear, sendOnErrand, recallFromErrand, errandRefusal, abroadWords } from '../systems/revenant/revenantCompanions.js';   // RVN-GEAR, RVN-ERRAND
 import { GEAR_SLOTS, GEAR_KEYS, GEAR, metalName, tierWord, armedKind, gearKeyOf, gearRefusal, gearLabel, gearPower, gearTier, gearItems, wornGear, brokenPiece } from '../systems/revenant/revenantGear.js';
-import { ERRAND, ERRAND_PLACES, VENTURES, VENTURE_KEYS, errandOdds, oddsWord, oddsKind, errandMinutes } from '../systems/revenant/revenantErrands.js';
+import { ERRAND, ERRAND_PLACES, VENTURES, VENTURE_KEYS, errandOdds, oddsWord, oddsKind, errandMinutes, ERRAND_REAL_HOURS_A_DAY } from '../systems/revenant/revenantErrands.js';
 import { rvnStarsOf } from '../systems/revenant/revenantStars.js';   // RVN-STARS: its level and its stars to set
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
 import { t } from '../systems/textManager.js';   // L10N4: RVN-GEAR's and RVN-ERRAND's words through the text core
@@ -289,7 +289,9 @@ function errandSheet(el, r, rerender, now) {
   box.append(list);
   // AUDIT RVN D13: every number its constant's; F1: online, what carries it on
   box.append(el('span', 'cmp-foot', t('rvn.roster.abroadLaw', 'Danger runs from I to V. Its rank and gear improve its odds. Its haul goes to your purse, your pack and your Materials Bag. A hard-won mission brings back {pct}% of the haul, and it must rest after. Up to {n} can be abroad at once.', { pct: Math.round(ERRAND.HARD_SHARE * 100), n: ERRAND.MAX })));
-  if (sharedClockOn()) box.append(el('span', 'cmp-foot', t('rvn.roster.abroadLived', 'Online, mission time passes only while you play. Resting, waiting or traveling doesn\'t speed it up.')));
+  // OFFLINE-ROAD (FIELD BUGS 2026-10-21): online an errand keeps the world's time, away or not - a day abroad its real hours
+  // read off the wire's rate (AUDIT FB1021 L3-5: never typed - AUDIT RVN D13's rule)
+  if (sharedClockOn()) box.append(el('span', 'cmp-foot', t('rvn.roster.abroadLived', 'Online, a mission keeps real time: it goes on while you\'re away, {h, plural, one {# real hour} other {# real hours}} for each day abroad. Resting, waiting or traveling doesn\'t speed it up.', { h: ERRAND_REAL_HOURS_A_DAY })));
   return box;
 }
 

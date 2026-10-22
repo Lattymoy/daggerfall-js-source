@@ -54,6 +54,7 @@ import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';
 import { SOUND } from './soundClips.js';
 import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weapon/weaponWidget.js';   // WW1: Unity's pieces and the two choice tables, one home
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
+import { beltLanternOf } from './beltLantern.js';   // BELT-WAIST: a press lights the lantern slot's lantern first
 import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
 import { setLightSource, addLightSourceListener } from './lightSource.js';   // DISC7: the light in hand's one door
@@ -248,6 +249,9 @@ export function createHandheldTorches({
    *  takes no hand, so the hand law never stows it, the no-hand refusals let it through, and the first-person
    *  hand never holds it. With the switch off every line below reads exactly as it did. */
   const atWaist = (it) => isLantern(it) && (!!w.s.lanternsAtWaist || it.beltLantern === true);   // BELT-LANTERN: and one in the lantern slot
+  /** BELT-WAIST: the lantern a press lights is the one in the lantern slot, while one hangs there - never another
+   *  lantern ahead of it in the pack (which lit beside the hung one, and the slot stood dark). */
+  const lanternFirst = () => beltLanternOf(ctx?.entity) ?? firstOf('UselessItems2', T.Lantern);
 
   // ---- InitializeTextures (IL 0x1034): 112359 records 0 (torch) and 1 (lantern), frames until one is missing ----
   const loadTextures = (renderer) => {
@@ -478,7 +482,9 @@ export function createHandheldTorches({
     // lights - and nothing else. The ladder below would take a stowed or remembered torch first, light it and
     // have the hand law stow it again the next frame: a press that visibly did nothing (the same quirk Relaxed
     // Lanterns has in the mod, which is the mod's to keep; this switch is the port's).
-    if (w.s.lanternsAtWaist && !hasFreeHand() && waistPress()) return true;
+    // BELT-WAIST: and with a lantern in the lantern slot, the switch off - it takes no hand (BELT-LANTERN's own word),
+    // so a shield and a drawn weapon were no reason to refuse it
+    if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;
     if (w.s.lanternRelaxed) {
       if (hasFreeHand() || contains('UselessItems2', T.Lantern)) { toggleLightSourceAction(); return true; }
     } else if (hasFreeHand()) { toggleLightSourceAction(); return true; }
@@ -500,11 +506,12 @@ export function createHandheldTorches({
     if (w.lastLightSource) { setLight(w.lastLightSource); w.lastLightSource = null; return; }
     w.lastLightSource = null;
     if (w.s.lastLight && w.lastLightTemplateIndex) {
-      if (contains('UselessItems2', w.lastLightTemplateIndex)) setLight(firstOf('UselessItems2', w.lastLightTemplateIndex));
+      if (w.lastLightTemplateIndex === T.Lantern && contains('UselessItems2', T.Lantern)) setLight(lanternFirst());   // BELT-WAIST
+      else if (contains('UselessItems2', w.lastLightTemplateIndex)) setLight(firstOf('UselessItems2', w.lastLightTemplateIndex));
       else if (contains('ReligiousItems', w.lastLightTemplateIndex)) setLight(firstOf('ReligiousItems', w.lastLightTemplateIndex));
     }
     if (!light()) {
-      if (contains('UselessItems2', T.Lantern)) setLight(firstOf('UselessItems2', T.Lantern));
+      if (contains('UselessItems2', T.Lantern)) setLight(lanternFirst());   // BELT-WAIST: the slot's lantern first
       else if (contains('UselessItems2', T.Torch)) setLight(firstOf('UselessItems2', T.Torch));
       else if (contains('UselessItems2', T.Candle)) setLight(firstOf('UselessItems2', T.Candle));
       else if (contains('ReligiousItems', T.Holy_candle)) setLight(firstOf('ReligiousItems', T.Holy_candle));
@@ -529,8 +536,10 @@ export function createHandheldTorches({
   function waistPress() {
     const l = light();
     if (l) { if (!atWaist(l)) return false; toggleLightSourceAction(); return true; }   // douse
-    if (!contains('UselessItems2', T.Lantern)) return false;
-    setLight(firstOf('UselessItems2', T.Lantern));
+    // BELT-WAIST: the slot's lantern first (with the switch off a press reaches here only while one hangs there)
+    const lantern = lanternFirst();
+    if (!lantern) return false;
+    setLight(lantern);
     igniteTail();
     return true;
   }

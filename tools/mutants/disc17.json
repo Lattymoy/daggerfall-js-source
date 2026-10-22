@@ -12,7 +12,7 @@
   {
     "name": "DISC17-A-the-alpha-of-WIND3",
     "file": "src/render/windWisps.js",
-    "old": "alpha: Object.freeze([0.20, 0.24])",
+    "old": "alpha: Object.freeze([0.09, 0.11])",
     "new": "alpha: Object.freeze([0.10, 0.12])",
     "tests": [
       "test/ui/disc17.test.js",

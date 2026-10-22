@@ -10986,7 +10986,7 @@ guild's chat (through the token and the relay), **GUILD1d** the guild hall, a gu
 **GUILD1a - the guild, as the service keeps it.**
 
 - **The law** (`src/net/guild/guildLaw.js`, which the service and the client both read). The bounds: 10,000 gold and
-  Renown 10 to found, 50 members, a name of 3 to 32 letters, digits, spaces, apostrophes and hyphens (tidied, and one
+  Renown 10 to found, 50 members (75 since GUILD-CAP, below), a name of 3 to 32 letters, digits, spaces, apostrophes and hyphens (tidied, and one
   guild a name whatever its case or spaces - `guildNameKey`), a tag of 2 to 4 capitals or digits (upper-cased). FOUR
   RANKS, highest first - Guildmaster (0), Officer (1), Member (2), Recruit (3) - whose POWERS are fixed: an officer
   or the guildmaster invites, removes and moves members; any member deposits; the guildmaster alone withdraws,
@@ -15333,6 +15333,224 @@ The stall row is the order paying off: the other room never stalled, and every p
 **Pinned** in `test/net/scale2b.test.js` (the stamp, the order, the resync, the pace on a jittering line, the standing),
 beside the relay's half. ONLINE1's and CHAT1's pose-frame pins re-aimed at the stamped pose.
 
+## OWNER-CLOCK (2026-10-21, the field: players report enemy desync) - a foes frame says when its foes were where it says
+
+DESYNC-ZERO's lead (`src/scenes/puppetLead.js`, 2026-10-09) on the owner's own clock, and the owner's street foes kept
+to its own world's pace. SCALE2b gave a pose the time it was said; this gives a foes frame the time its foes were stepped.
+
+**What was wrong.** A foe is its owner's to step and stream. The owner sends a delta every `FOES_MS` (200 ms) and a
+whole frame every `FOES_FULL_MS` on its own frame cadence (world.js:"if (now - _foesSentAt < FOES_MS)"), built from the foes as the frame BEFORE
+stepped them (the stream runs ahead of the step). Its foes step on the frame's clamped `dt` (world.js:"const dt = Math.min"), and
+below 20 fps FOE-CATCHUP (`characters/enemy/enemyMotor.js` `FOE_MAX_FRAME_DT`) hands a body three FIXED_DT steps a
+frame at most - so below 10 fps an owner's foes walked at half its own player's pace (at 4 fps, a fifth of the wall's),
+for everyone. Every reader led each puppet with `puppetLead(p, t, performance.now() / 1000)` (exteriorFoes.js:"const feet = f.ai.feet", dungeonContext.js:"const feet = f.ai.feet"): the velocity
+its last two records showed on the READER's arrival clock, carried `LEAD_MAX_S` (0.3 s) and `LEAD_DIST_MAX` (1 m) at
+most, eased over `PUPPET_EASE_S` (0.2 s), snapped past `PUPPET_SNAP` (3 m). An owner at 3 fps sends a frame every 333
+ms; one that hitches sends one after a second; and the road between delivers each anywhere from a few to a few hundred
+milliseconds late. So a slow owner's puppets stood still past the cap and jumped on the next word, and their speed read
+whatever the road did to two frames. A player's profile showed boats, peers, horses and grass each taking a tenth to a
+quarter of the main thread: a slow owner is common.
+
+**The word** (`src/net/ownerClock.js`). `tm`, inside the frame's `data`: the owner's clock (ms, the page's
+`performance.now()`) at the frame whose step left its foes where the frame says, an integer inside SCALE2b's
+`POSE_TS_MOD` (one wrap for both clocks on the wire; `ownerTmDiffS` reads two across it with `poseTsDiff`). The page
+keeps one clock (`ownerClock`), marked where its foes step: every pool at its call through the page's catch-up
+(scenes/ownerCatchUp.js, HOST-CLOCK below), and a building's and a dungeon's again when the mode machine's frame ran them
+(`markModalSteps`, at that frame's `now`). The
+session stamps every frame it sends - a cell's, a world room's host stream (`sendFoes`) and the own lane
+(`sendOwnFoes`) - in the bytes it sends (`stampedFrameText`); the frame object the stream built is never touched (SCALE2c's
+quiet gate reads it), and a stamp that would carry a frame past `FOES_FRAME_MAX` gives way, the frame still going. A
+page that never stepped a foe says none.
+
+**The reader** (`src/scenes/puppetLead.js`). The session applies each foes and own frame with its `tm` in hand
+(`applyingOwnerTm`, around `onFoes`/`onOwnFoes`), and each pool's record door copies it beside the feet - the street's
+and a building's (exteriorFoes.js:"p.tm = appliedOwnerTm"), a dungeon's (dungeonContext.js:"(Array.isArray(r.f) && r.f.length === 3 && r.f.every(Number.isFinite))"); a record a build lands after its frame
+carries none. Between two records that both carry one:
+- **Velocity** is the owner's distance over the OWNER's time, so the road's jitter moves it not at all.
+- **The lead** is carried for the interval the owner is seen to keep between its words - a longer gap taken at once, a
+  shorter one taken a quarter at a time (`LEAD_GAP_EASE`) - and a frame's slack past it (`LEAD_SLACK_S`, 0.1 s): never
+  under `LEAD_MAX_S`, never past `LEAD_SLOW_MAX_S` (0.75 s); and as far in the same proportion of `LEAD_DIST_MAX`,
+  `LEAD_DIST_SLOW_MAX` (2.5 m, under both pools' snap) at most. `LEAD_MAX_S` was FOES_MS and that slack: a healthy
+  owner's puppet is led as before, give or take its own frame.
+- **A new `tm` is a new word** even where the foe has not moved: it stood there then, and nothing leads it.
+- A pair where either record carries no `tm` - an older owner, a build's first record - is led by DESYNC-ZERO's law
+  exactly, on the arrival clock. So is a pair with ONE `tm` at other feet: the owner's clock stood while its foe moved
+  (a mark that never came), so it says nothing of the time between them - never a velocity of nothing for as long as
+  the clock stands. A word without `tm` forgets the last one's, and the bound goes back to `LEAD_MAX_S` with it.
+
+Simulated (a 60 fps reader, a 5 m/s foe, 80 ms of road; the share of reader frames whose target stands still, and the
+largest step it takes in one):
+
+| owner | DESYNC-ZERO's lead | OWNER-CLOCK |
+|---|---|---|
+| 60 fps | 0.7%, 0.17 m | 0.4%, 0.17 m |
+| 4 fps | 13%, 0.25 m | 0.4%, 0.17 m |
+| 3 fps | 35%, 0.67 m | 4.8%, 0.22 m |
+| 2 fps (a 3.75 m/s foe) | 43%, 0.88 m | 0.4%, 0.13 m |
+
+At 3 fps a 5 m/s foe still meets the distance bound a little before its next word (1.44 m at a 0.43 s lead); the
+time bound alone would cover it.
+
+**The owner** (`src/scenes/ownerCatchUp.js`) - THE PARITY. A slow owner's whole world runs on its clamped frame
+(world.js:"const dt = Math.min"): at 4 fps its player, its arrows and its watch take 0.1 s of each quarter second, not the
+quarter. FOE-CATCHUP gives a foe's body 0.05 s of that frame, so below 10 fps the owner's foes walked at half its own
+player's pace. Online, while anyone else is in the owner's room, the street's pool - the encounter pool every cell
+streams - is stepped again within the frame, in FOE-CATCHUP's own size of step (each call the shape of a 20 fps frame,
+which every pool already runs), until it has taken THE HOST'S OWN FRAME: the clamped `dt` the host hands it
+(ownerCatchUp.js:"export function catchUpPlan"), never more. So a street foe keeps its owner's player's pace one to one at
+every rate the clamp allows, and never outruns it. Only the extra calls that `OWNER_CATCHUP_SHARE` (a tenth) of the frame's
+own time buys at the cost a call last measured are made. None are made on a clock too coarse to price a call (a
+privacy-clamped `performance.now()` reads a call at 0: no price, never a free one). None are made on a frame past
+`FRAME_MS_MAX` (2 s: the pool was away - a building, a dungeon, a hidden tab - not slow). And the loop stops once the
+extras' measured time passes the share, whatever the forecast said. Where the foes ARE the frame's cost nothing extra is
+afforded and the host's one call stands exactly - FOE-CATCHUP's snowball cannot come back: a frame grows by a ninth at
+most. At world.js's clamp a frame takes ONE extra call at most (0.1 s in two); a host handing a longer frame would be
+sub-stepped whole up to `OWNER_CATCHUP_MAX_S` (0.3 s, `OWNER_CATCHUP_STEPS_MAX` calls) and no further. Offline, alone,
+at 20 fps and up, or held (a zero frame), the pool takes the host's one call as before. The tactics brain's clock
+(`ai/tacticsClock.js`) is carried to each extra call's end, so a wind-up lands where its body is.
+
+A street foe's body seconds a frame, against its owner's player's (the clamped frame), online with anyone else in the
+room (a 1 ms call; the first frame of a run, nothing measured yet, takes the host's one call):
+
+| owner fps | player | alone or offline (FOE-CATCHUP) | OWNER-CLOCK as first shipped | OWNER-CLOCK now |
+|---|---|---|---|---|
+| 60, 30, 20 | 1/fps | x1 | x1 | x1 (one call) |
+| 15 | 0.067 s | x0.75 | x1 | x1 (two calls) |
+| 10 | 0.1 s | x0.5 | x1 | x1 (two calls) |
+| 5 | 0.1 s | x0.5 | x2.0 | x1 (two calls) |
+| 4 | 0.1 s | x0.5 | x2.5 | x1 (two calls) |
+| 3 | 0.1 s | x0.5 | x3.0 | x1 (two calls) |
+| 2, 1 | 0.1 s | x0.5 | x3.0 | x1 (two calls) |
+
+As first shipped (the same day) the catch-up planned from the WALL's time since the pool's last call, up to 0.3 s,
+while the owner's own world took the clamped 0.1 s - so on a 3 fps owner its street foes ran three times its player, and
+a frame after a minute in a building or a hidden tab caught up 0.3 s at once. The audit (2026-10-21) found it; parity
+with the host's frame is the fix, and the time away buys nothing now (no extra call past `FRAME_MS_MAX`). A slow owner's
+foes therefore still run slow against the wall, for its readers too - as its whole world does, and as DFU's do under
+Unity's Maximum Allowed Timestep (0.333 s), which holds the player's frame and the foes' FixedUpdate alike. At 4 fps,
+measured on the real pool: six FIXED_DT steps a frame where FOE-CATCHUP gave three.
+
+**Wired** by the world host in one statement after the mode machine is made
+(world.js:"modes, () => online?.status"); the host's own calls (`exteriorFoes.update(foeDt, ...)`, `modes.frame(dt, now)`, the streams) stand as
+they were. THE GATE is `online.othersHere > 0` - the foes stream's own nobody-to-hear test, and exactly what it says:
+anyone else in the owner's ROOM. On the street that room is the cell (`WORLD_CELL`, 16 map pixels a side), wider than
+the `RANGE_PIXELS` (3) the relay fans the owner's foes frames across, so it is not "anyone who can see these foes"; with
+parity it need not be, for what it turns on is the owner's foes at the owner's own pace. THE FOUR HOSTS: `world.js`
+(the streamed exterior) WIRED - its street pool and its watch kept to the host's frame, its steps marked.
+`worldModes.js` (interiors) and `dungeonContext.js` STAMPED - their frames carry the clock and their readers lead by it -
+and WIRED (HOST-CLOCK, below). `exterior.js` (the fixed city) streams nothing.
+
+**HOST-CLOCK** (2026-10-21, OWNER-CLOCK's Left; `src/scenes/ownerCatchUp.js` `createOwnerCatchUp`, `ownerFoes`) - one plan
+a frame, for every pool of mine. OWNER-CLOCK caught up the street's encounter pool alone. A building's foes and a
+dungeon's kept FOE-CATCHUP's half of a slow host's frame - half speed for everyone in the room below 10 fps - and the
+town watch's bodies kept it too, while its brains, on the page's one tactics clock, ran on with the street's catch-up.
+- **How each host steps its foes.** The street: world.js's frame, after the mode machine answers that it ran nothing,
+  steps the watch (`cityGuards.update(foeDt, ...)`) and then the encounter pool (`exteriorFoes.update(foeDt, ...)`). A
+  building: worldModes.js's interior frame steps its encounter pool (`createExteriorFoes`, the street's own factory) in
+  its sim block and the watch called in (`createCityGuards`) in its draw block, both on `foeDt` - world.js's clamped
+  `dt`, 0.1 s at most (0 under an offline quest box). A dungeon: `drawFoes` (dungeonContext.js, the one frame function
+  both dungeon hosts call) steps every foe in one loop beside the player's own work and the draw, on the host's `dt`
+  (world.js's clamp, or the standalone dungeon.js's, 0.1 s). Every pool hands each body `foeFrameDt(dt)` - FOE-CATCHUP's
+  0.05 s at most. In every host "anyone else here" is the session's `othersHere`: the cell on the street, the world room
+  (`interior:...`, `dungeon:...`) in a building or a dungeon - the foes and own streams' own nobody-to-hear test.
+- **The wiring.** world.js's one statement hands the street's watch beside its encounter pool
+  (world.js:"modes, () => online?.status"); worldModes.js puts the building's two pools through the page's catch-up at the
+  mount (worldModes.js:"ownerFoes.pools(interiorFoes, interiorGuards);", one statement); and drawFoes hands its foe loop
+  to it as a call (dungeonContext.js:"const stepFoes = (stepDt) => {", the loop as it stood with its spacing inside it, keyed
+  by the context's one foe list). Each call stands the dungeon's foes whole - the lane begun, the batches listed afresh -
+  and the last call's stand is what is drawn. The call's time is written into the frame's own `dt` and the frame takes
+  its own back after the step (dungeonContext.js:"dt = frameDt;"): a closure parameter of that name shadowed drawFoes'
+  own, which MAC-L1b's `no-shadow` run over the file refuses (the full suite found it). The hosts grew by wiring alone:
+  createWorldModes one logical line, buildDungeonContext six (the step three, the frame's own `dt` taken back three),
+  bootWorld none.
+- **One plan a frame.** The plan is made at the frame's first step, priced at what every pool of the frame before cost a
+  call; a pool makes an extra call only while the frame's extras, every pool's together, are under `OWNER_CATCHUP_SHARE`,
+  so they pass it by one call at most (the last one begun under it). Every pool of the frame takes the plan, so the
+  brain's clock is carried once, as far as every body went - the watch's brains and its bodies are on one clock. The
+  frame's first pool steps exactly on it; a pool stepped after it in the same frame finds the brain already at the
+  furthest step, one FOE-CATCHUP step past its first call's bodies at most - the clock is the page's and only runs
+  forward, and turning it back for a later pool would read the tokens the first pool's foes took as taken in the future. A pool that did not step in the frame before (a door: a building's pools new, the street's back after a
+  building) takes the host's one call - nothing measured buys nothing - and the mode machine's frame begins the
+  catch-up's (`wireOwnerClock` wires it), so a door's new pools are priced at their own from their second frame. A
+  pool's update keeps its answer (the watch's returns the batches its host draws) and its own `this`. Offline, alone, at
+  20 fps and up or held, every pool takes the host's one call exactly as before - and so does a dungeon's foe loop with
+  no live foe of mine in it (dungeonContext.js:"ownerFoes.step(foes, frameDt, stepFoes, foes.some((f, i) => !f.dead && !isPuppetFoe(f, i)));"):
+  a joiner's foes are all the host's puppets, led by its stream and not by my clock, and an extra call of theirs was
+  every puppet's step, senses and sounds again for nothing.
+- **Not caught up, said plainly.** The pushes BETWEEN pools (`spaceAcross` and `clearDoorways` over the street's two and a
+  building's two) run once a frame on FOE-CATCHUP's step - a push apart, no foe's walk; each pool's own spacing runs in
+  each call. A building's and a dungeon's path budget (`pathBudget`) is the frame's, shared by its calls. The ON ICE rig
+  arm of the dungeon's loop would draw a rig each call; no foe carries one. A peer's puppets in the street's or a
+  building's pool step in each call beside the owner's own foes (the pool is one); a puppet eases to its stream, so the
+  extra call is spent time, not a wrong place.
+
+**AUDIT HOST-CLOCK** (2026-10-21, a cold read of the second pass): no blocking defect. Fixed and pinned: a dungeon joiner
+paid for a catch-up that stepped none of its foes (above); a later pool's first extra was made on the forecast alone, so
+the frame's share could be passed by a call a POOL (three pools forecast at 1 ms that cost 40 spent 120 ms of a 25 ms
+share) - now by one call a frame; `pools()` called a pool's update without its `this`. Said plainly instead of changed:
+the brain's clock for a later pool (above). Equivalent and unpinned: re-reading `shared()` per step rather than once a
+frame (only a message handler writes `othersHere`).
+
+A foe's body seconds a frame against its owner's player's (the clamped frame), on the real pools through the hosts' own
+wiring (`fb1021b_hostclock.test.js`: a building's rat and the watchman called in through worldModes' mount statements, a
+dungeon foe through drawFoes' own loop over a real EnemyAI; each call seen to cost 1 ms; the first frame of a new
+building or dungeon, nothing measured, takes the host's one call):
+
+| owner fps | player | before HOST-CLOCK, online or not (alone or offline now) | HOST-CLOCK, online with anyone else in the room |
+|---|---|---|---|
+| 60, 30, 20 | 1/fps | x1 | x1 (one call) |
+| 15 | 0.067 s | x0.75 | x1 (two calls) |
+| 10 | 0.1 s | x0.5 | x1 (two calls) |
+| 5, 4, 3, 2, 1 | 0.1 s | x0.5 | x1 (two calls) |
+
+The same for the building's rat, the watchman called in and the dungeon's foe, row for row. At 4 fps the rat and the
+dungeon foe each took six FIXED_DT steps a frame where they took three; on the street the watchman and the rat were each
+handed 0.1 s a frame and the tactics clock moved 0.1 s, once (alone: 0.05 s for all three). The "before" column is the
+alone path, measured: before HOST-CLOCK a building's and a dungeon's foes and the street's watch took the host's one call
+online too, which is the call they take alone now. FOE-CATCHUP's row in `Port-Ledger.md` says what changed, for the
+owner to approve.
+
+**The bytes.** `tm` adds `,"tm":` and up to eight digits to every foes and own frame - 14 bytes at most
+(`,"tm":16777215`, the wrap's last moment), and the relay fans them to every listener as it fans the rest. The room's
+foes budget (`FOES_ROOM_BYTES_PER_S`, 4 MiB/s, spent as a frame's length times its listeners) pays 14 bytes x at most
+five frames a second (`FOES_MS`) x listeners for each owner: 0.3% of it in FOES-FIRST's quiet cell (10 owners of 20 sockets),
+3.0% in its crowded one (30 of 60, whose fan already asks 3.6 times the budget). Against the frames themselves
+(`tools/foesFirstBench.mjs`'s record shape, as fanned: a 12-record cell's delta about 1.5 KiB, its full frame 3.1 KiB) the stamp is 0.9%
+of a delta and 0.4% of a full frame - where the budget binds, about that share fewer frames heard.
+
+**Version safety.** OWNER-CLOCK itself needs no relay change and no `RELAY_VERSION`, and touches nothing in
+`src/net/wire.js`: it passes any relay unread. (The branch's release does move the relay - to world239, for FOES-FIRST,
+`bible/11-Multiplayer/Scale-Arc.md` - and `wire.js` with it; neither is this slice's.) The relay reads nothing inside
+a foes frame: `parseClient` asks only that `data` is an object; the fan re-serialises `data` whole
+(`server/src/index.js` `fanOut`) and refuses a frame that GREW past its sent length - `tm` is in the sent bytes and an
+integer round-trips at its length; the grant strip (`_grantStripped`, `grantStrip` on) answers the frame itself or
+`{ ...data, f }`, every other field kept. A reader before this one reads named fields and never `tm`; an owner before
+this one sends none, and its puppets are led as DESYNC-ZERO led them. Executed through the relay's Room on the fake
+Durable Object: a cell's frame with the strip on and a record stripped, a world room's host stream and its own lane,
+each reaching every reader with the owner's `tm`, nothing counted as junk.
+
+**Pinned** (HOST-CLOCK) in `test/scenes/fb1021b_hostclock.test.js` (one plan for every pool of a frame, priced at
+their sum, the brain carried once, the last call's answer; a door's new pools; the frame's share across its pools; the
+page's frames the mode machine's; the street's watch through world.js's own statement on the page's clocks; THE PARITY
+of a building through worldModes' own mount statements and of a dungeon through drawFoes' own loop; the dungeon's foes
+stood once a frame; a pool's own `this`; a dungeon joiner's puppets stepped once, through dungeonContext's own
+predicates; the hosts by source - 11). `tools/mutants/fb1021b_hostclock.json` (29, all dead; the audit's five: the
+joiner caught up, its gate unwired, a dead foe counted mine, a later pool past the share, a method's `this` lost). Re-aimed by content
+in `fb1021_ownerclock.json`: fifteen records whose text the frame's plan rewrote (the brain, the shared test, the mark
+twice, the wall's time, the break, the price, the brain's start, the rest, the default mark, the wiring's three and
+world.js's two). PIN MOVED: `fb1021_ownerclock.test.js`'s two wiring pins (the statement's list) and `world2.test.js`'s
+loop count (the loop is the call's).
+
+**Pinned** in `test/scenes/fb1021_ownerclock.test.js` (18: the word, the session, the relay, the reader's glide, its
+jitter, DESYNC-ZERO's law kept frame for frame without a clock, the bounds, a clock that stops, the real pool as reader
+and as owner, the plan, THE PARITY's table, the catch-up, its budget and time away, the measured budget (a coarse clock,
+the break, the dearest call), the mode machine, the wiring by source and executed on the page's own clocks).
+`tools/mutants/fb1021_ownerclock.json` (63, all dead: the 39 first shipped, six of them re-aimed by content at the audit -
+the step size, the afforded count, a fast frame caught up, the share, the cost, the absence - and 24 for the audit's
+fixes and the survivors it found). Re-aimed by content: `tools/mutants/desynczero.json` DZ-lead-unbounded (the age's
+bound is the lead's own cap now). PIN MOVED: the seven harnesses that mount the dungeon's stream door out of its source
+hand it the new free name
+(`audit0928_merge`, `partyloot_wire`, `seatheal`, `audit68_dungeonctx`, `auditcards6_a`, `loot7check`, `survtiers3`).
 ## SUNBABY1 (2026-10-04, "develop a command like /event dread that turns the sky into pretty flowers, clears weather and shows the sun as a big laughing baby ... Like teletubbies") - a second live event: the sun baby, world163
 
 EVENT1's door, a second word on it: `/event sunbaby` (or `/event sunbaby on`) stages it, `/event sunbaby off` or `/event off` ends it - the dev glyph, asked of the token by the relay, online players only, exactly as the dread. Everything EVENT1 built carries it (the `stage` frame, the hub's storage, the welcome's `ev`, `OnlineSession._setEvent`); the parts below are what is new.
@@ -16754,3 +16972,7 @@ nothing is written.
 **Open.** A live handle other than this one that holds either word now fails the token's own law (identityToken.js
 claimsValid - `mintToken` throws), so its player cannot go online until it is renamed the same way; the live table was
 not read from here. Pinned by `test/server/handlerename0134.test.js`.
+
+## GUILD-CAP (2026-10-21, the Discord's feature-feedback, Bryorios: "May you please increase the guild member cap"; Dwarfblood: "75 would be a great start.") - a guild holds 75
+
+`GUILD_MEMBERS_MAX` (`src/net/guild/guildLaw.js`) is 75, up from GUILD1a's 50 - the step the thread agreed on as a start (the ask was "75 or a 100"; another player asked for many guilds over a few big ones, so the cap rises by half rather than doubling). Everything that reads the cap reads the one constant: the invite's and the join's room (`server-account/src/guilds.js`), the refusal's sentence (`accountClient.js` `guild-full`), the Guild tab's counts (`socialPanel.js`). The one bound that had to move with it is the hub's who-of-my-guild list, `HUB_GUILD_WHO_MAX` (`src/net/hubShards.js`), 64 to 100: at 64 a full guild of 75 online would have listed 64 of its 74 others. `test/server/guild1.test.js` pins the cap and that the list holds a full guild but its asker; the mutant `GUILD1-a-bigger-guild` re-aimed at 75. No migration: the cap lives in the law, not the schema. The service's version does not move - no route or shape changed.

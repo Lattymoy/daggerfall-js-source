@@ -35,7 +35,7 @@ const MAKER_ERA = [
 ];
 
 test('MAKER-KEPT: the report, answered - every piece of the maker\'s era, enchanted as the maker did then, carries no finding in the save or on the market; law 6 (mutants: the kept rows refused; the maker\'s law refusing the era)', () => {
-  assert.equal(ITEM_LAW_VERSION, 8);   // PIN MOVED (WITCH1): law 8 - the Soul Cake and the Hearth Offering; PIN MOVED (KEY-LAW): law 7 - the Weir Key known to the service's law; the era's pieces lawful from law 6 on
+  assert.equal(ITEM_LAW_VERSION, 9);   // PIN MOVED (SOUL-LAW, FIELD BUGS 2026-10-20h): law 9 - a soul of Daggerfall Enemy Expansion's fifty lawful in a Soul Gem or Azura's Star; PIN MOVED (WITCH1): law 8 - the Soul Cake and the Hearth Offering; PIN MOVED (KEY-LAW): law 7 - the Weir Key known to the service's law; the era's pieces lawful from law 6 on
   assert.deepEqual([...REGALIA, ...RAID_SET_PIECES].map((r) => r.id), MAKER_ERA, 'the era\'s records, as they stood');
   for (const r of [...REGALIA, ...RAID_SET_PIECES]) {
     assert.deepEqual(itemFindings(mintAetheric(r)), [], `${r.id}: fresh`);

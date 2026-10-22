@@ -128,7 +128,7 @@
   {
     "name": "ASB-the-rest-judged-again",
     "file": "src/systems/weather/snowpack.js",
-    "old": "    let quiet = this._partial !== `${spin ? 's' : 'm'}${t0}`;",
+    "old": "    let quiet = this._partial === null || this._partial !== `${spin ? 's' : 'm'}${t0}`;",
     "new": "    let quiet = true;",
     "tests": [
       "test/systems/weather/snowbudget.test.js"

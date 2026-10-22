@@ -12,7 +12,7 @@ import {
 import {
   starClockPhase, starStandPlaces, starCirclePlaces, starWordOf, starWordKey, STAR_STAND_R, STAR_CIRCLE_R, STAR_SAY_M,
 } from '../../../src/systems/starfall/starfallClient.js';
-import { starTimes, STAR_WAVES, STAR_REACH_M, STAR_CIRCLE_SHARE } from '../../../src/net/starfall/starfallLaw.js';
+import { starTimes, starRoll, STAR_WAVES, STAR_REACH_M, STAR_CIRCLE_SHARE } from '../../../src/net/starfall/starfallLaw.js';
 import { ENEMY_BASICS } from '../../../src/characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES as M } from '../../../src/characters/mobile/mobileTypes.js';
 import { getTargets, huntsStar, STAR_HUNT_PRIORITY, PLAYER_TARGET } from '../../../src/characters/enemy/enemyTargets.js';
@@ -21,6 +21,7 @@ import { Collider } from '../../../src/player/collider.js';
 import { createExteriorFoes } from '../../../src/scenes/exteriorFoes.js';
 import { WOD_SITE_RE, starSiteId, wodSiteId } from '../../../src/world/worldOfDaggerfall/wodShared.js';
 import { starSiteKey } from '../../../src/systems/starfall/starfallSites.js';
+import { STAR_BARE_R } from '../../../src/world/starfall/starModel.js';
 
 const N = 493_210;
 /** Daggerfall's weapon metals (WeaponMaterialTypes): iron 0, silver 2, mithril 5. */
@@ -99,7 +100,24 @@ test('STAR5 THE CLOCK: a star is none before its omen, the omen, the streak, fal
   assert.equal(starClockPhase(N, 2, NaN), 'none');
 });
 
-test('STAR5 WHERE THEY STAND: a wave on a ring 25 to 35 metres out from the heart, out of the crater, each facing the star, the star\'s own places; the circle 6 metres about its master (mutants: the ring, the facing)', () => {
+test('STAR-TUNE A WAVE OF TWENTY-FOUR STANDS ON ROLLS OF ITS OWN: each place\'s jitter on the ring is its own roll - never the next wave\'s, which a stride of sixteen shared past sixteen places (mutants: STAR-TUNE-the-rolls-shared)', () => {
+  const TAU = 2 * Math.PI;
+  const jitters = (w, count) => starStandPlaces(N, 1, w, count).map(([dx, dz], i) => {
+    const a0 = (starRoll(N, 1, 700 + w) / 4294967296) * TAU;
+    let j = Math.atan2(dx, dz) - a0 - (i / count) * TAU;
+    j = ((j % TAU) + TAU + Math.PI) % TAU - Math.PI;
+    return j;
+  });
+  for (let w = 1; w < STAR_WAVES; w++) {
+    const a = jitters(w, 24), b = jitters(w + 1, 24);
+    assert.ok(a.every((j) => Math.abs(j) <= 0.25 + 1e-9), 'a quarter-radian either side');
+    for (let i = 0; i < 8; i++) assert.ok(Math.abs(a[16 + i] - b[i]) > 1e-9, `wave ${w} place ${16 + i} and wave ${w + 1} place ${i}: their own rolls`);
+  }
+});
+
+test('STAR5 WHERE THEY STAND: a wave on a ring 14 to 20 metres out from the heart, just past the crater\'s thrown earth (STAR-TUNE: "The time between waves is too long" - from 25 to 35, a walk in), each facing the star, the star\'s own places; the circle 6 metres about its master (mutants: the ring, the facing, STAR-TUNE-the-coven-out-far)', () => {
+  assert.deepEqual(STAR_STAND_R, [14, 20]);
+  assert.ok(STAR_STAND_R[0] > STAR_BARE_R, 'out of the crater and its rim');
   for (let w = 1; w <= STAR_WAVES; w++) {
     const ps = starStandPlaces(N, 1, w, 8);
     assert.equal(ps.length, 8);

@@ -20,11 +20,12 @@
   {
     "name": "SD26-F33-the-sweeps-cube",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "    if (rift) out.push(riftPress(rift));",
+    "old": "    if (rift) out.push(riftPress(rift, riftKey, riftYields));",
     "new": "    if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });",
     "tests": [
       "test/world/sd26_dungeon.test.js"
-    ]
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the press carries the ring's yield (B3). SD-THROUGH (re-aimed by content): the press takes the ring's own key (the Way Through's is sdrift:1)."
   },
   {
     "name": "SD26-F33-the-box-unturned",

@@ -317,6 +317,16 @@ with the minutes left.
   second device, a cleared storage), a clock that waits for a disconnected owner, and a relay log of a fall's records
   that a lost pile could be granted back from - today nothing keeps them past the twelve minutes. Pinned by
   `test/systems/wild/fb1009c_wildkeep.test.js`; `tools/mutants/fb1009c_wildkeep.json` (7, all dead).
+- THE GOLD PILE (FIELD BUGS 2026-10-20h, "the PvP remains and gold pile", `01-Overview/bugs/Field-Bugs-2026-10-20h.md`).
+  REMAINS-GOLD: the pile's one coin record is minted by its count, to the item law's one count
+  (`wildRemains.js:"const mintOne = "`). The game's mint is the stranger's projection, whose stack bound is the wire's 65,535,
+  so a death that dropped more gold than that showed it to nobody, and the gold stayed in the room until the remains
+  went. REMAINS-TAKE: a pile shows what the room holds, less the takes of mine still waiting on an answer
+  (`wildRemains.js:"const follow = "`). A take of part of a stack, such as the gold a pack has no room for, was taken off
+  the taker's pile twice, and a room word heard between the window's take and the frame set the count over that take,
+  so the taker kept coin the room still held. A word now waits for the window's take to be asked first
+  (`wildRemains.js:"const settle = "`). Pinned by `test/net/fb1020h_remains.test.js`; `tools/mutants/fb1020h_remains.json`
+  (10, all dead).
 
 ## 6. The maps
 

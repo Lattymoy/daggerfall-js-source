@@ -1,0 +1,213 @@
+[
+  {
+    "name": "SENTENCE-MENDS-prison-mend-dropped",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the reported law: a sentence served walks out as known as it went in"
+  },
+  {
+    "name": "SENTENCE-MENDS-zero-day-mend-dropped",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the court's fine paid answers the charge alone"
+  },
+  {
+    "name": "SENTENCE-MENDS-served-unsaid",
+    "file": "src/scenes/standingHost.js",
+    "old": "    case 'served': return t('standing.notice.served', SERVED_TEXT, { name, by, word });\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the mend said as a bare rise, not as the time served"
+  },
+  {
+    "name": "SENTENCE-MENDS-fine-only",
+    "file": "src/systems/standing.js",
+    "old": "  return mendToLine(player, regionIndex, 'served', from == null ? Infinity : Math.max(0, KNOWN_CRIMINAL_BELOW - from));",
+    "new": "  return 0;",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "serving time counts as no penance"
+  },
+  {
+    "name": "CURFEW-REFUND-factor-unkept",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    playerEntity.chargedFactor = lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });",
+    "new": "    lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the Curfew's doubled charge given back single: two points kept a sentence"
+  },
+  {
+    "name": "CURFEW-REFUND-court-unset",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    court.factor = playerEntity.chargedFactor ?? 1;",
+    "new": "",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the court blind to how the charge was laid"
+  },
+  {
+    "name": "CURFEW-REFUND-refund-unread",
+    "file": "src/systems/court.js",
+    "old": "  const refund = sentenceRefund(court.crime, { acquitted, factor: court.factor });",
+    "new": "  const refund = sentenceRefund(court.crime, { acquitted });",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the refund blind to the court's factor"
+  },
+  {
+    "name": "CURFEW-REFUND-refund-single",
+    "file": "src/systems/court.js",
+    "old": "  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));",
+    "new": "  const legal = loss;",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the single loss given back whatever was charged"
+  },
+  {
+    "name": "PATROL-GRACE-blind-to-grace",
+    "file": "src/systems/standing.js",
+    "old": "  return knownCriminal(player, regionIndex, { ownNow, worldNow }) && ownNow >= (standingOf(player).graceUntil[regionIndex] ?? -Infinity);",
+    "new": "  return knownCriminal(player, regionIndex, { ownNow, worldNow });",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "a knight draws on the courthouse steps"
+  },
+  {
+    "name": "PATROL-GRACE-host-on-known",
+    "file": "src/scenes/world.js",
+    "old": "trip?.from?.region != null && patrolHalts(playerEntity, trip.from.region,",
+    "new": "trip?.from?.region != null && knownCriminal(playerEntity, trip.from.region,",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the host's patrol back on the bare standing"
+  },
+  {
+    "name": "SENTENCE-MENDS-at-the-sentence",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "      raiseRepForSentence(playerEntity, court);\n      const days = result.days;",
+    "new": "      raiseRepForSentence(playerEntity, court);\n      sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n      const days = result.days;",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "AUDIT FB1021d SM-1: mended before a day is served - a save under the prison screen keeps it"
+  },
+  {
+    "name": "SENTENCE-MENDS-mark-worn",
+    "file": "src/systems/standing.js",
+    "old": "  return mendToLine(player, regionIndex, 'served', from == null ? Infinity : Math.max(0, KNOWN_CRIMINAL_BELOW - from));",
+    "new": "  return mendToLine(player, regionIndex, 'served');",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "AUDIT FB1021d SM-3: the crime's own mark worn away - a Treason from a clean name -13, not -18"
+  },
+  {
+    "name": "SENTENCE-MENDS-name-unkept",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    court.from = playerEntity.chargedFrom ?? null;",
+    "new": "    court.from = null;",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the name it came in with never handed to the court"
+  },
+  {
+    "name": "SENTENCE-MENDS-name-unread",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    playerEntity.chargedFrom = legalRepOf(playerEntity, region());",
+    "new": "    playerEntity.chargedFrom = legalRepOf(playerEntity, region()) - 100;",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the name read wrong at the charge"
+  },
+  {
+    "name": "SENTENCE-MENDS-grace-unread",
+    "file": "src/systems/standing.js",
+    "old": "  if (ownNow != null && ownNow < (standingOf(player).graceUntil[regionIndex] ?? -Infinity)) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "AUDIT FB1021d SM-4: a petty crime self-reported, a step an hour"
+  },
+  {
+    "name": "SENTENCE-MENDS-ownNow-unhanded",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });\n",
+    "new": "          sentenceMends(playerEntity, court.regionIndex, { from: court.from });\n",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "kept as sentenceMends' one contract (both arms hand it the own clock): the prison arm reads it after advanceDays has served at least a day, and every grace that can stand then was granted before the arrest (a release, a fine, a pardon) and runs CHALLENGE_GRACE_MINUTES, one day - so no prison arm ends inside one and nothing can tell it. fb1021d_sentencemends pins the day against the grace, so the record goes stale the day a grace outlasts a sentence; the zero-day arm's read is the live one, pinned there",
+    "equivalent": true
+  },
+  {
+    "name": "CURFEW-REFUND-every-charge-doubled",
+    "file": "src/systems/court.js",
+    "old": "  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1;",
+    "new": "  const f = Math.max(1, Math.trunc(Number(_crimeFactor()) || 1));",
+    "tests": [
+      "test/systems/seat1d_client.test.js"
+    ],
+    "why": "AUDIT FB1021d SM-8: a road's report, a loan defaulted, doubled for standing in a Curfew town"
+  },
+  {
+    "name": "CURFEW-REFUND-watch-charge-undoubled",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });",
+    "new": "lowerRepForCrime(playerEntity, region(), crimeId());",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "the town's Curfew lost from its own watch's charge"
+  },
+  {
+    "name": "CURFEW-REFUND-court-reads-now",
+    "file": "src/systems/court.js",
+    "old": "  const refund = sentenceRefund(court.crime, { acquitted, factor: court.factor });",
+    "new": "  const refund = sentenceRefund(court.crime, { acquitted, factor: Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) });",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "AUDIT FB1021d SM-5: the court gives back the town's factor now, not the charge's"
+  },
+  {
+    "name": "CURFEW-REFUND-acquittal-unfactored",
+    "file": "src/systems/court.js",
+    "old": "  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));",
+    "new": "  const legal = acquitted ? loss : loss * Math.max(1, Math.trunc(Number(factor) || 1));",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "an acquittal keeps half a Curfew's charge"
+  },
+  {
+    "name": "PATROL-GRACE-name-alone",
+    "file": "src/systems/standing.js",
+    "old": "  return knownCriminal(player, regionIndex, { ownNow, worldNow }) && ownNow",
+    "new": "  return legalRepOf(player, regionIndex) < KNOWN_CRIMINAL_BELOW && ownNow",
+    "tests": [
+      "test/systems/fb1021d_sentencemends.test.js"
+    ],
+    "why": "AUDIT FB1021d SM-5: a banished player of good name meets no patrol"
+  }
+]

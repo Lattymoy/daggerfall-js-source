@@ -49,7 +49,7 @@ test('KEY-LAW judge: the report, answered - a checkpoint carrying Weir Keys hold
     const A = await s.seat('keyed');
     assert.equal((await s.put(A, [keys(3)])).tradeHeld ?? null, null);
     assert.deepEqual([s.row(A.R.id).held, s.row(A.R.id).strikes, s.findings(A.R.id, 'law')], [null, 0, []]);
-    assert.equal(JUDGE_VERSION, 8);   // PIN MOVED (WITCH1): law 8 - the Soul Cake and the Hearth Offering known too; the Weir Key from law 7 on
+    assert.equal(JUDGE_VERSION, 9);   // PIN MOVED (SOUL-LAW, FIELD BUGS 2026-10-20h): law 9 - a soul of Daggerfall Enemy Expansion's fifty lawful in a Soul Gem or Azura's Star; PIN MOVED (WITCH1): law 8 - the Soul Cake and the Hearth Offering known too; the Weir Key from law 7 on
   } finally { s.done(); }
 });
 

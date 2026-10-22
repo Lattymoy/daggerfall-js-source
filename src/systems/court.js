@@ -249,8 +249,11 @@ export function normalizeReputations(player, store, { recoveryOnly = false } = {
  *  legal reputation (2 in a Curfew town; 1, DFU's, everywhere else and offline). */
 let _crimeFactor = () => 1;
 export function setCrimeRepFactor(fn) { _crimeFactor = typeof fn === 'function' ? fn : () => 1; }
-export function lowerRepForCrime(player, regionIndex, crime) {
-  const f = Math.max(1, Math.trunc(Number(_crimeFactor()) || 1));   // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's
+/** AUDIT FB1021d SM-8: `curfew` - a crime the town's watch charges (arrestFlow.js chargeOnce) - takes the Curfew's
+ *  factor; a report the road carried, a loan defaulted or a sea's piracy is no crime in the town the player stands in,
+ *  and was doubled for standing there (and never given back: no court tries it). */
+export function lowerRepForCrime(player, regionIndex, crime, { curfew = false } = {}) {
+  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1;   // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's
   changeLegalRep(player, regionIndex, -REPUTATION_LOSS_PER_CRIME[crime] * f, { kind: 'crime', crime });
   // PlayerEntity.cs:2294-2298 - the region's People faction takes HALF
   // the legal loss, propagating out to its allies and enemies. The
@@ -259,11 +262,12 @@ export function lowerRepForCrime(player, regionIndex, crime) {
   // player's favour by one point. Silent when the store is absent
   // (a host that never ran chargen) rather than throwing on a crime.
   const store = player?.factionRep;
-  if (!store) return;
+  if (!store) return f;
   const people = getPeopleOfCurrentRegion(store.dict, regionIndex);
   if (people) {
     changeReputation(store, people.id, -Math.trunc(REPUTATION_LOSS_PER_CRIME[crime] / 2), true);
   }
+  return f;   // CURFEW-REFUND: the factor the legal loss was charged at - the court gives back what was charged
 }
 
 /** PlayerEntity.GoldPieces (:158). E4: THE COUNTER, not a bag stack -
@@ -483,7 +487,7 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
  * anyway. So do we: the sign is DFU's, not classic's.
  */
 export function raiseRepForSentence(player, court, { acquitted = false } = {}) {
-  const refund = sentenceRefund(court.crime, { acquitted });
+  const refund = sentenceRefund(court.crime, { acquitted, factor: court.factor });
   changeLegalRep(player, court.regionIndex, refund.legal, { kind: acquitted ? 'acquittal' : 'sentence', crime: court.crime });
 
   const store = player?.factionRep;
@@ -528,15 +532,20 @@ export function raisePeopleForAnswer(player, regionIndex, legalPts) {
  *  (Conspiracy nothing, a Vagrancy one point MORE lost) and half that on the People's - so a sentence never paid its
  *  debt, and eight Conspiracy arrests served were -16 kept ("Serving time doesnt fix rep. Tried 8 times"). The charge
  *  comes back whole now; a violent or treasonous crime (MARKED_CRIMES) keeps half of it, rounded toward the player. An
- *  ACQUITTAL gives it all back, whatever the crime: the court found no crime to mark. */
+ *  ACQUITTAL gives it all back, whatever the crime: the court found no crime to mark.
+ *  FIELD BUGS 2026-10-21d CURFEW-REFUND: the charge AS IT WAS LAID - `factor`, the court's (arrestFlow's chargeOnce keeps
+ *  what lowerRepForCrime charged at). A Curfew town's crime costs double the law's loss (SEAT1d), and the sentence gave
+ *  back the single loss: every Conspiracy served there kept two points for good (-20, -22, -24 ... a sentence at a
+ *  time). A marked crime keeps half of what was charged; the People's half was never doubled and comes back as it was. */
 export const MARKED_CRIMES = Object.freeze(new Set([CRIMES.Assault, CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]));
 /** REP3: the crimes a court may banish for - "Murder and worse". */
 export const BANISHABLE_CRIMES = Object.freeze(new Set([CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]));
-export function sentenceRefund(crime, { acquitted = false } = {}) {
+export function sentenceRefund(crime, { acquitted = false, factor = 1 } = {}) {
   const loss = REPUTATION_LOSS_PER_CRIME[crime] ?? 0;
   const people = Math.trunc(loss / 2);   // the charge's own People half (lowerRepForCrime)
-  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal: loss, people };
-  return { legal: Math.ceil(loss / 2), people: Math.ceil(people / 2) };
+  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));   // CURFEW-REFUND: the legal loss as it was charged
+  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };
+  return { legal: Math.ceil(legal / 2), people: Math.ceil(people / 2) };
 }
 
 /** TEXT.RSC 8060, courtTextExecuted (DaggerfallCourtWindow.cs:37). */

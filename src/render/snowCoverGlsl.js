@@ -8,9 +8,7 @@
 // lattice point: AUDIT PRECIP GROUND-7, it was six uniforms a draw, and HOST-5/GROUND-4, the line a fragment read was
 // another function from the one every reader on the CPU read). A fragment reads the line at its own place between the
 // four points about it - snowCoverHost.js lineAt's bilinear, term for term - its cover off its own height against it
-// (snowAtHeight - snowpack.js coverAtHeight), sheds it on a steep face, and breaks a thin cover into patches
-// (snowCoverAt below is all of it on the CPU, for the grass and the feet: GROUND-3); then its tile is its OWN
-// climate's WINTER record of the same tile (DFU's winter archive, TerrainMaterialProvider's +1 - every set is the same
+// (snowAtHeight - snowpack.js coverAtHeight), and breaks a thin cover into patches (snowCoverAt below is all of it on the CPU, for the grass and the feet: GROUND-3); then its tile is its OWN climate's WINTER record of the same tile (DFU's winter archive, TerrainMaterialProvider's +1 - every set is the same
 // 56 records, R9) in that share. On the snow lane a ground set wearing a winter IS its twin - its summer records, then
 // its winter ones, one array (renderer.js uploadTileArray; GROUND-2) - and the renderer sets each bound array's winter
 // offset off the array itself (uSnowArr: GROUND-1, the host had kept its own record, and a released twin read layer 55
@@ -18,11 +16,12 @@
 // the ecotone's own weights. uSnowSet.y is 0 for every draw off the lane - the classic skin, the interiors, a world whose
 // ground wears DFU's season - and the whole chunk is then one uniform test.
 
-/** The ground's snow constants: the face steepness it starts and stops lying at (the normal's y - DFU's terrain is
- *  rarely steeper than 50 degrees; a snow-shedding rock face is past 45), the patches' cells (in world tiles, 6.4 m)
- *  and weights, their edge, and how a patch octave fades with the fragment's footprint (AUDIT PRECIP GROUND-8). */
+/** The ground's snow constants: the patches' cells (in world tiles, 6.4 m) and weights, their edge, and how a patch
+ *  octave fades with the fragment's footprint (AUDIT PRECIP GROUND-8). SNOW-FACE (FIELD BUGS 2026-10-21): no slope - a
+ *  steep face keeps the snow its height lays, as DFU's winter set dresses every tile. The face's own record has no rock
+ *  under it to shed to: its summer grass is what showed, a green wall up a white mountain where the landforms stand
+ *  their faces past 52 degrees (and DFU's TerrainNature refuses a tree past 50, so it stood bare of them too). */
 export const SNOW_GROUND = Object.freeze({
-  slope: Object.freeze([0.62, 0.8]),
   patch: Object.freeze([Object.freeze({ cell: 1, weight: 0.35 }), Object.freeze({ cell: 4, weight: 0.4 }), Object.freeze({ cell: 16, weight: 0.25 })]),
   edge: 0.07,
   salt: 0x534e4f57,   // 'SNOW'
@@ -42,9 +41,9 @@ const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
 
 /**
  * THE COVER'S CHUNK - what any program that asks the ground's snow needs: the frame's lines (uSnowLines, uSnowSet,
- * uSnowWin) and `float snowCover(vec2 local, float y, vec3 n, vec2 gx, vec2 gy)` - the cover of the ground at
- * pixel-local metres `local`, world height `y`, normal `n`, its tile footprint `gx`/`gy` (tiles a screen pixel): 0 off
- * the lane, else the line there, its height's cover, the slope's shed, the patches as far as the footprint resolves them
+ * uSnowWin) and `float snowCover(vec2 local, float y, vec2 gx, vec2 gy)` - the cover of the ground at pixel-local
+ * metres `local`, world height `y`, its tile footprint `gx`/`gy` (tiles a screen pixel): 0 off the lane, else the line
+ * there, its height's cover, the patches as far as the footprint resolves them
  * (main asks it once and never reads the chunk's uniforms - AUDIT 47's rule: a unit uses what it declares), and
  * `float snowLaid(...)` the same at the same place for a snow lying on the ground - 1 off the lane. Reads the
  * draw's first world tile off `uEcoOrigin` (declared before it: the ecotone's in the terrain programs, its own in the
@@ -52,7 +51,7 @@ const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
  * art's) both carry it.
  */
 export function snowCoreGlsl() {
-  const [s0, s1] = SNOW_GROUND.slope, e = SNOW_GROUND.edge, P = SNOW_GROUND.patch;
+  const e = SNOW_GROUND.edge, P = SNOW_GROUND.patch;
   return `// PRECIP4 (render/snowCoverGlsl.js; the law is systems/weather/snowpack.js)
 uniform highp sampler2D uSnowLines;   // the window's lattice of snowlines: texel (i, j) the point i east and j south of its first, rgb h10/h50/h90 (m above the sea)
 uniform vec4 uSnowSet;                // x: world y -> metres above the sea; y: 1 on; z: the lattice's spacing (world tiles)
@@ -95,10 +94,9 @@ vec3 snowLine(vec2 local) {
   vec3 a = snowLineAt(i), b = snowLineAt(i + ivec2(1, 0)), c = snowLineAt(i + ivec2(0, 1)), d = snowLineAt(i + ivec2(1, 1));
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
-float snowCover(vec2 local, float y, vec3 n, vec2 gx, vec2 gy) {
+float snowCover(vec2 local, float y, vec2 gx, vec2 gy) {
   if (uSnowSet.y < 0.5) return 0.0;   // off the lane: one uniform test
-  float c = snowAtHeight(snowLine(local), y + uSnowSet.x);
-  c *= smoothstep(${f(s0)}, ${f(s1)}, n.y);   // a steep face sheds it
+  float c = snowAtHeight(snowLine(local), y + uSnowSet.x);   // SNOW-FACE: a steep face keeps it (SNOW_GROUND)
   if (c <= 0.0 || c >= 1.0) return c;
   vec2 lt = local / ${f(TILE_M)};
   // AUDIT PRECIP GROUND-8: the patches band-limited by the fragment's footprint (gx, gy: tiles a screen pixel - the
@@ -113,8 +111,8 @@ ${P.map((o, k) => `  { float a = clamp(${f(SNOW_GROUND.fade[0])} - ${f(SNOW_GROU
 // AUDIT PRECIP GROUND-9: the share of the ground a snow lying ON it may take (the Snowfall mod's surface,
 // render/snowfallGlsl.js): the ground's own cover on the snow lane - never a drift on green grass - and the whole ground
 // off it, where DFU's winter dresses every tile and the mod's own gate asks the season
-float snowLaid(vec2 local, float y, vec3 n, vec2 gx, vec2 gy) {
-  return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, n, gx, gy);
+float snowLaid(vec2 local, float y, vec2 gx, vec2 gy) {
+  return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);
 }
 `;
 }
@@ -169,12 +167,11 @@ function snowNoise(ltx, ltz, ox, oz, cell, salt) {
 /**
  * THE GROUND'S COVER AS IT IS DRAWN, on the CPU - snowCover term for term at a footprint below a cell (the near field,
  * where the grass and the feet are; AUDIT PRECIP GROUND-8's fade is the distance's): `cover` its cover off the snowline at its
- * height (snowpack.js coverAtHeight), `ny` its normal's y (the slope sheds it), `lx`/`lz` its pixel-local metres and
- * (`ox`, `oz`) its pixel's first world tile (ecotone.js ecoOrigin: the patches' lattice). 0 bare, 1 white. Pure.
+ * height (snowpack.js coverAtHeight), `lx`/`lz` its pixel-local metres and (`ox`, `oz`) its pixel's first world tile
+ * (ecotone.js ecoOrigin: the patches' lattice). 0 bare, 1 white. Pure. SNOW-FACE: no slope, as the chunk's.
  */
-export function snowCoverAt(cover, ny, lx, lz, ox, oz) {
-  const [s0, s1] = SNOW_GROUND.slope, e = SNOW_GROUND.edge;
-  const c = cover * smooth(s0, s1, ny);
+export function snowCoverAt(cover, lx, lz, ox, oz) {
+  const e = SNOW_GROUND.edge, c = cover;
   if (c <= 0 || c >= 1) return Math.max(0, Math.min(1, c));
   const ltx = lx / TILE_M, ltz = lz / TILE_M;
   let p = 0;

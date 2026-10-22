@@ -2979,6 +2979,16 @@
   "tr": "404e3156e0c4",
   "by": "claude-in-session"
  },
+ "chargen.class.skills.major": {
+  "en": "85c39f1a36a9",
+  "tr": "e4a9de958024",
+  "by": "claude-in-session"
+ },
+ "chargen.class.skills.primary": {
+  "en": "7bb8fba31082",
+  "tr": "7bb8fba31082",
+  "by": "claude-in-session"
+ },
  "combat.leadLeftHand": {
   "en": "9a84e174d1b8",
   "tr": "84a6eed18d46",
@@ -4502,6 +4512,16 @@
  "features.nearDeathWarning.title": {
   "en": "6afc69ea22c9",
   "tr": "817afd60f7ca",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.note": {
+  "en": "9ac4077e0fc2",
+  "tr": "5b4333f0c0b3",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.title": {
+  "en": "a3f85ff33ef4",
+  "tr": "2284b7f79596",
   "by": "claude-in-session"
  },
  "features.questHerald.note": {
@@ -10535,13 +10555,13 @@
   "by": "claude-in-session"
  },
  "prof.page.unlocks.hunting1": {
-  "en": "3150619be94c",
-  "tr": "d5bf5e59fd41",
+  "en": "7e740646d01d",
+  "tr": "f93934997e66",
   "by": "claude-in-session"
  },
  "prof.page.unlocks.hunting2": {
-  "en": "7ee91d615091",
-  "tr": "45c6d7faacfe",
+  "en": "3d94bbcfdab3",
+  "tr": "7e0535a6828e",
   "by": "claude-in-session"
  },
  "prof.page.unlocks.hunting3": {
@@ -10660,8 +10680,8 @@
   "by": "claude-in-session"
  },
  "prof.page.unlocks.outfitting2": {
-  "en": "c0be52db8eee",
-  "tr": "4c163aa00fce",
+  "en": "4b2213ed6f4a",
+  "tr": "90eb00aec33f",
   "by": "claude-in-session"
  },
  "prof.page.unlocks.outfitting3": {
@@ -11522,6 +11542,21 @@
  "saddle.hello.none": {
   "en": "c4f18acb1d78",
   "tr": "1acaf1235f38",
+  "by": "claude-in-session"
+ },
+ "sd.through.opens": {
+  "en": "1e72c7ca985d",
+  "tr": "3dd5b45fda75",
+  "by": "claude-in-session"
+ },
+ "sd.through.title": {
+  "en": "45d79739680d",
+  "tr": "ddc96bc51718",
+  "by": "claude-in-session"
+ },
+ "sd.through.to": {
+  "en": "9adecd5690cd",
+  "tr": "e2d4a45e7a8b",
   "by": "claude-in-session"
  },
  "sea.exchange.band": {

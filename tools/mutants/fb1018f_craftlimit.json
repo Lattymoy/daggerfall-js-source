@@ -507,12 +507,13 @@
   {
     "name": "L5-svc-dis-cap-stale",
     "file": "server-account/src/alchemy.js",
-    "old": "  const { rank, specs } = await tracksOf(db, player.id, character, 'enchanting', nowS);\n  const base = essenceOf(points);\n  const essence = essenceOf(points, specs[50] === DISENCHANTER);\n  if (essence < 1) return { error: 'prof-no-essence' };\n  const origin = p.bought_with === 'gold' ? 'gold' : p.char_id === character && p.bought_with == null ? 'own' : 'bought';\n  const cap = craftCapSql('?1', '?2', 'enchanting');",
-    "new": "  const { ranks, rank, specs } = await tracksOf(db, player.id, character, 'enchanting', nowS);\n  const base = essenceOf(points);\n  const essence = essenceOf(points, specs[50] === DISENCHANTER);\n  if (essence < 1) return { error: 'prof-no-essence' };\n  const origin = p.bought_with === 'gold' ? 'gold' : p.char_id === character && p.bought_with == null ? 'own' : 'bought';\n  const cap = Object.entries(ranks).filter(([p, v]) => p !== 'enchanting' && ['smithing', 'building', 'outfitting', 'provisioning', 'enchanting'].includes(p) && v > 50).length >= 2 ? '26009' : '100000';",
+    "old": "  const { rank, specs } = await tracksOf(db, player.id, character, 'enchanting', nowS);\n  const base = essenceOf(points);\n  const essence = essenceOf(points, specs[50] === DISENCHANTER);\n  if (essence < 1) return { error: 'prof-no-essence' };\n  const origin = p.bought_with === 'gold' ? (Number(p.loose) === 1 ? LOOSE_ORIGIN : 'gold') : p.char_id === character && p.bought_with == null ? 'own' : 'bought';   // FB1020h ESSENCE-LOOSE\n  const cap = craftCapSql('?1', '?2', 'enchanting');",
+    "new": "  const { ranks, rank, specs } = await tracksOf(db, player.id, character, 'enchanting', nowS);\n  const base = essenceOf(points);\n  const essence = essenceOf(points, specs[50] === DISENCHANTER);\n  if (essence < 1) return { error: 'prof-no-essence' };\n  const origin = p.bought_with === 'gold' ? (Number(p.loose) === 1 ? LOOSE_ORIGIN : 'gold') : p.char_id === character && p.bought_with == null ? 'own' : 'bought';   // FB1020h ESSENCE-LOOSE\n  const cap = Object.entries(ranks).filter(([p, v]) => p !== 'enchanting' && ['smithing', 'building', 'outfitting', 'provisioning', 'enchanting'].includes(p) && v > 50).length >= 2 ? '26009' : '100000';",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
-    "why": "a disenchant's cap read before the batch: the Ring's Enchanting crosses beside the anvil"
+    "why": "a disenchant's cap read before the batch: the Ring's Enchanting crosses beside the anvil",
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the origin line beside it reads the goods' mark."
   },
   {
     "name": "L5-svc-capsql-bound",

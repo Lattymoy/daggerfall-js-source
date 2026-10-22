@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { TravelControlUI } from '../../../src/ui/travel/travelControlUI.js';
 import { createTravelOptions, readTravelOptionsSettings } from '../../../src/systems/travel/travelOptions.js';
+import { passengerCard } from '../../../src/scenes/naval/passageHelm.js';
 const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 function lifted(name, next, scope) {
   const start = world.indexOf(`  function ${name}(`);
@@ -18,7 +19,7 @@ test('a first-person boat journey hides manual helm controls until the journey e
     csaCall: f => f(), csaAboard: { aboard: null }, drawEnhancedHelm: state => drawn.push(state), peerName: x => x,
     townTalk: { hudCovered: false }, modes: { hudCovered: false }, gamePaused: () => false, hudRenderEnabled: () => true, touch: null,
     cursorActive: () => true, pointerSurfaces: new Set(), csaKeyLabel: () => '', csaHelmHooks: {}, travelView: { active: false },
-    navalOn: () => true, _travelUIHolder: holder, holdsCargo: () => true, naval: null };   // PIN MOVED (CARGO-ANYWHERE: her Hold; SHOT-KINDS: her guns' load)
+    navalOn: () => true, _travelUIHolder: holder, holdsCargo: () => true, naval: null, passengerCard, csaJourneyHelm: { live: false } };   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the real card law (no charter here), and the journey's hand (AUDIT FB1021d PS-2)   // PIN MOVED (CARGO-ANYWHERE: her Hold; SHOT-KINDS: her guns' load)
   const draw = lifted('csaDrawHelmPanel', '\n  /** AUDIT HCC', scope);
   draw(); assert.equal(drawn.at(-1).covered, true);
   holder.ui.isShowing = false;

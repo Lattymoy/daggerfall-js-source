@@ -12,6 +12,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createTownEcon } from '../systems/town/townEcon.js';
 import { createTownEconBook, parseTownCommand, townAuditLines } from '../net/townEconBook.js';   // AUDIT TOWN-ECON 2 SVC-1: a developer's /town
+import { dayTurnMs } from '../net/dayTurn.js';   // DAY-TURN: this page's moment in the day's turn
 import { isEconTown } from '../net/townEconLaw.js';
 import { accountTowns, accountRefusalText } from '../net/accountClient.js';
 import { appStorage } from '../systems/appStorage.js';
@@ -38,7 +39,7 @@ export const MARKET_BANDS_MAX = 4096;
 export function createTownEconHost({ locAt = () => null, portLanes = () => null, storage = appStorage(), door = undefined, chapters = null,
   clockHeard = () => true, seatsHeard = () => true, onBandsReady = () => {}, regionHere = () => null, ...reading }) {
   const towns = door !== undefined ? door : reading.online() ? accountTowns({ fetch: (u, i) => globalThis.fetch(u, i), storage }) : null;
-  const book = towns ? createTownEconBook({ door: towns, storage, me: towns.me, isTownPixel: (x, y) => isEconTown(locAt(x, y)?.locationType), relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null) }) : null;
+  const book = towns ? createTownEconBook({ door: towns, storage, me: towns.me, isTownPixel: (x, y) => isEconTown(locAt(x, y)?.locationType), relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null), turnMs: dayTurnMs() }) : null;   // DAY-TURN
   /** SEA-TRADE: a port's sea lanes by its map pixel, counted once the map's lanes stand (a lane at each of its two ports). */
   let laneCounts = null;
   const lanesAt = (/** @type {number} */ px, /** @type {number} */ py) => {

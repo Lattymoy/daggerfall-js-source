@@ -18,6 +18,7 @@ import { AnswerPipeline, TALK_STRINGS } from '../../src/systems/answerPipeline.j
 import { NPCSession } from '../../src/systems/npcSession.js';
 import { TopicTree, QUESTION_TYPE, newListItem, QUEST_INFO_RESOURCE_TYPE } from '../../src/systems/topicTree.js';
 import { OATH_RACE_INDEX, raceDisplayName } from '../../src/systems/talk/talkSession.js';
+import { GENDERS, BANK_TYPES } from '../../src/characters/nameHelper.js';   // QUESTOR-SHE: the questor's gender and bank as staticNpcData and the pool mint them
 
 const h2 = (ctx) => talkMacroHandlers(ctx);
 const t = (text) => ({ text, formatting: 1, x: 0, y: 0 });
@@ -42,7 +43,7 @@ function makeCtx(over = {}) {
     fullName: (gender) => `${gender}-name`,
     raceOfCurrentRegion: () => 'Breton',
     factionRaceId: (race) => OATH_RACE_INDEX[race] ?? 0,
-    questorGender: () => 'male',
+    questorGender: () => GENDERS.Male,
     bumpSeed: () => {},
     ...over,
   };
@@ -253,8 +254,10 @@ test('%oth reads the NPC-s FACTION race, falling back to the region-s - DFUs fix
 });
 
 test('the four pronouns are the POTENTIAL QUESTORs gender, and anything but female is he', () => {
-  const male = talkMacroHandlers(makeCtx({ questorGender: () => 'male' }));
-  const female = talkMacroHandlers(makeCtx({ questorGender: () => 'female' }));
+  // QUESTOR-SHE (PIN MOVED): the gender is the Genders enum the pool's NPCData carries - these fixtures handed in the
+  // strings 'male'/'female', which no producer mints, and so held up a helper that never said "her" in the game
+  const male = talkMacroHandlers(makeCtx({ questorGender: () => GENDERS.Male }));
+  const female = talkMacroHandlers(makeCtx({ questorGender: () => GENDERS.Female }));
   const none = talkMacroHandlers(makeCtx({ questorGender: () => null }));
   assert.deepEqual(['%g', '%g2', '%g3', '%g4'].map((m) => male[m]()), ['he', 'him', 'his', 'his']);
   assert.deepEqual(['%g', '%g2', '%g3', '%g4'].map((m) => female[m]()), ['she', 'her', 'her', 'hers']);
@@ -268,9 +271,9 @@ test('%pqn and %pqp read the questor pool, and answer empty when it is bare', ()
   assert.equal(h['%pqn'](), '', 'no questor, no name');
   assert.equal(h['%pqp'](), '', 'no questor, no location');
   ctx.session.deps.fullName = (bank, gender) => `${bank}/${gender}`;
-  ctx.session.npcsWithWork.set(7, { npc: { nameSeed: 7, nameBank: 'Breton', gender: 'female' }, socialGroup: 1, buildingName: 'The Inn' });
+  ctx.session.npcsWithWork.set(7, { npc: { nameSeed: 7, nameBank: BANK_TYPES.Nord, gender: GENDERS.Female }, socialGroup: 1, buildingName: 'The Inn' });
   ctx.session.selectedNpcWorkKey = 7;
-  assert.equal(h['%pqn'](), 'Breton/female');
+  assert.equal(h['%pqn'](), `${BANK_TYPES.Nord}/${GENDERS.Female}`, 'the entry\'s own bank and gender, as the pool mints them');
   assert.equal(h['%pqp'](), 'The Inn');
   // MacroHelper.cs:162-163 - the questor LOCATION is %pqp, not %pql
   assert.equal(Object.hasOwn(h, '%pql'), false, '%pql is not a DFU macro at all');

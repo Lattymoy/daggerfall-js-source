@@ -147,7 +147,7 @@
 //                                                 helm, at StartSailing (AUDIT NAV2 F14)
 // }
 
-import { Boat, setLights, HULL_NAMES, HULL_PRICES, packedHullWeight, CARGO_CONTAINER_IMAGE, TRIGGER_MODEL, goModelName, meshLocalBounds, colliderBounds, animatorOf, boatAnimators, boatParticleSystems, nodeOf, AUDIO_CLIPS, SAIL_ANIMATION_SPEED } from './comeSailAwayBoat.js';
+import { Boat, setLights, HULL_NAMES, HULL_PRICES, packedHullWeight, CARGO_CONTAINER_IMAGE, TRIGGER_MODEL, goModelName, meshLocalBounds, colliderBounds, animatorOf, nodeOf, AUDIO_CLIPS, SAIL_ANIMATION_SPEED } from './comeSailAwayBoat.js';
 import { hullFromMessage } from './comeSailAwayHulls.js';   // PARTS-WEIGHT: GetHullFromMessage, the leaf's
 import { firmStat } from '../firmamentLive.js';   // FIRM1: the Firmament's helmsman (sailSpeed)
 import { constantCurve, twoConstantsCurve, SPACE } from '../../world/unityParticles.js';
@@ -164,6 +164,8 @@ import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContai
 import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
 import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
+import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOAT-OWN: her Animators and particle systems by her range, the far law
+import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
 /**
@@ -680,6 +682,9 @@ export function createComeSailAwayRuntime(deps) {
   const has = (action) => !!deps.input?.has(action);   // InputManager.HasAction
   const dt = () => f(deps.dt?.() ?? 0);                 // Time.deltaTime
   const cur = () => state.CurrentBoat;
+  /** BOAT-OWN (scenes/comeSailAway/farLife.js createBoatLives): each boat's Animators and particle systems by her range
+   *  from the pool's last eye (comeSailAwayPool.js lifeEye; a pool with none: every boat near, every frame). */
+  const lives = createBoatLives({ eye: () => deps.pool?.lifeEye?.() ?? null });
 
   /** moveSpeed (525-536). NAV-H x AUDIT NAV1 (the helm): times the sea fight's share of her way (`deps.wayScale`, the
    *  port's seam - the mod has no hurt): the canvas a shot-up rig still sets under sail, a wreck's oars under oars. */
@@ -1648,10 +1653,11 @@ export function createComeSailAwayRuntime(deps) {
    *  tree was walked here every frame to find its Animators - a fleet moored in three ports, on every frame of a town
    *  far inland. The list is kept (boatAnimators). A boat standing nowhere is still asked: an Animator asked while its
    *  object is inactive notes it (world/unityAnimator.js animatorUpdate - its first test, and all it costs), so it
-   *  starts over from its default state when she stands again (Port-Ledger, Come Sail Away row, (18)). */
+   *  starts over from its default state when she stands again (Port-Ledger, Come Sail Away row, (18)).
+   *  BOAT-OWN (bible/07-Rendering/Performance-Priority.md): and past NEAR_LIFE_M of the pool's eye, one frame in
+   *  FAR_LIFE_EVERY on the time she missed (`lives`, scenes/comeSailAway/farLife.js) - the peers' boats' law. */
   function animate() {
-    const d = dt();
-    for (const boat of state.AllBoats) for (const a of boatAnimators(boat)) a.update(d);
+    lives.animate(state.AllBoats, dt());
   }
   /** Update (4186-4800): the pause gate, then the helm, then the waves' frame; the coroutines' WaitForSeconds after
    *  it, as Unity resumes them once every Update has run. */
@@ -1743,10 +1749,10 @@ export function createComeSailAwayRuntime(deps) {
     }
     lateUpdateBoats();
   }
-  /** CSA-F: every boat's particle systems, one step on Time.deltaTime (an inactive one stands still, as Unity's). */
+  /** CSA-F: every boat's particle systems, one step on Time.deltaTime (an inactive one stands still, as Unity's).
+   *  BOAT-OWN: on the time each boat lived by this frame's animate - none for one it held. */
   function simulateParticles() {
-    const d = dt();
-    for (const boat of state.AllBoats) for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(d);
+    lives.particles(state.AllBoats);
   }
   /** LateUpdate's boats (4958-5042): each active one's bob - rolled into its turn at the helm, rocked by the wind, the
    *  roll not scaled by modifierAnimation (the C#'s precedence, kept) - and its flag streaming down the wind less the
@@ -2788,10 +2794,12 @@ export function createComeSailAwayRuntime(deps) {
     if (boat.OarParticles.length > 0) for (const oarParticle of boat.OarParticles) shift(oarParticle.subEmitters[0].system);   // GetSubEmitterSystem(0)
   }
 
-  /** OnLoad (1943-1950). */
+  /** OnLoad (1943-1950). SAIL-WIND (FIELD BUGS 2026-10-21b): and a load that lands outdoors under the indoors' none asks
+   *  the door's wind (csaLoadWind.js says why). */
   function OnLoad() {
     UpdateBoatVisibility();
     UpdateWaveMesh();   // `if (waveObject != null)` - Start built it
+    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);
   }
   /** OnTransition (1978-1985): into or out of a building or a dungeon. */
   function OnTransition() {

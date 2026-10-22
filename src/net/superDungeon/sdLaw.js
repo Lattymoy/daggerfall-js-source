@@ -8,7 +8,8 @@
 // online tab holds) keeps ONE record of it - `sdev` - and its director (server/src/index.js) moves it on: it RISES
 // where the census finds the most players (pickSdRegion), is FOUND by the first player at its door, FALLS when its
 // boss does, and is GONE three minutes later - or fades unbeaten when its time runs out - and the next rises after a
-// rest. Every change is fanned to every tab, which places the Hollow from its own map files (systems/superDungeon/sdSite.js): the
+// rest (SD-THROUGH: between the find and the fall it is ENTERED, once, when its first soul steps through the Rift -
+// sdEnter). Every change is fanned to every tab, which places the Hollow from its own map files (systems/superDungeon/sdSite.js): the
 // relay never knows the pixel, and needs not.
 //
 // PURE, and the relay's too: it imports wire.js and gateLaw.js (the port's one mix, gateHash, and a pixel's side), both
@@ -100,6 +101,16 @@ export function sdRise(prev, now, region) {
 export function sdFind(rec, now, name) {
   if (!rec || sdPhase(rec, now) !== 'risen') return null;
   return /** @type {SdRecord} */ ({ ...rec, ph: 'found', foundAt: now, fb: sanitizeName(name) });
+}
+
+/** SD-THROUGH (2026-10-21, the owner: "When someone finds and enters the portal. I want a portal to show up for anyone in
+ *  the dungeon and anyone entering that automatically leads them there."): the first soul through its Rift - stamped
+ *  once, at `now`, while it is found and its boss stands (its realm's first admission, told to the hub). From then on
+ *  every client in its Hollow, and every one entering it, stands the Way Through beside them
+ *  (world/superDungeon/sdDungeon.js sdThroughStands). */
+export function sdEnter(rec, now) {
+  if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;
+  return /** @type {SdRecord} */ ({ ...rec, inAt: now });
 }
 
 /** The boss fell: kept with the top fighter's name and how many fought it (`n` - every seat its fight took, the realm's

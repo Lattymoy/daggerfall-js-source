@@ -458,6 +458,19 @@ const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases
 const { isNewerRelease } = require('./lib/updateCheck.cjs');
 const { updateTransport } = require('./lib/autoUpdate.cjs');
 const { UNLOAD_ASK, leaves, restartAsk, reinstallAsk, installFailedAsk, goesAhead } = require('./lib/shellDialogs.cjs');
+const { goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, logWith } = require('./lib/rendererGone.cjs');   // FIELD BUGS 2026-10-21b RENDERER-GONE
+/** RENDERER-GONE: crash.log beside the saves - a process gone, when and why (its oldest lines dropped past its most). */
+const CRASH_LOG = () => path.join(app.getPath('userData'), 'crash.log');
+function logGone(what, details) {
+  try {
+    const file = CRASH_LOG();
+    const had = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    fs.writeFileSync(file, logWith(had, goneLine(what, details, Date.now())));
+  } catch { /* a log that cannot be written is no reason to stop */ }
+}
+// RENDERER-GONE: the GPU's process gone is logged too - Chromium starts it again, and the page says the graphics stopped
+// itself (main.js webglcontextlost: tap to reload)
+app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') logGone('gpu', details); });
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
@@ -1333,12 +1346,34 @@ async function createWindow({ onShown = null } = {}) {
   win.webContents.on('did-start-navigation', (d) => { if (d?.isMainFrame && !d.isSameDocument) playReadyGame(); });
   const giveUp = (why) => {
     const bad = gameStore?.rollback();
-    if (!bad) return;
+    if (!bad) return false;
     console.warn(`[game] v${bad} ${why} - the version before it plays again`);
     if (!win.isDestroyed()) win.webContents.reload();
+    return true;
   };
   win.webContents.on('did-fail-load', (_e, code, _text, _url, isMainFrame) => { if (isMainFrame && code !== -3) giveUp('did not load'); });
-  win.webContents.on('render-process-gone', () => giveUp('stopped before it came up'));
+  // FIELD BUGS 2026-10-21b RENDERER-GONE (app/lib/rendererGone.cjs): a page that stopped after its trial was met by nothing -
+  // the window stood black. It is said now, kept in crash.log, and restarted at the player's word; a hung page is offered
+  // Wait or Restart (Restart crashes it on purpose, and that stop restarts without asking again)
+  const stops = createStopCount();
+  let restarting = false, hangAsked = false;
+  win.webContents.on('render-process-gone', async (_e, details) => {
+    if (details?.reason !== 'clean-exit') logGone('renderer', details);
+    if (giveUp('stopped before it came up') || win.isDestroyed() || details?.reason === 'clean-exit') return;
+    if (restarting) { restarting = false; win.webContents.reload(); return; }
+    const { response } = await dialog.showMessageBox(win, goneAsk(details?.reason, stops.stop(Date.now())));
+    if (win.isDestroyed()) return;
+    if (restarts(response)) win.webContents.reload(); else app.quit();
+  });
+  win.webContents.on('unresponsive', async () => {
+    if (hangAsked || win.isDestroyed()) return;
+    hangAsked = true;
+    const { response } = await dialog.showMessageBox(win, hangAsk());
+    hangAsked = false;
+    if (!restartsHung(response) || win.isDestroyed()) return;
+    restarting = true;
+    win.webContents.forcefullyCrashRenderer();
+  });
   gameStore?.bootStarting();
   await win.loadURL('dagger://game/play/index.html');
   // a boot that serves a folder clears the copy a pick asked to be cleared (a game on the in-page picker keeps its own)

@@ -48,7 +48,13 @@ A FIND is asked by its source and decided by the service's own die (`server-acco
 | the endgame (`endgame`: a breach closed, a Redoubt, the Serpent...) | 100% | 4 |
 
 Every find lands in the pack (a face on a body is one the count cannot see). A day takes at most `FIND_ASKS_PER_DAY`
-(1,500) asks and `FIND_CAKES_PER_DAY` (120) cakes - a forged client finds no more than an honest one who played all day.
+(1,500) asks and `FIND_CAKES_PER_DAY` (120) cakes, a UTC day - a forged client finds no more than an honest one. CAKE-CAP-SAID
+(`01-Overview/bugs/Field-Bugs-2026-10-21b.md`): the cakes are an hour's undead, not a day's play (a dead foe finds at 50%,
+so 120 is about 240 kills - measured on the service, the 120th at kill 231), and a find past them had answered a miss's own
+`{ found: 0 }`, so a player farmed on against a cap nothing named. A find answers the day's count (`today`) and
+`capped: true` once it is spent, and so does the account's festival (`today`); the page says the day's end once a UTC day
+with the hour more are found, asks nothing until the day turns, and the Wyrd Sister's window counts the day's finds. The
+cap stands: her whole stock, 865 cakes of the twenty wares, is 7.2 capped days of the festival's 19.
 A kill is my own blow's (`systems/playerKills.js` - every pool tells it: the street's, a dungeon's room bodies, a foe
 another machine runs), once a body, never the watch or an ally. Acts are `systems/questlines/qlActs.js`'s, heard through
 `hearActs`: ONE DEED, ONE FIND - the acts one receipt says together (a breach closed with its rite broken, a Valkynaz's

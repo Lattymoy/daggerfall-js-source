@@ -1,0 +1,577 @@
+[
+ {
+  "name": "FB1021B-the-deadline-stands-nearer-the-eye",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_DUE_AT = 0.9;",
+  "new": "export const GRASS_DUE_AT = 0.8;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-frame-time-is-another",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_FRAME_MS = 3;",
+  "new": "export const GRASS_FRAME_MS = 4;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-share-is-of-a-30-fps-frame",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_FRAME_SHARE = GRASS_FRAME_MS * 60 / 1000;",
+  "new": "export const GRASS_FRAME_SHARE = GRASS_FRAME_MS * 30 / 1000;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-share-is-taken-of-a-longer-hitch",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_FRAME_GAP_MS = 50;",
+  "new": "export const GRASS_FRAME_GAP_MS = 100;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-step-between-clock-reads-is-another",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_STEP = 250;",
+  "new": "export const GRASS_STEP = 251;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-game-field-runs-on-a-clock-that-stands-still",
+  "file": "src/render/labGrass.js",
+  "old": "clock = () => performance.now() }",
+  "new": "clock = () => 0 }",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-default-frame-has-no-end",
+  "file": "src/render/labGrass.js",
+  "old": "frameMs = GRASS_FRAME_MS, clock",
+  "new": "frameMs = Infinity, clock",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-shift-east-is-taken-for-a-step",
+  "file": "src/render/labGrass.js",
+  "old": "      lastX += offset[0]; lastZ += offset[2];",
+  "new": "      lastX -= offset[0]; lastZ += offset[2];",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-shift-north-is-taken-for-a-step",
+  "file": "src/render/labGrass.js",
+  "old": "      lastX += offset[0]; lastZ += offset[2];",
+  "new": "      lastX += offset[0]; lastZ -= offset[2];",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-step-reads-one-axis-twice",
+  "file": "src/render/labGrass.js",
+  "old": "      const step = Math.hypot(ux, uz);",
+  "new": "      const step = Math.hypot(uz, uz);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-eye-is-never-remembered-east-west",
+  "file": "src/render/labGrass.js",
+  "old": "      lastX = ex; lastZ = ez;",
+  "new": "      lastZ = ez;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-deadline-runs-to-the-fade-start",
+  "file": "src/render/labGrass.js",
+  "old": "return d <= dueR ? 0 : back ? Infinity : (d - dueR) / step; };",
+  "new": "return d <= dueR ? 0 : back ? Infinity : (d - wholeR) / step; };",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-deadline-multiplies-the-step",
+  "file": "src/render/labGrass.js",
+  "old": "return d <= dueR ? 0 : back ? Infinity : (d - dueR) / step; };",
+  "new": "return d <= dueR ? 0 : back ? Infinity : (d - dueR) * step; };",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-left-behind-is-due-as-one-ahead",
+  "file": "src/render/labGrass.js",
+  "old": "return d <= dueR ? 0 : back ? Infinity : (d - dueR) / step; };",
+  "new": "return d <= dueR ? 0 : false ? Infinity : (d - dueR) / step; };",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-due-now-is-due-within-a-frame",
+  "file": "src/render/labGrass.js",
+  "old": "return d <= dueR ? 0 : back ? Infinity : (d - dueR) / step; };",
+  "new": "return d <= dueR ? 1 : back ? Infinity : (d - dueR) / step; };",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-what-the-step-leaves-behind-comes-first",
+  "file": "src/render/labGrass.js",
+  "old": "      want.sort((a, b) => a.back - b.back || a.d - b.d);",
+  "new": "      want.sort((a, b) => b.back - a.back || a.d - b.d);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-what-the-step-leaves-behind-is-not-read",
+  "file": "src/render/labGrass.js",
+  "old": "      want.sort((a, b) => a.back - b.back || a.d - b.d);",
+  "new": "      want.sort((a, b) => a.d - b.d);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-behind-is-ahead",
+  "file": "src/render/labGrass.js",
+  "old": "        + (Math.min(Math.max(ez, cz * cell + gz), (cz + 1) * cell + gz) - ez) * uz < 0 ? 1 : 0);",
+  "new": "        + (Math.min(Math.max(ez, cz * cell + gz), (cz + 1) * cell + gz) - ez) * uz > 0 ? 1 : 0);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-an-inner-cell-can-be-left-behind",
+  "file": "src/render/labGrass.js",
+  "old": "      const behind = (cx, cz, d2) => (d2 > wholeR2 && (",
+  "new": "      const behind = (cx, cz, d2) => (d2 >= 0 && (",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-peek-takes-the-free-slot",
+  "file": "src/render/labGrass.js",
+  "old": "        if (free.length) return take ? free.pop() : free[free.length - 1];",
+  "new": "        if (free.length) return free.pop();",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-peek-evicts",
+  "file": "src/render/labGrass.js",
+  "old": "        if (take) { renderer.clearSlot(far.slot); live.delete(farKey); }",
+  "new": "        if (true) { renderer.clearSlot(far.slot); live.delete(farKey); }",
+  "tests": [
+   "test/render/fb1021b_grass.test.js",
+   "test/world/terrain/grasspath.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-frame-is-never-measured",
+  "file": "src/render/labGrass.js",
+  "old": "      lastT = t0;",
+  "new": "      lastT = NaN;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-share-is-of-the-whole-hitch",
+  "file": "src/render/labGrass.js",
+  "old": "Math.min(t0 - lastT, GRASS_FRAME_GAP_MS)",
+  "new": "Math.max(t0 - lastT, GRASS_FRAME_GAP_MS)",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-floor-is-a-ceiling",
+  "file": "src/render/labGrass.js",
+  "old": "      const budgetMs = Math.max(frameMs, gap * GRASS_FRAME_SHARE);",
+  "new": "      const budgetMs = Math.min(frameMs, gap * GRASS_FRAME_SHARE);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-whole-cells-past-perFrame",
+  "file": "src/render/labGrass.js",
+  "old": "        if (item.d > wholeR2 || budget <= 0) break;",
+  "new": "        if (item.d > wholeR2 || budget < 0) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-first-whole-cell-must-fit-too",
+  "file": "src/render/labGrass.js",
+  "old": "        if (budget < perFrame && clock() - t0 + wholeMs > budgetMs) break;",
+  "new": "        if (budget <= perFrame && clock() - t0 + wholeMs > budgetMs) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-that-fits-exactly-does-not",
+  "file": "src/render/labGrass.js",
+  "old": "        if (budget < perFrame && clock() - t0 + wholeMs > budgetMs) break;",
+  "new": "        if (budget < perFrame && clock() - t0 + wholeMs >= budgetMs) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-fit-forgets-the-cell",
+  "file": "src/render/labGrass.js",
+  "old": "        if (budget < perFrame && clock() - t0 + wholeMs > budgetMs) break;",
+  "new": "        if (budget < perFrame && clock() - t0 - wholeMs > budgetMs) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-cost-counted-from-the-frame-start",
+  "file": "src/render/labGrass.js",
+  "old": "        wholeMs = clock() - s;",
+  "new": "        wholeMs = clock() - t0;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-rim-takes-the-cells-just-placed-whole",
+  "file": "src/render/labGrass.js",
+  "old": "const late = want.filter((w) => w.d > wholeR2 && w.d <= dueR2",
+  "new": "const late = want.filter((w) => w.d >= 0 && w.d <= dueR2",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-least-pace-for-the-most",
+  "file": "src/render/labGrass.js",
+  "old": "need = Math.max(need, owed / Math.ceil(due)); };",
+  "new": "need = Math.min(need, owed / Math.ceil(due)); };",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-deadline-counted-in-fractions-of-a-frame",
+  "file": "src/render/labGrass.js",
+  "old": "need = Math.max(need, owed / Math.ceil(due)); };",
+  "new": "need = Math.max(need, owed / due); };",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-due-now-has-no-pace",
+  "file": "src/render/labGrass.js",
+  "old": "if (due === 0) now = true; else need",
+  "new": "if (due === 1) now = true; else need",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-cell-in-progress-owes-nothing",
+  "file": "src/render/labGrass.js",
+  "old": "owe(pd, behind(pending.cx, pending.cz, pd), perCell - pending.st.i); }",
+  "new": "owe(pd, behind(pending.cx, pending.cz, pd), 0); }",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-rim-owes-nothing",
+  "file": "src/render/labGrass.js",
+  "old": "      for (const w of rim) owe(w.d, w.back, perCell);",
+  "new": "      for (const w of rim) owe(w.d, w.back, 0);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-frame-a-whole-cell-took-slices-too",
+  "file": "src/render/labGrass.js",
+  "old": "      let cur = pending, ri = 0, done = 0, first = budget === perFrame, paced = 0;",
+  "new": "      let cur = pending, ri = 0, done = 0, first = true, paced = 0;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-past-the-slice-no-deadline-is-heard",
+  "file": "src/render/labGrass.js",
+  "old": "        if (!first && done >= need && !(now && clock() - t0 - paced < budgetMs)) break;",
+  "new": "        if (!first && true && !(now && clock() - t0 - paced < budgetMs)) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-time-runs-out-a-step-late",
+  "file": "src/render/labGrass.js",
+  "old": "        if (!first && done >= need && !(now && clock() - t0 - paced < budgetMs)) break;",
+  "new": "        if (!first && done >= need && !(now && clock() - t0 - paced <= budgetMs)) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-begun-that-no-slot-takes",
+  "file": "src/render/labGrass.js",
+  "old": "          if (ri >= rim.length || slotFor(rim[ri].d, false) === undefined) break;",
+  "new": "          if (ri >= rim.length) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-first-slice-is-a-step",
+  "file": "src/render/labGrass.js",
+  "old": "        const finished = stepGrassCell(st, first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
+  "new": "        const finished = stepGrassCell(st, first ? GRASS_STEP : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-past-the-slice-the-deadline-steps-the-whole-need",
+  "file": "src/render/labGrass.js",
+  "old": "        const finished = stepGrassCell(st, first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
+  "new": "        const finished = stepGrassCell(st, first ? GRASS_SLICE : now ? GRASS_STEP : Math.ceil(need - done), ask);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ],
+  "equivalent": true,
+  "why": "Past the slice the deadlines' ask is stepped GRASS_STEP at a time and the loop stops at the first step past it; stepped whole it stops on it. The ask is met either way - the stepped way places up to 249 candidates more (0.1 ms here) - and no clock is read in that pace, so the step size only matters where the time is (a cell due now). One step size for both paces, kept."
+ },
+ {
+  "name": "FB1021B-the-slice-is-every-step",
+  "file": "src/render/labGrass.js",
+  "old": "        first = false;",
+  "new": "        first = !!first;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-the-candidates-placed-are-not-counted",
+  "file": "src/render/labGrass.js",
+  "old": "        done += st.i - i0;",
+  "new": "        done += 0;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-slice-unfinished-is-written",
+  "file": "src/render/labGrass.js",
+  "old": "        if (!finished) continue;",
+  "new": "        if (false) continue;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "FB1021B-a-cell-whose-slot-went-is-held-done",
+  "file": "src/render/labGrass.js",
+  "old": "        if (slot === undefined) { cur = null; break; }",
+  "new": "        if (slot === undefined) { break; }",
+  "tests": [
+   "test/render/fb1021b_grass.test.js",
+   "test/world/terrain/grasspath.test.js"
+  ],
+  "equivalent": true,
+  "why": "Reached only on a field with fewer slots than its disc (AUDIT PERF10 F1's test seam; the game's bound is the swept one), when the cell a slot was asked for at its begin is no longer nearer than any standing one at its end. Dropped, it is begun again from the world as it stands; held, it is written when a slot frees or dropped when it leaves reach - the same cell, the same bytes, and the field at rest the same (48 starved walks, 10 such cells, none left either way). Begun again is kept: the world it was placed from may have moved."
+ },
+ {
+  "name": "FB1021B-the-cell-in-progress-is-forgotten",
+  "file": "src/render/labGrass.js",
+  "old": "      pending = cur;   // the cell begun and not done",
+  "new": "      pending = null;   // the cell begun and not done",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-cells-due-now-go-first-and-take-the-pace",
+  "file": "src/render/labGrass.js",
+  "old": "      rim.splice(head, 0, ...late);",
+  "new": "      rim.unshift(...late);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-cells-due-now-wait-behind-what-the-step-leaves",
+  "file": "src/render/labGrass.js",
+  "old": "      rim.splice(head, 0, ...late);",
+  "new": "      rim.push(...late);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-pace-reaches-no-cell",
+  "file": "src/render/labGrass.js",
+  "old": "head < rim.length && o < need; head++) o += perCell;",
+  "new": "head < rim.length && o < 0; head++) o += perCell;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-pace-reaches-half-the-cells-it-owes",
+  "file": "src/render/labGrass.js",
+  "old": "head < rim.length && o < need; head++) o += perCell;",
+  "new": "head < rim.length && o < need; head++) o += 2 * perCell;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-cell-in-progress-is-not-counted-in-what-the-pace-reaches",
+  "file": "src/render/labGrass.js",
+  "old": "for (let o = pending ? perCell - pending.st.i : 0; head",
+  "new": "for (let o = 0; head",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-a-cell-due-now-the-step-leaves-goes-with-those-ahead",
+  "file": "src/render/labGrass.js",
+  "old": "w.d <= dueR2 && !w.back);   // due now",
+  "new": "w.d <= dueR2);   // due now",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-a-cell-due-now-the-step-leaves-is-in-no-list",
+  "file": "src/render/labGrass.js",
+  "old": "(w.d > wholeR2 && w.back));   // a deadline to come",
+  "new": "(w.d > dueR2 && w.back));   // a deadline to come",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-no-cell-is-due-now",
+  "file": "src/render/labGrass.js",
+  "old": "      const wholeR2 = wholeR * wholeR, dueR2 = dueR * dueR;",
+  "new": "      const wholeR2 = wholeR * wholeR, dueR2 = wholeR2;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-only-a-cell-ahead-is-due-now",
+  "file": "src/render/labGrass.js",
+  "old": "if (due === 0) now = true; else need",
+  "new": "if (due === 0) now = now; else need",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-pace-is-paid-out-of-the-frames-time",
+  "file": "src/render/labGrass.js",
+  "old": "!(now && clock() - t0 - paced < budgetMs)) break;",
+  "new": "!(now && clock() - t0 < budgetMs)) break;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-slice-is-taken-off-the-frames-time",
+  "file": "src/render/labGrass.js",
+  "old": "const timed = now && !first && done < need,",
+  "new": "const timed = now && done < need,",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-pace-is-its-last-step",
+  "file": "src/render/labGrass.js",
+  "old": "        if (timed) paced += clock() - s;",
+  "new": "        if (timed) paced = clock() - s;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-every-step-is-the-paces",
+  "file": "src/render/labGrass.js",
+  "old": "        if (timed) paced += clock() - s;",
+  "new": "        if (true) paced += clock() - s;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F2-a-cell-in-progress-inside-the-fade-is-held-as-the-rims",
+  "file": "src/render/labGrass.js",
+  "old": "if (pending && nearSq(pending.cx, pending.cz, ex, ez) <= wholeR2) pending = null;",
+  "new": "if (pending && nearSq(pending.cx, pending.cz, ex, ez) < 0) pending = null;",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F4-a-whole-cells-cost-is-measured-before-its-pack",
+  "file": "src/render/labGrass.js",
+  "old": "        write(item, slot, wholeSpare);\n        wholeMs = clock() - s;",
+  "new": "        wholeMs = clock() - s;\n        write(item, slot, wholeSpare);",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F5-a-cell-in-progress-the-step-leaves-is-read-as-ahead",
+  "file": "src/render/labGrass.js",
+  "old": "owe(pd, behind(pending.cx, pending.cz, pd), perCell - pending.st.i); }",
+  "new": "owe(pd, 0, perCell - pending.st.i); }",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-FB1021B-F1-the-pace-is-timed-without-a-cell-due-now",
+  "file": "src/render/labGrass.js",
+  "old": "const timed = now && !first && done < need,",
+  "new": "const timed = !first && done < need,",
+  "tests": [
+   "test/render/fb1021b_grass.test.js"
+  ],
+  "equivalent": true,
+  "why": "The pace's time is kept only to be taken off the frame's time, and the frame's time is read only on a frame with a cell due now (`now && clock() - t0 - paced < budgetMs`; `now` is fixed before the loop). Timed without one, a step reads the clock twice more and `paced` is never read: the same candidates, the same cells. Kept so a ride with no cell due now reads no clock in its pace, as FB1021B's did."
+ }
+]

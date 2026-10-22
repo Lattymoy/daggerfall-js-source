@@ -326,8 +326,8 @@
   {
     "name": "RVN-ERRAND-days-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "until: Math.floor(now) + Math.round(roadDays(p, sky) * MINUTES_PER_DAY),",
-    "new": "until: Math.floor(now) + MINUTES_PER_DAY,",
+    "old": "  const len = Math.round(roadDays(p, sky) * MINUTES_PER_DAY);",
+    "new": "  const len = MINUTES_PER_DAY;",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]

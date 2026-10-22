@@ -20,6 +20,7 @@
 import { readWatchReceipt } from './watchReceipt.js';
 import { jittered } from './backoff.js';   // a failed claim's wait, jittered as every book's is
 import { TOWN_WATCH_CLAIM_MAX, TOWN_ECON_KEPT_S, TOWN_SEA_REACH_PX, TOWN_SEA_TICK_S, townReportOf } from './townEconLaw.js';
+import { turnedDayOf } from './dayTurn.js';   // DAY-TURN
 
 /** Where the device keeps the ticks it holds: [{ r, s, i, e, sea? }] (`sea` a tick that vouches a dealing). */
 export const TOWN_ECON_WATCH_KEY = 'townecon.watch';
@@ -47,11 +48,11 @@ const WATCH_SETTLED = Object.freeze(['bad-watch', 'towns-need-account']);
  * THE TOWN BOOK.
  * @param {{ door: { econ: () => Promise<any>, witness: (town: any, receipt: string) => Promise<any>, watch: (receipts: string[], sea?: number[]) => Promise<any> },
  *   storage?: any, nowMs?: () => number, me?: () => (string|null), isTownPixel?: (x: number, y: number) => boolean,
- *   relayNowS?: () => (number|null), rand?: () => number }} o
+ *   relayNowS?: () => (number|null), rand?: () => number, turnMs?: number }} o
  *   `me` the signed-in account, `isTownPixel` whether a town with an economy stands at a map pixel, `relayNowS` the
- *   relay's clock (a tick's life is the relay's)
+ *   relay's clock (a tick's life is the relay's), `turnMs` this page's moment past midnight (DAY-TURN, net/dayTurn.js)
  */
-export function createTownEconBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, isTownPixel = () => false, relayNowS = () => null, rand = Math.random }) {
+export function createTownEconBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, isTownPixel = () => false, relayNowS = () => null, rand = Math.random, turnMs = 0 }) {
   // ── the shares ──
   /** @type {Map<number, number>} */
   let shares = new Map();
@@ -133,7 +134,7 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
     reported = Object.fromEntries(Object.entries(t).sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE)).slice(0, TOWN_ECON_REPORTED_MAX));
     try { storage?.setItem?.(TOWN_ECON_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
   };
-  const dayNow = () => Math.floor(nowMs() / 86_400_000);
+  const dayNow = () => turnedDayOf(nowMs(), turnMs);   // DAY-TURN: once a day, the day turned at this page's moment
   /** AUDIT TOWN-ECON 2 SVC-1: the towns walked into and waiting for a tick at their pixel, by map id. */
   /** @type {Map<number, any>} */
   const waiting = new Map();

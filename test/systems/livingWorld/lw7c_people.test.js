@@ -116,5 +116,5 @@ test('LW7c the chronicle\'s People: a section of its own where the host hands th
   const v3 = mountEnhancedChronicle(none, { section: 'people' });
   try { assert.ok(all(none, 'cr-row')[0].className.includes(' on'), 'no page: the section unknown, the window opens on the quests'); } finally { v3.destroy(); }
   const w = rd('src/scenes/world.js');
-  assert.match(w, /people: livingWorldOn\(\) \? \(\) => peoplePage\(livingRelations, Math\.floor\(\(skyMinutes\(\) - 240\) \/ 1440\), livingTownOfId\) : undefined,/);
+  assert.match(w, /people: livingWorldOn\(\) \? \(\) => peoplePage\(livingRelations, livingRegardDay\(\), livingTownOfId\) : undefined,/);   // REGARD-OWN (FIELD BUGS 2026-10-21d): the regard's own day
 });

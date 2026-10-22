@@ -76,6 +76,7 @@ import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AU
 import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
 import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
 import { settleStaleYards } from './decor.js';   // YARD-SNAP: a town's yards built again where a write left them stale
+import { STAFF_AUDIT_KEEP_S } from './staff.js';   // STAFF-PANEL1: the audit log's month
 
 /** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/server/scale4b.test.js holds the two to
  *  each other). The hour's minute is off the hour, where every other Worker's cron lands. */
@@ -237,6 +238,10 @@ export const HOUR_JOBS = Object.freeze([
   // SAFE5 (safetyClock.js): the feed's old batches, a resolved case's lines past their keeping, a case left open past its
   // own, and the reviewer's old daily counts
   ['safety-sweep', (ctx) => safetySweep(ctx)],
+  // STAFF-PANEL1 (mob, 2026-10-22 12:12Z: "only keep for one month"): the staff audit log's rows past STAFF_AUDIT_KEEP_S -
+  // its trigger refuses a delete of any newer (migration 0144)
+  ['staff-audit', (ctx) => rounds(() => deleted(ctx.db,
+    'DELETE FROM staff_audit WHERE id IN (SELECT id FROM staff_audit WHERE at < ?1 LIMIT ?2)', ctx.nowS - STAFF_AUDIT_KEEP_S), SWEEP_ROWS)],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in

@@ -69,7 +69,7 @@ test('GROUND-GATE the relay\'s door, through a real Room: off, an old build is l
       const fetch0 = H.room.fetch.bind(H.room);
       H.room.fetch = (req) => { if (new URL(req.url).pathname === RELAY_INTERNAL_CFG) asked++; return fetch0(req); };
       const B = W.room('world:10,10');
-      const now0 = await join(B, 'new-0001', { gl: GROUND_LAW, gv: GRANT_HELLO_LAW });   // PIN MOVED (GRANT-DOOR, Spawn-Grants section 20): the current build says its spawn grants too - one that did not would ask the hub for the grant door
+      const now0 = await join(B, 'new-0001', { gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1 });   // PIN MOVED (GRANT-DOOR, Spawn-Grants section 20): the current build says its spawn grants too - one that did not would ask the hub for the grant door. PIN MOVED (LEASE1, net/roomLease.js): and that it hands its hub's lease on - one that did not would ask the hub for the lease door
       assert.equal(now0.closed, null, 'the current build is let in');
       assert.equal(asked, 0, 'and asks the hub nothing');
       const old2 = await join(B, 'old-0003');

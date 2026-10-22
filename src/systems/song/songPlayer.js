@@ -196,10 +196,16 @@ export const LOOP_LEAD_SECONDS = 0.02;
  * landed exactly on a window boundary, which at 480 PPQN is every beat.
  */
 export function eventsInWindow(events, fromTick, toTick) {
+  // OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): the window's first event found by
+  // halving - the events are tick-ordered - where every pump walked the song from its first event (a long cue late in
+  // its play: thousands of events a pump, a pump every few frames, in the real game's journey profile). The same events.
+  let lo = 0, hi = events.length;
+  while (lo < hi) { const mid = (lo + hi) >>> 1; if (events[mid].tick < fromTick) lo = mid + 1; else hi = mid; }
   const out = [];
-  for (const e of events) {
+  for (let i = lo; i < events.length; i++) {
+    const e = events[i];
     if (e.tick >= toTick) break;          // events are tick-ordered
-    if (e.tick >= fromTick) out.push(e);
+    out.push(e);
   }
   return out;
 }

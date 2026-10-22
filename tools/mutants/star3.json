@@ -520,5 +520,45 @@
   "tests": [
    "test/net/starfall/star3_relay.test.js"
   ]
- }
+ },
+  {
+    "name": "STAR-TUNE-the-wire-nine",
+    "file": "src/net/wire.js",
+    "old": "export const STAR_WAVE_SIZE_MAX = 24;",
+    "new": "export const STAR_WAVE_SIZE_MAX = 9;",
+    "tests": [
+      "test/net/starfall/star3_relay.test.js"
+    ],
+    "note": "a wave past nine refused on the wire - every reader drops the ledger"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F3-the-older-tab-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "wz: Math.min(led.wz, STAR_WAVE_SIZE_OLD_MAX), kn: led.kn,",
+    "new": "wz: led.wz, kn: led.kn,",
+    "tests": [
+      "test/net/starfall/star3_relay.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F3: an older tab's validStarOut drops the whole st frame past nine - its party's third wave and master stood for nobody"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F3-wx-unread",
+    "file": "src/net/wire.js",
+    "old": "wz: m.wx ?? m.wz,",
+    "new": "wz: m.wz,",
+    "tests": [
+      "test/net/starfall/star3_relay.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F3: a new tab stands nine of a wave of twenty-four"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F3-wx-unbounded",
+    "file": "src/net/wire.js",
+    "old": "if (m.wx !== undefined && !(m.wz === STAR_WAVE_SIZE_OLD_MAX && intIn(m.wx, STAR_WAVE_SIZE_OLD_MAX + 1, STAR_WAVE_SIZE_MAX))) return null;",
+    "new": "if (m.wx !== undefined && !Number.isSafeInteger(m.wx)) return null;",
+    "tests": [
+      "test/net/starfall/star3_relay.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F3: a wave's size past the law's most read off the wire"
+  }
 ]

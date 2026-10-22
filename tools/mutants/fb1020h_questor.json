@@ -1,0 +1,86 @@
+[
+  {
+    "name": "QUESTOR-HELD-the-offer-holds-nothing",
+    "file": "src/systems/npcSession.js",
+    "old": "removeNpcQuestor(nameSeed) { this.npcsWithWork.delete(nameSeed); this._holdSelection(); }",
+    "new": "removeNpcQuestor(nameSeed) { this.npcsWithWork.delete(nameSeed); }",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-HELD-the-load-holds-nothing",
+    "file": "src/systems/npcSession.js",
+    "old": "    // this session's selection is rarely in it\n    this._holdSelection();",
+    "new": "    // this session's selection is rarely in it",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-HELD-only-an-empty-pool-is-held",
+    "file": "src/systems/npcSession.js",
+    "old": "if (this.npcsWithWork.size === 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "new": "if (this.npcsWithWork.size !== 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-HELD-a-held-selection-is-moved",
+    "file": "src/systems/npcSession.js",
+    "old": "if (this.npcsWithWork.size === 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "new": "if (this.npcsWithWork.size === 0 || !this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-HELD-the-first-questor-not-the-last",
+    "file": "src/systems/npcSession.js",
+    "old": "    for (const k of this.npcsWithWork.keys()) last = k;",
+    "new": "    for (const k of this.npcsWithWork.keys()) { last = k; break; }",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-HELD-the-selection-never-written",
+    "file": "src/systems/npcSession.js",
+    "old": "    this.selectedNpcWorkKey = last;",
+    "new": "",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SHE-the-female-arm-is-male",
+    "file": "src/systems/talk/talkMacros.js",
+    "old": "  const female = () => ctx.questorGender?.() === GENDERS.Female;",
+    "new": "  const female = () => ctx.questorGender?.() === GENDERS.Male;",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js",
+      "test/systems/talkmacros.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SHE-the-female-arm-inverted",
+    "file": "src/systems/talk/talkMacros.js",
+    "old": "  const female = () => ctx.questorGender?.() === GENDERS.Female;",
+    "new": "  const female = () => ctx.questorGender?.() !== GENDERS.Female;",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js",
+      "test/systems/talkmacros.test.js"
+    ]
+  },
+  {
+    "name": "QUESTOR-SHE-the-string-back",
+    "file": "src/systems/talk/talkMacros.js",
+    "old": "  const female = () => ctx.questorGender?.() === GENDERS.Female;",
+    "new": "  const female = () => ctx.questorGender?.() === 'female';",
+    "tests": [
+      "test/systems/talk/fb1020h_questor.test.js",
+      "test/systems/talkmacros.test.js"
+    ]
+  }
+]

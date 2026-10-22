@@ -232,7 +232,7 @@
   },
   {
     "name": "GRASSLIT2-host-mean-classic",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundSets.js",
     "old": "drawnMeans ?? layers.map(tileMeanColour)",
     "new": "layers.map(tileMeanColour)",
     "tests": [
@@ -420,7 +420,7 @@
   },
   {
     "name": "AUDIT-GRASSLIT2-B2-means-asked-again",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundSets.js",
     "old": "if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);",
     "new": "// means not kept",
     "tests": [

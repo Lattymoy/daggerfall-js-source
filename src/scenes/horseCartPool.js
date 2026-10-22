@@ -85,6 +85,8 @@ import {
 import { hitchAxle, bogieAxle, steerToward, yawed } from '../systems/horse/horseFollow.js';   // WAGON-HITCH: the shafts' one law, for a peer's trailing wagon (WAGONS2: and a four-wheeler's two)
 import { DeployedWagonVisual, wheelContacts, rolledAngles } from '../systems/horse/horseCart.js';   // DISC20-C: the mod's own two-wheel solve, for a peer's parked wagon (WAGONS2: and each wheel's roll)
 import { PARK_REACH, PARK_TTL_MS } from '../net/wire.js';   // HCC-PARK: how far a kept team's parts may stand from its anchor, and how long the relay keeps one
+import { lensOf } from '../net/peer/peerBodies.js';   // HORSE-VIEW (AUDIT): the lens a body pass draws through - its cadence's
+import { poseWhereSeen } from '../world/horseView.js';   // HORSE-VIEW: a 3D horse posed where it is seen, on the peers' bodies' cadence - the law the road's and the standing horses read too (HORSE-VIEW II)
 import { thrownRecord } from '../systems/wagon/wagonWarden.js';   // WARDEN1: a kept team the town watch threw, where it landed
 import { WAGON_HOVER_TEXT } from '../player/eyeOfTheBeholder/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horse/horseCartWire.js';
@@ -714,19 +716,28 @@ export function createHorseCartPool({
   // following, parked in harness or pulling - is the owner's 3D horse (world/horseRig.js) in the owner's look, drawn in
   // the body pass (draw3d) in place of its billboard: posed off the same team (teamOf), its gait off how far it went
   // this frame, its heading its `forward`, grown with the rig under the Overworld (`g`).
-  /** @type {Map<string, { horse: any, rig: any, at: number[] | null, speed: number, frame: number, conceal: any }>} */
+  /** @type {Map<string, { horse: any, rig: any, at: number[] | null, speed: number, frame: number, conceal: any, phase: number, out: boolean }>} */
   const _h3d = new Map();
   let _dt3d = 0;   // the frame's real seconds (frame's `dt`), the 3D horses' gait step
+  let _h3dPhase = 0;   // HORSE-VIEW: each new 3D horse takes the next phase, so horses on one cadence pose on different frames
   /** A 3D horse's ground speed is eased toward the frame's over this many seconds (a stride does not flicker on a
    *  stutter); a step past H3D_LEAP m/s is a jump - the drawn point snapped - never a gallop. */
   const H3D_EASE = 0.15, H3D_LEAP = 40;
+  /** COATS3D: an owner's horses as 3D horses. HORSE-VIEW: every horse's gait steps every frame, and its pose is written
+   *  and sent only in the last body pass's view (`_cam3d` - draw3d's own test, one frame behind; none yet, all are) on
+   *  the peers' bodies' cadence (world/horseView.js poseWhereSeen: every frame within 10 m, every second to 25, every
+   *  third past it, each horse its phase - AUDIT: by how far it looks from `_cam3d`, the zoomed-out boom's, the
+   *  bench's, the travel view's, over its lens, the spyglass's; before any pass from the frame's own eye, and with no
+   *  eye at all every frame); one skipped out of that view is `out`, and the draw catches its pose up if the view has
+   *  swung onto it (horseRig.js draw's `fresh`), so it never shows a pose from when it was last seen. */
   function pose3dTeam(rig, owner, team, conceal, dt) {
     let i = 0;
+    const cam = _cam3d;
     for (const h of team) {
       if (!h.drawn) continue;
       const key = teamKey(owner, i++);
       let e = _h3d.get(key);
-      if (!e) { const horse = rig.horse(seedOfKey(key)); if (!horse) continue; e = { horse, rig, at: null, speed: 0, frame: 0, conceal: null }; _h3d.set(key, e); }
+      if (!e) { const horse = rig.horse(seedOfKey(key)); if (!horse) continue; e = { horse, rig, at: null, speed: 0, frame: 0, conceal: null, phase: _h3dPhase++, out: false }; _h3d.set(key, e); }
       const g = h.g ?? 1;
       let v = 0;
       if (e.at && dt > 0) v = Math.hypot(h.position[0] - e.at[0], h.position[2] - e.at[2]) / dt / g;   // the stride the horse's own size covers
@@ -735,8 +746,9 @@ export function createHorseCartPool({
       e.speed += (v - e.speed) * (dt > 0 ? Math.min(1, dt / H3D_EASE) : 1);
       e.at = [h.position[0], h.position[1], h.position[2]];
       const yaw = Math.atan2(h.forward[0], h.forward[2]);
-      rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner) });
+      rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner), pose: false });
       if (g !== 1) rig.place(e.horse, h.position, yaw, g);
+      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);   // HORSE-VIEW: posed in the last pass's view, on its cadence - and as it comes into it (HORSE-VIEW II's audit)
       e.frame = _frameNo; e.conceal = owner ? conceal : null;
     }
   }
@@ -745,16 +757,16 @@ export function createHorseCartPool({
   function trim3d() {
     for (const [k, e] of _h3d) if (e.frame !== _frameNo) { e.rig?.release(e.horse); _h3d.delete(k); }
   }
-  let _cam3d = null;   // AUDIT COATS3D A5: the body pass's camera, for the veiled horses after the opaque world
+  let _cam3d = null;   // AUDIT COATS3D A5: the body pass's camera, for the veiled horses after the opaque world; HORSE-VIEW: and the next frame's poses' view - AUDIT: and their cadence's eye and lens
   /** COATS3D: the 3D horses, in the host's body pass (between its sprite batch's open and flush - every Morrowind body's
    *  picture in one bind). Answers how many drew. AUDIT COATS3D A5: a concealed owner's horses are not this pass's - a
    *  veiled picture blends with no depth of its own, and the world drawn after it would paint it out - but drawVeiled3d's. */
   function draw3d(canvas, { proj, view, eye, up = null }) {
     const rig = horses3d?.();
-    _cam3d = rig ? { canvas, proj, view, eye, up } : null;
+    _cam3d = rig ? { canvas, proj, view, eye, up, lens: lensOf(proj) } : null;   // HORSE-VIEW (AUDIT): the lens once a pass (h3dPoseDue's)
     if (!rig) return 0;
     let n = 0;
-    for (const e of _h3d.values()) if (e.frame === _frameNo && !e.conceal && rig.draw(e.horse, canvas, { proj, view, eye, up })) n++;
+    for (const e of _h3d.values()) if (e.frame === _frameNo && !e.conceal && rig.draw(e.horse, canvas, { proj, view, eye, up, fresh: e.out })) n++;   // HORSE-VIEW: one posed out of the last view caught up as it comes into this one
     return n;
   }
   /** AUDIT COATS3D A5: the concealed owners' 3D horses, translucent, in the host's veiled pass (after its opaque world,
@@ -771,7 +783,7 @@ export function createHorseCartPool({
       for (const e of _h3d.values()) {
         if (e.frame !== _frameNo || !e.conceal) continue;
         if (own && !open) { renderer.beginCharacterSpriteBatch(); open = true; }
-        if (rig.draw(e.horse, c.canvas, { proj: c.proj, view: c.view, eye: c.eye, up: c.up, conceal: e.conceal })) n++;
+        if (rig.draw(e.horse, c.canvas, { proj: c.proj, view: c.view, eye: c.eye, up: c.up, conceal: e.conceal, fresh: e.out })) n++;
       }
     } finally { if (open) renderer.flushCharacterSpriteBatch(); }
     return n;

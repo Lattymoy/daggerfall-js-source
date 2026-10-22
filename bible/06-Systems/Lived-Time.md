@@ -203,7 +203,9 @@ journeys make them hungry, as DFU has it. A vampire must still be fed within the
 ## The numbers, and what a rest can buy
 
 The character's clock opens no faucet the world pays for. Everything the world owns reads the world's
-clock: stock, prices, respawns, events, the day's shelf.
+clock: stock, prices, respawns, events, the day's shelf - and a sworn revenant abroad (OFFLINE-ROAD, FIELD BUGS
+2026-10-21, `Revenants.md` section 42): out in the world, it keeps the world's time, so its errand goes on while the
+player is away, and no rest moves it.
 
 What a player can speed by resting is their own waits, each exactly as DFU lets a single player, and
 every cost comes with it:

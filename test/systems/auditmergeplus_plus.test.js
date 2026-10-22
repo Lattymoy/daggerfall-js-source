@@ -34,6 +34,7 @@ import { setBindings } from '../../src/ui/input.js';
 import { attachGamepad } from '../../src/ui/gamepadInput.js';
 import { setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
 import { _resetForTests as resetSettings } from '../../src/systems/settings/settings.js';
+import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';   // FIELD BUGS 2026-10-21b BELT-WAIST: B2's lantern held in the hand
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -198,6 +199,10 @@ test('AUDIT MERGE-PLUS B2 a torch slot whose last torch is gone, pressed under a
 });
 
 test('AUDIT MERGE-PLUS B2 a light that will not light - a Lantern with no oil, the one light a dead flame leaves in the pack - takes the shield off, puts it back, and leaves the equip pause what it was before the press; a torch that lights is a real swap and still pays for it (mutants: the refusal leaves the pause billed)', () => {
+  // PIN MOVED (FIELD BUGS 2026-10-21b BELT-WAIST): a lantern hung at the waist takes no hand, so its slot never moves the
+  // shield (test/systems/fb1021b_beltwaist.test.js) - this law is a HELD light's: the lantern held in the hand, the waist
+  // switch off
+  setModSetting('handheld-torches', 'Handling.LanternsAtWaist', false);
   try {
     for (const pause of [0, 1234]) {
       const r = shieldUp(lightOf(TEMPLATES.Lantern, 'Lantern', 0), { pause });
@@ -212,7 +217,7 @@ test('AUDIT MERGE-PLUS B2 a light that will not light - a Lantern with no oil, t
     assert.equal(lit.press().kind, 'light');
     assert.equal(isEquipped(lit.sh), false, 'the shield came off');
     assert.ok(lit.me.equipCountdown > 0, 'and a torch went up in its place: that swap is billed');
-  } finally { HB.clearQuickslots(); }
+  } finally { HB.clearQuickslots(); _resetModSettings(); }
 });
 
 // ── B3 / B6: the others' blows and hurts ──────────────────────────────────────────────────────────────────────────

@@ -165,15 +165,46 @@ export function challengeDue(player, regionIndex, { ownNow, worldNow = ownNow })
 }
 export function noteChallenge(player, regionIndex, ownNow) { standingOf(player).challengeAt[regionIndex] = ownNow; }
 export function grantGrace(player, regionIndex, ownNow) { standingOf(player).graceUntil[regionIndex] = ownNow + CHALLENGE_GRACE_MINUTES; }
+/** FIELD BUGS 2026-10-21d PATROL-GRACE: whether a road patrol's knight draws on the character (LW9) - a known criminal
+ *  in the patrol's region, and no grace standing there. The grace an answered law gives (a sentence served, a fine paid:
+ *  "nobody stops a criminal on the courthouse steps") held the town's watch alone: a prisoner let out was met on the
+ *  road outside by a knight who drew at once, could not be surrendered to, and whose death in the fight the road carried
+ *  to the town as a Murder - a charge no court ever tried, so none could give it back. */
+export function patrolHalts(player, regionIndex, { ownNow, worldNow = ownNow }) {
+  return knownCriminal(player, regionIndex, { ownNow, worldNow }) && ownNow >= (standingOf(player).graceUntil[regionIndex] ?? -Infinity);
+}
 /** FIELD BUGS 2026-10-14 FINE-MENDS (Dweme... on the Discord: stopped for 560 gold three times with no new crime; Mac:
  *  "Fine raises standing"). A fine paid on the spot mends the payer's name by a temple penance's step (PENANCE_POINTS),
  *  never past the watch's line - a fine bought a day's grace and nothing else, so the same standing stopped the player
  *  again the day after for the same sum. A name a step or two under the line is clear in a fine or two; one far under it
  *  pays more fines, each its standing's price. Answers the points moved. */
-export function settleChallenge(player, regionIndex) {
+export function settleChallenge(player, regionIndex) { return mendToLine(player, regionIndex, 'fine'); }
+/** FIELD BUGS 2026-10-21d SENTENCE-MENDS (the "Retaining criminal status even after going to prison and serving
+ *  sentence" thread: "Guards will still chase you down and kill you, even if you have already been to prison"; today,
+ *  "Does serving time NOT count as 'doing penance'?"). A sentence the court passed and the prisoner answered - days
+ *  served, or the court's fine paid with none - mends the name as the watch's fine does (FINE-MENDS' step, never past the
+ *  line, the People's half with it). The court gave back the charge it tried (REP2) and nothing of the name it priced the
+ *  sentence by, so a standing under the line before the arrest - a quest's `legal repute` (A0C00Y17's escort refused to
+ *  the watch: -20), a report the road carried, an online death's kept charge - walked out of prison as known as it went
+ *  in: stopped again a day later, the patrols drawing on it, and the stop's own "come quietly" a closed loop (a
+ *  Conspiracy charged, served and given back). Not an acquittal (the court tried nothing to answer), a guild's rescue
+ *  (the guild answered, not the prisoner) or a banishment (DFU's state 4 repairs nothing). Answers the points moved.
+ *  AUDIT FB1021d SM-3: it answers the name the prisoner CAME IN WITH - never past what stood under the line before the
+ *  charge (`from`, arrestFlow.js chargeOnce) - so the crime's own mark (REP2's, DFU's: a Murder keeps half its charge) is
+ *  the court's due, as DFU keeps it: a Treason from a clean name stays -18, where the step had worn it to -13.
+ *  SM-4: and once a grace - an answer inside the day's grace the last one gave (`ownNow`) mends nothing more, so a petty
+ *  crime self-reported (a night in the street, given back whole) is no step an hour.
+ *  @param {any} player @param {number} regionIndex @param {{ from?: number | null, ownNow?: number | null }} [at] */
+export function sentenceMends(player, regionIndex, { from = null, ownNow = null } = {}) {
+  if (ownNow != null && ownNow < (standingOf(player).graceUntil[regionIndex] ?? -Infinity)) return 0;
+  return mendToLine(player, regionIndex, 'served', from == null ? Infinity : Math.max(0, KNOWN_CRIMINAL_BELOW - from));
+}
+/** An answer to the law - the watch's fine, a sentence - mends the name by a temple penance's step toward the watch's
+ *  line, never past it (nor past `most`), and the People's half with it (FINE-PEOPLE). Answers the points moved. */
+function mendToLine(player, regionIndex, kind, most = Infinity) {
   const rep = legalRepOf(player, regionIndex);
-  const pts = rep < KNOWN_CRIMINAL_BELOW ? Math.min(PENANCE_POINTS, KNOWN_CRIMINAL_BELOW - rep) : 0;
-  if (pts) { changeLegalRep(player, regionIndex, pts, { kind: 'fine' }); raisePeopleForAnswer(player, regionIndex, pts); }   // FINE-PEOPLE
+  const pts = rep < KNOWN_CRIMINAL_BELOW ? Math.min(PENANCE_POINTS, KNOWN_CRIMINAL_BELOW - rep, most) : 0;
+  if (pts) { changeLegalRep(player, regionIndex, pts, { kind }); raisePeopleForAnswer(player, regionIndex, pts); }   // FINE-PEOPLE
   return pts;
 }
 /** The fine the watch asks on the spot: the court's own Criminal Conspiracy penalty at this standing, every unit in coin

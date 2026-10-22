@@ -22,6 +22,7 @@ export const RELAY_CFG_VARS = Object.freeze({
   grantRoll: 'GRANT_ROLL',   // GRANT8 (Spawn-Grants.md section 16): 'on' - an encounter's grant rolls its species from its seed (`encr`); off unset
   grantStrip: 'GRANT_STRIP',   // GRANT9 (Spawn-Grants.md section 16): 'on' - the relay drops a record its grant does not stand (FOE-BOUNDS, section 19: and one no builder could give); off unset
   grantDoor: 'GRANT_DOOR',   // GRANT-DOOR (Spawn-Grants.md section 20): 'on' - a foes room refuses a build whose hello says no spawn grants (net/wire.js GRANT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
+  leaseDoor: 'LEASE_DOOR',   // LEASE1 (net/roomLease.js): 'on' - a lease room refuses a hello that does not hand on its hub's lease, and hears a bound socket in nothing but its ping while it holds no live lease; off unset, and off until the site serves the build that says it, since the relay deploys first
 });
 /** The settings a developer may set. */
 export const RELAY_CFG_KEYS = Object.freeze(Object.keys(RELAY_CFG_VARS));

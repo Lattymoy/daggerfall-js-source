@@ -20,7 +20,8 @@ QuestLogEntry:  [1010]
 %qdt:
  Hamid al-Rasheen has asked me to sail the packet
  lanes and watch the water. I am to make port twice
- under sail. If the Old Coil swims, the lanes will
+ under sail, each port a quarter league or more from
+ the last. If the Old Coil swims, the lanes will
  show its signs, and Hamid's packet will be looking
  out for my sails.
 

@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB1022B-CREATE-HOME-the-repair-reads-place-actions-alone",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "PlaceFoe: 'foeSymbol', CreateNpc: 'npcSymbol' });",
+    "new": "PlaceFoe: 'foeSymbol' });",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-CREATE-HOME-a-questor-homed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "(person?.isPerson && !person.isQuestor && !person.isIndividualNPC ?",
+    "new": "(person?.isPerson && !person.isIndividualNPC ?",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-CREATE-HOME-an-individual-homed",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "(person?.isPerson && !person.isQuestor && !person.isIndividualNPC ?",
+    "new": "(person?.isPerson && !person.isQuestor ?",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-CREATE-HOME-the-assignment-left-empty",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    if (it.res.isPerson && !it.res.assignedPlaceSymbol) it.res.setAssignedPlaceSymbol?.(it.place.symbol);",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-create-npc-places-nobody",
+    "file": "src/systems/quest/actions.js",
+    "old": "    person.placeAtHome();",
+    "new": "    void person;",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  },
+  {
+    "name": "FB1022B-the-talk-names-him-in-any-town",
+    "file": "src/systems/topicTree.js",
+    "old": "            if (assignedPlace.siteDetails.mapId === (this.deps.currentMapId?.() ?? 0)) isPlayerInSameLocationWorldCell = true;",
+    "new": "            isPlayerInSameLocationWorldCell = true;",
+    "tests": [
+      "test/systems/quest/fb1022b_courier.test.js"
+    ]
+  }
+]

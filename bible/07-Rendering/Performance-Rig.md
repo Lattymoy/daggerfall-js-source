@@ -226,6 +226,11 @@ take a phase each so eight far bodies do not all skin on the same
 frame, and the skipped frames' dt is banked and handed to the particle
 step on the frame that poses, so a puff keeps wall time.
 
+HORSE-VIEW's audit (2026-10-21, `07-Rendering/Performance-Priority.md` HORSE-VIEW): the distance the cadence reads is
+the camera's that drew the last pass, over its lens (`net/peer/peerBodies.js` `cadenceD2` and `lensOf`) - the
+zoomed-out third-person camera stands 11.4 m behind the head, and the spyglass draws a body 80 m off as large as one
+10 m off. Before any pass, the distance from `near`, as written here.
+
 **Measured** by `tools/peerBodiesProbe.mjs`: the real PeerBodies over
 the real rig on the arm fixtures (`test/fixtures/mw/bodyRig.mjs`, the
 same build fparm.test.js stands), a counting renderer, 600 frames of

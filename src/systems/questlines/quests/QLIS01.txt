@@ -23,8 +23,9 @@ QuestLogEntry:  [1010]
  A note came from _master_, a harbormaster who
  drinks at _tavern_ here in __tavern_ and needs a
  captain. I am to take a ship out of any port and
- bring her into another under sail, then come back
- to _tavern_ for my purse.
+ bring her into the harbor of another, a quarter
+ league off or more, then come back to _tavern_ for
+ my purse.
 
 Message:  1011
 To whoever reads this with a ship in mind,
@@ -33,7 +34,8 @@ To whoever reads this with a ship in mind,
  captains in the taverns than at sea. Prove you are
  not one of them. Take a ship - your own, or one
  bought at a shipyard - out of any port, and bring
- her into another under sail. Not by the road. Sail.
+ her into the harbor of another a quarter league
+ off or more. Not by the road. Sail.
 
      Then come and find me at _tavern_, and
  there is a purse in it.
@@ -53,8 +55,9 @@ Message:  1013
 
 Message:  1014
 <ce>         "Sailed yet? No? The sea is not in this tavern,
-<ce>          friend. Out of one port and into another, under
-<ce>          sail, and then we talk."
+<ce>          friend. Out of one port and into the harbor of
+<ce>          another, a quarter league off at the least, and
+<ce>          then we talk."
 
 Message:  1015
 <ce>         "Into port under your own sail! The coast needs

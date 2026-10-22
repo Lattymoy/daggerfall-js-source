@@ -345,8 +345,8 @@
   {
     "name": "OWS2-sea-leg-road-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const rect = leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(",
-    "new": "const rect = false ? rectOf(",
+    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(o.x + SEA_LEG_LO",
+    "new": "      : false ? rectOf(o.x + SEA_LEG_LO",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "OWS2-host-sails-left-up",
     "file": "src/scenes/world.js",
-    "old": "if (csaRuntime?.isSailing() && csaRuntime.state.sailPosition > 0) csaHelmPress(CSA_BOAT_ACTIONS.toggleSail);",
-    "new": "if (false) csaHelmPress(CSA_BOAT_ACTIONS.toggleSail);",
+    "old": "if (csaRuntime?.isSailing() && csaRuntime.state.sailPosition > 0) csaJourneyHelm.press(CSA_BOAT_ACTIONS.toggleSail);",
+    "new": "if (false) csaJourneyHelm.press(CSA_BOAT_ACTIONS.toggleSail);",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "AUDIT-OWS-A1-load-keeps-the-hand",
     "file": "src/scenes/world.js",
-    "old": "    csaJourneyHelm.held.clear(); csaJourneyHelm.row = false; tvSea.means = null; tvSea.phase = null; tvSea.boat = null; tvSea.wasLive = false;   // AUDIT OWS A1",
-    "new": "    tvSea.wasLive = false;   // AUDIT OWS A1",
+    "old": "    csaJourneyHelm.held.clear(); csaJourneyHelm.row = false; tvSea.means = null; tvSea.phase = null; tvSea.boat = null; tvSea.wasLive = csaJourneyHelm.live = false;   // AUDIT OWS A1",
+    "new": "    tvSea.wasLive = csaJourneyHelm.live = false;   // AUDIT OWS A1",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

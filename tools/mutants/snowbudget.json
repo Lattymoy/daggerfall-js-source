@@ -25,14 +25,5 @@
     "tests": [
       "test/systems/weather/snowbudget.test.js"
     ]
-  },
-  {
-    "name": "SB-the-slope-read-first",
-    "file": "src/scenes/snowCoverHost.js",
-    "old": "    if (cover <= 0) return 0;\n",
-    "new": "",
-    "tests": [
-      "test/systems/weather/snowbudget.test.js"
-    ]
   }
 ]

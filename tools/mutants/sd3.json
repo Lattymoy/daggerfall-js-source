@@ -192,12 +192,12 @@
   {
     "name": "SD3-a-returner-refused",
     "file": "server/src/index.js",
-    "old": "    if (sub && realm.in.includes(sub)) return null;",
+    "old": "    if (sub && realm.in.includes(sub)) { this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH",
     "new": "",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "One who entered may come back until the Hollow is gone."
+    "note": "SD-THROUGH (re-aimed by content): a returner's admission tells the hub too (the Way Through). One who entered may come back until the Hollow is gone."
   },
   {
     "name": "SD3-two-seats",

@@ -553,10 +553,21 @@ export function bloodAtlas() {
   _builder = null;
   return _atlas;
 }
+/** OW-HITCH: the longest the prewarm waits for idle time before it takes a cell anyway. */
+export const BLOOD_PREWARM_WAIT_MS = 250;
 /** BLOOD5: build the shared sheet in the page's idle time, a few cells
  *  a slice, so the first mark finds it made. `idle` is the scheduler
  *  (the browser's requestIdleCallback); without one this does nothing
- *  and the first mark builds it, as before. Answers whether it started. */
+ *  and the first mark builds it, as before. Answers whether it started.
+ *
+ *  OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): A PAGE THAT NEVER IDLES STILL
+ *  GETS ITS SHEET. An idle callback runs only when a frame leaves time before the next - and a world frame that spends
+ *  its whole interval (a slow machine, the stream building, an uncapped rate) leaves none, so the sheet waited for the
+ *  first blow and was built whole inside that frame's HUD: forty cells of noise, the real game's longest frame of a
+ *  journey after the grass's. Each request now names a wait (BLOOD_PREWARM_WAIT_MS); one that runs because the wait
+ *  ran out (`didTimeout`, no time remaining) takes ONE cell - a fortieth of the sheet - and asks again, so a busy page
+ *  finishes it in ten seconds a cell at a time and an idle one as before. The same steps in the same order: the same
+ *  sheet to the byte. */
 export function prewarmBloodAtlas(idle = globalThis.requestIdleCallback) {
   if (_atlas || _builder || typeof idle !== 'function') return false;
   _builder = atlasBuilder();
@@ -564,9 +575,9 @@ export function prewarmBloodAtlas(idle = globalThis.requestIdleCallback) {
     if (_atlas || !_builder) return;
     do { if (_builder.step()) { _atlas = _builder.atlas; _builder = null; return; } }
     while ((deadline?.timeRemaining?.() ?? 0) > 6);
-    idle(slice);
+    idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });
   };
-  idle(slice);
+  idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });
   return true;
 }
 

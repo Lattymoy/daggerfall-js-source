@@ -101,6 +101,6 @@ test('MAKER-KEPT migration 0123: a hold, a timed hold and strikes law 5 laid on 
     // the next checkpoint, under law 6, carrying the piece: nothing holds, no strike
     assert.equal((await s.put(seats.timed, [cleaver()])).tradeHeld ?? null, null);
     assert.deepEqual([s.row(seats.timed.R.id).held, s.row(seats.timed.R.id).strikes, s.row(seats.timed.R.id).law_sig], [null, 0, null]);
-    assert.equal(JUDGE_VERSION, 8);   // PIN MOVED (WITCH1): law 8 - the Soul Cake and the Hearth Offering known to the service's law; PIN MOVED (KEY-LAW): law 7 - the Weir Key known to the service's law; the era's pieces lawful from law 6 on
+    assert.equal(JUDGE_VERSION, 9);   // PIN MOVED (SOUL-LAW, FIELD BUGS 2026-10-20h): law 9 - a soul of Daggerfall Enemy Expansion's fifty lawful in a Soul Gem or Azura's Star; PIN MOVED (WITCH1): law 8 - the Soul Cake and the Hearth Offering known to the service's law; PIN MOVED (KEY-LAW): law 7 - the Weir Key known to the service's law; the era's pieces lawful from law 6 on
   } finally { s.done(); }
 });

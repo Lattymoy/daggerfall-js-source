@@ -340,13 +340,19 @@ test('QL11 port-reached (scenes/harbourOffice.js): a berth at another port than 
     L.sailed(PORT_VOYAGE_M * 4);
     berth(o, WAYREST);
     assert.equal(heard.length, 1, 'out and home to the same port: no port reached');
-    // a load lays a new log - its way is the save's, never a voyage of this session's
-    L.restoreSaveData({ ...L.getSaveData(), log: { ...L.getSaveData().log, sailed: 1e6 } });
+    // PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): a load keeps the voyage its save was on - the departure is its log's
+    // own (it had read the first berth after a load as only where she lies, and a relog or a crash between two ports lost
+    // the voyage) - and a departure past its log's way is no departure
+    L.sailed(PORT_VOYAGE_M / 2);
+    const mid = JSON.parse(JSON.stringify(L.getSaveData()));
+    L.restoreSaveData(mid);
+    L.sailed(PORT_VOYAGE_M / 2);
     berth(o, SENTINEL);
-    assert.equal(heard.length, 1, 'the first berth after a load marks where she lies');
-    L.sailed(PORT_VOYAGE_M);
+    assert.deepEqual(heard, [['port-reached', 1], ['port-reached', 1]], 'loaded half way, the voyage kept');
+    L.restoreSaveData({ ...mid, log: { ...mid.log, departed: { port: SENTINEL.key, sailed: mid.log.sailed + 1 } } });
+    assert.equal(L.log.departed, null, 'a departure further on than its log: none');
     berth(o, WAYREST);
-    assert.deepEqual(heard, [['port-reached', 1], ['port-reached', 1]]);
+    assert.equal(heard.length, 2, 'the first berth with none marks where she lies');
   } finally { done(); }
 });
 

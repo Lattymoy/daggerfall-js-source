@@ -219,10 +219,10 @@ test('MEADOW1: which sprite a blade wears and how big its card stands - the vert
     for (const t of [0, 0.7, 2.3]) {
       const gust = Math.sin(t * 1.7 - 15 * 0.35) * 0.5 + 0.5;   // the root 15 m down the wind; the phase byte 0
       const [xw] = top(r, 0.5, [6, 0], t);
-      assert.ok(Math.abs((xw - x0) - 6 * (0.55 + gust * 0.75) * LAB_LEAN_PER_PUSH * MEADOW_VARIANTS[v].sway * k) < 1e-9, `${MEADOW_VARIANTS[v].name} at ${t} s: its share of the wind's lean`);
+      assert.ok(Math.abs((xw - x0) - 6 * (0.6 + gust * 0.45) * LAB_LEAN_PER_PUSH * MEADOW_VARIANTS[v].sway * k) < 1e-9, `${MEADOW_VARIANTS[v].name} at ${t} s: its share of the wind's lean`);
     }
   }
-  assert.deepEqual([LAB_LEAN_PER_PUSH, LAB_GUST_MAX], [0.055, 1.3]);
+  assert.deepEqual([LAB_LEAN_PER_PUSH, LAB_GUST_MAX], [0.032, 1.05]);   // SWAY-SOFT: 0.055 and 1.3 before
   // ...and lit by the lean it stands at, not the blade's: a bush leaning 0.25 stands at its third of it, under a sun overhead
   const litBy = (lx) => Math.hypot(0, 1.2) / Math.hypot(lx, 1.2);   // its normal, up off level ground and back off its lean
   const bushLit = vs.run({ aPB: [1, 0.5, 0, 0], aCorner: [0.5, 1], aCard: 0, uWindV: [0, 0], uSunDir: [0, 1, 0], uMoonDir: [0, 1, 0] }).vLam;
@@ -230,7 +230,7 @@ test('MEADOW1: which sprite a blade wears and how big its card stands - the vert
   const bladeLit = vs.run({ uArt: 0 }).vLam;
   assert.ok(Math.abs(bladeLit - litBy(0.25)) < 1e-12, '...the pixel style\'s blade by the whole of it');
   vs.run({ uArt: 1 });
-  assert.ok(GAME_GRASS_VS.includes('float push = length(uWindV) * (0.55 + gust * 0.75);') && GAME_GRASS_VS.includes('vec2 lean = aInst2.xy + wdir * push * 0.055;'), 'the lab\'s own law, whose numbers those are');
+  assert.ok(GAME_GRASS_VS.includes('float push = length(uWindV) * (0.6 + gust * 0.45);') && GAME_GRASS_VS.includes('vec2 lean = aInst2.xy + wdir * push * 0.032;'), 'the lab\'s own law, whose numbers those are');
   // the switch off is the pixel style's blade: no card, no pick
   const off = vs.run({ uArt: 0, aPB: [0.5, 0.5, 0.5, 0], aCorner: [0.5, 1], uWindV: [0, 0] });
   assert.ok(Math.abs(off.gl_Position[1] - h) < 1e-9, 'the pixel style stands the blade its own height');
@@ -659,11 +659,11 @@ test('MEADOW1: a cell in the meadow is one indexed draw of a third of its blades
   };
   const sunny = { dir: [0, 1], speed: 70, windV: [0, 70 * LAB_WIND_RATE] };
   assert.deepEqual([near(-0.3, WIND, 'pixel'), near(-0.3, WIND, 'meadow')], [0, 1], 'roots behind the near plane: the pixel style\'s quads are not in view, the meadow\'s cards are');
-  const back = -(decoded(0.7) * MEADOW_REACH) - 0.3;   // past the reach standing still, inside it in a clear day's wind
+  const back = -(decoded(0.7) * MEADOW_REACH) - 0.04;   // past the reach standing still, inside it in a clear day's wind (SWAY-SOFT: 0.3 past it before - the wind's reach is under half what it was, and carries a card about 0.075 past it)
   assert.deepEqual([near(back, WIND, 'meadow'), near(back, sunny, 'meadow'), near(back, { ...sunny, sway: false }, 'meadow')], [0, 1, 0], 'the wind\'s reach is the frame\'s - and none while the trees stand still');
   const cb = r._cardBox, box = r.slotBox[4], reach = r.slotCardH[4] * MEADOW_REACH;
   assert.deepEqual([...cb].map((v) => +v.toFixed(9)), [box[0] - reach, box[1], box[2] - reach, box[3] + reach, box[4] + r.slotCardRise[4], box[5] + reach].map((v) => +v.toFixed(9)), 'the widened box: the reach across, the tallest card\'s top over the blades\'');
-  assert.ok(Math.abs(MEADOW_WIND_REACH - 2.25 * 1.25 * 0.055 * 1.3 * 0.6 * (52 / 64) ** 2) < 1e-12, 'a metre a second of wind: the bush\'s reach, the farthest');
+  assert.ok(Math.abs(MEADOW_WIND_REACH - 2.25 * 1.25 * 0.032 * 1.05 * 0.6 * (52 / 64) ** 2) < 1e-12, 'a metre a second of wind: the bush\'s reach, the farthest');
 });
 
 test('AUDIT MEADOW1: the meadow\'s box holds every card the stage draws - every sprite, card and corner at the lush patch\'s size, the steepest standing lean, a full gust at the wind slider\'s top, and a slope - and only just (mutants: the wind\'s reach or the standing reach shrunk, the slope left out)', () => {

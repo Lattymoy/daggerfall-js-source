@@ -185,8 +185,16 @@ round it to a crest at 7 m and falling away to 9.6 m, nine stones thrown onto th
 upright, two and a half metres out of the earth and sunk most of a metre into it, the rest leaning out from it) and three
 strands of thread that wind up the stone and run 90 m straight up (`world/starfall/starModel.js`). Every shape is the star's
 own roll, so every screen builds the same crater. The host builds it for a player within `STAR_BUILD_M` (1500 m), puts
-the stone in the collider, keeps the grass off the crater and its rim (`STAR_BARE_R`) and builds it again when the
-ground under it is built finer (`scenes/starfall/starfallHost.js`). The sky is one foreign pass after the Hollow's omen
+the stone AND its crater - the floor, the rim and its stones - in the collider, keeps the grass off the crater and its
+rim (`STAR_BARE_R`) and builds it again when the ground under it is built finer (`scenes/starfall/starfallHost.js`).
+STAR-TUNE (2026-10-20, the owner, of the first run: "The dirt mound where the star is crashed can be walked through"):
+the first build gave the collider the stone alone (`buildStarModel`'s `ground: false`), so the rim's 1.1 m of thrown
+earth was drawn and never held. It is held now, as a LATE solid (`player/lateSolid.js`, ROCK-CLEAR's gate): a crater
+built round a body standing on its rim is withheld until the body is clear of it, never closed on it, and the world
+frame's own settle stands it behind them. AUDIT STAR-TUNE F4: and a crater built AGAIN - the ground under it read finer
+as a player walks up to it - is a new solid asked of the body the same way (taken down and added); only a recentre puts
+the same solid back where it is held. A foe's stand is read from over the rim's crest (`standOn`), so one stood on
+the rim or the floor - the master's circle, called about a master fighting at the stone - lands on it, never under it. The sky is one foreign pass after the Hollow's omen
 (`render/starfall/starfallPass.js`): the omen's glow, the streak's head and trail, the landing's flash and ring, and the
 beacon, each drawn scaled about the eye to `STAR_SKY_R` (4200 m) so the far plane (6000 m) never cuts a star that burns
 9 km up. The sounds are DAGGER.SND's own records, pitched (`systems/starfall/starSounds.js`).
@@ -226,8 +234,25 @@ player at the star after `STAR_ORPHAN_MS` (10 s). The relay starts the first wav
 first word from the star. (The first build sprang it from `STAR_SPRING_M`, 80 m - the audit's C2, below.)
 
 **The waves** (`STAR_WAVES` 4). The relay says each wave's start and its size (`starWaveSize(k, n)` -
-`clamp(2 + n + (k >= 3 ? 1 : 0), 3, 9)`, `n` the defenders standing at the star when it starts), so every screen
-agrees. The owner stands them, out of sight at the crater's edge (25 to 35 m), from the coven's roster for the
+`min(4 + 2(n - 1) + (k - 1), 24)`, `n` the defenders standing at the star when it starts, one at the least), so every
+screen agrees: a lone defender's 4, 5, 6 and 7; two, 6 to 9; four, 10 to 13; eight, 18 to 21; ten or more, the most by
+the last wave. Twenty-four is one spawn grant's most (`net/grantLaw.js`): the star stands under a grant kind of its own,
+`star` (a wave of any size its law gives one ask, its bucket its own - never the camps' `site`, nine a grant, which the
+first build's waves were held to; the open country's alone), and the `st` frame carries a wave that size
+(`net/wire.js` `STAR_WAVE_SIZE_MAX`). Each foe is shared by those who fight it besides (`systems/party/partyScale.js`).
+The most a star's owner stands at once is a wave's twenty-four, the master and two calls of the Heart-Star's circle -
+forty-five (`STAR_LIVE_MAX`), a reader's allowance the same (`WOD_STAR_PUPPETS_MAX`), under one owner's frame of
+sixty-four. The owner's stand rolls each place's angle and radius from blocks of its own, thirty-two a wave
+(`STAR_STAND_ROLLS`), so no wave of twenty-four shares a roll with the next. The coven's foes - its waves and its circle - stand with `STAR_FOE_HEALTH` (2)
+times their health, as the rite's Summoner stands with its own (`scenes/riteHost.js`): what the rite on a star calls is
+no foe of the road. The master is an elite already (x5), and stands as one. The relay bounds a camp's foe by it
+(`net/foeBounds.js` `FOE_BOUND.star`), so a reader never strips the coven its owner stood. STAR-TUNE (the owner, of the
+first run: "the enemies are too few and die too quickly. Does this not have scaling?"; then "we should go beyond the
+limit"): the first build's size was `clamp(2 + n + (k >= 3 ? 1 : 0), 3, 9)` - a lone defender's 3, 3, 4 and 4, a party
+of eight's nine - and its foes the road's, the wilds' own
+progression and the hero's threat alone (`scenes/exteriorFoes.js` spawnFoe). The owner stands them just past the
+crater's thrown earth (`STAR_STAND_R`, 14 to 20 m - 25 to 35 in the first build, whose waves spent their first seconds
+walking in), from the coven's roster for the
 defenders' level - the band (`starBandOf`, the median level of the defenders the relay heard: band 1 to level 8,
 band 2 to 15, band 3 from 16), because Daggerfall's monsters have fixed levels and some want silver, dwarven or mithril
 to hurt (`ENEMY_BASICS` minMetalToHit), so a band never stands a foe its players cannot fight:
@@ -243,9 +268,12 @@ The coven's members are women (DFU: a witches' coven's people are always female 
 their coven - *Sister of the Bluff*, *Dust Witch*. Mephala is the Patroness of the Dark Brotherhood, so her own are
 murderers as well as Daedra.
 
-A wave ends when its foes are all dead (the owner's word, never sooner than `STAR_KILL_MIN_MS` (2.5 s) a foe), or
+A wave ends when its foes are all dead (the owner's word, never sooner than its foes shared among its defenders could
+die: `starClearFloorMs`, `STAR_KILL_MIN_MS` (2.5 s) for each foe of a defender's share - AUDIT STAR-TUNE F2), or
 `STAR_WAVE_MAX_MS` (100 s) after it began - then the next comes whether the last is dead or not. Between waves the
-coven draws breath for `STAR_BREATH_MS` (12 s) and the star's light steadies (`STAR_BREATH_LIGHT`, 15).
+coven draws breath for `STAR_BREATH_MS` (5 s) and the star's light steadies (`STAR_BREATH_LIGHT`, 15). STAR-TUNE (the
+owner: "The time between waves is too long"): the first build's breath was 12 s and its waves stood 25 to 35 m out -
+some twenty seconds from a wave's last death to the next one's first blow; both are cut.
 
 **The light.** A star has `STAR_LIGHT` (100). The coven's summoned that fight hand to hand go for the STAR, not the
 defenders: the star stands in the target machine as a body of its own (the townsperson's law,
@@ -700,7 +728,7 @@ holds what it can check: the window, the cell, the pose, the order of the waves,
 
 **What the relay cannot check, said.** A word is its player's own. The owner's machine runs the foes, so the owner's
 word moves the waves, the light and the master's fall. A modified owner could clear a wave early (never sooner than
-2.5 s a foe), drain the star (never faster than 9 blows a second) or call the master fallen (never sooner than 45 s
+2.5 s for each foe of a defender's share), drain the star (never faster than 9 blows a second) or call the master fallen (never sooner than 45 s
 after it stood). The last pays the defenders who struck and stood there; the service bounds what a receipt is worth
 (once a star, nine a day). A word for a forged pixel is a ledger of its own and stands in no other's way: once over it
 costs no place, and while live it keeps one against a new star only while somebody stands at it - an account stands
@@ -765,6 +793,27 @@ they meet:
 
 ## 13. Versions and deploy order
 
+STAR-TUNE moves the relay alone, to **world238** (world236 on its branch, renumbered past LONE-HERALD's world236 and
+FIELD BUGS 2026-10-20f's world237 at the merge with main): the wave's size and the breath are the relay's law, the `star` grant
+kind its mint, the `st` frame's wave to twenty-four, and the foe bounds its strip reads (`net/foeBounds.js`); the star
+word does not change, so `STAR_RELAY_MIN` stays 235, and the account service's version does not move. Relay first,
+then the client - but the site goes live as soon as the account service answers its version, which STAR-TUNE does not
+move, while the relay's deploy sweeps and waits out live fights first, so for an hour or more either side can be the
+older (AUDIT STAR-TUNE):
+
+- **A new client, an older relay (F1).** The client asks the `star` grant kind only of a relay that mints it
+  (`net/grantLaw.js` `STAR_GRANT_RELAY_MIN` 238, the welcome's version - `online.js` `starGrantOk`); of an older one, the
+  stand's own kind, main's (`site`, the master `kept`), whose waves that relay's law holds to nine. Asked `star`, world237
+  answers `kind`: under `enforce` no wave stood, under `grantStrip` the coven was its owner's alone.
+- **An older client, the new relay (F3).** An older client's `validStarOut` read `wz` nine at most and dropped the whole
+  `st` frame past it - an older tab that owned a party's star stood its third wave on for nobody, nor the master. The
+  cell says `wz` nine at most and a larger wave whole in `wx` (`net/wire.js` `STAR_WAVE_SIZE_OLD_MAX`); this client
+  reads `wx` back into `wz`, an older one projects it away and stands nine (the wave still clears on its `wc`).
+- **An older reader, a new owner (F3, not fixable from here).** An older reader's foe bound gives a camp's monster no
+  coven's multiplier, so it removes a toughened coven foe whose health passes its old bound (silently, as a refused
+  record) - by about x1.3 for the band-1 Spider, Giant Bat and type 3, x2.2-2.7 for the rest; a level-20 hero's threat
+  alone is x1.48. Only its reload mends it; the bound would have had to ship a release before `toughen`.
+
 Relay first (it signs), then the account service (its migration first), then the client. The relay's version moves for
 the frame, the receipt and the hub's door - world235 (world233 on the branch, renumbered past SD-SEA's world233 and
 DEX1's world234 at the merge with main, `STAR_RELAY_MIN` with it, so neither of those relays is ever sent a star's word;
@@ -786,6 +835,7 @@ minted before this, so no finding a law made could be a finding to ask again (it
 | STAR7 | the rewards: the claim, the service, the spoils, Starglass (Starfall Glass since AUDIT STAR), the Starspun Weave |
 | STAR8 | the questline: The Thirteenth of Frostfall - four scripts and sheets, the `festival` group, `opens.event`, the `starfall` need on the festival's calendar, the `star-held` act, the `star`/`stars3` witnesses, Starwarden; `ql name` names a foe (`star8_frostfall`, `ql12_claim`) |
 | AUDIT STAR | the words, the plate, the glass's name and the Weave's powers read again (sections 6 and 8; `Sigil-Sets.md` 6f) |
+| AUDIT STAR-TUNE | STAR-TUNE read cold (pull request #1090): F1 the `star` kind asked only of a relay that mints it, F2 a wave's floor shared by its defenders, F3 an older tab's `st` kept (`wx`), F4 a crater built again asks the body again (sections 4, 10, 13; `Spawn-Grants.md` 4) |
 
 ## 15. Not done, and why
 

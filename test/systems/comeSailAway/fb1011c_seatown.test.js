@@ -27,6 +27,7 @@ import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAw
 import { Boat, boatAnimators, spawnBoat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { PrefabNode } from '../../../src/world/prefabNode.js';
+import { passengerCard } from '../../../src/scenes/naval/passageHelm.js';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
@@ -214,6 +215,7 @@ test('SEA-TOWN HUDS: the naval HUD with no ship near (or the HUD covered) is han
     // PIN MOVED (THE CAPTAIN'S SEA, SPYGLASS - at the merge of main): the plate is handed the glass's state too (its
     // Glass brass while the glass is up), so the host's glass stands in its scope
     spyglass: { up: false },
+    travelView: null,   // PIN MOVED (FIELD BUGS 2026-10-21d PASSAGE-PLATE): the plate goes under the Overworld's controls
   };
   const navalHud = mount(scope, cut(WORLD, 'function navalHud(dt = 0) {', '\n  }\n'), 'navalHud');
   navalHud(0.25);
@@ -248,6 +250,7 @@ test('SEA-TOWN HUDS: the naval HUD with no ship near (or the HUD covered) is han
     touch: null, cursorActive: () => false, pointerSurfaces: new Set(), csaHelmHooks: { hooks: true },
     csaKeyLabel: (a) => { labels++; return `[${a}]`; },
     drawEnhancedHelm: (state, hooks) => helmDrawn.push({ state, hooks }),
+    passengerCard,   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the real card law (no charter here)
   };
   const csaDrawHelmPanel = mount(hs, cut(WORLD, 'function csaDrawHelmPanel() {', '\n  }\n'), 'csaDrawHelmPanel');
   csaDrawHelmPanel();
