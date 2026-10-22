@@ -99,7 +99,10 @@ test('RR1 advancedArchery: the draw ladders (:530-578) - hit chance by the hold,
   assert.equal(rrAdjustWeaponHitChanceMod(10, 1500, b), 20, '< 2000: +10');
   assert.equal(rrAdjustWeaponHitChanceMod(10, 3000, b), 10, '2000..5000: no arm - as it is');
   assert.equal(rrAdjustWeaponHitChanceMod(10, 6000, b), 0, '> 5000: -10');
-  assert.equal(rrAdjustWeaponHitChanceMod(10, 9000, b), 0, '> 8000 is shadowed by > 5000: -10, never -20 (the C#\'s else-if chain)');
+  // BOW-HOLD (issue #1098): the C#'s > 8000 arm sat behind > 5000 and never fired; it fires now
+  assert.equal(rrAdjustWeaponHitChanceMod(10, 8000, b), 0, 'exactly 8000: still the > 5000 arm, -10');
+  assert.equal(rrAdjustWeaponHitChanceMod(10, 8001, b), -10, '> 8000: -20 (BOW-HOLD - the arm the C#\'s chain shadowed)');
+  assert.equal(rrAdjustWeaponHitChanceMod(10, 9000, b), -10, '9 s: -20');
   assert.equal(rrAdjustWeaponHitChanceMod(10, 300, sword()), 10, 'not a bow');
   assert.equal(rrAdjustWeaponHitChanceMod(10, 0, b), 10, 'no draw');
   assert.equal(rrAdjustWeaponAttackDamage(20, 400, b), 10, '< 800: x t/800');

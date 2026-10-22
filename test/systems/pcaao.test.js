@@ -195,7 +195,7 @@ test('PCO1: the damage - hand-to-hand, the weapon roll, the silver six, the two-
 test('PCO1: Roleplay Realism\'s archery, as baked in - the draw time\'s hit and damage tables', () => {
   // AUDIT 68 S08-pcaao-archery-duplicate: the overhaul bakes in RR's OWN two members - one export, rrRealism.js's
   const bow = { templateIndex: 130 };
-  assert.deepEqual([100, 300, 700, 1500, 6000, 9000].map((t) => rrAdjustWeaponHitChanceMod(50, t, bow)), [10, 40, 50, 60, 40, 40], 'the > 8000 arm sits behind > 5000 and never fires');
+  assert.deepEqual([100, 300, 700, 1500, 6000, 9000].map((t) => rrAdjustWeaponHitChanceMod(50, t, bow)), [10, 40, 50, 60, 40, 30], 'every arm of the ladder reaches (BOW-HOLD: the > 8000 arm ahead of > 5000)');
   assert.equal(rrAdjustWeaponHitChanceMod(50, 100, { templateIndex: 120 }), 50, 'not a bow');
   assert.equal(rrAdjustWeaponHitChanceMod(50, 0, bow), 50, 'no draw time');
   assert.deepEqual([400, 2000, 5500, 7000, 8500, 9500].map((t) => rrAdjustWeaponAttackDamage(20, t, bow)), [10, 20, 17, 15, 10, 5]);

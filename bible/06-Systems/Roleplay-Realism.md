@@ -58,9 +58,14 @@ after Items'), and the seams they hang on.
 
 Read against the C#:
 
-- **The archery ladders** are ported as written, the `> 5000` arm
-  shadowing the `> 8000` one (an `else if` chain: nothing ever reaches
-  -20). The damage is the C# int cast.
+- **The archery ladders.** The damage ladder is ported as written (the
+  C# int cast). The hit ladder's last two arms stand in the order that
+  reaches both - BOW-HOLD (2026-10-21, issue #1098): the C# writes
+  `> 5000` before `> 8000` in an else-if chain, so -20 was never
+  reached and every draw past 8 s took the 5..8 s -10; the damage
+  ladder beside it reaches every tier and the mod's page names -20, so
+  the order is the bug. A departure from the mod: Ledger A (BOW-HOLD),
+  `01-Overview/bugs/Field-Bugs-2026-10-21-bow-hold.md`.
 - **FormulaHelper.RegisterOverride** keys by name and the last mod to
   register owns the member. PCAAO registers the same two archery hooks
   and DamageModifier; this mod registers after it (InitMod order: Items,

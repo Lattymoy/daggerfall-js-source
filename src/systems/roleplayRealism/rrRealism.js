@@ -39,9 +39,13 @@ export const BED_MODELS = Object.freeze([41000, 41001, 41002]);
 // ---- advancedArchery (:530-578) -----------------------------------------
 const isBow = (weapon) => weapon?.templateIndex === WEAPONS.Short_Bow || weapon?.templateIndex === WEAPONS.Long_Bow;
 /** AdjustWeaponHitChanceMod: a drawn bow's hit chance by how long it was
- *  held - the ladder as written, the `> 5000` arm shadowing the `> 8000`
- *  one (an `else if` chain: nothing past 5000 ever reaches -20).
- *  Verbatim, shadow included. */
+ *  held. BOW-HOLD (issue #1098; `bible/01-Overview/bugs/Field-Bugs-2026-10-21-bow-hold.md`): THE C#'S LAST TWO ARMS ARE
+ *  IN THE WRONG ORDER, AND A RECORDED DEPARTURE (Ledger A). The mod writes `else if (t > 5000) -10; else if (t > 8000)
+ *  -20` (RoleplayRealism.cs:543-546), an else-if chain in which the second arm can never be reached - every draw past
+ *  8 s took -10, the 5..8 s penalty. The sibling ladder right below it, AdjustWeaponAttackDamage (:555-578), is
+ *  written in ascending steps and reaches every tier (0.85, 0.75, 0.5, 0.25 past 9 s), and the mod's own page names
+ *  -20 past 8 s: the author's intent is the -20, and the chain's order is the bug. The port carried it verbatim until
+ *  2026-10-21. The two arms stand in the order that reaches both now; every other arm is as the C# writes it. */
 export function rrAdjustWeaponHitChanceMod(hitChanceMod, weaponAnimTime, weapon) {
   if (!(weaponAnimTime > 0 && isBow(weapon))) return hitChanceMod;
   let adjusted = hitChanceMod;
@@ -49,8 +53,8 @@ export function rrAdjustWeaponHitChanceMod(hitChanceMod, weaponAnimTime, weapon)
   else if (weaponAnimTime < 500) adjusted -= 10;
   else if (weaponAnimTime < 1000) adjusted = hitChanceMod;
   else if (weaponAnimTime < 2000) adjusted += 10;
+  else if (weaponAnimTime > 8000) adjusted -= 20;   // BOW-HOLD: ahead of the > 5000 arm, where the C# has it behind
   else if (weaponAnimTime > 5000) adjusted -= 10;
-  else if (weaponAnimTime > 8000) adjusted -= 20;   // unreachable behind the arm above - the C#'s own shape
   return adjusted;
 }
 /** AdjustWeaponAttackDamage: a short draw scales the damage down by
