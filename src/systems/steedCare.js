@@ -103,18 +103,6 @@ export const HUNGER = Object.freeze({
 });
 /** The minute a horse's food runs out (`horseFed`), or null where it was never seen fed. */
 export const fedUntil = (item) => (Number.isInteger(item?.horseFed) && item.horseFed > 0 ? item.horseFed : null);
-/** How hungry the horse a traveller is moving with is, at minute `now`: the ridden horse, or the hungriest horse of a
- *  cart's or a caravan's team (`horsesNeeded` how many pull it). 'fed' on foot, with no horse, or with no clock - a
- *  missing hunger is not Hungry. The team's hungriest is the one whose food runs out first, the saddle's own pick. */
-export function mountHunger(items, now, { mode = 'Foot', horsesNeeded = 1 } = {}) {
-  if (mode !== 'Horse' && mode !== 'Cart') return 'fed';
-  const horses = horsesIn(items);
-  if (!horses.length || !Number.isFinite(now)) return 'fed';
-  const team = mode === 'Horse' ? [horses[0]] : horses.slice(0, Math.max(1, horsesNeeded | 0));
-  if (!team.length) return 'fed';
-  const needy = team.reduce((a, x) => ((fedUntil(x) ?? Infinity) < (fedUntil(a) ?? Infinity) ? x : a));
-  return hungerOf(needy, now);
-}
 /** How hungry a horse is at minute `now`: 'fed', 'hungry' or 'starving'. A horse never seen fed is fed (it comes so). */
 export function hungerOf(item, now) {
   const f = fedUntil(item);

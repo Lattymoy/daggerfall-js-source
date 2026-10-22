@@ -1389,20 +1389,6 @@ gate by source), `tools/mutants/tv_wasd.json` (13 dead - two of them on to1's K2
 zero in the host is now this gate's, never the journey's). TV2's three pins on the governor's lines and the trip line, and its A2
 mutant, re-aimed to the grown lines (never loosened). Ledger A (continued): THE OVERWORLD'S MOVEMENT KEYS TRAVEL.
 
-## TV-PACE - THE OVERWORLD STOPS AT ×10, AND AT ×20 ON A FED MOUNT (2026-10-19)
-
-The owner: limit Travel view to ×10, and let a fed horse run at ×20; then, the same for a cart and a caravan, nobody
-faster than ×20, on foot never past ×10, and Hungry or Starving at ×10 instead of a food percentage.
-
-While the view is up (`scenes/world.js:"setTravelViewPaceCap(travelView?.active ? upkeep.travelViewCap(player.transportMode) : null);"`),
-the speed dial runs under that ceiling and keeps the number the player chose
-(`systems/travel/travelPace.js:"export const TV_PACE_FOOT = 10;"`, `systems/travel/travelPace.js:"export const TV_PACE_MOUNT = 20;"`).
-On foot, aboard, or swimming the keys as before, ×10. A horse, a small cart, an open wagon or a caravan at Fed may run
-at ×20 (`systems/steedCare.js:"export function mountHunger(items, now, { mode = 'Foot', horsesNeeded = 1 } = {}) {"`):
-the horse ridden, or the hungriest horse of the team that pulls. Hungry and Starving hold it at ×10. Horse care off,
-and a horse never yet seen, are not those two states, so a mount then may run at ×20. Bringing the view down gives the
-road's ×100 and the open ground's ×60 back, including a first-person journey. The near-enemies dial is not this ceiling.
-
 ## OW-TOGGLE - FIRST-PERSON TRAVEL, A SWITCH - SHIPPED (2026-09-28, Mac: "bring back the original travel option as a toggle. Off by default.")
 
 Mac, the same day: *"Travel Options was changed. The normal first person travel accelerated was removed in favor of the

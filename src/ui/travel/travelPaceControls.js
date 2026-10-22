@@ -6,7 +6,6 @@
 // so the dials and their rule are the same in every UI, online or off.
 import {
   TRAVEL_PACE_DIALS, TRAVEL_PACE_TEXT, PACE_STEPS, OPEN_PACE_MAX, paceNow, paceCanRise, paceOnRoad, stepTravelPace, onTravelPace,
-  travelViewPaceCeiling, TV_PACE_MOUNT,
 } from '../../systems/travel/travelPace.js';
 
 /**
@@ -52,11 +51,7 @@ export function buildPaceControls(doc, cls) {
       r.down.disabled = v <= PACE_STEPS[0];
       const rise = paceCanRise(k);
       r.up.disabled = !rise;
-      const view = k === 'speed' ? travelViewPaceCeiling() : null;
-      const viewHeld = !rise && view != null && v >= view;
-      r.up.title = viewHeld
-        ? (view >= TV_PACE_MOUNT ? TRAVEL_PACE_TEXT.viewMount : TRAVEL_PACE_TEXT.viewFoot)
-        : !rise && !paceOnRoad() && v >= OPEN_PACE_MAX ? TRAVEL_PACE_TEXT.roadOnly : `${TRAVEL_PACE_TEXT.faster} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`;
+      r.up.title = !rise && !paceOnRoad() && v >= OPEN_PACE_MAX ? TRAVEL_PACE_TEXT.roadOnly : `${TRAVEL_PACE_TEXT.faster} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`;
       r.down.title = `${TRAVEL_PACE_TEXT.slower} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`;
     }
   };

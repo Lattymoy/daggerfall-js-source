@@ -498,7 +498,7 @@ import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHu
 import { createBandSprites } from '../world/bandSprites.js';   // OW-FOES: the bands as their monsters, faded in near
 import { shownWaypoints, isWaypointFollowed, waypointById, mapPointToNative, nativeToMapPoint, receiveWaypointLine, setWaypointSender, syncWaypointGroups } from '../systems/map/mapWaypoints.js';   // WAYPOINTS: the flags on the Overworld, their wire on the hub's party and guild channels
 import { openWaypointMenu, waypointMenuOpen } from '../ui/waypointMenu.js';   // WAYPOINTS: the right-click menu
-import { onTravelPace, setPaceGround, setPaceZoneCap, setTravelViewPaceCap, WILD_PACE_CAP } from '../systems/travel/travelPace.js';   // PACE-DIALS: a dial turned under a running journey; the road rule's ground; TV-PACE: the Overworld's ceiling
+import { onTravelPace, setPaceGround, setPaceZoneCap, WILD_PACE_CAP } from '../systems/travel/travelPace.js';   // PACE-DIALS: a dial turned under a running journey; the road rule's ground
 import { showPaceBox, hidePaceBox } from '../ui/travel/travelPaceControls.js';   // PACE-DIALS: the other skins' dials, while a journey runs
 import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';   // OW-FILTER: a hidden group's sprites hidden with its marks
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travel/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town
@@ -35497,7 +35497,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (socialLink()?.status === 'open' && social) syncWaypointGroups({ party: social.party?.id ?? null, guild: myGuildTag() });
     if (travelControlUI?.isShowing) setPaceGround(!!travelControlUI.onRoad);
     else if (travelView?.state === 'up') setPaceGround(travellerOnRoad());
-    setTravelViewPaceCap(travelView?.active ? upkeep.travelViewCap(player.transportMode) : null);   // TV-PACE: ×10 on foot or hungry, ×20 on a fed horse, cart or caravan, and never faster while the view is up
     const framePace = () => {   // PERF-V8
     if (isEnhanced() && typeof document !== 'undefined') {
       hidePaceBox();   // PACE-DIALS: the enhanced skins carry their own dials (the journey bar, the Overworld's block)

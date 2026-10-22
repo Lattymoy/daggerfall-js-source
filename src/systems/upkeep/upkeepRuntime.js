@@ -28,7 +28,7 @@ import { activeWagonItem, wagonHorsesOf, wagonKindOf } from '../wagon/wagonKinds
 import {
   steedStats, stepBreath, freshBreath, breathShare, canGallop, steedSpeedScale, teamDraftScale, tendHorses, feedHorse,
   chooseRiddenHorse, horsesIn, steedFoodOf, STEED_TEXT, SKIP_MINUTES, HUNGER, STEED_STATS, STEED_STAT_TEXT, fedUntil,
-  FULL_AHEAD, BOND_TIERS, mountHunger,
+  FULL_AHEAD, BOND_TIERS,
 } from '../steedCare.js';
 import {
   wagonState, wagonSoundness, wagonCondition, wagonConditionMax, rollWear, journeyWear, createWearAccount, wearWagon,
@@ -37,7 +37,6 @@ import {
 import { isWagonKitItem, UPKEEP_ITEM } from './upkeepItemRows.js';
 import { registerItemUseHandler } from '../item/itemTemplates.js';
 import { HORSE_MODE, WAGON_MODE, TRANSPORT } from '../horse/horseCartLaw.js';
-import { travelViewPaceCap } from '../travel/travelPace.js';   // TV-PACE: the Overworld's ×10 and ×20
 
 /** A breath under this share shows short on the HUD. */
 export const BREATH_LOW = 0.25;
@@ -356,13 +355,6 @@ export function createUpkeep({ items, now, horseCare = () => null, wagonUpkeep =
 
   return {
     tick, rideScale, gallopGate, rideWalks, riderPaysGallop, bar, journey, thrown, model, saddle, act,
-    /** TV-PACE: the Overworld's ceiling for this transport - ×20 on a fed horse, cart or caravan, ×10 on foot or while
-     *  the ridden horse, or the hungriest horse of the team, is hungry or starving. */
-    travelViewCap: (mode) => {
-      const w = mode === 'Cart' ? activeWagonItem(pack()) : null;
-      const hunger = mountHunger(pack(), now(), { mode, horsesNeeded: w ? wagonHorsesOf(wagonKindOf(w)) : 1 });
-      return travelViewPaceCap(mode, hunger);
-    },
     /** The yard's price to mend the wagon driven (`away` it is not at the yard), or 0. */
     mendPrice: (away = false) => { const w = activeWagonItem(pack()); return w ? mendPrice(w, { away }) : 0; },
     /** Tests: the ridden horse's breath. */

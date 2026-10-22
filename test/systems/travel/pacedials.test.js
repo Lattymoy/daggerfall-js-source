@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import {
   PACE_STEPS, ROAD_PACE_MAX, OPEN_PACE_MAX, TRAVEL_PACE_DEFAULT, TRAVEL_PACE_DIALS, TRAVEL_PACE_STORE_KEY, clampPace,
   travelPace, setTravelPace, stepTravelPace, setPaceGround, paceNow, paceRateOn, paceCanRise, paceOnRoad, onTravelPace,
-  setTravelViewPaceCap, travelViewPaceCap, travelViewPaceCeiling, TV_PACE_FOOT, TV_PACE_MOUNT, _resetTravelPace,
+  _resetTravelPace,
 } from '../../../src/systems/travel/travelPace.js';
 import { MAX_TIME_SCALE, TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE, travelRateOf } from '../../../src/systems/timeScale.js';
 import { foePaced, JOURNEY_FOE_PACE } from '../../../src/systems/travel/travelThreat.js';
@@ -151,37 +151,9 @@ test('PACE-DIALS: the steppers - every skin\'s one builder - show the dial in fo
   } finally { c.dispose(); fresh(); }
 });
 
-test('TV-PACE: in the Overworld, on foot is ×10, a fed horse cart or caravan is ×20, hungry or starving is ×10, and the dial comes back when the view drops', () => {
-  fresh();
-  assert.equal(travelViewPaceCeiling(), null);
-  assert.deepEqual([travelViewPaceCap('Foot'), travelViewPaceCap('Ship'), travelViewPaceCap('Horse', 'fed'), travelViewPaceCap('Cart', 'fed')], [TV_PACE_FOOT, TV_PACE_FOOT, TV_PACE_MOUNT, TV_PACE_MOUNT]);
-  assert.equal(travelViewPaceCap('Horse', 'hungry'), TV_PACE_FOOT);
-  assert.equal(travelViewPaceCap('Cart', 'starving'), TV_PACE_FOOT);
-  assert.equal(travelViewPaceCap('Horse'), TV_PACE_MOUNT, 'no hunger said is fed');
-  setPaceGround(true);
-  setTravelPace('speed', 100);
-  setTravelPace('foe', 40);
-  setTravelViewPaceCap(TV_PACE_FOOT);
-  assert.equal(paceNow('speed'), TV_PACE_FOOT, 'on foot the stored ×100 runs at ×10');
-  assert.equal(paceNow('foe'), 40, 'the foe dial is not the view\'s ceiling');
-  assert.equal(paceRateOn(true), TV_PACE_FOOT);
-  assert.equal(travelRateOf(true), TV_PACE_FOOT);
-  assert.equal(paceCanRise('speed'), false);
-  assert.deepEqual({ ...travelPace() }, { speed: 100, foe: 40 }, 'the choice is kept');
-  setTravelViewPaceCap(TV_PACE_MOUNT);
-  assert.equal(paceNow('speed'), TV_PACE_MOUNT, 'a fed mount may run at ×20, and no higher');
-  assert.equal(paceRateOn(false), TV_PACE_MOUNT, 'off the road the view\'s ceiling still holds');
-  assert.equal(paceCanRise('speed'), false);
-  setTravelViewPaceCap(null);
-  assert.equal(travelViewPaceCeiling(), null);
-  assert.equal(paceNow('speed'), 100, 'the view down: the road\'s ×100 is back');
-  assert.equal(paceRateOn(false), 60);
-  fresh();
-});
-
 test('PACE-DIALS host: the world tells the rule its ground every frame a journey or the Overworld runs, a dial turned under a journey asks the clock again, and every other skin wears the pace box', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(travelControlUI\?\.isShowing\) setPaceGround\(!!travelControlUI\.onRoad\);\n\s*else if \(travelView\?\.state === 'up'\) setPaceGround\(travellerOnRoad\(\)\);\n\s*setTravelViewPaceCap\(travelView\?\.active \? upkeep\.travelViewCap\(player\.transportMode\) : null\);/, 'the journey\'s own ground, else the feet\'s under the view; TV-PACE: the view\'s ceiling while it is up');
+  assert.match(w, /if \(travelControlUI\?\.isShowing\) setPaceGround\(!!travelControlUI\.onRoad\);\n\s*else if \(travelView\?\.state === 'up'\) setPaceGround\(travellerOnRoad\(\)\);/, 'the journey\'s own ground, else the feet\'s under the view');
   assert.match(w, /const _stopPace = onTravelPace\(\(\) => \{ if \(!frameAlive\(_frameToken\)\) \{ _stopPace\(\); return; \} travelOptions\?\.reapplyRate\?\.\(\); \}\);/);
   assert.match(w, /if \(travelControlUI\?\.isShowing && typeof document !== 'undefined'\) showPaceBox\(\); else hidePaceBox\(\);/, 'the classic strip and GrimoireUI: the dials\' own box while a journey runs');
   assert.match(rd('src/systems/travel/travelOptions.js'), /reapplyRate: \(\) => \{ if \(st\.autopilot && ui\?\.isShowing\) applyRate\(true\); \},/);

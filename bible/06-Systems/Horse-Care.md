@@ -219,10 +219,8 @@ journey's, and let a band's chase (5.2 m/s at the world's scale) close on a ride
 under the Overworld's view (rising, up or falling) and while a Travel Options journey's autopilot drives the motor - the
 view's journeys, its journey held on the ground at x1, First-Person Travel's, a party's - the horse rides the ride's own
 pace and gallops on Run exactly as before the walk (`scenes/world.js` rideOnTheRoad, over the walk's install; a
-journey's panel left up over a stopped journey is no road). The walk does not change the clock, the governor or the pace
-dials. While the Overworld is up, TV-PACE (`06-Systems/Travel-View.md`) holds that clock to ×10 on foot or while the
-horse, cart or caravan is Hungry or Starving, and to ×20 when it is Fed. The steering's reach and the ground's lookahead
-read the motor's, the ride's again. The
+journey's panel left up over a stopped journey is no road). The clock, its governor and the pace dials read no pace of
+the body's and are untouched; the steering's reach and the ground's lookahead read the motor's, the ride's again. The
 fixed city (`scenes/exterior.js`) stands no Overworld and runs no journey.
 
 What reads the gait:

@@ -23,7 +23,6 @@
 // under the same law. Kept on the device, never in a save (the mod saved no travel state, Travel-Options.md).
 // ═══════════════════════════════════════════════════════════════════
 import { appStorage } from '../appStorage.js';
-import { t } from '../textManager.js';   // L10N4: the Overworld's two ceilings, read when a stepper paints them
 
 export const TRAVEL_PACE_STORE_KEY = 'dfjs.travel.pace2';
 /** The ladder every dial steps along. */
@@ -33,12 +32,6 @@ export const PACE_STEPS = Object.freeze([5, 10, 20, 30, 40, 60, 100]);
  *  it). The road's top is the mod's AccelerationLimit, timeScale.js MAX_TIME_SCALE - pinned equal. */
 export const ROAD_PACE_MAX = 100;
 export const OPEN_PACE_MAX = 60;
-/** TV-PACE (the owner, 2026-10-19): while the Overworld is up, nobody outruns these. On foot, or on a hungry or
- *  starving horse, cart or caravan, the clock stops at ×10. A fed horse, cart or caravan may run at ×20, and nothing
- *  in the view runs faster. First-person travel keeps the road's ×100 and the open ground's ×60: the host sets this
- *  ceiling only while the view is up (`setTravelViewPaceCap`), and clearing it gives the dial back. */
-export const TV_PACE_FOOT = 10;
-export const TV_PACE_MOUNT = 20;
 /** The two dials, in the panels' order. */
 export const TRAVEL_PACE_DIALS = Object.freeze(['speed', 'foe']);
 /** The defaults: the open ground's top for the journey (x100 is the player's to choose on a road), ENEMY-PACE's x5. */
@@ -53,8 +46,6 @@ export const TRAVEL_PACE_TEXT = Object.freeze({
     foe: `The slowest the clock runs while enemies are near (×${ROAD_PACE_MAX} on a road only)`,
   },
   roadOnly: `×${ROAD_PACE_MAX} only on a road`,
-  get viewFoot() { return t('travel.pace.viewFoot', '×{n} on foot, or while a horse is hungry', { n: TV_PACE_FOOT }); },
-  get viewMount() { return t('travel.pace.viewMount', '×{n} is as fast as the Overworld goes', { n: TV_PACE_MOUNT }); },
   slower: 'Slower',
   faster: 'Faster',
 });
@@ -76,15 +67,11 @@ let ground = false;   // the host's last word: on a road or a track
  *  never a write: the dials keep the player's choice and run under it, and leaving the zone gives it back at once. */
 export const WILD_PACE_CAP = Object.freeze({ road: 40, open: 20 });
 let zoneCap = null;
-/** The Overworld's ceiling while the view is up (TV_PACE_FOOT or TV_PACE_MOUNT), or null when it is down. */
-let viewCap = null;
 /** The ground's top in force: the road's or the open's, under the zone's cap while one stands. */
 const topOn = (onRoad) => {
   const t = onRoad ? ROAD_PACE_MAX : OPEN_PACE_MAX;
   return zoneCap ? Math.min(t, onRoad ? zoneCap.road : zoneCap.open) : t;
 };
-/** The speed dial's top: the ground's, and the Overworld's ceiling while the view is up. The foe dial is not held by it. */
-const speedTop = (onRoad) => (viewCap == null ? topOn(onRoad) : Math.min(topOn(onRoad), viewCap));
 /** The host's word on the zone, each frame (scenes/world.js wildFrame): `cap` the zone's tops, or null outside it. */
 export function setPaceZoneCap(cap) {
   const next = cap ? { road: Number(cap.road) || WILD_PACE_CAP.road, open: Number(cap.open) || WILD_PACE_CAP.open } : null;
@@ -95,28 +82,6 @@ export function setPaceZoneCap(cap) {
 }
 /** The zone's cap in force, or null. */
 export const paceZoneCap = () => zoneCap;
-/**
- * The Overworld's speed ceiling for how the traveller moves. A horse, a cart or a caravan (`Horse` or `Cart`) at `fed`
- * may run at ×20. On foot, aboard, or with a hungry or starving team, ×10. Anything that is not those two states of
- * hunger counts as fed: horse care off, or a horse never yet seen, has no Hungry and no Starving.
- * @param {string} mode @param {string} [hunger]
- */
-export function travelViewPaceCap(mode, hunger = 'fed') {
-  if (mode !== 'Horse' && mode !== 'Cart') return TV_PACE_FOOT;
-  if (hunger === 'hungry' || hunger === 'starving') return TV_PACE_FOOT;
-  return TV_PACE_MOUNT;
-}
-/** The Overworld's ceiling in force, or null while the view is down. */
-export const travelViewPaceCeiling = () => viewCap;
-/** The host's word, each frame the Overworld runs: `10` or `20` while the view is up, null when it is down. A cap,
- *  never a write - the dial keeps the player's choice and runs under it, and bringing the view down gives it back. */
-export function setTravelViewPaceCap(cap) {
-  const next = cap == null ? null : (Number(cap) >= TV_PACE_MOUNT ? TV_PACE_MOUNT : TV_PACE_FOOT);
-  if (next === viewCap) return;
-  viewCap = next;
-  const cur = travelPace();
-  for (const fn of [...listeners]) { try { fn(cur, 'view'); } catch { /* a listener's own fault */ } }
-}
 const listeners = new Set();
 
 function read() {
@@ -160,11 +125,11 @@ export function setPaceGround(onRoad) {
 /** A dial's rate in force now (the stored one, under the ground's top). */
 export function paceNow(which) {
   const v = travelPace()[which] ?? TRAVEL_PACE_DEFAULT[which];
-  const top = which === 'speed' ? speedTop(ground) : topOn(ground);   // WILD3: under the zone's cap; TV-PACE: the speed dial under the view
+  const top = topOn(ground);   // WILD3: under the zone's cap
   return Math.min(v, top);
 }
 /** The journey's rate on a ground (systems/timeScale.js travelRateOf asks). */
-export const paceRateOn = (onRoad) => Math.min(speedTop(onRoad), travelPace().speed);   // WILD3: the zone's top; TV-PACE: the view's ceiling
+export const paceRateOn = (onRoad) => Math.min(topOn(onRoad), travelPace().speed);   // WILD3: the zone's top
 
 /** Set one dial - onto the ladder, under the ground's top (x100 refused off the road). Returns the rate set. */
 export function setTravelPace(which, n) {
@@ -186,7 +151,7 @@ export function stepTravelPace(which, dir) {
 
 /** Whether a dial can step up from where it stands, on this ground. */
 export function paceCanRise(which) {
-  const top = which === 'speed' ? speedTop(ground) : topOn(ground);
+  const top = topOn(ground);
   return paceNow(which) < top;
 }
 
@@ -197,4 +162,4 @@ export function onTravelPace(fn) {
 }
 
 /** Pins: back to the device's word. */
-export function _resetTravelPace() { pace = null; ground = false; zoneCap = null; viewCap = null; listeners.clear(); }
+export function _resetTravelPace() { pace = null; ground = false; zoneCap = null; listeners.clear(); }
