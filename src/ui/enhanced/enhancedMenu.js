@@ -142,7 +142,7 @@ import { midiOutSupported, midiOutDenied, midiOutName, midiOutputs, setMidiOut, 
 import { brandMark } from '../brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
 import { soundReplacementCount } from '../../systems/soundReplacer.js';   // SNDREP1: the sound pack's count
 import { textureReplacementCount, bundleTextureCount } from '../../systems/textureReplacement.js';   // M-TEX: and the texture half; DFMOD1: and the bundles'
-import { attachedDfmods, DFMOD_DETAIL, dfmodMaxSize, setDfmodEnabled, unregisteredDfmods } from '../../systems/dfmodTextures.js';   // VE3: a mod switched on or off; AUDIT VE R5: and one stored that did not register
+import { attachedDfmods, DFMOD_DETAIL, dfmodMaxSize, setDfmodEnabled, unregisteredDfmods, dfmodCanMove, moveDfmod, dfmodOrderSetByHand, sortDfmodsAutomatically } from '../../systems/dfmodTextures.js';   // VE3: a mod switched on or off; AUDIT VE R5: and one stored that did not register; MOD-ORDER: the order by hand
 import { isIilMod } from '../../systems/improvedInteriorLighting.js';   // IIL3: the lighting mod's own section   // DFMOD1: the attached texture mods, one row each; DFMOD2: the detail choice
 import { isTouchDevice } from '../touch/touch.js';   // TI2: the Touch card mounts only where a finger can reach it
 import { dateFromClassicMinutes, dateString } from '../../systems/gameDate.js';
@@ -3268,6 +3268,8 @@ function packsCard() {
   // VE1: listed in load order - a mod loads after the mods it depends on, and where two carry the same texture the one
   // loaded later is drawn (DFU's ModManager)
   if (mods.length > 1) c.append(el('p', 'meta', t('menu.packs.loadOrder', 'In load order: where two mods carry the same texture, the later one is drawn. A mod always loads after the mods it is built on.')));
+  if (mods.length > 1) c.append(el('p', 'meta', t('menu.packs.moveNote', 'Move a mod down to draw its textures over the mods above it.')));   // MOD-ORDER
+  const shown = mods.map((m) => m.key);   // MOD-ORDER: a move passes over the lighting mod, which this list does not show
   if (!textureStoreSettled()) c.append(el('p', 'meta', t('menu.packs.reading', 'Reading your attached texture mods\u2026')));   // AUDIT VE R2
   for (const m of mods) {
     const row = el('div', 'card');
@@ -3279,6 +3281,9 @@ function packsCard() {
     row.append(acts([
       // VE3: DFU's mod window switches a mod off without removing it (Mod.Enabled); the Texture Overhaul card does the same
       { label: m.enabled ? t('menu.packs.switchOff', 'Switch off') : t('menu.packs.switchOn', 'Switch on'), onClick: () => { setDfmodEnabled(m.key, !m.enabled); render(); } },
+      // MOD-ORDER: DFU's mod window's Increase and Lower, offered only where the move changes the load order
+      ...(dfmodCanMove(m.key, -1, shown) ? [{ label: t('menu.packs.moveUp', 'Move up'), onClick: () => { moveDfmod(m.key, -1, shown); render(); } }] : []),
+      ...(dfmodCanMove(m.key, 1, shown) ? [{ label: t('menu.packs.moveDown', 'Move down'), onClick: () => { moveDfmod(m.key, 1, shown); render(); } }] : []),
       // VE4: a shipped mod is switched, never removed - it is not in this browser's store
       ...(m.shipped ? [] : [remove(t('menu.packs.removeYes', 'Remove'), t('menu.packs.removeMod', 'Remove {mod}', { mod: m.title }), t('menu.packs.removeModBody', 'This clears {mod} from this browser. It takes full effect the next time an area loads.', { mod: m.title }), (d) => d.removeStoredDfmod(m.key))]),
     ]));
@@ -3302,6 +3307,7 @@ function packsCard() {
   c.append(el('p', 'meta', t('menu.packs.detailNote', 'Texture detail: {detail}. Higher is sharper but uses more memory and loads slower. \u201cfull\u201d can run out of memory with HD packs. Applies to areas loaded afterwards.', { detail: detailLabel })));
   c.append(acts([
     { label: t('menu.packs.detail', 'Texture detail: {detail}', { detail: detailLabel }), onClick: () => { setPref('dfmodTextureDetail', nextDetail()); render(); } },
+    ...(dfmodOrderSetByHand() ? [{ label: t('menu.packs.autoSort', 'Sort automatically'), onClick: () => { sortDfmodsAutomatically(); render(); } }] : []),   // MOD-ORDER: DFU's AutoSortMods
     { label: t('menu.packs.addDfmods', 'Add texture mods'), primary: !mods.some((m) => !m.shipped), onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickDfmodFiles(); render(); } },
     ...(mods.filter((m) => !m.shipped).length + unregisteredDfmods().length > 1 ? [remove(t('menu.packs.removeAllDfmods', 'Remove all texture mods'), t('menu.packs.removeAllDfmods', 'Remove all texture mods'), t('menu.packs.removeAllDfmodsBody', 'This clears every attached .dfmod texture mod from this browser; the built-in ones stay. It takes full effect the next time an area loads.'), (d) => d.clearStoredDfmods())] : []),
   ]));

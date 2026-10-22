@@ -14349,6 +14349,11 @@
   "tr": "81a318608ae4",
   "by": "claude-in-session"
  },
+ "menu.packs.autoSort": {
+  "en": "ab9eb8cd5b3d",
+  "tr": "1fb951f98583",
+  "by": "claude-in-session"
+ },
  "menu.packs.blurb": {
   "en": "6aa4427c6db0",
   "tr": "53f7f744edf4",
@@ -14412,6 +14417,21 @@
  "menu.packs.loadOrder": {
   "en": "e1e71b0d8149",
   "tr": "b1c5a64d9526",
+  "by": "claude-in-session"
+ },
+ "menu.packs.moveDown": {
+  "en": "260ff8ae7182",
+  "tr": "7638b0cf3d5b",
+  "by": "claude-in-session"
+ },
+ "menu.packs.moveNote": {
+  "en": "1327cff5ab71",
+  "tr": "2854ffbe6640",
+  "by": "claude-in-session"
+ },
+ "menu.packs.moveUp": {
+  "en": "b4f57cd0cd5c",
+  "tr": "aade1bd334cd",
   "by": "claude-in-session"
  },
  "menu.packs.nomods": {

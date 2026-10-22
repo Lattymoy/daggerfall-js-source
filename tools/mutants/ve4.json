@@ -24,8 +24,8 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  _mods = dfmodLoadOrder(liveShipped());\n  install();\n}",
-    "new": "  _mods = [];\n  install();\n}"
+    "old": "  forgetOpen();\n  _mods = orderMods();\n  install();\n}",
+    "new": "  forgetOpen();\n  _mods = [];\n  install();\n}"
   },
   {
     "name": "VE4-shipped-outside-the-load-order",
@@ -34,7 +34,7 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
+    "old": "  _mods = orderMods();   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them; MOD-ORDER: over the player's order",
     "new": "  _mods = [...dfmodLoadOrder(_attached), ...liveShipped()];"
   },
   {
@@ -44,7 +44,7 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  _shipped = (list ?? []).filter((s) => typeof s?.key === 'string' && s.key.startsWith(DFMOD_PREFIX) && s.index && typeof s.open === 'function');\n  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);",
+    "old": "  _shipped = (list ?? []).filter((s) => typeof s?.key === 'string' && s.key.startsWith(DFMOD_PREFIX) && s.index && typeof s.open === 'function');\n  _mods = orderMods();",
     "new": "  _shipped = (list ?? []).filter((s) => typeof s?.key === 'string' && s.key.startsWith(DFMOD_PREFIX) && s.index && typeof s.open === 'function');\n  _mods = [..._attached, ...liveShipped()];"
   },
   {

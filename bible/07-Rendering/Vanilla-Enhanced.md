@@ -94,6 +94,47 @@ Classic look would have registered again at every host's boot, bumping
 the generation every cache of mod pictures keys on (`_registered !== null`
 now).
 
+## MOD-ORDER - the load order by hand (2026-10-22)
+
+Asked on the Discord's suggestions channel (2026-10-20): a way to set the
+texture mods' load order. DREAM's Mod Compatibility Patch is one reason: it
+must load after the DREAM mods it patches, and a player had no way to put it
+there when its file name sorted first.
+
+**DFU'S WINDOW.** `ModLoaderInterfaceWindow` has an Increase and a Lower
+button. Each swaps the selected mod with its neighbour in the list
+(`IncreaseLoadOrderButton_OnMouseClick`, `DecreaseLoadOrderButton_OnMouseClick`).
+Save and Close writes each mod's place as its `LoadPriority`
+(`SaveAndCloseButton_OnMouseClick`: `mod.LoadPriority = i`, then `SortMods`).
+`Mods.json` keeps it (`WriteModSettings`), and the next start reads it back
+(`LoadModSettings`, then `SortMods`, ModManager.cs:153-155). AutoSortMods runs
+only when the player answers Yes to "Do you want to sort mods automatically?",
+which the window asks when a mod stands above a mod it depends on
+(`CheckModDependencies`).
+
+**THE PORT'S.** The packs card gives each texture mod a **Move up** and a
+**Move down** beside its switch (`moveDfmod`, `dfmodCanMove`):
+
+- the move is one place, past the neighbour the card shows. The card lists the
+  texture mods alone (IIL3 gives the lighting mod its own section), so a move
+  passes over the lighting mod;
+- AutoSortMods still runs over the order by hand (`dfmodLoadOrder(mods,
+  order)`: the mods the order names first, in its order, the rest after them
+  by file name, then TopologicalSort). So a mod never stands above a mod it is
+  built on, and a button is offered only where the move changes the order;
+- the order is kept on the prefs shelf (`dfmodOrder`), as VE3 keeps
+  Mod.Enabled: every registered mod's store key, in load order. A copy over a
+  shipped mod is kept under the shipped mod's key (`switchKeyOf`): one place a
+  mod, as AUDIT VE R3 keeps one switch a mod;
+- **Sort automatically** (`sortDfmodsAutomatically`) is DFU's AutoSortMods: it
+  forgets the order, and the listing by file name stands again. The card
+  offers it only while the order differs from that one
+  (`dfmodOrderSetByHand`).
+
+A move puts the doors back at once, as a switch does: the walk changes, so
+every cache of mod pictures is emptied (AUDIT VE R1), and what is drawn
+changes when its area loads again.
+
 ## VE2 - the ground's tile set, 1:1
 
 GROUND1 read a mod's terrain only as a `<archive>-TexArray`, and kept the
@@ -276,11 +317,12 @@ and nothing of it reaches the wire.
 
 ## The departures (Ledger A, the VANILLA ENHANCED row)
 
-1. **The order is always AutoSortMods'.** DFU asks the player to sort when a
-   dependency stands below its dependent (`ModLoaderInterfaceWindow
-   .CheckDependencies`), and its mod window moves a mod by hand; the port
-   has no mod window, so its order is the listing's under AutoSortMods,
-   always.
+1. **AutoSortMods runs over the order by hand, always** (MOD-ORDER). DFU's
+   mod window lets the player put a mod above a mod it depends on, then asks
+   to sort (`CheckModDependencies`). The packs card never offers that move.
+   And a mod attached after the player set an order loads after every mod in
+   it, until it is moved. DFU gives a new mod its place in the folder's
+   listing (`FindModsFromDirectory`: `mod.LoadPriority = i`).
 2. **A dependency's name is matched lower case.** DFU's match is Ordinal;
    the store keeps every key lower case (`dfmodStoreKey`), so case cannot be
    told - a mod builder writes the names lower case either way.
@@ -291,7 +333,8 @@ and nothing of it reaches the wire.
 4. **A mod's ground record is decoded at the texture detail** (DFMOD2), with
    no deadline, as the arrays are - the ground is uploaded once.
 5. **Mod.Enabled lives on the prefs shelf** (`dfmodOff`), not in a
-   Mods.json; a fresh attach is on.
+   Mods.json; a fresh attach is on. So does LoadPriority (`dfmodOrder`,
+   MOD-ORDER).
 6. **Wearing Vanilla Enhanced turns Replace Game Artwork on.**
 7. **Vanilla Enhanced's add-ons ship off** (VE4; AUDIT VE). A mod in DFU's
    Mods folder is on until the player switches it off. The Base ships so - on
@@ -331,6 +374,9 @@ and nothing of it reaches the wire.
   ground over the REAL index, slice by slice, down to which file drew each
   one; the client's detail and concurrency; the card's add-ons; and the
   wiring.
+- `test/systems/modorder_byHand.test.js` (5): the order by hand - the law, the
+  move through the door and back from a boot, a mod never above its base, one
+  place a mod over a shipped one, and the packs card.
 - `test/tooling/doctrine.test.js`: two pins on the exception's bound.
 - Re-aimed: DFMOD1's door pin (it pinned the first mod by name), its wiring
   pin, GROUND1's door pin (the classic file handed in, the depth law),
@@ -340,6 +386,8 @@ and nothing of it reaches the wire.
 - `tools/mutants/ve1.json`: 35, all dead. VE3's three on the attach retired
   with it.
 - `tools/mutants/ve4.json`: 24, all dead.
+- `tools/mutants/modorder.json`: 15, all dead. MOD-ORDER re-aimed two of
+  `ve1.json`'s records by content (the listing's sort, the order applied).
 - `tools/mutants/overhauls.json`: its texture-panel record re-aimed by
   content.
 

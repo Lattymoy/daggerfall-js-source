@@ -1,0 +1,137 @@
+[
+  {
+    "name": "MODORDER-order-ignored",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  const base = [...(mods ?? [])].sort((a, b) => at(a) - at(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));",
+    "new": "  const base = [...(mods ?? [])].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));"
+  },
+  {
+    "name": "MODORDER-unplaced-put-first",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  const at = (m) => placed.get(m.key) ?? order.length;",
+    "new": "  const at = (m) => placed.get(m.key) ?? -1;"
+  },
+  {
+    "name": "MODORDER-move-not-saved",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  setPref(DFMOD_ORDER_PREF, after.map(switchKeyOf));",
+    "new": "  setPref(DFMOD_ORDER_PREF, []);"
+  },
+  {
+    "name": "MODORDER-copy-own-key-saved",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  setPref(DFMOD_ORDER_PREF, after.map(switchKeyOf));",
+    "new": "  setPref(DFMOD_ORDER_PREF, after);"
+  },
+  {
+    "name": "MODORDER-shipped-key-not-read-as-the-copy",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  return savedOrder().map((k) => copyOf.get(k) ?? k);",
+    "new": "  return savedOrder();"
+  },
+  {
+    "name": "MODORDER-boot-not-reading-the-order",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  return dfmodLoadOrder([..._attached, ...live], placedOrder());",
+    "new": "  return dfmodLoadOrder([..._attached, ...live]);"
+  },
+  {
+    "name": "MODORDER-move-doors-not-put-back",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  setPref(DFMOD_ORDER_PREF, after.map(switchKeyOf));\n  _mods = orderMods();\n  _registered = install();",
+    "new": "  setPref(DFMOD_ORDER_PREF, after.map(switchKeyOf));\n  _mods = orderMods();"
+  },
+  {
+    "name": "MODORDER-undone-move-offered",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  return after.join('\\n') === keys.join('\\n') ? null : after;",
+    "new": "  return after;"
+  },
+  {
+    "name": "MODORDER-hidden-mod-not-passed-over",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  const shown = among ? keys.filter((k) => among.includes(k)) : keys;",
+    "new": "  const shown = keys;"
+  },
+  {
+    "name": "MODORDER-move-two-places",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  const near = i < 0 || (step !== 1 && step !== -1) ? undefined : shown[i + step];",
+    "new": "  const near = i < 0 ? undefined : shown[i + step];"
+  },
+  {
+    "name": "MODORDER-move-up-lands-after",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  moved.splice(moved.indexOf(near) + (step > 0 ? 1 : 0), 0, key);",
+    "new": "  moved.splice(moved.indexOf(near) + 1, 0, key);"
+  },
+  {
+    "name": "MODORDER-sort-not-forgetting",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  setPref(DFMOD_ORDER_PREF, []);\n  _mods = orderMods();",
+    "new": "  _mods = orderMods();"
+  },
+  {
+    "name": "MODORDER-set-by-hand-whenever-saved",
+    "file": "src/systems/dfmodTextures.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "  && _mods.map((m) => m.key).join('\\n') !== dfmodLoadOrder(_mods).map((m) => m.key).join('\\n');",
+    "new": ";"
+  },
+  {
+    "name": "MODORDER-card-up-not-gated",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "      ...(dfmodCanMove(m.key, -1, shown) ? [",
+    "new": "      ...(true ? ["
+  },
+  {
+    "name": "MODORDER-card-autosort-always",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "tests": [
+      "test/systems/modorder_byHand.test.js"
+    ],
+    "old": "    ...(dfmodOrderSetByHand() ? [{",
+    "new": "    ...(true ? [{"
+  }
+]
