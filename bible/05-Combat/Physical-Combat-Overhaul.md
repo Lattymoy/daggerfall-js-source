@@ -270,6 +270,38 @@ lane is unchanged; a dual wielder gives up the shield's block under both.
 Pinned in `test/systems/pcaao.test.js` on the builder's own pieces;
 `tools/mutants/twohandsshield.json`, 2 mutants, both dead.
 
+## The seventh departure: the armour enchantments mean what they say (ENCHANT-SIGN, 2026-10-21; issue #1096)
+
+GrimmLiddell's report, from the source: "Strengthens Armor increases
+enemy hit chance in PCAAO". It holds. The mod's `CalculateArmorToHit`
+reads the player as `100 - IncreasedArmorValueModifier -
+DecreasedArmorValueModifier` (PhysicalCombatOverhaulMain.cs:2087, v1.50 -
+the same line in the v1.44 this port restates) and `CalculateHitSuccess`
+adds the answer into the ATTACKER's chance to hit. Strengthens Armor
+writes Increased as -5 (StrengthensArmor.cs:25: "lower armor value equals
+a stronger rating"), so the mod answers 105 for a player wearing it -
+five points EASIER to hit - and would answer 95 for the drawback Weakens
+Armor (+5), five points harder, if that enchantment bit at all (#1097:
+it does not, in DFU or here). DFU's own core adds the two channels to the
+part's armour value (FormulaHelper.cs:1158, `formulas.js:"chance += mentorArmorValue(target, target.armorValues?.[struckBodyPart] ?? 0)"`),
+and that is what the enchantments mean: the port carried the mod's sign
+verbatim - AUDIT SET P-M1's note at the term said so, "the mod's own two
+channels keep the mod's own sign", and no page recorded it as a quirk -
+so the same ring protected a player under the stock core and exposed
+them under the overhaul.
+
+The player's term adds the channels now (`combat/pcaao.js`
+`pcaaoArmorToHit`): Strengthens 95, Weakens 105 once it bites, both
+together 100, the two cores agreeing on every enchanted item. Nothing
+else in the term moves - the 100, the class foe's 60, a monster's part,
+and the port's points (AUDIT SET P-M1) stay as they were. Pinned in
+`test/systems/pcaao.test.js` (the Strengthens cell re-aimed from 101 to
+91 beside the four points, a Weakens cell and a cancelling pair added);
+`tools/mutants/enchant_sign.json`, 2 mutants (the mod's subtraction
+back; the channels dropped), both dead; `auditsetd.json`'s points
+mutant re-aimed onto the new line. Not played: Mac's approval of the
+departure is the row's "Approved via", and it is open until he gives it.
+
 ## What is kept bug for bug
 
 - `Mathf.Round` rounds half to EVEN (`unityRound`), and every float the
@@ -340,6 +372,8 @@ Pinned in `test/systems/pcaao.test.js` on the builder's own pieces;
 
 ## Pinned (`test/systems/pcaao.test.js`, 27)
 
+<!-- ENCHANT-SIGN: still 27 tests; three cells moved or added inside the hit-helpers test. -->
+
 The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;
 the unclamped hit; the body-part table; the luck-bent critical; the
@@ -350,7 +384,9 @@ arithmetic; the wear (weapon, piece, shield, a fist, the fading removal,
 the warnings' words and delays); the reduction cells with the cap and
 the natural resistance; the monsters' hides and their weapons; the
 shield roll and the under-armour comparison; a weapon in the left hand
-blocking nothing (TWO-HANDS-SHIELD); the natural resistance's
+blocking nothing (TWO-HANDS-SHIELD); the armour enchantments' channels
+ADDED to the player's term, Strengthens harder to hit and Weakens easier
+(ENCHANT-SIGN); the natural resistance's
 extremes; the proficiency and racial ladders; a whole blow through each
 branch (a sword, the soft material's line, a monster's assigned axe
 wearing the player's cuirass); the registry declining and accepting;

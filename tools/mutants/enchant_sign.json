@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ENCHANT-SIGN-the-mods-subtraction-back",
+    "file": "src/combat/pcaao.js",
+    "old": "  if (isPlayer(target)) result = 100 + entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);",
+    "new": "  if (isPlayer(target)) result = 100 - entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);",
+    "tests": [
+      "test/systems/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "ENCHANT-SIGN-the-channels-dropped",
+    "file": "src/combat/pcaao.js",
+    "old": "  if (isPlayer(target)) result = 100 + entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);",
+    "new": "  if (isPlayer(target)) result = 100 - entityArmorPoints(target, struckBodyPart);",
+    "tests": [
+      "test/systems/pcaao.test.js"
+    ]
+  }
+]

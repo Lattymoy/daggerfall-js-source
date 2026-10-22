@@ -336,12 +336,20 @@ export const pcaaoWeaponToHit = (weapon) => materialModifier(weapon) * 2 + 2;
  *  AUDIT SET P-M1: the port's points on the struck part (an armour affix, a set's armour - RF1) are PROTECTION here as in
  *  the stock core: the term read `100 - entityArmorMod`, and that channel is `Increased + Decreased - points`, so every
  *  point came back as a point EASIER to hit under this core, the default one - Orc-Hide's armour and every armour affix
- *  exposed the player they were meant to cover. The mod's own two channels keep the mod's own sign. */
+ *  exposed the player they were meant to cover. The mod's own two channels kept the mod's own sign - until ENCHANT-SIGN.
+ *  ENCHANT-SIGN (issue #1096; `bible/01-Overview/bugs/Field-Bugs-2026-10-21-enchant-sign.md`): THE MOD'S SIGN ON ITS
+ *  OWN CHANNELS IS WRONG, AND A RECORDED DEPARTURE (Ledger A). The mod writes `100 - Increased - Decreased`
+ *  (PhysicalCombatOverhaulMain.cs:2087, v1.50 - the same line in the v1.44 this file restates) and adds the result
+ *  into the ATTACKER'S chance to hit. Strengthens Armor sets Increased to -5 (StrengthensArmor.cs:25, "lower armor
+ *  value equals a stronger rating"), so the mod answers 105: a player wearing the protection is five points EASIER
+ *  to hit, and the drawback would be five points harder. DFU's own core adds the channels (FormulaHelper.cs:1158,
+ *  `formulas.js:"chance += mentorArmorValue(target, target.armorValues?.[struckBodyPart] ?? 0)"`), which is what the enchantments mean. The player's term adds
+ *  them here too: Strengthens 95, Weakens (once it bites, #1097) 105, the two cores agreeing on every enchanted item. */
 export function pcaaoArmorToHit(target, struckBodyPart) {
   let result = 0;
   const values = target.armorValues ?? [];
   if (struckBodyPart <= values.length) result = values[struckBodyPart] ?? 0;
-  if (isPlayer(target)) result = 100 - entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);   // RF1 + AUDIT SET P-M1
+  if (isPlayer(target)) result = 100 + entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);   // RF1 + AUDIT SET P-M1; ENCHANT-SIGN: the channels ADD, as FormulaHelper.cs:1158 adds them
   else if (isClassEnemy(target)) result = 60;
   return result;
 }

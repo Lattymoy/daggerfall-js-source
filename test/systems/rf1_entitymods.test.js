@@ -148,7 +148,7 @@ test('RF1: the read sites - one accessor per channel in the formulas, the field 
   assert.match(f, /chance \+= mentorArmorValue\(target, target\.armorValues\?\.\[struckBodyPart\] \?\? 0\) \+ entityArmorMod\(target, struckBodyPart\);/, 'the hit formula\'s armour term');
   assert.match(f, /weaponDamageMods\(weapon, wMin \+ Math\.floor\(rolls\(\) \* \(wMax \+ 1 - wMin\)\)\) \+ damageMod/, 'the weapon roll');
   assert.match(f, /const mult = entityWeightMult\(entity\);/, 'the carrying capacity');
-  assert.match(read('src/combat/pcaao.js'), /result = 100 - entityEnchantArmorMod\(target\) - entityArmorPoints\(target, struckBodyPart\);/, 'PCAAO\'s read (AUDIT SET P-M1: the channels and the points apart, the points as protection)');
+  assert.match(read('src/combat/pcaao.js'), /result = 100 \+ entityEnchantArmorMod\(target\) - entityArmorPoints\(target, struckBodyPart\);/, 'PCAAO\'s read (AUDIT SET P-M1: the channels and the points apart, the points as protection; ENCHANT-SIGN: the channels added)');
   assert.match(read('src/systems/statMods.js'), /mod \+= entity\._mods\?\.stats\?\.\[statName\] \?\? 0;/, 'liveStat, import-free');
   // SOFTCAP1: the one import is mentor mode's overlay, itself import-free - so statMods is still a leaf's leaf, cycle-free
   assert.deepEqual(read('src/systems/statMods.js').match(/^import [^\n]*/gm), ["import { mentoredStat } from './mentorMode.js';   // SOFTCAP1: mentor mode's overlay - a leaf, so this file stays cycle-free"], 'statMods stays a leaf (but for the leaf mentorMode)');
