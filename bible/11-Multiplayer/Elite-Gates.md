@@ -10052,8 +10052,11 @@ span link 0's three Gusts at y 0 on the hall's line, span link 1's three 12 m up
 steps on one road with no other piece between, so the six were one run: the first course's line, its height stretched to 12 m
 over z 4.11-29.47. The bridge the way takes back over the first course (link 20, x -1.15, 12 m up) stood inside it and was
 blown - the pilot pushed off it at 2.7 m/s - and span link 1's own Gusts, 14.85 m off the section's line, past
-`EG_GUST_REACH_M`, never blew at all. A run is one span link's now (`span` on the section): 797 of 6,000 law 10 halls over
-seeds 1-60 laid a Gust run straight on into another link's. The laws before lay no `span`, and draw as they did.
+`EG_GUST_REACH_M`, never blew at all. A run is one span link's now (`span` on the section). Over seeds 1-60's 6,000 law 10
+halls a Gust run ran straight on into another link's 797 times, in 578 halls, and onto another line or storey once (as
+this hall's does); the other 796 stay on one line, where each link's run now keeps its own breath and the ground between them,
+past each run's 4 m, none - egGustSections' own rule ("the pieces between two runs - a decree's Crumbles, a passage - stand
+in no breath"). The laws before lay no `span`, and draw as they did.
 
 **A PLAN'S CHAIN HELD FOR A LAUNCH A HOLD LATE** (`tools/egSpanSolve.mjs` launch). Seed 464's Hall 47 (band 1, ground 5)
 turns a bridge onto one Beat (link 8, heading -x). The first launch into the Beat's window was taken with the launch off it
@@ -10069,6 +10072,10 @@ edges, and the far one is a corner caught and stepped up onto (seed 464's landin
 catch); a face moving away from the body gives none - the body was pinned to the Rail's face and fell. Onto a piece receding
 at the landing, the pilot takes a launch only where the reach less one capsule's radius (`EG_BODY_R`, 2.91 m on the level)
 still lands.
+
+**The sweep** at this head (`2eb330d`), the relay deploy's own gate run locally: seeds 1-500 and the law pin's golden four
+in every band, every course crossed - band 0 3,418, band 1 3,529, band 2 3,548, band 3 3,482 (13,977) - and the synthetic
+LAW 9 halls' 25 seeds and golden four, 280 a band, every one crossed.
 
 **The pins** (`test/tooling/egsweep_red.test.js`, 3; `tools/mutants/egsweep_red.json`, 4 records, every one dead): the two
 sections of seed 342's Hall 37 on their own lines and storeys, its bridge in no breath, every Gust of it blowing, the course
