@@ -133,7 +133,7 @@ const HARDCODED = {
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
   'src/net/realm/realmTradeLaw.js': 21,
-  'src/net/recipeLaw.js': 109,
+  'src/net/recipeLaw.js': 121,   // RR-CRAFT: Updated test for the added recipes
   'src/net/relayCfg.js': 3,
   'src/net/renown.js': 2,
   'src/net/royalLink.js': 10,
