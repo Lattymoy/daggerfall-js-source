@@ -91,6 +91,8 @@ features.mwBillboardLook.note,"使用 Morrowind 身體時，人物和馬匹會�
 features.mwBillboardLook.title,"看板外觀"
 features.mwBodyMotion.note,"在第三人稱視角下，Morrowind 身體會依你移動的速度行走，每種武器各有其持握方式，揮擊時全身發力，雙腿仍持續移動。關閉則播放 Morrowind 原本的動畫。"
 features.mwBodyMotion.title,"Morrowind 身體動作"
+features.npcMarks.note,"開啟「Morrowind People」後，值得尋找的人頭上會浮動一個小圖示：任務需要的人頭上是黃色標記，商人頭上是硬幣，公會教官、公會任務發布者和競技場官員頭上是藍色寶石。"
+features.npcMarks.title,"Morrowind 人物標記"
 features.wagonUpkeep.boons,"增益"
 features.wagonUpkeep.effect,"立即生效。連線時由每位玩家自行選擇。"
 features.wagonUpkeep.hard,"困難"

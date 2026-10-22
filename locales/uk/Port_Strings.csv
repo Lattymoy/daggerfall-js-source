@@ -91,6 +91,8 @@ features.mwBillboardLook.note,"З тілом Morrowind тіла й коні ст
 features.mwBillboardLook.title,"Вигляд білборда"
 features.mwBodyMotion.note,"Від третьої особи тіло Morrowind іде в тому темпі, у якому ви рухаєтеся, тримає кожну зброю по-своєму й замахується всім тілом, поки ноги продовжують рухатися. Вимкнено — відтворює власні анімації Morrowind."
 features.mwBodyMotion.title,"Рух тіла Morrowind"
+features.npcMarks.note,"Коли «Morrowind People» увімкнено, над людьми, яких варто знайти, гойдається маленька піктограма: жовта позначка над тим, хто потрібен для завдання, монета над торговцем і синій самоцвіт над наставниками й замовниками гільдій та службовцями арени."
+features.npcMarks.title,"Позначки над людьми Morrowind"
 features.wagonUpkeep.boons,"Бонуси"
 features.wagonUpkeep.effect,"Діє одразу. Онлайн кожен гравець обирає сам."
 features.wagonUpkeep.hard,"Важко"

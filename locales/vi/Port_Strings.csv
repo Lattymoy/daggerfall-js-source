@@ -91,6 +91,8 @@ features.mwBillboardLook.note,"Với thân thể Morrowind, các thân thể và
 features.mwBillboardLook.title,"Kiểu billboard"
 features.mwBodyMotion.note,"Ở góc nhìn thứ ba, thân thể Morrowind bước đi theo nhịp bạn di chuyển, cầm mỗi loại vũ khí theo cách riêng và vung đòn bằng cả cơ thể trong khi đôi chân vẫn tiếp tục chuyển động. Tắt sẽ phát các hoạt ảnh gốc của Morrowind."
 features.mwBodyMotion.title,"Chuyển động thân thể Morrowind"
+features.npcMarks.note,"Khi bật ""Morrowind People"", một biểu tượng nhỏ nhấp nhô trên đầu những người đáng tìm: dấu vàng trên người mà nhiệm vụ cần, đồng xu trên thương nhân, và viên ngọc xanh lam trên người huấn luyện, người giao nhiệm vụ của hội và quan chức đấu trường."
+features.npcMarks.title,"Dấu hiệu trên người Morrowind"
 features.wagonUpkeep.boons,"Phần thưởng"
 features.wagonUpkeep.effect,"Có hiệu lực ngay. Khi trực tuyến, mỗi người chơi tự chọn."
 features.wagonUpkeep.hard,"Khó"

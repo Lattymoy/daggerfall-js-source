@@ -10372,6 +10372,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  draws billboardBatches: each active person with a look offered (their own batch cast-only where the body stands),
      *  the rest drawn as ever. A host that reads none (dungeon.js) leaves every person their billboard. MWNPC8c: `also`
      *  (lane, on, eye, dt) offers the host's own people on the same lane before it draws - the quest's stands. */
+    /** NPC-MARKS: the people's lane, whose bodies a host's marks hang over (scenes/npcMarksHost.js - its `heightOf`). */
+    peopleLane: _peopleLane,
     drawPeople(canvas, proj, view, eye, dt, also = null) {
       const read = opts.standingLook ?? null;
       const on = !!read && _peopleLane.frame();
