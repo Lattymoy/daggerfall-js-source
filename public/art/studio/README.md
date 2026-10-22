@@ -14,10 +14,11 @@ public/art/studio/
   artists.json       the roster: whose folders the game wears
   trashBattery/      trashBattery's pictures
   Redclaw/           Redclaw's pictures
+  maya/              maya's pictures
 ```
 
 Your folder is made by your first picture. On GitHub's upload page, open `public/art/studio/`, drag in a folder named
-exactly as the roster spells you (`trashBattery`, `Redclaw`) with your pictures in it, or type `trashBattery/` in
+exactly as the roster spells you (`trashBattery`, `Redclaw`, `maya`) with your pictures in it, or type `trashBattery/` in
 front of the file's name. Make folders inside yours however you like (`trashBattery/wagons/...`). A folder whose name
 is not on the roster is not worn: a new artist is added to `artists.json` first.
 
