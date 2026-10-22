@@ -7319,6 +7319,16 @@
   "tr": "c5a8fc8a9ba3",
   "by": "claude-in-session"
  },
+ "chargen.class.skills.major": {
+  "en": "85c39f1a36a9",
+  "tr": "61115387b17a",
+  "by": "claude-in-session"
+ },
+ "chargen.class.skills.primary": {
+  "en": "7bb8fba31082",
+  "tr": "7bb8fba31082",
+  "by": "claude-in-session"
+ },
  "chat.help.breach": {
   "en": "0abe32307fc8",
   "tr": "880bc45d493f",
@@ -9409,6 +9419,16 @@
   "tr": "aa079ed2a3a6",
   "by": "claude-in-session"
  },
+ "features.npcMarks.note": {
+  "en": "9ac4077e0fc2",
+  "tr": "6a70a1495c0e",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.title": {
+  "en": "a3f85ff33ef4",
+  "tr": "ac68a9299c3a",
+  "by": "claude-in-session"
+ },
  "features.questHerald.note": {
   "en": "96aa445162b4",
   "tr": "e5cbd792f5fe",
@@ -9642,6 +9662,21 @@
  "festival.cakes": {
   "en": "42b5d392c591",
   "tr": "b9ee00404e47",
+  "by": "claude-in-session"
+ },
+ "festival.finds.full": {
+  "en": "330c9b302a2c",
+  "tr": "9a13b1517def",
+  "by": "claude-in-session"
+ },
+ "festival.finds.today": {
+  "en": "93be20c18f10",
+  "tr": "3df5955035f5",
+  "by": "claude-in-session"
+ },
+ "festival.finds.todayFull": {
+  "en": "78bff0d44c1f",
+  "tr": "8cbdd36c419c",
   "by": "claude-in-session"
  },
  "festival.found": {
@@ -11879,6 +11914,11 @@
   "tr": "6cd5a68498b0",
   "by": "claude-in-session"
  },
+ "helm.passenger": {
+  "en": "61953c9d9311",
+  "tr": "357f212b05fb",
+  "by": "claude-in-session"
+ },
  "holdings.horse.boons.hungry": {
   "en": "11b471ca7d1e",
   "tr": "ea71ccdaebcf",
@@ -12567,6 +12607,16 @@
  "levelup.vital.magicka": {
   "en": "3f9626ec308d",
   "tr": "6c3922764577",
+  "by": "claude-in-session"
+ },
+ "livingWorld.friend.court": {
+  "en": "0246b7029d39",
+  "tr": "71d880d797e3",
+  "by": "claude-in-session"
+ },
+ "livingWorld.friend.made": {
+  "en": "fee76aa0c9bf",
+  "tr": "5bd9f0357f10",
   "by": "claude-in-session"
  },
  "lootBanner.honour.aura": {
@@ -23579,14 +23629,29 @@
   "tr": "c9a8f98d1697",
   "by": "claude-in-session"
  },
+ "prof.page.stores.fromPackGoods": {
+  "en": "658f1d1d015f",
+  "tr": "439d97bb59d8",
+  "by": "claude-in-session"
+ },
  "prof.page.stores.goldGoods": {
   "en": "0d5a1ee06ac7",
   "tr": "6def4dcaf660",
   "by": "claude-in-session"
  },
+ "prof.page.stores.goldStays": {
+  "en": "d7fe9756ed0f",
+  "tr": "873d5e4f416a",
+  "by": "claude-in-session"
+ },
  "prof.page.stores.looseGoods": {
   "en": "4b2a8d95c0dd",
   "tr": "b6f24f0a66be",
+  "by": "claude-in-session"
+ },
+ "prof.page.stores.looseMade": {
+  "en": "a48227c3560e",
+  "tr": "d3cbc73278c0",
   "by": "claude-in-session"
  },
  "prof.page.stores.matLine": {
@@ -23765,13 +23830,13 @@
   "by": "claude-in-session"
  },
  "prof.page.unlocks.hunting1": {
-  "en": "3150619be94c",
-  "tr": "5ce268f308db",
+  "en": "7e740646d01d",
+  "tr": "f6e665c88b53",
   "by": "claude-in-session"
  },
  "prof.page.unlocks.hunting2": {
-  "en": "7ee91d615091",
-  "tr": "1afb1e1f3b9a",
+  "en": "3d94bbcfdab3",
+  "tr": "7d0287e13212",
   "by": "claude-in-session"
  },
  "prof.page.unlocks.hunting3": {
@@ -23890,8 +23955,8 @@
   "by": "claude-in-session"
  },
  "prof.page.unlocks.outfitting2": {
-  "en": "c0be52db8eee",
-  "tr": "764a56e2d533",
+  "en": "4b2213ed6f4a",
+  "tr": "99b77a2da1d4",
   "by": "claude-in-session"
  },
  "prof.page.unlocks.outfitting3": {
@@ -26149,6 +26214,16 @@
   "tr": "2a688b181ba8",
   "by": "claude-in-session"
  },
+ "rvn.errand.left.realHours": {
+  "en": "09ae5f9750ec",
+  "tr": "780123793677",
+  "by": "claude-in-session"
+ },
+ "rvn.errand.left.realMinutes": {
+  "en": "fa15b0cca051",
+  "tr": "ff156e2ebf53",
+  "by": "claude-in-session"
+ },
  "rvn.errand.no.abroad": {
   "en": "3d2f752aa20c",
   "tr": "9f62d27860d2",
@@ -26510,8 +26585,8 @@
   "by": "claude-in-session"
  },
  "rvn.roster.abroadLived": {
-  "en": "02ad56e2e2bb",
-  "tr": "9c0a3908725b",
+  "en": "a57a6cdb3d6f",
+  "tr": "dfa4f81ca8f0",
   "by": "claude-in-session"
  },
  "rvn.roster.broken": {
@@ -28164,6 +28239,21 @@
   "tr": "99161bf2da8c",
   "by": "claude-in-session"
  },
+ "sd.through.opens": {
+  "en": "1e72c7ca985d",
+  "tr": "93047cb4c9db",
+  "by": "claude-in-session"
+ },
+ "sd.through.title": {
+  "en": "45d79739680d",
+  "tr": "b7e7d54464a0",
+  "by": "claude-in-session"
+ },
+ "sd.through.to": {
+  "en": "9adecd5690cd",
+  "tr": "be90f7e9a329",
+  "by": "claude-in-session"
+ },
  "sea.board.cargoVoid": {
   "en": "ab24e7cbf348",
   "tr": "164f03d43043",
@@ -28547,6 +28637,11 @@
  "spellbook.effect.magnitude": {
   "en": "032e12a22bdd",
   "tr": "480267a19394",
+  "by": "claude-in-session"
+ },
+ "standing.notice.served": {
+  "en": "b6b59e754a1b",
+  "tr": "ce6c72e1ba08",
   "by": "claude-in-session"
  },
  "starfall.at.breath": {

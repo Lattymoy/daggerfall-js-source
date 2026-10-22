@@ -118,7 +118,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     // (climateSwaps.js groundIsSnowy) - the mod's unmasked ground counts as snowed, and laid snow over the desert's edge
     const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);
     const t = {
-      mapX: px.x, mapY: px.y, size, stamp, seen: frameNo, replaced: null,
+      mapX: px.x, mapY: px.y, size, stamp, seen: frameNo, replaced: false,
       tileMap: ground.tileMap(p),
       winterArchive,
       origin: (out) => ground.translation(p, out),
@@ -144,7 +144,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     byPixel.set(key, t);
     // OnPromoteTerrainData: its ground was rebuilt. The event is never the runtime's own frame's (DFU raises it from the
     // streaming world's), so one found while a build asked for the tile is heard when that frame is done (flushPromotions)
-    if (was && was !== t) { t.replaced = was; if (runtime) promotions.push(t, was); }
+    // SNOW-HOLD (FIELD BUGS 2026-10-21b): `replaced` says THAT it replaced one - the old tile goes to the runtime through
+    // `promotions` alone; held here, each tile kept the one before it, and every rebuild of a pixel stood in one chain
+    if (was && was !== t) { t.replaced = true; if (runtime) promotions.push(t, was); }
     return t;
   }
   /** The rebuilds found since the runtime last heard: each a tile replacing the one its map pixel stood before. */

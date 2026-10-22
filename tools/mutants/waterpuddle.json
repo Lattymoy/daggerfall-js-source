@@ -38,8 +38,8 @@
   {
     "name": "WATERPUDDLE-wet-specks-kept",
     "file": "src/world/puddleMask.js",
-    "old": "if (patch.length < minArea && (want === 1 || !edge))",
-    "new": "if (patch.length < minArea && want === 0 && !edge)",
+    "old": "      if (size < minArea && (want === 1 || !edge))",
+    "new": "      if (size < minArea && want === 0 && !edge)",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WATERPUDDLE-dry-edge-filled-too",
     "file": "src/world/puddleMask.js",
-    "old": "if (patch.length < minArea && (want === 1 || !edge))",
-    "new": "if (patch.length < minArea)",
+    "old": "      if (size < minArea && (want === 1 || !edge))",
+    "new": "      if (size < minArea)",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WATERPUDDLE-the-down-neighbour-lost",
     "file": "src/world/puddleMask.js",
-    "old": "y < h - 1 ? i + w : -1]",
-    "new": "-1]",
+    "old": "        if (y < h - 1 && !seen[i + w] && wet[i + w] === want) { seen[i + w] = 1; stack[top++] = i + w; }\n",
+    "new": "",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]
@@ -154,9 +154,9 @@
   },
   {
     "name": "WATERPUDDLE-world-uploads-the-bare-layers",
-    "file": "src/scenes/world.js",
-    "old": "return { modLayers, layers: modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : markPuddleWater(classic) };",
-    "new": "return { modLayers, layers: modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : classic };",
+    "file": "src/scenes/groundSets.js",
+    "old": "    return { modLayers, layers: modLayers ? await stepsBreathing(carryPuddleMaskSteps(modLayers, marked), breathe) : marked };",
+    "new": "    return { modLayers, layers: modLayers ? await stepsBreathing(carryPuddleMaskSteps(modLayers, marked), breathe) : classic };",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]
@@ -181,9 +181,9 @@
   },
   {
     "name": "WATERPUDDLE-grass-never-learns-the-mask",
-    "file": "src/scenes/world.js",
-    "old": "      groundPuddles.set(groundArchive, markPuddleWater(layers));",
-    "new": "      groundPuddles.set(groundArchive, layers);",
+    "file": "src/scenes/groundSets.js",
+    "old": "    if (!groundPuddles.has(archive)) groundPuddles.set(archive, marked);   // WATER-PUDDLE: the blades ask the mask the pass draws by",
+    "new": "    if (!groundPuddles.has(archive)) groundPuddles.set(archive, classic);   // WATER-PUDDLE: the blades ask the mask the pass draws by",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]

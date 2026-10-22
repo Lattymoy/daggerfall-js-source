@@ -464,6 +464,33 @@ Also RECORDED (Ledger A): SetRandomQuestor uses `new System.Random()`
 unseeded and wall-clock dependent. Unspecified, so the port's own roll
 is as faithful.
 
+**QUESTOR-HELD** (FIELD BUGS 2026-10-20h, Ledger A). While the pool
+holds questors, its selection names one of them. The build sets it on
+the last questor added (TalkManager.cs:2869), but RemoveNpcQuestor
+(TalkManager.cs:2602-2605) and RestoreConversationData
+(TalkManager.cs:2541-2542) leave it where it stood. The offer window
+spends the questor it was opened for, and a load brings in a pool
+without the selection. If that was the selected questor, DFU's next
+Work answer throws KeyNotFoundException out of GetQuestorGender
+(TalkManagerMCP.cs:34) before SetRandomQuestor (TalkManager.cs:2036)
+can move the selection, and the topic stays dead in that town. The
+port's readers answered the empty string instead: "Go to a place called
+ and talk to someone named ." Both mutators now end in
+`npcSession.js:"  _holdSelection() {"`, which takes the build's own rule,
+the last questor the pool holds. A selection still in the pool is left
+alone, and nothing is drawn. DFU's order is unchanged: the answer names
+the selection that stood before the ask, and the pick follows it.
+Pinned: `fb1020h_questor.test.js`.
+
+**QUESTOR-SHE** (FIELD BUGS 2026-10-20h). The four pronouns fork on
+`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`.
+It compared the string `'female'`, but the pool's NPCData carries the
+Genders enum staticNpcData mints, and the world host hands that on
+unchanged. So every woman with work was "him", while the pins handed
+the helper the string. DFU switches on the enum
+(TalkManagerMCP.cs:146-195), so this restores DFU's behaviour and departs
+from nothing.
+
 **THE UNCLONED QUESTOR POST** (:927 vs :3552). ExpandQuestMessage
 writes each expanded string back into the token it came from
 (QuestMacroHelper.cs:157), and GetNPCQuestGreeting hands it the array

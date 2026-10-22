@@ -24,6 +24,7 @@ import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { quatRotate } from '../../../src/world/quat.js';
 import { scene } from '../../csaScene.mjs';
 import { sea } from '../../navalSea.mjs';
+import { createJourneyHand, passengerHelm, passengerCard } from '../../../src/scenes/naval/passageHelm.js';
 
 const HULL = Object.freeze({ Rowboat: 0, LargeBoat: 1, SmallShip: 2, LargeGalley: 3, Carrack: 4 });
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -185,6 +186,7 @@ test('AUDIT NAV2 F17 a journey holds the helm under the travel view: the helm pa
     cursorActive: () => true, pointerSurfaces: new Set(), csaKeyLabel: () => '', csaHelmHooks: {}, travelView, _travelUIHolder: { ui: null },
     navalOn: () => true,   // PIN MOVED (SHIP-CREW): the panel's Orders button asks whether the naval arc is on
     holdsCargo: (hull) => hull > 0,   // PIN MOVED (CARGO-ANYWHERE): and its Hold whether her hull carries one
+    passengerCard,   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the real card law (no charter here)
   };
   const draw = mount(scope, fn('csaDrawHelmPanel'), 'csaDrawHelmPanel');
   draw();
@@ -207,9 +209,17 @@ test('AUDIT NAV2 F17 the sail keys stand down under the travel view, as the turn
   for (const a of sail) assert.equal(started(a), false, `${a} pressed under the view: the journey's hand sets the sails`);
   assert.equal(started(BOAT_ACTIONS.toggleLight), true, 'the lanterns still the key\'s');
   assert.equal(started(BOAT_ACTIONS.disembark), true, 'leaving the helm still the key\'s');
-  scope.csaHelmInput.edges.add(BOAT_ACTIONS.toggleSail);   // world.js tvSeaSail: csaHelmPress(CSA_BOAT_ACTIONS.toggleSail)
+  // PIN MOVED (FIELD BUGS 2026-10-21d PASSAGE-HANDS): the journey's tap is its own hand's, read through the seam's wrapper
+  const journey = createJourneyHand();
+  const seam = passengerHelm({ started, has: () => false, horizontal: () => 0, vertical: () => 0 }, () => null, journey);
+  journey.press(BOAT_ACTIONS.toggleSail);   // world.js tvSeaSail: csaJourneyHelm.press(CSA_BOAT_ACTIONS.toggleSail)
   edges.delete(BOAT_ACTIONS.toggleSail);
-  assert.equal(started(BOAT_ACTIONS.toggleSail), true, 'the journey\'s own press reaches the mod');
+  assert.equal(seam.started(BOAT_ACTIONS.toggleSail), true, 'the journey\'s own press reaches the mod');
+  journey.edges.clear();
+  // ...and a panel's or the pad's sail tap under the view is refused as the key's is (it set sail against the journey)
+  for (const a of sail) { scope.csaHelmInput.edges.add(a); assert.equal(started(a), false, `${a} tapped on the panel or the pad under the view`); }
+  scope.csaHelmInput.edges.add(BOAT_ACTIONS.disembark);
+  assert.equal(started(BOAT_ACTIONS.disembark), true, 'the panel\'s Leave still the panel\'s');
   scope.csaHelmInput.edges.clear();
   edges.add(BOAT_ACTIONS.toggleSail);
   travelView.active = false;

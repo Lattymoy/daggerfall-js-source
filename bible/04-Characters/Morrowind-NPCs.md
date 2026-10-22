@@ -126,6 +126,7 @@ Each line is a slice's acceptance, not an aspiration:
 | MWNPC17 THE WARDROBE | who wears what by role, dressed off the seed - silhouettes, garments, dyes, cloaks, armour kits, Morrowind's clothing ladder; each garment's record picked and the head and hair walked off the look's `npc` hint (SHIPPED, section 25) | wardrobe.js; the item map, the build; every look producer |
 | MWNPC18 THE PLACED FIGURES | a figure a player set down in a home or a yard stands in a body - its sex and role off FLATS.CFG (SHIPPED, section 26) | worldModes.js (rooms), world.js (yards) |
 | MWNPC19 THE FLATS THAT STAND | the standing horses (TEXTURE.201's, a World of Daggerfall site's, the Stables') as the 3D horse; a person's flat no StaticNPC holds (a factionless figure, a site's people, a marker's captive, a boat's crew) in a body (SHIPPED, section 28) | world.js, exterior.js, merchantYardsHost.js, comeSailAwayPool.js; worldModes.js and dungeonContext.js named |
+| NPC-MARKS | a bobbing pixel-art mark over a body whose click is a quest's (a yellow "!" - the work pool's questor too), a merchant's (an amber coin) or a guild's or the arena's (a blue gem), read off the click's own route (SHIPPED, section 30; AUDIT NPC-MARKS, section 31) | worldModes.js (interiors, dungeons), dungeonContext.js (its lane handed), world.js (the street), exterior.js (the bench) |
 
 Click and talk boxes keep the billboard's size (they are the classic
 game's); the arena crowd stays flats.
@@ -2628,3 +2629,139 @@ Look keep the quad's depth; the target, the unit and every drawn exit's depth wr
 the target is drawn into again (a program sampling it would be a feedback loop). `tools/mutants/fb1015_lootbody.json`:
 13 mutants, 13 dead. Pin moved: AUDIT MW-NPC C6's (`test/characters/mwnpc_audit.test.js`) holds
 C6's own half at the new door - every flat shown before a standing body's is marked; the hosts' order is FB1015's pin.
+
+## 30. NPC-MARKS - A MARK OVER THE PEOPLE WHO DO SOMETHING (SHIPPED 2026-10-21)
+
+The owner, 2026-10-21: "For morrowind models, vendors and quests npcs are hard to find due to everyone looking the
+same. Could we make a bobbing icon above their character for morrowind specifically?"
+
+THE PROBLEM IS THIS ARC'S OWN. Daggerfall's standing people are pictures, and the picture says who they are - a shop's
+keeper wears the shop's sprite. MWNPC17's wardrobe dresses everyone off their faction's role and their seed, so in a
+Morrowind body a jeweller and the customer at the counter can look alike, and a quest's contact looks like the room.
+
+WHAT SHIPS. Over each standing person whose BODY stands on the people lane (`createPopulationLane`'s new `heightOf` -
+PeerBodies' own, so an Altmer's mark hangs over an Altmer's head) and whose click goes somewhere other than talk, a
+small pixel-art icon bobs (`render/npcMarkPass.js`, `scenes/npcMarksHost.js`):
+
+- a yellow "!" - a person a live quest holds (their QuestResourceBehaviour, the one `openStaticNpc`'s `doClick` reaches
+  first - PlayerActivate.cs:1523-1528 - or a quest's stood person). A quest set aside (QUEST-SHELF), ended or broken
+  marks no one. It wins over the other two: what the quest wants first. (AUDIT NPC-MARKS, section 31: and the work
+  pool's questor where the click reaches talk; an arena officer's own window comes before it.)
+- an amber coin - StaticNPCClick's merchant arm (a Merchants-group person in a shop, a bank or a tavern, or a custom
+  merchant service's).
+- a blue gem - its guild-service arm where a guild answers it, and the coven's (a guild's trainers, spell sellers and
+  quest givers); since section 31, the arena's officers too.
+
+THE ROUTE IS THE CLICK'S. `staticNpcRouteIn` builds staticNpcRoute's arguments in one place, and `openStaticNpc` now
+asks it too (ONE CONSTRUCTION SEAM - the rr3 pin moved with it), so a mark never promises a door the click does not
+open. A person's route is read once their faction's row is in (section 31 L1: not "the table" - it is an empty Map
+while it loads), again when a mod's merchant service switches (L6); their quest and their work each frame.
+
+THE FORM. One quad a mark, square to the eye, standing on a point MARK_OVER_HEAD_M over the body's crown (section 31
+R9: its bottom there at any size - it was centred there, and a far mark drawn large reached into the head); the icon
+drawn by the fragment
+stage on a 16 x 16 grid, so it reads as the pixel art the sprites are and ships no picture (nothing read from ARENA2).
+Blended, tested against the world's depth and writing none (a wall hides it - NAME1's complaint about names seen
+through walls is not repeated), never under MARK_MIN_RAD of the view (two screen pixels a cell since section 31 R6), the
+nearest twelve (the lane's Near cap) within
+30 m, faded over the last fifth. The bob: 6 cm each way once a second on duelWall.js's wrapped clock, a phase each;
+still under the system's reduced motion. No fog: a cue for the eye, inside a street's width.
+
+A classic sprite is never marked - its picture is its mark - so with Morrowind People off, or no Morrowind data, nothing
+draws. The switch is the Features page's "Morrowind People Marks" (`npc-marks`, the `npcMarks` pref, on by default, the
+viewer's own).
+
+THE FOUR HOSTS. `scenes/worldModes.js` - the interior (the room's people and its quest stands) and the dungeon (its
+people, through `dungeonContext.js`'s new `peopleLane`, and its quest stands); `scenes/world.js` - the street's
+standing people (route read with no building: a guild's servant and a custom merchant service mark, a plain merchant
+in the street talks); `scenes/exterior.js` - the fixed-city bench's standing people, the same. Not marked: the walkers
+(MWNPC7 - no faction route), the yards' and homes' placed figures (MWNPC18), the stand-flats and the boats' crews
+(STAND-FLAT - no StaticNPC), the living world's residents (LW8).
+
+Not a DFU member: Ledger A row (NPC-MARKS). `test/scenes/npcmarks.test.js`; `tools/mutants/npcmarks.json` (its count
+since the audit is section 31's), one equivalent as recorded (the route's `insideBuilding` with no building). The icons' pixels and the quad's
+size are pinned on the shader's own code, run by `test/glsl.mjs`. The shader was compiled and drawn
+in headless Chromium (SwiftShader) against a dark and a lit wall before it shipped; the bodies themselves need the
+player's Morrowind data, so the marks over a live body were not seen on this machine.
+
+## 31. AUDIT NPC-MARKS (2026-10-22)
+
+The owner, of section 30: "Audit this". Two lanes read the change cold, from its commit and not from this record - the
+LAW AND THE WIRING (does the mark ever disagree with the click; does each host gather and draw in the right order and
+place), and RENDERING, GL STATE, PERFORMANCE AND LIFECYCLE - and nothing was edited while they read (Home.md, DO NOT
+FIX WHILE THE VERIFIER IS READING). Sixteen findings (numbered by the lanes' reports; R8 and R11 read fine): fourteen
+fixed, two stated, and three of the fixes carry a stated remainder (R4, R6, L2).
+
+THE LESSON FIRST. R1 was a red CI the slice pushed: a new foreign pass on a host moves the hosts' seam counts, and
+three pins count them by call site (`test/render/glstate.test.js` EV6, `test/render/perf2.test.js`,
+`test/ui/farring.test.js`) - beside the one the slice did move (`test/bible/audit18_bible_docs.test.js` AUDIT 39r).
+The slice ran its own tests by grepping for the names it touched, and a count of `renderer.markForeignPass();` names
+nothing it touched. A slice that adds a pass greps the tests for `markForeignPass` too.
+
+RENDERING (R):
+- R1 FIXED. The three seam pins moved: world.js 32 -> 33, exterior.js 7 -> 8, each with its reason.
+- R2 FIXED. The pass bound its program and VAO before it knew whether a mark would draw - a lone mark at the reach's
+  very edge fades to alpha 0, drew nothing, and the host, told so, marked no seam: the renderer's program and VAO
+  shadows were left wrong for its next draw (EV6's own class). It looks first now and binds nothing for nothing
+  (spoilsGlow.js's order).
+- R3 FIXED. Every session built the program twice - bootWorld and createWorldModes each made a pass on the one context.
+  ONE PASS A CONTEXT: the hosts share it (`npcMarksHost.js` SHARED), its owner the last to let go.
+- R4 FIXED. No owner freed the program, the VAO or the buffer. `NpcMarkRenderer.dispose` and the host's `dispose`
+  (the last host frees). The hosts' life is their page (the title menu reloads it, scenes/shared.js), as the loot
+  lines' is - stated, as theirs is.
+- R5 FIXED. The icon's right was the view's first row - lookAt's x, which the HANDEDNESS mirror (mat4.js
+  mirrorProjectionX) puts on the screen's LEFT: the icons drew mirrored (only the top-left light showed it). It is the
+  billboards' `camRight` now, the row negated.
+- R6 FIXED. At MARK_MIN_RAD 0.011 a far icon stood about 21 pixels at 1080 lines - 1.3 a cell - so cells came out one
+  and two pixels wide and shimmered as it bobbed. 0.017 is two a cell. And the "!" and the coin were the same gold, so
+  where an icon is a few pixels (retro mode) the two could not be told apart: the "!" a lemon yellow, the coin an
+  amber. STATED: in retro mode a far icon is still a few pixels - the shapes do not survive that; the hues do.
+- R7 STATED. The lit lane's resolve multiplies the frame by its AO, its vignette, its contrast and its dither, and the
+  icon is in the frame, so in front of a corner it darkens a little - as the loot lines do. No bloom: its brightest
+  is under AIR_BRIGHT_THRESHOLD.
+- R9 FIXED. The icon was centred on its point, so a far mark drawn at its larger floor size reached down into the head;
+  it stands ON its point now (the vertex stage lifts it a half-size), MARK_OVER_HEAD_M 0.2 the gap under it.
+- R10 STATED. "No allocation a frame" was not true: the lane's `heightOf` spells its peer id (npcPeerId), as its `has`
+  already did for every actor. The header says so.
+- FINE, as read: the GL state left (blend off, depth mask on, cull on, the VAO unbound - the blend func the next pass
+  sets its own); a standing body's card discards its empty texels, so the body never hides the mark; every lane's
+  bodies are composited before the marks; at most twelve draws, three uniforms each; the shader's highp, int compares
+  and discard.
+
+THE LAW AND THE WIRING (L):
+- L1 FIXED. `townTalk.factionDict` is the FactionFile's own empty Map from the moment the file is fetched until it
+  parses - truthy - so a person first seen in that window read talk and KEPT it. The route is kept only once the
+  person's faction row is in. The test builds the producer's own empty dict (TEST THE SHAPE THE PRODUCER MINTS).
+- L2 FIXED - the owner's case. The work pool's questor - the townsperson the "any work?" answer names - opens the quest
+  offer as their talk's first door (npcSession.isNpcOfferingQuest, TalkManager.cs:757-772) and had no mark. Marked
+  now where the click reaches talk, read each frame by the click's own seed (`offersWork`, worldModes.js and world.js;
+  the bench has no session, and so no pool). STATED: a castle's 25% roll is the click's own and cannot be known ahead.
+- L3 FIXED. A guild-service route with no guild here - a holy order's servant in a building no divine runs, an order
+  no hall holds - is "You get no response." (openGuildService's createGuildForGroup); it marked a gem. It marks only
+  where a guild answers now.
+- L4 FIXED. The dungeon's click is npcTargets' - no width, or a ShowText action's person, is not the NPC's - and the
+  marks gathered every person. `clickable` holds the marks to that law.
+- L5 FIXED. The arena's officers open their own windows before the route (activateStaticNpc: the Herald, the
+  banners' recruiters, the bookmaker, the Pit Master, the Keeper of the Hall) and were marked by their faction. They
+  mark a gem now, before the quest's "!" as their window comes before the quest's click. A warden talks. The Wyrd
+  Sisters and the lamp keepers stand no body (their looks are null), so no mark.
+- L6 FIXED. A mod's merchant service (Roleplay & Realism's) switched mid-session left the kept route. The route is
+  read again whenever the switch's answer moves.
+- L7 FIXED. Under the Billboard Look the upright card draws the body cos(pitch) of its height (BODY-CARD), and the mark
+  hung at the full height floated over a shortened head from above. `markCrownOf` reads the switch.
+- FINE, as read: `interiorBuilding` is cleared on every way out, so the click and the mark read the same building in
+  every mode; the faction listeners' quests are Individuals', whose route is talk; quest-words-first; tombstoned
+  questors' behaviours destroyed; a quest's item and foe stands stand no body; outdoor quest people are the street's
+  StaticNPCs (no stand is stood outdoors); the lane's feet are the holder's own array; interior holders are fresh
+  each visit, so no route crosses buildings.
+
+AT THE PULL REQUEST (#1121): CI's first run of the audited change found one more - the one-home ratchet
+(`test/systems/talk/audit24_onehome.test.js`, ONE DFU MEMBER, ONE EXPORT) caught two names already declared elsewhere
+for other things: `MARK_KINDS` (systems/livingWorld/relations.js, a body's marks) and the audit's own `crownOf`
+(systems/naval/navalShips.js, a water's crown). Not one member twice - two homonyms - so ours were renamed
+(`NPC_MARK_KINDS`, `markCrownOf`) rather than listed in HOMONYMS. The same lesson as R1's: a ratchet over the whole
+tree's declarations names nothing the slice touched, so a slice adding exports runs it.
+
+`test/scenes/npcmarks.test.js` (21 tests; L1-L7, R2, R3/R4 and R5 each their own, the vertex stage's point law beside
+R9); `tools/mutants/npcmarks.json`: 46 records, 45 dead, one equivalent as recorded. The pass was compiled and drawn
+again in headless Chromium through a mirrored projection, the game's.

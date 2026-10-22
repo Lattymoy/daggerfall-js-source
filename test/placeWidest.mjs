@@ -5,6 +5,7 @@ import { NAME_MAX, POSE_BOUND, POSE_Y_BOUND, CAST_DEST_SENDERS_MAX, POSE_RIDE, P
 import { TITLES, GLYPHS, titleClaimed } from '../src/net/identityToken.js';
 import { HOUSE_NAME_MAX, HOUSE_GIVEN_MAX, HOUSE_GEN_MAX } from '../src/net/houseLaw.js';
 import { fakeRoom } from './fakeRoom.mjs';
+import { leaseKeyOf, mintLease } from '../src/net/roomLease.js';
 
 export async function withClock(fn) {
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
@@ -26,7 +27,9 @@ export const PARTY_POSE = { px: 100, py: 200, loc: 'Daggerfall', in: 0, h: 50, h
 /** Everything a place socket's attachment carries - what a wake must recompute, and nothing else. */
 // CHAP4c: and a claimed title's `ts` (wire.js badged) - a seat's (SEAT1c) and a chapter's seat's ride the attachment with it,
 // unmeasured until the widest title was a claimed one (PIN MOVED)
-export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 'ts', 'glyphs', 'sub', 'mu', 'lv', 'gi', 'gt', 'gm', 'hn', 'hc', 'hb', 'hg', 'ci', 'gio', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed', 'pk']);   // WARDEN1: `pk`, whose parked team the socket last spoke for (24 hex - the town watch tells it of a throw); AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed; GUILD1c: the guild it signed (`gi`, `gt`, `gm`) and when it was said (`gio`); LEGACY7: the house it signed (`hn`, `hc`, `hb`, `hg`); AUDIT LEGACY III O1: its realm character (`ci`), which the wed arm stamps
+// LEASE1 (net/roomLease.js): and the hub's word on the socket - when the room's last word on its mute was said (`lt`),
+// when the lease it hands on lapses (`ld`, epoch seconds; none for a build that hands on none), and a freeze (`fz`)
+export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 'ts', 'glyphs', 'sub', 'mu', 'lv', 'gi', 'gt', 'gm', 'hn', 'hc', 'hb', 'hg', 'ci', 'gio', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed', 'pk', 'lt', 'ld', 'fz']);   // WARDEN1: `pk`, whose parked team the socket last spoke for (24 hex - the town watch tells it of a throw); AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed; GUILD1c: the guild it signed (`gi`, `gt`, `gm`) and when it was said (`gio`); LEGACY7: the house it signed (`hn`, `hc`, `hb`, `hg`); AUDIT LEGACY III O1: its realm character (`ci`), which the wed arm stamps
 /** AUDIT FB1018D L4-4: a dungeon room's socket carries SEAT-LIVE's two stamps beside them (net/seatLive.js - when it came
  *  in, `hi`; when it was last heard, `hd`), which an interior's never writes. */
 export const SEAT_ATTACH_FIELDS = Object.freeze(['hd', 'hi']);
@@ -39,6 +42,7 @@ export const PLACE_METER_FIELDS = Object.freeze([
   'duelBucket', 'duelDrops', 'rnbucket', 'rndrops',   // AUDIT RENOWN1 WIRE-4: DUEL1's meter and RENOWN1's, which neither slice listed
   'gdbucket', 'gddrops',   // GUILD1c: the guild orders' one meter, both kinds
   'wedBucket', 'wedDrops',   // LEGACY7 part three: the wed frames' meter
+  'lq',   // LEASE1: the lease frames' meter
 ]);
 /** Every frame a place socket can send, once - the room's host, so its memory and its stream are its own. */
 export const placeFrames = (other) => [
@@ -63,7 +67,7 @@ export async function widestPlace(tick, key = 'interior:m4294967295.16777216') {
   const title = TITLES.reduce((x, y) => (y.length > x.length ? y : x));   // CHAP4c: a chapter's seat's now - claimed, so it rides with its widest claim
   const widest = async (ws, n) => {
     const tok = await r.token(long(n), { s: long(n, 's'), n: 'N'.repeat(NAME_MAX), t: title, ...(titleClaimed(title) ? { ts: [0xffffffff, 9999] } : {}), g: [...GLYPHS], mu: Math.floor(Date.now() / 1000) + 3600, lv: 50, gi: `g${'z'.repeat(10)}`, gt: 'WWWW', gm: `m${'9'.repeat(15)}`, hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX, rc: 1, ci: `r${'f'.repeat(20)}` });   // AUDIT RENOWN1 WIRE-4: every RENOWN1 client's token carries a level; GUILD1c: and a guild, each at its shape's bound; AUDIT LEGACY III O1: and its realm character
-    return r.hello(ws, long(n), WIDE_POSE, { tok, name: 'N'.repeat(NAME_MAX) });
+    return r.hello(ws, long(n), WIDE_POSE, { tok, name: 'N'.repeat(NAME_MAX), ls: 1 });   // LEASE1: a build that hands its hub's lease on
   };
   const me = r.connect(); await widest(me, 0);   // the first hello: this world room's host
   const others = [];
@@ -72,5 +76,11 @@ export async function widestPlace(tick, key = 'interior:m4294967295.16777216') {
   await r.raw(others[0], JSON.stringify({ t: 'hit', data: { i: 0, dmg: 1, kind: 'melee' } }));   // a blow at the host
   await r.raw(others[0], JSON.stringify({ t: 'trade', data: { to: long(0), k: 'ask', s: 'abcdef' } }));   // a trade at me
   for (const f of placeFrames(long(1))) { tick(337); await r.raw(me, JSON.stringify(f)); }
+  // LEASE1: last, the hub's lease - a mute and a freeze at their widest (the relay's secret set only now, so no arm above
+  // read it)
+  r.env.GATE_SIGNING_KEY = 'the relay secret';
+  const nowS = Math.floor(Date.now() / 1000);
+  const l = await mintLease({ s: long(0, 's'), mu: nowS + 3600, fz: nowS + 3600, at: nowS }, await leaseKeyOf(r.env.GATE_SIGNING_KEY, { subtle: crypto.subtle }), { subtle: crypto.subtle });
+  tick(337); await r.raw(me, JSON.stringify({ t: 'lease', l }));
   return { r, me, others };
 }

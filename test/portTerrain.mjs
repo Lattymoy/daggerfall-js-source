@@ -81,5 +81,5 @@ export function portTerrain() {
     for (let y = 0; y + K <= 128; y++) for (let x = 0; x + K <= 128; x++) if (S[(y + K) * 129 + x + K] - S[y * 129 + x + K] - S[(y + K) * 129 + x] + S[y * 129 + x] === K * K) n++;
     return n;
   };
-  return (_terrain = { maps, dict, openSea, towns, tileMapOf, isWater, shipWater });
+  return (_terrain = { maps, woods, dict, openSea, towns, tileMapOf, isWater, shipWater });   // FIELD BUGS 2026-10-21d PASSAGE-IN: the heightmap the planner reads
 }

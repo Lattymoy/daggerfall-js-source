@@ -67,11 +67,20 @@ export function underwaterFogDensityMax(fogStrengthSlider, fogDistanceSlider) {
 
 /**
  * GetDaylightFactor: 0 at night, else SunlightManager.DaylightScale -
- * the light curve with the weather's scale already in it - clamped.
+ * the light curve with the weather's scale already in it - clamped -
+ * and then (SEA-DAWN, the Discord, 2026-10-21: "during the dawn/dusk
+ * hours ... the waters are very dark even though the sun is up") to the
+ * power SEA_DAYLIGHT_GAMMA. A departure (Port-Ledger A): the mod reads
+ * the curve straight, and the rig's curve is 0.36 two hours into the day
+ * and two hours before dusk, so the sea held most of its night tint
+ * while the ambient floor kept a ship on it and the sky lit. The power
+ * keeps night 0 and clear noon near where it was, and lifts the hours
+ * between - 17:00 clear from 0.37 to 0.61.
  */
+export const SEA_DAYLIGHT_GAMMA = 0.5;
 export function daylightFactor({ night, daylightScale, weatherScale = 1 }) {
   if (night) return 0;
-  return clamp01(daylightScale * weatherScale);
+  return clamp01(daylightScale * weatherScale) ** SEA_DAYLIGHT_GAMMA;
 }
 
 /** GetUnderwaterFogColor: DFU's water fog colour, to the night tint by the daylight (alpha kept). */

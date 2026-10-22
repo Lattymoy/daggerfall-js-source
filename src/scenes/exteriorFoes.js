@@ -92,6 +92,7 @@ import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recover
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { puppetLead } from './puppetLead.js';   // DESYNC-ZERO: a moving puppet leads its last word
+import { appliedOwnerTm } from '../net/ownerClock.js';   // OWNER-CLOCK: and by its owner's clock, where the frame says it
 import { bindQuestFoeHost, isPrivateQuestFoe, placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // B1: quest foes ride this pool; CURSE-SYNC: a world quest's ride as the world's; RVN6: a band placed about its master
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RVN6: PlaceFoeFreely's ring, a camp member's law
 import { validSites, validSiteTags, isRiteSite, isStarSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
@@ -2811,6 +2812,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (p.wire) { const d = Math.hypot(r.f[0] - p.wire[0], r.f[1] - p.wire[1], r.f[2] - p.wire[2]); p.leap = d > (f.ai.speed ?? 0) * PUPPET_LEAP * elapsed + PUPPET_LEAP_SLACK; }
       p.at = now;
       p.wire = r.f;
+      p.tm = appliedOwnerTm();   // OWNER-CLOCK: the owner's moment for these feet (net/ownerClock.js) - null for a build landing after its frame
     }
     if (r.w !== undefined) {   // B2: the owner's weapon, rebuilt from the descriptor (no dice: the stack roll is fixed)
       const cur = f.entity.weapon;

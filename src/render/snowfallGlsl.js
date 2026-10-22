@@ -140,7 +140,7 @@ void main() {
   vec2 xz = ground.xz;
   // AUDIT PRECIP GROUND-9: laid only where the ground wears snow - its own cover at the vertex (snowLaid: 1 off the snow
   // lane) taken as the static mask's coverage is: the depth by its square (staticSnowMultiplier's), the offset by it
-  float laid = snowLaid(xz - uSnowAnchor, ground.y, normalize(aNormal), vec2(0.0), vec2(0.0));
+  float laid = snowLaid(xz - uSnowAnchor, ground.y, vec2(0.0), vec2(0.0));
   vDepth *= laid * laid;
   vec2 dynUV = (xz - uSnowDynMap.xy) * uSnowDynMap.z;
   vec2 statUV = (xz - uSnowStatMap.xy) * uSnowStatMap.z;
@@ -223,7 +223,7 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
   vec4 st = textureLod(uSnowStatic, statUV, 0.0);
   float coverage = st.g;
   if (blanket && st.b != 0.0) coverage = max(coverage, snowOnPath(st.b, statUV));
-  coverage *= snowLaid(snowAt, vWorldPos.y, normalize(vNormal), snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it
+  coverage *= snowLaid(snowAt, vWorldPos.y, snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it
   if (coverage - 0.005 < 0.0) discard;
   vec4 ctx = blanket ? vec4(0.0) : textureLod(uSnowContext, statUV, 0.0);   // the blanket's depth and path are its vertices'
   float pathW = blanket ? sn.w : ctx.b;

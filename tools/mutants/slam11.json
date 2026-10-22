@@ -86,7 +86,7 @@
   {
     "name": "U7-foes-borrows",
     "file": "server/src/index.js",
-    "old": "    const budget = byteGate(bucket, now, per * listeners.length, FOES_ROOM_BYTES_PER_S);",
+    "old": "    const budget = floorGate(bucket, now, per * listeners.length, FOES_ROOM_BYTES_PER_S, floor);",
     "new": "    const budget = byteGate(bucket, now, per * listeners.length, FOES_ROOM_BYTES_PER_S, true);",
     "tests": [
       "test/net/slam11.test.js",
@@ -97,7 +97,7 @@
       "test/net/slam1.test.js",
       "test/net/scale5b.test.js"
     ],
-    "note": "SCALE5b (re-aimed by content): the foes budget in `_foesFan`, after the one asked ahead of the walk (which spends nothing, so borrowing THERE is no change)."
+    "note": "SCALE5b (re-aimed by content): the foes budget in `_foesFan`, after the one asked ahead of the walk (which spends nothing, so borrowing THERE is no change). FOES-FIRST (re-aimed by content): the budget is floorGate's now - a full frame borrows the reserve at most; this borrows the whole fan's cost, for every frame."
   },
   {
     "name": "U8-latched-though-refused",

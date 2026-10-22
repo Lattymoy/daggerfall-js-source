@@ -75,20 +75,21 @@
   {
     "name": "AUDIT-NAV2-F17-the-sail-keys-under-the-view",
     "file": "src/scenes/world.js",
-    "old": "started: (action) => (pressed(latch.edge, keys, action) && !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action))) || csaHelmInput.edges.has(action),",
-    "new": "started: (action) => (pressed(latch.edge, keys, action)) || csaHelmInput.edges.has(action),",
+    "old": "started: (action) => !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)) && (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
+    "new": "started: (action) => (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
     "tests": [
       "test/systems/comeSailAway/auditnav2_helm.test.js"
     ]
   },
   {
-    "name": "AUDIT-NAV2-F17-the-journey-refused-too",
+    "name": "AUDIT-NAV2-F17-the-panel-and-pad-pass-the-view",
     "file": "src/scenes/world.js",
-    "old": "started: (action) => (pressed(latch.edge, keys, action) && !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action))) || csaHelmInput.edges.has(action),",
-    "new": "started: (action) => !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)) && (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
+    "old": "started: (action) => !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action)) && (pressed(latch.edge, keys, action) || csaHelmInput.edges.has(action)),",
+    "new": "started: (action) => (pressed(latch.edge, keys, action) && !(travelView?.active && [CSA_BOAT_ACTIONS.sailUp, CSA_BOAT_ACTIONS.sailDown, CSA_BOAT_ACTIONS.toggleSail, 'MoveForwards', 'MoveBackwards'].includes(action))) || csaHelmInput.edges.has(action),",
     "tests": [
       "test/systems/comeSailAway/auditnav2_helm.test.js"
-    ]
+    ],
+    "why": "FIELD BUGS 2026-10-21d PASSAGE-HANDS: the journey's taps are its own hand's now, so the panel's and the pad's sail taps under the view set sail against the journey"
   },
   {
     "name": "AUDIT-NAV2-F17-the-sail-key-left-live",

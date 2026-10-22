@@ -63,7 +63,7 @@ test('WORLD6b-iii(b): the session - a halo room is hello\'d into and posed into;
     hw.open();
     const helloTs = JSON.parse(hw.sent[0]).pose.ts;   // SCALE2b: the hello's pose is stamped with when it is said
     assert.ok(Number.isInteger(helloTs));
-    assert.equal(hw.sent[0], JSON.stringify({ t: 'hello', id: 'mac-0001', secret: 'secret-of-mac-0001', name: 'Mac', look: s.look, pose: { ...pose, ts: helloTs }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW }), 'PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: the spawn grants too): the hello, my pose in it - and the ground this build stands on, a halo cell being a ground room (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
+    assert.equal(hw.sent[0], JSON.stringify({ t: 'hello', id: 'mac-0001', secret: 'secret-of-mac-0001', name: 'Mac', look: s.look, pose: { ...pose, ts: helloTs }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1 }), 'PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: the spawn grants too): the hello, my pose in it - and the ground this build stands on, a halo cell being a ground room (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f) - and that it hands its hub\'s lease on, a halo cell being a lease room (PIN MOVED: LEASE1, net/roomLease.js)');
     assert.equal(s.inRoom('world:2,12'), true); assert.equal(s.inRoom('world:3,12'), true); assert.equal(s.inRoom('world:9,9'), false);
     assert.equal(s.status, 'open', 'my own socket untouched'); assert.equal(s.room, 'world:3,12');
     hw.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'eve-0003', name: 'Eve', look, pose }, { id: 'bob-0002', name: 'Bob', look, pose }], host: null, world: null });

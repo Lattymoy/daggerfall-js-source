@@ -1,0 +1,173 @@
+[
+  {
+    "name": "OFFLINE-ROAD-the-due-unread",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most)",
+    "new": "Math.min(w + Math.max(0, e.until - Math.floor(own)), w + most)",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-the-clamp-gone",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most)",
+    "new": "(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)))",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-before-its-start",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "until: Math.max(e.at, Math.floor(own) + Math.max(0, due - w))",
+    "new": "until: Math.floor(own) + Math.max(0, due - w)",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-the-due-unkept",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": ", ...(Number.isInteger(e.due) ? { due: e.due } : {}) };   // OFFLINE-ROAD: its world's minute",
+    "new": " };",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-sent-with-no-due",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "const e = newErrand(r, place, venture, now, seed, world);",
+    "new": "const e = newErrand(r, place, venture, now, seed);",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-the-world-unread-online",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  const onWorld = online && Number.isFinite(world);",
+    "new": "  const onWorld = false;",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-the-world-untrusted",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "online = sharedClockOn(), world = errandWorldNow() } = {}) {",
+    "new": "online = sharedClockOn(), world = ownMinutes() } = {}) {",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "OFFLINE-ROAD-the-page-s-word-unsaid",
+    "file": "src/ui/companionRoster.js",
+    "old": "other {# real hours}} for each day abroad. Resting",
+    "new": "other {# real hours}} for each day. Resting",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-1-the-world-read-whole",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "  return Math.min(world, heard.world + Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS + ERRAND_WORLD_SLACK);",
+    "new": "  return world;",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-1-the-monotonic-time-misread",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS + ERRAND_WORLD_SLACK",
+    "new": "Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS * 1000 + ERRAND_WORLD_SLACK",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-1-the-hearing-unmarked-again",
+    "file": "src/systems/worldTick.js",
+    "old": "  _heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });",
+    "new": "  _heardMark ??= Object.freeze({ world: worldMinutes(), perf, n: 1 });",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-1-the-wake-reads-the-world-whole",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "online = sharedClockOn(), world = errandWorldNow() } = {}) {",
+    "new": "online = sharedClockOn(), world = trustedWorldMinutes() } = {}) {",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-2-the-raise-discarded-at-the-turn",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "errandOnWorld(Number.isInteger(e.due) ? e : { ...e, until: errandUntil(e, now - push) + push }, now, world)",
+    "new": "errandOnWorld(e, now, world)",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-3-the-world-unfloored",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "const p = errandPlace(e?.place), w = Math.floor(world);",
+    "new": "const p = errandPlace(e?.place), w = world;",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-3-the-vigil-s-road-the-place-s",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "  const most = p ? Math.round(roadDays(p, e.sky) * MINUTES_PER_DAY) : 0;\n  const due = Math.min(",
+    "new": "  const most = p ? Math.round(roadDays(p, null) * MINUTES_PER_DAY) : 0;\n  const due = Math.min(",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-3-a-due-offline",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "world = sharedClockOn() ? errandWorldNow() : NaN } = {}) {",
+    "new": "world = sharedClockOn() ? errandWorldNow() : ownMinutes() } = {}) {",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-5-the-rate-unread",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "export const ERRAND_REAL_HOURS_A_DAY = MINUTES_PER_DAY / (ONLINE_MINUTES_PER_MS * 3_600_000);",
+    "new": "export const ERRAND_REAL_HOURS_A_DAY = MINUTES_PER_DAY / (ONLINE_MINUTES_PER_MS * 1_800_000);",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-5-the-words-the-game-s-online",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "errandWords(r.companion.errand, now, sharedClockOn())",
+    "new": "errandWords(r.companion.errand, now, false)",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1021-L3-5-the-minutes-uncounted",
+    "file": "src/systems/revenant/revenantErrands.js",
+    "old": "const m = Math.max(1, Math.ceil(Math.max(0, until - now) / (ONLINE_MINUTES_PER_MS * 60_000)));",
+    "new": "const m = Math.max(1, Math.ceil(Math.max(0, until - now) / 60));",
+    "tests": [
+      "test/systems/revenant/fb1021_offlineroad.test.js"
+    ]
+  }
+]

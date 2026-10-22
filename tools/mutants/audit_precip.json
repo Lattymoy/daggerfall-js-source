@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-9-the-stream-s-ground",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M, x, z);",
-    "new": "const c = drawnCover(p.px, p.py, lx, lz, heightAt(x, z) - stateOf().compensation[1] - SEA_LEVEL_M, x, z);",
+    "old": "const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M);",
+    "new": "const c = drawnCover(p.px, p.py, lx, lz, stateOf().compensation[1] - SEA_LEVEL_M);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -450,15 +450,6 @@
     ]
   },
   {
-    "name": "AUDIT-PRECIP-GROUND-3-the-cpu-s-slope-unread",
-    "file": "src/render/snowCoverGlsl.js",
-    "old": "const c = cover * smooth(s0, s1, ny);",
-    "new": "const c = cover;",
-    "tests": [
-      "test/render/precip4_snowground.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-PRECIP-GROUND-5-the-bed-s-summer-art",
     "file": "src/render/waterBedGlsl.js",
     "old": "    if (snowC > 0.0) a = mix(a, textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).a, snowC);\n",
@@ -498,7 +489,7 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-mod-s-snow-on-green",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, n, gx, gy);",
+    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
     "new": "return 1.0;",
     "tests": [
       "test/render/precip4_snowground.test.js"
@@ -507,8 +498,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-mod-off-the-lane-unlaid",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, n, gx, gy);",
-    "new": "return snowCover(local, y, n, gx, gy);",
+    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
+    "new": "return snowCover(local, y, gx, gy);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -525,7 +516,7 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-coverage-unlaid",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  coverage *= snowLaid(snowAt, vWorldPos.y, normalize(vNormal), snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it\n",
+    "old": "  coverage *= snowLaid(snowAt, vWorldPos.y, snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it\n",
     "new": "",
     "tests": [
       "test/render/precip4_snowground.test.js"

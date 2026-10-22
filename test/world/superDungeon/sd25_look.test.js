@@ -514,7 +514,9 @@ test('SD-LOOK THE VEIL CLOSES ON THE RIFT (S5): the world host hands the veil wh
   const body = W.slice(W.indexOf('function sdVeilAim(proj, view, m) {'), W.indexOf('/** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT'));
   assert.ok(body.length > 100);
   assert.doesNotMatch(body, /new |[=(,:]\s*\[|=>|\.\.\./, 'nothing made: no array, no closure, no spread');
-  assert.match(W, /sdVeilAim\(proj, view, look\?\.window\?\.model \?\? look\?\.bay\?\.model\);/, 'each frame the Rift is drawn');
+  // PIN MOVED (SD-THROUGH): the nearer of the Hollow's two rings - the Rift's window (or its Return's), or the Way Through's
+  // (scenes/superDungeon/sdThrough.js sdVeilModelOf - its own pins in test/world/superDungeon/sdthrough_way.test.js)
+  assert.match(W, /sdVeilAim\(proj, view, sdVeilModelOf\(eye, through, look\)\);/, 'each frame the Rift is drawn');
   assert.match(body, /gateVeil\.aim\?\.\(/, 'handed to the veil');
   assert.match(W, /\}, 'hourIn'\);/);
   assert.match(W, /\}, 'hourBack'\);/);

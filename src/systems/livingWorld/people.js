@@ -116,6 +116,6 @@ export function regardBadge(card) {
   return {
     standing, label: STANDING_NAMES[standing], value: `${r > 0 ? '+' : ''}${r}`, share: (r + REGARD_MAX) / (2 * REGARD_MAX),
     words: `How they regard you: ${r > 0 ? '+' : ''}${r}, from -${REGARD_MAX} to +${REGARD_MAX}. A friend from +${FRIEND_AT}; an enemy from ${ENEMY_AT}, who will not speak to you; hostile from ${HOSTILE_AT}. `
-      + 'Talking once a day, speaking in a tone they like and fighting at their side raise it. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 on days you are apart.',   // TONE-TASTE
+      + 'Talking once a day, speaking in a tone they like and fighting at their side raise it. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 by half a point for each of your days apart - time away from the game does not count. A townsperson who is your friend - not one of the watch, a traveller or your own blood - can be courted: ask about Courtship under Tell me about.',   // TONE-TASTE; FIELD BUGS 2026-10-21d REGARD-OWN: the fade in the character's own days, and where a courtship begins (AUDIT FB1021d RO-7: as marriage.js courtable reads it)
   };
 }

@@ -224,6 +224,15 @@ export const COLLISION_TRIGGER_FLAGS = Object.freeze([
 /** RDBLayout.cs:992-996 - "if a collision type action or action flat,
  *  add DaggerFallActionCollision component". */
 export const hasActionCollision = (o) => !!o && COLLISION_TRIGGER_FLAGS.includes(o.triggerFlag ?? TRIGGER_FLAGS.None);
+/** FIELD BUGS 2026-10-21d (FLAT-WALK; Krinton, "would randomly get rubber-band back to the entrance"): WHAT A WALK
+ *  HEARS. RDBLayout.AddAction gives an acting flat ("FLT") a BoxCollider with `isTrigger = true` - "for raycasting" -
+ *  and DaggerfallActionCollision hears only OnControllerColliderHit, which a CharacterController never raises for a
+ *  trigger: in DFU a flat's action fires on a click or a blow, never a walk. The port hears an effect's and a moving
+ *  flat's box on a walk (AUDIT PRE-MERGE 0929, a departure named in Port-Ledger A); a RELAY's never - a flat Teleport,
+ *  Activate or DoorText walked under fires nothing. FLAT-RELAY (2026-10-05c) had made 41 relay flats walk-ins for a
+ *  Collision03 flat Teleport the corpus does not hold: Edworyan Laboratory's six hanging roots, at head height in the
+ *  online build's first block, each sent the body back to the entrance. */
+export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');
 
 /** DISC29-A: THE STANDING RAY (DaggerfallActionCollision.cs:74-85). A hit that is not beneath the player is WalkInto -
  *  except on a Collision01 object, where DFU first casts "straight down from the controller's bottom, skinWidth long,
@@ -766,10 +775,8 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,
       axisRaw: action.axisRaw,
-      // FIELD BUGS 2026-10-05c (FLAT-RELAY; "red brick sections are not always working at teleporters"): an acting FLAT
-      // relay is heard by its box (dungeonContext collisionTriggers' standsOnAction), as addEffect's and addMoveFlat's
-      // are - left unset, the pass asked a flat's triangles, which it has none of, and a walk into a flat Teleport
-      // (Collision03) never fired: AUDIT PRE-MERGE 0929's "the acting flats keep the box", lost for relays alone
+      // FIELD BUGS 2026-10-05c (FLAT-RELAY): a relay keeps its flat's mark, as addEffect's and addMoveFlat's objects do.
+      // FLAT-WALK (2026-10-21d): the mark is what keeps a flat relay off the walk - `walkHears`; a click or a blow fires it
       isFlat: action.isFlat === true,
       activationCount: 0,
       state: 'start',

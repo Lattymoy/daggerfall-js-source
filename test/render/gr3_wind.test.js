@@ -56,7 +56,9 @@ test('GR3: a blade actually MOVES - the shader\'s lean on real placer output', (
   // The vertex law evaluated in JS on blades the real placer lands:
   // over half a gust the tip must travel a visible fraction of the
   // blade's height. GR2 measured a million blades placed; this
-  // measures one moving.
+  // measures one moving. SWAY-SOFT (2026-10-21, Mac: "make the grass sway more
+  // subtle"): about 9% of the height now, where it was over 15% - the floor is
+  // for a field that moves at all, so it sits under the softer sway.
   const gen = placeLabGrassSteps({ centre: [1000, 1000], keep: () => 0 });
   let r; do { r = gen.next(); } while (!r.done);
   const { inst, inst2 } = r.value;
@@ -68,14 +70,14 @@ test('GR3: a blade actually MOVES - the shader\'s lean on real placer output', (
     const x = inst[i * 4], z = inst[i * 4 + 1], h = inst[i * 4 + 2], ph = inst[i * 4 + 3];
     const along = x * wdir[0] + z * wdir[1];
     const gust = Math.sin(t * 1.7 - along * 0.35 + ph * 0.6) * 0.5 + 0.5;   // the shader's line
-    const push = L * (0.55 + gust * 0.75);
-    const lean = [inst2[i * 4] + wdir[0] * push * 0.055, inst2[i * 4 + 1] + wdir[1] * push * 0.055];
+    const push = L * (0.6 + gust * 0.45);   // SWAY-SOFT
+    const lean = [inst2[i * 4] + wdir[0] * push * 0.032, inst2[i * 4 + 1] + wdir[1] * push * 0.032];
     return { x: x + lean[0] * h, z: z + lean[1] * h, h };
   };
   let sumH = 0, sumMove = 0; const N = 500;
   for (let i = 0; i < N; i++) { const a = tip(i, 0), b = tip(i, 1.85); sumH += a.h; sumMove += Math.hypot(b.x - a.x, b.z - a.z); }
   const frac = sumMove / sumH;
-  assert.ok(frac > 0.15, `the tip travels ${(frac * 100).toFixed(0)}% of its height over half a gust - visible`);
+  assert.ok(frac > 0.06, `the tip travels ${(frac * 100).toFixed(0)}% of its height over half a gust - visible`);
   // ...and with wind [0,0], which is what the host was feeding, it does
   // not move at all - the exact silence Mac reported.
   const still = (i, t) => { const x = inst[i * 4], z = inst[i * 4 + 1], h = inst[i * 4 + 2]; return { x: x + inst2[i * 4] * h, z: z + inst2[i * 4 + 1] * h }; };

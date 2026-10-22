@@ -1,0 +1,9 @@
+[
+  { "name": "SNOW-YEAR-origin-unrounded", "file": "src/systems/weather/snowpack.js",
+    "old": "  const midsummer = eventMinuteOfSky(Math.round(sky - since));", "new": "  const midsummer = eventMinuteOfSky(sky - since);",
+    "tests": ["test/systems/weather/fb1021b_snowyear.test.js"], "why": "the reported law: one snow year, two origins a step apart - and a build waiting on the snow for good" },
+  { "name": "SNOW-YEAR-settle-holds-its-minute", "file": "src/scenes/snowCoverHost.js",
+    "old": "      while (!at(px, py, now(), arriving?.() ? Math.max(SNOW_COVER.arriveMs, breather.left()) : breather.left(), true)) await breather.breathe();",
+    "new": "      for (const t0 = now(); !at(px, py, t0, arriving?.() ? Math.max(SNOW_COVER.arriveMs, breather.left()) : breather.left(), true);) await breather.breathe();",
+    "tests": ["test/systems/weather/fb1021b_snowyear.test.js"], "why": "a build's wait held across the year's turn: the tick and the wait reset each other's lattice for good" }
+]

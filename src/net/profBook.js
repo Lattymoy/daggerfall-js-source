@@ -66,6 +66,7 @@ import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
 import { t } from '../systems/textManager.js';   // L10N4: the Stores' words in the player's language
 import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { turnedDayOf } from './dayTurn.js';   // DAY-TURN: a page's day turns at its own moment past midnight
 
 /** Where this device keeps the acts whose answers did not come: { [account|character]: { harvests, withdrawals } }. */
 export const PROF_KEPT_KEY = 'prof1.kept';
@@ -133,7 +134,10 @@ const dayOf = (ms) => Math.floor(ms / 86_400_000);
  *   `stamped`/`unstamp`/`stamps` a deposit's stamp in the save (takeCarried's `stamp` - its id, material, units and
  *   order); `flush` a checkpoint that LANDED (the save holding the take is the realm's before the deposit is asked).
  */
-export function createProfBook({ door, storage = null, character = () => null, now = () => Date.now(), rid = () => mintProfRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), carry = /** @type {CarryHands|null} */ (null) }) {
+export function createProfBook({ door, storage = null, character = () => null, now = () => Date.now(), rid = () => mintProfRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), carry = /** @type {CarryHands|null} */ (null), turnMs = 0 }) {
+  /** DAY-TURN (net/dayTurn.js): the day this book holds its answers for - the UTC day, turned at this page's moment past
+   *  midnight (`turnMs`, the host's; 0 turns at midnight). An answer held is good while its day is not before it. */
+  const heldDay = () => turnedDayOf(now(), turnMs);
   const state = {
     /** whether the professions are this account's: true, false, or null not yet asked */
     open: /** @type {boolean|null} */ (null),
@@ -394,7 +398,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       if (state.open === false) return account() !== state.account || now() - state.readAt >= PROF_CLOSED_RECHECK_MS;
       if (state.character !== character() || state.account !== account()) return true;
       if (state.reread && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS) return true;   // REFUSALS-LEARNED
-      return state.day !== dayOf(now()) && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;
+      return state.day < heldDay() && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;   // DAY-TURN: another day at this page's turn
     },
     /** REFUSALS-LEARNED: whether today a refusal closed `key` for the account - `deep` (its veins in dungeons nobody has
      *  vouched for). CAP-OFF: the account's day in a craft (`account:<profession>`) closes nothing - there is none. */
@@ -467,7 +471,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
 
     // ─── THE PIXELS ─────────────────────────────────────────────────
     /** A streamed pixel's witnessed state today, or null not yet asked. */
-    pixel(x, y) { const p = pixels.get(pixelKey(x, y)); return p && p.day === dayOf(now()) ? p : null; },
+    pixel(x, y) { const p = pixels.get(pixelKey(x, y)); return p && p.day >= heldDay() ? p : null; },   // DAY-TURN: yesterday's until this page's turn
     /** GROUND-STALE: whether the host should ask after a pixel - not yet known today, or a harvest answered on it since. */
     pixelWanted(x, y) { const p = this.pixel(x, y); return !p || p.stale === true; },
     /** Asks after the pixels not yet known today, PROF_PIXELS_MAX at a time, one read in flight. Answers the pixels
@@ -477,7 +481,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
       const c = character();
       const day = dayOf(now());
       const owner = slot();
-      const want = (list ?? []).filter(([x, y]) => { const p = pixels.get(pixelKey(x, y)); return p?.day !== day || p.stale === true; }).slice(0, PROF_PIXELS_MAX);   // GROUND-STALE: and one a harvest answered on
+      const held = heldDay();
+      const want = (list ?? []).filter(([x, y]) => { const p = pixels.get(pixelKey(x, y)); return !(p && p.day >= held) || p.stale === true; }).slice(0, PROF_PIXELS_MAX);   // GROUND-STALE: and one a harvest answered on - DAY-TURN: one held for a day before this page's turn
       if (!c || !want.length) return [];
       _pixelsBusy = (async () => {
         const r = await ask(() => door.pixels(c, want));
@@ -500,7 +505,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
 
     // ─── THE DUNGEONS (PROF2) ───────────────────────────────────────
     /** A dungeon's witnessed state today (its id DFU's MapId & 0xfffff), or null not yet asked. */
-    dungeon(id) { const d = dungeons.get(id); return d && d.day === dayOf(now()) ? d : null; },
+    dungeon(id) { const d = dungeons.get(id); return d && d.day >= heldDay() ? d : null; },   // DAY-TURN: as the pixels
     /** GROUND-STALE: whether the host should ask after a dungeon - not yet known today, or a harvest answered in it since. */
     dungeonWanted(id) { const d = this.dungeon(id); return !d || d.stale === true; },
     /** Asks after a dungeon not yet known today, beside no pixels - one read in flight. Answers whether its state is

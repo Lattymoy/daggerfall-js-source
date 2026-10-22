@@ -135,14 +135,19 @@ export function standingFor(act, cls, { marque = false } = {}) {
 const crownNames = () => CROWNS.map((c) => c.name);
 const whole = (v, max = Number.MAX_SAFE_INTEGER) => (Number.isFinite(v) ? Math.max(0, Math.min(max, Math.floor(v))) : 0);
 const zeros = (keys) => Object.fromEntries(keys.map((k) => [k, 0]));
-/** A new log: every count none. */
+/** A new log: every count none. FIELD BUGS 2026-10-21b VOYAGE-HOLD: `departed` the port a voyage is counted from and the
+ *  way logged when she lay there (scenes/harbourOffice.js PORT_VOYAGE_M) - kept with the log, so a load between two ports
+ *  (a relog, a reload, a crash) keeps the voyage. */
 export function newLog() {
   return {
     sunk: zeros(LOG_TRADES), taken: zeros(LOG_TRADES), repelled: 0, claimed: 0, plunder: 0,
     contracts: zeros(LOG_CONTRACTS), earned: 0, traded: 0, sailed: 0, maps: 0, islands: 0, deepest: 0,
-    legends: [], best: null,
+    legends: [], best: null, departed: null,
   };
 }
+/** VOYAGE-HOLD: a saved departure as the log may keep it - a port's key and a way no further than the log's - else null. */
+export const restoreDeparted = (/** @type {any} */ d, /** @type {number} */ sailed) => (d && typeof d.port === 'string' && d.port.length > 0 && d.port.length <= 64
+  && Number.isFinite(d.sailed) && d.sailed >= 0 && d.sailed <= sailed ? { port: d.port, sailed: d.sailed } : null);
 
 /**
  * THE LEDGER. `deed(act, cls, { crown, marque, trade, legend })` a ship's fate at the captain's hands - logged by
@@ -402,6 +407,7 @@ export function createCaptainLedger() {
       log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? Math.min(SAILED_MAX_M, l.sailed) : 0;   // AUDIT CAPTAIN'S SEA L8
       log.legends = Array.isArray(l.legends) ? l.legends.filter((n) => typeof n === 'string').map((n) => n.slice(0, 48)).slice(-LOG_LIST_MAX) : [];
       log.best = l.best && typeof l.best.name === 'string' && Number.isFinite(l.best.worth) ? { name: l.best.name.slice(0, 48), worth: whole(l.best.worth) } : null;
+      log.departed = restoreDeparted(l.departed, log.sailed);   // VOYAGE-HOLD
       for (const c of crownNames()) {
         const v = Number(r.standing?.[c]);
         standing[c] = Number.isFinite(v) ? Math.max(CROWN_STANDING_MIN, Math.min(CROWN_STANDING_MAX, Math.round(v))) : 0;

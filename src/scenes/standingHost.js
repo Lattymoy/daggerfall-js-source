@@ -18,6 +18,7 @@ import { challengeDue, noteChallenge, challengeFine, grantGrace, settleChallenge
 import { totalGoldAmount, deductGold, CRIMES, CRIME_NAMES, setLegalRepNotifier } from '../systems/court.js';
 import { racialSuppressCrime } from '../systems/lycanthropy.js';
 import { legalStandingWord } from '../systems/legalBands.js';
+import { t } from '../systems/textManager.js';
 import { isInvisible } from '../systems/effects.js';
 
 /** How often the street is looked over for a guard who can see a known criminal: once a second, not every frame. */
@@ -100,6 +101,10 @@ export function installLegalNotices({ playerEntity, say, regionName = () => 'thi
   return () => setLegalRepNotifier(null);
 }
 
+/** SENTENCE-MENDS (FIELD BUGS 2026-10-21d): a sentence served mends the name a penance's step - said apart from the
+ *  charge it gave back ("Your debt ... is paid"). */
+const SERVED_TEXT = 'Time served mends your name in {name} ({by}). You are {word}.';
+
 /** The notice's words. */
 export function legalNoticeLine({ name, after, delta, cause }) {
   const word = legalStandingWord(after);
@@ -109,6 +114,7 @@ export function legalNoticeLine({ name, after, delta, cause }) {
     case 'sentence': return `Your debt to ${name} is paid (${by}). You are ${word}.`;
     case 'acquittal': return `The court of ${name} clears your name (${by}). You are ${word}.`;
     case 'penance': return `Your penance is accepted in ${name} (${by}). You are ${word}.`;
+    case 'served': return t('standing.notice.served', SERVED_TEXT, { name, by, word });
     case 'contract': return `${name} thanks you for your work (${by}). You are ${word}.`;
     case 'raid': return `${name} thanks you for its defense (${by}). You are ${word}.`;   // AUDIT REP F5
     default: return `Your standing with the law of ${name} ${delta < 0 ? 'falls' : 'rises'} (${by}). You are ${word}.`;

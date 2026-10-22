@@ -723,6 +723,46 @@ export function isDomFocusWalk(e) {
   return e?.key === 'Tab' && !!e.target?.closest?.('[data-dom-focus]');
 }
 
+/** FB1020h TAB-WALK: a key aimed at THE PAGE ITSELF - nothing has the keyboard's focus, so the event lands on the body
+ *  (or the document, or the root element). That is where the focus stands while the game has the keyboard. */
+export function isPageTarget(t) {
+  return !t || !t.tagName || t.tagName === 'BODY' || t.tagName === 'HTML';
+}
+
+/** FB1020h TAB-WALK: the browser's own walk of the page's focus, begun from the page itself. A Tab (or Shift+Tab) with
+ *  no control focused moves the focus to the first control the page draws, and the game draws its own over the world:
+ *  online that was the chat's Social button, the first one the sheet shows while the chat is shut. A field keeps its
+ *  Tab (CG2), and so does a window whose control already has the focus (isDomFocusWalk). Ctrl+Tab is the browser's
+ *  own tab switch, and Alt+Tab belongs to the system. */
+export function isPageFocusWalk(e) {
+  return (e?.key === 'Tab' || e?.code === 'Tab') && !e.ctrlKey && !e.altKey && !e.metaKey && isPageTarget(e.target);
+}
+
+/**
+ * FB1020h HUD-FOCUS: A CONTROL THAT STANDS OVER THE LIVE WORLD IS NEVER THE KEYBOARD'S FOCUS.
+ *
+ * A focused button is pressed by the browser on Enter at the keydown and on Space at the keyup. Space is the game's Jump,
+ * a polled action that no key ladder prevents. Enter goes through whenever the chat does not take it, and under a
+ * window AUDIT 28 H11 lets it reach a focused DOM control. So a HUD button that keeps the focus is pressed by keys meant
+ * for the game. Chromium gives a button the focus on a mouse press, and a Tab gave it one too. This helper takes the
+ * control out of the Tab walk, stops a press from giving it the focus (the click still fires), and gives back at once
+ * any focus it gets another way (a script's focus(), the pad cursor's press, plusPad.js domPointer).
+ *
+ * The steed's panels (AUDIT STEED-UI), the held map's filters, the pace steppers and the enhanced dialog each wrote this
+ * rule out for themselves. This is the one copy for a HUD control (a window's own buttons keep the focus their window
+ * walks). Returns the control.
+ * @template {{ tabIndex?: number, addEventListener?: Function, blur?: Function }} T
+ * @param {T} n
+ * @returns {T}
+ */
+export function neverTheFocus(n) {
+  if (!n) return n;
+  n.tabIndex = -1;
+  n.addEventListener?.('mousedown', (/** @type {any} */ e) => e?.preventDefault?.());
+  n.addEventListener?.('focus', () => n.blur?.());
+  return n;
+}
+
 /**
  * MAC-L3: THE BROWSER MENU, SHUT ONCE.
  *
@@ -812,9 +852,12 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
 function routeKeyAction(e, act, ctx, setPlayerPos) {
   // PX15: THE DIAL, the port's own too - QuickDial (Tab) raises the enhanced
   // compass rose. `=== true` matters: a host without the arm, or the
-  // classic skin (the opener's own gate), answers false and the key keeps
-  // its default, so classic behaviour is byte-for-byte untouched. KB1: the
-  // registry's action, not a literal Tab - a rebind moves it.
+  // classic skin (the opener's own gate), answers false and the press is
+  // not used here. FB1020h TAB-WALK: the browser's own walk of the page's
+  // focus is not the "default" this used to keep - the hosts' swallow
+  // takes it (swallowBrowserKey, isPageFocusWalk), so an unanswered Tab
+  // does nothing, as DFU's does. KB1: the registry's action, not a
+  // literal Tab - a rebind moves it.
   if (act === 'QuickDial') { return ctx.toggleDial?.() === true; }
   if (POLLED_ACTIONS.has(act)) return false;
   // MAC-R2 (2026-09-17, Mac: "The enhanced quickbar sometimes shows double
@@ -920,10 +963,18 @@ export const QUICKSLOT_ACTIONS = new Set(['QuickUse1', 'QuickUse2', 'QuickSwap',
  * MODE-WHEEL (AUDIT): F1 opens the browser's help and F3 its find bar - both drop the pointer lock - and the host's
  * mode arm was what consumed them while they were DFU's mode keys. They ship unbound now (the wheel picks the
  * mode), so they join the list: a habit's press is no lost lock.
+ *
+ * FB1020h TAB-WALK: and Tab, from the page itself (isPageFocusWalk). F6 is listed because it moves the focus, and Tab
+ * moves it too. The hosts prevented Tab only when the QuickDial answered it (PX15: "classic Tab keeps its default"), so
+ * on the classic skin, before the boot's last await (KEY-BOOT) and wherever a player rebound the dial, the browser
+ * walked the focus onto the first control over the world. Online that is the Social button, and the next
+ * Space or Enter pressed it. DFU binds nothing to Tab (InputManager.cs:954-1048, ResetDefaults), so its Tab does nothing
+ * when no action answers it. The browser's walk was never DFU's behaviour. A field's Tab and a window's own walk are
+ * left alone.
  */
 export const BROWSER_STEALS = Object.freeze(['F1', 'F3', 'F5', 'F6', 'F11']);
 export function swallowBrowserKey(e) {
-  if (!BROWSER_STEALS.includes(e.code)) return false;
+  if (!BROWSER_STEALS.includes(e.code) && !isPageFocusWalk(e)) return false;
   e.preventDefault();
   return true;
 }

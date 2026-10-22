@@ -30,10 +30,22 @@
 // answer, committed to the killer's record (server-account/src/wild.js wildCollect), never as the room's copy of it.
 //
 // The host hands in everything this touches (the pool, the frame, the pack, the clock, the socket), so the pins drive
-// it with fakes. The pile's `items` are minted through the item law the host hands in (systems/loot/loot.js validLootList).
+// it with fakes. The pile's `items` are minted through the item law the host hands in (systems/loot/loot.js validLootList)
+// - all but the coin, minted by its count (REMAINS-GOLD, below).
+//
+// FIELD BUGS 2026-10-20h (bible/01-Overview/bugs/Field-Bugs-2026-10-20h.md), "the PvP remains and gold pile":
+//   - REMAINS-GOLD: the gold a death drops is ONE pile, half the purse and the cart's coin (systems/wild/wildDropLaw.js
+//     takeWildGold), and the host's mint is the stranger's projection, whose stack bound is the wire's 65,535
+//     (loot.js LOOT_STACK_MAX). A pile past it was no item there: it never stood, and the gold lay in the room for nobody.
+//   - REMAINS-TAKE: a pile stands AS THE ROOM HOLDS IT, LESS MY TAKES IN FLIGHT. The room answers my take with `got` and
+//     then says its `rm` to everyone, me too; the `got` had already ended the take, so a take of part of a stack - the
+//     gold a pack has no room for (CanCarryAmount, DaggerfallInventoryWindow.cs:1414-1422; the how-many popup's split,
+//     DaggerfallInventoryWindow.cs:1510-1559) - was taken off the pile twice.
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_REMAINS_ITEMS_MAX } from '../wire.js';
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
+import { goldStack, isGoldPieces } from '../../systems/inventory.js';
+import { GOLD_INT_MAX } from '../../systems/item/itemLaw.js';
 
 /** The pile's icon: the treasure flat a dropped pile wears (archive 216's sack, randomTreasureIconIndices' first). */
 export const WILD_PILE_ICON = Object.freeze({ archive: 216, record: 0 });
@@ -66,15 +78,36 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   // HALO-REMAINS: the rooms I hold - my own and the halo's (the cells beside mine); each record is its room's
   let rooms = new Set();
   let poolNow = null;
-  /** @type {Map<string, number>} */
-  const asked = new Map();    // `${r}:${i}` -> takes in flight
+  /** @type {Map<string, number[]>} */
+  const asked = new Map();    // `${r}:${i}` -> the counts of my takes in flight, in the order asked (the room answers in order)
+  const ask = (/** @type {string} */ key, /** @type {number} */ n) => { const l = asked.get(key); if (l) l.push(n); else asked.set(key, [n]); };
+  /** One take answered (`got`, `no`, `cr`): the oldest in flight. */
+  const answered = (/** @type {string} */ key) => { const l = asked.get(key); if (!l) return; l.shift(); if (!l.length) asked.delete(key); };
+  /** REMAINS-TAKE: how much of record `i` my takes in flight hold - the pile stands without it. */
+  const inFlight = (/** @type {string} */ r, /** @type {number} */ i) => (asked.get(`${r}:${i}`) ?? []).reduce((a, n) => a + n, 0);
+  const countOf = (/** @type {any} */ it) => Math.max(1, it?.stackCount ?? 1);
+  /**
+   * REMAINS-GOLD: ONE RECORD MINTED. A coin pile is minted by its count (inventory.js goldStack - the service's own minter,
+   * wildDropLaw.js takeWildGold), any whole count to the item law's one count (itemLaw.js GOLD_INT_MAX): DFU keeps a pile's
+   * count in an int (DaggerfallUnityItem.cs:51; ItemBuilder.CreateGoldPieces, ItemBuilder.cs:790-797). The remains are the
+   * service's word, never a peer's - the room says a remains only once its records digest to the service's order (INT9,
+   * net/wild/wildLaw.js) - so the wire's 65,535 (the stranger's bound, HACKED-GOLD) is not theirs. Every other record is
+   * the host's mint.
+   */
+  const mintOne = (/** @type {any} */ r) => {
+    if (!isGoldPieces(r)) return mint([r])?.[0] ?? null;
+    const n = r.stackCount ?? 1;
+    return Number.isSafeInteger(n) && n >= 1 && n <= GOLD_INT_MAX ? goldStack(n) : null;
+  };
 
   const unseed = (rec) => {
     if (rec.pile) { try { rec.poolOf?.removePile(rec.pile); } catch { /* a pool torn down already */ } }
     rec.pile = null; rec.poolOf = null; rec.seen = new Map();
   };
-  /** A record's pile in the pool I stand in: what is left of it, minted, each item remembered with its place. */
+  /** A record's pile in the pool I stand in: what is left of it, minted, each item remembered with its place. REMAINS-TAKE:
+   *  what is left is the room's word less my takes in flight. */
   const seed = (rec) => {
+    settle(rec);   // REMAINS-TAKE: a take the window made off the pile standing now is asked before it goes
     unseed(rec);
     const p = poolNow;
     if (!p || rec.items.every((it) => it == null)) return;
@@ -84,10 +117,12 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     for (let i = 0; i < rec.items.length; i++) {
       const r = rec.items[i];
       if (!r || i === rec.wi) continue;   // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)
-      const minted = mint([r])?.[0] ?? null;
+      const n = countOf(r) - inFlight(rec.r, i);
+      const minted = n > 0 ? mintOne(r) : null;
       if (!minted) continue;
+      if (n !== countOf(minted)) minted.stackCount = n;
       live.push(minted);
-      seen.set(minted, { i, n: Math.max(1, minted.stackCount ?? 1) });
+      seen.set(minted, { i, n });
     }
     if (!live.length) return;
     // PVPFIX (the owner: \"place the pile next to the body not on top of it\" - on top it was hidden in the body and could not be aimed at):
@@ -119,6 +154,42 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
     }
     if (left > 0 && item?.group === 'Currency') left -= unpurse(left);   // WILD GOLD: the window's take of coin went to the purse
   };
+  /** What the window took off a record's pile since the last look - lifted back out of my pack and asked of the room. The
+   *  host's frame looks (tick), and so does a room word before it moves the pile (REMAINS-TAKE: a word that came between a
+   *  take and the frame set the piece's count over a take nothing had asked yet - a copy, the room's and mine). */
+  const settle = (rec) => {
+    if (!rec.pile || rec.pile.dead) return;
+    for (const [obj, info] of [...rec.seen]) {
+      const there = rec.pile.items.includes(obj);
+      const cur = there ? Math.max(0, obj.stackCount ?? 1) : 0;
+      if (cur >= info.n) continue;
+      const k = info.n - cur;
+      lift(obj, k);
+      if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {   // HALO-REMAINS: to the room that keeps it
+        // the ask never left (the socket, the gate): it goes back on the pile as it was, and nothing was lost
+        obj.stackCount = info.n > 1 || obj.stackCount != null ? info.n : obj.stackCount;
+        if (!there) rec.pile.items.push(obj);
+        continue;
+      }
+      ask(`${rec.r}:${info.i}`, k);
+      info.n = cur;
+      if (!there) rec.seen.delete(obj);
+    }
+  };
+  /** REMAINS-TAKE: record `i`'s piece on the pile, IN PLACE (a window may stand open on it), as the room holds it less my
+   *  takes in flight - its count set, or the piece gone at nothing. My own take's `rm` moves nothing so: the `got` before
+   *  it ended the take, and the room's word took the same count off. */
+  const follow = (rec, i) => {
+    if (!rec.pile || rec.pile.dead) return;
+    const want = (rec.items[i] ? countOf(rec.items[i]) : 0) - inFlight(rec.r, i);
+    for (const [obj, info] of rec.seen) {
+      if (info.i !== i) continue;
+      if (want > 0) { if (want !== info.n) { obj.stackCount = want; info.n = want; } }
+      else { const at = rec.pile.items.indexOf(obj); if (at >= 0) rec.pile.items.splice(at, 1); rec.seen.delete(obj); }
+      break;
+    }
+    if (!rec.pile.items.length) unseed(rec);
+  };
 
   /** INT9 (AUDIT): every remains' id said here this life - a killer's seizure is never asked of one its fallen laid. */
   const saidIds = new Set();
@@ -128,7 +199,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   const askMine = (/** @type {any} */ rec) => {
     const it = rec.wk && rec.wk === me() ? rec.items[rec.wi] : null;
     const key = `${rec.r}:${rec.wi}`;
-    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: Math.max(1, it.stackCount ?? 1) }, rec.room)) asked.set(key, 1);   // HALO-REMAINS: to the room that keeps it
+    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: countOf(it) }, rec.room)) ask(key, countOf(it));   // HALO-REMAINS: to the room that keeps it
   };
 
   const book = {
@@ -182,25 +253,17 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       if (w.k === 'gone') { if (rec) { unseed(rec); recs.delete(w.r); } return; }
       if (w.k === 'rm') {
         if (!rec || !rec.items[w.i]) return;
+        settle(rec);   // REMAINS-TAKE: what the window took since the frame's look, asked before the room's word moves the pile
         const it = rec.items[w.i];
-        const stack = Math.max(1, it.stackCount ?? 1);
+        const stack = countOf(it);
         if (w.n >= stack) rec.items[w.i] = null; else rec.items[w.i] = { ...it, stackCount: stack - w.n };
-        // the pile follows IN PLACE (a window may stand open on it) - unless my own take already moved it (the
-        // window's, then my ask's: the room's word on it is that ask's)
-        if (asked.has(`${w.r}:${w.i}`)) return;
-        for (const [obj, info] of rec.seen) {
-          if (info.i !== w.i) continue;
-          const left = info.n - w.n;
-          if (left > 0) { obj.stackCount = left; info.n = left; }
-          else { const at = rec.pile?.items.indexOf(obj) ?? -1; if (at >= 0) rec.pile.items.splice(at, 1); rec.seen.delete(obj); }
-          break;
-        }
-        if (rec.pile && !rec.pile.items.length) unseed(rec);
+        // the pile follows IN PLACE (a window may stand open on it): the room's count less my takes in flight - REMAINS-TAKE:
+        // it skipped every `rm` while a take of mine was in flight and subtracted any other from what it showed, so my
+        // own take's `rm`, heard after its `got`, came off the pile a second time
+        follow(rec, w.i);
         return;
       }
-      const key = `${w.r}:${w.i}`;
-      const left = (asked.get(key) ?? 1) - 1;
-      if (left > 0) asked.set(key, left); else asked.delete(key);
+      answered(`${w.r}:${w.i}`);
       if (w.k === 'cr') {
         // MAC (2026-10-14): MY COLLECT - the piece the service holds in escrow is mine once the service commits it; the
         // room's record of it is nobody's to add
@@ -215,7 +278,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       }
       if (w.k === 'got') {
         if (rec && w.i === rec.wi && rec.wk === me()) rec.items[w.i] = null;   // AUDIT INT9: mine, whole - never asked again before the room's `rm`
-        const item = mint([w.it])?.[0] ?? null;
+        const item = mintOne(w.it);   // REMAINS-GOLD: a coin pile by its count
         if (item) { addItem(pack(), item); say(`You take ${nameOf(item)}.`); }
       } else if (w.k === 'no') {
         say('Someone took that first.');   // nothing comes back: nothing was kept (the room's `rm` for the winner's take moved the pile)
@@ -229,23 +292,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
         askMine(rec);   // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word
         // a pile its pool let go under me (a building's cache restored, a dungeon rebuilt) is stood again from the room's word
         if (!rec.pile || rec.pile.dead) { rec.pile = null; if (poolNow && rec.items.some(Boolean)) seed(rec); continue; }
-        for (const [obj, info] of [...rec.seen]) {
-          const there = rec.pile.items.includes(obj);
-          const cur = there ? Math.max(0, obj.stackCount ?? 1) : 0;
-          if (cur >= info.n) continue;
-          const k = info.n - cur;
-          lift(obj, k);
-          if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {   // HALO-REMAINS: to the room that keeps it
-            // the ask never left (the socket, the gate): it goes back on the pile as it was, and nothing was lost
-            obj.stackCount = info.n > 1 || obj.stackCount != null ? info.n : obj.stackCount;
-            if (!there) rec.pile.items.push(obj);
-            continue;
-          }
-          const key = `${rec.r}:${info.i}`;
-          asked.set(key, (asked.get(key) ?? 0) + 1);
-          info.n = cur;
-          if (!there) rec.seen.delete(obj);
-        }
+        settle(rec);
       }
     },
     /** Every pile down (the host is going). */

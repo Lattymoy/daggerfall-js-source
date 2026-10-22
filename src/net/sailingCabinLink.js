@@ -25,6 +25,7 @@ export function createSailingCabinLink({ frame, receive, sweep, Session = Online
           if (data && (!data.k || link?.inRoom(data.k))) receive(id, data);
         };
       }
+      link.leaseFrom?.(main);   // LEASE1: the page's lease rides this lane's frames too (net/roomLease.js)
       const pose = { x: cabin.origin[0], y: cabin.origin[1], z: cabin.origin[2], yaw: cabin.yaw, pitch: 0, mv: 0 };
       if (link.room !== room) { link.join(room, pose); sentAt = -Infinity; }
       else link.sendPose(pose);

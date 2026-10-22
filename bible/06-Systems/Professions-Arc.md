@@ -271,6 +271,17 @@ Twigs, the Roots, Bamboo, Ginkgo Leaves, Palm, Aloe, Fig and Cactus do); in **au
 Hides cure to **Cured Leather** (tiers 1-3) or **Hardened Leather** (tiers 4-6) at a tanning rack, **2:1** (Tanner
 1:1). Butchery gives C&C's Raw Meat either way. DFU's own corpse loot is untouched: skinning adds, never replaces.
 
+DEX-HIDES (2026-10-21, `01-Overview/bugs/Field-Bugs-2026-10-20h.md`): Daggerfall Enemy Expansion's nine animals are
+skinned too, each by its own id (`net/professionLaw.js` HIDES): the Bat the Bat Leather, the Blood Spider the Spider
+Silk, the Mountain Lion the Tiger Pelt, the Land Dreugh the Dreugh Shell; and three hides of their own, **Wolf Pelt**
+(681, tier 2 - the Wolf, the Snow Wolf, the Dog), **Boar Hide** (682, tier 2) and **Mudcrab Chitin** (683, tier 1). The
+branch for `01-Overview/bugs/Field-Bugs-2026-10-21.md` had built the same slice, and at its merge took this one whole (the
+same keys; these ids may already stand in a player's Stores). What its audit (AUDIT FB1021, `01-Overview/audits/
+Audit-Field-Bugs-2026-10-21.md`) found here and carried: the Bear Hide's cure stands LAST of its tier (L2-1 - it is the
+Ram Kit's too, and a chain for Cured Leather spent every one before a Wolf Pelt); the Stores count Mudcrab Chitin as a
+mass, as the Scorpion's. The Land Dreugh shares the Dreugh's row whole, so no butchery: a departure from C&C, whose
+corpse feeds its body (L2-2).
+
 ### 4.5 Cloth, stone and the Board's counters
 
 - **Linen Bolt** and **Wool Bolt** are sold by the Notice Board's own supplier - the Weavers' counter on the Market
@@ -313,8 +324,8 @@ So the crowns sit on the richest veins, the free lands hold what no crown can, a
 
 ### 4.8 The new templates (600-699)
 
-Icons are DFU's own, recoloured at runtime (law 6): each row names the DFU icon it borrows. **600-602 and 604 are
-unused**: the Pick, the Woodcutter's Axe, the Sickle and the Fishing Rod this table first held are Foraging's own
+Icons are DFU's own, recoloured at runtime (law 6): each row names the DFU icon it borrows. **601, 602 and 604 are
+unused** (600 is the Materials Bag's since BAG1, `net/bagLaw.js` BAG_TEMPLATE - AUDIT FB1021 L4-10): the Pick, the Woodcutter's Axe, the Sickle and the Fishing Rod this table first held are Foraging's own
 Pick-Axe (1601), Wood-Axe (1600), Sickle (1602) and Fishing-Net (1603), and the Basket (1607) joined them (FORAGE0 14).
 The Basket's foods are Foraging's and C&C's own templates, not new ones (FORAGE0 14.6).
 
@@ -332,6 +343,7 @@ The Basket's foods are Foraging's and C&C's own templates, not new ones (FORAGE0
 | 673-675 | Rough Stone, Cut Stone, Mortar | Stores | DFU Lodestone, greyed |
 | 678 | Siege-cracked Gem | Stores | DFU Diamond, cracked overlay |
 | 680 | Arcane Essence | Stores | DFU Ectoplasm, tinted |
+| 681-683 | Wolf Pelt, Boar Hide, Mudcrab Chitin (DEX-HIDES: Daggerfall Enemy Expansion's animals, 4.4) | Stores | Nymph Hair's lock; Fairy Dragon's Scales' |
 | 685-688 | Hunter's Stew, Fisherman's Supper, Orchard Tart, Feast of the Hearth | pack (food) | C&C's Meat / Cooked Fish / Bread, tinted |
 | 690 | Ram Kit | Stores (a siege work) | DFU Battle Axe, tinted |
 | 692 | Repair Kit | pack | DFU Warhammer, tinted |
@@ -2786,7 +2798,7 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   from the crypto source - its node key `body:<day>:<id>` (`net/nodeLaw.js` bodyKey, read in its one spelling). A body
   another's blow felled is DFU's corpse alone.
 - **Bounded, not witnessed** (6): the id is the client's word and the tier the foe's the client names (`foe`, its
-  MobileTypes value); the account's day - ~~**30 hides,**~~ **3 of tiers 5-6** (CAP-OFF, 2026-10-07: the thirty gone, the three kept) - is
+  MobileTypes value, or since DEX-HIDES the Enemy Expansion's id - AUDIT FB1021 L4-3); the account's day - ~~**30 hides,**~~ **3 of tiers 5-6** (CAP-OFF, 2026-10-07: the thirty gone, the three kept) - is
   the whole defence, **decided in the harvest's own INSERT** (the day's rows of `profession = 'hunting'` an account, its high ones by a new `tier` column -
   AUDIT 32 L2: their units, the hides, a clean pelt's second among them, the last skinning cut to the day's room; it
   counted the rows, the bodies, so a day ran to 60 hides and its rare three to six).
@@ -2888,7 +2900,8 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
     player's own clothing first, as DFU's Clothing Store shelves it, and both.
   - **Rugs 3 Wool, tapestries 4 Wool** (DFU's 237-243) - FOUND: 9.3's "+ a dye" has nothing to colour, DFU's furniture
     takes no dye; **Large Skins 2 and Small Skins 1 of a pelt** (244-245; a fur's hide - the Rat's, the Bat's, the
-    Bear's, the Tiger's; never silk, chitin, scales, feathers or shell). Among the home's things, as PROF4's furniture.
+    Bear's, the Tiger's, and DEX-HIDES' Wolf's and Boar's (FIELD BUGS 2026-10-20h); never silk, chitin, scales, feathers or
+    shell). Among the home's things, as PROF4's furniture.
   - **The Fishing-Net** (FORAGE0 14.7): 2 Linen Bolt, rank 0 - Foraging's own 1603, its quality its life.
   - The steps (9.2): **a Tailor's clothing, a Leatherworker's leather armour**; Outfitting XP 20 x the tier, +500 the
     first, under the crafter's limit - AUDIT 32 S1 (Mac: "Whatever you think is best"): none for the 152 made wholly of
@@ -3689,6 +3702,13 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   came down 8 logical lines (its ceiling 36,233 -> 36,225). Pinned: `test/systems/fb1019f_disenchantsaid.test.js` (3);
   PIN MOVED `prof12_client.test.js` (AUDIT PROF12 E2's host pin, onto the module and the wiring line);
   `tools/mutants/fb1019f_disenchantsaid.json` (13, all dead).
+- **ESSENCE-LOOSE** (FIELD BUGS 2026-10-20h, the Discord's #bug-reports: a player's Arcane Essence "bought with gold";
+  `01-Overview/bugs/Field-Bugs-2026-10-20h.md`). A piece made or tempered with a LOOSE unit (`Materials-Bag.md` 15, A1) is
+  walled to gold on its row, and the disenchant read that as a gold purchase: its Essence went into the Stores as gold's,
+  and the Reforge with Essence refused it. Its origin is now **loose** where the piece's goods walled it
+  (`products.loose`, migration 0142, acct166) - a station's, as a smelt's products of loose goods are - and **gold** where
+  gold bought it, as before; the Reforge spends as a station does, loose first. The Stores page says a no-pack-form
+  material's loose units are "made from pack goods", and its gold line no longer offers the pack.
 - **Pinned**: `test/systems/prof12_law.test.js` (15), `test/net/prof12_service.test.js` (13, through the real Worker),
   `test/systems/prof12_client.test.js` (16), `test/net/prof12_apothecary.test.js` (4, the Apothecary through the real Worker). Mutants:
   `tools/mutants/prof12.json` (206: 205 dead - AUDIT PROF-541 R2's six among them - and PROF12-spends-no-hash recorded equivalent - B1's ingredient comparison holds everything DFU's hash refused).
@@ -5062,7 +5082,7 @@ At dusk the hub warns of a Motherlode in the Wrothgarian foothills in ten minute
 | Herbalism | common 0.8 s, steady 2.5 s, 3 degrees |
 | Hunting | trace 5-9 points, clean 0.8, torn 0.4 (as built, PROF7 - E held: 4 + tier points across 14 degrees, a zigzag of 3; begun within 2.5 degrees; the tolerance 3 degrees, x1.5 at Master, x (INT + AGI) / 2's band, sampled every 0.25 degree of its progress - AUDIT 32 L1; clean 0.6-6 s from the first move; Gentle 1.2 s) |
 | A body (PROF7) | `body:<day>:<12 hex>`, stamped at the player's own kill; a node while the pack holds a Skinning Knife; a hide 1, a clean pelt x1.5, a torn one its part lost; the part one body in four (Big Tooth, Spider's Venom, Giant Scorpion Stinger, Dragon's Scales); the butchery one Raw Meat (the Slaughterfish's Raw Fish), a Butcher's two, a Butcher's meat withdrawn spoiling at half the pace; ~~30 hides an account a day,~~ 3 of tiers 5-6 an account a day (AUDIT 32 L2: hides, not bodies; CAP-OFF, 2026-10-07: the thirty gone); lapsed at the UTC day's turn (B1); reached at DFU's corpse distance (H7); no ground, no hours, no witness; Hunting XP 15 x tier |
-| The hides (PROF7) | Rat Pelt 1, Bat Leather 2, Bear Hide 2, Tiger Pelt 3, Spider Silk 3, Scorpion Chitin 4, Slaughterfish Scales 4, Harpy Feathers 5, Dreugh Shell 5, Dragonling Scale 6 (655-664); Cured Leather tier 2, Hardened 5 (665-666); Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5 (668-671, the last unyielded); a hide 1 kg (Spider Silk and Harpy Feathers 0.25), a bolt 0.5; 8 x the tier's Marks value in gold, a leather and a Silk Bolt x1.5 |
+| The hides (PROF7) | Rat Pelt 1, Bat Leather 2, Bear Hide 2, Tiger Pelt 3, Spider Silk 3, Scorpion Chitin 4, Slaughterfish Scales 4, Harpy Feathers 5, Dreugh Shell 5, Dragonling Scale 6 (655-664); DEX-HIDES' Wolf Pelt 2, Boar Hide 2, Mudcrab Chitin 1 (681-683 - AUDIT FB1021 L2-4); Cured Leather tier 2, Hardened 5 (665-666); Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5 (668-671, the last unyielded); a hide 1 kg (Spider Silk and Harpy Feathers 0.25), a bolt 0.5; 8 x the tier's Marks value in gold, a leather and a Silk Bolt x1.5 |
 | The loom (PROF7) | a Clothing Store's, 50 gold a craft, a cure or a weave; a home's `loom` station, 50,000 gold; two hides a leather (tiers 1-3 Cured, 4-6 Hardened), a Tanner's two a unit (a choice at 50); three Spider Silk a Silk Bolt; no XP |
 | Outfitting's recipes (PROF7) | leather armour at Leather - Cuirass 6, Greaves 4, the rest 2 - Cured (rank 10) or Hardened (rank 55, a step); DFU's 76 garments in each cloth - a bolt, two, three, boots a bolt and a Cured Leather; rugs 3 Wool, tapestries 4 Wool, skins 2 and 1 of a pelt; the Fishing-Net 2 Linen; the steps a Tailor's clothing, a Leatherworker's leather armour; XP 20 x tier, +500 the first (AUDIT 32 S1: not the 152 made wholly of Linen and Wool) |
 | A garment's dye (PROF7) | DFU's ten clothing dyes (0-9), chosen at the loom, signed into the record (`u`); every garment (AUDIT 32 L3: the four unchangeable shirts too) |

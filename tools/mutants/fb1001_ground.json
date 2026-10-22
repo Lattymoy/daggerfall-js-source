@@ -20,8 +20,8 @@
   {
     "name": "GROUND-STALE-the-book-asks-past-the-stale",
     "file": "src/net/profBook.js",
-    "old": "return p?.day !== day || p.stale === true; }).slice(0, PROF_PIXELS_MAX);",
-    "new": "return p?.day !== day; }).slice(0, PROF_PIXELS_MAX);",
+    "old": "return !(p && p.day >= held) || p.stale === true; }).slice(0, PROF_PIXELS_MAX);",
+    "new": "return !(p && p.day >= held); }).slice(0, PROF_PIXELS_MAX);",
     "tests": [
       "test/net/fb1001_ground.test.js"
     ]

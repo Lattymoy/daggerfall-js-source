@@ -21,6 +21,7 @@ import { FESTER, WRATH_MAX } from '../../src/systems/revenant/revenantFeud.js';
 import { DREAD } from '../../src/systems/revenant/revenantUnquiet.js';
 import { WILD_FOE_HEALTH_MULT, WILD_RING_LOOT, WILD_RINGS, WILD_GIANT_HEALTH_MULT, WILD_GIANT, ZONE_WATCH_SCALE, applyWildFoe } from '../../src/systems/wild/wildZone.js';
 import { RITE_SUMMONER_HEALTH } from '../../src/net/gate/gateRite.js';
+import { STAR_FOE_HEALTH } from '../../src/net/starfall/starfallLaw.js';
 import { KNIGHT_CITY_WATCH } from '../../src/characters/mobile/mobileTypes.js';
 import { HERO_THREAT, heroThreat } from '../../src/systems/heroThreat.js';
 import { progressionScaling, foeShare, wildernessShare, placeVeteran, wildernessThreat, DUNGEON_SHARE, EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from '../../src/systems/skillSoftcap.js';
@@ -37,13 +38,13 @@ const entityOf = (t, l) => {
 const worst = (t, dShare, place) => progressionScaling({ veteran: 1, edge: EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP }, dShare, foeShare(isClass(t) ? null : FOE_BOUND_ROWS.get(t)[2], isClass(t)), place, heroThreat(HERO_THREAT.level.to, HERO_THREAT.renown.to));
 const revenantAt = (e) => applyRevenant(e, { id: 'rvn-bound', name: 'Grak', mobileType: e.mobileType, rank: REVENANT_MAX_RANK, wrath: WRATH_MAX, dread: true, wounds: [], learned: [], history: [], returns: 0 });
 
-test('FOE-BOUNDS EACH MULTIPLIER IS ITS HOME\'S: the class roll, the elite, the Super dungeon, the champion and its traits, the revenant\'s rank, wrath and Dread, the wild zone, the Greater Giant, the zone\'s watch, the Rite\'s Summoner, the City Watch and the hero - copied because the relay cannot import their homes, equal to each (mutants: each copy off its home)', () => {
+test('FOE-BOUNDS EACH MULTIPLIER IS ITS HOME\'S: the class roll, the elite, the Super dungeon, the champion and its traits, the revenant\'s rank, wrath and Dread, the wild zone, the Greater Giant, the zone\'s watch, the Rite\'s Summoner, a star\'s coven, the City Watch and the hero - copied because the relay cannot import their homes, equal to each (mutants: each copy off its home)', () => {
   assert.equal(rollEnemyClassMaxHealth(7, 1, () => 0), FOE_BOUND.classBase + 7, 'DFU\'s class roll: 10 and a die a level');
   assert.deepEqual([FOE_BOUND.classHpPerLevel, FOE_BOUND.elite, FOE_BOUND.superFoe, FOE_BOUND.champion, FOE_BOUND.championMinLevel], [HP_MAX, ELITE_FOE_HEALTH_MULT, SUPER_HEALTH_SCALE, CHAMPION_HEALTH, CHAMPION_MIN_LEVEL]);
   assert.deepEqual(FOE_BOUND.championTraits, CHAMPION_TRAITS.map((t) => t.health ?? 1));
   assert.deepEqual([FOE_BOUND.revenantPerRank, FOE_BOUND.revenantRankMax, FOE_BOUND.festerHealth, FOE_BOUND.wrathMax, FOE_BOUND.dread], [REVENANT_HEALTH_PER_RANK, REVENANT_MAX_RANK, FESTER.HEALTH, WRATH_MAX, DREAD.HEALTH]);
   assert.deepEqual([FOE_BOUND.wild, FOE_BOUND.wildRingTop, FOE_BOUND.giant, FOE_BOUND.giantType, FOE_BOUND.zoneWatch], [WILD_FOE_HEALTH_MULT, WILD_RING_LOOT[WILD_RINGS - 1], WILD_GIANT_HEALTH_MULT, WILD_GIANT, ZONE_WATCH_SCALE]);
-  assert.deepEqual([FOE_BOUND.rite, FOE_BOUND.watch], [RITE_SUMMONER_HEALTH, KNIGHT_CITY_WATCH]);
+  assert.deepEqual([FOE_BOUND.rite, FOE_BOUND.star, FOE_BOUND.watch], [RITE_SUMMONER_HEALTH, STAR_FOE_HEALTH, KNIGHT_CITY_WATCH]);
   assert.deepEqual(FOE_BOUND.hero, { level: { from: HERO_THREAT.level.from, to: HERO_THREAT.level.to, health: HERO_THREAT.level.health }, renown: { from: HERO_THREAT.renown.from, to: HERO_THREAT.renown.to, health: HERO_THREAT.renown.health } });
   assert.equal(FOE_HERO_HEALTH_MAX, heroThreat(1000, 1000).health, 'the hero at its worst');
   assert.equal(FOE_HERO_HEALTH_MAX, 2.6090292465253375, 'the spec\'s figure');
@@ -68,7 +69,7 @@ test('FOE-BOUNDS EACH MONSTER\'S ROW AT ITS MOST: the most health and the most l
   assert.equal(foeStatsRefusal({ t: 34, k: 146, h: 146 }), null, 'DEX1: the mod\'s Dragonling at its row (146) stands - it was refused at 60');
 });
 
-test('FOE-BOUNDS THE STREET\'S BOUND IS ITS BUILDERS\' WORST, EXACTLY: every monster and a class foe at three levels, built through the game\'s own stages in spawnFoe\'s order - its row, an elite (`z`), progression at night with the hero at his worst, a Stalwart champion (`cp`), a revenant at rank 5 with full wrath and the Dread (`nm`), the wild heart, a Greater Giant (`gg`), a Rite\'s Summoner - stand at their bound, and one more is refused (mutants: a stage left out; the order or the rounding changed)', () => {
+test('FOE-BOUNDS THE STREET\'S BOUND IS ITS BUILDERS\' WORST, EXACTLY: every monster and a class foe at three levels, built through the game\'s own stages in spawnFoe\'s order - its row, an elite (`z`), progression at night with the hero at his worst, a Stalwart champion (`cp`), a revenant at rank 5 with full wrath and the Dread (`nm`), the wild heart, a Greater Giant (`gg`), a Rite\'s Summoner or a star\'s coven - stand at their bound, and one more is refused (mutants: a stage left out; the order or the rounding changed)', () => {
   ladder();
   const night = (e) => applyProgressionScaling(e, worst(e.mobileType, wildernessShare(true), placeVeteran(wildernessThreat(true))));
   const cases = [...MONSTERS.map((t) => [t, null]), [135, 1], [135, 37], [KNIGHT_CITY_WATCH, 100]];
@@ -82,7 +83,7 @@ test('FOE-BOUNDS THE STREET\'S BOUND IS ITS BUILDERS\' WORST, EXACTLY: every mon
       if (Number.isInteger(flags.cp) && !applyChampion(e, flags.cp)) continue;   // under its level
       if (flags.nm) revenantAt(e);
       if (flags.wild) applyWildFoe(e, { ring: WILD_RINGS });
-      if (flags.camp && isClass(t)) e.maxHealth = Math.max(1, Math.round(e.maxHealth * RITE_SUMMONER_HEALTH));   // scenes/riteHost.js riteFoe's own line
+      if (flags.camp) e.maxHealth = Math.max(1, Math.round(e.maxHealth * (isClass(t) ? Math.max(RITE_SUMMONER_HEALTH, STAR_FOE_HEALTH) : STAR_FOE_HEALTH)));   // scenes/riteHost.js riteFoe's own line; STAR-TUNE: a star's coven (scenes/starfall/starfallHost.js toughen), any kind
       const r = { t, ...(l != null ? { l } : {}), ...(flags.z ? { z: 1 } : {}), ...(Number.isInteger(flags.cp) ? { cp: flags.cp } : {}), ...(flags.nm ? { nm: flags.nm } : {}) };
       const o = { wild: !!flags.wild, camp: !!flags.camp };
       assert.equal(foeHealthBound(r, o), e.maxHealth, `${t}/${l} ${JSON.stringify(flags)}`);
@@ -94,7 +95,7 @@ test('FOE-BOUNDS THE STREET\'S BOUND IS ITS BUILDERS\' WORST, EXACTLY: every mon
   const g = entityOf(WILD_GIANT, null);
   promoteEliteFoe(g); night(g); applyWildFoe(g, { ring: WILD_RINGS });
   const gg = Math.max(1, Math.round(g.maxHealth * WILD_GIANT_HEALTH_MULT));
-  assert.equal(foeHealthBound({ t: WILD_GIANT, z: 1, gg: 0 }), gg);
+  assert.equal(foeHealthBound({ t: WILD_GIANT, z: 1, gg: 0 }, { camp: false }), gg);   // STAR-TUNE: a giant stands in no camp (unknown, a camp's coven's x2 is its worst)
   // the City Watch: its class roll and the open zone's x10 (scenes/cityGuards.js) - under its encounter's chain
   const w = entityOf(KNIGHT_CITY_WATCH, 40);
   assert.ok(foeHealthBound({ t: KNIGHT_CITY_WATCH, l: 40 }, { wild: true, camp: false }) >= Math.round(w.maxHealth * ZONE_WATCH_SCALE));
@@ -116,9 +117,12 @@ test('FOE-BOUNDS THE DUNGEON\'S BOUND IS ITS BUILDERS\' WORST, EXACTLY: a layout
   }
 });
 
-test('FOE-BOUNDS WHAT A RECORD SAYS OF ITSELF ONLY RAISES ITS BOUND, AND NO BUILDER GIVES SOME MARKS: a rat with no marks is held to its own chain; an elite, a champion, a revenant\'s name raise it; the City Watch never an elite or a champion; no champion under level 3 (mutants: a mark read when absent; the watch\'s marks believed; the champion\'s floor)', () => {
-  const plain = foeHealthBound({ t: 0 }, { wild: false });
+test('FOE-BOUNDS WHAT A RECORD SAYS OF ITSELF ONLY RAISES ITS BOUND, AND NO BUILDER GIVES SOME MARKS: a rat with no marks is held to its own chain, a camp\'s twice it (a star\'s coven); an elite, a champion, a revenant\'s name raise it; the City Watch never an elite or a champion; no champion under level 3 (mutants: a mark read when absent; the watch\'s marks believed; the champion\'s floor)', () => {
+  const plain = foeHealthBound({ t: 0 }, { wild: false, camp: false });
   assert.equal(plain, Math.round(35 * FOE_HERO_HEALTH_MAX), 'a rat: its row and the hero (its own share is none)');
+  // STAR-TUNE: a camp's monster may be a fallen star's coven (x2, rounded once more); unknown is a camp's, the worst
+  assert.equal(foeHealthBound({ t: 0 }, { wild: false, camp: true }), Math.round(plain * STAR_FOE_HEALTH), 'a rat in a camp: a star\'s coven');
+  assert.equal(foeHealthBound({ t: 0 }, { wild: false }), foeHealthBound({ t: 0 }, { wild: false, camp: true }), 'unknown: a camp\'s');
   for (const m of [{ z: 1 }, { cp: 1 }, { nm: 'Grak' }]) assert.ok(foeHealthBound({ t: 0, ...m }, { wild: false }) > plain, JSON.stringify(m));
   assert.ok(foeHealthBound({ t: 0 }, { wild: true }) > plain, 'the zone');
   assert.ok(foeStatsRefusal({ t: 0, k: 99_999 }, { wild: true }), 'the forged rat');
@@ -126,6 +130,6 @@ test('FOE-BOUNDS WHAT A RECORD SAYS OF ITSELF ONLY RAISES ITS BOUND, AND NO BUIL
   assert.ok(foeStatsRefusal({ t: KNIGHT_CITY_WATCH, l: 20, cp: 0, k: 10 }), 'a champion watchman');
   assert.ok(foeStatsRefusal({ t: 1, cp: 0, k: 10 }), 'a champion of level 2');
   assert.equal(foeStatsRefusal({ t: 2, cp: 0, k: 10 }), null, 'a champion of level 3');
-  assert.ok(foeStatsRefusal({ t: 0, h: plain + 1 }, { wild: false }), 'its health past the bound, too');
+  assert.ok(foeStatsRefusal({ t: 0, h: plain + 1 }, { wild: false, camp: false }), 'its health past the bound, too');
   assert.equal(foeStatsRefusal({ t: 39, k: 1e5 }), null, 'unverified: never refused');
 });

@@ -2979,6 +2979,16 @@
   "tr": "5be01439d42a",
   "by": "claude-in-session"
  },
+ "chargen.class.skills.major": {
+  "en": "85c39f1a36a9",
+  "tr": "5ebeff89c464",
+  "by": "claude-in-session"
+ },
+ "chargen.class.skills.primary": {
+  "en": "7bb8fba31082",
+  "tr": "7bb8fba31082",
+  "by": "claude-in-session"
+ },
  "combat.leadLeftHand": {
   "en": "9a84e174d1b8",
   "tr": "4b808c0211f8",
@@ -4502,6 +4512,16 @@
  "features.nearDeathWarning.title": {
   "en": "6afc69ea22c9",
   "tr": "7b97bc024c6a",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.note": {
+  "en": "9ac4077e0fc2",
+  "tr": "f73c73aca2c6",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.title": {
+  "en": "a3f85ff33ef4",
+  "tr": "7b614f7f7c60",
   "by": "claude-in-session"
  },
  "features.questHerald.note": {
@@ -11612,6 +11632,21 @@
  "saddle.hello.none": {
   "en": "c4f18acb1d78",
   "tr": "ca33a260d676",
+  "by": "claude-in-session"
+ },
+ "sd.through.opens": {
+  "en": "1e72c7ca985d",
+  "tr": "7df257ce6484",
+  "by": "claude-in-session"
+ },
+ "sd.through.title": {
+  "en": "45d79739680d",
+  "tr": "b4506364e23d",
+  "by": "claude-in-session"
+ },
+ "sd.through.to": {
+  "en": "9adecd5690cd",
+  "tr": "90d7aef18aa2",
   "by": "claude-in-session"
  },
  "sea.exchange.band": {

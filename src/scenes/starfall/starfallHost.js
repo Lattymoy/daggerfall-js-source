@@ -27,7 +27,7 @@
 import {
   starfallRuns, starInWindow, starNightAt, starTimes, starStreakBearing, starCircleSize, STAR_WORD_MS, STAR_ORPHAN_MS,
   STAR_CIRCLE_AT, STAR_LOW_LIGHT, STAR_LIGHT, starLostAt, P_WAVE, P_BREATH, P_MASTER, P_HELD, P_LOST, STAR_LOST_DARK,
-  STAR_LIFE_MS, STAR_AFTER_MS, STAR_WAVE_MAX, STAR_ACCOUNTS_MAX, STAR_BLOWS_WIRE_MAX,
+  STAR_LIFE_MS, STAR_AFTER_MS, STAR_WAVE_MAX, STAR_ACCOUNTS_MAX, STAR_BLOWS_WIRE_MAX, STAR_FOE_HEALTH,
 } from '../../net/starfall/starfallLaw.js';
 import { worldRoom } from '../../net/wire.js';
 import { storedSession } from '../../net/accountClient.js';
@@ -44,7 +44,8 @@ import {
 import { STAR_REGION_TEXT, STAR_AT_TEXT } from '../../systems/starfall/starWords.js';
 import { playStarSound, starHeardAfterMs } from '../../systems/starfall/starSounds.js';
 import { starSiteId, isStarSite } from '../../world/worldOfDaggerfall/wodShared.js';
-import { buildStarModel, rimAt, STAR_BARE_R, STAR_STONE_H } from '../../world/starfall/starModel.js';
+import { buildStarModel, rimAt, STAR_BARE_R, STAR_STONE_H, STAR_RIM_H } from '../../world/starfall/starModel.js';
+import { lateSolidsOf } from '../../player/lateSolid.js';   // STAR-TUNE: the crater a late solid - never closed on a body standing in it
 import { starArt, STAR_ARCHIVE, STAR_GLASS_RECORD, STAR_GOLD_RECORD, STAR_DARK_RECORD } from '../../world/starfall/starArt.js';
 import {
   StarfallPassRenderer, streakAt, omenAt, skyClamp, shockRingAt, STAR_TRAIL_M, STAR_HEAD_W, STAR_FLASH_W, STAR_FLASH_MS, STAR_FALL_COLOR,
@@ -98,7 +99,7 @@ export const starBucket = (key) => `star:${key}`;
  *  kept none (a private window) counts on from the relay's. */
 export const STAR_BLOWS_STORE = 'dagger:starBlows';
 /** AUDIT STARFALL C7: THE MOST OF A STAR'S FOES ITS OWNER STANDS AT ONCE - what the law can call at one moment: a wave's
- *  most, the master, and both its circle's calls at the Heart-Star's size. Every stand is held to it, and a reader stands
+ *  most (STAR-TUNE: twenty-four), the master, and both its circle's calls at the Heart-Star's size. Every stand is held to it, and a reader stands
  *  a star's foes under an allowance of the same size (world/worldOfDaggerfall/wodShared.js WOD_STAR_PUPPETS_MAX). */
 export const STAR_LIVE_MAX = STAR_WAVE_MAX + 1 + STAR_CIRCLE_AT.length * starCircleSize(STAR_ACCOUNTS_MAX, true);
 
@@ -277,11 +278,19 @@ export function createStarfallHost(host) {
    *  (scenes/gate/gatePool.js standCollider's law), not only when the ground under it was built finer. */
   function place(S) {
     if (!sameAt(S.madeAt, S.heart)) { S.madeAt = [...S.heart]; S.mat = trs(S.heart[0], S.heart[1], S.heart[2], 0, 0, 0); }
-    const col = collider?.();
-    if (!col?.addMesh || !S.stone || !S.mat) return;
+    const col = collider?.(), late = lateSolidsOf(col);
+    if (!col?.addMesh || !late || !S.stone || !S.mat) return;
     if (S.colliderGen === S.stoneGen && sameMatrix(S.colliderAt, S.mat)) return;
-    col.removeBucket?.(starBucket(S.key));
-    col.addMesh(starBucket(S.key), S.stone.positions, S.stone.indices, S.mat);
+    // STAR-TUNE (the owner: "The dirt mound where the star is crashed can be walked through"): THE CRATER IS SOLID - its
+    // floor, its rim of thrown earth and the stones on it with the stone (`S.stone`, ensureMesh); and a LATE solid
+    // (player/lateSolid.js, ROCK-CLEAR's gate): a crater built round a body standing on its rim is withheld until the
+    // body is clear of it, never closed on it. Moved (a floating origin's recentre), it is put back where it is held
+    // AUDIT STAR-TUNE F4: a recentre (the same solid, moved with the body) is put back where it is held; a crater BUILT
+    // AGAIN (the ground under it built finer - `ground` - as a player walks up to it) is a new solid, asked of the body
+    // as the first was: replaced, it stood round a body already on its rim
+    const key = starBucket(S.key);
+    if (S.colliderAt && S.colliderGen === S.stoneGen) late.replace(key, S.stone.positions, S.stone.indices, S.mat);
+    else { if (S.colliderAt) late.remove(key); late.add(key, S.stone.positions, S.stone.indices, S.mat); }
     S.colliderAt = S.mat; S.colliderGen = S.stoneGen;
   }
   /** AUDIT STARFALL (the relay's grace, WP1): WHETHER THE STAR IS STILL UNDECIDED - fallen, or past its deadline inside
@@ -314,7 +323,7 @@ export function createStarfallHost(host) {
         const floor = renderer.createMesh(buildStarModel(S.site.n, S.site.k, h, { stone: false, thread: false }));
         if (S.floor) renderer.destroyMesh?.(S.floor);
         S.floor = floor;
-        S.stone = buildStarModel(S.site.n, S.site.k, h, { ground: false, thread: false });
+        S.stone = buildStarModel(S.site.n, S.site.k, h, { thread: false });   // STAR-TUNE: what the collider holds - the stone AND the crater (`place`)
         S.stoneGen = S.groundGen;
       }
     } catch (e) { console.warn('[star] the crater would not build', e?.message ?? e); S.meshKey = want; }
@@ -323,7 +332,7 @@ export function createStarfallHost(host) {
     if (S.mesh) { renderer?.destroyMesh?.(S.mesh); S.mesh = null; S.meshKey = ''; }
     if (S.floor) { renderer?.destroyMesh?.(S.floor); S.floor = null; }
     S.stone = null; S.stoneGen = -1;
-    if (S.colliderAt) { collider?.()?.removeBucket?.(starBucket(S.key)); S.colliderAt = null; S.colliderGen = -1; }
+    if (S.colliderAt) { lateSolidsOf(collider?.())?.remove(starBucket(S.key)); S.colliderAt = null; S.colliderGen = -1; }   // STAR-TUNE: held back or standing, the gate's
     if (S.bared) { S.bared = false; bareSaid(S); }
   }
   const bareSaid = (S) => onBare(S.heart[0] - STAR_BARE_R, S.heart[2] - STAR_BARE_R, S.heart[0] + STAR_BARE_R, S.heart[2] + STAR_BARE_R);
@@ -415,6 +424,27 @@ export function createStarfallHost(host) {
     if (f.entity) { f.entity.name = M.name(); f.entity.properName = M.name(); f.entity.worldBoss = true; }
     f.circleWard = () => (S.circle | 0) > 0;
   }
+  /** STAR-TUNE: WHERE A FOE STANDS at (x, z) - on whatever is highest there: the land, or the crater's floor and rim now
+   *  that they are solid (`place`), read from over the rim's crest (a ray from just over the land starts under the rim and
+   *  finds the land beneath it). `{ y, hitDist }` as spawnFoe's groundAlign reads them - the drop from 0.2 over `y` - or
+   *  null where no ground answers. */
+  function standOn(x, z) {
+    const y = groundAt(x, z);
+    if (!Number.isFinite(y)) return null;
+    const top = y + STAR_RIM_H + 1;
+    const d = hitDistance(collider?.()?.surfaceHit?.([x, top, z], DOWN, top - y + 3));
+    if (d != null) return { y: top - d, hitDist: 0.2 };
+    return { y, hitDist: hitDistance(collider?.()?.surfaceHit?.([x, y + 0.2, z], DOWN, 3)) };
+  }
+  /** STAR-TUNE: A FOE OF THE COVEN'S RITE - its health STAR_FOE_HEALTH times (the rite's Summoner's own law,
+   *  scenes/riteHost.js), stood once, as it lands; and on its kind's health too (TELL1: what ai/tells.js kindHealth
+   *  divides out, so it staggers as its kind does). A foe handed to me keeps what its owner stood. */
+  function toughen(f) {
+    const e = f.entity;
+    if (!e) return;
+    e.maxHealth = Math.max(1, Math.round((e.maxHealth ?? 1) * STAR_FOE_HEALTH)); e.health = e.maxHealth;
+    e.healthMult = (e.healthMult ?? 1) * STAR_FOE_HEALTH;
+  }
   /** Stand `careers` at `places` ([dx, dz, yaw] from the heart, or from `about`) under `site`: placed, in no save, never an
    *  elite of its own (the master alone is). Each foe landed is made the star's (`made`). AUDIT STARFALL C7: never past
    *  STAR_LIVE_MAX of the star's foes at once - what a reader stands of them. */
@@ -424,18 +454,18 @@ export function createStarfallHost(host) {
     careers.slice(0, Math.max(0, STAR_LIVE_MAX - liveOf(S))).forEach((career, i) => {
       const [dx, dz, yaw] = places[i % places.length];
       const x = (about ?? S.heart)[0] + dx, z = (about ?? S.heart)[2] + dz;
-      const y = groundAt(x, z);
-      if (!Number.isFinite(y)) return;
-      const hit = collider?.()?.surfaceHit?.([x, y + 0.2, z], DOWN, 3);
+      const at = standOn(x, z);
+      if (!at) return;
       S.pending++;
       const landed = (f) => {
         S.pending--;
         if (!f) return;
         if (stars.get(S.key) !== S || !S.own) { foes.removeFoe?.(f); return; }   // the star went, or the foes were given up, while they stood
+        if (site !== S.sites.m) toughen(f);   // STAR-TUNE: a wave's and the circle's - the master is an elite's own
         mark(S, f);
         made(f);
       };
-      Promise.resolve(foes.spawnFoe(career, [x, y, z], { yaw: yaw ?? 0, gender: covenFemale(career) ? 'female' : null, placed: true, groundAlign: { hitDist: hitDistance(hit) }, site, transient: true, eliteFoe: elite }))
+      Promise.resolve(foes.spawnFoe(career, [x, at.y, z], { yaw: yaw ?? 0, gender: covenFemale(career) ? 'female' : null, placed: true, groundAlign: { hitDist: at.hitDist }, site, transient: true, eliteFoe: elite, grantKind: session()?.starGrantOk ? 'star' : undefined }))   // STAR-TUNE: a grant of the star's own kind - a wave of any size its law gives, one ask; AUDIT STAR-TUNE F1: of a relay that mints it (an older one's own kind, its waves nine at most)
         .then(landed, () => landed(null));
     });
   }

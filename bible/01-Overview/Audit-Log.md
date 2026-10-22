@@ -8,6 +8,41 @@
 
 Newest first.
 
+**2026-10-22 - AUDIT FB1021d (pull request #1118, FIELD BUGS 2026-10-21d: FLAT-WALK, RAVEN-CLOSE, SENTENCE-MENDS, REGARD-OWN,
+PASSAGE).** The owner: *"Audit this"*. Five cold lanes, one a report, read-only over the pull request's own diff at
+`cff651e83` against Daggerfall Unity's C# and the freeware's data, given the reports and the files and never the
+record's conclusions. The worst: a sentence's mend landed before a day was served, so a save under the prison screen
+kept it for nothing (SM-1); the friend line lumin asked for was said under the talk window and ran out unseen (RO-1); a
+booked ship whose master's hand was off - a foe near, aground - was steered by nobody (PS-2), and 25 sailed legs were
+still aimed at land, hidden by the test's own filter (PS-1). The rest: two FLAT-WALK pins too weak to tell a Teleport
+from every flat relay, its count (27, not 41) and FLAT-RELAY's refuted diagnosis left standing on four pages (2026-10-05c
+report 5 reopened); the Raven close's price (a map read after the knight's word) named and pinned; the mend wearing a
+crime's own mark, a petty crime's cheap step, and a Curfew doubling charges laid anywhere in its town; grudges given back
+whole by the rebase and an offline copy frozen; a deed's friend never said; the town rings lost on the land a party
+embarks from; a passenger's autorun outliving the helm; the plate hidden under a bar that never covered it; a passenger's
+card with no dial or Leave. Every finding is in the record's own section with what became of it
+(`01-Overview/bugs/Field-Bugs-2026-10-21d.md`, AUDIT FB1021d): fixed and pinned, or taken under the owner's standing
+word (FW-6, RC-1, SM-3, SM-4, RO-3, PS-2), or found and left with its reason (LW-II's open item 6 on the road's sword;
+the unsaved charge; a realm-era build reading the record; my own boat's embark legs). The campaign, 1,291 mutants on
+the merged tree: 1,275 dead, 2 equivalent, 14 survived - the seven of this change's own answered (four pinned, PS-3's
+reading cut to the half that is the whole of it, SM-4's prison-arm read recorded equivalent with its reason pinned), the
+seven others surviving on main as here (four of them equivalent since PLEA-LOOP), named in the record.
+
+**2026-10-21 - AUDIT STAR-TUNE (pull request #1090, the Starfall from its first run).** The owner: *"Audit this"*. One
+cold lane over the pull request's own diff, read-only, at the head that renumbered it world238 past main's world236 and
+world237. Four findings, each fixed and pinned (`bible/11-Multiplayer/Starfall.md` sections 4, 10 and 13; `Spawn-Grants.md`
+section 4): F1, the site goes live before the relay's deploy is through (the account service, which STAR-TUNE does not
+move, is all `deploy.yml` waits on), and a new client asked world237 a `star` grant it refuses - under `enforce` no wave
+stood, under `grantStrip` the coven was its owner's alone; the kind is now asked only of world238 and later
+(`STAR_GRANT_RELAY_MIN`), the stand's own kind of an older relay. F2, the wave's clearing floor stayed a foe's 2.5 s while
+a party's wave grew to twenty-one - an empty crater waited out to 52.5 s after a 25 s fight; it is shared by the
+defenders now (`starClearFloorMs`). F3, an older tab's `st` dropped a wave past nine whole, so an older owner stood a
+party's third wave and master for nobody; the cell says nine in `wz` and the wave in `wx`. An older reader removing a
+toughened coven foe past its old bound is recorded, not fixable from here. F4, a crater built again under a standing
+player skipped the late-solid gate's body check. Sound: the wave law, the grant's size and ceiling, toughening across
+handovers, the frame's 64 records, the stand height, the renumber. Mutants: 7 new and 3 re-aimed (`star1`, `star3`,
+`star5`), all dead.
+
 **2026-10-20 - AUDIT PERF-PASS (the performance pass, pull request #1078: TRIP-PICKS, the BOOT-FREEZE slices,
 TRADE-VIRT, SHADER-STALL, SNOW-BUDGET and the GATE-MIX merge).** The owner: *"I need you to audit this and ensure this is
 perfect and fidelity isnt lost"*. Four cold lanes on a frozen head (7e5cdfcb80), read-only, each against the code before

@@ -174,7 +174,7 @@ import { SOUND } from '../../systems/soundClips.js';
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { isLanternItem, beltLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf
+import { isLanternItem, waistLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf (BELT-WAIST: whatever hangs at the waist)
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -335,8 +335,9 @@ export function equippedModel(entity = {}) {
   // made-up EQUIP_SLOTS value, and the counts below still walk the
   // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
   // slots learns about this one.
-  // BELT-LANTERN: a lit lantern on the belt is the shelf's (its own slot), not the hand's
-  const light = entity?.lightSource && entity.lightSource.beltLantern !== true ? entity.lightSource : null;
+  // BELT-LANTERN: a lit lantern on the belt is the shelf's (its own slot), not the hand's. BELT-WAIST: and so is one the
+  // switch hangs at the waist - the world draws it at the hip, so the hand's row never holds it (systems/beltLantern.js)
+  const light = entity?.lightSource && waistLanternOf(entity) !== entity.lightSource ? entity.lightSource : null;
   const visible = rows.filter((r) => r.item || !r.hidden);
   return {
     rows: light
@@ -2442,7 +2443,7 @@ function shelfSocket(r, g, source = 'worn') {
 function lanternGroup(g) {
   const grp = el('div', 'shelfgrp shelfgrp-lantern');
   const pair = el('div', 'shelfpair shelfone');
-  const item = beltLanternOf(deps.entity);
+  const item = waistLanternOf(deps.entity);   // BELT-WAIST: the lantern at the waist, hung or lit there by the switch
   if (!item) {
     const d = el('div', 'wornsock wornempty');
     d.dataset.lantern = '';

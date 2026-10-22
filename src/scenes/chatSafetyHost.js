@@ -278,6 +278,7 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
     link.hears = hears;
     link.mayChat = mayChat;
     link.onLaw = ({ order }) => carry(order);
+    link.onLease = (l) => { for (const x of allLinks()) x?.sendLease?.(l); };   // LEASE1 (net/roomLease.js): my hub's lease, handed to every room I hold
     link.onBanned = ({ until }) => banned(until);
     link.onWelcomed = () => {
       if (reading || now() - readAt < BLOCKS_REREAD_MS) return;

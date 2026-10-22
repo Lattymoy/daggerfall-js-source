@@ -65,8 +65,8 @@
   {
     "name": "PEERCADENCE-the-cadence-is-read-off-the-body-when-it-stood",
     "file": "src/net/peer/peerBodies.js",
-    "old": "(this._frame + b.phase) % poseCadenceFor(b.d2) === 0 ? 1 : 0;",
-    "new": "(this._frame + b.phase) % poseCadenceFor(b.cadenceD2 ??= b.d2) === 0 ? 1 : 0;",
+    "old": "(this._frame + b.phase) % poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2) === 0 ? 1 : 0;",
+    "new": "(this._frame + b.phase) % poseCadenceFor(b.cadenceD2 ??= (eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2)) === 0 ? 1 : 0;",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]

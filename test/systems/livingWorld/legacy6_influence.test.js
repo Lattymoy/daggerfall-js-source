@@ -253,7 +253,7 @@ test('LEGACY6 wiring: the world host hands the host the town\'s regard, the sky 
   assert.match(src, /regards: \(\) => livingRelations, regardDay: livingRegardDay, sky: \(\) => skyMinutes\(\),/);
   assert.match(src, /killerOf: \(cid, ownAt\) => revenantKillerOf\(cid, ownAt\), inheritFoe: \(rec\) => inheritRevenant\(playerEntity, rec\),/);
   assert.match(src, /familyNews: \(t\) => host\.legacyHost\?\.newsFor\(livingTown\.mapId, t\) \?\? null,/);
-  assert.match(src, /newGame: \(\) => \{ livingRelations = createRelations\(\); legacyHost\?\.seedRegards\(livingRelations\); \},/);
+  assert.match(src, /newGame: \(\) => \{ livingRelations = characterRelations\(null, ownMinutes, params\.has\('online'\)\); legacyHost\?\.seedRegards\(livingRelations\); \},/);   // REGARD-OWN (FIELD BUGS 2026-10-21d)
   assert.match(rd('src/systems/livingWorld/meetups.js'), /house: told\?\.item\.house \?\? null,/);
   // the house's news at each of its doors: a laying to rest, a wedding, a child of the house
   const host = rd('src/scenes/legacyHost.js');

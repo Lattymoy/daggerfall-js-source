@@ -26,8 +26,9 @@
 /** What founding costs: gold (the purse, then the bank - a fee, the treasury starts empty) and the founder's Renown. */
 export const GUILD_FOUND_GOLD = 10_000;
 export const GUILD_FOUND_RENOWN = 10;
-/** How many characters one guild holds. */
-export const GUILD_MEMBERS_MAX = 50;
+/** How many characters one guild holds - 75 since GUILD-CAP (the Discord, 2026-10-21: "75 would be a great start"; it was 50).
+ *  The hub's who-is-online list (hubShards.js HUB_GUILD_WHO_MAX) must hold a full guild but its asker. */
+export const GUILD_MEMBERS_MAX = 75;
 /** A guild's name: 3 to 32 of letters, digits, spaces, apostrophes and hyphens; its tag 2 to 4 capitals or digits. */
 export const GUILD_NAME_MIN = 3;
 export const GUILD_NAME_MAX = 32;

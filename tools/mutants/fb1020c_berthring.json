@@ -1,12 +1,13 @@
 [
   {
     "name": "BERTH-RING-the-ring-a-pixel",
-    "file": "src/scenes/world.js",
-    "old": "if (d <= SEA_RING && d < best) { best = d; port = q; }",
-    "new": "if (d <= 1 && d < best) { best = d; port = q; }",
+    "file": "src/world/portSites.js",
+    "old": "    if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) continue;",
+    "new": "    if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) continue;",
     "tests": [
-      "test/systems/naval/fb1020c_berthring.test.js"
-    ]
+      "test/systems/naval/fb1021b_voyagehold.test.js"
+    ],
+    "note": "VOYAGE-HOLD (PIN MOVED, FIELD BUGS 2026-10-21b): the ring moved from world.js's navalPortHere to the port law's boardPortAt, and its killer with it"
   },
   {
     "name": "BERTH-RING-where-gates-the-port-on-the-pixel",

@@ -304,7 +304,7 @@ test('GUILD2 the tab in pages: the guild\'s header over every page - its banner,
   const all = texts(t.panel.root);
   assert.ok(all.includes('The Hand [HND]'));
   assert.ok(all.includes('You are Guildmaster - the treasury holds 30,000 gold'), 'GUILD1b\'s line, kept');
-  assert.ok(all.includes('1/50 members - the vault 1/50'));
+  assert.ok(all.includes('1/75 members - the vault 1/50'));
   strip[2].fire('click');
   t.panel.render();
   assert.equal(find(t.panel.root, 'dfsocial-subtab')[2].attrs['aria-selected'], 'true');

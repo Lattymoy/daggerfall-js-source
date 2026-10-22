@@ -93,8 +93,8 @@
   {
     "name": "WB9g-the-relay-reads-no-aura",
     "file": "server/src/index.js",
-    "old": "glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lv: c.lv,",
-    "new": "glyphs: c.g, gx: c.gx, pi: c.pi, rb: c.rb, mu, lv: c.lv,",
+    "old": "glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv,",
+    "new": "glyphs: c.g, gx: c.gx, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv,",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

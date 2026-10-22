@@ -78,11 +78,13 @@ export function helmPadGesture(dir, kind, h, { press, hold }) {
   if (dir === 'left') press(A.normal); else press(A.faster);
   return false;
 }
-/** CSA-L: the prompt bar's rows at the helm (the pad's own glyphs, ui/plus/plusPad.js showPrompts). */
-export function helmPadPrompts(h, { glass = [] } = {}) {
+/** CSA-L: the prompt bar's rows at the helm (the pad's own glyphs, ui/plus/plusPad.js showPrompts). AUDIT FB1021d PS-7:
+ *  a `passenger` under way is told only what reaches her helm from them - leaving it, and the dial where it turns
+ *  (scenes/naval/passageHelm.js PASSENGER_KEYS): her sails, lanterns and trim are her master's. */
+export function helmPadPrompts(h, { glass = [], passenger = false } = {}) {
   if (!h) return null;
   const trims = h.manualTrim && h.hasSails;
-  if (glass.length) return glassHelmPrompts(h, glass, trims);
+  if (glass.length || passenger) return glassHelmPrompts(h, glass, trims, passenger);
   const rows = [
     [[PAD_CODE.up], h.squareToggle ? 'Sails (hold: square sails)' : 'Sails'],
     [[PAD_CODE.down], 'Lanterns (hold: leave the helm)'],
@@ -97,7 +99,7 @@ export function helmPadPrompts(h, { glass = [] } = {}) {
  * [{ dir, kind }]) is the glass's at the helm too (ui/gamepadInput.js), so each direction says its own two presses, the
  * glass's in place of the helm's.
  */
-function glassHelmPrompts(h, glass, trims) {
+function glassHelmPrompts(h, glass, trims, passenger = false) {
   const dial = h.timeDial !== false;
   const own = {
     up: { tap: 'Sails', hold: h.squareToggle ? 'square sails' : null },
@@ -105,6 +107,8 @@ function glassHelmPrompts(h, glass, trims) {
     left: { tap: dial ? 'Slower' : null, hold: trims ? 'trim' : dial ? 'normal time' : null },
     right: { tap: dial ? 'Faster' : null, hold: trims ? 'trim' : null },
   };
+  // AUDIT FB1021d PS-7: a passenger's - her sails, her lanterns and her trim are her master's
+  if (passenger) { own.up = { tap: null, hold: null }; own.down.tap = null; if (trims) own.left.hold = own.right.hold = null; }
   for (const { dir, kind } of glass) if (own[dir]) own[dir][kind] = 'spyglass';
   const rows = [];
   for (const dir of ['up', 'down', 'left', 'right']) {
@@ -134,16 +138,30 @@ export function helmButtons(h) {
     if (h.hasSquare && !h.squareOnly) out.push({ act: 'squareLeft', label: '◀ Square', kind: 'hold', action: A.trimLeft, withHeld: A.trimModifier }, { act: 'squareRight', label: 'Square ▶', kind: 'hold', action: A.trimRight, withHeld: A.trimModifier });
   }
   out.push({ act: 'light', label: h.light ? 'Douse lanterns' : 'Light lanterns', kind: 'tap', action: A.light });
-  // HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): the dial's three only where it turns
-  if (h.timeDial !== false) out.push({ act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex > 0) },
-    { act: 'normal', label: `×${h.timeScale ?? 1}`, kind: 'tap', action: A.normal, disabled: !(h.timeScaleIndex > 0) },
-    { act: 'faster', label: '+', kind: 'tap', action: A.faster, disabled: !(h.timeScaleIndex < h.timeScaleMax) });
+  out.push(...dialButtons(h));
   if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' });   // SHIP-CREW: her captain's orders (the naval arc on)
   if (h.cargo) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' });   // CARGO-ANYWHERE: her hold, from the wheel (scenes/holdDoor.js)
   if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' });   // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)
   out.push({ act: 'position', label: 'Position', kind: 'hook' });
-  out.push({ act: 'leave', label: 'Leave the helm', kind: 'tap', action: A.disembark });
+  out.push(leaveButton());
   return out;
+}
+/** The helm left - the mod's disembark (its key, the d-pad's down held). */
+const leaveButton = () => ({ act: 'leave', label: 'Leave the helm', kind: 'tap', action: A.disembark });
+/** The time dial's three. HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): only where it
+ *  turns. @param {{ timeDial?: boolean, timeScale?: number, timeScaleIndex?: number, timeScaleMax?: number }} h */
+function dialButtons(h) {
+  if (h.timeDial === false) return [];
+  return [{ act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) > 0) },
+    { act: 'normal', label: `×${h.timeScale ?? 1}`, kind: 'tap', action: A.normal, disabled: !(Number(h.timeScaleIndex) > 0) },
+    { act: 'faster', label: '+', kind: 'tap', action: A.faster, disabled: !(Number(h.timeScaleIndex) < Number(h.timeScaleMax)) }];
+}
+/** AUDIT FB1021d PS-7: a passenger's card keeps what a passenger keeps (scenes/naval/passageHelm.js PASSENGER_KEYS) - the
+ *  time dial, where it turns, and leaving the helm - for a hand on a mouse or a screen as much as on the keys.
+ *  @param {{ dial?: any } | null} card */
+export function passengerButtons(card) {
+  if (!card) return [];
+  return [...(card.dial ? dialButtons(card.dial) : []), leaveButton()];
 }
 
 /** The layout and the letters; the Plus kit paints the bar, the buttons and the socket (enhancedFrame.js FRAME_ROLES). */
@@ -321,13 +339,13 @@ function paintHelm(doc, parts, last, state, hooks, holds) {
   if (last.scale !== scale) { last.scale = scale; parts.root.style.setProperty?.('--hud-scale', scale); }
   const rootClass = `helmpanel${state.touch ? ' touch' : ''}${aboard ? ' aboard' : ''}`;
   if (last.rootClass !== rootClass) { last.rootClass = rootClass; parts.root.className = rootClass; }
-  const title = h ? `At the helm - ${HULL_NAMES[h.hull] ?? 'Boat'}` : `Aboard ${aboard.owner ? `${aboard.owner}'s` : "another player's"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;
+  const title = h ? `At the helm - ${HULL_NAMES[h.hull] ?? 'Boat'}` : aboard.passage ? passengerTitle(aboard.passage) : `Aboard ${aboard.owner ? `${aboard.owner}'s` : "another player's"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;
   if (last.title !== title) { last.title = title; parts.name.textContent = title; }
   const speed = h ? helmSpeedText(h.way) : '';
   if (last.speed !== speed) { last.speed = speed; parts.speed.textContent = speed; }
   const hint = h ? helmHint(h, state) : '';
   if (last.hint !== hint) { last.hint = hint; parts.hint.textContent = hint; }
-  const list = helmButtons(h);
+  const list = h ? helmButtons(h) : aboard?.passage ? passengerButtons(aboard) : [];
   const sig = list.map((b) => b.act).join(',');
   if (last.sig !== sig) { last.sig = sig; last.labels = {}; makeButtons(doc, parts, list, hooks, holds); }
   for (const b of list) {
@@ -344,6 +362,11 @@ function paintHelm(doc, parts, last, state, hooks, holds) {
     }
   }
 }
+
+/** FIELD BUGS 2026-10-21d PASSAGE-HANDS: a passenger at a booked ship's helm reads her card - her name and her port, and
+ *  only what a passenger keeps (passengerButtons) (scenes/naval/passageHelm.js passengerCard): her master's hand alone
+ *  is on her helm while the voyage runs. */
+const passengerTitle = (p) => t('helm.passenger', '{ship}, bound for {port} - her master steers', { ship: p.ship ?? t('passage.theShip', 'The ship'), port: p.port });
 
 /** HUD-HELM: the state HUD-MOVE's preview stands on - a Come Sail Away boat at the wheel with her sails stowed and her
  *  lanterns dark, the time dial at one. Named a preview on its title (buildHelmPreview), as every stand-in is. */

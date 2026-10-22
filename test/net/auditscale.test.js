@@ -214,7 +214,7 @@ test('AUDIT SCALE D2: the clock\'s moment in seconds - scheduled() hands runCron
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n, 1);
 });
 
-test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute and thirty-four an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job (mutants: TOWNECON-AUDIT2-SVC3-kept-read-each-minute)', async () => {
+test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute and thirty-five an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job (mutants: TOWNECON-AUDIT2-SVC3-kept-read-each-minute)', async () => {
   clock(T0);
   const svc = await standService({ SEATS_OPEN: 'on', PROFESSIONS_OPEN: 'on' });
   _resetCronForTests();
@@ -244,8 +244,10 @@ test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute a
   // its page short (safetyClock.js safetySweep) - twenty-eight. PIN MOVED (AUDIT SAFE DOC-1, DOC-12): and a resolved
   // case's lines, notes and reviewer's reason swept apart - the case marked first, its card redrawn without them - thirty
   // PIN MOVED (INT17, Integrity-Arc section 7): the progression claims' hours swept past the wealth's keeping - thirty-one
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 34);   // PIN MOVED (YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
+  // PIN MOVED (STAFF-PANEL1, mob 2026-10-22 12:12Z: "only keep for one month"): the staff audit log's rows past its month
+  // swept - one statement, its page short (cron.js staff-audit) - thirty-five
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6], ['staff-audit', 1]]);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 35);   // PIN MOVED (YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

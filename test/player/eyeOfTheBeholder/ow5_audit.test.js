@@ -227,6 +227,7 @@ test('AUDIT OW5 G5: a first-person crossing keeps its journey\'s clock - Come Sa
       worldTimeScale: () => scale, setWorldTimeScale: (n) => { scale = n; }, travelAsked: 10, tvHeld: held,
       SEA_KINDS: ['sea', 'landfall'], TV_SEA_PROBE_S: 1, tvSeaRelease: () => {}, tvSeaLaunch: () => {}, tvSeaLand: () => {},
       tvSeaSail: () => {}, tvSeaAshore: () => {}, csaHelmPress: () => {}, CSA_BOAT_ACTIONS: {},
+      csaJourneyHelm: { live: false },   // AUDIT FB1021d PS-2: the journey's hand, marked live as the frame runs
     };
     mount(env, `${fnSource('tvSeaFrame')}\nreturn tvSeaFrame;`)(1 / 60);
     return scale;

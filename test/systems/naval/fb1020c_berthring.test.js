@@ -69,8 +69,10 @@ test('FB1020c BERTH-RING a cargo goes to a port the sea bears on within SEA_RING
 
 test('FB1020c BERTH-RING by source: the board\'s port lain at is the nearest within SEA_RING, imported where it lives; where() hands it whether or not a flagged place is near; the berth, the shipwright and the crew\'s port read the two through one question; navalNearPort keeps its pixel for the sea\'s traffic and its waters (mutants: the ring a literal; where() gates the port on nearPort)', () => {
   const W = hostText('src/scenes/world.js');
-  assert.match(W, /import \{[^}]*\bSEA_RING\b[^}]*\} from '\.\.\/world\/portSites\.js';/);
-  assert.match(W, /for \(const q of navalPortList\(\)\) \{ const d = Math\.max\(Math\.abs\(q\.px - p\.x\), Math\.abs\(q\.py - p\.y\)\); if \(d <= SEA_RING && d < best\) \{ best = d; port = q; \} \}/);
+  // PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): the ring and the nearest within it are the port law's own, read where
+  // they live (world/portSites.js boardPortAt - by the crow's flight, a tie no longer the list's first)
+  assert.match(W, /import \{[^}]*\bboardPortAt\b[^}]*\} from '\.\.\/world\/portSites\.js';/);
+  assert.match(W, /const port = boardPortAt\(navalPortList\(\), p\.x, p\.y\);/);
   assert.match(W, /nearPort, port: navalPortHere\(\), waters: ether \? 'ether' : watersOf\(\{ nearPort, portPx: navalPortPx\(\) \}\),/);
   assert.match(W, /for \(let dy = -1; dy <= 1 && !near; dy\+\+\) for \(let dx = -1; dx <= 1 && !near; dx\+\+\) near = csaIsPortTown\(p\.x \+ dx, p\.y \+ dy\);/, 'the traffic\'s port stays a pixel');
   const N = readFileSync(new URL('../../../src/scenes/naval/navalHost.js', import.meta.url), 'utf8');

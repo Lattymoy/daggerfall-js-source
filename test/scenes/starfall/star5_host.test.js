@@ -11,11 +11,11 @@ import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  createStarfallHost, starfallStands, STAR_BLOWS_STORE, STAR_LIVE_MAX, STAR_RESTAND_MS, STAR_COARSE_EVERY, STAR_FLOOR_OFFSET, STAR_BUILD_M,
+  createStarfallHost, starfallStands, STAR_BLOWS_STORE, STAR_LIVE_MAX, STAR_RESTAND_MS, STAR_COARSE_EVERY, STAR_FLOOR_OFFSET, STAR_BUILD_M, STAR_GROUND_EVERY,
 } from '../../../src/scenes/starfall/starfallHost.js';
 import {
   starNightAt, starTimes, starCircleSize, starLostAt, STAR_ORPHAN_MS, STAR_CIRCLE_AT, STAR_LOST_DARK, STAR_LIFE_MS, STAR_AFTER_MS, STAR_GRACE_MS,
-  P_GATHER, P_WAVE, P_BREATH, P_MASTER, P_HELD, P_LOST,
+  P_GATHER, P_WAVE, P_BREATH, P_MASTER, P_HELD, P_LOST, STAR_FOE_HEALTH,
 } from '../../../src/net/starfall/starfallLaw.js';
 import { starCovenOf, covenWitches, STAR_COVENS } from '../../../src/systems/starfall/starfallCovens.js';
 import { findStarSites } from '../../../src/systems/starfall/starfallSites.js';
@@ -25,9 +25,11 @@ import { starHeldKey, STAR_SAY_M } from '../../../src/systems/starfall/starfallC
 import { STAR_REGION_TEXT, STAR_AT_TEXT } from '../../../src/systems/starfall/starWords.js';
 import { STAR_SOUNDS } from '../../../src/systems/starfall/starSounds.js';
 import { starSiteId, WOD_STAR_PUPPETS_MAX, WOD_CAMP_PUPPETS_MAX } from '../../../src/world/worldOfDaggerfall/wodShared.js';
+import { CELL_FRAME_RECORDS_MAX } from '../../../src/net/wire.js';
 import { createExteriorFoes } from '../../../src/scenes/exteriorFoes.js';
 import { skyClamp, STAR_SKY_R, STAR_RING_SEGS, STAR_RING_WIDTH_M } from '../../../src/render/starfall/starfallPass.js';
-import { rimAt } from '../../../src/world/starfall/starModel.js';
+import { rimAt, buildStarModel, STAR_CRATER_R, STAR_RIM_H } from '../../../src/world/starfall/starModel.js';
+import { lateSolidsOf } from '../../../src/player/lateSolid.js';
 import { thunderOf, thunderSourceAt } from '../../../src/systems/distantStorms.js';
 import { playerEntity } from '../../../src/characters/playerEntity.js';
 import { characterIdOf } from '../../../src/systems/characterId.js';
@@ -87,11 +89,11 @@ function fakeGl() {
 function world({ storage = memStorage(), t = starTimes(N, 0).omenAt - 1000, gfx = false, surface = () => 0, coarse = undefined, account = undefined } = {}) {
   const w = { t, feet: null, region: COVEN.region, said: [], mids: [], sounds: [], heard: [], words: [], sprung: new Set(), peer: new Set(), peerAgo: 0, forgot: [], bare: [], storage, origin: [0, 0, 0] };
   w.foes = pool();
-  w.session = { starReady: () => true, sendStar: (word, cell) => { w.words.push({ ...word, cell }); return true; } };
+  w.session = { starReady: () => true, starGrantOk: true, sendStar: (word, cell) => { w.words.push({ ...word, cell }); return true; } };   // AUDIT STAR-TUNE F1: a relay that mints the `star` kind
   w.gl = gfx ? fakeGl() : null;
   w.renderer = gfx ? { gl: w.gl, meshes: [], draws: [], createMesh(m) { const mesh = { m }; this.meshes.push(mesh); return mesh; }, destroyMesh() {}, uploadTexture() {}, uploadEmissionTexture() {}, drawMesh(mesh, mat) { w.draws.push({ mesh, mat: Array.from(mat), offset: w.gl.calls.filter(([k, c]) => (k === 'enable' || k === 'disable') && c === 'POLYGON_OFFSET_FILL').at(-1)?.[0] === 'enable' }); } } : null;
   w.draws = [];
-  w.col = { adds: [], removes: [], addMesh(b, pos, idx, m) { this.adds.push({ b, m: Array.from(m) }); }, removeBucket(b) { this.removes.push(b); }, surfaceHit: () => null };
+  w.col = { adds: [], removes: [], addMesh(b, pos, idx, m) { this.adds.push({ b, m: Array.from(m), tris: idx.length / 3 }); }, removeBucket(b) { this.removes.push(b); }, surfaceHit: () => null };
   const bindings = {
     renderer: w.renderer,
     state: { pixelTranslation: (px, py, out) => { out[0] = px * 100 + w.origin[0]; out[1] = w.origin[1]; out[2] = py * 100 + w.origin[2]; return out; } },
@@ -621,7 +623,7 @@ const netFor = (id) => ({ room: () => 'world:3,12', selfId: () => id, peers: () 
 const flush = async () => { for (let i = 0; i < 6; i++) await new Promise((r) => setTimeout(r, 0)); };
 
 test('AUDIT STARFALL C7 A STAR\'S FOES UNDER AN ALLOWANCE THE SIZE OF ITS LAW: its owner never stands past STAR_LIVE_MAX of them at once - the most the law calls - and a reader stands that many of one owner\'s, apart from its camps\' sixteen (mutants: the bound, the star\'s allowance)', async () => {
-  assert.equal(STAR_LIVE_MAX, 9 + 1 + 2 * 10, 'a wave\'s nine, the master, two calls of the Heart-Star\'s circle');
+  assert.equal(STAR_LIVE_MAX, 24 + 1 + 2 * 10, 'a wave\'s twenty-four (STAR-TUNE), the master, two calls of the Heart-Star\'s circle');
   assert.equal(WOD_STAR_PUPPETS_MAX, STAR_LIVE_MAX, 'the reader\'s allowance is the owner\'s bound');
   assert.ok(WOD_STAR_PUPPETS_MAX > WOD_CAMP_PUPPETS_MAX);
   // the owner: a crowd of the circle's still standing, and a wave of nine called - only the room left stands
@@ -638,8 +640,10 @@ test('AUDIT STARFALL C7 A STAR\'S FOES UNDER AN ALLOWANCE THE SIZE OF ITS LAW: i
   const A = createExteriorFoes(poolRig());
   A.setNet(netFor('aaaa-0001')); A.setOnSites(() => {}, () => []);
   const star = starSiteId(3, 12, N, 0, 'c');
-  for (let i = 0; i < WOD_STAR_PUPPETS_MAX + 4; i++) await A.spawnFoe(0, [2000 + i * 3, 0, 2000], { placed: true, groundAlign: { hitDist: 0.5 }, site: star });
-  for (let i = 0; i < WOD_CAMP_PUPPETS_MAX + 2; i++) await A.spawnFoe(0, [2600 + i * 3, 0, 2000], { placed: true, groundAlign: { hitDist: 0.5 }, site: '3,12:7' });
+  // over each allowance, the whole inside one frame's sixty-four records (CELL_FRAME_RECORDS_MAX - STAR-TUNE: the star's forty-five and the camp's sixteen fit under it)
+  assert.ok(WOD_STAR_PUPPETS_MAX + 2 + WOD_CAMP_PUPPETS_MAX + 1 <= CELL_FRAME_RECORDS_MAX);
+  for (let i = 0; i < WOD_STAR_PUPPETS_MAX + 2; i++) await A.spawnFoe(0, [2000 + i * 3, 0, 2000], { placed: true, groundAlign: { hitDist: 0.5 }, site: star });
+  for (let i = 0; i < WOD_CAMP_PUPPETS_MAX + 1; i++) await A.spawnFoe(0, [2600 + i * 3, 0, 2000], { placed: true, groundAlign: { hitDist: 0.5 }, site: '3,12:7' });
   const B = createExteriorFoes(poolRig());
   B.setNet(netFor('bbbb-0002')); B.setOnSites(() => {});
   B.applyFoes('aaaa-0001', JSON.parse(JSON.stringify(A.foesFrame(true))));
@@ -826,5 +830,80 @@ test('AUDIT STARFALL THE GRACE, ONE TIME: this screen says its last word at the 
   d.t = starLostAt(N, 1) + 10; d.frame();
   assert.equal(beaconAt(d, 1), null, 'past the grace, unheld: its beacon out');
   assert.equal(starLostAt(N, 1), T.endAt + STAR_GRACE_MS);
+  Date.now = realNow;
+});
+
+test('STAR-TUNE THE COVEN STANDS AS AN EVENT\'S (the owner, of the first run: "the enemies are too few and die too quickly"; "The dirt mound where the star is crashed can be walked through"): a wave\'s foes and its circle\'s stand with STAR_FOE_HEALTH times their health, the master as the elite it is, a foe handed to me as its owner stood it; the crater - floor, rim and stones with the stone - is the collider\'s, through the late-solid gate: a body standing on the rim as it is built is not closed in, and the rim stands once the body is clear; a stand is read from over the rim\'s crest, so a foe stood on it lands on it (mutants: STAR-TUNE-the-coven-as-the-road; STAR-TUNE-the-master-toughened; STAR-TUNE-the-crater-hollow; STAR-TUNE-the-gate-passed; STAR-TUNE-a-stand-under-the-rim)', async () => {
+  const w = world({ gfx: true });
+  clockOf(w);
+  const T = starTimes(N, 2), sites = w.sites(2);
+  // a body on the rim's crest as the crater builds: held back, never closed on it
+  const h = w.heart(2), onRim = [h[0] + STAR_CRATER_R, h[1], h[2]];
+  const late = lateSolidsOf(w.col);
+  late.settle({ pos: onRim, height: 1.8 });
+  w.t = T.fallAt + 500; w.feet = [...onRim];
+  w.frame(); w.frame();
+  const star = (b) => typeof b === 'string' && b.startsWith(`star:${N}.2@`);   // this star's bucket (the night's others stand, no body in their rims)
+  assert.equal(w.col.adds.filter((a) => star(a.b)).length, 0, 'withheld while the body stands in its rim');
+  assert.equal(late.settle({ pos: [h[0] + 40, h[1], h[2]], height: 1.8 }), 1, 'clear of it, it stands');
+  const solid = w.col.adds.filter((a) => star(a.b)).at(-1);
+  assert.equal(solid.tris, buildStarModel(N, 2, () => 0, { thread: false }).indices.length / 3, 'the stone AND its crater - floor, rim and stones');
+  assert.ok(solid.tris > buildStarModel(N, 2, () => 0, { ground: false, thread: false }).indices.length / 3, 'more than the stone alone');
+  // the waves: twice their health; stood on what is highest at their place
+  w.col.surfaceHit = (o) => (o[1] > STAR_RIM_H ? { dist: o[1] - 0.8 } : null);   // a surface 0.8 over the land wherever it is asked from above
+  w.at(2, 5);
+  w.st(2, { p: P_WAVE, w: 1, wz: 4, kn: 0, b: 1 });
+  await w.beat();
+  const wave = w.foes.stood.filter((f) => f && f.site === sites.base);
+  assert.equal(wave.length, 4);
+  for (const f of wave) {
+    assert.deepEqual([f.entity.maxHealth, f.entity.health, f.entity.healthMult], [100 * STAR_FOE_HEALTH, 100 * STAR_FOE_HEALTH, STAR_FOE_HEALTH], 'the coven\'s, no foe of the road');
+    assert.ok(Math.abs(f.ai.feet[1] - (h[1] + 0.8)) < 1e-6, `stood on the surface read from above (${f.ai.feet[1]})`);
+    assert.equal(f.opts.groundAlign.hitDist, 0.2, 'its drop from just over it');
+    assert.equal(f.opts.grantKind, 'star', 'a grant of the star\'s own kind - a wave of any size its law gives, one ask');
+  }
+  // AUDIT STAR-TUNE F1: a relay before the star's kind (the site live first) is asked the stand's own - main's, a wave of nine at most
+  w.session.starGrantOk = false;
+  w.st(2, { p: P_WAVE, w: 2, wz: 5, kn: 0, b: 1 });
+  await w.beat();
+  const older = w.foes.stood.filter((f) => f && f.site === sites.base).slice(wave.length);
+  assert.equal(older.length, 5, 'the next wave stands on an older relay too');
+  for (const f of older) assert.equal(f.opts.grantKind, undefined, 'its own shape\'s kind (net/grantLaw.js grantKindOf), never one the relay refuses');
+  w.session.starGrantOk = true;
+  // the master: an elite's own health; its circle the coven's
+  w.st(2, { p: P_MASTER, w: 4, wz: 0, kn: 0, b: 1, nd: 1 });
+  await w.beat();
+  const master = w.foes.stood.find((f) => f && f.site === sites.m);
+  assert.equal(master.entity.maxHealth, 100, 'the master as the elite it is - the pool\'s own, never twice');
+  master.entity.health = 100 * STAR_CIRCLE_AT[0];
+  await w.beat();
+  const circle = w.foes.stood.filter((f) => f && f.site === sites.c);
+  assert.ok(circle.length > 0);
+  for (const f of circle) assert.equal(f.entity.maxHealth, 100 * STAR_FOE_HEALTH, 'its circle the coven\'s');
+  Date.now = realNow;
+});
+
+test('AUDIT STAR-TUNE F4 A CRATER BUILT AGAIN ASKS THE BODY AGAIN: the ground under a standing crater built finer (a player walking up to it) makes the crater anew - a new solid, withheld while the body stands in its rim, never stood round it; a recentre alone puts the same solid back (mutants: AUDIT-STAR-TUNE-F4-the-rebuild-replaced)', () => {
+  let H = null, bump = 0;
+  const w = world({ gfx: true, surface: (x, z) => (H && Math.hypot(x - H[0], z - H[2]) > 2 ? bump : 0) });
+  clockOf(w);
+  const T = starTimes(N, 2);
+  const h = w.heart(2), onRim = [h[0] + STAR_CRATER_R, h[1], h[2]], away = [h[0] + 40, h[1], h[2]];
+  H = [h[0] - w.origin[0], h[1], h[2] - w.origin[2]];
+  const late = lateSolidsOf(w.col);
+  const star = (b) => typeof b === 'string' && b.startsWith(`star:${N}.2@`);
+  late.settle({ pos: away, height: 1.8 });
+  w.t = T.fallAt + 500; w.feet = [...away];
+  w.frame(); w.frame();
+  const stood = () => w.col.adds.filter((a) => star(a.b)).length;
+  assert.equal(stood(), 1, 'the crater stands, nobody in its rim');
+  // the body walks onto the rim; the ground under the crater is built finer
+  late.settle({ pos: onRim, height: 1.8 }); w.feet = [...onRim];
+  bump = 0.5;
+  for (let i = 0; i <= STAR_GROUND_EVERY; i++) w.frame();
+  assert.ok(w.col.removes.some(star), 'the old crater taken down');
+  assert.equal(stood(), 1, 'the new one withheld while the body stands in its rim - never stood round it');
+  assert.equal(late.settle({ pos: away, height: 1.8 }), 1, 'clear of it, the new crater stands');
+  assert.equal(stood(), 2);
   Date.now = realNow;
 });

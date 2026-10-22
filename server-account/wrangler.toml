@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct165"
+ACCOUNT_VERSION = "acct168"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -157,7 +157,24 @@ ALLOWED_ORIGIN = "*"
 # title, the glyph, the Seraph Wings, /red, /mute and /unmute, the developer's
 # acts and the POI editor's builder door - on their next token and next call.
 # Case-folded as every list is: the account roderic, Roderic or RODERIC.
-DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic"
+# STAFF-PANEL1 (2026-10-22, mob: "can we just add me to the dev and my shadow fang just becomes vanity and i gain admin as
+# well?"): SirMcMobdon, with the whole set above - the developer's acts include the relay's live settings (/relay) and
+# the trade-freeze review's clear and roll back - and the staff panel's Admin role (server-account/src/staff.js), which is
+# this list. SHADOW_FANG_HANDLES still names them: that title, glyph and cloak stay theirs to wear.
+# STAFF-PANEL1 (2026-10-22, mob: "kpblca_1 needs added to them as welll"): the account kpblca_1, with the same whole set.
+DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1"
+# STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (mob: "only mob and Latty" read the audit
+# log) - staff who may also read the audit log of every staff sign-in and act, invite a staff member to enrol one more
+# extension (a new invite replaces the member's unspent one; keys stay) and cut one off (every key and session ended). A handle here that no role list names is no owner (staff.js isOwner). Comma-separated,
+# case-insensitive, read at every call.
+OWNER_HANDLES = "Lattymoy,SirMcMobdon"
+# STAFF-PANEL1: AN OWNER'S FIRST WAY IN - `handle:publicKey`, comma-separated, the key raw Ed25519 in base64url. The owner's own
+# staff panel extension minted the pair on their computer and holds the private half; this half only checks its signature,
+# so it is safe in a public repository. It is that owner's first way in; every other staff member is invited from the
+# panel. Empty: no owner can enrol (no key is a shut door, never an open one).
+# STAFF-PANEL1 (2026-10-22, mob pasted the key his panel showed): SirMcMobdon's first computer. Latty enrols by mob's invite,
+# or adds a pair here.
+OWNER_KEYS = "SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM"
 # POI-1 (2026-10-14, the POI editor; bible/06-Systems/POI-Editor-Arc.md): WHO BUILDS AND WHO APPROVES. Mac, asked how a
 # POI reaches players: "I need to be able to approve changes"; asked who uses the editor: "Developers + Builders". A
 # BUILDER imports models, places POIs, saves drafts and submits them - every developer above is one, and BUILDER_HANDLES

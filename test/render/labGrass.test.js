@@ -7,7 +7,7 @@ import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second
 
 const lab = () => readFileSync('grass-proto.html', 'utf8');
 
-test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for four DECLARED edits, and the port\u2019s height, range and byte layout are its own', () => {
+test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for five DECLARED edits, and the port\u2019s height, range and byte layout are its own', () => {
   const src = lab();
   const vsStart = src.indexOf('layout(location=0) in vec2 aCorner;      // one blade quad, 0..1\nlayout(location=1) in vec4 aInst;        // xz, height, phase');
   const vsEnd = src.indexOf('}`, HEAD + `', vsStart) + 1;
@@ -23,13 +23,13 @@ test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for four 
   // not compared; the CODE is.
   const noComments = (t) => t.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   let want = src.slice(vsStart, vsEnd);
-  assert.equal(GRASS2_VS_EDITS.length, 4, 'four departures, no more - a fifth is a decision, not a detail (GRASS6 took the tint edit back to the placer, so the lab\u2019s own vTint line compiles again)');
+  assert.equal(GRASS2_VS_EDITS.length, 5, 'five departures, no more - a sixth is a decision, not a detail (GRASS6 took the tint edit back to the placer, so the lab\u2019s own vTint line compiles again; SWAY-SOFT, 2026-10-21, was Mac\u2019s decision: the softer sway)');
   for (const e of GRASS2_VS_EDITS) {
     assert.ok(want.includes(e.from), `the lab still carries the line this edit replaces: ${e.why}`);
     assert.ok(e.why && e.why.length > 20, 'every departure says why, on the departure itself');
     want = want.replace(e.from, e.to);
   }
-  assert.equal(noComments(LAB_GRASS_VS), noComments(want), 'the vertex stage is the lab\u2019s text with the four declared edits, and nothing else');
+  assert.equal(noComments(LAB_GRASS_VS), noComments(want), 'the vertex stage is the lab\u2019s text with the five declared edits, and nothing else');
   assert.equal(LAB_GRASS_FS, src.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s text, byte for byte - GRASS2 changed no fragment law');
   const headStart = src.indexOf('const HEAD = `');
   assert.equal(LAB_GRASS_HEAD, src.slice(headStart + 'const HEAD = `'.length, src.indexOf('`;', headStart)));
@@ -112,8 +112,10 @@ test('AUDIT 49: the grass is double-sided, follows the origin, learns its record
   // follows the origin in place now (test/world/terrain/grassshift.test.js holds how).
   assert.match(w, /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassField\?\.shiftOrigin\(r\.offset\);/, 'the origin shift reaches the field');
   // F3: the records are learned whenever missing, not only on a tile-cache miss
-  assert.match(w, /if \(!grassRecords\.has\(groundArchive\)\) \{\s*\n\s*const layers = \[\];/);
-  assert.ok(!/renderer\.uploadTileArray\(groundArchive, layers\);\s*\n[^}]*grassRecords\.set/.test(w), 'not inside the cache-miss block');
+  // PIN MOVED (OW-HITCH): the learning's home is scenes/groundSets.js, the world host's module (HOST-SPLIT)
+  const gs = readFileSync('src/scenes/groundSets.js', 'utf8');
+  assert.match(gs, /if \(!grassRecords\.has\(groundArchive\)\) \{\s*\n\s*const layers = \[\];/);
+  assert.ok(!/renderer\.uploadTileArray(Steps)?\(\w+, layers\)[^\n]*\n[^}]*grassRecords\.set/.test(gs), 'not inside the cache-miss block');
   // F4: uWind carries the gust, as the lab's WIND.speed does; uWindV does not
   // (WIND3: the pair comes from the one mapping, systems/wind/windDrive.js - the
   // rate without the gust is windV, the speed with it is slider * gust)
@@ -215,10 +217,12 @@ test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texe
   // AUDIT 68 S17: through the one law (tileMeanColour, pinned on a real
   // color32 in audit68_worldjs), learned beside grassRecords whenever the
   // SCENE's map lacks the archive, not on the renderer's cache miss.
-  const learnAt = world.indexOf('if (!grassRecords.has(groundArchive)) {');
   // (AUDIT HOST-SPLIT 2, the second read: it ended at the build's createTerrainSurface, which left world.js - on the
   // raw file that indexOf was -1, so the slice ran to the end and held nothing. It ends at the next door, in world.js)
-  const learn = world.slice(learnAt, world.indexOf('  async function buildPixel(', learnAt));
+  // PIN MOVED (OW-HITCH): the learning's home is scenes/groundSets.js (HOST-SPLIT) - read there, to its module's return
+  const gs = readFileSync('src/scenes/groundSets.js', 'utf8');
+  const learnAt = gs.indexOf('if (!grassRecords.has(groundArchive)) {\n      const layers = [];');
+  const learn = gs.slice(learnAt, gs.indexOf('  return { groundLayersOf', learnAt));
   assert.ok(learnAt > 0 && learn.length > 0 && learn.length < 4000, `loadGroundSet's learning, read alone: ${learn.length} chars`);
   // GRASS-LIT2: off the tile set that is DRAWN - a texture mod's, where one dresses the archive (test/render/grasslit2.test.js)
   assert.match(learn, /groundMeanColour\.set\(groundArchive, drawnMeans \?\? layers\.map\(tileMeanColour\)\);/);   // AUDIT GRASS-LIT2 B2: the uploaded layers' means
@@ -260,7 +264,9 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
   // GRASS5: the budget has to exceed the WINDOW, which grew with the
   // range - at 400 the first update left 84 cells unfilled and the next
   // one finished them, which reads exactly like a step that moved cells.
-  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9 });
+  // PIN MOVED (FB1021B): and its clock stands still - a machine that does the work in no time, whose frame's time
+  // (GRASS_FRAME_MS) never runs out, so perFrame alone bounds the frame, as it did
+  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9, clock: () => 0 });
   assert.equal(w[0][0], 'a', 'the buffers are sized once, up front');
   // GRASS5: the start is SNAPPED to the cell grid rather than a round
   // number, so the fixture states a law rather than relying on the
@@ -289,7 +295,7 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
   const writes = w.filter((x) => x[0] === 'w').length, clears = w.filter((x) => x[0] === 'c').length;
   assert.ok(writes > 0 && writes < live / 4 && clears > 0 && clears < live / 4, `forty metres: one edge in, one out (${writes}/${clears} of ${live})`);
   // ...and a frame fills at most perFrame, so the walk cannot hitch.
-  const g = createGrassField(r, { keep: () => 0, perFrame: 2 }); w.length = 0;
+  const g = createGrassField(r, { keep: () => 0, perFrame: 2, clock: () => 0 }); w.length = 0;
   const pending = g.update(0, 0);
   assert.equal(w.filter((x) => x[0] === 'w').length, 2, 'two cells a frame');
   assert.ok(pending > 0, 'the rest wait their turn');
@@ -304,8 +310,9 @@ test('GR5: the host runs the field, not the walk', () => {
   const src = readFileSync(new URL('../../src/render/labGrass.js', import.meta.url), 'utf8');
   // GRASS5: the stride is in BYTES now, because a blade is no longer a
   // whole number of floats - eight bytes of u16 and two lots of four u8.
-  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* this\._lanes\[k\]\.bytes, this\._packs\[k\]\);/, 'a cell arrives by bufferSubData into its slot');
-  assert.match(src, /clearSlot\(slot\) \{[\s\S]{0,700}bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* 8, this\._zeros\)/, 'and leaves by zeros');
+  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* this\._lanes\[k\]\.bytes, this\._packs\[k\], 0, n \* 4\);/, 'a cell arrives by bufferSubData into its slot - PIN MOVED (OW-HITCH): its blades alone');
+  // PIN MOVED (OW-HITCH): a cell leaves by its box and its count - the zeros it wrote were never drawn (test/render/owhitch.test.js)
+  assert.doesNotMatch(src.slice(src.indexOf('  clearSlot(slot) {'), src.indexOf('  clearSlot(slot) {') + 900), /bufferSubData|_zeros/, 'and leaves uploading nothing');
 });
 
 // ═══ GRASS5 (2026-09-19): THE BLADE, PACKED ═════════════════════════
@@ -404,7 +411,9 @@ test('GRASS6: the patch is BAKED - the clump noise is the placer\u2019s, once a 
     assert.ok(moved > 100, `the 59 m octave shows in ${moved} of 200 samples`);
     // the sample is OFF the lattice corner at the origin: hash(0,0) is 0 and the scene origin is a corner of the player's map pixel
     assert.ok(grassClump(0, 0) > 0.15 && grassClump(0, 0) < 0.85, `no dead patch at the origin (${grassClump(0, 0).toFixed(3)})`);
-    assert.match(src, /grassVnoise\(x \* 0\.055 \+ 0\.317, z \* 0\.055 \+ 0\.713\) \* 0\.66 \+ grassVnoise\(x \* 0\.017 \+ 0\.531, z \* 0\.017 \+ 0\.279\) \* 0\.34/);
+    // PIN MOVED (OW-HITCH): the clump writes the two octaves' noise out in itself (no number made a call) - held to the
+    // composition it was, to the bit, rather than to its spelling
+    for (let i = 0; i < 2000; i++) { const x = i * 7.31 - 4000, z = i * -3.77 + 2500; assert.ok(Object.is(grassClump(x, z), grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34), `the clump at (${x}, ${z})`); }
   }
   // the lane's tint: the lab's random pulled 0.55 of the way to the patch, clamped
   assert.equal(bakedTint(0.2, 10, 10), 0.2 + (grassClump(10, 10) - 0.2) * 0.55);

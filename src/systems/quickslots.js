@@ -48,6 +48,7 @@ import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, i
   getItemHands, ITEM_HANDS, getEquipSlot,   // UI2: the equip table's own answer - which pieces a slot of the body takes
   equipDelaySnapshot, billEquipDelayOnClose, ITEM_BROKEN_TEXT_ID, FORBIDDEN_EQUIPMENT_TEXT_ID } from './equip.js';
 import { isShieldTemplate } from './armorMaterials.js';
+import { lanternAtWaist } from './playerTorch.js';   // BELT-WAIST: a lantern at the waist takes no hand
 import { itemLongName, conditionPercentage } from './item/itemInfo.js';
 import { isEnchanted } from './inventory.js';   // UI2: an enchanted piece shows its wear (its powers spend its condition - the pack's rule)
 import { shownSpellName } from './loot/loot.js';   // L10N3e: a slotted spell's name as the book shows it - the stored name stays the canonical one
@@ -1230,13 +1231,17 @@ export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
   // door. A hand holding a shield or a weapon is refused in words, as ever.
   if (typeof doors.quickUse !== 'function') return { kind: 'none' };
   const view = quickslotView(entity);
-  if (view.off.kind === 'weapon') { say?.(HOTBAR_TEXT.offHandFull); return { kind: 'refused' }; }
+  // BELT-WAIST: A LANTERN AT THE WAIST TAKES NO HAND (systems/playerTorch.js lanternAtWaist), so its slot neither waits on
+  // the off hand nor empties it - SHIELD1 took the shield off for any light, and the lantern lit at the hip beside an
+  // empty hand.
+  const atWaist = lanternAtWaist(hotbarView(entity)[i]?.item);
+  if (view.off.kind === 'weapon' && !atWaist) { say?.(HOTBAR_TEXT.offHandFull); return { kind: 'refused' }; }
   // SHIELD1: A TORCH SLOT TAKES THE SHIELD OFF FIRST ("torches in the hotbar that are supposed to swap out the
   // shield"). The shield leaves the left hand; Handheld Torches' hand law runs on that equip change and may take its
   // stowed light straight back up (handheldTorches.js applyHandLaw) - if that is this slot's kind, it is lit and the
   // press is done (a toggle now would put it out again). Otherwise the pack's own Use lights it. A light that will
   // not light puts the shield back.
-  if (view.off.kind === 'shield') {
+  if (view.off.kind === 'shield' && !atWaist) {
     const shield = view.off.item;
     // AUDIT MERGE-PLUS B2: A SLOT WITH NONE OF ITS LIGHT LEFT IS REFUSED BEFORE THE SHIELD MOVES. The shield came off, the
     // light refused, the shield went back on - and the swap's pause stayed billed (three seconds without a swing,

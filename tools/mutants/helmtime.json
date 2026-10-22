@@ -38,8 +38,8 @@
   {
     "name": "HELM-TIME-presses-kept-online",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.timeDial !== false) out.push({ act: 'slower'",
-    "new": "  out.push({ act: 'slower'",
+    "old": "  if (h.timeDial === false) return [];\n  return [{ act: 'slower'",
+    "new": "  return [{ act: 'slower'",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]

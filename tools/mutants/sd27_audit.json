@@ -146,11 +146,12 @@
   {
     "name": "SD27-P1-the-host-asking-the-whole-word",
     "file": "src/scenes/dungeonContext.js",
-    "old": "look: () => (opts.superRiftLook ? opts.superRiftLook(dfLocation?.sdSlot) : sdEndWord()?.look) ?? null",
-    "new": "look: () => sdEndWord()?.look ?? null",
+    "old": "const sdRiftLookNow = () => (opts.superRiftLook ? opts.superRiftLook(dfLocation?.sdSlot) : sdEndWord()?.look) ?? null;",
+    "new": "const sdRiftLookNow = () => sdEndWord()?.look ?? null;",
     "tests": [
       "test/scenes/sd27_audit.test.js"
-    ]
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the Rift's look one named closure, the Way Through's too (C13). SD-THROUGH (re-aimed by content): the Rift's own look - the Way Through's copy is its own record's."
   },
   {
     "name": "SD27-P1-the-look-made-a-frame",

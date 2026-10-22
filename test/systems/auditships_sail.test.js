@@ -88,7 +88,7 @@ function crossing({ hull, windTo, islet, handling = 'responsive', maxS = 600, le
     tvSeaStop: (line) => { stopped = line; }, TRAVEL_VIEW_TEXT: { aground: 'aground', noWayAtSea: 'no way', noShore: 'no shore', leftMoored: 'moored' },
     tvSeaMark: () => mark, worldTimeScale: () => 1,
     seaHelmStep, seaHelmLook, seaHeadingOf: headingOf, seaSquareOnly: squareOnly,
-    csaJourneyHelm: { held: s.held, get row() { return s.deps.input.toggleAutorun; }, set row(v) { s.deps.input.toggleAutorun = !!v; } },
+    csaJourneyHelm: { held: s.held, get row() { return s.deps.input.toggleAutorun; }, set row(v) { s.deps.input.toggleAutorun = !!v; }, press: (a) => presses.push(a) },   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the journey's taps its own
   };
   const from = WORLD.indexOf('  /** Metres along a flat direction from `p` to the first land');
   const to = WORLD.indexOf('  /** THE CROSSING\'S FRAME');

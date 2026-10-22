@@ -1,0 +1,155 @@
+[
+  {
+    "name": "DT-moment-chosen-again",
+    "file": "src/net/dayTurn.js",
+    "old": "  if (pageTurnMs == null) pageTurnMs = ",
+    "new": "  pageTurnMs = ",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-span-unbounded",
+    "file": "src/net/dayTurn.js",
+    "old": " * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;",
+    "new": " * DAY_TURN_SPREAD_MS);",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-turn-backwards",
+    "file": "src/net/dayTurn.js",
+    "old": "Math.floor((ms - turnMs) / DAY_MS);",
+    "new": "Math.floor((ms + turnMs) / DAY_MS);",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-prof-moment-unread",
+    "file": "src/net/profBook.js",
+    "old": "  const heldDay = () => turnedDayOf(now(), turnMs);",
+    "new": "  const heldDay = () => turnedDayOf(now());",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-prof-state-unturned",
+    "file": "src/net/profBook.js",
+    "old": "      return state.day < heldDay() && now() - state.readAt",
+    "new": "      return state.day < dayOf(now()) && now() - state.readAt",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-prof-state-other-day",
+    "file": "src/net/profBook.js",
+    "old": "      return state.day < heldDay() && now() - state.readAt",
+    "new": "      return state.day !== heldDay() && now() - state.readAt",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-pixel-unturned",
+    "file": "src/net/profBook.js",
+    "old": "return p && p.day >= heldDay() ? p : null; },",
+    "new": "return p && p.day === dayOf(now()) ? p : null; },",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-pixel-same-day",
+    "file": "src/net/profBook.js",
+    "old": "return p && p.day >= heldDay() ? p : null; },",
+    "new": "return p && p.day === heldDay() ? p : null; },",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-ask-unturned",
+    "file": "src/net/profBook.js",
+    "old": "return !(p && p.day >= held) || p.stale === true; }",
+    "new": "return p?.day !== day || p.stale === true; }",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-dungeon-unturned",
+    "file": "src/net/profBook.js",
+    "old": "return d && d.day >= heldDay() ? d : null; },",
+    "new": "return d && d.day === dayOf(now()) ? d : null; },",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-hall-unturned",
+    "file": "src/net/npcHallBook.js",
+    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs);",
+    "new": "  const dayNow = () => turnedDayOf(nowMs());",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-town-unturned",
+    "file": "src/net/townEconBook.js",
+    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs);",
+    "new": "  const dayNow = () => turnedDayOf(nowMs());",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-seat-unturned",
+    "file": "src/net/townSeatBook.js",
+    "old": "Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S);",
+    "new": "Math.floor(nowMs() / 1000 / SEAT_REPORT_EVERY_S);",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-host-prof-unwired",
+    "file": "src/scenes/world.js",
+    "old": "carry: carryHands, turnMs: dayTurnMs() })",
+    "new": "carry: carryHands })",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-host-hall-unwired",
+    "file": "src/scenes/world.js",
+    "old": "storage: appStorage(), turnMs: dayTurnMs() })",
+    "new": "storage: appStorage() })",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-host-seat-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      turnMs: dayTurnMs(),   // DAY-TURN: its report",
+    "new": "      // DAY-TURN: its report",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  },
+  {
+    "name": "DT-host-town-unwired",
+    "file": "src/scenes/townEconHost.js",
+    "old": ", turnMs: dayTurnMs() }) : null;",
+    "new": " }) : null;",
+    "tests": [
+      "test/net/dayturn.test.js"
+    ]
+  }
+]

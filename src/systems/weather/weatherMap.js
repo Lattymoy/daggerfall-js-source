@@ -737,7 +737,11 @@ function takeNear(out, b, x, z, range, minutes) {
   const s = systemAt(b, minutes);
   if (!s) return;
   const d = Math.hypot(s.x - x, s.z - z);
-  if (d - s.reach <= range) out.push({ ...s, d });
+  // OW-HITCH: the standing system systemAt has just made is this call's alone - `d` is written onto it, where a copy of
+  // it was made to carry `d` (the same keys in the same order: `d` last). The snowpack keeps a step's systems for a
+  // year of steps (snowpack.js `_systems`), so every copy outlived the young generation and the collector's full
+  // passes paid for it.
+  if (d - s.reach <= range) { s.d = d; out.push(s); }
 }
 /** AUDIT PRECIP PACK-6: systemsNear as a walk that pauses after every lattice node it asks (a node not yet drawn costs
  *  its births and its fronts' cells - up to a fifth of a second for a day the memo has not seen), so a reader with a
@@ -856,11 +860,21 @@ export function systemStrength(type, id) {
   return range ? range[0] + (range[1] - range[0]) * seededFirst((idHash(id) ^ STRENGTH_SEED) >>> 0) : 1;
 }
 export function bandAt(s, d) {
-  if (!(d < s.r)) return null;
-  const band = s.bands.find(([outer]) => d < outer);
+  const k = bandIndexAt(s, d);
+  return k < 0 ? null : { word: s.bands[k][1], intensity: bandIntensityAt(s, d) };
+}
+/** OW-HITCH: bandAt's two halves without its answer's object - the index of the band over radial distance `d` (-1
+ *  outside every band), and the intensity there (the band's own whichever it is). bandAt is made of them. */
+export function bandIndexAt(s, d) {
+  if (!(d < s.r)) return -1;
+  const bands = s.bands;
+  for (let k = 0; k < bands.length; k++) if (d < bands[k][0]) return k;
+  return -1;
+}
+export function bandIntensityAt(s, d) {
   const core = s.bands[0][0];
   const f = core > 0 ? Math.min(1, d / core) : 1;   // a core of no size is all edge (never NaN)
-  return band ? { word: band[1], intensity: (s.strength ?? 1) * s.env * (1 - (1 - EDGE_INTENSITY) * f * f) } : null;
+  return (s.strength ?? 1) * s.env * (1 - (1 - EDGE_INTENSITY) * f * f);
 }
 
 /** Whether (x, z) is within a system's `clip` (a cell's front core now);
@@ -903,6 +917,34 @@ export function coverAtRadial(s, rad) {
  * answer - the strongest band of each wet word too (`rain`, `thunder`, `snow`: the snowpack's fall is the heaviest of
  * them, PACK-10).
  */
+/**
+ * OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): WHAT FALLS AMONG SYSTEMS, alone -
+ * wornAmong's `fall` (the strongest wet band's intensity, each wet word's strongest band, the cloud cover), the same
+ * numbers by the same walk, into `out`, with no band, no winner and no answer made. The snowpack asks only the fall, at
+ * every point of its window at every step of a year (snowpack.js `_step`), and wornAmong's objects a system were most
+ * of what its catch-up left the collector. wornAmong is the walk below with its winner beside it.
+ */
+export function fallAmong(systems, x, z, out = { intensity: 0, rain: 0, thunder: 0, snow: 0, cover: 0 }) {
+  let wet = 0, rain = 0, thunder = 0, snow = 0, cover = 0;
+  for (const s of systems) {
+    const dx = x - s.x, dz = z - s.z, reach = s.reach ?? s.r;
+    if (dx * dx + dz * dz >= reach * reach || !insideClip(s, x, z)) continue;
+    const rad = radialOf(s, x, z), k = bandIndexAt(s, rad);
+    if (k < 0) continue;
+    const c = coverAtRadial(s, rad);
+    if (c > cover) cover = c;
+    const word = s.bands[k][1];
+    if (WET.has(word)) {
+      const intensity = bandIntensityAt(s, rad);
+      if (intensity > wet) wet = intensity;
+      if (word === 'snow') { if (intensity > snow) snow = intensity; }
+      else if (word === 'rain') { if (intensity > rain) rain = intensity; }
+      else if (intensity > thunder) thunder = intensity;
+    }
+  }
+  out.intensity = wet; out.rain = rain; out.thunder = thunder; out.snow = snow; out.cover = cover;
+  return out;
+}
 export function wornAmong(systems, x, z, ground = null, air = null) {
   let best = null, wet = 0, rain = 0, thunder = 0, snow = 0, cover = 0;
   for (const s of systems) {

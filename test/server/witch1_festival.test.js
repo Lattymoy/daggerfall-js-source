@@ -85,10 +85,12 @@ test('WITCH1 A FIND: the service\'s die decides at the source\'s odds; a guest, 
   assert.deepEqual(await findFestival(ctx(), player(alice), { source: 'foe' }, {}), { error: 'closed' });
   assert.deepEqual(await findFestival(ctx(AFTER_S), player(alice), { source: 'foe' }, ON), { error: 'closed' });
   assert.deepEqual(await findFestival(ctx(), player(alice), { source: 'gold' }, ON), { error: 'source' });
-  assert.deepEqual(await findFestival(ctx(DAY_S, MISS), player(alice), { source: 'foe' }, ON), { found: 0, cakes: 0 });
-  assert.deepEqual(await findFestival(ctx(DAY_S, HIT), player(alice), { source: 'foe' }, ON), { found: 1, cakes: 1 });
-  assert.deepEqual(await findFestival(ctx(DAY_S, HIT), player(alice), { source: 'endgame' }, ON), { found: 4, cakes: 5 });
-  assert.deepEqual(await findFestival(ctx(NIGHT_S, HIT), player(alice), { source: 'endgame' }, ON), { found: 8, cakes: 13 }, 'twice on a night the dead walk');
+  // PIN MOVED (CAKE-CAP-SAID, FIELD BUGS 2026-10-21b): each answer says the day's cakes found, this find's with them
+  assert.deepEqual(await findFestival(ctx(DAY_S, MISS), player(alice), { source: 'foe' }, ON), { found: 0, cakes: 0, today: 0 });
+  assert.deepEqual(await findFestival(ctx(DAY_S, HIT), player(alice), { source: 'foe' }, ON), { found: 1, cakes: 1, today: 1 });
+  assert.deepEqual(await findFestival(ctx(DAY_S, HIT), player(alice), { source: 'endgame' }, ON), { found: 4, cakes: 5, today: 5 });
+  assert.equal(utcDay(NIGHT_S), utcDay(DAY_S), 'the night falls on the same UTC day');
+  assert.deepEqual(await findFestival(ctx(NIGHT_S, HIT), player(alice), { source: 'endgame' }, ON), { found: 8, cakes: 13, today: 13 }, 'twice on a night the dead walk');
   assert.equal(row(alice.id).fest_cakes, 13);
   // the festival's own night, 31 October: a whole UTC day, every player at once - twice, never four times on a sky's night too
   const eve = FESTIVALS[0].eveFromMs / 1000 + 3600;
@@ -100,12 +102,28 @@ test('WITCH1 THE DAY\'S CAPS: FIND_ASKS_PER_DAY asks and FIND_CAKES_PER_DAY cake
   const { alice, player, ctx, db, row } = await stand();
   const day = utcDay(DAY_S);
   db._raw.prepare('INSERT INTO fest_finds (account, day, asks, found) VALUES (?, ?, ?, ?)').run(alice.id, day, FIND_ASKS_PER_DAY - 1, FIND_CAKES_PER_DAY - 3);
-  // the last ask of the day: the cakes it gives stop at the day's cap
-  assert.deepEqual(await findFestival(ctx(), player(alice), { source: 'endgame' }, ON), { found: 3, cakes: 3 });
+  // the last ask of the day: the cakes it gives stop at the day's cap - and say it (PIN MOVED, CAKE-CAP-SAID)
+  assert.deepEqual(await findFestival(ctx(), player(alice), { source: 'endgame' }, ON), { found: 3, cakes: 3, today: FIND_CAKES_PER_DAY, capped: true });
   assert.deepEqual(await findFestival(ctx(), player(alice), { source: 'foe' }, ON), { error: 'capped', cakes: 3 });
   assert.equal(row(alice.id).fest_cakes, 3);
   // the next UTC day starts afresh
   assert.equal((await findFestival(ctx(DAY_S + 86400), player(alice), { source: 'foe' }, ON)).found, 1);
+});
+
+test('CAKE-CAP-SAID: the day\'s cakes all found with asks to spare - a winning roll answers `capped`, never a miss\'s `{ found: 0 }` (FIELD BUGS 2026-10-21b, "Soul Cake stopped dropping")', async () => {
+  const { alice, player, ctx, db, row } = await stand();
+  const day = utcDay(DAY_S);
+  // the report: 120 found in the first hour of undead, a whole day of asks left
+  db._raw.prepare('INSERT INTO fest_finds (account, day, asks, found) VALUES (?, ?, ?, ?)').run(alice.id, day, 231, FIND_CAKES_PER_DAY - 1);
+  assert.deepEqual(await findFestival(ctx(DAY_S, MISS), player(alice), { source: 'undead' }, ON), { found: 0, cakes: 0, today: FIND_CAKES_PER_DAY - 1 }, 'a miss short of the cap is a miss');
+  assert.deepEqual(await findFestival(ctx(DAY_S, HIT), player(alice), { source: 'undead' }, ON), { found: 1, cakes: 1, today: FIND_CAKES_PER_DAY, capped: true }, 'the cake that ends the day says so');
+  assert.deepEqual(await findFestival(ctx(DAY_S, HIT), player(alice), { source: 'undead' }, ON), { found: 0, cakes: 1, today: FIND_CAKES_PER_DAY, capped: true }, 'a winning roll past it');
+  assert.deepEqual(await findFestival(ctx(DAY_S, MISS), player(alice), { source: 'undead' }, ON), { found: 0, cakes: 1, today: FIND_CAKES_PER_DAY, capped: true });
+  assert.equal(row(alice.id).fest_cakes, 1);
+  // the account's festival says the day's count, and a new UTC day's is nought
+  assert.equal((await festivalOf(ctx(), player(alice), ON)).today, FIND_CAKES_PER_DAY);
+  assert.equal((await festivalOf(ctx(DAY_S + 86400), player(alice), ON)).today, 0);
+  assert.deepEqual(await findFestival(ctx(DAY_S + 86400, HIT), player(alice), { source: 'undead' }, ON), { found: 1, cakes: 2, today: 1 }, 'the next UTC day finds again');
 });
 
 test('WITCH1 A SALE: the price taken only while the cakes cover it; an account ware laid on the row once; the same request id is one sale', async () => {

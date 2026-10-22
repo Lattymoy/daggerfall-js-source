@@ -949,11 +949,12 @@
   {
     "name": "PROF12-svc-dis-origin-gold",
     "file": "server-account/src/alchemy.js",
-    "old": "const origin = p.bought_with === 'gold' ? 'gold' :",
-    "new": "const origin = p.bought_with === 'gold!' ? 'gold' :",
+    "old": "const origin = p.bought_with === 'gold' ? (Number(p.loose)",
+    "new": "const origin = p.bought_with === 'gold!' ? (Number(p.loose)",
     "tests": [
       "test/net/prof12_service.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): a gold wall's Essence loose where the piece's goods walled it."
   },
   {
     "name": "PROF12-svc-dis-bad-id",

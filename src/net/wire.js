@@ -535,6 +535,17 @@ export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FR
 /** AUDIT WORLD2 A5: a room's foes fan spends this many bytes a second - the frame's size times its listeners; one host
  *  at FOES_HZ_MAX and FOES_FRAME_MAX into SOCKETS_MAX listeners would have been 191 MiB/s out of one object. */
 export const FOES_ROOM_BYTES_PER_S = 4 * 1024 * 1024;
+/** FOES-FIRST (2026-10-21, bible/11-Multiplayer/Scale-Arc.md FOES-FIRST): THE FULL FRAMES' RESERVE in the room's foes
+ *  budget (and the own lane's). Every frame spent one bucket alike, so in a crowded cell the small deltas, every FOES_MS
+ *  from every owner, kept it below what a FULL frame's fan costs, and the full frames - the sweep, the grants, the
+ *  sites sprung, the handovers - were the ones dropped: 1.2% of them got through a 30-owner, 60-socket cell
+ *  (tools/foesFirstBench.mjs, over the real Room; 100% now). A delta now spends the bucket down to this and no
+ *  further; a frame that goes FIRST (a full frame, at most once each FOES_FIRST_MS a sender, or the first frame of a
+ *  sender unheard for FOES_UNHEARD_MS) may spend it and borrow as much again (floorGate's floor at minus this). A
+ *  quarter of the budget: a full fan of up to twice this (2 MiB - a 16 KiB frame to 128 listeners) goes straight into
+ *  a room the deltas hold at the reserve, the deltas keep three quarters of the burst, and the deepest debt a full
+ *  frame leaves is a quarter of a second of the rate, so the room's bytes a second stay at the budget on average. */
+export const FOES_FULL_RESERVE = FOES_ROOM_BYTES_PER_S / 4;
 
 /** QUEST1 (2026-09-20, revised): sharing an accepted quest with the party - systems/quest/questShare.js's own envelope
  *  (Quest.getSaveData()'s shape). First measured at "a few hundred bytes to a few KB for most quests" - wrong in
@@ -614,6 +625,17 @@ export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
   const bytes = Math.min(rate, b.bytes + Math.max(0, ((nowMs - b.at) / 1000) * rate));
   if (borrow ? bytes < 0 : bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
   return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
+}
+/** FOES-FIRST (2026-10-21): byteGate's bucket spent down to a FLOOR - passes when the cost leaves at least `floor`,
+ *  spending it. A floor of 0 is byteGate's own law; a positive one holds a reserve back from this caller; a negative
+ *  one lets it borrow that far and no further, so the debt is bounded by the floor (byteGate's `borrow` bounds it by
+ *  the frame's own cost, which a stream cannot afford - SLAM11) and the rate holds on average. The room's foes fan
+ *  asks it with FOES_FULL_RESERVE either way round (server/src/index.js `_foesFan`). The refill is byteGate's own: asked
+ *  for nothing, it answers the bucket refilled to now, whatever it holds. */
+export function floorGate(bucket, nowMs, cost, rate, floor) {
+  const held = byteGate(bucket, nowMs, 0, rate).bucket;
+  if (held.bytes - cost < floor) return { bucket: held, pass: false };
+  return { bucket: { bytes: held.bytes - cost, at: nowMs }, pass: true };
 }
 /** CHAT-CHAN (2026-09-23, kurkku: "regional chat that everyone in the region can see (so players in Wayrest see
  *  messages from other players in Wayrest and so on)"): A REGION IS A CHANNEL of its own, one room per Daggerfall region
@@ -1097,6 +1119,8 @@ export const GROUND_OLD_REASON = 'old ground';
 export const GRANT_HELLO_LAW = 1;
 /** The most `gv` a hello may say - a later build's number, read; past it, read as none. */
 export const GRANT_HELLO_LAW_WIRE_MAX = 65535;
+/** LEASE1 (net/roomLease.js): the longest lease the wire carries. */
+export const LEASE_WIRE_MAX = 256;
 /** GRANT-DOOR: the refusal's close reason (a WebSocket close's reason is at most 123 bytes); the words ride the error frame
  *  before it, GROUND-GATE's own (server/src/index.js GROUND_OLD_WORDS: update the game). */
 export const GRANT_OLD_REASON = 'old grants';
@@ -1514,6 +1538,26 @@ export const FOES_FULL_MS = 2000;
  *  a dungeon room's host that has said no frame for this long, with another socket there to hear it, holds the seat no
  *  longer (net/seatLive.js seatOf). */
 export const FOES_STALE_MS = 3 * FOES_FULL_MS;
+/** FOES-FIRST (2026-10-21): a sender's FULL frame goes first on the room's foes budget (FOES_FULL_RESERVE) at most this
+ *  often on each lane - every honest one comes FOES_FULL_MS apart; a sender that says `full` on every frame (the word
+ *  is the sender's own) earns one such frame a second, and the rest are deltas to the budget. */
+export const FOES_FIRST_MS = FOES_FULL_MS / 2;
+/** FOES-FIRST: a sender its lane has not heard for this long goes first with its next frame, full or not - two full
+ *  frames' cadence unheard, and one more full cadence (ten frames' tries) before its readers' FOES_STALE_MS prunes its
+ *  puppets. A room whose full frames alone are more than its budget would otherwise drop some owners whole. */
+export const FOES_UNHEARD_MS = FOES_STALE_MS - FOES_FULL_MS;
+/** FOES-FIRST: whether a foes or own frame is FULL - it says so (`full` 1: a cell's, a building's, the own lane's -
+ *  scenes/exteriorFoes.js and dungeonContext.js ownFrame) or carries the dungeon host's layout count (`lc`, said on its
+ *  full frames alone - dungeonContext.js foesFrame), which its readers take as a full frame's list. */
+export const foesFrameFull = (data) => data?.full === 1 || Number.isInteger(data?.lc);
+/** AUDIT FOES-FIRST F1: whether a foes or own frame HANDS foes on - a record naming its heir (`e`, world/foeHandover.js:
+ *  the batches of an owner leaving, dying or going through a door). A cell's handover batch says `full` 0, so as a
+ *  delta it was held at the reserve and lost in the very cells FOES-FIRST is for (a crowded cell's handovers heard
+ *  61.7% before it, 29.2% after; a star's 92.5%, 1.7%) - and the owner has let the foes go, so a batch dropped is foes
+ *  gone for everyone. It goes first (`_foesFirst`) - FOES-HOLD: held, in the line, never replaced or aged out, and
+ *  tried at its sender's leave (server/src/foesHold.js). Its records are the frame's own (the relay junks
+ *  a frame of more than CELL_FRAME_RECORDS_MAX before the fan), so the scan is bounded. */
+export const foesFrameHandsOn = (data) => Array.isArray(data?.f) && data.f.some((r) => typeof r?.e === 'string' && r.e !== '');
 /** SLAM13 (2026-09-16, AUDIT SLAM A2): A KEEPALIVE IS HEARD BY THE WHOLE CROWD AT MOST THIS OFTEN. SLAM8 fans an
  *  unmoved pose to everyone in range, untiered, because a standing player's heartbeat is the one frame whose whole job
  *  is to be heard - and it assumed that frame comes every HEARTBEAT_MS, which is what the port's client does. A
@@ -1534,7 +1578,12 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world237';   // world237: FIELD BUGS 2026-10-20f (2026-10-20, bible/01-Overview/bugs/Field-Bugs-2026-10-20f.md, from ilovemybonk's word on the Elite Breach in #general; world236 on its branch, renumbered past LONE-HERALD's world236 at the merge; NOT YET DEPLOYED): LANDED-WORD - an Elite Breach's room tells a striker what each of its blows landed (`eland`, to it alone - net/eliteGates/egBrain.js egBlow), and a lord an errand holds at a threshold answers what it lost (net/eliteGates/egLords.js egLordHit), so the word, the recap and a Court's chart count that; FAIR-STILL - the fair trail reads a member's silence from held ground to held ground within the snap as standing still, never blind (net/eliteGates/egFair.js egStillGap); DOOR-WORD - a member at the door on a trail it refuses is told why, once a hall (`efair`, to it alone - egBrain.js doorWord). A page facing a relay before it keeps its claims (EG_LAND_RELAY_MIN); an older page drops both words. Deploy the relay first or with the pages
+export const RELAY_VERSION = 'world242';   // world242: LEASE1 (2026-10-22, the staff panel's mute and freeze holding against a modded game - mob: "this need addressed"; design doc "DFO Staff Panel: design", Holding against a modded game: room leases; net/roomLease.js; NOT YET DEPLOYED) - the hub hands each socket a lease (`{t:'lease'}` asked, `{t:'lease', l}` answered: the account, its mute and freeze, signed with a key the relay derives from GATE_SIGNING_KEY), the game hands it to every lease room it holds, and a lease room takes the hub's word from one newer than its own; a hello there says `ls` 1. The relay setting `leaseDoor` (off unset) turns away a hello that says no `ls`, and hears a bound socket in nothing but its ping while it holds no live lease (no grace). Client and relay move together: an older relay closes a socket on the frame, so the game asks and hands on leases only to a relay at world242 or later.
+// world241: SD-THROUGH (2026-10-21, world239 then world240 on its branch - renumbered past FIELD BUGS 2026-10-21c FOES-FIRST's world239 and GUILD-CAP's world240 at the merges; the owner: "When someone finds and enters the portal. I want a portal to show up for anyone in the dungeon and anyone entering that automatically leads them there."; bible/11-Multiplayer/Super-Dungeons.md section 6 and SD-THROUGH; NOT YET DEPLOYED) - a Hollow's realm tells the hub its first admission (SD_INTERNAL_IN, validSdInTell), the hub stamps the record's `inAt` (net/superDungeon/sdLaw.js sdEnter) and fans it, and every client in the Hollow or entering it stands the Way Through beside them. Client and relay move together: an older client projects `inAt` away, and an older relay never stamps it (no Way Through stands).
+// world240: GUILD-CAP (2026-10-21, the Discord's feature-feedback: "May you please increase the guild member cap"; bible/06-Systems/Online-Arc.md GUILD-CAP; NOT YET DEPLOYED): a guild holds 75 (net/guild/guildLaw.js GUILD_MEMBERS_MAX, 50 until now) and the hub's who-of-my-guild answer lists up to 100 (net/hubShards.js HUB_GUILD_WHO_MAX, 64 - a full guild's 74 others would have been cut at 64). No wire shape changed: the relay reads the cap nowhere, and every build reads a longer `found` list as it reads a shorter one (online.js read(HUB_GUILD_WHO_MAX) - an older client keeps its first 64). The account service enforces the cap and deploys with main.
+// world239: FIELD BUGS 2026-10-21c FOES-FIRST (2026-10-21, players' word of enemy desync; bible/01-Overview/bugs/Field-Bugs-2026-10-21c.md, bible/11-Multiplayer/Scale-Arc.md FOES-FIRST; NOT YET DEPLOYED; past STAR-TUNE's world238, #1090, merged first): a foes or own room spends its byte budget on FULL frames first - a delta only down to FOES_FULL_RESERVE, a full frame (`full` 1, or a dungeon host's `lc`) into a debt of a quarter-second at most, each sender one first a FOES_FIRST_MS and its next frame first once unheard FOES_UNHEARD_MS (server/src/index.js _foesFan, _foesLane, _foesFirst; net/wire.js floorGate) - where the deltas had kept a crowded cell's bucket drained and the full frames, which carry the sweep, the sites, the grants and the handovers, lost first (30 owners of 60 sockets heard 1.2% of them, now 100%); HIT-DROPS - the blows a destination's hit funnels drop counted, with the full frames asked and dropped, in the room's metrics' blobs (server/src/relayScale.js); AUDIT FOES-FIRST: a frame that hands foes on (a record naming its heir - net/wire.js foesFrameHandsOn) goes first on a turn of its own, and a sender's clocks are stamped once its fan is charged, before the re-serialise (a junked frame's sender is heard). FOES-HOLD (2026-10-21, the owner: "No band aids and true improvements"; Scale-Arc.md FOES-HOLD; re-hashed in place): where a room's full frames alone are more than its budget, a first frame the budget refuses is HELD for its turn (server/src/foesHold.js) - one line, one turn a sender, a newer full frame in its sender's place, nothing of a sender overtaking its own, no delta past a held frame; a held sender still streaming is beaten with an empty frame of its own (`{ f: [] }` and its frame's `k` - every reader of every build takes it as the owner heard), a leaving sender's handovers tried before its leave, and the hold counted in blob6 to blob10 - the star's large owner heard 0% -> 44.8% of its full frames. AUDIT FOES-HOLD (re-hashed in place): the beat's `k` a room key's or none (isRoomKey) and charged to the first frames' floor, a held frame kept as its text and room in the hold made from the sender holding the most, a leaving sender's handovers one reserve deeper (FOES_LEFT_FLOOR) - every one heard at a star's doors, 45% before the hold. No client gate: the relay reads `full`, `lc` and the records' heirs, and OWNER-CLOCK's `tm` (the client's, the same release) passes any relay unread. STAR-TUNE's world238 (#1090) merged first and its `star` grant kind is in this law with it; GRANT-SLEEP #1066, open, claimed world238 too and takes the next number at its merge.
+// world238: STAR-TUNE (2026-10-20, the owner, of the Starfall's first run: "the enemies are too few and die too quickly. Does this not have scaling?"; "The time between waves is too long"; bible/11-Multiplayer/Starfall.md section 4; world236 on its branch, renumbered past LONE-HERALD's world236 and FIELD BUGS 2026-10-20f's world237 at the merge; NOT YET DEPLOYED) - the star's law: a wave is four for the first defender and two for each beside it, one more each wave, four to twenty-four (net/starfall/starfallLaw.js starWaveSize - a lone defender's 4 to 7, from 3, 3, 4 and 4; then "we should go beyond the limit": past the camps' grant's nine), and the breath between waves five seconds, from twelve (STAR_BREATH_MS); a spawn grant kind of the star's own (net/grantLaw.js GRANT_KINDS.star - a wave of twenty-four one grant, the open country's alone) and the `st` frame's wave to twenty-four (STAR_WAVE_SIZE_MAX); the foe bounds hold a camp's foe to a fallen star's coven's twice its health (net/foeBounds.js FOE_BOUND.star - STAR_FOE_HEALTH), so the relay never strips the coven the client now stands. Client and relay move together: an older relay refuses the `star` grant kind, an older client drops a ledger of a wave past nine. STAR_RELAY_MIN stays 235 (the star word itself does not change).
+// world237: FIELD BUGS 2026-10-20f (2026-10-20, bible/01-Overview/bugs/Field-Bugs-2026-10-20f.md, from ilovemybonk's word on the Elite Breach in #general; world236 on its branch, renumbered past LONE-HERALD's world236 at the merge; NOT YET DEPLOYED): LANDED-WORD - an Elite Breach's room tells a striker what each of its blows landed (`eland`, to it alone - net/eliteGates/egBrain.js egBlow), and a lord an errand holds at a threshold answers what it lost (net/eliteGates/egLords.js egLordHit), so the word, the recap and a Court's chart count that; FAIR-STILL - the fair trail reads a member's silence from held ground to held ground within the snap as standing still, never blind (net/eliteGates/egFair.js egStillGap); DOOR-WORD - a member at the door on a trail it refuses is told why, once a hall (`efair`, to it alone - egBrain.js doorWord). A page facing a relay before it keeps its claims (EG_LAND_RELAY_MIN); an older page drops both words. Deploy the relay first or with the pages
 // world236: FIELD BUGS 2026-10-20d LONE-HERALD (2026-10-20, a player in the Discord: "I JUST HIT REDOUBT 20 SOLO AND BECAUSE I DID IT WRONG ITS SEEN AS COMPANY"; bible/01-Overview/bugs/Field-Bugs-2026-10-20d.md, audited (AUDIT FB1020d: a company that went without its opener led by its first entrant); world235 on its branch, renumbered past THE WITCHES' FESTIVAL AND ITS STARFALL's world235 at the merge; NOT YET DEPLOYED): a Valkynaz Redoubt's herald news says its company's entrants (`n`, the Descent's count) and leads a company of one with its member's name (net/eliteGates/egBrain.js heraldCompany), the hub's read keeps the size (net/eliteGates/egHerald.js validEgHeraldTell) and its reckoning hands it to the posts, so the tenth Redoubt's post, First of the Spire and a seal lifted say a company of one alone - the room-to-hub tell grows a field; no frame a client reads changes shape, and either end may deploy first (a tell with no size is posted as a company, as it was).
 // world235: THE WITCHES' FESTIVAL AND ITS STARFALL, one release - WITCH1 (2026-10-20, the owner: "develop our first live event"; bible/06-Systems/Witches-Festival.md; world231, world233 then world234 on its branch, renumbered past main's world231 (NAME-WORDS), world232 (GAUNTLET-PLATES), world233 (SD-SEA) and world234 (DEX1) at the merges; NOT YET DEPLOYED) - the token's vocabulary grows: the Witchwarden and Hearthkeeper titles (TITLES), the Witchfire aura (AURAS), and a profile icon worn (`pi`, ICONS - the relay's hello carries it to the room beside the aura), and the Iliac Hand's festival cards and their two emblems (iliacCards.js); an older relay drops `pi` and refuses a token naming a word it does not hold, so client and relay move together. STAR3 (2026-10-20, the owner: "something coming from the sky and crashing into the ground, where people need to defend the objective in a wave based format with a boss topping off the encounter at the end"; bible/11-Multiplayer/Starfall.md sections 5, 9 and 13; world233 on its branch, renumbered past SD-SEA's world233 and DEX1's world234 at the merge, and one release with WITCH1's world235 when the festival's pull request was folded in; NOT YET DEPLOYED): THE STARFALL - a word at a fallen star (`star`) to its cell, which keeps the star's ledger (net/starfall/starfallLaw.js - the gathering, the waves and their breath, the master, the light, who defended), says it to the cell (`st`), mints each earner's receipt at the master's fall (`j1`, net/starfall/starReceipt.js - the gate's one key) and tells the hub (STAR_INTERNAL_HELD), which says the hold to everyone online (`hd`) and keeps the night's held stars (`hds`) and each account's receipts for a hello; STAR8 (bible/11-Multiplayer/Starfall.md section 7): TITLES gains `starwarden` (net/identityToken.js - the Thirteenth of Frostfall's title), so this relay reads a token wearing it. Deploy the relay first: a client says no star word to a relay older than STAR_RELAY_MIN (one would close the socket on it), and an older client drops the `star` frame
 // world234: DEX1 (2026-10-19, Mac: "I want to implement this as our next mod 1:1"; bible/04-Characters/Enemy-Expansion.md; world225 on its branch, renumbered past main's world225-world233 at the merges; NOT YET DEPLOYED): a foe's kind on the wire is MobileTypes' u16 (FOE_TYPE_MAX), so a mod's enemies (Daggerfall Enemy Expansion's 256-398) cross - it was 255; the enemy table the relay reads takes a mod's rows (characters/enemy/customEnemies.js joins the bundle) and carries MobileBehaviour's one home; a mod's monster past 255 throws no class's telegraphed blow (ai/blowShapes.js); the relay's foe bounds hold the mod's classic rows too (net/foeBounds.js, six profiles, no table read) and King's Gambit's roster reads the vanilla rows by name (VANILLA_ENEMY_BASICS). DEX4a (2026-10-20, grown in place): a cast's spell index is a standard spell's to a u16 (SPELL_INDEX_MAX), so a foe casting a mod's spell (Daggerfall Enemy Expansion's 500-503) crosses - it was a u8, SPELLS.STD's. DEX5b (2026-10-20, grown in place): a dead foe's record may say its body GONE (`bg` - 1 risen, 2 burnt to its ash), a mod's corpse prefab's word to every copy (validFoeRecord). AUDIT DEX D3 (2026-10-20, grown in place): and the room's memory keeps it (validSharedFoe), so an arrival lays no body the room saw rise or burn.
@@ -2026,6 +2075,10 @@ export function roomOf(pathname) {
   const m = /^\/room\/([A-Za-z0-9_.,:+-]{1,80})$/.exec(pathname);
   return m ? m[1] : null;
 }
+/** A string in the shape `roomOf` takes for a room's key. AUDIT FOES-HOLD 1: a held sender's beat repeats its frame's
+ *  `k` only in this shape (server/src/index.js `_foesBeats`) - the sender's own word, it went out at any length the
+ *  frame cap let in, once a beat to every listener. */
+export const isRoomKey = (k) => typeof k === 'string' && /^[A-Za-z0-9_.,:+-]{1,80}$/.test(k);
 
 /** A relay the client may connect to: wss:// anywhere, ws:// on localhost only (AUDIT ONLINE A16/E11). */
 export function relayUrl(url) {
@@ -2094,7 +2147,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2249,6 +2302,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     return g;
   }
   if (m.t === 'ping') return { t: 'ping' };
+  if (m.t === 'lease') {   // LEASE1 (net/roomLease.js): an ask to the hub (no `l`), or the hub's lease, handed to a room
+    if (!hasHello) return { error: 'lease before hello' };
+    if (m.l === undefined) return { t: 'lease' };
+    return typeof m.l === 'string' && m.l.length > 0 && m.l.length <= LEASE_WIRE_MAX ? { t: 'lease', l: m.l } : { error: 'bad lease' };
+  }
   if (m.t === 'hello') {
     if (hasHello) return { error: 'hello twice' };
     const id = typeof m.id === 'string' && ID_RE.test(m.id) ? m.id : null;
@@ -2319,6 +2377,7 @@ export function parseClient(text, { hasHello = false } = {}) {
     // room's door refuses none while its gate is on, and a later build's number is read as it is
     if (Number.isSafeInteger(m.gl) && m.gl >= 1 && m.gl <= GROUND_LAW_WIRE_MAX) hello.gl = m.gl;
     if (Number.isSafeInteger(m.gv) && m.gv >= 1 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX) hello.gv = m.gv;   // GRANT-DOOR: the grants this build stands on - read as GROUND-GATE's `gl` is
+    if (m.ls === 1) hello.ls = 1;   // LEASE1: this build hands its hub's lease to the room (net/roomLease.js) - 1 or nothing, the `w2` law
     return hello;
   }
   if (m.t === 'pose') {
@@ -5289,6 +5348,15 @@ export const STAR_STARS_MAX = 3;
 export const STAR_WAVES_MAX = 4;
 export const STAR_LEVEL_WIRE_MAX = 60;
 export const STAR_KILLS_MAX = 99;
+/** A wave's most on the wire (`st`'s `wz`): net/starfall/starfallLaw.js STAR_WAVE_MAX, a copy because the law imports this
+ *  module (held equal by test/net/starfall/star3_relay.test.js). STAR-TUNE: twenty-four, from nine. */
+export const STAR_WAVE_SIZE_MAX = 24;
+/** AUDIT STAR-TUNE F3: the most an older client's `st` reads (world235-world237's validStarOut: `wz` nine at most). It
+ *  dropped the whole frame for a wave past it - an older tab that held a party's star stood its third wave on for nobody,
+ *  nor the master. So `wz` rides at most this, and a wave past it says its size in `wx`, which this module reads back
+ *  into `wz` (an older one projects it away): an older owner stands nine of it and the wave still clears (its word's
+ *  `wc`, under the floor), never nothing. */
+export const STAR_WAVE_SIZE_OLD_MAX = 9;
 export const STAR_BLOWS_MAX = 9999;
 export const STAR_TOP_WIRE_MAX = 3;
 export const STAR_COUNT_MAX = 64;
@@ -5323,8 +5391,9 @@ const msOk = (v) => Number.isSafeInteger(v) && v >= 0;
 const starTopOf = (top) => (Array.isArray(top) ? top.filter((x) => typeof x === 'string' && x).slice(0, STAR_TOP_WIRE_MAX).map(sanitizeName) : []);
 /**
  * A cell's or the hub's star word, projected for the client - or null:
- *   `{k:'st', n, s, px, py, p, w, wz, kn, wl, lt, nd, b, ow, hc, hd, lo, why, hm?}` the ledger (starfallLaw.js
- *   starLedgerState) - `hm`, to the socket that spoke alone, its own account's credited blows;
+ *   `{k:'st', n, s, px, py, p, w, wz, kn, wl, lt, nd, b, ow, hc, hd, lo, why, hm?, wx?}` the ledger (starfallLaw.js
+ *   starLedgerState) - `hm`, to the socket that spoke alone, its own account's credited blows; `wx` a wave past
+ *   STAR_WAVE_SIZE_OLD_MAX, read back as its `wz` (AUDIT STAR-TUNE F3);
  *   `{k:'hd', n, s, px, py, at, top, c}` held, by whom (the first few named, `c` how many);
  *   `{k:'rc', r}` an earner's receipt; `{k:'hds', l: [[n, s, px, py, at], ...]}` the held stars the hub keeps.
  */
@@ -5342,11 +5411,12 @@ export function validStarOut(m) {
     const top = starTopOf(m.top);
     return { k: 'hd', n: m.n, s: m.s, px: m.px, py: m.py, at: m.at, top, c: intIn(m.c, top.length, STAR_COUNT_MAX) ? m.c : top.length };
   }
-  if (!intIn(m.p, 0, STAR_PHASE_MAX) || !intIn(m.w, 0, STAR_WAVES_MAX) || !intIn(m.wz, 0, 9) || !intIn(m.kn, 0, STAR_KILLS_MAX)) return null;
+  if (!intIn(m.p, 0, STAR_PHASE_MAX) || !intIn(m.w, 0, STAR_WAVES_MAX) || !intIn(m.wz, 0, STAR_WAVE_SIZE_MAX) || !intIn(m.kn, 0, STAR_KILLS_MAX)) return null;
   if (!(Number.isSafeInteger(m.wl) && m.wl >= -1) || !intIn(m.lt, 0, STAR_LIGHT_MAX) || !intIn(m.nd, 0, STAR_COUNT_MAX) || !intIn(m.b, 1, 3)) return null;
   if (!flag(m.ow) || !intIn(m.hc, 0, STAR_BLOWS_MAX) || !msOk(m.hd) || !msOk(m.lo) || !intIn(m.why, 0, 2)) return null;
   if (m.hm !== undefined && !intIn(m.hm, 0, STAR_BLOWS_MAX)) return null;
-  const st = { k: 'st', n: m.n, s: m.s, px: m.px, py: m.py, p: m.p, w: m.w, wz: m.wz, kn: m.kn, wl: m.wl, lt: m.lt, nd: m.nd, b: m.b, ow: m.ow, hc: m.hc, hd: m.hd, lo: m.lo, why: m.why };
+  if (m.wx !== undefined && !(m.wz === STAR_WAVE_SIZE_OLD_MAX && intIn(m.wx, STAR_WAVE_SIZE_OLD_MAX + 1, STAR_WAVE_SIZE_MAX))) return null;   // AUDIT STAR-TUNE F3: a wave past an older client's, said whole
+  const st = { k: 'st', n: m.n, s: m.s, px: m.px, py: m.py, p: m.p, w: m.w, wz: m.wx ?? m.wz, kn: m.kn, wl: m.wl, lt: m.lt, nd: m.nd, b: m.b, ow: m.ow, hc: m.hc, hd: m.hd, lo: m.lo, why: m.why };
   return m.hm === undefined ? st : { ...st, hm: m.hm };
 }
 /** The door from a star's cell to the hub: a star held, its earners' receipts riding it (the raid's door). */
@@ -5754,7 +5824,9 @@ function serpentOutOf(m) {
 // from the socket's own pose (net/superDungeon/sdBrain.js orreryStep), and the hall's stones, fray, dial and Concord said back to every
 // soul in it - after each turn, and to each at its hello.
 //   client -> cell:  {t:'sd', k:'found', s, px, py}
-//   hub -> client:   {t:'sd', k:'ev', s, ph, r, at, until, next, foundAt?, fb?, fellAt?, top?, n?}
+//   hub -> client:   {t:'sd', k:'ev', s, ph, r, at, until, next, foundAt?, fb?, inAt?, fellAt?, top?, n?}
+// SD-THROUGH: `inAt` - when the first soul stepped through its Rift (the realm's first admission, told to the hub -
+// SD_INTERNAL_IN): from then on every client in its Hollow, and every one entering it, stands the Way Through beside them.
 //   client -> realm: {t:'sd', k:'pz', i, a, q}                                 (stone i, a +1 forward or -1 back, my turn's number)
 //   realm -> client: {t:'sd', k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?, ls?, w?}   (the stones, the fray, the dial's
 //                    count, the Concord; the turn and its turner's id and number; x 1 when the Hour snapped back - AUDIT SD
@@ -5787,7 +5859,7 @@ export const SD_SLOT_MAX = 999_999_999;
 /** The most fighters a fall may count (the gate's seat bound). */
 export const SD_FIGHTERS_MAX = 256;
 
-/** @typedef {{ s:number, ph:string, r:number, at:number, until:number, next:number, foundAt?:number, fb?:string, fellAt?:number, top?:string, n?:number }} SdRecord */
+/** @typedef {{ s:number, ph:string, r:number, at:number, until:number, next:number, foundAt?:number, fb?:string, inAt?:number, fellAt?:number, top?:string, n?:number }} SdRecord */
 
 const sdMs = (t) => Number.isSafeInteger(t) && t >= 0;
 /**
@@ -5809,11 +5881,13 @@ export function validSdRecord(v) {
   if (out.s === 0 && out.ph !== 'gone') return null;
   if (r.foundAt != null) { if (!sdMs(r.foundAt)) return null; out.foundAt = r.foundAt; }
   if (r.fb != null) out.fb = sanitizeName(r.fb);
+  if (r.inAt != null) { if (!sdMs(r.inAt)) return null; out.inAt = r.inAt; }   // SD-THROUGH: the first soul through its Rift
   if (r.fellAt != null) { if (!sdMs(r.fellAt)) return null; out.fellAt = r.fellAt; }
   if (r.top != null) out.top = sanitizeName(r.top);
   if (r.n != null) { if (!Number.isSafeInteger(r.n) || r.n < 0 || r.n > SD_FIGHTERS_MAX) return null; out.n = r.n; }
   // a find and a fall are said with their instants, and a fall was always a find first: nobody enters an unfound Hollow
   if ((out.ph === 'found' || out.ph === 'fell') && out.foundAt == null) return null;
+  if (out.inAt != null && out.foundAt == null) return null;   // SD-THROUGH: nor steps through its Rift
   if (out.ph === 'fell' && out.fellAt == null) return null;
   return out;
 }
@@ -5998,6 +6072,9 @@ export const SD_INTERNAL_FOUND = '/internal/sd/found';
 export const SD_INTERNAL_LIVE = '/internal/sd/live';
 /** SD8b: a realm telling the hub its Remnant fell (the director moves its record on - net/superDungeon/sdLaw.js sdFell). */
 export const SD_INTERNAL_FELL = '/internal/sd/fell';
+/** SD-THROUGH: a realm telling the hub its first soul stepped through the Rift (the director stamps the record's `inAt` -
+ *  net/superDungeon/sdLaw.js sdEnter). */
+export const SD_INTERNAL_IN = '/internal/sd/in';
 /** How soon a cell whose hub did not answer a find tells it again (the rite's number). */
 export const SD_TELL_RETRY_MS = 5000;
 /** Where the hub keeps its record, a cell a find it owes the hub, and a realm who entered it (never `world:` - swept). */
@@ -6032,6 +6109,12 @@ export function validSdFellTell(v) {
   }
   const here = Array.isArray(b.here) ? b.here.filter((x) => typeof x === 'string' && ID_RE.test(x)).slice(0, SD_FIGHTERS_MAX) : [];
   return { s: b.s, at: b.at, top: sanitizeName(b.top), n: b.n, rc, here };
+}
+/** SD-THROUGH: a realm's first soul through, as told to the hub - its slot alone - projected, or null. */
+export function validSdInTell(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const b = /** @type {any} */ (v);
+  return intIn(b.s, 1, SD_SLOT_MAX) ? { s: b.s } : null;
 }
 /** SD9a: where the hub keeps an account's Hour receipt for its hello (its latest, a receipt's life) - outside every
  *  swept prefix but its own; how long an earner who stood in the realm at the kill is left to its floor first. */

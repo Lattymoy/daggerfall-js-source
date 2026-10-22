@@ -1,0 +1,716 @@
+[
+  {
+    "name": "LEASE1-the-account-unread",
+    "file": "server/src/index.js",
+    "old": "if (!r || !b || r.s !== b.sub) return;",
+    "new": "if (!r || !b) return;",
+    "why": "another account's lease sets my mute",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-law-time-unread",
+    "file": "server/src/index.js",
+    "old": "const law = r.at > (b.lt ?? b.gio ?? 0);",
+    "new": "const law = true;",
+    "why": "an older lease lifts a newer order's mute",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-carried-order-unstamped",
+    "file": "server/src/index.js",
+    "old": "        this._setAttach(other, { ...b, mu, lt: Math.max(b.lt ?? 0, i) });",
+    "new": "        this._setAttach(other, { ...b, mu });",
+    "why": "a lease minted before a carried mute, replayed after it, lifts the mute",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-change-not-handed-up",
+    "file": "server/src/index.js",
+    "old": "if (b.vid && isChannelShard(room) && ((b.mu ?? 0)",
+    "new": "if (false && b.vid && isChannelShard(room) && ((b.mu ?? 0)",
+    "why": "a region's bus never hears the mute its shard took",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): a freeze the shard took is handed up too."
+  },
+  {
+    "name": "LEASE1-minted-in-any-room",
+    "file": "server/src/index.js",
+    "old": "if (!isSocialRoom(room)) return;\n      const l = await mintLease",
+    "new": "const l = await mintLease",
+    "why": "a channel mints leases",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-read-in-any-room",
+    "file": "server/src/index.js",
+    "old": "if (!leaseRoom(room)) return;\n    const r = await readLease",
+    "new": "const r = await readLease",
+    "why": "the hub reads leases it hands out",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-rate-unread",
+    "file": "server/src/index.js",
+    "old": "    if (now - (meter.lq ?? -Infinity) < LEASE_FRAME_MIN_MS) return;",
+    "new": "",
+    "why": "a MAC a frame, unmetered",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-renewed-unheard",
+    "file": "server/src/index.js",
+    "old": "if (a.ld != null ? a.ld * 1000 >= now :",
+    "new": "if (a.ld != null ? false :",
+    "why": "a renewed socket unheard",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): the frame door is its own method now (`_leaseHeard`), asked by a region's shard too."
+  },
+  {
+    "name": "LEASE1-the-door-always-on",
+    "file": "server/src/index.js",
+    "old": "    return relayCfgValue(cfg, this.env, 'leaseDoor') === 'on';",
+    "new": "    return true;",
+    "why": "the door shuts with leaseDoor off",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-freeze-unread",
+    "file": "server/src/index.js",
+    "old": "if (a.fz && a.fz > Math.floor(Date.now() / 1000) && m.t !== 'ping') return;",
+    "new": "",
+    "why": "a frozen socket heard",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-lease-not-renewed",
+    "file": "server/src/index.js",
+    "old": "ld: Math.max(b.ld ?? 0, r.u)",
+    "new": "ld: b.ld",
+    "why": "a lease renews nothing",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-hub-bound",
+    "file": "server/src/index.js",
+    "old": "if (!leaseRoom(key) || m.ls === 1) return false;",
+    "new": "if (m.ls === 1) return false;",
+    "why": "the hub refuses the old build",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-shard-not-told",
+    "file": "src/net/hubShards.js",
+    "old": "'rb', 'lv', 'fz', 'lt']",
+    "new": "'rb', 'lv']",
+    "why": "a hub shard mints a lease from a stale freeze and law time",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-mac-unchecked",
+    "file": "src/net/roomLease.js",
+    "old": "if (!ok) return null;",
+    "new": "",
+    "why": "a forged lease read",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-life-unchecked",
+    "file": "src/net/roomLease.js",
+    "old": "|| c.u !== c.a + LEASE_LIFE_S) return null;",
+    "new": ") return null;",
+    "why": "a lease with any life read",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-lapse-unread",
+    "file": "src/net/roomLease.js",
+    "old": "if (c.u <= nowS || c.a > nowS + 30) return null;",
+    "new": "if (c.a > nowS + 30) return null;",
+    "why": "a lapsed lease read",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-skew-unread",
+    "file": "src/net/roomLease.js",
+    "old": "if (c.u <= nowS || c.a > nowS + 30) return null;",
+    "new": "if (c.u <= nowS) return null;",
+    "why": "a lease from the future read",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-ls-everywhere",
+    "file": "src/net/online.js",
+    "old": "if (leaseRoom(room)) frame.ls = 1;",
+    "new": "frame.ls = 1;",
+    "why": "a hub hello says ls",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-ask-unpaced",
+    "file": "src/net/online.js",
+    "old": "if (this.leaseOk && this.status === 'open' && isSocialRoom(this.room) && now - this._leaseAskAt >= LEASE_MS",
+    "new": "if (this.leaseOk && this.status === 'open' && isSocialRoom(this.room)",
+    "why": "the hub asked every tick",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-an-old-relay-asked",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.leaseOk = relaySupportsLease(relayV);",
+    "new": "if (primary) this.leaseOk = true;",
+    "why": "a relay that closes on the frame asked",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-halo-skipped",
+    "file": "src/net/online.js",
+    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}`), room); } catch {",
+    "new": "    try { ws = new this._WS(`${this.url}/room/${room}`); } catch {",
+    "why": "a halo never handed the lease",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-lease-from-any-room",
+    "file": "src/net/online.js",
+    "old": "if (!isSocialRoom(room) || typeof m.l !== 'string'",
+    "new": "if (typeof m.l !== 'string'",
+    "why": "a channel's word taken as the hub's lease",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-lease-kept",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    link.onLease = (l) => { for (const x of allLinks()) x?.sendLease?.(l); };",
+    "new": "    link.onLease = () => {};",
+    "why": "the page keeps its hub's lease to itself",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-door-asked-of-every-frame",
+    "file": "server/src/index.js",
+    "old": "    if (a.ld != null ? a.ld * 1000 >= now : !a.id || !leaseRoom(a.key ?? this._busKey)) return a;",
+    "new": "    if (!(await this._leaseDoorOn(now)) && (a.ld != null ? a.ld * 1000 >= now : !a.id || !leaseRoom(a.key ?? this._busKey))) return a;",
+    "why": "every frame in a lease room asks after the door, so every lease room asks the hub once a minute",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): the frame door is its own method now (`_leaseHeard`), asked by a region's shard too."
+  },
+  {
+    "name": "LEASE1-the-hello-door-awaited",
+    "file": "server/src/index.js",
+    "old": "    const cfg = await this._relayCfgOf();\n    if (ask) void this._relayCfgFresh(now);\n    return relayCfgValue(cfg, this.env, 'leaseDoor')",
+    "new": "    await this._relayCfgFresh(now); const cfg = await this._relayCfgOf();\n    return relayCfgValue(cfg, this.env, 'leaseDoor')",
+    "why": "a cold room's hello waits on the hub",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-unbound-let-stand",
+    "file": "server/src/index.js",
+    "old": ": !a.id || !leaseRoom(a.key ?? this._busKey)) return a;",
+    "new": ": true) return a;",
+    "why": "a build that hands on no lease, let in by a cold room, stays with the door on",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): the frame door is its own method now (`_leaseHeard`), asked by a region's shard too."
+  },
+  {
+    "name": "LEASE1-sent-on-its-own",
+    "file": "src/net/online.js",
+    "old": "    this._leaseAt = this._now();\n    return this.leaseOk",
+    "new": "    this._leaseAt = this._now();\n    this._send({ t: 'lease', l });\n    return this.leaseOk",
+    "why": "every idle room is woken by the lease (the load check's cost)",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): sendLease stamps when the lease came (`_leaseAt`, LEASE_HELD_MS)."
+  },
+  {
+    "name": "LEASE1-handed-ahead-of-every-frame",
+    "file": "src/net/online.js",
+    "old": "if (l && l !== handed && now - handedAt",
+    "new": "if (l && now - handedAt",
+    "why": "a lease ahead of every frame: twice the frames",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-handed-ahead-of-a-ping",
+    "file": "src/net/online.js",
+    "old": "const LEASE_QUIET_RE = /^\\{\"t\":\"(?:ping|hello|lease)\"/;",
+    "new": "const LEASE_QUIET_RE = /^\\{\"t\":\"(?:hello|lease)\"/;",
+    "why": "a ping carries a lease, so the room wakes for it",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-grace-back",
+    "file": "server/src/index.js",
+    "old": "...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}),",
+    "new": "...(m.ls === 1 && leaseRoom(a.key) ? { ld: Math.floor((now + 60_000) / 1000) } : {}),",
+    "why": "a bound socket heard for a minute with no lease: a changed game reconnecting inside it never leased (the PR review)",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-unleased-heard",
+    "file": "server/src/index.js",
+    "old": "if (a.ld != null ? a.ld * 1000 >= now :",
+    "new": "if (a.ld != null ? !a.ld || a.ld * 1000 >= now :",
+    "why": "a bound socket with no lease yet heard in everything",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): the frame door is its own method now (`_leaseHeard`), asked by a region's shard too."
+  },
+  {
+    "name": "LEASE1-the-unleased-closed",
+    "file": "server/src/index.js",
+    "old": "    if (a.ld == null) this._refuse(",
+    "new": "    this._refuse(",
+    "why": "a bound socket with no live lease closed",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW II (2026-10-22, PIN MOVED): the frame door is its own method now (`_leaseHeard`), asked by a region's shard too."
+  },
+  {
+    "name": "LEASE1-the-frame-not-waiting-on-its-lease",
+    "file": "server/src/index.js",
+    "old": "    if (a.ld != null && !(a.ld * 1000 >= Date.now())) { await meter.lp; a = this._attach(ws); }   // closed or replaced meanwhile: its lease untaken (`_leaseRead`), the door's below\n",
+    "new": "",
+    "why": "the honest game's first frame, right behind its lease, dropped while the lease is read",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22, PIN MOVED): the wait at the door is its own method (`_leaseDoor`), behind the socket's own earlier frames (`dq`); an old build asks once in LEASE_OLD_ASK_MS. LEASE1 REVIEW IV b (2026-10-22, PIN MOVED): a socket closed or replaced during the lease read's wait is caught by `_leaseRead` and the door (`_pastWait`)."
+  },
+  {
+    "name": "LEASE1-the-shards-line-past-the-door",
+    "file": "server/src/index.js",
+    "old": "isChannelShard(a.key) && !shardKeeps(message)) { a = await this._leaseHeard(ws, a); if (a) this._hubForward(ws, a, message); return; }",
+    "new": "isChannelShard(a.key) && !shardKeeps(message)) { this._hubForward(ws, a, message); return; }",
+    "why": "a region's line goes up to its bus unleased",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-shards-parsed-line-past-the-door",
+    "file": "server/src/index.js",
+    "old": "m.t !== 'lease') { a = await this._leaseHeard(ws, a); if (a) this._hubForward(ws, a, message); return; }",
+    "new": "m.t !== 'lease') { this._hubForward(ws, a, message); return; }",
+    "why": "a line dressed as a pose goes up to the bus unleased",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-an-older-leases-freeze-dropped",
+    "file": "server/src/index.js",
+    "old": ": r.fz > (b.fz ?? 0) ? { fz: r.fz } : {}) };",
+    "new": ": {}) };",
+    "why": "a fresh token, then a lease minted before it, dodges a freeze",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-an-older-lease-lifting-a-freeze",
+    "file": "server/src/index.js",
+    "old": ": r.fz > (b.fz ?? 0) ? { fz: r.fz } : {}) };",
+    "new": ": { fz: r.fz }) };",
+    "why": "a lease older than the room's word lifts a freeze",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-an-older-freeze-not-handed-up",
+    "file": "server/src/index.js",
+    "old": "if (b.vid && isChannelShard(room) && ((b.mu ?? 0)",
+    "new": "if (law && b.vid && isChannelShard(room) && ((b.mu ?? 0)",
+    "why": "a region's bus never hears the freeze an older lease held",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-cold-rooms-guess",
+    "file": "server/src/index.js",
+    "old": "    if (bound) await (this._relayCfgAt === -Infinity ? this._relayCfgFresh(now) : this._relayCfgP);\n",
+    "new": "",
+    "why": "a woken room hears a bound socket's unleased frame on the Worker's var",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22, PIN MOVED): the wait at the door is its own method (`_leaseDoor`), behind the socket's own earlier frames (`dq`); an old build asks once in LEASE_OLD_ASK_MS."
+  },
+  {
+    "name": "LEASE1-a-renewal-after-a-lapse-not-waited-on",
+    "file": "server/src/index.js",
+    "old": "    if (a.ld != null && !(a.ld * 1000 >= Date.now())) { await meter.lp;",
+    "new": "    if (a.ld === 0) { await meter.lp;",
+    "why": "an idle honest socket closed busy with its renewal on the way",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22, PIN MOVED): the wait at the door is its own method (`_leaseDoor`), behind the socket's own earlier frames (`dq`); an old build asks once in LEASE_OLD_ASK_MS."
+  },
+  {
+    "name": "LEASE1-a-lapsed-socket-unheard-with-the-door-off",
+    "file": "server/src/index.js",
+    "old": "    if (!on || a.ld * 1000 >= Date.now()) return a;",
+    "new": "    if (!(on || a.ld > 0) || a.ld * 1000 >= Date.now()) return a;",
+    "why": "every honest player whose hub was away goes unheard in every lease room while the door is off",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22, PIN MOVED): the wait at the door is its own method (`_leaseDoor`), behind the socket's own earlier frames (`dq`); an old build asks once in LEASE_OLD_ASK_MS."
+  },
+  {
+    "name": "LEASE1-a-lapsed-sockets-ping-dropped",
+    "file": "server/src/index.js",
+    "old": "    if (m.t !== 'ping') { a = await this._leaseHeard(ws, a); if (!a) return; }",
+    "new": "    if (a.ld && m.t === 'ping') { a = await this._leaseHeard(ws, a); if (!a) return; }\n    if (m.t !== 'ping') { a = await this._leaseHeard(ws, a); if (!a) return; }",
+    "why": "a lapsed socket's ping unanswered",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-lease-thrown-away-outside-a-lease-room",
+    "file": "src/net/online.js",
+    "old": "    if (typeof l !== 'string' || !l) return false;\n    this._lease = l;",
+    "new": "    if (!this.leaseOk || typeof l !== 'string' || !l || !(leaseRoom(this.room) || [...this._halo.keys()].some(leaseRoom))) return false;\n    this._lease = l;",
+    "why": "a lease that came in a dungeon, a gate, a home or before a welcome thrown away: the next lease room deaf to me until the hub's next",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-lease-held-forever",
+    "file": "src/net/online.js",
+    "old": "      const l = now - this._leaseAt < LEASE_HELD_MS ? this._lease : null;",
+    "new": "      const l = this._lease;",
+    "why": "a lapsed lease handed on, spending the room's one read on nothing",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-lapsed-socket-closed",
+    "file": "server/src/index.js",
+    "old": "    if (a.ld == null) this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, LEASE_OLD_REASON);\n",
+    "new": "    if (a.ld == null) this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, LEASE_OLD_REASON);\n    else if (a.ld) this._refuse(ws, 'lease lapsed', CLOSE_BUSY);\n",
+    "why": "a lapsed socket closed: an honest game back from a hidden tab bought nothing but a reconnect",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-ask-in-flight-skipped",
+    "file": "server/src/index.js",
+    "old": "this._relayCfgFresh(now) : this._relayCfgP);",
+    "new": "this._relayCfgFresh(now) : null);",
+    "why": "a second frame during the first's wait heard on the Worker's var",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22): a socket's own second frame now waits behind its first (`dq`); another socket's frame during the wait is what this pins."
+  },
+  {
+    "name": "LEASE1-an-old-build-asking-every-minute",
+    "file": "server/src/index.js",
+    "old": "this._leaseDoorOn(now, bound || now - this._relayCfgAt >= LEASE_OLD_ASK_MS)",
+    "new": "this._leaseDoorOn(now, true)",
+    "why": "every lease room holding an old build asks the hub once a minute, the door off",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22, PIN MOVED): the wait at the door is its own method (`_leaseDoor`), behind the socket's own earlier frames (`dq`); an old build asks once in LEASE_OLD_ASK_MS."
+  },
+  {
+    "name": "LEASE1-the-cold-wait-a-fresh-sockets-alone",
+    "file": "server/src/index.js",
+    "old": "this._leaseDoor(ws, a.ld != null, now)",
+    "new": "this._leaseDoor(ws, a.ld === 0, now)",
+    "why": "a lapsed socket's frame heard on a woken room's guess",
+    "tests": [
+      "test/net/lease1.test.js"
+    ],
+    "note": "LEASE1 REVIEW IV (2026-10-22, PIN MOVED): the wait at the door is its own method (`_leaseDoor`), behind the socket's own earlier frames (`dq`); an old build asks once in LEASE_OLD_ASK_MS."
+  },
+  {
+    "name": "LEASE1-the-frame-judged-before-its-lease",
+    "file": "server/src/index.js",
+    "old": "    if (m.t !== 'ping') { a = await this._leaseHeard(ws, a); if (!a) return; }",
+    "new": "    if (m.t !== 'ping' && !(await this._leaseHeard(ws, a))) return;",
+    "why": "the frame right behind a lease judged under the hello's word, not the lease it waited on",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-town-bound",
+    "file": "server/src/index.js",
+    "old": ": !a.id || !leaseRoom(a.key ?? this._busKey)) return a;",
+    "new": ": !a.id || isSocialRoom(a.key ?? this._busKey)) return a;",
+    "why": "a room no lease binds turns an old build away at its frame",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-hubs-frame-bound",
+    "file": "server/src/index.js",
+    "old": ": !a.id || !leaseRoom(a.key ?? this._busKey)) return a;",
+    "new": ": !a.id || !(isChatRoom(a.key ?? this._busKey) || streamsFoes(a.key ?? this._busKey))) return a;",
+    "why": "the hub's own frames behind the lease door it hands out",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-hub-bound",
+    "file": "src/net/roomLease.js",
+    "old": "export const leaseRoom = (key) => !isSocialRoom(key) && (isChatRoom(key) || streamsFoes(key));",
+    "new": "export const leaseRoom = (key) => isChatRoom(key) || streamsFoes(key);",
+    "why": "the hub binds its own sockets",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-mute-unsaid",
+    "file": "server/src/index.js",
+    "old": "mintLease({ s: a.sub, mu: a.mu ?? 0,",
+    "new": "mintLease({ s: a.sub, mu: 0,",
+    "why": "the hub's lease says no mute",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-ping-dropped",
+    "file": "server/src/index.js",
+    "old": "if (a.fz && a.fz > Math.floor(Date.now() / 1000) && m.t !== 'ping') return;",
+    "new": "if (a.fz && a.fz > Math.floor(Date.now() / 1000)) return;",
+    "why": "a frozen socket's ping unanswered",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-lease-dropped",
+    "file": "server/src/index.js",
+    "old": "    if (m.t === 'lease') return this._leaseFrame(ws, a, m, message);",
+    "new": "    if (m.t === 'lease' && !(a.fz > Math.floor(Date.now() / 1000))) return this._leaseFrame(ws, a, m, message);",
+    "why": "a frozen socket never thawed: its lease unread",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-pace-dropped",
+    "file": "src/net/online.js",
+    "old": " && now - handedAt >= LEASE_HAND_MIN_MS && this.leaseOk",
+    "new": " && this.leaseOk",
+    "why": "a second lease inside the room's meter: dropped there, counted handed here",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-cabin-lane-unleased",
+    "file": "src/net/sailingCabinLink.js",
+    "old": "      link.leaseFrom?.(main);   // LEASE1: the page's lease rides this lane's frames too (net/roomLease.js)\n",
+    "new": "",
+    "why": "the sailing cabin lane hands on no lease: with the door on its boat goes unheard",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-hold-past-the-life",
+    "file": "src/net/roomLease.js",
+    "old": "export const LEASE_HELD_MS = (LEASE_LIFE_S - 15) * 1000;",
+    "new": "export const LEASE_HELD_MS = LEASE_LIFE_S * 1000;",
+    "why": "a lease handed on as it lapses",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-pace-inside-the-meter",
+    "file": "src/net/roomLease.js",
+    "old": "export const LEASE_HAND_MIN_MS = LEASE_FRAME_MIN_MS + 1000;",
+    "new": "export const LEASE_HAND_MIN_MS = LEASE_FRAME_MIN_MS;",
+    "why": "the pace on the meter's own edge: the wire's jitter drops a lease",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-the-wait-judged-on-the-old-socket",
+    "file": "server/src/index.js",
+    "old": "    const door = meter.dq = this._leaseDoor(ws, a.ld != null, now);",
+    "new": "    const door = meter.dq = this._leaseDoor(ws, a.ld != null, now).then((b) => b && a);",
+    "why": "a frame that waited is heard under the socket as it stood before the wait, and writes over the lease that landed meanwhile - its mute, its freeze",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-frames-out-of-order",
+    "file": "server/src/index.js",
+    "old": "    while (meter.dq) {",
+    "new": "    while (false && meter.dq) {",
+    "why": "a socket's leased frame heard ahead of its own earlier one still at the door - its older pose written over the newer",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-an-old-build-asking-once-a-wake",
+    "file": "server/src/index.js",
+    "old": "bound || now - this._relayCfgAt >= LEASE_OLD_ASK_MS",
+    "new": "bound || this._relayCfgAt === -Infinity",
+    "why": "one let in before the door went on at the hub is heard for the whole wake",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-bound-socket-never-asking-again",
+    "file": "server/src/index.js",
+    "old": "this._leaseDoorOn(now, bound || ",
+    "new": "this._leaseDoorOn(now, ",
+    "why": "a room that asked with the door off never asks again for a bound socket's unleased frame - one holding back its lease is heard on the old word",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-woken-rooms-old-build-never-asking",
+    "file": "server/src/index.js",
+    "old": "bound || now - this._relayCfgAt >= LEASE_OLD_ASK_MS",
+    "new": "bound || (this._relayCfgAt > -Infinity && now - this._relayCfgAt >= LEASE_OLD_ASK_MS)",
+    "why": "a room woken holding an old build hears it on the Worker's var for the whole wake",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-an-old-build-asking-every-minute-by-its-bound",
+    "file": "server/src/index.js",
+    "old": "const LEASE_OLD_ASK_MS = 10 * RELAY_CFG_TTL_MS;",
+    "new": "const LEASE_OLD_ASK_MS = RELAY_CFG_TTL_MS;",
+    "why": "every lease room holding an old build asks the hub once a minute again, the door off",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-closed-socket-heard-after-the-wait",
+    "file": "server/src/index.js",
+    "old": "    const a = this._pastWait(ws);\n    if (!a) return null;\n    if (!on",
+    "new": "    const a = this._attach(ws);\n    if (!on",
+    "why": "a frame that waited at the door is heard after its socket closed and its leave was said",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-closed-sockets-queued-frame-heard",
+    "file": "server/src/index.js",
+    "old": "{ await meter.dq.catch(() => null); if (!(a = this._pastWait(ws))) return null; }",
+    "new": "{ await meter.dq.catch(() => null); a = this._attach(ws); }",
+    "why": "a frame queued behind one at the door is heard after its socket closed",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-closed-sockets-lease-taken",
+    "file": "server/src/index.js",
+    "old": "    const b = this._pastWait(ws);   // read again past the awaits\n",
+    "new": "    const b = this._attach(ws);   // read again past the awaits\n",
+    "why": "a lease read while its socket closed is taken anyway (the socket back in the room's index), and the frame waiting on the read is heard after the leave",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-replaced-socket-heard-after-the-wait",
+    "file": "server/src/index.js",
+    "old": "    return a?.replaced ? null : a;\n",
+    "new": "    return a;\n",
+    "why": "a frame of a socket a reconnect replaced while it waited at the door is heard, with no id",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "LEASE1-a-closed-socket-unread-past-a-wait",
+    "file": "server/src/index.js",
+    "old": "    const a = this._dead.has(ws) || this._gone.has(ws) ? null : this._attach(ws);\n",
+    "new": "    const a = this._attach(ws);\n",
+    "why": "past every wait a closed socket reads as live: its frames are heard after its leave",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  }
+]

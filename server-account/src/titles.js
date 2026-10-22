@@ -284,10 +284,11 @@ export const isDeveloper = (player, env) =>
   && developerHandles(env).has(player.handle.toLowerCase());
 
 /** MOD1: is this player a moderator? A guest cannot be, for the same
- *  reason a guest cannot be a developer. */
+ *  reason a guest cannot be a developer. STAFF-PANEL1: listed, or added by an Admin from the staff panel
+ *  (`staff_mod`, migration 0144) - the account's, so a rename keeps it and a listed handle is never needed. */
 export const isModerator = (player, env) =>
   typeof player?.handle === 'string' && !!player.handle
-  && moderatorHandles(env).has(player.handle.toLowerCase());
+  && (moderatorHandles(env).has(player.handle.toLowerCase()) || player.staff_mod === 1);
 
 /** SHADOW-FANG-MOD (2026-10-19, Mac: "Give the shadow fang title mod perms including ban"): THE TITLES THAT MODERATE -
  *  their holders may do everything canModerate opens (mute, ban, unban, strikes, the reports' queue, a case's buttons),

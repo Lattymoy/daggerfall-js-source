@@ -363,8 +363,8 @@
   {
     "name": "T-BOOK-DAYMS",
     "file": "src/net/npcHallBook.js",
-    "old": "Math.floor(nowMs() / 86_400_000)",
-    "new": "Math.floor(nowMs() / 3_600_000)",
+    "old": "const dayNow = () => turnedDayOf(nowMs(), turnMs);",
+    "new": "const dayNow = () => Math.floor(nowMs() / 3_600_000);",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1424,8 +1424,8 @@
   {
     "name": "T-WIRE-HALLBOOK-STORAGE",
     "file": "src/scenes/world.js",
-    "old": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage() }) : null;",
-    "new": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: null }) : null;",
+    "old": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage(), turnMs: dayTurnMs() }) : null;",
+    "new": "const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: null, turnMs: dayTurnMs() }) : null;",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",

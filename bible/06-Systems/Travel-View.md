@@ -2707,3 +2707,18 @@ the ring's sun and haze, the ring's hole and its key, the click, the host's wiri
 arithmetic rewritten as the far law, every `_csLoc` a triple - `blood1_decals`, `el1_enhancedlighting`, `el4_frame`,
 `enhancedSky`, `grasslit2`, `vc7b_shafts`, `volumetricClouds`, `water`, `dwf_audit`, `weatherfront`, `tv2_click_to_move`,
 `farring`, `audit_farsea1`, `farsea1`).
+
+## OW-HITCH - the Overworld's hitches (2026-10-21, the owner)
+
+The owner: "Theres still a lot of hitching in the overworld. Can you please fix this properly". An Overworld journey in
+the real game (W held at x60 from Knightstale, the freeware ARENA2) was profiled frame by frame, and what froze its frames
+was taken out - the grass freeing every cell the journey left behind in the frame the view came down, the collector's
+pauses (the grass's and the snowpack's garbage), the blood sheet built in the first blow's frame, a ground set met at a
+new climate built in one task, the Living World's towns-near book cleared inside one trip, the music's window walked
+from the song's start. The record, the figures and the pins: `07-Rendering/Performance-Priority.md` OW-HITCH.
+
+**The four hosts.** `scenes/world.js` wired - it alone streams pixels, raises the Overworld and holds the grass, the
+snow and the ground sets (`scenes/groundSets.js`, its module). `scenes/exterior.js` (the fixed city) builds its one
+ground set once at its boot, through the renderer's `uploadTileArray` and the marks' whole-run names, which answer as
+before; `scenes/worldModes.js` and `scenes/dungeonContext.js` stream no ground and raise no Overworld. The blood sheet's
+prewarm and the music's window are every host's alike.

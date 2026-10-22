@@ -431,7 +431,8 @@ test('LW9 the host: the roads\' trouble world reads the patrol\'s cover, the tow
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /covered: \(trip\) => livingCovered\(patrolCover\(trip, livingTripWorld/);   // PIN MOVED (AUDIT LW-II E1): a cover waiting on a round's way waits
   assert.match(w, /town\.type === INN_TYPE \? innGuestsOf\(town, day, livingTripWorld, o\)/);
-  assert.match(w, /wanted: \(res, trip\) => \(res\.job === 'patrol' && trip\?\.from\?\.region != null && knownCriminal\(playerEntity, trip\.from\.region/);
+  // FIELD BUGS 2026-10-21d PATROL-GRACE: the region's law outside the grace an answered law gives (standing.js patrolHalts)
+  assert.match(w, /wanted: \(res, trip\) => \(res\.job === 'patrol' && trip\?\.from\?\.region != null && patrolHalts\(playerEntity, trip\.from\.region/);
   const r = readFileSync(new URL('../../../src/scenes/livingWorld/livingRoads.js', import.meta.url), 'utf8');
   assert.match(r, /if \(at\.inn\) continue;   \/\/ LW9: lodged at the inn on the road/);
   assert.equal(paceScale(CALENDAR_MPM), 1);

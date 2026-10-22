@@ -467,6 +467,16 @@ stood for a quest Person now answers to the Person's own name (`systems/quest/pe
 stand's one builder and answered by `characters/staticNpc.js` staticNpcName - Port-Ledger's QUESTLINES row, departure
 11). Pinned by `test/systems/fb1020_questnameone.test.js`, which reads every `ql name` the scripts hold.
 
+SITE-NAMED (FIELD BUGS 2026-10-20h, report 2: "the Orrery quest's blank building name";
+`01-Overview/bugs/Field-Bugs-2026-10-20h.md`). The runner starts a step wherever the player stands, and a step's
+`remote temple` or `remote magery` was named through the town host's name bag, which answered nothing off a town: a
+temple or Mages Guild hall drawn on the road was named '' for good, and Brass at Dusk and The Orrery of Endings read
+"Meet Prior Anselm Vey at  in Wildertown" in the sheet, the letter, the journal, the talk and the map - as did nine more
+steps (the Burning Doors' and the Covens' Mages Guild halls, the Frostfall's last) and the main story's S0000008. The bag now answers once FACTION.TXT
+is read (`townTalk.js:"    if (!factions) return null;"`), DFU's own law (FormulaHelper.cs:3139-3162 reads
+PlayerEntity.FactionData wherever the player stands), and a save carrying such a site has it named at the load's
+re-seat (`place.js:"  nameSiteAgain(world) {"`). Pinned by `test/systems/quest/fb1020h_sitenamed.test.js`.
+
 ### 4.1 THE DAGON CYCLE - three lines, one story (online)
 
 The breach, the covens and the Spire are already one story in the shipped lore: Dagon's mortal faithful open the
@@ -561,7 +571,7 @@ sweeps `src/` both ways and pins where each is said:
 | gem-socketed, piece-reforged | a gem set in a socket - at the Reforge, or with the pack's own socket press (the inventory's gem wells), both through `systems/reforge.js` setGemPiece (AUDIT QUESTLINES ACTS-9: this said the Reforge alone); a piece reforged at the Reforge |
 | gambit-won | The King's Gambit settled, the player's side won (`scenes/gambitTableGame.js`) |
 | cards-won | a Hold'em pot or an Iliac hand won, offline and at the relay's tables |
-| port-reached, cargo-delivered | the harbour office: a berth at another port after a quarter league under sail (PORT_VOYAGE_M); a delivery contract done (`scenes/harbourOffice.js`) |
+| port-reached, cargo-delivered | the harbour office: a berth at another port after a quarter league under sail (PORT_VOYAGE_M) from the port she last lay still in, the helm let go in port a berth too (VOYAGE-HOLD, `01-Overview/bugs/Field-Bugs-2026-10-21b.md`); a delivery contract done (`scenes/harbourOffice.js`) |
 | ship-struck | a ship struck to the player's guns - in a sea the player stands, or online in her stander's word within SINK_CREDIT_S of the player's blow - one helper with the crew's win (`naval/navalHost.js` struckToMe; AUDIT QUESTLINES ACTS-11: the second arm said nothing, so online a group's other captains struck none) |
 | raid-repelled | a raid the player fought, cleansed (`systems/raidingParties.js`) |
 | arena-won | a ladder bout won - this screen's own, or the relay's `pve` bout; never the pit's practice nor a bout between players (`scenes/arena/arenaBouts.js`; AUDIT QUESTLINES ACTS-6) |

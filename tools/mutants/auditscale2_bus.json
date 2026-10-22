@@ -42,12 +42,12 @@
   {
     "name": "AUDIT-SCALE2-R2-5-order-unread",
     "file": "server/src/index.js",
-    "old": "    if (order && order.i > ti) a = { ...a, mu: order.mu };\n",
+    "old": "    if (order && order.i > ti) a = { ...a, mu: order.mu, lt: order.i };",
     "new": "",
     "tests": [
       "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a mute the bus applied unread at a shard's hello"
+    "note": "LEASE1 (PIN MOVED): the line also keeps a socket's lease. a mute the bus applied unread at a shard's hello"
   },
   {
     "name": "AUDIT-SCALE2-R2-5-guildout-unread",
@@ -272,12 +272,12 @@
   {
     "name": "AUDIT-SCALE2-R1-7-kept-by-prefix",
     "file": "server/src/index.js",
-    "old": "    if (a.vid && a.id && isChannelShard(a.key) && m.t !== 'hello' && m.t !== 'ping' && m.t !== 'pose') { this._hubForward(ws, a, message); return; }\n",
+    "old": "    if (a.vid && a.id && isChannelShard(a.key) && m.t !== 'hello' && m.t !== 'ping' && m.t !== 'pose' && m.t !== 'lease') { a = await this._leaseHeard(ws, a); if (a) this._hubForward(ws, a, message); return; }   // LEASE1: as above\n",
     "new": "",
     "tests": [
       "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a shard keeps a frame by its first key"
+    "note": "LEASE1 (PIN MOVED): the line also keeps a socket's lease. a shard keeps a frame by its first key LEASE1 REVIEW II (PIN MOVED): the line passes the lease door before it goes up."
   },
   {
     "name": "AUDIT-SCALE2-R3-1-copy-fights",

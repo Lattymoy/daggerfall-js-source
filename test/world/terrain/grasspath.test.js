@@ -151,7 +151,7 @@ test('PERF10: the field is a disc - filled at the draw’s range, held out to th
   // a cell is only ever created inside `range` and freed past `span`.
   const seen = [];
   const r = { allocSlots: (p, s) => seen.push(s), writeSlot: () => {}, clearSlot: () => {} };
-  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9 });
+  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9, clock: () => 0 });   // FB1021B: a clock that stands still - every cell due now comes on the frame, as a whole fill did
   assert.equal(seen[0], f.slots);
   let max = 0;
   for (let step = 0; step < 40; step++) { f.update(step * 7.5, step * 3.1); if (f.live.size > max) max = f.live.size; }
@@ -175,10 +175,11 @@ test('AUDIT PERF10 F1: a field with too few slots holds the NEAREST cells - a wr
   // ever want. The guarantee is not that the bound is right - it is that
   // the field holds the NEAREST `slots` cells whatever the bound says.
   const slots = full - 8;
-  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9, span: rad, range: rad, slots });
+  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9, span: rad, range: rad, slots, clock: () => 0 });   // PIN MOVED (FB1021B): a clock that stands still - the frame's time never runs out
   assert.equal(f.slots, slots, 'the seam took');
   let ex = 0;
   for (let i = 0; i <= 80; i++) { ex = i * (cell / 4); f.update(ex, 0); }
+  for (let i = 0; i < 20; i++) f.update(ex, 0);   // FB1021B: a walk paces its rim to the eye; the law is the field's once it stands
   assert.ok(f.live.size <= f.slots, `never more live than slots (${f.live.size} of ${f.slots})`);
   assert.equal(held.size, f.live.size, 'and the renderer holds exactly what is live');
   // THE LAW: every live cell is at least as near as every cell that is
@@ -203,7 +204,7 @@ test('AUDIT PERF10 F1: a field with too few slots holds the NEAREST cells - a wr
   // and the source carries the eviction, not a break
   const src = read('src/render/labGrass.js');
   assert.match(src, /if \(slot === undefined\) \{/, 'an empty free list is handled, not broken out of');
-  assert.match(src, /if \(!far\) break;/, 'and the walk stops only when every slot holds something nearer');
+  assert.match(src, /if \(!far\) return undefined;/, 'and the walk stops only when every slot holds something nearer');   // PIN MOVED (FB1021B): the fill's one slot question, asked before a cell is begun and when it is written
   assert.doesNotMatch(src, /if \(budget-- <= 0 \|\| !free\.length\) break;/, 'the old break is gone');
 });
 
@@ -216,7 +217,7 @@ test('AUDIT PERF10: the window is measured to a cell’s NEAREST POINT, as the d
   // say that, so this holds the live set against the law directly.
   const r = { allocSlots: () => {}, writeSlot: () => {}, clearSlot: () => {} };
   const cell = GRASS_CELL, rad = cell * 4;
-  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9, span: rad, range: rad });
+  const f = createGrassField(r, { keep: () => 0, perFrame: 1e9, span: rad, range: rad, clock: () => 0 });   // PIN MOVED (FB1021B): a clock that stands still - the whole disc in the one update
   const ex = 7.3, ez = 21.9;   // an offset with no symmetry to hide behind
   f.update(ex, ez);
   const k = Math.ceil(rad / cell) + 2;

@@ -200,21 +200,22 @@
   {
     "name": "BAL9c-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 8;",
+    "old": "export const ITEM_LAW_VERSION = 9;",
     "new": "export const ITEM_LAW_VERSION = 2;",
     "tests": [
       "test/systems/tech1_roster.test.js",
       "test/systems/item/int1_itemlaw.test.js"
-    ]
+    ],
+    "note": "SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
   },
   {
     "name": "BAL9c-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct165';",
+    "old": "export const ACCOUNT_VERSION = 'acct168';",
     "new": "export const ACCOUNT_VERSION = 'acct120';",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ],
-    "note": "LEAN-READS (PIN MOVED): acct164 (acct159, acct160, acct161, acct162 then acct163 on its branch, renumbered past QL12, WB14, JUNGLE-WOODS, NAME-WORDS and PURSE-MEND at the merges). PURSE-MEND and COMPANION-DROP (PIN MOVED): acct163 (acct162 on its branch, renumbered past NAME-WORDS at the merge). JUNGLE-WOODS (PIN MOVED): acct161 (acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges). QL12 (PIN MOVED): acct159."
+    "note": "STAFF-PANEL1 (PIN MOVED): acct168, the staff panel sign-in (migration 0144). CAKE-CAP-SAID (PIN MOVED): acct167 (acct166 on its branch, renumbered past ESSENCE-LOOSE and SOUL-LAW at the merge). ESSENCE-LOOSE and SOUL-LAW (PIN MOVED): acct166, one release, and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143). LEAN-READS (PIN MOVED): acct164 (acct159, acct160, acct161, acct162 then acct163 on its branch, renumbered past QL12, WB14, JUNGLE-WOODS, NAME-WORDS and PURSE-MEND at the merges). PURSE-MEND and COMPANION-DROP (PIN MOVED): acct163 (acct162 on its branch, renumbered past NAME-WORDS at the merge). JUNGLE-WOODS (PIN MOVED): acct161 (acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges). QL12 (PIN MOVED): acct159."
   }
 ]

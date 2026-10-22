@@ -88,6 +88,14 @@ export const PATROL_COVER_DAYS = 2;
 export const PATROL_RISK = 0.5;
 /** The farthest a traveller's home can be from a town and still be read for visitors or the roads (map pixels). */
 export const TRIP_REACH_PX = 18;
+/** OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): the key a host keeps a
+ *  `townsNear(px, py, r)` answer by - a number, one a pixel and a reach (any reach, and a pixel up to half a map past
+ *  its 1000 x 500 either way),
+ *  where it was a template string a call: a way's inns ask it at every pixel of the way (innsAlong) - and how many the
+ *  host keeps. 512 was fewer than one long way's pixels, so the book was cleared inside a single trip's inns and asked
+ *  again cold; a journey on the Overworld brings a town's roads in every few seconds. */
+export const livingNearKey = (px, py, r) => (r * 1024 + (py + 256)) * 2048 + (px + 512);
+export const LIVING_NEAR_KEPT = 8192;
 /** LW6: the share of an adventurer's trips that are DIVES - into a dungeon in reach, when one is - and the reach
  *  (map pixels, nearest and farthest), and the hours inside (the clock's minutes, fewest and most). */
 export const DIVE_CHANCE = 0.55;

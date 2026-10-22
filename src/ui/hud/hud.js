@@ -28,7 +28,7 @@ import { drawCrosshairAndModeIcon, crosshairCentreY } from './hudCrosshair.js'; 
 import { playerDamageFlash } from '../damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { playerBloodScreen, SCREEN_SPATTER_MIN } from '../bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
 import { bloodScreenOn } from '../../combat/blood/bloodSwitch.js';   // BLOOD2e: its row
-import { bloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../../combat/blood/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
+import { bloodAtlas, prewarmBloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../../combat/blood/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
 import { hudFade } from '../fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { cursorActive as freedCursor } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse is the tooltip's gate too (DaggerfallHUD.cs:141-147)
@@ -286,6 +286,7 @@ let _placedSpellIcons = [];
 // or covered returns before the rows, and the last frame's rects stood - a freed right-click there ended a spell with
 // nothing on the screen. Emptied on those returns, and a placement not drawn for a second answers none.
 let _placedAt = -Infinity;
+let _lensWarmed = false;   // OW-HITCH: the lens's blood sheet asked to grow in the page's idle time (drawHud)
 const PLACED_FRESH_MS = 1000;
 const nowMs = () => globalThis.performance?.now?.() ?? Date.now();
 export const activeSpellIconsPlaced = () => (nowMs() - _placedAt <= PLACED_FRESH_MS ? _placedSpellIcons : []);
@@ -634,6 +635,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // flash's latch says a blow landed (the RemoveHealth edge - an enemy's
   // hit, a trap, a fall; never a spell, a load or a surrender).
   const blow = playerDamageFlash.takeBlow();
+  // OW-HITCH: the lens's sheet grown ahead of the first blow, as the marks' is (bloodMarks.js asks it only with the marks
+  // on - the lens has its own row): asked once its row is on, and idempotent (a sheet made or begun answers at once)
+  if (!_lensWarmed && bloodScreenOn()) { _lensWarmed = true; prewarmBloodAtlas(); }
   if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
   playerBloodScreen.tick(dt);
   if (playerBloodScreen.count && renderer.uploadTexture) playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));

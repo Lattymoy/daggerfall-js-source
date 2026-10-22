@@ -57,6 +57,17 @@ export function packTradeRefusal(item, entity) {
  *  shelf restated it, pinned by its text alone. */
 export const wagonLoadedHeld = (item, entity) => !!item && item === activeWagonItem(entity?.items ?? []) && (entity?.wagonItems?.length ?? 0) > 0;
 
+/** TRADE-WHOLE (FIELD BUGS 2026-10-20h, found tracing SOUL-LAW): A LOT IS CLAMPED WHOLE OR NOT AT ALL. validLootList lets a
+ *  piece the item law refuses go and keeps the rest (AUDIT INT: a forged piece in a chest cost every honest one beside
+ *  it) - right for a chest, and wrong for a trade, whose two sides hold the lot as offered. The Soul Gem an Ogre filled
+ *  (law 8 refused its soul) stood in its giver's offer and never rode the wire: hand to hand it left the giver's pack at
+ *  the commit and reached nobody, and the receiver's side of a forged lot shows less than was given. So an offer with
+ *  such a piece is said ("That cannot be traded."), and a lot that carries one is refused whole, as one of no shape is. */
+function wholeLot(records) {
+  const items = validLootList(records);
+  return items && items.length === records.length ? items : null;
+}
+
 /** The kilograms an offer takes out of the pack: each entry at the count offered, and the gold. */
 function offerWeight(entries, gold) {
   let w = gold * GOLD_PIECE_WEIGHT_KG;
@@ -89,13 +100,13 @@ export function createTradePack(entity, { stampIds = null } = {}) {
         if (have > 1 || count > 1) copy.stackCount = count;
         return copy;
       });
-      return validLootList(recs);
+      return wholeLot(recs);
     },
 
     /** The peer's records as this game would mint them - every one through the wire clamp - or null if any is no item,
      *  or any is BOUND (SS1: a peer that holds one out - an older build, a forged frame - offers what may not change
      *  hands, and the lot is refused whole, the trade's own word for a forgery). */
-    unwire(records) { const items = validLootList(records); return items && !items.some(isBound) ? items : null; },
+    unwire(records) { const items = wholeLot(records); return items && !items.some(isBound) ? items : null; },
 
     /** AUDIT REALM L1-F1: where each offered item stands in the pack - its index in the list a save writes as `items`
      *  (systems/save/save.js snapshotPlayer keeps the order) - read BEFORE the goods are reserved, so a realm trade's half

@@ -6366,6 +6366,10 @@ it lives. DFU has no such pass; this is the port's own (Port-Ledger section A, Q
    `Place.assignQuestResource`, without the action's unhide and without its cull. The fault: a party's shared-quest
    resync replaces each Place's siteDetails with the partner's copy, and the `place` action, complete, never runs
    again. A Person's last-assigned Place settles two placements; two Places and nothing to settle them leave it alone.
+   CREATE-HOME (`01-Overview/bugs/Field-Bugs-2026-10-22b.md`): a completed `create npc` names its person's home the same
+   way (Person.PlaceAtHome's; never a questor's or an individual's, whom it refuses) - the courier's recipient and 43
+   more people no `place npc` ever places - and a person put back where no Place is assigned him is assigned that
+   Place, which the talk's Where is reads.
 2. **A site link the quest never got.** `hasSiteLink` asks the SITE, not the quest (QuestMachine.cs:1739, kept), so a
    second quest placing where a first already had leaned on the first's link, and when the first ended the second's
    resources stood nowhere. One link per (quest, Place) that holds targets.
@@ -6387,7 +6391,7 @@ was missing from your active quest(s).", or "You have no active quests to repair
 
 Every host's pause hands `repairQuests` off its own bridge (`questBridge.repair`): the world, the fixed city, the
 dungeon, and the interior pause through its host. Pinned: `test/systems/quest/qrepair.test.js` (6) over a real machine, Place and
-mount; `tools/mutants/qrepair.json`.
+mount; `tools/mutants/qrepair.json`; CREATE-HOME `test/systems/quest/fb1022b_courier.test.js` (5), `tools/mutants/fb1022b_courier.json`.
 
 ## DISC29-H - Info mode looks at a quest stand; it does not click it (2026-09-28, Triage)
 

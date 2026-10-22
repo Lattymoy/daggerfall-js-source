@@ -27,7 +27,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   ActionSystem, DOOR_TEXT_HUD_DELAY_S, TYPE_99_TEXT_INDEX, isActionDoorObject,
-  hasActionCollision, COLLISION_TRIGGER_FLAGS,
+  hasActionCollision, walkHears, COLLISION_TRIGGER_FLAGS,
   CASTLE_DAGGERFALL_MAP_ID, CASTLE_DAGGERFALL_FOYER_DOOR_LOAD_IDS,
 } from '../../src/world/actionSystem.js';
 import { Collider } from '../../src/player/collider.js';
@@ -391,8 +391,10 @@ test('AUDIT 63 F45: a Door-flagged foyer door cannot take the hack from a bump',
   // ...so the pass has to refuse the call.
   const dc = src('src/scenes/dungeonContext.js');
   const pass = dc.slice(dc.indexOf('function collisionTriggers('), dc.indexOf('function waterSurfaceYAt('));
-  assert.ok(pass.includes('if (!hasActionCollision(o)) continue;'),
+  // FIELD BUGS 2026-10-21d FLAT-WALK: the pass asks walkHears - hasActionCollision, and no flat relay
+  assert.equal(walkHears(door), false, 'what a walk hears is a DaggerfallActionCollision first');
+  assert.ok(pass.includes('if (!walkHears(o)) continue;'),
     'the collision pass walks only the objects DFU gives a DaggerfallActionCollision');
-  assert.ok(pass.indexOf('if (!hasActionCollision(o)) continue;') < pass.indexOf('actions.receive(o, touch);'),
+  assert.ok(pass.indexOf('if (!walkHears(o)) continue;') < pass.indexOf('actions.receive(o, touch);'),
     'and refuses before Receive, which is where the hack sits');   // AUDIT PRE-MERGE 0929 D1/D2: the receive is of the touch actionContact heard
 });

@@ -102,12 +102,12 @@
   {
     "name": "SCALE5c-frame-not-handed-up",
     "file": "server/src/index.js",
-    "old": "    if (a.vid && a.id && typeof message === 'string' && isChannelShard(a.key) && !shardKeeps(message)) { this._hubForward(ws, a, message); return; }\n",
+    "old": "    if (a.vid && a.id && typeof message === 'string' && isChannelShard(a.key) && !shardKeeps(message)) { a = await this._leaseHeard(ws, a); if (a) this._hubForward(ws, a, message); return; }\n",
     "new": "",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "a shard runs a world line itself - the other shards never hear it, and a shared quest meets the shard's door"
+    "note": "a shard runs a world line itself - the other shards never hear it, and a shared quest meets the shard's door LEASE1 REVIEW II (PIN MOVED): the line passes the lease door before it goes up."
   },
   {
     "name": "SCALE5c-forward-unbounded",
@@ -132,12 +132,12 @@
   {
     "name": "SCALE5c-pose-handed-up",
     "file": "src/net/hubShards.js",
-    "old": " || s.startsWith('{\"t\":\"pose\"');",
-    "new": ";",
+    "old": " || s.startsWith('{\"t\":\"pose\"') || s.startsWith('{\"t\":\"lease\"');",
+    "new": " || s.startsWith('{\"t\":\"lease\"');",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "a pose handed to the bus, which keeps no place"
+    "note": "LEASE1 (PIN MOVED): the line also keeps a socket's lease. a pose handed to the bus, which keeps no place"
   },
   {
     "name": "SCALE5c-verdict-kept-wrong",
@@ -783,12 +783,12 @@
   {
     "name": "SCALE5c-census-the-bus-own",
     "file": "server/src/index.js",
-    "old": "  _shardAtt(a) { const { key, pose, hm, at, w2, vid, ly, ...att } = a; void key;",
-    "new": "  _shardAtt(a) { const { key, pose, hm, at, w2, vid, ly, lk, ...att } = a; void lk; void key;",
+    "old": "  _shardAtt(a) { const { key, pose, hm, at, w2, vid, ly, ld, ...att } = a; void key;",
+    "new": "  _shardAtt(a) { const { key, pose, hm, at, w2, vid, ly, ld, lk, ...att } = a; void lk; void key;",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "the census counts the bus's own sockets alone SCALE5d part two (re-aimed by content): the court's copies beside it."
+    "note": "LEASE1 (PIN MOVED): the line also keeps a socket's lease. the census counts the bus's own sockets alone SCALE5d part two (re-aimed by content): the court's copies beside it."
   },
   {
     "name": "SCALE5c-region-list-unanswered",

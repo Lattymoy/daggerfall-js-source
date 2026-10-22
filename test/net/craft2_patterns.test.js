@@ -86,7 +86,7 @@ test('CRAFT2 law: the first-make 500 a pattern\'s at a tier - Adamantium, Ebony,
   const paying = RECIPES.filter(firstCraftPays);
   // the key as it stood (AUDIT PROF-541 J7 and R2-S7 - a jewel's piece and base, a dish its dish, every other recipe its id)
   const before = (r) => (r.kind === 'jewel' ? r.id.split(':').slice(0, 2).join(':') : r.kind === 'dish' ? r.product : r.id);
-  assert.deepEqual([paying.length, new Set(paying.map(before)).size, new Set(paying.map(firstCraftKey)).size], [663, 561, 446], 'MEASURED: the recipes that pay a first, the firsts they paid, and the patterns\' at a tier');
+  assert.deepEqual([paying.length, new Set(paying.map(before)).size, new Set(paying.map(firstCraftKey)).size], [667, 565, 446], 'MEASURED: the recipes that pay a first, the firsts they paid, and the patterns\' at a tier');   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the Wolf Pelt's and the Boar Hide's four skins pay a first each, kin of the Bat's and the Bear's at tier 2 (663, 561)
   const mixed = [...new Set(RECIPES.map(firstCraftKey))].filter((k) => { const pays = RECIPES.filter((r) => firstCraftKey(r) === k).map(firstCraftPays); return pays.includes(true) && pays.includes(false); });
   assert.deepEqual(mixed, [], 'FACT: AUDIT 32 S1 stands beside it - no pattern at a tier mixes the world\'s goods and the counter\'s');
   // D1 binds at most 100 parameters a statement: the craft's decision binds 16, two an input (a Heartwood's or a cracked

@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-ENVIRONS-S5-promotion-inside-the-build",
     "file": "src/scenes/snowfallHost.js",
-    "old": "if (was && was !== t) { t.replaced = was; if (runtime) promotions.push(t, was); }",
-    "new": "if (was && was !== t) { t.replaced = was; if (runtime) runtime.terrainPromoted(t, lastFrame?.now ?? 0, was); }",
+    "old": "if (was && was !== t) { t.replaced = true; if (runtime) promotions.push(t, was); }",
+    "new": "if (was && was !== t) { t.replaced = true; if (runtime) runtime.terrainPromoted(t, lastFrame?.now ?? 0, was); }",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]

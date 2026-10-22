@@ -282,10 +282,12 @@ test('VE2 the hosts: the two terrain hosts hand the classic file and upload what
   assert.match(src('scenes/exterior.js'), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\);[\s\S]{0,400}?renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, 'scenes/exterior.js');
   // PIN MOVED (AUDIT PRECIP GROUND-2): the streaming host asks in one home (groundLayersOf) for its set and its twin's winter,
   // and uploads the set - or on the snow lane its twin, the two as one array - once
-  assert.match(src('scenes/world.js'), /const modLayers = await dfmodGroundLayers\(archive, tex\), classic = \[\];/, 'scenes/world.js');
-  assert.match(src('scenes/world.js'), /renderer\.uploadTileArray\(key, winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\)\);/, 'scenes/world.js');
-  const uploaders = readdirSync(new URL('../../src/scenes/', import.meta.url), { recursive: true }).filter((f) => f.endsWith('.js') && /uploadTileArray\(/.test(src(`scenes/${f}`)));
-  assert.deepEqual(uploaders.sort(), ['exterior.js', 'world.js'], 'worldModes.js (interiors) and dungeonContext.js have no ground to dress');
+  // PIN MOVED (OW-HITCH): that home is scenes/groundSets.js, the world host's module (HOST-SPLIT), uploading a few layers a breath
+  assert.match(src('scenes/groundSets.js'), /const modLayers = await dfmodGroundLayers\(archive, tex\), classic = \[\];/, 'scenes/groundSets.js');
+  assert.match(src('scenes/groundSets.js'), /const layers = winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\);\n\s+await stepsBreathing\(renderer\.uploadTileArraySteps\(key, layers\), breathe\);/, 'scenes/groundSets.js');
+  assert.match(src('scenes/world.js'), /const \{ loadGroundSet \} = createGroundSets\(\{ renderer, getTexture, labGrass, breathe: \(\) => breather\.breathe\(\),/, 'scenes/world.js wires it');
+  const uploaders = readdirSync(new URL('../../src/scenes/', import.meta.url), { recursive: true }).filter((f) => f.endsWith('.js') && /uploadTileArray(Steps)?\(/.test(src(`scenes/${f}`)));
+  assert.deepEqual(uploaders.sort(), ['exterior.js', 'groundSets.js'], 'worldModes.js (interiors) and dungeonContext.js have no ground to dress');
 });
 
 test('VE3/VE4 the Texture Overhaul card: Classic and Vanilla Enhanced - the pack ships and the player\'s own copy shadows it; wearing it switches the Base on with Replace Game Artwork and the add-ons it was last worn with; Classic switches every texture mod off but the lighting mod and keeps the add-ons for the next wear; Custom for a mix (mutants: Classic sparing a texture mod; the Base not switched on; the add-ons forgotten across Classic; Custom read as Classic)', async () => {

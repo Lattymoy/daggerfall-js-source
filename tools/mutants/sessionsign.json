@@ -212,8 +212,8 @@
  {
   "name": "SESSIONSIGN-preflight-shut",
   "file": "server-account/src/index.js",
-  "old": "x-d1-bookmark, if-none-match, x-session-pass'",
-  "new": "x-d1-bookmark, if-none-match'",
+  "old": "x-d1-bookmark, if-none-match, x-session-pass, x-staff-session'",
+  "new": "x-d1-bookmark, if-none-match, x-staff-session'",
   "tests": [
    "test/server/sessionsign.test.js"
   ],

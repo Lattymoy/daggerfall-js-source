@@ -1223,6 +1223,7 @@ export function createLegacyHost(deps) {
     const me = current();
     if (!family || past || !me || !deps.on() || !playedHere(me) || !res?.id) return [];
     return topicsFor(family, me, res, ctx.regard | 0).map((t) => ({
+      topic: t,   // FIELD BUGS 2026-10-21d REGARD-OWN: which row it is - townTalk says where a new friend's Courtship is
       label: topicLabel(t),
       legacy: { question: (tone) => topicQuestion(t, tone), answer: (tone, taste) => answerTopic(t, res, taste, ctx) },
     }));

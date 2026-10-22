@@ -201,8 +201,8 @@
   {
     "name": "LEGACY6-new-game-forgets",
     "file": "src/scenes/world.js",
-    "old": "    newGame: () => { livingRelations = createRelations(); legacyHost?.seedRegards(livingRelations); },",
-    "new": "    newGame: () => { livingRelations = createRelations(); },",
+    "old": "    newGame: () => { livingRelations = characterRelations(null, ownMinutes, params.has('online')); legacyHost?.seedRegards(livingRelations); },",
+    "new": "    newGame: () => { livingRelations = characterRelations(null, ownMinutes, params.has('online')); },",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]

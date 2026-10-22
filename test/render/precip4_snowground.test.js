@@ -24,7 +24,7 @@ import { EL_TERRAIN_FS } from '../../src/render/enhancedLighting.js';
 const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= eps, `${msg}: ${a} vs ${b}`);
 const read = (p) => readFileSync(p, 'utf8');
 const PIX = 819.2;
-const up = [0, 1, 0], none = [0, 0];
+const none = [0, 0];
 
 /** The chunk (with the ecotone's before it: its uEcoOrigin, its weights) bound to a frame of snowlines - `lines(i, j)` the
  *  [h10, h50, h90] of the window's point (i east, j south of its first), `win` the window's first world tile. */
@@ -47,21 +47,28 @@ test('PRECIP4 THE CHUNK READS THE LAW: snowAtHeight is snowpack.js coverAtHeight
   }
 });
 
-test('PRECIP4 THE FRAGMENT\'S COVER: off the lane none; on it the line between the window\'s four points about it, its height (world y + the frame\'s offset) against it, a steep face shed, a thin cover broken into patches while a bare one stays bare and a whole one whole (mutants: the switch unread; the offset\'s sign; the slope unread; the patches over a whole cover)', () => {
+test('PRECIP4 THE FRAGMENT\'S COVER: off the lane none; on it the line between the window\'s four points about it, its height (world y + the frame\'s offset) against it, a thin cover broken into patches while a bare one stays bare and a whole one whole (mutants: the switch unread; the offset\'s sign; the patches over a whole cover; the laid snow\'s footprint one axis twice)', () => {
   const [ox, oz] = ecoOrigin(200, 100);
   const f = chunk({ lines: lineFn(100, 150, 180), win: [ox, oz + 128], origin: [ox, oz, 0], alt: -34 });
-  assert.equal(f.snowCover([400, 400], 2000 + 34, up, none, none), 1, 'whole over its 90 %');
-  assert.equal(f.snowCover([400, 400], 0 + 34, up, none, none), 0, 'bare under its 10 %');
-  assert.equal(f.snowCover([400, 400], 400 + 34, [0.6, 0.5, 0], none, none), 0, 'a cliff sheds it');
-  near(f.snowCover([400, 400], 400 + 34, [0, SNOW_GROUND.slope[1], 0], none, none), 1, 1e-9, 'a gentle slope whole');
+  assert.equal(f.snowCover([400, 400], 2000 + 34, none, none), 1, 'whole over its 90 %');
+  assert.equal(f.snowCover([400, 400], 0 + 34, none, none), 0, 'bare under its 10 %');
   const off = chunk({ lines: lineFn(100, 150, 180), on: 0 });
-  assert.equal(off.snowCover([400, 400], 9000, up, none, none), 0, 'off the lane');
-  assert.equal(off.snowLaid([400, 400], 9000, up, none, none), 1, 'and a snow lying on the ground the whole ground\'s (GROUND-9)');
-  assert.equal(f.snowLaid([400, 400], 0 + 34, up, none, none), 0, 'on it, the ground\'s own');
+  assert.equal(off.snowCover([400, 400], 9000, none, none), 0, 'off the lane');
+  assert.equal(off.snowLaid([400, 400], 9000, none, none), 1, 'and a snow lying on the ground the whole ground\'s (GROUND-9)');
+  assert.equal(f.snowLaid([400, 400], 0 + 34, none, none), 0, 'on it, the ground\'s own');
+  // AUDIT FB1021 L1-6: its footprint the fragment's own, both axes - a footprint one way only (a tile and a half a pixel
+  // up the screen, none across) fades the finest patches where a square one would not
+  let fades = 0;
+  for (let i = 0; i < 60; i++) {
+    const at = [i * 13.3 + 2, 800 - i * 11.9], wide = f.snowLaid(at, 150 + 34, none, [0, 1.5]);
+    assert.equal(wide, f.snowCover(at, 150 + 34, none, [0, 1.5]), `the ground's own at ${at}`);
+    if (Math.abs(wide - f.snowCover(at, 150 + 34, none, none)) > 1e-6) fades++;
+  }
+  assert.ok(fades > 10, `the footprint read: ${fades} of 60 changed by it`);
   let white = 0, n = 0, mixed = 0;
-  for (let i = 0; i < 40; i++) for (let j = 0; j < 40; j++) { white += f.snowCover([i * 20.3 + 1, j * 20.3 + 1], 150 + 34, up, none, none); n++; }
+  for (let i = 0; i < 40; i++) for (let j = 0; j < 40; j++) { white += f.snowCover([i * 20.3 + 1, j * 20.3 + 1], 150 + 34, none, none); n++; }
   assert.ok(white / n > 0.3 && white / n < 0.7, `half the ground: ${(white / n).toFixed(2)}`);
-  for (let i = 0; i < 400; i++) { const c = f.snowCover([i * 2.1, 3], 150 + 34, up, none, none); if (c > 0.05 && c < 0.95) mixed++; }
+  for (let i = 0; i < 400; i++) { const c = f.snowCover([i * 2.1, 3], 150 + 34, none, none); if (c > 0.05 && c < 0.95) mixed++; }
   assert.ok(mixed < 140, `patches, not a grey wash: ${mixed} of 400 between`);
 });
 
@@ -70,21 +77,21 @@ test('PRECIP4 THE PATCHES FADE WITH THE FOOTPRINT (AUDIT PRECIP GROUND-8): an oc
   const c = coverAtHeight([100, 150, 180], 150);
   for (let i = 0; i < 50; i++) {
     const p = [i * 13.7 + 2, 400 - i * 7.1];
-    near(f.snowCover(p, 150, up, [20, 0], [0, 20]), c, 1e-9, 'the share itself, far off');
-    near(f.snowCover(p, 150, up, [0.3, 0], [0, 0.3]), f.snowCover(p, 150, up, none, none), 1e-12, 'the near field unchanged');
+    near(f.snowCover(p, 150, [20, 0], [0, 20]), c, 1e-9, 'the share itself, far off');
+    near(f.snowCover(p, 150, [0.3, 0], [0, 0.3]), f.snowCover(p, 150, none, none), 1e-12, 'the near field unchanged');
   }
   let spread0 = 0, spread1 = 0;
-  for (let i = 0; i < 200; i++) { const p = [i * 4.1, 300]; spread0 += Math.abs(f.snowCover(p, 150, up, none, none) - c); spread1 += Math.abs(f.snowCover(p, 150, up, [3, 0], [0, 3]) - c); }
+  for (let i = 0; i < 200; i++) { const p = [i * 4.1, 300]; spread0 += Math.abs(f.snowCover(p, 150, none, none) - c); spread1 += Math.abs(f.snowCover(p, 150, [3, 0], [0, 3]) - c); }
   assert.ok(spread1 < spread0, 'a middling footprint keeps the large patches alone');
   assert.deepEqual(SNOW_GROUND.fade, [2, 2]);
 });
 
-test('PRECIP4 THE CPU READS THE SAME COVER (AUDIT PRECIP GROUND-3/4, HOST-5): snowCoverAt is the chunk\'s snowCover term for term at a fragment\'s place and slope (the grass, the feet), and the host\'s line at a field point is the shader\'s between the same four lattice points on pixel corners (mutants: a patch octave\'s salt; the corners of the lattice by the pixel\'s middle)', async () => {
+test('PRECIP4 THE CPU READS THE SAME COVER (AUDIT PRECIP GROUND-3/4, HOST-5): snowCoverAt is the chunk\'s snowCover term for term at a fragment\'s place (the grass, the feet), and the host\'s line at a field point is the shader\'s between the same four lattice points on pixel corners (mutants: a patch octave\'s salt; the corners of the lattice by the pixel\'s middle)', async () => {
   setAirGround({ climateAt: () => CLIMATES.Woodlands, groundAt: () => 0, topAt: () => 900 });
   try {
     const t = (406 * 360 + 215) * 1440;
     const state = { compensation: [0, 40, 0], mapOrigin: { x: 200, y: 100 }, current: { x: 200, y: 100 }, pixelTranslation: (px, py, out = [0, 0, 0]) => { out[0] = (px - 200) * PIX; out[1] = 40; out[2] = -(py - 100) * PIX; return out; } };
-    const host = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => state, builtOf: () => new Map(), heightAt: () => 0, owns: () => true, markReskin: () => {}, now: () => t, place: () => ({ px: 200, py: 100 }) });
+    const host = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => state, builtOf: () => new Map(), owns: () => true, markReskin: () => {}, now: () => t, place: () => ({ px: 200, py: 100 }) });
     await host.settle({ left: () => Infinity, breathe: async () => {} });
     // a field of lines that varies across the window: every point its own
     for (const [k, l] of host._lines) { const i = Math.floor(k / 16384) - 8192, j = (k % 16384) - 8192; const h = 200 + 37 * (i % 5) + 23 * (j % 7); l.shown = Float32Array.of(h, h + 60, h + 110); }
@@ -93,15 +100,15 @@ test('PRECIP4 THE CPU READS THE SAME COVER (AUDIT PRECIP GROUND-3/4, HOST-5): sn
     const texel = (i, j) => { const s = fr.side, o = (Math.min(s - 1, Math.max(0, j)) * s + Math.min(s - 1, Math.max(0, i))) * 4; return [fr.lines[o], fr.lines[o + 1], fr.lines[o + 2]]; };
     let seed = 11; const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
     let checked = 0;
-    for (let k = 0; k < 160; k++) {
+    for (let k = 0; k < 240; k++) {   // SNOW-FACE: 240 places (the slope's draw gone, 160 held 9 between bare and whole)
       const px = 196 + Math.floor(rnd() * 9), py = 96 + Math.floor(rnd() * 9), lx = rnd() * PIX, lz = rnd() * PIX;
       const [ox, oz] = ecoOrigin(px, py), fx = px * PIX + lx, fz = (499 - py) * PIX + lz;
       const f = chunk({ lines: texel, win: fr.origin, side: fr.side, alt: fr.altitude, spacing: fr.spacing, origin: [ox, oz, 0] });
       const line = host.lineAt(fx, fz);
       for (let q = 0; q < 3; q++) near(f.snowLine([lx, lz])[q], line[q], 1e-6, `the line at ${px},${py} (${q})`);
-      const alt = line[1] + (rnd() - 0.5) * 120, ny = 0.6 + rnd() * 0.4;
-      const gpu = f.snowCover([lx, lz], alt - fr.altitude, [0, ny, Math.sqrt(1 - ny * ny)], none, none);
-      const cpu = snowCoverAt(host.coverAt(fx, fz, alt), ny, lx, lz, ox, oz);
+      const alt = line[1] + (rnd() - 0.5) * 120;
+      const gpu = f.snowCover([lx, lz], alt - fr.altitude, none, none);
+      const cpu = snowCoverAt(host.coverAt(fx, fz, alt), lx, lz, ox, oz);
       near(gpu, cpu, 1e-6, `the cover at ${px},${py}`);
       if (cpu > 0.05 && cpu < 0.95) checked++;
     }
@@ -127,7 +134,7 @@ test('PRECIP4 THE PATCHES ARE THE WORLD\'S: a pixel\'s east edge and its east ne
   const sw = [(200 - 196) * PIX, -(100 - 96) * PIX - PIX];   // pixel (200, 100)'s south-west corner from the window's anchor
   for (let k = 0; k < 60; k++) {
     const lx = (k * 131.3) % PIX, lz = (k * 77.7) % PIX;
-    near(snow.snowCover([sw[0] + lx, sw[1] + lz], 240, up, none, none), pix.snowCover([lx, lz], 240, up, none, none), 1e-6, `one cover at ${lx.toFixed(0)},${lz.toFixed(0)}`);
+    near(snow.snowCover([sw[0] + lx, sw[1] + lz], 240, none, none), pix.snowCover([lx, lz], 240, none, none), 1e-6, `one cover at ${lx.toFixed(0)},${lz.toFixed(0)}`);
   }
 });
 
@@ -162,22 +169,22 @@ test('PRECIP4 BOTH TERRAIN PROGRAMS: the border\'s weights once, the snow\'s cov
   const r = read('src/render/renderer.js');
   const classic = r.slice(r.indexOf('const TERRAIN_FS = `'), r.indexOf('}`;', r.indexOf('const TERRAIN_FS = `')));
   for (const [name, fs] of [['classic', classic], ['lane', EL_TERRAIN_FS]]) {
-    assert.match(fs, /\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);[^\n]*\n {2}float snowC = snowCover\(vLocalXZ, vWorldPos\.y, normalize\(vNormal\), gx, gy\);[^\n]*\n {2}tex = snowGround\(tex, ew, snowC, vec3\(tuv, float\(layer\)\), gx, gy\);\n/, `${name}: after the border`);
+    assert.match(fs, /\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);[^\n]*\n {2}float snowC = snowCover\(vLocalXZ, vWorldPos\.y, gx, gy\);[^\n]*\n {2}tex = snowGround\(tex, ew, snowC, vec3\(tuv, float\(layer\)\), gx, gy\);\n/, `${name}: after the border`);
     const bed = Math.max(fs.indexOf('vec2 bedK = bedCover(data, tileUV, vec3(tuv, float(layer)), gx, gy, snowC);'), fs.indexOf('${waterBedMix()}'));   // the lane's text evaluated, the classic's its source
     assert.ok(bed > 0 && fs.indexOf('tex = snowGround(') < bed, `${name}: before the bed, which reads its cover`);
   }
   assert.match(EL_TERRAIN_FS, /vec3 white = elDecode\(textureGrad\(uTileArr, vec3\(tl\.xy, tl\.z \+ float\(uSnowArr\.x\)\), gx, gy\)\.rgb\);/, 'the lane decodes its winter');
   assert.match(classic, /\$\{snowCoverGlsl\(\)\}/);
   assert.match(read('src/render/enhancedLighting.js'), /\$\{snowCoverGlsl\('elDecode'\)\}/);
-  assert.match(snowCoreGlsl(), /float snowCover\(vec2 local, float y, vec3 n, vec2 gx, vec2 gy\) \{\n {2}if \(uSnowSet\.y < 0\.5\) return 0\.0;/);
+  assert.match(snowCoreGlsl(), /float snowCover\(vec2 local, float y, vec2 gx, vec2 gy\) \{\n {2}if \(uSnowSet\.y < 0\.5\) return 0\.0;/);
   assert.match(ecotoneGlsl(''), /vec4 ecoWeights\(vec2 local\) \{\n {2}if \(uEcoOrigin\.z == 0\) return vec4\(1\.0, 0\.0, 0\.0, 0\.0\);/);
   assert.match(read('src/render/waterBedGlsl.js'), /if \(snowC > 0\.0\) a = mix\(a, textureGrad\(uTileArr, vec3\(tl\.xy, tl\.z \+ float\(uSnowArr\.x\)\), gx, gy\)\.a, snowC\);/, 'the bed\'s painted water the winter art\'s under snow');
   // the Snowfall mod's surface
-  assert.match(SNOW_VS, /float laid = snowLaid\(xz - uSnowAnchor, ground\.y, normalize\(aNormal\), vec2\(0\.0\), vec2\(0\.0\)\);\n {2}vDepth \*= laid \* laid;/);
+  assert.match(SNOW_VS, /float laid = snowLaid\(xz - uSnowAnchor, ground\.y, vec2\(0\.0\), vec2\(0\.0\)\);\n {2}vDepth \*= laid \* laid;/);
   assert.match(SNOW_VS, /lifted = depth \* clamp\(st\.r \* 2\.0, 0\.0, 1\.0\) \* laid \* laid \* remain;/);
   assert.match(SNOW_VS, /cover \*= laid;\n {2}float offset = cover/);
   for (const fs of [snowTerrainFs(classic.slice(classic.indexOf('#version')) + '}'), snowTerrainFs(EL_TERRAIN_FS)]) {
-    assert.match(fs, /coverage \*= snowLaid\(snowAt, vWorldPos\.y, normalize\(vNormal\), snowGx, snowGy\);[^\n]*\n {2}if \(coverage - 0\.005 < 0\.0\) discard;/);
+    assert.match(fs, /coverage \*= snowLaid\(snowAt, vWorldPos\.y, snowGx, snowGy\);[^\n]*\n {2}if \(coverage - 0\.005 < 0\.0\) discard;/);
     assert.ok(fs.indexOf('vec2 snowGx = dFdx(') < fs.indexOf('discard;'), 'the footprint before the first discard');
   }
 });
@@ -290,22 +297,22 @@ test('PRECIP4 A SET\'S TWIN IS THE SET (AUDIT PRECIP GROUND-2): its summer recor
   assert.equal(t[TWIN_LAYERS + 7], winter[7], 'a set at the size kept whole');
   assert.equal(t[3].colors[(1 * 4 + 1) * 4 + 3], summer[3].colors[0 * 4 + 3], 'a texel repeated, its alpha its own');
   assert.equal(t[3].colors[(3 * 4 + 3) * 4 + 3], summer[3].colors[(1 * 2 + 1) * 4 + 3]);
-  const w = read('src/scenes/world.js');
-  assert.match(w, /renderer\.uploadTileArray\(key, winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\)\);/);
+  const w = read('src/scenes/groundSets.js');   // PIN MOVED (OW-HITCH): the world host's ground sets' home (HOST-SPLIT), uploading a few layers a breath
+  assert.match(w, /const layers = winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\);\n\s+await stepsBreathing\(renderer\.uploadTileArraySteps\(key, layers\), breathe\);/);
   assert.equal(typeof RENDER.Renderer.prototype.makeTwinArray, 'undefined', 'no blit');
 });
 
 /** A stream about pixel (200, 100) with its pixels `built`, and a host over it whose lines a test sets by hand. */
-function hostRig({ built = new Map(), owns = true, comp = [0, 0, 0], t = NaN, ground = SEA_LEVEL_M + 100 } = {}) {
+function hostRig({ built = new Map(), owns = true, comp = [0, 0, 0], t = NaN } = {}) {
   const lane = { on: owns };
-  const marked = [];
+  const marked = [], rebuilt = [];
   const clock = { t };
   const state = {
     compensation: comp, mapOrigin: { x: 200, y: 100 }, current: { x: 200, y: 100 },
     pixelTranslation: (px, py, out = [0, 0, 0]) => { out[0] = (px - 200) * PIX + comp[0]; out[1] = comp[1]; out[2] = -(py - 100) * PIX + comp[2]; return out; },
   };
   const tileArrays = new Map([[302, { id: 'summer' }], [twinKey(302), { id: 'twin' }], [2, { id: 'desert' }]]);
-  const host = createSnowCoverHost({ renderer: { tileArrays }, climateAt: () => 0, mapHeight: 500, stateOf: () => state, builtOf: () => built, heightAt: () => ground, owns: () => lane.on, markReskin: (k) => marked.push(k), now: () => clock.t });
+  const host = createSnowCoverHost({ renderer: { tileArrays }, climateAt: () => 0, mapHeight: 500, stateOf: () => state, builtOf: () => built, owns: () => lane.on, markReskin: (k) => marked.push(k), markRebuild: (k) => rebuilt.push(k), now: () => clock.t });
   /** every lattice point's lines about the stream - shown, target and build - one line */
   const setAll = (line, which = ['shown', 'target', 'build']) => {
     for (let j = 40; j <= 60; j++) {
@@ -317,19 +324,20 @@ function hostRig({ built = new Map(), owns = true, comp = [0, 0, 0], t = NaN, gr
       }
     }
   };
-  return { host, marked, state, setAll, tileArrays, lane, clock };
+  return { host, marked, rebuilt, state, setAll, tileArrays, lane, clock };
 }
 
-test('PRECIP4 THE HOST: the lane asked each frame (a pixel built under the other lane re-skinned, once); the line bilinear between lattice points on pixel CORNERS (AUDIT PRECIP HOST-5); a pixel\'s draw its first world tile; its set\'s twin on the lane, the set off it; the summer archive on the lane, DFU\'s season off it; the winter a set carries, none for a desert (mutants: the corners at pixel middles; the twin off the lane; a desert\'s winter)', () => {
+test('PRECIP4 THE HOST: the lane asked each frame (a pixel built under the other lane built again, once - LANE-TURN: never a re-skin, which never touches its ground); the line bilinear between lattice points on pixel CORNERS (AUDIT PRECIP HOST-5); a pixel\'s draw its first world tile; its set\'s twin on the lane, the set off it; the summer archive on the lane, DFU\'s season off it; the winter a set carries, none for a desert (mutants: the corners at pixel middles; the twin off the lane; a desert\'s winter)', () => {
   const built = new Map([['200,100', { px: 200, py: 100, groundArchive: 302, _snow: { px: 200, py: 100, pixel: null, flats: new Float32Array(0) } }], ['201,100', { px: 201, py: 100, _snow: null }]]);
-  const { host, marked, setAll, lane } = hostRig({ built });
+  const { host, marked, rebuilt, setAll, lane } = hostRig({ built });
   assert.equal(host.on, true, 'the lane known before the first frame - a boot\'s builds ask it');
   host.tick({ px: 200, py: 100 });
-  assert.deepEqual(marked, ['201,100'], 'a pixel built off the lane re-skinned on it');
-  host.tick({ px: 200, py: 100 });
-  assert.deepEqual(marked, ['201,100'], 'once');
+  assert.deepEqual(rebuilt, [], 'a pixel built off the lane: not before the window stands (no clock here - AUDIT FB1021 L1-1; fb1021_snowface.test.js turns it once it does)');
   lane.on = false; host.tick({ px: 200, py: 100 });
-  assert.deepEqual(marked, ['201,100', '200,100'], 'the lane turned off: the one built on it');
+  assert.deepEqual(rebuilt, ['200,100'], 'the lane turned off: the one built on it, at once');   // PIN MOVED (LANE-TURN): it was sent to the skin, which refused it
+  host.tick({ px: 200, py: 100 });
+  assert.deepEqual(rebuilt, ['200,100'], 'once');
+  assert.deepEqual(marked, [], 'and never sent to the skin');
   lane.on = true; host.tick({ px: 200, py: 100 });
   setAll([100, 200, 300]);
   for (let j = 40; j <= 60; j++) { const l = host._lines.get(latticeKey(101, j)); l.shown = Float32Array.of(300, 400, 500); }
@@ -386,24 +394,24 @@ test('PRECIP4 THE BUILD\'S SEASONS (AUDIT PRECIP HOST-6/8): a build keeps every 
   for (let k = 0; k < 50; k++) { const d = flatDraw(200, 100, k * 3.7, k * 9.1); assert.ok(d >= 0.15 && d <= 0.85, 'never at the ends'); assert.equal(d, flatDraw(200, 100, k * 3.7, k * 9.1)); }
 });
 
-test('PRECIP4 THE GRASS, THE FEET AND THE MOD (AUDIT PRECIP GROUND-3/9, HOST-4): a blade is buried and a foot treads snow where the ground DRAWS it there - its cover, its slope, its patches (snowCoverAt) - at the blade\'s own height; the feet\'s footsteps follow it, the calendar\'s winter taken off; the Snowfall mod stands wherever snow lies on any ground the window holds and lays it only where the ground wears it (it laid the mod\'s snow over a green field from the player\'s white one); off the lane DFU\'s word (mutants: the slope unread; the feet the calendar\'s; the mod\'s gate the player\'s spot)', () => {
-  const { host, setAll, clock } = hostRig({ t: NaN, ground: SEA_LEVEL_M + 5000 });   // the stream's ground far over the blade: the blade's own height decides (AUDIT PRECIP HOST-9)
+test('PRECIP4 THE GRASS, THE FEET AND THE MOD (AUDIT PRECIP GROUND-3/9, HOST-4): a blade is buried and a foot treads snow where the ground DRAWS it there - its cover and its patches (snowCoverAt) - at the blade\'s own height; the feet\'s footsteps follow it, the calendar\'s winter taken off; the Snowfall mod stands wherever snow lies on any ground the window holds and lays it only where the ground wears it (it laid the mod\'s snow over a green field from the player\'s white one); off the lane DFU\'s word (mutants: the feet the calendar\'s; the mod\'s gate the player\'s spot; the shift\'s sign under the blade; the feet\'s height unshifted)', () => {
+  const { host, setAll, clock } = hostRig({ t: NaN });   // the blade's own height decides (AUDIT PRECIP HOST-9): the host asks the stream no height (SNOW-FACE)
   host.tick({ px: 200, py: 100 });
   setAll([-800, -700, -600]);
   const p = { px: 200, py: 100 };
-  assert.equal(host.buries(p, 10, 10, 0, 0, SEA_LEVEL_M + 100), true, 'under a line far below');
+  assert.equal(host.buries(p, 10, 10, SEA_LEVEL_M + 100), true, 'under a line far below');
   assert.equal(host.winterAt([PIX / 2, SEA_LEVEL_M + 100, -PIX / 2 + 10], false), true, 'snow under the feet');
   assert.equal(host.footSeason([PIX / 2, SEA_LEVEL_M + 100, -PIX / 2 + 10], SEASON.Summer), SEASON.Winter);
   setAll([3000, 3100, 3200]);
-  assert.equal(host.buries(p, 10, 10, 0, 0, SEA_LEVEL_M + 100), false, 'a blade at 100 m under a line at 3,000 - whatever the stream\'s ground there');
+  assert.equal(host.buries(p, 10, 10, SEA_LEVEL_M + 100), false, 'a blade at 100 m under a line at 3,000 - whatever the stream\'s ground there');
   assert.equal(host.winterAt([PIX / 2, SEA_LEVEL_M + 100, -PIX / 2 + 10], true), false, 'none, whatever the calendar');
   assert.equal(host.footSeason([PIX / 2, SEA_LEVEL_M + 100, -PIX / 2 + 10], SEASON.Winter), SEASON.Summer, 'the calendar\'s winter taken off');
   // the blade's own place reads the drawn cover: a half cover buries about half, and the same blade the same way twice
   setAll([0, 100, 200]);
   let buried = 0;
   for (let i = 0; i < 400; i++) {
-    const lx = (i * 53.3) % PIX, lz = (i * 31.7) % PIX, b = host.buries(p, lx, lz, lx, -lz, SEA_LEVEL_M + 100);
-    const c = snowCoverAt(coverAtHeight([0, 100, 200], 100), 1, lx, lz, ...ecoOrigin(200, 100));
+    const lx = (i * 53.3) % PIX, lz = (i * 31.7) % PIX, b = host.buries(p, lx, lz, SEA_LEVEL_M + 100);
+    const c = snowCoverAt(coverAtHeight([0, 100, 200], 100), lx, lz, ...ecoOrigin(200, 100));
     assert.equal(b, c > 0 && c >= flatDraw(200, 100, lx, lz), 'the drawn cover against the blade\'s own draw');
     if (b) buried++;
   }
@@ -414,9 +422,18 @@ test('PRECIP4 THE GRASS, THE FEET AND THE MOD (AUDIT PRECIP GROUND-3/9, HOST-4):
   off.host.tick({ px: 200, py: 100 });
   assert.equal(off.host.winterNear(true), true); assert.equal(off.host.winterNear(false), false, 'off the lane DFU\'s season');
   assert.equal(off.host.winterAt([0, 0, 0], true), true, 'DFU\'s word');
-  assert.equal(off.host.buries(p, 1, 1, 0, 0, 0), false);
+  assert.equal(off.host.buries(p, 1, 1, 0), false);
   assert.equal(off.host.footSeason([0, 0, 0], SEASON.Winter), SEASON.Winter);
   assert.ok(Number.isNaN(clock.t));
+  // AUDIT FB1021 L1-6: a scene shifted by the floating origin (compensation 1,000 m up) - the blade's and the foot's
+  // height the world's, the shift taken off (every rig before stood at none, where its sign could not show)
+  const up = hostRig({ comp: [0, 1000, 0] });
+  up.host.tick({ px: 200, py: 100 });
+  up.setAll([500, 600, 700]);
+  assert.equal(up.host.buries(p, 10, 10, SEA_LEVEL_M + 100 + 1000), false, 'a blade 100 m up, under a line at 500');
+  assert.equal(up.host.buries(p, 10, 10, SEA_LEVEL_M + 900 + 1000), true, 'one at 900, over it');
+  assert.equal(up.host.winterAt([PIX / 2, SEA_LEVEL_M + 100 + 1000, -PIX / 2 + 10], true), false, 'a foot 100 m up: bare');
+  assert.equal(up.host.winterAt([PIX / 2, SEA_LEVEL_M + 900 + 1000, -PIX / 2 + 10], false), true, 'at 900: snow');
   const w = read('src/scenes/world.js');
   assert.equal(w.split('winter: snowCover.winterNear(season === SEASON.Winter)').length - 1, 2, 'the mod indoors and out');
   assert.equal(w.split('winter: snowCover.winterAt(player.pos, season === SEASON.Winter)').length - 1, 3, 'the three footsteps');
@@ -426,7 +443,7 @@ test('PRECIP4 THE GRASS, THE FEET AND THE MOD (AUDIT PRECIP GROUND-3/9, HOST-4):
 test('PRECIP4 THE MOD\'S GATE ON A REAL WINDOW (AUDIT PRECIP GROUND-9): winterNear is whether any window point\'s cover begins under its ground\'s top - snow somewhere about the player - and never the player\'s own spot (mutants: the ceil unread; the zero-cover height the 10 % one)', async () => {
   setAirGround({ climateAt: () => CLIMATES.Woodlands, groundAt: () => 0, topAt: () => 300 });
   try {
-    const mk = (t) => createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), heightAt: () => 0, owns: () => true, markReskin: () => {}, now: () => t, place: () => ({ px: 200, py: 100 }) });
+    const mk = (t) => createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), owns: () => true, markReskin: () => {}, now: () => t, place: () => ({ px: 200, py: 100 }) });
     const summer = mk((406 * 360 + 215) * 1440);
     await summer.settle({ left: () => Infinity, breathe: async () => {} });
     assert.equal(summer.winterNear(true), false, 'a summer: no snow anywhere about');
@@ -443,7 +460,7 @@ test('PRECIP4 THE BUILD WAITS FOR THE SNOW AT THE CLOCK\'S MINUTE (AUDIT PRECIP 
   setAirGround({ climateAt: () => CLIMATES.Woodlands, groundAt: () => 0, topAt: () => 900 });
   try {
     const clock = { t: (406 * 360 + 215) * 1440 };
-    const host = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), heightAt: () => 0, owns: () => true, markReskin: () => {}, now: () => clock.t, place: () => ({ px: 200, py: 100 }) });
+    const host = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), owns: () => true, markReskin: () => {}, now: () => clock.t, place: () => ({ px: 200, py: 100 }) });
     let breaths = 0;
     await host.settle({ left: () => 0, breathe: async () => { breaths++; } });
     assert.ok(breaths > 0, `sliced: ${breaths} breaths`);
@@ -468,11 +485,11 @@ test('PRECIP4 THE BUILD WAITS FOR THE SNOW AT THE CLOCK\'S MINUTE (AUDIT PRECIP 
     for (const k of host._lines.keys()) assert.ok(!kept.has(k), 'none of the old window\'s lines kept twelve pixels on');
     assert.ok(Number.isFinite(first));
     // AUDIT PRECIP DOC-7: while the world stands up the wait takes the arrival's budget - a fraction of the breaths
-    const fresh = (arriving) => createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), heightAt: () => 0, owns: () => true, markReskin: () => {}, now: () => clock.t, place: () => ({ px: 300, py: 240 }), arriving: () => arriving });
+    const fresh = (arriving) => createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), owns: () => true, markReskin: () => {}, now: () => clock.t, place: () => ({ px: 300, py: 240 }), arriving: () => arriving });
     const breathsOf = async (h) => { let n = 0; await h.settle({ left: () => 0, breathe: async () => { n++; } }); return n; };
     const stood = await breathsOf(fresh(false)), standing = await breathsOf(fresh(true));
     assert.ok(standing * 3 < stood, `the arrival's budget: ${standing} breaths against ${stood}`);
-    const off = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => 0, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), heightAt: () => 0, owns: () => false, markReskin: () => {}, now: () => clock.t, place: () => ({ px: 200, py: 100 }) });
+    const off = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => 0, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0] }), builtOf: () => new Map(), owns: () => false, markReskin: () => {}, now: () => clock.t, place: () => ({ px: 200, py: 100 }) });
     await off.settle({ left: () => Infinity, breathe: async () => { throw new Error('no breath off the lane'); } });
     assert.equal(off._lines.size, 0);
   } finally { setAirGround(null); }
@@ -487,7 +504,7 @@ test('PRECIP4 THE FRAME SWEEPS AT A STEP: once the window stands, the first fram
   try {
     const clock = { t: (406 * 360 + 215) * 1440 + 30 }, marked = [];
     const built = new Map([['200,100', { px: 200, py: 100, _snow: { px: 200, py: 100, pixel: { altitude: 100, season: SEASON.Winter }, flats: new Float32Array(0) } }]]);
-    const host = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0], current: { x: 200, y: 100 } }), builtOf: () => built, heightAt: () => 0, owns: () => true, markReskin: (k) => marked.push(k), now: () => clock.t, place: () => ({ px: 200, py: 100 }) });
+    const host = createSnowCoverHost({ renderer: { tileArrays: new Map() }, climateAt: () => CLIMATES.Woodlands, mapHeight: 500, stateOf: () => ({ compensation: [0, 0, 0], current: { x: 200, y: 100 } }), builtOf: () => built, owns: () => true, markReskin: (k) => marked.push(k), now: () => clock.t, place: () => ({ px: 200, py: 100 }) });
     await host.settle({ left: () => Infinity, breathe: async () => {} });
     host.tick({ px: 200, py: 100, dt: 0 });
     assert.deepEqual(marked, ['200,100'], 'built winter in an autumn\'s bare ground: re-skinned at the step');
@@ -547,14 +564,14 @@ test('PRECIP4 THE WIRING: a build settles the snow, then keeps every season it t
   assert.match(b, /const archive = getNatureArchive\(base, fSeason\);/);   // PIN MOVED (AUDIT PRECIP HOST-7): one law for every wild flat - the re-skin's own (getNatureArchive(f.wild, ...))
   assert.match(b, /const snowSeen = snowRec\?\.done\(models\.length > 0 \|\| dfLocation != null\) \?\? null;[^]*?_snow: snowSeen,/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /const snowCover = createSnowCoverHost\(\{ renderer, climateAt, mapHeight: MAP_H, stateOf: \(\) => state, builtOf: \(\) => built, heightAt: \(x, z\) => heightAt\(x, z\), owns: precipLawOn, markReskin: \(key\) => _reskin\.skin\(key\), now: /);
+  assert.match(w, /const snowCover = createSnowCoverHost\(\{ renderer, climateAt, mapHeight: MAP_H, stateOf: \(\) => state, builtOf: \(\) => built, owns: precipLawOn, markReskin: \(key\) => _reskin\.skin\(key\), markRebuild: \(key\) => _reskin\.mark\(key\), now: /);   // LANE-TURN: a lane's turn rebuilt
   assert.match(w, /snowCover\.tick\(\{ px: _sp\.x, py: _sp\.y, dt, arriving: !playerSpawned \}\); renderer\.setSnowFrame\(snowCover\.frame\(\)\);/);
   assert.match(w, /if \(refreshSeason\(\) && !snowCover\.on\) _reskin\.markAll\(\);/);
   assert.match(w, /e\.tex\[k\] = snowCover\.arrayOf\(a\);/);
   assert.equal(w.split('snowCover.drawOf(').length - 1, 4, 'both ground draws and both water lists');
   assert.equal(w.split('snowCover.arrayOf(').length - 1, 8, 'every reader of a pixel\'s set: its ground (both draws), its water (both lists), its shadow, the sea, the ring\'s sea, the border');
   assert.doesNotMatch(w, /renderer\.tileArrays\.get\(p\.groundArchive\)|renderer\.tileArrays\.get\(cell\.groundArchive\)/, 'no reader of the bare set the lane does not upload');
-  assert.match(w, /if \(snowCover\.on && snowCover\.buries\(p, lx, lz, x, z, h \+ t\[1\]\)\) return null;/);
+  assert.match(w, /if \(snowCover\.on && snowCover\.buries\(p, lx, lz, h \+ t\[1\]\)\) return null;/);
   assert.match(w, /p\._stride === 1 && p\.tilemapBytes && \(snowCover\.on \|\| p\.season !== SEASON\.Winter\)/);
   assert.match(w, /seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs,/);
   assert.match(b, /seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs,/);

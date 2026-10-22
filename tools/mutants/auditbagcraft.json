@@ -167,20 +167,22 @@
   {
     "name": "AUDITBAGCRAFT-A1-pages-split-silent",
     "file": "src/ui/professions/profPages.js",
-    "old": "loose ? t('prof.page.stores.fromPack', '{n} from your pack', { n: loose }) : null]",
+    "old": "loose ? fromPack() : null]",
     "new": "null]",
     "tests": [
       "test/net/auditbagcraft.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the split's loose segment is the no-pack-form choice's (fromPack)."
   },
   {
     "name": "AUDITBAGCRAFT-A1-pages-line-undrawn",
     "file": "src/ui/professions/profPages.js",
-    "old": "    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine()));   // AUDIT BAG-CRAFT A1: a carrying book's page\n",
+    "old": "    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine(pick.material)));   // AUDIT BAG-CRAFT A1: a carrying book's page\n",
     "new": "",
     "tests": [
       "test/net/auditbagcraft.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the line names its material (a no-pack-form material's line its own)."
   },
   {
     "name": "AUDITBAGCRAFT-A1-pages-total-without",
