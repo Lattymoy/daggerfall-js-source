@@ -24,6 +24,7 @@
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
+import { leaveGuildHooks } from '../systems/guild/leaveGuild.js';   // LEAVE-GUILD: a member's row to leave the guild
 import { walkModeOn } from '../player/walkMode.js';   // PADWALK
 import { privateInteriorOf, privateInteriorMatches } from '../net/privateInterior.js';
 import { iilActive, iilInteriorLights, iilDungeonLights, iilTorch, iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL1: Improved Interior Lighting on the classic lane
@@ -6187,6 +6188,9 @@ export function createWorldModes(host) {
       // HEAL-CURSE (the owner: "Add a button to the temple services under heal disease named heal curse"): the Cure
       // Disease priest's second row - the curse's offer as a Yes/No box, its rite paid and done on the Yes
       healCurse: service === 'CureDisease' ? () => shutBox() ?? healCurseBox() : null,
+      // LEAVE-GUILD (the Discord's "Leave Guild/Faction Option"; DFU's Leave Guild mod): a member's row to leave this
+      // guild, on either skin - a Yes/No box, the membership dropped on its Yes; online, never while a chair of it is held
+      ...leaveGuildHooks(memberships, guild, orderName, () => host.rollPace?.(guild.factionId) ?? null),
     });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }

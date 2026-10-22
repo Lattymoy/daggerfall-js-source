@@ -11784,6 +11784,61 @@
   "tr": "a6fd9a6d72c5",
   "by": "claude-in-session"
  },
+ "guild.leave.ask": {
+  "en": "8d0fe542d336",
+  "tr": "a8d8f5d1ff80",
+  "by": "claude-in-session"
+ },
+ "guild.leave.askRank": {
+  "en": "4f7ad840e43c",
+  "tr": "a7b3d20781bd",
+  "by": "claude-in-session"
+ },
+ "guild.leave.askStanding": {
+  "en": "b6115606cb60",
+  "tr": "d4f767febc7c",
+  "by": "claude-in-session"
+ },
+ "guild.leave.left": {
+  "en": "ebbfe2fe0226",
+  "tr": "53175c5bb076",
+  "by": "claude-in-session"
+ },
+ "guild.leave.notMember": {
+  "en": "18b8c2229b0f",
+  "tr": "b078d7360c8a",
+  "by": "claude-in-session"
+ },
+ "guild.leave.rowGuild": {
+  "en": "d28c4a13ccd4",
+  "tr": "7cf290e8e09e",
+  "by": "claude-in-session"
+ },
+ "guild.leave.rowOrder": {
+  "en": "be6de7bf36a3",
+  "tr": "1936e2a6f5a8",
+  "by": "claude-in-session"
+ },
+ "guild.leave.rowTemple": {
+  "en": "d3d5ddd06721",
+  "tr": "1eb07e32c38d",
+  "by": "claude-in-session"
+ },
+ "guild.leave.seated": {
+  "en": "7e8d8657c97b",
+  "tr": "a9edf956f307",
+  "by": "claude-in-session"
+ },
+ "guild.leave.thisGuild": {
+  "en": "72867d6550dd",
+  "tr": "f83eccf5e6ba",
+  "by": "claude-in-session"
+ },
+ "guild.leave.unheard": {
+  "en": "9e9698f278b9",
+  "tr": "591f9cd9b141",
+  "by": "claude-in-session"
+ },
  "guild.probation.comingRep": {
   "en": "eae43e35b6c7",
   "tr": "ca5a2f9cd458",

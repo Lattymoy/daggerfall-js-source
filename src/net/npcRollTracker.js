@@ -302,10 +302,13 @@ export function createRollTracker({
 /** ROLL-PACE: what the guild halls read of the Roll for faction `f` (scenes/worldModes.js openGuildService, through the
  *  host's `rollPace`): null offline, or with no Roll to read (none made, or a refusal ended it) - DFU's review whole;
  *  else the book's ceiling, the highest rank a review may promote to now, and the days the pace still holds a rank.
- * @param {{ stopped: string | null, standing: (f: number) => { rep: number, since: number | null } | null } | null} tracker
+ *  LEAVE-GUILD: and `seated` - the character holds a chair of the guild in any region (true), none (false), or the Roll
+ *  has not said yet (null).
+ * @param {{ stopped: string | null, held?: boolean, seats?: unknown, standing: (f: number) => { rep: number, since: number | null } | null } | null} tracker
  * @param {number} f @param {number} nowS */
 export function rollPaceOf(tracker, f, nowS) {
   if (!tracker || tracker.stopped) return null;
   const standing = tracker.standing(f);
-  return { book: ROLL_BOOK_RANK_MAX, ceiling: rollPromoteCeiling(standing, nowS), wait: (/** @type {number} */ rank) => rollPaceWait(standing, nowS, rank) };
+  const seated = tracker.held ? rollSeatsOf(tracker.seats).some((s) => s.f === f) : null;
+  return { book: ROLL_BOOK_RANK_MAX, ceiling: rollPromoteCeiling(standing, nowS), wait: (/** @type {number} */ rank) => rollPaceWait(standing, nowS, rank), seated };
 }
