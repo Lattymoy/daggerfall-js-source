@@ -216,7 +216,7 @@ test('DA8: the shell - a sandboxed window on its own origin, two words of bridge
   assert.match(main, /case 'download': if \(st\.update\.download\) shell\.openExternal\(st\.update\.download\); break;/, 'the download URL is the shell\'s own, never the page\'s');
   // REL5: and it is THIS copy's own file by the name that never moves - the dmg, the portable exe
   const latest = main.slice(main.indexOf('async function fetchLatestRelease()'), main.indexOf('/** The notice transport\'s check'));
-  assert.match(latest, /const file = manualDownloadFile\(\{ platform: process\.platform, portable: !!process\.env\.PORTABLE_EXECUTABLE_DIR, packaged: app\.isPackaged \}\);/);
+  assert.match(latest, /const file = manualDownloadFile\(\{ platform: process\.platform, arch: process\.arch, portable: !!process\.env\.PORTABLE_EXECUTABLE_DIR, packaged: app\.isPackaged \}\);/);
   // PIN MOVED: BR5 (AUDIT BR5) - the release's own link to the file first, the name that never moves after it
   assert.match(latest, /download: file \? listed \?\? latestDownloadUrl\(file\) : url/, 'the release page only where there is no one file to name');
   // the handover: the game shows at its first paint, THEN the launcher closes (window-all-closed would quit)

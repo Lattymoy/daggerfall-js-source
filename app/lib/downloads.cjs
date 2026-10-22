@@ -30,12 +30,17 @@
 
 const RELEASES_URL = 'https://github.com/Lattymoy/daggerfall-js-source/releases';
 
-/** The four files a player downloads, one per way to run the app. */
+/** The five files a player downloads, one per way to run the app.
+ *  linuxArm64 (2026-10-12, a player on a Steam Frame): the Linux AppImage
+ *  for ARM64 machines - the Steam Frame, a Raspberry Pi, ARM laptops - where
+ *  the x86_64 one runs only under emulation. The shell carries no native
+ *  module, so electron-builder packs it from the same leg as the x86_64 one. */
 const DOWNLOAD_FILES = Object.freeze({
   winSetup: 'DFO-Online-win-x64-setup.exe',
   winPortable: 'DFO-Online-win-x64-portable.exe',
   mac: 'DFO-Online-mac-arm64.dmg',
   linux: 'DFO-Online-linux-x86_64.AppImage',
+  linuxArm64: 'DFO-Online-linux-arm64.AppImage',
 });
 
 /** BR5 (2026-10-11): THE NAMES BEFORE THE RENAME. Every copy built
@@ -47,7 +52,9 @@ const DOWNLOAD_FILES = Object.freeze({
  *  rename never meets a dead link. A copy from BR5 on reads its download
  *  off the release itself (releaseAssetUrl) and needs no alias for a
  *  later rename. These names are the only place the old product name is
- *  still published; they go once no copy older than BR5 is left to ask. */
+ *  still published; they go once no copy older than BR5 is left to ask.
+ *  Only the downloads that existed before BR5 have one: linuxArm64 came
+ *  after it, so no copy asks for it by an old name. */
 const LEGACY_DOWNLOAD_FILES = Object.freeze({
   winSetup: 'DaggerfallOnline-win-x64-setup.exe',
   winPortable: 'DaggerfallOnline-win-x64-portable.exe',
@@ -82,15 +89,16 @@ function releaseAssetUrl(release, file) {
 
 /** The file THIS copy runs from, by the name that never moves: the dmg on
  *  macOS, the portable exe for the portable, the setup exe for an
- *  installed Windows copy, the AppImage on Linux - and null where there
+ *  installed Windows copy, the AppImage for its architecture on Linux
+ *  (`arch` is process.arch: arm64 takes the ARM64 one) - and null where there
  *  is no one file to name (an unpackaged run). What a copy on the NOTICE
  *  transport (lib/autoUpdate.cjs) downloads to update by hand, and what
  *  the launcher's Reinstall downloads (DA10). */
-function manualDownloadFile({ platform, portable, packaged }) {
+function manualDownloadFile({ platform, arch, portable, packaged }) {
   if (!packaged) return null;
   if (platform === 'darwin') return DOWNLOAD_FILES.mac;
   if (platform === 'win32') return portable ? DOWNLOAD_FILES.winPortable : DOWNLOAD_FILES.winSetup;
-  if (platform === 'linux') return DOWNLOAD_FILES.linux;
+  if (platform === 'linux') return arch === 'arm64' ? DOWNLOAD_FILES.linuxArm64 : DOWNLOAD_FILES.linux;
   return null;
 }
 
