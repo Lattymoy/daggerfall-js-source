@@ -1,0 +1,164 @@
+[
+  {
+    "name": "LEAVE-any-member-of-the-group",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "export const leaveOffered = (memberships, guild) => !!guild && isJoinableByApplication(guild) && !!membershipOf(memberships, guild);",
+    "new": "export const leaveOffered = (memberships, guild) => !!guild && isJoinableByApplication(guild) && !!memberships?.[guild.guildGroup];"
+  },
+  {
+    "name": "LEAVE-underworld-offered",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "export const leaveOffered = (memberships, guild) => !!guild && isJoinableByApplication(guild) && !!membershipOf(memberships, guild);",
+    "new": "export const leaveOffered = (memberships, guild) => !!guild && !!membershipOf(memberships, guild);"
+  },
+  {
+    "name": "LEAVE-chair-ignored",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "  if (pace && pace.seated === true) return 'seated';\n",
+    "new": ""
+  },
+  {
+    "name": "LEAVE-unheard-read-as-no-chair",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "  if (pace && pace.seated !== false) return 'unheard';\n",
+    "new": ""
+  },
+  {
+    "name": "LEAVE-yes-not-dropping",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "          leaveGuild(memberships, guild);\n",
+    "new": ""
+  },
+  {
+    "name": "LEAVE-yes-not-asking-again",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "          if (now !== 'ok') return box(now === 'seated' ? leaveGuildText.seated(name) : now === 'unheard' ? leaveGuildText.unheard() : leaveGuildText.notMember(name));\n",
+    "new": ""
+  },
+  {
+    "name": "LEAVE-farewell-not-closing",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "          return box(leaveGuildText.left(name), { closesWindow: true });",
+    "new": "          return box(leaveGuildText.left(name));"
+  },
+  {
+    "name": "LEAVE-temple-called-a-guild",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "  if (guild?.guildGroup === GUILD_GROUPS.HolyOrder) return t('guild.leave.rowTemple', 'Leave Temple');\n",
+    "new": ""
+  },
+  {
+    "name": "LEAVE-name-not-mid-sentence",
+    "file": "src/systems/guild/leaveGuild.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "name.trim().replace(/^The /, 'the ')",
+    "new": "name.trim()"
+  },
+  {
+    "name": "LEAVE-pace-chair-by-region",
+    "file": "src/net/npcRollTracker.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "  const seated = tracker.held ? rollSeatsOf(tracker.seats).some((s) => s.f === f) : null;",
+    "new": "  const seated = tracker.held ? rollSeatsOf(tracker.seats).some((s) => s.f === f && s.region === 0) : null;"
+  },
+  {
+    "name": "LEAVE-pace-unheard-answered",
+    "file": "src/net/npcRollTracker.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "  const seated = tracker.held ? rollSeatsOf(tracker.seats).some((s) => s.f === f) : null;",
+    "new": "  const seated = rollSeatsOf(tracker.seats).some((s) => s.f === f);"
+  },
+  {
+    "name": "LEAVE-row-not-stacked",
+    "file": "src/ui/guildServiceWindow.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "const leaveRect = (above) => Object.freeze([REFORGE_RECT[0], REFORGE_RECT[1] + above * (REFORGE_RECT[3] + 2), REFORGE_RECT[2], REFORGE_RECT[3]]);",
+    "new": "const leaveRect = (above) => Object.freeze([REFORGE_RECT[0], REFORGE_RECT[1] + above, REFORGE_RECT[2], REFORGE_RECT[3]]);"
+  },
+  {
+    "name": "LEAVE-row-under-heal-curse-ignored",
+    "file": "src/ui/guildServiceWindow.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "  _rowsAbove() { return (this.hooks.reforge || this.hooks.lift ? 1 : 0) + (this.hooks.healCurse ? 1 : 0); }",
+    "new": "  _rowsAbove() { return this.hooks.reforge || this.hooks.lift ? 1 : 0; }"
+  },
+  {
+    "name": "LEAVE-key-without-the-row",
+    "file": "src/ui/guildServiceWindow.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "    const leaveKey = code === LEAVE_KEY && !!this.hooks.leaveRow?.();",
+    "new": "    const leaveKey = code === LEAVE_KEY;"
+  },
+  {
+    "name": "LEAVE-question-closes-the-popup",
+    "file": "src/ui/guildServiceWindow.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "    const r = this.hooks.leave?.();\n    if (isServiceBox(r)) this._push({ ...r, closesWindow: !!r.closesWindow });",
+    "new": "    const r = this.hooks.leave?.();\n    if (isServiceBox(r)) this._push({ ...r, closesWindow: true });"
+  },
+  {
+    "name": "LEAVE-click-without-the-row",
+    "file": "src/ui/guildServiceWindow.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "    if (this.hooks.leaveRow?.() && inRect(leaveRect(this._rowsAbove()), vx, vy))",
+    "new": "    if (inRect(leaveRect(this._rowsAbove()), vx, vy))"
+  },
+  {
+    "name": "LEAVE-plus-face-not-listed",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "        ...(w.hooks.leaveRow?.() ? [{ label: w.hooks.leaveRow(), act: () => w._leave() }] : []),   // LEAVE-GUILD: a member's way out, last\n",
+    "new": ""
+  },
+  {
+    "name": "LEAVE-host-not-wired",
+    "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/systems/guild/leaveguild.test.js"
+    ],
+    "old": "      ...leaveGuildHooks(memberships, guild, orderName, () => host.rollPace?.(guild.factionId) ?? null),\n",
+    "new": ""
+  }
+]

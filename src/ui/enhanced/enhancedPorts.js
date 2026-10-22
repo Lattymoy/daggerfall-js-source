@@ -59,6 +59,7 @@ const guild = {
         ...(w.hooks.healCurse ? [{ label: HEAL_CURSE_ROW, act: () => w._healCurse() }] : []),   // HEAL-CURSE: the temple's, right under its Cure Disease
         ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []),   // LOOT9: the Mages Guild's Reforge, beside its Identify
         ...(!w.hooks.reforge && w.hooks.lift ? [{ label: LIFT_ROW, act: () => w._lift() }] : []),   // LOOT16: the temple's lifting, beside its Cure Disease
+        ...(w.hooks.leaveRow?.() ? [{ label: w.hooks.leaveRow(), act: () => w._leave() }] : []),   // LEAVE-GUILD: a member's way out, last
       ] }],
       foot: [{ label: 'Exit', act: press(GUILD_RECTS.exit) }],
     };

@@ -97,6 +97,10 @@ export { HEAL_CURSE_ROW, HEAL_CURSE_KEY } from '../systems/healCurse.js';
 import { HEAL_CURSE_ROW, HEAL_CURSE_KEY } from '../systems/healCurse.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 const healCurseRect = (reforge) => Object.freeze([REFORGE_RECT[0], REFORGE_RECT[1] + (reforge ? REFORGE_RECT[3] + 2 : 0), REFORGE_RECT[2], REFORGE_RECT[3]]);
+/** LEAVE-GUILD (systems/guild/leaveGuild.js): a member's row to leave the guild - the Reforge's shape, under every port row
+ *  the popup carries (`above`: how many stand over it), its key Q. */
+import { LEAVE_KEY } from '../systems/guild/leaveGuild.js';
+const leaveRect = (above) => Object.freeze([REFORGE_RECT[0], REFORGE_RECT[1] + above * (REFORGE_RECT[3] + 2), REFORGE_RECT[2], REFORGE_RECT[3]]);
 
 let _art = null;
 /** BOX1: the test seam every other art-gated window carries. */
@@ -121,6 +125,7 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PANEL_X && y >= ry + PANEL_
  *   steps() -> the OnPush stack (guildServiceFlow.onPushEffects), once
  *   rows(textId) -> [{text,center}] (TEXT.RSC through the host)
  *   onJoin() -> null | { rows, buttons?: 'YesNo', onYes }
+ *   leaveRow() -> the leave row's words while it stands, else null; leave() -> its box (LEAVE-GUILD)
  *   onTalk(), onService(), onClose()
  */
 export class GuildServiceWindow {
@@ -168,6 +173,15 @@ export class GuildServiceWindow {
     const r = this.hooks.healCurse?.();
     if (isServiceBox(r)) this._push({ ...r, closesWindow: !!r.closesWindow });
   }
+
+  /** LEAVE-GUILD: the member's row - its question, or why not, a box on the popup (the farewell closes it). */
+  _leave() {
+    const r = this.hooks.leave?.();
+    if (isServiceBox(r)) this._push({ ...r, closesWindow: !!r.closesWindow });
+  }
+
+  /** LEAVE-GUILD: how many port rows stand over the leave row - the Reforge's or the Lift's place, and Heal Curse's. */
+  _rowsAbove() { return (this.hooks.reforge || this.hooks.lift ? 1 : 0) + (this.hooks.healCurse ? 1 : 0); }
 
   /** LOOT9: the Reforge's row - a dispatch closes the popup, as a service's does; a box stands on it. */
   _reforge() {
@@ -226,7 +240,8 @@ export class GuildServiceWindow {
     const healKey = !!this.hooks.healCurse && code === HEAL_CURSE_KEY;   // HEAL-CURSE: the temple's second row, its key H - ahead of every other, and the one sound below (AUDIT 26 D1)
     const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;   // LOOT9: the Reforge's row, its key F - the one sound below
     const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;   // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)
-    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);
+    const leaveKey = code === LEAVE_KEY && !!this.hooks.leaveRow?.();   // LEAVE-GUILD: Q, a letter no other row of the popup has
+    const hit = healKey ? 'HealCurse' : reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : leaveKey ? 'Leave' : null);
     if (hit === null) return;
     // F141 on the KEYBOARD side too: Talk/Service/Exit each play
     // ButtonClick in their OnKeyboardEvent's KeyDown arm (:299, :460,
@@ -245,6 +260,7 @@ export class GuildServiceWindow {
       case 'Reforge': this._reforge(); return;   // LOOT9
       case 'Lift': this._lift(); return;   // LOOT16
       case 'HealCurse': this._healCurse(); return;   // HEAL-CURSE
+      case 'Leave': this._leave(); return;   // LEAVE-GUILD
       default: this._service();   // whichever of the nineteen service buttons hit
     }
   }
@@ -278,6 +294,7 @@ export class GuildServiceWindow {
     if (this.hooks.reforge && inRect(REFORGE_RECT, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._reforge(); return true; }   // LOOT9
     if (this.hooks.healCurse && inRect(healCurseRect(!!this.hooks.reforge || !!this.hooks.lift), vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return true; }   // HEAL-CURSE
     if (!this.hooks.reforge && this.hooks.lift && inRect(REFORGE_RECT, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._lift(); return true; }   // LOOT16: the temple's, in its place
+    if (this.hooks.leaveRow?.() && inRect(leaveRect(this._rowsAbove()), vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._leave(); return true; }   // LEAVE-GUILD
     return false;
   }
 
@@ -315,6 +332,12 @@ export class GuildServiceWindow {
       const [hx, hy, hw, hh] = healCurseRect(!!this.hooks.reforge || !!this.hooks.lift);
       drawRect(renderer, m, PANEL_X + hx, PANEL_Y + hy, hw, hh, REFORGE_ROW_BG);
       shadowText(renderer, font, HEAL_CURSE_ROW, m, PANEL_X + hx, PANEL_Y + hy + 2, { align: 'center', w: hw });
+    }
+    const leaveRow = this.hooks.leaveRow?.();
+    if (leaveRow) {   // LEAVE-GUILD: the member's row, under every other port row
+      const [lx, ly, lw, lh] = leaveRect(this._rowsAbove());
+      drawRect(renderer, m, PANEL_X + lx, PANEL_Y + ly, lw, lh, REFORGE_ROW_BG);
+      shadowText(renderer, font, leaveRow, m, PANEL_X + lx, PANEL_Y + ly + 2, { align: 'center', w: lw });
     }
     const top = this.top;
     if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2
