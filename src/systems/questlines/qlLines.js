@@ -27,16 +27,19 @@
 import { t } from '../textManager.js';
 import { QL_SERVICE_LINES } from '../../net/questlineClaims.js';
 import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js';   // AUDIT QUESTLINES LINES-3: the Renown a revenant comes at, in the window's words
+import { FIRST_STAR_RENOWN } from '../../net/firmament/firmamentLaw.js';   // FIRST-STAR: the Renown whose purse first holds a Star
 
 /**
  * @typedef {{ quest: string, title: () => string, needs?: ReadonlyArray<LineNeed> }} LineStep
  *   `needs` what the step's deed cannot be done without (AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6): the step waits,
  *   saying so, until each holds - never started to fail every day
- * @typedef {'lootRarity'|'kingsGambit'|'naval'|'renown'|'starfall'} LineNeed
+ * @typedef {'lootRarity'|'kingsGambit'|'naval'|'renown'|'starfall'|'firstStar'} LineNeed
  *   `lootRarity` Loot rarity on (a socket, a reforge); `kingsGambit` The King's Gambit on (its table); `naval` Naval
  *   Combat on (the sea's own deeds); `renown` the Renown a revenant comes at (revenant.js REVENANT_MIN_RENOWN, online);
  *   `starfall` (STAR8) the Starfall running - the Witches' Festival's days (net/festivalLaw.js, through
  *   net/starfall/starfallLaw.js starfallRuns), when stars fall to be held
+ *   `firstStar` (FIRST-STAR) the Renown whose purse first holds a Star (net/firmament/firmamentLaw.js FIRST_STAR_RENOWN,
+ *   online) - under it the Firmament has no star to take
  * @typedef {{ level?: number, after?: string, online?: boolean, account?: boolean, event?: LineNeed }} LineOpens
  *   `level` the character's level at least; `after` another line finished first; `online` only where the account
  *   service answers (every endgame line: its witnesses are the service's rows); `account` a registered account, never a
@@ -216,7 +219,7 @@ export const QL_LINES = Object.freeze([
     giver: () => t('ql.line.introFirmament.giver', 'an astrologer'),
     opens: { level: 3, online: true },
     steps: [
-      { quest: 'QLIF01', title: () => t('ql.step.QLIF01', 'The First Star') },
+      { quest: 'QLIF01', title: () => t('ql.step.QLIF01', 'The First Star'), needs: ['firstStar'] },
       { quest: 'QLIF02', title: () => t('ql.step.QLIF02', 'A Constellation of Your Own') },
     ],
   }),
@@ -272,6 +275,7 @@ const NEED_WORDS = Object.freeze({
   naval: () => t('ql.line.needs.naval', 'with Naval Combat on'),
   renown: () => t('ql.line.needs.renown', 'at Renown {n}', { n: REVENANT_MIN_RENOWN }),
   starfall: () => t('ql.line.needs.starfall', 'during the Witches’ Festival'),   // STAR8
+  firstStar: () => t('ql.line.needs.renown', 'at Renown {n}', { n: FIRST_STAR_RENOWN }),   // FIRST-STAR: the Renown's own words
 });
 
 /**

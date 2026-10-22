@@ -1,0 +1,38 @@
+[
+ {
+  "name": "FIRST-STAR-the-need-unread",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "  firstStar: () => renownOpens(FIRST_STAR_RENOWN),",
+  "new": "  firstStar: () => true,",
+  "tests": [
+   "test/systems/questlines/ql12_lines.test.js"
+  ]
+ },
+ {
+  "name": "FIRST-STAR-the-renown",
+  "file": "src/net/firmament/firmamentLaw.js",
+  "old": "export const FIRST_STAR_RENOWN = 1 + Math.ceil(1 / STARS_PER_RENOWN);",
+  "new": "export const FIRST_STAR_RENOWN = 1 + STARS_PER_RENOWN;",
+  "tests": [
+   "test/systems/questlines/ql12_lines.test.js"
+  ]
+ },
+ {
+  "name": "FIRST-STAR-the-step-without-its-need",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "{ quest: 'QLIF01', title: () => t('ql.step.QLIF01', 'The First Star'), needs: ['firstStar'] },",
+  "new": "{ quest: 'QLIF01', title: () => t('ql.step.QLIF01', 'The First Star') },",
+  "tests": [
+   "test/systems/questlines/ql12_lines.test.js"
+  ]
+ },
+ {
+  "name": "FIRST-STAR-the-words",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "  firstStar: () => t('ql.line.needs.renown', 'at Renown {n}', { n: FIRST_STAR_RENOWN }),",
+  "new": "  firstStar: () => t('ql.line.needs.renown', 'at Renown {n}', { n: REVENANT_MIN_RENOWN }),",
+  "tests": [
+   "test/systems/questlines/ql12_lines.test.js"
+  ]
+ }
+]

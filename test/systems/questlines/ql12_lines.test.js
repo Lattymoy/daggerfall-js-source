@@ -15,6 +15,7 @@ import { LOOT_RARITY_KEY } from '../../../src/systems/loot/lootRarity.js';
 import { KINGS_GAMBIT_KEY } from '../../../src/systems/features.js';
 import { setSigilOnline, setSigilRenown } from '../../../src/systems/sigil/sigil.js';
 import { REVENANT_MIN_RENOWN } from '../../../src/systems/revenant/revenant.js';
+import { FIRST_STAR_RENOWN, starsFor } from '../../../src/net/firmament/firmamentLaw.js';
 import { QL_SERVICE_LINES, QL_WITNESS_KINDS, qlClaimOf, qlStepClaimed, QL_TITLES } from '../../../src/net/questlineClaims.js';
 import { ACT_KINDS } from '../../../src/systems/questlines/qlActs.js';
 import { sheetFor } from '../../../src/systems/questlines/qlSheets.js';
@@ -445,10 +446,10 @@ test('QL1/QL12 an outcome settles at the end its script names: a failure clock\'
 // ═══ AUDIT QUESTLINES (LINES, ACTS-2): the runner's gates, its stalls and its order ═══
 
 test('AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: a step whose deed needs a switch that is off, or the Renown a revenant comes at, waits and says so - never started to fail every day; each need is one the runner can read (mutants: the needs unread; the line begun regardless; the Renown)', () => {
-  assert.deepEqual(Object.keys(NEED_CHECKS).sort(), ['kingsGambit', 'lootRarity', 'naval', 'renown', 'starfall']);   // PIN MOVED (STAR8): the Starfall running
+  assert.deepEqual(Object.keys(NEED_CHECKS).sort(), ['firstStar', 'kingsGambit', 'lootRarity', 'naval', 'renown', 'starfall']);   // PIN MOVED (FIRST-STAR): a star to take
   for (const l of QL_LINES) for (const s of l.steps) for (const n of s.needs ?? []) assert.ok(n in NEED_CHECKS, `${s.quest} needs ${n}`);
   assert.deepEqual(QL_LINES.flatMap((l) => l.steps.filter((s) => s.needs).map((s) => `${s.quest}:${s.needs.join('+')}`)),
-    ['QLTF01:starfall', 'QLTF03:starfall', 'QLIG01:lootRarity', 'QLIG02:lootRarity', 'QLIS01:naval', 'QLIS02:naval', 'QLIS03:naval', 'QLIT02:kingsGambit', 'QLIW02:renown']);   // PIN MOVED (STAR8): the Festival line's star steps
+    ['QLTF01:starfall', 'QLTF03:starfall', 'QLIG01:lootRarity', 'QLIG02:lootRarity', 'QLIS01:naval', 'QLIS02:naval', 'QLIS03:naval', 'QLIT02:kingsGambit', 'QLIW02:renown', 'QLIF01:firstStar']);   // PIN MOVED (FIRST-STAR): The First Star
   // Loot rarity off: the Smith's Secrets never begins, and its row says why
   setPref(LOOT_RARITY_KEY, false);
   setPref(KINGS_GAMBIT_KEY, true);
@@ -486,6 +487,26 @@ test('AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: a step whose deed needs a switc
     assert.equal(NEED_CHECKS.renown(), true);
   } finally { setSigilOnline(false); }
   assert.equal(NEED_CHECKS.renown(), true, 'offline: no revenant is held');
+});
+
+test('FIRST-STAR (2026-10-22, the owner: "The faithful question item cant be found by this streamer (tutorial quest)"): The First Star waits, online, for the Renown whose purse first holds a Star - at Renown 1 the sky has only its free start, which is no star taken, so the step ran out its days and came again for ever (mutants: the need unread; the Renown; the step without its need)', () => {
+  assert.equal(FIRST_STAR_RENOWN, 2);
+  assert.deepEqual([starsFor(FIRST_STAR_RENOWN - 1), starsFor(FIRST_STAR_RENOWN) > 0], [0, true], 'the first Renown with a Star to spend');
+  setSigilOnline(true);
+  setSigilRenown(1);
+  try {
+    assert.equal(NEED_CHECKS.firstStar(), false, 'Renown 1 online: no star to take');
+    const { runner, machine, clock, step } = runnerWith({ level: 3, online: true, service: { account: () => 'a', claim: async () => ({ ok: true, data: {} }) } });
+    for (let i = 0; i < 8; i++) { step(); clock.s += STEP_GAP_S; }   // every other line due at level 3 begun, an hour apart
+    assert.ok(!machine.scheduled.includes('QLIF01'), 'not begun to fail');
+    assert.equal(runner.lineState('introFirmament'), null, 'its first step\'s need is the line\'s gate');
+    assert.deepEqual(['state', 'opens'].map((k) => runner.rows().find((l) => l.id === 'introFirmament')[k]), ['locked', 'Opens at Renown 2.']);
+    setSigilRenown(FIRST_STAR_RENOWN);
+    assert.equal(NEED_CHECKS.firstStar(), true);
+    step();
+    assert.ok(machine.scheduled.includes('QLIF01'), 'Renown 2: it begins');
+  } finally { setSigilOnline(false); }
+  assert.equal(NEED_CHECKS.firstStar(), true, 'offline: the line waits on its own gate, never this one');
 });
 
 test('AUDIT QUESTLINES LINES-12, LINES-19, LINES-7: a step that will not begin here waits RETRY_GAP_S and says so; a step\'s quest gone without its end (an error) is offered again a day later, never every tick (mutants: the wait on a refused parse; the stall\'s words; dropped)', () => {

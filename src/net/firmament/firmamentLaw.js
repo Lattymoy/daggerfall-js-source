@@ -48,6 +48,10 @@ export const CRAFT_RANK_MAX = 100;
 const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.trunc(Number(v) || 0)));
 /** The Stars a Renown level gives: 0 at Renown 1, 98 at 50. */
 export const starsFor = (renown) => STARS_PER_RENOWN * (clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) - 1);
+/** FIRST-STAR (2026-10-22): the first Renown whose purse holds a Star (2) - under it the sky offers nothing to take but
+ *  its free start, which is no star taken (firmamentBook.js counts the tree's keys). The Firmament's introduction waits
+ *  for it (systems/questlines/qlLineRunner.js NEED_CHECKS firstStar). */
+export const FIRST_STAR_RENOWN = 1 + Math.ceil(1 / STARS_PER_RENOWN);
 /** The Craft points a character's profession ranks give (any iterable of ranks, each 0..100). */
 export function craftPointsFor(ranks) {
   let sum = 0;

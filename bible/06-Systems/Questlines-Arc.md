@@ -601,6 +601,19 @@ guest); THE SMITH'S SECRETS' steps need Loot rarity, THE HARBORMASTER'S WORD's N
 switch), A SEAT AT THE TABLE's second The King's Gambit, and THE BAY'S TROUBLES' second the Renown a revenant comes at
 online (10) - each step waits, saying so ("Opens with Loot rarity on.", "Opens at Renown 10.").
 
+FIRST-STAR (2026-10-22, the owner: "The faithful question item cant be found by this streamer (tutorial quest)", then
+"Just audit them all"). Every introduction's script was started through the real parser and machine over the player's
+own map - up to twelve towns of every region, three starts each, with the town packs on (1,458 starts a step), and up to
+four, two each, on Daggerfall's own layouts (340) - and every person a step places stood in a building of the town as it is laid out, held by a marker of it, its
+town found by name (a `local armory` the mods took away is the nearest town's, as QUEST-AUDIT II NEAR-SITE draws it, and
+the words name that town); The Long Haul's and A Wagon's Load's sack is `large_sack` of Quests-Items, handed over and
+toted as DFU does. One step could not be done: WRITTEN IN THE STARS opens at the character's level 3, and its first
+step's deed is a star taken (`firmamentBook.js` counts the tree's keys, never its free start) - while the Stars come
+with Renown alone, none at Renown 1, and a character levelled offline comes online at Renown 1. The First Star ran out
+its thirty days and was offered again, for ever. It now needs `firstStar` - the Renown whose purse first holds a Star
+(`firmamentLaw.js` FIRST_STAR_RENOWN, 2) - and waits, saying "Opens at Renown 2.". Pinned in
+`test/systems/questlines/ql12_lines.test.js` (`tools/mutants/firststar.json`).
+
 **The work that is already work** - bounties, writs, harbour contracts, revenant errands, caravans - stays its own
 system; the window's rail already holds its rows.
 
