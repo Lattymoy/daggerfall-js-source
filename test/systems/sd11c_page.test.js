@@ -21,7 +21,7 @@ import { scanGatePixels } from '../../src/systems/gate/gateSite.js';
 import { LOCATION_TYPES, CLIMATES } from '../../src/formats/mapsFile.js';
 import { isMainStoryDungeon } from '../../src/world/dungeon/dungeonTextures.js';
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdFoundLine, SD_COLLAPSE_MS, SD_CAST_OUT_LINE, SD_NO_CLOSED, isSdRoom, sdRoomKey } from '../../src/net/superDungeon/sdLaw.js';
-import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, sdRiftPlace, sdReturnPlace, sdLandingPlace, inSdPortal, SD_LANDING_PAST_M, SD_RETURN_REACH_M, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../src/world/superDungeon/sdDungeon.js';
+import { sdRiftWord, sdReturnStands, sdThroughStands, sdRiftCount, riftLook, sdRiftPlace, sdReturnPlace, sdLandingPlace, inSdPortal, SD_LANDING_PAST_M, SD_RETURN_REACH_M, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../src/world/superDungeon/sdDungeon.js';
 import { sdSlotsKept } from '../../src/systems/superDungeon/sdSlots.js';
 import { SD_REALM_TEXT } from '../../src/world/superDungeon/sdRealm.js';
 import { createSpoilsPool, spoilsStore, spoilsLevel, SPOILS_SPENT_RESEND_MS, SPOILS_SPENT_MAX, SPOILS_KEYS } from '../../src/scenes/spoilsPool.js';
@@ -263,7 +263,7 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
     forceExitToExterior: () => log.push('out'), enterSdRealm: async () => { log.push('realm'); return entered; },
   };
   const env = {
-    sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 },
+    sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdThroughStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 },   // SD-THROUGH (PIN MOVED): the word says whether one went through
     INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
     sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door

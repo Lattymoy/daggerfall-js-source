@@ -20,7 +20,7 @@ const DOUBLE_OF = { sockets: 2, hellos: 3, busy: 4, poses: 7, sends: 8, refused:
 
 test('RELAY-LOAD the questions: each over the relay\'s own dataset and window, its columns exactly the aliases it selects, every alias the double RoomMetrics writes for it in EVERY question (a sum weighted by the sample, a row\'s value and a peak its room\'s own), the kind blob1; the kinds by their sends, the five-minute rows of the crowd\'s kinds over at most WINDOW_HOURS_MAX - every row of the span, never cut - the busiest rooms but the channels by their peak; the window whole hours 1 to a week, refused before the SQL; an answer drawn as its columns (mutants: the weight; a double moved in any question; a count unweighted; a column renamed; the IF; the orders; the limits; the span; the channels left in the crowds; the window\'s guard)', () => {
   assert.equal(DATASET, src('server/wrangler.toml').match(/\[\[analytics_engine_datasets\]\]\nbinding = "METRICS"\ndataset = "(\w+)"/)[1], 'the dataset the relay writes');
-  assert.deepEqual(QUESTIONS.map(([n]) => n), ['kinds', 'windows', 'crowds']);
+  assert.deepEqual(QUESTIONS.map(([n]) => n), ['kinds', 'windows', 'crowds', 'fulls', 'storage']);
 
   // THE DOUBLES ARE THE ONES ROOMMETRICS WRITES: a point flushed with every count its own value, read back by position
   let point = null;
@@ -65,6 +65,24 @@ test('RELAY-LOAD the questions: each over the relay\'s own dataset and window, i
   assert.match(QUESTIONS[1][1], /world, gate, chat; the last 24 hours at most/);
   const crowds = loadSql('crowds', 1);
   assert.ok(crowds.includes("WHERE timestamp > NOW() - INTERVAL '1' HOUR AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40 FORMAT JSON"), 'the channels left out (their buses hold everyone), the forty busiest by peak');
+
+  // FOES-FIRST and FOES-HOLD: the blobs past the doubles, each alias the blob RoomMetrics writes its count in - a point
+  // flushed with every count its own value, read back by position - weighted by the sample through toUInt32, over the
+  // points that carry the hold's blobs; the mean wait the waits over the frames sent, both arms of the IF a Double
+  let bp = null;
+  const bm = new RoomMetrics(0);
+  Object.assign(bm.c, { frames: 1, hitDrops: 3, fullDrops: 4, fulls: 5, held: 6, heldSent: 7, heldGone: 8, heldMs: 9, beats: 10 });
+  bm.flush({ writeDataPoint: (p) => { bp = p; } }, 'world', 2, 'v', 1000, true);
+  const BLOB_OF = { hit_drops: 3, full_drops: 4, fulls: 5, held: 6, held_sent: 7, held_gone: 8, beats: 10 };
+  for (const [as, k] of Object.entries(BLOB_OF)) assert.equal(bp.blobs[k - 1], String(k), `blob${k} RoomMetrics's`);
+  assert.equal(bp.blobs[8], '9', 'blob9 the waits');
+  const fulls = loadSql('fulls', 2);
+  for (const [as, k] of Object.entries(BLOB_OF)) assert.ok(fulls.includes(`SUM(_sample_interval * toUInt32(blob${k})) AS ${as}`), `fulls: ${as} is blob${k}`);
+  assert.ok(fulls.includes('IF(SUM(_sample_interval * toUInt32(blob7)) > 0, SUM(_sample_interval * toUInt32(blob9)) / SUM(_sample_interval * toUInt32(blob7)), 0.0) AS wait_ms'), 'the mean wait: the waits over the held frames sent');
+  assert.ok(fulls.endsWith("WHERE timestamp > NOW() - INTERVAL '2' HOUR AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40 FORMAT JSON"), 'the hold\'s points alone, by kind, the most full frames first');
+  const storage = loadSql('storage', 2);
+  assert.ok(storage.includes('blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak'), 'a room-window\'s writes and reads, the doubles RoomMetrics writes them in, and its sockets');
+  assert.ok(storage.endsWith("WHERE timestamp > NOW() - INTERVAL '2' HOUR ORDER BY writes DESC LIMIT 40 FORMAT JSON"), 'every kind, the most writes first');
 
   for (const bad of ['0', String(HOURS_MAX + 1), '1.5', '-1', "1' HOUR; --", 'x']) {
     for (const [name] of QUESTIONS) assert.throws(() => loadSql(name, bad), /not a window/, `${name} ${bad}`);

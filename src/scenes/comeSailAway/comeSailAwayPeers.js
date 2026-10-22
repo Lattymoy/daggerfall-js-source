@@ -35,6 +35,7 @@ import { stowSail } from '../../systems/comeSailAway/comeSailAway.js';
 import { easeToward } from '../../systems/horse/horseCartWire.js';
 import { quatSlerp, quatMultiply, quatAngleAxis } from '../../world/quat.js';
 import { FOES_FULL_MS } from '../../net/online.js';
+import { farLife, farTreeStep } from './farLife.js';   // BOAT-FAR: her Animators' life by her range, navalHost's law (BOAT-OWN: her tree's)
 
 /** How fast a peer's boat turns toward its word (per second, the ease's rate). */
 export const CSA_PEER_TURN_RATE = 12;
@@ -96,6 +97,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
    *  never hands the bucket back full */
   const buckets = new Map();
   let turn = 0;   // the owner the next build asks first
+  let lifeSeq = 0;   // BOAT-FAR: each boat's frame of the far law's stride, in the order they stand
   const said = new Set();
 
   function drop(owner) {
@@ -195,7 +197,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
     const rotation = turned ? quatSlerp(turned, turnTo, 1 - Math.exp(-CSA_PEER_TURN_RATE * step)) : [...turnTo];
     return { position, rotation, jumped };
   }
-  function pose(s, w, toScene, dt, look, age) {
+  function pose(s, w, toScene, dt, look, age, eye) {
     s.was = s.shown && s.turn ? { position: [...s.shown], rotation: [...s.turn] } : null;
     const next = nextPose(s, w, toScene, dt, age);
     s.jumped = next.jumped;
@@ -216,12 +218,18 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
     if (s.boat.GameObject.activeSelf === hide) s.boat.GameObject.setActive(!hide);
     s.boat.conceal = w.helm && look && look !== 'hidden' ? look : null;
     // SEA-TOWN (FIELD BUGS 2026-10-11c): her Animators as kept for her tree (boatAnimators), not walked out of it again
-    // for every boat of every player on every frame - asked even standing nowhere, so each starts over when she stands
-    for (const a of boatAnimators(s.boat)) a.update(dt);
+    // for every boat of every player on every frame - asked even standing nowhere, so each starts over when she stands.
+    // BOAT-FAR: and by her range, as the sea's ships' are (scenes/comeSailAway/farLife.js) - past NEAR_LIFE_M of the eye
+    // one frame in FAR_LIFE_EVERY, on the time she missed (up to eight boats a player, anywhere in some 3 km, every frame).
+    // BOAT-OWN: her tree's (farTreeStep) - hidden or shown, her helm taken or let go, she lives that frame, so her
+    // Animators start over or switch as her walk does, never up to three frames after it
+    const lived = farTreeStep(s.life ??= farLife(lifeSeq++), dt, s.boat.GameObject, s.shown, eye);
+    if (lived !== null) for (const a of boatAnimators(s.boat)) a.update(lived);
   }
 
-  /** One frame: the builds' buckets refilled, each moved word matched to what stands, ONE build, then each boat posed. */
-  function frame(dt) {
+  /** One frame: the builds' buckets refilled, each moved word matched to what stands, ONE build, then each boat posed.
+   *  BOAT-FAR: `eye` the eye their Animators' range is read from - the pool's last frame's (null: every boat near). */
+  function frame(dt, eye = pool.lifeEye?.() ?? null) {
     for (const [boat, s] of retained) {
       if (!enabled || !keepAboard(boat)) { retained.delete(boat); pool.remove(boat); continue; }
       boat.GameObject.position = [...s.position]; boat.GameObject.rotation = [...s.rotation];
@@ -243,7 +251,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
       if (!list) continue;
       const look = peerLook?.(owner) ?? null;
       try {
-        for (let i = 0; i < list.length; i++) if (list[i]) pose(list[i], l.boats[i], l.toScene, dt, look, l.age);
+        for (let i = 0; i < list.length; i++) if (list[i]) pose(list[i], l.boats[i], l.toScene, dt, look, l.age, eye);
       } catch (e) { fail(owner, e); }
     }
   }

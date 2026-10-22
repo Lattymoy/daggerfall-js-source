@@ -1,0 +1,229 @@
+[
+  {
+    "name": "HV2-road-step-posing",
+    "file": "src/world/road/roadTeams.js",
+    "old": "dt, look: s.look, pose: false });",
+    "new": "dt, look: s.look });",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-camera-never-kept",
+    "file": "src/world/road/roadTeams.js",
+    "old": "      cam3d = rig ? { proj, view, eye, lens: lensOf(proj) } : null;",
+    "new": "      cam3d = null;",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-lens-never-kept",
+    "file": "src/world/road/roadTeams.js",
+    "old": "{ proj, view, eye, lens: lensOf(proj) }",
+    "new": "{ proj, view, eye, lens: 1 }",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-fresh-unhanded",
+    "file": "src/world/road/roadTeams.js",
+    "old": "{ proj, view, eye, up, fresh: s.out })",
+    "new": "{ proj, view, eye, up })",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-out-never-kept",
+    "file": "src/world/road/roadTeams.js",
+    "old": "        s.out = poseWhereSeen(",
+    "new": "        s.out = false; poseWhereSeen(",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-phase-dropped",
+    "file": "src/world/road/roadTeams.js",
+    "old": "phase: phases++, out: false };   // COATS1",
+    "new": "phase: 0, out: false };   // COATS1",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-frames-uncounted",
+    "file": "src/world/road/roadTeams.js",
+    "old": "    drawn3d.length = 0;\n    frameNo++;\n",
+    "new": "    drawn3d.length = 0;\n",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-road-frame-eye-unread",
+    "file": "src/world/road/roadTeams.js",
+    "old": "poseWhereSeen(rig, s.h3, h.feet, cam3d, eye, frameNo, s.phase, s.out)",
+    "new": "poseWhereSeen(rig, s.h3, h.feet, cam3d, null, frameNo, s.phase, s.out)",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-step-posing",
+    "file": "src/world/standingHorses.js",
+    "old": "look: o.look, pose: false });",
+    "new": "look: o.look });",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-view-unread",
+    "file": "src/world/standingHorses.js",
+    "old": "if (cam) { pass.view = cam.view; pass.proj = cam.proj; pass.lens = lensOf(cam.proj); }",
+    "new": "if (cam) { pass.lens = lensOf(cam.proj); }",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-lens-unread",
+    "file": "src/world/standingHorses.js",
+    "old": "pass.lens = lensOf(cam.proj); }",
+    "new": "pass.lens = 1; }",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-fresh-unhanded",
+    "file": "src/world/standingHorses.js",
+    "old": "eye: eyeAt, up, fresh: e.fresh })",
+    "new": "eye: eyeAt, up })",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-fresh-never-set",
+    "file": "src/world/standingHorses.js",
+    "old": "        e.fresh = e.out;",
+    "new": "        e.fresh = false;",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-drawn-out-of-view",
+    "file": "src/world/standingHorses.js",
+    "old": "if (e.frame !== frameNo || e.out) continue;",
+    "new": "if (e.frame !== frameNo) continue;",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-phase-dropped",
+    "file": "src/world/standingHorses.js",
+    "old": "phase: phases++, out: false, fresh: false };",
+    "new": "phase: 0, out: false, fresh: false };",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-stand-begins-eye-unread",
+    "file": "src/world/standingHorses.js",
+    "old": "cam ? pass : null, eye, frameNo, e.phase);",
+    "new": "cam ? pass : null, null, frameNo, e.phase);",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-pool-view-unhanded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);",
+    "new": "e.out = poseWhereSeen(rig, e.horse, h.position, null, _eye, _frameNo, e.phase, e.out);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HV2-pool-frame-eye-unhanded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);",
+    "new": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, null, _frameNo, e.phase, e.out);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HV2-pool-phase-unhanded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);",
+    "new": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, 0, e.out);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HV2-law-pose-unsent",
+    "file": "src/world/horseView.js",
+    "old": "  if (!out && (wasOut || horsePoseDue(frame, phase, at, cam, eye))) rig.pose(horse);",
+    "new": "  if (!out && (wasOut || horsePoseDue(frame, phase, at, cam, eye))) { /* unposed */ }",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-AUDIT-law-last-answer-unread",
+    "file": "src/world/horseView.js",
+    "old": "  if (!out && (wasOut || horsePoseDue(frame, phase, at, cam, eye))) rig.pose(horse);",
+    "new": "  if (!out && (horsePoseDue(frame, phase, at, cam, eye))) rig.pose(horse);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-AUDIT-law-standing-held-out",
+    "file": "src/world/horseView.js",
+    "old": "frame, phase, wasOut = false) {",
+    "new": "frame, phase, wasOut = true) {",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-AUDIT-road-last-answer-unhanded",
+    "file": "src/world/road/roadTeams.js",
+    "old": "frameNo, s.phase, s.out);",
+    "new": "frameNo, s.phase);",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HV2-AUDIT-pool-last-answer-unhanded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "_frameNo, e.phase, e.out);",
+    "new": "_frameNo, e.phase);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HV2-AUDIT-road-pass-eye-unkept",
+    "file": "src/world/road/roadTeams.js",
+    "old": "cam3d = rig ? { proj, view, eye, lens: lensOf(proj) } : null;",
+    "new": "cam3d = rig ? { proj, view, eye: null, lens: lensOf(proj) } : null;",
+    "tests": [
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  }
+]

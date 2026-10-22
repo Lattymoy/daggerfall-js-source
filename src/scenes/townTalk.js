@@ -300,15 +300,24 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // buildingNameOpts hook and the directory build cannot drift - a
   // second copy of "which bank, whose regent, what the palace is
   // called" is how %cbd and the talk directory come to disagree about
-  // the same building. Null while no topics/factions stand (the quest
+  // the same building. Null until FACTION.TXT is read (the quest
   // hook answers {} through it and generateBuildingName falls to its
-  // own defaults, DFU's own out-of-location posture).
+  // own defaults).
+  // FB1020h SITE-NAMED (FIELD BUGS 2026-10-20h): A TEMPLE'S AND A GUILD
+  // HALL'S NAME NEED NO TOWN. The bag answered null wherever no town's
+  // topics stood - on the road, at sea - and a quest that drew a remote
+  // temple or guild hall there named it '' for good: the Order of the
+  // Hour's letters read "at  in Wildertown". DFU names them from
+  // PlayerEntity.FactionData wherever the player stands
+  // (FormulaHelper.cs:3139-3162), and a shop's %ef bank and %rt regent
+  // by the player's region (FormulaHelper.cs:3225,
+  // MacroHelper.cs:644-650); only the town pair is the town's.
   function nameOpts() {
-    if (!topics || !factions) return null;
-    const region = topics.regionIndex ?? regionNow();
+    if (!factions) return null;
+    const region = topics?.regionIndex ?? regionNow();
     const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
     return {
-      locationName: topics.locationName, regionName: topics.regionName,   // the canonical pair: the key a palace is chosen by
+      locationName: topics?.locationName, regionName: topics?.regionName,   // the canonical pair: the key a palace is chosen by (none off a town)
       // L10N3e: ...and the pair AS SHOWN, for a shop's %cn and the bank's region (TalkManager.cs:2788-2789, :2857-2858)
       shownLocationName: shownLocationName(), shownRegionName: shownRegionName(),
       nameBank: getNameBankOfRegion(region),

@@ -14,7 +14,8 @@
 //     (systems/skillSoftcap.js progressionScaling, the wilderness by night at its worst, the hero at its worst) - a
 //     champion's 2 x its trait (`cp`, never with `z`) - a revenant's rank, wrath and the Dread (`nm`) - the wild zone's 4 x
 //     its heart ring - a Greater Giant x10 (`gg`) - a Rite's Summoner x3 (a class foe in a camp - the rite's faithful are
-//     one, the frame's `cz` - scenes/riteHost.js riteFoe); and
+//     one, the frame's `cz` - scenes/riteHost.js riteFoe), or a fallen star's coven x2 (any foe in a camp - a star's are
+//     one - scenes/starfall/starfallHost.js toughen; STAR-TUNE); and
 //     the City Watch's own (scenes/cityGuards.js: its class roll, the open zone's x10);
 //   - a dungeon's foe (scenes/dungeonContext.js buildFoeAt): its base - a Super dungeon's x4 and a Stalwart champion's x3
 //     (more than any elite's x9) - progression at a Dragon's Den's worst - the wild dungeon's 4 x 2. The record carries no
@@ -53,6 +54,7 @@ export const FOE_BOUND = Object.freeze({
   giantType: 16,            // systems/wild/wildZone.js WILD_GIANT
   zoneWatch: 10,            // systems/wild/wildZone.js ZONE_WATCH_SCALE (scenes/world.js guardScale)
   rite: 3,                  // net/gate/gateRite.js RITE_SUMMONER_HEALTH
+  star: 2,                  // net/starfall/starfallLaw.js STAR_FOE_HEALTH
   watch: 146,               // characters/mobile/mobileTypes.js KNIGHT_CITY_WATCH
   hero: Object.freeze({     // systems/heroThreat.js HERO_THREAT's health
     level: Object.freeze({ from: 10, to: 30, health: 1.04 }),
@@ -108,7 +110,7 @@ function streetBound(r, base, wild, camp) {
   if (typeof r.nm === 'string' && r.nm) v = revenantStages(v);
   if (wild) v = stage(v, FOE_BOUND.wild * FOE_BOUND.wildRingTop);
   if (Number.isInteger(r.gg) && r.t === FOE_BOUND.giantType) v = stage(v, FOE_BOUND.giant);
-  if (camp && isClass(r.t)) v = stage(v, FOE_BOUND.rite);
+  if (camp) v = stage(v, isClass(r.t) ? Math.max(FOE_BOUND.rite, FOE_BOUND.star) : FOE_BOUND.star);   // STAR-TUNE: a fallen star's coven, any kind
   return r.t === FOE_BOUND.watch ? Math.max(v, wild ? stage(base, FOE_BOUND.zoneWatch) : base) : v;
 }
 

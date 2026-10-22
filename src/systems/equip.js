@@ -34,6 +34,7 @@ import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (cha
 import { startingProvisions } from './survival/items.js';   // SURV2: the new character's kit
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { ARMOR_BITS_SHIFT } from './specialAdvantages.js';   // the armour field's place, one home
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 
@@ -166,7 +167,7 @@ export function unequipItem(entity, item) {
  *  could never put back on. Ported at the same seam, deliberately. */
 export function isForbiddenEquip(career, item) {
   if (!career || !item) return false;
-  const forbiddenArmors = (career.weaponArmorShieldsBitfield >>> 6) & 0x07;
+  const forbiddenArmors = (career.weaponArmorShieldsBitfield >>> ARMOR_BITS_SHIFT) & 0x07;
   const forbiddenShields = (career.weaponArmorShieldsBitfield >>> 9) & 0x0f;
   const forbiddenProficiencies = career.weaponArmorShieldsBitfield & 0x3f;
   const forbiddenMaterials = career.forbiddenMaterialsFlags ?? 0;

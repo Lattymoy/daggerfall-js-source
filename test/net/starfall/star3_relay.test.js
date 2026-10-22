@@ -11,7 +11,7 @@ import {
   STAR_HOUR_MS, STAR_PER_NIGHT, STAR_WAVES, STAR_LEVEL_MAX, STAR_KILLS_WIRE_MAX, STAR_BLOWS_WIRE_MAX,
   STAR_TOP_MAX, STAR_ACCOUNTS_MAX, STAR_LIGHT, STAR_PHASES, STAR_WORD_MS, STAR_GRACE_MS, STAR_REACH_M, STAR_UNITS_PER_M,
   STAR_ORPHAN_MS, STAR_LOST_DAWN, STAR_LOST_DARK, P_GATHER, P_WAVE, P_BREATH, P_MASTER, P_HELD, P_LOST, starTimes, starNativeOf, starLedgerId,
-  starWaveSize, starNightGoneAt, STAR_WAVE_MAX, newStarLedger, starLedgerSane, starHeldWord, STAR_LIFE_MS, STAR_AFTER_MS,
+  starWaveSize, starNightGoneAt, STAR_WAVE_MAX, newStarLedger, starLedgerSane, starHeldWord, STAR_LIFE_MS, STAR_AFTER_MS, starLedgerState,
 } from '../../../src/net/starfall/starfallLaw.js';
 import { readStarReceipt, verifyStarReceipt, mintStarReceipt, STAR_RECEIPT_MAX, STAR_RECEIPT_V } from '../../../src/net/starfall/starReceipt.js';
 import {
@@ -19,7 +19,7 @@ import {
   STAR_KILLS_MAX, STAR_BLOWS_MAX, STAR_TOP_WIRE_MAX, STAR_COUNT_MAX, STAR_LIGHT_MAX, STAR_PHASE_MAX, STAR_RECEIPT_WIRE_MAX,
   STAR_HELD_MAX, STAR_HELD_KEY, STAR_LEDGERS_MAX, STAR_LEDGERS_BY_MAX, STAR_IDLE_MS, STAR_KEEP_MS, STAR_RC_KEEP, STAR_RC_KEEP_MS,
   starLedgerKey, starReceiptKeyOf, LIVE_EVENTS, LIVE_EVENT_RELAY_MIN, relayKnowsLiveEvent, RELAY_VERSION, SOCIAL_ROOM,
-  worldRoom, STAR_INTERNAL_HELD,
+  worldRoom, STAR_INTERNAL_HELD, STAR_WAVE_SIZE_MAX, STAR_WAVE_SIZE_OLD_MAX,
 } from '../../../src/net/wire.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
@@ -97,6 +97,22 @@ test('STAR3 THE WIRE: a star word projected whole and bounded - the wave its dea
   assert.equal(validStarOut({ ...st, p: STAR_PHASES.length }), null);
   assert.equal(validStarOut({ ...st, s: STAR_PER_NIGHT }), null);
   assert.equal(validStarOut({ ...st, wz: STAR_WAVE_MAX + 1 }), null);
+  assert.equal(STAR_WAVE_SIZE_MAX, STAR_WAVE_MAX, 'STAR-TUNE: the wire\'s copy of the law\'s most');
+  assert.equal(validStarOut({ ...st, wz: STAR_WAVE_MAX })?.wz, STAR_WAVE_MAX, 'a wave of twenty-four rides');
+  // AUDIT STAR-TUNE F3: an older client's `st` read nine at most and dropped the whole frame past it - the cell says nine
+  // and the wave whole in `wx`, which this reader folds back into `wz`
+  assert.equal(STAR_WAVE_SIZE_OLD_MAX, 9, 'world235-world237\'s validStarOut: `wz` nine at most');
+  const olderReads = (m) => Number.isInteger(m.wz) && m.wz >= 0 && m.wz <= STAR_WAVE_SIZE_OLD_MAX;   // an older client's bound on `wz`, its only one the wave moves
+  const said = newStarLedger({ n: N, k: K, px: PX, py: PY }, T.fallAt + 5);
+  for (let wz = 0; wz <= STAR_WAVE_MAX; wz++) {
+    said.wz = wz;
+    const out = JSON.parse(JSON.stringify(starLedgerState(said)));
+    assert.ok(olderReads(out), `a wave of ${wz}: an older tab keeps the frame (wz ${out.wz})`);
+    assert.equal(out.wx, wz > STAR_WAVE_SIZE_OLD_MAX ? wz : undefined, `a wave of ${wz}: whole in wx only past nine`);
+    assert.equal(validStarOut(out)?.wz, wz, `a wave of ${wz}: read whole here`);
+    assert.equal(validStarOut(out)?.wx, undefined, 'wx is the wire\'s, never the reader\'s');
+  }
+  for (const bad of [{ wz: 8, wx: 18 }, { wz: 9, wx: 9 }, { wz: 9, wx: STAR_WAVE_MAX + 1 }, { wz: 9, wx: 1.5 }, { wz: 9, wx: '18' }]) assert.equal(validStarOut({ ...st, ...bad }), null, `wx ${JSON.stringify(bad)}`);
   assert.deepEqual(validStarOut({ ...st, wl: -1 }).wl, -1, 'no phase clock running');
   const hd = validStarOut({ k: 'hd', n: N, s: K, px: PX, py: PY, at: T.fallAt + 5, top: [7, 'Ann', '', 'Bran', 'Cat', 'Dun'], c: 9 });
   assert.deepEqual(hd.top, ['Ann', 'Bran', 'Cat'], 'junk never hides a name');
@@ -232,7 +248,7 @@ test('STAR3 THE DEFENSE, HELD: the gathering, four waves and their breath, the m
     // the gathering, then the waves - each wave's size by the defenders standing as it starts
     let st = await defend(sayOthers, a, others, { until: (x) => x.p === P_WAVE });
     assert.equal(st.w, 1);
-    assert.equal(st.wz, starWaveSize(1, 3), 'three defenders: five foes');
+    assert.equal(st.wz, starWaveSize(1, 3), 'three defenders: eight foes');
     assert.equal(st.b, 2, 'the band of the defenders\' levels (12, 20, 12): the second');
     const blows = { hb: 0 };
     st = await defend(sayOthers, a, others, { until: (x) => x.p === P_BREATH, blows });

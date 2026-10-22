@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { WILD_GIANT } from '../../src/systems/wild/wildZone.js';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
 import { createGrantHost, grantSpeciesOf } from '../../src/scenes/grantHost.js';
-import { signGrant, grantMarksFor, grantMarksAllow, grantKindOf, validGrant, GRANT_TTL_MS, GRANT_TALLY_MS, GRANT_RENEW_LEAD_MS, GRANT_KINDS, GRANT_MARKLESS } from '../../src/net/grantLaw.js';
+import { signGrant, grantMarksFor, grantMarksAllow, grantKindOf, validGrant, GRANT_TTL_MS, GRANT_TALLY_MS, GRANT_RENEW_LEAD_MS, GRANT_KINDS, GRANT_MARKLESS, GRANT_OPEN_KINDS } from '../../src/net/grantLaw.js';
 
 const { subtle } = globalThis.crypto;
 function craftCfg({ hpPerLevel = 4, speed = 90, str = 40, agi = 85, luck = 55, atkFlags = 0x08 } = {}) {
@@ -93,7 +93,8 @@ async function player(R, id, { mode, climate = () => 231 } = {}) {
 }
 
 test('GRANT4 THE KINDS: a stand\'s kind is its caller\'s word or its own shape - an ally, a quest\'s foe, a Greater Giant, a revenant, marks its caller decided, the deep\'s or the Living World\'s, a loose stand or Wabbajack\'s change, a marker\'s, else a capped stand\'s; no kind stands more than 24 a grant; a quest\'s foe, an ally, a revenant, the watch and a kept stand roll no marks, and a reader believes theirs (mutants: an ally granted marks; the shape\'s order; a markless kind\'s marks judged)', () => {
-  assert.deepEqual(Object.keys(GRANT_KINDS), ['enc', 'camp', 'band', 'bounty', 'loose', 'site', 'managed', 'giant', 'rev', 'quest', 'ally', 'watch', 'kept', 'encr']);
+  assert.deepEqual(Object.keys(GRANT_KINDS), ['enc', 'camp', 'band', 'bounty', 'loose', 'site', 'managed', 'giant', 'rev', 'quest', 'ally', 'watch', 'kept', 'encr', 'star']);   // STAR-TUNE: a fallen star's coven, its own kind
+  assert.ok(GRANT_OPEN_KINDS.includes('star'), 'STAR-TUNE: a star falls in the open country alone - a world room refuses its kind');
   assert.ok(Object.values(GRANT_KINDS).every((k) => k.max >= 1 && k.max <= 24));
   assert.equal(GRANT_KINDS.ally.hostile, false);
   assert.deepEqual([{ allied: true, questBehaviour: 1 }, { questBehaviour: 1, revenant: {} }, { zoneGiant: 3 }, { revenant: {} }, { revenant: {}, managed: true }, { kept: true, managed: true }, { revenant: {}, kept: true }, { managed: true, loose: true }, { loose: true }, { replacing: true }, { site: 's', placed: true }, { placed: true }, {}].map(grantKindOf),

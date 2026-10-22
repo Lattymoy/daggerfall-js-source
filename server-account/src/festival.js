@@ -91,7 +91,8 @@ const orphansHome = (/** @type {any} */ db, /** @type {string} */ id) => db.batc
 
 /**
  * THE ACCOUNT'S FESTIVAL: its cakes and bowls, the account wares it bought, what its offerings gave and what it took,
- * and whether the festival is open - `{ cakes, bowls, wares, given, taken, open, offerings }` (`offerings` its own
+ * and whether the festival is open - `{ cakes, bowls, wares, given, taken, today, open, offerings }` (`today` the cakes its
+ * finds gave this UTC day, findFestival's count - CAKE-CAP-SAID; `offerings` its own
  * standing, each `{ mapId, buildingKey, character, stock }`). An orphaned offering comes home first (orphansHome). A guest
  * answers `guest`.
  * @param {{ db: any, nowS: number }} ctx @param {{ id: string, handle?: string|null }} player @param {any} env
@@ -101,8 +102,11 @@ export async function festivalOf({ db, nowS }, player, env) {
   await orphansHome(db, player.id);
   const { results: mine } = await db.prepare('SELECT map_id, building_key, char_id, stock FROM fest_offerings WHERE player = ?1').bind(player.id).all();
   const row = await db.prepare('SELECT fest_cakes, fest_bowls, fest_wares, fest_given, fest_taken FROM players WHERE id = ?1').bind(player.id).first();
+  // CAKE-CAP-SAID: the day's cakes found so far (findFestival's own row), so the Wyrd's window says how near the day's end is
+  const finds = await db.prepare('SELECT found FROM fest_finds WHERE account = ?1 AND day = ?2').bind(player.id, utcDay(nowS)).first();
   return {
     cakes: int(row?.fest_cakes), bowls: int(row?.fest_bowls), wares: festivalWaresHeld(row?.fest_wares), given: int(row?.fest_given), taken: int(row?.fest_taken),
+    today: int(finds?.found),
     open: festivalOpenFor(player, env) && inDays(nowS),
     offerings: (mine ?? []).map((/** @type {any} */ r) => ({ mapId: int(r.map_id), buildingKey: int(r.building_key), character: String(r.char_id), stock: int(r.stock) })),
   };
@@ -111,8 +115,11 @@ export async function festivalOf({ db, nowS }, player, env) {
 /**
  * A FIND: the account's word that it did `source` (festivalLaw FIND_SOURCES - a foe by its kind, an act by its group),
  * decided by this service's die at the source's odds; a hit gives its count (twice while the dead walk - the sky's own
- * night, skyDayAt, or the festival's own, 31 October: festivalLaw deadWalk), never past the day's cakes. `{ found, cakes }` (`found` the cakes this find gave, 0 for none);
- * `capped` once the day's asks are spent (`cakes` with it).
+ * night, skyDayAt, or the festival's own, 31 October: festivalLaw deadWalk), never past the day's cakes. `{ found, cakes, today }` (`found` the cakes this find gave, 0 for none;
+ * `today` the day's cakes found, this one's with them), and `capped: true` with them once the day's cakes are all found;
+ * `capped` the refusal once the day's asks are spent (`cakes` with it).
+ * CAKE-CAP-SAID (FIELD BUGS 2026-10-21b, "Soul Cake stopped dropping"): a find past the day's cakes answered `{ found: 0 }`,
+ * a miss's own words, so a player farmed on for hours against a cap nothing named - the answer says it now, and its count.
  * @param {{ db: any, nowS: number, rand?: (b: Uint8Array) => Uint8Array }} ctx @param {{ id: string, handle?: string|null }} player
  * @param {any} body @param {any} env
  */
@@ -128,7 +135,8 @@ export async function findFestival(ctx, player, body, env) {
     ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks < ?3 RETURNING asks, found`).bind(player.id, day, FIND_ASKS_PER_DAY).first();
   if (!ask) return { error: 'capped', cakes: await cakesOf(db, player.id) };
   let found = 0;
-  const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), FIND_CAKES_PER_DAY - int(ask.found));
+  const left = FIND_CAKES_PER_DAY - int(ask.found);
+  const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), left);
   if (want > 0 && typeof rand === 'function' && dice(rand) < FIND_SOURCES[source].p) {
     // ONE TRANSACTION: the day's count first, under its cap - the count's own row decides - then the cakes where it moved
     const [took] = await db.batch([
@@ -137,7 +145,8 @@ export async function findFestival(ctx, player, body, env) {
     ]);
     if (took?.results?.[0]) found = want;
   }
-  return { found, cakes: await cakesOf(db, player.id) };
+  const today = FIND_CAKES_PER_DAY - left + found;
+  return { found, cakes: await cakesOf(db, player.id), today, ...(today >= FIND_CAKES_PER_DAY ? { capped: true } : {}) };
 }
 
 /**

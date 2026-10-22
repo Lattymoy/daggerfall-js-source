@@ -149,7 +149,8 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     const mesh = { vao: base.vao, count: base.count, buffers: [], vbo: base.vbo, floats: base.floats, bounds: null,
       skin: renderer.createSkinPalette({ pairs: stream.pairs, width: shape.width, height: shape.height }),
       ranges: stream.ranges.map((r) => ({ first: r.first, count: r.count, tex: r.texture === 'hair' ? hairTex : null, alphaCut: r.alpha ? 0.5 : 0, hidden: false, part: r.part })) };
-    return { seed, gait: horseGait(), scratch: horsePoseScratch(bake), pal, mesh, model: null, feet: [0, 0, 0], yaw: 0, scale: 1, look: 0 };
+    return { seed, gait: horseGait(), scratch: horsePoseScratch(bake), pal, mesh, model: null, feet: [0, 0, 0], yaw: 0, scale: 1, look: 0,
+      posed: false, stale: false };   // HORSE-VIEW: a pose sent yet; the pose sent behind the gait's clock (a step taken with `pose` false)
   }
 
   /** A horse let go: its palette (the stream is the rig's). */
@@ -160,14 +161,33 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   /** One frame of a horse: its gait stepped at `speed` (m/s, its ground speed), its pose written and uploaded, and
    *  where it stands - its feet (the rig's origin on the ground) and its heading (the way it faces, the motor's yaw:
    *  0 down +Z, as every body's). `gallops` false: its rider holds it to a slow ride (HORSE-WALK - horseModel.js
-   *  gaitFor); a horse no one rides gallops as its speed says. */
-  function step(h, { feet, yaw, speed = 0, dt = 0, look = 0, gallops = true }) {
+   *  gaitFor); a horse no one rides gallops as its speed says.
+   *  HORSE-VIEW (bible/07-Rendering/Performance-Priority.md): `pose` false steps the gait's clock and places the horse,
+   *  and neither writes its pose nor sends it - it stands in the last pose sent (`stale`) until `pose` catches it up.
+   *  The palette is the clock's alone (horseModel.js writeHorsePalette reads the gait and nothing else), so a pose
+   *  after skipped frames is the one an every-frame horse shows on that frame. A horse never posed is posed whatever
+   *  `pose` says - none stands in the palette it was made with. */
+  function step(h, { feet, yaw, speed = 0, dt = 0, look = 0, gallops = true, pose = true }) {
     stepHorseGait(h.gait, bake, speed, dt, h.seed, gallops);
-    writeHorsePalette(bake, h.gait, h.pal, h.scratch);
-    renderer.updateSkinPalette(h.mesh, h.pal);
+    if (pose || !h.posed) poseNow(h);
+    else h.stale = true;
     h.look = horseLookCode(horseLookOfCode(look | 0));
     h.mesh.ranges[0].tex = lookTex(h.look);
     return place(h, feet, yaw);
+  }
+
+  /** HORSE-VIEW: a horse's pose written and sent where its gait's clock stands - the palette, its upload. */
+  function poseNow(h) {
+    writeHorsePalette(bake, h.gait, h.pal, h.scratch);
+    renderer.updateSkinPalette(h.mesh, h.pal);
+    h.posed = true; h.stale = false;
+  }
+  /** HORSE-VIEW: a horse whose pose is behind its clock (stepped with `pose` false) posed where the clock stands; one
+   *  already there sends nothing. Answers whether it posed. */
+  function pose(h) {
+    if (!h || (h.posed && !h.stale)) return false;
+    poseNow(h);
+    return true;
   }
 
   /** Where a horse stands: its feet and heading, `scale` times its size about its feet (the travel view's grown
@@ -207,12 +227,21 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     return { center, halfW, halfH, anchor };
   }
 
+  /** HORSE-VIEW: does a placed horse reach into a camera's view - the draw's own test (its box's ball, outOfView)? One
+   *  not placed yet is not known to be out of it. */
+  function seen(h, view, proj, bx = h?.model ? box(h) : null) {
+    return !bx || !outOfView(bx.center, Math.hypot(bx.halfW, bx.halfH), view, proj);
+  }
+
   /** A horse alone, through the sprite pass at the Morrowind body's dial - none out of the view (AUDIT COATS3D A12: a
-   *  horse behind the eye was skinned and drawn all the same, and one at the eye's plane a whole-screen tile). */
-  function draw(h, canvas, { proj, view, eye, up = null, conceal = null, hitFlash = 0 }) {
+   *  horse behind the eye was skinned and drawn all the same, and one at the eye's plane a whole-screen tile).
+   *  HORSE-VIEW: `fresh` - its caller skipped its pose out of the view - and a pose behind its clock is caught up before
+   *  it is drawn, so a horse the view swings onto is never drawn in a pose from when it was last seen. */
+  function draw(h, canvas, { proj, view, eye, up = null, conceal = null, hitFlash = 0, fresh = false }) {
     if (!h?.model || !canvas) return false;
     const bx = box(h);
-    if (outOfView(bx.center, Math.hypot(bx.halfW, bx.halfH), view, proj)) return false;
+    if (!seen(h, view, proj, bx)) return false;
+    if (fresh) pose(h);
     drawRigSpriteBox(renderer, canvas, h.mesh, h.model, { ...bx, up, conceal, hitFlash }, proj, view, eye, MW_ARM_PIXEL);
     return true;
   }
@@ -230,7 +259,7 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   }
 
   return {
-    load, tick, horse, release, step, place, picture, seat, box, draw, drawFirstPerson, lookTex,
+    load, tick, horse, release, step, pose, place, picture, seat, box, seen, draw, drawFirstPerson, lookTex,
     /** The rig is up: the stream and the bay's pictures. */
     ready: () => !!base,
     /** Why the rig is not up, when it failed. */

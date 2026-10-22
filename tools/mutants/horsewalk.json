@@ -66,7 +66,7 @@
     "old": "look: horse.look | 0, gallops: !horse.slow });", "new": "look: horse.look | 0, gallops: true });",
     "tests": ["test/systems/horsewalk.test.js"]},
   {"name": "HORSEWALK-peer-horse-ungated", "file": "src/net/peer/peerBodies.js",
-    "old": "look: shown.rc | 0, gallops: !shown.hs });", "new": "look: shown.rc | 0, gallops: true });",
+    "old": "look: shown.rc | 0, gallops: !shown.hs, pose: false });", "new": "look: shown.rc | 0, gallops: true, pose: false });",
     "tests": ["test/systems/horsewalk.test.js"]},
   {"name": "HORSEWALK-saddle-trots", "file": "src/ui/enhanced/enhancedSaddle.js",
     "old": "  return walks ? 'Walking' : 'Trotting';", "new": "  return 'Trotting';",

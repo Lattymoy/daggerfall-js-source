@@ -43,7 +43,7 @@
   {
     "name": "WITCH1-the-cakes-cap-ignored",
     "file": "server-account/src/festival.js",
-    "old": "const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), FIND_CAKES_PER_DAY - int(ask.found));",
+    "old": "const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), left);",
     "new": "const want = findCount(source, skyDayAt(nowS), nowS * 1000);",
     "tests": [
       "test/server/witch1_festival.test.js"

@@ -560,8 +560,8 @@
   {
     "name": "HOST-berth-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (boat && w.port && yardHere(boat)) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });",
-    "new": "    if (false) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });",
+    "old": "    berths.step(boat, w.port);",
+    "new": "",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]

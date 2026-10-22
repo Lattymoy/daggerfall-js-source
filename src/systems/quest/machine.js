@@ -1860,7 +1860,8 @@ export class QuestMachine {
   }
   /** One quest's half of reseatMovedSites - the questors first, so a questor's hall moves with them and never by a
    *  Place's own law (it has none: Place.reseatMovedSite's Scopes.None). FIELD BUGS 2026-10-04d QUEST-MARKERS: and every
-   *  building site's markers the curation moves, moved (Place.mendCuratedMarkers) - not counted: no site moved. */
+   *  building site's markers the curation moves, moved (Place.mendCuratedMarkers) - not counted: no site moved. FB1020h
+   *  SITE-NAMED: and every building site a save carries with no name, named from its building (Place.nameSiteAgain). */
   _reseatMovedOf(quest, world) {
     if (!world || quest.questComplete) return 0;
     let moved = 0;
@@ -1878,6 +1879,7 @@ export class QuestMachine {
       resource.fitSiteToBuild?.(world);   // KVAR-HOLD's audit: a dungeon drawn again, fitted to the size its link now builds
     }
     for (const resource of quest.resources.values()) if (resource.isPlace) resource.mendCuratedMarkers?.(world);
+    for (const resource of quest.resources.values()) if (resource.isPlace) resource.nameSiteAgain?.(world);   // FB1020h SITE-NAMED: a site the bag named '' off a town - not counted: no site moved
     return moved;
   }
   /** A Place's site links moved to where it stands now - the whole site, its town with it (AUDIT QA2). One walk, the

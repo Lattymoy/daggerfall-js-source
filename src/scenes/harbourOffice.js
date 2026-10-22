@@ -50,11 +50,17 @@ const cargoVoidWords = (c) => t('sea.board.cargoVoid', 'Contract void - {title}.
 const movedWords = (c) => (c.kind === 'hunt' ? `${c.done} of ${c.need} pirate ships ended` : c.kind === 'survey' ? `${c.done} of ${c.need} ships studied`
   : c.kind === 'salvage' ? `${c.done} of ${c.need} casks raised` : '');
 
-/** QL11: A PORT REACHED UNDER SAIL - a berth (the naval host's: her way off at a port's quay, said every second she lies
- *  there) at another port than the last one heard, with at least this much way made at the helm since it (m, the
- *  captain's log's own count): a quarter league. A ship lying at a quay berths every second and so makes none between
- *  two, and one drifting where two ports' waters meet never makes this much. The first berth of a session, and the first
- *  after a load (the ledger's restore lays a new log), only marks where she lies. */
+/** QL11: A PORT REACHED UNDER SAIL - a berth (the naval host's: her way under YARD_SPEED in a port's waters, said every
+ *  second she is there) at another port than the one she sailed from, with at least this much way made at the helm since
+ *  she lay there (m, the captain's log's own count): a quarter league.
+ *  FIELD BUGS 2026-10-21b VOYAGE-HOLD: SHE SAILED FROM WHERE SHE LAST LAY STILL. The voyage was counted from the LAST berth
+ *  heard, and a boat making 2.5 m/s or less (YARD_SPEED) berths every second she is in a port's waters - a Rowboat
+ *  (2 m/s) always, a Large Boat in a light wind - so her departure followed her out to the edge of the port's waters and
+ *  the quarter league had to lie between the two ports' waters: 26 pairs of ports lie closer than that. Now the
+ *  departure is the port she last lay STILL in (`still`: her own way under navalBerth.js BERTH_STILL, or the helm let
+ *  go), kept while she moves on; a berth elsewhere a quarter league on is the port reached, and she lies there from then.
+ *  One drifting where two ports' waters meet lies still in each in turn, so never makes the quarter league between them.
+ *  The departure is the log's own (captainLedger.js newLog `departed`): a load between two ports keeps the voyage. */
 export const PORT_VOYAGE_M = LEAGUE_M / 4;
 
 /** @param {any} deps */
@@ -68,16 +74,18 @@ export function createHarbourOffice(deps) {
   /** SEA-TRADE: the port town's exchange factors, or null (offline, an isle, no town economy). */
   const townAt = (port) => deps.town?.exchangeAt?.(port) ?? null;
 
-  /** QL11: the last berth heard - its port, the log it was counted in and its way then - or null before the first
-   *  (PORT_VOYAGE_M). */
-  let berth = null;
+  /** QL11 / VOYAGE-HOLD: a berth on the voyage's count (PORT_VOYAGE_M) - the port reached, or where she lies now. A berth
+   *  that does not say `still` lies still (the old shape: every berth its own departure). */
+  function berthed(ev) {
+    const log = L.log;
+    if (!log) return;
+    const sailed = Number(log.sailed) || 0, from = log.departed ?? null;
+    if (from && from.port !== ev.port && sailed - from.sailed >= PORT_VOYAGE_M) { noteAct('port-reached'); log.departed = { port: ev.port, sailed }; return; }   // QL11: a port reached under sail
+    if (!from || ev.still !== false) log.departed = { port: ev.port, sailed };
+  }
   /** What happened at sea, to the contracts held: each done paid and said, each failed said, each come further said. */
   function event(ev) {
-    if (ev?.type === 'berth' && typeof ev.port === 'string') {
-      const log = L.log ?? null, sailed = Number(log?.sailed) || 0;
-      if (berth && berth.log === log && berth.port !== ev.port && sailed - berth.sailed >= PORT_VOYAGE_M) noteAct('port-reached');   // QL11: a port reached under sail
-      berth = { port: ev.port, log, sailed };
-    }
+    if (ev?.type === 'berth' && typeof ev.port === 'string') berthed(ev);
     const r = L.contractEvent(ev);
     for (const c of r.done) { deps.credit?.(c.pay); deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbormaster.`, 5); }
     for (const c of r.done) if (c.kind === 'delivery') noteAct('cargo-delivered');   // QL11: a cargo delivered - its port's harbormaster paid it

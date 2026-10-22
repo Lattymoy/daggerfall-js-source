@@ -71,6 +71,7 @@ import { DEEP_WATERS_FISH_TEMPLATES } from '../deepWater/deepWatersFishRows.js';
 import { WEIR_KEY_LAW_ROW } from '../eliteGates/weirKeyRow.js';   // KEY-LAW: the Weir Key's home pulls the Spire's law and its picture in
 import { SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW } from '../festival/festivalRows.js';   // WITCH1: the festival's home pulls its pictures and the texture door in
 import { STARGLASS_LAW_ROW } from '../starfall/starglassRow.js';   // STAR7: Starglass's home pulls its picture in - the Weir Key's way
+import { DEX_ENEMY_IDS } from '../enemyExpansion/dexIds.js';   // SOUL-LAW: the mod's fifty, whose souls a gem holds - read from its tables, no install
 // THE PORT'S OWN TEMPLATES register as their homes load (itemTemplates.js registerCustomTemplates). A headless reader -
 // the account service - loads none of the game, so the homes that register at import are imported here for exactly
 // that; the four whose homes pull the UI in (foraging, rest, Deep Waters' fish, Roleplay & Realism: Items) hand the law
@@ -104,8 +105,10 @@ import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  moved it to 7: the Weir Key (575) is a template the law knows headless - law 6 found every one 'template' on the
  *  account service, which loads none of its home (FIELD BUGS 2026-10-17). WITCH1 moved it to 8: the Witches' Festival's
  *  Soul Cake (2000) and Hearth Offering (2001) are templates the law knows headless, and the Wyrd's Raiment's nine
- *  records (systems/aetheric.js WYRD_SET_PIECES) are lawful from it on. */
-export const ITEM_LAW_VERSION = 8;
+ *  records (systems/aetheric.js WYRD_SET_PIECES) are lawful from it on. SOUL-LAW moved it to 9: a Soul Gem or Azura's
+ *  Star holding the soul of one of Daggerfall Enemy Expansion's fifty (an Ogre's, 282) is lawful from it on - law 8 found
+ *  each one 'soul' and froze its trapper's trading (FIELD BUGS 2026-10-20h). */
+export const ITEM_LAW_VERSION = 9;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
@@ -146,8 +149,12 @@ const ARMOR_MATERIALS = Object.freeze([0x0000, 0x0100, 0x0103, 0x0200, 0x0201, 0
 const LAW_POISON_FIRST = 128, LAW_POISON_LAST = 135;
 /** The souls a trap may hold: a monster's (enchantmentCatalogue SOUL_COUNT, EnemyBasics' first 43) and a person's - DFU's
  *  kill door traps any foe's mobile id (mysticism.js attemptSoulTrap; only Azura's Star asks `< 128`), a guard's and a
- *  knight's among them (AUDIT INT: a human soul's gem was a finding). The item maker reads only the first. */
-const soulLawful = (/** @type {unknown} */ v) => isInt(v) && ((/** @type {number} */ (v) >= 0 && /** @type {number} */ (v) < SOUL_COUNT) || (/** @type {number} */ (v) >= HUMAN_SOUL_FIRST && /** @type {number} */ (v) <= HUMAN_SOUL_LAST));
+ *  knight's among them (AUDIT INT: a human soul's gem was a finding) - and (SOUL-LAW, FIELD BUGS 2026-10-20h) one of
+ *  Daggerfall Enemy Expansion's fifty, whose ids the mod's own tables give (enemyExpansion/dexIds.js): an Ogre's soul
+ *  was a finding, and froze the trapper's trading. The item maker reads only the first. */
+const soulLawful = (/** @type {unknown} */ v) => isInt(v) && ((/** @type {number} */ (v) >= 0 && /** @type {number} */ (v) < SOUL_COUNT) || (/** @type {number} */ (v) >= HUMAN_SOUL_FIRST && /** @type {number} */ (v) <= HUMAN_SOUL_LAST) || MOD_SOULS.has(/** @type {number} */ (v)));
+/** SOUL-LAW: the mod's fifty, read headless - the service installs no mod. */
+const MOD_SOULS = new Set(DEX_ENEMY_IDS);
 /** The people a foe may be (mobileTypes.js: Mage 128 to the City Watch's knight 146). */
 const HUMAN_SOUL_FIRST = 128, HUMAN_SOUL_LAST = 146;
 /** DFU's Soul Gem - the one item a soul is trapped in, beside Azura's Star (the table's tenth artifact, createArtifact's

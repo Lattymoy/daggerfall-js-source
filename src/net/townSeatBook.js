@@ -119,13 +119,14 @@ export function parseSiegeCommand(text) {
  *   me?: () => (string|null), character?: () => (string|null), rid?: () => string,
  *   isSeatPixel?: (x: number, y: number) => boolean, relayNowS?: () => (number|null),
  *   onRed?: ((line: { text: string, at: number }) => boolean)|null,
- *   rand?: () => number,
+ *   rand?: () => number, turnMs?: number,
  * }} deps SEAT1b: `me` the signed-in account's id, `character` the character standing here, `rid` a fresh request id
  *   (the Marks' own shape), `isSeatPixel` whether this client's own derivation holds a seat at a map pixel, `relayNowS`
  *   the relay's clock (null unheard - a receipt's life is the relay's); CROWN2: `onRed` says a red line (false: not yet);
- *   STORM-SHED: `rand` Math.random's shape, a failed Watch claim's jitter
+ *   STORM-SHED: `rand` Math.random's shape, a failed Watch claim's jitter; DAY-TURN: `turnMs` this page's moment past
+ *   midnight (net/dayTurn.js)
  */
-export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null, rand = Math.random }) {
+export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null, rand = Math.random, turnMs = 0 }) {
   const turnSpreadMs = Math.floor(rand() * SEAT_TURN_READ_SPREAD_MS);   // D1-LOAD: this client's share of the Turning's read
   /** CROWN2: the red lines already said, by id - read from the device once */
   let redSeen = null;
@@ -173,7 +174,7 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     reported = Object.fromEntries(keep);
     try { storage?.setItem?.(SEAT_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
   };
-  const dayNow = () => Math.floor(nowMs() / 1000 / SEAT_REPORT_EVERY_S);
+  const dayNow = () => Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S);   // DAY-TURN: the report's day turned at this page's moment
   /** SEAT1b: each seat's standings as last read, `{ at, data }` by key (AUDIT-SEATS C9: cleared by generation); the
    *  Tribute asked and its one request id */
   const standingsAt = new StandingsCache();

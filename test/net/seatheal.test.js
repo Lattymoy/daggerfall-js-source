@@ -14,6 +14,7 @@ import { validFoeRecord } from '../../src/net/wire.js';
 import { renownFoeStruck, renownFoeDied } from '../../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
 import { reportPlayerKill } from '../../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope
 import { createSeatClock } from '../../src/net/seatLive.js';   // PIN MOVED (FIELD BUGS 2026-10-18d SEAT-LIVE): the seat heard is the clock's - the page's own absence spends none of it
+import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const D = rd('src/scenes/dungeonContext.js');
@@ -59,7 +60,7 @@ function joiner() {
   `;
   // CORPSE-FOOD (2026-09-23): the stream's first word of a death rolls this joiner's copy of the body its food - stood
   // down here, where the seat is the subject (survtiers3.test.js mounts that arm)
-  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console, rollCorpseKit: () => [], addCorpseFood: () => 0, dropFoeCard: () => null, capFoeLoot: () => [], stampWonWeapons: () => 0, liveStat: () => 50, playerEntity: null, renownFoeStruck, renownFoeDied, reportPlayerKill }));   // PIN MOVED (AUDIT CARDS-6 A3): the copy door's card stood down too
+  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, appliedOwnerTm, retypeFoe: (...a) => hooks.retype(...a), console, rollCorpseKit: () => [], addCorpseFood: () => 0, dropFoeCard: () => null, capFoeLoot: () => [], stampWonWeapons: () => 0, liveStat: () => 50, playerEntity: null, renownFoeStruck, renownFoeDied, reportPlayerKill }));   // PIN MOVED (AUDIT CARDS-6 A3): the copy door's card stood down too
 
   const applyDungeonFoesLine = mustMatch(M, /applyDungeonFoes\(id, data[^)]*\) \{[^\n]*\},/, 'worldModes.applyDungeonFoes');
   const setDungeonAuthorityLine = mustMatch(M, /setDungeonAuthority\(on\) \{[^\n]*\},/, 'worldModes.setDungeonAuthority');
@@ -139,4 +140,22 @@ test('SEAT-HEAL: a puppet still refuses nothing new - a frame while the host is 
   assert.equal(j.ctx.isAuthority(), false);
   assert.equal(j.ctx.applyFoes(null, 'H'), false);
   assert.equal(j.ctx.applyFoes({ n: 1 }, 'H'), false, 'a frame with no list is nothing');
+});
+
+test('FOES-HOLD (Scale-Arc.md FOES-HOLD): THE RELAY\'S BEAT FOR A HELD HOST IS ITS HEARTBEAT. A dungeon host whose frames the room\'s budget holds is beaten by the relay - `{ f: [] }` with its frame\'s `k`, no number, no `full` - and through world.js\'s own onFoes and the dungeon\'s own applyFoes the seat stays heard past FOES_STALE_MS, nothing on the board moves, and the host\'s held frame, numbered after its last, lands when it comes (mutants: tools/mutants/fb1021b_foeshold.json FH-dungeon-refuses-an-empty-frame)', () => {
+  const j = joiner();
+  j.join();
+  j.run(1000, { stream: j.rat(false) });   // the host heard, its last frame numbered n
+  assert.equal(j.ctx.isAuthority(), false);
+  for (let k = 0; k < 3; k++) {   // its frames held by the room's budget: the relay's beat each FOES_UNHEARD_MS
+    j.run(4000);
+    j.online.onFoes('H', { f: [], k: 'dungeon:7' });
+  }
+  j.run(1000);
+  assert.equal(j.ctx.isAuthority(), false, 'thirteen seconds of beats and no numbered frame: the seat still heard, the joiner a puppet');
+  assert.equal(j.foes[0].dead, false, 'nothing moved on the board');
+  j.frame([j.rat(true)]);   // the held frame, in its turn
+  assert.equal(j.foes[0].dead, true, 'and the host\'s held frame lands - the beat moved no counter');
+  j.run(7000);
+  assert.equal(j.ctx.isAuthority(), true, 'without a word, the seat handed back as before');
 });

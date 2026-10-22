@@ -65,8 +65,8 @@
   {
     "name": "RAIN-HEART-the-strength-unread",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "intensity: (s.strength ?? 1) * s.env * (1 - (1 - EDGE_INTENSITY) * f * f)",
-    "new": "intensity: s.env * (1 - (1 - EDGE_INTENSITY) * f * f)",
+    "old": "  return (s.strength ?? 1) * s.env * (1 - (1 - EDGE_INTENSITY) * f * f);",
+    "new": "  return s.env * (1 - (1 - EDGE_INTENSITY) * f * f);",
     "tests": [
       "test/systems/weather/rainhours.test.js"
     ]

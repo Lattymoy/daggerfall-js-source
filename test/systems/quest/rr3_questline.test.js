@@ -349,7 +349,9 @@ test('RR3 the merchant service: the registry, the gate, the route, the popup\'s 
   assert.deepEqual(route, { kind: 'merchant', service: 'sell' });
   assert.equal(staticNpcRoute({ npcFactionId: 1022, npcFaction: { id: 1022, sgroup: SOCIAL_GROUPS.Merchants, ggroup: 0 }, buildingType: -1, insideBuilding: true }).kind, 'talk', 'without the registry read: DFU\'s empty registry');
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /hasCustomMerchantService,\s*\/\/ RR3/);
+  // NPC-MARKS (PIN MOVED): the route's arguments are built in one place, which the click and the marks over heads both ask
+  assert.match(rd('src/scenes/npcMarksHost.js'), /hasCustomMerchantService,\s*\/\/ RR3/);
+  assert.match(wm, /const route = staticNpcRouteIn\(\{ npcFactionId: pn\.factionID, dict: townTalk\?\.factionDict \?\? null, building: interiorBuilding \}\);/);
   assert.match(wm, /const custom = getCustomMerchantService\(pn\.factionID\);/);
   assert.match(wm, /label: custom \? getCustomMerchantServiceLabel\(pn\.factionID\) : undefined,/);
   assert.match(wm, /function openCustomMerchantService\(service\) \{[\s\S]*?messageBox: \(text\) => \(mode === 'interior' \? mountInterior\(new ActionTextBox\(\[text\]\)\) : mountServiceWindow\(new ActionTextBox\(\[text\]\)\)\),[\s\S]*?const win = openTradeWindow\(\{ items \}, b, 'Buy'\);/);   // IT1 (PIN MOVED): a street merchant's box in the street's slot

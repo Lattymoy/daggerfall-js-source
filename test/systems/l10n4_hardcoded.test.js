@@ -129,7 +129,7 @@ const HARDCODED = {
   'src/net/oneSeat.js': 3,
   'src/net/peer/peerBodies.js': 5,
   'src/net/postLaw.js': 1,
-  'src/net/professionLaw.js': 109,
+  'src/net/professionLaw.js': 112,   // FIELD BUGS 2026-10-20h DEX-HIDES: the Wolf Pelt's, the Boar Hide's and the Mudcrab Chitin's names - an item's canonical name is its row's, as the ten hides' are
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
   'src/net/realm/realmTradeLaw.js': 21,
@@ -202,6 +202,7 @@ const HARDCODED = {
   'src/render/lightningBolts.js': 2,
   'src/render/navalRender.js': 2,
   'src/render/nodeGlow.js': 1,
+  'src/render/npcMarkPass.js': 1,   // NPC-MARKS: its vertex stage's source (GLSL, never a player's words)
   'src/render/nodeGlint.js': 2,
   'src/render/oceanHolesRender.js': 4,
   'src/render/orderedDither.js': 1,
@@ -455,7 +456,7 @@ const HARDCODED = {
   'src/systems/portPlaces.js': 8,
   'src/systems/portalStone.js': 23,
   'src/systems/potionRecipes.js': 15,
-  'src/systems/professions/profItems.js': 35,
+  'src/systems/professions/profItems.js': 36,   // AUDIT FB1021 (merged onto FB1020h's DEX-HIDES): 'Mudcrab Chitin' a mass, as the Scorpion's
   'src/systems/professions/profTemplates.js': 1,
   'src/systems/quest/actions.js': 11,
   'src/systems/quest/machine.js': 1,

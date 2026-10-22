@@ -499,6 +499,14 @@ const MOB = Object.freeze({
   Rat: 0, GiantBat: 3, GrizzlyBear: 4, SabertoothTiger: 5, Spider: 6, Slaughterfish: 11, Harpy: 13, GiantScorpion: 20,
   Dragonling: 34, DragonlingAlternate: 40, Dreugh: 41,
 });
+/** FIELD BUGS 2026-10-20h DEX-HIDES: Daggerfall Enemy Expansion's animals by their own ids (its MonsterBase.mdb.csv ID
+ *  column - bible/04-Characters/Enemy-Expansion.md section 5), the nine rows of Animal affinity among its fifty. The
+ *  classic ten skin every classic Animal row, and so do these: a DEX Bat, Wolf or Mudcrab carries its own id, never a
+ *  MobileTypes value, and was no body the knife knew. The Hell Hound (264) is a daedra and the Lizard Men and the Troll
+ *  are people - no hide, as no classic daedra or person gives one. */
+const DEX = Object.freeze({
+  Bat: 260, Wolf: 262, SnowWolf: 263, Dog: 267, BloodSpider: 271, Boar: 278, LandDreugh: 279, MountainLion: 280, Mudcrab: 281,
+});
 /** A DFU creature part a body may give (4.4's "a chance of the DFU ingredient"), at its price's tier as a gem is
  *  (PROF0 23's bands): Big Tooth 8 gold, Spider's Venom 22, Giant Scorpion Stinger 25, Dragon's Scales 375. */
 export const PARTS = Object.freeze([
@@ -515,25 +523,37 @@ export const PARTS = Object.freeze([
 const hide = (key, templateIndex, name, tier, icon, foes, part, meat, cures) =>
   Object.freeze({ ...made(key, 'hides', tier, templateIndex, name, icon, null), foes: Object.freeze(foes), part, meat, cures });
 /**
- * THE TEN HIDES (4.4, templates 655-664 in its order), each its foes, tier, DFU part (4.4's column), its butchery (C&C's
- * own animals: SURV2's MEAT_BY_TYPE - Rat, Giant Bat, Grizzly Bear, Sabretooth Tiger, Spider, Giant Scorpion - Raw Meat;
- * its FISH_BY_TYPE's Slaughterfish Raw Fish; the Harpy, the Dreugh and the Dragonling none, as C&C gives their bodies
- * none) and its cure: tiers 1-3 to Cured Leather, 4-6 to Hardened Leather (4.4) - but Spider Silk, woven to a Silk Bolt
+ * THE HIDES: the ten of 4.4 (templates 655-664 in its order) and DEX-HIDES' three (681-683), each its foes, tier, DFU
+ * part (4.4's column), its butchery (C&C's own animals: SURV2's MEAT_BY_TYPE - Rat, Giant Bat, Grizzly Bear, Sabretooth
+ * Tiger, Spider, Giant Scorpion - Raw Meat; its FISH_BY_TYPE's Slaughterfish Raw Fish; the Harpy, the Dreugh and the
+ * Dragonling none, as C&C gives their bodies none) and its cure: tiers 1-3 to Cured Leather, 4-6 to Hardened Leather (4.4) - but Spider Silk, woven to a Silk Bolt
  * (4.5), and Harpy Feathers, which fletch (9.3's arrows), never cure (PROF0 29).
+ * DEX-HIDES (FIELD BUGS 2026-10-20h): and Daggerfall Enemy Expansion's animals, each the hide of its family - the Bat's
+ * the Bat Leather (its career is the Giant Bat's), the Blood Spider's the Spider Silk, the Mountain Lion's the Tiger Pelt
+ * (the mod's own team for it is the Tigers), the Land Dreugh's the Dreugh Shell. Three families are none of the ten's, and
+ * a body that says "+1 Bear Hide" when a wolf was skinned is the wrong hide, so they take hides of their own (681-683):
+ * the WOLF PELT (the Wolf, the Snow Wolf and the Dog - the mod draws its dog as one of the wolves: their frames, their
+ * move and attack sounds, their team), the BOAR HIDE and the MUDCRAB CHITIN, each at the tier of its family's kin
+ * (the furs of the Bear and the Bat 2, the Rat's 1), its Big Tooth where a fang or a tusk is, and Raw Meat - C&C gives
+ * every body of Animal affinity its meat (survival/loot.js isAnimal, DEFAULT_ANIMAL_MEAT).
  */
 export const HIDES = Object.freeze([
   hide('hide:rat', 655, 'Rat Pelt', 1, ICON_HAIR, [MOB.Rat], null, 'food:meat', 'leather:cured'),
-  hide('hide:bat', 656, 'Bat Leather', 2, ICON_HAIR, [MOB.GiantBat], null, 'food:meat', 'leather:cured'),
+  hide('hide:bat', 656, 'Bat Leather', 2, ICON_HAIR, [MOB.GiantBat, DEX.Bat], null, 'food:meat', 'leather:cured'),
   hide('hide:bear', 657, 'Bear Hide', 2, ICON_HAIR, [MOB.GrizzlyBear], 'part:tooth', 'food:meat', 'leather:cured'),
-  hide('hide:tiger', 658, 'Tiger Pelt', 3, ICON_HAIR, [MOB.SabertoothTiger], 'part:tooth', 'food:meat', 'leather:cured'),
-  hide('hide:spider', 659, 'Spider Silk', 3, ICON_WRAPPINGS, [MOB.Spider], 'part:venom', 'food:meat', null),
+  hide('hide:tiger', 658, 'Tiger Pelt', 3, ICON_HAIR, [MOB.SabertoothTiger, DEX.MountainLion], 'part:tooth', 'food:meat', 'leather:cured'),
+  hide('hide:spider', 659, 'Spider Silk', 3, ICON_WRAPPINGS, [MOB.Spider, DEX.BloodSpider], 'part:venom', 'food:meat', null),
   hide('hide:scorpion', 660, 'Scorpion Chitin', 4, ICON_SCALES, [MOB.GiantScorpion], 'part:stinger', 'food:meat', 'leather:hardened'),
   hide('hide:slaughterfish', 661, 'Slaughterfish Scales', 4, ICON_SCALES, [MOB.Slaughterfish], null, 'food:fish', 'leather:hardened'),
   hide('hide:harpy', 662, 'Harpy Feathers', 5, ICON_FEATHER, [MOB.Harpy], null, null, null),
-  hide('hide:dreugh', 663, 'Dreugh Shell', 5, ICON_SCALES, [MOB.Dreugh], null, null, 'leather:hardened'),
+  hide('hide:dreugh', 663, 'Dreugh Shell', 5, ICON_SCALES, [MOB.Dreugh, DEX.LandDreugh], null, null, 'leather:hardened'),
   hide('hide:dragonling', 664, 'Dragonling Scale', 6, ICON_SCALES, [MOB.Dragonling, MOB.DragonlingAlternate], 'part:dragonscale', null, 'leather:hardened'),
+  hide('hide:wolf', 681, 'Wolf Pelt', 2, ICON_HAIR, [DEX.Wolf, DEX.SnowWolf, DEX.Dog], 'part:tooth', 'food:meat', 'leather:cured'),
+  hide('hide:boar', 682, 'Boar Hide', 2, ICON_HAIR, [DEX.Boar], 'part:tooth', 'food:meat', 'leather:cured'),
+  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_SCALES, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),
 ]);
-/** The hide a foe's body gives, by its MobileTypes value, or null for a body no knife takes a hide from. */
+/** The hide a foe's body gives, by its MobileTypes value (or, DEX-HIDES, Daggerfall Enemy Expansion's own id), or null for a
+ *  body no knife takes a hide from. */
 export const hideOfFoe = (mobileType) => (Number.isSafeInteger(mobileType) ? HIDES.find((h) => h.foes.includes(mobileType)) ?? null : null);
 /** Hunting's Bear Hide - the Ram Kit's (PROF0 25). */
 export const BEAR_HIDE = HIDES[2];
@@ -904,8 +924,12 @@ export const SAW_RECIPES = Object.freeze(LOGS.map((l) => recipe(`saw:${woodOf(l.
   { station: 'workbench', per: 2, more: Object.freeze({ profession: 'logging', spec: 'timberwright', per: 3 }), xp: null })));
 /** PROF7 (PROF0 4.4, 4.5, 29): a hide cures to its leather at the tanning rack - two a leather, a Tanner's one (a unit
  *  of work two hides, and a Tanner's makes two); Spider Silk weaves to a Silk Bolt at the loom, three a bolt. The rack
- *  and the loom are Outfitting's one station. No XP: a hide's was its skinning's, as a log's was its fall's (PROF0 25). */
-export const CURE_RECIPES = Object.freeze(HIDES.filter((h) => h.cures).map((h) => recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 2]],
+ *  and the loom are Outfitting's one station. No XP: a hide's was its skinning's, as a log's was its fall's (PROF0 25).
+ *  DEX-HIDES (FIELD BUGS 2026-10-20h): by the hide's tier, the ten's order kept - a leather's cures stand cheapest first,
+ *  as a chain plans them (chainLaw.js producersOf), so the Mudcrab Chitin's stands beside the Rat Pelt's. AUDIT FB1021
+ *  L2-1: the Bear Hide last of its tier - it is the Ram Kit's too, and a chain for Cured Leather spent every one before a
+ *  Wolf Pelt or a Boar Hide. */
+export const CURE_RECIPES = Object.freeze(HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE)).map((h) => recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 2]],
   { station: 'loom', more: Object.freeze({ profession: 'hunting', spec: 'tanner', per: 2, rank: 50 }), xp: null })));
 export const WEAVE_RECIPES = Object.freeze([recipe('weave:silk', SILK.key, [['hide:spider', 3]], { station: 'loom', xp: null })]);
 /** PROF11 (PROF0 4.5): Mortar a mix makes - "ten at a time". */

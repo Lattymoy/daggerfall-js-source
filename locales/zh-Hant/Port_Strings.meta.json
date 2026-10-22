@@ -84,6 +84,16 @@
   "tr": "5ae648c5e129",
   "by": "claude-in-session"
  },
+ "chargen.class.skills.major": {
+  "en": "85c39f1a36a9",
+  "tr": "5164b7449862",
+  "by": "claude-in-session"
+ },
+ "chargen.class.skills.primary": {
+  "en": "7bb8fba31082",
+  "tr": "676a83fd2f29",
+  "by": "claude-in-session"
+ },
  "combat.leadLeftHand": {
   "en": "9a84e174d1b8",
   "tr": "78ddc53db54a",
@@ -447,6 +457,16 @@
  "features.mwBodyMotion.title": {
   "en": "6fb981a99ca7",
   "tr": "09b2f06bcdd9",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.note": {
+  "en": "9ac4077e0fc2",
+  "tr": "7d3ea04f4fb4",
+  "by": "claude-in-session"
+ },
+ "features.npcMarks.title": {
+  "en": "a3f85ff33ef4",
+  "tr": "91006eb555e3",
   "by": "claude-in-session"
  },
  "features.wagonUpkeep.boons": {
@@ -1022,6 +1042,21 @@
  "saddle.hello.none": {
   "en": "c4f18acb1d78",
   "tr": "13ba9ba3a4db",
+  "by": "claude-in-session"
+ },
+ "sd.through.opens": {
+  "en": "1e72c7ca985d",
+  "tr": "32ba4da71eb5",
+  "by": "claude-in-session"
+ },
+ "sd.through.title": {
+  "en": "45d79739680d",
+  "tr": "62ffbff1b74e",
+  "by": "claude-in-session"
+ },
+ "sd.through.to": {
+  "en": "9adecd5690cd",
+  "tr": "61b20d20b164",
   "by": "claude-in-session"
  },
  "sea.exchange.band": {

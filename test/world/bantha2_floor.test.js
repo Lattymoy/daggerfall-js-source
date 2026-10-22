@@ -262,7 +262,8 @@ test('BANTHA2 THE WIRING: the world builds the floor after the jungle, with the 
   const j = w.indexOf('const jungle = jungleOn() ? createJungleHost('), f = w.indexOf('const jungleFloor = jungle && labGrass ? createJungleFloorHost({ gl: renderer.gl, jungle, pictures: floorPictures({ getTexture, palette }), density: grassDensity / LAB_GRASS.density,');
   assert.ok(j > 0 && f > j, 'after the jungle, with the grass');
   assert.match(w, /onArrive: \(\) => \{ labGrassField = null; \}/, 'the meadow placed again beside it');
-  assert.match(w, /grassRecords\.set\(groundArchive, grassRecordsOf\(layers\)\); floorRecords\.set\(groundArchive, floorRecordsOf\(layers\)\);/);
+  // PIN MOVED (OW-HITCH): the records are learned in the ground sets' home, scenes/groundSets.js (HOST-SPLIT)
+  assert.match(readFileSync(new URL('../../src/scenes/groundSets.js', import.meta.url), 'utf8'), /grassRecords\.set\(groundArchive, grassRecordsOf\(layers\)\); floorRecords\.set\(groundArchive, floorRecordsOf\(layers\)\);/);
   assert.match(w, /const keep = \(x, z, floor = false\) => \{/);
   const pair = w.indexOf('jungleFloor.pair(createGrassField(labGrass, { keep, ground, slope, density: grassDensity }))');
   const meadowWalk = w.indexOf('labGrassField.update(ex, ez, keep, ground, slope);');

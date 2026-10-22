@@ -17,6 +17,7 @@ import {
   guildGoldOk,
 } from '../../src/net/guild/guildLaw.js';
 import { renownXpFor } from '../../src/net/renown.js';
+import { HUB_GUILD_WHO_MAX } from '../../src/net/hubShards.js';
 import { accountGuilds, REFUSALS, SESSION_KEY } from '../../src/net/accountClient.js';
 import { r2, seatRealm } from '../realmSeat.mjs';   // AUDIT REALM2 S2: a founding is a realm character's, paid on its record
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // TERMS1: a request that makes an account carries the versions ticked
@@ -109,8 +110,9 @@ const bare = ({ order, outOrder, ...body }) => body;
 
 // ─── THE LAW ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('GUILD1 the law: founding costs 10,000 gold and Renown 10; a guild holds 50; its name is 3 to 32 plain words and its tag 2 to 4 capitals or digits, one guild a name whatever its case or spaces; four ranks, the guildmaster\'s to rename, each acting only on ranks below its own - the treasury the guildmaster\'s alone to take from (mutants: a bound, an officer withdrawing, a rank moved to its mover\'s, the name key keeping case)', () => {
-  assert.deepEqual([GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_MOVE_MAX], [10_000, 10, 50, 1_000_000]);
+test('GUILD1 the law: founding costs 10,000 gold and Renown 10; a guild holds 75 (GUILD-CAP, the Discord, 2026-10-21 - it held 50); its name is 3 to 32 plain words and its tag 2 to 4 capitals or digits, one guild a name whatever its case or spaces; four ranks, the guildmaster\'s to rename, each acting only on ranks below its own - the treasury the guildmaster\'s alone to take from (mutants: a bound, an officer withdrawing, a rank moved to its mover\'s, the name key keeping case)', () => {
+  assert.deepEqual([GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_MOVE_MAX], [10_000, 10, 75, 1_000_000]);
+  assert.ok(HUB_GUILD_WHO_MAX >= GUILD_MEMBERS_MAX - 1, 'the hub\'s who-of-my-guild list holds a full guild but its asker (hubShards.js)');
   assert.deepEqual(GUILD_RANK_NAMES, ['Guildmaster', 'Officer', 'Member', 'Recruit']);
   assert.equal(guildNameOf('  The   Order of  the Hound '), 'The Order of the Hound', 'tidied');
   assert.equal(guildNameOf("Knights' Rest-2"), "Knights' Rest-2");
@@ -460,6 +462,6 @@ test('GUILD1 the wire: every guild route is the service\'s and behind a session;
     assert.ok(typeof REFUSALS[w] === 'string' && REFUSALS[w].length > 10, w);
   }
   assert.match(REFUSALS['guild-renown'], /Renown 10/);
-  assert.match(REFUSALS['guild-full'], /50/);
+  assert.match(REFUSALS['guild-full'], /75/);
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/guild\/guildLaw\.js"/);
 });

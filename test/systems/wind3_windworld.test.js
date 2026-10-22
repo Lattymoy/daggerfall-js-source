@@ -111,7 +111,7 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   assert.match(WISP_VS, /vLife = sin\(fract\(uTime\*rate \+ seed\*7\.0\) \* 3\.14159\);/, 'the wisp\'s own clock');
   assert.match(WISP_VS, /p \+= vel \* \(aCorner\.y-0\.5\) \* len;/, 'stretched along the wind (WISPS-RETURN: WIND3\'s streak again, where WIND5 drew a flourish)');
   assert.match(WISP_FS, /a \*= vLife \* \(uAlpha\.x \+ uAlpha\.y \* uStrength\);/, 'never more than a breath (WEATHER2d: the look\'s alpha)');
-  assert.deepEqual([...WISP_LOOK.alpha], [0.20, 0.24]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);   // DISC17-A: the alpha doubled (WIND3's 0.10, 0.12)
+  assert.deepEqual([...WISP_LOOK.alpha], [0.09, 0.11]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);   // DISC17-A: the alpha doubled (WIND3's 0.10, 0.12)
   assert.doesNotMatch(WISP_VS + WISP_FS, /uTime \* uWindV|uWindV \* uTime/, 'no wind x time anywhere');
   const { gl, calls } = stubGl();
   const r = new WindWispsRenderer(gl);

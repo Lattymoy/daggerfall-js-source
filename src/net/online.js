@@ -73,7 +73,7 @@ import { relaySupportsFoeInventory } from './wire.js';
 import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported } from './staffTeleport.js';
 import { validRelayCfgIn, validRelayCfgOut, relayCfgSupported } from './relayCfg.js';
 import { relaySupportsSeatLive, seatAskDue, seatStreams } from './seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: a dungeon room's seat is a live socket's
-import { relaySupportsGrant, relaySupportsGrantStats, grantModeOf, validGrantAsk, validGrantOut, grantGate } from './grantLaw.js';   // GRANT2: the spawn grants' asks (bible/11-Multiplayer/Spawn-Grants.md section 12)   // SCALE5b: the relay's settings, a developer's
+import { relaySupportsGrant, relaySupportsGrantStats, relaySupportsStarGrant, grantModeOf, validGrantAsk, validGrantOut, grantGate } from './grantLaw.js';   // GRANT2: the spawn grants' asks (bible/11-Multiplayer/Spawn-Grants.md section 12)   // SCALE5b: the relay's settings, a developer's
 import { hubHopOf, isChannelShard, channelOf, hubShardsSupported, HUB_FIND_MAX, HUB_FIND_Q_MAX, HUB_GUILD_WHO_MS, HUB_GUILD_WHO_MAX, HUB_WHO_MS } from './hubShards.js';   // SCALE5c: the hub, sixteen ways
 import { CHAT_ROSTER_MAX } from './wire.js';   // SCALE5c: the World tab's list while the hub is small
 /** CHAT-FIND-HUB: the chat's search box asks the hub no closer together than this - the relay's own bucket for a socket
@@ -111,6 +111,7 @@ import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, rel
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
 import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
 import { readWatchReceipt } from './watchReceipt.js';   // SEAT1b: the Watch's tick, read (never judged) at home
+import { ownerClock, stampedFrameText, applyingOwnerTm } from './ownerClock.js';   // OWNER-CLOCK: a foes frame says when its foes were stepped, and is applied with it in hand
 import { t } from '../systems/textManager.js';   // L10N4: the HUD line's words in the player's language (the relay's own words pass as it said them)
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
@@ -553,7 +554,7 @@ export function steadyClock(wall = () => Date.now()) {
 export const steadyNow = steadyClock();
 
 export class OnlineSession {
-  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, mintToken = null, WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand = Math.random, wave = reconnectWave(), wire2 = false } = {}) {
+  constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, mintToken = null, ownerTm = () => ownerClock.tm(), WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand = Math.random, wave = reconnectWave(), wire2 = false } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
     this.secret = secret ?? peerSecret();
     // SOC2: the ACCOUNT rides the hello only when the caller hands both halves in - the hub link's alone (world.js
@@ -788,6 +789,7 @@ export class OnlineSession {
     this.onGrant = null;          // GRANT2: (answer) => void - my own cell's answer to a grant ask (net/grantLaw.js validGrantOut: ok, no or off)
     this.grantSenders = new Set();   // GRANT-DOOR: the peers whose foes frames the relay vouched stand on grants (`g`) - scenes/grantHost.js holds each to them
     this.grantStatsOk = false;    // FOE-BOUNDS: this relay takes a tally's `stats` (net/grantLaw.js relaySupportsGrantStats)
+    this.starGrantOk = false;     // AUDIT STAR-TUNE F1: this relay mints the `star` grant kind (net/grantLaw.js relaySupportsStarGrant)
     this.onWatch = null;          // SEAT1b: (receipt, claims) => void - the Watch's tick the relay signed for my account in my own cell (net/watchReceipt.js), carried to the account service by the seats' book
     this.onRaid = null;           // RAID3: (frame, room) => void - a cell's word about a raid (its ledger, its cleanse, my receipt) or the hub's (a cleanse anywhere, the day's cleanses), projected by the wire's validRaidOut
     this._raidBucket = null;      // RAID3: my own raid words out - raidGate's law
@@ -844,6 +846,7 @@ export class OnlineSession {
     this.id = id ?? peerId();
     this._WS = WebSocketImpl;
     this._now = now;
+    this._ownerTm = ownerTm;   // OWNER-CLOCK: when my foes were last stepped - every foes frame I send says it (net/ownerClock.js)
     this._rand = rand;   // SLAM2: the retry's jitter - injected, as the clock is, so a pin can drive a whole crowd
     this.room = null;
     this.status = 'idle';      // idle | connecting | open | closed | error
@@ -1295,8 +1298,8 @@ export class OnlineSession {
     if (!(isCellRoom(this.room) || (this.isHost() && isWorldRoom(this.room))) || !this._ws || this.status !== 'open' || !this._welcomed.has(this._ws)) return false;   // SD-HELLO
     const gate = foesGate(this._fbucket, this._now());
     if (!gate.pass) return false;
-    const s = JSON.stringify({ t: 'foes', data });
-    if (s.length > FOES_FRAME_MAX) return false;
+    const s = stampedFrameText('foes', data, this._ownerTm(), FOES_FRAME_MAX);   // OWNER-CLOCK: the frame says when its foes were where it says
+    if (s == null) return false;
     try { this._ws.send(s); } catch { return false; }
     this._fbucket = gate.bucket; this.stats.sent++; this.stats.foes++;
     return true;
@@ -1310,8 +1313,8 @@ export class OnlineSession {
     if (!this.ownOk || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
     const gate = foesGate(this._fbucket, this._now());
     if (!gate.pass) return false;
-    const s = JSON.stringify({ t: 'own', data });
-    if (s.length > FOES_FRAME_MAX) return false;
+    const s = stampedFrameText('own', data, this._ownerTm(), FOES_FRAME_MAX);   // OWNER-CLOCK: the own lane's too
+    if (s == null) return false;
     try { this._ws.send(s); } catch { return false; }
     this._fbucket = gate.bucket; this.stats.sent++; this.stats.foes++;
     return true;
@@ -3182,6 +3185,7 @@ export class OnlineSession {
       if (primary) this.iliacOk = relaySupportsIliac(relayV);   // CARDS10: and deals the second game   // CARDS5; AUDIT CARDS-3 B1: a new welcome is a new socket - the relay stood the old one up
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
       if (primary) this.grantStatsOk = relaySupportsGrantStats(relayV);   // FOE-BOUNDS: a tally's `stats` to a relay that knows it
+      if (primary) this.starGrantOk = relaySupportsStarGrant(relayV);   // AUDIT STAR-TUNE F1: a star's stands ask `star` of a relay that mints it
       if (primary) this.dmOk = relaySupportsDm(relayV);   // TITLE-N
       if (primary) this.banOk = relaySupportsBan(relayV);   // AUDIT SAFE RELAY-3: the ban frame's relay
       if (primary) this.courtWatchOk = relaySupportsCourtWatch(relayV);   // AUDIT PLAN-1000 G3: a full court's watcher, told when it is seated
@@ -3317,11 +3321,11 @@ export class OnlineSession {
       // FOES through on the same frame and re-opened AUDIT WORLD6b A8/C6 - a stream trusted from an id the relay has
       // not yet named. A pose is one figure standing where it says it is; a foes frame is a whole pool, and that
       // still waits for the introduction.
-      if (typeof m.id === 'string' && (isCellRoom(this.room) ? !!this.peers.get(m.id)?.told : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (primary && m.id === this.host) this._seatHeardAt = now; if (m.g === 1) this._grantSender(m.id); this._deliver('foes', () => this.onFoes?.(m.id, m.data)); }   // SEAT-LIVE: the host's stream is the seat heard; GRANT-DOOR: the relay vouches this sender stands on grants
+      if (typeof m.id === 'string' && (isCellRoom(this.room) ? !!this.peers.get(m.id)?.told : m.id === this.host) && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (primary && m.id === this.host) this._seatHeardAt = now; if (m.g === 1) this._grantSender(m.id); this._deliver('foes', () => applyingOwnerTm(m.data, () => this.onFoes?.(m.id, m.data))); }   // SEAT-LIVE: the host's stream is the seat heard; GRANT-DOOR: the relay vouches this sender stands on grants
       else if (isCellRoom(this.room)) this._askWho(room, m.id, now);   // WORLD6b-iii(e): a stranger's foes - asked for, its frames a peer's once the join lands
     } else if (m.t === 'own') {
       // OWN1: a peer's OWN foes in my world room (the room's roster holds it; never my own back)
-      if (typeof m.id === 'string' && isWorldRoom(this.room) && m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (m.g === 1) this._grantSender(m.id); this._deliver('own', () => this.onOwnFoes?.(m.id, m.data)); }   // GRANT-DOOR: and on the own lane
+      if (typeof m.id === 'string' && isWorldRoom(this.room) && m.id !== this.id && this.peers.has(m.id) && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { if (m.g === 1) this._grantSender(m.id); this._deliver('own', () => applyingOwnerTm(m.data, () => this.onOwnFoes?.(m.id, m.data))); }   // GRANT-DOOR: and on the own lane
     } else if (m.t === 'hit') {
       // WORLD2: a blow on my foe - mine to apply only while I host
       // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host

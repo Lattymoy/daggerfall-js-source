@@ -330,14 +330,16 @@ regard lost, and said ("Contract void - ... No ship can make port there.").
 A PORT'S WATERS ARE THE PORT LAW'S RING (FB1020c BERTH-RING, 2026-10-20 - the field: the tutorial's *"sail from one
 harbor too another"* never registered). The berth - a boat of mine at her helm, slow, no hostile ship near, in a port's
 waters (`navalHost.js siteStep`, `yardHere`) - is what a delivery, the questlines' `port-reached` (the harbour office:
-a berth at another port a quarter league under sail after the last - "Under Sail", "The Packet Lanes") and the
+a berth at another port a quarter league under sail after the port she last lay still in - VOYAGE-HOLD,
+`01-Overview/bugs/Field-Bugs-2026-10-21b.md` - "Under Sail", "The Packet Lanes") and the
 shipwright all ask; and a port's waters were a map pixel about the captain's (`navalPortHere`, and a place the port's
 data flags within one, `navalNearPort`). The shore DFU's kernel builds lies past it at twelve of the 106: no water a
 Small Ship lies in within a pixel of Daggerfall, Wayrest, Holwych, Ripmore, Isfakabi, Pencart, Aldbrugh, Gallocart,
 Wilderham, Longwich End, Longmore Field or Wartale - no voyage into or out of one counted, no cargo for one could be
 delivered, no shipwright stood there. Within SEA_RING - the open sea's reach that makes a town a port
 (`portSites.js seaBears`) - every one of the 106 has it. So the port lain at is the nearest board port within SEA_RING
-(`world.js:"if (d <= SEA_RING && d < best) { best = d; port = q; }"`), handed whether or not a flagged place is within a
+(`portSites.js:"export function boardPortAt(ports, x, y) {"` - by the crow's flight since VOYAGE-HOLD: by the ring's
+squares a tie went to the list's first, and Pencart's every pixel of water tied Longham's), handed whether or not a flagged place is within a
 pixel (`world.js:"nearPort, port: navalPortHere(), waters:"`); the berth, the shipwright and the crew's port read the two
 through one question (`navalHost.js:"const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };"`);
 and a cargo goes to a port the sea bears on within SEA_RING (`harbourBoard.js:"export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);"`)

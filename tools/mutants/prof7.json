@@ -80,8 +80,8 @@
   {
     "name": "PROF7-spider-cured",
     "file": "src/net/professionLaw.js",
-    "old": "[MOB.Spider], 'part:venom', 'food:meat', null),",
-    "new": "[MOB.Spider], 'part:venom', 'food:meat', 'leather:cured'),",
+    "old": "[MOB.Spider, DEX.BloodSpider], 'part:venom', 'food:meat', null),",
+    "new": "[MOB.Spider, DEX.BloodSpider], 'part:venom', 'food:meat', 'leather:cured'),",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"

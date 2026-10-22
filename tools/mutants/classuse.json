@@ -1,0 +1,155 @@
+[
+  {
+    "name": "CLASS-USE-barbarian-jumping-major",
+    "file": "src/systems/stockClasses.js",
+    "old": "[S.LongBlade, S.Dodging, S.Running],",
+    "new": "[S.Jumping, S.Dodging, S.Running],",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-mage-dragonish-minor",
+    "file": "src/systems/stockClasses.js",
+    "old": "[S.Medical, S.ShortBlade, S.BluntWeapon, S.Dodging, S.Etiquette, S.Mercantile]",
+    "new": "[S.Medical, S.ShortBlade, S.BluntWeapon, S.Dodging, S.Dragonish, S.Mercantile]",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-healer-no-weapon",
+    "file": "src/systems/stockClasses.js",
+    "old": "[S.BluntWeapon, S.Alteration, S.Mysticism],",
+    "new": "[S.Thaumaturgy, S.Alteration, S.Mysticism],",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-warrior-three-weapons",
+    "file": "src/systems/stockClasses.js",
+    "old": "revision('Warrior', [S.LongBlade, S.Axe, S.CriticalStrike], [S.BluntWeapon, S.Archery, S.Dodging],",
+    "new": "revision('Warrior', [S.LongBlade, S.Axe, S.BluntWeapon], [S.CriticalStrike, S.Archery, S.Dodging],",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-duplicate-skill",
+    "file": "src/systems/stockClasses.js",
+    "old": "[S.Archery, S.ShortBlade, S.Stealth, S.Jumping, S.Climbing, S.Swimming]",
+    "new": "[S.Archery, S.ShortBlade, S.Stealth, S.Jumping, S.Climbing, S.Archery]",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-burglar-file-armour",
+    "file": "src/systems/stockClasses.js",
+    "old": "{ forbiddenArmor: Object.freeze(['chain', 'plate']) }",
+    "new": "{ forbiddenArmor: Object.freeze(['leather', 'chain']) }",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-armour-not-cleared",
+    "file": "src/systems/stockClasses.js",
+    "old": "((career.weaponArmorShieldsBitfield & ~ARMOR_MASK) | (bits << ARMOR_BITS_SHIFT))",
+    "new": "(career.weaponArmorShieldsBitfield | (bits << ARMOR_BITS_SHIFT))",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-reader-career-written",
+    "file": "src/systems/stockClasses.js",
+    "old": "const out = { ...career, primarySkills: [...r.primary], majorSkills: [...r.major], minorSkills: [...r.minor] };",
+    "new": "const out = Object.assign(career, { primarySkills: [...r.primary], majorSkills: [...r.major], minorSkills: [...r.minor] });",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-description-majors-unjoined",
+    "file": "src/systems/stockClasses.js",
+    "old": "'{m1}, {m2}, and {m3}.', { m1, m2, m3 }",
+    "new": "'{m1}, {m2}, {m3}.', { m1, m2, m3 }",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-description-lead-never-joined",
+    "file": "src/systems/stockClasses.js",
+    "old": "`${head} ${primaries}`.length <= widest",
+    "new": "false",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-description-question-taken-for-the-list",
+    "file": "src/systems/stockClasses.js",
+    "old": "i < end && typeof row?.text",
+    "new": "typeof row?.text",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-loadCareers-unwired",
+    "file": "src/systems/chargenSession.js",
+    "old": "career: reviseStockCareer(i, cf.career) });",
+    "new": "career: cf.career });",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-headless-unwired",
+    "file": "src/systems/chargenSession.js",
+    "old": "const career = reviseStockCareer(classIndex, cf.career);",
+    "new": "const career = cf.career;",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-enhanced-description-unwired",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "f.describeClass = (i) => reviseClassDescription(i, textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i));",
+    "new": "f.describeClass = (i) => textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i);",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-classic-description-unwired",
+    "file": "src/ui/chargenArt.js",
+    "old": "return rows.length ? reviseClassDescription(classIndex, rows) : null;",
+    "new": "return rows.length ? rows : null;",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-healer-forbidden-minor",
+    "file": "src/systems/stockClasses.js",
+    "old": "[S.Thaumaturgy, S.Destruction, S.Illusion, S.Etiquette, S.Streetwise, S.ShortBlade]",
+    "new": "[S.Thaumaturgy, S.Destruction, S.Illusion, S.Etiquette, S.Streetwise, S.Archery]",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  },
+  {
+    "name": "CLASS-USE-file-restrictions-copy-drifts",
+    "file": "test/systems/stockclasses.test.js",
+    "old": "0x1f88, 0x1d90, 0x1f80",
+    "new": "0x1f88, 0x1d80, 0x1f80",
+    "tests": [
+      "test/systems/stockclasses.test.js"
+    ]
+  }
+]

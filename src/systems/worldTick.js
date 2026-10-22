@@ -1211,11 +1211,21 @@ function settleAbsence() {
   _absenceWaiting = null;
   if (waiting) waiting.pay(worldMinutes());
 }
+/** AUDIT FB1021 L3-1: THE RELAY'S CLOCK AS LAST HEARD - the world's minute at the welcome that heard it and this
+ *  machine's MONOTONIC clock then (`perf`, performance.now's ms; `n` the hearing's count this session), null before it. The
+ *  world's reading after it is the machine's wall clock run through the relay's offset (world.js's source), so a machine
+ *  clock set forward after the welcome moves it - an errand abroad reads it no further than the monotonic time since
+ *  (revenantErrands.js errandWorldMinute). */
+let _heardMark = null;
+export const sharedClockHeardMark = () => _heardMark;
+const monotonicMs = () => (typeof globalThis.performance?.now === 'function' ? globalThis.performance.now() : Date.now());
 /** AUDIT LIVED1b P4: the host has heard the relay's clock (its offset is in the source) - the waiting absence is paid on
- *  it. Answers whether a shared clock stands to hear. */
-export function hearSharedClock() {
+ *  it. Answers whether a shared clock stands to hear. AUDIT FB1021 L3-1: the hearing marked (`perf`, the monotonic clock
+ *  at it; tests hand their own). */
+export function hearSharedClock(perf = monotonicMs()) {
   if (!_sharedClock) return false;
   _sharedClockHeard = true;
+  _heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });
   settleAbsence();
   return true;
 }
@@ -1240,6 +1250,7 @@ export function setSharedClock(source, wallOf = null, { sky = null, skyWall = nu
   _sharedLastTick = null;
   _worldWalked = [];   // AUDIT LIVED1 I, LIVED1b P3: a new session's world arms start at its first reading
   _sharedClockHeard = false;   // AUDIT LIVED1b P4: and it has not heard the relay's clock yet
+  _heardMark = null;   // AUDIT FB1021 L3-1: nor marked it
   _absenceWaiting = null;
   _ownMinutes = null;   // LIVED1: a clock installed or removed is a new session - the character's own time comes from its load
   _raisedMinutes = 0;   // TIME3: ...and its raises are counted from nought

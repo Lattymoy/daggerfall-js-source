@@ -472,15 +472,16 @@ export function setLights(boat, value) {
 
 /** `GetComponent<Animator>()` on a node: its runtime (world/unityAnimator.js), or null. */
 export const animatorOf = (node) => node?.getComponent('Animator')?.animator ?? null;
-/** SEA-TOWN (FIELD BUGS 2026-10-11c): each boat tree's Animators, kept while every tree's shape stands (prefabNode.js
+/** SEA-TOWN (FIELD BUGS 2026-10-11c): each boat tree's Animators, kept while her tree's shape stands (prefabNode.js
  *  prefabShapeStamp - prefabColliders.js keeps a tree's colliders by the same stamp). Read-only: the list is shared. */
 const _animators = new WeakMap();   // root -> { stamp, list }
 /** Every Animator a boat carries, for the frame's step (Unity updates each after the scripts' Update). SEA-TOWN: found
  *  once a tree shape - the walk of every node (a galleon's 1,228) was made for every boat, every frame. A tree's
  *  Animators change only with its shape: a node hung or a component added (each bumps the stamp), a runtime attached
- *  only as an instance is imported, before it is hung under its parent (importCustomGameobject). */
+ *  only as an instance is imported, before it is hung under its parent (importCustomGameobject). BOAT-STAMP: her own
+ *  tree's stamp - another boat built anywhere walked every boat's tree again the next frame. */
 export const boatAnimators = (boat) => {
-  const root = boat.GameObject, stamp = prefabShapeStamp();
+  const root = boat.GameObject, stamp = prefabShapeStamp(root);
   const had = _animators.get(root);
   if (had && had.stamp === stamp) return had.list;
   const list = [...root.walk()].flatMap((n) => n.getComponents('Animator').map((c) => c.animator).filter(Boolean));

@@ -1000,8 +1000,8 @@
   {
     "name": "NAVP-animators-walked-every-frame",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(e.lifeDt);",
-    "new": "for (const a of (b.animators = boatAnimators(b))) a.update(e.lifeDt);",
+    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(lived);",
+    "new": "for (const a of (b.animators = [...b.GameObject.walk()].flatMap((n) => n.getComponents('Animator').map((c) => c.animator).filter(Boolean)))) a.update(lived);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1009,8 +1009,8 @@
   {
     "name": "NAVP-far-stride-unread",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "if (!eye || dist2d(s.pos, eye) <= NEAR_LIFE_M || (e.lifeN = (e.lifeN + 1) % FAR_LIFE_EVERY) === 0) {",
-    "new": "if (true) {",
+    "old": "const lived = farLifeStep(e, dt, s.pos, eye);",
+    "new": "const lived = farLifeStep(e, dt, s.pos, null);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -1018,7 +1018,7 @@
   {
     "name": "NAVP-far-missed-time-dropped",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(e.lifeDt);",
+    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(lived);",
     "new": "for (const a of (b.animators ??= boatAnimators(b))) a.update(dt);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"

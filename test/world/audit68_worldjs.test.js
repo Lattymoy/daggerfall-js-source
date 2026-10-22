@@ -341,28 +341,33 @@ test('AUDIT 68 S17-ground-mean-colour: a blade\'s root is the mean of the tile\'
   const near = (a, b) => a.forEach((v, i) => assert.ok(Math.abs(v - b[i]) < 1e-9, `${a} vs ${b}`));
   near(tileMeanColour(t.getColor32(bitmap, 0)), [150 / 255, 125 / 255, 100 / 255]);
   near(tileMeanColour(t.getColor32({ width: 1, height: 1, data: new Uint8Array([7]) }, 0)), [200 / 255, 200 / 255, 200 / 255]);
-  // the host's learning block, lifted and run - with the renderer's tile
-  // array ALREADY cached (it outlives the scene), so only this block runs
-  const block = lift(WORLD, '    if (!grassRecords.has(groundArchive)) {', '\n    }\n');
-  const groundMeanColour = new Map();
+  // the host's learning, run - with the renderer's tile array ALREADY cached (it outlives the scene), so only the
+  // learning runs. PIN MOVED (OW-HITCH): its home is scenes/groundSets.js (HOST-SPLIT), and it is run there whole, through
+  // the door the build asks (loadGroundSet) rather than lifted out of the host's text
+  const { createGroundSets } = await import('../../src/scenes/groundSets.js');
   const groundTex = { recordCount: 2, getDFBitmap: (r) => (r === 0 ? bitmap : { width: 1, height: 1, data: new Uint8Array([9]) }), getColor32: (b, a) => t.getColor32(b, a) };
-  const { markPuddleWater } = await import('../../src/world/puddleMask.js');
-  const groundPuddles = new Map();   // WATER-PUDDLE: the same block learns the pass's puddle mask for the blades
-  // GRASS-LIT2: `drawnMeans` is the record means of a texture mod's tile set where one dresses the archive (null: none -
-  // the classic's); AUDIT GRASS-LIT2 B2: taken at the upload, off the layers drawn
-  const floorRecords = new Map();   // BANTHA2: the jungle floor's records, learned beside the meadow's
-  const run = (drawnMeans) => new Function('grassRecords', 'groundArchive', 'groundTex', 'grassRecordsOf', 'groundMeanColour', 'tileMeanColour', 'groundPuddles', 'markPuddleWater', 'drawnMeans', 'floorRecords', 'floorRecordsOf', block)(
-    new Map(), 302, groundTex, grassRecordsOf, groundMeanColour, tileMeanColour, groundPuddles, markPuddleWater, drawnMeans, floorRecords, floorRecordsOf);
-  run(null);
-  assert.ok(floorRecords.has(302), 'the floor\'s records learned in the same step');
-  assert.equal(groundPuddles.get(302)?.length, 2, 'and the puddle mask with them, off the same layers');
-  assert.ok(groundMeanColour.has(302), 'the scene learned the archive\'s colours though the tile array was the renderer\'s already');
-  near(groundMeanColour.get(302)[0], [150 / 255, 125 / 255, 100 / 255]);
-  near(groundMeanColour.get(302)[1], [100 / 255, 50 / 255, 0]);
+  // GRASS-LIT2: the drawn set's means - a texture mod's tile set where one dresses the archive (null: none, the classic's);
+  // AUDIT GRASS-LIT2 B2: taken at the upload, off the layers drawn - here the scene's own map of them
+  const run = async (drawnMeans) => {
+    const maps = { grassRecords: new Map(), floorRecords: new Map(), groundPuddles: new Map(), groundMeanColour: new Map(), groundDrawnMeans: new Map(drawnMeans ? [[302, drawnMeans]] : []) };
+    let uploads = 0;
+    const renderer = { tileArrays: new Map([[302, {}]]), applyGroundSharpness() {}, *uploadTileArraySteps() { uploads++; } };
+    const sets = createGroundSets({ renderer, getTexture: async () => groundTex, labGrass: {}, breathe: async () => {}, ...maps });
+    await sets.loadGroundSet(302, { tileArray() {} });
+    assert.equal(uploads, 0, 'a cached array is not uploaded again');
+    return maps;
+  };
+  let m = await run(null);
+  assert.ok(m.floorRecords.has(302), 'the floor\'s records learned in the same step');
+  assert.equal(m.groundPuddles.get(302)?.length, 2, 'and the puddle mask with them, off the same records');
+  assert.ok(m.groundMeanColour.has(302), 'the scene learned the archive\'s colours though the tile array was the renderer\'s already');
+  near(m.groundMeanColour.get(302)[0], [150 / 255, 125 / 255, 100 / 255]);
+  near(m.groundMeanColour.get(302)[1], [100 / 255, 50 / 255, 0]);
+  assert.ok(grassRecordsOf && floorRecordsOf);
   // a mod's tile set: the colours are ITS (the ground drawn), the records and the puddles still the classic file's
   const modTile = (r, g, b) => ({ width: 2, height: 2, colors: new Uint8Array([r, g, b, 255, r, g, b, 255, r, g, b, 255, r, g, b, 255]) });
-  run([modTile(30, 90, 20), modTile(60, 60, 60)].map(tileMeanColour));
-  near(groundMeanColour.get(302)[0], [30 / 255, 90 / 255, 20 / 255]);
-  near(groundMeanColour.get(302)[1], [60 / 255, 60 / 255, 60 / 255]);
-  assert.equal(groundPuddles.get(302)?.length, 2);
+  m = await run([modTile(30, 90, 20), modTile(60, 60, 60)].map(tileMeanColour));
+  near(m.groundMeanColour.get(302)[0], [30 / 255, 90 / 255, 20 / 255]);
+  near(m.groundMeanColour.get(302)[1], [60 / 255, 60 / 255, 60 / 255]);
+  assert.equal(m.groundPuddles.get(302)?.length, 2);
 });

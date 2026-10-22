@@ -12,6 +12,7 @@ import {
   createStandingHorses, isStandingHorseFlat, standingHorseYaw, standingHorseSeed,
   STANDING_HORSES_MAX, STANDING_HORSE_RANGE, STANDING_HORSE_HOLD,
 } from '../../src/world/standingHorses.js';
+import { outOfView } from '../../src/world/horseRig.js';
 import { isStandFlat, standFlatId, standFlatRecord } from '../../src/world/standFlats.js';
 import { strangerHorseLook } from '../../src/systems/horse/horseCoats.js';
 import { figureLook } from '../../src/characters/peopleBodies.js';
@@ -28,13 +29,23 @@ const ordered = (s, needles, what) => {
   }
 };
 
-/** A rig that records: horses made, stepped, drawn and released. */
+/** A rig that records: horses made, stepped, posed, drawn and released. HORSE-VIEW II: its view the old ball at the
+ *  feet (the real rig's box is pinned in test/systems/horse/fb1021b_strangers.test.js); a step leaves its pose behind
+ *  its clock but for its first, and a pose catches one up, as the rig's own do. */
 function fakeRig(name = 'rig') {
-  const log = { made: 0, steps: [], drawn: [], released: [] };
+  const log = { made: 0, steps: [], posed: [], drawn: [], released: [] };
   const rig = {
     name, log,
-    horse: (seed) => ({ id: ++log.made, seed, rig: name }),
-    step: (h, o) => { log.steps.push({ id: h.id, feet: [...o.feet], yaw: o.yaw, speed: o.speed, look: o.look }); h.model = true; return h; },
+    horse: (seed) => ({ id: ++log.made, seed, rig: name, posed: false }),
+    step: (h, o) => {
+      log.steps.push({ id: h.id, feet: [...o.feet], yaw: o.yaw, speed: o.speed, look: o.look });
+      h.model = true; h.feet = [...o.feet];
+      h.stale = true;
+      if (o.pose !== false || !h.posed) rig.pose(h);
+      return h;
+    },
+    pose: (h) => { if (h.posed && !h.stale) return false; log.posed.push(h.id); h.posed = true; h.stale = false; return true; },
+    seen: (h, view, proj) => !outOfView([h.feet[0], h.feet[1] + 0.9, h.feet[2]], 1.6, view, proj),
     draw: (h) => { log.drawn.push(h.id); return true; },
     release: (h) => log.released.push(h.id),
   };
@@ -122,7 +133,7 @@ test('STAND-HORSE the hold: a horse standing keeps its place past the cut by STA
   assert.deepEqual(rig.log.released, [1], 'the first let go through its rig');
 });
 
-test('STAND-HORSE let go: a horse not offered (its pixel gone, the street left) or under a new rig is released through the rig that made it and its billboard drawn again; one out of the view stands but is not stepped (mutants: STAND-HORSE-let-go-hidden, STAND-HORSE-new-rig-kept, STAND-HORSE-unseen-stepped)', () => {
+test('STAND-HORSE let go: a horse not offered (its pixel gone, the street left) or under a new rig is released through the rig that made it and its billboard drawn again; one out of the view stands, its clock stepped, but is not posed nor drawn (mutants: STAND-HORSE-let-go-hidden, STAND-HORSE-new-rig-kept, STAND-HORSE-unseen-stepped)', () => {
   const r1 = fakeRig('r1'), r2 = fakeRig('r2');
   const sh = createStandingHorses();
   const a = batch(), b = batch();
@@ -145,19 +156,25 @@ test('STAND-HORSE let go: a horse not offered (its pixel gone, the street left) 
   sh.destroy();
   assert.deepEqual(r2.log.released, [1]);
   assert.equal(a.castOnly, false);
-  // the view: a camera looking down -z from the origin; a horse behind it stands (its billboard hidden) but is not posed
+  // the view: a camera looking down -z from the origin; a horse behind it stands (its billboard hidden) but is not posed.
+  // PIN MOVED (HORSE-VIEW II): its idle's clock is stepped all the same (`pose: false`), so turned back into the view it
+  // shows the pose an every-frame horse shows (fb1021b_strangers.test.js on the real rig) - it stood still before
   const r3 = fakeRig('r3');
   const v = createStandingHorses();
   const front = batch(), behind = batch();
   const view = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   const proj = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, -1, 0, 0, -0.2, 0]);
-  v.begin(r3, [0, 0, 0]);
-  v.offer('front', [0, 0, -10], 0, 0, front);
-  v.offer('behind', [0, 0, 10], 0, 0, behind);
-  assert.equal(v.end(0, { proj, view }), 2);
+  for (let f = 0; f < 2; f++) {
+    v.begin(r3, [0, 0, 0]);
+    v.offer('front', [0, 0, -5], 0, 0, front);
+    v.offer('behind', [0, 0, 5], 0, 0, behind);
+    assert.equal(v.end(0, { proj, view }), 2);
+  }
   assert.deepEqual([front.castOnly, behind.castOnly], [true, true]);
-  assert.deepEqual(r3.log.steps.map((s) => s.feet[2]), [-10], 'only the one in view posed');
+  assert.deepEqual(r3.log.steps.map((s) => s.feet[2]), [-5, 5, -5, 5], 'both stepped, every frame');
+  assert.deepEqual(r3.log.posed, [1, 2, 1], 'each posed at its first step; after it, only the one in view (5 m: every frame)');
   assert.equal(v.draw({}, { proj, view, eye: [0, 0, 0] }), 1);
+  assert.deepEqual(r3.log.drawn, [1], 'and only it drawn');
 });
 
 test('STAND-FLAT the one record: a horse its heading, idle seed and look off its id (the road\'s strangers\' law), the same every build; a person their BORN flat as their piece; the id its place to the centimetre', () => {

@@ -13,7 +13,6 @@ import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: 
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
 import { iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL2
-import { dfmodGroundLayers } from '../systems/dfmodTextures.js';   // GROUND1: an attached mod's terrain tile set
 import { RESURRECT_HOLD_MS, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, rezSnapshot, rezFor } from '../systems/resurrect.js';   // RESURRECT1
 import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND, portalHold, spendPortalStone, portalPlace } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
 import { createPartyMapSender, hasSharedCartography } from '../systems/party/partyMap.js';   // PARTY-MAP
@@ -116,7 +115,7 @@ import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the li
 import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX, livingNearKey, LIVING_NEAR_KEPT } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
 import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage, residentOfId, regardBadge } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
@@ -230,7 +229,7 @@ import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES, encounterCap, WILD_PACK_
 import { createBreather, frameFitBudget } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame; PERF-EXT24: a slice of what the frame left
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
-import { LabGrassRenderer, createGrassField, grassRecordsOf, floorRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
+import { LabGrassRenderer, createGrassField, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/wind/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
@@ -260,6 +259,7 @@ import { createMarksBook, mintMarksRid } from '../net/marksBook.js';   // MARKS1
 import { createNoticeBook, parseNoteCommand, planNoteAnswer, NOTE_LETTER_LOST } from '../net/noticeBook.js';   // NOTICE1: this device's Notice Boards - a town's board read, a note pinned
 import { createNoticeOverlay, closeNoticeDoor, noticeDoorOpen } from '../ui/noticeDoor.js';   // NOTICE1: the board's window, through its one door
 import { createProfBook } from '../net/profBook.js';   // PROF1: this character's professions - its Stores, its day, its harvests kept until answered
+import { dayTurnMs } from '../net/dayTurn.js';   // DAY-TURN: this page's moment in the day's turn
 import { createMotherlodeBook } from '../net/motherlodeBook.js';   // PROF2b: the day's Motherlodes - read, warned of, their Watch receipts kept
 import { createProfHud } from '../ui/professions/profHud.js';   // PROF1: the prompt, the act's meter, the toasts, the day's chip, the rank's banner
 import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gathering professions in the streaming world - the nodes, the target, the act
@@ -269,7 +269,8 @@ import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the fore
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
 import { createJungleFloorHost, floorPictures } from './jungleFloorHost.js';   // BANTHA2: the jungle's floor - a second field of the grass
-import { createSnowCoverHost, twinKey, twinLayers } from './snowCoverHost.js';   // PRECIP4: the snow the ground keeps, about the player
+import { createSnowCoverHost } from './snowCoverHost.js';
+import { createGroundSets } from './groundSets.js';   // OW-HITCH: a ground set made and uploaded a breath at a time (HOST-SPLIT)   // PRECIP4: the snow the ground keeps, about the player
 import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
@@ -284,6 +285,7 @@ import { forestAt } from '../world/terrain/terrainNature.js';   // FOREST1 (AUDI
 import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
 import { freePull } from '../systems/travel/freePull.js';   // OW-FREE-STRAIGHT, moved out (HOST-SPLIT)
 import { createGrantHost } from './grantHost.js';   // GRANT2-GRANT4: the spawn grants - my stands' and my reading of others' (bible/11-Multiplayer/Spawn-Grants.md)
+import { wireOwnerClock } from './ownerCatchUp.js';   // OWNER-CLOCK: my foes' steps on the clock their frames carry, and the street's kept to my frame's pace while anyone else is in my room
 import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
 import { utcDayOfMs } from '../net/nodeLaw.js';   // PROF8: a haul's UTC day
@@ -308,7 +310,7 @@ import { WARDEN_VENDOR } from '../systems/wagon/wagonWarden.js';   // WARDEN1: t
 import { townGroundOf, yardSitesOn, craftYardSitesOn, MONUMENT_KEEP_M, yardMeasuresOf, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
-import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, SEA_RING } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
 import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
 import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
@@ -373,7 +375,8 @@ import { SD_STEPS_TEXT } from './superDungeon/sdSteps.js';   // SD7b: the cast-b
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/superDungeon/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './superDungeon/sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
 import { SD_HOME_TEXT, SD_HOME_SAY_MS, SD_HOME_RISE_MS, SD_HOME_SCALE } from './superDungeon/sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
-import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_FALLEN_KEY, SD_NO_MARK, SD_RETURN_SIZE } from '../world/superDungeon/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, SD_ENTERED_KEY, SD_FALLEN_KEY, SD_NO_MARK, SD_RETURN_SIZE, sdThroughStands } from '../world/superDungeon/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record; SD-THROUGH: and its Way Through
+import { sdVeilModelOf, sdRingsFarFirst } from './superDungeon/sdThrough.js';   // SD-THROUGH: the veil closes on the nearer of the Hollow's two rings; AUDIT SD-THROUGH (B8): the nearer drawn last
 import { sdSlotsKept } from '../systems/superDungeon/sdSlots.js';   // SD-ONELIFE: the Hollows' slots kept on the device, by the account
 import { sdCities, sdTemplates } from '../systems/superDungeon/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/loot/lootDataTables.js';   // WB12d: the casket's pile, undrawn
@@ -833,7 +836,7 @@ import { magicPowersLines } from '../systems/item/itemPowers.js';   // HOME-VEND
 import { itemIsIdentified } from '../systems/tradeModes.js';   // HOME-VENDOR: known, or "powers unknown"
 import { setSigilOnline, setSigilRenown } from '../systems/sigil/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
 import { setSetsDueling, setsDueling, drinkWorn, setSetsWearer } from '../systems/sigil/sigilSets.js';   // SET2: the duel's word - sets sleep in one; SET4: the drink, whole; SET5: the wearer a tooltip reads
-import { lootHudChips } from '../systems/loot/lootPowers.js'; import { setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js'; import '../systems/loot/lootDrought.js'; import '../systems/loot/lootCodex.js'; import { createLootLines } from './lootLines.js';   // SET3: what the sets DO - every power registered at import; its voice is this host's; SET5: its chips; LOOT4: and lootPowers.js beside it, what a loot piece DOES (the Loot arc), every kind registered at import; LOOT8: lootDrought.js, the drought's finder and take listener, registered at import; LOOT10: lootCodex.js, the codex's take listener, round sweep and record; LOOT11: the lines of light over a find
+import { lootHudChips } from '../systems/loot/lootPowers.js'; import { setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js'; import '../systems/loot/lootDrought.js'; import '../systems/loot/lootCodex.js'; import { createLootLines } from './lootLines.js'; import { createNpcMarks } from './npcMarksHost.js';   // NPC-MARKS: the marks over the street's people who do something; SET3: what the sets DO - every power registered at import; its voice is this host's; SET5: its chips; LOOT4: and lootPowers.js beside it, what a loot piece DOES (the Loot arc), every kind registered at import; LOOT8: lootDrought.js, the drought's finder and take listener, registered at import; LOOT10: lootCodex.js, the codex's take listener, round sweep and record; LOOT11: the lines of light over a find
 import { computeEntityMods, registerEntityFold, EMPTY_MODS } from '../systems/entityMods.js';   // SET3: the sets' stat fold, recomputed the moment they wake or sleep; SEAT1d: the Festive buff's
 import { createSeatEdicts, FESTIVE_FOLD, festiveMods } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it
 import { createTownEconHost } from './townEconHost.js';   // TOWN-ECON TE1: every town's economy - its counters' factor, its card; TE2: the players' share
@@ -1117,7 +1120,7 @@ import { registerItemUseHandler } from '../systems/item/itemTemplates.js';   // 
 import { mintBoatItem, mintShelfBoatUids, assignVariantsToShopItems, cargoLootTarget, BOAT_PARTS_TEMPLATE as CSA_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE as CSA_DEED_TEMPLATE } from '../systems/comeSailAway/comeSailAwayItems.js';   // CSA-H: the two items, their shelf
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // CSA-H: the boat's variant picker
 import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } from '../world/underwater/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform; DW-E5: SpawnRevealDistance
-import { markPuddleWater, carryPuddleMask, puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
+import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
 import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishPictureUrl, fishIconArchive } from '../systems/deepWater/deepWatersFishItems.js';   // DW-E3: the fish as items
 import { clearEdgeBlackPixels } from '../world/underwater/underwaterDecorations.js';   // DW-E3: a fish's picture, edge-cleaned   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
@@ -1868,13 +1871,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       relayNowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null),   // a receipt's life is the relay's
       // CROWN2: a Pact broken early, said in red on every tab as the server's own line (RED1) - offered again while there is no chat yet
       onRed: (line) => (redChat ? redChat(line) : false),
+      turnMs: dayTurnMs(),   // DAY-TURN: its report's day turns at this page's moment past midnight
     })
     : null;
   // CHAP2a (Chapters-Arc 4): the guild halls of the towns this client walks into, reported once a UTC day a town while
   // the Chapters are open to this account (net/npcHallBook.js; the entry edge is revealMemberGuildHalls'). Online only -
   // offline a town is DFU's.
   const hallDoor = params.has('online') ? accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
-  const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage() }) : null;
+  const hallBook = hallDoor ? createHallBook({ door: hallDoor, storage: appStorage(), turnMs: dayTurnMs() }) : null;   // DAY-TURN
   // CHAP3c (Chapters-Arc 5.2, 5.3): the chapter sheet - every chapter's Strength - held for the halls' prices and shelves
   // (net/chapterSheet.js), asked at a town's entry and again when it grows old. Online only - offline a hall is DFU's.
   const chapterSheet = hallDoor ? createChapterSheet({ door: hallDoor }) : null;
@@ -2004,7 +2008,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const profBook = params.has('online')
     ? createProfBook({ door: accountProf({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage(),
-      character: () => characterIdOf(playerEntity), now: () => Date.now() + _sharedOffsetMs, carry: carryHands })
+      character: () => characterIdOf(playerEntity), now: () => Date.now() + _sharedOffsetMs, carry: carryHands, turnMs: dayTurnMs() })   // DAY-TURN: its day's reads turn at this page's moment past midnight
     : null;
   // FIRM1 (bible/06-Systems/Firmament.md): THE FIRMAMENT'S BOOK - the character's passive tree and its purses as the account
   // service keeps them (net/firmament/firmamentBook.js); what it hears is the tree in force (systems/firmamentLive.js), and the window
@@ -3047,7 +3051,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const jungle = jungleOn() ? createJungleHost({ renderer, maps, mapWidth: MAP_W, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, heightAt: (x, z) => heightAt(x, z), breathe: () => breather.breathe(), haze: jungleHazeOn() }) : null;
   const jungleFloor = jungle && labGrass ? createJungleFloorHost({ gl: renderer.gl, jungle, pictures: floorPictures({ getTexture, palette }), density: grassDensity / LAB_GRASS.density, provoke: pageParam('provoke') !== 'last', onArrive: () => { labGrassField = null; } }) : null;   // BANTHA2: the jungle's floor, a second field of the grass (scenes/jungleFloorHost.js) - made when the jungle comes near; the meadow's field placed again beside it
   let _snowArrival = null;   // AUDIT PRECIP HOST-2: a trip's arrival minute (the event clock's) while its time has yet to run - declared before the host that reads it
-  const snowCover = createSnowCoverHost({ renderer, climateAt, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, heightAt: (x, z) => heightAt(x, z), owns: precipLawOn, markReskin: (key) => _reskin.skin(key), now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes())), place: () => ({ px: state.current.x, py: state.current.y }), arriving: () => !playerSpawned });   // AUDIT PRECIP HOST-2: ONE clock - a trip's arrival minute until its own time has run   // PRECIP4 (scenes/snowCoverHost.js): the ground's snow on the enhanced lane - its draws, its builds' seasons, the sweep
+  const snowCover = createSnowCoverHost({ renderer, climateAt, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, owns: precipLawOn, markReskin: (key) => _reskin.skin(key), markRebuild: (key) => _reskin.mark(key), now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes())), place: () => ({ px: state.current.x, py: state.current.y }), arriving: () => !playerSpawned });   // AUDIT PRECIP HOST-2: ONE clock - a trip's arrival minute until its own time has run   // PRECIP4 (scenes/snowCoverHost.js): the ground's snow on the enhanced lane - its draws, its builds' seasons, the sweep
   const trees = createTreesHost({ renderer, getTexture, seasons, seasonsActive: () => seasonsActive, lowPolyTreesOn: modSetting('low-poly-trees', 'Enabled') && params.get('trees') !== 'off', jungle, breathe: () => breather.breathe(), yards: () => yards });
   const { lowPolyTrees, lptSway: _lptSway, lptWindfall: _lptWindfall } = trees;   // LPT1: the door, and the flats' shares of the wind by prototype (the build writes them)
   mwViewAttachHorse(renderer);   // COATS3D: the 3D horse under the Morrowind body
@@ -3129,27 +3133,27 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const _livingDungeonsNear = new Map();
   const livingDungeonsNear = (px, py, r) => {
-    const key = `${px},${py},${r}`;
+    const key = livingNearKey(px, py, r);   // OW-HITCH
     let got = _livingDungeonsNear.get(key);
     if (got) return got;
     got = [];
     const idx = livingDungeonsIndex();
     for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const d = idx.get(y * 1000 + x); if (d) got.push(d); }
     got.sort((a, b) => a.mapId - b.mapId);
-    if (_livingDungeonsNear.size > 512) _livingDungeonsNear.clear();
+    if (_livingDungeonsNear.size > LIVING_NEAR_KEPT) _livingDungeonsNear.clear();
     _livingDungeonsNear.set(key, got);
     return got;
   };
   const _livingNear = new Map();
   const livingTownsNear = (px, py, r) => {
-    const key = `${px},${py},${r}`;
+    const key = livingNearKey(px, py, r);   // OW-HITCH
     let got = _livingNear.get(key);
     if (got) return got;
     got = [];
     const idx = livingTownsIndex();
     for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const t = idx.get(y * 1000 + x); if (t) got.push(t); }
     got.sort((a, b) => a.mapId - b.mapId);
-    if (_livingNear.size > 512) _livingNear.clear();
+    if (_livingNear.size > LIVING_NEAR_KEPT) _livingNear.clear();
     _livingNear.set(key, got);
     return got;
   };
@@ -5683,6 +5687,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     speed: player?.speed ?? 0, dt, scale, maxFrameDt: MAX_FRAME_DT,
     floor: TRAVEL_LOOKAHEAD, margin: TRAVEL_LOOKAHEAD_MARGIN,
   });
+  /** R9: A GROUND ARCHIVE'S TILE SET, ready for a pixel's draw and its grass - held by the pixel's place (`hold`, its
+   *  PLACE-LRU door), uploaded once (a texture mod's set first), the ground-sharpness tier on every cached set, and the
+   *  grass's three tables learned. The pixel's own archive, and ECOTONE1's neighbours' at a climate border (the sets
+   *  the ground's border samples - render/ecotoneGlsl.js). OW-HITCH (HOST-SPLIT): its home is scenes/groundSets.js -
+   *  a set made a record a breath, uploaded a few layers a breath, once a key. Made before the stream's build state
+   *  (`inFlight`, the breather below - asked at its breaths, never at the making). */
+  const { loadGroundSet } = createGroundSets({ renderer, getTexture, labGrass, breathe: () => breather.breathe(), grassRecords, floorRecords, groundPuddles, groundMeanColour, groundDrawnMeans });
   const inFlight = new Map();
   /** ECOTONE1: a border pixel's neighbours for its ground's draw (renderer.drawTerrain's `eco`) - their sets as the
    *  renderer holds them now. Null for a pixel with none, and while any of them is missing (the pixel's hold keeps them,
@@ -5704,61 +5715,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const g = p.ecoGround;
     const [dx, dz] = ecotoneOwner(p.px, p.py, x, z, (ax, az) => g[(az + 1) * 3 + ax + 1]);
     return g[(dz + 1) * 3 + dx + 1];
-  };
-  /** R9: A GROUND ARCHIVE'S TILE SET, ready for a pixel's draw and its grass - held by the pixel's place (`hold`, its
-   *  PLACE-LRU door), uploaded once (a texture mod's set first), the ground-sharpness tier on every cached set, and the
-   *  grass's three tables learned. The pixel's own archive, and ECOTONE1's neighbours' at a climate border (the sets
-   *  the ground's border samples - render/ecotoneGlsl.js). Moved here whole from the build, so both ask one home. */
-  /** A ground archive's layers as they are drawn (a texture mod's set first, GROUND1/VE2: TextureReader.GetTerrainTextureArray),
-   *  puddles marked (WATER-PUDDLE: a puddle record's water in its layer's alpha; GROUND1-W: a mod's set takes their shapes
-   *  from the classic records) - `modLayers` the mod's own, null for none. */
-  const groundLayersOf = async (archive, tex) => {
-    const modLayers = await dfmodGroundLayers(archive, tex), classic = [];
-    for (let r = 0; r < tex.recordCount; r++) classic.push(tex.getColor32(tex.getDFBitmap(r, 0), 0));
-    return { modLayers, layers: modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : markPuddleWater(classic) };
-  };
-  const loadGroundSet = async (groundArchive, hold, winter = null) => {
-    // AUDIT PRECIP GROUND-2: on the snow lane a set that wears a winter IS its twin - one array, its summer records then its
-    // winter ones (scenes/snowCoverHost.js twinLayers), held and uploaded once: never the two sets and a copy of both
-    const key = winter == null ? groundArchive : twinKey(groundArchive);
-    hold.tileArray(key); const groundTex = await getTexture(groundArchive);   // FIELD BUGS 2026-10-04d PLACE-LRU: held BEFORE the cache is asked, so no sweep in the await frees what this pixel will draw
-    if (!renderer.tileArrays.has(key)) {
-      const own = await groundLayersOf(groundArchive, groundTex);
-      renderer.uploadTileArray(key, winter == null ? own.layers : twinLayers(own.layers, (await groundLayersOf(winter, await getTexture(winter))).layers));
-      // AUDIT GRASS-LIT2 B2: the grass's colours off THESE layers - the ones drawn - and not a second ask of the mod
-      // door, whose cache a mod indexed mid-session empties (another decode, maybe another mod's tiles than these)
-      if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);
-    }
-    renderer.applyGroundSharpness();   // GRAIN AUDIT 1: the ground-sharpness tier lands on THIS load, on every cached archive - the cache outlives the scene
-    // GR1: which of this archive's records are GRASS, from its own texels -
-    // roads excluded by record, and a winter archive has no green base so
-    // it yields none. AUDIT 49 F3: learned whenever MISSING, not only on a
-    // tile-cache miss - the tile array cache lives on the renderer and
-    // outlives this scene, so an archive the exterior host had uploaded
-    // came back here cached, skipped the block above, and grew no grass.
-    // GRASS-LIT2: the tile set that is DRAWN - an attached texture mod's (GROUND1, the cached promise the upload above
-    // asked) - is what the grass's colour is taken off; asked BEFORE the three below are learned, so all three land in
-    // one step and no pixel places a field against records whose colours are still on their way
-    // AUDIT GRASS-LIT2 B2: the means taken at the upload above when it ran in this scene; asked of the door only for a
-    // tile array an earlier scene uploaded (the renderer's cache outlives the scene)
-    const drawnMeans = grassRecords.has(groundArchive) ? null
-      : groundDrawnMeans.has(groundArchive) ? groundDrawnMeans.get(groundArchive)
-      : (await dfmodGroundLayers(groundArchive, groundTex))?.map(tileMeanColour) ?? null;
-    if (!grassRecords.has(groundArchive)) {
-      const layers = [];
-      for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
-      grassRecords.set(groundArchive, grassRecordsOf(layers)); floorRecords.set(groundArchive, floorRecordsOf(layers));   // BANTHA2: the floor's beside the meadow's
-      groundPuddles.set(groundArchive, markPuddleWater(layers));   // WATER-PUDDLE: the blades ask the mask the pass draws by
-      // GR4: each record's MEAN colour, for the grass root that stands on
-      // it - averaged once, rather than sampled per blade. AUDIT 68 S17:
-      // learned here, beside grassRecords (the tile cache outlives the
-      // scene), and off the color32's texels - it read the object's length.
-      // GRASS-LIT2: off the mod's tile where one dresses the archive - the
-      // ground a blade stands in is the one drawn. Which records are grass
-      // stays the classic file's question: a record means the same tile
-      // under any picture of it.
-      groundMeanColour.set(groundArchive, drawnMeans ?? layers.map(tileMeanColour));
-    }
   };
 
   async function buildPixel(px, py) {
@@ -7192,6 +7148,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
   const lootLines = createLootLines(renderer.gl);   // LOOT11: the lines of light over a find, one pass for every mode
+  // NPC-MARKS (scenes/npcMarksHost.js): a bobbing mark over a street person's body whose click is a quest's or a guild's -
+  // the route read in the street (no building); the interior host keeps marks of its own
+  const npcMarks = createNpcMarks(renderer.gl), streetMarkCtx = { get dict() { return _questStore()?.dict ?? null; }, building: null,
+    offersWork: (pn) => npcSession.isNpcOfferingQuest(pn._mwSeed ??= staticNpcData(pn, { locationIndex: _questLoc()?.locationIndex ?? 0 }).nameSeed) };   // AUDIT NPC-MARKS L2: the work pool's questor, by the seed the street's click mints (worldModes.js staticNpcSceneCtx: no building)
   // FindGroundPosition (CreateDroppedLootContainer): the pile lands
   // on the ground BELOW the player, not at the motor's height
   const dropFeet = () => {
@@ -9185,13 +9145,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const navalPortHere = () => {
     const p = playerTravelPixel(), key = `${p.x},${p.y}`;
     if (_navalPortHereAt?.key === key) return _navalPortHereAt.port;
-    let port = null, best = Infinity;
     if (etherSea && inEther(p.x, p.y)) {   // ETHER-PORTS: an isle's port past the Veil
       const isle = etherPortNear(p.x, p.y);
       _navalPortHereAt = { key, port: isle ? etherPortOf(isle) : null };
       return _navalPortHereAt.port;
     }
-    for (const q of navalPortList()) { const d = Math.max(Math.abs(q.px - p.x), Math.abs(q.py - p.y)); if (d <= SEA_RING && d < best) { best = d; port = q; } }
+    const port = boardPortAt(navalPortList(), p.x, p.y);   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the nearest by the crow's flight (Pencart's water tied Longham's)
     _navalPortHereAt = { key, port };
     return port;
   };
@@ -24838,7 +24797,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
     const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
-    return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record
+    return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record; SD-THROUGH: and whether one has gone through (the Way Through stands)
   };
   /** AUDIT SD V (P1): the Rift's look alone, every frame it is drawn - none of the word, the count or the step's door
    *  sdRiftOf makes (it was made four times a frame for the look, ~2.4 KB); its `seen` kept. */
@@ -29414,9 +29373,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (sky && !inHour) sky.paint(deadlandsSeconds(), _sdHollowHaze, sdSkyLookNow(), renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight]);
       if (sky) { _sdRiftSky.map = sky.map.texture; _sdRiftSky.seconds = deadlandsSeconds(); _sdRiftSky.gain = inHour ? skyGain(renderer._fogColor, SD_REALM_FOG.color) : 1; }
       const look = end.sdEndLook?.(eye, sky ? _sdRiftSky : null, minuteNow() / 60);
-      sdVeilAim(proj, view, look?.window?.model ?? look?.bay?.model);
+      const through = end.sdThroughLook?.(eye, sky ? _sdRiftSky : null, minuteNow() / 60) ?? null;   // SD-THROUGH: the Way Through's window and floor light, the Rift's own pass
+      sdVeilAim(proj, view, sdVeilModelOf(eye, through, look));
       let drew = !!sky && !inHour;
-      if (look && pass?.draw(proj, view, look, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) drew = true;
+      for (const l of sdRingsFarFirst(eye, through, look)) if (l && pass?.draw(proj, view, l, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic)) drew = true;   // AUDIT SD-THROUGH (B8): the farther first - the pass writes no depth
       if (sdHaloPassOf()?.draw(proj, view, end.sdEndHalos?.() ?? [], fog, renderer.lightingLane ? SD_HALO_GAIN.lane : SD_HALO_GAIN.classic)) drew = true;
       if (drew) renderer.markForeignPass();
     },
@@ -30181,6 +30141,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it
     },
   });
+  wireOwnerClock([exteriorFoes, cityGuards], modes, () => online?.status === 'open' && online.othersHere > 0);   // OWNER-CLOCK (scenes/ownerCatchUp.js): while anyone else is in my room (on the street the 16-pixel cell, wider than the 3 pixels my foes frames are fanned across) the street's foes take my clamped frame in FOE-CATCHUP's steps - my player's pace, never past it - and every step of mine is marked on the clock my foes frames carry; HOST-CLOCK: the watch with them (its brains already ran on the street's clock), the mode machine's frames the catch-up's, and a building's and a dungeon's foes through the same page's catch-up from their own hosts
   // AT2: AMBIENT TEXT CLAIMS ITS HOST. The mod is one GameObject made
   // at load and never destroyed (systems/ambientText.js), so the slot
   // holds STATE - the pace and the no-repeat index - across every door
@@ -34202,6 +34163,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // distance from the player's own pixel - a hundred-odd integers,
     // sorted into a scratch array kept across frames, no allocation.
     const _peopleOn = streetPeople.frame();   // MWNPC8b
+    npcMarks.begin();   // NPC-MARKS: the street's candidates, gathered as its people are offered
     standingHorses.begin(tvf ? null : mwViewHorseRig(), mwv.eye);   // STAND-HORSE: the standing horses' frame - the lane's rig (none under the travel view)
     _pixelOrder.length = 0;
     for (const p of built.values()) { p._dist2 = (p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2; _pixelOrder.push(p); }
@@ -34331,6 +34293,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const f = pn._mwFeet ??= [0, 0, 0];
         f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];
         streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);
+        npcMarks.consider(pn, streetMarkCtx);   // NPC-MARKS
       }
       // STAND-FLAT / STAND-HORSE (Morrowind-NPCs.md section 28): the near rings' town horses offered their 3D horse, and
       // the people no StaticNPC holds their bodies, read as a placed figure is (MWNPC18's figureLook) - every other
@@ -34926,7 +34889,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // grass only stands on the stride-1 ring anyway.
         const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
         if (h <= sea) return null;
-        if (snowCover.on && snowCover.buries(p, lx, lz, x, z, h + t[1])) return null;   // PRECIP4: no blade through the snow the ground shows there (AUDIT PRECIP HOST-9: at the blade's own height)
+        if (snowCover.on && snowCover.buries(p, lx, lz, h + t[1])) return null;   // PRECIP4: no blade through the snow the ground shows there (AUDIT PRECIP HOST-9: at the blade's own height)
         return h + t[1];
       };
       // GR4: the SAME lookup keep makes, answering with the tile's mean
@@ -35076,6 +35039,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // gate's fire, the same eye and fog (scenes/lootLines.js: the nearest eight within 40 m)
     if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()], proj, view, new Float32Array(mwv.eye), now / 1000,
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze })) renderer.markForeignPass();
+    if (npcMarks.draw(proj, view, mwv.eye, streetPeople, now / 1000)) renderer.markForeignPass();   // NPC-MARKS: the marks over the street's people, after its flats
     // TV4 (bible/06-Systems/Travel-View.md): THE CURTAINS FROM ABOVE - the weather map's falling cells as veils stood in
     // the world, under the travel view alone (at the eye the sky map's own curtains stand on the horizon); the same
     // cells the clouds draw, at the shared minute (render/rainCurtains.js)

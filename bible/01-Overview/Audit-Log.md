@@ -8,6 +8,21 @@
 
 Newest first.
 
+**2026-10-21 - AUDIT STAR-TUNE (pull request #1090, the Starfall from its first run).** The owner: *"Audit this"*. One
+cold lane over the pull request's own diff, read-only, at the head that renumbered it world238 past main's world236 and
+world237. Four findings, each fixed and pinned (`bible/11-Multiplayer/Starfall.md` sections 4, 10 and 13; `Spawn-Grants.md`
+section 4): F1, the site goes live before the relay's deploy is through (the account service, which STAR-TUNE does not
+move, is all `deploy.yml` waits on), and a new client asked world237 a `star` grant it refuses - under `enforce` no wave
+stood, under `grantStrip` the coven was its owner's alone; the kind is now asked only of world238 and later
+(`STAR_GRANT_RELAY_MIN`), the stand's own kind of an older relay. F2, the wave's clearing floor stayed a foe's 2.5 s while
+a party's wave grew to twenty-one - an empty crater waited out to 52.5 s after a 25 s fight; it is shared by the
+defenders now (`starClearFloorMs`). F3, an older tab's `st` dropped a wave past nine whole, so an older owner stood a
+party's third wave and master for nobody; the cell says nine in `wz` and the wave in `wx`. An older reader removing a
+toughened coven foe past its old bound is recorded, not fixable from here. F4, a crater built again under a standing
+player skipped the late-solid gate's body check. Sound: the wave law, the grant's size and ceiling, toughening across
+handovers, the frame's 64 records, the stand height, the renumber. Mutants: 7 new and 3 re-aimed (`star1`, `star3`,
+`star5`), all dead.
+
 **2026-10-20 - AUDIT PERF-PASS (the performance pass, pull request #1078: TRIP-PICKS, the BOOT-FREEZE slices,
 TRADE-VIRT, SHADER-STALL, SNOW-BUDGET and the GATE-MIX merge).** The owner: *"I need you to audit this and ensure this is
 perfect and fidelity isnt lost"*. Four cold lanes on a frozen head (7e5cdfcb80), read-only, each against the code before

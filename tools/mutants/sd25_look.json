@@ -418,11 +418,12 @@
   {
     "name": "SD25-the-aim-dropped",
     "file": "src/scenes/world.js",
-    "old": "      sdVeilAim(proj, view, look?.window?.model ?? look?.bay?.model);\n",
+    "old": "      sdVeilAim(proj, view, sdVeilModelOf(eye, through, look));\n",
     "new": "",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
-    ]
+    ],
+    "note": "SD-THROUGH (re-aimed by content): the veil closes on the nearer of the Hollow's two rings."
   },
   {
     "name": "SD25-the-flood-never-fading",

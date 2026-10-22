@@ -2974,12 +2974,20 @@ From the field: frames fell in a crowded inland town with "The sea & ships" on, 
 owned the mods cost nothing there; with boats owned, `animate` (the Animators' step at the head of LateUpdate, (19) of
 the Port-Ledger row) found every boat's Animators by walking her whole tree - a galleon's 1,228 nodes - every frame, for
 every boat the player had placed wherever it lay, and the peers' pose did the same for every other player's boat
-(`scenes/comeSailAway/comeSailAwayPeers.js`). `boatAnimators` keeps a tree's list while every tree's shape stands
+(`scenes/comeSailAway/comeSailAwayPeers.js`). `boatAnimators` keeps a tree's list while that tree's shape stands
 (`world/prefabNode.js` `prefabShapeStamp`, the stamp `world/prefabColliders.js` keeps a tree's colliders by): the same
 Animators, in the same order. The step itself is unchanged - a boat standing nowhere is still asked, because that ask is
 how an Animator starts over from its default state when she stands again ((18)). The naval HUD and the helm panel stopped
 making their keys' names for windows they were not showing. Measured, before and after, in
 `01-Overview/bugs/Field-Bugs-2026-10-11c.md`; `test/systems/comeSailAway/fb1011c_seatown.test.js`.
+
+Until BOAT-STAMP (2026-10-21) the stamp was one count for every tree in the game, so any boat built anywhere walked
+every boat's tree again the next frame; it is each tree's own now. BOAT-FAR (the same day) steps a peer's boat's
+Animators past 600 m of the player one frame in four on the time she missed, as the sea's ships' rigging steps; BOAT-OWN
+(the same day) steps mine the same - `animate` and `simulateParticles` call `scenes/comeSailAway/farLife.js`
+`createBoatLives`, from the pool's eye - and a boat switched on or off since she last lived lives that frame, so a far
+boat of mine stood again still starts over from her default state as she stands. All in
+`07-Rendering/Performance-Priority.md`.
 
 ## What was already waiting in the port
 

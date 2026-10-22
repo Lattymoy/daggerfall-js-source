@@ -30,7 +30,7 @@ import { paintTitle, titleBadge, TITLE_TEXT, AURA_TEXT, WITCH_FIRE, WITCH_GLOW, 
 import { profileIconNode, ICON_TEXT } from './profileIcons.js';
 import { iliacCardLines } from '../systems/iliac/iliacItems.js';
 import { SOUL_CAKE_TEXT } from '../systems/festival/soulCake.js';
-import { cakesText, festivalName, vendorOffice, festivalNightText, festivalRefusalText } from '../systems/festival/festivalWords.js';
+import { cakesText, festivalName, vendorOffice, festivalNightText, festivalRefusalText, findsTodayText, findsTodayFullText } from '../systems/festival/festivalWords.js';
 import { FESTIVAL_WARES, accountWare, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../net/festivalLaw.js';
 import { t } from '../systems/textManager.js';
 
@@ -131,6 +131,7 @@ export const WYRD_CSS = `
 .wyrd-shell .broker-insig .broker-frame { border-color: ${FIRE} #10240c #10240c ${FIRE};
   background: radial-gradient(ellipse at 50% 62%, ${FIRE}55, transparent 70%), rgba(6,16,4,0.85); }
 .wyrd-shell .wyrd-night { margin: 2px 0 0; font-size: 12px; color: ${VIOLET}; }
+.wyrd-shell .wyrd-today { margin: 2px 0 0; font-size: 12px; color: #f6e2b8; }
 .wyrd-shell .aura-ring.aura-witchfire { background: conic-gradient(from 0deg, ${FIRE}, ${MOSS}, ${GLOW}, ${FIRE}, ${MOSS}, ${GLOW}, ${FIRE});
   filter: drop-shadow(0 0 4px ${FIRE}); }
 .wyrd-shell .insignia-sign.hero .aura-ring.aura-witchfire { filter: drop-shadow(0 0 12px ${FIRE}) drop-shadow(0 0 3px ${GLOW}); }
@@ -175,6 +176,7 @@ function insigniaSign(/** @type {any} */ row, hero = false) {
  *   itemOf: (w: any) => any, nameOf: (item: any) => string, wearer?: any,
  *   buy: (id: string) => Promise<{ ok: boolean, text: string }>, wear: (row: any) => Promise<{ ok: boolean, text: string }>,
  *   load?: () => Promise<any>, hear?: (fn: () => void) => () => void, onExit?: () => void,
+ *   today?: () => { found: number|null, max: number, full: boolean, resetMs: number },
  * }} deps
  * @returns {{ repaint: () => void, unmount: () => void }}
  */
@@ -199,9 +201,10 @@ export function mountWyrdWindow(host, deps) {
   const title = el('div', 'broker-title');
   const sub = el('p', 'broker-sub');
   const night = el('p', 'wyrd-night');
+  const todayLine = el('p', 'wyrd-today');   // CAKE-CAP-SAID: the day's finds, and when more are found once they are spent
   const noteLine = el('p', 'broker-note');
   noteLine.setAttribute('aria-live', 'polite');
-  title.append(el('h2', null, vendorOffice()), sub, night, noteLine);
+  title.append(el('h2', null, vendorOffice()), sub, night, todayLine, noteLine);
   const purse = el('span', 'broker-purse');
   const close = el('button', 'act broker-close', t('festival.window.close', 'Close'));
   close.setAttribute('type', 'button');
@@ -248,6 +251,10 @@ export function mountWyrdWindow(host, deps) {
     sub.textContent = t('festival.window.until', '{festival} - until {last}.', { festival: festivalName(), last: deps.lastDay() });
     night.textContent = deps.night() ? festivalNightText() : '';
     if (deps.night()) night.removeAttribute('hidden'); else night.setAttribute('hidden', '');
+    // CAKE-CAP-SAID: the day's finds (systems/festival/festivalClient.js festivalFindsToday) - nothing while unheard
+    const day = deps.today?.() ?? null;
+    todayLine.textContent = day?.found == null ? '' : day.full ? findsTodayFullText(day.max, day.resetMs) : findsTodayText(day.found, day.max);
+    if (todayLine.textContent) todayLine.removeAttribute('hidden'); else todayLine.setAttribute('hidden', '');
     // why nothing can be bought here, said before a press asks it - offline, a guest, the festival shut (AUDIT WITCH1 G2)
     const told = note ?? (s.shut ? { ok: false, text: festivalRefusalText(s.shut) } : null);
     noteLine.textContent = told ? told.text : '';
@@ -315,8 +322,10 @@ export function mountWyrdWindow(host, deps) {
   if (deps.load) Promise.resolve().then(() => deps.load?.()).catch(() => null).then(() => render());
   const unhear = deps.hear?.(() => render()) ?? (() => {});
   // what the festival's state is without an answer to say it - the relay back, the night come, the clock past a day
-  let was = `${deps.shut()}|${deps.night()}`;
-  const watch = setInterval(() => { const now = `${deps.shut()}|${deps.night()}`; if (now !== was) { was = now; render(); } }, WYRD_WATCH_MS);
+  // CAKE-CAP-SAID: and a UTC day turned (its day's finds open again) - no answer says that either
+  const sig = () => `${deps.shut()}|${deps.night()}|${deps.today?.()?.resetMs}`;
+  let was = sig();
+  const watch = setInterval(() => { const now = sig(); if (now !== was) { was = now; render(); } }, WYRD_WATCH_MS);
   const onKey = (/** @type {KeyboardEvent} */ e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit(); }

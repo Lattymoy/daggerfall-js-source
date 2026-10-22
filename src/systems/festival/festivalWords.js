@@ -37,6 +37,16 @@ const REFUSALS = Object.freeze({
 export const isFestivalRefusal = (/** @type {unknown} */ code) => typeof code === 'string' && Object.hasOwn(REFUSALS, code);
 export const festivalRefusalText = (/** @type {unknown} */ code) => (typeof code === 'string' && Object.hasOwn(REFUSALS, code) ? REFUSALS[/** @type {keyof typeof REFUSALS} */ (code)]() : REFUSALS.offline());
 
+/** CAKE-CAP-SAID: the day's finds spent - how many a day gives and the time (the player's own clock) the next day's open
+ *  from: the UTC midnight `resetMs`. */
+export const findsFullText = (/** @type {number} */ n, /** @type {number} */ resetMs) => t('festival.finds.full', 'You have found all {n, number} Soul Cakes a day allows. More can be found from {time}.', { n, time: clockText(resetMs) });
+/** CAKE-CAP-SAID: the Wyrd's window - the day's finds so far, and once they are spent, when more are found. */
+export const findsTodayText = (/** @type {number} */ n, /** @type {number} */ max) => t('festival.finds.today', 'Found today: {n, number} of {max, number} Soul Cakes.', { n, max });
+export const findsTodayFullText = (/** @type {number} */ max, /** @type {number} */ resetMs) => t('festival.finds.todayFull', 'Found today: all {max, number} Soul Cakes. More from {time}.', { max, time: clockText(resetMs) });
+/** A time of day in the player's language and zone ("8:00 PM", "20:00"). */
+function clockText(/** @type {number} */ ms) {
+  try { return new Intl.DateTimeFormat(intlLocale(), { hour: 'numeric', minute: '2-digit' }).format(new Date(ms)); } catch { return ''; }
+}
 /** A find's line: "+2 Soul Cakes". */
 export const cakesFoundText = (/** @type {number} */ n) => t('festival.found', '+{n, plural, one {# Soul Cake} other {# Soul Cakes}}', { n });
 /** A festival's last day in the player's language ("7 November", "7 novembre") - the day before its end. */

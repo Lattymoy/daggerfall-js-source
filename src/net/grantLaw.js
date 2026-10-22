@@ -86,7 +86,10 @@ export const GRANT_CHAMPION_TRAITS = 5;
  *              whole field in a few asks, rarely.
  *    encr    - GRANT8: an encounter whose species its seed rolls - the relay's answer to an `enc` ask while its `grantRoll`
  *              is on (never asked for by name): enc's own bounds.
- *  enc's and camp's `max` are held equal to their homes by the test; the rest are bounds. */
+ *    star    - STAR-TUNE: a fallen star's coven (scenes/starfall/starfallHost.js stand): its law's largest wave in one
+ *              grant (net/starfall/starfallLaw.js STAR_WAVE_MAX, held equal by the test); a star's waves, its master and
+ *              its circle's two calls asked within the burst, a breath's ten seconds a token. The open country's alone.
+ *  enc's, camp's and star's `max` are held equal to their homes by the test; the rest are bounds. */
 export const GRANT_KINDS = Object.freeze({
   enc: Object.freeze({ max: 4, rate: 1 / 60, cap: 6, hostile: true }),
   camp: Object.freeze({ max: 8, rate: 1 / 20, cap: 9, hostile: true }),
@@ -102,10 +105,11 @@ export const GRANT_KINDS = Object.freeze({
   watch: Object.freeze({ max: 10, rate: 1 / 30, cap: 6, hostile: true }),
   kept: Object.freeze({ max: 24, rate: 1 / 600, cap: 2, hostile: true }),
   encr: Object.freeze({ max: 4, rate: 1 / 60, cap: 6, hostile: true }),
+  star: Object.freeze({ max: 24, rate: 1 / 10, cap: 8, hostile: true }),
 });
 /** GRANT4: the kinds of the open country alone - a world room (a building's, a dungeon's) refuses them `kind`: its stands
  *  roll no road's table, carry no bounty and call no Greater Giant. */
-export const GRANT_OPEN_KINDS = Object.freeze(['enc', 'camp', 'bounty', 'giant', 'encr']);
+export const GRANT_OPEN_KINDS = Object.freeze(['enc', 'camp', 'bounty', 'giant', 'encr', 'star']);
 /** GRANT8 (Spawn-Grants section 16): the kind the relay makes an `enc` ask's grant while `grantRoll` is on - its species
  *  rolled from its seed (scenes/grantHost.js grantSpecies), so neither its owner nor a forger chooses it. Pure. */
 export const grantKindRolled = (k, roll) => (k === 'enc' && roll ? 'encr' : k);
@@ -294,6 +298,14 @@ export const relaySupportsGrant = (v) => Number(/^world(\d+)$/.exec(String(v ?? 
 export const GRANT_STATS_RELAY_MIN = 223;
 /** Does the relay at version `v` take a tally's `stats`? */
 export const relaySupportsGrantStats = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= GRANT_STATS_RELAY_MIN;
+/** AUDIT STAR-TUNE F1: the first relay that mints the `star` kind (STAR-TUNE's). An older one answers the ask `kind`, so
+ *  under `enforce` no wave stands and under `grantStrip` the coven is its owner's alone - and the site goes live before
+ *  the relay's deploy is through (deploy.yml waits on the account service, which STAR-TUNE does not move). A client asks
+ *  `star` of a relay at this or later, and its stand's own kind (`site`, the master `kept` - main's) of an older one,
+ *  whose waves its own law holds to nine. */
+export const STAR_GRANT_RELAY_MIN = 238;
+/** Does the relay at version `v` mint the `star` kind? */
+export const relaySupportsStarGrant = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAR_GRANT_RELAY_MIN;
 
 /** The law's modes (relayCfg `grantMode`, the welcome's `gm`): `off` - no ask is made or answered; `measure` - every ask
  *  is granted and what the gate would refuse is counted (GRANT2 to GRANT5); `enforce` - the gate refuses (GRANT6). */

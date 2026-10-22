@@ -155,12 +155,13 @@
   {
     "name": "GILDED2-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 8;",
+    "old": "export const ITEM_LAW_VERSION = 9;",
     "new": "export const ITEM_LAW_VERSION = 4;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
       "test/systems/tech1_roster.test.js"
-    ]
+    ],
+    "note": "SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
   },
   {
     "name": "GILDED2-no-window",

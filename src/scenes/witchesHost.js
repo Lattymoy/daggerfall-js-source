@@ -25,7 +25,7 @@
 // stands none (the ?exterior bench builds its own street and runs no account service - no festival there);
 // dungeonContext.js stands no street. Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 import {
-  bindFestival, festivalLive, festivalShut, festivalAccount, festivalState, festivalWardrobe, hearFestival, offeringMove, townOfferings,
+  bindFestival, festivalLive, festivalShut, festivalAccount, festivalState, festivalFindsToday, festivalWardrobe, hearFestival, offeringMove, townOfferings,
   refreshFestival, buyWare, wearWare, wearAccount, wareItem, loadWardrobe,
 } from '../systems/festival/festivalClient.js';
 import { setOfferingPlacer, hearthOffering } from '../systems/festival/soulCake.js';
@@ -243,7 +243,7 @@ export function createWitchesHost(deps) {
   /** THE WYRD SISTER'S WINDOW - her wares as the account holds them, bought and worn through the festival's client. */
   function shop() {
     const win = createWyrdOverlay({
-      state: () => festivalState(), worn: () => festivalWardrobe(), shut: () => festivalShut(),
+      state: () => festivalState(), worn: () => festivalWardrobe(), shut: () => festivalShut(), today: () => festivalFindsToday(),   // CAKE-CAP-SAID
       lastDay: () => lastDayText(festivalNext(Date.now())),
       night: () => deadWalk(dayOfYearFromMinutes(Math.floor(skyMinutes())), nowMs()),
       itemOf: (/** @type {any} */ w) => wareItem(w) ?? (bowlWare(w) ? hearthOffering() : null), nameOf: (/** @type {any} */ item) => itemLongName(item), wearer: playerEntity,

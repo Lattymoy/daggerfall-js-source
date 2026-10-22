@@ -472,12 +472,20 @@ test('SCALE5b the foes fan, a method of its own with the budget asked before its
         await R.hello(ws, `f-${String(i).padStart(4, '0')}`, { x: (BX + far + rnd()) * PIXEL_UNITS, y: 0, z: (499 - BY + rnd()) * PIXEL_UNITS, yaw: 0, pitch: 0 });
         socks.push(ws);
       }
-      const { byteGate, inRange, FOES_ROOM_BYTES_PER_S } = relay;
+      // PIN MOVED (FOES-FIRST, Scale-Arc.md FOES-FIRST): every frame here is FULL and comes a second or more after its
+      // sender's last, so it goes first - its floor is minus FOES_FULL_RESERVE, and the bucket stands that far lower
+      // (it read byteGate's law, the floor at 0, for every frame alike). test/net/fb1021_foesfirst.test.js holds the rest.
+      // PIN MOVED (FOES-HOLD, Scale-Arc.md FOES-HOLD): a full frame the budget refuses is HELD for its turn, not dropped -
+      // each round here starts with an empty hold (the turns are test/net/fb1021b_foeshold.test.js's), and a refusal is
+      // counted held.
+      const { floorGate, inRange, FOES_ROOM_BYTES_PER_S, FOES_FULL_RESERVE } = relay;
+      const floor = -FOES_FULL_RESERVE;
       let dropped = 0, passed = 0, between = 0;
       const low = [], mid = [];   // how many times the index was asked for a frame refused below one listener's worth, and for one refused between
       for (let round = 0; round < 60; round++) {
         clock += 1000;   // past every sender's own meter
         for (const ws of socks) ws.sent.length = 0;
+        R.room._foesHolds = null;
         const from = socks[Math.floor(rnd() * socks.length)];
         const a = R.room._attach(from);
         const frame = JSON.stringify({ t: 'foes', data: { n: round, full: 1, f: Array.from({ length: 1 + Math.floor(rnd() * 8) }, (_, i) => ({ i, x: 1, y: 0, z: 1, h: 10 })) } });
@@ -485,10 +493,11 @@ test('SCALE5b the foes fan, a method of its own with the budget asked before its
         const heard = socks.filter((o) => o !== from && inRange(key, a.pose, R.room._attach(o).pose));
         const want = per * heard.length;
         // the bucket stood anywhere from empty to past the whole fan's cost
-        const bytes = [0, per / 2, per, (per + want) / 2, want - 1, want, want * 2][round % 7];
-        if (bytes >= per && bytes < want) between++;
+        const over = [0, per / 2, per, (per + want) / 2, want - 1, want, want * 2][round % 7];
+        const bytes = floor + over;
+        if (over >= per && over < want) between++;
         R.room._roomFoes = { bytes, at: clock };
-        const law = byteGate({ bytes, at: clock }, clock, want, FOES_ROOM_BYTES_PER_S);
+        const law = floorGate({ bytes, at: clock }, clock, want, FOES_ROOM_BYTES_PER_S, floor);
         let walked = 0;
         const all = R.room._all.bind(R.room);
         R.room._all = () => { walked++; return all(); };
@@ -500,10 +509,11 @@ test('SCALE5b the foes fan, a method of its own with the budget asked before its
         assert.deepEqual(R.room._roomFoes, law.bucket, `round ${round}: the bucket`);
         if (law.pass) passed++; else dropped++;
         assert.equal(R.room._meterOf(from).junk ?? 0, 0, `round ${round}: never junk`);
-        (bytes < per ? low : bytes < want ? mid : []).push(walked - before);
+        (over < per ? low : over < want ? mid : []).push(walked - before);
       }
       assert.ok(dropped > 10 && passed > 10 && between > 10, `both answers, and the band between one listener and all (${dropped} dropped, ${passed} passed, ${between} between)`);
-      assert.equal(R.room._metrics.c.drops, dropped, 'each drop counted');
+      assert.equal(R.room._metrics.c.held, dropped, 'each refusal held for its turn and counted');
+      assert.equal(R.room._metrics.c.drops, 0, 'and none dropped');
       assert.equal(R.room._metrics.c.foes, 60, 'and each frame');
       assert.ok(low.length > 5 && mid.length > 5);
       assert.ok(Math.max(...low) < Math.min(...mid), `a frame the room cannot afford for one listener walks nobody - the index asked ${JSON.stringify([...new Set(low)])} times for it, ${JSON.stringify([...new Set(mid)])} for one that walked`);

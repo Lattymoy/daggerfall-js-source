@@ -27,10 +27,11 @@ import { registerPlayerKillListener } from '../playerKills.js';
 import { hearActs, ACT_KINDS } from '../questlines/qlActs.js';
 import { registerModSaveData } from '../modSaveData.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
-import { festivalOpen, isFindSource, wareById, accountWare, bowlWare, festivalWaresHeld, SALE_RID_RE } from '../../net/festivalLaw.js';
+import { festivalOpen, isFindSource, wareById, accountWare, bowlWare, festivalWaresHeld, SALE_RID_RE, FIND_CAKES_PER_DAY } from '../../net/festivalLaw.js';
+import { utcDay } from '../../net/marksLaw.js';   // CAKE-CAP-SAID: the service's own day (server-account/src/festival.js)
 import { restackSoulCakes, restackHearthOfferings, isHearthOffering } from './soulCake.js';
 import { foeFindSource } from './festivalFoes.js';
-import { cakesFoundText, festivalRefusalText, isFestivalRefusal } from './festivalWords.js';
+import { cakesFoundText, festivalRefusalText, isFestivalRefusal, findsFullText } from './festivalWords.js';
 import { wyrdPieceById } from '../aetheric.js';
 import { mintIliacCard } from '../iliac/iliacItems.js';
 import { addItem } from '../inventory.js';
@@ -43,9 +44,9 @@ const NO_DOORS = Object.freeze({ online: () => false, entity: () => null, say: (
 let _doors = NO_DOORS;
 /** @type {any} */
 let _api = null;
-/** @typedef {{ cakes: number|null, bowls: number|null, wares: string[], given: number|null, taken: number|null, offerings: any[], open: boolean|null }} FestivalState */
+/** @typedef {{ cakes: number|null, bowls: number|null, wares: string[], given: number|null, taken: number|null, offerings: any[], open: boolean|null, today: number|null, todayDay: number|null, fullDay: number|null }} FestivalState */
 /** What no answer has said: nothing known - every count null (unknown, never a known nought), nothing held or standing. */
-const UNHEARD = Object.freeze({ cakes: null, bowls: null, wares: [], given: null, taken: null, offerings: [], open: null });
+const UNHEARD = Object.freeze({ cakes: null, bowls: null, wares: [], given: null, taken: null, offerings: [], open: null, today: null, todayDay: null, fullDay: null });
 /** The account's festival as the service last said it: its cakes and bowls, its wares, given and taken, its own offerings
  *  standing, and whether the festival is open for it - and the account it was said for (`_stateOf`): another signed in
  *  hears nothing of it (AUDIT WITCH1 G2). */
@@ -112,7 +113,35 @@ function learn(/** @type {any} */ d) {
   for (const k of ['given', 'taken']) if (Number.isSafeInteger(d[k])) { _state = { ..._state, [k]: d[k] }; moved = true; }
   if (Array.isArray(d.offerings)) { _state = { ..._state, offerings: d.offerings }; moved = true; }
   if (typeof d.open === 'boolean') { _state = { ..._state, open: d.open }; moved = true; }
+  // CAKE-CAP-SAID: the day's finds as the service counts them (`today`, the UTC day it was said in), and the day it said
+  // they are all found (a find's `capped: true`, or the refusal once the day's asks are spent)
+  if (Number.isSafeInteger(d.today) && d.today >= 0) { _state = { ..._state, today: d.today, todayDay: findDay() }; moved = true; }
+  if (d.capped === true || d.error === 'capped') { _state = { ..._state, fullDay: findDay() }; moved = true; }
   if (moved) changed();
+}
+
+/** CAKE-CAP-SAID: the UTC day the service counts a day's finds in (marksLaw utcDay, its own), on the shared clock. */
+const findDay = () => utcDay(festivalNowMs() / 1000);
+/**
+ * CAKE-CAP-SAID (FIELD BUGS 2026-10-21b, "Soul Cake stopped dropping"): THE DAY'S FINDS - `{ found, max, full, resetMs }`:
+ * the cakes found this UTC day (null while no answer has said; a count said on an earlier day is this day's 0), the day's
+ * most (FIND_CAKES_PER_DAY), whether the service has said they are all found, and when the next day opens.
+ */
+export function festivalFindsToday() {
+  const s = festivalState(), day = findDay();
+  const found = s.today == null ? null : s.todayDay === day ? s.today : 0;
+  return { found, max: FIND_CAKES_PER_DAY, full: s.fullDay === day || (found ?? 0) >= FIND_CAKES_PER_DAY, resetMs: (day + 1) * 86_400_000 };
+}
+/** The account and day the day's end was last said for: said once a day, an account. */
+let _fullSaid = /** @type {string|null} */ (null);
+/** Say the day's finds are spent and when more are found - once a UTC day for an account, never while they are not. */
+function sayDayFull() {
+  const today = festivalFindsToday();
+  if (!today.full) return;
+  const key = `${festivalAccount()}:${findDay()}`;
+  if (_fullSaid === key) return;
+  _fullSaid = key;
+  _doors.say(findsFullText(today.max, today.resetMs));
 }
 
 /** Ask the service for the account's festival, and a pending sale's answer after it. Answers whether it was heard. */
@@ -139,11 +168,15 @@ const neverPays = (/** @type {any} */ e) => e?.mobileType === KNIGHT_CITY_WATCH 
 export function askFind(source) {
   if (!isFindSource(source) || !festivalLive()) return Promise.resolve(0);
   const run = async () => {
+    // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer
+    // and a write for nothing, every kill - and the player is told why (once a day)
+    if (festivalFindsToday().full) { sayDayFull(); return 0; }
     const r = await _api.find(source).catch(() => null);
     const d = r?.ok ? r.data : r;   // a refusal (`capped`) carries the count too
     const found = r?.ok && Number.isSafeInteger(d?.found) ? d.found : 0;
     learn(d);
     if (found > 0) _doors.say(cakesFoundText(found));
+    sayDayFull();
     return found;
   };
   const p = _chain.then(run, run);
@@ -349,6 +382,6 @@ export async function townOfferings(/** @type {number} */ mapId) {
 /** Tests only. */
 export function _resetFestivalClientForTests() {
   _doors = NO_DOORS; _api = null; _pending = null; _asking = null; _wardrobe = null; _chain = Promise.resolve(); _actTurn = null;
-  _state = UNHEARD; _stateOf = null;
+  _state = UNHEARD; _stateOf = null; _fullSaid = null;
   _hear.clear(); _version = 0;
 }

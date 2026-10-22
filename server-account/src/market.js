@@ -1379,8 +1379,9 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
       db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
         SELECT buyer, char_id, material, 'gold', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1
         ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(me, rid, nonce),
-      // a piece's owner moved, marked bought with gold (it lists for gold alone), and by courier its delivery written
-      db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'gold' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
+      // a piece's owner moved, marked bought with gold (it lists for gold alone), and by courier its delivery written -
+      // FB1020h ESSENCE-LOOSE: walled by this purchase now, never by its maker's goods (products.loose): its Essence gold's
+      db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'gold', loose = 0 WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
         .bind(me, rid, nonce),
       db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
         SELECT ?4, s.buyer, s.char_id, s.provenance, l.wear, 'bought', s.from_region, s.arrives_at, s.at

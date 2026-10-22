@@ -178,5 +178,15 @@
     "tests": [
       "test/net/grant1_law.test.js"
     ]
+  },
+  {
+    "name": "GRANT-star-off-its-home",
+    "file": "src/net/grantLaw.js",
+    "old": "  star: Object.freeze({ max: 24,",
+    "new": "  star: Object.freeze({ max: 9,",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ],
+    "note": "STAR-TUNE: the star's kind under its law's largest wave - a wave past it asks two grants"
   }
 ]

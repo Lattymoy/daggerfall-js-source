@@ -223,8 +223,8 @@
   {
     "name": "AUDIT29-C1-midnight-stale-every-draw",
     "file": "src/net/profBook.js",
-    "old": "      return state.day !== dayOf(now()) && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;",
-    "new": "      return state.day !== dayOf(now());",
+    "old": "      return state.day < heldDay() && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;",
+    "new": "      return state.day < heldDay();",
     "tests": [
       "test/net/audit29_client.test.js"
     ]

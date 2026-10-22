@@ -203,8 +203,11 @@ test('F097: the questor gender is read only on a Work question', () => {
   const tm = src('systems/talk/talkMacros.js');
   // E7 moved the shared read into one helper - the four pronoun
   // overrides all fork on it - but the law is unchanged: only
-  // 'female' takes the female arm, and C#'s `default:` shares Male.
-  assert.ok(tm.includes("const female = () => ctx.questorGender?.() === 'female';"),
+  // Female takes the female arm, and C#'s `default:` shares Male.
+  // QUESTOR-SHE (FIELD BUGS 2026-10-20h, PIN MOVED): Female is the
+  // Genders enum the pool's NPCData carries, not the string 'female'
+  // this pin held, which no producer mints.
+  assert.ok(tm.includes('const female = () => ctx.questorGender?.() === GENDERS.Female;'),
     'the questor-gender read is one helper');
   assert.ok(tm.includes("pronoun() { return text(female() ? 'pronounShe' : 'pronounHe'); }"),
     'anything but female is the male pronoun');

@@ -51,6 +51,22 @@ import { SEA_RING, seaBears } from '../net/fortLaw.js';   // FB1020c BERTH-RING:
 
 export { SEA_RING, seaBears };
 
+/** FIELD BUGS 2026-10-21b VOYAGE-HOLD: the board port whose waters map pixel (x, y) lies in - the nearest of `ports` within
+ *  SEA_RING by the crow's flight (the squared pixels, exact on every engine), or null outside every ring. By the ring's
+ *  squares alone (BERTH-RING's reading) a tie went to the list's first, and every pixel of Pencart's water tied it with
+ *  Longham's: no berth ever named Pencart. Inside a ring of two the crow's flight differs from the squares on a tie alone.
+ *  @template {{ px: number, py: number }} P @param {ReadonlyArray<P>} ports @param {number} x @param {number} y @returns {P|null} */
+export function boardPortAt(ports, x, y) {
+  let port = null, best = Infinity;
+  for (const q of ports) {
+    const dx = q.px - x, dy = q.py - y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) continue;
+    const e = dx * dx + dy * dy;
+    if (e < best) { best = e; port = q; }
+  }
+  return port;
+}
+
 /** Each place's ground, metres: half its width (x) and half its depth (z) - its fence or wall and the apron before its
  *  gate (world/shipyardModel.js, world/lighthouseModel.js lay both out inside it). */
 export const PORT_FOOT = Object.freeze({

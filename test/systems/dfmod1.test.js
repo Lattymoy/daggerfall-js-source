@@ -371,8 +371,10 @@ test('GROUND1 door: `<archive>-TexArray` is that ground archive\'s tile set - wh
   clearDfmodSources();
   // AUDIT PRECIP GROUND-2 (PIN MOVED): world.js reads a set's layers through one helper, for its own set and the winter
   // its twin carries (scenes/snowCoverHost.js twinLayers) - the mod's tiles first, the classic set's puddles carried
-  assert.match(src('scenes/world.js'), /const groundLayersOf = async \(archive, tex\) => \{\n\s+const modLayers = await dfmodGroundLayers\(archive, tex\), classic = \[\];\n[^\n]*\n\s+return \{ modLayers, layers: modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : markPuddleWater\(classic\) \};/);
-  assert.match(src('scenes/world.js'), /renderer\.uploadTileArray\(key, winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\)\);/);
+  // PIN MOVED (OW-HITCH): the helper's home is scenes/groundSets.js (HOST-SPLIT) - the mod's tiles first, the classic marked
+  // a record a breath, a mod's set carried from it; the set or its twin uploaded a few layers a breath
+  assert.match(src('scenes/groundSets.js'), /const groundLayersOf = async \(archive, tex\) => \{\n\s+const modLayers = await dfmodGroundLayers\(archive, tex\), classic = \[\];\n[^\n]*\n\s+const marked = await stepsBreathing\(markPuddleWaterSteps\(classic\), breathe\);\n[^\n]*\n\s+return \{ modLayers, layers: modLayers \? await stepsBreathing\(carryPuddleMaskSteps\(modLayers, marked\), breathe\) : marked \};/);
+  assert.match(src('scenes/groundSets.js'), /const layers = winter == null \? own\.layers : twinLayers\(own\.layers, \(await groundLayersOf\(winter, await getTexture\(winter\)\)\)\.layers\);\n\s+await stepsBreathing\(renderer\.uploadTileArraySteps\(key, layers\), breathe\);/);
   for (const host of ['scenes/exterior.js']) {
     assert.match(src(host), /const modLayers = await dfmodGroundLayers\(groundArchive, groundTex\);[\s\S]{0,400}?const layers = modLayers \? carryPuddleMask\(modLayers, markPuddleWater\(classic\)\) : classic;\n\s+renderer\.uploadTileArray\(groundArchive, modLayers \? layers : markPuddleWater\(layers\)\);/, host);   // GROUND1-W: and the puddles' shapes from the classic set
   }

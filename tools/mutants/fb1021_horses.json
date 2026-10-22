@@ -1,0 +1,334 @@
+[
+  {
+    "name": "HORSE-VIEW-rig-pose-word-ignored",
+    "file": "src/world/horseRig.js",
+    "old": "    if (pose || !h.posed) poseNow(h);",
+    "new": "    if (true || !h.posed) poseNow(h);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-first-pose-skipped",
+    "file": "src/world/horseRig.js",
+    "old": "    if (pose || !h.posed) poseNow(h);",
+    "new": "    if (pose) poseNow(h);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-clock-only-with-the-pose",
+    "file": "src/world/horseRig.js",
+    "old": "    stepHorseGait(h.gait, bake, speed, dt, h.seed, gallops);",
+    "new": "    if (pose || !h.posed) stepHorseGait(h.gait, bake, speed, dt, h.seed, gallops);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-stale-unmarked",
+    "file": "src/world/horseRig.js",
+    "old": "    else h.stale = true;",
+    "new": "    else h.stale = false;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-catch-up-never",
+    "file": "src/world/horseRig.js",
+    "old": "    if (!h || (h.posed && !h.stale)) return false;",
+    "new": "    if (!h || h.posed) return false;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-catch-up-always",
+    "file": "src/world/horseRig.js",
+    "old": "    if (!h || (h.posed && !h.stale)) return false;",
+    "new": "    if (!h) return false;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-fresh-ignored",
+    "file": "src/world/horseRig.js",
+    "old": "    if (fresh) pose(h);",
+    "new": "    void fresh;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-fresh-out-of-view",
+    "file": "src/world/horseRig.js",
+    "old": "    if (!seen(h, view, proj, bx)) return false;",
+    "new": "    if (fresh) pose(h); if (!seen(h, view, proj, bx)) return false;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-rig-unplaced-out",
+    "file": "src/world/horseRig.js",
+    "old": "    return !bx || !outOfView(bx.center, Math.hypot(bx.halfW, bx.halfH), view, proj);",
+    "new": "    return !!bx && !outOfView(bx.center, Math.hypot(bx.halfW, bx.halfH), view, proj);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-step-posing",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "look: lookOfOwner(owner), pose: false });",
+    "new": "look: lookOfOwner(owner) });",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-view-dropped",
+    "file": "src/world/horseView.js",
+    "old": "  const out = !!cam && !rig.seen(horse, cam.view, cam.proj);",
+    "new": "  const out = false;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-cadence-dropped",
+    "file": "src/world/horseView.js",
+    "old": "  return (frame + phase) % poseCadenceFor(cadenceD2(at, from, cam?.lens ?? 1)) === 0;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-phase-dropped",
+    "file": "src/world/horseView.js",
+    "old": "  return (frame + phase) % poseCadenceFor(cadenceD2(at, from, cam?.lens ?? 1)) === 0;",
+    "new": "  return frame % poseCadenceFor(cadenceD2(at, from, cam?.lens ?? 1)) === 0;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-height-for-depth",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2) / (lens * lens);",
+    "new": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[1] - eye[1]) ** 2) / (lens * lens);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-height-counted",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2) / (lens * lens);",
+    "new": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2 + (at[1] - eye[1]) ** 2) / (lens * lens);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-no-eye-never",
+    "file": "src/world/horseView.js",
+    "old": "  if (!from) return true;",
+    "new": "  if (!from) return false;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-fresh-unhanded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "rig.draw(e.horse, canvas, { proj, view, eye, up, fresh: e.out })",
+    "new": "rig.draw(e.horse, canvas, { proj, view, eye, up })",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-pool-veiled-fresh-unhanded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "conceal: e.conceal, fresh: e.out })",
+    "new": "conceal: e.conceal })",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-saddle-step-posing",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "gallops: !shown.hs, pose: false });",
+    "new": "gallops: !shown.hs });",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-body-pose-without-its-horse",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      if (pose) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first",
+    "new": "      // HORSE-VIEW: astride, its horse first",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-seat-off-the-old-pose",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    if (seat) b.cam.saddle.seat = seat;",
+    "new": "    void seat;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-draw-catch-up-without-its-horse",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "        try { this._poseHorse(b); b.rig.update(0, { pose: true, effectsDt: b.bank });",
+    "new": "        try { b.rig.update(0, { pose: true, effectsDt: b.bank });",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-pool-the-heads-distance",
+    "file": "src/world/horseView.js",
+    "old": "  const from = cam?.eye ?? eye;",
+    "new": "  const from = eye;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-pool-no-frame-eye-before-a-pass",
+    "file": "src/world/horseView.js",
+    "old": "  const from = cam?.eye ?? eye;",
+    "new": "  const from = cam?.eye;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-pool-lens-ignored",
+    "file": "src/world/horseView.js",
+    "old": "  return (frame + phase) % poseCadenceFor(cadenceD2(at, from, cam?.lens ?? 1)) === 0;",
+    "new": "  return (frame + phase) % poseCadenceFor(cadenceD2(at, from, 1)) === 0;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-pool-lens-never-read-off-the-pass",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    _cam3d = rig ? { canvas, proj, view, eye, up, lens: lensOf(proj) } : null;",
+    "new": "    _cam3d = rig ? { canvas, proj, view, eye, up, lens: 1 } : null;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-pool-out-before-any-pass",
+    "file": "src/world/horseView.js",
+    "old": "  const out = !!cam && !rig.seen(horse, cam.view, cam.proj);",
+    "new": "  const out = !cam || !rig.seen(horse, cam.view, cam.proj);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js",
+      "test/systems/horse/fb1021b_strangers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-bodies-the-heads-distance",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    const eye = this._cam?.eye ?? null, lens = this._cam?.lens ?? 1;",
+    "new": "    const eye = null, lens = this._cam?.lens ?? 1;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-bodies-lens-ignored",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    const eye = this._cam?.eye ?? null, lens = this._cam?.lens ?? 1;",
+    "new": "    const eye = this._cam?.eye ?? null, lens = 1;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-bodies-lens-never-read-off-the-pass",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    c.lens = lensOf(proj);",
+    "new": "    c.lens = 1;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-bodies-no-distance-before-a-pass",
+    "file": "src/net/peer/peerBodies.js",
+    "old": ": b.d2) === 0 ? 1 : 0;",
+    "new": ": 0) === 0 ? 1 : 0;",
+    "tests": [
+      "test/net/peer/peercadence.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-lens-over-the-distance-once",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2) / (lens * lens);",
+    "new": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2) / lens;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-lens-floor-dropped",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  return m > 1 + 1e-6 ? m : 1;",
+    "new": "  return m;",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-lens-base-a-fixed-sixty-degrees",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "  const m = proj?.[5] * Math.tan(fieldOfView() / 2);",
+    "new": "  const m = proj?.[5] * Math.tan(Math.PI / 6);",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-must-pose-horse-only-in-view",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      if (pose) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first",
+    "new": "      if (pose && b.inView) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VIEW-AUDIT-bodies-the-camera-read-off-no-feet",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2)",
+    "new": "poseCadenceFor(eye ? cadenceD2(b.feet, eye, lens) : b.d2)",
+    "tests": [
+      "test/systems/horse/fb1021_horses.test.js"
+    ]
+  }
+]

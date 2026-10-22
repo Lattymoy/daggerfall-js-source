@@ -20,8 +20,14 @@ export const STAR_SAY_M = 55;
 export const STAR_HUD_M = 400;
 /** The ground shakes for a player this near a landing. */
 export const STAR_SHAKE_M = 300;
-/** The coven stands out of sight at the crater's edge: this far from the heart, its nearest and its farthest. */
-export const STAR_STAND_R = Object.freeze([25, 35]);
+/** The coven stands just past the crater's thrown earth (world/starfall/starModel.js STAR_BARE_R, 9.6 m): this far from
+ *  the heart, its nearest and its farthest. STAR-TUNE (the owner: "The time between waves is too long"): 14 to 20 m, from
+ *  25 to 35 - a wave stood that far out spent its first seconds walking in. */
+export const STAR_STAND_R = Object.freeze([14, 20]);
+/** STAR-TUNE: where a stand's rolls begin (starRoll's index): the ring's angle a wave's 32 from here, its radius 32 from
+ *  200 past - clear of every other roll a star makes (its layout's under 100, its rosters' 300s, its circle's 500s, its
+ *  ring's own 700 + w, its night's 900s). */
+export const STAR_STAND_ROLLS = 1000;
 /** A word that changed is said once more this long after - the relay's bucket may have dropped it (the rite's). */
 export const STAR_RESAY_MS = 1000;
 /** The master calls its circle this far out from itself. */
@@ -45,8 +51,10 @@ export function starStandPlaces(n, k, w, count) {
   const out = [];
   const a0 = (starRoll(n, k, 700 + w) / 4294967296) * 2 * Math.PI;
   for (let i = 0; i < count; i++) {
-    const a = a0 + (i / Math.max(1, count)) * 2 * Math.PI + ((starRoll(n, k, 720 + w * 16 + i) % 1000) / 1000 - 0.5) * 0.5;
-    const r = STAR_STAND_R[0] + ((starRoll(n, k, 760 + w * 16 + i) % 1000) / 1000) * (STAR_STAND_R[1] - STAR_STAND_R[0]);
+    // STAR-TUNE: each place's two rolls in blocks of their own, a wave's thirty-two apiece - a wave of twenty-four once
+    // shared its rolls with the next wave's and with the radii (720 + 16w and 760 + 16w overlapped past sixteen)
+    const a = a0 + (i / Math.max(1, count)) * 2 * Math.PI + ((starRoll(n, k, STAR_STAND_ROLLS + w * 32 + i) % 1000) / 1000 - 0.5) * 0.5;
+    const r = STAR_STAND_R[0] + ((starRoll(n, k, STAR_STAND_ROLLS + 200 + w * 32 + i) % 1000) / 1000) * (STAR_STAND_R[1] - STAR_STAND_R[0]);
     const dx = Math.sin(a) * r, dz = Math.cos(a) * r;
     out.push([dx, dz, Math.atan2(-dx, -dz)]);
   }

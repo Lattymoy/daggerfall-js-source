@@ -81,7 +81,7 @@ const puppets = (D) => D.pool.foes.filter((f) => f.puppet === OWNER && !f._gone)
 test('FOE-BOUNDS A HAND-OFF NO BUILDER COULD GIVE IS REFUSED BEFORE IT IS MINE: an owner hands me a rat of 99,999 health - never adopted (nothing of it rides as mine), its copy taken down without a death, a body or its loot, tallied once against its SENDER and never against me, however often it is said; its honest twin and the maximum itself stand (mutants: the check left out of the street pool; a hand-off adopted before the check; tallied every frame)', async () => {
   const { D, honest } = await stood();
   assert.equal(puppets(D).length, 2, 'the honest pair stands');
-  const mx = foeHealthBound({ t: 0 }, { wild: true });
+  const mx = foeHealthBound({ t: 0 }, { wild: true, camp: false });   // STAR-TUNE: its frame tags no camp (unknown, a fallen star's coven's x2 is the worst)
   const atMax = { ...honest, n: 40, full: 0, f: [{ ...honest.f[1], k: mx, h: mx }] };
   D.pool.applyFoes(OWNER, atMax);
   await settle();

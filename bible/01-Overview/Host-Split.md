@@ -574,3 +574,15 @@ hub's event, the cell's words, the spoils' crash door and the realm save's two h
 voice. The spoils' one lock moved OUT of the host to its pool's own home (`src/scenes/spoilsPool.js` `spoilsLock`), so
 every pool's host takes the same one. At the merge with main (2026-10-20) - main's FIRM-STARS had raised the ceiling to 36,187 for its
 one statement, and DEX's audit had brought `bootWorld` down to its ceiling - the host stands at 36,174 of 36,187.
+
+## OW-HITCH's move - the ground sets out of bootWorld (2026-10-21)
+
+OW-HITCH (`07-Rendering/Performance-Priority.md`) changes how a ground set is made - its water marked a record a breath,
+uploaded a few layers a breath, once a key - and that set's one home (R9's `groundLayersOf` and `loadGroundSet`, two
+members that wrote nothing of the host's and read eight of its names) stood in `bootWorld`. It went out rather than
+growing there: `src/scenes/groundSets.js` (`createGroundSets`), written as a module the host wires (fishHost.js's
+shape, not a verbatim move - its new behaviour is in it), handed the renderer, the texture door, the grass switch, the
+stream's breather and the five maps the grass and the water read, and answering `loadGroundSet`. `bootWorld` 36,151 ->
+36,138 logical lines, its ceiling 36,171 -> 36,158. The pins that quoted the moved code read `groundSets.js` now (twelve
+files, listed in the OW-HITCH record), and seven mutant records were re-aimed there.
+

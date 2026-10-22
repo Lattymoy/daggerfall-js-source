@@ -74,14 +74,15 @@ const xformDir = (m, d) => [
  * AUDIT NAV1 (the frame's cost, #12): A TREE'S COLLIDERS, INDEXED BY ITS SHAPE. Every BoxCollider and MeshCollider
  * under `root`, on or off, in the walk's order (depth first, child order; a node's own components in theirs), and the
  * nodes of their chains - every node from the root down to a collider's - each after its parent (`parent[i]`, -1 the
- * root's). Built once per tree shape (prefabNode.js prefabShapeStamp): a galley is 598 nodes to walk and 14 colliders
- * to find, and every ray and every sync walked them all. What is on is read live off the index (`refresh`, `live`); where
- * each node stands is its own matrix, kept while it reads the same (PrefabNode.worldMatrix).
+ * root's). Built once per tree shape (prefabNode.js prefabShapeStamp - BOAT-STAMP: the stamp of `root`'s own tree, so
+ * another boat built is no reason to index hers again): a galley is 598 nodes to walk and 14 colliders to find, and
+ * every ray and every sync walked them all. What is on is read live off the index (`refresh`, `live`); where each node
+ * stands is its own matrix, kept while it reads the same (PrefabNode.worldMatrix).
  * @param {any} root
  */
 const _indexes = new WeakMap();
 function colliderIndex(root) {
-  const stamp = prefabShapeStamp();
+  const stamp = prefabShapeStamp(root);
   const had = _indexes.get(root);
   if (had && had.stamp === stamp) return had;
   const found = [];

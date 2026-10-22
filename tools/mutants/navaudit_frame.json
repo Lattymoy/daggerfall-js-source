@@ -164,8 +164,8 @@
   {
     "name": "NAVF-stamp-setParent",
     "file": "src/world/prefabNode.js",
-    "old": "    if (parent) parent.children.push(this);\n    _shapeStamp++;\n",
-    "new": "    if (parent) parent.children.push(this);\n",
+    "old": "reshaped(left); reshaped(this);",
+    "new": "",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "NAVF-stamp-addComponent",
     "file": "src/world/prefabNode.js",
-    "old": "  addComponent(c) { this.components.push(c); _shapeStamp++; return c; }",
+    "old": "  addComponent(c) { this.components.push(c); reshaped(this); return c; }",
     "new": "  addComponent(c) { this.components.push(c); return c; }",
     "tests": [
       "test/world/navaudit_frame.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "NAVF-still-drawn-twice",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, made(c.rec), paint);",
-    "new": "      for (const c of still) one(c.gpu, made(c.rec), paint);",
+    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, placed(c.rec), paint);",
+    "new": "      for (const c of still) one(c.gpu, placed(c.rec), paint);",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]

@@ -84,6 +84,7 @@ const PLURAL_SAME = Object.freeze(['Twigs', 'Green Leaves', 'Root Tendrils', 'Gr
   'Jade', 'Turquoise', 'Malachite', 'Amber',
   // PROF7: the hides, leathers and silks a body and the loom bring, and its butchery ('2 Harpy Feathers', '3 Raw Meat')
   'Bat Leather', 'Spider Silk', 'Scorpion Chitin', 'Slaughterfish Scales', 'Harpy Feathers', 'Hardened Leather', 'Standard-bearer\'s Silk',
+  'Mudcrab Chitin',   // DEX-HIDES (FIELD BUGS 2026-10-21): the Enemy Expansion's chitin is mass, as the scorpion's
   'Spider\'s Venom', 'Dragon\'s Scales', 'Raw Meat', 'Raw Fish', 'Fish',
   'Mortar',   // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'
   // PROF12: the Apothecaries' sixteen and the enchanter's Essence, counted as mass ('4 Ichor', '3 Arcane Essence')

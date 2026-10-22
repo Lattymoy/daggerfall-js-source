@@ -1036,6 +1036,28 @@ export class Place extends QuestResource {
     return null;
   }
 
+  /**
+   * FB1020h SITE-NAMED (FIELD BUGS 2026-10-20h): A BUILDING SITE A SAVE CARRIES WITH NO NAME is named again, from its
+   * building as its town stands - its seed, kind and faction through the one name bag (_getBuildingName). Before the
+   * bag answered off a town (scenes/townTalk.js nameOpts), a temple or a guild hall a quest drew on the road was named
+   * '' and kept so: its journal, its talk and its map read "at  in Wildertown" until the quest ended. A residence is
+   * never nameless (its surname is drawn), a site with no building here (key 0, unseated, another layout) names none,
+   * and a kind DFU names '' itself (GenerateBuildingName's default) stays ''. GetName seeds DFRandom; the state is put
+   * back, as a shared re-seat's residence puts it back. Answers whether the name changed.
+   */
+  nameSiteAgain(world) {
+    const sd = this.siteDetails;
+    if (sd?.siteType !== SITE_TYPES.Building || sd.buildingName !== '' || !recordStands(sd)) return false;
+    const b = this.siteBuilding(world);
+    if (!b || isResidence(b.buildingType)) return false;
+    const was = getSeed();
+    let name;
+    try { name = this._getBuildingName(world, b.buildingType, this.siteTown(world), b, sd.buildingKey); } finally { setSeed(was); }
+    if (!name) return false;
+    sd.buildingName = name;
+    return true;
+  }
+
   /** CollectQuestSitesOfBuildingType (:1131-1250): the full block walk
    *  with the wildcard sets, the owned-house / guild-faction / TG+DB /
    *  already-assigned exclusions, the marker requirement, and the

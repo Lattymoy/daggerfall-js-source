@@ -542,7 +542,7 @@
  {
   "name": "AUDIT-STARFALL-C7-the-camps-allowance",
   "file": "src/world/worldOfDaggerfall/wodShared.js",
-  "old": "export const WOD_STAR_PUPPETS_MAX = 30;",
+  "old": "export const WOD_STAR_PUPPETS_MAX = 45;",
   "new": "export const WOD_STAR_PUPPETS_MAX = 16;",
   "tests": [
    "test/scenes/starfall/star5_host.test.js"
@@ -709,5 +709,115 @@
   "tests": [
    "test/scenes/starfall/star5_host.test.js"
   ]
- }
+ },
+  {
+    "name": "STAR-TUNE-the-coven-as-the-road",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "        if (site !== S.sites.m) toughen(f);",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "the coven's foes stand as the road's - too few to matter and dead too soon"
+  },
+  {
+    "name": "STAR-TUNE-the-master-toughened",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "if (site !== S.sites.m) toughen(f);",
+    "new": "toughen(f);",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "the master, an elite already, twice again"
+  },
+  {
+    "name": "STAR-TUNE-the-crater-hollow",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "buildStarModel(S.site.n, S.site.k, h, { thread: false });   // STAR-TUNE",
+    "new": "buildStarModel(S.site.n, S.site.k, h, { ground: false, thread: false });   // STAR-TUNE",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "the stone alone in the collider - the rim walked through"
+  },
+  {
+    "name": "STAR-TUNE-the-gate-passed",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "late.remove(key); late.add(key, S.stone.positions, S.stone.indices, S.mat); }",
+    "new": "late.remove(key); col.addMesh(key, S.stone.positions, S.stone.indices, S.mat); }",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "a crater built round a body on its rim closes on it"
+  },
+  {
+    "name": "STAR-TUNE-a-stand-under-the-rim",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (d != null) return { y: top - d, hitDist: 0.2 };\n",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "a foe stood on the rim lands on the land under it, inside the rim"
+  },
+  {
+    "name": "STAR-TUNE-the-coven-out-far",
+    "file": "src/systems/starfall/starfallClient.js",
+    "old": "export const STAR_STAND_R = Object.freeze([14, 20]);",
+    "new": "export const STAR_STAND_R = Object.freeze([25, 35]);",
+    "tests": [
+      "test/systems/starfall/star5_defense.test.js"
+    ],
+    "note": "the first run's stand, 25 to 35 m out - a wave's first seconds spent walking in"
+  },
+  {
+    "name": "STAR-TUNE-the-camps-grant",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": ", grantKind: session()?.starGrantOk ? 'star' : undefined }))",
+    "new": " }))",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "a star's stand asks the camps' grant - nine a grant, the camps' bucket spent"
+  },
+  {
+    "name": "STAR-TUNE-the-rolls-shared",
+    "file": "src/systems/starfall/starfallClient.js",
+    "old": "STAR_STAND_ROLLS + w * 32 + i) % 1000",
+    "new": "STAR_STAND_ROLLS + w * 16 + i) % 1000",
+    "tests": [
+      "test/systems/starfall/star5_defense.test.js"
+    ],
+    "note": "a wave of twenty-four shares its last places' rolls with the next wave's first"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F1-star-asked-of-any-relay",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "grantKind: session()?.starGrantOk ? 'star' : undefined",
+    "new": "grantKind: 'star'",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F1: a relay before world238 is asked a kind it does not mint - under enforce no wave stands, under grantStrip the coven is its owner's alone"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F1-the-relay-min-moved",
+    "file": "src/net/grantLaw.js",
+    "old": "export const STAR_GRANT_RELAY_MIN = 238;",
+    "new": "export const STAR_GRANT_RELAY_MIN = 237;",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F1: world237 is asked the star's kind it refuses"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F4-the-rebuild-replaced",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "if (S.colliderAt && S.colliderGen === S.stoneGen) late.replace(",
+    "new": "if (S.colliderAt) late.replace(",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F4: a crater built again round a body on its rim stood at once, the body's check skipped"
+  }
 ]

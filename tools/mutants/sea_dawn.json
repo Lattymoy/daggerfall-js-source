@@ -1,0 +1,29 @@
+[
+  {
+    "name": "SEA-DAWN-the-curve-straight",
+    "file": "src/world/deepWater/deepWaterLook.js",
+    "old": "  return clamp01(daylightScale * weatherScale) ** SEA_DAYLIGHT_GAMMA;",
+    "new": "  return clamp01(daylightScale * weatherScale);",
+    "tests": [
+      "test/world/deepWater/sea_dawn.test.js"
+    ]
+  },
+  {
+    "name": "SEA-DAWN-a-softer-lift",
+    "file": "src/world/deepWater/deepWaterLook.js",
+    "old": "export const SEA_DAYLIGHT_GAMMA = 0.5;",
+    "new": "export const SEA_DAYLIGHT_GAMMA = 0.6;",
+    "tests": [
+      "test/world/deepWater/sea_dawn.test.js"
+    ]
+  },
+  {
+    "name": "SEA-DAWN-the-night-lifted",
+    "file": "src/world/deepWater/deepWaterLook.js",
+    "old": "  if (night) return 0;\n  return clamp01(daylightScale * weatherScale) ** SEA_DAYLIGHT_GAMMA;",
+    "new": "  if (night) return 0.2;\n  return clamp01(daylightScale * weatherScale) ** SEA_DAYLIGHT_GAMMA;",
+    "tests": [
+      "test/world/deepWater/sea_dawn.test.js"
+    ]
+  }
+]

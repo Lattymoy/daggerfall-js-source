@@ -482,13 +482,15 @@ const UNLOCKS = Object.freeze({
   carpentry: () => [[t('prof.page.unlocks.carpentry1', 'Pine: staves, bows, arrows, the Basket, a plain single bed'), 1], [t('prof.page.unlocks.carpentry2', 'Oak: tables, chairs, a plain double bed'), 2],
     [t('prof.page.unlocks.carpentry3', 'Cherry: a fancy single bed'), 3], [t('prof.page.unlocks.carpentry4', 'Teak: a fancy double bed'), 4], [t('prof.page.unlocks.logging5', 'Mahogany'), 5],
     [t('prof.page.unlocks.carpentry6', 'Ironwood, Ghostwood: staves and bows'), 6]],
-  // PROF7: the hides by their tiers (PROF0 4.4); Outfitting's leathers and cloths by theirs (9.3)
-  hunting: () => [[t('prof.page.unlocks.hunting1', 'Rat Pelt'), 1], [t('prof.page.unlocks.hunting2', 'Bat Leather, Bear Hide'), 2], [t('prof.page.unlocks.hunting3', 'Tiger Pelt, Spider Silk'), 3],
+  // PROF7: the hides by their tiers (PROF0 4.4) - DEX-HIDES (FIELD BUGS 2026-10-20h): Daggerfall Enemy Expansion's three
+  // with them; Outfitting's leathers and cloths by theirs (9.3)
+  hunting: () => [[t('prof.page.unlocks.hunting1', 'Rat Pelt, Mudcrab Chitin'), 1], [t('prof.page.unlocks.hunting2', 'Bat Leather, Bear Hide, Wolf Pelt, Boar Hide'), 2], [t('prof.page.unlocks.hunting3', 'Tiger Pelt, Spider Silk'), 3],
     [t('prof.page.unlocks.hunting4', 'Scorpion Chitin, Slaughterfish Scales'), 4], [t('prof.page.unlocks.hunting5', 'Harpy Feathers, Dreugh Shell'), 5], [t('prof.page.unlocks.hunting6', 'Dragonling Scale'), 6]],
-  // AUDIT 32 R4: the skins by their pelt's tier (the Rat's open at 0, the Bat's and the Bear's at 10, the Tiger's at 25),
+  // AUDIT 32 R4: the skins by their pelt's tier (the Rat's open at 0, the Bat's, the Bear's, the Wolf's and the Boar's at
+  // 10 - DEX-HIDES - the Tiger's at 25),
   // and Standard-bearer's Silk said for what it waits on
   outfitting: () => [[t('prof.page.unlocks.outfitting1', 'Linen clothing; the Rat\'s skins; the Fishing-Net'), 1],
-    [t('prof.page.unlocks.outfitting2', 'Cured Leather armor; Wool clothing, rugs and tapestries; the Bat\'s and the Bear\'s skins'), 2],
+    [t('prof.page.unlocks.outfitting2', 'Cured Leather armor; Wool clothing, rugs and tapestries; the Bat\'s, the Bear\'s, the Wolf\'s and the Boar\'s skins'), 2],
     [t('prof.page.unlocks.outfitting3', 'The Tiger\'s skins'), 3], [t('prof.page.unlocks.outfitting4', 'Silk clothing'), 4],
     [t('prof.page.unlocks.outfitting5', 'Hardened Leather armor; Standard-bearer\'s Silk clothing (its silk comes with the sieges)'), 5]],
   // PROF8: every haul is Raw Fish - the rank sets its XP (a haul is worked at the rank's own tier); the sea's finds need
@@ -763,20 +765,29 @@ export function storesRows(stores, { family = null, query = '', sort = 'tier' } 
 }
 
 /** A Stores card's split: own, bought and (GOLD-MARKET) bought with gold - "own" alone where nothing was bought. AUDIT
- *  BAG-CRAFT A1: and what a station's put-in brought from the pack, loose. */
+ *  BAG-CRAFT A1: and what a station's put-in brought from the pack, loose. FB1020h ESSENCE-LOOSE: a material with no pack
+ *  form (Arcane Essence, a Ram Kit) never came from the pack itself - its loose units were MADE of goods that did (a piece
+ *  of them disenchanted, a kit of them built), and say so. */
 export function storesSplit(r) {
   const gold = r.gold | 0, loose = r.loose | 0;
   const own = () => t('prof.page.stores.own', '{n} own', { n: r.own }), bought = () => t('prof.page.stores.bought', '{n} bought', { n: r.bought });
   if (!gold && !loose) return r.bought ? `${own()} · ${bought()}` : t('prof.page.stores.ownOnly', 'own');
+  const fromPack = () => (withdrawable(r.material) ? t('prof.page.stores.fromPack', '{n} from your pack', { n: loose }) : t('prof.page.stores.fromPackGoods', '{n} made from pack goods', { n: loose }));
   return [r.own ? own() : null, r.bought ? bought() : null, gold ? t('prof.page.stores.boughtGold', '{n} bought with gold', { n: gold }) : null,
-    loose ? t('prof.page.stores.fromPack', '{n} from your pack', { n: loose }) : null].filter(Boolean).join(' · ');
+    loose ? fromPack() : null].filter(Boolean).join(' · ');
 }
 /** GOLD-MARKET: what the page says of a material gold bought (Professions-Arc 10.8's wall). */
 export const GOLD_GOODS_LINE = 'Bought with gold. It can go to your pack or be sold on the market for gold, but no station, craft, writ or silver sale takes it.';
-const goldGoodsLine = () => t('prof.page.stores.goldGoods', GOLD_GOODS_LINE);
+/** FB1020h ESSENCE-LOOSE: and of one with no pack form (Arcane Essence of a piece bought with gold) - it never goes to the
+ *  pack (AUDIT PROF12 E1), so the line no longer says it can. */
+export const GOLD_STAYS_LINE = 'Bought with gold, or made from a piece bought with gold. It can be sold on the market for gold, but no station, craft, writ or silver sale takes it.';
+const goldGoodsLine = (/** @type {string} */ m) => (withdrawable(m) ? t('prof.page.stores.goldGoods', GOLD_GOODS_LINE) : t('prof.page.stores.goldStays', GOLD_STAYS_LINE));
 /** AUDIT BAG-CRAFT A1: what the page says of a material a station's put-in brought from the pack - the stations' wall. */
 export const LOOSE_GOODS_LINE = 'From your pack. Stations can use it, or it can go back to your pack. Writs, guilds and sales only take what you gathered or took from your Stores.';
-const looseGoodsLine = () => t('prof.page.stores.looseGoods', LOOSE_GOODS_LINE);
+/** FB1020h ESSENCE-LOOSE: and of one with no pack form, made of such goods (Arcane Essence of a piece made from them) -
+ *  the stations' wall, its pack never offered. */
+export const LOOSE_MADE_LINE = 'Made from goods from your pack. Stations can use it, but writs, guilds and sales only take what you gathered or took from your Stores.';
+const looseGoodsLine = (/** @type {string} */ m) => (withdrawable(m) ? t('prof.page.stores.looseGoods', LOOSE_GOODS_LINE) : t('prof.page.stores.looseMade', LOOSE_MADE_LINE));
 
 /**
  * THE STORES PAGE.
@@ -850,8 +861,8 @@ export function drawStoresPage(detail, rerender, kit) {
     detail.append(el('p', 'px-note', withdrawable(pick.material)
       ? t('prof.page.stores.withdrawNote', 'A withdrawn material becomes an item in your pack and can\'t go back into the Stores. Writs are delivered on a Notice Board\'s Work tab.')
       : staysLine(pick)));   // SEAT2b part two: a siege work's road
-    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine()));
-    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine()));   // AUDIT BAG-CRAFT A1: an older book's page (another device's put-in)
+    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine(pick.material)));
+    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine(pick.material)));   // AUDIT BAG-CRAFT A1: an older book's page (another device's put-in)
   }
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawStationTiles(detail, rerender, kit, [
@@ -1097,8 +1108,8 @@ function drawCarryStores(detail, rerender, kit) {
     if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));   // UNCOUNTED: what Put in makes of them (LOOT-LOOSE)
     detail.append(el('p', 'px-note', withdrawable(pick.material) ? BAG_PAGE_WORDS.takenNote
       : staysLine(pick)));
-    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine()));
-    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine()));   // AUDIT BAG-CRAFT A1: a carrying book's page
+    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine(pick.material)));
+    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine(pick.material)));   // AUDIT BAG-CRAFT A1: a carrying book's page
   }
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawStationTiles(detail, rerender, kit, [   // MENU-ORDER
@@ -2867,9 +2878,10 @@ function drawEnchantingStation(detail, rerender, { el, divider }) {
   const short = purseShort(station, 'enchanter');
   if (short) detail.append(el('p', 'px-note prof-short', short));
   const pieces = p.disenchantable();
-  // AUDIT PROF-541 B8: the Essence's room - every origin counted, as the service counts it (storesFullIn's sum)
+  // AUDIT PROF-541 B8: the Essence's room - every origin counted, as the service counts it (storesFullIn's sum) -
+  // FB1020h ESSENCE-LOOSE: its loose units too (storesRoomOf)
   const ess = book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(book, ARCANE_ESSENCE.key) };
-  const room = (book.state?.caps?.stores ?? STORES_MAX) - ((ess.own | 0) + (ess.bought | 0) + (ess.gold | 0));
+  const room = storesRoomOf(book, ess);
   // DISENCHANT-SAID: said when no piece gives Essence - a piece listed under one stands greyed below, its reason beside it
   if (!pieces.some((pc) => pc.essence >= 1)) detail.append(el('p', 'px-note', t('prof.page.enchant.none', 'No crafted piece in your pack has enough enchantment to give Essence. Only pieces a player crafted online can be taken apart.')));
   // CRAFT-LIMIT-SAID: each piece's XP as the service credits it (the Firmament's percent on disenchantXp, under the room the
@@ -2996,7 +3008,7 @@ function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
   if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }
   detail.append(el('p', 'px-note', ESSENCE_REFORGE_HOW));
   const ess = p.book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(p.book, ARCANE_ESSENCE.key) };
-  const have = (ess.own | 0) + (ess.bought | 0);   // never gold's units, as the service spends
+  const have = (ess.own | 0) + (ess.bought | 0) + (ess.loose | 0);   // never gold's units, as the service spends - FB1020h ESSENCE-LOOSE: a station's, its loose too
   const pieces = p.reforgeable();
   if (!pieces.length) detail.append(el('p', 'px-note', ESSENCE_REFORGE_NONE));
   for (const pc of pieces) {

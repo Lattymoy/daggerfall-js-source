@@ -308,20 +308,22 @@
   {
     "name": "SD25-S10-the-hall's-halos-dropped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "sdEndWith(sdEnd.halos(), sdHall?.halos(), _sdEndHalos)",
-    "new": "sdEndWith(sdEnd.halos(), null, _sdEndHalos)",
+    "old": "sdEndWith(sdEnd.halos(), sdHall?.halos() ?? sdThrough?.halos(), _sdEndHalos)",
+    "new": "sdEndWith(sdEnd.halos(), sdThrough?.halos(), _sdEndHalos)",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
-    ]
+    ],
+    "note": "SD-THROUGH (re-aimed by content): the Way Through's halos ride beside the hall's (a Hollow's; the hall is the Hour's)."
   },
   {
     "name": "SD25-S10-the-gem's-light-dropped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "sdEndWith(sdEnd.lights(), sdHall?.lights(), _sdEndLights)",
-    "new": "sdEndWith(sdEnd.lights(), null, _sdEndLights)",
+    "old": "sdEndWith(sdEnd.lights(), sdHall?.lights() ?? sdThrough?.lights(), _sdEndLights)",
+    "new": "sdEndWith(sdEnd.lights(), sdThrough?.lights(), _sdEndLights)",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
-    ]
+    ],
+    "note": "SD-THROUGH (re-aimed by content): and its lights."
   },
   {
     "name": "SD25-S10-the-rings-off-the-anchored-clock",

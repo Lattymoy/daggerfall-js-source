@@ -982,7 +982,10 @@ export class SnowfallRuntime {
     const B = this.blanket, s = this.settings;
     const was = B.active;
     B.active = shouldBeActive && s.streamedBlanketPrototype && !!handoff;
-    if (!B.active) return;
+    // FIELD BUGS 2026-10-21b SNOW-HOLD: SetActive(false) lets its queue go - standing again queues every visible tile anew
+    // (below), and a queued tile holds its map pixel's whole entry (the host's SnowTerrain closures): an indoors, or an
+    // Overworld journey under the travel view, kept every pixel the world destroyed meanwhile
+    if (!B.active) { if (was) { B.queue.length = 0; B.queued.clear(); } return; }
     if (!was) B.lastPixel = null;   // AUDIT ENVIRONS S4: SetActive(true) - the visible tiles queue again, a tile rebuilt while it was off among them
     B.handoff = handoff;
     B.innerRadius = innerRadius;
@@ -1000,6 +1003,10 @@ export class SnowfallRuntime {
       B.nextPrune = f.now + BLANKET.pruneSeconds;
       const live = new Set(near);
       for (const [t, o] of B.overlays) if (!live.has(t)) { B.overlays.delete(t); this.dirty.blanket.add(o); o.dead = true; }
+      // SNOW-HOLD: and a queued one - the queue drains only while the local tier is not recentring, and a player on the
+      // move keeps it recentring, so every tile the world built and destroyed behind them stood in it (1.8 MB of JS heap a
+      // map pixel, measured in the running game); _blanketProcess skips a tile no longer drawn, so letting it go is the same
+      if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }
     }
   }
   _blanketQueue(t) {

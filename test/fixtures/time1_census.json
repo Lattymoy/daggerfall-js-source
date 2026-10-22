@@ -865,6 +865,18 @@
    "why": "BANISH-SKY: the event minute at a sky minute - a banishment's thirty days of the sky's calendar, stamped on the event clock"
   },
   {
+   "file": "src/systems/revenant/revenantCompanions.js",
+   "has": "export const errandWorldNow = () => errandWorldMinute(trustedWorldMinutes(), sharedClockHeardMark(), _monotonic());",
+   "clock": "event",
+   "why": "OFFLINE-ROAD: a sworn one abroad keeps the world's time, held to the session's monotonic time since the welcome (AUDIT FB1021 L3-1)"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "_heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });",
+   "clock": "law",
+   "why": "the event minute a welcome is heard at, marked with the session's monotonic time (AUDIT FB1021 L3-1)"
+  },
+  {
    "file": "src/systems/worldTick.js",
    "has": "regionIndex, minute = worldMinutes()) => worldRegionPricesOn",
    "clock": "law",
