@@ -91,6 +91,10 @@ test('GUILD-PANE 3 THE REACH: the world host\'s reach is the town OR a guild car
   assert.equal(reached({ caravanRoom: room, caravanVisit: visit }, caravanPack('private'), 'HND'), true, 'a guildmate\'s guild caravan, mine private');
   assert.equal(reached({ caravanRoom: room, caravanVisit: { ...visit, entry: 'party' } }, caravanPack('guild'), 'HND'), false, 'a party caravan, though mine is the guild\'s');
   assert.equal(reached({ caravanRoom: room, caravanVisit: { ...visit, guild: 'OTH' } }, caravanPack('guild'), 'HND'), false, 'another guild\'s');
+  // a visit whose room no longer matches (modes.caravanVisit reads null though I am a guest): never my own caravan's door
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, caravanGuest: true }, caravanPack('guild'), 'HND'), false, 'a guest whose visit is not read holds no reach from her own caravan\'s door');
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, caravanGuest: false }, caravanPack('guild'), 'HND'), true, 'and my own room, a guest of no one, still does');
+  assert.match(hostText('src/scenes/worldModes.js'), /get caravanGuest\(\) \{ return caravanGuestHere\(\); \},/, 'worldModes says whether I am a guest');
   assert.equal(reached(null, null, 'HND'), false, 'no modes, no pack');
   assert.equal(reached(undefined, undefined, undefined), false);
 });

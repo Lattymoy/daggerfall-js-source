@@ -13145,6 +13145,8 @@ export function createWorldModes(host) {
     /** WAGONS2-VISIT: the visit to another player's caravan I stand in - its room, its owner, its paint, its owner key and
      *  where its record stands (enterCaravanRoom's `visit`) - or null (my own caravan, any other room, outside). */
     get caravanVisit() { return caravanGuestHere() && _caravanVisit?.privateRoom === privateVisitRoom ? _caravanVisit : null; },
+    /** GUILD-PANE: whether I stand in another's caravan as a guest - true even where `caravanVisit` reads null (its room no longer the one I entered), so my own caravan's door is never read for a room that is not mine. */
+    get caravanGuest() { return caravanGuestHere(); },
     /** WAGONS2-VISIT: WHAT I HAVE PLACED IN MY OWN CARAVAN, as its room is told it (systems/caravanVisit.js
      *  caravanDecorDoc: the pieces as the save keeps them, unturned) - null anywhere else, a visit included. */
     myCaravanDecor() {
