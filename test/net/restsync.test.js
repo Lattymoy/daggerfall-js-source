@@ -15,6 +15,7 @@ import { feudWeakBlow } from '../../src/systems/feudLedger.js';   // AUDIT FEUD:
 import { ARENA_PUPPET_OWNER } from '../../src/net/arena/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
+import { noteMyBlow, myShare, contributionParty } from '../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
@@ -307,7 +308,7 @@ test('REST-SYNC: a joiner\'s blow at the room\'s encounter goes to the host by t
   const layout0 = foe(), pup = foe({ _encId: 7 });
   const j = {
     _authority: false, ARENA_PUPPET_OWNER, blowClassOf, feudWeakBlow, foes: [layout0, pup], _layoutFoes: 1, lastPlayerFeet: [1, 0, 1], _ecvT: 0,
-    opts: { onFoeHit: (h) => sent.push(h) }, renownFoeStruck() {}, takeWholeBlow: () => false, markFoeStruck() {}, markConcealedHit() {},
+    opts: { onFoeHit: (h) => sent.push(h) }, renownFoeStruck() {}, noteMyBlow, myShare, contributionParty, takeWholeBlow: () => false, markFoeStruck() {}, markConcealedHit() {},
   };
   const jd = mount(`${consts()}\n${declSrc('isRoomFoe')}\n${fnSrc('damageFoe')}\nreturn { damageFoe };`, j);
   jd.damageFoe(pup, 5, [2, 0, 3]);

@@ -82,8 +82,8 @@
   {
     "name": "AUDIT625-L5-the-joiner-uncapped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
-    "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); }",
+    "old": "stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1))); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "new": "stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1))); dropFoeCard(f.entity); }",
     "why": "a joiner's copy of a body past its cap",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -533,7 +533,7 @@
   {
     "name": "AUDIT625-P2-the-bout-unread",
     "file": "src/scenes/world.js",
-    "old": "setSetsDueling(!!duelMgr.live || arenaPvpLive());",
+    "old": "setSetsDueling(!!duelMgr.live || arenaPvpLive() || !!siegeSession?.active?.() || !!royalSession?.active?.());",
     "new": "setSetsDueling(!!duelMgr.live);",
     "why": "the sets awake in a bout between players",
     "tests": [

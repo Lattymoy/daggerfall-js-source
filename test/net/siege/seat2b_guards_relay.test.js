@@ -6,7 +6,7 @@
 // server/src/index.js `_siegeNpcBlow`, `_siegeTick`; net/siege/siegeRef.js). `06-Systems/Online-Arc.md` SEAT2b part two (c).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { siegeRoomKey, SIEGE_UNITS_PER_M, siegeNpcAt } from '../../../src/net/siege/siegeRef.js';
+import { siegeRoomKey, SIEGE_UNITS_PER_M, siegeNpcAt, siegeBlowMax, PVP_TEMPLATE_METAL } from '../../../src/net/siege/siegeRef.js';
 import { mintSiegeOrder } from '../../../src/net/identityToken.js';
 import { readSiegeReceipt } from '../../../src/net/siege/siegeReceipt.js';
 import { fakeRoom } from '../../fakeRoom.mjs';
@@ -86,6 +86,19 @@ test('SEAT2b part two (c) THE GUARDS IN THE ROOM: the pass\'s Barracks fields fo
   }, { sx: null, sn: 'tourney' });
 });
 
+test('PWR5 A GUARD STRUCK IN A SIEGE (bible/05-Combat/Power-Arc.md section 8): a siege is a refereed lane - an attacker\'s blow on one of the relay\'s guards is clipped at the template\'s Steel, never the Daedric its look holds (mutants: a guard\'s blow clipped at the look\'s metal)', async () => {
+  await withBattle(async ({ r, say, enter, until, place }) => {
+    const a = await enter('peer-0001', 'attack');
+    await until(T + 1000);
+    const g = r.room._siege.battle.npcs[1];
+    const [gx, gz] = siegeNpcAt(g, Date.now());
+    place(a, gx / M, gz / M + 1.5);
+    await say(a, { k: 'blow', to: 'n1', w: 123, m: 9, d: 999, r: 0 });
+    assert.ok(siegeBlowMax(123, PVP_TEMPLATE_METAL) < siegeBlowMax(123, 9), 'Steel\'s reach under Daedric\'s');
+    assert.equal(g.hp, 360 - siegeBlowMax(123, PVP_TEMPLATE_METAL));
+  });
+});
+
 test('SEAT2b part two (c) A GUARD\'S BLOW AT THE BEAT: an attacker standing at a guard is struck for 20 on the room\'s vitality a beat after its wind-up, fanned to the room; felled, its fall is said by the guard and it rises at the attackers\' wave (mutants: the beat\'s blow; the fan; the fall; its wave)', async () => {
   await withBattle(async ({ r, enter, until, place }) => {
     const a = await enter('peer-0001', 'attack');
@@ -97,8 +110,8 @@ test('SEAT2b part two (c) A GUARD\'S BLOW AT THE BEAT: an attacker standing at a
     await until(T + 1000);
     assert.deepEqual(g.atk, { at: T + 2000, to: a.att.sub });
     await until(T + 2000);
-    assert.equal(me.hp, 300);
-    assert.deepEqual(sieges(d, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0001', h: 300, m: 320 });
+    assert.equal(me.hp, 340);   // PIN MOVED (PWR5): was 300 (320 - the guard's 20) - every player fighter 360, Renown buys no PvP health
+    assert.deepEqual(sieges(d, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0001', h: 340, m: 360 });   // PIN MOVED (PWR5): was h 300, m 320 - every player fighter 360, Renown buys no PvP health
     me.hp = 5;
     await until(T + 4000);
     assert.deepEqual([me.down, me.hp], [true, 0]);

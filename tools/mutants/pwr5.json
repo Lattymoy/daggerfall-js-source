@@ -1,0 +1,329 @@
+[
+  {
+    "name": "PWR5-the-vitality-by-renown",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  const max = PVP_VITALITY;",
+    "new": "  const max = siegeVitality(lv);",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-rated-bout-by-level",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "export const pvpVitality = (_lv) => ARENA_PRIVATE_VITALITY;",
+    "new": "export const pvpVitality = (_lv) => 300 + 2 * arenaLv(_lv);",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-third-lands",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  return seen.has(by) || seen.size < CROWD_HARM.strikers;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-window-never-empties",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  for (const [k, at] of seen) if (!(now - at < CROWD_HARM.windowMs)) seen.delete(k);",
+    "new": "  for (const [k, at] of seen) if (!(now - at < Infinity)) seen.delete(k);",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-count-past-two",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  return seen.has(by) || seen.size < CROWD_HARM.strikers;",
+    "new": "  return seen.has(by) || seen.size <= CROWD_HARM.strikers;",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-crowd-unasked",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (!crowdRoom(t.f, by, now)) return { ok: true, dealt: 0, fell: false, fall: null, why: 'crowd' };",
+    "new": "  if (false) return { ok: true, dealt: 0, fell: false, fall: null, why: 'crowd' };",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-crowd-unmarked",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  crowdMark(t.f, by, now);\n",
+    "new": "",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-template-level-kept",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "    lv: PVP_TEMPLATE.level,\n",
+    "new": "",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-an-attribute-kept",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "    st: a.st.map(() => PVP_TEMPLATE.attribute),",
+    "new": "    st: a.st,",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-a-skill-kept",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "    sk: a.sk.map(() => PVP_TEMPLATE.skill),",
+    "new": "    sk: a.sk,",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-claws-metal-kept",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "    cm: Math.max(0, weaponMaterialModifier(PVP_TEMPLATE.material)),\n",
+    "new": "",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-metal-kept",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "(w ? { ...w, m: PVP_TEMPLATE.material, c: PVP_TEMPLATE.condition } : w)",
+    "new": "(w ? { ...w, c: PVP_TEMPLATE.condition } : w)",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-family-normalized",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "(w ? { ...w, m: PVP_TEMPLATE.material, c: PVP_TEMPLATE.condition } : w)",
+    "new": "(w ? { ...w, t: 118, m: PVP_TEMPLATE.material, c: PVP_TEMPLATE.condition } : w)",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-blow-on-my-own-sheet",
+    "file": "src/combat/pvpTemplate.js",
+    "old": "  return resolveDuelStrike({ by, a: templateSheet(duelAttackerOf(entity, weapon)), ...(w ? { w: templateWeapon(w) } : {}) }, duelStandIn(), { rolls }).dmg;",
+    "new": "  return resolveDuelStrike({ by, a: duelAttackerOf(entity, weapon), ...(w ? { w } : {}) }, duelStandIn(), { rolls }).dmg;",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-referee-clips-at-the-claim",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa)",
+    "new": "siegeBlowMax(held.w, held.m, wa)",
+    "tests": [
+      "test/net/duel/int8_duel_ref.test.js",
+      "test/net/siege/pvpref_relay.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-arena-clips-at-the-claim",
+    "file": "src/net/arena/arenaBrain.js",
+    "old": "arenaBlowCap({ r, w, m: st.kind === 'pvp' ? ARENA_PVP_METAL : m, wa })",
+    "new": "arenaBlowCap({ r, w, m, wa })",
+    "tests": [
+      "test/net/arena/arena4_relay.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-duel-untemplated",
+    "file": "src/net/duel/duelRef.js",
+    "old": "{ from: me.pose, at: them.pose, held, d, r, wa, template: true }",
+    "new": "{ from: me.pose, at: them.pose, held, d, r, wa }",
+    "tests": [
+      "test/net/duel/int8_duel_ref.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-siege-untemplated",
+    "file": "server/src/index.js",
+    "old": "refereeBlow(by, to, { from: by.pose, at: to.pose, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null, template: true }, now);",
+    "new": "refereeBlow(by, to, { from: by.pose, at: to.pose, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);",
+    "tests": [
+      "test/net/siege/pvpref_relay.test.js",
+      "test/net/arena/int7_arms.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-siege-npc-untemplated",
+    "file": "server/src/index.js",
+    "old": "refereeBlow(by, n, { from: by.pose, at, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null, template: true }, now);",
+    "new": "refereeBlow(by, n, { from: by.pose, at, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);",
+    "tests": [
+      "test/net/siege/seat2b_guards_relay.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-share-unweighed-by-the-party",
+    "file": "src/systems/party/partyScale.js",
+    "old": "  const whole = maxHealth * partyToughness(partySizeOf(n));",
+    "new": "  const whole = maxHealth;",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-crowds-size-paid",
+    "file": "src/systems/party/partyScale.js",
+    "old": "  return Math.max(1, Math.min(N, 1 + Math.floor((N - 1) * Math.min(1, N * s) + 1e-9)));",
+    "new": "  return N;",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-size-past-the-fight",
+    "file": "src/systems/party/partyScale.js",
+    "old": "  return Math.max(1, Math.min(N, 1 + Math.floor((N - 1) * Math.min(1, N * s) + 1e-9)));",
+    "new": "  return Math.max(1, 1 + Math.floor((N - 1) * N * s + 1e-9));",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-my-blow-unnoted-outdoors",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (fromPlayer && !peer && !bout) { renownFoeStruck(f); noteMyBlow(f, damage); }",
+    "new": "    if (fromPlayer && !peer && !bout) { renownFoeStruck(f); }",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-my-blow-unnoted-in-a-dungeon",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (fromPlayer && !peer && !bout) { renownFoeStruck(foe); noteMyBlow(foe, damage); }",
+    "new": "    if (fromPlayer && !peer && !bout) { renownFoeStruck(foe); }",
+    "tests": [
+      "test/characters/enemy/arena2_seams.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-outdoor-kill-at-the-crowds-size",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? contributionParty(fightN(f), myShare(f, fightN(f))) : 1, { rolls });",
+    "new": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-dungeon-kill-at-the-crowds-size",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? contributionParty(fightN(foe), myShare(foe, fightN(foe))) : 1);",
+    "new": "stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? fightN(foe) : 1);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-a-joiners-copy-at-the-crowds-size",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1)));",
+    "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1);",
+    "tests": [
+      "test/systems/sigil/sigil1.test.js",
+      "test/systems/audit625_loot.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-rooms-base-at-the-crowds-count",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "      stampWonWeapons(e.items, 1, { rolls });",
+    "new": "      stampWonWeapons(e.items, terms.n ?? 1, { rolls });",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-bonus-at-the-crowds-count",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "fighters: contributionParty(base.terms.n ?? 1, f ? myShare(f, base.terms.n ?? 1) : 1),",
+    "new": "fighters: base.terms.n ?? 1,",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-arenas-swing-on-my-own-sheet",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const damage = templateBlow(playerEntity, playerWeapon.strikingWeapon ?? null, 'melee');",
+    "new": "    const damage = 0;",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-arenas-shaft-on-the-formula",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "blow: () => templateBlow(playerEntity, m.weapon ?? null, 'arrow'), dealDamage: (t, d) => landOnRival(rv, d, 'arrow')",
+    "new": "dealDamage: (t, d) => landOnRival(rv, d, 'arrow')",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-shaft-door-unread",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  const rolled = blow ? blow() : calculateAttackDamage(playerEntity, foe.entity, {",
+    "new": "  const rolled = calculateAttackDamage(playerEntity, foe.entity, {",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-arenas-spell-at-my-level",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "countOnStandIn(harm, rb.entity, PVP_TEMPLATE.level, null, rolls);",
+    "new": "countOnStandIn(harm, rb.entity, player.level, player, rolls);",
+    "tests": [
+      "test/systems/power/pwr5_group.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-duels-swing-on-my-own-sheet",
+    "file": "src/scenes/world.js",
+    "old": "    const r = resolveDuelStrike({ by, a: templateSheet(a), ...(w ? { w: templateWeapon(w) } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());",
+    "new": "    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-sieges-swing-on-my-own-sheet",
+    "file": "src/scenes/world.js",
+    "old": "    const r = resolveDuelStrike({ by, a: templateSheet(a), ...(w ? { w: templateWeapon(w) } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0",
+    "new": "    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0",
+    "tests": [
+      "test/systems/auditcc_pvp.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-sets-awake-in-a-siege",
+    "file": "src/scenes/world.js",
+    "old": "setSetsDueling(!!duelMgr.live || arenaPvpLive() || !!siegeSession?.active?.() || !!royalSession?.active?.());",
+    "new": "setSetsDueling(!!duelMgr.live || arenaPvpLive());",
+    "tests": [
+      "test/systems/set3_powers.test.js"
+    ]
+  }
+]

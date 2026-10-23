@@ -36,6 +36,7 @@ import { tellSpellLanded } from '../../systems/spell/spellPower.js';
 import { SOUL_TRAP_TEXT } from '../../systems/mysticism.js';
 import { HIT_KINDS } from '../../net/gate/gateBrain.js';
 import { ARENA_HIT, arenaBlowCap } from '../../net/arena/arenaLaw.js';
+import { PVP_TEMPLATE } from '../../combat/pvpTemplate.js';   // PWR5: a bout between players' spell at the template's level
 import { BOSS_SWAY_TEXT, BOSS_SWAY_TELL_MS, standInBlowCap } from '../../world/gate/gateBoss.js';
 import { COURT_ROUND_MS } from './gateCourt.js';   // BOSS-DOT: the round a relay body's lasting harm ticks on - the court's trap's
 import { SERPENT_HIT_CAP_X, SERPENT_HAND_REF } from '../../net/serpent/serpentBrain.js';   // BOSS-DOT: the most a hand's blow lands on the serpent
@@ -198,11 +199,12 @@ export function createStandInSpell(host) {
    *  sequence, PVP-REF's three casts in five seconds and its spell cap deciding what lands (swingOnRival's road); its
    *  number what that cap lets land. No rider is told: the powers sleep in a bout. BOSS-DOT: and no round is carried - the
    *  referee counts every spell claim a cast, and a bout takes the referee's blow alone (BAL8, as OPEN-HAND drops what a
-   *  follow-up owes a player). */
+   *  follow-up owes a player). PWR5 (bible/05-Combat/Power-Arc.md section 8): counted on the template - its level, no
+   *  caster's powers - as the duel's and the siege's are (scenes/world.js's strike-outs). */
   function spellOnRival(sp) {
     const rb = host.rival(), harm = duelSpellOf(sp);
     if (!rb || !harm) return false;
-    const { dealt } = countOnStandIn(harm, rb.entity, player.level, player, rolls);
+    const { dealt } = countOnStandIn(harm, rb.entity, PVP_TEMPLATE.level, null, rolls);
     if (!(dealt >= 1)) return false;
     reportPlayerAttack({ hit: true, damage: Math.round(standInShown(dealt, arenaBlowCap({ r: ARENA_HIT.Spell }))) });   // HN1: the number pops as a blow's does
     host.nextArenaQ();

@@ -21,6 +21,7 @@ import { rollCorpseKit } from '../systems/foeLootCap.js';
 import { rollRoomBonus, spawnEnemyLoot, wildLootAfter } from './hostCombat.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
 import { stampWonWeapons } from '../systems/loot/lootRarity.js';
+import { contributionParty, myShare } from '../systems/party/partyScale.js';   // PWR5: pay by contribution - a player's share of the fight
 import { wildPileMore } from '../systems/wild/wildZone.js';
 import { seaPileMore } from '../systems/sea/seaSpoils.js';
 
@@ -165,10 +166,11 @@ export function createRoomLoot(host) {
     if (h.pile.stopKey && _deepCleared.has(h.pile.stopKey)) items.length = 0;
     return items;
   }
-  /** A body's base: SetEnemyCareer's whole loot chain (spawnEnemyLoot) and its death's (the kit's ladder, the sigils at
-   *  the fight's count, OnEnemyDeath's subscribers and the cap), run over the fallen foe's own entity on the room's
-   *  dice and terms - a class foe at the party's level, as SetEnemyCareer stands one at the player's - and handed back
-   *  without touching what the foe wore or fought with. `rejects` receives what PLAIN-LOOT's keep let go. */
+  /** A body's base: SetEnemyCareer's whole loot chain (spawnEnemyLoot) and its death's (the kit's ladder, the sigils as
+   *  a fight of one - PWR5: any member may take it, so no crowd's odds - OnEnemyDeath's subscribers and the cap), run
+   *  over the fallen foe's own entity on the room's dice and terms - a class foe at the party's level, as
+   *  SetEnemyCareer stands one at the player's - and handed back without touching what the foe wore or fought with.
+   *  `rejects` receives what PLAIN-LOOT's keep let go. */
   function roomBodyBase(f, terms, rolls, gender, rejects) {
     const e = f.entity;
     const saved = { items: e.items, weapon: e.weapon, armorValues: e.armorValues, equip: e.equip, level: e.level };
@@ -182,7 +184,7 @@ export function createRoomLoot(host) {
       if (_wildDungeon) wildLootAfter(e);
       if (f.src?.eliteFoe) grantEliteLoot(e, terms.lv, rolls);
       rollCorpseKit(e, o);
-      stampWonWeapons(e.items, terms.n ?? 1, { rolls });
+      stampWonWeapons(e.items, 1, { rolls });   // PWR5: the room's shared base any member may take - a fight of one; each player's own share pays their bonus (roomBonusOf)
       raiseEnemyDeath(e, { ...o, level: terms.lv, room: true });   // `room`: the room's base, every client's - no kill (systems/eliteGates/egFind.js asks at the kill)
       return { items: e.items, lootCap: Number.isInteger(e.lootCap) ? e.lootCap : null };
     } finally {
@@ -193,7 +195,7 @@ export function createRoomLoot(host) {
    *  own Renown and Luck (RENOWN-LOOT, "the roller's own"): the pieces PLAIN-LOOT's keep let go that their Renown's keep
    *  keeps (bonusShare, so the base's keep and theirs together are their own), the supplies their Renown's share adds
    *  over the base's (rollBonusSupplies), each piece on their own ladder (their Luck, their finders, their Renown's plain
-   *  weights) and the sigils at the fight's count - inside the cap's room above the base, never past it. Rolled outside
+   *  weights) and the sigils at the fight as it pays them (PWR5: their share of it, partyScale.js contributionParty) - inside the cap's room above the base, never past it. Rolled outside
    *  the room's scope: the player's own switches decide what is theirs. Never said to the room. */
   function roomBonusOf(canon, base) {
     const who = playerEntity?.characterId ?? opts.selfId?.() ?? 'me';
@@ -205,7 +207,7 @@ export function createRoomLoot(host) {
     const pieces = rollRoomBonus({   // hostCombat.js: the knobs' one home, at this player's own stage and Luck
       rolls: seededRolls(key), player: playerEntity, pile: !!h?.pile, deepPile: !!h?.pile && isDeepPileKey(host.lootKey), rejects: base.rejects,
       basics: f ? ENEMY_BASICS[f.mobileType] : null, mobileType: f?.mobileType ?? null, champion: f?.entity?.champion ?? null,
-      level: f ? (f.entity.isClass ? base.terms.lv : f.entity.level) : base.terms.lv, lootCap: base.lootCap, baseItems: base.items, fighters: base.terms.n ?? 1,
+      level: f ? (f.entity.isClass ? base.terms.lv : f.entity.level) : base.terms.lv, lootCap: base.lootCap, baseItems: base.items, fighters: contributionParty(base.terms.n ?? 1, f ? myShare(f, base.terms.n ?? 1) : 1),   // PWR5: the fight as it pays THIS player (partyScale.js)
     });
     for (const it of pieces) markPersonal(it);
     const rec = { key, pieces, composed: false };

@@ -6744,7 +6744,7 @@ export class Room {
     if (!look && m.k === 'blow') { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }
     const res = m.k === 'cast'
       ? refereeCast(by, to, { from: by.pose, at: to.pose, d: m.d, heal }, now)
-      : refereeBlow(by, to, { from: by.pose, at: to.pose, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);   // INT7: clipped to the striker's signed arms
+      : refereeBlow(by, to, { from: by.pose, at: to.pose, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null, template: true }, now);   // INT7: clipped to the striker's signed arms
     if (!res.ok || !res.dealt) return;
     const frames = [{ k: 'hp', id: m.to, h: to.hp, m: to.max }];
     if (res.fell && b?.kind === 'royal') { this._siegeFan(frames); await this._royalBoutEnd(s, b, royalEnd(b, a.sub, now), now); return; }   // CROWN1 part two: a fall ends the bout
@@ -6805,7 +6805,7 @@ export class Room {
     const at = siegeNpcPose(n, now, b.ground ?? null, by.pose?.y ?? 0);
     const res = m.k === 'cast'
       ? refereeCast(by, n, { from: by.pose, at, d: m.d }, now)
-      : refereeBlow(by, n, { from: by.pose, at, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);   // INT7
+      : refereeBlow(by, n, { from: by.pose, at, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null, template: true }, now);   // INT7
     if (!res.ok || !res.dealt) return;
     if (res.fell) {
       siegeNpcFell(b, n, now);

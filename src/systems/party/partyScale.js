@@ -120,6 +120,39 @@ export function noteFighter(foe, who, now) {
   m.set(who, now);
 }
 
+/** PWR5 (bible/05-Combat/Power-Arc.md section 8; Mac, asked: "Pay by contribution"): what MY blows took off `foe` -
+ *  every machine tallies its own (the owner's door and a puppet's hit-out alike, noteMyBlow), so no share rides the
+ *  wire. @type {WeakMap<object, number>} */
+let _mine = new WeakMap();
+/** A blow of MINE on `foe` of `dealt` - the blow as I struck it, before the party's toughness weighs it (a joiner sends it so;
+ *  the owner's door weighs it after). */
+export function noteMyBlow(foe, dealt) {
+  const key = _obj(foe);
+  if (!key || !(dealt > 0)) return;
+  _mine.set(key, (_mine.get(key) ?? 0) + dealt);
+}
+/** MY SHARE of `foe`'s fight, 0..1, the fight `n` strong: my blows over the foe's whole health as the fight weighed it - its
+ *  maximum times the party's toughness (partyToughness: a blow of mine took 1/t of it), the least the fight that felled it
+ *  dealt; a heal past it can only lower my share, never raise it past whole. Every machine reads its own the same way. */
+export function myShare(foe, n = 1, maxHealth = foe?.entity?.maxHealth ?? foe?.maxHealth) {
+  const key = _obj(foe);
+  const mine = key ? _mine.get(key) ?? 0 : 0;
+  const whole = maxHealth * partyToughness(partySizeOf(n));
+  return whole > 0 ? Math.max(0, Math.min(1, mine / whole)) : 0;
+}
+/**
+ * PWR5: THE FIGHT AS IT PAYS ONE FIGHTER - the fight's `n` fighters weighed by `share`, that fighter's part of it: 1 + (n - 1)
+ * x min(1, n x share). A fair partner of a fair fight (a share of 1/n) is paid the fight's whole size, as SIGIL1 paid every
+ * fighter; one who carried it, no more (the size never past the fight's own); one who stood by striking nothing, a fight
+ * of one. What the sigil's chance and floor read for that fighter (systems/sigil/sigil.js sigilChance, sigilFloor) - the
+ * crowd's size alone pays nobody. Whole, 1..n.
+ */
+export function contributionParty(n, share) {
+  const N = partySizeOf(n);
+  const s = Number.isFinite(share) ? Math.max(0, Math.min(1, share)) : 0;
+  return Math.max(1, Math.min(N, 1 + Math.floor((N - 1) * Math.min(1, N * s) + 1e-9)));
+}
+
 /** How many players are fighting `foe` at `now`: those who struck it within PARTY_FIGHT_WINDOW_MS, 1..PARTY_MAX. */
 export function foeFighters(foe, now) {
   const key = _obj(foe);
@@ -200,6 +233,7 @@ export function takeWholeBlow(entity) {
 /** Tests only: forget every foe's fighters and remainders, every victim's, every mark. */
 export function _resetPartyScaleForTests() {
   _fighters = new WeakMap();
+  _mine = new WeakMap();
   _carry = new WeakMap();
   _healCarry = new WeakMap();
   _hitCarry = new WeakMap();

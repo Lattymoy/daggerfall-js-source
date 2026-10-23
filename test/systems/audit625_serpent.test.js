@@ -108,7 +108,7 @@ test('AUDIT 625 P2: the duel\'s word is ONE, kept by SIGIL1\'s door (sigil.js se
   assert.match(read('src/systems/loot/lootPowers.js'), /if \(!mine\(entity\) \|\| !lootRarityOn\(\) \|\| setsDueling\(\)\) return \[\];/);
   // the host: the duel, or a live bout between players
   const w = read('src/scenes/world.js');
-  assert.match(w, /setSetsDueling\(!!duelMgr\.live \|\| arenaPvpLive\(\)\);/);
+  assert.match(w, /setSetsDueling\(!!duelMgr\.live \|\| arenaPvpLive\(\) \|\| !!siegeSession\?\.active\?\.\(\) \|\| !!royalSession\?\.active\?\.\(\)\);/);   // PIN MOVED (PWR5): and a siege's and the Royal Tourney's - every refereed lane on the template
   assert.match(w, /const arenaPvpLive = \(\) => \{ const b = arenaOnline\?\.bout\(\), r = arenaBouts\.relay\(\); return !!b && b\.kind === 'pvp' && !!r\?\.me; \};/);
   assert.doesNotMatch(read('src/systems/sigil/sigilSets.js'), /let _dueling/, 'the word is kept once');
 });

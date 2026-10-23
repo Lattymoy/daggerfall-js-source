@@ -100,6 +100,6 @@ test('ARENA4b the dungeon\'s host numbers its blows and routes a spell on my opp
   assert.match(D, /const \{ spellOnBoss, spellOnCrystal, spellOnHost, spellOnRival, spellOnStandIn, standInRound \} = createStandInSpell\(\{[^]*?rival: arenaRivalBody,[^]*?landOnRival, nextArenaQ,/);
   const S = readFileSync(new URL('../../../src/scenes/gate/standInSpell.js', import.meta.url), 'utf8');
   const fn = S.slice(S.indexOf('function spellOnRival(sp) {'), S.indexOf('function spellOnRival(sp) {') + 900);
-  assert.match(fn, /countOnStandIn\(harm, rb\.entity, player\.level, player, rolls\)/, 'the one door every spell lands through, against their stand-in');
+  assert.match(fn, /countOnStandIn\(harm, rb\.entity, PVP_TEMPLATE\.level, null, rolls\)/, 'the one door every spell lands through, against their stand-in');   // PIN MOVED (PWR5): at the template's level, no caster's powers
   assert.match(fn, /host\.nextArenaQ\(\);\n\s+return host\.landOnRival\(rb, dealt, 'spell'\);/, 'its own sequence, to the referee as a spell');
 });

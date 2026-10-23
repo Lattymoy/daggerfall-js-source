@@ -473,6 +473,9 @@ export function playerArrowHitFoe(m, foe, {
   // and shove a foe DFU leaves standing.
   onAttackFromPlayer = null,
   rolls = Math.random,
+  // PWR5 (bible/05-Combat/Power-Arc.md section 8): a refereed lane's own number for the shaft, in place of the formula's -
+  // the template's at my opponent on a relay's sand (scenes/dungeonContext.js, combat/pvpTemplate.js templateBlow)
+  blow = null,
 } = {}) {
   if (!foe || foe.dead || !playerEntity) return 0;
   // REVENANT-FATE (the 2026-10-02 audit): one held by its fate (kneeling, burning, gathering into a portal) - the shaft
@@ -484,7 +487,7 @@ export function playerArrowHitFoe(m, foe, {
   // does (playerWeapon.js resolveHit) - Agility's to-hit term and OFF_HAND_BLOW's share and weight. Read off the gun the
   // shot left, since the strike that fired it is over by the time it lands.
   const off = !!playerWeapon?.isOffHandItem?.(m.weapon);
-  const rolled = calculateAttackDamage(playerEntity, foe.entity, {
+  const rolled = blow ? blow() : calculateAttackDamage(playerEntity, foe.entity, {
     weapon: m.weapon ?? null,
     damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(liveStat(playerEntity, 'agility')) : 0),
     ...(off ? OFF_HAND_BLOW : {}),

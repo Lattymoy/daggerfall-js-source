@@ -410,3 +410,67 @@ What it says:
 20: this table is PWR3's before.)
 
 A DEPARTURE: Ledger A (PWR4). `test/net/firmament/pwr4_soft_cap.test.js` (5); `tools/mutants/pwr4.json`.
+
+## 8. PWR5 - the group and the veteran
+
+THE CAUSE (section 1's calls 3, 6 and 7): a group earned more than its members fighting alone in ways that paid the
+crowd, not the fighter. SIGIL1 paid every fighter's sigil the fight's whole size ("Bigger fights, stronger sigils": 200
+per mille alone, 40 more a fighter, the floor rising with it), and the party's Renown bonus added 10% a head to +70%.
+Where players met, Renown bought health (300 + 2 a Renown in the siege, the duel and the open zone; to Renown 60 in the
+arena), and nothing held a crowd's blows on one fighter. Every Legendary, set and Gilded draw of a boss could be taken
+again and again, the whole week.
+
+THE PARTY'S RENOWN (Mac: "the party's Renown bonus at most +30%" - `net/renown.js` RENOWN_PARTY_BONUS_MOST): 10% a head
+past the first, to +30% - a party of four reaches it; eight paid +70%.
+
+PAY BY CONTRIBUTION (Mac: "the sigil follows a fighter's share of the fight, not the crowd's size" -
+`systems/party/partyScale.js`):
+
+- **Every machine tallies its own blows** on a foe (`noteMyBlow`): the owner's door and a puppet's hit-out alike, the blow
+  as struck. Its SHARE is those blows over the foe's whole health as the fight weighed it - the maximum times the
+  party's toughness (PSCALE1's), the least the fight that felled it dealt (`myShare`). No share rides the wire.
+- **The fight as it pays one fighter** (`contributionParty`): 1 + (n - 1) x min(1, n x share). A fair partner of a fair
+  fight - a share of 1/n - is paid the fight's whole size, as SIGIL1 paid every fighter; one who carried it, no more;
+  one who stood by and struck nothing, a fight of one. It is what the sigil's chance and floor read (`sigil.js`
+  sigilChance, sigilFloor - their law unmoved): a fighter's own sigils (a foe of the open world, a dungeon's) and each
+  player's own bonus of a room's loot (PARTY-LOOT's personal layer).
+- **The room's shared drop is a fight of one** (`scenes/roomLootHost.js` roomBodyBase): any member may take it, so the
+  crowd's size pays nobody through it.
+- A sigil's `party` is still the fight as it paid its holder, so every sigil minted before keeps its floor (the item
+  law's `sigilFloor`).
+
+THE REFEREED LANES ON A TEMPLATE (Mac: "the duel, the arena and the siege fight on a fixed template (the class and the
+weapon family; attributes, skills and metal normalized; flat health)" - `combat/pvpTemplate.js`):
+
+- A blow between players is counted on the striker's machine off its sheet against the neutral stand-in and clipped by
+  the relay's referee (INT8-INT10). In a duel, a siege and its works, the Royal Tourney and a bout of the arena's between
+  players, that sheet is the TEMPLATE's (`templateSheet`, `templateWeapon`): the class's bitfields, the race and the
+  weapon's family the striker's own; the level the referee's bucket already assumes (30), every attribute 75, every skill
+  the classic top (100 - no climb past it), the weapon Steel (DFU's material modifier 0) and whole, the claws' metal
+  Steel's. A spell is counted at the template's level with no caster's powers. Every set, loot power, sigil and sky
+  sleeps in all of them, as it did in a duel and a rated bout (`setSetsDueling`).
+- The doors: the duel's, the siege's and its works' strike-outs (`scenes/world.js` duelStrikeOut, siegeStrikeOut,
+  siegeWorkHit, duelSpellOut, siegeSpellOut); the arena's bout between players at my opponent on a relay's sand - the
+  swing and the shaft meet the body by the game's own reach and flight, and their number is the template's
+  (`scenes/dungeonContext.js` swingOnRival; `combat/arrowFlight.js` playerArrowHitFoe's `blow`, `templateBlow`), the
+  spell at the template's level (`scenes/gate/standInSpell.js` spellOnRival). A bout between players stands no AI
+  fighter, so the relay's puppets keep the game's own law.
+- The referee clips a templated blow at the template's metal (`siegeRef.js` refereeBlow's `template` - the duel's, a
+  siege's on a player and on the relay's guards; the arena's arenaBlowCap in a bout between players), so the metal a
+  look holds buys nothing there.
+- **Flat health** (`siegeRef.js` PVP_VITALITY, `arenaLaw.js` pvpVitality): every player fighter stands at 360 - the
+  arena's equal bout's (ARENA_PRIVATE_VITALITY), the one flat health the port already had - whatever its Renown. A
+  town's NPC keeps its own Renown's (siegeVitality).
+
+THE OPEN ZONE KEEPS ITS GEAR (Mac: "a target takes only so much from several players at once, and Renown adds no
+health"): no template - the zone is where a kit is worn - but the flat health above, and THE MANY ON ONE IS A TWO ON ONE
+(`siegeRef.js` CROWD_HARM, crowdRoom; `net/wild/wildRef.js` wildBlow): a fighter takes harm from at most two strikers
+inside BAL8's window (5 s), the first two to strike it there; a third lands nothing until one of them has let it be a
+whole window. No crowd fells a fighter faster than a pair at BAL8's ceiling - two of 180 in 5 s, its whole vitality. (A
+pool of damage could not say so: a fighter falls before any pool its vitality's size fills.)
+
+THE WEEKLY LOCKOUT on each boss's top-tier roll (Mac's call 7) is this section's next part, written at its slice.
+
+A DEPARTURE: Ledger A (PWR5). `test/systems/power/pwr5_group.test.js` (5); the doors' own suites moved with it
+(`test/systems/partyloot.test.js`, `test/systems/sigil/sigil1.test.js`, `test/net/siege/seat2b_guards_relay.test.js`,
+each a PWR5 test); `tools/mutants/pwr5.json`.

@@ -43,6 +43,7 @@ import { copyEffectEntry } from '../../src/systems/save/save.js';
 import { withoutCarried } from '../../src/world/interior/interiorShared.js';
 import * as RL from '../../src/systems/roomLoot.js';
 import { fakeRoom } from '../fakeRoom.mjs';
+import { noteMyBlow, myShare, contributionParty } from '../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 setPref(LOOT_RARITY_KEY, true);   // the loot ladder - forced on online (OL1)
 setSigilOnline(true);
@@ -106,7 +107,7 @@ function entry({ id, seed, characterId, player, authority, clock }) {
     _foesFrom: null, _sharedStamp: `${id}:${seed}`, _sharedApplied: false, _eliteOnline: true, _foesSeqIn: -1, clearSurplus: () => {},
     addItem, stacksWith, isGoldPieces, addGoldPieces, isEquipped, unequipItem, neverPeerHanded, notCarried,
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS, corpseTextureOf,   // AUDIT DEX A1: the corpse mints read it
-    generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
+    generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons, noteMyBlow, myShare, contributionParty,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
     wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,

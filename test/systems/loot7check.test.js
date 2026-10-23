@@ -43,6 +43,7 @@ import { validFoeRecord } from '../../src/net/wire.js';
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { noteMyBlow, myShare, contributionParty } from '../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -224,7 +225,7 @@ function killDoor() {
     foes: [], _authority: true, ARENA_PUPPET_OWNER, feudWeakBlow: () => false, blowClassOf: () => null, opts: {},   // AUDIT FEUD: the hit door asks a blow's weakness (none here)
     lastPlayerFeet: [0, 0, 0], _ecvT: 0, foeDeps: null, playerEntity: { isPlayer: true, items: [] }, audio: {},
     renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, takeWholeBlow: () => false,   /* PIN MOVED (EG-E3): the joiner's find door */ markFoeStruck: () => {}, markConcealedHit: () => {},
-    handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', _sharedFoe: () => false, partyFoeLoses: (f, n) => n, fightN: () => 1,
+    handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', noteMyBlow, myShare, contributionParty, _sharedFoe: () => false, partyFoeLoses: (f, n) => n, fightN: () => 1,
     peerSoulTrapOf: () => null, attemptSoulTrap: () => ({ allowDeath: true }), isAzurasStarEquipped: () => false, fillEmptyTrap: () => false,
     hudText: { add: (l) => hud.push(l) }, SOUL_TRAP_TEXT: {}, setEnemyAlert: () => {}, sayEnemyDied, isClassEnemyId,
     spawnCorpse: () => {}, playRareDrop: () => {}, rollCorpseKit: () => [], stampWonWeapons: () => {}, raiseEnemyDeath: () => {}, liveStat: () => 50,
@@ -239,7 +240,7 @@ function joiner(self) {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, isClassEnemyId, enemyEntityType, validFoeRecord, opts: { selfId: () => self },
     appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
-    renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
+    renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], noteMyBlow, myShare, contributionParty, liveStat: () => 50,
     dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam
     playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     sayEnemyDied, hudText: { add: (l) => hud.push(l) },

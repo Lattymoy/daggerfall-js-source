@@ -135,16 +135,16 @@ test('CROWN1 A BOUT: a challenge said to the one challenged, its accept beginnin
     assert.equal(sieges(wb, 'hp').filter((m) => m.h < m.m).length, 0, 'never a third\'s blow, never a heal between them');
     await h.until(h.now() + 1000);
     await say(wa, { k: 'blow', to: wb.att.id, w: 123, m: 9, d: 50, r: 0 });
-    assert.equal(sieges(wc, 'hp').at(-1).h, 270, 'the bout\'s blow, judged');
+    assert.equal(sieges(wc, 'hp').at(-1).h, 310, 'the bout\'s blow, judged');   // PIN MOVED (PWR5): was 270 (320 - 50) - every player fighter 360, Renown buys no PvP health
     await say(wa, { k: 'cast', to: wb.att.id, d: 20, h: 1 });
-    assert.equal(sieges(wc, 'hp').at(-1).h, 270, 'never a heal on the one you fight');
+    assert.equal(sieges(wc, 'hp').at(-1).h, 310, 'never a heal on the one you fight');   // PIN MOVED (PWR5): was 270 - every player fighter 360, Renown buys no PvP health
     await fell(h, wa, wb);
     const end = sieges(wc, 'bend').at(-1);
     assert.deepEqual(end, { t: 'siege', k: 'bend', n: 1, w: wa.att.id, l: wb.att.id, c: 1 });
     assert.deepEqual(sieges(wc, 'lad').at(-1).l, [[wa.att.id, 1, 0], [wb.att.id, 0, 1]]);
     assert.equal(r.room._siege.battle.bout, null);
     const f = r.room._siege.fighters;
-    assert.deepEqual([f[wa.att.sub].hp, f[wb.att.sub].hp, f[wb.att.sub].down], [320, 320, false], 'both whole again');
+    assert.deepEqual([f[wa.att.sub].hp, f[wb.att.sub].hp, f[wb.att.sub].down], [360, 360, false], 'both whole again');   // PIN MOVED (PWR5): was [320, 320, false] - every player fighter 360, Renown buys no PvP health
     const won = sieges(wa, 'won');
     assert.equal(won.length, 1);
     assert.equal(sieges(wb, 'won').length + sieges(wc, 'won').length, 0, 'the winner\'s alone');

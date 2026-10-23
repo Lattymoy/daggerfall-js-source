@@ -37,6 +37,7 @@ import { markOutCold } from '../../src/systems/survival/needs.js';   // AUDIT C&
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { noteMyBlow, myShare, contributionParty } from '../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const AST = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -106,7 +107,7 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     foes, foeDeps, ARENA_PUPPET_OWNER, blowClassOf, feudWeakBlow, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
     markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied, reportPlayerKill,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
-    partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor,   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
+    partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor, noteMyBlow, myShare, contributionParty,   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
     ownRides: () => false,   // PSCALE-OWN / SUMMON-SYNC: nothing of mine on the own lane here
     damageShieldPool: (e, n) => n, attemptSoulTrap, peerSoulTrapOf, fillEmptyTrap, isAzurasStarEquipped: () => false,
     hudText: { add: (l) => log.hud.push(l) }, sayEnemyDied, SOUL_TRAP_TEXT: { trapSuccess: 'ok', trapFail: 'fail', trapNoneEmpty: 'none' },   // LOOT7-CHECK DUNGEON-DIED: the notice, onto the harness's line
@@ -508,7 +509,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
       foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
       appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
       renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), egFindStruck: async () => false,   // PIN MOVED (EG-E3): the joiner's door asks the dungeon's find beside the kill report (systems/eliteGates/egFind.js)
-      rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [],
+      rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], noteMyBlow, myShare, contributionParty,
       dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam
       sayEnemyDied, hudText: { add: () => {} },   // LOOT7-CHECK DUNGEON-DIED: the striker's notice (test/systems/loot7check.test.js reads its line)
       liveStat: () => 50, playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,

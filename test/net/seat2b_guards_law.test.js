@@ -68,19 +68,19 @@ test('SEAT2b part two (c) A GUARD\'S BEAT: it marks an attacker within its reach
   beat(b, fs, T + 2000);
   assert.deepEqual(g.atk, { at: T + 3000, to: 'A' }, 'within two metres: a blow wound up a beat');
   const hit = beat(b, fs, T + 3000).find((e) => e.k === 'nhit');
-  assert.deepEqual(hit, { k: 'nhit', n: 'n0', to: 'A', h: 300, m: 320, fell: false });
-  assert.equal(a.hp, 300);
+  assert.deepEqual(hit, { k: 'nhit', n: 'n0', to: 'A', h: 340, m: 360, fell: false });   // PIN MOVED (PWR5): was h 300, m 320 - every player fighter 360, Renown buys no PvP health (the guard's own 20 unmoved)
+  assert.equal(a.hp, 340);   // PIN MOVED (PWR5): was 300 - every player fighter 360, Renown buys no PvP health
   beat(b, fs, T + 4000);
   assert.equal(g.atk?.at, T + 5000, 'the next a blow\'s time after the last began');
   a.pose = { x: 0, y: 0, z: -25 * M };   // stepped away in the wind-up
   assert.deepEqual(beat(b, fs, T + 5000).filter((e) => e.k === 'nhit'), []);
-  assert.equal(a.hp, 300);
+  assert.equal(a.hp, 340);   // PIN MOVED (PWR5): was 300 - every player fighter 360, Renown buys no PvP health
   // a protected fighter takes nothing
   const b2 = newBattle({ kind: 'siege', tier: 'palace', startMs: T, field: FIELD, works: worksOf([0, -1, 0, 0, 1], 'palace') });
   const p = fighter('P', 'attack', 0, -38.5, { safeTo: T + 60_000 });
   beat(b2, [p], T); assert.ok(b2.npcs[0].atk);
   assert.deepEqual(beat(b2, [p], T + 1000).filter((e) => e.k === 'nhit'), []);
-  assert.equal(p.hp, 320);
+  assert.equal(p.hp, 360);   // PIN MOVED (PWR5): was 320 - every player fighter 360, Renown buys no PvP health
   // past the leash: let go, home
   const b3 = newBattle({ kind: 'siege', tier: 'palace', startMs: T, field: FIELD, works: worksOf([0, -1, 0, 0, 1], 'palace') });
   const far = fighter('F', 'attack', 0, -30);

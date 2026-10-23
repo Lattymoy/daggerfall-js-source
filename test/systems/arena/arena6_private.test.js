@@ -172,7 +172,7 @@ test('ARENA6 THE BOUT: the host\'s go opens a refereed casual bout between the t
   assert.equal(readArenaOut(last(brann, 'st')).me, 'p1', 'Brann the Blue');
   assert.equal(readArenaOut(last(gull, 'st')).me, '', 'Gull in the stands');
   assert.deepEqual(st.f.map((f) => [f[0], f[1], f[3], f[4]]), [['p0', 'Alva', ARENA_PRIVATE_VITALITY, ARENA_PRIVATE_VITALITY], ['p1', 'Brann', ARENA_PRIVATE_VITALITY, ARENA_PRIVATE_VITALITY]], 'EQUAL HEALTH: level 3 and level 50 alike');
-  assert.notEqual(pvpVitality(3), pvpVitality(50), 'a rated bout would have held them apart');
+  assert.deepEqual([pvpVitality(3), pvpVitality(50)], [ARENA_PRIVATE_VITALITY, ARENA_PRIVATE_VITALITY], 'PWR5: a rated bout holds them equal too');   // PIN MOVED (PWR5): was notEqual - a rated bout held level 3 and level 50 apart (306, 400); every player fighter 360, Renown buys no PvP health
   assert.equal(ARENA_PRIVATE_VITALITY, pvpVitality(30), 'a level-30 fighter\'s rated vitality - the middle of the range');
   assert.ok(gull.sent.some((m) => m.t === 'join' && m.id === 'peer-alva') && gull.sent.some((m) => m.t === 'join' && m.id === 'peer-brann'), 'the stands see both fighters come onto the sand');
   // the fighters' places are their marks, never the terrace their sockets last said

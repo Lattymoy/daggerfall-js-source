@@ -976,6 +976,7 @@ import { createFestivalStage } from './seatFestival.js';   // FESTIVAL-STAGE: a 
 import { drawBanner } from '../ui/heraldryArt.js';   // GUILD1d: ...its heraldry painted on it
 import { heraldryLookup } from '../ui/heraldrySwatch.js';   // HERALDRY-SHOWN: a guild's heraldry by its tag, off what this client holds
 import { AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights, CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S } from '../render/auraRing.js'; import { peerBodyYaw } from '../net/peer/peerClimb.js'; import { compiledPass } from '../render/glProgram.js';   // WB9g: Dagon's Fire at a wearer's feet; SHADOW-CLOAK: a peer's facing, the cloak's front (on this line, so no cite below it moves); AURA-STALL: its pass built once its program is done
+import { PVP_TEMPLATE, templateSheet, templateWeapon } from '../combat/pvpTemplate.js';   // PWR5: a refereed lane's blow on the template
 import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelWearDamage, duelStandIn } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists - INT8/INT9: the striker's half alone, the relay referees (AUDIT C&C H5: against the neutral stand-in)
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
@@ -22232,7 +22233,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!duelMgr.fighting) return siegeStrikeOut(to, by, weapon, swing, drawMs, { off });   // AUDIT-SEATS G5: outside a duel, my shaft on a battle's foe (`to`)
     const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
     const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
-    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());
+    const r = resolveDuelStrike({ by, a: templateSheet(a), ...(w ? { w: templateWeapon(w) } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());   // PWR5: a refereed lane's blow on the template (combat/pvpTemplate.js); the wire's `w` the weapon the look holds
     if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); return true; }
     const n = duelMgr.blow('strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at });
     if (n) { _duelSent.set(n, { kind: 'strike', weapon }); _duelLastWeapon = weapon ?? null; if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
@@ -22243,7 +22244,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const duelSpellOut = (peerId, sp) => {
     if (!duelMgr.fighting) return siegeSpellOut(peerId, sp);   // AUDIT-SEATS G5: outside a duel, my spell on a siege's foe
     if (peerId !== duelMgr.opponent) return false;
-    const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));
+    const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, PVP_TEMPLATE.level, duelStandIn(), null));   // PWR5: at the template's level, no caster's powers
     if (!(harm > 0)) return false;
     const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });
     if (n) { _duelSent.set(n, { kind: 'spell', weapon: null }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
@@ -22299,7 +22300,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (Math.hypot(me[0] - at[0], me[2] - at[1]) / SIEGE_UNITS_PER_M > SIEGE_REACH.melee + size) return false;
     const weapon = weaponRig.playerWeapon.strikingWeapon;
     const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(weaponRig.playerWeapon.machine?.state);
-    const r = resolveDuelStrike({ by: 'melee', a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(weaponRig.playerWeapon.offStrike ? { off: true } : {}) }, duelStandIn());
+    const r = resolveDuelStrike({ by: 'melee', a: templateSheet(a), ...(w ? { w: templateWeapon(w) } : {}), ...(sw ? { sw } : {}), ...(weaponRig.playerWeapon.offStrike ? { off: true } : {}) }, duelStandIn());   // PWR5: the template
     if (r.dmg > 0) {
       const held = weapon ? (composeLook(playerEntity)?.items ?? []).find((i) => i?.group === 'Weapons' && i.templateIndex === weapon.templateIndex) ?? null : null;
       siegeSession.workBlow(to, { w: weapon ? weapon.templateIndex : -1, m: held?.material ?? 0, d: r.dmg, r: siegeBlowKind('melee') });
@@ -22314,7 +22315,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const battle = royalSession?.active() ? royalSession : siegeSession;
     if (!to || !battle?.active() || !battle.foes().includes(to)) return wildStrikeOut(to, by, weapon, swing, drawMs, { off });   // WILD1: not the battle's - perhaps a fair player of the open zone's
     const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
-    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}), ...(off ? { off } : {}) }, duelStandIn());
+    const r = resolveDuelStrike({ by, a: templateSheet(a), ...(w ? { w: templateWeapon(w) } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}), ...(off ? { off } : {}) }, duelStandIn());   // PWR5: the template
     if (r.dmg > 0) {
       const held = weapon ? (composeLook(playerEntity)?.items ?? []).find((i) => i?.group === 'Weapons' && i.templateIndex === weapon.templateIndex) ?? null : null;
       battle.blow(to, { w: weapon ? weapon.templateIndex : -1, m: held?.material ?? 0, d: r.dmg, r: siegeBlowKind(by) });
@@ -22351,7 +22352,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  (combat/siegeCombat.js siegeSpellNumbers), to the referee as a cast (it clips, and bounds the rate). */
   const siegeSpellOut = (peerId, sp) => {
     if (!siegeSession?.isFoe(peerId)) return wildSpellOut(peerId, sp);   // WILD1: not the siege's - perhaps a fair player of the open zone's
-    const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));
+    const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, PVP_TEMPLATE.level, duelStandIn(), null));   // PWR5: at the template's level, no caster's powers
     return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false));
   };
   /** AUDIT-SEATS G5: A GIFT OF MINE ON A SIEGE'S SIDE-MATE - its Heal Health, counted as the mate's own client would land
@@ -25772,7 +25773,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     duelMgr.tick();
     if (duelClaims.due()) duelClaims.offer();   // INT8: a bout's receipt the service has not settled yet, offered again on its wait
     const setsWere = setsDueling();
-    setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigil/sigilSets.js); AUDIT 625 P2: and a bout between players
+    setSetsDueling(!!duelMgr.live || arenaPvpLive() || !!siegeSession?.active?.() || !!royalSession?.active?.());   // PWR5: and a siege's and the Royal Tourney's - every refereed lane on the template   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigil/sigilSets.js); AUDIT 625 P2: and a bout between players
     if (setsDueling() !== setsWere) computeEntityMods(playerEntity);   // SET3: the stat tiers leave with the duel's first frame and return with its last
     // my ring rose or fell: the onlookers hear it on the next frame - in a CELL room, the only one whose foes frame carries
     // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)

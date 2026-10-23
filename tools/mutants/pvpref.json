@@ -482,7 +482,7 @@
  {
   "name": "PVPREF-blow-unclipped",
   "file": "src/net/siege/siegeRef.js",
-  "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "old": "  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "new": "  const got = Math.min(want, to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
    "test/systems/pvpref_law.test.js",
@@ -492,8 +492,8 @@
  {
   "name": "PVPREF-blow-past-left",
   "file": "src/net/siege/siegeRef.js",
-  "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
-  "new": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "old": "  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "new": "  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
    "test/systems/pvpref_law.test.js"
   ]
@@ -501,8 +501,8 @@
  {
   "name": "PVPREF-blow-fractional",
   "file": "src/net/siege/siegeRef.js",
-  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
-  "new": "  const want = Math.max(0, Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "new": "  const want = Math.max(0, Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
    "test/systems/pvpref_law.test.js"
   ]
@@ -510,8 +510,8 @@
  {
   "name": "PVPREF-blow-below-nought",
   "file": "src/net/siege/siegeRef.js",
-  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
-  "new": "  const want = Math.trunc(Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "old": "  const want = Math.max(0, Math.trunc(Number(d) || 0));\n  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+  "new": "  const want = Math.trunc(Number(d) || 0);\n  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
   "tests": [
    "test/systems/pvpref_law.test.js"
   ]

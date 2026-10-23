@@ -459,11 +459,11 @@ test('RENOWN1 a foe you fought: it pays once when it dies within RENOWN_ASSIST_M
   _resetRenownKillsForTests();
   // THE DOORS: my blow stamps and every death asks - in both foe pools, a copy's death included; the watch never
   const ex = src('src/scenes/exteriorFoes.js'), dg = src('src/scenes/dungeonContext.js'), cg = src('src/scenes/cityGuards.js');
-  assert.match(ex, /if \(f\.dead[^\n]*\) return;[^\n]*\n(?:\s+const bout = [^\n]*\n)?\s+if \(fromPlayer && !peer(?: && !bout)?\) renownFoeStruck\(f\);/,   // ARENA2: never a bout fighter's
+  assert.match(ex, /if \(f\.dead[^\n]*\) return;[^\n]*\n(?:\s+const bout = [^\n]*\n)?\s+if \(fromPlayer && !peer(?: && !bout)?\) (?:\{ )?renownFoeStruck\(f\);(?: noteMyBlow\(f, damage\); \})?/,   // ARENA2: never a bout fighter's; PIN MOVED (PWR5): my share noted with it
     'the outdoor door stamps my blow before a puppet\'s divert');   // PIN MOVED (AUDIT NAV2 F55): the dead check carries the shipmate's guard now - a blow that lands nothing stamps nothing
   assert.match(ex, /f\.dead = true;\n(?:\s+if \(fromPlayer && !peer\) reportPlayerKill\([^\n]*\n)?\s+renownFoeDied\(f\);\s+\/\/ RENOWN1: whoever struck last/);   // SET2: the kill told as mine may stand between
   assert.match(ex, /function puppetDie\(f\) \{[\s\S]{0,400}?f\.dead = true;\n\s+renownFoeDied\(f\);/, 'an owner\'s foe that fell');
-  assert.match(dg, /if \(foe\.dead[^\n]*\) return;[^\n]*\n(?:\s+const bout = [^\n]*\n)?\s+if \(fromPlayer && !peer(?: && !bout)?\) renownFoeStruck\(foe\);/,   // ARENA2: never a bout fighter's
+  assert.match(dg, /if \(foe\.dead[^\n]*\) return;[^\n]*\n(?:\s+const bout = [^\n]*\n)?\s+if \(fromPlayer && !peer(?: && !bout)?\) (?:\{ )?renownFoeStruck\(foe\);(?: noteMyBlow\(foe, damage\); \})?/,   // ARENA2: never a bout fighter's; PIN MOVED (PWR5): my share noted with it
     'the dungeon door stamps a joiner\'s blow before the divert');   // PIN MOVED (CREW-COMPANIONS): the dead check carries the companion's guard, as the outdoor door's carries the shipmate's
   assert.match(dg, /foe\.dead = true;\n(?:\s+if \(fromPlayer && !peer\) reportPlayerKill\([^\n]*\n)?\s+renownFoeDied\(foe\);/);   // SET2: as above
   assert.match(dg, /if \(r\.d === 1\) \{ if \(!f\.dead\) \{[^}]*renownFoeDied\(f\); \}/, 'a joiner\'s copy that the host\'s frame says fell');

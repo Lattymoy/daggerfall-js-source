@@ -50,6 +50,7 @@ import { planTake, applyTransfer } from '../../src/systems/item/itemTransfer.js'
 import { runBulk, bulkVerdict } from '../../src/ui/storeBulk.js';
 import '../../src/systems/card/cardSources.js';   // CARDS9's death handler registers at import, as the hosts load it
 import '../../src/scenes/physicalItemsLayer.js';   // PI1's
+import { noteMyBlow, myShare, contributionParty, _resetPartyScaleForTests } from '../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 installForaging(); installSmithing(); installHealingSupply(); installRestItemLoot(); installSurvivalLoot();   // the hosts' order (scenes/shared.js), and the corpse food the online room mints
 setPref(LOOT_RARITY_KEY, true);   // the loot ladder - forced on online (OL1)
@@ -138,7 +139,7 @@ function relay() {
 
 /** ONE PEER: a character (its level, Luck, Renown, dice and its own mod switch), and the real dungeon host's loot
  *  doors over one layout pile and one layout foe - built as the build builds them, on this peer's own roll. */
-function peer(net, { id, level, luck, renown, seed, host, foraging, partners, characterId, seat = { id: host ? id : null } }) {
+function peer(net, { id, level, luck, renown, seed, host, foraging, partners, characterId, seat = { id: host ? id : null }, extra = {} }) {   // `extra`: a test's own doors over the mount's (PWR5's spies)
   const player = { level, gender: 'male', name: id, characterId, stats: { luck, strength: 60 }, activeEffects: [], items: [], goldPieces: 0 };
   const said = [];   // what the mid-screen line said to this player (the refusal's line)
   const own = lcg(seed);
@@ -159,7 +160,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     _foesFrom: host ? null : seat.id, _sharedStamp: `st${seed}`, _foesSeqIn: -1, clearSurplus: () => {},   // WORLD2: the host this client follows, and the seat's handover
     addItem, stacksWith, isGoldPieces, addGoldPieces, isEquipped, unequipItem, neverPeerHanded, notCarried,   // AUDIT AUTO-HOLD: the give asks it (offline here: no filter)
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS, corpseTextureOf,   // AUDIT DEX A1: the corpse mints read it
-    generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
+    generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons, noteMyBlow, myShare, contributionParty,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
     wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
@@ -168,6 +169,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     droppedLoot: { physical: { owns: () => false }, pileFor: () => null, lootFinds: () => [] }, lootCrown: (pos) => pos, droppedTorches: { activate: () => false }, plaqueActionFor: () => null,
     activateSearchable: () => 0, setMidScreenText: (t) => said.push(t), activeOverlay: null, silverFindKey: () => null, silverFindAt: () => {},
     quickLootTake, showPickups: null, lootPile: () => null, pileBody: () => null, openInventory: () => null, RANDOM_TREASURE_ARCHIVE: 216,
+    ...extra,
   };
   const h = mount(`
     ${declSrc('LOOT_KEY_RE')}
@@ -391,6 +393,32 @@ test('PARTY-LOOT: each player\'s BONUS is their own - rolled at their own Renown
   const back = reenter(7);
   assert.equal(KEYS.flatMap((k) => mineRows(shown(back, k))).length, mineA.length - 1, 'a character loaded from that save finds every bonus piece but the one it took');
   assert.ok(!mineRows(shown(back, key)).includes(sig(mine)) || mineA.filter((x) => x === sig(mine)).length > 1, 'and not that one');
+});
+
+test('PWR5 PAY BY CONTRIBUTION, THE ROOM\'S LOOT (bible/05-Combat/Power-Arc.md section 8; Mac: "Pay by contribution"): bodies of a fight of two - the shared base any member may take rolls its sigils as a fight of one; each player\'s own bonus at the fight as it pays THEM, their share of it: the body A carried pays A the fight\'s whole two, every other body and every pile a fight of one, and B, who struck nothing, a fight of one everywhere (mutants: the base at the crowd\'s count; the bonus at the crowd\'s count)', () => {
+  RL._resetRoomLootForTests();
+  resetQuickLoot();
+  _resetPartyScaleForTests();
+  const net = relay();
+  const seat = { id: 'aaaa' };
+  const stamps = [], paid = { aaaa: { body: [], pile: [] }, bbbb: { body: [], pile: [] } };
+  const extra = (id) => ({
+    _sharedFoe: () => true, fightN: () => 2,   // every body a fight of two
+    stampWonWeapons: (items, n, o) => { stamps.push(n); return stampWonWeapons(items, n, o); },
+    rollRoomBonus: (o) => { paid[id][o.pile ? 'pile' : 'body'].push(o.fighters); return rollRoomBonus(o); },
+  });
+  const t0 = clock.t;   // the room's clock put back after: a later test's seeded base reads it
+  const A = peer(net, { id: 'aaaa', level: 30, luck: 70, renown: 45, seed: 11, host: true, foraging: true, partners: [3], characterId: 'char-a', seat, extra: extra('aaaa') });
+  const B = peer(net, { id: 'bbbb', level: 3, luck: 30, renown: 1, seed: 29, host: false, foraging: false, partners: [30], characterId: 'char-b', seat, extra: extra('bbbb') });
+  try {
+    noteMyBlow(A.state.foes[0], 1e6);   // A carried the first body's fight whole
+    fall({ net, A, B });
+    for (const key of KEYS) { shown(A, key); shown(B, key); }
+    assert.ok(stamps.length > 0 && stamps.every((n) => n === 1), `the room's base, every body and pile: a fight of one (${stamps})`);
+    assert.deepEqual([...new Set(paid.aaaa.body)].sort(), [1, 2], `A's bonus: the body A carried the fight's two, the rest a fight of one (${paid.aaaa.body})`);
+    assert.deepEqual([...new Set(paid.bbbb.body)], [1], 'B struck nothing: a fight of one');
+    assert.deepEqual([...new Set([...paid.aaaa.pile, ...paid.bbbb.pile])], [1], 'a pile no fight\'s');
+  } finally { _resetPartyScaleForTests(); clock.t = t0; }
 });
 
 test('PARTY-LOOT, HOST ARBITRATES (Mac, 2026-10-15: "Host arbitrates"): the SAME piece taken by two players in one breath goes to ONE of them - the host\'s own take against a joiner\'s, two joiners\' against each other - and the loser is told "Someone took that first." and holds none of it (both kept it); the host\'s own take and a player\'s bonus wait on nobody', () => {

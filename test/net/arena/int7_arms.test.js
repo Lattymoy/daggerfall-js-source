@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  armsTop, armsOf, armsOk, ARMS_TOP_MAX, siegeBlowMax, refereeBlow, newFighter, SIEGE_HIT, SIEGE_THUNDERLOCK, SIEGE_WEAPON_MAX,
+  armsTop, armsOf, armsOk, ARMS_TOP_MAX, siegeBlowMax, PVP_TEMPLATE_METAL, refereeBlow, newFighter, SIEGE_HIT, SIEGE_THUNDERLOCK, SIEGE_WEAPON_MAX,
   SIEGE_BONUS_MAX, SIEGE_CRIT_MAX, siegeRoomKey, SIEGE_UNITS_PER_M,
 } from '../../../src/net/siege/siegeRef.js';
 import { arenaBlowCap, arenaArmsOk, ARENA_ARMS_TOP_MAX, ARENA_HIT, ARENA_MOD_MAX, ARENA_TICK_MS, ARENA_FLOOR_CENTRE } from '../../../src/net/arena/arenaLaw.js';
@@ -151,9 +151,9 @@ test('INT7 THE RELAY: a striker\'s signed arms ride its socket from the hello, a
     for (const ws of [a, b, c]) await say(ws, { k: 'in' });
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
     const hp = () => ws => ws.sent.filter((f) => f.t === 'siege' && f.k === 'hp').at(-1)?.h;
-    assert.equal(hp()(b), 400 - siegeBlowMax(123, 9, [16, 0]), 'its look\'s Dai-Katana, clipped to its pack\'s Longsword');
+    assert.equal(hp()(b), 360 - siegeBlowMax(123, PVP_TEMPLATE_METAL, [16, 0]), 'its look\'s Dai-Katana, clipped to its pack\'s Longsword');   // PIN MOVED (PWR5): was 400 - every player fighter 360, Renown buys no PvP health
     clock += 1000;
     await say(c, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
-    assert.equal(hp()(b), 400 - siegeBlowMax(123, 9, [16, 0]) - siegeBlowMax(123, 9), 'a token from before the arms: its look\'s whole bucket');
+    assert.equal(hp()(b), 360 - siegeBlowMax(123, PVP_TEMPLATE_METAL, [16, 0]) - siegeBlowMax(123, PVP_TEMPLATE_METAL), 'a token from before the arms: its look\'s whole bucket');   // PIN MOVED (PWR5): was 400 - every player fighter 360, Renown buys no PvP health; and a siege clips at the template's Steel, never the look's Daedric
   } finally { Date.now = realNow; }
 });

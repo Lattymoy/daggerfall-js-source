@@ -5,7 +5,7 @@
 // fast back, and keeps one fighter an account. bible/11-Multiplayer/Seats-Arc.md 6.1; `06-Systems/Online-Arc.md` PVP-REF.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { siegeRoomKey, SIEGE_UNITS_PER_M, SIEGE_WAVE_MS, SIEGE_PROTECT_MS, SIEGE_FIGHTERS_MAX, siegeBlowMax } from '../../../src/net/siege/siegeRef.js';
+import { siegeRoomKey, SIEGE_UNITS_PER_M, SIEGE_WAVE_MS, SIEGE_PROTECT_MS, SIEGE_FIGHTERS_MAX, siegeBlowMax, PVP_TEMPLATE_METAL } from '../../../src/net/siege/siegeRef.js';
 import { CLOSE_REPLACED } from '../../../src/net/wire.js';
 import worker from '../../../server/src/index.js';
 import { fakeRoom } from '../../fakeRoom.mjs';
@@ -25,7 +25,7 @@ async function withSiege(fn, start = 1_800_000_000_000) {
   try { await fn({ r, say, join, now: () => clock, set: (t) => { clock = t; }, step: (ms) => { clock += ms; } }); } finally { Date.now = realNow; }
 }
 
-test('PVP-REF THE ROOM: the Worker mints no object for a siege key a client made up; a siege\'s room admits a developer\'s verified account alone until SEAT2a opens it; `in` makes the account a fighter at 300 + 2 x its token\'s Renown and answers every fighter\'s vitality; a frame before `in`, and any siege frame outside a siege\'s room, is junk (mutants: the 404; the developers\' door; the vitality; the roll call)', async () => {
+test('PVP-REF THE ROOM: the Worker mints no object for a siege key a client made up; a siege\'s room admits a developer\'s verified account alone until SEAT2a opens it; `in` makes the account a fighter at the one PvP vitality whatever its token\'s Renown (PWR5) and answers every fighter\'s vitality; a frame before `in`, and any siege frame outside a siege\'s room, is junk (mutants: the 404; the developers\' door; the vitality; the roll call)', async () => {
   for (const key of ['siege:abc:1', 'siege:3021', 'siege:03021:20']) {
     const res = await worker.fetch(new Request(`https://relay.test/room/${key}`, { headers: { Upgrade: 'websocket' } }), { ROOMS: { idFromName: () => { throw new Error('minted'); } } });
     assert.equal(res.status, 404, key);
@@ -46,11 +46,11 @@ test('PVP-REF THE ROOM: the Worker mints no object for a siege key a client made
     const put = r.state.storage.put;
     r.state.storage.put = async (k, v) => { if (k === 'siege') saves++; return put(k, v); };
     await say(a, { k: 'in' });
-    assert.deepEqual(sieges(a, 'st').at(-1), { t: 'siege', k: 'st', f: [['peer-0001', 320, 320, 0]] });
+    assert.deepEqual(sieges(a, 'st').at(-1), { t: 'siege', k: 'st', f: [['peer-0001', 360, 360, 0]] });   // PIN MOVED (PWR5): was 320 - every player fighter 360, Renown buys no PvP health
     await say(b, { k: 'in' });
     assert.equal(saves, 2, 'each new fighter written at once, however soon after the last');
-    assert.deepEqual(sieges(b, 'st').at(-1), { t: 'siege', k: 'st', f: [['peer-0001', 320, 320, 0], ['peer-0002', 400, 400, 0]] });
-    assert.equal(r.room._siege.fighters['acct-peer-0002'].max, 400);
+    assert.deepEqual(sieges(b, 'st').at(-1), { t: 'siege', k: 'st', f: [['peer-0001', 360, 360, 0], ['peer-0002', 360, 360, 0]] }, 'Renown 10 and Renown 50, one vitality');   // PIN MOVED (PWR5): was 320 and 400 - every player fighter 360, Renown buys no PvP health
+    assert.equal(r.room._siege.fighters['acct-peer-0002'].max, 360);   // PIN MOVED (PWR5): was 400 - every player fighter 360, Renown buys no PvP health
     assert.ok(r.store.get('siege'), 'a new fighter checkpointed at once');
   });
   const town = fakeRoom('town:m9');
@@ -66,9 +66,9 @@ test('PVP-REF THE BLOW IN THE ROOM: judged on the striker\'s look and both last 
     const b = await join('peer-0002', 2, { lv: 50 });
     const eye = r.connect(); await r.hello(eye, 'peer-0003', at(30), { glyphs: ['dev'], look: LOOK });   // a spectator: never says `in`
     await say(a, { k: 'in' }); await say(b, { k: 'in' });
-    const top = siegeBlowMax(123, 9);
+    const top = siegeBlowMax(123, PVP_TEMPLATE_METAL);   // PIN MOVED (PWR5): a siege clips at the template's Steel, never the look's Daedric
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
-    for (const ws of [a, b, eye]) assert.deepEqual(sieges(ws, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0002', h: 400 - top, m: 400 }, 'clipped, and said to the room');
+    for (const ws of [a, b, eye]) assert.deepEqual(sieges(ws, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0002', h: 360 - top, m: 360 }, 'clipped, and said to the room');   // PIN MOVED (PWR5): was 400 - every player fighter 360, Renown buys no PvP health
     assert.equal(r.room._siege.fighters['acct-peer-0001'].clipped, 500 - top);
     step(1000);
     await say(a, { k: 'blow', to: 'peer-0002', w: 121, m: 9, d: 10, r: 0 });
@@ -91,14 +91,14 @@ test('PVP-REF THE BLOW IN THE ROOM: judged on the striker\'s look and both last 
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 10, r: 0 });
     assert.equal(sieges(b, 'hp').at(-1).h, 0, 'the fallen take no blow');
     set(f.upAt); await r.fire();
-    assert.deepEqual(sieges(eye).slice(-2), [{ t: 'siege', k: 'up', id: 'peer-0002' }, { t: 'siege', k: 'hp', id: 'peer-0002', h: 400, m: 400 }]);
+    assert.deepEqual(sieges(eye).slice(-2), [{ t: 'siege', k: 'up', id: 'peer-0002' }, { t: 'siege', k: 'hp', id: 'peer-0002', h: 360, m: 360 }]);   // PIN MOVED (PWR5): was 400 - every player fighter 360, Renown buys no PvP health
     const n = sieges(b, 'hp').length;
     step(SIEGE_PROTECT_MS - 1);
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 10, r: 0 });
     assert.equal(sieges(b, 'hp').length, n, 'risen untouched');
     step(1);
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 10, r: 0 });
-    assert.equal(sieges(b, 'hp').at(-1).h, 390);
+    assert.equal(sieges(b, 'hp').at(-1).h, 350);   // PIN MOVED (PWR5): was 390 (400 - 10) - every player fighter 360, Renown buys no PvP health
     assert.ok(now() > 0);
   });
 });
@@ -128,14 +128,14 @@ test('PVP-REF THE STEP AND THE SEAT: a fighter\'s step faster than the ceiling i
     step(1000);
     await r.pose(a, at(3)); step(500);
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 7, r: 0 });
-    assert.deepEqual(sieges(b, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0002', h: 313, m: 320 }, 'the look read back from storage');
+    assert.deepEqual(sieges(b, 'hp').at(-1), { t: 'siege', k: 'hp', id: 'peer-0002', h: 353, m: 360 }, 'the look read back from storage');   // PIN MOVED (PWR5): was h 313, m 320 - every player fighter 360, Renown buys no PvP health
     // one fighter an account
     const a2 = await join('peer-0004', 3, { tokenSub: 'acct-peer-0001' });
     assert.equal(a.closed?.code, CLOSE_REPLACED, 'the older socket goes');
     await say(a2, { k: 'in' });
     assert.equal(Object.keys(r.room._siege.fighters).length, 2, 'still one fighter an account');
-    assert.deepEqual(sieges(a2, 'st').at(-1).f.find((x) => x[0] === 'peer-0004'), ['peer-0004', 320, 320, 0], 'the account\'s fighter, spoken for by its newest socket');
-    assert.deepEqual(sieges(a2, 'st').at(-1).f.find((x) => x[0] === 'peer-0002'), ['peer-0002', 313, 320, 0], 'the roll call says the vitality left');
+    assert.deepEqual(sieges(a2, 'st').at(-1).f.find((x) => x[0] === 'peer-0004'), ['peer-0004', 360, 360, 0], 'the account\'s fighter, spoken for by its newest socket');   // PIN MOVED (PWR5): was 320 - every player fighter 360, Renown buys no PvP health
+    assert.deepEqual(sieges(a2, 'st').at(-1).f.find((x) => x[0] === 'peer-0002'), ['peer-0002', 353, 360, 0], 'the roll call says the vitality left');   // PIN MOVED (PWR5): was 313 of 320 - every player fighter 360, Renown buys no PvP health
   });
 });
 

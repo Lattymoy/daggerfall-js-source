@@ -17,7 +17,7 @@ import { fakePage } from '../hudPage.mjs';
 import { createDuelManager } from '../../src/net/duel/duelSession.js';
 import { duelVitality } from '../../src/net/duel/duelBar.js';
 import { validDuelData, validDuelRefOut } from '../../src/net/wire.js';
-import { ROYAL_RING, SIEGE_UNITS_PER_M, siegeVitality } from '../../src/net/siege/siegeRef.js';
+import { ROYAL_RING, SIEGE_UNITS_PER_M, PVP_VITALITY } from '../../src/net/siege/siegeRef.js';
 import { drawHud } from '../../src/ui/hud/hud.js';
 import { hudHealth, lastHealthLost, _resetHudVitals, mathfRound } from '../../src/ui/hud/hudVitals.js';
 import { _resetForTests as resetSettings } from '../../src/systems/settings/settings.js';
@@ -28,7 +28,7 @@ const M = SIEGE_UNITS_PER_M;
 const T = 1_800_000_000;
 const P = (x) => ({ x: 1000 * M + x * M, y: 0, z: 1000 * M, yaw: 0, pitch: 0 });
 const LOOK = { race: 'Nord', gender: 'male', faceIndex: 0, items: [] };
-const WHOLE = siegeVitality(10);   // the Royal Tourney's vitality at the Renown the harness's tokens sign
+const WHOLE = PVP_VITALITY;   // the Royal Tourney's vitality, whatever the Renown the harness's tokens sign - PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
 /** What the world host hands drawHud: my vitality off the duel manager's live duel (world.js's own entry). */
 const mine = (mgr) => duelVitality(mgr.live, 'peer-0001');
 

@@ -261,7 +261,7 @@ const netted = (pool, { self = 'mac-0001', peers = [] } = {}) => pool.setNet({ s
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const blowFrom = (pool, f, who, dmg = 0) => pool.damageFoe(f, dmg, null, null, who === 'me' ? { fromPlayer: true } : { fromPlayer: true, peer: true, peerId: who });
 
-test('SIGIL1 outdoors, driven: the owner\'s kill door marks the body\'s won weapons at the fight\'s size - four fighting it, a Magic sword from 3 - whoever struck last; a reader keeps the count the foe DIED at, since a body\'s record carries none (its Renown bonus reads it); offline the same kill marks nothing (mutants: the stamp unwired, the fight unread, the reader\'s count reset by the body\'s record)', async () => {
+test('SIGIL1 outdoors, driven: the owner\'s kill door marks the body\'s won weapons at the fight\'s size - four fighting it, a Magic sword from 3 - whoever struck last (PIN MOVED, PWR5: the fight as it pays the owner, its share of it - a fair share the whole four, a token blow a fight of one); a reader keeps the count the foe DIED at, since a body\'s record carries none (its Renown bonus reads it); offline the same kill marks nothing (mutants: the stamp unwired, the fight unread, the reader\'s count reset by the body\'s record)', async () => {
   _resetPartyScaleForTests(); _resetSigilForTests();
   setPref('lootRarity', true);
   setSigilOnline(true);
@@ -273,7 +273,7 @@ test('SIGIL1 outdoors, driven: the owner\'s kill door marks the body\'s won weap
   const sword = magicSword();
   rat.entity.items = [sword];
   for (const id of ['bob-0002', 'carl-0003', 'dave-0004']) blowFrom(owner, rat, id, 0);
-  blowFrom(owner, rat, 'me', 1);
+  blowFrom(owner, rat, 'me', 63);   // PIN MOVED (PWR5): a fair share of a fight of four - a quarter of its weighed health (100 x 2.5)
   const reader = createExteriorFoes(rig());
   netted(reader, { self: 'eve-0005' });
   reader.applyFoes('mac-0001', owner.foesFrame(true)); await settle();
@@ -288,6 +288,16 @@ test('SIGIL1 outdoors, driven: the owner\'s kill door marks the body\'s won weap
   reader.applyFoes('mac-0001', owner.foesFrame(true)); await settle();
   assert.ok(pup.dead, 'the reader\'s copy fell');
   assert.equal(pup._fightN, 4, 'and keeps the fight it died in');
+  // PWR5: the same fight of four, my blow a token one - a fight of one, a Magic sword from 2
+  const rat3 = await owner.spawnFoe(0, [12, 0, 10], { feetGiven: true });
+  rat3.entity.health = rat3.entity.maxHealth = 100;
+  const sword3 = magicSword();
+  rat3.entity.items = [sword3];
+  for (const id of ['bob-0002', 'carl-0003', 'dave-0004']) blowFrom(owner, rat3, id, 0);
+  blowFrom(owner, rat3, 'me', 1);
+  blowFrom(owner, rat3, 'bob-0002', 1000);
+  assert.ok(rat3.dead);
+  assert.deepEqual([sword3.sigil.party, sword3.sigil.power], [1, 2], 'a carry\'s token blow: no crowd\'s odds');
   // offline, the same kill
   _resetPartyScaleForTests(); _resetSigilForTests();
   const solo = createExteriorFoes(rig({ rolls: () => 0 }));
@@ -347,12 +357,12 @@ test('SIGIL1 the hosts: the session is online from the boot\'s first line and my
   _resetSigilForTests();
   // the dungeon
   const D = strip(read('src/scenes/dungeonContext.js'));
-  assert.match(D, /stampWonWeapons\(foe\.entity\.items, _sharedFoe\(foe\) \? fightN\(foe\) : 1\);\s*(?:if \(!_roomBody\) )?raiseEnemyDeath\(foe\.entity,/, 'the host\'s kill, at its fight');   // PIN MOVED (PARTY-LOOT): a room's body's sigils are its base's (at the fight's count, roomBodyBase)
+  assert.match(D, /stampWonWeapons\(foe\.entity\.items, _sharedFoe\(foe\) \? contributionParty\(fightN\(foe\), myShare\(foe, fightN\(foe\)\)\) : 1\);\s*(?:if \(!_roomBody\) )?raiseEnemyDeath\(foe\.entity,/, 'the host\'s kill, at its fight');   // PIN MOVED (PARTY-LOOT): a room's body's sigils are its base's (at the fight's count, roomBodyBase); PIN MOVED (PWR5): the fight as it pays me - my share of it
   // PIN MOVED (AUDIT 625 L5): both copies are capped now, last - after their kit, their food and their sigils, as the
   // host's death caps its own
   // PIN MOVED (AUDIT CARDS-6 A3): and each copy's own card drawn before the cap
   // PIN MOVED (PARTY-LOOT): never a room's body - a layout body's and an encounter's sigils are their base's
-  assert.match(D, /if \(r\.d === 1 && !f\.dead && !\(roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, f\._fightN \?\? 1\); dropFoeCard\(f\.entity\); capFoeLoot\(f\.entity\); \}/, 'a joiner\'s copy of the body, at the host\'s count');
+  assert.match(D, /if \(r\.d === 1 && !f\.dead && !\(roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, contributionParty\(f\._fightN \?\? 1, myShare\(f, f\._fightN \?\? 1\)\)\); dropFoeCard\(f\.entity\); capFoeLoot\(f\.entity\); \}/, 'a joiner\'s copy of the body, at the host\'s count');   // PIN MOVED (PWR5): weighed by the joiner's own share of it
   assert.match(D, /if \(wire && sf\.dead && !f\.dead && sf\.items == null && !\(roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, 1\); dropFoeCard\(f\.entity\); capFoeLoot\(f\.entity\); \}/, 'a body the room\'s memory hands an arrival');
   assert.match(D, /function rollPileItems\(\{[^\n]*\) \{[\s\S]{0,700}?rollLootRarity\([^;]*;\s*stampWonWeapons\(items, 1, \{ rolls \}\);[^\n]*\n\s*return items;/, 'every pile, at the build and the hour\'s respawn');   // PIN MOVED (PARTY-LOOT): on the roll's own dice - a room's base its seeded ones   // MERGE 2: 600 - the pile trio\'s call carries FORAGE3\'s index and luck beside REALM P0.4\'s level
   assert.match(D, /if \(r\.d !== 1\) f\._fightN = r\.n \?\? 1;/, 'a joiner reads the count off live records alone');

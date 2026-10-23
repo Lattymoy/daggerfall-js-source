@@ -912,7 +912,7 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-SIEGES-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);   // INT7: clipped to the striker's signed arms",
+    "old": "held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null, template: true }, now);   // INT7: clipped to the striker's signed arms",
     "new": "held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: null }, now);   // INT7: clipped to the striker's signed arms",
     "tests": [
       "test/net/arena/int7_arms.test.js"

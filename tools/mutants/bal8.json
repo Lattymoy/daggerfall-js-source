@@ -2,8 +2,8 @@
   {
     "name": "BAL8-the-blow-past-the-ceiling",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
-    "new": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
+    "old": "  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+    "new": "  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp);",
     "tests": [
       "test/net/siege/bal8_pvp.test.js"
     ]

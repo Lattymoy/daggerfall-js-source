@@ -12,7 +12,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 
 import { mintDuelReceipt, readDuelReceipt, verifyDuelReceipt, duelReceiptValid, DUEL_RECEIPT_V, DUEL_RECEIPT_TTL_S, DUEL_RECEIPT_MAX } from '../../../src/net/duel/duelReceipt.js';
 import { newDuelRef, duelNote, duelOpen, duelBlow, duelPose, duelForfeit, duelStep, duelBoutOf, duelVitals, DUEL_REF } from '../../../src/net/duel/duelRef.js';
-import { ROYAL_RING, SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, SIEGE_CASTS } from '../../../src/net/siege/siegeRef.js';
+import { ROYAL_RING, SIEGE_UNITS_PER_M, SIEGE_HIT, PVP_VITALITY, PVP_TEMPLATE_METAL, siegeBlowMax, SIEGE_CASTS } from '../../../src/net/siege/siegeRef.js';
 import { mintRoyalReceipt, verifyRoyalReceipt } from '../../../src/net/siege/siegeReceipt.js';
 import { validDuelRefOut, DUEL_REF_RECEIPT_MAX, parseClient } from '../../../src/net/wire.js';
 import { WILD_RECEIPT_MAX } from '../../../src/net/wild/wildReceipt.js';
@@ -67,7 +67,7 @@ function opened({ now = 10_000, a = at(-2), b = at(2) } = {}) {
 
 test('INT8 THE REFEREE\'S LAW, THE BOUT: set only on a start whose ask and yes it saw, with this duel\'s id, inside their windows; neither fighter in another bout; both bodies inside the ring; both whole at the Royal Tourney\'s vitality (mutants: a start with no yes set; a stale yes set; a fighter in two bouts; a ring far from the bodies)', () => {
   const { st, bout, t0 } = opened();
-  assert.deepEqual(duelVitals(bout), [['peer-a', siegeVitality(10), siegeVitality(10)], ['peer-b', siegeVitality(50), siegeVitality(50)]]);
+  assert.deepEqual(duelVitals(bout), [['peer-a', PVP_VITALITY, PVP_VITALITY], ['peer-b', PVP_VITALITY, PVP_VITALITY]], 'Renown 10 and Renown 50, one vitality');   // PIN MOVED (PWR5): was siegeVitality(10) and siegeVitality(50), 320 and 400 - every player fighter 360, Renown buys no PvP health
   assert.deepEqual([bout.startMs, bout.endMs], [t0 + ROYAL_RING.countdownMs, t0 + ROYAL_RING.countdownMs + ROYAL_RING.boutMs]);
   assert.equal(duelBoutOf(st, 'acct-a'), bout);
   const tryOpen = (notes, { a = at(-2), b = at(2), c = C, now = 50_000, s = 'duel999999' } = {}) => {
@@ -97,10 +97,10 @@ test('INT8 THE REFEREE\'S LAW, THE BLOWS: none before the count runs; a strike c
   const s = bout.startMs;
   assert.equal(duelBlow(st, 'acct-a', 'peer-b', { d: 50, held: { w: -1, m: 0 } }, s - 1).why, 'not-live', 'the count');
   const r = duelBlow(st, 'acct-a', 'peer-b', { d: 999, held: { w: 123, m: 9 } }, s);
-  assert.deepEqual([r.ok, r.dealt], [true, siegeBlowMax(123, 9)], 'clipped to a Daedric Dai-Katana\'s bucket');
+  assert.deepEqual([r.ok, r.dealt], [true, siegeBlowMax(123, PVP_TEMPLATE_METAL)], 'clipped to a Dai-Katana\'s bucket - the template\'s Steel one');   // PIN MOVED (PWR5): a duel clips at the template's metal, never the claim's Daedric
   const fresh = opened();   // PIN MOVED (BAL8, bible/05-Combat/Balance-Arc.md section 14): a bout of its own - the blow above spent 124 of the 180 the referee's harm ceiling allows in any 5 s
   const signed = duelBlow(fresh.st, 'acct-a', 'peer-b', { d: 999, held: { w: 123, m: 9 }, wa: [16, 0] }, fresh.bout.startMs);
-  assert.equal(signed.dealt, siegeBlowMax(123, 9, [16, 0]), 'INT7: and the pack\'s signed reach');
+  assert.equal(signed.dealt, siegeBlowMax(123, PVP_TEMPLATE_METAL, [16, 0]), 'INT7: and the pack\'s signed reach');
   assert.equal(duelBlow(st, 'acct-a', 'peer-c', { d: 10, held: { w: -1, m: 0 } }, s + 600).why, 'not-opponent');
   assert.equal(duelBlow(st, 'acct-a', 'peer-b', { d: 10, held: null }, s + 900).why, 'weapon', 'a weapon the look does not hold');
   const casts = [1, 2, 3, 4].map((k) => duelBlow(st, 'acct-b', 'peer-a', { d: 999, r: SIEGE_HIT.Spell }, s + 1000 + k * 100));
@@ -184,7 +184,7 @@ test('INT8 THE RELAY: a start is routed only where the referee sets a bout on it
   assert.deepEqual(refs(a, 'no'), [{ t: 'dref', k: 'no', s: 'nohandshk1', why: 'timeout' }]);
   await fight(a, b);
   assert.equal(b.sent.filter((m) => m.t === 'duel' && m.data.k === 'start').length, 1, 'the start routed');
-  const whole = siegeVitality(10);
+  const whole = PVP_VITALITY;   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
   for (const [ws, op] of [[a, 'peer-0002'], [b, 'peer-0001']]) {
     const g = refs(ws, 'bout')[0];
     assert.deepEqual(g, { t: 'dref', k: 'bout', s: S, op, ms: ROYAL_RING.countdownMs, h: [['peer-0001', whole, whole], ['peer-0002', whole, whole]] });
@@ -203,7 +203,7 @@ test('INT8 THE RELAY, THE BLOWS: a strike is the referee\'s - routed to nobody, 
   assert.equal(refs(a, 'hp').length, 0, 'nothing lands in the count');
   step(ROYAL_RING.countdownMs + 1);
   await say(a, { to: 'peer-0002', s: S, k: 'strike', n: 2, by: 'melee', p: [P(-2).x, 0, P(-2).z], d: 999, w: { t: 123, m: 9, c: 100 } });
-  const cap = siegeBlowMax(123, 9, [16, 0]), whole = siegeVitality(10);
+  const cap = siegeBlowMax(123, 9, [16, 0]), whole = PVP_VITALITY;   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
   for (const ws of [a, b]) assert.deepEqual(refs(ws, 'hp').at(-1), { t: 'dref', k: 'hp', s: S, by: 'peer-0001', to: 'peer-0002', d: cap, r: SIEGE_HIT.Melee, h: [['peer-0001', whole, whole], ['peer-0002', whole - cap, whole]] }, 'the Dai-Katana its look holds, clipped to the Longsword its pack does');
   assert.equal(b.sent.filter((m) => m.t === 'duel' && (m.data.k === 'strike' || m.data.k === 'spell')).length, 0, 'routed to nobody: the defender resolves nothing');
   step(300);

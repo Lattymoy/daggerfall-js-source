@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { mintWildReceipt, readWildReceipt, verifyWildReceipt, wildReceiptValid, WILD_RECEIPT_V, WILD_RECEIPT_TTL_S, WILD_RECEIPT_MAX, WILD_FALL_GRACE_S, WILD_WORN_MAX } from '../../src/net/wild/wildReceipt.js';
 import { mintDuelReceipt, verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';
 import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_REF } from '../../src/net/wild/wildRef.js';
-import { SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, SIEGE_CASTS } from '../../src/net/siege/siegeRef.js';
+import { SIEGE_UNITS_PER_M, SIEGE_HIT, PVP_VITALITY, siegeBlowMax, SIEGE_CASTS } from '../../src/net/siege/siegeRef.js';
 import { mintRemainsOrder, verifyOrder, remainsDigest, REMAINS_RECORDS_MAX, mintToken, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { newRemains, foldFall, takeFrom, remainsWords, remainsFit, wildRemainsKey, WILD_REMAINS_BYTES_MAX, WILD_RECORD_BYTES_MAX, remainsSpent, remainsTakeover, remainsEvict, remainsOf, WILD_TOMB_MIN_MS, WILD_STALL_MS } from '../../src/net/wild/wildLaw.js';
 import { takeWildDeath, wornOffer, wildRecord, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook } from '../../src/systems/wild/wildDropLaw.js';
@@ -78,7 +78,7 @@ function zone(now = 10_000) {
 
 test('INT9 THE REFEREE\'S LAW, WHO FIGHTS: a blow lands only between two fighters that BOTH said they stand in the zone, neither down, never kin (the party, its truce, a duel\'s two), never one\'s self; whole at the Royal Tourney\'s vitality (mutants: one fighter\'s word enough; kin unread; a down fighter struck)', () => {
   let st = zone();
-  const whole = siegeVitality(10);
+  const whole = PVP_VITALITY;   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
   assert.deepEqual(wildVitals(st, 'acct-a', 'acct-b'), [['peer-a', whole, whole], ['peer-b', whole, whole]]);
   assert.equal(wildBlow(st, 'acct-a', 'acct-b', { d: 5, held: FIST, kin: true, rid: '0123456789ab' }, 10_100).why, 'kin');
   assert.equal(wildBlow(st, 'acct-a', 'acct-a', { d: 5, held: FIST }, 10_100).why, 'no-fighter');
@@ -103,7 +103,7 @@ test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look h
   // the mend: unstruck for mendMs, whole
   t += WILD_REF.mendMs;
   wildBlow(st, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'aaaaaaaaaaac' }, t);
-  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], siegeVitality(10), 'whole again');
+  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], PVP_VITALITY, 'whole again');   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
   // fists until B falls
   let fall = null;
   for (let k = 0; k < 400 && !fall; k++) fall = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: `bbbbbbbbb${String(k).padStart(3, '0')}` }, t += 300).fall;
@@ -133,7 +133,7 @@ test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look h
   wildZone(st2, 'acct-a', { id: 'peer-a2', lv: 10 }, true, at(1), t2 + 2000);
   assert.equal(wildBlow(st2, 'acct-b', 'acct-a', { d: 1, held: FIST }, t2 + 2300).why, 'down', 'still down');
   wildZone(st2, 'acct-a', { id: 'peer-a2', lv: 10 }, true, at(1), t2 + WILD_REF.riseMs);
-  assert.deepEqual(wildVitals(st2, 'acct-a', 'acct-b')[0], ['peer-a2', siegeVitality(10), siegeVitality(10)], 'risen whole, under its socket now');
+  assert.deepEqual(wildVitals(st2, 'acct-a', 'acct-b')[0], ['peer-a2', PVP_VITALITY, PVP_VITALITY], 'risen whole, under its socket now');   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
 });
 
 /** `by`'s fists on `to` until it falls, from `t`: the fall. */
@@ -156,7 +156,7 @@ test('INT9 THE REFEREE\'S LAW, REACH: a blow\'s reach is from the fighters\' bel
 });
 
 test('INT9 (AUDIT) THE REFEREE\'S LAW, NO FREE BAR: a word off and on keeps the bar (whole again only away WILD_REF.riseMs, or unstruck WILD_REF.mendMs after it stood in the zone as long); a fighter takes the bar it carries from another room (the hub\'s word, newer than when it left this one); a fallen carried is down until its rise; a socket gone is out of the zone and its place a newcomer\'s; a full room\'s oldest fall is handed back to be signed; a building\'s fall signed at once; the pick signs what the offer showed (mutants: a word off and on a heal; the carry unread; the eviction unsigned; the gone socket still fighting)', () => {
-  const whole = siegeVitality(10);
+  const whole = PVP_VITALITY;   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
   // off and on: no heal
   let st = zone();
   wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: 'eeeeeeeeeee1' }, 10_300);
@@ -421,7 +421,7 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   await say(b, { k: 'zone', z: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 3, by: 'melee', p: W(-1), d: 999 });
-  const whole = siegeVitality(10), fist = siegeBlowMax(-1, 0);
+  const whole = PVP_VITALITY, fist = siegeBlowMax(-1, 0);   // PIN MOVED (PWR5): was siegeVitality(10), 320 - every player fighter 360, Renown buys no PvP health
   for (const ws of [a, b]) assert.deepEqual(refs(ws, 'hp').at(-1), { t: 'wref', k: 'hp', by: 'peer-0001', to: 'peer-0002', d: fist, r: SIEGE_HIT.Melee, h: [['peer-0001', whole, whole], ['peer-0002', whole - fist, whole]] });
   assert.equal(b.sent.filter((m) => m.t === 'wild' && m.data && (m.data.k === 'strike' || m.data.k === 'spell')).length, 0, 'routed to nobody: the defender resolves nothing');
   // AUDIT INT7 (the pins' own): the zone's referee clips a weapon's blow to the arms the striker's token signs

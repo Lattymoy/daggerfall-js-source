@@ -18,6 +18,7 @@ import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';
 import { combatStanding, dungeonShare, foeShare, progressionScaling, placeVeteran } from '../systems/skillSoftcap.js';   // SOFTCAP2: tougher foes, by dungeon tier; BAL3: and by the place's own threat
 import { effectiveLevel, playLevel } from '../systems/mentorMode.js';   // SOFTCAP1
 import { enterDungeonPlace } from '../systems/placeSync.js';   // PWR3: the place sets the player - this dungeon's ceiling
+import { templateBlow } from '../combat/pvpTemplate.js';   // PWR5: a bout between players' blow on the template
 import { heroThreatOf } from '../systems/heroThreat.js';   // BAL11: the hero's threat
 import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty quickslot press reads the hand   // PX30
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
@@ -322,7 +323,7 @@ import { grantKindOf } from '../net/grantLaw.js';   // GRANT4: the own lane's st
 const LOOSE_PUPPETS_MAX = Math.max(24, CELL_LOOSE_PUPPETS);
 /** DESYNC-ZERO: what a player whose dungeon the host builds otherwise is told (once a dungeon). */
 export const LAYOUT_MISMATCH_TEXT = 'Another player here has this dungeon laid out differently, maybe from an older version of the game. Reload the page so you all see the same monsters.';
-import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
+import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, noteMyBlow, myShare, contributionParty } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
 import { hearEliteFoesIn } from '../systems/questlines/qlEliteFoe.js';   // QL11: an elite foe of an Elite dungeon, slain - the act's own module (AUDIT QUESTLINES ACTS-8)
@@ -4462,7 +4463,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const landOnRival = (rb, damage, kind) => (takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind, w: playerWeapon.strikingWeapon?.templateIndex ?? -1, m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }));   // OPEN-HAND: what a follow-up owed a player is dropped - BAL8, the referee's blow alone
   /** A swing of mine that met my opponent: the parry's ring for none, else the hit's sound and blood at them and the
    *  number out (their own screen bleeds as the relay's health falls). */
-  function swingOnRival(rb, damage, lookDir) {
+  function swingOnRival(rb, lookDir) {
+    const damage = templateBlow(playerEntity, playerWeapon.strikingWeapon ?? null, 'melee');   // PWR5: a bout between players is counted on the template (combat/pvpTemplate.js) - the swing met them by the game's reach, its number the template's
     const chest = [rb.ai.feet[0], rb.ai.feet[1] + rb.ai.centreOffset, rb.ai.feet[2]];
     if (damage <= 0) { audio.play3d(SOUND.Parry6, chest, 1.1, { maxDistance: 24 }); landOnRival(rb, 0, 'melee'); return; }
     audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), chest, ENEMY_HIT_VOLUME, { maxDistance: 24 });
@@ -4578,7 +4580,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (foe === boss) { hitEnemy = true; swingOnBoss(boss, damage, lookDir); continue; }   // WB4b: his own arm - nothing of a foe's door is his
       if (foe.crystal != null) { hitEnemy = true; swingOnCrystal(foe, damage); continue; }   // WB9c: a crystal's own - no blood, no foe's door
       if (foe.host != null) { hitEnemy = true; swingOnHost(foe, damage, lookDir); continue; }   // WB11c: one of his host's own - its blood, no foe's door
-      if (foe.rival != null) { hitEnemy = true; swingOnRival(foe, damage, lookDir); continue; }   // ARENA4: my opponent's - the number to the referee
+      if (foe.rival != null) { hitEnemy = true; swingOnRival(foe, lookDir); continue; }   // ARENA4: my opponent's - the number to the referee
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -4819,7 +4821,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const rv = m.technique ? null : arenaRivalBody();   // TECH1: a technique's shaft passes a player's body by (TECH law 3)
           if (rv && missileHitsCapsule(m.pos, rv.ai.feet, rv.ai.height, rv.ai.radius)) {
             nextArenaQ();   // ARENA4b: each shaft its own blow
-            playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnRival(rv, d, 'arrow') });   // BAL8: no backstab at a player (the stand-in's yaw is no one's)
+            playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects, say: (l) => hudText.add(l), blow: () => templateBlow(playerEntity, m.weapon ?? null, 'arrow'), dealDamage: (t, d) => landOnRival(rv, d, 'arrow') });   // BAL8: no backstab at a player (the stand-in's yaw is no one's); PWR5: the shaft's number the template's
             retireMissile(m);
             continue;
           }
@@ -5816,7 +5818,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // raises (raiseEnemyDeath is the kill's), so a joiner who opened the body first handed the room a list with no card
     // in it and the host's drop was gone; the copy draws its own, before the cap, as the host's death does.
     // PARTY-LOOT: never a room's body - its kit, food, card, sigils and cap are its base's, rolled on the room's dice when it falls
-    if (r.d === 1 && !f.dead && !(roomLootOn() && roomCanonOfFoe(f) != null)) { rollCorpseKit(f.entity, { luck: liveStat(playerEntity, 'luck') }); addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }   // KIT-ROLL: this copy's kit on its ladder, before its sigils read it; AUDIT 625 L5: and its cap last, as the host's death caps its own; SIGIL1: and its own roll of the sigils, at the host's count - the room adopts the first opener's list
+    if (r.d === 1 && !f.dead && !(roomLootOn() && roomCanonOfFoe(f) != null)) { rollCorpseKit(f.entity, { luck: liveStat(playerEntity, 'luck') }); addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1))); dropFoeCard(f.entity); capFoeLoot(f.entity); }   // KIT-ROLL: this copy's kit on its ladder, before its sigils read it; AUDIT 625 L5: and its cap last, as the host's death caps its own; SIGIL1: and its own roll of the sigils, at the host's count - the room adopts the first opener's list
     if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; renownFoeDied(f); } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to   // RENOWN1: the host's frame says it fell - it pays me if I fought it
     else if (r.d === 0 && f.dead) {   // AUDIT WORLD7/8 B3: the stream's un-death is a REBUILD - the host minted a fresh entity (the hour's respawn), and the old body stood up looted, still cursed (a frozen drain killed it again at once and sent the host the blow) and with the dead foe's counts (phantom edges); WORLD3 E2's own arm
       const idx = foes.indexOf(f);
@@ -6731,7 +6733,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // after the killing tick inside one window, and each re-ran the whole death arm (trap, chime, OnEnemyDeath).
     if (foe.dead || (fromPlayer && !peer && foe.companion != null)) return;   // CREW-COMPANIONS: and my companion takes no blow of mine (exteriorFoes' AUDIT NAV2 F55 gate) - it turned him
     const bout = foe.entity?.bout ?? null;   // ARENA2: a fighter on the arena floor's sand (scenes/arena/arenaBouts.js)
-    if (fromPlayer && !peer && !bout) renownFoeStruck(foe);   // RENOWN1: MY blow - a joiner's too, before the divert sends it to the host; ARENA2: no renown on the sand
+    if (fromPlayer && !peer && !bout) { renownFoeStruck(foe); noteMyBlow(foe, damage); }   // RENOWN1: MY blow - a joiner's too, before the divert sends it to the host; ARENA2: no renown on the sand
     if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return;   // REVENANT-FATE: a beaten revenant takes no blow - its fate is the player's choice (RVN3: nor one tearing away; RVN4: nor one roaring)
     // AUDIT PSCALE1 DOORS-1: a KILL is not a blow - a Disintegrate, a stat drained to zero (the sinks' `whole`), the
     // Razor's whole-health strike (its mark on the foe) - and no fighters' toughness divides it, here or at the host
@@ -6935,7 +6937,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!_roomBody) rollCorpseKit(foe.entity, { luck: liveStat(playerEntity, 'luck') });   // KIT-ROLL: a plain foe's kit, worn by nobody now, on its ladder - before the chime and the sigils read the body (Math.random, as its spawn loot's)
       spawnCorpse(foe);
       playRareDrop(audio, foe.ai.feet, foe.entity.items);   // LR3: the chime for a Rare or better on the body
-      if (!_roomBody) stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? fightN(foe) : 1);   // SIGIL1: the body's Magic+ weapons won online may carry a sigil; a bigger fight, better odds
+      if (!_roomBody) stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? contributionParty(fightN(foe), myShare(foe, fightN(foe))) : 1);   // PWR5: the fight as it pays me - my share of it (partyScale.js contributionParty)   // SIGIL1: the body's Magic+ weapons won online may carry a sigil; a bigger fight, better odds
       if (!_roomBody) raiseEnemyDeath(foe.entity, { luck: liveStat(playerEntity, 'luck'), by: foe._killedBy ?? null }); else egFindKill(foe.entity, foe._killedBy ?? null).catch(() => {});   // EG-E3: the striker the foes stream names (a joiner's kill is the joiner's find) - a room's body raises its death in the room's base, which the find never answers, so its kill asks here (PARTY-LOOT; systems/eliteGates/egFind.js); UL1: OnEnemyDeath (EnemyDeath.cs:139) - the kill, not the load's rewind. AUDIT VC6: the player's luck, which SURV2's food rolls against - this host keeps no loot stream of its own, so the roll stays Math.random as its spawn loot's is
       return;
     }

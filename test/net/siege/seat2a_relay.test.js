@@ -125,7 +125,7 @@ test('SEAT2a THE SIDES: a fighter enters at its side\'s camp; nothing lands befo
     const camp = (side) => r.room._siege.battle.field.camps[side];
     assert.deepEqual([sieges(a, 'back').at(-1).p.x, sieges(a, 'back').at(-1).p.z], camp('attack'), 'told its camp');
     assert.deepEqual([r.room._siege.fighters['acct-peer-0003'].pose.x, r.room._siege.fighters['acct-peer-0003'].pose.z], camp('defend'));
-    assert.deepEqual(sieges(a, 'st').at(-1).f.find((x) => x[0] === 'peer-0001'), ['peer-0001', 320, 320, 0, 1], 'the roll call names the side');
+    assert.deepEqual(sieges(a, 'st').at(-1).f.find((x) => x[0] === 'peer-0001'), ['peer-0001', 360, 360, 0, 1], 'the roll call names the side');   // PIN MOVED (PWR5): was 320 - every player fighter 360, Renown buys no PvP health
     // everyone to one spot, the battle not yet joined
     await until(T - 60_000);
     await walk({ r, until, now }, [a, a2, d].map((ws) => [ws, at(0, 10)]));   // PIN MOVED (AUDIT-SEATS): R2 - 70 m from either camp, walked at the ceiling (one pose after a minute's silence may land 18.5 m away at most)
@@ -137,15 +137,15 @@ test('SEAT2a THE SIDES: a fighter enters at its side\'s camp; nothing lands befo
     await say(a, { k: 'cast', to: 'peer-0002', d: 30 });
     assert.equal(sieges(a2, 'hp').length, 0, 'nor a harmful cast on one');
     await say(a, { k: 'blow', to: 'peer-0003', w: 123, m: 9, d: 50, r: 0 });
-    assert.equal(sieges(d, 'hp').at(-1).h, 270, 'a foe');
+    assert.equal(sieges(d, 'hp').at(-1).h, 310, 'a foe');   // PIN MOVED (PWR5): was 270 (320 - 50) - every player fighter 360, Renown buys no PvP health
     await say(a, { k: 'cast', to: 'peer-0003', d: 30, h: 1 });
-    assert.equal(sieges(d, 'hp').at(-1).h, 270, 'never a heal on a foe');
+    assert.equal(sieges(d, 'hp').at(-1).h, 310, 'never a heal on a foe');   // PIN MOVED (PWR5): was 270 - every player fighter 360, Renown buys no PvP health
     await say(a2, { k: 'cast', to: 'peer-0002', d: 30, h: 1 });   // whole already: a heal of nothing says nothing
     await say(d, { k: 'blow', to: 'peer-0001', w: 123, m: 9, d: 50, r: 0 });
     await say(a2, { k: 'cast', to: 'peer-0001', d: 30, h: 1 });
-    assert.equal(sieges(a, 'hp').at(-1).h, 300, 'a side-mate healed');
+    assert.equal(sieges(a, 'hp').at(-1).h, 340, 'a side-mate healed');   // PIN MOVED (PWR5): was 300 (320 - 50 + 30) - every player fighter 360, Renown buys no PvP health
     // a fall, risen at the camp on a crown's wave
-    for (let i = 0; i < 6; i++) { await until(Date.now() + 1000); await say(d, { k: 'blow', to: 'peer-0001', w: 123, m: 9, d: 500, r: 0 }); }
+    for (let i = 0; i < 24 && !r.room._siege.fighters['acct-peer-0001'].down; i++) { await until(Date.now() + 1000); await say(d, { k: 'blow', to: 'peer-0001', w: 123, m: 9, d: 500, r: 0 }); }   // PIN MOVED (PWR5): was six blows - 340 left of 360 (it was 300 of 320) takes more than six under BAL8's 180 in any 5 s, so the blows run to the fall
     const f = r.room._siege.fighters['acct-peer-0001'];
     assert.equal(f.down, true);
     assert.equal(f.upAt % SIEGE_WAVE_MS.crown, 0, 'a crown\'s wave');

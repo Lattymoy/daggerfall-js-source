@@ -88,11 +88,11 @@ test('PVP-REF THE ROOM AND VITALITY: `siege:<seat>:<week>`; 300 + 2 x Renown, th
 test('PVP-REF THE BLOW: both standing, the weapon the look holds, its kind its own (a bow a shaft), the reach (2.5 m and 3 of slack; a shaft 60), four a second (one second deep, spent first), a fighter just risen untouched; the damage clipped to the bucket and the vitality left; a fall at none (mutants: each refusal; the clip; the fall; the rate\'s refill)', () => {
   let now = 1_000_000;
   const a = newFighter(10, now), b = newFighter(50, now);
-  assert.deepEqual([a.hp, a.max, b.hp], [320, 320, 400]);
+  assert.deepEqual([a.hp, a.max, b.hp], [360, 360, 360], 'Renown 10 and Renown 50, one vitality');   // PIN MOVED (PWR5): was [320, 320, 400] - every player fighter 360, Renown buys no PvP health
   const dk = { w: 123, m: 9 };
   const blow = (o) => refereeBlow(a, b, { from: at(0), at: at(2), held: dk, d: 50, r: SIEGE_HIT.Melee, ...o }, now);
   assert.deepEqual(blow({}), { ok: true, dealt: 50, fell: false, why: null });
-  assert.equal(b.hp, 350);
+  assert.equal(b.hp, 310);   // PIN MOVED (PWR5): was 350 (400 - 50) - every player fighter 360, Renown buys no PvP health
   assert.equal(blow({ d: 500 }).dealt, 124, 'clipped to the bucket');
   assert.equal(a.clipped, 376);
   assert.equal(blow({ at: at(5.6) }).why, 'reach', 'past 2.5 + 3 m');
@@ -117,7 +117,7 @@ test('PVP-REF THE BLOW: both standing, the weapon the look holds, its kind its o
   b.upAt = siegeNextWave(now, SIEGE_WAVE_MS.palace);
   assert.equal(siegeRise(b, b.upAt - 1), false);
   assert.equal(siegeRise(b, b.upAt), true);
-  assert.deepEqual([b.down, b.hp, b.safeTo], [false, 400, b.upAt + SIEGE_PROTECT_MS]);
+  assert.deepEqual([b.down, b.hp, b.safeTo], [false, 360, b.upAt + SIEGE_PROTECT_MS]);   // PIN MOVED (PWR5): was 400 - every player fighter 360, Renown buys no PvP health
   now = b.upAt + 1;
   assert.equal(blow({}).why, 'protected');
   now = b.upAt + SIEGE_PROTECT_MS;
@@ -143,14 +143,14 @@ test('PVP-REF THE CAST AND THE STEP: three damaging casts a 5 s, each to 60; a h
   assert.equal(cast({}).why, 'rate', 'a fourth in the window');
   now += SIEGE_CASTS.windowMs;
   assert.equal(cast({}).ok, true, 'the window passed');
-  assert.equal(b.hp, 302 - 240);
+  assert.equal(b.hp, 360 - 240);   // PIN MOVED (PWR5): was 302 - 240 (Renown 1) - every player fighter 360, Renown buys no PvP health
   assert.deepEqual(cast({ heal: true }), { ok: true, dealt: -40, fell: false, why: null }, 'a heal, 40 at most');
-  assert.equal(b.hp, 102);
-  a.hp = 290;
+  assert.equal(b.hp, 160);   // PIN MOVED (PWR5): was 102 - every player fighter 360, Renown buys no PvP health
+  a.hp = 348;   // PIN MOVED (PWR5): was 290 (12 short of 302) - still 12 short of whole, now 360, so the heal is still held at whole
   assert.equal(refereeCast(a, a, { from: at(0), at: at(0), d: 100, heal: true }, now).dealt, -12, 'never past whole, on oneself');
   assert.equal(cast({ heal: true }).ok, true, 'a third heal in the window');
   assert.equal(cast({ heal: true }).why, 'rate', 'a fourth: a heal has a window of its own');
-  assert.equal(b.hp, 142);
+  assert.equal(b.hp, 200);   // PIN MOVED (PWR5): was 142 - every player fighter 360, Renown buys no PvP health
   assert.equal(cast({}).ok, true, 'and the heals spent none of the damaging window (one of three)');
   now += SIEGE_CASTS.windowMs;
   assert.equal(cast({ heal: true }).ok, true, 'the heal\'s window passed');

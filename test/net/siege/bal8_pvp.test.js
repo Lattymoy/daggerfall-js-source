@@ -31,7 +31,7 @@ test('BAL8: every harm a fighter deals - blows and casts together - at most the 
   assert.equal(blow(100).dealt, 80, 'the window\'s last 80');
   const third = blow(100);
   assert.deepEqual([third.ok, third.dealt], [true, 0], 'judged, and nothing past the ceiling');
-  assert.equal(b.hp, 400 - 180);
+  assert.equal(b.hp, 360 - 180);   // PIN MOVED (PWR5): was 400 - 180 (a Renown-50 fighter) - every player fighter 360, Renown buys no PvP health
   assert.equal(a.clipped, 120);
   assert.equal(harmRoom(a, now), 0);
   now += 4999;

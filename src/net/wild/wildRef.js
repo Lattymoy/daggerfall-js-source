@@ -26,7 +26,7 @@
 // Pure: no clock (every `now` an argument), no socket, no storage - the relay's room keeps the state in its memory
 // (DECIDED, the duel's: a room that restarts mid-fight forgets it; a fall already signed is the service's to settle).
 // ═════════════════════════════════════════════════════════════════════
-import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
+import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep, crowdRoom, crowdMark } from '../siege/siegeRef.js';
 
 /** The zone referee's own numbers: how long a fighter no player has struck - and that has stood in the zone as long - takes
  *  to be whole again; how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
@@ -163,10 +163,14 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   mend(a, now); mend(t, now);
+  // PWR5 (bible/05-Combat/Power-Arc.md section 8): the many on one is a two on one - a third striker inside the window
+  // lands nothing (siegeRef.js CROWD_HARM)
+  if (!crowdRoom(t.f, by, now)) return { ok: true, dealt: 0, fell: false, fall: null, why: 'crowd' };
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);
   if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why };
+  crowdMark(t.f, by, now);
   t.struckAt = now;
   if (!res.fell) return { ok: true, dealt: res.dealt, fell: false, fall: null, why: null };
   t.down = true; t.downAt = now;

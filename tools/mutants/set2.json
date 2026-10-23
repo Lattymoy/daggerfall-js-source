@@ -175,7 +175,7 @@
   {
     "name": "SET2-the-duel-unsaid",
     "file": "src/scenes/world.js",
-    "old": "    setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigil/sigilSets.js); AUDIT 625 P2: and a bout between players\n",
+    "old": "    setSetsDueling(!!duelMgr.live || arenaPvpLive() || !!siegeSession?.active?.() || !!royalSession?.active?.());   // PWR5: and a siege's and the Royal Tourney's - every refereed lane on the template   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigil/sigilSets.js); AUDIT 625 P2: and a bout between players\n",
     "new": "",
     "tests": [
       "test/systems/set2_seams.test.js"

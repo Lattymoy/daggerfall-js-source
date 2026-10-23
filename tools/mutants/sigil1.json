@@ -363,7 +363,7 @@
   {
     "name": "SIGIL1-outdoor-stamp-unwired",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });",
+    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? contributionParty(fightN(f), myShare(f, fightN(f))) : 1, { rolls });",
     "new": "void stampWonWeapons;",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
@@ -372,7 +372,7 @@
   {
     "name": "SIGIL1-outdoor-fight-unread",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });",
+    "old": "stampWonWeapons(f.entity.items, _sharedFoe(f) ? contributionParty(fightN(f), myShare(f, fightN(f))) : 1, { rolls });",
     "new": "stampWonWeapons(f.entity.items, 1, { rolls });",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
@@ -392,7 +392,7 @@
   {
     "name": "SIGIL1-dungeon-kill-unwired",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? fightN(foe) : 1);",
+    "old": "stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? contributionParty(fightN(foe), myShare(foe, fightN(foe))) : 1);",
     "new": "void stampWonWeapons;",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
@@ -401,7 +401,7 @@
   {
     "name": "SIGIL1-dungeon-joiner-count-unread",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
+    "old": "stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1))); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
     "new": "stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); capFoeLoot(f.entity); }",
     "tests": [
       "test/systems/sigil/sigil1.test.js"

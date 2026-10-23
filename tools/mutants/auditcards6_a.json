@@ -65,8 +65,8 @@
   {
     "name": "AC6-A3-joiner-no-card",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity);",
-    "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1);",
+    "old": "stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1))); dropFoeCard(f.entity);",
+    "new": "stampWonWeapons(f.entity.items, contributionParty(f._fightN ?? 1, myShare(f, f._fightN ?? 1)));",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

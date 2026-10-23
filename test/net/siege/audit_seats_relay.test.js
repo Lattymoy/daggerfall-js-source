@@ -444,7 +444,7 @@ test('AUDIT-SEATS R8 A WEAPON IS HELD IN A HAND: the look\'s right hand (19) or 
     assert.equal(sieges(b, 'hp').length, 0, 'a blade at the throat is no blade in the hand');
     step(1000);
     await say(a, { k: 'blow', to: b.att.id, w: -1, m: 0, d: 5, r: 0 });
-    assert.equal(sieges(b, 'hp').at(-1).h, 315, 'a fist is always held');
+    assert.equal(sieges(b, 'hp').at(-1).h, 355, 'a fist is always held');   // PIN MOVED (PWR5): was 315 (320 - 5) - every player fighter 360, Renown buys no PvP health
   });
 });
 

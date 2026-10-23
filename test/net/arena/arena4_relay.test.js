@@ -10,7 +10,7 @@ import { readArenaReceipt, verifyArenaReceipt } from '../../../src/net/arena/are
 import { importReceiptKey } from '../../../src/net/gate/gateReceipt.js';
 import {
   ARENA_HALL, arenaBoutRoom, ARENA_FLOOR_CENTRE, MATCH_ACCEPT_MS, MATCH_WIDEN_MS, ARENA_JOIN_WAIT_MS, ARENA_GONE_MS, ARENA_TICK_MS,
-  pvpVitality, ARENA_SPECTATORS_MAX, validArenaIn, validArenaOut, arenaBlowCap, ARENA_HIT, ARENA_BUCKET_DEPTH, MATCH_REPAIR_MS,
+  pvpVitality, ARENA_PVP_METAL, ARENA_SPECTATORS_MAX, validArenaIn, validArenaOut, arenaBlowCap, ARENA_HIT, ARENA_BUCKET_DEPTH, MATCH_REPAIR_MS,
   pairQueue, ARENA_BUCKET_RATE,
 } from '../../../src/net/arena/arenaLaw.js';
 import { parseClient, relaySupportsArena, RELAY_VERSION } from '../../../src/net/wire.js';
@@ -177,7 +177,7 @@ async function toFight(R, step, n = 2) {
   for (let t = 0; t < total; t += ARENA_TICK_MS) { step(ARENA_TICK_MS); await R.fire(); }
 }
 
-test('ARENA4 PVP-REF: a matched bout runs the bout law on the relay - both on the sand, the call, the count, the fight; the relay holds each fighter\'s vitality (300 + 2 x level) and believes a blow only in reach, under the rate, capped by the weapon and the bucket - and signs the result for both (mutants: a blow from across the sand landed; the rate unchecked; the bucket unspent; the vitality the client\'s; a pose too fast believed; the bucket\'s rate changed)', async () => onClock(async ({ step, now }) => {
+test('ARENA4 PVP-REF: a matched bout runs the bout law on the relay - both on the sand, the call, the count, the fight; the relay holds each fighter\'s vitality (PWR5: one flat vitality, whatever the level) and believes a blow only in reach, under the rate, capped by the weapon and the bucket - and signs the result for both (mutants: a blow from across the sand landed; the rate unchecked; the bucket unspent; the vitality the client\'s; a pose too fast believed; the bucket\'s rate changed)', async () => onClock(async ({ step, now }) => {
   const W = fakeRooms();
   const { R, a, b, o, pair } = await matched(W, step);
   const st = last(a, 'st');
@@ -185,7 +185,7 @@ test('ARENA4 PVP-REF: a matched bout runs the bout law on the relay - both on th
   assert.equal(st.me, 'p0');
   assert.equal(last(b, 'st').me, 'p1');
   assert.deepEqual(st.f.map((f) => [f[0], f[4]]), [['p0', pvpVitality(20)], ['p1', pvpVitality(30)]], 'the vitality the relay holds');
-  assert.deepEqual([pvpVitality(20), pvpVitality(30), pvpVitality(9999)], [340, 360, 420], 'ARENA5: 300 + 2 x level, the level held at sixty - a lie about it buys little');
+  assert.deepEqual([pvpVitality(20), pvpVitality(30), pvpVitality(9999)], [360, 360, 360], 'PWR5: one vitality whatever the level - a lie about it buys nothing');   // PIN MOVED (PWR5): was [340, 360, 420] (300 + 2 x level, held at sixty) - every player fighter 360, Renown buys no PvP health
   assert.ok(a.sent.some((m) => m.t === 'join' && m.id === 'fight-brann'), 'each fighter comes onto the other\'s sand');
   await toFight(R, step);
   assert.equal(last(a, 'st').ph, 'fight');
@@ -217,7 +217,7 @@ test('ARENA4 PVP-REF: a matched bout runs the bout law on the relay - both on th
   assert.ok(down - after <= 4 * 40 + ARENA_BUCKET_DEPTH, `four seconds of capped blows took ${down - after}`);
   // ARENA5: the bound above is no tighter than what Brann had left (a run that fells him passes it - an unspent bucket's
   // did), so the run is read blow by blow: the first the weapon's capped most, then, the bucket dry, a second's refill
-  assert.equal(takes[0], arenaBlowCap({ r: 0, w: 123, m: 9 }), 'the first, a Daedric dai-katana\'s capped most');
+  assert.equal(takes[0], arenaBlowCap({ r: 0, w: 123, m: ARENA_PVP_METAL }), 'the first, a Daedric dai-katana\'s capped most - at the template\'s Steel');   // PIN MOVED (PWR5): a bout between players clips at the template's metal, never the claim's
   assert.deepEqual(takes.slice(2), [ARENA_BUCKET_RATE, ARENA_BUCKET_RATE], `then the bucket's own rate, however a claim is dressed: ${takes}`);
   // to the floor: the fall, the end, the receipt
   for (let i = 0; i < 40 && !last(a, 'rc'); i++) { step(1000); await R.fire(); await word(R, a, { k: 'hit', i: 'p1', d: 999, r: 0, w: 123, m: 9, q: 200 + i }); }

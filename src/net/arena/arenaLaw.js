@@ -306,9 +306,10 @@ export function arenaNextOf(won) {
 export const ARENA_LV_MIN = 1;
 export const ARENA_LV_MAX = 60;
 export const arenaLv = (lv) => Math.max(ARENA_LV_MIN, Math.min(ARENA_LV_MAX, Number.isFinite(lv) ? Math.floor(lv) : ARENA_LV_MIN));
-/** A fighter's vitality in a bout between players: 300 + 2 x Renown level - Seats-Arc 6.1's normalised vitality, flat
- *  on purpose, so even a lie about the level buys a third more at most. */
-export const pvpVitality = (lv) => 300 + 2 * arenaLv(lv);
+/** A fighter's vitality in a bout between players - PWR5 (bible/05-Combat/Power-Arc.md section 8; Mac: "Templates in
+ *  refereed lanes" - "flat health"): every fighter the equal bout's ARENA_PRIVATE_VITALITY, whatever its Renown (it was
+ *  300 + 2 x Renown level, Seats-Arc 6.1's line - a level-60 fighter a sixth fuller than a level-30). */
+export const pvpVitality = (_lv) => ARENA_PRIVATE_VITALITY;
 /** ARENA4b: A LADDER FIGHTER'S VITALITY FROM A LEVEL - DFU's most at it (25 and 30 a level: systems/chargen.js
  *  rollMaxHealthLevel1's base and the steepest career's hit points a level - the bound ARENA4 held a claimed health to),
  *  bounded. The relay cannot see a career or an endurance (neither is signed), so every fighter of a level fights at the
@@ -462,6 +463,9 @@ export const ARENA_PRIVATE_KICKED_MAX = 256;
  *  bout gives a level-30 fighter (pvpVitality(30)), the middle of the range a rated bout's spans (302 at level 1, 420 at
  *  sixty), so a session's bout lasts about as long as a rated one. */
 export const ARENA_PRIVATE_VITALITY = 360;
+/** PWR5: a bout between players is counted on the template (combat/pvpTemplate.js), so its blow is clipped at the
+ *  template's metal - Steel's 1 (net/siege/siegeRef.js PVP_TEMPLATE_METAL, pinned equal). */
+export const ARENA_PVP_METAL = 1;
 /** A session's member on the wire - `m1`, `m2` ... (the smallest number free): never an account's id. */
 export const ARENA_MEMBER_ID_RE = /^m[1-9]\d{0,2}$/;
 /** A session word's acts (`ps`): open (its host's first), join, and the host's own - pick, go, void, kick, close, and

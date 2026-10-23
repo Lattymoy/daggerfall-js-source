@@ -32,6 +32,7 @@ import { renownFoeStruck, renownFoeDied } from '../../../src/net/renownTracker.j
 import { reportPlayerKill } from '../../../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope
 import { ROOM_LOOT_OFF } from '../../roomLootOff.mjs';   // PIN MOVED (PARTY-LOOT): the room's seams with no room
 import { appliedOwnerTm } from '../../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { noteMyBlow, myShare, contributionParty } from '../../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 // ═══ AUDIT SURV-TIERS, THE THIRD PASS (2026-09-23) ═══════════════════
 //
@@ -478,8 +479,8 @@ test('CORPSE-FOOD (Mac: "It needs to be accessible with people with it on"): onl
   }
   // ...and the dungeon calls it on the stream's first death and on an arrival's body that came without the room's list
   const dc = read('src/scenes/dungeonContext.js');
-  // PIN MOVED (AUDIT CARDS-6 A3): and its card, drawn before the cap
-  assert.match(dc, /if \(r\.d === 1 && !f\.dead && !\(roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, f\._fightN \?\? 1\); dropFoeCard\(f\.entity\); capFoeLoot\(f\.entity\); \}[^\n]*\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
+  // PIN MOVED (AUDIT CARDS-6 A3): and its card, drawn before the cap; PIN MOVED (PWR5): the sigils at the fight as it pays me (partyScale.js contributionParty)
+  assert.match(dc, /if \(r\.d === 1 && !f\.dead && !\(roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, contributionParty\(f\._fightN \?\? 1, myShare\(f, f\._fightN \?\? 1\)\)\); dropFoeCard\(f\.entity\); capFoeLoot\(f\.entity\); \}[^\n]*\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
   assert.match(dc, /if \(wire && sf\.dead && !f\.dead && sf\.items == null && !\(roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\) \{ rollCorpseKit\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);/, 'an arrival\'s body without the room\'s list: its own roll, food and all');
 });
 
@@ -503,7 +504,7 @@ test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'
   const { isIliacCard } = await import('../../../src/systems/iliac/iliacItems.js');
   // KG-SET: the bear's card drops on a roll (Math.random's, at its death) - pinned to drop, so the run is one run (CI drew
   // it, and the meat check below read the card as a stray item)
-  const state = { ...ROOM_LOOT_OFF, appliedOwnerTm, validFoeRecord, addCorpseFood, stampWonWeapons, rollCorpseKit, dropFoeCard: (/** @type {any} */ e, /** @type {any} */ o = {}) => dropFoeCard(e, { ...o, rolls: () => 0 }), capFoeLoot, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied, reportPlayerKill };   // RENOWN1: the stream's death asks whether I fought it
+  const state = { ...ROOM_LOOT_OFF, appliedOwnerTm, validFoeRecord, addCorpseFood, stampWonWeapons, rollCorpseKit, noteMyBlow, myShare, contributionParty, dropFoeCard: (/** @type {any} */ e, /** @type {any} */ o = {}) => dropFoeCard(e, { ...o, rolls: () => 0 }), capFoeLoot, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied, reportPlayerKill };   // RENOWN1: the stream's death asks whether I fought it
   const scope = new Proxy(state, { has: (t, k) => k !== '__s', get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])) });
   const { applyFoeRecord } = new Function('__s', `with (__s) { const setFoeDead = (f, d) => { f.dead = !!d; }; ${fn} return { applyFoeRecord }; }`)(scope);
   const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, dead: false, entity: { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, health: 5, items: [] }, ai: { feet: [0, 0, 0], yaw: 0, moving: false, isHostile: true } };

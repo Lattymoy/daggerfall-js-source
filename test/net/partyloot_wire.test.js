@@ -73,6 +73,7 @@ import '../../src/systems/card/cardSources.js';   // CARDS9's death handler regi
 import '../../src/scenes/physicalItemsLayer.js';   // PI1's
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { noteMyBlow, myShare, contributionParty } from '../../src/systems/party/partyScale.js';   // PWR5: the host's contribution doors, in the mount's scope
 
 installForaging(); installSmithing(); installHealingSupply(); installRestItemLoot(); installSurvivalLoot();   // the hosts' order (scenes/shared.js)
 setPref(LOOT_RARITY_KEY, true);   // the loot ladder - forced on online (OL1)
@@ -204,7 +205,7 @@ function dungeon(id, { authority, level, luck, renown, seed, foraging, partners,
     // the kill door's neighbours (test/systems/loot7check.test.js's killDoor): nothing here reads a loot law
     feudWeakBlow: () => false, blowClassOf: () => null, lastPlayerFeet: [0, 0, 0], foeDeps: null, audio: {},
     renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, takeWholeBlow: () => false, markFoeStruck: () => {}, markConcealedHit: () => {},
-    handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', partyFoeLoses: (f, n) => n,
+    handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', noteMyBlow, myShare, contributionParty, partyFoeLoses: (f, n) => n,
     peerSoulTrapOf: () => null, attemptSoulTrap: () => ({ allowDeath: true }), isAzurasStarEquipped: () => false, fillEmptyTrap: () => false,
     hudText: { add: () => {} }, SOUL_TRAP_TEXT: {}, setEnemyAlert: () => {}, sayEnemyDied: () => null, playRareDrop: () => {}, addCorpseFood: () => {},
     // the joiner's stream doors around the records (test/net/seatheal.test.js's, test/net/restsync.test.js's): no surplus, one species

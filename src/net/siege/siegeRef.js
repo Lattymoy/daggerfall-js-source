@@ -57,6 +57,15 @@ export function siegeOfRoom(k) {
 export const SIEGE_VITALITY = Object.freeze({ base: 300, perLevel: 2, levelMax: 50 });
 export const siegeVitality = (lv) => SIEGE_VITALITY.base + SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));
 
+/** PWR5 (2026-10-23, bible/05-Combat/Power-Arc.md section 8; Mac, asked: "Templates in refereed lanes" - "flat health" -
+ *  and the open zone's "Renown adds no health"): EVERY PLAYER FIGHTER STANDS AT ONE VITALITY, whatever its Renown - the
+ *  arena's equal bout's 360 (net/arena/arenaLaw.js ARENA_PRIVATE_VITALITY, pinned equal), the one flat health the port
+ *  already had, Seats-Arc 6.1's line at level 30. A town's NPC keeps its own Renown's (siegeVitality, newNpc). */
+export const PVP_VITALITY = 360;
+/** PWR5: the metal a refereed lane's blow is counted and clipped at - Steel (DaggerfallUnityItem's material 1, its
+ *  modifier 0): combat/pvpTemplate.js PVP_TEMPLATE.material, pinned equal (the relay cannot import the client's). */
+export const PVP_TEMPLATE_METAL = 1;
+
 /** World units a metre in a siege's room - a town's cell (world natives, net/duel/duelSession.js NATIVES_PER_M). */
 export const SIEGE_UNITS_PER_M = 40;
 /** REACH (6.1): DFU's effective melee reach (WeaponManager.cs:35's 2.25 m and the sphere cast's 0.25), a shaft's 60 m,
@@ -197,7 +206,7 @@ export function siegeHeld(look, w, m) {
 
 /** A fighter's state as the room keeps it. */
 export const newFighter = (lv, now) => {
-  const max = siegeVitality(lv);
+  const max = PVP_VITALITY;   // PWR5: flat - Renown buys no health where players meet (`lv` kept, the token's word)
   return { lv: Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1))), hp: max, max, down: false, upAt: 0, safeTo: 0, rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], heals: [], harm: [], dealt: 0, clipped: 0 };
 };
 const metres = (a, b) => Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.y - b.y) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);
@@ -209,6 +218,22 @@ function spend(f, now) {
   f.rate -= 1;
   return true;
 }
+/** PWR5 (bible/05-Combat/Power-Arc.md section 8; Mac: "a target takes only so much from several players at once"): THE
+ *  MANY ON ONE IS A TWO ON ONE - a fighter takes harm from at most `strikers` strikers inside SIEGE_HARM's window, the
+ *  first to strike it there; another lands nothing until one of them has let it be a whole window. No crowd fells a
+ *  fighter faster than a pair at BAL8's ceiling (two of 180 in 5 s: its whole PVP_VITALITY), and a pool of damage could
+ *  not say so - a target falls before any pool its vitality's size fills. The open zone's (net/wild/wildRef.js wildBlow);
+ *  a refereed lane fights side to side under its own referee. */
+export const CROWD_HARM = Object.freeze({ strikers: 2, windowMs: SIEGE_HARM.windowMs });
+/** PWR5: may `by` harm `f` at `now` - one of the strikers it takes harm from inside CROWD_HARM's window, or room for it
+ *  (its record of who struck it last, pruned to the window). Marks nothing: a blow that lands is marked (crowdMark). */
+export function crowdRoom(f, by, now) {
+  const seen = f.crowd instanceof Map ? f.crowd : (f.crowd = new Map());
+  for (const [k, at] of seen) if (!(now - at < CROWD_HARM.windowMs)) seen.delete(k);
+  return seen.has(by) || seen.size < CROWD_HARM.strikers;
+}
+/** PWR5: a blow by `by` landed on `f` at `now`. */
+export const crowdMark = (f, by, now) => { (f.crowd instanceof Map ? f.crowd : (f.crowd = new Map())).set(by, now); };
 /** BAL8: the harm the striker may still deal inside SIEGE_HARM's window (its record of `[at, dealt]` pruned to it). */
 export function harmRoom(f, now) {
   f.harm = (f.harm ?? []).filter((h) => Array.isArray(h) && now - h[0] < SIEGE_HARM.windowMs);
@@ -222,12 +247,13 @@ const spendHarm = (f, now, n) => { if (n > 0) f.harm.push([now, n]); };
  * (SIEGE_HIT). Answers `{ ok, dealt, fell, why }` and moves the states: the striker's bucket spent first (as the gate's),
  * the target's vitality down by the clipped damage, a fall at none left. INT7: `wa` the striker's SIGNED arms (the
  * token's, armsOk - null: a token from before them): the clip never past their reach, and a shaft only where they hold
- * a bow.
+ * a bow. PWR5: `template` - a refereed lane's blow (the duel's, the siege's): counted on the template, so clipped at its
+ * metal (PVP_TEMPLATE_METAL), never the one the look holds; the open zone's keeps its own.
  * @param {any} by @param {any} to
- * @param {{ from?: any, at?: any, held?: any, d?: number, r?: number, wa?: any }} o
+ * @param {{ from?: any, at?: any, held?: any, d?: number, r?: number, wa?: any, template?: boolean }} o
  * @param {number} now
  */
-export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0, r = SIEGE_HIT.Melee, wa = null } = {}, now) {
+export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0, r = SIEGE_HIT.Melee, wa = null, template = false } = {}, now) {
   if (!by || !to || by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };
   if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };
   if (!spend(by, now)) return { ok: false, dealt: 0, fell: false, why: 'rate' };
@@ -239,7 +265,7 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;
   if (metres(from, at) > reach) return { ok: false, dealt: 0, fell: false, why: 'reach' };
   const want = Math.max(0, Math.trunc(Number(d) || 0));
-  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling
+  const got = Math.min(want, siegeBlowMax(held.w, template ? PVP_TEMPLATE_METAL : held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling
   spendHarm(by, now, got);
   by.clipped += want - got;
   by.dealt += got;

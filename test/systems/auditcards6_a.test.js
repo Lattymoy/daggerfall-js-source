@@ -145,6 +145,7 @@ const ratBody = () => ({ mobileType: MOBILE_TYPES.Rat, level: 1, items: [], loot
 /** The copy doors' own deps - the kit, the food and the sigils stand in; the card and the cap are the real ones. */
 const doorDeps = () => ({
   rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => 0, dropFoeCard, capFoeLoot,
+  contributionParty: () => 1, myShare: () => 0,   // PWR5: the sigils' fight as it pays me stands in with them (partyScale.js)
   liveStat: () => 50, playerEntity: { isPlayer: true, items: [] },
 });
 

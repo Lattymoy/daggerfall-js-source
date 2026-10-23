@@ -106,7 +106,7 @@ export function duelBlow(st, sub, to, { d = 0, r = SIEGE_HIT.Melee, held = null,
   if (now < bout.startMs || now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(me.f, them.f, { from: me.pose, at: them.pose, d }, now)
-    : refereeBlow(me.f, them.f, { from: me.pose, at: them.pose, held, d, r, wa }, now);
+    : refereeBlow(me.f, them.f, { from: me.pose, at: them.pose, held, d, r, wa, template: true }, now);   // PWR5: a refereed lane - the template's metal
   return { ok: res.ok, dealt: res.dealt, fell: res.fell, bout, why: res.why };
 }
 
