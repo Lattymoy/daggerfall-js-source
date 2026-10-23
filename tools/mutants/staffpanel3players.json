@@ -232,8 +232,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-held-any-side",
     "file": "server-account/src/staffPlayers.js",
-    "old": "(a_player = ?1 AND why = 'trade-held:a') OR (b_player = ?1 AND why = 'trade-held:b')",
-    "new": "(a_player = ?1 OR b_player = ?1) AND why LIKE 'trade-held:%'",
+    "old": "(a_player = ${who} AND why = 'trade-held:a') OR (b_player = ${who} AND why = 'trade-held:b')",
+    "new": "(a_player = ${who} OR b_player = ${who}) AND why LIKE 'trade-held:%'",
     "why": "a trade the other side's hold refused counted as this one's",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-read-unaudited",
     "file": "server-account/src/staffPlayers.js",
-    "old": "body, audit('player-read', p.id, { tab }, { onceIn: READ_ONCE_S }));",
-    "new": "body, db.prepare('SELECT 1'));",
+    "old": "const row = (/** @type {string} */ tab, /** @type {string} */ id, ahead = false) => audit('player-read', id, { tab },",
+    "new": "const row = (/** @type {string} */ tab, /** @type {string} */ id, ahead = false) => db.prepare('SELECT 1') ?? audit('player-read', id, { tab },",
     "why": "a profile read unwritten",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-read-audit-every-page",
     "file": "server-account/src/staffPlayers.js",
-    "old": "{ tab }, { onceIn: READ_ONCE_S }",
-    "new": "{ tab }, {}",
+    "old": "{ onceIn: READ_ONCE_S, ...(ahead ?",
+    "new": "{ ...(ahead ?",
     "why": "a profile read written every page",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -673,8 +673,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-FIX-open-cases-order",
     "file": "server-account/src/staffPlayers.js",
-    "old": "status = 'open' ORDER BY kind\").bind(p.id),",
-    "new": "status = 'open'\").bind(p.id),",
+    "old": "status = 'open' ORDER BY kind\"),",
+    "new": "status = 'open'\"),",
     "why": "equivalent: the read stands on mod_cases_open (target, kind) WHERE status = 'open' (migration 0156), so SQLite answers in kind's order either way - ORDER BY kind says it rather than leaning on the plan",
     "equivalent": true,
     "tests": [
@@ -684,8 +684,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-FIX-economy-cut",
     "file": "server-account/src/staffPlayers.js",
-    "old": "LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`).bind(...ids, since),",
-    "new": "LIMIT ${PLAYERS_PAGE * 4}`).bind(...ids, since),",
+    "old": "LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`, since)],",
+    "new": "LIMIT ${PLAYERS_PAGE * 4}`, since)],",
     "why": "the gains cut at a hundred, the older unreachable",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -694,8 +694,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-FIX-economy-from-ignored",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    const from = fromOf(body.from);\n    const [hours, gains]",
-    "new": "    const from = 0;\n    const [hours, gains]",
+    "old": "    const from = fromOf(body.from);\n    return {\n      reads: [...picks,",
+    "new": "    const from = 0;\n    return {\n      reads: [...picks,",
     "why": "every page of gains is the first",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -704,8 +704,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-FIX-economy-next-dropped",
     "file": "server-account/src/staffPlayers.js",
-    "old": "      next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,\n      characters:",
-    "new": "      next: null,\n      characters:",
+    "old": "          next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,\n          characters:",
+    "new": "          next: null,\n          characters:",
     "why": "the gains answer no next page",
     "tests": [
       "test/server/staffpanel3players.test.js"

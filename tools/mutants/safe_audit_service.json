@@ -419,8 +419,8 @@
   {
     "name": "AUDIT-SAFE-S6-void-counted",
     "file": "server-account/src/sanctions.js",
-    "old": "AND at > ?2 AND void_at IS NULL\").bind(target, nowS - STRIKE_WINDOW_S).first();",
-    "new": "AND at > ?2\").bind(target, nowS - STRIKE_WINDOW_S).first();",
+    "old": "AND at > ?2 AND void_at IS NULL`).bind(target, nowS - STRIKE_WINDOW_S);",
+    "new": "AND at > ?2`).bind(target, nowS - STRIKE_WINDOW_S);",
     "tests": [
       "test/server/safe_audit.test.js"
     ]

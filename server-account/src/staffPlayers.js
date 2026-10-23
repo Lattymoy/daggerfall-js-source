@@ -27,7 +27,7 @@
 // (`kept`: by its object's key, and every write is a new object, so a kept view never goes stale), the trades read by
 // migration 0151's indexes, and every list pages (`from`, answered `next`).
 import { displayName, devicesOf, closeAllSessions, handleRefusal, wornNameRefusal, isMuted } from './accounts.js';
-import { findAccount, strikesOf, isBanned } from './sanctions.js';
+import { findAccount, strikesRead, isBanned, nameAsked, guestNamed } from './sanctions.js';
 import { canModerate, handleList } from './titles.js';
 import { REALM_ID_RE, REALM_PLAYING_S, realmSaveTextOf, realmNameOf, mustChange } from './realm.js';
 import { possessedItemLists, ledgerKeyOf } from './judge.js';
@@ -92,7 +92,6 @@ const num = (/** @type {unknown} */ v) => (typeof v === 'number' && Number.isFin
 const parse = (/** @type {unknown} */ t) => { try { return JSON.parse(String(t)); } catch { return null; } };
 const arrayOf = (/** @type {unknown} */ x) => (Array.isArray(x) ? x : []);
 const objectOf = (/** @type {unknown} */ x) => (x && typeof x === 'object' ? /** @type {Record<string, unknown>} */ (x) : {});
-const marks = (/** @type {number} */ n, from = 1) => (n ? Array.from({ length: n }, (_, i) => `?${from + i}`).join(', ') : 'NULL');
 const fromOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);
 const plural = (/** @type {number} */ n, /** @type {string} */ one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -212,10 +211,9 @@ async function viewOf(bucket, c) {
 }
 
 /** The law finding standing on a character - the last the judge wrote (one is written as its signature comes or changes,
- *  verdict.js) - as `{ seq, findings }`, or null. @param {any} db @param {any} c */
-async function lawOf(db, c) {
+ *  verdict.js), `f` its row - as `{ seq, findings }`, or null. @param {any} c @param {any} f */
+function lawOf(c, f) {
   if (!lawStands(c)) return null;
-  const f = await db.prepare("SELECT seq, detail FROM realm_findings WHERE char_id = ?1 AND kind = 'law' ORDER BY at DESC, id DESC LIMIT 1").bind(c.id).first();
   const d = parse(f?.detail);
   return d ? { seq: f.seq, findings: arrayOf(d.findings) } : null;
 }
@@ -243,46 +241,57 @@ function charView(c, nowS) {
 /** The character a tab reads: the one asked for, or the one played last that lives. @param {any[]} chars @param {unknown} id */
 const chosen = (chars, id) => chars.find((c) => c.id === id) ?? chars.find((c) => c.dead_at == null) ?? chars[0] ?? null;
 
-const CHARS_SQL = `SELECT id, name, summary, seq, lease, lease_at, obj, dead_at, held, held_at, held_until, strikes, law_sig, law_excused, review,
-  wealth, allowance, witnessed, judged_seq, level_seen, created_at, updated_at FROM realm_characters WHERE player = ?1 ORDER BY updated_at DESC LIMIT ${CHARS_READ_MAX}`;
+/** The account's characters, the one played last first - `who` the account as SQL over ?1. STAFF-PANEL-SPEED: `cols` 'id'
+ *  is the same list as a subquery (the same index, in the same order), so a read keyed on it is keyed on what the list read. */
+const charsSql = (who = '?1', cols = `id, name, summary, seq, lease, lease_at, obj, dead_at, held, held_at, held_until, strikes, law_sig, law_excused, review,
+  wealth, allowance, witnessed, judged_seq, level_seen, created_at, updated_at`) => `SELECT ${cols} FROM realm_characters WHERE player = ${who} ORDER BY updated_at DESC LIMIT ${CHARS_READ_MAX}`;
+/** STAFF-PANEL-SPEED: a profile asked by a name is read keyed on this - the account its handle names (?1, folded), one
+ *  probe of the handle's unique index (0001's idx_players_handle_lc), as findAccount reads it. */
+const BY_HANDLE = '(SELECT id FROM players WHERE handle_lc = ?1)';
+/** STAFF-PANEL-SPEED: chosen() in SQL, over the characters of ?1 and the one asked (?2) - it, else the one played last that
+ *  lives, else the last played, the list's own order (its index's: a tie by rowid, last first) - so a tab reads its
+ *  character beside the account. The answer checks it against chosen() over the list, and reads again where they part. */
+const PICK_SQL = '(SELECT id FROM realm_characters WHERE player = ?1 ORDER BY id = ?2 DESC, dead_at IS NOT NULL, updated_at DESC, rowid DESC LIMIT 1)';
 
 /**
- * A PROFILE'S FACTS, one batch: the open case, the judge's findings standing and this week's, the ledger's copies and claims,
- * the reported listings, the trades refused on a hold - and the card's newest flag.
- * @param {any} db @param {any} p @param {any[]} chars @param {number} nowS
+ * A PROFILE'S FACTS, one batch: the strikes, the open case, the judge's findings standing and this week's, the ledger's
+ * copies and claims, the reported listings, the trades refused on a hold - and the card's newest flag. STAFF-PANEL-SPEED
+ * (mob: "The click takes a while before the new page shows"): keyed on the account as `who` (SQL over ?1, `key`) and its
+ * characters by subquery, so they ride the account's own read; the judge's last law finding of each character whose
+ * finding stands, in one read, and lawStands() over the list still the word on which count (factsFrom).
+ * @param {any} db @param {string} who @param {string} key @param {number} nowS
  */
-async function factsOf(db, p, chars, nowS) {
-  const ids = chars.map((c) => c.id);
-  const standing = chars.filter(lawStands);
-  const q = (/** @type {string} */ sql, /** @type {unknown[]} */ ...a) => db.prepare(sql).bind(...a);
-  /** @type {[string, any][]} */
-  const reads = [
+function factsReads(db, who, key, nowS) {
+  const q = (/** @type {string} */ sql, /** @type {unknown[]} */ ...a) => db.prepare(sql).bind(key, ...a);
+  const inIds = charsSql(who, 'id');
+  return [
+    strikesRead(db, key, nowS, who),
     // one open case a kind (migration 0156: a chat case and a spawn case may stand together)
-    ['case', q("SELECT COUNT(*) AS n FROM mod_cases WHERE target = ?1 AND status = 'open'", p.id)],
-    ['reported', q(`SELECT COUNT(DISTINCT x) AS n FROM (SELECT r.listing AS x FROM market_reports r JOIN market_listings l ON l.id = r.listing WHERE l.seller = ?1 AND l.state = 'open'
-      UNION ALL SELECT r.auction FROM market_auction_reports r JOIN market_auctions a ON a.id = r.auction WHERE a.seller = ?1 AND a.state = 'open')`, p.id)],
+    q(`SELECT COUNT(*) AS n FROM mod_cases WHERE target = ${who} AND status = 'open'`),
+    q(`SELECT COUNT(DISTINCT x) AS n FROM (SELECT r.listing AS x FROM market_reports r JOIN market_listings l ON l.id = r.listing WHERE l.seller = ${who} AND l.state = 'open'
+      UNION ALL SELECT r.auction FROM market_auction_reports r JOIN market_auctions a ON a.id = r.auction WHERE a.seller = ${who} AND a.state = 'open')`),
     // a hold's refusal is kept with the side it held (realmTrade.js, FIELD BUGS 2026-10-11g HELD-SIDE): this account's own
-    ['refused', q("SELECT COUNT(*) AS n FROM realm_trades WHERE (a_player = ?1 AND why = 'trade-held:a') OR (b_player = ?1 AND why = 'trade-held:b')", p.id)],
+    q(`SELECT COUNT(*) AS n FROM realm_trades WHERE (a_player = ${who} AND why = 'trade-held:a') OR (b_player = ${who} AND why = 'trade-held:b')`),
+    q(`SELECT COUNT(*) AS n FROM item_dupes WHERE char_id IN (${inIds})`),
+    q(`SELECT (SELECT COUNT(*) FROM item_uids WHERE claim_char IN (${inIds}) AND claim_char IS NOT NULL)
+        + (SELECT COUNT(*) FROM item_uids WHERE char_id IN (${inIds}) AND claim_char IS NOT NULL) AS n`),
+    q(`SELECT kind, COUNT(*) AS n FROM realm_findings WHERE char_id IN (${inIds}) AND at >= ?2 GROUP BY kind`, nowS - OPEN_WINDOW_S),
+    q(`SELECT char_id, kind, at, detail FROM realm_findings WHERE char_id IN (${inIds}) AND kind != 'staff' ORDER BY at DESC, id DESC LIMIT 1`),
+    q(`SELECT c.id, (SELECT f.detail FROM realm_findings f WHERE f.char_id = c.id AND f.kind = 'law' ORDER BY f.at DESC, f.id DESC LIMIT 1) AS detail
+      FROM realm_characters c WHERE c.id IN (${inIds}) AND c.law_sig IS NOT NULL AND c.law_sig IS NOT c.law_excused`),
   ];
-  if (ids.length) {
-    const inIds = marks(ids.length);
-    reads.push(
-      ['copies', q(`SELECT COUNT(*) AS n FROM item_dupes WHERE char_id IN (${inIds})`, ...ids)],
-      ['claims', q(`SELECT (SELECT COUNT(*) FROM item_uids WHERE claim_char IN (${inIds}) AND claim_char IS NOT NULL)
-        + (SELECT COUNT(*) FROM item_uids WHERE char_id IN (${inIds}) AND claim_char IS NOT NULL) AS n`, ...ids)],
-      ['kinds', q(`SELECT kind, COUNT(*) AS n FROM realm_findings WHERE char_id IN (${inIds}) AND at >= ?${ids.length + 1} GROUP BY kind`, ...ids, nowS - OPEN_WINDOW_S)],
-      ['newest', q(`SELECT char_id, kind, at, detail FROM realm_findings WHERE char_id IN (${inIds}) AND kind != 'staff' ORDER BY at DESC, id DESC LIMIT 1`, ...ids)],
-      ...standing.map((c) => /** @type {[string, any]} */ ([`law:${c.id}`, q("SELECT seq, detail FROM realm_findings WHERE char_id = ?1 AND kind = 'law' ORDER BY at DESC, id DESC LIMIT 1", c.id)])),
-    );
-  }
-  const got = await db.batch(reads.map(([, s]) => s));
+}
+/** What factsReads' answers say, in their order. @param {any[]} got @param {any} p @param {any[]} chars @param {number} nowS */
+function factsFrom(got, p, chars, nowS) {
   /** @type {Record<string, any[]>} */
-  const r = Object.fromEntries(reads.map(([k], i) => [k, got[i]?.results ?? []]));
+  const r = Object.fromEntries(['strikes', 'case', 'reported', 'refused', 'copies', 'claims', 'kinds', 'newest', 'law'].map((k, i) => [k, got[i]?.results ?? []]));
   const n = (/** @type {string} */ k) => Number(r[k]?.[0]?.n ?? 0);
-  const law = standing.flatMap((c) => arrayOf(parse(r[`law:${c.id}`]?.[0]?.detail)?.findings));
+  const lawAt = new Map(r.law.map((l) => [l.id, l.detail]));
+  const law = chars.filter(lawStands).flatMap((c) => arrayOf(parse(lawAt.get(c.id))?.findings));
   /** @type {Record<string, number>} */
   const kinds = Object.fromEntries((r.kinds ?? []).map((k) => [k.kind, Number(k.n)]));
   return {
+    strikes: n('strikes'),
     facts: {
       openCases: n('case'), banned: isBanned(p, nowS), muted: isMuted(p, nowS), frozen: Number(p.frozen_until) > nowS,
       holds: chars.filter((c) => c.held && c.dead_at == null).length, charLaw: law.filter((f) => !isPieceFinding(f)).length,
@@ -294,18 +303,19 @@ async function factsOf(db, p, chars, nowS) {
   };
 }
 
-/** A list's statements, paged: every section from its start, or the one asked (`section`) from `from` - one batch, the
- *  read's audit row (`row`) last in it. @param {any} db @param {Record<string, [string, unknown[]]>} defs @param {any} body
- *  @param {any} row @param {(row: any) => any} [map] */
-async function sectionsOf(db, defs, body, row, map = (x) => x) {
+/** A list's statements, paged: every section from its start, or the one asked (`section`) from `from` - its reads, and
+ *  what they answer. @param {any} db @param {Record<string, [string, unknown[]]>} defs @param {any} body @param {(row: any) => any} [map] */
+function sectionsOf(db, defs, body, map = (x) => x) {
   const one = typeof body.section === 'string' && Object.hasOwn(defs, body.section) ? body.section : null;
   const names = one ? [one] : Object.keys(defs);
   const from = one ? fromOf(body.from) : 0;
-  const got = await db.batch([...names.map((k) => db.prepare(`${defs[k][0]} LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`).bind(...defs[k][1])), row]);
-  return Object.fromEntries(names.map((k, i) => {
-    const rows = got[i]?.results ?? [];
-    return [k, { rows: rows.slice(0, PLAYERS_PAGE).map(map), next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null }];
-  }));
+  return {
+    reads: names.map((k) => db.prepare(`${defs[k][0]} LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`).bind(...defs[k][1])),
+    of: async (/** @type {any[]} */ got) => Object.fromEntries(names.map((k, i) => {
+      const rows = got[i]?.results ?? [];
+      return [k, { rows: rows.slice(0, PLAYERS_PAGE).map(map), next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null }];
+    })),
+  };
 }
 
 /** A stored item record (a listing's, a delivery's, a vault slot's, an escrow's) as its name and template. @param {unknown} rec */
@@ -314,96 +324,132 @@ const recOf = (rec) => { const o = objectOf(parse(rec)); return { name: str(o.na
 const marketRow = (r) => (r.item ? { ...r, item: recOf(r.item) } : r);
 
 /**
- * ONE TAB OF A PROFILE. @param {any} ctx @param {any} env @param {string} tab @param {any} p the account's row
- * @param {any[]} chars its realm characters, the one played last first @param {any} body
- * @param {any} row the read's audit row - STAFF-PANEL-SPEED: written in the tab's own batch, never a trip after it
+ * ONE TAB OF A PROFILE: its reads, and what it makes of them (`of`). @param {any} ctx @param {any} env @param {string} tab
+ * @param {string} id the account's id @param {any} body
+ * @param {any[]|null} chars its realm characters, the one played last first - or null: STAFF-PANEL-SPEED (mob: "The click
+ * takes a while before the new page shows"), a tab read beside them, every read keyed on the account (?1), its characters
+ * by subquery and the one a tab shows by PICK_SQL; `of` answers null where that is not chosen()'s, for a read again
+ * @returns {{ reads: any[], view?: Promise<any>|null, of: (got: any[], p: any, chars: any[]) => Promise<any> }}
  */
-async function tabOf(ctx, env, tab, p, chars, body, row) {
+function tabOf(ctx, env, tab, id, body, chars) {
   const { db, nowS } = ctx;
   const bucket = ctx.bucket ?? env.SAVES;
-  const ids = chars.map((c) => c.id);
+  const q = (/** @type {string} */ sql, /** @type {unknown[]} */ ...a) => db.prepare(sql).bind(id, ...a);
+  // the character a tab shows (?2): chosen()'s where the list is read, else the one asked, PICK_SQL's beside the list
+  const known = chars && chosen(chars, body.char);
+  const pick = chars ? '?2' : PICK_SQL;
+  const char = chars ? known?.id ?? null : typeof body.char === 'string' ? body.char : null;
+  const picks = chars ? [] : [q(`SELECT ${PICK_SQL} AS id`, char)];
+  /** The character shown and its reads' answers - null where PICK_SQL's is not chosen()'s. @param {any[]} got @param {any[]} all */
+  const picked = (got, all) => {
+    if (chars) return { c: known, got };
+    const c = chosen(all, body.char);
+    return (c?.id ?? null) === (got[0]?.results?.[0]?.id ?? null) ? { c, got: got.slice(1) } : null;
+  };
 
   if (tab === 'overview') {
-    const [[guilds, renown, devices, open], strikes] = await Promise.all([db.batch([
-      db.prepare('SELECT m.char_id, m.rank, g.id, g.name, g.tag FROM guild_members m JOIN guilds g ON g.id = m.guild_id WHERE m.player = ?1').bind(p.id),
-      db.prepare('SELECT char_id, xp FROM renown_tracks WHERE player = ?1').bind(p.id),
-      db.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?1').bind(p.id),
-      // every open case - one a kind, a chat case and a spawn case at once (migration 0156)
-      db.prepare("SELECT id, kind, opened_at, reports, claimed_by FROM mod_cases WHERE target = ?1 AND status = 'open' ORDER BY kind").bind(p.id),
-      row,
-    ]), strikesOf(db, p.id, nowS)]);
-    const guildOf = new Map((guilds.results ?? []).map((/** @type {any} */ g) => [g.char_id, { id: g.id, name: g.name, tag: g.tag, rank: g.rank }]));
-    const xpOf = new Map((renown.results ?? []).map((/** @type {any} */ t) => [t.char_id, t.xp]));
     return {
-      account: {
-        id: p.id, handle: p.handle ?? null, guestName: p.guest_name, createdAt: p.created_at, registeredAt: p.registered_at ?? null,
-        playedS: p.played_s ?? 0, playedAt: p.played_at ?? null, online: onlineNow(p, nowS), nameAs: p.name_as === 'character' ? 'character' : 'account',
+      reads: [
+        q('SELECT m.char_id, m.rank, g.id, g.name, g.tag FROM guild_members m JOIN guilds g ON g.id = m.guild_id WHERE m.player = ?1'),
+        q('SELECT char_id, xp FROM renown_tracks WHERE player = ?1'),
+        q('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?1'),
+        // every open case - one a kind, a chat case and a spawn case at once (migration 0156)
+        q("SELECT id, kind, opened_at, reports, claimed_by FROM mod_cases WHERE target = ?1 AND status = 'open' ORDER BY kind"),
+        strikesRead(db, id, nowS),
+      ],
+      of: async ([guilds, renown, devices, open, struck], p, all) => {
+        const strikes = Number(struck?.results?.[0]?.n ?? 0);
+        const guildOf = new Map((guilds.results ?? []).map((/** @type {any} */ g) => [g.char_id, { id: g.id, name: g.name, tag: g.tag, rank: g.rank }]));
+        const xpOf = new Map((renown.results ?? []).map((/** @type {any} */ t) => [t.char_id, t.xp]));
+        return {
+          account: {
+            id: p.id, handle: p.handle ?? null, guestName: p.guest_name, createdAt: p.created_at, registeredAt: p.registered_at ?? null,
+            playedS: p.played_s ?? 0, playedAt: p.played_at ?? null, online: onlineNow(p, nowS), nameAs: p.name_as === 'character' ? 'character' : 'account',
+          },
+          sanctions: {
+            strikes, mutedUntil: isMuted(p, nowS) ? p.muted_until : 0, bannedUntil: isBanned(p, nowS) ? p.banned_until : 0,
+            banReason: isBanned(p, nowS) ? p.ban_reason ?? null : null, frozenUntil: Number(p.frozen_until) > nowS ? p.frozen_until : 0,
+          },
+          openCases: (open.results ?? []).map((/** @type {any} */ c) => ({ id: c.id, kind: c.kind, openedAt: c.opened_at, reports: c.reports, claimedBy: c.claimed_by ?? null })),
+          devices: Number(devices.results?.[0]?.n ?? 0),
+          characters: all.map((ch) => ({ ...charView(ch, nowS), guild: guildOf.get(ch.id) ?? null, renownXp: xpOf.get(ch.id) ?? 0 })),
+        };
       },
-      sanctions: {
-        strikes, mutedUntil: isMuted(p, nowS) ? p.muted_until : 0, bannedUntil: isBanned(p, nowS) ? p.banned_until : 0,
-        banReason: isBanned(p, nowS) ? p.ban_reason ?? null : null, frozenUntil: Number(p.frozen_until) > nowS ? p.frozen_until : 0,
-      },
-      openCases: (open.results ?? []).map((/** @type {any} */ c) => ({ id: c.id, kind: c.kind, openedAt: c.opened_at, reports: c.reports, claimedBy: c.claimed_by ?? null })),
-      devices: Number(devices.results?.[0]?.n ?? 0),
-      characters: chars.map((ch) => ({ ...charView(ch, nowS), guild: guildOf.get(ch.id) ?? null, renownXp: xpOf.get(ch.id) ?? 0 })),
     };
   }
 
   if (tab === 'skills' || tab === 'equipment' || tab === 'inventories') {
-    const c = chosen(chars, body.char);
-    if (!c) { await row.run(); return { character: null }; }
-    // STAFF-PANEL-SPEED: the save, its law finding, the locked copies and what the service holds, all at once, the row with them
+    if (chars && !known) return { reads: [], of: async () => ({ character: null }) };
+    // STAFF-PANEL-SPEED: the save, its law finding, the locked copies and what the service holds, all at once, the row with
+    // them - the save beside them once the list is read (its object's key is the row's), after them where it is not
+    const has = 'EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1)';   // a character to show, so never read for none
     const service = tab === 'inventories' ? [
-      db.prepare('SELECT char_id, material, origin, qty FROM prof_stores WHERE player = ?1 AND qty > 0').bind(p.id),
+      'SELECT char_id, material, origin, qty FROM prof_stores WHERE player = ?1 AND qty > 0',
       // a guild's vault, by its own key: the account's guilds' deposits (one it left keeps them as the guild's)
-      db.prepare(`SELECT v.guild_id, g.name AS guild, v.slot, v.rec, v.name, v.count, v.dep_char FROM guild_vault v JOIN guilds g ON g.id = v.guild_id
-        WHERE v.guild_id IN (SELECT guild_id FROM guild_members WHERE player = ?1) AND v.dep_player = ?1`).bind(p.id),
-      db.prepare(`SELECT l.id, l.char_id, l.kind, l.material, l.provenance, l.item, l.units, l.bought, l.price, l.currency, e.item AS piece
-        FROM market_listings l LEFT JOIN piece_escrow e ON e.provenance = l.provenance WHERE l.seller = ?1 AND l.state = 'open'`).bind(p.id),
-      db.prepare(`SELECT a.id, a.char_id, a.provenance, a.opening, a.high, e.item AS piece FROM market_auctions a LEFT JOIN piece_escrow e ON e.provenance = a.provenance
-        WHERE a.seller = ?1 AND a.state = 'open'`).bind(p.id),
-      db.prepare("SELECT id, char_id, material, left_units, escrow FROM market_orders WHERE poster = ?1 AND state = 'open'").bind(p.id),
-      db.prepare("SELECT id, char_id, auction, amount, courier FROM market_bids WHERE bidder = ?1 AND state = 'high'").bind(p.id),
-      db.prepare('SELECT id, char_id, provenance, item, why, arrives_at FROM market_deliveries WHERE player = ?1 AND collected = 0').bind(p.id),
-      db.prepare('SELECT char_id, gold FROM market_gold WHERE player = ?1 AND gold > 0').bind(p.id),
-      db.prepare(`SELECT r, char_id, rec, until_s FROM wild_escrow WHERE char_id IN (${marks(ids.length)}) AND state = 'held'`).bind(...ids),
-    ] : [];
-    const [view, law, got] = await Promise.all([viewOf(bucket, c), lawOf(db, c),
-      db.batch([...(tab === 'skills' ? [] : [db.prepare('SELECT uid FROM item_dupes WHERE char_id = ?1').bind(c.id)]), ...service, row])]);
-    const head = { character: charView(c, nowS), seq: c.seq, savedAt: c.updated_at, judgedSeq: c.judged_seq ?? null, saved: !!view };
-    if (tab === 'skills') {
-      return { ...head, trustedLevel: c.level_seen ?? null, save: view && { level: view.level, name: view.name, stats: view.stats, skills: view.skills },
-        findings: (law?.findings ?? []).filter((f) => !isPieceFinding(f)) };
-    }
-    const locked = new Set((got[0]?.results ?? []).map((/** @type {any} */ d) => d.uid));
-    const rows = flagged(view?.items ?? [], law, c.seq, locked);
-    if (tab === 'equipment') return { ...head, worn: rows.filter((r) => r.where === 'carried' && r.slot != null), findings: (law?.findings ?? []).filter(isPieceFinding) };
-    // INVENTORIES, EVERYWHERE: the save's own lists (this character's), and what the service holds for the account
-    const [stores, vault, listings, auctions, orders, bids, deliveries, gold, wild] = got.slice(1);
-    const res = (/** @type {any} */ x) => /** @type {any[]} */ (x?.results ?? []);
-    const held = [
-      ...res(stores).map((s) => ({ where: 'stores', char: s.char_id, name: s.material, origin: s.origin, count: s.qty, worth: null })),
-      ...res(vault).map((v) => ({ where: 'vault', char: v.dep_char, guild: { id: v.guild_id, name: v.guild }, slot: v.slot, name: str(v.name) ?? recOf(v.rec).name, t: recOf(v.rec).t, count: v.count, worth: null })),
-      ...res(listings).map((l) => ({ where: 'escrow', char: l.char_id, listing: l.id, name: l.material ?? recOf(l.item ?? l.piece).name ?? l.provenance, count: l.units - l.bought, price: l.price, currency: l.currency, worth: null })),
-      ...res(auctions).map((a) => ({ where: 'escrow', char: a.char_id, auction: a.id, name: recOf(a.piece).name ?? a.provenance, count: 1, price: a.high ?? a.opening, worth: null })),
-      ...res(orders).map((o) => ({ where: 'escrow', char: o.char_id, order: o.id, name: `gold for ${o.left_units} ${o.material}`, count: 1, worth: o.escrow })),
-      ...res(bids).map((b) => ({ where: 'escrow', char: b.char_id, auction: b.auction, name: 'gold for a high bid', count: 1, worth: b.amount + b.courier })),
-      ...res(deliveries).map((d) => ({ where: 'deliveries', char: d.char_id, delivery: d.id, name: recOf(d.item).name ?? d.provenance, why: d.why, arrivesAt: d.arrives_at, count: 1, worth: null })),
-      ...res(gold).map((g) => ({ where: 'market-gold', char: g.char_id, name: 'gold held at the market', count: 1, worth: g.gold })),
-      ...res(wild).map((w) => ({ where: 'escrow', char: w.char_id, wild: w.r, name: recOf(w.rec).name, until: w.until_s, count: 1, worth: null })),
-    ];
-    const where = ITEM_PLACES.includes(body.where) ? body.where : null;
-    const q = typeof body.q === 'string' ? body.q.trim().toLowerCase().slice(0, 32) : '';
-    const type = typeof body.type === 'string' ? body.type.toLowerCase().slice(0, 32) : '';
-    const min = Number.isSafeInteger(body.min) && body.min > 0 ? body.min : 0;
-    const quality = Number.isSafeInteger(body.quality) && body.quality > 0 ? body.quality : 0;
-    const all = [...rows.map((r) => ({ ...r, char: c.id })), ...held].filter((/** @type {any} */ r) => (!where || (where === 'letters' ? r.letter === true : r.where === where))
-      && (!q || String(r.name ?? '').toLowerCase().includes(q)) && (!type || String(r.group ?? '').toLowerCase() === type)
-      && (!min || (r.worth ?? 0) >= min) && (!quality || (r.quality ?? 0) >= quality));
-    const from = fromOf(body.from);
+      `SELECT v.guild_id, g.name AS guild, v.slot, v.rec, v.name, v.count, v.dep_char FROM guild_vault v JOIN guilds g ON g.id = v.guild_id
+        WHERE v.guild_id IN (SELECT guild_id FROM guild_members WHERE player = ?1) AND v.dep_player = ?1`,
+      `SELECT l.id, l.char_id, l.kind, l.material, l.provenance, l.item, l.units, l.bought, l.price, l.currency, e.item AS piece
+        FROM market_listings l LEFT JOIN piece_escrow e ON e.provenance = l.provenance WHERE l.seller = ?1 AND l.state = 'open'`,
+      `SELECT a.id, a.char_id, a.provenance, a.opening, a.high, e.item AS piece FROM market_auctions a LEFT JOIN piece_escrow e ON e.provenance = a.provenance
+        WHERE a.seller = ?1 AND a.state = 'open'`,
+      "SELECT id, char_id, material, left_units, escrow FROM market_orders WHERE poster = ?1 AND state = 'open'",
+      "SELECT id, char_id, auction, amount, courier FROM market_bids WHERE bidder = ?1 AND state = 'high'",
+      'SELECT id, char_id, provenance, item, why, arrives_at FROM market_deliveries WHERE player = ?1 AND collected = 0',
+      'SELECT char_id, gold FROM market_gold WHERE player = ?1 AND gold > 0',
+      `SELECT r, char_id, rec, until_s FROM wild_escrow WHERE char_id IN (${charsSql('?1', 'id')}) AND state = 'held'`,
+    ].map((sql) => q(`${sql} AND ${has}`)) : [];
+    const view = known ? viewOf(bucket, known) : null;
     return {
-      ...head, purse: view?.purse ?? null, banks: view?.banks ?? null, items: all.slice(from, from + ITEMS_PAGE),
-      next: from + ITEMS_PAGE < all.length ? from + ITEMS_PAGE : null, total: all.length, findings: (law?.findings ?? []).filter(isPieceFinding),
+      view,
+      reads: [...picks,
+        // the judge's last law finding where it stands (lawOf, which asks lawStands() again)
+        q(`SELECT f.seq, f.detail FROM realm_characters c JOIN realm_findings f ON f.char_id = c.id AND f.kind = 'law'
+          WHERE c.id = ${pick} AND c.law_sig IS NOT NULL AND c.law_sig IS NOT c.law_excused ORDER BY f.at DESC, f.id DESC LIMIT 1`, char),
+        ...(tab === 'skills' ? [] : [q(`SELECT uid FROM item_dupes WHERE char_id = ${pick}`, char)]), ...service],
+      of: async (all, p, list) => {
+        const hit = picked(all, list);
+        if (!hit) return null;
+        const { c } = hit;
+        if (!c) return { character: null };
+        const [found, ...got] = hit.got;
+        const save = await (view ?? viewOf(bucket, c));
+        const law = lawOf(c, found?.results?.[0]);
+        const head = { character: charView(c, nowS), seq: c.seq, savedAt: c.updated_at, judgedSeq: c.judged_seq ?? null, saved: !!save };
+        if (tab === 'skills') {
+          return { ...head, trustedLevel: c.level_seen ?? null, save: save && { level: save.level, name: save.name, stats: save.stats, skills: save.skills },
+            findings: (law?.findings ?? []).filter((f) => !isPieceFinding(f)) };
+        }
+        const locked = new Set((got[0]?.results ?? []).map((/** @type {any} */ d) => d.uid));
+        const rows = flagged(save?.items ?? [], law, c.seq, locked);
+        if (tab === 'equipment') return { ...head, worn: rows.filter((r) => r.where === 'carried' && r.slot != null), findings: (law?.findings ?? []).filter(isPieceFinding) };
+        // INVENTORIES, EVERYWHERE: the save's own lists (this character's), and what the service holds for the account
+        const [stores, vault, listings, auctions, orders, bids, deliveries, gold, wild] = got.slice(1);
+        const res = (/** @type {any} */ x) => /** @type {any[]} */ (x?.results ?? []);
+        const held = [
+          ...res(stores).map((s) => ({ where: 'stores', char: s.char_id, name: s.material, origin: s.origin, count: s.qty, worth: null })),
+          ...res(vault).map((v) => ({ where: 'vault', char: v.dep_char, guild: { id: v.guild_id, name: v.guild }, slot: v.slot, name: str(v.name) ?? recOf(v.rec).name, t: recOf(v.rec).t, count: v.count, worth: null })),
+          ...res(listings).map((l) => ({ where: 'escrow', char: l.char_id, listing: l.id, name: l.material ?? recOf(l.item ?? l.piece).name ?? l.provenance, count: l.units - l.bought, price: l.price, currency: l.currency, worth: null })),
+          ...res(auctions).map((a) => ({ where: 'escrow', char: a.char_id, auction: a.id, name: recOf(a.piece).name ?? a.provenance, count: 1, price: a.high ?? a.opening, worth: null })),
+          ...res(orders).map((o) => ({ where: 'escrow', char: o.char_id, order: o.id, name: `gold for ${o.left_units} ${o.material}`, count: 1, worth: o.escrow })),
+          ...res(bids).map((b) => ({ where: 'escrow', char: b.char_id, auction: b.auction, name: 'gold for a high bid', count: 1, worth: b.amount + b.courier })),
+          ...res(deliveries).map((d) => ({ where: 'deliveries', char: d.char_id, delivery: d.id, name: recOf(d.item).name ?? d.provenance, why: d.why, arrivesAt: d.arrives_at, count: 1, worth: null })),
+          ...res(gold).map((g) => ({ where: 'market-gold', char: g.char_id, name: 'gold held at the market', count: 1, worth: g.gold })),
+          ...res(wild).map((w) => ({ where: 'escrow', char: w.char_id, wild: w.r, name: recOf(w.rec).name, until: w.until_s, count: 1, worth: null })),
+        ];
+        const where = ITEM_PLACES.includes(body.where) ? body.where : null;
+        const q = typeof body.q === 'string' ? body.q.trim().toLowerCase().slice(0, 32) : '';
+        const type = typeof body.type === 'string' ? body.type.toLowerCase().slice(0, 32) : '';
+        const min = Number.isSafeInteger(body.min) && body.min > 0 ? body.min : 0;
+        const quality = Number.isSafeInteger(body.quality) && body.quality > 0 ? body.quality : 0;
+        const every = [...rows.map((r) => ({ ...r, char: c.id })), ...held].filter((/** @type {any} */ r) => (!where || (where === 'letters' ? r.letter === true : r.where === where))
+          && (!q || String(r.name ?? '').toLowerCase().includes(q)) && (!type || String(r.group ?? '').toLowerCase() === type)
+          && (!min || (r.worth ?? 0) >= min) && (!quality || (r.quality ?? 0) >= quality));
+        const from = fromOf(body.from);
+        return {
+          ...head, purse: save?.purse ?? null, banks: save?.banks ?? null, items: every.slice(from, from + ITEMS_PAGE),
+          next: from + ITEMS_PAGE < every.length ? from + ITEMS_PAGE : null, total: every.length, findings: (law?.findings ?? []).filter(isPieceFinding),
+        };
+      },
     };
   }
 
@@ -412,75 +458,149 @@ async function tabOf(ctx, env, tab, p, chars, body, row) {
     return sectionsOf(db, {
       listings: [`SELECT l.id, l.char_id AS char, l.kind, l.material, l.provenance, l.item, l.units, l.bought, l.price, l.currency, l.state, l.region, l.at,
         l.expires_at AS expiresAt, l.closed_at AS closedAt, (SELECT COUNT(*) FROM market_reports r WHERE r.listing = l.id) AS reports
-        FROM market_listings l WHERE l.seller = ?1 ORDER BY l.at DESC, l.id DESC`, [p.id]],
+        FROM market_listings l WHERE l.seller = ?1 ORDER BY l.at DESC, l.id DESC`, [id]],
       sales: [`SELECT s.listing, s.buyer AS other, x.handle AS otherHandle, s.char_id AS char, s.kind, s.material, s.provenance, s.units, s.price, s.total,
-        s.currency, s.at FROM market_sales s ${party('buyer')} WHERE s.seller = ?1 ORDER BY s.at DESC, s.rid DESC`, [p.id]],
+        s.currency, s.at FROM market_sales s ${party('buyer')} WHERE s.seller = ?1 ORDER BY s.at DESC, s.rid DESC`, [id]],
       purchases: [`SELECT s.listing, s.seller AS other, x.handle AS otherHandle, s.char_id AS char, s.kind, s.material, s.provenance, s.units, s.price, s.total,
-        s.currency, s.at FROM market_sales s ${party('seller')} WHERE s.buyer = ?1 ORDER BY s.at DESC, s.rid DESC`, [p.id]],
+        s.currency, s.at FROM market_sales s ${party('seller')} WHERE s.buyer = ?1 ORDER BY s.at DESC, s.rid DESC`, [id]],
       auctions: [`SELECT a.id, a.char_id AS char, a.provenance, a.opening, a.high, a.bids, a.state, a.at, a.ends_at AS endsAt,
-        (SELECT COUNT(*) FROM market_auction_reports r WHERE r.auction = a.id) AS reports FROM market_auctions a WHERE a.seller = ?1 ORDER BY a.at DESC, a.id DESC`, [p.id]],
-      bids: ['SELECT b.id, b.auction, b.char_id AS char, b.amount, b.state, b.at FROM market_bids b WHERE b.bidder = ?1 ORDER BY b.at DESC, b.id DESC', [p.id]],
+        (SELECT COUNT(*) FROM market_auction_reports r WHERE r.auction = a.id) AS reports FROM market_auctions a WHERE a.seller = ?1 ORDER BY a.at DESC, a.id DESC`, [id]],
+      bids: ['SELECT b.id, b.auction, b.char_id AS char, b.amount, b.state, b.at FROM market_bids b WHERE b.bidder = ?1 ORDER BY b.at DESC, b.id DESC', [id]],
       orders: [`SELECT o.id, o.char_id AS char, o.material, o.units, o.left_units AS leftUnits, o.price, o.escrow, o.state, o.at FROM market_orders o
-        WHERE o.poster = ?1 ORDER BY o.at DESC, o.id DESC`, [p.id]],
-      fills: ['SELECT f.order_id AS orderId, f.poster AS other, f.char_id AS char, f.material, f.units, f.price, f.pay, f.at FROM market_fills f WHERE f.filler = ?1 ORDER BY f.at DESC, f.rid DESC', [p.id]],
-    }, body, row, marketRow);
+        WHERE o.poster = ?1 ORDER BY o.at DESC, o.id DESC`, [id]],
+      fills: ['SELECT f.order_id AS orderId, f.poster AS other, f.char_id AS char, f.material, f.units, f.price, f.pay, f.at FROM market_fills f WHERE f.filler = ?1 ORDER BY f.at DESC, f.rid DESC', [id]],
+    }, body, marketRow);
   }
 
   if (tab === 'trades') {
     // both sides, by migration 0151's indexes; the service keeps a trade REALM_TRADE_KEEP_S (realmTrade.js), so this is the last week's
     const from = fromOf(body.from);
-    const [found] = await db.batch([db.prepare(`SELECT t.sid, t.created_at AS at, t.state, t.why, t.result, t.a_player, t.a_char, t.b_player, t.b_char,
-        ca.name AS a_name, cb.name AS b_name, pa.handle AS a_handle, pb.handle AS b_handle
-      FROM realm_trades t LEFT JOIN realm_characters ca ON ca.id = t.a_char LEFT JOIN realm_characters cb ON cb.id = t.b_char
-        LEFT JOIN players pa ON pa.id = t.a_player LEFT JOIN players pb ON pb.id = t.b_player
-      WHERE t.a_player = ?1 OR t.b_player = ?1 ORDER BY t.created_at DESC, t.sid DESC LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`).bind(p.id), row]);
-    const rows = found?.results ?? [];
     return {
-      keptDays: REALM_TRADE_KEEP_S / 86400, next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,
-      trades: rows.slice(0, PLAYERS_PAGE).map((/** @type {any} */ t) => {
-        const mine = t.a_player === p.id ? 'a' : 'b', theirs = mine === 'a' ? 'b' : 'a';
-        const r = t.state === 'done' ? parse(t.result) ?? {} : null;
-        const side = /^(trade-held|record-unjudged):([ab])$/.exec(t.why ?? '');
-        // the row keeps what each side RECEIVED, so what this side gave is what the other got (review.js tradesOf)
+      reads: [q(`SELECT t.sid, t.created_at AS at, t.state, t.why, t.result, t.a_player, t.a_char, t.b_player, t.b_char,
+          ca.name AS a_name, cb.name AS b_name, pa.handle AS a_handle, pb.handle AS b_handle
+        FROM realm_trades t LEFT JOIN realm_characters ca ON ca.id = t.a_char LEFT JOIN realm_characters cb ON cb.id = t.b_char
+          LEFT JOIN players pa ON pa.id = t.a_player LEFT JOIN players pb ON pb.id = t.b_player
+        WHERE t.a_player = ?1 OR t.b_player = ?1 ORDER BY t.created_at DESC, t.sid DESC LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`)],
+      of: async ([found], p) => {
+        const rows = found?.results ?? [];
         return {
-          sid: t.sid, at: t.at, state: t.state, why: side ? side[1] : t.why ?? null, held: side ? (side[2] === mine ? 'mine' : 'theirs') : null, char: t[`${mine}_char`],
-          with: { id: t[`${theirs}_char`] ?? null, name: t[`${theirs}_name`] ?? null, player: t[`${theirs}_player`] ?? null, handle: t[`${theirs}_handle`] ?? null },
-          gave: r ? receiptOf(r[theirs]) : null, got: r ? receiptOf(r[mine]) : null,
+          keptDays: REALM_TRADE_KEEP_S / 86400, next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,
+          trades: rows.slice(0, PLAYERS_PAGE).map((/** @type {any} */ t) => {
+            const mine = t.a_player === p.id ? 'a' : 'b', theirs = mine === 'a' ? 'b' : 'a';
+            const r = t.state === 'done' ? parse(t.result) ?? {} : null;
+            const side = /^(trade-held|record-unjudged):([ab])$/.exec(t.why ?? '');
+            // the row keeps what each side RECEIVED, so what this side gave is what the other got (review.js tradesOf)
+            return {
+              sid: t.sid, at: t.at, state: t.state, why: side ? side[1] : t.why ?? null, held: side ? (side[2] === mine ? 'mine' : 'theirs') : null, char: t[`${mine}_char`],
+              with: { id: t[`${theirs}_char`] ?? null, name: t[`${theirs}_name`] ?? null, player: t[`${theirs}_player`] ?? null, handle: t[`${theirs}_handle`] ?? null },
+              gave: r ? receiptOf(r[theirs]) : null, got: r ? receiptOf(r[mine]) : null,
+            };
+          }),
         };
-      }),
+      },
     };
   }
 
   if (tab === 'economy') {
     const days = Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= ECONOMY_DAYS_MAX ? body.days : 7;
     const since = nowS - days * 86400;
-    const c = chosen(chars, body.char);
     // the gains page from `from`, answered `next` (STAFF-PANEL3-PLAYERS FIX, flaw review: a farmer's month is past any one cut)
     const from = fromOf(body.from);
-    const [hours, gains] = await db.batch([
-      db.prepare('SELECT hour, level, gain, loss, played_s AS playedS, checkpoints FROM realm_wealth_hours WHERE char_id = ?1 AND hour >= ?2 ORDER BY hour DESC').bind(c?.id ?? null, since),
-      db.prepare(`SELECT char_id AS char, at, kind, detail FROM realm_findings WHERE char_id IN (${marks(ids.length)}) AND kind IN ('measure', 'budget') AND at >= ?${ids.length + 1}
-        ORDER BY at DESC, id DESC LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`).bind(...ids, since),
-      row,
-    ]);
-    const rows = gains.results ?? [];
     return {
-      days, char: c?.id ?? null, hours: hours.results ?? [], gains: rows.slice(0, PLAYERS_PAGE).map((/** @type {any} */ g) => ({ ...g, detail: parse(g.detail) })),
-      next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,
-      characters: chars.map((ch) => ({ id: ch.id, name: ch.name, wealth: ch.wealth ?? null, allowance: ch.allowance ?? null, witnessed: ch.witnessed ?? 0, held: ch.held ?? null, review: ch.review ?? null })),
+      reads: [...picks,
+        q(`SELECT hour, level, gain, loss, played_s AS playedS, checkpoints FROM realm_wealth_hours WHERE char_id = ${pick} AND hour >= ?3 ORDER BY hour DESC`, char, since),
+        q(`SELECT char_id AS char, at, kind, detail FROM realm_findings WHERE char_id IN (${charsSql('?1', 'id')}) AND kind IN ('measure', 'budget') AND at >= ?2
+          ORDER BY at DESC, id DESC LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`, since)],
+      of: async (all, p, list) => {
+        const hit = picked(all, list);
+        if (!hit) return null;
+        const { c, got: [hours, gains] } = hit;
+        const rows = gains.results ?? [];
+        return {
+          days, char: c?.id ?? null, hours: hours.results ?? [], gains: rows.slice(0, PLAYERS_PAGE).map((/** @type {any} */ g) => ({ ...g, detail: parse(g.detail) })),
+          next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,
+          characters: list.map((ch) => ({ id: ch.id, name: ch.name, wealth: ch.wealth ?? null, allowance: ch.allowance ?? null, witnessed: ch.witnessed ?? 0, held: ch.held ?? null, review: ch.review ?? null })),
+        };
+      },
     };
   }
 
   // HISTORY: the judge's findings (staff's realm acts among them, `staff`), the strike record, and the reports against the
   // account and by it - a report's reason, never its words
   return sectionsOf(db, {
-    findings: [`SELECT id, char_id AS char, seq, at, kind, detail FROM realm_findings WHERE char_id IN (${marks(ids.length)}) ORDER BY at DESC, id DESC`, ids],
-    acts: ['SELECT id, kind, until, reason, actor_name AS actorName, case_id AS caseId, at, void_at AS voidAt FROM mod_actions WHERE target = ?1 ORDER BY at DESC, id DESC', [p.id]],
+    findings: [`SELECT id, char_id AS char, seq, at, kind, detail FROM realm_findings WHERE char_id IN (${charsSql('?1', 'id')}) ORDER BY at DESC, id DESC`, [id]],
+    acts: ['SELECT id, kind, until, reason, actor_name AS actorName, case_id AS caseId, at, void_at AS voidAt FROM mod_actions WHERE target = ?1 ORDER BY at DESC, id DESC', [id]],
     against: [`SELECT id, source, status, opened_at AS openedAt, reports, ai_category AS aiCategory, ai_severity AS aiSeverity, resolution, resolved_by AS resolvedBy,
-      resolved_at AS resolvedAt FROM mod_cases WHERE target = ?1 ORDER BY opened_at DESC, id DESC`, [p.id]],
+      resolved_at AS resolvedAt FROM mod_cases WHERE target = ?1 ORDER BY opened_at DESC, id DESC`, [id]],
     filed: [`SELECT r.case_id AS caseId, r.reason, r.at, r.counted, c.target, x.handle AS targetHandle, c.status FROM mod_reports r JOIN mod_cases c ON c.id = r.case_id
-      LEFT JOIN players x ON x.id = c.target WHERE r.reporter = ?1 ORDER BY r.at DESC, r.case_id DESC`, [p.id]],
-  }, body, row, (r) => (r.detail ? { ...r, detail: parse(r.detail) } : r));
+      LEFT JOIN players x ON x.id = c.target WHERE r.reporter = ?1 ORDER BY r.at DESC, r.case_id DESC`, [id]],
+  }, body, (r) => (r.detail ? { ...r, detail: parse(r.detail) } : r));
+}
+
+/**
+ * A PROFILE - opened (no tab): the summary card, each tab's badge, the tab it opens on and that tab; a tab named: that tab
+ * alone. STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows"; "it need to not hurt server
+ * performance"): the account, its characters and what it shows first in one batch - the badges' facts (by id, or keyed on
+ * the handle), or the tab named by id; a guest's name is findAccount's own way (guestNamed) once the handle misses. The
+ * tab a profile opens on is read once the badges choose it, a trip of its own: never a tab the answer may not show.
+ * @param {any} ctx @param {any} env @param {any} body @param {(act: string, target?: string|null, detail?: object|null, how?: object) => any} audit
+ */
+async function profileOf(ctx, env, body, audit) {
+  const { db, nowS } = ctx;
+  const asked = PLAYER_TABS.includes(body.tab) ? body.tab : null;
+  const byId = typeof body.target === 'string' && ID_RE.test(body.target);   // findAccount's own tests
+  const said = byId ? null : nameAsked(body.name);
+  if (!byId && !said) return findAccount(db, { target: body.target, name: body.name });   // its refusal, nothing read
+  // the read's row, written in the batch it reads in; `ahead` that batch finds the account too, so a read of none writes none
+  const row = (/** @type {string} */ tab, /** @type {string} */ id, ahead = false) => audit('player-read', id, { tab },
+    { onceIn: READ_ONCE_S, ...(ahead ? { onlyIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ?)', args: [id] } } : {}) });
+  /** The characters, and the badges' facts or the tab named - keyed on the account as `who` (SQL over ?1, `key`). */
+  const next = (/** @type {string} */ who, /** @type {string} */ key) => {
+    const t = asked && who === '?1' ? tabOf(ctx, env, asked, key, body, null) : null;
+    return { t, reads: [db.prepare(charsSql(who)).bind(key), ...(!asked ? factsReads(db, who, key, nowS) : t ? [...t.reads, row(asked, key, true)] : [])] };
+  };
+  const key = byId ? body.target : String(said).toLowerCase();
+  let n = next(byId ? '?1' : BY_HANDLE, key);
+  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);
+  /** @type {any} */
+  let p = got[0]?.results?.[0];
+  if (p) got = got.slice(1);
+  else if (byId) return { error: 'no-player' };
+  else {
+    // a name no handle wears: findAccount's own way past the handles, then the account's reads by its id
+    p = await guestNamed(db, String(said));
+    if ('error' in p) return p;
+    n = next('?1', p.id);
+    got = await db.batch(n.reads);
+  }
+  const chars = got[0]?.results ?? [];
+  /** The tab now, the list read: one trip, the save beside it, the row with it unless written already. @param {string} tab */
+  const tabNow = async (tab, written = false) => {
+    const t = tabOf(ctx, env, tab, p.id, body, chars);
+    const reads = written ? t.reads : [...t.reads, row(tab, p.id)];
+    const [found] = await Promise.all([reads.length ? db.batch(reads) : [], t.view]);
+    return t.of(found, p, chars);
+  };
+  if (asked) {
+    // by a handle, or where PICK_SQL's character is not chosen()'s: the tab again, the list read
+    const data = (n.t && await n.t.of(got.slice(1, 1 + n.t.reads.length), p, chars)) ?? await tabNow(asked, !!n.t);
+    return { target: p.id, tab: asked, data };
+  }
+  const x = factsFrom(got.slice(1), p, chars, nowS);
+  const living = chars.filter((c) => c.dead_at == null);
+  const last = living[0] ?? null;
+  const { tabs, first } = profileBadges(x.facts);
+  const head = {
+    card: {
+      id: p.id, handle: p.handle ?? null, name: displayName(p), online: onlineNow(p, nowS), level: last ? charView(last, nowS).level : null,
+      hours: Math.floor((p.played_s ?? 0) / 3600), wealth: living.reduce((s, c) => s + (Number(c.wealth) || 0), 0), strikes: x.strikes,
+      holds: living.filter((c) => c.held).map((c) => ({ char: c.id, name: c.name, held: c.held, at: c.held_at, until: c.held_until ?? null })),
+      flag: x.newest ? { char: x.newest.char_id, kind: x.newest.kind, at: x.newest.at, detail: parse(x.newest.detail) } : null,
+      banned: x.facts.banned, muted: x.facts.muted, frozen: x.facts.frozen,
+    },
+    badges: tabs, first,
+  };
+  return { ...head, target: p.id, tab: first, data: await tabNow(first) };
 }
 
 /**
@@ -525,44 +645,17 @@ export async function staffPlayers(ctx, env, path, body, who, audit) {
     };
   }
 
-  // an act names the account by its id, never a name (design doc, Weak spots: "Act by account id ... never by name"); a read
-  // may name it either way (sanctions.js findAccount)
-  const acting = path === '/v1/staff/player/signout' || path === '/v1/staff/player/rename';
-  // STAFF-PANEL-SPEED: a profile asked by the account's id (findAccount's own test) reads its characters beside the account
-  const byId = path === '/v1/staff/player' && typeof body.target === 'string' && ID_RE.test(body.target);
-  const [p, early] = await Promise.all([findAccount(db, acting ? { target: body.target } : { target: body.target, name: body.name }),
-    byId ? db.prepare(CHARS_SQL).bind(body.target).all() : null]);
-  if ('error' in p) return p;
-
   // /v1/staff/player { target | name, tab?, char?, section?, from?, where?, q?, type?, quality?, min?, days? } - opened (no
   // tab): the summary card, each tab's badge, the tab it opens on and that tab; a tab named: that tab alone. `where`, `q`,
   // `type`, `quality` and `min` filter the Inventories (ITEM_PLACES; a name; a group; a quality and a worth at least);
   // `days` the Economy's range (1 to ECONOMY_DAYS_MAX, a week else)
-  if (path === '/v1/staff/player') {
-    const chars = (early ?? await db.prepare(CHARS_SQL).bind(p.id).all())?.results ?? [];
-    const asked = PLAYER_TABS.includes(body.tab) ? body.tab : null;
-    /** @type {any} */
-    let head = {};
-    if (!asked) {
-      const [strikes, x] = await Promise.all([strikesOf(db, p.id, nowS), factsOf(db, p, chars, nowS)]);
-      const living = chars.filter((c) => c.dead_at == null);
-      const last = living[0] ?? null;
-      const { tabs, first } = profileBadges(x.facts);
-      head = {
-        card: {
-          id: p.id, handle: p.handle ?? null, name: displayName(p), online: onlineNow(p, nowS), level: last ? charView(last, nowS).level : null,
-          hours: Math.floor((p.played_s ?? 0) / 3600), wealth: living.reduce((s, c) => s + (Number(c.wealth) || 0), 0), strikes,
-          holds: living.filter((c) => c.held).map((c) => ({ char: c.id, name: c.name, held: c.held, at: c.held_at, until: c.held_until ?? null })),
-          flag: x.newest ? { char: x.newest.char_id, kind: x.newest.kind, at: x.newest.at, detail: parse(x.newest.detail) } : null,
-          banned: x.facts.banned, muted: x.facts.muted, frozen: x.facts.frozen,
-        },
-        badges: tabs, first,
-      };
-    }
-    const tab = asked ?? head.first;
-    const data = await tabOf(ctx, env, tab, p, chars, body, audit('player-read', p.id, { tab }, { onceIn: READ_ONCE_S }));
-    return { ...head, target: p.id, tab, data };
-  }
+  if (path === '/v1/staff/player') return profileOf(ctx, env, body, audit);
+
+  // an act names the account by its id, never a name (design doc, Weak spots: "Act by account id ... never by name"); a read
+  // may name it either way (sanctions.js findAccount)
+  const acting = path === '/v1/staff/player/signout' || path === '/v1/staff/player/rename';
+  const p = await findAccount(db, acting ? { target: body.target } : { target: body.target, name: body.name });
+  if ('error' in p) return p;
 
   // /v1/staff/player/devices { target | name } - the devices the account signed in on (accounts.js devicesOf, the player's own list)
   if (path === '/v1/staff/player/devices') {

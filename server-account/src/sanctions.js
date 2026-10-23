@@ -64,9 +64,13 @@ export const actionStatement = (db, { target, kind, until = null, reason = null,
 
 /** The strikes standing against an account: its mutes and bans of the last STRIKE_WINDOW_S, the voided not counted. */
 export async function strikesOf(db, target, nowS) {
-  const r = await db.prepare("SELECT COUNT(*) AS n FROM mod_actions WHERE target = ?1 AND kind IN ('mute', 'ban') AND at > ?2 AND void_at IS NULL").bind(target, nowS - STRIKE_WINDOW_S).first();
+  const r = await strikesRead(db, target, nowS).first();
   return Number(r?.n ?? 0);
 }
+/** STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows"): strikesOf's read as a statement, for a
+ *  door's own batch - `who` the target as SQL over ?1 (`target`): its id, or a subquery that names it. */
+export const strikesRead = (db, target, nowS, who = '?1') =>
+  db.prepare(`SELECT COUNT(*) AS n FROM mod_actions WHERE target = ${who} AND kind IN ('mute', 'ban') AND at > ?2 AND void_at IS NULL`).bind(target, nowS - STRIKE_WINDOW_S);
 
 /**
  * FIND THE ACCOUNT a moderator names - by its id, or by a name: a handle (unique, any case), else a guest's generated
@@ -78,10 +82,18 @@ export async function findAccount(db, { target, name }) {
   if (typeof target === 'string' && ID_RE.test(target)) {
     return (await db.prepare('SELECT * FROM players WHERE id = ?1').bind(target).first()) ?? { error: 'no-player' };
   }
-  if (typeof name !== 'string' || !name.trim() || name.length > 64) return { error: 'no-player' };
-  const said = name.trim();
+  const said = nameAsked(name);
+  if (!said) return { error: 'no-player' };
   const byHandle = await db.prepare('SELECT * FROM players WHERE handle_lc = ?1').bind(said.toLowerCase()).first();
   if (byHandle) return byHandle;
+  return guestNamed(db, said);
+}
+/** The name findAccount reads by, trimmed - or null, for none it reads. STAFF-PANEL-SPEED: a door that reads the handle in a
+ *  batch of its own asks the same. @param {unknown} name */
+export const nameAsked = (name) => (typeof name === 'string' && name.trim() && name.length <= 64 ? name.trim() : null);
+/** findAccount past the handles: a guest's generated name, when exactly one guest wears it - the row, or `{ error }`.
+ *  STAFF-PANEL-SPEED: a door that read the handle in a batch of its own, and missed, asks this alone. @param {any} db @param {string} said */
+export async function guestNamed(db, said) {
   const guests = (await db.prepare('SELECT * FROM players WHERE handle IS NULL AND guest_name = ?1 LIMIT 2').bind(said).all())?.results ?? [];
   if (guests.length > 1) return { error: 'ambiguous' };
   return guests[0] ?? { error: 'no-player' };

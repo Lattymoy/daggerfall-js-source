@@ -173,14 +173,15 @@ function staffHandles(env) {
  *  an EXISTS the batch's own next statement changes a row by, asked ahead of it in the same transaction - ok when it holds,
  *  failed when not. `onceIn` seconds: written only when this member wrote no row of this kind, about this target with this
  *  detail, in them (the fourth review of the PR: keyed on the member alone, a second member's read, or another view of
- *  the log, inside one member's window left no trace).
+ *  the log, inside one member's window left no trace). STAFF-PANEL-SPEED: `onlyIf` an EXISTS the row is written by at all -
+ *  a read's row in the batch that finds what it is about, so a read of nothing writes none.
  *  @param {any} db @param {number} nowS
- *  @param {{ actor?: any, role?: string|null, act: string, target?: string|null, detail?: object|null, keyId?: string|null, outcome?: 'ok'|'denied'|'failed', okIf?: { sql: string, args: unknown[] }|null, onceIn?: number }} row */
-export const auditStatement = (db, nowS, { actor = null, role = null, act, target = null, detail = null, keyId = null, outcome = 'ok', okIf = null, onceIn = 0 }) => {
+ *  @param {{ actor?: any, role?: string|null, act: string, target?: string|null, detail?: object|null, keyId?: string|null, outcome?: 'ok'|'denied'|'failed', okIf?: { sql: string, args: unknown[] }|null, onceIn?: number, onlyIf?: { sql: string, args: unknown[] }|null }} row */
+export const auditStatement = (db, nowS, { actor = null, role = null, act, target = null, detail = null, keyId = null, outcome = 'ok', okIf = null, onceIn = 0, onlyIf = null }) => {
   const said = detail ? JSON.stringify(detail) : null;
-  return db.prepare(`INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}`)
+  return db.prepare(`INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}${onlyIf ? ` ${onceIn ? 'AND' : 'WHERE'} ${onlyIf.sql}` : ''}`)
     .bind(nowS, actor?.id ?? null, actor ? displayName(actor) : null, role, act, target, said, keyId,
-      ...(okIf ? okIf.args : [outcome]), ...(onceIn ? [actor?.id ?? null, act, target, said, nowS - onceIn] : []));
+      ...(okIf ? okIf.args : [outcome]), ...(onceIn ? [actor?.id ?? null, act, target, said, nowS - onceIn] : []), ...(onlyIf ? onlyIf.args : []));
 };
 
 /** The handle a body names, folded as the lists fold it. @param {unknown} h */
@@ -373,7 +374,7 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   const { db, rand, subtle, nowS } = ctx;
   const me = who.player;
   if (overAccountRate(`staff:${me.id}`, nowS, STAFF_RATE_MAX, 60)) return { error: 'rate' };
-  const audit = (/** @type {string} */ act, /** @type {string|null} */ target = null, /** @type {object|null} */ detail = null, /** @type {{ outcome?: 'ok'|'denied'|'failed', okIf?: { sql: string, args: unknown[] }, onceIn?: number }} */ how = {}) =>
+  const audit = (/** @type {string} */ act, /** @type {string|null} */ target = null, /** @type {object|null} */ detail = null, /** @type {{ outcome?: 'ok'|'denied'|'failed', okIf?: { sql: string, args: unknown[] }, onceIn?: number, onlyIf?: { sql: string, args: unknown[] } }} */ how = {}) =>
     auditStatement(db, nowS, { actor: me, role: who.role, act, target, detail, keyId: who.keyId, ...how });
   /** A role's door refused this member: written down (a review of the PR: a Moderator trying an owner's page left no trace). */
   const denied = async (/** @type {string} */ error) => { await audit('refused', null, { path, need: error === 'staff-admin' ? 'admin' : 'owner' }, { outcome: 'denied' }).run(); return { error }; };
