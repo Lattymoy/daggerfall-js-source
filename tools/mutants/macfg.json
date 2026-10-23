@@ -168,11 +168,12 @@
   {
     "name": "MAC-G-the-sheet-forgets-the-blood",
     "file": "src/ui/enhanced/enhancedCharSheet.js",
-    "old": "    specials: classSpecials(e.career, raceTemplateOf(e)),",
-    "new": "    specials: classSpecials(e.career),",
+    "old": "    specials: deedSpecials(e, classSpecials(e.career, raceTemplateOf(e))),",
+    "new": "    specials: deedSpecials(e, classSpecials(e.career)),",
     "tests": [
       "test/ui/enhanced/macfg_fold_and_specials.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DEEDS3): the specials pass through deedSpecials, which marks a deed's advantage."
   },
   {
     "name": "MAC-G-the-race-is-only-ever-found-by-key",

@@ -13,7 +13,7 @@ import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: 
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
 import { iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL2
-import { RESURRECT_HOLD_MS, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, rezSnapshot, rezFor } from '../systems/resurrect.js';   // RESURRECT1
+import { RESURRECT_HOLD_MS, RESURRECT_TEXT, rezSnapshot, rezFor, rezHealthPct } from '../systems/resurrect.js';   // RESURRECT1
 import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND, portalHold, spendPortalStone, portalPlace } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
 import { createPartyMapSender, hasSharedCartography } from '../systems/party/partyMap.js';   // PARTY-MAP
 import { liveDungeonAutomapKey, getDungeonAutomap, mergePartyAutomap } from '../systems/automap/automap.js';   // PARTY-MAP: the live dungeon's record, and a mate's rows merged into it
@@ -1171,6 +1171,7 @@ import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-R
 import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 import { createExteriorAutomapToggle } from './exteriorAutomapToggle.js';   // HOST-SPLIT
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+import { haggleOf, samePlace, talentPose, partyTalentsFrame } from '../systems/partyTalents.js';   // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5): the haggle's one door, the party's place law and its talents
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -9727,7 +9728,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     canCarry: (item) => planTake(item, { bag: (playerEntity.items ??= []), entity: playerEntity, dryRun: true }).ok,   // AUDIT SHIPYARDS L1-4: the counter's carry gate
     ashore: (uid) => naval?.handsAshore?.(uid) ?? 0,   // AUDIT SHIPYARDS L1-6: by her number, whatever the sea fight's switch
     forgetBoat: (uid) => naval?.forgetBoat?.(uid),
-    skills: () => ({ mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality') }),
+    skills: () => haggleOf(playerEntity),   // DEEDS2: the haggle's one door (partyTalents.js)
     traded: () => tallySkill(playerEntity, SKILLS.Mercantile, 1),
     mintUid: () => csaNewItemUid(),
     day: () => Math.floor(worldMinutes() / 1440),
@@ -14560,7 +14561,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3: my body is gone - my party pose says so at once
     reviveForPlay(playerEntity, { force: true });
     forgetLastSlew();   // AUDIT FEUD (RVN8): no respawn - its killer takes nothing, now or at a later death
-    playerEntity.health = Math.max(1, Math.round((playerEntity.maxHealth ?? playerEntity.health) * RESURRECT_HEALTH_PCT / 100));
+    playerEntity.health = Math.max(1, Math.round((playerEntity.maxHealth ?? playerEntity.health) * rezHealthPct(rez) / 100));   // DEEDS2: the caster's Medical
     player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise - a drowned autorunner raised on the seabed walked on
     _deathWasOnline = null;
     const spared = statedDeathLoss() ?? 0;
@@ -25926,6 +25927,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // moment; broadcasting "now" every pose would make every tab look like an ongoing vote forever.
       voteAt: Number.isFinite(_partyRestGateRefusedAt) ? _partyRestGateRefusedAt : null,
       cl: playerEntity.level ?? 1,   // SOFTCAP1: my REAL level, so a mentor in my party can play at it (net/wire.js validPartyPose `cl`)
+      tk: talentPose(playerEntity),   // DEEDS2: my Medical, Stealth, Etiquette, Streetwise and tongues, lent to the members near me (systems/partyTalents.js)
       // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels
       // the ongoing resting"): stamped by a follower's own Stop click (partyRestMirrorDeps' `onManualStop`),
       // naming the ONE account they were mirroring - broadcast unconditionally, like restEnemyAt above, so
@@ -26070,7 +26072,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       bk: mode === 'interior' ? (modes?.interiorBuilding?.buildingKey ?? null) : null,
     };
   };
-  const samePlace = (a, b) => !!(a && b && a.px === b.px && a.py === b.py && a.in === b.in && (a.in !== 2 || a.bk === b.bk));
+  // PARTY-REST1's `samePlace` lives in systems/partyTalents.js now (DEEDS2: the party's talents ask it too) - imported above
   /** PARTY-REST3 (2026-09-20, per-request: "how near is near" - a world-map pixel is roughly 832x416 METERS
    *  (dfworkshop.net's own figure for Daggerfall Unity's world-pixel scale), so `samePlace` alone would call two
    *  players on opposite sides of an entire city, or an entire wilderness pixel, "near" each other. This is the
@@ -27893,6 +27895,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const text = mentorWord === 'on' ? mentorStatusText(playerEntity) : 'Mentoring ended. Your real level, skills, attributes and gear are back.';
       try { chatLog.push(chatLog.active, { text, system: true }); } catch { /* no chat yet: the sheet says it too */ }
     }
+    partyTalentsFrame(social?.party ? social.others() : [], myPartyLocation(), distanceToPartyAccount);   // DEEDS2: the talents of the members near me
     if (!social) return;
     // AUDIT SOC B7: the HUB LINK's clock - its welcome carries the relay's `now` (AUDIT SOC B7, server side), and it is
     // the link whose stamps (last seen, an invite's lapse) the picture reads; the presence session's stands in for a

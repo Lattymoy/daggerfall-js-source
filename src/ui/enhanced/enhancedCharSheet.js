@@ -83,6 +83,8 @@ import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '
 import { carriedWeight } from '../charsheet.js';
 import { totalGoldAmount } from '../../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
 import { classSpecials } from '../../systems/specialAdvantages.js';   // MAC-G: GetClassSpecials, read back off the career's own flags
+import { deedSpecials, deedRows, overcomeRows, DEED_SLOTS } from '../../systems/deeds.js';   // DEEDS3: the sheet's deeds
+import { talentsInForce } from '../../systems/talents.js';
 import { arenaLadderRestore, ladderTitle } from '../../systems/arena/arenaLadder.js';   // ARENA2: the arena's name for you
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';   // ARENA3: the banner's name
 import { liveRaceTemplate, liveRaceName } from '../../systems/vampirism.js';     // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
@@ -158,7 +160,10 @@ export function sheetModel(entity) {
     // the career's flags and the race template - the same list the
     // classic sheet's History button pops before the history window,
     // which the port had never drawn in EITHER skin.
-    specials: classSpecials(e.career, raceTemplateOf(e)),
+    specials: deedSpecials(e, classSpecials(e.career, raceTemplateOf(e))),   // DEEDS3: a deed's advantage says so
+    // DEEDS3 (bible/06-Systems/Deeds-And-Talents.md section 6.4): the deeds, earned and on the way, and the disadvantages
+    // overcome - while Deeds and Talents is in force
+    deeds: talentsInForce(e) ? { rows: deedRows(e), overcome: overcomeRows(e), slots: DEED_SLOTS } : null,
     groups: SKILL_GROUPS.map((name, i) => ({
       name,
       ids: i < 3 ? career[i] : misc,

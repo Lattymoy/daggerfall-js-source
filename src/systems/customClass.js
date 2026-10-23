@@ -5,8 +5,9 @@
 
 import { SKILL_NAMES, SKILL_COUNT, MAGIC_SKILLS } from './skills.js';   // DFCareer.MagicSkills lives there
 import {
-  ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd,
+  ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, cannotAdd,
 } from './specialAdvantages.js';   // UXB1-H: an imported pick passes the window's own gates
+import { pickDifficulty } from './talents.js';   // DEEDS1: an imported pick priced by the table in force, as the window prices it
 import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // CreateCharCustomClass.cs:29-34
@@ -329,7 +330,7 @@ export function parseCustomClassDoc(input) {
       const secondary = typeof e?.secondary === 'string' ? e.secondary : '';
       const second = keys.includes(primary) ? secondaryListFor(primary) : null;
       const valid = keys.includes(primary) && (second ? second.includes(secondary) : secondary === '');
-      const item = valid ? { primary, secondary, difficulty: advDisAdjustment(primary, secondary) } : null;
+      const item = valid ? { primary, secondary, difficulty: pickDifficulty(primary, secondary) } : null;
       if (!item || list.length >= MAX_ITEMS
         || (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary))
         || cannotAdd(item, list, other)) { skipped.push(e); continue; }

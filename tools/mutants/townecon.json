@@ -662,11 +662,11 @@
   {
     "name": "TOWNECON-LAW3-keyed-unpassed",
     "file": "src/scenes/worldModes.js",
-    "old": "    }, lot.pieces, lot.resale);   // LAW-3: a counter's piece never fetches more than it cost",
-    "new": "    }, lot.pieces);",
+    "old": "    return getTradePrice('Sell', lot.cost, b.quality, haggleOf(playerEntity), lot.pieces, lot.resale);   // LAW-3: a counter's piece never fetches more than it cost",
+    "new": "    return getTradePrice('Sell', lot.cost, b.quality, haggleOf(playerEntity), lot.pieces);",
     "tests": [
       "test/systems/townecon.test.js"
     ],
-    "note": "LAW-3: the keyed shelf's sale passes the cap"
+    "note": "Re-aimed by content (DEEDS2): the haggle's skills are its one door now (haggleOf). LAW-3: the keyed shelf's sale passes the cap"
   }
 ]

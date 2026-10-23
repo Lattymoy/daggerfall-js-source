@@ -70,6 +70,8 @@ import { renownHpOf, onlineMpOf, offlineVitals } from '../renownLayer.js';   // 
 import { stashedItemLists } from '../../net/realm/realmGoldLaw.js';   // AUDIT PRE-MERGE 0929 D3: every list of the character's own things a save carries
 import { DEPOSIT_MAX, depositOrderOk } from '../../net/bagLaw.js';   // AUDIT2 BAG1: a deposit's stamp, kept to a deposit's bounds
 import { resetBlowEffects } from '../blowEffects.js';   // AUDIT TELL L2: a load forgets the last game's landings
+import { careerAsMade } from '../talents.js';   // DEEDS3: the save keeps the career as made
+import { deedsSaved, applyDeeds } from '../deeds.js';   // DEEDS3: the deeds' record, and its fold at the load
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -362,7 +364,9 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.pathPrompted = entity.pathPrompted === true;   // SCHOOLS1: the one ask, made
   snap.martialPath = isMartialPathId(entity.martialPath) ? entity.martialPath : null;   // MARTIAL1: the martial specialisation (systems/martialPaths.js; given up only by systems/specReset.js)
   snap.martialPrompted = entity.martialPrompted === true;   // MARTIAL1: its one ask, made
-  snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
+  snap.career = entity.career ? { ...careerAsMade(entity.career) } : null;   // plain CFG data; DEEDS3: the career as made, never a deed's fold
+  if (snap.career) delete snap.career.deedBase;   // DEEDS3: the fold is laid again at the load (deeds.js applyDeeds)
+  snap.deeds = deedsSaved(entity.deeds);   // DEEDS3: the deeds' tallies, slots and overcomings
   // AUDIT MARTIAL L3 F1: the permanent martial path's MIRROR, in the one record every older build carries whole - an older
   // build drops `martialPath` (a key it never knew), and the new build, finding none, asked again: a second choice of a
   // permanent one, among every pair the masteries open. The character's id beside it (an heir inherits a custom career
@@ -856,6 +860,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity._mentor = null;   // SOFTCAP1: recomputed by the party frame, never restored
   entity.career = snap.career ? { ...snap.career } : entity.career;
   if (snap.career) { delete entity.career.martialMirror; delete entity.career.arcaneMirror; }   // AUDIT MARTIAL L3 F1: a mirror is the save's, never the live career's
+  entity.deeds = deedsSaved(snap.deeds);   // DEEDS3: a save from before it holds none
+  applyDeeds(entity);   // DEEDS3: the deeds laid over the career as made, at once (the next magic round lays them again)
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
   entity.bagItems = (snap.bagItems ?? []).map((it) => setItemFields(it));   // BAG1: a save written before holds none

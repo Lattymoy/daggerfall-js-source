@@ -16,9 +16,9 @@
 // calendar, so these are exact rather than approximated: the cooldown
 // compares classic minutes, and trainSkill RETURNS the minutes the
 // host must advance rather than reaching for a clock it does not own.
-import { SKILLS, skillValue, permanentSkillValue } from '../skills.js';
+import { permanentSkillValue } from '../skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from '../advancement.js';
-import { FATIGUE_LOSS, liveStat } from '../statMods.js';
+import { FATIGUE_LOSS } from '../statMods.js';
 // AUDIT 39 F100: all three windows gate on GetGoldAmount (PlayerEntity.cs
 // :1313-1316 = goldPieces + letters of credit), never on the purse alone -
 // Training.cs:79, CureDisease.cs:122, Donation.cs:60 - and all three then
@@ -33,6 +33,7 @@ import { trainingPrice, trainingMax, trainingSkills, reducedCureCost } from './g
 import { getHolidayId, FREE_CURE_HOLIDAYS, HALF_PRICE_CURE_HOLIDAY } from '../holidays.js';
 import { firstName } from '../talk/talkSession.js';   // MH1: %pcf's own reader
 import { expandMacroValues } from '../quest/questMacros.js';   // MH1: the ONE macro walk
+import { haggleOf } from '../partyTalents.js';   // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5): the haggle's one door
 
 /** MacroHelper's four (Utility/MacroHelper.cs :50, :105, :107, :153),
  *  which are all these three windows ask for. The FULL table is 100+
@@ -274,10 +275,7 @@ export function cureDiseaseOffer(entity, guild, membership, {
   // temple's customer is by definition diseased, and a disease's PER
   // damage lives only in the mod channel, so the permanent read quoted
   // a price that never moved.
-  const haggled = calculateTradePrice(costBeforeBargaining, quality, {
-    mercantile: skillValue(entity, SKILLS.Mercantile),
-    personality: entity.stats?.personality == null ? 50 : liveStat(entity, 'personality'),
-  }, false);
+  const haggled = calculateTradePrice(costBeforeBargaining, quality, haggleOf(entity), false);   // DEEDS2: the haggle's one door
   // ESSENTIALS-HALF (2026-09-30, Discord: "cut the cost of most essential items by half"): online the cure costs half
   // (shopStock.js essentialPrice). The priest's haggle line still reads the haggle itself, not the half.
   const cost = essentialPrice(haggled, { online });

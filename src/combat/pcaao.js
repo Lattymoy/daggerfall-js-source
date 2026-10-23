@@ -84,7 +84,6 @@ import { modSetting, modSettingIfDeclared } from '../systems/modSettings.js';
 import { liveStat } from '../systems/statMods.js';
 import { skillValue, SKILLS } from '../systems/skills.js';
 import { RACES } from '../systems/races.js';
-import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';
 import { WEAPONS, weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';
 import { equipTableOf, lowerCondition, blowWear, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';
 import { SHIELD_PARTS, isShieldTemplate, itemArmorValue } from '../systems/armorMaterials.js';
@@ -92,6 +91,7 @@ import { conditionPercentage, itemLongName, shownItemName } from '../systems/ite
 import { effectiveUnitWeightInKg } from '../systems/inventory.js';
 import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { enchantChanceToHitMod, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';
+import { inAdrenalineRush as inRushBar } from '../systems/talents.js';   // DEEDS1: Adrenaline Rush's bar, one home for both cores
 import { stampedTier } from '../systems/rarityTier.js';   // RARE-BREAK1: a piece off the rarity ladder, which the fading rule leaves alone (the leaf - RF1: no formula reads the ladder)
 import { entityEnchantArmorMod, entityArmorPoints, weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';   // RF1: the enchantment channels and the port's points (AUDIT SET P-M1: read apart) (SET2: and the weapon's own and the blow's, read here too)
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
@@ -170,7 +170,6 @@ const isMonster = (e) => !!e && !e.isPlayer && e.isClass === false;   // EntityT
 const isClassEnemy = (e) => !!e && !e.isPlayer && e.isClass === true;   // EntityTypes.EnemyClass
 const stat = (e, k) => liveStat(e, k);
 const skill = (e, id) => skillValue(e, id);
-const hasAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
 const struckSlotItem = (e, part) => {
   const slot = slotForBodyPart(part);
   return slot !== EQUIP_SLOTS.None ? (equipTableOf(e)[slot] ?? null) : null;
@@ -350,7 +349,7 @@ export function pcaaoArmorToHit(target, struckBodyPart) {
  *  an eighth), +8 or +12 improved (DFU's +5/+8). */
 export function pcaaoAdrenalineRushToHit(attacker, target) {
   let mod = 0;
-  const rushing = (e) => hasAbility(e.career, SPECIAL_ABILITY_BITS.adrenalineRush) && (e.health ?? 0) < int((e.maxHealth ?? 0) / 6);
+  const rushing = (e) => inRushBar(e, 6);   // DEEDS1: the mod's sixth off, talents.js's quarter in force
   if (rushing(attacker)) mod += entityImprovedAdrenalineRush(attacker) ? 12 : 8;
   if (rushing(target)) mod -= entityImprovedAdrenalineRush(target) ? 12 : 8;
   return mod;

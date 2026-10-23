@@ -48,6 +48,7 @@ import { liveStat, FATIGUE_LOSS } from '../statMods.js';   // Q5: WhenAttributeL
 import { CRIMES } from '../court.js';   // Q5: SetPlayerCrime's enum
 import { makeItemPermanent } from './item.js';
 import { isGoldPieces } from '../inventory.js';   // E4: GetItem's IsOfTemplate(Currency, Gold_pieces) test, one spelling
+import { rewardGold } from '../partyTalents.js';   // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5.2): Etiquette and Streetwise raise a quest's gold
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
@@ -1549,6 +1550,7 @@ export class GivePc extends ActionTemplate {
     }
     if (isGoldPieces(item.daggerfallUnityItem)) item.goldPaid = true;
     this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);
+    if (isGoldPieces(item.daggerfallUnityItem)) rewardGold(this.parentQuest, item.daggerfallUnityItem);   // DEEDS2: the party's good word, before the split
     shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward
     if (this.textId !== 0) {
       this.parentQuest.hooks?.giveItemToPlayer?.(item.daggerfallUnityItem, true);   // AddPosition.Front

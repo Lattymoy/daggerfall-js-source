@@ -263,11 +263,12 @@
   {
     "name": "AUDIT-QL-REWARD-11-split-before-scale",
     "file": "src/systems/quest/actions.js",
-    "old": "    this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);\n    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward",
-    "new": "    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward\n    this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);",
+    "old": "    this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);\n    if (isGoldPieces(item.daggerfallUnityItem)) rewardGold(this.parentQuest, item.daggerfallUnityItem);   // DEEDS2: the party's good word, before the split\n    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward",
+    "new": "    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward\n    this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);\n    if (isGoldPieces(item.daggerfallUnityItem)) rewardGold(this.parentQuest, item.daggerfallUnityItem);   // DEEDS2: the party's good word, before the split",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DEEDS2): the good word's raise stands between the scale and the split."
   },
   {
     "name": "AUDIT-QL-LAW-6-catch-all-yield-deleted",

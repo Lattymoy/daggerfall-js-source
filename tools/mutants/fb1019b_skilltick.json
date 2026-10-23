@@ -12,12 +12,13 @@
   {
     "name": "SKILL-TICK-level-one-price",
     "file": "src/systems/advancement.js",
-    "old": "entity.career?.advancementMultiplier ?? 1, entity.level ?? 1);",
-    "new": "entity.career?.advancementMultiplier ?? 1, 1);",
+    "old": "careerAdvancementMultiplier(entity), entity.level ?? 1);",
+    "new": "careerAdvancementMultiplier(entity), 1);",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],
-    "why": "the requirement at level 1 - a level-7 player told a skill is closer than it is"
+    "why": "the requirement at level 1 - a level-7 player told a skill is closer than it is",
+    "note": "Re-aimed by content (DEEDS1): the career's multiplier is talents.js careerAdvancementMultiplier's."
   },
   {
     "name": "SKILL-TICK-ready-early",

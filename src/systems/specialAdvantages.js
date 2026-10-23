@@ -140,13 +140,31 @@ export const DIFFICULTY = Object.freeze({
   lowTolerance: -5, phobia: -4,
 });
 
+/** DEEDS1 (bible/06-Systems/Deeds-And-Talents.md section 4.1): THE DFO PRICES, with Deeds and Talents in force
+ *  (talents.js pickDifficulty) - each a pick DFU's table charges for less or more than it buys, measured through the
+ *  stats card and the encounter tables. A key is `primary + secondary` where the secondary moves the price, else the
+ *  primary; a pick not here keeps DFU's. Phobia is priced by its group here (DFU's one -4 is SECONDARY_BLIND), at DFU's
+ *  own ratio of a phobia to a bonus (4 to 6). */
+export const DFO_DIFFICULTY = Object.freeze({
+  expertiseIn: 8,
+  bonusToHitanimals: 4, bonusToHitundead: 4, bonusToHitdaedra: 2,
+  phobiahumanoid: -4, phobiaanimals: -3, phobiaundead: -3, phobiadaedra: -1,
+  damagefromSunlight: -4,
+  acuteHearing: 3,
+});
+
 /** GetAdvDisAdjustment (:479-497): eight primaries ignore their
- *  secondary entirely; the rest key on the CONCATENATION. */
+ *  secondary entirely; the rest key on the CONCATENATION. `dfo` reads
+ *  DEEDS1's prices first (DFO_DIFFICULTY). */
 const SECONDARY_BLIND = Object.freeze(new Set([
   'expertiseIn', 'immunity', 'resistance', 'criticalWeakness',
   'forbiddenShieldTypes', 'forbiddenWeaponry', 'lowTolerance', 'phobia',
 ]));
-export function advDisAdjustment(primary, secondary = '') {
+export function advDisAdjustment(primary, secondary = '', dfo = false) {
+  if (dfo) {
+    const own = DFO_DIFFICULTY[primary + secondary] ?? DFO_DIFFICULTY[primary];
+    if (own != null) return own;
+  }
   return DIFFICULTY[SECONDARY_BLIND.has(primary) ? primary : primary + secondary] ?? 0;
 }
 
@@ -217,8 +235,9 @@ export const ABSORPTION_FLAGS = Object.freeze({ general: 4, inDarkness: 2, inLig
 export const REGENERATION_FLAGS = Object.freeze({ general: 8, inDarkness: 2, inLight: 1, whileImmersed: 4 });
 export const RAPID_HEALING_FLAGS = Object.freeze({ general: 4, inDarkness: 2, inLight: 1 });
 /** The attack-modifier byte's [bonus, phobia] bit per enemy group -
- *  the same table combat/formulas.js reads (GROUP_BITS). */
-const ATTACK_BITS = Object.freeze({ undead: [0x01, 0x10], daedra: [0x02, 0x20], humanoid: [0x04, 0x40], animals: [0x08, 0x80] });
+ *  the same table combat/formulas.js reads (GROUP_BITS). Exported for
+ *  DEEDS3's overcoming of a phobia (deeds.js). */
+export const ATTACK_BITS = Object.freeze({ undead: [0x01, 0x10], daedra: [0x02, 0x20], humanoid: [0x04, 0x40], animals: [0x08, 0x80] });
 /** SpellPointMultipliers, at (bitfield & 0x1C00) >> 8 (DFCareer:782).
  *  DFU's SetMagery writes the enum AND its float; the port's career
  *  carries only the bitfield, and systems/chargen.js decodes it. */

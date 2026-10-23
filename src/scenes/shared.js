@@ -70,7 +70,11 @@ import { registerPreventRestCondition } from '../systems/rest/restSession.js';  
 import { quietNights } from '../systems/encounters.js';   // CAMP-ROLL: a camp mate's night rolls nothing of mine
 import { carriedRestKind } from '../systems/party/partyRestLaw.js';   // CAMP-ROLL: and is slept at the better of their spot and mine
 import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the gate, composed from the entity   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
-import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
+import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector, getNearbyObjects, NEARBY, DETECT_KIND_FLAG, NEARBY_DEFAULT_MAX_RANGE } from '../systems/nearbyObjects.js';   // X4: the Detect scan
+import { athleteSkill, athleteFatigue, hearsFoes } from '../systems/talents.js';   // DEEDS1: Athleticism's and Acute Hearing's laws
+import { partySkill } from '../systems/partyTalents.js';   // DEEDS2: the party's Stealth cover in my foes' senses
+import '../systems/deedsAndTalents.js';   // DEEDS: the arc's registrations (the round, the hurt, the kill, the endured, the blow) - here, so every host has them
+import { acuteHearingMultiplier, ATTRACT_RADIUS } from '../characters/enemy/enemySounds.js';   // DEEDS1: a foe heard as far as its sound carries
 import { liveStat, maxFatigue, clampFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 62 F23: the standing capsule, the senses context's headless default
 import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
@@ -803,7 +807,7 @@ export function createSkyController(gl, params) {
 export function motorStats(entity) {
   return {
     get speed() { return entity.stats?.speed != null ? liveStat(entity, 'speed') : 50; },
-    get running() { return skillValue(entity, SKILLS.Running); },
+    get running() { return skillValue(entity, SKILLS.Running) + athleteSkill(entity); },   // DEEDS1: Athleticism's +15 in force (talents.js)
     get swimming() { return skillValue(entity, SKILLS.Swimming); },
   };
 }
@@ -826,7 +830,7 @@ export function motorStats(entity) {
 export function climbingDeps(entity, say = null) {
   return {
     inputs: () => ({
-      climbing: skillValue(entity, SKILLS.Climbing),
+      climbing: skillValue(entity, SKILLS.Climbing) + athleteSkill(entity),   // DEEDS1: Athleticism's +15 in force (talents.js)
       luck: entity.stats?.luck != null ? liveStat(entity, 'luck') : 50,
       khajiit: entity.race === 'Khajiit',
       // X1: the Climbing SPELL - "target can climb twice as well",
@@ -967,7 +971,7 @@ export function parkourDeps(entity, say = null, { hold = null } = {}) {
     inputs: () => {
       const most = maxFatigue(entity), cap = entityMaxEncumbrance(entity);
       return {
-        climbing: skillValue(entity, SKILLS.Climbing),
+        climbing: skillValue(entity, SKILLS.Climbing) + athleteSkill(entity),   // DEEDS1: Athleticism's +15 in force (talents.js)
         jumping: skillValue(entity, SKILLS.Jumping),
         khajiit: entity.race === 'Khajiit',
         enhanced: !!entity?.activeEffects?.some((a) => a.kind === 'climbing'),
@@ -998,20 +1002,29 @@ export function parkourDeps(entity, say = null, { hold = null } = {}) {
  *  NearbyObject record. feet() is the player's position AT THE
  *  REBUILD, which is what PlayerGPS measures every distance from.
  */
+/** DEEDS1: a live Detect Enemy - it marks the foes within its own range, so the heard markers start past it. */
+const detectsEnemies = (entity) => (entity?.activeEffects ?? []).some((a) => !a.ended && DETECT_KIND_FLAG[a.kind] === NEARBY.Enemy);
 export function createDetectFeed(entity, { entities = () => [], loot = () => [], feet = () => [0, 0, 0] } = {}) {
   const scan = createNearbyScan(() =>
     updateNearbyObjects(feet(), { entities: entities(), loot: loot() }));
   let markers = [];
   return {
     tick(dt) {
-      if (!hasLiveDetector(entity)) {
+      // DEEDS1 (bible/06-Systems/Deeds-And-Talents.md section 4.2): ACUTE HEARING MARKS FOES - in force, every foe
+      // within its sound's reach (DFU's attract radius times the hearing multiplier, enemySounds.js) shows as Detect
+      // Enemy shows it
+      const heard = hearsFoes(entity) ? ATTRACT_RADIUS * acuteHearingMultiplier(entity) : 0;
+      if (!hasLiveDetector(entity) && !heard) {
         // No detector: drop the list rather than let a stale one sit.
         // DFU has no equivalent because it never stops scanning, but
         // a port that DOES stop must not resume from a stale snapshot.
         if (markers.length) { scan.reset(); markers = []; }
         return markers;
       }
-      markers = detectedMarkers(entity, scan.tick(dt));
+      const list = scan.tick(dt);
+      markers = detectedMarkers(entity, list);
+      const beyond = detectsEnemies(entity) ? NEARBY_DEFAULT_MAX_RANGE : 0;   // a live Detect Enemy has marked those nearer already
+      if (heard) for (const no of getNearbyObjects(list, NEARBY.Enemy, heard) ?? []) if (no.distance >= beyond) markers.push([no.pos[0], no.pos[2]]);
       return markers;
     },
     get markers() { return markers; },
@@ -1838,7 +1851,7 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
-    playerStealth: skillValue(entity, SKILLS.Stealth),
+    playerStealth: partySkill(entity, SKILLS.Stealth),   // DEEDS2: the party's cover (partyTalents.js), my own out of force
     movingLessThanHalfSpeed,
     // S21: all three illusion branches - invisible always blocks (the 13
     // seers exempt), blending 8% see-through, shade 4% - each folding
@@ -1912,7 +1925,7 @@ function careerTartFatigueLoss(entity) {
   // (systems/cookItems.js dishStaminaFactor), laid over the career's own
   const tart = dishStaminaFactor(entity);
   if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0 * tart;
-  return (entityImprovedAthleticism(entity) ? 0.8 : 0.9) * tart;
+  return athleteFatigue(entity, entityImprovedAthleticism(entity)) * tart;   // DEEDS1: DFU's 0.9 / 0.8 off, 0.8 / 0.7 in force (talents.js)
 }
 
 // --- THE MUSIC DIRECTOR (AUDIT 19's 1:1 pass) ------------------------

@@ -25,7 +25,8 @@ import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, a
 // instant advance rather than a dead screen.
 const QANIM_STUCK_MIN_MS = 2000;
 const QANIM_STUCK_PAD_MS = 1000;
-import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
+import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
+import { pickDifficulty, talentsInForce } from '../systems/talents.js';   // DEEDS1: each pick priced by the table in force, and the career marked with it
 import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS, parseCustomClassDoc } from '../systems/customClass.js';   // U20a; UXB1-H: the class document
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
@@ -877,6 +878,9 @@ export class ChargenFlow {
     const dp = this.customDifficulty();
     if (dp < DIFFICULTY_MIN || dp > DIFFICULTY_MAX) { box(306); return; }
     this.customCareer = buildCustomCareer({ name: c.className, hp: c.hp, skills: c.skills, stats: c.stats, points: dp });
+    // DEEDS1 (bible/06-Systems/Deeds-And-Talents.md section 4.3): the table that priced the picks, so the career's
+    // multiplier is moved only by what the table in force charges differently (talents.js careerAdvancementMultiplier)
+    this.customCareer.advPricing = talentsInForce() ? 'dfo' : 'dfu';
     // U20b: ParseCareerData for BOTH windows, after every gate has
     // passed and immediately before the close (:460-470). The picks
     // fold onto the career the builder just minted - tolerances,
@@ -944,7 +948,7 @@ export class ChargenFlow {
       }
       const secondary = secondaryListFor(key);
       if (!secondary) {
-        const item = { primary: key, secondary: '', difficulty: advDisAdjustment(key, '') };
+        const item = { primary: key, secondary: '', difficulty: pickDifficulty(key, '') };
         c.pickList = null;
         if (cannotAdd(item, this._advList(), this._advOther())) return;
         this._advList().push(item);
@@ -959,7 +963,7 @@ export class ChargenFlow {
     }
     // the secondary arm
     const primary = c.pickPrimary;
-    const item = { primary, secondary: key, difficulty: advDisAdjustment(primary, key) };
+    const item = { primary, secondary: key, difficulty: pickDifficulty(primary, key) };
     c.pickList = null;
     c.pickPrimary = null;
     if (cannotAdd(item, this._advList(), this._advOther())) return;

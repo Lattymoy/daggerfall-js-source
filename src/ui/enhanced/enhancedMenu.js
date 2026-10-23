@@ -5268,7 +5268,6 @@ function statsSpecials(detail, m) {
   if (!rows.length) {
     detail.append(pxDivider(t('pause.stats.advantages', 'Advantages')));
     detail.append(el('p', 'px-note', t('pause.specials.none', 'No special advantages or disadvantages.')));
-    return;
   }
   for (const [kind, title] of [['advantage', t('pause.stats.advantages', 'Advantages')], ['disadvantage', t('pause.specials.disadvantages', 'Disadvantages')]]) {
     const list = rows.filter((r) => r.kind === kind);
@@ -5277,10 +5276,30 @@ function statsSpecials(detail, m) {
     for (const r of list) {
       const row = el('div', 'px-stat');
       row.append(el('span', 'k', r.label));
-      row.append(el('span', 'v px-src', r.source === 'race' ? (m.race || t('pause.specials.race', 'Race')) : (m.career || t('pause.specials.class', 'Class'))));
+      row.append(el('span', 'v px-src', r.source === 'race' ? (m.race || t('pause.specials.race', 'Race'))
+        : r.source === 'deed' ? t('pause.specials.deed', 'Deed') : (m.career || t('pause.specials.class', 'Class'))));
       detail.append(row);
     }
   }
+  statsDeeds(detail, m.deeds);
+}
+
+/** DEEDS3 (bible/06-Systems/Deeds-And-Talents.md section 6): THE DEEDS - each advantage a deed earns, where it stands
+ *  (earned, done with no slot left, or the tally toward it), and the disadvantages overcome. A deed the career cannot
+ *  take is not listed. Shown while Deeds and Talents is in force. */
+function statsDeeds(detail, deeds) {
+  if (!deeds) return;
+  const earned = deeds.rows.filter((r) => r.state === 'earned').length;
+  detail.append(pxDivider(t('pause.deeds.title', 'Deeds ({n} of {max})', { n: earned, max: deeds.slots })));
+  for (const r of deeds.rows) {
+    if (r.state === 'closed') continue;
+    const row = el('div', 'px-stat');
+    row.append(el('span', 'k', `${r.name} \u2014 ${r.label}`));
+    row.append(el('span', `v${r.state === 'earned' ? ' won' : ''}`, r.state === 'earned' ? t('pause.deeds.earned', 'Earned')
+      : r.state === 'unslotted' ? t('pause.deeds.unslotted', 'Done, no slot') : `${Math.min(r.have, r.need)} / ${r.need}`));
+    detail.append(row);
+  }
+  for (const line of deeds.overcome) detail.append(el('p', 'px-note', line));
 }
 
 /** STANDING: the reputation stores the game actually reads - the five named social groups (getReactionToPlayer's own

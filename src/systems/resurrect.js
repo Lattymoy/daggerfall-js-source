@@ -15,6 +15,12 @@ export const RESURRECT_TYPE = 45;
 export const RESURRECT_SUBTYPE = 255;
 export const RESURRECT_KEY = '45,255';
 export const RESURRECT_HEALTH_PCT = 30;
+/** DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5.2): MEDICAL RAISES THE RISEN - a fifth of the caster's Medical
+ *  on top of RESURRECT_HEALTH_PCT (50% at Medical 100), never past REVIVE_MAX_PCT. The fallen's own client reads it off the
+ *  caster's pose (rezFor's `med`), as it reads the `rz` itself; a relay or a caster from before it carries none: 30%. */
+export const REVIVE_MEDICAL_DIVISOR = 5;
+export const REVIVE_MAX_PCT = 60;
+export const rezHealthPct = (rez) => Math.min(REVIVE_MAX_PCT, RESURRECT_HEALTH_PCT + Math.trunc(Math.max(0, Number(rez?.med) || 0) / REVIVE_MEDICAL_DIVISOR));
 /** Metres from the eye to the body: a touch, with room for a body lying on the floor below the crosshair. */
 export const RESURRECT_REACH = 6;   // RESURRECT3 ("still too hard to hit"): 4.5 -> 6
 /** RESURRECT2 ("the aiming at the corpse is off - hard to trigger"): a body LIES - wide and flat on the floor - so it
@@ -99,7 +105,7 @@ export function rezFor(members, myAcct, seen) {
     const rz = m?.p?.rz;
     if (!rz || rz.to !== myAcct || !Number.isFinite(rz.at)) continue;
     if (seen.get(m.acct) === rz.at) continue;
-    return { acct: m.acct, name: m.name ?? null, at: rz.at };
+    return { acct: m.acct, name: m.name ?? null, at: rz.at, med: Number.isInteger(m.p?.tk?.[0]) ? m.p.tk[0] : 0 };   // DEEDS2: the caster's Medical (partyTalents.js TALENT_SKILLS[0])
   }
   return null;
 }

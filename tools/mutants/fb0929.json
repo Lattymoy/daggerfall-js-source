@@ -107,9 +107,10 @@
   {
     "name": "FB0929-the-keyed-shelf-haggles-its-own-copy",
     "file": "src/scenes/worldModes.js",
-    "old": "    return getTradePrice('Buy', lot.cost, b.quality, {",
-    "new": "    return calculateTradePrice(lot.cost, b.quality, {",
-    "tests": ["test/systems/fb0929_min_price.test.js"]
+    "old": "    return getTradePrice('Buy', lot.cost, b.quality, haggleOf(playerEntity), lot.pieces);",
+    "new": "    return calculateTradePrice(lot.cost, b.quality, haggleOf(playerEntity), lot.pieces);",
+    "tests": ["test/systems/fb0929_min_price.test.js"],
+    "note": "Re-aimed by content (DEEDS2): the haggle's skills are its one door now (haggleOf)."
   },
   {
     "name": "FB0929-the-keyed-repair-haggles-its-own-copy",

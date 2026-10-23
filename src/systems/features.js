@@ -1656,6 +1656,21 @@ export const FEATURES = Object.freeze([
       ]),
     }),
   }),
+  // DEEDS0 (2026-10-23, the owner: "Giving more online functionality to minor skills, balancing advantages/disadvantages
+  // and introducing more power fantasy advantages through gameplay"; bible/06-Systems/Deeds-And-Talents.md): ONE SWITCH
+  // FOR THE ARC - the advantages' prices and four effects, the party's minor skills, and deeds. A rule, so the lane
+  // forces it on online (the owner: "Online always on"); offline the player's, on by default (systems/talents.js).
+  Object.freeze({
+    id: 'deeds-and-talents',
+    group: 'character',
+    get title() { return t('features.deedsAndTalents.title', 'Deeds and Talents'); },
+    get note() { return t('features.deedsAndTalents.note', 'Advantages cost what they are worth and the weak ones are worth taking, '
+      + 'Medical, Stealth, Etiquette, Streetwise and the languages help your whole party, and deeds done in play earn '
+      + 'advantages and overcome disadvantages. Off is the classic table, and online it is always on.'); },
+    get effect() { return t('features.deedsAndTalents.effect', 'Takes effect at once; deeds already earned are kept while it is off.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'deedsAndTalents', initial: true, online: true }),   // systems/talents.js TALENTS_PREF
+  }),
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',

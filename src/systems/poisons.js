@@ -45,6 +45,7 @@ import { dice100 } from '../combat/formulas.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { youFeelSomewhatBadText } from './diseases.js';
 import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { reportPlayerEndured } from './playerEndures.js';   // DEEDS3: a leaf - the poisons a deed counts
 
 // ---- ItemEnums.Poisons, verbatim (0-7 weapon poisons, 8-11 drugs) ----
 export const POISONS = Object.freeze({
@@ -218,6 +219,7 @@ export function updatePoisons(entity, currentMinute, sinks, rolls = Math.random,
  */
 export function inflictPoison(target, poisonType, bypassResistance, { rolls = Math.random, currentMinute = 0 } = {}) {
   if (careerTolerance(target.career ?? {}, EFFECT_FLAGS.Poison) === 'Immune') return null;
+  reportPlayerEndured(target, EFFECT_FLAGS.Poison);   // DEEDS3: a poison faced (the player's alone - the leaf asks)
   if (bypassResistance || savingThrow(2, EFFECT_FLAGS.Poison, target, 0, rolls) !== 0) {
     if (target.level !== 1) return startPoison(target, poisonType, currentMinute, rolls);
   }

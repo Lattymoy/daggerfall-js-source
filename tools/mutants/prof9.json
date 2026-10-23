@@ -1019,11 +1019,12 @@
   {
     "name": "PROF9-tart-unread-athlete",
     "file": "src/scenes/shared.js",
-    "old": "return (entityImprovedAthleticism(entity) ? 0.8 : 0.9) * tart;",
-    "new": "return (entityImprovedAthleticism(entity) ? 0.8 : 0.9);",
+    "old": "return athleteFatigue(entity, entityImprovedAthleticism(entity)) * tart;",
+    "new": "return athleteFatigue(entity, entityImprovedAthleticism(entity));",
     "tests": [
       "test/systems/prof9_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DEEDS1): Athleticism's multiplier is talents.js athleteFatigue's."
   },
   {
     "name": "PROF9-host-never-cooks",

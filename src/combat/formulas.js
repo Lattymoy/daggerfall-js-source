@@ -30,7 +30,7 @@ import { skillValue, SKILLS } from '../systems/skills.js';
 import { noteSkillChallenge } from '../systems/skillSoftcap.js';   // SOFTCAP1: the foe a blow was traded with, for the real-use law
 import { mentorArmorValue, mentorGearScale, mentorDamageTakenMult } from '../systems/mentorMode.js';   // SOFTCAP1: mentor mode's overlay   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
-import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvantages.js';   // AUDIT 21 F2: the Adrenaline Rush bit; CF1: the HandToHand expertise bit
+import { PROFICIENCY_BITS } from '../systems/specialAdvantages.js';   // CF1: the HandToHand expertise bit (the Adrenaline Rush bit's reader is talents.js since DEEDS1)
 // NOT from rest.js, which re-exports healingRateModifier FROM here - importing
 // hasSpecialAbility back out of it makes a cycle, and the ESM binding lands in
 // the temporal dead zone: the helper reads `undefined` at call time and the
@@ -45,6 +45,8 @@ import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wa
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language (an import-free leaf)
 import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what the target takes - a leaf, for the brain that registers into it imports the motor that imports this file
 import { ENEMY_GROUPS, enemyEntityGroup, _resetEnemyGroups } from './enemyGroups.js';   // AUDIT DEX C3: the group switch and its mod door, a leaf
+import { inAdrenalineRush as inRushBar } from '../systems/talents.js';   // DEEDS1: Adrenaline Rush's bar, one home for both cores
+import { partySkill } from '../systems/partyTalents.js';   // DEEDS2: the party's tongue in the calm roll
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -362,13 +364,8 @@ export function adjustmentsToHit(target) {
  *  here. */
 export const ADRENALINE_RUSH_MODIFIER = 5;
 export const IMPROVED_ADRENALINE_RUSH_MODIFIER = 8;
-/** DFCareer.HasSpecialAbility: the flag masked against the bitfield's LOW
- *  BYTE (rest.js's hasSpecialAbility, restated here to keep this file a
- *  leaf-ward importer - see the import note above). */
-const hasAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
-const inAdrenalineRush = (e) => Boolean(e)
-  && hasAbility(e.career, SPECIAL_ABILITY_BITS.adrenalineRush)
-  && (e.health ?? 0) < Math.trunc((e.maxHealth ?? 0) / 8);   // C# integer division
+// DEEDS1: the bar is talents.js's - DFU's eighth off, a quarter with Deeds and Talents in force
+const inAdrenalineRush = (e) => inRushBar(e, 8);   // C# integer division
 export function adrenalineRushToHit(attacker, target) {
   let mod = 0;
   if (inAdrenalineRush(attacker)) {
@@ -965,11 +962,13 @@ export function enemyLanguageSkill(entity) {
  *  it, at the one seam all three enemy pools already share. */
 export function calculateEnemyPacification(player, languageSkill, sheathed, roll01 = Math.random(), comprehendBonus = 0) {
   let chance = 0;
+  // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5.2): THE PARTY'S TONGUE - the best near speaker's skill
+  // (partyTalents.js partySkill; my own out of force), so one speaker calms the foes every member's client runs
   if (languageSkill === SKILLS.Etiquette || languageSkill === SKILLS.Streetwise) {
-    chance += Math.trunc(skillValue(player, languageSkill) / 10);
+    chance += Math.trunc(partySkill(player, languageSkill) / 10);
     chance += Math.trunc(liveStat(player, 'personality') / 5);
   } else {
-    chance += skillValue(player, languageSkill);
+    chance += partySkill(player, languageSkill);
     chance += Math.trunc(liveStat(player, 'personality') / 10);
   }
   chance += sheathed ? 10 : -25;

@@ -51,6 +51,7 @@ import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keep
 import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { HEAL_SPELL_POINTS_KEY } from './potionRecipes.js';   // PROF12: Heal-SpellPoints' key, beside the one recipe that names it
 import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { reportPlayerEndured } from './playerEndures.js';   // DEEDS3: a leaf - the spells a deed counts
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
@@ -651,6 +652,7 @@ export const settingsKeyOf = (e) => [
 function effectMagnitude(e, casterLevel, saveScaled, element, flag, target, rolls, caster = null) {
   let n = rollMagnitude(e, casterLevel, rolls);
   if (saveScaled) n = Math.trunc(n * savingThrow(element, flag, target, 0, rolls, isDamageHealthEffect(e) ? spellPierce(caster, target) : 0) / 100);
+  if (saveScaled && caster !== target && isDamageHealthEffect(e)) reportPlayerEndured(target, flag);   // DEEDS3: a damaging spell faced (Tempered, Hardened)
   return n;
 }
 

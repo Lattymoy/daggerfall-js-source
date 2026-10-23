@@ -479,6 +479,7 @@ import '../ui/tutorialPopup.js';   // TUT1: the popup's handler, registered by t
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a tinted copy of a light is that light (the dungeon's flame tint, the abyss's candle)
 import { createQuestClickFirst, clickHeardByQuest } from './quest/questClickFirst.js';   // QUEST-WORDS-FIRST: a quest's words and reward before the NPC's door
 import { ownerFoes } from './ownerCatchUp.js';   // HOST-CLOCK: a building's two pools through the page's one catch-up (OWNER-CLOCK's parity)
+import { haggleOf } from '../systems/partyTalents.js';   // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5): the haggle's one door
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -648,7 +649,7 @@ export function createWorldModes(host) {
   // game's (one or the other stands: each opens by closing the other), the game's half in scenes/iliacTableGame.js
   let iliacGame = null;
   /** CARDS9: a pack's price at this house's card table - its quality, the player's haggle (the counter's own law). */
-  const cardHaggle = () => ({ mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality') });   // the tavern window's own skills hook
+  const cardHaggle = () => haggleOf(playerEntity);   // the tavern window's own skills hook
   const cardPackHere = () => cardPackPrice(interiorBuilding?.quality ?? 10, cardHaggle());
   const buyCardPackHere = () => buyCardPack(playerEntity, { quality: interiorBuilding?.quality ?? 10, skills: cardHaggle() });
   /** CARDS10: the Iliac game closes (a game under way conceded) - the slot emptied first (THE SLOT IS EMPTIED BEFORE THE
@@ -3807,10 +3808,7 @@ export function createWorldModes(host) {
     // Every price this host quotes - trade, keyed shelf, static-NPC
     // service, spellbook buy mode, repair - goes through that one
     // formula, so all of them read the stat at the same layer.
-    const skills = () => ({
-      mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-      personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
-    });
+    const skills = () => haggleOf(playerEntity);   // DEEDS2: the haggle's one door (partyTalents.js), the party's good word on it
     return createTradeWindow({
       mode,
       shelfItems: () => shelf.items,
@@ -4126,10 +4124,7 @@ export function createWorldModes(host) {
     // FB0929: the counter's own law, not a second copy of it - the walk's cost and pieces, and GetTradePrice's floor
     // of a gold a piece, so the keyed row's price is the price it charges and the trade window's
     const lot = tradeCost('Buy', [it], { quality: b.quality, priceAdjustment: shopAdjustment(b, 'Buy') });
-    return getTradePrice('Buy', lot.cost, b.quality, {
-      mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-      personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
-    }, lot.pieces);
+    return getTradePrice('Buy', lot.cost, b.quality, haggleOf(playerEntity), lot.pieces);
   }
   // E3: the sell offer - CalculateCost(value)*stack through the
   // SELLING branch of CalculateTradePrice (DaggerfallTradeWindow's
@@ -4141,10 +4136,7 @@ export function createWorldModes(host) {
   function sellPrice(it) {
     const b = interiorBuilding;
     const lot = tradeCost('Sell', [it], { quality: b.quality, priceAdjustment: shopAdjustment(b, 'Sell') });
-    return getTradePrice('Sell', lot.cost, b.quality, {
-      mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-      personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
-    }, lot.pieces, lot.resale);   // LAW-3: a counter's piece never fetches more than it cost
+    return getTradePrice('Sell', lot.cost, b.quality, haggleOf(playerEntity), lot.pieces, lot.resale);   // LAW-3: a counter's piece never fetches more than it cost
   }
   // ── U23: THE STATIC NPC SEAM ────────────────────────────────────
   // PlayerActivate.ActivateStaticNPC/StaticNPCClick (:742-766,
@@ -5793,10 +5785,7 @@ export function createWorldModes(host) {
           orderRegion: dict?.get(knightGuild.factionId)?.region ?? null,
         })
         : false),
-      skills: () => ({
-        mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-        personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
-      }),
+      skills: () => haggleOf(playerEntity),
       // SetHealth, through the entity's own ceiling.
       heal: (n) => { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); },
       // SURV5: the mod's menu - the region keys it and the climate where the region names none (AUDIT C&C I8: the mod's
@@ -6807,10 +6796,7 @@ export function createWorldModes(host) {
         buildingQuality: () => b?.quality ?? 0,
         priceFactor: () => bookFactor,   // CHAP3c: the hall's chapter's band on a spell's price
         shopName: () => b?.name ?? '',
-        skills: () => ({
-          mercantile: skillValue(playerEntity, SKILLS.Mercantile),
-          personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality'),
-        }),
+        skills: () => haggleOf(playerEntity),
         classicMinutes: () => Math.floor(skyMinutes()),   // TIME1: the spellbook reads the calendar (the Witches Festival) - the sky's
         rows,
         onClose: () => closeSpellWindow(bookWin),
@@ -6969,7 +6955,7 @@ export function createWorldModes(host) {
       priceAdjustment: shopAdjustment(b, 'Repair'),
       reducedRepairCost: discount ?? null,
     });
-    return getTradePrice('Repair', lot.cost, b?.quality ?? 0, { mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality == null ? 50 : liveStat(playerEntity, 'personality') }, lot.pieces);
+    return getTradePrice('Repair', lot.cost, b?.quality ?? 0, haggleOf(playerEntity), lot.pieces);
   }
   /** D7: the native INVE12I0 Repair screen when the art is up, the
    *  keyed list when it is not - the same split openShelf takes for
