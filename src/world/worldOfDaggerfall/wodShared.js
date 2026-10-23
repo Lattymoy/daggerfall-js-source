@@ -13,18 +13,31 @@
 // the relay, which reads a frame's record count and nothing else. No wire or relay change.
 
 /** A site id: `px,py:objectID` or `px,py:hold` - WB12d: or `px,py:rite.<day>`, a breach's faithful (scenes/riteHost.js),
- *  its day in it (AUDIT WB12d C14: a later breach's circle on the same pixel is a site of its own). */
-export const WOD_SITE_RE = /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}(?:\.\d{1,3})?|hold|rite\.\d{1,9})$/;
+ *  its day in it (AUDIT WB12d C14: a later breach's circle on the same pixel is a site of its own) - STAR5: or
+ *  `px,py:star.<night>.<k>`, a fallen star's coven, `.m` its master and `.c` its master's circle (starSiteId). */
+export const WOD_SITE_RE = /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}(?:\.\d{1,3})?|hold|rite\.\d{1,9}|star\.\d{1,10}\.[0-2](?:\.[mc])?)$/;   // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`)
 /** WB12d: the site of a day's faithful at a breach in pixel (px, py). */
 export const riteSiteId = (px, py, day) => `${px},${py}:rite.${day}`;
 /** AUDIT WB12d (C5): a breach's faithful - today's site, or one a save from before the day joined the id held. */
 export const isRiteSite = (site) => typeof site === 'string' && /:rite(?:\.\d{1,9})?$/.test(site);
+/** STAR5 (bible/11-Multiplayer/Starfall.md section 4): a fallen star's sites in pixel (px, py) - night `n`, star `k`: its
+ *  coven's waves, its master (`m`) and its master's circle (`c`), one owner's all (the first to spring the waves'), so every
+ *  screen tells the master and its circle among the foes it sees. */
+export const starSiteId = (px, py, n, k, part = '') => `${px},${py}:star.${n}.${k}${part ? `.${part}` : ''}`;
 /** The most sites one frame may name, as tags or as the sprung list. */
 export const WOD_SITES_MAX = 64;
 /** A reader's allowance for one owner's camp foes - apart from CELL_PUPPETS_MAX, as the watch's is (WATCH1): a camp
  *  that spent the encounter allowance was the bug M1 fixed by keeping them home. The biggest shipped camp stands
  *  well under this. */
 export const WOD_CAMP_PUPPETS_MAX = 16;
+/** AUDIT STARFALL C7: a reader's allowance for one owner's fallen-star foes (its three sites, starSiteId), counted apart
+ *  from its camps' - the most of them the Starfall's law calls at once (scenes/starfall/starfallHost.js STAR_LIVE_MAX: a
+ *  wave's twenty-four - STAR-TUNE, from nine - the master, two calls of the Heart-Star's circle of ten), which its owner
+ *  never stands past. Under the camps' sixteen the excess of a master's circle stood nowhere but its owner's, and warded
+ *  the master still. Under a peer's whole frame (exteriorFoes.js PEER_PUPPETS_TOTAL_MAX, sixty-four). */
+export const WOD_STAR_PUPPETS_MAX = 45;
+/** STAR5: whether a site is a fallen star's - its waves', its master's or its circle's (starSiteId). */
+export const isStarSite = (site) => typeof site === 'string' && /:star\.\d{1,10}\.[0-2](?:\.[mc])?$/.test(site);
 /** Two players who spring one marker inside this window (a frame's latency, generously) are a RACE, settled by id;
  *  past it the one who sprang FIRST keeps it (AUDIT WOD7: each side measured only its own spring's age, so a pair
  *  ten seconds apart doubled or collapsed by id order alone). */

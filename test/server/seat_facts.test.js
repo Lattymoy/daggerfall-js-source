@@ -10,8 +10,7 @@ import assert from 'node:assert/strict';
 import { seatReportText } from '../../src/net/townSeatLaw.js';
 import {
   listSeats, confirmedSeats, witnessSeat, strikeSeat, seatFacts, keepSeatFacts, seatFactsText, seatFactsOfText,
-  SEAT_ROWS_KEPT_S, SEAT_FACTS_FRESH_S,
-} from '../../server-account/src/townSeats.js';
+  SEAT_ROWS_KEPT_S, SEAT_FACTS_FRESH_S, SEAT_ROWS_SQL, SEAT_JUDGED_SQL } from '../../server-account/src/townSeats.js';
 import { runCron, CRON_MINUTE, MINUTE_JOBS, _resetCronForTests } from '../../server-account/src/cron.js';
 import { standService, T0 } from '../accountDb.mjs';
 
@@ -19,7 +18,8 @@ const DAY = 86400;
 const ENV = { SEATS_OPEN: 'on', DEVELOPER_HANDLES: 'Devra' };
 const ANTICLERE = { key: 3021, name: 'Anticlere', region: 21, tier: 'palace', pixel: [402, 151] };
 const ALCAIRE = { key: 3022, name: 'Alcaire', region: 21, tier: 'palace', pixel: [410, 160] };
-const WITNESS_SQL = "SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'";
+const WITNESS_SQL = SEAT_ROWS_SQL;
+const seatRead = (sql) => sql === SEAT_ROWS_SQL || sql === SEAT_JUDGED_SQL;   // LEAN-WITNESS (PIN MOVED): the rows the law judges by are a read of them
 const FACTS_SQL = 'SELECT at, facts FROM seat_facts_kept WHERE id = 1';
 const PLAYER = { id: 'p-somebody', handle: 'Somebody', registered_at: T0 - 30 * DAY };
 const DEV = { id: 'p-devra', handle: 'Devra', registered_at: T0 - 30 * DAY };
@@ -35,7 +35,7 @@ async function seatsDb(env = ENV) {
   const c = { n: 0, f: 0 };
   const db = Object.create(base);
   db.prepare = (sql) => {
-    if (sql === WITNESS_SQL) c.n++;
+    if (seatRead(sql)) c.n++;
     if (sql === FACTS_SQL) c.f++;
     return base.prepare(sql);
   };

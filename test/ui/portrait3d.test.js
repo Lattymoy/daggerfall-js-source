@@ -283,7 +283,7 @@ test('PORTRAIT3D: the talk window - the NPC\'s head takes the record\'s place un
   const town = src('src/scenes/townTalk.js');
   assert.match(town, /if \(portrait\) setNpcPortrait\(portrait\.archive, portrait\.record, \{ picture: portrait\.head \? \(renderer\) => npcHeadImage\(portrait\.head, \{ renderer \}\) : null \}\);/);
   const modes = src('src/scenes/worldModes.js');
-  assert.match(modes, /const npcData = questBridge\?\.clickNpc\(pn, npcSceneCtx\) \?\? staticNpcData\(pn, npcSceneCtx\);\n\s*talkedTo\.set\(npcData, pn\);/);
+  assert.match(modes, /const npcData = clicked \?\? questBridge\?\.clickNpc\(pn, npcSceneCtx\) \?\? staticNpcData\(pn, npcSceneCtx\);\n\s*talkedTo\.set\(npcData, pn\);/);   // PIN MOVED (QUEST-WORDS-FIRST): a door reopened after the quest's words lends the record its click derived
   assert.match(modes, /return pn && portrait \? \{ \.\.\.portrait, head: standingLook\(pn\) \} : portrait;/);
 });
 

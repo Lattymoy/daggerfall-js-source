@@ -2,12 +2,12 @@
  {
   "name": "SEATREPLICA-read-binding",
   "file": "server-account/src/townSeats.js",
-  "old": "const ask = allSeatRows(session).then((rows) => {",
-  "new": "const ask = allSeatRows(db).then((rows) => {",
+  "old": "const ask = judgedSeatRows(session, nowS).then((rows) => {",
+  "new": "const ask = judgedSeatRows(db, nowS).then((rows) => {",
   "tests": [
    "test/server/seat_replica.test.js"
   ],
-  "note": "the kept read on the request's database - the primary's queue again"
+  "note": "the kept read on the request's database - the primary's queue again (LEAN-READS: re-aimed by content at the code the slice moved)"
  },
  {
   "name": "SEATREPLICA-first-primary",

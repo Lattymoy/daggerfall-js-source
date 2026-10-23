@@ -59,7 +59,7 @@ test('CROUCH-SNEAK + MODE-WHEEL defaults: Crouch keeps C and LB; Sneak and F1-F4
   assert.equal(by.get('Crouch'), 'KeyC');
   for (const a of ['Sneak', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode']) assert.equal(by.get(a), undefined, `${a} ships unbound`);
   assert.equal(by.get(MODE_WHEEL_ACTION), 'AltLeft');
-  assert.equal(ACTIONS.at(-6), MODE_WHEEL_ACTION,   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last)
+  assert.equal(ACTIONS.at(-7), MODE_WHEEL_ACTION,   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's)
     'appended - a saved file resolves by position (TECH1\'s technique after it, SPYGLASS\' glass after that - PIN MOVED)');
   assert.ok(ACTIONS.includes('Sneak') && ACTIONS.includes('StealMode'), 'the old rows stay, rebindable');
   assert.ok(PORT_ACTIONS.includes(MODE_WHEEL_ACTION), 'the classic windows yield it');

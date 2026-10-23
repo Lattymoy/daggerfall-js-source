@@ -158,7 +158,7 @@ test('AUDIT 31 U2, U10: every field under its visible name; a Post or a Commissi
   // Deliver: the guild Stores can take 30 of W1's 280 - the field's most; one's own guild's (W2): not offered
   assert.equal(field(r.host, 'supply|W1').max, '30');
   assert.equal(btn(r.host, 'Deliver').textContent, 'Deliver 30');
-  const own = byClass(r.host, 'seal-guild')[1];
+  const own = byClass(r.host, 'seal-guild').find((c) => /The Silver Hand/.test(c.textContent));   // PIN MOVED (BOARD-SIFT): W2 by its guild - the work ends soonest first, and W2 ends first
   assert.equal(field(own, 'supply|W2'), undefined);
   assert.match(own.textContent, /Officers and the Guildmaster do not deliver to their own guild's writs\./);   // BOARD-UI (PIN MOVED)
   // the writ form: an Officer with no budget

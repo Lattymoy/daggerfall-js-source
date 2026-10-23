@@ -39,6 +39,7 @@ import { totalGoldAmount, deductGold } from '../court.js';
 // The bosses' own cards live in systems/bossCards.js (the hoards import it; this module would close a cycle round them).
 export { BOSS_CARDS, BOSS_CARD_IDS, BOSS_CARD_PER_MILLE, bossCardRoll } from '../bossCards.js';
 import { BOSS_CARD_IDS } from '../bossCards.js';
+import { FESTIVAL_CARD_IDS } from '../../net/festivalLaw.js';   // WITCH1: the Witches' Festival's cards are the Wyrd Sisters' alone
 
 // ── THE FOES ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -152,9 +153,10 @@ export function guildCardRoll(factionId, rank, rolls, factionDict = null) {
 
 /** A pack's cards, the last of them rare or better. */
 export const CARD_PACK_SIZE = 5;
-/** Every card a pack may hold, by tier: never a holding (the game deals those), never a boss's own. */
+/** Every card a pack may hold, by tier: never a holding (the game deals those), never a boss's own, never the Witches'
+ *  Festival's (WITCH1: sold by the Wyrd Sisters alone). */
 export const PACK_POOL = Object.freeze(Object.fromEntries(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'].map((t) => [t,
-  Object.freeze(ILIAC_CARDS.filter((c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id)).map((c) => c.id))])));
+  Object.freeze(ILIAC_CARDS.filter((c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id)).map((c) => c.id))])));
 /** MEASURE (CARDS9): a pack's first four - a common or a magic - and its last, rare or better, per mille by tier. */
 export const PACK_SLOT_TIERS = Object.freeze({ common: 720, magic: 280 });
 export const PACK_TOP_TIERS = Object.freeze({ rare: 850, legendary: 130, aetheric: 15, artifact: 5 });

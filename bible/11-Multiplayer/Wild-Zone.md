@@ -65,7 +65,7 @@ cut. Every place on what is left - its streets, its buildings, its dungeons - is
 penalty's law). The law is `src/systems/wild/wildZone.js` (a leaf: the region test, the mask and its edge, the numbers, the
 live flag the pools read at a spawn, and the death screen's state); the world host sets the flag each frame
 (`wildFrame`, `world.js:"const wildFrame ="`) from the region under the player AND the ring of the pixel under them
-(`world.js:"const here = _onlineWorldSession"` - region 16 outside the cut is not the zone), and says the crossing. A
+(`world.js:"const here = seaRing > 0"` - region 16 outside the cut is not the zone; ETHER-WILD, section 24, the sea past Veilhaven's peace beside it), and says the crossing. A
 dungeon reads its own map pixel (`dungeonContext.js:"const _wildDungeon"`): one of region 16 outside the cut is an
 ordinary dungeon.
 
@@ -232,7 +232,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
     at any time", `03-World/Naval-Refit.md`) opens a ship's hold from anywhere, the zone included: a piece stowed there
     from inside the zone is outside the drop, as a companion's pack was.
   - A boat placed on the zone's water keeps her hold through a death there, where CART-AWAY drops a cart parked on the
-    zone's ground.
+    zone's ground. (SHIP-PVP, 2026-10-22 - `03-World/Eltheric-Ocean.md` SHIP-PVP: in the open sea a SHIP wrecked at
+    another captain's guns and boarded gives up a share of her hold to her killer - a wreck, never a death.)
 - WORN: kept on a death to a foe. At another player's hand, in the open country (a cell room), the killer may take
   ONE worn piece: the fallen's game shows the list (`worn`, under the fall's id), the killer's body window picks
   (`pick`, INT9: to the relay, in the room that refereed the fall, within `WILD_REF.pickMs`, naming what the offer
@@ -317,6 +318,16 @@ with the minutes left.
   second device, a cleared storage), a clock that waits for a disconnected owner, and a relay log of a fall's records
   that a lost pile could be granted back from - today nothing keeps them past the twelve minutes. Pinned by
   `test/systems/wild/fb1009c_wildkeep.test.js`; `tools/mutants/fb1009c_wildkeep.json` (7, all dead).
+- THE GOLD PILE (FIELD BUGS 2026-10-20h, "the PvP remains and gold pile", `01-Overview/bugs/Field-Bugs-2026-10-20h.md`).
+  REMAINS-GOLD: the pile's one coin record is minted by its count, to the item law's one count
+  (`wildRemains.js:"const mintOne = "`). The game's mint is the stranger's projection, whose stack bound is the wire's 65,535,
+  so a death that dropped more gold than that showed it to nobody, and the gold stayed in the room until the remains
+  went. REMAINS-TAKE: a pile shows what the room holds, less the takes of mine still waiting on an answer
+  (`wildRemains.js:"const follow = "`). A take of part of a stack, such as the gold a pack has no room for, was taken off
+  the taker's pile twice, and a room word heard between the window's take and the frame set the count over that take,
+  so the taker kept coin the room still held. A word now waits for the window's take to be asked first
+  (`wildRemains.js:"const settle = "`). Pinned by `test/net/fb1020h_remains.test.js`; `tools/mutants/fb1020h_remains.json`
+  (10, all dead).
 
 ## 6. The maps
 
@@ -532,7 +543,7 @@ Then "as centered as possible not on the border to the other tier... dont overri
 ## 13. The hub's record of the halls (PVPDUNGEONS)
 
 What no client may decide the social hub keeps (`server/src/index.js` `_wdun*`, `_wdunWord` at
-`server/src/index.js:"async _wdunWord(ws, acct, m, now)"`), in one small record (`WDUN_KEY`,
+`server/src/index.js:"async _wdunWord(ws, acct, m, now, a = null)"`), in one small record (`WDUN_KEY`,
 `wildLaw.js:"export const WDUN_KEY"` - `{ locks, piles, inside, empty, crows, eps, giants }`), read once a wake and
 pruned as it is read (`wdunPrune`, `wildLaw.js:"export function wdunPrune"`). The law is pure (`src/net/wild/wildLaw.js`
 wdun*); the hub reads, calls it and writes.
@@ -887,6 +898,51 @@ The zone landed without a run of the suite. Four of what it caught were the sour
 - `/unstuck`'s bar stands at the HUD's z 30, not 9999 - over the asset picker (MWFIX 1); the Heal Curse hotkey plays
   the hotkey arm's one click, not a second of its own (AUDIT 26 D1); and the temple's blood curse is `bearsCurse` /
   `healCurseLift`, not the item curse's `isCursed` / `liftCurse` (AUDIT 24, one name one home).
+
+## 24. The open sea past the Veil (ETHER-WILD, 2026-10-21)
+
+The owner: "implement open pvp for this zone specifficaly and implement some of the wrothgarian mountain open pvp aspects
+into the procedural Islands" - of the Eltheric Ocean. The zone stands on a second ground: every pixel of the sea's box
+but Veilhaven's peace (the Veil, twelve pixels about Veilhaven, and her rows east of her to the Veil - the way home,
+AUDIT SEA VENTURES C2), its four depth bands the four rings - the Shallows
+I, the Reaches II, the Deep Aether III, the Abyss IV, at `WILD_RING_LOOT` as the mountains' are. The law is
+`src/systems/wild/etherWild.js`; its record, and what the sea keeps its own, is `03-World/Eltheric-Ocean.md` ETHER-WILD.
+
+- THE ONE FLAG. `wildFrame` asks the sea beside the mountains (`world.js:"const seaRing = _onlineWorldSession()"`,
+  online, past a relay that raises the zone, with the sea standing) and sets the flag with its GROUND
+  (`setWildHere(on, ring, kind)`, `wildZoneKind` - 'wroth' or 'ether'): every law of sections 2-11 reads the flag and
+  so stands at sea unchanged - the fights and the referee, the foes and their loot by the ring, the packs, the death's
+  drop, the remains and the worn pick, the wait, the strangers and the maps' hiding, the zone watch in a freeport's
+  streets, the companions' drop, no teleport. An isle's ruin is the zone's by its band at its own pixel
+  (`wildRingAtPlace`, now `etherWild.js`'s, read by `dungeonContext.js:"const _wildRingRaw = isOnlinePage()"`).
+- ITS WORDS are its ground's: `registerZoneWords` (the sea's, registered by its own module so this leaf imports nothing
+  of it), `zoneWord`, `zoneName`, `zoneRingName` - the crossing of the zone and of a ring, the HUD tile and its tip, a
+  companion held at the side ("until you leave the Eltheric Ocean"), and the death's wait (the death keeps the ground
+  it fell on, `setWildDeath`'s `kind`). A word the sea does not say its own way is `WILD_TEXT`'s. AUDIT SEA VENTURES C3,
+  C6, C7: the sea says its own of every word the zone's law asks at sea - a party's walk into it, `/unstuck` outdoors,
+  a second revenant, a party left, a drop answered after the rise (by the room the fall was in), and the zone gone while
+  still past the peace (`quiet`, never "Veilhaven's peace" where she is not); the mountains' `/unstuck` and one-revenant
+  words go through the text core (`wild.zone.*`).
+- WHAT THE SEA KEEPS ITS OWN: no pace cap (its leagues are its price; STRANGER-PACE still holds a journey); the rise at
+  the nearest freeport however far, never the Bay's maps' nearest town (`wildRiseSite`'s first line - AUDIT SEA VENTURES
+  C5/F2: past 60 px it rose at Veilhaven); a hand ashore goes back aboard (her hold the sea's shelter - section 4's open
+  door); no giants. As the mountains', a wagon on the zone's ground is with its owner (C4), and the linked bank cabin is
+  a teleport refused (C1). Eltheric-Ocean.md ETHER-WILD names each.
+- ITS HALLS ARE THE DAY'S VAULTS OF THE DEEP (SEA-VAULTS, 2026-10-22): four ruin isles of the Deep Aether and three of the
+  Abyss a day keep section 13's door - the hub's lock, the way back, the reset and its epoch, the crows - keyed
+  `"e<cx>,<cy>"` (`wdunHall` reads both forms; `wdunRoomKey` a room lane of its own, `SEA_VAULT_LANE` - AUDIT SEA
+  VENTURES D7, D8: the isle place's own room was its plain ruin's too), world246. The hub's wipe reaches every size a
+  hall is laid at, the mountains' halls with them (`_wdunWipe` over `DUNGEON_ROOM_TAGS` - A5). The open sea keeps no
+  instance, as the mountains keep none (`seaRoomCell`). Eltheric-Ocean.md SEA-VAULTS.
+- ETHER-WILD ITSELF MOVED NO WIRE AND NO DEPLOY: the relay's zone word reads no map - two sockets that both say zone 1
+  are refereed wherever they stand, in the peace too (AUDIT SEA VENTURES A9), as on the mountains' edge - and at
+  ETHER-WILD the account service's fall read none. The sea's later slices move both (world246; migrations 0146-0148 -
+  SEA-BOUNTY's fall reads the sea's box at the service; AUDIT SEA VENTURES F9). A client from before it never says it
+  stands in the zone at sea - section 22's first limit.
+
+Pinned by `test/systems/wild/etherwild.test.js`; `tools/mutants/etherwild.json` (35, all dead). SEA-VAULTS:
+`test/systems/sea/seavaults.test.js`; `tools/mutants/seavaults.json` (49, all dead). AUDIT SEA VENTURES
+(`01-Overview/audits/Audit-Sea-Ventures.md`): `test/systems/sea/auditsea.test.js`; `tools/mutants/auditsea.json`.
 
 ## Pins
 

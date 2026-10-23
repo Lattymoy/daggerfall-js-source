@@ -23,7 +23,7 @@ test('LOOT-MARKS the gem is each tier\'s own colour - the rarity table\'s, every
     assert.ok(css.includes(`.wplaque-row[data-rarity="${k}"] > span:first-child::before { background: ${c}; }`), `${k}: its gem`);
     assert.match(css, new RegExp(`\\.wplaque-row\\[data-rarity="${k}"\\] \\{ background: linear-gradient\\(90deg, rgba\\(`), `${k}: its wash`);
   }
-  assert.match(css, /\.wplaque-row\[data-rarity="gilded"\] > span:first-child::before \{ box-shadow: inset 0 0 0 2px #fff4c4/, 'the Gilded\'s gem is leaf - never the Rare\'s gold');
+  assert.match(css, /\.wplaque-row\[data-rarity="gilded"\] > span:first-child::before \{ box-shadow: inset 0 0 0 2px #f6c945/, 'the Gilded\'s gem is set - its crimson in the crown\'s gold');   // PIN MOVED (GILDED-RED): the leaf's pale rim was there so the gold gem never read as the Rare's; the crimson stone is set in the crown's gold - test/ui/gildedred.test.js
   assert.doesNotMatch(css, /data-rarity="common"/);
 });
 

@@ -44,6 +44,7 @@ import { tokensToString } from '../rumorMill.js';
 import { QUESTION_TYPE } from '../topicTree.js';
 import { TALK_STRINGS } from '../answerPipeline.js';
 import { getMacroValue, macroTableCoverage, statsMacroSource } from '../quest/questMacros.js';   // ATTRMACRO1: the stats MCP the attribute boxes expand against
+import { GENDERS } from '../../characters/nameHelper.js';   // QUESTOR-SHE: the potential questor's gender is the Genders enum
 
 /** Every symbol MacroHelper's dictionary carries, handled rows and
  *  C#-null rows alike - the set ExpandMacros can resolve. Read off
@@ -95,7 +96,10 @@ export const OATH_BASE_TEXT_ID = 201;
  *   raceOfCurrentRegion()     - PlayerGPS
  *   factionRaceId(race)       - RaceTemplate.GetFactionRaceFromRace
  *   bumpSeed(delta)           - DFRandom.Seed += / -= (MaleName's quirk)
- *   questorGender()           - TalkManagerContext.potentialQuestorGender
+ *   questorGender()           - TalkManagerContext.potentialQuestorGender:
+ *                               the Genders enum (GENDERS.Female/Male) the
+ *                               pool's NPCData carries, as staticNpcData
+ *                               mints it; null where C# leaves the default
  * A method ABSENT from this object is C#'s MacroDataSource base
  * throwing NotImplementedException - the ladder's [srcDataUnknown]
  * arm - so the list must stay exactly the thirteen.
@@ -105,7 +109,10 @@ export function talkMacroSource(ctx) {
   const item = () => ctx.pipeline?.currentQuestionListItem ?? null;
   const qt = () => item()?.questionType ?? null;
   const err = () => text('resolvingError');
-  const female = () => ctx.questorGender?.() === 'female';
+  // QUESTOR-SHE (FIELD BUGS 2026-10-20h): this compared the string
+  // 'female', but the pool's NPCData carries the Genders enum
+  // staticNpcData mints, so every woman with work was "him"
+  const female = () => ctx.questorGender?.() === GENDERS.Female;
 
   return {
     /** Name (:49-56): "Used for greeting messages only: 7215, 7216,

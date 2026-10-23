@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { Collider } from '../../src/player/collider.js';
 import { PlayerMotor, FIXED_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, motionBagOf } from '../../src/player/motor.js';
 import {
-  ActionSystem, actionContact, standsOnAction, hasActionCollision, classifyPlacementAction, COLLISION_TIMEOUT_S, WALK_ON_DIR_Y, TRIGGER_SKIN_WIDTH,
+  ActionSystem, actionContact, standsOnAction, hasActionCollision, walkHears, classifyPlacementAction, COLLISION_TIMEOUT_S, WALK_ON_DIR_Y, TRIGGER_SKIN_WIDTH,
 } from '../../src/world/actionSystem.js';
 import { layoutRdbBlock, TRIGGER_FLAGS, ACTION_FLAGS } from '../../src/world/rdbLayout.js';
 import { RDB_RESOURCE_TYPES } from '../../src/formats/blocksFile.js';
@@ -172,7 +172,7 @@ function pass(world, dt, feet, wish, heard) {
   const { actions, collider, triggerSurfaces } = world;
   const R = 0.45, H = 1.8;
   for (const o of actions.objects.values()) {
-    if (!o.aabb || !hasActionCollision(o)) continue;
+    if (!o.aabb || !walkHears(o)) continue;
     if (o.restOnlyTrigger && o.state !== 'start') continue;
     o._colTimer = (o._colTimer ?? COLLISION_TIMEOUT_S) + dt;
     if (o._colTimer < COLLISION_TIMEOUT_S) continue;
@@ -239,14 +239,15 @@ test('AUDIT PRE-MERGE 0929 D1: the throne puzzle (N0000037) at the motor\'s own 
   assert.ok(events.includes('cast'), 'the throne casts its spell');
 });
 
-test('FIELD BUGS 2026-10-05c FLAT-RELAY ("red brick sections are not always working at teleporters"): a Teleport an RDB FLAT carries, Collision03, is heard by its box when walked into and sends the body to its next object - the relay keeps the flat\'s mark (addRelay isFlat), as an effect and a moving flat do; a model\'s relay is no flat (mutants: the mark dropped, every relay a flat)', () => {
-  // the flat as BlocksFile mints it (no ARENA2): an editor flat (199.11) whose Teleport links to a start marker 50 units away
+test('FIELD BUGS 2026-10-05c FLAT-RELAY, as FLAT-WALK (2026-10-21d) leaves it: a Teleport an RDB FLAT carries keeps the flat\'s mark (addRelay isFlat), and so a walk under it hears NOTHING - DFU\'s flat box is a trigger the controller never hits (RDBLayout.AddAction isTrigger) - while a click sends the body to its next object; an effect flat walked into is heard (AUDIT PRE-MERGE 0929); a model\'s relay is no flat; and no flat relay of any kind - an Activate, an Unknown27 - is a walk\'s (AUDIT FB1021d FW-1) (mutants: the mark dropped, every relay a flat, the walk refusing nothing, the Teleport alone refused, MultiTrigger alone refused)', () => {
+  // the flat as BlocksFile mints it (no ARENA2): an editor flat (199.11) whose Teleport links to a start marker 50 units
+  // away, MultiTrigger as the corpus's thirteen flat Teleports that admit a walk are (Edworyan Laboratory's roots)
   const flat = (position, record, { x = 0, z = 0, action = 0, flags = 0, next = -1 } = {}) => ({
     position, xPos: x, yPos: 0, zPos: z, type: RDB_RESOURCE_TYPES.Flat,
     resources: { flatResource: { textureArchive: 199, textureRecord: record, flags, magnitude: 0, soundIndex: 0, factionOrMobileId: 0, nextObjectOffset: next, action } },
   });
   const block = { position: 0, rdbBlock: { modelReferenceList: [], objectRootList: [{ rdbObjects: [
-    flat(100, 11, { action: ACTION_FLAGS.Teleport, flags: TRIGGER_FLAGS.Collision03, next: 200 }), flat(200, 10, { x: 2000, z: 2000 }),
+    flat(100, 11, { action: ACTION_FLAGS.Teleport, flags: TRIGGER_FLAGS.MultiTrigger, next: 200 }), flat(200, 10, { x: 2000, z: 2000 }),
   ] }, { rdbObjects: null }] } };
   const layout = layoutRdbBlock(block, 0, false, () => null);
   const { action } = layout.markers.find((m) => m.position === 100);
@@ -259,12 +260,35 @@ test('FIELD BUGS 2026-10-05c FLAT-RELAY ("red brick sections are not always work
   actions.resolvePosition = (_ns, pos) => (pos === 200 ? { pos: [50, 0, 50], yawDeg: 0 } : null);
   const o = actions.addRelay(0, 100, action, { min: [-0.5, -1, -0.5], max: [0.5, 1, 0.5] }, [0, 0, 0]);
   assert.equal(o.isFlat, true, 'the relay keeps the mark');
+  assert.equal(walkHears(o), false, 'a flat relay is no walk\'s');
   const heard = [];
-  pass({ actions, collider, triggerSurfaces }, COLLISION_TIMEOUT_S, [0.6, -1, 0], [-1, 0], heard);
-  assert.deepEqual(heard, [[o.key, 'WalkInto']], 'walked into, heard');
+  for (let i = 0; i < 4; i++) { pass({ actions, collider, triggerSurfaces }, COLLISION_TIMEOUT_S, [0.6, -1, 0], [-1, 0], heard); actions.update?.(FIXED_DT); }
+  assert.deepEqual(heard, [], 'walked into, nothing heard');
+  assert.equal(sent.length, 0, 'and nothing sent');
+  // a click is heard, as DFU's PlayerActivate hears it, and sends the body on
+  actions.receive(o, 'Direct');
   actions.update?.(FIXED_DT);
-  assert.equal(sent.length, 1, 'and sent on');
+  assert.equal(sent.length, 1, 'clicked, sent on');
   assert.deepEqual(sent[0].pos, [50, 0, 50]);
-  // a model's relay (rdbLayout modelAction: isFlat false) is not heard by its box
-  assert.equal(actions.addRelay(0, 300, { ...action, isFlat: false }, null).isFlat, false);
+  // an effect flat over the same box keeps AUDIT PRE-MERGE 0929's walk (Port-Ledger A: the acting effect and moving flats)
+  const eo = actions.addEffect(0, 300, { ...action, actionFlag: ACTION_FLAGS.Hurt23 }, [0, 0, 0]);
+  eo.aabb = { min: [-0.5, -1, -0.5], max: [0.5, 1, 0.5] };
+  assert.equal(eo.isFlat, true);
+  assert.equal(walkHears(eo), true, 'an effect flat is still the walk\'s');
+  // a model's relay (rdbLayout modelAction: isFlat false) is no flat, and a walk hears it by its triangles
+  const mo = actions.addRelay(0, 400, { ...action, isFlat: false }, null);
+  assert.equal(mo.isFlat, false);
+  assert.equal(walkHears(mo), true);
+  // AUDIT FB1021d FW-1: not the Teleport alone - every relay a flat carries is a click's or a blow's. Of the corpus's 27
+  // flat relays a walk heard, 14 were no Teleport: 5 Activates on MultiTrigger (W0000020 #20572 shuts and locks seven
+  // doors, which online are the room's), 4 Activates on Collision09 (N0000054's starts a model's Translation) and 5
+  // Unknown27 on Collision03 - one of each, over the box the Teleport stood in, a model's beside it
+  for (const [actionFlag, triggerFlag] of [[ACTION_FLAGS.Activate, TRIGGER_FLAGS.MultiTrigger], [ACTION_FLAGS.Activate, TRIGGER_FLAGS.Collision09], [ACTION_FLAGS.Unknown27, TRIGGER_FLAGS.Collision03]]) {
+    const kind = `${actionFlag}/${triggerFlag}`;
+    const ro = actions.addRelay(0, 500 + actionFlag * 16 + triggerFlag, { ...action, actionFlag, triggerFlag }, { min: [-0.5, -1, -0.5], max: [0.5, 1, 0.5] }, [0, 0, 0]);
+    assert.equal(ro.isFlat, true, kind);
+    assert.equal(walkHears(ro), false, `a flat relay ${kind} is no walk's`);
+    const model = actions.addRelay(0, 900 + actionFlag * 16 + triggerFlag, { ...action, actionFlag, triggerFlag, isFlat: false }, null);
+    assert.equal(walkHears(model), true, `a model's ${kind} is`);
+  }
 });

@@ -41,11 +41,12 @@
   {
     "name": "SS1-a-peers-bound-lot-taken",
     "file": "src/systems/tradePack.js",
-    "old": "unwire(records) { const items = validLootList(records); return items && !items.some(isBound) ? items : null; },",
-    "new": "unwire(records) { const items = validLootList(records); return items; },",
+    "old": "unwire(records) { const items = wholeLot(records); return items && !items.some(isBound) ? items : null; },",
+    "new": "unwire(records) { const items = wholeLot(records); return items; },",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
-    ]
+    ],
+    "note": "TRADE-WHOLE (PIN MOVED, FIELD BUGS 2026-10-20h): the lot is clamped whole (tradePack.js wholeLot)."
   },
   {
     "name": "SS1-the-purse-counted-by-record",

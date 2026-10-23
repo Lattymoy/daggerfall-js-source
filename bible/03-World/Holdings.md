@@ -371,6 +371,28 @@ any Water Depth over her draft. Measured off the real bathymetry and the floor's
 5-250 m and four bearings: every port a harbour, every quay a pier to the land, the longest 166 m; Deep Waters off, a
 9 m jetty as before. `test/systems/naval/harbourbook.test.js`, `tools/mutants/harbourbook.json`.
 
+**A HARBOUR TOWN WITH NO HARBOUR** (FB1020c HARBOUR-REACH, 2026-10-20 - the field: *"a lot of harbor towns dont have harbors
+dispite being along the coast"*). Two laws read one sea at two distances. A port town is one the open sea bears on within
+SEA_RING (2) map pixels (`world/portSites.js` portTownOnSea - its shipyard, its lighthouse, the harbour board's port), and
+its harbour was sounded on the ground the game builds within HARBOUR_REACH (420 m) of its footprint alone. DFU's kernel
+(`DefaultTerrainSampler.cs` GenerateSamples, `TerrainHelper.cs` BlendLocationTerrainJob) lays a high coast's shore far
+into the sea's pixel, and flattens a town's whole pixel to its mean: measured on the real map (Deep Waters off, the
+TileMap's water), 37 of the 106 port towns sounded no harbour at all - Daggerfall, Sentinel and Wayrest among them,
+their nearest berths 1,542 m, 721 m and 1,118 m off their footprints; Holwych's town stands at 272 m over a sea pixel
+whose shore the kernel lays 1.1 km off. A Bay port whose own shore gives no berth is sounded again out to the ring its
+port law read (`systems/naval/harbourBook.js` portRingReach: the pixels within SEA_RING of the town's -
+`harbourBook.js:"if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far); e.far = true; }"`),
+once every pixel of that ring is built (the world's `ready` at any reach - O1's law: never "no harbour" off a
+half-streamed ring, the port waits and is asked again each step), and once a book's life (its scan is some five times
+the near one's; the B7 retry asks the near reach alone). 36 of the 37 then stand a harbour, its quays at the nearest
+shore - up to some 1.6 km from the town. Aldbrugh (Shalgora) sounds none still: OPEN, its port kept. An isle past the
+Veil sounds its own reach alone (AUDIT CAPTAIN'S SEA H1). Two things it leaves: the ring's ground is built about a player
+within a pixel of the town at TerrainDistance 3 (DFU's default), so a ship come in from the sea to a far shore 2 pixels
+off - Daggerfall's - stands its quays once the player has been to the town, never before; and under Deep Waters (on by
+default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the ring's edge was not measured against.
+`test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and the one, on ARENA2 - `test/portTerrain.mjs`, the pixel's
+TileMap as the build makes it), `tools/mutants/fb1020c_harbourreach.json`.
+
 THE FOUR HOSTS: `scenes/world.js` keeps the harbours, stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.
 

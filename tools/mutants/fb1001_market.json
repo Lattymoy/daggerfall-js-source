@@ -449,8 +449,8 @@
   {
     "name": "MARKET-ANY-book-the-pieces-unkeyed",
     "file": "src/net/marketBook.js",
-    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(',')].join('|');",
-    "new": ", (q.board ?? []).join(',')].join('|');",
+    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(','),\n",
+    "new": ", (q.board ?? []).join(','),\n",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

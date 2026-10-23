@@ -1,0 +1,224 @@
+[
+ {
+  "name": "DEX4b-the-override-unasked",
+  "file": "src/systems/diseases.js",
+  "old": "  if (o) { o(attacker, target, damage, deps); return; }",
+  "new": "  if (o) { o(attacker, target, damage, deps); }",
+  "why": "DFU's arm runs beside a mod's override, where TryGetOverride replaces the whole",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-spider-readies-nothing",
+  "file": "src/systems/diseases.js",
+  "old": "if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(SPIDER_TOUCH_SPELL_INDEX);",
+  "new": "if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(0);",
+  "why": "the spider's touch readies another spell",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-lamia-unarmed",
+  "file": "src/systems/diseases.js",
+  "old": "[MOBILE_TYPES.Nymph]: 5, [MOBILE_TYPES.Lamia]: 5,",
+  "new": "[MOBILE_TYPES.Nymph]: 5,",
+  "why": "the Lamia drains no fatigue (DFU's own case)",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-chain-by-career",
+  "file": "src/systems/enemyExpansion/dexCombat.js",
+  "old": "    const classicArm = CLASSIC_HIT_ARM[attacker.mobileType] ?? 0;",
+  "new": "    const classicArm = 0;",
+  "why": "a classic monster's own arm forgotten under the mod - the Rat bites with nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-effect-last",
+  "file": "src/systems/enemyExpansion/dexCombat.js",
+  "old": "      if (classicArm === arm || customEffect === arm) { runMonsterHitArm(arm, attacker, target, damage, deps); return; }",
+  "new": "      if (classicArm === arm) { runMonsterHitArm(arm, attacker, target, damage, deps); return; }",
+  "why": "a row's OnHit 1-9 never read - the Lizard Man touches with nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-classic-wins",
+  "file": "src/systems/enemyExpansion/dexCombat.js",
+  "old": "    for (let arm = 1; arm <= MONSTER_HIT_ARMS; arm++) {",
+  "new": "    if (classicArm) { runMonsterHitArm(classicArm, attacker, target, damage, deps); return; }\n    for (let arm = 1; arm <= MONSTER_HIT_ARMS; arm++) {",
+  "why": "the classic arm before the chain - a GiantBat whose row names 1 keeps its own, where the C#'s chain gives it the Rat's",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-spells-shifted",
+  "file": "src/systems/enemyExpansion/dexCombat.js",
+  "old": "export const DEX_HIT_SPELLS = Object.freeze(new Map([[10, 500], [11, 23], [12, 501], [13, 502]]));",
+  "new": "export const DEX_HIT_SPELLS = Object.freeze(new Map([[10, 500], [11, 501], [12, 502], [13, 503]]));",
+  "why": "the Gloom Wraith readies Daemon Touch, not Silence",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-skeletal-door-shut",
+  "file": "src/combat/formulas.js",
+  "old": "  for (const fn of _skeletal) { const a = fn(target); if (a != null) return a === true; }\n",
+  "new": "",
+  "why": "the Skeletal Soldier takes a blunt weapon whole",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-formula-asks-the-career",
+  "file": "src/combat/formulas.js",
+  "old": "  if (!target.isPlayer && isSkeletalTarget(target)) {   // DEX4b: a mod's skeletal enemy too",
+  "new": "  if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {",
+  "why": "the stock formula asks the career alone",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-group-door-unasked",
+  "file": "src/combat/enemyGroups.js",
+  "old": "    const g = fn(careerIndex);\n    if (g != null) return g;",
+  "new": "    const g = fn(careerIndex);\n    if (g != null && false) return g;",
+  "why": "the Goblin is no Humanoid to a racial bonus, nor to a Detect, a Dispel or a Pacify (AUDIT DEX C3: the door's one home)",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-language-door-unasked",
+  "file": "src/combat/formulas.js",
+  "old": "    const s = fn(entity);\n    if (s != null) return s;",
+  "new": "    const s = fn(entity);\n    if (s) return s;",
+  "why": "a row's language of None (or Medical, skill 0) falls back to DFU's",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-gender-instead-of-the-roll",
+  "file": "src/characters/mobile/mobileUnit.js",
+  "old": "    else if (basics?.affinity === 'Human') resolved = rand() % 2 === 0 ? 'male' : 'female';\n    for (const fn of _forcedGenders) {",
+  "new": "    for (const fn of _forcedGenders) { const f = fn(mobileType); if (f) return f; }\n    if (basics?.affinity === 'Human') resolved = rand() % 2 === 0 ? 'male' : 'female';\n    for (const fn of _forcedGenders) {",
+  "why": "a forced gender skips the DFRandom draw - the stream moves for everyone after it",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-gender-under-a-given-one",
+  "file": "src/characters/mobile/mobileUnit.js",
+  "old": "      const forced = fn(mobileType);\n      if (forced) return forced;",
+  "new": "      const forced = fn(mobileType);\n      if (forced && resolved === 'unspecified') return forced;",
+  "why": "the forced gender only where nothing was resolved",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-install-registers-no-hit",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "    registerFormulaOverride('onMonsterHit', combat.monsterHit);\n",
+  "new": "",
+  "why": "loaded, the Blood Spider bites with nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "DEX4b-the-install-forces-no-gender",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "    registerForcedGender(combat.gender);\n",
+  "new": "",
+  "why": "loaded, the Druid groans as the roll says",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C3-the-scan-skips-the-door",
+  "file": "src/systems/nearbyObjects.js",
+  "old": "export const enemyGroupOf = (mobileType) => GROUP_FLAG[enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;",
+  "new": "export const enemyGroupOf = (mobileType) => GROUP_FLAG[careerIndexOf(mobileType) > 255 ? -1 : enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;",
+  "why": "the scan's group is a copy of DFU's switch again: a mod's enemies take no group - no Detect, Pacify or Dispel finds them",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C3-the-flags-take-no-group",
+  "file": "src/systems/nearbyObjects.js",
+  "old": "    result |= enemyGroupOf(rec.mobileType);",
+  "new": "    result |= 0;",
+  "why": "GetEntityFlags sets Enemy and no group bit: Detect Undead and Dispel's sweep find nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js",
+   "test/systems/audit26_singles.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C3-the-animal-flag-a-humanoid",
+  "file": "src/systems/nearbyObjects.js",
+  "old": "  [ENEMY_GROUPS.Animals]: NEARBY.Animal,",
+  "new": "  [ENEMY_GROUPS.Animals]: NEARBY.Humanoid,",
+  "why": "GetEntityFlags' switch maps the Animals group to the Humanoid flag",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js",
+   "test/systems/pacify.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C2-the-word-widens",
+  "file": "src/combat/formulas.js",
+  "old": "  for (const fn of _skeletal) { const a = fn(target); if (a != null) return a === true; }",
+  "new": "  for (const fn of _skeletal) { const a = fn(target); if (a === true) return true; }",
+  "why": "a mod's skeletal word only adds to DFU's career test: under the mod a Barbarian (career 15) still halves a blunt blow and doubles silver",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C2-the-mod-asks-the-career",
+  "file": "src/systems/enemyExpansion/dexCombat.js",
+  "old": "    skeletal: (target) => target?.mobileType === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,",
+  "new": "    skeletal: (target) => target?.careerIndex === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,",
+  "why": "the mod's override asks the career where it asks the ID: the Barbarian rides the Skeletal Warrior's slot under it",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C6-the-dungeon-readies-nothing",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "          const sp = spellsByIndex?.get(index);\n          if (sp) castEnemySpell(f, sp, true);\n",
+  "new": "          const sp = spellsByIndex?.get(index);\n          if (sp) castEnemySpell(f, sp, false);\n",
+  "why": "the dungeon's rider spell paid for, not readied free (SetReadySpell(spell, true))",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C6-the-street-readies-nothing",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "            if (sp) castSpellFrom(f, sp, playerFeet, true);",
+  "new": "",
+  "why": "the street's rider spell never readied: the Blood Spider's Blood Leech and the spiders' touch cast nothing out of doors",
+  "tests": [
+   "test/systems/enemyExpansion/dex4b_combat.test.js"
+  ]
+ }
+]

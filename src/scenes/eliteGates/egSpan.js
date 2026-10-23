@@ -126,6 +126,7 @@ import { egNicheBoxes, egIsleDisc } from '../../world/eliteGates/egHall.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';
 import { spireFooting, spireWake, spireObjs, spireAct } from '../../systems/eliteGates/spireKit.js';
 import { spireStoneName } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): a handle names its stone
+import { createEgOrrery } from './egOrrery.js';   // FIELD BUGS 2026-10-20f (ORRERY-STONES): an Athenaeum's stones stood, their levers the handles
 import { SD_STONES } from '../../net/superDungeon/sdBrain.js';
 import { SD_HALL_TEXT } from '../superDungeon/sdHall.js';   // ORRERY-SIGHT: the Hour's own words for a stone's hand
 import { spireCrumbleWait } from '../../systems/eliteGates/spireVestiges.js';   // EG-ZR (Elite-Gates.md section 15): Featherstep - my crumbles wait longer
@@ -853,6 +854,8 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
   const away = (d) => { d.object.matrix.fill(0); d.hidden = true; };
   /** @type {any[]} */
   let targetList = [];
+  /** FIELD BUGS 2026-10-20f (ORRERY-STONES): each Athenaeum's stones, stood by the span's own `place` */
+  const orrery = createEgOrrery({ seed, specs, place });
   /** THE FALLING WALLS: each hall's walkway as segments, each its bucket, its draw and the moment it fell */
   const walls = [];
   for (const spec of specs) {
@@ -1130,12 +1133,11 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
         for (let k = 0; k < indices.length; k++) indices[k] = k;
         try { collider?.addMesh?.(g.key, tris, indices, identity(), () => g.T); } catch (e) { console.warn('[eg] a false wall\'s collider', e?.message ?? e); }
       }
-      // the hands this circle offers the activation ray: each Athenaeum's Orrery stones (a handle each way), each engine.
-      // FIELD BUGS 2026-10-17c (ORRERY-HEIGHT): a stone's handles a metre over its own floor - a spot's `y` the law's
-      // centimetres (net/eliteGates/egLaw.js; THE ASCENT's, the laws before lay none and stand the court at 0), never the 0 floor
-      const list = [];
+      // the hands this circle offers the activation ray: each Athenaeum's Orrery stones, each engine. FIELD BUGS 2026-10-20f
+      // (ORRERY-STONES): a stone stands as the Hour's, on its own floor (ORRERY-HEIGHT's law), and its two levers are its
+      // handles (scenes/eliteGates/egOrrery.js) - they were boxes in the air beside a gold disc, with nothing drawn there
+      const list = [...orrery.stand({ renderer, collider })];
       for (const spec of specs) {
-        for (const [j, q] of (spec.spots.stone ?? []).entries()) for (const a of [1, -1]) { const c = realmToDungeon(spec.x0 + q.x + a * 0.9, (Number.isFinite(q.y) ? q.y / 100 : 0) + 1.0, q.z); list.push({ key: `egstone:${spec.h}:${j}:${a > 0 ? 'f' : 'b'}`, aabb: { min: [c[0] - 0.35, c[1] - 0.35, c[2] - 0.35], max: [c[0] + 0.35, c[1] + 0.35, c[2] + 0.35] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }); }
         for (const e of spec.engines ?? []) { const c = realmToDungeon(spec.x0 + e.x, e.y + 1.0, e.z); list.push({ key: `egengine:${spec.h}:${e.i}`, aabb: { min: [c[0] - 0.6, c[1] - 1.0, c[2] - 0.6], max: [c[0] + 0.6, c[1] + 1.0, c[2] + 0.6] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE }); }
       }
       targetList = list;
@@ -1192,6 +1194,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       for (const st of steps) pose(st, t);
       beatFrames(t);   // EG-ZL: each beat's frame
       poseMarks(t);
+      orrery.frame(dt);   // ORRERY-STONES: each Athenaeum's hands toward the hours the room said
       poseSlags(t);
       poseWalls(t);
       poseTubes(t);
@@ -1277,8 +1280,10 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
      *  each its matrix and whether hidden, as its pose wrote them. */
     get slots() { return steps.map((st) => ({ h: st.spec.h, i: st.s.i, kind: st.s.kind, draw: st.draw, stages: st.stages, chunks: st.chunks, grit: st.grit, hang: st.hang, pivot: st.pivot })); },
     /** EG-ZL: the marks as they stand (tests) - each beat's picture map, the waystones (lit or dark) and the banners. */
+    /** ORRERY-STONES: each Athenaeum's stones as they stand (tests) - scenes/eliteGates/egOrrery.js's. */
+    get orrery() { return orrery.stones; },
     get marks() { return { beats: [...beatKinds.entries()].map(([k, B]) => ({ kind: k, map: B.map ?? null })), stones: stones.map((g) => ({ h: g.spec.h, x: g.isl.x, z: g.isl.z, lit: g.lit, dark: g.dark })), litStone: litStone ? { h: litStone.spec.h, x: litStone.isl.x, z: litStone.isl.z } : null, vanes: vanes.map((v) => v.draw) }; },
-    /** The hands this circle offers the activation ray (an Orrery stone's handles, an engine) - after the stand. */
+    /** The hands this circle offers the activation ray (an Orrery stone's levers, an engine) - after the stand. */
     targets: () => (draws ? targetList : []),
     /** A press on one of them: the breach client's (systems/eliteGates/spireKit.js spireAct - it sends the turn or the work). */
     press(key) { return typeof key === 'string' && (key.startsWith('egstone:') || key.startsWith('egengine:')) ? (spireAct(key), true) : false; },
@@ -1321,6 +1326,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       ghostState.fill(0);
       for (const g of stones) { g.lit = null; g.dark = null; }
       for (const v of vanes) v.draw = null;
+      orrery.clear();   // ORRERY-STONES: its parts' slots (their meshes freed above, with the span's)
       litStone = null;
       for (const st of steps) { st.draw = null; st.pend = null; st.stages = null; st.chunks = null; st.grit = null; st.hang = null; }
       for (const g of walls) g.draw = null;

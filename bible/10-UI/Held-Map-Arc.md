@@ -1313,6 +1313,12 @@ it; a seat answers its hover with the EVENT-TIP card (who holds it, this week's 
 not 80), and the I box names a held seat's holder - it read "unheld" whoever held it. The record:
 `01-Overview/bugs/Field-Bugs-2026-10-04e.md`.
 
+MAP-PLAYERS (2026-10-20, Dudey: *"add a filter button on the Worldmap not overworld map (theres is already one for it) to
+show and not show players"*): the key's Players row stands wherever players can be drawn, with none in the region too,
+and opens on one switch, Shown / Hidden, that takes every other player off the sheet and its legend. It is the
+Overworld's Travellers switch (`travelViewFilters.js` playersOnMaps - one store, so both maps answer alike); Friends,
+Guild, Others and the Renown floor follow it while players are shown and in the book. My party is drawn either way.
+
 ## TAMRIEL1 - the continent round the Bay (2026-10-08)
 
 The world sheet zooms out past the Bay's own fit onto the whole of Tamriel, inked in the same hand round the Bay's
@@ -1336,3 +1342,9 @@ overworld map like 'this area is known for X ore'"): online, the professions ope
 card under the province's name - the pixel's veins, its dungeons', its kingdom's own ore and whether its ground is
 witnessed (`ui/oreMapTip.js`, the host's `oreAt`; its witnessed state asked once a pixel, after the pointer rests).
 A place keeps its own answer. The record: `01-Overview/bugs/Field-Bugs-2026-10-11d.md`.
+
+## MAP-PAN - the world sheet's places move as one layer (2026-10-18)
+
+A pan redrew every place. The kept ink is keyed by the view, so each step of a drag painted the coast and, inside that, walked every mark onto the paper again. The place marks are a layer of their own now (`inkMap.js:"export function syncMarksLayer(prev, spec) {"`): the glyphs, a hub's circle, a seat's ring, a port's anchor, a carriage town's wheel, and the marked place's ring. A pan that stays inside what that layer baked — half a paper past each edge, and never a bitmap over 8192 device pixels on a side or 16777216 device pixels in area — is one blit (`inkMap.js:"export function blitMarksLayer(ctx, layer, view) {"`), and only while that blit still covers the whole view. A zoom, a band change, or a pan that walks off the bake paints the marks again: a glyph is a paper-pixel size, so the layer is not scaled. The coast, the roads and the breathing rings are as they were. With no 2D context on the layer the sheet inks the marks where it always did.
+
+Pins: `test/ui/mappan.test.js`.

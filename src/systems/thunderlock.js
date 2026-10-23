@@ -41,7 +41,7 @@ import { GUN_FEEL } from '../combat/gun/gunFeel.js';   // FIELD-GUN13: the flash
 // there would close a cycle through systems/item/itemTemplates.js. Said out
 // loud on the leaf itself.
 import {
-  THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, THUNDERLOCK_ARCHIVE, PELLET_ARCHIVE,
+  THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, THUNDERLOCK_ARCHIVE, PELLET_ARCHIVE, PISTOLET_TEMPLATE,
   orbColour,   // FIELD-GUN17: the muzzle light wears the orb's own colour, sampled rather than named
 } from '../characters/thunderlockIds.js';
 
@@ -304,6 +304,19 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
 // with it - few enough that the weapon still sends you looking.
 export const FIND_MIN_TIER = 4;
 export const FIND_PELLETS = Object.freeze({ min: 6, max: 18 });
+// PISTOLET (2026-10-21, the owner: "make the thunderlock in general more rare along with the new hand cannon" - each
+// "Half as often"): ONE GUN FIND, the Thunderlock's own at its old weight, and the gun it mints is either gun, each
+// GUN_SHARE of the time. AUDIT PISTOLET (A5, A8, C2, C3, D6, D29): two finds at half weight were neither half nor stable
+// - the 6 per mille cap and Luck's nudge are each find's, unscaled by the weight (a tier-14 boss turned up a gun TWICE
+// as often, the Thunderlock no rarer at all), and the second find's roll moved every later draw of every seeded loot
+// list (Loot-II-Arc law 9: seed 43 grew a Welkynd Stone). One find draws what the Thunderlock's always drew - its roll,
+// then ONE draw in the mint, which picks the gun and counts the Pellets both - so every seed is its seed, and each gun
+// is exactly half the old chance at every source, cap and Luck included.
+export const GUN_SHARE = 0.5;
+let _secondGun = null;
+/** The second gun the find can mint - systems/pistolet.js hands its own (it imports this file, so this file cannot
+ *  import it); until then the find mints the Thunderlock alone, as it always did. */
+export function setSecondGun(mint) { _secondGun = typeof mint === 'function' ? mint : null; }
 
 // The pellet is AMMUNITION: never rarity-promoted, for the Arrow's own
 // reason - promoting a stack enchants it, and an enchanted item does
@@ -313,10 +326,14 @@ registerAmmunition(PELLET_TEMPLATE);
 registerUniqueFind({
   id: 'dwarven-thunderlock',
   minTier: FIND_MIN_TIER,
-  weight: 1,
   mint: (rolls = Math.random) => {
-    const n = FIND_PELLETS.min + Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1));
-    return [createThunderlock(), createPellets(n)];
+    // ONE draw: under GUN_SHARE the Thunderlock, at or over it the second gun; what is left of the draw, stretched back
+    // to a whole unit, counts the Pellets - so the mint draws exactly what it always drew
+    const r = rolls();
+    const second = _secondGun && r >= GUN_SHARE;
+    const u = second ? (r - GUN_SHARE) / (1 - GUN_SHARE) : (_secondGun ? r / GUN_SHARE : r);
+    const n = FIND_PELLETS.min + Math.min(FIND_PELLETS.max - FIND_PELLETS.min, Math.floor(u * (FIND_PELLETS.max - FIND_PELLETS.min + 1)));
+    return [second ? _secondGun() : createThunderlock(), createPellets(n)];
   },
 });
 
@@ -325,7 +342,9 @@ registerUniqueFind({
  *  own case - it is already the hardest hitter, so its signature is
  *  what it does to the user rather than more damage. */
 registerLegendary({
-  id: 'the-last-lock', name: 'The Last Lock', group: WEAPON_GROUP, templates: [THUNDERLOCK_TEMPLATE],
+  // AUDIT PISTOLET C5: both guns - a Pistolet claimed by no exclusive record rolled up every time as Wyrmbane, "Forged
+  // for a dragon hunt" with Fire Storm (824 of 824), exactly what `exclusive` is for
+  id: 'the-last-lock', name: 'The Last Lock', group: WEAPON_GROUP, templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],
   exclusive: true,   // a gun does not roll up as a blade forged for a dragon hunt
   affixes: [
     { id: 'damage', value: 20 },
@@ -460,11 +479,15 @@ export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
   const f = [sy, 0, cy];              // forward
   const r = [cy, 0, -sy];             // right
   const o = MUZZLE_OFFSET;
+  // PISTOLET: the side the flash is on - a pair's left pistol fires from the left hand - and the gun's own reach (the
+  // Pistolet's PISTOLET_FEEL.flashRange), both parked by the rig beside the glow
+  const side = entity._thunderlockFlashSide === -1 ? -1 : 1;
+  const reach = entity._thunderlockFlashRange ?? GUN_FEEL.flashRange;
   return {
-    x: feet[0] + r[0] * o.right + f[0] * o.forward,
+    x: feet[0] + r[0] * o.right * side + f[0] * o.forward,
     y: feet[1] + o.up,
-    z: feet[2] + r[2] * o.right + f[2] * o.forward,
-    range: GUN_FEEL.flashRange * glow,
+    z: feet[2] + r[2] * o.right * side + f[2] * o.forward,
+    range: reach * glow,
     color: orbColour(),   // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one
     // MAC-T1: a flash in your own hand gets no bloom glare either -
     // the same exemption the carried torch takes, for the same reason

@@ -1,0 +1,242 @@
+[
+  {
+    "name": "GR-table-left-gold",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "colour: '#ff3b4a', tint",
+    "new": "colour: '#ffcf4d', tint",
+    "tests": [
+      "test/ui/gildedred.test.js",
+      "test/systems/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GR-tint-left-gold",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "tint: Object.freeze([1.00, 0.23, 0.29, 0.60])",
+    "new": "tint: Object.freeze([1.00, 0.80, 0.26, 0.60])",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-light-pink",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "--rar-hi: #ff7480;",
+    "new": "--rar-hi: #ffb4ba;",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-rgb-drifted",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "--rar-rgb: 255,59,74;",
+    "new": "--rar-rgb: 255,207,77;",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-shade-left-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "--rar-lo: #8e1622;",
+    "new": "--rar-lo: #8f6410;",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-stars-back",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "--rar-pips: ${GILDED_CROWN_URL};",
+    "new": "--rar-pips: '\\\\2726\\\\2726';",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-jewels-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "<rect x='5' y='7' width='2' height='2' fill='#ff3b4a'/>",
+    "new": "<rect x='5' y='7' width='2' height='2' fill='#f6c945'/>",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-outline-dropped",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "fill='#f6c945' stroke='#050608' stroke-width='1.4' paint-order='stroke' stroke-linejoin='round'",
+    "new": "fill='#f6c945' stroke-linejoin='round'",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-glow-left-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "@keyframes gilded-glow { from { box-shadow: 0 0 0 1px #050608, 0 0 5px rgba(255,59,74,0.35)",
+    "new": "@keyframes gilded-glow { from { box-shadow: 0 0 0 1px #050608, 0 0 5px rgba(255,207,77,0.35)",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-still-glow-left-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "animation: none; box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,59,74,0.72)",
+    "new": "animation: none; box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,207,77,0.72)",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-bigicon-left-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".bigicon[data-rarity=\"gilded\"] img { filter: drop-shadow(0 0 9px rgba(255,59,74,0.8))",
+    "new": ".bigicon[data-rarity=\"gilded\"] img { filter: drop-shadow(0 0 9px rgba(255,207,77,0.8))",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-glint-left-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "drop-shadow(0 0 2px #ff7480)",
+    "new": "drop-shadow(0 0 2px #fff1b8)",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-codex-left-gold",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".broker-offer.codex-gilded.found .broker-name { color: #ff3b4a; }",
+    "new": ".broker-offer.codex-gilded.found .broker-name { color: #ffcf4d; }",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-tile-pips-unset",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-dock .itemrow[data-rarity]::before { content: var(--rar-pips);",
+    "new": ".pack-dock .itemrow[data-rarity]::before { content: '';",
+    "tests": [
+      "test/ui/gildedred.test.js",
+      "test/ui/enhanced/sigilui1.test.js"
+    ]
+  },
+  {
+    "name": "GR-banner-pips-unset",
+    "file": "src/ui/lootBanner.js",
+    "old": ".lb-kicker::after { content: var(--rar-pips, '');",
+    "new": ".lb-kicker::after { content: '';",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-name-left-gold",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".wplaque-row[data-rarity=\"gilded\"] > span:first-child { color: #ff3b4a; }",
+    "new": ".wplaque-row[data-rarity=\"gilded\"] > span:first-child { color: #ffcf4d; }",
+    "tests": [
+      "test/ui/gildedred.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "GR-postwin-left-gold",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-postwin [data-rarity=\"gilded\"] { color: #ff3b4a; }",
+    "new": ".px-postwin [data-rarity=\"gilded\"] { color: #ffcf4d; }",
+    "tests": [
+      "test/ui/gildedred.test.js",
+      "test/net/serverpost_client.test.js"
+    ]
+  },
+  {
+    "name": "GR-stone-unlifted",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ":root[data-plus-theme=\"stone\"] .px-postwin [data-rarity=\"gilded\"] { color: #ffb1b7; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-stone-lift-the-crimson",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ":root[data-plus-theme=\"stone\"] .px-postwin [data-rarity=\"gilded\"] { color: #ffb1b7; }",
+    "new": ":root[data-plus-theme=\"stone\"] .px-postwin [data-rarity=\"gilded\"] { color: #ff3b4a; }",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-gem-left-gold",
+    "file": "src/ui/lootTierMarks.js",
+    "old": "artifact: '#b57bee', gilded: '#ff3b4a',",
+    "new": "artifact: '#b57bee', gilded: '#ffcf4d',",
+    "tests": [
+      "test/ui/gildedred.test.js",
+      "test/ui/lootmarks1.test.js"
+    ]
+  },
+  {
+    "name": "GR-gem-rim-leaf",
+    "file": "src/ui/lootTierMarks.js",
+    "old": "inset 0 0 0 2px #f6c945",
+    "new": "inset 0 0 0 2px #fff4c4",
+    "tests": [
+      "test/ui/gildedred.test.js",
+      "test/ui/lootmarks1.test.js"
+    ]
+  },
+  {
+    "name": "GR-gem-glint-left-gold",
+    "file": "src/ui/lootTierMarks.js",
+    "old": "0 0 5px rgba(255, 59, 74, 0.8)",
+    "new": "0 0 5px rgba(255, 207, 77, 0.8)",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-ink-old-amber",
+    "file": "src/ui/grimoireDress.js",
+    "old": "artifact: '#5e2a96', gilded: '#a3122e' });",
+    "new": "artifact: '#5e2a96', gilded: '#7a4a00' });",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-ink-pale-crimson",
+    "file": "src/ui/grimoireDress.js",
+    "old": "artifact: '#5e2a96', gilded: '#a3122e' });",
+    "new": "artifact: '#5e2a96', gilded: '#ff3b4a' });",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-plaque-ink-left-amber",
+    "file": "src/ui/grimoireDress.js",
+    "old": ".wplaque-row[data-rarity=\"gilded\"] > span:first-child { color: #a3122e !important; }",
+    "new": ".wplaque-row[data-rarity=\"gilded\"] > span:first-child { color: #7a4a00 !important; }",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  },
+  {
+    "name": "GR-ramp-turned-crimson",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "[252, 214, 90]",
+    "new": "[252, 60, 70]",
+    "tests": [
+      "test/ui/gildedred.test.js"
+    ]
+  }
+]

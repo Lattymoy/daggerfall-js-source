@@ -389,13 +389,61 @@ function diffArrayLcs(a, b, ka, kb, path, ops, memo) {
   }
 }
 
-const clone = (v) => (v === null || typeof v !== 'object' ? v : JSON.parse(JSON.stringify(v)));
+/** WD-OWNED (WD-COPY): THE JSON ROUND TRIP'S OWN COPY, WALKED. A pack's block file is laid on a copy of its classic
+ *  block's JSON (~135 KB: it is kept for the next file), and the round trip was 63% of a block's build at the boot -
+ *  the walk is ~4x its speed over the packs' bases. It writes what the round trip writes: a number JSON cannot write
+ *  null and -0 as 0, an undefined (a function, a symbol) dropped from an object and null in an array; anything it
+ *  cannot vouch for - an object that is not plain, a toJSON, a `__proto__` key, a bigint, a tree past COPY_DEPTH
+ *  (a cycle) - is the round trip's own, throws and all. */
+const COPY_DEPTH = 1000;
+const NOT_PLAIN = Symbol('not plain JSON');
+/** @param {any} x @param {number} depth @returns {any} */
+function copiedValue(x, depth) {
+  switch (typeof x) {
+    case 'string': case 'boolean': return x;
+    case 'number': return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;
+    case 'object': return x === null ? null : copiedTree(x, depth + 1);
+    case 'bigint': return NOT_PLAIN;
+    default: return undefined;   // undefined, a function, a symbol: what JSON.stringify leaves out
+  }
+}
+/** @param {object} v @param {number} depth @returns {any} */
+function copiedTree(v, depth) {
+  if (depth > COPY_DEPTH || typeof v.toJSON === 'function') return NOT_PLAIN;
+  if (Array.isArray(v)) {
+    const n = v.length, out = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = copiedValue(v[i], depth);
+      if (x === NOT_PLAIN) return NOT_PLAIN;
+      out[i] = x === undefined ? null : x;
+    }
+    return out;
+  }
+  const proto = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) return NOT_PLAIN;
+  const out = {};
+  for (const k of Object.keys(v)) {
+    if (k === '__proto__') return NOT_PLAIN;
+    const x = copiedValue(v[k], depth);
+    if (x === NOT_PLAIN) return NOT_PLAIN;
+    if (x !== undefined) out[k] = x;
+  }
+  return out;
+}
+const clone = (v) => {
+  if (v === null || typeof v !== 'object') return v;
+  const c = copiedTree(v, 0);
+  return c === NOT_PLAIN ? JSON.parse(JSON.stringify(v)) : c;
+};
 
 /** Apply ops (diffJson's) to a deep copy of `base`. `resolve(ref)`
  *  answers a copy op's source - `{ block, path }`, a node of a classic
- *  block's JSON (the patch never carries what it can point at). */
-export function patchJson(base, ops, resolve = null) {
-  let root = clone(base);
+ *  block's JSON (the patch never carries what it can point at).
+ *  WD-OWNED (2026-10-20, bible/07-Rendering/Performance-Priority.md WD-OWNED): `owned` - the base is the caller's
+ *  own, a plain JSON tree made for this patch and held nowhere else - is laid on in place: its copy would be itself
+ *  (a JSON round trip changes no plain tree), and a pack's 7,727 town files each copied one at the boot. */
+export function patchJson(base, ops, resolve = null, { owned = false } = {}) {
+  let root = owned ? base : clone(base);
   for (let op of ops) {
     if (op[0] === 'ci' || op[0] === 'cs') {
       if (!resolve) throw new Error('world-data patch: a copy op and no resolver');

@@ -202,7 +202,7 @@ test('audit24 wave30: OnMonsterHit rides EVERY monster melee door and no other',
   for (const s of monsterMelee) {
     assert.ok(s.call.includes('onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {'),
       `${s.file}:${s.line} must pass the special-attack rider`);
-    assert.ok(s.call.includes('castParalyze:'), `${s.file}:${s.line} carries the spider/scorpion free-cast`);
+    assert.ok(s.call.includes('readySpell: (index) =>'), `${s.file}:${s.line} carries the spider/scorpion free-cast`);   // PIN MOVED (DEX4b): SetReadySpell for any standard spell - a mod's riders ready theirs through it
     // InflictDisease stamps the entry's lastDay, and the classic day is
     // elapsed minutes / 1440 (PlayerEntity.cs:263) - both hosts, one unit.
     assert.ok(/currentDay: Math\.floor\([^\n]*\/ MINUTES_PER_DAY\)/.test(s.call),
@@ -218,7 +218,7 @@ test('audit24 wave30: OnMonsterHit rides EVERY monster melee door and no other',
 
 test('audit24 wave30: the exterior pool binds the paralyze free-cast the way the dungeon does', () => {
   const xf = rd('src/scenes/exteriorFoes.js');
-  assert.ok(xf.includes("const sp = spellsByIndex?.()?.get(SPIDER_TOUCH_SPELL_INDEX);"),
+  assert.ok(xf.includes("const sp = spellsByIndex?.()?.get(index);"),   // PIN MOVED (DEX4b): the index the rider readies (66 for the spider's)
     'the pool reads the SPELLS.STD map through its own accessor (it is a FUNCTION dep here, unlike the dungeon\'s map)');
   assert.ok(xf.includes('if (sp) castSpellFrom(f, sp, playerFeet, true);'),
     'SetReadySpell(spell, noSpellPointCost: true) - the cast is free and skips the silence gate');

@@ -318,6 +318,9 @@ export async function loadThunderlockArt(renderer, { fetch: fetchSheet = null, d
     // box - so a caller that knows where the union is drawn knows
     // where the muzzle is. Null if the art has no flash to measure.
     muzzle,
+    // PISTOLET: the pose gunFrameRect places it by, on the art - so the rig asks the art for either gun's
+    // (combat/gun/pistoletArt.js answers the Pistolet's)
+    pose: { widthPct: GUN_FEEL.widthPct, raise: GUN_FEEL.raise },
   };
 }
 

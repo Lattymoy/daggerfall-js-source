@@ -1,0 +1,234 @@
+[
+  {
+    "name": "YARDSNAP-delete-unmoved",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS home_yards_out AFTER DELETE ON home_decor WHEN OLD.yard = 1",
+    "new": "CREATE TRIGGER IF NOT EXISTS home_yards_out AFTER DELETE ON home_decor WHEN OLD.yard = 9",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a yard piece taken away (or its home released) leaves its town's row standing"
+  },
+  {
+    "name": "YARDSNAP-move-one-town",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "  INSERT INTO home_yards_ver (map_id, ver) SELECT OLD.map_id, COALESCE((SELECT built FROM home_yards WHERE map_id = OLD.map_id), 0) + 1 WHERE OLD.yard = 1\n    ON CONFLICT (map_id) DO UPDATE SET ver = ver + 1;\n",
+    "new": "",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a yard piece moved to another town leaves the town it left standing"
+  },
+  {
+    "name": "YARDSNAP-room-moves-town",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS home_yards_in AFTER INSERT ON home_decor WHEN NEW.yard = 1",
+    "new": "CREATE TRIGGER IF NOT EXISTS home_yards_in AFTER INSERT ON home_decor WHEN NEW.yard >= 0",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a room's piece moves its town, and every room write builds the town again"
+  },
+  {
+    "name": "YARDSNAP-build-order",
+    "file": "server-account/src/decor.js",
+    "old": "ORDER BY building_key, placed_at, id LIMIT ${DECOR_YARDS_TOWN_MAX}`;",
+    "new": "ORDER BY id LIMIT ${DECOR_YARDS_TOWN_MAX}`;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "the town's bound cut in another order than the read's"
+  },
+  {
+    "name": "YARDSNAP-build-unbounded",
+    "file": "server-account/src/decor.js",
+    "old": "ORDER BY building_key, placed_at, id LIMIT ${DECOR_YARDS_TOWN_MAX}`;",
+    "new": "ORDER BY building_key, placed_at, id`;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a town past its bound answered whole"
+  },
+  {
+    "name": "YARDSNAP-stale-answered",
+    "file": "server-account/src/decor.js",
+    "old": "  const fresh = snap.ver != null && Number(snap.built) === Number(snap.ver) && snap.shape === YARD_SNAP_SHAPE;",
+    "new": "  const fresh = snap.ver != null && snap.shape === YARD_SNAP_SHAPE;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a stale row answered over the rows as they stand"
+  },
+  {
+    "name": "YARDSNAP-shape-unread",
+    "file": "server-account/src/decor.js",
+    "old": "  const fresh = snap.ver != null && Number(snap.built) === Number(snap.ver) && snap.shape === YARD_SNAP_SHAPE;",
+    "new": "  const fresh = snap.ver != null && Number(snap.built) === Number(snap.ver);",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B1: another deploy's rows served by this one's read"
+  },
+  {
+    "name": "YARDSNAP-clock-shape-blind",
+    "file": "server-account/src/decor.js",
+    "old": "AND y.built = ${v}.ver AND y.shape = '${YARD_SNAP_SHAPE}')`;",
+    "new": "AND y.built = ${v}.ver)`;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B1: a quiet town of another shape never built again - read as its rows stand forever"
+  },
+  {
+    "name": "YARDSNAP-shape-parts",
+    "file": "server-account/src/decor.js",
+    "old": "shapeOf('yards: [columns...] each, NULL past the bound', yardRowsSql('?'), KEPT_BOARD_MAX_BYTES);",
+    "new": "shapeOf('yards: [columns...] each, NULL past the bound', YARD_SNAP_COLS.join(', '));",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B1: the order and the bound no part of the shape - a deploy that changes them serves the old rows"
+  },
+  {
+    "name": "YARDSNAP-backfill-shape",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "  SELECT v.map_id, v.ver, '92826ba1', (SELECT CASE",
+    "new": "  SELECT v.map_id, v.ver, 'none', (SELECT CASE",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "the migration's towns built in no shape - every town read as its rows stand until the clock reaches it"
+  },
+  {
+    "name": "YARDSNAP-old-index-kept",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "DROP INDEX IF EXISTS idx_home_decor_yard;\n",
+    "new": "",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B8: 0039's (map_id, yard) kept beside its prefix's index - a write each decor write for nothing"
+  },
+  {
+    "name": "YARDSNAP-no-row-reads",
+    "file": "server-account/src/decor.js",
+    "old": "  if (snap?.ver == null && !snap?.orphan) return { mapId, yards: [] };\n",
+    "new": "",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a town that never stood a yard read for its rows"
+  },
+  {
+    "name": "YARDSNAP-rows-unordered",
+    "file": "server-account/src/decor.js",
+    "old": "  return rows.sort((x, y) => cmp(x.building_key, y.building_key) || cmp(x.placed_at, y.placed_at) || cmp(x.id, y.id));",
+    "new": "  return rows;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a built row trusted for the order json_group_array kept",
+    "equivalent": true,
+    "why": "json_group_array keeps its ordered subquery's order on every SQLite this service runs on (node:sqlite here, D1 there), so the built rows already stand in the read's order; SQLite's documentation promises no order for the aggregate, and the sort is the read's own guarantee where it promises none"
+  },
+  {
+    "name": "YARDSNAP-columns",
+    "file": "server-account/src/decor.js",
+    "old": "export const YARD_SNAP_COLS = Object.freeze(['map_id', 'building_key', 'id', 'model', 'flat_archive', 'flat_record', 'place', 'placed_at', 'item', 'paid', 'yard']);",
+    "new": "export const YARD_SNAP_COLS = Object.freeze(['map_id', 'building_key', 'id', 'model', 'flat_archive', 'flat_record', 'place', 'placed_at', 'paid', 'yard']);",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a column SELECT * reads left out of the built row"
+  },
+  {
+    "name": "YARDSNAP-route-unbuilt",
+    "file": "server-account/src/index.js",
+    "old": "          await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)\n",
+    "new": "",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "a decor route leaves its town stale until the clock"
+  },
+  {
+    "name": "YARDSNAP-clock-gone",
+    "file": "server-account/src/cron.js",
+    "old": "  ['yard-snap', (ctx) => settleStaleYards(ctx.db)],\n",
+    "new": "",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "nothing builds a town a cascade left stale"
+  },
+  {
+    "name": "YARDSNAP-clock-page",
+    "file": "server-account/src/decor.js",
+    "old": "export const YARDS_SETTLE_A_MINUTE = 50;",
+    "new": "export const YARDS_SETTLE_A_MINUTE = 5000;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "the clock builds every stale town in one firing"
+  },
+  {
+    "name": "YARDSNAP-backfill-bound",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "      WHERE map_id = v.map_id AND yard = 1 ORDER BY building_key, placed_at, id LIMIT 2000)))",
+    "new": "      WHERE map_id = v.map_id AND yard = 1 ORDER BY building_key, placed_at, id)))",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "the towns standing at the migration built past their bound"
+  },
+  {
+    "name": "YARDSNAP2-out-version-unmade",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS home_yards_out AFTER DELETE ON home_decor WHEN OLD.yard = 1\nBEGIN\n  INSERT INTO home_yards_ver (map_id, ver) VALUES (OLD.map_id, COALESCE((SELECT built FROM home_yards WHERE map_id = OLD.map_id), 0) + 1) ON CONFLICT (map_id) DO UPDATE SET ver = ver + 1;",
+    "new": "CREATE TRIGGER IF NOT EXISTS home_yards_out AFTER DELETE ON home_decor WHEN OLD.yard = 1\nBEGIN\n  UPDATE home_yards_ver SET ver = ver + 1 WHERE map_id = OLD.map_id;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B4: a town whose version row was lost never has one again by a delete"
+  },
+  {
+    "name": "YARDSNAP2-orphan-unasked",
+    "file": "server-account/src/decor.js",
+    "old": "v.map_id IS NULL AND EXISTS (SELECT map_id FROM home_decor WHERE map_id = ?1 AND yard = 1) AS orphan",
+    "new": "0 AS orphan",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B4: a town standing yard pieces with no version row answered no yard"
+  },
+  {
+    "name": "YARDSNAP2-bound-unkept",
+    "file": "server-account/src/decor.js",
+    "old": "(SELECT CASE WHEN length(CAST(j AS BLOB)) <= ${KEPT_BOARD_MAX_BYTES} THEN j END",
+    "new": "(SELECT CASE WHEN 1 THEN j END",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B7: a town past the bound kept whole - past D1's 2 MB, the clock's page refused"
+  },
+  {
+    "name": "YARDSNAP2-past-unsaid",
+    "file": "server-account/src/decor.js",
+    "old": "  if (fresh && snap.rows == null) keptPast('a town\\'s yards', `town ${mapId}`);",
+    "new": "",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B7: a town read every time past the bound, and nothing in the log says why"
+  },
+  {
+    "name": "YARDSNAP2-version-made-at-one",
+    "file": "server-account/migrations/0136_yard_snap.sql",
+    "old": "  INSERT INTO home_yards_ver (map_id, ver) VALUES (OLD.map_id, COALESCE((SELECT built FROM home_yards WHERE map_id = OLD.map_id), 0) + 1) ON CONFLICT (map_id) DO UPDATE SET ver = ver + 1;",
+    "new": "  INSERT INTO home_yards_ver (map_id, ver) VALUES (OLD.map_id, 1) ON CONFLICT (map_id) DO UPDATE SET ver = ver + 1;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B4: a town's version row lost and made again at 1 - rows kept at 1 long before served as its yards"
+  }
+]

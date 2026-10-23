@@ -470,7 +470,9 @@ test('AUDIT C&C S14: A COST IS SAID WITHOUT ITS COLOUR - a need\'s tile and the 
     drawEnhancedHud(f, 0, 0, {});
     const tile = tempTile(doc);
     const reading = temperatureReadout(f, feltNow(f).felt);
-    assert.deepEqual([tile.word, tile.cell.classList.contains('hst-cost'), tile.cell.title, tile.cell.getAttribute('aria-label')], [reading.label, true, `${reading.label} - it costs you`, `${reading.label} - it costs you`]);
+    // STATUS-TIPS (2026-10-20): the tile's level is said on its label and in its hover card (ui/hud/statusTips.js) - the
+    // browser's own title stands down, as the pack's does under its card
+    assert.deepEqual([tile.word, tile.cell.classList.contains('hst-cost'), tile.cell.title, tile.cell.getAttribute('aria-label')], [reading.label, true, '', `${reading.label} - it costs you`]);
     const plate = doc.querySelector('.hud .hud-temp');
     assert.deepEqual([plate.title, plate.getAttribute('aria-label')], [`Felt temperature ${reading.text}: ${reading.label} - it costs you`, `Felt temperature ${reading.text}: ${reading.label} - it costs you`]);
     withDom(() => {

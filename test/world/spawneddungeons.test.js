@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SPAWN_CHANCE, ANY_SPAWN_CHANCE, SALT_MAX, WORLD_SALT, hash32, spawnsDungeon, spawnedMapId, pickTemplate, synthesizeDungeonLocation, spawnTemplates, SPAWN_CLEARANCE_M, BLOCK_M, spawnClearance, spawnedLocationCentreLocal, dungeonSightLine } from '../../src/world/spawnedDungeons.js';
+import { SPAWN_CHANCE, ANY_SPAWN_CHANCE, SPAWN_KEEP, SALT_MAX, WORLD_SALT, hash32, spawnsDungeon, spawnRoll, spawnKept, isEliteSpawn, spawnedMapId, pickTemplate, synthesizeDungeonLocation, spawnTemplates, SPAWN_CLEARANCE_M, BLOCK_M, spawnClearance, spawnedLocationCentreLocal, dungeonSightLine } from '../../src/world/spawnedDungeons.js';
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { isWorldRoom } from '../../src/net/wire.js';
 import { getMapPixelID, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
@@ -10,14 +10,32 @@ import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host wh
 test('SPAWNED-DUNGEONS: the roll is a pure function of (salt, pixel) and lands near the chance', () => {
   assert.equal(SPAWN_CHANCE, 0.30);
   assert.ok(Math.abs(ANY_SPAWN_CHANCE - 0.40) < 1e-12, '30% normal + 10% elite');
+  assert.equal(SPAWN_KEEP, 0.75, 'SPAWN-THIN: a quarter of the band is empty land');
   assert.equal(spawnsDungeon(7, 100, 200), spawnsDungeon(7, 100, 200), 'the same pixel answers the same, load after load');
   let hits = 0, n = 0;
   for (let x = 0; x < 200; x++) for (let y = 0; y < 100; y++) { n++; if (spawnsDungeon(1234, x, y)) hits++; }
-  assert.ok(Math.abs(hits / n - ANY_SPAWN_CHANCE) < 0.02, `~${ANY_SPAWN_CHANCE * 100}% of ${n} pixels, got ${(hits / n).toFixed(3)}`);
+  assert.ok(Math.abs(hits / n - ANY_SPAWN_CHANCE * SPAWN_KEEP) < 0.02, `~${ANY_SPAWN_CHANCE * SPAWN_KEEP * 100}% of ${n} pixels, got ${(hits / n).toFixed(3)}`);
   assert.equal(spawnsDungeon(5, 1, 1, 0), false);
   assert.equal(spawnsDungeon(5, 1, 1, 1), true);
   assert.ok(hash32(1, 2, 3) !== hash32(1, 3, 2), 'order matters');
   assert.ok(Number.isInteger(WORLD_SALT) && WORLD_SALT >= 1 && WORLD_SALT <= SALT_MAX, 'the world salt is a legal id salt');
+});
+
+test('SPAWN-THIN: a quarter of the band is gone, and a dungeon that remains is the same kind it was', () => {
+  let band = 0, gone = 0, eliteKept = 0, normalKept = 0;
+  for (let x = 0; x < 200; x++) for (let y = 0; y < 100; y++) {
+    if (!(spawnRoll(1, x, y) < ANY_SPAWN_CHANCE)) {
+      assert.equal(spawnsDungeon(1, x, y), false);
+      continue;
+    }
+    band++;
+    const elite = isEliteSpawn(1, x, y);
+    if (!spawnsDungeon(1, x, y)) { assert.equal(spawnKept(1, x, y), false); gone++; continue; }
+    assert.equal(spawnKept(1, x, y), true);
+    if (elite) eliteKept++; else normalKept++;
+  }
+  assert.ok(band > 0 && eliteKept > 0 && normalKept > 0, 'both kinds survive');
+  assert.ok(Math.abs(gone / band - (1 - SPAWN_KEEP)) < 0.03, `about a quarter of the band gone, ${(gone / band).toFixed(3)}`);
 });
 
 test('SPAWNED-DUNGEONS: the id carries the pixel id in its low 20 bits, the salt above, and is a room the relay admits', () => {

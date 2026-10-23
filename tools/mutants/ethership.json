@@ -291,8 +291,8 @@
   {
     "name": "SHIP-host-unpaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (legend) deps.ether?.legendEnded?.(legend.id, act);",
-    "new": "    if (false) deps.ether?.legendEnded?.(legend.id, act);",
+    "old": "    if (legend) legendTidemail(legend, s.seed, deps.ether?.legendEnded?.(legend.id, act),",
+    "new": "    if (false) legendTidemail(legend, s.seed, deps.ether?.legendEnded?.(legend.id, act),",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]

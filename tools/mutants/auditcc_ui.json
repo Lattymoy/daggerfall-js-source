@@ -503,7 +503,7 @@
   {
     "name": "AUDITCC-UI-S14-the-tile-untitled",
     "file": "src/ui/enhanced/enhancedHud.js",
-    "old": "  if (t.say) { cell.title = t.say; cell.setAttribute('aria-label', t.say); }",
+    "old": "  if (t.say) cell.setAttribute('aria-label', t.say);",
     "new": "",
     "why": "the HUD says no level on a tile",
     "tests": [

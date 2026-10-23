@@ -6,7 +6,9 @@
 //
 // - EVERY TENTH REDOUBT (10, 20, 30...): "<opener>'s company took Redoubt 10 of the Battlespire (Hall 50) in 1:51:20." - AUDIT
 //   EG V (L8-7): the time is from the breach's first hall's wake, so a breach begun deeper says where it began ("..., from
-//   Redoubt 9.").
+//   Redoubt 9."). FIELD BUGS 2026-10-20d LONE-HERALD: a company of one is named as one - "Mara took Redoubt 20 of the
+//   Battlespire (Hall 100) alone in ..." - by the size its news carries (`n`, the Descent's count); First of the Spire and a
+//   seal's post the same.
 // - FIRST OF THE SPIRE: the first company ever to take Redoubt 10 - its post in that Redoubt's place, said once ever (a
 //   flag the hub keeps in its storage for good).
 // - THE LONE BEACON: a Court felled alone in a company of four or more (the relay's own `lb`, net/eliteGates/egBrain.js redoubt) -
@@ -74,6 +76,11 @@ export function egHeraldTime(s) {
 }
 /** "<opener>'s company", or "A company" for a name that says nothing. */
 const companyOf = (o) => { const n = heraldName(o); return n ? `${n}'s company` : 'A company'; };
+/** FIELD BUGS 2026-10-20d LONE-HERALD: is the news's company one member (`n`, its entrants - 0 when the news did not say)? */
+const lone = (n) => n === 1;
+/** Who a post names: a company of one by its member's name ("Someone" for a name that says nothing); any other company - and
+ *  one whose size its news did not say - as "<opener>'s company". */
+const whoOf = (o, n) => (lone(n) ? heraldName(o) || 'Someone' : companyOf(o));
 /** The names a post may say, at most a company's. */
 const namesOf = (by) => (Array.isArray(by) ? by : []).slice(0, EG_PARTY_MAX).map(heraldName).filter(Boolean);
 /** A lord mid-sentence: its name (a leading "The" lowered), or the Court's lord for a key the table lacks. */
@@ -83,19 +90,19 @@ const quiet = (content) => ({ content, allowed_mentions: { parse: [] } });
 /** AUDIT EG V (L8-7): the start a post's time ran from, said when it was not Hall 1 (`ew` the Redoubt the breach began at). */
 const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `, from Redoubt ${ew}` : '');
 /**
- * EVERY TENTH REDOUBT: the opener's company, the Redoubt, its hall and the time since the breach's first hall woke - Hall 1's,
- * or the Redoubt it began at said (`ew`). Pings nobody.
- * @param {{o?: string, w: number, h: number, t: number, ew?: number}} p
+ * EVERY TENTH REDOUBT: the opener's company - or a company of one's member, alone (`n` 1) - the Redoubt, its hall and the time
+ * since the breach's first hall woke - Hall 1's, or the Redoubt it began at said (`ew`). Pings nobody.
+ * @param {{o?: string, n?: number, w: number, h: number, t: number, ew?: number}} p
  */
-export const egRedoubtPost = ({ o = '', w, h, t, ew = 0 }) => quiet(`**${companyOf(o)} took Redoubt ${w} of the Battlespire (Hall ${h})** in ${egHeraldTime(t)}${fromOf(ew)}.`);
+export const egRedoubtPost = ({ o = '', n = 0, w, h, t, ew = 0 }) => quiet(`**${whoOf(o, n)} took Redoubt ${w} of the Battlespire (Hall ${h})${lone(n) ? ' alone' : ''}** in ${egHeraldTime(t)}${fromOf(ew)}.`);
 /**
- * FIRST OF THE SPIRE: the first company ever to take Redoubt 10 - the opener's company and every name in it (AUDIT EG V, L8-7:
- * its time's start said as the Redoubt's post says it). Pings nobody.
- * @param {{o?: string, by?: ReadonlyArray<string>, w: number, h: number, t: number, ew?: number}} p
+ * FIRST OF THE SPIRE: the first company ever to take Redoubt 10 - the opener's company and every name in it, or a company of
+ * one's member, alone (AUDIT EG V, L8-7: its time's start said as the Redoubt's post says it). Pings nobody.
+ * @param {{o?: string, n?: number, by?: ReadonlyArray<string>, w: number, h: number, t: number, ew?: number}} p
  */
-export function egFirstPost({ o = '', by = [], w, h, t, ew = 0 }) {
-  const names = namesOf(by);
-  return quiet(`**First of the Spire:** ${companyOf(o)} is the first ever to take Redoubt ${w} of the Battlespire (Hall ${h}), in ${egHeraldTime(t)}${fromOf(ew)}${names.length ? ` - ${heraldList(names)}` : ''}.`);
+export function egFirstPost({ o = '', n = 0, by = [], w, h, t, ew = 0 }) {
+  const names = lone(n) ? [] : namesOf(by);
+  return quiet(`**First of the Spire:** ${whoOf(o, n)} is the first ever to take Redoubt ${w} of the Battlespire (Hall ${h}), ${lone(n) ? 'alone, ' : ''}in ${egHeraldTime(t)}${fromOf(ew)}${names.length ? ` - ${heraldList(names)}` : ''}.`);
 }
 /**
  * THE LONE BEACON: who felled which lord alone, and the company they were the last standing of. Pings nobody.
@@ -111,10 +118,10 @@ export function egTopPost({ br, by = [], o = '', h, td }) {
   return quiet(`**A new top of the Descent** (${EG_DESCENT_BRACKETS[br] ?? ''}): ${names.length ? heraldList(names) : companyOf(o)} cleared Hall ${h} in ${egHeraldTime(td)}.`);
 }
 /**
- * A BAND'S SEAL LIFTED: the way below the band, and the company first through. Pings nobody.
- * @param {{band: number, o?: string}} p
+ * A BAND'S SEAL LIFTED: the way below the band, and the company first through (a company of one's member, alone). Pings nobody.
+ * @param {{band: number, o?: string, n?: number}} p
  */
-export const egSealPost = ({ band, o = '' }) => quiet(`**The way below ${EG_HERALD_BAND_WORDS[band] ?? 'the Spire'} is open.** ${companyOf(o)} is the first through.`);
+export const egSealPost = ({ band, o = '', n = 0 }) => quiet(`**The way below ${EG_HERALD_BAND_WORDS[band] ?? 'the Spire'} is open.** ${whoOf(o, n)} is the first through${lone(n) ? ', alone' : ''}.`);
 /** The post for an owed record (egHeraldFold's `q`), by its kind. */
 export function egHeraldPost(p) {
   if (p.kind === 'first') return egFirstPost(p);
@@ -130,9 +137,11 @@ const LORD_RE = /^[a-z]{1,16}$/;
 /**
  * A breach room's tell, as the hub reads it: `{ b, ev }` - the breach and its news, each piece projected through the
  * law (a piece out of shape dropped, as a client's would be); null for a tell that is not one.
- *   `{ i, at, k: 'rd', w, h, t, ew, o, by }`  a Valkynaz's Redoubt (every fifth): the Redoubt, its hall, seconds since the
+ *   `{ i, at, k: 'rd', w, h, t, n, ew, o, by }`  a Valkynaz's Redoubt (every fifth): the Redoubt, its hall, seconds since the
  *                                          breach's first hall woke (Hall 1's only when `ew`, the Redoubt it began at, is 0 -
- *                                          AUDIT EG V, L8-7), the opener's name and the earners'
+ *                                          AUDIT EG V, L8-7), the company's entrants (0 when a room before LONE-HERALD did
+ *                                          not say), the name its post leads with (the opener's; a company of one's member)
+ *                                          and the earners'
  *   `{ i, at, k: 'lb', n, lk, c }`        a Court felled alone: who, the lord, the company's entrants
  *   `{ i, at, k: 'dc', h, td, n, o, by }` the breach's end, a Descent's candidate: the deepest hall cleared, its seconds,
  *                                          the entrants, the opener's name and theirs
@@ -145,7 +154,7 @@ export function validEgHeraldTell(body) {
   for (const e of body.ev) {
     if (!e || typeof e !== 'object' || !nat(e.i, 1, 1e9) || !nat(e.at, 0, Number.MAX_SAFE_INTEGER)) continue;
     const by = Array.isArray(e.by) ? e.by.slice(0, EG_PARTY_MAX).map(str) : [];
-    if (e.k === 'rd' && nat(e.w, 1, 19_999) && nat(e.h, 1, 99_999) && nat(e.t, 0, 7 * 86_400)) ev.push({ i: e.i, at: e.at, k: 'rd', w: e.w, h: e.h, t: e.t, ew: nat(e.ew, 0, 19_999) ? e.ew : 0, o: str(e.o), by });
+    if (e.k === 'rd' && nat(e.w, 1, 19_999) && nat(e.h, 1, 99_999) && nat(e.t, 0, 7 * 86_400)) ev.push({ i: e.i, at: e.at, k: 'rd', w: e.w, h: e.h, t: e.t, n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0, ew: nat(e.ew, 0, 19_999) ? e.ew : 0, o: str(e.o), by });
     else if (e.k === 'lb' && nat(e.c, 1, EG_PARTY_MAX) && (e.lk === '' || (typeof e.lk === 'string' && LORD_RE.test(e.lk)))) ev.push({ i: e.i, at: e.at, k: 'lb', n: str(e.n), lk: e.lk, c: e.c });
     else if (e.k === 'dc' && nat(e.h, 1, 99_999) && nat(e.td, 0, 7 * 86_400) && nat(e.n, 1, EG_PARTY_MAX)) ev.push({ i: e.i, at: e.at, k: 'dc', h: e.h, td: e.td, n: e.n, o: str(e.o), by });
   }
@@ -200,11 +209,11 @@ export function egHeraldFold(st, tell, { nowMs, open = EG_OPEN, post = true }) {
     S.seen.push(id);
     if (e.k === 'rd') {
       if (e.w % EG_HERALD_EVERY === 0) {
-        if (e.w === EG_HERALD_FIRST && !S.first) { S.first = 1; owe({ kind: 'first', o: e.o, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 }); }
-        else owe({ kind: 'rd', o: e.o, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });
+        if (e.w === EG_HERALD_FIRST && !S.first) { S.first = 1; owe({ kind: 'first', o: e.o, n: e.n ?? 0, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 }); }
+        else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });
       }
       const below = egBandOfHall(e.h) + 1;
-      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) { S.said = below; owe({ kind: 'seal', band: below - 1, o: e.o }); }
+      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) { S.said = below; owe({ kind: 'seal', band: below - 1, o: e.o, n: e.n ?? 0 }); }
     } else if (e.k === 'lb') owe({ kind: 'lb', n: e.n, lk: e.lk, c: e.c });
     else if (e.k === 'dc') {
       const br = egDescentBracket(e.n), season = arenaSeasonOf(Math.floor(nowMs / 1000));

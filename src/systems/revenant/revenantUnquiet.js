@@ -42,6 +42,7 @@ import { DISSOLVE_ARCANE } from '../dissolve.js';
 import { playerDoor } from '../playerDoor.js';
 import { t } from '../textManager.js';   // L10N4: UNQUIET's words through the text core
 import { lessonOf, ADAPT_MAX, ADAPT } from './revenantFeud.js';   // UNQUIET III: what a revenant of mastery trains against
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ── born of flight, ranked by surviving ─────────────────────────────
 /** A revenant's kill of the player (or a companion it fells) ranks it up only every this many times - an escape ranks
@@ -95,7 +96,7 @@ export function fleeCraftOf(mobileType) {
   if (!Number.isInteger(mobileType)) return 'bolt';
   if (BLINKERS.has(mobileType)) return 'blink';
   if (SINKERS.has(mobileType)) return 'sink';
-  if (mobileType >= 128 && mobileType !== M.None) return 'smoke';
+  if (isClassEnemyId(mobileType) && mobileType !== M.None) return 'smoke';
   return 'bolt';
 }
 /** A live revenant's craft as it breaks - its kind's, from CRAFT.RANK (`rank` its record's); null under it (it runs). */

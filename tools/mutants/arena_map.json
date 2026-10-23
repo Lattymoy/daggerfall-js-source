@@ -109,7 +109,7 @@
   },
   {
     "name": "ARENAMAP-WORLD-HOST-UNHANDED",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/exteriorAutomapToggle.js",
     "old": "autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })),",
     "new": "autoMapData, landmark: null })),",
     "tests": [

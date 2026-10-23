@@ -1,4 +1,4 @@
-# The Eltheric Ocean - past the Veil (ETHER-SEA, ETHER-PLACES, ETHER-PORTS, ETHER-SHIPS, ETHER-LEGENDS, ETHER-CROSSING, ETHER-CHART, ETHER-LIGHT, 2026-10-11; ETHER-CHART2, ELTHERIC, ETHER-DEEP, ETHER-NODES, 2026-10-12; ETHER-OW, 2026-10-13)
+# The Eltheric Ocean - past the Veil (ETHER-SEA, ETHER-PLACES, ETHER-PORTS, ETHER-SHIPS, ETHER-LEGENDS, ETHER-CROSSING, ETHER-CHART, ETHER-LIGHT, 2026-10-11; ETHER-CHART2, ELTHERIC, ETHER-DEEP, ETHER-NODES, 2026-10-12; ETHER-OW, 2026-10-13; ETHER-WILD, 2026-10-21; SEA-SET, 2026-10-22)
 
 The owner, 2026-10-11: *"A brand new open sea map that allows you to traverse to the etheric sea. Sail far enough and
 you are prompted to travel into the open sea. The etheric sea is a infinite procedural oceanscape with procedural
@@ -15,9 +15,18 @@ The owner, 2026-10-13: *"Also allow the player to zoom out into the overworld li
 Enemies should show on the world map just like in the bay"* - ETHER-OW: the Overworld (`06-Systems/Travel-View.md`)
 risen past the Veil, its places the isles' and its enemies the Bay's own, seeded on the sea.
 
+The owner, 2026-10-21: *"I want there to be more of a reason to venture into this zone. Along with your suggestions id
+also like to implement open pvp for this zone specifficaly and implement some of the wrothgarian mountain open pvp
+aspects into the procedural Islands"* - ETHER-WILD: the sea past Veilhaven's peace an open PvP zone, its depth bands the
+Wrothgarian Mountains' four rings.
+
+The owner, 2026-10-22, of the reasons to venture that came with it: *"Build ever single bit of this and dont return until
+its perfected"* - the peace on the chart (ETHER-WILD), the deep's own gear (SEA-SET), and the sections after it.
+
 The pre-merge audit (AUDIT CAPTAIN'S SEA, the owner: "Lets do a comprehensive audit, enaure this is insanely detailed
 and perfection. No exceptions") is `01-Overview/audits/Audit-Captains-Sea.md`: its fixes stand in the sections below, each
-under its finding's id.
+under its finding's id. AUDIT SEA VENTURES (the owner, 2026-10-22, of the sections ETHER-WILD to SHIP-PVP: "Audit this
+and ensure perfection") is `01-Overview/audits/Audit-Sea-Ventures.md`: its fixes stand in those sections the same way.
 
 **THE PORT'S OWN.** Nothing in Daggerfall or DFU lies past the Bay's western water, and nothing here is transcribed.
 Where the game has a law it is used: the ground is grown by DFU's own terrain kernel from the two bytes a pixel it
@@ -67,6 +76,13 @@ thousand leagues:
 | ETHER-DEEP | ITS DEPTH: Iliac Puddle No More's bake over the sea's own frame - its floor carved, swum and walked as the Bay's; the pits held to the Bay | `world/etherWatersBake.js`, `world/deepWater/deepWatersBake.js` (the frame, the flood, the raw reader's own bytes), `world/deepWater/deepWaterTileData.js` (the frame's clamps), `world/deepWater/deepWatersClient.js`, `world/deepWater/deepWatersWorker.js`, `scenes/deepWater/deepWatersHost.js` (the one gate, the frame's climates), `scenes/oceanHolesHost.js` (the hold), `scenes/world.js` (the places' rects, the near promote) |
 | ETHER-NODES | ITS NODES: the nodes' law knows the sea's ground - an isle's node, a haul and a pixel's witnesses taken by the service as the Bay's | `net/nodeLaw.js` (`pixelOk`, the ids' spelling) - both ends |
 | ETHER-OW | THE OVERWORLD PAST THE VEIL: the chart's Overworld door; an isle's place the view's own (plated, at the edge, TV6's); the governor's ground the stream's; the bands and the raiders seeded on the sea, their chases heard; a raider stood there the sea's own corsair | `ui/etherChartWindow.js` (the door), `scenes/travelView.js` (`TRAVEL_VIEW_BUTTON`), `world/ethericSea.js` (`onBayOrEther`), `world/etherPlaces.js` (`etherPlaceIsle`, `etherPlaceRows`), `scenes/world.js` (`openEtherChart`, `etherPlaceClone`, `tvEtherPlace`, `tvPlaceSummary`, `travelViewFarPlaces`, `tvDungeonRowsAt`, the governor, `bandOk`, `tvRaidOpen`, `tvRaidSea`), `systems/travel/travelBands.js` (`chaserPlaceOk`), `scenes/naval/navalHost.js` (`raiders`) |
+| ETHER-WILD | THE OPEN SEA: past Veilhaven's peace an open PvP zone, its bands the zone's four rings - the fights, the foes and their loot, the packs, the death's drop, the strangers, no teleport; the rise at a freeport; no pace cap; a hand ashore goes back aboard; the crossing's warning; /unstuck to a freeport | `systems/wild/etherWild.js`, `systems/wild/wildZone.js` (the ground on the flag, `registerZoneWords`, `zoneWord`), `scenes/world.js` (`wildFrame`, `wildAtWire`, `wildHidesPlayer`, `wildTeleportRefused`, `wildRiseSite`, `unstuckOutdoors`, `wildBornHere`, the crossing's rows), `scenes/dungeonContext.js` (`_wildRingRaw`), `scenes/grantHost.js` (`wildAbout`), `systems/naval/crewCompanions.js`, `systems/naval/etherCrossing.js`, `ui/hud/statusTips.js` |
+| SEA-SET | THE DEEP'S OWN GEAR: the Eltheric Tidemail, an Aetheric set the Deep Aether and the Abyss alone give up - a legend ended, a vault's pile, a ruin's pile, the fleet's flagship, the storm's wrack | `systems/sigil/sigilSets.js` (`eltheric`), `systems/sigil/sigilSetPowers.js` (`captainsDue`), `systems/aetheric.js` (`ELTHERIC_SET_PIECES`, `ELTHERIC_CHANCE`, `rollElthericPiece`), `systems/sea/seaSpoils.js`, `scenes/naval/navalSeaSet.js` (`legendTidemail`, `dueOnHull` - out of createNavalHost, AUDIT SEA VENTURES D12), `scenes/naval/navalHost.js` (`gunsRefit`), `scenes/dungeonContext.js` and `scenes/roomLootHost.js` (the piles), `systems/item/itemLaw.js` (law 10) |
+| SEA-EVENTS | THE SEA'S SHARED CLOCK: the Aether Storm - its thunder, its wrack, its lightning - and the treasure fleet - its sailing, its ships, its flagship's spoils, the hub's word that it is scattered; both on the chart and in a freeport's talk | `systems/sea/seaEvents.js`, `scenes/naval/treasureFleet.js`, `scenes/seaVenturesHost.js` (`stormWord`, `stormTurned`, `seaStormShown`, `wrackSites`, `gather`, `step`, `fleetEnded`, `hubWord`, `rumours`, the chart's word), `scenes/naval/navalHost.js` (`fleet`, `stormStrike`, chargeEther's `treasureFleet.ended`, a site's `word`), `scenes/etherHost.js` (`credit`, `mid`, `say`, `fleetDone`, `haulWrack`, `wrackHauled`), `systems/naval/captainLedger.js` (`endFleet`, `haulWrack` - the save's `fleets` and `wrack`), `net/wire.js` (`SEA_FLEET_PERIOD_MS`, `seaFleetSailing`, `fk`, `fd`), `net/wild/wildLaw.js` (`wdunFleetSunk`, `wdunFleets`), `server/src/index.js` (`_wdunWord`), `scenes/world.js` (`shownWeather`, the front, the sky, the wind, the sea's step, the hub's word, the sites, the haul, the office), `ui/etherChartWindow.js` (`paintStorm`, `paintFleet`, the keys), `systems/aetheric.js` (`ELTHERIC_CHANCE.storm`) |
+| SEA-VAULTS | THE VAULTS OF THE DEEP: the Wrothgarian halls on water - the day's four ruin isles of the Deep Aether and three of the Abyss, each an elite hall with its hub lock, crows, reset and epoch; marked on the chart; the open sea keeps no instance | `systems/sea/seaVaults.js`, `scenes/seaVenturesHost.js` (`vaultHere`, `openSeaAt`, `chartWord`, `crowLine`), `net/wire.js` (`seaVaultKey`, `seaVaultCell`, `seaVaultMapId`, `seaRoomCell`, `wdunHall`, `wdunRoomKey`, `WDUN_SEA_RELAY_MIN`), `net/online.js` (`wdunSeaOk`), `server/src/index.js` (`_instanceHello`), `scenes/instanceDoor.js` (`keepsNone`), `scenes/world.js` (`wildHallHere`, `wildDungeonGate`, `wdKey`, the crows' news, the chart's word, the door's `wild`), `ui/etherChartWindow.js` (`paintVault`, `CHART_VAULT_KEY`) |
+| SEA-BOUNTY | A FREEPORT'S BOUNTY BOARD: a fall at sea signed with its room and its killer's character; the kill, the posts, the claim and the owed at the service, gold never made; the harbourmaster's Wanted section | `net/sea/seaBountyLaw.js`, `server-account/src/seaBounty.js` (`seaKillSteps`, `seaBountyBoard`, `seaBountyPost`, `seaBountyCollect`), `server-account/migrations/0146_sea_bounty.sql`, `server-account/src/wild.js` (wildFall's batch), `net/wild/wildReceipt.js` (`m`, `kc`, `WILD_ROOM_RE`), `net/wild/wildRef.js` (`room`, `kc`), `net/wire.js` (`seaRoomOf`, `WILD_SEA_BOX`, `seaPlaceCell`), `server/src/index.js` (the strike's room, `_wildSign`), `net/accountClient.js` (`accountSeaBounty`, the refusals), `scenes/seaBountyHost.js`, `scenes/seaVenturesHost.js` (`office`'s `wanted`), `ui/naval/navalYardWindow.js` (`wantedText`, `renderWanted`), `ui/naval/navalPlunderDoor.js` (`repaintNavalYard`), `scenes/world.js` (the sea's deps, the office), `systems/naval/etherCrossing.js` (`createCrossLand`) |
+| SEA-SEASON | THE SEASON'S CAPTAINS: the captain's ledger's season figures (the deepest voyage, the legends ended) by the world's day, dropped at both copy doors; read off a clean judged checkpoint within the law and kept at their most; the boards with their ranks and the last season's firsts; the harbourmaster's section | `net/sea/seaSeasonLaw.js`, `server-account/src/seaSeason.js` (`seaSeasonSteps`, `seaSeasonBoard`), `server-account/migrations/0147_sea_season.sql`, `server-account/src/realm.js` (checkpointRealm's batch), `systems/naval/captainLedger.js` (`ether.season`, `restoreSeason`, `deepest`, `endLegend`, `season`), `scenes/etherHost.js` (`sight`'s day), `systems/offlineCopy.js` (`dropSeason`), `net/accountClient.js` (`accountSeaSeason`), `scenes/seaSeasonHost.js`, `scenes/seaVenturesHost.js` (`office`), `ui/naval/navalYardWindow.js` (`seasonText`, `renderSeason`), `scenes/world.js` (the office's spread) |
+| SHIP-PVP | BROADSIDES BETWEEN CAPTAINS: a captain's helm, shots and boarding refereed by the relay (the bar, the purse, the reach, the wreck); the wreck signed (`n1`); at the service, a boarded wreck's hold's share held for its killer, collected or reclaimed, and a kill at sea; the page's guns, the naval host's seams, the wreck's service half, the board's prize rows | `net/sea/seaRef.js`, `net/sea/seaPrizeLaw.js`, `net/wild/wildReceipt.js` (`n1`), `net/wire.js` (`helm`, `shot`, `board`, `hull`, `wreck`, `wc`, `relaySupportsSeaPvp`), `server/src/index.js` (`_seaWord`, `_seaWrecked`, `_seaSign`, `_wildHand`, the beat, the read-back), `server-account/src/seaWreck.js`, `server-account/migrations/0148_sea_wreck.sql`, `server-account/src/seaBounty.js` (the board's prize counts), `net/accountClient.js` (`accountSeaWreck`), `net/online.js` (`seaPvpOk`, `_seaPvpOn`), `scenes/naval/navalPvp.js`, `scenes/naval/navalHost.js` (`hitBy`, `landHit`, `pvp`), `scenes/naval/seaBroadsides.js`, `scenes/seaWreckHost.js`, `systems/naval/seaHoldGuard.js` and `scenes/holdDoor.js` (the hold shut while she may be boarded), `scenes/seaBountyHost.js` (`collectPrizes`, `reclaim`), `scenes/seaVenturesHost.js` (`wref`, the step), `ui/naval/navalYardWindow.js` (the prize rows), `scenes/world.js` (the sea's deps, `wildRefIn`) |
 | (the ledger) | WHAT A CAPTAIN KEEPS OF IT: the isles charted, the legends ended and heard of, the strands gathered, the way out, the crossings - in the Captain save | `systems/naval/captainLedger.js` (`ether`, `chartIsle`, `endLegend`, `gathered`, `setCrossedFrom`, `crossed`, `hearLegend`), `scenes/etherHost.js` |
 
 THE FOUR HOSTS (Home.md; AUDIT CAPTAIN'S SEA H12 - the slices named none): the sea, its ships, the crossing, the chart
@@ -216,8 +232,8 @@ records read it there), or nothing. The Overworld's far reads never clone a spaw
 spawnedMapId's law is the Bay's and throws there). Saved inside a ruin, offline the load rebuilds the pixel and the
 same place stands (its door matched by its header's id); online - where a load never puts a character back inside a
 dungeon - the sleeper wakes at the ruin's own door (the region's search would read the Alik'r's past the map). A death
-past the Veil rises at the nearest port isle's town (`etherRisePort`, ETHER_RISE_PX - P4: Betony's temple a crossing
-away), and no cemetery of the Bay's takes a vampire there. No teleport crosses the Veil - Recall, a portal stone, the
+past the Veil rises at the nearest port isle's town (`systems/wild/etherWild.js` `etherRisePort`, ETHER_RISE_PX - P4:
+Betony's temple a crossing away), and no cemetery of the Bay's takes a vampire there. No teleport crosses the Veil - Recall, a portal stone, the
 Mages Guild's, a party's travel to its leader are refused across it (`veilRefused` - P6) - nor does the Fleet: no
 Summon to the far side, no Send away from it, a ship laid up keeping her side (`veilApart` - P5).
 
@@ -597,6 +613,656 @@ as it stood), so the account Worker's law did not move with ETHER-OW (AUDIT ETHE
 Motherlode is sited where a Watch receipt can name its pixel).
 **THE FOUR HOSTS.** The Overworld is the streaming host's alone (`06-Systems/Travel-View.md`): `scenes/world.js` wired;
 `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` raise no view - FLAGGED, as TV's.
+
+## ETHER-WILD - the open sea: past Veilhaven's peace, an open PvP zone
+
+The owner, 2026-10-21: *"The etheric ocean is some amazing content we havent touched in awhile. I want there to be more
+of a reason to venture into this zone. Along with your suggestions id also like to implement open pvp for this zone
+specifficaly and implement some of the wrothgarian mountain open pvp aspects into the procedural Islands"*.
+
+READ AS: the Wrothgarian Mountains' open zone (`11-Multiplayer/Wild-Zone.md`) - its law already one live flag every
+pool, fight, drop and name reads (`wildZone.js:"export function setWildHere"`) - stood on a second ground: the sea. Its
+four rings are the sea's four depth bands, so the band that already made the ships deadlier and the holds richer makes
+the foes and the players so too. Online alone, as the mountains are. Its section in the zone's own page is
+`11-Multiplayer/Wild-Zone.md` section 24; the law is `src/systems/wild/etherWild.js`.
+
+**WHERE.** Every pixel of the box (`inEther`) but **VEILHAVEN'S PEACE** (`etherInPeace`,
+`etherWild.js:"export function etherInPeace"`): the Veil, the way home, the whole length of the sea; and the water
+within `ETHER_PEACE_PX` (12 pixels, some ten kilometres) of Veilhaven's own pixel - the haven, its quay, and the
+landfall four pixels east of it, so a crossing never comes out into a fight; and THE WAY HOME between them - her own rows,
+`ETHER_PEACE_PX` either side, east of her to the Veil (`etherWild.js:"return inEther(x, y) && x >= h.px && Math.abs(y - h.py) <= ETHER_PEACE_PX;"`
+- AUDIT SEA VENTURES C2: the circle alone left thirty-one pixels of open zone between the peace and the Veil, every
+captain's one way home through them). West of her the peace is a circle, not a square: a captain reads it off
+Veilhaven, whichever way she sails. Every other port is a freeport of the open sea - its watch ten
+times as strong, a blow struck at a player in its streets an Assault (ZONE-WATCH, Wild-Zone.md section 3).
+
+**THE RINGS** (`etherWildRingAt`, `etherWild.js:"export function etherWildRingAt"`): a pixel's band is its ring - the
+Shallows I (+25% loot), the Reaches II (+50%), the Deep Aether III (+75%), the Abyss IV (twice) - `WILD_RING_LOOT`, the
+mountains' own, unchanged. The crossing of a band is said in the sea's words ("Deeper - The Deep Aether: +75% loot.",
+"Back toward the Veil - The Shallows: +25% loot.") and the HUD's zone tile names the band. AUDIT SEA VENTURES F4: the
+loot's share is said through the text core too (`etherRingBonus`, `sea.wild.bonus`) - the band was each language's and
+its "+75% loot" English.
+
+**WHAT THE MOUNTAINS' LAW BRINGS TO THE ISLES** (the flag is the mountains', so each of these is theirs, unchanged):
+
+- THE FIGHTS: two players past the peace may strike each other - outdoors, on an isle or across a deck, and in an
+  isle's ruin - never kin (a party, its truce, a duel's two, a guild); the relay referees every blow
+  (`wildRef.js`), and its zone word is the client's own, as the mountains' is (`world.js:"online?.setWildZone?.(wildCan() ? 1 : 0)"`).
+  A peer's pose past the peace is fair (`wildAtWire`, `world.js:"const wildAtWire = (p, near = false) => {"`). The relay
+  reads no map (AUDIT SEA VENTURES A9 - the record said otherwise): two sockets that both say zone 1 are refereed
+  wherever they stand, in Veilhaven's own cell too, so the peace is each honest client's word - its own `wildCan` - as
+  the mountains' edge is; a modified client that says zone 1 in the peace fights only another that says so.
+- THE FOES four times as strong and their ring's share more (`applyWildFoe` at a spawn, read off the flag): an isle's
+  wanderers and camps, and - ISLE RUINS - an isle's ruin read by its band at its own pixel
+  (`wildRingAtPlace`, `etherWild.js:"export function wildRingAtPlace"`, moved there from dungeonContext.js so it reads one
+  way; `dungeonContext.js:"const _wildRingRaw = isOnlinePage()"`), over the elite a ruin of the Deep Aether or the Abyss
+  already is (ELITE_BANDS). Their drops, their gold and their piles at the ring's multiplier, the ruins' DUNGEON-RESPAWN
+  the zone's own.
+- THE PACKS: an Overworld band born past the peace is four times its size (`wildBornHere`,
+  `world.js:"function wildBornHere(px, py)"` - online alone at sea; the mountains' read stands as it stood).
+- A DEATH: the bag and half the purse into the room's remains, a killer's pick of one worn piece in the open (the
+  two-phase handoff), the two minutes' wait ("Past the Veil the dead wait two minutes." - the death keeps the ground it
+  fell on, `setWildDeath`'s `kind`), the remains twelve minutes, marked for their owner. THE RISE is the sea's own,
+  AUDIT CAPTAIN'S SEA P4's: THE NEAREST FREEPORT'S TOWN, however far - sought from `ETHER_RISE_PX` out, the reach doubled
+  until a port stands within it (`etherWild.js:"for (let r = ETHER_RISE_PX; ; r *= 2) {"`, `etherRisePort`; Veilhaven
+  is one, so it ends at her at the farthest) (`wildRiseSite`,
+  `world.js:"const wildRiseSite = (px, inDungeon = false) => {"`, over `etherWild.js` `etherRiseSite`) - the mountains' search of the Bay's maps would have
+  woken the dead a crossing away, and the sea has no "outside" near enough to rise in; a ruin's death rises there too,
+  never at the ruin's door its killer stands at. AUDIT SEA VENTURES C5/F2: a death with no freeport within 60 px rose
+  at Veilhaven - one in twenty-five of the sea's, a hundred leagues and more from a port a few dozen off. The team is
+  called to follow, the risen stood clear of every body. A WAGON parked on the open sea's ground (an isle's) is with its
+  owner at a death there, as one in the mountains is (`wildCart.js:"return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);"`
+  - AUDIT SEA VENTURES C4: it counted as away, and its cargo never dropped).
+- STRANGERS: every other player past the Veil outside my party and my guild is unseen on the maps
+  (`wildHidesPlayer` - near the zone is the whole sea, the peace too, as the mountains' band is), a red "Stranger"
+  helm on the Overworld within 1.5 km, said within 600 m, no name over their heads, and a journey slowed by them
+  (STRANGER-PACE).
+- NO TELEPORT into, out of or about the open sea (`wildTeleportRefused`, ETHER_WILD_TEXT.teleport: "You cannot
+  teleport into, out of or about the open Eltheric Ocean. Sail.") - asked before the mountains' mask, beside the Veil's
+  own refusal (`veilRefused`, P6). The way about the sea is the sea. THE LINKED BANK CABIN is a teleport like any - to
+  her boat's pixel, refused into, out of or about the open sea and across the Veil
+  (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;"`
+  - AUDIT SEA VENTURES C1: Transport > Ship's carried a captain from a Bay town's bank onto her boat a hundred leagues
+  past the Veil, and back, past every refusal).
+- THE COMPANIONS: a hand ashore and a sworn one at the side drop their packs with the player's (COMPANION-DROP); one
+  revenant at the side, refused in the sea's words ("Only one revenant may walk at your side on the open Eltheric
+  Ocean." - AUDIT SEA VENTURES C7).
+- THE PARTY: a party left past the peace keeps the zone's ten minutes' truce, said in the sea's words; and a party's
+  walk that leads onto the open sea warns as one into the mountains does (`zoneWord('walkInto', ETHER_KIND)` - AUDIT SEA
+  VENTURES C3: the walk's row read the mountains' mask alone, so a party sailed into the fights unwarned).
+- /UNSTUCK (PVPUNSTUCK, the zone's five minutes and its hour): at sea, the walk is to the nearest freeport
+  (`world.js:"const unstuckOutdoors = () => {"`, wildRiseSite's sea). FOUND READING IT: it searched the Bay's maps
+  anywhere, so a captain stuck on an isle woke in a Bay town across the Veil - a teleport over it (P6), and out of the
+  open sea's fights. Outdoors on the open sea it is refused, as on the mountains' slopes - in the sea's words ("/unstuck
+  does not work outdoors on the open Eltheric Ocean." - AUDIT SEA VENTURES C6: "in the mountains", at sea).
+- FOE-BOUNDS (Spawn-Grants section 19): a street foe stood past the Veil may carry the zone's health to a client in
+  Veilhaven's peace (`grantHost.js:"function wildAbout(r, lane) {"`) - the whole sea is near the zone, as the
+  mountains' band is, so an owner's foe a stride over the peace's edge is never taken down as impossible.
+
+**WHAT THE SEA KEEPS ITS OWN** (named, each a reading of the mountains' law on water):
+
+- NO PACE CAP. The mountains' x20 / x40 (`WILD_PACE_CAP`) is never set at sea (`world.js:"setPaceZoneCap(wildHere() && wildZoneKind() !== ETHER_KIND"`):
+  the sea's leagues are its own price (the Abyss is an hour at the helm's top speed), and a stranger near still holds
+  a journey (STRANGER-PACE).
+- A HAND ASHORE GOES BACK ABOARD. COMPANION-DROP's "no send-off in zone" is the mountains' (the owner, 2026-10-19):
+  at sea a hand is sent back to her boat and a hand knocked out gives his pack to her hold
+  (`crewCompanions.js:"export function heldAtSide"`, `packStaysAshore`) - the boat's hold is the sea's own shelter, open
+  from anywhere already (CARGO-ANYWHERE, Wild-Zone.md section 4's open door), and a captain a hundred leagues out could
+  otherwise never send her hands home short of Veilhaven. A sworn one at the side stays, as in the mountains: the
+  roster's "away" is no hold.
+- THE HOLD IS KEPT. A boat on the zone's water keeps her hold through a death there (Wild-Zone.md section 4, "Open for
+  the owner") - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
+  takes none of it; a SHIP WRECKED AT ANOTHER CAPTAIN'S GUNS AND BOARDED gives up a share of it (SHIP-PVP, below - her
+  best piece always, and more of her best while they come to a third of what she could give - AUDIT SEA VENTURES F3:
+  "up to a third" was the promise, and her best piece alone may be all she carries; never a locked, bound or classic
+  piece).
+- No Greater Giants, and no hall spawned: an isle's ruin stands where its isle does and is open every day - but the
+  day's VAULTS of the deep (SEA-VAULTS, below) keep a hall's door, lock and crows, the hub's record keyed by the isle's
+  cell. Every other ruin of the sea is itself.
+- THE CROSSING SAYS SO. Online, the question at the crossing waters says what lies past the peace
+  (`etherCrossing.js:"export function crossingRows"`, `pvp`; one sentence in every language, broken into the question's own measure by `questionRows`): "Past Veilhaven's peace the open sea is an open PvP zone.
+  Other players may attack you there."
+
+**THE CHART** (ETHER-WILD's own, the owner's "build every single bit of this", 2026-10-22): while the chart's word says
+the open sea fights (`pvp` - online, at a relay that raises the zone: `world.js:"return { ...etherHost.chart(p.x, p.y, heading()), ...seaVentures.chartWord() };"`,
+`seaVenturesHost.js:"      pvp: live(),"`),
+Veilhaven's peace is drawn about Veilhaven - a safe harbour's green wash and a dashed ring, `ETHER_PEACE_PX` at the
+chart's scale, with its way home east of her to the Veil (one shape: the ring's west half and the band, `vx` the Veil's
+x on the chart - AUDIT SEA VENTURES C2), under the haunts and the isles as the depths' water is (`chartModel`'s `peace`,
+`paintPeace`; AUDIT SEA VENTURES F6: under a haunt pinned in a view that holds one - the pin's view held none) - named
+VEILHAVEN'S PEACE inside its ring's top once its radius is `PEACE_NAME_R` (40 px - from x4), and keyed beside the marks
+("Veilhaven's peace - past it, open PvP", `CHART_PEACE_KEY`, shown with the word). Offline there is nothing to be safe
+from, and nothing is drawn. Pinned by `test/ui/etherchart_peace.test.js`.
+
+**THE WORDS** are the ground's: the live flag carries its kind (`setWildHere(on, ring, kind)`, `wildZoneKind`), the
+sea's words are registered by its own module (`registerZoneWords`, so the mountains' leaf imports nothing of the sea),
+and `zoneWord`, `zoneName` and `zoneRingName` answer the ground's own - a word the sea does not say its own way is the
+mountains' (`WILD_TEXT`). Through the text core (L10N4: `sea.wild.*`; the mountains' `/unstuck` and one-revenant words
+`wild.zone.*`). AUDIT SEA VENTURES C6, C7: the sea said the mountains' words where the zone's law was asked of the
+mountains' own text - `/unstuck` outdoors, a second revenant, a party left, a drop answered after the rise (asked by the
+room the fall was in, `seaRoomOf`), and "You are in Veilhaven's peace" whenever the zone went: the zone gone while still
+past the peace (the relay lost, a relay that raises no zone) says `quiet` - "You are out of the open Eltheric Ocean's PvP
+zone. No player may attack you here." A sentence's way and ring words are the language's (F4: `etherWayWord`, the sixteen
+points of the compass, `sea.way.*`).
+
+**THE FOUR HOSTS.** `scenes/world.js` (the street, the fights, the death, the frame) WIRED; `scenes/dungeonContext.js`
+(an isle's ruin: its foes, its piles, its fights) WIRED; `scenes/worldModes.js` (an isle town's buildings) reads the
+flag as the mountains' buildings do - no player is struck indoors, its foes and remains the zone's; `scenes/exterior.js`
+(the bench) stands no sea - FLAGGED, as ever.
+
+**ETHER-WILD ITSELF MOVED NO WIRE AND NO DEPLOY.** The relay referees a socket's word (`zone`) wherever its cell lies
+(A9, above), and the account service's fall read no map at ETHER-WILD: nothing on either moved. The slices after it
+move both (AUDIT SEA VENTURES F9 - "NO WIRE, NO DEPLOY" stood after they did): the relay's world246 (SEA-VAULTS'
+version, SEA-EVENTS' `fk`, SEA-BOUNTY's signed room, SHIP-PVP's referee), and the service's migrations 0146-0148 -
+SEA-BOUNTY's fall reads the sea's box at the service (`seaRoomOf`, `seaKillSteps`). A client from before ETHER-WILD never
+says it stands in the zone at sea, so it fights nobody there and drops nothing - INT9's known limit, Wild-Zone.md
+section 22.
+
+**OPEN FOR THE OWNER** (the suggestions that came with it, none built in ETHER-WILD - each built since, 2026-10-22):
+broadsides between players' ships and a captain's hold as a prize are SHIP-PVP (below); the Wrothgarian halls' daily
+elite vaults for the Deep Aether and the Abyss, with their locks and crows, are SEA-VAULTS (below); the bounty board is
+SEA-BOUNTY (below); the season's boards for the deepest voyage and the legends ended are SEA-SEASON (below). Still the
+owner's call: a title or prize for a season's first; whether a DEATH past the peace (not a wreck) gives up a share of a
+captain's hold.
+
+Pinned by `test/systems/wild/etherwild.test.js` (8); `tools/mutants/etherwild.json` (35, all dead). AUDIT SEA VENTURES:
+`test/systems/sea/auditsea.test.js` (C1-C7, F2, F4, F5) and `test/ui/etherchart_peace.test.js` (C2, F6).
+
+## SEA-SET - the deep's own gear: the Eltheric Tidemail
+
+A REASON TO GO DEEP. The Shallows and the Reaches pay as the Bay does; past them, the Deep Aether and the Abyss give up a
+set no other place in the world does - **The Eltheric Tidemail** (`11-Multiplayer/Sigil-Sets.md` section 6h: its law, its
+nine Adamantium records, its numbers). Its 2-piece is Stormwrack (shock resistance, Speed); its 4-piece Undertow, whose
+blow is whole only in the open sea and half anywhere else; its 6-piece the Captain's Due - the captain's ship's guns
+harder and her hull tougher. A set for the sea, worn at sea.
+
+WHERE THE DEEP GIVES IT UP (`systems/aetheric.js` `ELTHERIC_CHANCE`): a LEGEND ended - the Deep Aether's two a quarter of
+the time, the Abyss's two every time, into the boat the captain sails (`navalSeaSet.js:"export function legendTidemail(legend, seed, paid, { give, say }) {"`,
+on her seed's own stream, WITH her purse - AUDIT SEA VENTURES D1: never for a legend her purse was not paid for, another's
+copy of her sunk again before the aether raised her; D12: out of createNavalHost - so the Abyss's legends, the sea's hardest fights, always pay one); a VAULT
+of the deep's pile (a quarter, half - SEA-VAULTS); an isle's RUIN's treasure pile in those bands (a twentieth, a tenth -
+`systems/sea/seaSpoils.js` seaPileMore, the pile's last roll on its own dice: the layout's offline, the room's seeded base
+online, every client's alike); the treasure fleet's flagship (every time) and a cask of the Aether Storm's wrack (a
+fortieth, a twentieth - SEA-EVENTS). Each its source's LAST roll,
+so nothing the source rolled before moves.
+
+TRUSTED AS A LEGENDARY IS. The sea's legends and ruins are the client's (no relay or service receipt seeds them, as the
+gate's, the serpent's and a star's do), so these are the client's rolls; item law 11 holds every piece to its record -
+its make, its affixes, its sigil - and acct172 carries it. Named, not closed: a modified client can roll a piece the sea
+did not give it, as it can roll a Legendary.
+
+Pinned by `test/systems/sea/seaset.test.js`; `tools/mutants/seaset.json` (31, all dead).
+
+## SEA-VAULTS - the vaults of the deep: the mountains' halls on water
+
+The owner's "implement some of the wrothgarian mountain open pvp aspects into the procedural Islands", and the
+suggestion that came with ETHER-WILD (2026-10-22: "Build ever single bit of this"): the Wrothgarian Mountains' daily
+elite halls (`11-Multiplayer/Wild-Zone.md` PVPDUNGEONS) for the Deep Aether and the Abyss. DFU has no such thing - the
+departure is the mountains' own, read onto the sea.
+
+**THE DAY'S VAULTS** (`systems/sea/seaVaults.js` `seaVaultPicks`): on the relay's day (`WDUN_DAY_MS`, the halls' own -
+every player sees the same), `SEA_VAULTS` - four of the Deep Aether, three of the Abyss. Each slot is the ruin isle of its
+band nearest a point the day's hash draws (`SEA_VAULT_SALT`) in its band's waters - the legends' haunts' corridor,
+`HAUNT_SPREAD` rows either side of Veilhaven's, the Abyss's first `ABYSS_HAUNT_LEAGUES` (`vaultWaters`) - searched ring by
+ring out to `SEA_VAULT_SEARCH_CELLS`, never within `SEA_VAULT_SPACING_CELLS` (six cells, some fifty kilometres) of one
+already chosen; a slot whose draws find none in `SEA_VAULT_TRIES` gives up (never met over the sea's own law). Its ring is
+its band's: III the Deep Aether, IV the Abyss - the High Crags' and the Heart's. Pure: the day in, the vaults out; kept a
+day.
+
+**A VAULT IS A HALL.** Its door is a hall's (`world.js:"return seaVentures.vaultHere() ?? (a && p"`, `wildHallHere` - a
+vault first; `wildDungeonGate` keeps it past the mountains' mask: `world.js:"if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;"`):
+the hub's hour's lock on whoever leaves it, lifted while their own remains lie inside; the crows over it while a body
+lies there; wiped twenty minutes empty and its chests keyed by the reset's epoch; an elite dungeon whose foes are its
+ring's high tier (`dungeonContext.js:"if (dfLocation?.wildRing > 0) {"`, wildHallFoes over the isle's own place id). The
+hub's record is the mountains' (`net/wild/wildLaw.js` wdun*), keyed `"e<cx>,<cy>"` (`seaVaultKey`; `wdunHall` reads both
+forms), its world room A LANE OF ITS OWN - the isle place's map id with `SEA_VAULT_LANE` in its high bits, the same low
+twenty (`wire.js:"export const SEA_VAULT_LANE = 0xe8;"`, `seaVaultRoomMapId`; `wdunRoomKey`): the room a vault is stood in
+(`seaVaultRoomId` - while the gate let me in, or while I stand at the day's vault; `world.js` roomKeyFor's `mapId`) and the
+one the hub wipes, never the isle's own `dungeon:m<etherPlaceId>` (`seaVaultMapId`, the place id's law copied for the
+relay's bundle and held equal by the pins), its plain ruin's every day. AUDIT SEA VENTURES D7, D8: the hub wiped ANY
+ruin's room on a client's word for its key, and at the day's turn a vault and its plain ruin shared one room built two
+ways. The hub's wipe reaches every size a hall is laid at (`server/src/index.js:"async _wdunWipe(h) {"` over
+`DUNGEON_ROOM_TAGS` - AUDIT SEA VENTURES A5: the plain room alone was wiped, while the halls laid medium or small, 120
+of the mountains' 200 and 46 of a fortnight's vaults, kept their foes slain and their chests empty for good). A death after a load (which runs no gate) names the vault,
+never its pixel (`world.js:"return seaVentures.vaultHere()?.key ??"`). Every other ruin of the sea stays open and itself -
+ETHER-WILD's dungeon of the open zone. Offline there is no hub and no open zone: no vault, every ruin itself.
+
+**THE CHART** marks every vault - an arched door in the halls' oxblood (`ui/ink/inkMap.js` HALL_INK) over its isle,
+charted or not (`paintVault`, over the isles' marks and under every word), named from x4 (`VAULT_NAME_ZOOM`), my padlock
+and its crows through the mountains' own painters (`ui/wild/wildMapInk.js` paintWildLocks, paintWildCrows) on the
+chart's paper (`chartModel`'s `paperView`) - and keys it ("A vault of the deep, open today", `CHART_VAULT_KEY`) while the
+word carries any. The word is the host's (`scenes/seaVenturesHost.js` `chartWord`: each vault, `locked` while my lock
+holds and no remains of mine lie inside, `crows`).
+
+**THE CROWS' NEWS** of a vault is told at sea, named and banded - "Crows gather over Toranth's Vault (The Abyss). Someone
+has fallen there." (`crowLine`; yesterday's vault too, a body outliving the day's turn) - and a hall's in the mountains
+(`world.js:"if (!wildHere() || !!sea !== (wildZoneKind() === ETHER_KIND)) return;"`). The band in parentheses, not
+"in {band}": the band's name carries its article, which a language that declines it cannot fold into a sentence.
+
+**THE SPOILS**: a vault's pile rolls the Tidemail at the vault's share (SEA-SET - `seaSpoils.js:"export const seaPileSource"`,
+the hall's ring the door stamps).
+
+**THE OPEN SEA KEEPS NO INSTANCE.** FOUND BUILDING IT: the instance door's `wild` read the mountains' mask alone, so at
+sea a party was offered a private copy of a ruin past the peace, or of a vault - out of the open sea's fights, and out
+of a vault's lock, crows and reset. Now the page's door counts the open sea as the zone (`world.js:"|| seaVentures.openSeaAt(p); },"`),
+`keepsNone` refuses any isle's dungeon room (`seaRoomCell`, `seaVaultMapId`'s inverse), and the relay refuses an instance
+hello for one to everyone, as it refuses a mountain hall's (`server/src/index.js` `_instanceHello`). The relay cannot
+tell today's vaults from the other ruins without drawing the day's picks, so it refuses them all; no quest sends a
+player to an isle's place.
+
+**THE WIRE** is world246 (`WDUN_SEA_RELAY_MIN`; world241 on its branch, then world242 and world245, renumbered past SD-THROUGH's world241, LEASE1's world242, PARTY-PING's world243, SPAWN-THIN's world244 and AUDIT PISTOLET's world245 at the merges): an older relay closes the socket on a sea key, so the social socket asks
+one of a hub that reads it alone (`online.js:"if ((seaVaultCell(w.h) || w.k === 'fk') && !this.wdunSeaOk) return false;"` - AUDIT SEA VENTURES A10: a fleet's sinking too) - at an older
+relay a vault keeps this session's own lock, as a mountain hall does with no hub. A vault's own lane rides the same
+version (an older relay's room for it is a room like any).
+
+**KNOWN, NAMED.** The hub keys any cell's vault, as it keys any pixel's hall: it does not draw the day's picks, so a
+modified client can lock itself out of, or raise crows over, a ruin no day named - the mountains' halls' own limit. The
+vault's door and its lock are the page's, as the mountains' are.
+
+**THE FOUR HOSTS.** `scenes/world.js` (the door, the death, the crows, the chart) WIRED through
+`scenes/seaVenturesHost.js` (HOST-SPLIT - the host wires, the module holds); `scenes/worldModes.js` (the door's stamp)
+reads the hall as it reads a mountain hall - WIRED unchanged; `scenes/dungeonContext.js` (the foes, the chests, the piles)
+WIRED unchanged; `scenes/exterior.js` (the bench) stands no sea - FLAGGED, as ever.
+
+Pinned by `test/systems/sea/seavaults.test.js` (7); `tools/mutants/seavaults.json` (49, all dead). AUDIT SEA VENTURES:
+`test/systems/sea/auditsea.test.js` (D7, D8, A5, A10).
+
+## SEA-EVENTS - the sea's shared clock: the Aether Storm and the treasure fleet
+
+The owner's "more of a reason to venture into this zone", and two of the suggestions that came with ETHER-WILD (2026-10-22:
+"Build ever single bit of this"): events on the shared clock - where the relay's clock puts them, every client alike
+online (`raidNowMs`, the relay's offset); offline on this machine's own. DFU has neither: the departure is the sea's own,
+read off the Wrothgarian Mountains' giants (a death kept by the hub for everyone) and the lanes' packets (ships stood
+where the clock puts them).
+
+**THE AETHER STORM** (`systems/sea/seaEvents.js`): one each `STORM_PERIOD_MS` (two hours), blowing the first
+`STORM_LIFE_MS` (fifty minutes) of it. Its eye is born at a point its number's hash draws in the deep waters - the Deep
+Aether and the Abyss's first `STORM_ABYSS_LEAGUES`, `HAUNT_SPREAD.deep` rows either side of Veilhaven's, and far enough
+west that its drift and its reach never cross into the Reaches
+(`seaEvents.js:"const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r()), y0 = lerp(row - spread, row + spread, r()), a = r() * Math.PI * 2;"`
+- AUDIT SEA VENTURES D11: one storm in fourteen touched them, and its wrack there, the Reaches' share, never gave a piece
+of the Tidemail) - and drifts `STORM_DRIFT_PX` over its life on a heading of its own; it reaches `STORM_R_PX` (some 33
+km) about its eye, always inside the sea's box. Inside it:
+
+- THE WEATHER IS THUNDER - SHOWN, as the Sun Baby's clear day is (`world.js:"const shownWeather = () => (sunbaby.on ? SUNBABY_WEATHER : seaStormShown()"`):
+  the sim's word, the map and the save stay the world's, and the storm's leave the frame its edge is crossed. Its rain
+  falls whole (the front's `peak` 1 - the map's intensity there is the open sea's), the sky wears its violence and stands
+  its clouds on the worn word (`cloudBase` none), Come Sail Away's wind reads it (`weatherType`), and into it or out of it
+  is a cell's edge - a short front (`world.js:"const crossing = weatherCrossingStamp() !== seenCrossing || seaVentures.stormTurned();"`).
+  The word is the sea's host's module word (`seaStormShown`), so the weather may ask before the host is built. A pinned
+  `?weather` shows none of it, as it shows no sim.
+- ITS LIGHTNING FINDS A SHIP. The world's own `LightningPlayer` strikes (DFU's schedule, 4-35 s apart); each new strike
+  over the player's ship finds her `STORM_STRIKE_CHANCE` of the time (`stormStrikeOf`): `STORM_STRIKE` of her hull and canvas,
+  a fifth of them alight - laid on the ship the captain stands aboard while she floats, never under her last timber by
+  it alone (`strikeShip`, the naval host's `stormStrike`). A fire it sets burns as a gun's does.
+- ITS WRACK. Each `STORM_WRACK_MS` a cask of it floats alongside (`wrackSites` - a strand's site of the naval host's,
+  `strand:wrack:<storm>:<slot>`, floated and hauled as a wild isle's strand is, its own word said): one of the sea's goods
+  (`ETHER_GOODS`, the cask's hash) as many as the band's strand (`STRAND_YIELD`), and on the band's share a piece of the
+  Eltheric Tidemail (`ELTHERIC_CHANCE.storm` - a fortieth, a twentieth). Each slot's cask is hauled once, KEPT IN THE
+  SAVE (the captain's ledger's `wrack`, the newest `ETHER_WRACK_KEEP` - sixteen; `haulWrack`, `wrackHauled` - AUDIT SEA
+  VENTURES D6: once a session, so a reload floated it again, its goods and its piece with it).
+- ITS WORDS: the storm gathering, said once to a captain at sea; sailing into it and out of it.
+
+**THE TREASURE FLEET** (`seaEvents.js` `fleetOf`): one sailing each `SEA_FLEET_PERIOD_MS` (three hours - `net/wire.js`,
+the relay's own), under way `FLEET_SAIL_MS` (ninety minutes) from `FLEET_OFFSET_MS` (an hour) into it: a merchant carrack
+(`FLEET_FLAGSHIP`) and her corsair escorts (`FLEET_ESCORTS`: the Deep Aether's two, the Abyss's three), mustered at a point
+its number draws in the Deep Aether or the Abyss's first `FLEET_ABYSS_LEAGUES`, bound east for the Veil, give or take, at
+a convoy's `FLEET_MPS`. Her name (the sea's own merchant names, off her seed), her band, her ships' seeds and stations
+are the sailing's own.
+
+- AT SEA (`scenes/naval/treasureFleet.js` - the naval host constructs it once, out of `createNavalHost`): fed by the
+  sea's host each `FLEET_FEED_MS` - each ship where her station on the route is now and `FLEET_LEAD_MS` on, in the scene
+  - she is stood within `FLEET_STAND_M` of the captain, on water deep enough for her hull, never one already in the sea
+  (mine, or a peer's copy: known by her seed), never one spent this sailing - nor any of a sailing whose flagship my
+  ledger ended (AUDIT SEA VENTURES D4: a reload stood her again, for her strongroom again) - and only by the captain the
+  sea's traffic is stood by (`launchesTraffic` - two captains near each other meet one fleet). Each ship on water deep
+  enough for HER OWN hull (`isWater(x, z, hull)` - AUDIT SEA VENTURES D10: every ship was placed on a rowboat's depth).
+  She steers her station while she cruises; one fighting fights; past `FLEET_DROP_M` she sails on and fades unless she
+  fights.
+- HER FLAGSHIP DOWN, sunk or taken by my hand (`chargeEther`'s `treasureFleet.ended`): her purse (`FLEET_PURSE` - 6,000
+  gold in the Deep Aether, 12,000 in the Abyss) from her strongroom - ONCE A SAILING, KEPT IN THE SAVE (`fleetEnded`, the
+  ether host's purse over the captain's ledger's `endFleet`, the newest `ETHER_FLEETS_KEEP` - four - sailings) - and WITH
+  HER PURSE ALONE a piece of the Tidemail every time (`ELTHERIC_CHANCE.fleet`, on the SAILING's band - AUDIT SEA VENTURES
+  D9: a peer's copy of her rolled the observer's), into the boat I sail and said
+  (`treasureFleet.js:"if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null;"` - AUDIT SEA VENTURES D2:
+  nothing kept a sailing's strongroom and piece to one: a second end, another's copy of her going down, each paid them
+  again); and the hub told (`fk`, online, at a relay that reads it) - TOLD UNTIL IT SAYS SO, again each `FLEET_TELL_MS`
+  (thirty seconds) while the sailing is under way and the hub's word does not carry it (AUDIT SEA VENTURES D5: said
+  once, a socket shut as she went down lost it; and the hub's hello put my own sinking out - `mine` is kept apart from
+  the hub's word).
+- SCATTERED FOR EVERYONE. The hub keeps a sailing whose flagship is down (`net/wild/wildLaw.js` `wdunFleetSunk`): HEARD
+  ONLY WHILE SHE IS UNDER WAY - the ninety minutes she sails, an hour into her sailing's three, and a word a minute late
+  on its way
+  (`wildLaw.js:"if (!(now >= start && now <= start + SEA_FLEET_SAIL_MS + SEA_FLEET_LATE_MS)) return false;"`,
+  `SEA_FLEET_OFFSET_MS`, `SEA_FLEET_SAIL_MS`, `SEA_FLEET_LATE_MS`, held equal to the clients') - and NEVER FROM A GUEST
+  (`server/src/index.js:"if (a?.gu) return;"` - a guest sails no realm ship); AUDIT SEA VENTURES A7: anyone, a guest
+  among them, scattered every fleet before it sailed, the last sailing's and the next's; once, kept till the sailing after
+  it is over; it says so to
+  everyone online (`fd`) and in every hello (`st`'s `fleets`), and a captain at sea hears the fleet scatter. A sailing
+  scattered stands no ship. The ZONE-GIANTS' shape, word for word.
+- ITS WORDS: its sailing, said once to a captain at sea - its band, its flagship's name, which way it lies.
+
+**THE CHART** marks both while the word carries them (`seaVentures.chartWord`'s `storm` and `fleet`): the storm a violet
+wash and dashed ring about its eye with a bolt at its middle, named AETHER STORM once its ring is `STORM_NAME_R` wide; the
+fleet a gold hull on her heading over her route's dashed line, named "Treasure fleet: <her name>", greyed and crossed
+when scattered - each keyed ("The Aether storm, blowing now", "The treasure fleet, under way").
+
+**A FREEPORT'S TALK** (the harbourmaster's tab - `etherHost.js` office's rumours, `seaVentures.rumours`): the fleet under
+way, or the next to sail - its band, its way from here and its minutes; the storm blowing, or the next to gather.
+
+**THE WIRE** rides world246 (SEA-VAULTS' version, undeployed - `fk` in, `fd` out, the hello's `fleets`); an older relay
+is never told, and a fleet sunk there is scattered for its sinker alone.
+
+**KNOWN, NAMED.** A fleet's flagship is the client's to sink (no relay referees the sea's ships), so `fk` is trusted from
+any registered account at the hub, as `gk` is: a modified client can scatter the sailing UNDER WAY - once a sailing,
+never another's, never before she sails, never longer (ZONE-GIANTS' own limit; A7 narrowed it to this). The CO-OP's
+law is the legends' (D3, decided - AUDIT SEA VENTURES): every captain whose ball was in her within `SINK_CREDIT_S` of
+her end (`navalHost.js` `SINK_CREDIT_S`, Naval-Combat.md - a ship that goes down within it of my last blow is charged to
+me) ends her in her own game, and each is paid her strongroom and her piece - once a sailing (D2), as a legend ended is
+each such captain's. The fleet is the clock's, not the relay's: no hub weighs who struck her most. The storm and the fleet are the clock's; a captain with no relay's clock (offline)
+meets this machine's.
+
+**THE FOUR HOSTS.** `scenes/world.js` (the weather, the step, the sites and the haul, the hub, the office) WIRED through
+`scenes/seaVenturesHost.js`; `scenes/naval/navalHost.js` (the ships, the strikes, the spoils) WIRED through
+`scenes/naval/treasureFleet.js`; `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no sea's weather or ships
+(indoors and underground, as every weather) - FLAGGED, nothing to wire; `scenes/exterior.js` (the bench) stands no sea -
+FLAGGED, as ever. HOST-SPLIT: bootWorld's wiring paid in references (the sea's deps, the ether host's purse and words).
+
+Pinned by `test/systems/sea/seaevents.test.js` (12); `tools/mutants/seaevents.json` (86, all dead). AUDIT SEA VENTURES:
+`test/systems/sea/auditsea.test.js` (D2, D4, D5, D6, D9, D10, D11, A7).
+
+## SEA-BOUNTY - a freeport's bounty board on the open sea's killers
+
+The owner's "more of a reason to venture into this zone", and the third of ETHER-WILD's suggestions (2026-10-22: "Build
+ever single bit of this"): a price on the heads of the captains who kill other players at sea, posted by players out of
+their own gold and paid to whoever ends them there. DFU has no players to hunt: the board is the sea's own, read off the
+service's gold acts (a card table's stake, a market's collect) and the open zone's signed fall (INT9).
+
+**A KILL AT SEA** is a fall the relay refereed in a room of the open sea at another player's hand. The relay already
+signs every such fall (`f1` - `06-Systems/Integrity-Arc.md` lane 2); it now signs WHERE - `m`, the room that refereed it
+(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }, now);"`)
+- and WHOSE HAND by character - `kc`, the killer's realm character off its hello (`net/wild/wildRef.js` wildBlow, kept
+through a restart by `wildFallOf`). Both are optional in the receipt's law (`WILD_ROOM_RE`, `REALM_CHARACTER_RE`; a
+collect `g1` carries neither), so an older relay's receipt still verifies and simply names no kill at sea;
+`WILD_RECEIPT_MAX` (and `DUEL_REF_RECEIPT_MAX`, `WILD_COLLECT_MAX` with it) is 512, the longest such receipt fitting.
+The service reads the room with the relay's own law (`net/wire.js` `seaRoomOf`): a world cell whose middle lies in the
+sea's box (`WILD_SEA_BOX`, pinned to `ETHER_BOX`), or an isle place's dungeon or building (`dungeon:m<id>`,
+`interior:m<id>...`, its map id in the sea's lane - `seaPlaceCell`, the vaults' inverse). Veilhaven's peace is inside
+the box, and harmless so: the relay referees no fall there.
+
+**THE SERVICE** (`server-account/src/seaBounty.js`; tables `migrations/0146_sea_bounty.sql`; the law both ends read,
+`src/net/sea/seaBountyLaw.js`):
+
+- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"...seaKillSteps(ctx.db, sea, ctx.nowS),"`):
+  `sea_kills` once by the remains' id; every bounty standing on the fallen character claimed by that fall (guarded by
+  no kill of it written yet, so two tabs racing one fall claim once); their sum OWED to the killer's character
+  (`sea_bounty_owed`). A fall asked again answers from its first row and writes nothing.
+- WANTED: a living realm character with a kill at sea in the last `SEA_WANTED_DAYS` (14), or with a bounty standing.
+  THE BOARD (`/v1/sea/bounty/board`) lists them by their bounty, then their kills (at most `SEA_BOARD_MAX`, 12), with the
+  gold owed the asking character and the bounty on its own head.
+- A POST (`/v1/sea/bounty/post`) is `SEA_BOUNTY_MIN` to `SEA_BOUNTY_MAX` (100 to 50,000) gold off the poster's record -
+  the wallet's own order (`payFromSave`), and `outbound` (a held record hands no gold toward another's hand) - in one
+  batch with its row. It is a realm character's act alone; one request asked twice is one post (`UNIQUE (poster, rid)`).
+  Refused on a head not wanted, on one's own, or on another character of one's own account (whose hand could collect it).
+- A COLLECT (`/v1/sea/bounty/collect`) pays every sum owed the character into its record - its Empire account, as a
+  market's gold is collected (`creditSave` with the region's bank) - and turns each row paid in the same batch, each
+  exactly once (`mustChange`).
+- A POST ON A HEAD GONE goes back to its poster (AUDIT SEA VENTURES B4 - it stood on the gone head for good): a head
+  deleted, or dead `SEA_REFUND_AFTER_S` (two hours - a fall that ended it is carried within its receipt's hour, and claims
+  it first), is written OWED BACK to its poster's own character (`back:` its id) and marked claimed by it, in one batch
+  (`seaRefundSteps`), and the poster's collect pays it as an owed bounty ("Bounties returned"). A character with gold
+  owed it at sea, a wreck's goods held for it, or its own hold's goods due back is NOT DELETED until they come home
+  (`realm.js` deleteRealm - `sea-held`: "Bounties, prizes or hold goods are waiting for this character at a freeport.
+  Collect them before the character is deleted.").
+- SWEPT (AUDIT SEA VENTURES B5 - the board and a kill scanned the whole history, and nothing was ever pruned): the
+  service's hourly clock (`cron.js` `sea`, over `seaSweeps`, a page at a time) takes a kill at sea past the Wanted window,
+  a wreck past its receipt's hour, and what has ended past `SEA_ENDED_KEEP_S` (thirty days) - a bounty claimed, a sum
+  paid, a prize collected or returned; never a bounty standing, a sum owed or a prize held. The reads walk their own
+  indexes (migrations 0146 and 0148 - the standing posts, the claimed, the poster's, the kills by when).
+- NO GOLD IS MADE. Every coin owed was posted, and a post left its poster's record in its own batch: posted = owed +
+  standing, always.
+
+**THE PAGE** (`scenes/seaBountyHost.js`, built by the sea's host - HOST-SPLIT: `world.js` hands `seaVentures` the realm
+session, the checkpoint, the wallet and the region (the character the sea's host's own - `characterIdOf`), and the harbourmaster's tab its Wanted section through `seaVentures.office()` - SEA-SEASON's spread).
+A freeport's harbourmaster's tab grows a WANTED section (`ui/naval/navalYardWindow.js` `wantedText`, `renderWanted`),
+online with a realm character alone: each wanted captain's kills and bounty with a press for each post
+(`SEA_BOUNTY_POSTS`: 500, 2,000, 10,000), the gold owed and its Collect, the bounty on one's own head, and the last
+answer's line - the act's answer and the read's refusal TWO LINES (AUDIT SEA VENTURES E7: a post that landed was shown
+failed by the refused read after it, a second post the player's next press; a stale refusal stood after a good read).
+The words name both ends of a captain (F10): "paid to whoever ends them at sea: a death at their hand, or a wreck at
+their guns" - a wreck is a kill at sea (SHIP-PVP). A post the purse and this region's bank cannot pay is greyed and never
+asked (E7). The board is read when the tab is shown and again `SEA_BOARD_FRESH_MS` (30 s) on - A REFUSED READ asked again
+`SEA_BOARD_READ_RETRY_MS` (5 s) on, doubling to the fresh wait (`boardRetryMs` - AUDIT SEA VENTURES E1: a refusal moved
+nothing, and the repaint that ends a read asked again at once: a page frozen in reads, two thousand a minute against the
+account's limit, every checkpoint of the account refused behind them); a post and a collect
+are the record's gold acts (`realmGoldAct`, as a card table's stake is) - a post's gold held out of the purse while it is
+asked and given back on a refusal, a collect's banked where the service banks it - and the board read again on the answer.
+The presses grey while an answer is awaited.
+
+**THE WIRE AND THE DEPLOY.** The relay's half rides world246 (undeployed); the service's acct172 (from migration 0146,
+the deploy's ledger applies it). An older relay's receipts name no room: its falls pay no bounty and make nobody wanted.
+The account deploy watches the law's file (`account-deploy.yml`).
+
+**KNOWN, NAMED.** A bounty pays the hand that ends its captain AT SEA - a fall in the Wrothgarian Mountains claims none,
+and neither does the Bay's. A captain may be ended by a friend for the bounty (another account's character): the posts
+are other players' gold, and a friend is a player too - as a market's sale to a friend is. Gold, never items, is posted.
+
+**THE FOUR HOSTS.** `scenes/world.js` (the sea's deps, the office's spread) WIRED through `scenes/seaVenturesHost.js`
+and `scenes/seaBountyHost.js`; `scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js` show no
+harbourmaster - FLAGGED, nothing to wire. bootWorld paid for its four deps by `createCrossLand` leaving it
+(`systems/naval/etherCrossing.js` - the crossing's land ring, ETHER-CROSSING's, built by its own module now).
+
+Pinned by `test/systems/sea/seabounty.test.js` (9); `tools/mutants/seabounty.json` (109, all dead - AUDIT SEA VENTURES F7:
+the record said 108). AUDIT SEA VENTURES: `test/systems/sea/auditsea.test.js` (E1, E7, B4, B5).
+
+## SEA-SEASON - the season's captains: the deepest voyage and the legends ended
+
+The owner's "more of a reason to venture into this zone", and the last of ETHER-WILD's suggestions (2026-10-22: "Build
+ever single bit of this"): the realm's boards for how far past the Veil a captain has sailed this season and how many of
+the six legends they have sunk or taken, at every freeport. DFU keeps no season and no players' boards: the season is
+the realm's own (`net/arena/arenaLaw.js` arenaSeasonOf - eight weeks of wall time from a Monday, the arena's and the
+Spire's), and the boards are read off the service's own judged records.
+
+**THE FIGURES** are the captain's ledger's (`systems/naval/captainLedger.js` `ether.season` - `{ n, deepest, legends }`):
+the deepest leagues past the Veil a sighting at sea marked in the season (`deepest(d, day)` - the ether host hands it the
+world's day: `etherHost.js:"L.deepest?.(etherDepthAt(px), day());"`), and each legend ended in it (`endLegend`). The
+season is the one the world's day falls in (`net/sea/seaSeasonLaw.js` `seaSeasonOfDay` - online, the shared clock's
+wall time at the day's first minute - an event-clock reader, named in `test/fixtures/time1_census.json`; the day the
+season turns in counts for the old one, and the service reads it so: for `SEA_WORLD_DAY_S` past a turn, a save filing
+the season before's figures is read for that season, its legends bounded by that whole season - AUDIT SEA VENTURES B6:
+those voyages counted for neither). A new season begins the
+figures afresh; a day of a season before the one kept counts nothing (a world moved back). The save keeps them, read
+back within the law (`restoreSeason`); NEITHER COPY DOOR CARRIES THEM (`systems/offlineCopy.js` `dropSeason`): an
+offline game's voyages are on its own clock, and a copy brought online starts the season from nothing.
+
+**THE SERVICE** (`server-account/src/seaSeason.js`; the table `migrations/0147_sea_season.sql`; the law both ends read,
+`src/net/sea/seaSeasonLaw.js`):
+
+- A CLEAN CHECKPOINT CARRIES THEM, in its own batch (`server-account/src/realm.js:"...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),"`):
+  read through the law (`seaSeasonFigures` - this season's; the deepest no further than the sea goes, `SEA_DEEPEST_MAX`
+  1,365 leagues at its west edge; the legends no more than the six could have risen since the season began,
+  `seaLegendsPossible` - each once, and once more each `SEA_LEGEND_RISE_S`, the sixty hours of wall time that
+  `LEGEND_RISE_DAYS` are online) and written only while the character stands unheld, after the verdict's own write - so
+  a lawless checkpoint (the judge's `clean` is false) and a held character's say nothing to the boards. Each figure is
+  the most any checkpoint of the season has said, with the moment it was first reached.
+- THE BOARDS (`/v1/sea/season/board`): the season's first `SEA_SEASON_ROWS` (10) each way - the deepest first, the most
+  legends first, equal figures by who reached them first - the asking character's rank each way, and the season
+  before's first `SEA_SEASON_LAST_ROWS` (3). A held character stands on neither board while it is held, nor ahead of
+  anyone.
+
+**THE PAGE** (`scenes/seaSeasonHost.js`, built by the sea's host - HOST-SPLIT: the sea's host spreads `office()`'s two
+sections, the Wanted and the season's, into the harbourmaster's tab - `world.js:"...seaVentures.office(), buyChart:"`,
+no line more). A freeport's harbourmaster's tab grows THE SEASON'S CAPTAINS (`ui/naval/navalYardWindow.js` `seasonText`,
+`renderSeason`), online with a realm character alone: the season and its days left, the deepest voyages and the legends
+ended (each its rank, its captain and its figure, or a line that none has yet), the player's own places, and the last
+season's firsts. The boards are read when the tab is shown and again `SEA_SEASON_FRESH_MS` (a minute) on, once at a
+time - refused, asked again `SEA_SEASON_RETRY_MS` (5 s) on, doubling to the fresh wait (AUDIT SEA VENTURES E1); boards
+never read say they are being asked for, never an empty season's lists (E7).
+
+**THE DEPLOY.** The service's acct172 (migration 0147, the deploy's ledger applies it); the account deploy watches the
+law's file. No relay word: the figures come with the record.
+
+**KNOWN, NAMED.** The figures are the record's, and the service cannot replay a voyage: a modified client could write a
+false figure the law allows - a depth the sea has, legends at the rate they rise - as it could any field of a record
+the judge does not see through. The bounds keep it to what an honest captain could do; the hold keeps a lawless record
+off the boards. A checkpoint carries the figures, so the board stands a checkpoint behind the sea. No title or prize
+for a season's first yet - the owner's call (OPEN FOR THE OWNER).
+
+**THE FOUR HOSTS.** `scenes/world.js` (the office's spread, unchanged in length) WIRED through
+`scenes/seaVenturesHost.js` and `scenes/seaSeasonHost.js`; `scenes/etherHost.js` (the day to the deepest's mark);
+`scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js` show no harbourmaster - FLAGGED, nothing
+to wire.
+
+Pinned by `test/systems/sea/seaseason.test.js` (6); `tools/mutants/seaseason.json` (83, all dead). AUDIT SEA VENTURES:
+`test/systems/sea/auditsea.test.js` (B6, E1, E7).
+
+## SHIP-PVP - broadsides between captains: a ship wrecked, boarded, her hold a prize
+
+The owner's "more of a reason to venture into this zone", and the first of ETHER-WILD's suggestions (2026-10-22: "Build
+ever single bit of this"): past Veilhaven's peace, a captain's guns hit another captain's ship. DFU has no players' ships
+to fight: the fight is the sea's own, refereed as the open zone's blows are (INT9) and the Sea Serpent's broadsides are
+(the serpent's reference broadside, its purse).
+
+**THE GUNS OPEN** where the open sea is the open zone (online; past the peace - `systems/wild/etherWild.js` ETHER_KIND; at a
+relay that referees them - `online.js` `seaPvpOk`, world246's `relaySupportsSeaPvp`; and each word only through a socket
+whose own relay does - `_seaPvpOn`: a halo's says for itself, and each socket's word goes with it across a crossing). There my balls meet a STRANGER
+captain's ship (never my party's or my guild's - world.js `wildIsStranger`; and the relay refuses kin again: wildKin's party,
+truce, duel and guild), and a peer's are seen to meet another's (seen only). Ashore, in the Bay, at peace, or wrecked
+myself, my balls pass through a player's ship as ever. The naval host's seams are `scenes/naval/navalPvp.js` (my ship as
+the referee is told of her, its word laid on her, her wreck, a prize out of her hold) - its targets' `hitBy` and its
+`landHit` ask them (`navalHost.js:"hitBy: (s) => shipShot(s) || pvp.open(p.id, s, isMine(s)) });"`). A STRANGER
+CAPTAIN'S SHIP AT HER HELM within `SEA_CAPTAIN_NEAR_M` (700 m) of mine is a hostile ship near: no cabin below with her
+there (`navalPvp.js` `captainNear`; Come-Sail-Away.md's CABIN-FOES - AUDIT SEA VENTURES E6A).
+
+**THE PAGE'S GUNS** (`scenes/naval/seaBroadsides.js`, built by the sea's host): my HELM said to the referee - my hull, my
+uid, my toughness (my Hull refit's, over the Captain's Due's share), my hull as my game reckons it - each `SEA_HELM_SAY_MS`
+and on a change (at most each `SEA_HELM_MIN_MS`), and that I have left her when I go; a ship wrecked in my own game said
+at none (`h: 0` - AUDIT SEA VENTURES E6B/A2: she was said LEFT, and the referee's credit to the captain whose shot broke
+her never came); my balls' harm on her ship (as it would strike a sea ship, my Guns refit's with it) GATHERED and said
+each `SEA_SHOT_MS` a ship (`shot`), WITHIN `SEA_SHOT_HZ` WORDS A SECOND IN ALL (the referee's `SEA_REF.hz` less two, its
+slack the words' bunching on their way), a word not said kept and gathered on (AUDIT SEA VENTURES E6C: three ships under
+my guns said twelve a second, and the refused words' harm was dropped); the referee's words heard. THE STEP RUNS EVERY
+ONLINE FRAME (`world.js:"seaVentures.guns();"`, the zone's frame - paused, a window open, below in the cabin; AUDIT SEA
+VENTURES E6A: it ran in the exterior's unpaused frame alone, so a captain with a window open or a hidden tab said no helm
+and was unshootable after twenty seconds).
+
+**THE REFEREE** (`src/net/sea/seaRef.js`, on the zone's own room state - its fighters, their places, their kin):
+
+- A SHIP is a captain's at her helm in the zone. Her BAR is her hull's player strength (`SEA_SHIP_HP`, the player's own
+  build's hullHp - pinned equal) times her toughness (never past `SEA_REF.toughMax`, the hardest refit over the Captain's
+  Due's most). Her own word only lowers it (a sea ship's guns broke her); a new hull or uid keeps the share; unstruck
+  `SEA_REF.mendMs`, she is whole again at her next word. A hull said with no uid is no ship (the wire's `helm`:
+  `wire.js:"if (!intIn(d.hl, -1, 4) || !intIn(d.t, 100, SEA_TOUGH_WIRE_MAX) || !intIn(d.u, d.hl >= 0 ? 1 : 0, 0x7fffffff) || !intIn(d.h, 0, 1000)) return null;"`
+  - AUDIT SEA VENTURES A4: `u: 0` was wrecked but never signed, no prize and no kill).
+- OFF THE GUNS, NEVER HEALED (AUDIT SEA VENTURES F1/A1 - leaving the helm, the zone or the socket and coming back, or
+  crossing a cell's line, was a whole ship: a modified client was never wrecked): a captain who leaves her helm (`hl`
+  -1), the zone (her zone word) or the room (her socket - `seaGone`) leaves her ship OFF the guns (`offShip`) with her bar
+  kept until it would be whole - no shot lands on her, nor hers on another - and her next helm takes it back. One who
+  crosses into another cell's room CARRIES it: the bar's share and when a captain last struck her (`seaCarry`), put at
+  the hub with the zone's own carry on every shot that took any of it
+  (`server/src/index.js:"if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now));"`), taken at
+  her first helm there while it is newer than what the room knows and within `SEA_REF.mendMs`
+  (`seaRef.js:"if (c) { x.seaCarry = null; if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) { s.hp = s.max * c.h; s.struckAt = c.at; } }"`).
+  A captain who stands in the zone saying nothing (a hidden tab) is at sea all the same - never forgotten for her quiet.
+- A SHOT lands only between two captains at their helms in the zone, NEITHER OFF, WRECKED OR AT NONE
+  (`seaRef.js:"if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');"`
+  - a ship the sea's own guns broke is out of the fight both ways until she mends), never kin, THE SHOOTER'S word no
+  older than `SEA_REF.helmMs` (AUDIT SEA VENTURES E6A: her target's word was asked too - a captain whose page said none
+  could not be shot), the shooter no jumper, within `SEA_REF.reachM` (both believed places, in metres), at most
+  `SEA_REF.hz` words a second, on the SHOOTER'S OWN PURSE: SHIP_REF of her hull a second (`net/serpent/serpentBrain.js`, the
+  serpent's reference broadside) refilled at `SEA_REF.rateX`, `SEA_REF.depthX` deep, no word past `SEA_REF.capX` of it;
+  her canvas bounded a word (`SEA_REF.sailCapX`), a fire once in `SEA_REF.fireMs`. What landed is said to both (`hull` -
+  per mille of her bar and canvas ROUNDED DOWN, a fire, her bar left ROUNDED UP - AUDIT SEA VENTURES A3: the share rounded
+  up, so a word of a point laid a thousandth of her bar and tiny shots dealt three times the purse), and her game lays it
+  in shares (`navalPvp.js` `struck` - her hull no higher than the bar leaves her, so her own builds and the referee's
+  agree). A shot that took none of her bar (canvas, a fire) claims her for no one (AUDIT SEA VENTURES E6B).
+- A WRECK is the referee's word: her bar at none by a captain's shot, or by her own word within `SEA_REF.creditMs` of one
+  that took any of her bar (that captain her killer - E6B). A player's ship never sinks: she lies crippled (`wrecked`), as a sea ship's
+  guns leave her, shot no more `SEA_REF.wreckMs`. Said to the room (`wreck`), kept in the room's storage
+  (`SEA_WRECK_PREFIX`, read back by a restarted room) with where she lay (her captain's believed place).
+- BOARDED: her killer has `SEA_REF.boardMs` to come within `SEA_REF.boardM` of her - her captain's believed place (kept
+  when she goes from the room) or where she lay. HER CAPTAIN NEED NOT STAY: one who closes her tab, leaves the room or
+  jumps away leaves her wreck to be boarded, and a restarted room boards it where she lay (`seaRef.js` seaBoard; the
+  relay asks nothing of her socket). The page's guns say `board` - its id alone, to the room that wrecked her - when my
+  ship is within `SEA_BOARD_NEAR_M` of her boat, of where it last saw her, or of where she lay when the wreck was said
+  (her shown place copied - it moves each frame), again each `SEA_BOARD_RETRY_MS` until answered. A jumper boards
+  nothing (`seaRef.js:"if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null;"` - AUDIT SEA VENTURES A6). Boarded,
+  or its time out (the room's beat, or THE ROOM'S ALARM - `server/src/index.js:"async _seaAlarm(now) {"`, armed for each
+  wreck's boarding's end: AUDIT SEA VENTURES A8, a room nobody came back to took no frame to beat on and its wreck stayed
+  unsigned), the relay signs the wreck (`net/wild/wildReceipt.js` `n1`: both captains' accounts and characters, the
+  wreck's id, her uid, `b` boarded or not, the room) and hands it to both (`wc`; kept for one away, as a fall's is - in
+  the room's storage, `wildowed:`, so an object that slept still hands it over: A8, they were kept in memory alone). A
+  ship with no uid, or a captain with no realm character, is signed never.
+
+**THE SERVICE** (`server-account/src/seaWreck.js`; tables `migrations/0148_sea_wreck.sql`; the prize's law both ends read,
+`src/net/sea/seaPrizeLaw.js`):
+
+- THE WRECK (`/v1/sea/wreck`), once (its id): carried by her captain's own tab at once (a record act, where its record
+  stands), or by her killer's past `SEA_WRECK_GRACE_S` (300 s - the record seized, its lease cleared, as a fall's; AUDIT
+  SEA VENTURES E3: thirty seconds was a busy captain's hold seized). BOARDED, and the record not held by the judge, her
+  hold's share - the boat her uid names (`placedBoats[].Items`): her most valuable pieces while they come to
+  `SEA_PRIZE_SHARE` (a third) of what she could give, her best always, `SEA_PRIZE_PIECES_MAX` at most; never a piece the
+  ledger keeps back, a classic save's, a locked or a bound one, NOR ONE THE REALM NEVER LETS PASS BETWEEN PLAYERS
+  (`realmTradeLaw.js` tradeableRecord - a quest's, a summoned one, a boat's deed or parts, a Materials Bag: AUDIT SEA
+  VENTURES E5/B1, a boarded wreck took her deed, a second ship), and none of those swells the share - off her record
+  into the service's hands (`sea_prizes`, the ledger told they go in escrow), in one batch with the wreck, each piece
+  WRITTEN DOWN AS HIS OWN COPY of a crafted original (B2 - as a trade writes it: she kept the original, and the piece he
+  took was a locked copy). A seize whose batch her own checkpoint beat answers `seq` and is asked again (B7 - it
+  answered 500, and the page dropped it).
+  Her game takes the same pieces out of her hold, each FOUND BY ITS MARKS - its id, its craft's provenance, else its group,
+  template, material and stack (`seaPrizeLaw.js` seaPrizeTook over `systems/wild/wildDropLaw.js` wildTookOf; `navalPvp.js`
+  `takeHold` over wildTakeTook, her hold's list alone) - never by its place: her hold in her game need not stand as her
+  record did (the fall's lesson, AUDIT INT9). Asked again, a wreck tells its pieces ONLY TO HER TAB FROM BEFORE THE TAKE
+  (`sea_wrecks.seq`, her record's sequence once they were taken: its first answer lost, or her killer's seize landed
+  under it); a tab that joined her record since holds none of them and is told none - it took them twice, pieces the
+  record never gave - though its captain is still told her hold was plundered. A boarded hold with nothing to give makes
+  no move of her record, and keeps no object of one.
+- A WRECK IS A KILL AT SEA (`seaBounty.js` seaKillSteps, in its batch): boarded or not, her killer is wanted and every
+  bounty on her captain is owed to her killer's character.
+- THE PAGE'S CARRIES (`scenes/seaWreckHost.js`): her KILLER carries every wreck of his, boarded or not (AUDIT SEA VENTURES
+  E2: an unboarded wreck was a kill only if HER tab carried it); HER CAPTAIN carries hers only over a checkpoint that went
+  (E4: a carry over a refused checkpoint - a duel, the death screen - read a stale record, the hold's pieces given twice),
+  asked again each `SEA_WRECK_CAPTAIN_RETRY_MS` while it cannot be (E3: asked once, a busy record's refusal let the seize
+  take her hold); an answer that says nothing of the wreck (`SEA_WRECK_TRANSIENT`) asked again; the carries owed kept in
+  the page's storage across a reload until their receipt expires (E2).
+- HER HOLD IS SHUT while her wreck may be boarded (`systems/naval/seaHoldGuard.js`, AUDIT SEA VENTURES B3): from the
+  referee's wreck of her until her own carry lands - `SEA_HOLD_SHUT_MS` (240 s) at most, kept across a reload - her hold
+  opens to no one (the hold's door, the mod's own box: "Her hold is shut while her wreck may be boarded."), and she is
+  neither packed nor laid up. The hold opens from anywhere (CARGO-ANYWHERE), so in the boarding window an honest captain
+  emptied it into her pack and a boarded wreck took nothing.
+- COLLECT (`/v1/sea/prize/collect`): every prize held for the asking character, into its record (`giveTradeGoods`), each
+  once (mustChange) - the killer's tab collects at once after the wreck, and a freeport's board shows what is left
+  (`Prizes taken at sea - Collect`).
+- RECLAIM (`/v1/sea/prize/reclaim`): a prize its killer left `SEA_PRIZE_HOLD_S` (three days) back into the wrecked
+  captain's record, once (`Your hold's goods - Reclaim`).
+- NO PIECE IS MADE OR LOST: a prize is pieces a record held, held by the service until one of the two takes them.
+
+**THE WIRE AND THE DEPLOY.** world246 (undeployed): `helm`, `shot` (directed - the room her captain stands in) and `board`
+(the wreck's id alone, the wreck's room's) in; `hull`, `wreck` and `wc` out; the relay's bundle grows `net/sea/seaRef.js` (the serpent's three walk from it now).
+The service's acct172 (migration 0148); the account deploy watches the prize's law. An older relay is never sent a sea
+kind (it would close the socket).
+
+**KNOWN, NAMED.** The balls' harm is the shooter's game's reckoning, bounded by the purse (as the serpent's is): a modified
+client fires the purse's most, never more; a captain claiming a bigger hull (`hl` is her own word - a rowboat said a
+carrack) claims a bigger purse and a bigger bar - never past a carrack's. Her uid is her own word too: a wrong one seizes
+nothing (no boat of hers names it), and she wrecks all the same. A captain's toughness is her own word, bounded by the
+hardest an honest captain can make her. Her own reckoning of her hull can only lower her bar - a client that never says
+it is hurt is wrecked all the same by the referee's bar. Her hold's shutting is her page's (B3): a modified page holds its
+own save between checkpoints, as it holds every piece of it - the prize is what her record holds when the wreck is
+carried. A ship whose captain is below in her cabin is OFF the guns (she has left her helm) - so the cabin is refused
+with a stranger captain's ship near (E6A). A ship the sea's own guns broke is out of the fight both ways until it mends.
+Fights cross no cell's edge (a shot is refereed in the room its target stands in, its shooter a fighter there) - but her
+bar does (F1/A1, above). Her crew
+is no part of the referee's fight (no man is lost to a captain's grape), and a captain's ship is boarded for her hold,
+never fought for on her deck.
+
+**THE FOUR HOSTS.** `scenes/naval/navalHost.js` (its targets, its landHit, its seams built - `navalPvp.js`) WIRED;
+`scenes/world.js` (the sea's host's cell, stranger and name; the referee's sea words routed) WIRED through
+`scenes/seaVenturesHost.js`, `scenes/naval/seaBroadsides.js` and `scenes/seaWreckHost.js`; `scenes/worldModes.js`,
+`scenes/dungeonContext.js` and `scenes/exterior.js` stand no ship - FLAGGED, nothing to wire.
+
+Pinned by `test/systems/sea/shippvp.test.js` (15); `tools/mutants/shippvp.json` (183, all dead - AUDIT SEA VENTURES F7:
+the record said 181). AUDIT SEA VENTURES: `test/systems/sea/auditsea.test.js` (E2-E6, A1-A8, B1-B3, B7, F1, F5).
 
 ## The ledger's record
 

@@ -76,8 +76,8 @@
   {
     "name": "mark-ring-hidden-at-far",
     "file": "src/ui/ink/inkMap.js",
-    "old": "      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y)) continue;",
-    "new": "      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y) || !shown.has(m.colorIndex)) continue;",
+    "old": "      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y, reach)) continue;",
+    "new": "      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y, reach) || !shown.has(m.colorIndex)) continue;",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

@@ -134,7 +134,7 @@ import { getBinding } from '../systems/inputActions.js';
 import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { resolveNameplates, nameplateAnchor, WORLD_PER_PX } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there
+import { resolveNameplates, nameplateAnchor, WORLD_PER_PX, STAR_PLATE } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there; FB1020c STAR-PLATE: and the surrender's "*"
 import { shownBuildingName } from '../systems/discovery.js';   // EMPIRE-BANK
 import {
   nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
@@ -1035,7 +1035,7 @@ export class ExteriorAutomapWindow {
       for (let i = 0; i < plates.length; i++) {
         const p = plates[i], r = this._plates[i] ?? { offY: 0, replaced: false };
         const y = p.y + r.offY;
-        drawText(renderer, font, r.replaced ? '*' : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);
+        drawText(renderer, font, r.replaced ? STAR_PLATE : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);
         if (hv && hv[0] >= p.x && hv[0] < p.x + p.w && hv[1] >= y - p.h / 2 && hv[1] < y + p.h / 2) {
           this._hoverPlate = p;   // ToolTipDelay 0 (:874) - it shows at once
         }

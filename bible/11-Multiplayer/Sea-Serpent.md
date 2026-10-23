@@ -849,7 +849,7 @@ Mac: *"With the introduction of elite dungeons soon. I want to enhance the rewar
 weapon to the serpent + a rare chance of a title/aura drop."* Three rewards, each a ship that DEALT's alone - a ship that
 stood is paid its hoard and its Renown as before, and nothing here.
 
-**The Sunken Sovereign** (GILDED2, `06-Systems/Gilded.md` section 7): a Gilded Ebony Saber, its power Undertow - the
+**The Sunken Sovereign** (GILDED2, `06-Systems/Gilded.md` section 7): a Gilded Ebony Saber - a Gilded Ebony Dwarven Pistolet since PISTOLET (2026-10-21) - its power Undertow - the
 hoard's very last draw, one dealing ship's hoard in a hundred (`systems/serpent/serpentSpoils.js`, after the technique pass), so
 every hoard rolled before it is what it was for its seed.
 

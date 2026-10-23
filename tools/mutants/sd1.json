@@ -92,8 +92,8 @@
   {
     "name": "SD1-one-player-a-crowd",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN) qual.push(r);",
-    "new": "if (Number(counts?.[r] ?? 0) >= 1) qual.push(r);",
+    "old": "if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);",
+    "new": "if (Number(counts?.[r] ?? 0) >= 1 && !TOWNLESS.has(r)) qual.push(r);",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],

@@ -22,7 +22,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STORES_MAX, MATERIAL_FAMILIES, MINED_KEYS, FOOD_KEYS, PLANT_GROUP_TEMPLATES } from './professionLaw.js';   // MARKET-ANY: and the Stores' forms
-import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK } from './recipeLaw.js';
+import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK, RECIPES } from './recipeLaw.js';   // BOARD-SIFT: a search's recipes
 import { MARKS_MAX } from './marksLaw.js';
 import { witnessedFact, factConfirmed, material } from './nodeLaw.js';
 import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realm/realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
@@ -86,6 +86,66 @@ export const CRAFTED_FAMILIES = Object.freeze([
 ]);
 /** The material families the Materials view filters by - the Stores' own (section 8). */
 export const MARKET_FAMILIES = MATERIAL_FAMILIES;
+
+// ─── BOARD-SIFT: PAGES, ORDERS, A SEARCH OF THE PIECES ───────────────
+// (2026-10-21, feature-feedback: "The notice board market also doesnt show everything if there are too many
+// weapons/armor/etc listed it stops after a certain number") - a view showed its first MARKET_SHOWN rows and nothing
+// past them. The views of pieces and of buy orders turn pages of MARKET_SHOWN now, every filter read in the query
+// itself so a page is a page (bible/06-Systems/Professions-Arc.md 10.13).
+
+/** The views read a page at a time. Materials is not: its first look is the Bay's cheapest hundred of every material,
+ *  and its search, family and tier reach any material - each to its own cheapest hundred, its market's front. */
+export const MARKET_PAGED_VIEWS = Object.freeze(['crafted', 'goods', 'auctions', 'orders']);
+/** The pages a view turns through, at most - MARKET_SHOWN x this many rows (AUDIT BOARD-SIFT: 50 pages were 5,000 rows,
+ *  a market's busy week; 50,000 is past what the Bay holds - thirty listings an account). */
+export const MARKET_PAGES_MAX = 500;
+/** A page as the service reads it: its first (0) for anything but a whole number in range. */
+export const marketPageOf = (n) => (Number.isSafeInteger(n) && n >= 0 && n < MARKET_PAGES_MAX ? n : 0);
+/** The orders a view of pieces is read in - the first its own, as before (the cheapest; an auction the soonest to end). */
+export const MARKET_SORTS = Object.freeze({
+  crafted: Object.freeze(['cheap', 'dear', 'new', 'quality']),
+  goods: Object.freeze(['cheap', 'dear', 'new']),
+  auctions: Object.freeze(['ending', 'cheap', 'dear', 'new']),
+});
+/** A view's order as the service reads it - its first for anything it does not offer; null for a view with none. */
+export const marketSortOf = (view, sort) => {
+  const sorts = Object.hasOwn(MARKET_SORTS, view) ? /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[view] : null;
+  return sorts ? (sorts.includes(sort) ? sort : sorts[0]) : null;
+};
+/** A search of the pieces, at most this long: trimmed, lower-cased; '' for none. */
+export const MARKET_QUERY_MAX = 40;
+export const marketQueryOf = (q) => (typeof q === 'string' ? q.trim().toLowerCase().slice(0, MARKET_QUERY_MAX) : '');
+/** A search's words. */
+export const searchWords = (q) => marketQueryOf(q).split(/\s+/).filter(Boolean);
+const tight = (/** @type {string} */ s) => s.replace(/[\s\-'’]+/g, '');
+/** AUDIT BOARD-SIFT: whether every word stands somewhere in `text` - or in it read without its spaces, hyphens and
+ *  apostrophes ("shortbow" in "Short Bow", "daikatana" in "Dai-katana"). Pure; the Work tab's bar reads it too. */
+export function wordsIn(/** @type {ReadonlyArray<string>} */ words, /** @type {string} */ text) {
+  const hay = String(text ?? '').toLowerCase(), close = tight(hay);
+  return words.every((w) => hay.includes(w) || close.includes(tight(w)));
+}
+/** The least quality a Crafted read asks (recipeLaw QUALITY_NAMES' index), 0 - any - for anything else. */
+export const marketQualityOf = (n) => (Number.isSafeInteger(n) && n > 0 && n <= MASTERWORK ? n : 0);
+/**
+ * THE RECIPES A SEARCH OF THE PIECES NAMES - each word of it in the recipe's name or in the name its piece wears on the
+ * board's rows (`shown`, the client's: AUDIT BOARD-SIFT - a row names its piece as its record mints it, and 52 recipes'
+ * pieces wear another name than the recipe's: a Pine Staff is an "Iron Staff", a Warforged Dagger an "Ebony Dagger",
+ * every Wakizashi DFU's "Wakazashi"), of `families` (null: every family). The client reads a search as these, as it reads
+ * a materials search as the catalogue's materials (AUDIT 30 U2), and the service reads them. Pure.
+ * @param {string} query @param {ReadonlyArray<string>|null} [families]
+ * @param {((r: any) => string|null)|null} [shown]
+ * @returns {string[]} recipe ids
+ */
+export function recipesNamed(query, families = null, shown = null) {
+  const words = searchWords(query);
+  return RECIPES.filter((r) => (!families || families.includes(r.family)) && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name)).map((r) => r.id);
+}
+/** AUDIT BOARD-SIFT: a search's recipes as the service reads them - known recipe ids, each once; null for no search (an
+ *  empty list is a search that named none). */
+export function marketRecipesOf(list) {
+  if (!Array.isArray(list)) return null;
+  return [...new Set(list.slice(0, 2 * RECIPES.length).filter((id) => typeof id === 'string' && !!recipeById(id)))];
+}
 /** A request id, as every account act's: 8-40 of [A-Za-z0-9_-]. A listing's or an order's id is the service's own
  *  (SOC1's id shape, minted by `mintId`). */
 export const MARKET_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;

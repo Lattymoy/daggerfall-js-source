@@ -28,6 +28,13 @@ export const HANDS_MODE = Object.freeze({ Single: 'single', Fists: 'fists', Dual
  *  hand (`hands`, below, decides that: a flail or a warhammer is two-handed in DFU's table, a custom class may not be).
  *  Never a staff's (two-handed always), a bow's, the bare hand's, a beast's claws or the port's own gun. */
 export const DUAL_TYPES = Object.freeze([0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+/** PISTOLET (2026-10-21, the owner: "a dwarven flintlock style pistol" that "can also be duel wielded"): the one gun a
+ *  pair may hold - the Dwarven Pistolet, plain and enchanted (WEAPON_TYPES Pistolet 19, Pistolet_Magic 20 - pinned equal).
+ *  A pair is two of a KIND: two melee weapons, or two Pistolets - never one of each. A sword's strike and a pistol's shot
+ *  are two machines' worth of difference (a swing and its frames against a trigger, a reload and a shot through the
+ *  ranged lane), and the sprite lane draws them through two doors (the Weapon Widget's clone, the gun's frame). The mixed
+ *  pair is a later slice's, named in bible/05-Combat/Dwarven-Pistolet.md. The Thunderlock is two-handed and never here. */
+export const DUAL_GUN_TYPES = Object.freeze([19, 20]);
 /** ItemHands.Both (characters/equipTable.js ITEM_HANDS - pinned equal). */
 const HANDS_BOTH = 4;
 
@@ -36,10 +43,13 @@ const HANDS_BOTH = 4;
  *   One hand's item as the law reads it: the item (null for an empty hand), its WeaponTypes, its ItemHands, a shield.
  */
 
-/** Can this hand's item be one of a dual pair: a weapon, not a shield, one-handed, of a dual kind. */
+/** Can this hand's item be one of a dual pair: a weapon, not a shield, one-handed, of a dual kind (melee, or the gun). */
 export function dualEligible(/** @type {HandDesc} */ h) {
-  return !!h?.item && !h.shield && h.hands !== HANDS_BOTH && DUAL_TYPES.includes(/** @type {number} */ (h.type));
+  const t = /** @type {number} */ (h?.type);
+  return !!h?.item && !h.shield && h.hands !== HANDS_BOTH && (DUAL_TYPES.includes(t) || DUAL_GUN_TYPES.includes(t));
 }
+/** PISTOLET: is this hand a gun of a pair. */
+const dualGun = (/** @type {HandDesc} */ h) => DUAL_GUN_TYPES.includes(/** @type {number} */ (h?.type));
 
 /**
  * The way the hands are held. A transformed lycanthrope (`claws`) is the beast's - DFU's racial override, one claw
@@ -53,7 +63,7 @@ export function dualEligible(/** @type {HandDesc} */ h) {
 export function handsModeOf({ right = null, left = null, claws = false, leftBusy = false } = {}) {
   if (claws || leftBusy) return HANDS_MODE.Single;
   if (!right?.item && !left?.item) return HANDS_MODE.Fists;
-  if (dualEligible(right) && dualEligible(left)) return HANDS_MODE.Dual;
+  if (dualEligible(right) && dualEligible(left) && dualGun(right) === dualGun(left)) return HANDS_MODE.Dual;   // PISTOLET: two of a kind
   return HANDS_MODE.Single;
 }
 

@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFO Online &mdash; new weapon type prototype (dwarven pistol)</title>
+<!--
+  THE PISTOL LAB (the owner, 2026-10-21): a dwarven flintlock pistol,
+  one in either hand, prototyped before a line of the game changes -
+  "the same prototype testing we did for the thunderlock", which is
+  gun-proto.html, and this page is built the way that one is.
+
+  NOTHING HERE TOUCHES THE GAME. Its own page over its own art
+  (public/art/pistol-frames.png); src/tools/pistolLab.js is the only
+  module it loads and nothing the game runs imports that.
+
+  What it RUNS rather than imitates: the game's gun frame
+  (combat/gun/gunViewmodel.js gunFrameRect - FPSWeapon's rect, Weapon
+  Widget's Offset/Bob/Inertia, the kick after the floor), the gun's
+  recoil spring and trauma shake (combat/gun/gunFeel.js), the gun lab's
+  machine and sound player, and for the pair the game's Two-Hands law
+  (combat/twoHands/handsLaw.js): which hand fires, the resting hand's
+  guard, the left hand a right hand in the glass. Design and record:
+  bible/05-Combat/Pistol-Lab.md.
+
+  Controls: click fires (and asks for the pointer lock - the Inertia
+  module needs a look to lag); under "per hand" the right button fires
+  the left pistol. Space fires too, hold either for auto. 1/2/3/4 pick
+  the trigger (single, alternate, volley, per hand). W walks, Shift
+  runs, C crouches, S stops. Arrows scrub frames while idle, G shows the
+  boxes, Tab hides the panels, Esc releases the mouse.
+-->
+<style>
+  html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
+    font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; cursor:crosshair; }
+  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.82);
+    border:1px solid #55503f; padding:10px 12px; width:min(330px,44vw);
+    max-height:calc(100vh - 40px); overflow:auto; }
+  .hud h1 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#e0d5ad; }
+  .hud h2 { margin:10px 0 4px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#9c9378; border-top:1px solid #33302a; padding-top:8px; }
+  .hud label { display:flex; align-items:center; gap:8px; margin:2px 0; }
+  .hud label > span:first-child { width:96px; color:#a89e80; flex:none; }
+  .hud input[type=range] { flex:1; min-width:60px; }
+  .hud select { flex:1; background:#15181d; color:#cdc4a8; border:1px solid #454033; }
+  .hud .v { width:46px; text-align:right; color:#c08a3e; flex:none; }
+  .hud p { margin:6px 0 0; color:#8d836c; font-size:12px; }
+  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.82);
+    border:1px solid #55503f; padding:8px 10px; color:#9c9378; white-space:pre; }
+  .lock { position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+    background:rgba(10,12,16,.82); border:1px solid #55503f; padding:5px 12px; color:#b9ad8b; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <h1>New weapon type &mdash; dwarven pistol</h1>
+
+  <h2>The pair &mdash; Two-Hands</h2>
+  <label><span>trigger</span><select id="trigger">
+    <option value="alternate">alternate (the flurry)</option>
+    <option value="volley">volley (both)</option>
+    <option value="perHand">per hand (LMB / RMB)</option>
+    <option value="single">single pistol</option>
+  </select></label>
+  <label><span>lead hand</span><select id="lead"><option value="R">right</option><option value="L">left</option></select></label>
+  <label><span>guard</span><input id="guard" type="checkbox" checked><span class="v">lower</span></label>
+
+  <h2>Placement &mdash; FPSWeapon</h2>
+  <label><span>size &times;native</span><input id="scale" type="range" min="0.5" max="3" step="0.05" value="1.05"><span class="v" id="vscale"></span></label>
+  <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
+  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-1"><span class="v" id="vraise"></span></label>
+
+  <h2>Cycle</h2>
+  <label><span>fire fps</span><input id="fps" type="range" min="4" max="30" step="1" value="12"><span class="v" id="vfps"></span></label>
+  <label><span>reload ms</span><input id="cool" type="range" min="0" max="3000" step="20" value="1400"><span class="v" id="vcool"></span></label>
+  <label><span>hit frame</span><input id="hit" type="range" min="0" max="5" step="1" value="1"><span class="v" id="vhit"></span></label>
+  <label><span>auto</span><input id="auto" type="checkbox"><span class="v">hold</span></label>
+
+  <h2>Recoil &mdash; the gun's spring</h2>
+  <label><span>kick</span><input id="kick" type="range" min="0" max="60" step="1" value="3"><span class="v" id="vkick"></span></label>
+  <label><span>back</span><input id="back" type="range" min="0" max="1.5" step="0.02" value="0"><span class="v" id="vback"></span></label>
+  <label><span>stiffness</span><input id="stiff" type="range" min="20" max="400" step="5" value="400"><span class="v" id="vstiff"></span></label>
+  <label><span>damping</span><input id="damp" type="range" min="2" max="60" step="1" value="36"><span class="v" id="vdamp"></span></label>
+
+  <h2>Screenshake &mdash; the camera</h2>
+  <label><span>shake</span><input id="shake" type="range" min="0" max="30" step="0.5" value="20"><span class="v" id="vshake"></span></label>
+  <label><span>roll&deg;</span><input id="shakeRot" type="range" min="0" max="4" step="0.1" value="2.5"><span class="v" id="vshakeRot"></span></label>
+  <label><span>rattle</span><input id="shakeFreq" type="range" min="6" max="60" step="1" value="60"><span class="v" id="vshakeFreq"></span></label>
+  <label><span>decay</span><input id="shakeDecay" type="range" min="0.5" max="10" step="0.1" value="5"><span class="v" id="vshakeDecay"></span></label>
+
+  <h2>Sound &mdash; CC0, baked to 11kHz 8-bit</h2>
+  <label><span>fire</span><select id="sfxFire"></select></label>
+  <label><span>reload open</span><select id="sfxOpen"></select></label>
+  <label><span>reload close</span><select id="sfxClose"></select></label>
+  <label><span>volume</span><input id="sfxVol" type="range" min="0" max="1" step="0.02" value="1"><span class="v" id="vsfxVol"></span></label>
+  <label><span>pitch vary</span><input id="sfxVary" type="range" min="0" max="0.3" step="0.01" value="0.19"><span class="v" id="vsfxVary"></span></label>
+  <label><span>sound</span><input id="sfxOn" type="checkbox" checked><span class="v">on</span></label>
+
+  <h2>Reload lower &mdash; the Offset module</h2>
+  <label><span>drop</span><input id="drop" type="range" min="0" max="1.5" step="0.05" value="0.7"><span class="v" id="vdrop"></span></label>
+  <label><span>Offset.Speed</span><input id="offsetSpeed" type="range" min="0" max="5" step="0.25" value="1"><span class="v" id="voffsetSpeed"></span></label>
+  <label><span>Modules.Offset</span><input id="modOffset" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Weapon Widget &mdash; Bob</h2>
+  <label><span>Modules.Bob</span><input id="modBob" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Bob.Length</span><input id="bobLength" type="range" min="0" max="200" step="1" value="146"><span class="v" id="vbobLength"></span></label>
+  <label><span>Bob.SizeX</span><input id="bobSizeX" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSizeX"></span></label>
+  <label><span>Bob.SizeY</span><input id="bobSizeY" type="range" min="0" max="2" step="0.1" value="0.7"><span class="v" id="vbobSizeY"></span></label>
+  <label><span>Bob.SpeedMove</span><input id="bobSpeedMove" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSpeedMove"></span></label>
+  <label><span>Bob.SpeedState</span><input id="bobSpeedState" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vbobSpeedState"></span></label>
+  <label><span>Bob.Shape</span><select id="bobShape"><option value="0">U</option><option value="1">Sideways 8</option><option value="2">Inverted U</option></select></label>
+  <label><span>BobWhileIdle</span><input id="bobIdle" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Weapon Widget &mdash; Inertia</h2>
+  <label><span>Modules.Inertia</span><input id="modInertia" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Scale</span><input id="inScale" type="range" min="0" max="2" step="0.1" value="2"><span class="v" id="vinScale"></span></label>
+  <label><span>Speed</span><input id="inSpeed" type="range" min="0" max="2" step="0.1" value="2"><span class="v" id="vinSpeed"></span></label>
+  <label><span>ForwardDepth</span><input id="inFwd" type="range" min="0" max="2" step="0.1" value="0"><span class="v" id="vinFwd"></span></label>
+  <label><span>ForwardSpeed</span><input id="inFwdSpeed" type="range" min="0" max="2" step="0.1" value="1"><span class="v" id="vinFwdSpeed"></span></label>
+
+  <h2>Movement</h2>
+  <label><span>walking</span><input id="walk" type="checkbox"><span class="v">W/S</span></label>
+  <label><span>running</span><input id="run" type="checkbox"><span class="v">Shift</span></label>
+  <label><span>crouching</span><input id="crouch" type="checkbox"><span class="v">C</span></label>
+  <label><span>SPD</span><input id="spd" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vspd"></span></label>
+
+  <h2>Art &amp; room</h2>
+  <label><span>alpha cut</span><input id="alphaCut" type="range" min="1" max="255" step="1" value="128"><span class="v" id="valphaCut"></span></label>
+  <label><span>muzzle light</span><input id="light" type="range" min="0" max="1" step="0.02" value="0.6"><span class="v" id="vlight"></span></label>
+  <label><span>room</span><input id="room" type="range" min="0.15" max="1.2" step="0.01" value="0.62"><span class="v" id="vroom"></span></label>
+  <label><span>boxes</span><input id="grid" type="checkbox"><span class="v">G</span></label>
+  <p id="note">loading art&hellip;</p>
+</div>
+<div class="stat" id="stat"></div>
+<div class="lock" id="lockHint">click to lock the mouse &mdash; the inertia needs a look to lag</div>
+
+<script type="module">
+import {
+  PISTOL_STRIP, PISTOL_OPENING, PAIR_TRIGGER, stripCellRect, hardenAlpha, nativeWidthPct, createPair,
+  ALIGN, contentBox, unionBox, gunFrameRect, muzzleLight, guardStep, guardOffset,
+  createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
+  SFX_CANDIDATES, createSfxPlayer,
+} from '/src/tools/pistolLab.js';
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const O = PISTOL_OPENING;
+
+// THE OWNER'S PICKS (PISTOL-LAB 2): the lists are the gun lab's, and a
+// pick a list does not offer is an error, never a quiet fall to its head.
+const pickOf = (slot, name) => {
+  if (!SFX_CANDIDATES[slot].some(([n]) => n === name)) throw new Error(`no ${slot} clip ${name}`);
+  return name;
+};
+const W = O.widget;
+const state = {
+  trigger: PAIR_TRIGGER.Alternate, lead: 'R', guard: true,
+  scale: O.scale, offset: O.offset, raise: O.raise,
+  fps: O.fps, cool: O.reloadMs, hit: O.hitFrame, auto: false,
+  kick: O.kick, back: O.back, stiff: O.stiff, damp: O.damp,
+  shake: O.shake, shakeRot: O.shakeRot, shakeFreq: O.shakeFreq, shakeDecay: O.shakeDecay,
+  sfxFire: pickOf('fire', O.sfxFire), sfxOpen: pickOf('reload-open', O.sfxOpen), sfxClose: pickOf('reload-close', O.sfxClose),
+  sfxVol: O.sfxVol, sfxVary: O.sfxVary, sfxOn: true,
+  drop: O.drop, offsetSpeed: W['Offset.Speed'], modOffset: true,
+  modBob: true, bobLength: W['Bob.Length'], bobSizeX: W['Bob.SizeX'], bobSizeY: W['Bob.SizeY'],
+  bobSpeedMove: W['Bob.SpeedMove'], bobSpeedState: W['Bob.SpeedState'], bobShape: W['Bob.Shape'], bobIdle: W['Bob.BobWhileIdle'],
+  modInertia: true, inScale: W['Inertia.Scale'], inSpeed: W['Inertia.Speed'], inFwd: W['Inertia.ForwardDepth'], inFwdSpeed: W['Inertia.ForwardSpeed'],
+  walk: false, run: false, crouch: false, spd: 50,
+  alphaCut: O.alphaCut, light: O.light, room: 0.62, grid: false,
+};
+const NUM = {
+  scale:1, offset:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
+  shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1, sfxVol:1, sfxVary:1,
+  drop:1, offsetSpeed:1, bobLength:1, bobSizeX:1, bobSizeY:1, bobSpeedMove:1, bobSpeedState:1,
+  inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, alphaCut:1, light:1, room:1,
+};
+const ENUMS = { bobShape:1 };
+const bind = (id, after = () => {}) => {
+  const el = $(id), out = $('v' + id);
+  const read = () => {
+    state[id] = el.type === 'checkbox' ? el.checked
+      : NUM[id] ? parseFloat(el.value)
+      : ENUMS[id] ? parseInt(el.value, 10) : el.value;
+    if (out) out.textContent = el.type === 'checkbox' ? '' : el.value;
+    after();
+  };
+  el.addEventListener('input', read);
+  read();
+};
+
+// ── THE ART ──────────────────────────────────────────────────────────
+// Cut at a fixed stride and hardened to 1 bit here rather than shipped
+// pre-cut, so the alpha cut is live. `frames` are six canvases on ONE
+// box (the union), `anchor` the rest frame's own box inside it.
+let art = null;
+const stripImg = new Image();
+
+function bakeOne(i) {
+  const r = stripCellRect(i);
+  const cv = document.createElement('canvas');
+  cv.width = r.w; cv.height = r.h;
+  const c = cv.getContext('2d', { willReadFrequently: true });
+  c.imageSmoothingEnabled = false;
+  c.drawImage(stripImg, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+  const img = c.getImageData(0, 0, r.w, r.h);
+  hardenAlpha(img, state.alphaCut);
+  c.putImageData(img, 0, 0);
+  let soft = 0;
+  for (let p = 3; p < img.data.length; p += 4) if (img.data[p] !== 0 && img.data[p] !== 255) soft++;
+  return { cv, box: contentBox(img), soft };
+}
+
+function crop(cv, box) {
+  const out = document.createElement('canvas');
+  out.width = box.w; out.height = box.h;
+  const c = out.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.drawImage(cv, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
+  return out;
+}
+
+function rebuild() {
+  if (!stripImg.complete || !stripImg.naturalWidth) return;
+  const baked = Array.from({ length: PISTOL_STRIP.frames }, (_, i) => bakeOne(i));
+  const union = unionBox(baked.map((b) => b.box));
+  const anchor = baked[0].box;   // frame 1: the pistol at rest, no flash
+  art = { frames: baked.map((b) => crop(b.cv, union)), union, anchor, soft: baked.reduce((n, b) => n + b.soft, 0) };
+  $('note').textContent = `strip ${stripImg.naturalWidth}x${stripImg.naturalHeight}, ${PISTOL_STRIP.frames} frames of ${PISTOL_STRIP.cellW}x${PISTOL_STRIP.cellH} — pistol ${anchor.w}x${anchor.h}, with flash ${union.w}x${union.h}`;
+}
+stripImg.onload = rebuild;
+stripImg.onerror = () => { $('note').textContent = `art/${PISTOL_STRIP.file} did not load`; };
+// RELATIVE to the page: the lab is deployed on its own under
+// /preview/pistol-lab/ as well as beside the game.
+stripImg.src = new URL(`art/${PISTOL_STRIP.file}`, document.baseURI).href;
+
+// ── the pair, a rig, a spring and a guard per hand, one camera ──────
+const pair = createPair({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit });
+const HANDS = ['R', 'L'];
+const rigs = { R: createWidgetRig(), L: createWidgetRig() };
+const recoils = { R: createRecoil(), L: createRecoil() };
+const guards = { R: 0, L: 0 };
+const shake = createScreenShake();
+
+const sfx = createSfxPlayer();
+for (const [id, slot] of [['sfxFire', 'fire'], ['sfxOpen', 'reload-open'], ['sfxClose', 'reload-close']]) {
+  $(id).innerHTML = SFX_CANDIDATES[slot].map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
+  $(id).value = state[id];
+}
+for (const list of Object.values(SFX_CANDIDATES)) for (const [name] of list) sfx.load(name).catch(() => {});
+globalThis.__pistolLabSfx = SFX_CANDIDATES;
+let scrub = -1;
+let hitFlash = 0;
+let look = [0, 0];
+const LOOK_RADIANS_PER_PX = 0.0025;
+
+const CONTROLS = ['trigger','lead','guard','scale','offset','raise','fps','cool','hit','auto',
+  'kick','back','stiff','damp','shake','shakeRot','shakeFreq','shakeDecay','drop','offsetSpeed','modOffset',
+  'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
+  'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
+  'walk','run','crouch','spd','light','room','grid',
+  'sfxFire','sfxOpen','sfxClose','sfxVol','sfxVary','sfxOn'];
+// THE ROW IS THE TRUTH, the markup a copy of it: every control is set
+// from `state` before it is bound, so a slider's `value=` that drifted
+// from PISTOL_OPENING cannot open the panel on a different weapon.
+for (const id of [...CONTROLS, 'alphaCut']) {
+  const el = $(id);
+  if (el.type === 'checkbox') el.checked = !!state[id]; else el.value = String(state[id]);
+}
+for (const id of CONTROLS) bind(id);
+bind('alphaCut', rebuild);
+
+// AUDIT PISTOLET B2: past Diverse Weapons' preset, as the game lays the Pistolet's own tuning (gunWidgetSettings' `preset`)
+const widgetSettings = () => labWidgetSettings({
+  'Modules.Offset': state.modOffset, 'Modules.Bob': state.modBob, 'Modules.Inertia': state.modInertia,
+  'Offset.Speed': state.offsetSpeed,
+  'Bob.Length': state.bobLength, 'Bob.SizeX': state.bobSizeX, 'Bob.SizeY': state.bobSizeY,
+  'Bob.SpeedMove': state.bobSpeedMove, 'Bob.SpeedState': state.bobSpeedState,
+  'Bob.Shape': state.bobShape, 'Bob.BobWhileIdle': state.bobIdle,
+  'Inertia.Scale': state.inScale, 'Inertia.Speed': state.inSpeed,
+  'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
+}, null, { preset: false });
+
+/** Every shot, whichever door it came through: the hand's own spring,
+ *  one punch of the camera's trauma each (a volley is two), the voice. */
+const shot = (hands) => {
+  for (const h of hands) { recoils[h].punch(state.kick); shake.punch(); sfx.play(state.sfxFire); }
+  return hands;
+};
+let held = null;   // the button held, for auto
+const press = (button) => { held = button; scrub = -1; shot(pair.pull(button)); };
+const release = () => { held = null; };
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('mousedown', (e) => {
+  if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+  press(e.button);
+});
+addEventListener('mouseup', release);
+addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== canvas) return;
+  look = [look[0] + e.movementX * LOOK_RADIANS_PER_PX, look[1] - e.movementY * LOOK_RADIANS_PER_PX];
+});
+document.addEventListener('pointerlockchange', () => {
+  $('lockHint').style.display = document.pointerLockElement === canvas ? 'none' : '';
+});
+const setTick = (id, v) => { state[id] = v; $(id).checked = v; };
+const setPick = (id, v) => { state[id] = v; $(id).value = v; };
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(0); }
+  if (e.code === 'KeyW') setTick('walk', true);
+  if (e.code === 'KeyS') setTick('walk', false);
+  if (e.code === 'KeyC') setTick('crouch', !state.crouch);
+  if (e.shiftKey) setTick('run', true);
+  const triggerKey = { Digit1: 'single', Digit2: 'alternate', Digit3: 'volley', Digit4: 'perHand' }[e.code];
+  if (triggerKey) setPick('trigger', triggerKey);
+  if (e.code === 'Tab') { e.preventDefault(); for (const el of document.querySelectorAll('.hud,.stat')) el.style.display = el.style.display === 'none' ? '' : 'none'; }
+  if (e.code === 'KeyG') { state.grid = !state.grid; $('grid').checked = state.grid; }
+  if (e.code === 'ArrowRight') scrub = (scrub + 1 + PISTOL_STRIP.frames) % PISTOL_STRIP.frames;
+  if (e.code === 'ArrowLeft') scrub = (scrub - 1 + PISTOL_STRIP.frames) % PISTOL_STRIP.frames;
+});
+addEventListener('keyup', (e) => {
+  if (e.code === 'Space') release();
+  if (e.key === 'Shift') setTick('run', false);
+});
+
+// ── the room (gun-proto.html's: a plain lit corridor, nothing of the game's)
+let bobWorld = 0;
+function drawRoom(lit) {
+  const { width: w, height: h } = canvas;
+  const horizon = h * 0.56;
+  const g = ctx.createLinearGradient(0, 0, 0, horizon);
+  g.addColorStop(0, `rgb(${18 * lit | 0},${17 * lit | 0},${20 * lit | 0})`);
+  g.addColorStop(1, `rgb(${74 * lit | 0},${66 * lit | 0},${54 * lit | 0})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, horizon);
+  const f = ctx.createLinearGradient(0, horizon, 0, h);
+  f.addColorStop(0, `rgb(${58 * lit | 0},${50 * lit | 0},${40 * lit | 0})`);
+  f.addColorStop(1, `rgb(${22 * lit | 0},${19 * lit | 0},${16 * lit | 0})`);
+  ctx.fillStyle = f; ctx.fillRect(0, horizon, w, h - horizon);
+  ctx.strokeStyle = `rgba(${12 * lit | 0},${11 * lit | 0},${9 * lit | 0},0.85)`;
+  ctx.lineWidth = Math.max(1, w / 640);
+  for (let i = 1; i < 7; i++) {
+    const y = horizon * (i / 7) ** 1.6;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  for (let i = -6; i <= 6; i++) {
+    ctx.beginPath(); ctx.moveTo(w / 2 + i * w * 0.09 + bobWorld, horizon); ctx.lineTo(w / 2 + i * w * 0.42 + bobWorld * 2, h); ctx.stroke();
+  }
+}
+function drawTarget(lit) {
+  const { width: w, height: h } = canvas;
+  const tw = w * 0.055, th = tw * 2.6;
+  const x = w / 2 - tw / 2 + bobWorld, y = h * 0.56 - th * 0.86;
+  ctx.fillStyle = hitFlash > 0 ? `rgba(190,60,44,${0.35 + 0.65 * hitFlash})` : `rgb(${52 * lit | 0},${46 * lit | 0},${42 * lit | 0})`;
+  ctx.fillRect(x, y, tw, th);
+  ctx.fillStyle = `rgba(${18 * lit | 0},${16 * lit | 0},${14 * lit | 0},0.9)`;
+  ctx.fillRect(x, y + th * 0.18, tw, th * 0.04);
+}
+function drawCrosshair() {
+  const { width: w, height: h } = canvas;
+  const r = Math.max(4, w * 0.006);
+  ctx.strokeStyle = 'rgba(220,208,170,0.55)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - r * 2, h / 2); ctx.lineTo(w / 2 - r, h / 2);
+  ctx.moveTo(w / 2 + r, h / 2); ctx.lineTo(w / 2 + r * 2, h / 2);
+  ctx.moveTo(w / 2, h / 2 - r * 2); ctx.lineTo(w / 2, h / 2 - r);
+  ctx.moveTo(w / 2, h / 2 + r); ctx.lineTo(w / 2, h / 2 + r * 2);
+  ctx.stroke();
+}
+
+// ── the frame ────────────────────────────────────────────────────────
+let last = performance.now();
+const reloadSfx = { R: { open: false, close: false }, L: { open: false, close: false } };
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+
+  pair.trigger = state.trigger; pair.lead = state.lead;
+  for (const hd of HANDS) { pair[hd].fps = state.fps; pair[hd].cooldownMs = state.cool; pair[hd].hitFrame = state.hit; }
+  const events = pair.step(dt);
+  if (events.R === 'hit' || events.L === 'hit') hitFlash = 1;
+  // the held trigger: a pull each time no shot is in flight, which fires
+  // whatever the law finds loaded - the auto of a pair is the two hands
+  // taking turns, a shot's frames apart rather than a frame apart
+  if (held !== null && state.auto && !['R', 'L'].some((hd) => pair[hd].state === 'Firing')) shot(pair.pull(held));
+  hitFlash = Math.max(0, hitFlash - dt * 4);
+
+  sfx.enabled = state.sfxOn; sfx.volume = state.sfxVol; sfx.vary = state.sfxVary;
+  shake.amount = state.shake; shake.rot = state.shakeRot; shake.freq = state.shakeFreq; shake.decay = state.shakeDecay;
+  const cam = shake.step(dt);
+
+  const drawn = pair.hands();
+  const dual = drawn.length === 2;
+  const per = {};
+  for (const hd of HANDS) {
+    const m = pair[hd];
+    // THE RELOAD'S TWO ENDS, per hand (gun-proto.html's timing)
+    const rs = reloadSfx[hd];
+    if (m.state === 'Cooling' && !rs.open) { rs.open = true; sfx.play(state.sfxOpen, 0.9); }
+    if (m.state === 'Cooling' && !rs.close && m.cooledMs >= Math.max(0, state.cool - 420)) { rs.close = true; sfx.play(state.sfxClose, 0.95); }
+    if (m.state !== 'Cooling') { rs.open = false; rs.close = false; }
+    const rc = recoils[hd];
+    rc.stiff = state.stiff; rc.damp = state.damp; rc.back = state.back;
+    // THE GUARD (handsLaw): while the OTHER pistol fires and this one
+    // does not, this one lowers a share of its own drawn height - a pair
+    // only, and never in a volley, where both hands are the striking hand
+    const other = pair[hd === 'R' ? 'L' : 'R'];
+    guards[hd] = guardStep(guards[hd], dual && state.guard && other.state === 'Firing' && m.state !== 'Firing', dt);
+    per[hd] = { kick: rc.step(dt), frame: m.state === 'Firing' ? m.frame : (scrub >= 0 ? scrub : 0) };
+  }
+
+  const glow = Math.max(...drawn.map((hd) => muzzleLight(pair[hd].state, per[hd].frame)));
+  const lit = state.room * (1 + glow * state.light * 1.9);
+  bobWorld = bobWorld * 0.86 - look[0] * canvas.width * 0.18;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  // THE CAMERA SHAKES, NOT THE WEAPONS (gun-proto.html's law): the room
+  // is drawn through the offset, both pistols are carried by it.
+  const sx0 = canvas.width / 320, sy0 = canvas.height / 200;
+  ctx.save();
+  ctx.translate(canvas.width / 2 + cam.x * sx0, canvas.height / 2 + cam.y * sy0);
+  ctx.rotate(cam.rot);
+  ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  drawRoom(lit); drawTarget(lit);
+  ctx.restore();
+  drawCrosshair();
+
+  // THE MOD'S FRAME, one rig per hand on one clock. The left rig runs
+  // flipped, which is Two-Hands' two sway rules for free: Bob goes
+  // OUTWARD (the mod's flipped sprite takes it mirrored) and Inertia
+  // keeps the screen's direction (inertiaStep pre-signs it for a flip).
+  const s = widgetSettings();
+  const motion = labMotion({ walking: state.walk, running: state.run, crouching: state.crouch, liveSpeed: state.spd });
+  const shown = {};
+  for (const hd of HANDS) {
+    widgetRigStep(rigs[hd], s, dt, {
+      screenRect: { width: canvas.width, height: canvas.height }, motion, look,
+      flip: hd === 'L', idle: pair[hd].state === 'Idle',
+      shown: pair[hd].state !== 'Cooling', hiddenTarget: [0, state.drop], liveSpeed: state.spd,
+      cursorActive: document.pointerLockElement !== canvas,
+    });
+  }
+  look = [0, 0];
+
+  if (art) {
+    const widthPct = nativeWidthPct(art.anchor.w, state.scale);
+    // the striking hand over the other (Two-Hands)
+    for (const hd of pair.order) {
+      if (!drawn.includes(hd)) continue;
+      const flip = hd === 'L';
+      const [, guardY] = guardOffset(guards[hd], flip ? 'left' : 'right', { height: art.anchor.h * state.scale });
+      const k = per[hd].kick;
+      // AUDIT 68 S08's law: the GAME's frame, called - never restated here
+      const { rect, anchorRect } = gunFrameRect({
+        canvasW: canvas.width, canvasH: canvas.height, anchor: art.anchor, union: art.union,
+        rig: rigs[hd], kick: { x: k.x, y: k.y + guardY }, flip,
+        widthPct, align: ALIGN.Right, offset: state.offset, raise: state.raise,
+      });
+      ctx.save();
+      if (flip) { ctx.translate(rect.x + rect.w / 2, 0); ctx.scale(-1, 1); ctx.translate(-(rect.x + rect.w / 2), 0); }
+      ctx.drawImage(art.frames[per[hd].frame], rect.x, rect.y, rect.w, rect.h);
+      ctx.restore();
+      if (state.grid) {
+        ctx.strokeStyle = 'rgba(192,138,62,0.9)'; ctx.lineWidth = 1;
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+        ctx.strokeStyle = 'rgba(120,200,140,0.9)';
+        ctx.strokeRect(anchorRect.x, anchorRect.y, anchorRect.w, anchorRect.h);
+      }
+      shown[hd] = { rect, anchorRect };
+    }
+  }
+
+  // The probe's window on the frame (tools/pistolProtoProbe.mjs).
+  const hand = (hd) => ({
+    drawn: drawn.includes(hd), state: pair[hd].state, frame: per[hd].frame, shots: pair[hd].shots,
+    reloading: pair[hd].state === 'Cooling', guard: guards[hd], kick: per[hd].kick,
+    rect: shown[hd]?.rect ?? null, anchorRect: shown[hd]?.anchorRect ?? null,
+    channels: { position: [...rigs[hd].position], scale: [...rigs[hd].scale], offset: [...rigs[hd].offset] },
+  });
+  globalThis.__pistolLab = {
+    ready: !!art, trigger: pair.trigger, lead: pair.lead, order: [...pair.order], lastShot: pair.lastShot,
+    R: hand('R'), L: hand('L'), cam, trauma: shake.trauma,
+    art: art && { union: art.union, anchor: art.anchor, frames: art.frames.length, soft: art.soft },
+  };
+
+  const cycle = PISTOL_STRIP.frames / state.fps * 1000 + state.cool;
+  const line = (hd) => `${hd} ${(pair[hd].state === 'Cooling' ? 'RELOAD' : pair[hd].state).padEnd(8)} frame ${per[hd].frame + 1}/${PISTOL_STRIP.frames}  shots ${pair[hd].shots}`;
+  const ls = pair.lastShot;
+  $('stat').textContent =
+    `${state.trigger}${dual ? `, lead ${state.lead}` : ''}\n` +
+    drawn.map(line).join('\n') + '\n' +
+    `cycle ${cycle.toFixed(0)}ms   ${(60000 / cycle * drawn.length).toFixed(0)} rpm ${dual ? 'the pair' : 'one'}\n` +
+    `last ${ls ? `${ls.hand}${ls.off ? ' (off hand)' : ''}${ls.flurry ? ' flurry' : ''}` : '-'}   shake ${shake.trauma.toFixed(2)}`;
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

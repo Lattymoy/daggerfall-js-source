@@ -79,6 +79,22 @@ export function passageDestinations(ports, here, { hereKey = null, known = () =>
   return out.sort((a, b) => a.pixels - b.pixels || a.port.name.localeCompare(b.port.name));
 }
 
+/**
+ * FIELD BUGS 2026-10-21d PASSAGE-IN (Harlander: "Fast travel gets stuck on docks and tries to path up onto land"): WHETHER
+ * A BOOKED VOYAGE'S PLAN MAY BE WALKED - it sails, or she already lies within VOYAGE_LANDFALL_PX of her port, where the
+ * last of the way in is the landfall's. AUDIT PASSAGE A1 refused every plan that never sails, so a passenger was never
+ * set down at the quay they paid to leave; but her master's resume asks the same, and from her port's own roadstead the
+ * plan is the landfall and the walk in (`landfall>open`), never a sea step: stopped there - a raider, the end of the
+ * Overworld's way on - she was refused every twenty seconds for good, lying off the harbour she was bound for. A quay
+ * left is never that near the port she sails for (passageDestinations books none within that reach).
+ * @param {{ x: number, y: number }} from - her map pixel @param {{ x: number, y: number }} to - her port's
+ * @param {{ kinds: readonly string[] } | null} plan
+ */
+export function voyageSails(from, to, plan) {
+  if (!plan) return false;
+  return plan.kinds.includes('sea') || passagePixels(from, to) <= VOYAGE_LANDFALL_PX;
+}
+
 /** The voyage's record, written on the boat she becomes (and saved with her - comeSailAway.js getSaveData's
  *  `Charter`): where she sails (`to`, a port's name and pixel), her name, her master, the fare paid. Null for anything
  *  else - a record a save hands back is read through this. */

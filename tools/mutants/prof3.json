@@ -307,12 +307,12 @@
   {
     "name": "PROF3-svc-product-owner",
     "file": "server-account/src/professions.js",
-    "old": "      SELECT ?4, ?1, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith} FROM prof_crafts",
-    "new": "      SELECT ?4, ?2, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith} FROM prof_crafts",
+    "old": "      SELECT ?4, ?1, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith}, ${looseWall} FROM prof_crafts",
+    "new": "      SELECT ?4, ?2, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith}, ${looseWall} FROM prof_crafts",
     "tests": [
       "test/net/prof3_service.test.js"
     ],
-    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. AUDIT PROF-541 (RE-AIMED by content): bought_with beside it."
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the goods' mark (looseWall) beside bought_with. PROF9 (RE-AIMED by content): the fire's code beside it. AUDIT PROF-541 (RE-AIMED by content): bought_with beside it."
   },
   {
     "name": "PROF3-svc-stock-free",

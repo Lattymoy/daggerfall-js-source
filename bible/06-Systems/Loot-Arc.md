@@ -1056,14 +1056,19 @@ opens - the sigils' own five (`sigil.js` `renownSigilStage`: Renown 1, 10, 20, 3
 
 | Renown | the buff | items kept | blue at level 0 | healing (a foe / a pile) | Restore Power (a foe / a pile) | rest supplies |
 |---|---|---|---|---|---|---|
-| 1-9 | half | 62.5% | 4.5% | 8 / 15 | 3 / 5 | half LOOT-EASE's |
-| 10-19 | three quarters | 68.75% | 4.75% | 9 / 16.5 | 4.5 / 7.5 | three quarters |
-| 20-29 | all | 75% | 5% | 10 / 18 | 6 / 10 | LOOT-EASE's |
-| 30-39 | five quarters | 81.25% | 5.25% | 11 / 19.5 | 7.5 / 12.5 | five quarters |
-| 40-50 | half again | 87.5% | 5.5% | 12 / 21 | 9 / 15 | half again |
+| 1-9 | half | 62.5% | 4.5% | 3 / 6 | 1 / 2 | half LOOT-EASE's |
+| 10-19 | three quarters | 68.75% | 4.75% | 3.5 / 7 | 1.5 / 3 | three quarters |
+| 20-29 | all | 75% | 5% | 4 / 8 | 2 / 4 | LOOT-EASE's |
+| 30-39 | five quarters | 81.25% | 5.25% | 4.5 / 9 | 2.5 / 5 | five quarters |
+| 40-50 | half again | 87.5% | 5.5% | 5 / 10 | 3 / 6 | half again |
 
 The live game before LOOT-EASE: 50% kept, 4% blue, 6 / 12 healing, no Restore Power, no rest supply online. Every
-stage is above it, and Renown 40 is under the loot before PLAIN-LOOT (section 18).
+stage is above it but the two potions, and Renown 40 is under the loot before PLAIN-LOOT (section 18). POT-THIN
+(2026-10-21, `06-Systems/Professions-Arc.md` section 48, the owner: "decrease pot drops") cut the potion columns BELOW
+the live game's on purpose - a crafter's bottle is the supply now, the drop a windfall - so the healing ladder's step
+starts at an invented 2 / 4 (`healingSupply.js` HEALING_ENEMY_CHANCE_BEFORE, HEALING_PILE_CHANCE_BEFORE), not the live
+game's 6 / 12; it was 8 / 15 to 12 / 21, and Restore Power 3 / 5 to 9 / 15 (AUDIT CRAFT-WRITS T7: the table stood at its
+old numbers).
 
 **What stays whole at every stage.** What LOOT-EASE fixed rather than tuned: a foe's worn kit rolls the plain ladder at
 its death (KIT-ROLL - every foe's since AUDIT 625, section 21), the cap keeps a supply before plain gear
@@ -1093,7 +1098,8 @@ seed's other loot is the same loot at every Renown; only what each roll decides 
 bodies a cell, a plain Warrior at level 8: 1.11 pieces a body at Renown 1 (26.5% gold alone), 1.21 at 10, 1.30 at 20
 (18.7%; offline the same), 1.39 at 30, 1.46 at 40 (13.2%); a Potion of Healing on 5.8% / 7.9% / 10.1% of them at
 Renown 1 / 20 / 40, Restore Power on 2.2% / 4.3% / 8.2%, a rest supply on 2.4% / 7.1% / 11.0%. A skeleton's body 0.46 /
-0.59 / 0.75 pieces.
+0.59 / 0.75 pieces. (The potions' shares were measured before POT-THIN; at its chances a foe's healing potion and Restore
+Power fall to some two fifths and one third of them.)
 
 Pinned: `test/systems/renownloot.test.js` (6 - the stage and its door, the table, the keep through the real spawn, the kit at
 death, the supplies through the real hooks with their draws counted, the hosts). Moved: `test/systems/rf2_spawnloot.test.js`

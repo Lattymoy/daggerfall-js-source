@@ -30,11 +30,12 @@ test('SWING-LABEL: every mouse button is named for the physical button it is, ne
   }
 });
 
-test('SWING-LABEL: the default attack reads RIGHT CLICK, activate LEFT CLICK, auto-run MIDDLE CLICK', () => {
+test('SWING-LABEL: the default attack reads RIGHT CLICK, activate LEFT CLICK, the party\'s ping MIDDLE CLICK', () => {
   const codeOf = (action) => DEFAULT_BINDINGS.find(([, a]) => a === action)[0];
   assert.equal(buttonText(codeOf('SwingWeapon'), true), 'RIGHT CLICK');
   assert.equal(buttonText(codeOf('ActivateCenterObject'), true), 'LEFT CLICK');
-  assert.equal(buttonText(codeOf('AutoRun'), true), 'MIDDLE CLICK');
+  assert.equal(buttonText(codeOf('PartyPing'), true), 'MIDDLE CLICK');   // PARTY-PING: the middle button
+  assert.equal(buttonText(codeOf('AutoRun'), true), 'F3');   // PARTY-PING: auto-run left it
 });
 
 test('SWING-LABEL: the Swing Weapon line says what the gesture code actually does', () => {

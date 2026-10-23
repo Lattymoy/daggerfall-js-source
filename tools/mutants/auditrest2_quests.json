@@ -103,8 +103,8 @@
   {
     "name": "AUDITREST2-Q-Q4-frozen-again-in-the-doc",
     "file": "src/systems/quest/clock.js",
-    "old": "and stays a deadline, on played time (it was frozen under TIMEFREE). */",
-    "new": "and stays frozen. */",
+    "old": "and stays a deadline, on played time (it was frozen under TIMEFREE).",
+    "new": "and stays frozen.",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"
     ]

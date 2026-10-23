@@ -146,7 +146,8 @@ test('audit26 F033: both missile hosts flash, gated on element None and ByTouch,
     // WB4b: and a SEVENTH - a harmful missile of mine meeting the Burning Court's boss
     // SUNBABY2: and an EIGHTH - the sun baby's sky fireball landing where it was thrown
     // SERPENT4: and a NINTH - a harmful missile of mine meeting a box mark (the sea serpent's hide)
-    const impacts = f === 'src/scenes/hostMagic.js' ? 9 : 3;
+    // DEX5: and a TENTH - a missile of mine meeting a body a mod's corpse prefab stands (the troll's trigger)
+    const impacts = f === 'src/scenes/hostMagic.js' ? 10 : 3;
     assert.equal((s.match(/(?<!function )showImpactFlash\(m, /g) ?? []).length, impacts,
       `${f} flashes at all ${impacts} impacts`);
     // the wall flash is OUTSIDE the AoE branch - DFU flashes on any

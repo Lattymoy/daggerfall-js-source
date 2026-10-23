@@ -125,7 +125,8 @@ current design "does not work in an enjoyable manner"):
   KIT-CEILING and SELL-AS-FOUND (below), POTION-COMMON (a Potion of Healing
   on a looting foe 6 times in 100 and in a J-O pile 12 - 10 and 18 since
   LOOT-EASE, 2026-10-05, with a Potion of Restore Power beside it at 6 and 10,
-  `06-Systems/Loot-Arc.md` section 19 - and a few at every
+  `06-Systems/Loot-Arc.md` section 19; 4 and 8, and 2 and 4, since POT-THIN,
+  2026-10-21, `06-Systems/Professions-Arc.md` section 48 - and a few at every
   alchemist's and general store's counter each day -
   `src/systems/healingSupply.js`) and COMPANION-WEIGHT (a crew companion's
   pack carries what a person of his strength can, DFU's MaxEncumbrance -

@@ -1,0 +1,60 @@
+[
+  {
+    "name": "SNOW-FACE-the-shed-back-in-the-chunk",
+    "file": "src/render/snowCoverGlsl.js",
+    "old": "  float c = snowAtHeight(snowLine(local), y + uSnowSet.x);   // SNOW-FACE: a steep face keeps it (SNOW_GROUND)",
+    "new": "  float c = snowAtHeight(snowLine(local), y + uSnowSet.x) * smoothstep(0.62, 0.8, 0.5);",
+    "tests": [
+      "test/render/fb1021_snowface.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-FACE-a-cover-held-under-whole",
+    "file": "src/render/snowCoverGlsl.js",
+    "old": "  float c = snowAtHeight(snowLine(local), y + uSnowSet.x);   // SNOW-FACE: a steep face keeps it (SNOW_GROUND)",
+    "new": "  float c = min(snowAtHeight(snowLine(local), y + uSnowSet.x), 0.98);",
+    "tests": [
+      "test/render/fb1021_snowface.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-FACE-the-cpu-s-shed-back",
+    "file": "src/render/snowCoverGlsl.js",
+    "old": "  const e = SNOW_GROUND.edge, c = cover;",
+    "new": "  const e = SNOW_GROUND.edge, c = cover * smooth(0.62, 0.8, 0.5);",
+    "tests": [
+      "test/render/fb1021_snowface.test.js",
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "LANE-TURN-sent-to-the-skin",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "!turned.has(p)) { turned.add(p); markRebuild(key); }",
+    "new": "!turned.has(p)) { turned.add(p); markReskin(key); }",
+    "tests": [
+      "test/render/fb1021_snowface.test.js",
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "LANE-TURN-the-world-s-rebuild-a-skin",
+    "file": "src/scenes/world.js",
+    "old": "markRebuild: (key) => _reskin.mark(key), now:",
+    "new": "markRebuild: (key) => _reskin.skin(key), now:",
+    "tests": [
+      "test/render/fb1021_snowface.test.js",
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "LANE-TURN-a-turn-on-before-the-window",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "if (!on || ready) for (const [key, p] of builtOf())",
+    "new": "if (true) for (const [key, p] of builtOf())",
+    "tests": [
+      "test/render/fb1021_snowface.test.js",
+      "test/render/precip4_snowground.test.js"
+    ]
+  }
+]

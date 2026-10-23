@@ -1,0 +1,394 @@
+[
+  {
+    "name": "PASSAGE-HANDS-keys-read",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "    has: { value: (/** @type {string} */ action) => (passenger() ? journey.held.has(action) : input.has(action)) },",
+    "new": "    has: { value: (/** @type {string} */ action) => input.has(action) },",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the reported law: the passenger's D on her rudder"
+  },
+  {
+    "name": "PASSAGE-HANDS-presses-read",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "(passenger() && !PASSENGER_KEYS.includes(action) ? journey.edges.has(action) : input.started(action) || journey.edges.has(action))",
+    "new": "(input.started(action) || journey.edges.has(action))",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the passenger's S, sails and lantern on her helm"
+  },
+  {
+    "name": "PASSAGE-HANDS-journey-taps-unread",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "input.started(action) || journey.edges.has(action))",
+    "new": "input.started(action))",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js",
+      "test/systems/comeSailAway/auditnav2_helm.test.js"
+    ],
+    "why": "her master's own sail press never reaches the mod"
+  },
+  {
+    "name": "PASSAGE-HANDS-keeps-nothing",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "(passenger() && !PASSENGER_KEYS.includes(action) ?",
+    "new": "(passenger() ?",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "a passenger can never step from her helm"
+  },
+  {
+    "name": "PASSAGE-HANDS-autorun-the-players",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "get: () => { if (!passenger()) return input.toggleAutorun; if (input.toggleAutorun) input.toggleAutorun = false; return journey.row; }",
+    "new": "get: () => input.toggleAutorun",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "AUDIT FB1021d PS-4: the passenger's autorun read under her master's hand - latched the whole voyage, it pulls her oars whenever he ships them with her sails down"
+  },
+  {
+    "name": "PASSAGE-HANDS-host-unwrapped",
+    "file": "src/scenes/world.js",
+    "old": "}, () => csaRuntime?.state?.CurrentBoat, csaJourneyHelm),",
+    "new": "}, () => null, csaJourneyHelm),",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the host's seam never asks for a charter"
+  },
+  {
+    "name": "PASSAGE-HANDS-card-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const ab = helm ? null : card ?? csaAboard.aboard;",
+    "new": "    const ab = helm ? null : csaAboard.aboard;",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "a passenger's panel blank"
+  },
+  {
+    "name": "PASSAGE-HANDS-helm-kept",
+    "file": "src/scenes/world.js",
+    "old": "    if (helm) helm = card ? null : { ...helm,",
+    "new": "    if (helm) helm = { ...helm,",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "a passenger handed her helm's buttons"
+  },
+  {
+    "name": "PASSAGE-IN-roadstead-refused",
+    "file": "src/systems/naval/passage.js",
+    "old": "  return plan.kinds.includes('sea') || passagePixels(from, to) <= VOYAGE_LANDFALL_PX;",
+    "new": "  return plan.kinds.includes('sea');",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the reported law: her master never brings her in from her port's roadstead"
+  },
+  {
+    "name": "PASSAGE-IN-every-plan",
+    "file": "src/systems/naval/passage.js",
+    "old": "  return plan.kinds.includes('sea') || passagePixels(from, to) <= VOYAGE_LANDFALL_PX;",
+    "new": "  return true;",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "A1 undone: set down at the quay left"
+  },
+  {
+    "name": "PASSAGE-IN-host-on-A1",
+    "file": "src/scenes/world.js",
+    "old": "    if (voyage && !voyageSails(from, summary.pixel, plan)) {",
+    "new": "    if (voyage && !plan?.kinds.includes('sea')) {",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js",
+      "test/scenes/naval/passagehost.test.js"
+    ],
+    "why": "the host's resume back on A1's own"
+  },
+  {
+    "name": "PASSAGE-IN-rings-on-the-sea",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const ring = (i) => (ringAt && i < pixels.length - 1 && !afloat(i)",
+    "new": "  const ring = (i) => (ringAt && i < pixels.length - 1",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "a sailed leg aimed at a town's ring ashore"
+  },
+  {
+    "name": "PASSAGE-IN-mark-unread",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const read = leg.kind === 'sea' ? seaLegMark(o, deps.seaWaterAt) : null;",
+    "new": "    const read = null;",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the reported law: a sailed leg aimed at the built ground's land"
+  },
+  {
+    "name": "PASSAGE-IN-middle-always",
+    "file": "src/systems/travel/seaMark.js",
+    "old": "  if (floats(centre.x, centre.z)) return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the middle quarter whatever is built"
+  },
+  {
+    "name": "PASSAGE-IN-lone-tile",
+    "file": "src/systems/travel/seaMark.js",
+    "old": "export const MARK_BLOCK_HALF = 2;",
+    "new": "export const MARK_BLOCK_HALF = 0;",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "a lone wet tile taken for room to float her"
+  },
+  {
+    "name": "PASSAGE-IN-host-water-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    seaWaterAt: (x, z) => tvSeaWaterAt(...state.localFromWorld(x, z)),",
+    "new": "    seaWaterAt: null,",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the host hands the journey no built water"
+  },
+  {
+    "name": "PASSAGE-PLATE-over-the-overworld",
+    "file": "src/scenes/world.js",
+    "old": "!!townTalk.hudHidden || !!travelView?.active;   // PASSAGE-PLATE: the Overworld's",
+    "new": "!!townTalk.hudHidden;   // PASSAGE-PLATE: the Overworld's",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the reported law: the plate over the Overworld's block"
+  },
+  {
+    "name": "PASSAGE-PLATE-down-under-the-bar",
+    "file": "src/scenes/world.js",
+    "old": "!!townTalk.hudHidden || !!travelView?.active;   // PASSAGE-PLATE: the Overworld's",
+    "new": "!!townTalk.hudHidden || !!travelView?.active || !!_travelUIHolder.ui?.isShowing;   // PASSAGE-PLATE: the Overworld's",
+    "why": "AUDIT FB1021d PS-5: the plate, the fight's card and the touch Brace taken down under First Person Travel's bar, which stands top centre clear of it",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-latch-kept",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": " if (input.toggleAutorun) input.toggleAutorun = false;",
+    "new": "",
+    "why": "AUDIT FB1021d PS-4: a passenger stepped off under sail runs off down the deck",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-setter-dropped",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "set: (v) => { input.toggleAutorun = v; } },",
+    "new": "set: (v) => {} },",
+    "why": "the mod's let-go of my own autorun never reaches it",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-master-never-rows",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "input.toggleAutorun = false; return journey.row; }",
+    "new": "input.toggleAutorun = false; return false; }",
+    "why": "her master's oars unread: in a calm she lies still",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-journey-disembark-refused",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "(passenger() && !PASSENGER_KEYS.includes(action) ? journey.edges.has(action) : input.started(action) || journey.edges.has(action))",
+    "new": "(passenger() ? (PASSENGER_KEYS.includes(action) ? input.started(action) : journey.edges.has(action)) : input.started(action) || journey.edges.has(action))",
+    "why": "her master's landfall never sets the passenger down",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-time-keys-taken",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "export const PASSENGER_KEYS = Object.freeze([BOAT_ACTIONS.disembark, 'Transport', BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);",
+    "new": "export const PASSENGER_KEYS = Object.freeze([BOAT_ACTIONS.disembark, 'Transport']);",
+    "why": "the passenger's time dial taken",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-halted-still-his",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "export const mastersHelm = (boat, journey) => !!charterOf(boat) && journey?.live === true;",
+    "new": "export const mastersHelm = (boat, journey) => !!charterOf(boat);",
+    "why": "AUDIT FB1021d PS-2: halted, nobody steers her - dead in the water in a fight, aground every twenty seconds",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-host-live-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "    tvSea.wasLive = csaJourneyHelm.live = true;",
+    "new": "    tvSea.wasLive = true;",
+    "why": "the journey's hand never marked on: a passenger's helm theirs all the voyage",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-host-halt-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "      tvSea.wasLive = csaJourneyHelm.live = false;   // AUDIT FB1021d PS-2",
+    "new": "      tvSea.wasLive = false;   // AUDIT FB1021d PS-2",
+    "why": "the hand never marked off: halted, the passenger held off her helm",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-card-while-halted",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "  if (!mastersHelm(boat, journey)) return null;",
+    "new": "  if (!charterOf(boat)) return null;",
+    "why": "halted, the helm's buttons hidden behind a card",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-card-buttonless",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  const list = h ? helmButtons(h) : aboard?.passage ? passengerButtons(aboard) : [];",
+    "new": "  const list = helmButtons(h);",
+    "why": "AUDIT FB1021d PS-7: a mouse or a touch passenger loses the dial and Leave",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-card-untitled",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": " : aboard.passage ? passengerTitle(aboard.passage) : ",
+    "new": " : ",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "the passenger's card titled as another player's boat - nothing says where she is bound"
+  },
+  {
+    "name": "PASSAGE-HANDS-pad-told-the-helm",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  if (glass.length || passenger) return glassHelmPrompts(h, glass, trims, passenger);",
+    "new": "  if (glass.length) return glassHelmPrompts(h, glass, trims);",
+    "why": "AUDIT FB1021d PS-7: a passenger's pad told her sails and lanterns",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-HANDS-pad-host-unasked",
+    "file": "src/scenes/world.js",
+    "old": ", passenger: mastersHelm(csaRuntime?.state?.CurrentBoat, csaJourneyHelm) }",
+    "new": " }",
+    "why": "the host never says a passenger",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-IN-every-sea-kind-afloat",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
+    "new": "const afloat = (i) => SEA_KINDS.includes(kinds[i - 1]) || SEA_KINDS.includes(kinds[i]);",
+    "why": "AUDIT FB1021d PS-3: the land a party embarks from and makes landfall on loses its ring - straight across the town to the water",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-IN-the-landfall-s-land-afloat",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
+    "new": "const afloat = (i) => ['sea', 'embark', 'landfall'].includes(kinds[i - 1]);",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "AUDIT FB1021d PS-3: the land a party makes landfall on read as sea - its town walked straight across"
+  },
+  {
+    "name": "PASSAGE-IN-the-launch-s-water-ashore",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
+    "new": "const afloat = (i) => kinds[i - 1] === 'sea';",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ],
+    "why": "AUDIT FB1021d PS-3: the water a party embarks into read as land - a sailed leg aimed at a town's ring ashore"
+  },
+  {
+    "name": "PASSAGE-IN-dry-leg-sailed",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) { r.i++; startRouteLeg(); return; }\n",
+    "new": "",
+    "why": "AUDIT FB1021d PS-1: a pixel with no water built aimed at its middle - land",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-IN-unbuilt-never-again",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.autopilot && st.route && st.route.seaUnbuilt === st.route.i && seaLegBuilt(st.route.legs[st.route.i])) startRouteLeg();\n",
+    "new": "",
+    "why": "AUDIT FB1021d PS-1: a leg begun with its pixel unbuilt keeps its middle, whatever is built there",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-IN-unbuilt-read-as-dry",
+    "file": "src/systems/travel/seaMark.js",
+    "old": "  if (waterAt(centre.x, centre.z) === null) return SEA_LEG_UNBUILT;\n",
+    "new": "",
+    "why": "a pixel not built yet passed as dry",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-IN-dry-as-the-middle",
+    "file": "src/systems/travel/seaMark.js",
+    "old": "  return best ?? SEA_LEG_DRY;",
+    "new": "  return best;",
+    "why": "a dry pixel's middle kept",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-IN-host-unbuilt-as-land",
+    "file": "src/scenes/world.js",
+    "old": "    if (!t) return null;   // AUDIT FB1021d PS-1",
+    "new": "    if (!t) return false;   // AUDIT FB1021d PS-1",
+    "why": "the host reads an unbuilt pixel as land: every leg into one passed",
+    "tests": [
+      "test/scenes/naval/fb1021d_passage.test.js"
+    ]
+  }
+]

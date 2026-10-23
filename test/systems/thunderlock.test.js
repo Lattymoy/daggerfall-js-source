@@ -233,7 +233,9 @@ test('THE RAREST THING IN THE GAME: impossible below its tier, and never for sal
 
   // IT ARRIVES LOADED: a gun found with no ammunition is a gun that
   // cannot be fired and cannot be bought shot for.
-  const minted = find.mint(() => 0.5);
+  // PIN MOVED (PISTOLET, AUDIT PISTOLET): the find's draw under GUN_SHARE is the Thunderlock's, at or over it the
+  // Pistolet's (systems/thunderlock.js setSecondGun) - this one draws in the Thunderlock's half
+  const minted = find.mint(() => 0.25);
   assert.equal(minted.length, 2);
   assert.ok(isThunderlock(minted[0]) && isPellet(minted[1]));
   assert.ok(minted[1].stackCount >= 6 && minted[1].stackCount <= 18);
@@ -380,9 +382,13 @@ test('F8: the game plays the weapon’s own clips - all four hosts, through the 
   // and the ONE place all four hosts share plays them
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
   assert.match(rig, /thunderlockVoice\(dt, \{ armShoots, fired: held\.fired \}\);/, 'the rig has a per-frame voice (AUDIT FIELD-GUN-MW F1: told the arm\'s hold, so the shot\'s bang rides the release under the arm)');
-  assert.match(rig, /audio\.playOneShot\(TL_SFX\.fire/, 'the shot');
-  assert.match(rig, /audio\.playOneShot\(TL_SFX\.open/, 'the reload opening');
-  assert.match(rig, /audio\.playOneShot\(TL_SFX\.close/, 'and the lock-up');
+  // PISTOLET: the clips are the HELD gun's - the Thunderlock's own three when it is the one in hand (heldSfx), the
+  // Dwarven Pistolet's when that is
+  assert.match(rig, /const heldSfx = \(\) => \(pistoletHeld\(\) \? PL_SFX : TL_SFX\);/, 'the Thunderlock in hand plays TL_SFX');
+  assert.match(rig, /const feel = heldFeel\(\), sfx = heldSfx\(\)/, 'the voice reads the held gun\'s');
+  assert.match(rig, /audio\.playOneShot\(sfx\.fire/, 'the shot');
+  assert.match(rig, /audio\.playOneShot\(sfx\.open/, 'the reload opening');
+  assert.match(rig, /audio\.playOneShot\(sfx\.close/, 'and the lock-up');
 });
 
 test('F7: the art is fetched off the SITE root, not the document - the held map’s own lesson', async () => {
@@ -865,9 +871,11 @@ test('FIELD-GUN8: EVERY knob on the lab\'s panel is either carried or deliberate
 test('FIELD-GUN8: the voice and the one module the lab turns on', () => {
   // the clips take the lab's volume and its jitter, not full gain
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /playOneShot\(TL_SFX\.fire, GUN_FEEL\.sfxVolume, gunPitch\(\)\)/);
-  assert.match(rig, /playOneShot\(TL_SFX\.open, GUN_FEEL\.sfxVolume \* 0\.9, gunPitch\(\)\)/);
-  assert.match(rig, /playOneShot\(TL_SFX\.close, GUN_FEEL\.sfxVolume \* 0\.95, gunPitch\(\)\)/);
+  // PISTOLET: through the held gun's row (heldFeel - GUN_FEEL for the Thunderlock), its jitter its own
+  assert.match(rig, /const heldFeel = \(\) => \(pistoletHeld\(\) \? PISTOLET_FEEL : GUN_FEEL\);/);
+  assert.match(rig, /playOneShot\(sfx\.fire, feel\.sfxVolume, gunPitch\(undefined, feel\)\)/);
+  assert.match(rig, /playOneShot\(sfx\.open, feel\.sfxVolume \* 0\.9, gunPitch\(undefined, feel\)\)/);
+  assert.match(rig, /playOneShot\(sfx\.close, feel\.sfxVolume \* 0\.95, gunPitch\(undefined, feel\)\)/);
   // the jitter is the lab's line, and it is BOUNDED - a pitch that
   // can wander is a clip that stops sounding like the same gun
   for (const r of [0, 0.5, 1]) {
@@ -921,8 +929,11 @@ test('FIELD-GUN12: the lab and the game are the SAME function, not two that agre
   // and then doing something else.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
   assert.match(rig, /const \{ rect \} = gunFrameRect\(\{/, 'the draw takes the prototype\'s rect');
-  assert.match(rig, /gunRigStep\(_tlRig, gunWidgetSettings\(\), dt, \{/, 'and the prototype\'s module step');
-  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, undefined, lit \?\? undefined\)/, 'and puts it on the screen');   // FIELD-GUN13: `lit` is the tint with the muzzle's own lift on it
+  assert.match(rig, /gunRigStep\(_tlRig, gunWidgetSettings\(null, feel\.widget\), dt, \{/, 'and the prototype\'s module step (PISTOLET: on the held gun\'s own tuning - none for the Thunderlock, so the player\'s own)');
+  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\)/, 'and puts it on the screen');
+  // PISTOLET: and the PICTURE is mirrored under the flip, as the lab's ctx.scale(-1, 1) mirrors it - it had moved only the
+  // rect, so a left-handed player's gun (and a pair's left pistol) was drawn on the left as a right hand
+  assert.match(rig, /const uv = flip \? MIRROR_UV : undefined;/, 'the mirror is the picture\'s');   // FIELD-GUN13: `lit` is the tint with the muzzle's own lift on it
 
   // THE FRAME IS STILL THE PROTOTYPE'S SHAPE: anchor placed and
   // transformed, union derived, kick after the transform (the mod's
@@ -987,7 +998,7 @@ test('FIELD-GUN13 #2 - the draw is the gun’s own clack, not a scabbard', () =>
   assert.ok(toggle.includes('if (thunderlockHeld()) {'), 'the departure is named in the toggle');
   assert.ok(toggle.indexOf('thunderlockHeld()') < toggle.indexOf('equipSoundFor('),
     'and it stands AHEAD of the verbatim call, which is what makes it a departure and not a patch');
-  assert.ok(toggle.includes('TL_SFX.close'), 'the clip is the breech coming home');
+  assert.ok(toggle.includes('heldSfx().close'), 'the clip is the breech coming home (PISTOLET: the held gun\'s own - TL_SFX for this one)');
   // the key it plays is one the weapon actually registers
   assert.equal(TL_SFX.close, 'thunderlock:close');
   assert.ok(SFX_FILES[TL_SFX.close], 'and it has a file behind it');
@@ -1104,7 +1115,7 @@ test('FIELD-GUN13 #3 - the weapon rides in, it does not pop', () => {
     'and nothing below the gun’s own arm draws on a sliding frame');
   // the module is told, rather than a second curve being written
   assert.match(src, /shown: !reloading && !sheathed,/);
-  assert.match(src, /hiddenTarget: sheathed \? GUN_FEEL\.sheathTarget : GUN_FEEL\.hiddenTarget,/);
+  assert.match(src, /hiddenTarget: sheathed \? feel\.sheathTarget : feel\.hiddenTarget,/);
 });
 
 // ── FIELD-GUN15 (2026-09-20, Mac, with the lab's panel open on his
@@ -1154,8 +1165,11 @@ test('FIELD-GUN15: the weapon plays the HEAD of each candidate list, which is wh
   // AND THE CLOSE'S LEAD IS THE LAB'S, not a clip length. The comment
   // in weaponRig.js used to claim it was "the clip's own length"; the
   // clip it was written for is 98ms and the lead is 420.
+  // PIN MOVED (AUDIT PISTOLET B6): the 420 is ONE number now, gunFeel.js RELOAD_CLOSE_LEAD, which the rig and the pistol
+  // pair both read - it was two literals
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /const TL_CLOSE_LEAD = 0\.42;/);
+  assert.match(rig, /const TL_CLOSE_LEAD = RELOAD_CLOSE_LEAD;/);
+  assert.match(readFileSync('src/combat/gun/gunFeel.js', 'utf8'), /export const RELOAD_CLOSE_LEAD = 0\.42;/);
   assert.match(proto, /gun\.cooledMs >= Math\.max\(0, state\.cool - 420\)/, 'the prototype’s own 420ms');
   assert.doesNotMatch(rig, /The close lands this long before the weapon is ready - the clip's\n\s+\*\s+own length/,
     'and the sentence that said otherwise is gone');
@@ -1512,7 +1526,10 @@ test('FIELD-GUN19: the shot leaves the barrel through the WORLD STRIP, not the c
   // for this one reader; a draw that forgot it would leave every shot
   // high again with nothing else to show for it.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /_tlDrawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \},[^}]*viewport: renderer\.worldViewportRect \?\? null[^}]*\}/,   // RETRO-UI: the rect measured back on the real canvas
+  // PISTOLET: the record is built once (`drawn`) and parked on the one gun's `_tlDrawn` or on a pair's hand
+  assert.match(rig, /const drawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \},[^}]*viewport: renderer\.worldViewportRect \?\? null[^}]*\}/,   // RETRO-UI: the rect measured back on the real canvas
+    'drawThunderlock parks the strip the world was drawn into');
+  assert.match(rig, /if \(hand\) gunPair\.hands\[hand\]\.drawn = drawn; else _tlDrawn = drawn;/,
     'drawThunderlock parks the strip the world was drawn into');
   const renderer = readFileSync('src/render/renderer.js', 'utf8');
   assert.match(renderer, /get worldViewportRect\(\)/, 'the renderer exposes the frame\'s strip');

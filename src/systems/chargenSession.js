@@ -29,10 +29,11 @@ import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
 import { assignStartingEquipment } from './startingGear.js';   // S3d; RRI2: AssignStartingEquipment, the delegate
 import { giveBinderAtChargen } from './iliac/iliacItems.js';   // CARDS8: the Card Binder and the starter deck, the kit's own tail
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
-import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
+import { standardSpellsByIndex } from './spell/standardSpells.js';   // DEX4a: the one RebuildClassicSpellsDict
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
+import { reviseStockCareer } from './stockClasses.js';   // CLASS-USE: the stock careers' revised skill lists
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
 import { attachFactionRep } from './faction/factionRep.js';   // S25
 import { createRegionConditions } from './region/regionConditions.js';
@@ -56,7 +57,7 @@ import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the ans
  *  unavailable, which is the pre-existing no-magic fallback. */
 export async function loadSpellIndex(fetchBytes) {
   try {
-    return spellsByIndexMap(readSpellsStd(await fetchBytes('SPELLS.STD')));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict)
+    return standardSpellsByIndex(await fetchBytes('SPELLS.STD'));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict); DEX4a: the mods' records merged first
   } catch (e) {
     console.warn('[chargen] SPELLS.STD unavailable; the starting spellbook stays empty', e);
     return null;
@@ -102,13 +103,13 @@ export async function loadClassQuestionData(fetchBytes) {
   return { questionLibrary, classesData };
 }
 
-/** The 18 classic careers (CLASS00..17.CFG). */
+/** The 18 classic careers (CLASS00..17.CFG), each through CLASS-USE's revision (stockClasses.js). */
 export async function loadCareers(fetchBytes) {
   const careers = [];
   for (let i = 0; i < CLASS_CAREERS.length; i++) {
     const cf = new ClassFile();
     cf.load(await fetchBytes(`CLASS${String(i).padStart(2, '0')}.CFG`));
-    careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: cf.career });
+    careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: reviseStockCareer(i, cf.career) });
   }
   return careers;
 }
@@ -123,8 +124,9 @@ export async function loadCareers(fetchBytes) {
 export async function applyHeadlessChargen(playerEntity, classIndex, { fetchBytes, spellsByIndex = null } = {}) {
   const cf = new ClassFile();
   cf.load(await fetchBytes(`CLASS${String(classIndex).padStart(2, '0')}.CFG`));
-  createCharacter(playerEntity, cf.career, classIndex);
-  playerEntity.spells = assignStartingSpells(classIndex, spellsByIndex, cf.career);
+  const career = reviseStockCareer(classIndex, cf.career);   // CLASS-USE: the career loadCareers hands the wizard
+  createCharacter(playerEntity, career, classIndex);
+  playerEntity.spells = assignStartingSpells(classIndex, spellsByIndex, career);
   // S3d: the same kit every other creation path gets
   playerEntity.items = [];
   playerEntity.equip = null;

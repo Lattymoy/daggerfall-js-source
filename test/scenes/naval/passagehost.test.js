@@ -327,7 +327,7 @@ test('PASSAGE host wiring: the world host builds it once and calls it - the bert
   assert.match(world, /\n {4}passage: \(ship\) => passage\?\.offer\(ship\),/, 'the sea\'s door to it');
   assert.match(world, /const passage = createPassageHost\(\{[^]*?canGo: travelViewCanGo, route: travelViewRouteTo, travel: \(\) => travelOptions,/, 'the Overworld\'s journey is the voyage - a voyage\'s');
   assert.match(world, /return tvSeaCrosses\(tvSeaRig\(b\)\) \? \{ start: 'sea', again: !!b\.packable, boat: b, how: 'helm', voyage: !!b\.charter \} : null;/, 'her helm asks the planner for a voyage (AUDIT PASSAGE A1)');
-  assert.match(world, /if \(voyage && !plan\?\.kinds\.includes\('sea'\)\) \{ noWay\?\.\(\); return false; \}/, 'a plan that never sails refused');
+  assert.match(world, /if \(voyage && !voyageSails\(from, summary\.pixel, plan\)\) \{ noWay\?\.\(\); return false; \}/, 'a plan that never sails refused');   // PIN MOVED (FIELD BUGS 2026-10-21d PASSAGE-IN): but from her port's roadstead she runs in
   assert.match(world, /const tvSeaAsk = \(means, goal\) => \(means \? \{ \.\.\.means, again: means\.again && !means\.voyage, goal \} : null\);/, 'and never packed to launch again');
   assert.match(world, /standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk \}\);/, 'the rider remounted on a refusal, her deck underfoot, a world\'s move');
   assert.match(world, /\n {4}passage\.frame\(dt, gamePaused\(\) \|\| _loading\);[^\n]*\n {4}const on = navalOn\(\);/, 'its frame, before the switch returns');

@@ -886,6 +886,11 @@ The Battlemages' library, its heart an **Orrery** drawn by `orreryOf` (`src/net/
   every five Redoubts) and four at rank II, never past the default.
 - **The judge**: EG4 extracts the pure judge, `orreryJudge`, out of `_sdTurn` in `server/src/index.js` (reach,
   settle, rights, `orreryStep`). The Hour's room and the Spire's both call it.
+- **The stones on the screen** (FIELD BUGS 2026-10-20f ORRERY-STONES, `scenes/eliteGates/egOrrery.js`): the law lays the six
+  stones at the Hour's own ring and bearings (11 m; 30 to 330 degrees), so each stands as the Hour's own stone j - its
+  relief, dial and hand, its crown gear, its two levers - carried to its spot by a translation, on its own floor, solid.
+  Its levers ARE the handles (forward on the right as one faces it), and its hand shows the room's hours. The handles
+  were boxes in the air beside a gold disc, with nothing drawn there.
 - **Pressure**: `ceil(n/4)` Harriers rise every 15 s while the lock stands, so the members off the stones guard the
   members on them. The wave is Harriers alone (`egWaveKinds`' `only`), with Swarm-Mother's Binder beside them.
 - **Everyone works**: any member in reach may turn any stone, and the company is one thread: the Spire's judge keeps
@@ -2431,7 +2436,10 @@ fight hall's door is no part. A receipt banks:
 - **the depth**: the Redoubt joins the member's taken Redoubts, this season and all time;
 - **the week's spoils** of that Redoubt, rolled from the seed its claim answers - the receipt's secret seed (section 22)
   mixed with the account service's own draw, so no page rolls a receipt's spoils before the service has said which
-  receipt the week pays (AUDIT EG V) - and thrown at the beacon like the gate's spew (section 19);
+  receipt the week pays (AUDIT EG V) - and thrown at the beacon like the gate's spew (section 19). LOST-SPOILS
+  (2026-10-22, `06-Systems/Accounts-And-Cloud-Saves-Arc.md`): an item still there when the member leaves the Spire, or
+  when the next Redoubt's spoils are thrown, goes to the mailbox from the Lost and Found, its gold to the purse; a
+  Reliquary does not (the owner: "No, keep the risk");
 - **Marks**, and the embers section 19 pays, thrown among the spoils (AUDIT EG V);
 - **a sealed Reliquary**, when that Redoubt pays this week (section 16.3);
 - **the board's standing** (section 20).
@@ -2557,7 +2565,11 @@ fallen their spoils at risk and the company a member until the next Redoubt, or 
 Losing the whole company still costs the run.
 
 - **The Unfallen**: a company that takes Redoubt 10 with no fall, in a breach begun at Hall 1, holds the title *the
-  Unfallen* and a flame on its board row (section 20).
+  Unfallen* and a flame on its board row (section 20). AS BUILT (AUDIT COLLECTIONS-II, 2026-10-22,
+  `01-Overview/audits/Audit-Collections-II.md` L1-4): the fall counted is the member's own - a Redoubt receipt's `fl`
+  is its member's falls (`egBrain.js:"fl: m.falls ?? 0"`) and egHonourBitsOf grants on it
+  (`egHonours.js:"c.fl === 0 && c.ew === 0"`) - so a member who never fell holds the title whoever else in the company fell. The
+  Collections page says what is built; which is meant is the owner's to decide.
 - **The Lone Beacon**: a Court felled by one living member, in a company of four or more, gives that member the title
   *the Lone Beacon* and a herald line (section 20).
 
@@ -2889,6 +2901,13 @@ own bodies; and every one is a company of one's to earn - the Last Armsmaster's 
 earned, never bought. The Broker's insignia stay the gate's. Cosmetic auras draw at nothing during a trial (THE QUIET
 COMPANY, section 25.4).
 
+**SPIRE-FIRST (2026-10-20): the first company came.** The account Serveride - shown in the room by his character's name,
+Severide - took Redoubt 10 first, alone, in 1:17:40 (the herald's post; the Descent's Alone bracket), and the owner
+granted it: *"Since hes world first. He should get this title plus a custom aura"*. `EG_FIRST_HANDLES` names Serveride,
+and the list is closed with him - there is one first company. Firstlight was rebuilt as that aura, its own and nobody
+else's (section 31, SPIRE-FIRST). The list is ACCOUNTS' HANDLES: the herald says the name the room reads, which since
+NAME-AS may be a character's, so a name off the herald is never put on it as it stands (section 31, SPIRE-FIRST-NAME).
+
 **EG-E1 record (2026-10-12): what a Redoubt pays.** The account service pays a Redoubt's `w` receipt at its claim, by
 the pay law `net/eliteGates/egPay.js`, and the Broker sells the Panoply's sink. File by file:
 
@@ -3002,12 +3021,37 @@ heralds, it posts to the gate's webhook and falls back to the gate's role, pingi
 
 - a company taking Redoubt 10, 20, 30...: *<opener>'s company took Redoubt 10 of the Battlespire (Hall 50) in
   1:51:20.* - the time since the breach's first hall woke, so a breach begun deeper says where it began: *... in 20:04,
-  from Redoubt 9.* (the news carries its start, `ew`; First of the Spire's post says it too - AUDIT EG V);
+  from Redoubt 9.* (the news carries its start, `ew`; First of the Spire's post says it too - AUDIT EG V). A company of
+  one is named as one: *Mara took Redoubt 20 of the Battlespire (Hall 100) alone in 40:00, from Redoubt 10.*
+  (LONE-HERALD, below);
 - a new top of the Descent in any bracket;
 - *First of the Spire*, and *the Lone Beacon*;
 - a band's seal lifted: *The way below the Galleries is open.*
 
 An opening is never heralded: a company's breach is its own.
+
+**LONE-HERALD (FIELD BUGS 2026-10-20d, `01-Overview/bugs/Field-Bugs-2026-10-20d.md`; audited, AUDIT FB1020d): a company
+of one is posted as one.** A player says they took Redoubt 20 alone and that the Spire counted it a company. The channel's
+post for every tenth Redoubt was *<opener>'s company took Redoubt N*: a Redoubt's news carried no size, so one member got
+the words eight do. The news now says the company's entrants (`n` - the Descent's count, "Who counts" above: every member
+admitted, earning or not). It leads with an entrant's name, the opener's where the opener entered and else the first who
+did, since an opener who never stepped in is not of the company that went (`net/eliteGates/egBrain.js` `heraldCompany`;
+AUDIT FB1020d L1-1 for two or more). The hub's read keeps the size (`validEgHeraldTell`, 0 when a room before this relay
+did not say it) and its reckoning hands it on. Three posts word a company of one alone:
+- the tenth Redoubt's: *Mara took Redoubt 20 of the Battlespire (Hall 100) alone in 40:00, from Redoubt 10.*
+- First of the Spire's: *Mara is the first ever to take Redoubt 10 of the Battlespire (Hall 50), alone, in 1:17:40.*,
+  with no list of one name;
+- a seal's: *Mara is the first through, alone.*
+
+Two or more, and news with no size, keep *<first entrant>'s company*. The tracker counts the same company (AUDIT FB1020d
+L1-3, `ui/eliteGates/egHud.js` `egHudModel`): the whole called company until the first wake, then its entrants alone,
+the gather's rule (`egGatherOf`), so a called member who never came is no row and no *of N*. First of the Spire's letter
+says *You were the first ever...* (L1-4). Unchanged:
+- a company of one is still a company to the law (section 13.2, THE ERRAND FLOOR; section 6.1);
+- the boards rank as they did - a breach begun past Hall 1 is on the Depths, never the Descent's Alone, and a companion
+  who came and went still makes a company of two.
+
+Relay `world236` (`world235` on its branch, renumbered past the Starfall's at the merge).
 
 **EG-E2 record (2026-10-12): the feats, the Annals, the honours and the boards.** The account's half of section 19's
 honours and this section's boards, in `server-account/src/egHonours.js` (claim-time logic apart from `claimEg`, one seam
@@ -3132,7 +3176,11 @@ everything"*.)
 The gate's trust law, kept whole, and where it was not enough for one life, widened:
 
 - **Blows on lords and the legion**: `applyHit`'s hand and purse, the bucket by the level claim times the Vestiges'
-  capped factor, a melee pose within reach, from a pose on a fight floor of the current fight (section 11.7). The
+  capped factor, a melee pose within reach, from a pose on a fight floor of the current fight (section 11.7). What
+  each blow landed is told to its striker alone (`eland`, `net/eliteGates/egBrain.js` egBlow - a refused blow lands 0), and
+  the striker's screen shows that number, never its claim: a blow's number is the room's word, as a duel's is the
+  referee's (FIELD BUGS 2026-10-20f LANDED-WORD). A lord an errand holds at a threshold answers what it lost
+  (`egLordHit`), so the word, the recap and a Court's chart count that. The
   blow's kind `r` is the client's word (`HIT_KINDS`), so a Vestige that reads it must not gain from a lie. Sweeping
   Arc, Bladestorm and Counterstroke read melee, and the relay already checks a melee blow's reach. Long Sight, Hunter's
   Mark, Spotter and Deadeye read arrows and spells, and also need more than 12 m between the poses, where a forged kind
@@ -3175,7 +3223,9 @@ The gate's trust law, kept whole, and where it was not enough for one life, wide
   - **speed**: no step faster than the fast build's run times 1.1, plus a push;
   - **air**: no airborne stretch past `EG_AIR_MAX_S` (2.5 s);
   - **blindness**: a `ts` gap over 0.4 s is BLIND and judges nothing either way. A crossing more than 30% blind opens
-    no door, and records `m.blind`;
+    no door, and records `m.blind`. A gap from held ground to held ground within `EG_FAIR_SNAP_M` (2.5 m) is a member
+    STANDING STILL and is never blind (`egStillGap` - FIELD BUGS 2026-10-20f FAIR-STILL): a client says no pose while
+    nothing about it changes, and a crossing waited out at its timed pieces read as unseen, so its door never opened;
   - **the crossing**: its time against `EG_CROSS_MIN(spec, road)` (section 10.5) rides the receipt's `m`, and gates
     nothing until EG21;
   - **after a restart**: the accumulator is saved to storage. After the room is re-woken, a member at the end plate
@@ -3183,7 +3233,9 @@ The gate's trust law, kept whole, and where it was not enough for one life, wide
     recorded as `m.wake`. A hall woken after every member passed the last island never deadlocks;
   - **repeats**: a member whose trail breaks the law again within a hall has their hits refused for 5 s;
   - poses between a member's `down` and their next `here` are never judged; a pose sent mid-stair belongs to no hall;
-  - an unfair trail opens no door, and its measures ride the receipt (`m`).
+  - an unfair trail opens no door, and its measures ride the receipt (`m`). A member at the door on a trail it refuses
+    is told why, once a hall, to it alone (`efair`: the break's reason - `speed`, `air`, `void` - else `blind`;
+    `net/eliteGates/egBrain.js` doorWord - FIELD BUGS 2026-10-20f DOOR-WORD). It had been refused in silence.
 - **Every pose-gated credit needs a fair trail** from the last island: the door, `down`, a cache, THE GOLD RUN, a
   niche, a Memento carried, the Reliquary Vault, the High Road's cache.
 - **A hall cleared**: only the relay says so (the legion broken, the lock solved, the champion or the lord fallen, a
@@ -3438,6 +3490,8 @@ height rides a word the fight already says, so the frames stay as many as they w
 | `ask`, `asked`, `tally` | room -> all | the company's word: asked, answered, counted |
 | `egot`, `run`, `rise`, `eping`, `pz`, `eheal` | room -> all (a gift to one) | a gift (a shard, a tonic, a Cantrip, lumen, a Reliquary, a page, Long Step's word), a member's run, a recall's rise, a ping, the Orrery, the room's heals |
 | `{k:'toll', q, h}` | room -> one | the pull's toll (section 10.6) |
+| `{k:'eland', i, d}` | room -> one | what my blow on body `i` landed, whole points - the striker's number (section 21; FIELD BUGS 2026-10-20f LANDED-WORD; world237, `EG_LAND_RELAY_MIN`) |
+| `{k:'efair', w}` | room -> one | why the door will not take me: `speed`, `air`, `void` or `blind` (section 21; FIELD BUGS 2026-10-20f DOOR-WORD) |
 | `{k:'end', why, at, ds, dm}` | room -> all | why: `'tear'` (the count spent), `'gone'` (every member out: fallen twice, forsaken or home), `'wipe'` (no living member), `'home'` (THE COVENANT'S PATIENCE), `'seal'` (THE SEAL), `'rehearsal'` (a Rehearsal's end), `'last'` (the last word) or `'void'` (a force deploy, an unknown `egv`, no hall ever woken); each member's part (`ds`) and a lord's fall's chart (`dm`) |
 
 The hub's own three (`open`, `void`, `claimed`) spend a bucket of their own at the social acts' rate (`egHubGate`:
@@ -6207,7 +6261,8 @@ recap's board line, the first-time lines once an account, and First of the Spire
   - an account `EG_FIRST_HANDLES` names is written its letter at its next balance's read, once (0093's one-a-send
     index);
   - the words are fixed, the developers', with no item: *Your company was the first ever to take Redoubt 10 of the
-    Battlespire. The Spire remembers.* The title and Firstlight are the account's by the list;
+    Battlespire. The Spire remembers.* (*You were the first ever...* since AUDIT FB1020d L1-4: the first company came
+    alone, `01-Overview/bugs/Field-Bugs-2026-10-20d.md`). The title and Firstlight are the account's by the list;
   - `post.js`, `net/postLaw.js` and the Accounts arc's SERVER-POST record now say so.
 
 **Where it departs from this page, said plainly.**
@@ -10109,3 +10164,130 @@ skin and DFO Grimoire at 1280x800 and 390x844 and checks the face, the carved fr
 finger: 244 of 244.
 
 **The relay.** Nothing of this is in its bundle.
+
+### SPIRE-FIRST - 2026-10-20 - FIRST OF THE SPIRE GRANTED, AND FIRSTLIGHT REBUILT AS SERVERIDE'S OWN
+
+The player, on Discord: *"Would it be possible for you to make a First of the Spire title for me? I achieved it Saturday
+night."* - the herald's post beside it: *First of the Spire: Severide's company is the first ever to take Redoubt 10 of
+the Battlespire (Hall 50), in 1:17:40 - Severide.* The owner: *"Since hes world first. He should get this title plus a
+custom aura"*.
+
+**What was there (FACT, at fc2a29e0c).** The title and its aura were built at EG-E2 and waiting: `spirefirst` First of the
+Spire and `firstlight` Firstlight, held by name off `EG_FIRST_HANDLES` (`server-account/src/titles.js` `isSpireFirst`),
+which was empty "until the first company takes Redoubt 10", with its letter written at the named account's next balance's
+read (EG-ZF, `egFirstPost`). One name in the herald's post, and the Descent's *Alone* bracket, say the company was one.
+(This record first read the post's *Severide* as the account's handle. It is not: the herald says the name the room reads,
+the token's `n`, which since NAME-AS may be the character's - SPIRE-FIRST-NAME, below, corrected it.)
+
+**The grant.** `server-account/wrangler.toml` reads `EG_FIRST_HANDLES = "Serveride"` (SPIRE-FIRST-NAME; this slice wrote
+the herald's `Severide`). Read off the config at every token and every call, case-folded (`handleList`), so once the
+account worker deploys, the account holds the title and Firstlight and is written the letter once; a near name is
+another account. No column, no migration, no version:
+both ids have been in the token's vocabulary since EG-E2.
+
+**The custom aura: Firstlight, rebuilt.** EG-E2 drew it as one dawn-white ring with a sunrise circling it and a veil to
+the shin - the plainest of the auras. A second aura beside it would have been a new id in the token's vocabulary (a relay
+version, the hello's body bound, every positional pin) for the same honour; Firstlight is held only by the first company
+and that company is Severide, so Firstlight IS his own, and it was rebuilt to say what he did. `src/render/auraRing.js`,
+the eleventh look, still added whole, in the Spire's dawn (`ui/playerBadge.js` `SPIRE_DAWN`, `SPIRE_DAWN_GOLD`, and
+`SPIRE_DAWN_ROSE`, new: the sky low at sunrise):
+- **THE CLIMB** (`dawnClimb`, node's law, the shader's `dawnTaken`/`dawnFlare` its copy): every twelve seconds the ten
+  Redoubts are taken one after another, I to X, each flaring as it is; X held - the dawn broken - for some four seconds;
+  then all of it back down, and again (`DAWN_CLIMB`).
+- **THE GROUND**: the dial - the dawn-white ring and a thinner gold line inside it - with the climb's lane between them lit
+  round from I to where the climb has come, its head bright; the ten Redoubts on the ring as lozenges (`dawnMarkAngle`),
+  an outline until taken and filled with the dawn after, X the larger and a star of four points once the dawn breaks; the
+  sunrise still circling the ring; and past it a sunburst of twenty rays, long and short by turns, gold at the ring and
+  rose at their tips, turning slowly - faint until X is taken, when the dawn's light runs out along them across the
+  ground and they brighten.
+- **THE WALL**, the pass's strip at the ring, now 1.9 m (`DAWN_H`): ten spires of light, one off each Redoubt, I the
+  lowest (0.16 m) and X the tallest (0.74 m), each a third of itself until its Redoubt is taken and standing whole after
+  (`dawnSpireH`) - rose at the foot, gold up it, white at its point, a star there; as X is taken a shaft of first light
+  shoots up off its point past the head and stands faint while the dawn holds; dawn-white motes rising off the ring, more
+  once it has broken; the veil to the shin kept. The shaft and the motes are not drawn from inside the ring, so the
+  wearer's own first person is never veiled by them (the radiance's law).
+- Every rate whole over the clock (`spireRatesWhole`, the motes' two paces too); the Redoubts, the lane and the rays whole
+  round, so no seam behind the wearer nor where the sunburst's own round closes as it turns. No third draw, no host
+  changed (THE FOUR HOSTS: `scenes/world.js` draws every look through the pass by its key; `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` draw through world.js's pass; `scenes/exterior.js` draws no aura - FLAGGED, unchanged).
+- Not a DFU member: Daggerfall Unity has no accounts, titles or auras (Ledger A's EG-PLAY row).
+
+**Seen** in headless Chromium's WebGL2 with a stand-in body: it compiles, links and draws with no GL error; from the
+wearer's third-person eye the ten spires stand round the feet and climb, the tenth crowned; from above the dial, the climb's
+lane and the sunburst; from X's side its spire and its shaft. `tools/auraProbe.mjs` reads it (94/94): the ring whole and
+warm from above, the lane lit behind the climb and dark ahead (node's law), X's spire whole once taken and a third
+before, the shaft as X is taken and none before, no seam where the ring closes, no jump at the wrap, nothing before it
+kindles (shots `firstlight.png`, `firstlight_top.png`, `firstlight_side.png`).
+
+**Pins.** `test/net/eliteGates/egeco_honours.test.js`: the config pin moved - `EG_FIRST_HANDLES` reads `Serveride` since SPIRE-FIRST-NAME (`Severide` here first; it read
+empty), held in any case, near names refused; Firstlight's crisp ring moved to read two centimetres either side of its
+line (PIN MOVED - the lit lane now lies inside the old hand's reach, and EGECO2-dawn-ring-gone survived the old pin);
+three new tests - the climb's law, the ground RUN, the wall RUN, each through the interpreter (`test/glsl.mjs`) on the
+code the GPU runs, the seam a hair either side of atan's wrap and of the sunburst's own. `tools/mutants/egeco_honours.json`:
+SPIRE-FIRST's 23 (the account left off the list; the law's taken-at-once, never-down, flare-held and a whole spire before; the
+shader's taken-at-once, order reversed, never down, lane unlit, lane lit whole, faces never filled, star always, rays
+flat, rays all long, wave gone, spires one height, spires never rise, shaft from inside, shaft never, veil past the shin,
+the wall kindled at once, the rays' seam and the wall's seam) and the list's 63 before them - 86, every one dead. The
+first run of the new pins found two survivors (a taken lozenge was told from an untaken one only by the flare and the
+lane beside it; a spire's rise only by its brightness) and the rays' seam a third (a non-whole ray count closes where the
+sunburst's own round does, which turns, not behind the wearer); each pin was aimed at what it claims.
+
+**Left as it is, said.** Not seen in a running game client - the probe and the interpreter are its readers. Like every
+aura it stands on a wearer turned beast and on a rider. The climb runs on the shared clock, not the wearer's seed: one
+company ever holds it.
+
+### SPIRE-FIRST-NAME - 2026-10-20 - THE LIST NAMES THE ACCOUNT, NOT THE NAME THE HERALD READ
+
+The owner, after SPIRE-FIRST merged (#1083): *"Its Serveride. You did the wrong name"*.
+
+**What was wrong (FACT, at d883d3778).** SPIRE-FIRST put `EG_FIRST_HANDLES = "Severide"`, the name off the herald's post,
+on the reading that the herald names an earner by the account's handle. It names them by the token's `n`, the name the
+room reads (`server/src/index.js` `_egOpen`: each member's `sanitizeName` of the hello's verified name), and since NAME-AS
+(acct122, `06-Systems/Accounts-And-Cloud-Saves-Arc.md`) that is the account's name OR the realm character's, as the
+account chose. `isSpireFirst` matches the list against `player.handle`. So the list named a handle that is not his: the
+account Serveride wears his character's name, Severide, and held nothing - and nobody else did either: NAME-AS refuses
+to sign a one-word character's name that is another account's handle (`wornNameRefusal`, `taken`), so a `Severide` worn
+in the room was no account's handle when its token was minted.
+
+**The fix.** `server-account/wrangler.toml` reads `EG_FIRST_HANDLES = "Serveride"`, on the owner's word; its comment, and
+`titles.js` beside `isSpireFirst`, now say the list is accounts' handles and never a name off the herald. The record
+above is corrected where it read the post's name as the handle.
+
+**Pins.** `test/net/eliteGates/egeco_honours.test.js`: the list reads `Serveride` (PIN MOVED), held in any case; `Severide`,
+the character's name, refused as another account beside the near names. `tools/mutants/egeco_honours.json`:
+SPIRE-FIRST-severide-not-granted re-aimed as SPIRE-FIRST-serveride-not-granted, and SPIRE-FIRST-NAME-the-character-listed
+(the list naming the character) - both dead.
+
+**Left as it is, said.** The herald still posts the name the room reads - it is the room's word, and a player who chose to
+be seen by their character is seen so in Discord too. A list in config is still a person's edit: Hour's First's names
+came from the clears' claims (`sd-clears.yml`), which carry the account; the Spire's company has no such workflow, so
+the next name put on a handle list off the herald is checked against the account first.
+
+### EG-SPANS-HELD - 2026-10-22 - THE SPANS' CLOCK PIN ON A HELD PAGE CLOCK
+
+The site's deploy 1592 (#1126's merge, `d4c96bea7`) was refused by `verify / tests 8/8`, on the one failure among that
+shard's 3,948 tests: EG-ZD's THE SPANS' CLOCK in `test/net/eliteGates/egz_return.test.js`, *not re-anchored for a wander
+under the step*. The tree was #1126's head's to the byte (`fb8bde413`), whose check had passed the same pin, and AUDIT
+QUESTLINES had seen it fail once under load and pass alone (`01-Overview/audits/Audit-Questlines.md`, "Not this arc's") -
+named there for this arc.
+
+**Why it failed.** `spanSeconds` reads render/deadlands.js `anchoredClock`, which carries the seconds on the page's clock
+(`performance.now()`) from an anchor on the wall. The pin held the wall (`Date.now`) and not the page's clock: between the
+two reads it compared, the wall stepped the round trip's 100 ms and the page's clock moved by whatever the runner spent on
+a frame and a ping's answer - and the pin allowed that 50 ms. A busy runner spent more, and the seconds moved by it, as
+the law says they should: the pin was wrong, not the clock. Reproduced: a 60 ms stall between the two reads fails it on
+that assertion.
+
+**The fix** is 52aff580b's (#1124, the staff panel's branch, which had reproduced it under load on its own): the pin holds
+the page's clock still as well, so the seconds move only when the anchor is taken again - a wander under the step leaves
+them where they stood, where taking the anchor again moves them 103 ms, either side of the pin's 50. This record's branch
+made the same fix after the deploy failed and withdrew it at the merge (main's is the file). The same stall passes it.
+
+**The pins.** `tools/mutants/egz_return.json` - 71, every one dead on the held clock, the spans' five among them
+(EGZ-spans-clock-outside, EGZ-reanchor-every-sample, EGZ-reanchor-never, EGZ-host-spans-on-the-welcome and
+EGZ-host-egnow-on-the-welcome).
+
+**Left, said.** `prof3_client`, the other test the audit named, strikes the Anvil on real 400 ms timers; it is the
+Anvil's arc's, and not touched here.
+
+**The game.** Nothing in `src/` moved. **The four hosts.** None touched (HOST-SPLIT).

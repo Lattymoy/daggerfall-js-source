@@ -212,7 +212,7 @@
   {
     "name": "GRANT3-level-law-off",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (LEVELLED_KINDS.has(gr.k) && r.t >= 128 && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';",
+    "old": "    if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';",
     "new": "    void GRANT_LEVEL_SLACK;",
     "why": "a class foe over the owner's level stands",
     "tests": [

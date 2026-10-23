@@ -1,0 +1,353 @@
+[
+  {
+    "name": "FF-one-floor",
+    "file": "server/src/index.js",
+    "old": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, first ? -FOES_FULL_RESERVE : FOES_FULL_RESERVE, lane);",
+    "new": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, FOES_FULL_RESERVE, lane);",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "every frame stopped at the reserve - no frame first"
+  },
+  {
+    "name": "FF-first-floor-empty",
+    "file": "server/src/index.js",
+    "old": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, first ? -FOES_FULL_RESERVE : FOES_FULL_RESERVE, lane);",
+    "new": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, first ? 0 : FOES_FULL_RESERVE, lane);",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "a first frame may spend the reserve but borrow nothing - a full fan past the reserve never goes into a room the deltas hold"
+  },
+  {
+    "name": "FF-delta-no-reserve",
+    "file": "server/src/index.js",
+    "old": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, FOES_FULL_RESERVE, lane);\n      return sent.pass ? sent.bucket : this._foesDropped(full, sent.bucket);",
+    "new": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, 0, lane);\n      return sent.pass ? sent.bucket : this._foesDropped(full, sent.bucket);",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the deltas spend the reserve too - the old law's starvation"
+  },
+  {
+    "name": "FF-full-borrows-whole",
+    "file": "server/src/index.js",
+    "old": "    const budget = floorGate(bucket, now, per * listeners.length, FOES_ROOM_BYTES_PER_S, floor);",
+    "new": "    const budget = first ? byteGate(bucket, now, per * listeners.length, FOES_ROOM_BYTES_PER_S, true) : floorGate(bucket, now, per * listeners.length, FOES_ROOM_BYTES_PER_S, floor);",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "a first frame borrows its whole fan's cost (byteGate's borrow) - the debt unbounded by the reserve"
+  },
+  {
+    "name": "FF-ahead-floor-empty",
+    "file": "server/src/index.js",
+    "old": "    const ahead = floorGate(bucket, now, per, FOES_ROOM_BYTES_PER_S, floor);",
+    "new": "    const ahead = floorGate(bucket, now, per, FOES_ROOM_BYTES_PER_S, 0);",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the ask ahead of the walk at byteGate's floor - a delta below its reserve walks the room, a first frame in debt is refused one it could afford"
+  },
+  {
+    "name": "FF-cadence-unread",
+    "file": "server/src/index.js",
+    "old": "(full && now - (lane.first ?? -Infinity) >= FOES_FIRST_MS)",
+    "new": "full",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "every full frame first - one that says full on every frame takes the budget"
+  },
+  {
+    "name": "FF-cadence-exclusive",
+    "file": "server/src/index.js",
+    "old": "(full && now - (lane.first ?? -Infinity) >= FOES_FIRST_MS)",
+    "new": "(full && now - (lane.first ?? -Infinity) > FOES_FIRST_MS)",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the turn due a millisecond late"
+  },
+  {
+    "name": "FF-unheard-a-delta",
+    "file": "server/src/index.js",
+    "old": " || now - (lane.heard ?? -Infinity) >= FOES_UNHEARD_MS; }",
+    "new": "; }",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "a sender the full frames crowd out stays unheard - its readers prune it"
+  },
+  {
+    "name": "FF-heard-unstamped",
+    "file": "server/src/index.js",
+    "old": "    lane.heard = now;\n    if (typeof data === 'string')",
+    "new": "    if (typeof data === 'string')",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "no sender ever heard - every frame first"
+  },
+  {
+    "name": "FF-turn-on-a-delta",
+    "file": "server/src/index.js",
+    "old": "    if (first && full) lane.first = now;",
+    "new": "    if (first) lane.first = now;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "an unheard sender's delta spends its full frame's turn"
+  },
+  {
+    "name": "FF-turn-on-any-full",
+    "file": "server/src/index.js",
+    "old": "    if (first && full) lane.first = now;",
+    "new": "    if (full) lane.first = now;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js",
+      "test/net/fb1021b_foeshold.test.js"
+    ],
+    "note": "a full frame that went as a delta spends the turn again"
+  },
+  {
+    "name": "FF-turn-unstamped",
+    "file": "server/src/index.js",
+    "old": "    if (first && full) lane.first = now;\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the turn never spent - every full frame first"
+  },
+  {
+    "name": "FF-lanes-shared",
+    "file": "server/src/index.js",
+    "old": "return ((m.fl ??= {})[kind] ??= {}); }",
+    "new": "return (m.fl ??= {}); }",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the foes lane and the own lane one pair of clocks"
+  },
+  {
+    "name": "FF-fulls-uncounted",
+    "file": "server/src/index.js",
+    "old": "    if (full) this._metrics.c.fulls++;   // FOES-FIRST: and the full frames among them\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "blob5 says nothing"
+  },
+  {
+    "name": "FF-fulldrops-uncounted",
+    "file": "server/src/index.js",
+    "old": "    if (full) this._metrics.c.fullDrops++;\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "blob4 says nothing"
+  },
+  {
+    "name": "FF-fulldrops-every-drop",
+    "file": "server/src/index.js",
+    "old": "    if (full) this._metrics.c.fullDrops++;",
+    "new": "    this._metrics.c.fullDrops++;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "a delta's drop counted a full frame's"
+  },
+  {
+    "name": "FF-budget-drop-uncounted",
+    "file": "server/src/index.js",
+    "old": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, FOES_FULL_RESERVE, lane);\n      return sent.pass ? sent.bucket : this._foesDropped(full, sent.bucket);",
+    "new": "      const sent = this._foesSend(ws, a, kind, data, length, ranged, bucket, now, FOES_FULL_RESERVE, lane);\n      return sent.bucket;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "a drop past the walk never counted"
+  },
+  {
+    "name": "HIT-frames-drop-uncounted",
+    "file": "server/src/index.js",
+    "old": "    if (!funnel.pass) { this._metrics.c.hitDrops++; return; }",
+    "new": "    if (!funnel.pass) return;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the destination's frames-a-second funnel drops silently again"
+  },
+  {
+    "name": "HIT-bytes-drop-uncounted",
+    "file": "server/src/index.js",
+    "old": "    if (!bytes.pass) { this._metrics.c.hitDrops++; return; }",
+    "new": "    if (!bytes.pass) return;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the destination's bytes funnel drops silently again"
+  },
+  {
+    "name": "FF-lc-unread",
+    "file": "src/net/wire.js",
+    "old": "export const foesFrameFull = (data) => data?.full === 1 || Number.isInteger(data?.lc);",
+    "new": "export const foesFrameFull = (data) => data?.full === 1;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the dungeon host's full frame (its layout count) a delta"
+  },
+  {
+    "name": "FF-full-truthy",
+    "file": "src/net/wire.js",
+    "old": "export const foesFrameFull = (data) => data?.full === 1 || Number.isInteger(data?.lc);",
+    "new": "export const foesFrameFull = (data) => !!data?.full || Number.isInteger(data?.lc);",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "any truthy `full` a full frame"
+  },
+  {
+    "name": "FF-floor-unread",
+    "file": "src/net/wire.js",
+    "old": "  if (held.bytes - cost < floor) return { bucket: held, pass: false };",
+    "new": "  if (held.bytes - cost < 0) return { bucket: held, pass: false };",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "floorGate's floor unread - byteGate again"
+  },
+  {
+    "name": "FF-floor-unspent",
+    "file": "src/net/wire.js",
+    "old": "  return { bucket: { bytes: held.bytes - cost, at: nowMs }, pass: true };",
+    "new": "  return { bucket: held, pass: true };",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "a frame that goes spends nothing"
+  },
+  {
+    "name": "FF-refill-skipped",
+    "file": "src/net/wire.js",
+    "old": "  const held = byteGate(bucket, nowMs, 0, rate).bucket;",
+    "new": "  const held = bucket ?? { bytes: rate, at: nowMs };",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the bucket never refilled"
+  },
+  {
+    "name": "FF-reserve-half",
+    "file": "src/net/wire.js",
+    "old": "export const FOES_FULL_RESERVE = FOES_ROOM_BYTES_PER_S / 4;",
+    "new": "export const FOES_FULL_RESERVE = FOES_ROOM_BYTES_PER_S / 2;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the reserve moved"
+  },
+  {
+    "name": "FF-first-ms-moved",
+    "file": "src/net/wire.js",
+    "old": "export const FOES_FIRST_MS = FOES_FULL_MS / 2;",
+    "new": "export const FOES_FIRST_MS = FOES_FULL_MS;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the cadence moved - an honest full frame a little early is a delta"
+  },
+  {
+    "name": "FF-unheard-ms-moved",
+    "file": "src/net/wire.js",
+    "old": "export const FOES_UNHEARD_MS = FOES_STALE_MS - FOES_FULL_MS;",
+    "new": "export const FOES_UNHEARD_MS = FOES_FULL_MS;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the unheard sender's patience moved"
+  },
+  {
+    "name": "METRICS-blob-dropped",
+    "file": "server/src/relayScale.js",
+    "old": "blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls), String(c.held)",
+    "new": "blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.held)",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "blob5 never written"
+  },
+  {
+    "name": "METRICS-blobs-order",
+    "file": "server/src/relayScale.js",
+    "old": "blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls), String(c.held)",
+    "new": "blobs: [kind, String(version), String(c.fullDrops), String(c.hitDrops), String(c.fulls), String(c.held)",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "blob3 and blob4 swapped"
+  },
+  {
+    "name": "METRICS-counts-unreset",
+    "file": "server/src/relayScale.js",
+    "old": "batches: 0, hitDrops: 0, fullDrops: 0, fulls: 0, held: 0,",
+    "new": "batches: 0, held: 0,",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "the new counts never started - NaN, and never reset"
+  },
+  {
+    "name": "AUDIT-FF-F1-handover-a-delta",
+    "file": "server/src/index.js",
+    "old": "_foesUrgent(lane, hands, now) { return (hands && now",
+    "new": "_foesUrgent(lane, hands, now) { return (false && now",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "AUDIT FOES-FIRST F1: a handover batch held at the reserve as a delta - a crowded cell's heard 29.2%, the foes its owner let go gone for everyone"
+  },
+  {
+    "name": "AUDIT-FF-F1-handover-unbounded",
+    "file": "server/src/index.js",
+    "old": "(hands && now - (lane.hands ?? -Infinity) >= FOES_FIRST_MS)",
+    "new": "(hands)",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "AUDIT FOES-FIRST F1: a sender naming an heir on every frame goes first on every frame"
+  },
+  {
+    "name": "AUDIT-FF-F1-handover-turn-unstamped",
+    "file": "server/src/index.js",
+    "old": "    if (urgent && hands) lane.hands = now;   // AUDIT FOES-FIRST F1: and a handover's\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "AUDIT FOES-FIRST F1: the handover's turn never spent - every batch first"
+  },
+  {
+    "name": "AUDIT-FF-F1-heir-empty-hands",
+    "file": "src/net/wire.js",
+    "old": "typeof r?.e === 'string' && r.e !== ''",
+    "new": "typeof r?.e === 'string'",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "AUDIT FOES-FIRST F1: an empty heir read as a handover"
+  },
+  {
+    "name": "AUDIT-FF-F2-stamped-after-the-send",
+    "file": "server/src/index.js",
+    "old": "    lane.heard = now;\n    if (typeof data === 'string') data = JSON.parse(data).data;\n    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own' || isCellRoom(a.key))) data = this._grantStripped(a, data, kind, now);   // GRANT9: the switch on - a record its grant does not stand goes nowhere; FOE-BOUNDS: nor one no builder could give\n    const out = fanOut(kind, a.id, data, length, a.gv === 1);   // AUDIT (pre-merge) O3/O4; GRANT-DOOR: vouched\n    if (out == null) { this._junk(ws); return { bucket: budget.bucket, pass: true, fan: 0, junk: true }; }\n    for (const other of listeners) this._send(other, out);",
+    "new": "    if (typeof data === 'string') data = JSON.parse(data).data;\n    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own' || isCellRoom(a.key))) data = this._grantStripped(a, data, kind, now);   // GRANT9: the switch on - a record its grant does not stand goes nowhere; FOE-BOUNDS: nor one no builder could give\n    const out = fanOut(kind, a.id, data, length, a.gv === 1);   // AUDIT (pre-merge) O3/O4; GRANT-DOOR: vouched\n    if (out == null) { this._junk(ws); return { bucket: budget.bucket, pass: true, fan: 0, junk: true }; }\n    for (const other of listeners) this._send(other, out);\n    lane.heard = now;",
+    "tests": [
+      "test/net/fb1021_foesfirst.test.js"
+    ],
+    "note": "AUDIT FOES-FIRST F2: a frame charged then junked left its sender unheard - every frame it sent went first, past the turn's bound and the unheard rule"
+  }
+]

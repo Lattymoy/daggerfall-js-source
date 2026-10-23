@@ -91,7 +91,7 @@ test('CLASSIC-PAGES: with no pages to show (offline, the switch shut) the door s
 
 test('CLASSIC-PAGES: THE PROFESSIONS KEY - appended, a default share on the down arrow beside less sail (as more sail shares the act choice\'s up arrow), in the Professions group, a port row; the router opens the pause on the Professions page, and nothing while sailing', () => {
   // PIN MOVED (SPYGLASS, 2026-10-11): the captain's glass appended after them, last
-  assert.deepEqual(ACTIONS.slice(-8, -2), ['Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel'],   // PIN MOVED (SHOT-KINDS: ShotCycle after ShipHold)   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after)
+  assert.deepEqual(ACTIONS.slice(-9, -3), ['Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel'],   // PIN MOVED (PARTY-PING: PartyPing after ShotCycle)   // PIN MOVED (SHOT-KINDS: ShotCycle after ShipHold)   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after)
       // PIN MOVED (UI-CALM)
     'appended after HELM-KEYS\' two: the classic grid and a saved file resolve by position (LEGACY1\'s family tree after it, MODE-WHEEL\'s wheel, TECH1\'s technique, SPYGLASS\'s glass last)');
   assert.ok(DEFAULT_SHARES.some(([c, a, partner]) => c === 'ArrowDown' && a === 'Professions' && partner === 'BoatSailDown'), 'shared onto less sail\'s own key');

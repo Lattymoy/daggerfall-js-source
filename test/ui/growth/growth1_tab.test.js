@@ -447,7 +447,7 @@ test('AUDIT GROWTH LANE2/LANE3 THE STAGE\'S EDGES: a face left before its chunk 
   assert.match(menu, /if \(pauseTab === 'growth' && growthAsks\(\)\) \{ timersOpen = false; timersFocusBack = true; render\(\); return; \}/, 'the timers door asks');
   assert.match(menu, /\(\) => \{ if \(pauseTab === 'growth' && growthAsks\(\)\) return; onAction\('resume'\); \}\);/, 'the scrim asks');
   const tab = rd('src/ui/growth/growthTab.js');
-  assert.match(tab, /:root\[data-plus-dress="grimoire"\] \.px-journal\.gr-faced > \.px-qrail \{ width: auto;/);
+  assert.match(tab, /:root\[data-plus-dress="grimoire"\] \.px-journal\.gr-book > \.px-qrail \{ width: 25%;/);
   assert.match(tab, /const levelDoor = \(\) => \(globalThis\.innerHeight \?\? 720\) < LEVEL_PANE_MIN_H \|\| /);
   assert.match(tab, /door: levelDoor\(\),/);
   const stage = rd('src/ui/growth/growthStage.js');
@@ -511,8 +511,8 @@ test('GROWTH3 THE WINDOWS, EMBEDDED (by source; tools/growthProbe.mjs drives the
   assert.match(lv, /if \(embed \|\| overlayAction\(e\) !== 'back'\) return;/, 'Escape is the window\'s: a level left stays owed');
   // the window's back stack asks the face first, on the Growth tab with a face up
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /: mode === 'pause' && pauseTab === 'growth' && stageLive\(\) \? \(\) => \{ if \(!growthBack\(\)\) onAction\('resume'\); \}/);
-  // and a face up widens the window
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(pauseTab === 'growth' && stageLive\(\)\) win\.classList\.add\('px-win-wide'\);/);
+  // GROWTH-BOOK: one window size for every page of the tab, face or none
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(pauseTab === 'growth'\) win\.classList\.add\('px-win-growth'\);/);
 });
 
 // GROWTH5 (the merge of RVN-STARS found it: AUDIT RVN-STARS S8's law, for every face on the stage) - LEAVING ASKS FIRST

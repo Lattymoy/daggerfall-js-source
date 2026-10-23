@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB-the-tail-counted",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "            score += popcount((m & one) | (~m & zero & (k === mw - 1 ? tail : 0xffffffff)));",
+    "new": "            score += popcount((m & one) | (~m & zero));",
+    "tests": [
+      "test/world/fitbits.test.js"
+    ]
+  },
+  {
+    "name": "FB-the-zeros-not-counted",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "            score += popcount((m & one) | (~m & zero & (k === mw - 1 ? tail : 0xffffffff)));",
+    "new": "            score += popcount(m & one);",
+    "tests": [
+      "test/world/fitbits.test.js"
+    ]
+  },
+  {
+    "name": "FB-another-value-counted-as-0",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "      else if (v === 0) zeros[at] |= bit;",
+    "new": "      else zeros[at] |= bit;",
+    "tests": [
+      "test/world/fitbits.test.js"
+    ]
+  },
+  {
+    "name": "FB-a-word-not-joined",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "            const one = s ? (ones[at] >>> s) | (ones[at + 1] << (32 - s)) : ones[at];",
+    "new": "            const one = s ? (ones[at] >>> s) : ones[at];",
+    "tests": [
+      "test/world/fitbits.test.js"
+    ]
+  },
+  {
+    "name": "FB-the-popcount-wrong",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);",
+    "new": "  x = (x & 0x33333333) + ((x >>> 2) & 0x13333333);",
+    "tests": [
+      "test/world/fitbits.test.js"
+    ]
+  },
+  {
+    "name": "FB-a-later-tie-taken",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "        if (value > bestValue) { bestValue = value; best = { ox, oy, ppu, score, cells: cols * rows, seam, edge }; }",
+    "new": "        if (value >= bestValue) { bestValue = value; best = { ox, oy, ppu, score, cells: cols * rows, seam, edge }; }",
+    "tests": [
+      "test/world/fitbits.test.js"
+    ]
+  }
+]

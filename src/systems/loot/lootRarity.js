@@ -108,7 +108,7 @@ export const RARITIES = Object.freeze({
   legendary: Object.freeze({ rank: 3, label: 'Legendary', colour: '#e07a2e', tint: Object.freeze([0.85, 0.42, 0.10, 0.50]) }),
   aetheric:  Object.freeze({ rank: 4, label: 'Aetheric',  colour: '#bfe8ff', tint: Object.freeze([0.62, 0.86, 1.00, 0.55]) }),
   artifact:  Object.freeze({ rank: 5, label: 'Artifact',  colour: '#b57bee', tint: Object.freeze([0.60, 0.35, 0.85, 0.50]) }),
-  gilded:    Object.freeze({ rank: 6, label: 'Gilded',    colour: '#ffcf4d', tint: Object.freeze([1.00, 0.80, 0.26, 0.60]) }),   // GILDED1: gold leaf, over everything
+  gilded:    Object.freeze({ rank: 6, label: 'Gilded',    colour: '#ff3b4a', tint: Object.freeze([1.00, 0.23, 0.29, 0.60]) }),   // GILDED1: over everything; GILDED-RED: crimson, its pieces' own art still gold leaf
 });
 export { ROLLED_TIERS };   // RARE-BREAK1: its one home is the leaf (rarityTier.js), so a formula can ask it without the ladder
 

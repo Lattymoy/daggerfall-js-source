@@ -137,8 +137,8 @@
   {
     "name": "SUMMONSYNC-stranger-blow-refused",
     "file": "src/scenes/dungeonContext.js",
-    "old": "!(ownLoose(f) || (!!ownQuestTag(f) && ownPeerMayHit(id, f)))",
-    "new": "!(!!ownQuestTag(f) && !!ownShare()?.peerMayHit?.(id, f))",
+    "old": "!(ownLoose(f) || (!!ownQuestTag(f) && ownPeerMayHit(id, f))) || !Number.isFinite(dmg)",
+    "new": "!(!!ownQuestTag(f) && !!ownShare()?.peerMayHit?.(id, f)) || !Number.isFinite(dmg)",
     "tests": [
       "test/scenes/summonsync.test.js"
     ]

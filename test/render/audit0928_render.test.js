@@ -161,7 +161,7 @@ function exteriorFrame({ lane, night, town, boats, eye }) {
     worldLightAnimator: { tick() {}, ranges: new Float32Array(64).fill(18) },
     wod: null, csaOn: () => true, csa: { lights: () => boats },
     magic: null, _dwFogP: null, playerTorchLight: () => null, thunderlockMuzzleLight: () => null, playerEntity: {}, player: { feetAt: () => [0, 0, 0] },
-    peerTorchLights: () => [], gatePool: null, riteHost: null, camps: { lights: () => [] }, droppedTorches: { lights: () => [] },
+    peerTorchLights: () => [], gatePool: null, riteHost: null, starfall: null, camps: { lights: () => [] }, droppedTorches: { lights: () => [] },
     naval: null,   // NAV-B: the broadsides' flashes and the burning decks join the hand lights - no sea in this pin
     festivalStage: null,   // FESTIVAL-STAGE: no Festival in this pin
     quays: null,   // PIN MOVED (QUAYS): the quays' lanterns join the night's extras - no harbour in this pin

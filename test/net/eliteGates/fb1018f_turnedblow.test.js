@@ -124,7 +124,7 @@ test('TURNED-BLOW THE IMPS (Elite-Gates.md sections 8.2 and 11.7): on a span the
   assert.ok(S.relayBlow(by.i) > 0, 'and the relay lands it');
   assert.equal(egStruckOff(view, by, isle.x, isle.y ?? 0, isle.z), false);
   // the one law: the relay's egBlow asks it, and no second copy of the rule stands in src/
-  assert.match(rd('src/net/eliteGates/egBrain.js'), /if \(egStruckOff\(view, body, p\.x, p\.y, p\.z\)\) return out;/, 'the relay asks the law');
+  assert.match(rd('src/net/eliteGates/egBrain.js'), /if \(egStruckOff\(view, body, p\.x, p\.y, p\.z\)\) return land\(0\);/, 'the relay asks the law');   // PIN MOVED (FIELD BUGS 2026-10-20f LANDED-WORD): a blow it refuses lands 0 and says so to its striker
   assert.equal((rd('src/net/eliteGates/egBrain.js').match(/egGroundAt\(view, body\.x, egFeetY\(view, body\.y\)/g) ?? []).length, 0, 'no second copy of the rule');
 });
 

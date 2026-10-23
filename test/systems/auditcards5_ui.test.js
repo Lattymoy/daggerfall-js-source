@@ -37,6 +37,8 @@ function fakeEl(tag) {
 const el = (t, cls, text) => { const n = fakeEl(t); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 const all = (root, f) => { const out = []; const walk = (x) => { for (const c of x.children ?? []) { if (f(c)) out.push(c); walk(c); } }; walk(root); return out; };
 const button = (root, label) => all(root, (c) => c.tag === 'button' && c.textContent === label)[0];
+/** COLLECTIONS-II: a part's tile - its name over its count, so found by its focus key, never its words. */
+const tile = (root, id) => all(root, (c) => c.tag === 'button' && c.attrs?.['data-focus'] === `coll-part-${id}`)[0];
 function page(player) {
   const box = { root: el('div') };
   const draw = () => { box.root = el('div'); drawCollectionsPage(box.root, draw, { el, divider: (t) => el('h4', 'px-divider', t), player }); };
@@ -51,9 +53,10 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   resetCollectionsPage();
   const me = { items: [] };
   assert.equal(collectionsPageShown(me), true, 'Loot rarity: the codex');
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['codex']);
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'icons', 'glyphs', 'codex'], 'PIN MOVED (COLLECTIONS-II): the wardrobe\'s four parts before it');
+  setCollectionsPart('codex');
   let p = page(me);
-  assert.equal(all(p.root, (c) => c.classList?.contains('coll-parts')).length, 0, 'one part: no switch');
+  assert.equal(all(p.root, (c) => c.classList?.contains('coll-parts')).length, 1, 'PIN MOVED (COLLECTIONS-II): the switch always - the wardrobe\'s parts are every player\'s');
   const rows = CX.codexRows();
   const lines = all(p.root, (c) => c.classList?.contains('codex-line'));
   assert.equal(lines.length, rows.length + GILDED_RECORDS.length, 'every Legendary a row - PIN MOVED (AUDIT WORLD-REWARDS A5): and every Gilded record one, over them');
@@ -95,24 +98,26 @@ test('AUDIT CARDS-5 D12/D14: the Codex part - every Legendary row, found and not
   oath.onclick();
   // a binder: two parts, the switch; a landing on cards; the reset
   giveBinder(me);
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['codex', 'cards']);
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'icons', 'glyphs', 'codex', 'cards']);
   setCollectionsPart('cards');
   p = page(me);
-  assert.ok(button(p.root, 'Cards').classList.contains('on'));
+  assert.ok(tile(p.root, 'cards').classList.contains('on'));
   assert.ok(all(p.root, (c) => c.classList?.contains('binder-grid')).length, 'the Cards part drawn');
-  button(p.root, 'Codex').onclick();
-  assert.ok(button(p.root, 'Codex').classList.contains('on'));
+  tile(p.root, 'codex').onclick();
+  assert.ok(tile(p.root, 'codex').classList.contains('on'));
   setCollectionsPart('cards'); resetCollectionsPage();
-  assert.ok(button(page(me).root, 'Codex').classList.contains('on'), 'a new visit opens on the first part');
-  // Loot rarity off: the cards alone; neither: no page
+  assert.ok(tile(page(me).root, 'titles').classList.contains('on'), 'a new visit opens on the first part - PIN MOVED (COLLECTIONS-II): the Titles');
+  // Loot rarity off: the cards with the wardrobe; neither: the wardrobe's parts alone - COLLECTIONS-II (PIN MOVED): the page
+  // is every player's now
   setPref('lootRarity', false);
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['cards']);
-  assert.equal(collectionsPageShown({ items: [] }), false);
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'icons', 'glyphs', 'cards']);
+  assert.equal(collectionsPageShown({ items: [] }), true);
+  assert.deepEqual(collectionParts({ items: [] }).map(([id]) => id), ['titles', 'auras', 'icons', 'glyphs']);
   // the menu's wiring
   const menu = read('src/ui/enhanced/enhancedMenu.js');
-  assert.match(menu, /collections: \(d\) => drawCollectionsPage\(d, render, \{ \.\.\.kit, player: playerEntity \}\),/);
+  assert.match(menu, /collections: \(d\) => drawCollectionsPage\(d, render, \{ \.\.\.kit, player: playerEntity, account: newAccountFlow \}\),/);   // PIN MOVED (COLLECTIONS-II): and the account's flow, the card's own construction
   assert.match(menu, /resetHoldingsPages\(\); resetFleetPage\(\); resetCollectionsPage\(\);/);
-  assert.match(menu, /else if \(at === 'collections' \|\| at === 'cards' \|\| at === 'codex'\) \{ pauseTab = 'holdings'; holdSec = 'collections'; if \(at !== 'collections'\) setCollectionsPart\(at\); \}/);
+  assert.match(menu, /else if \(at === 'collections' \|\| COLLECTION_PARTS\.some\(\(\[id\]\) => id === at\)\) \{ pauseTab = 'holdings'; holdSec = 'collections'; if \(at !== 'collections'\) setCollectionsPart\(at\); \}/);   // PIN MOVED (AUDIT COLLECTIONS-II, lanes 2 and 5): every part lands by its name, the wardrobe's four too
   assert.match(menu, /b\.onclick = \(\) => \{ holdSec = id; disarmCollectionsPage\(\); render\(\); \};/);
   assert.match(menu, /disarmFamilyPages\(\); disarmCollectionsPage\(\); if \(id !== 'growth'\) releaseGrowthTab\(\); pauseTab = id; render\(\);/);   // PIN MOVED (GROWTH1, bible/10-UI/Growth.md: the Growth tab): and the Growth stage's face
   CX._resetCodexForTests();
@@ -236,11 +241,14 @@ test('AUDIT CARDS-5 lane D\'s survivors (second pass): the Collections page - a 
   CX.noteFind(legend('wyrmbane'), { quiet: true });
   resetCollectionsPage();
   const me = { items: [] };
-  // no binder: a landing on cards opens the codex
+  // no binder: a landing on cards opens the first part shown - PIN MOVED (COLLECTIONS-II): the Titles, the codex a press on
   setCollectionsPart('cards');
   let p = page(me);
-  assert.ok(all(p.root, (c) => c.classList?.contains('codex-line')).length > 0, 'the codex drawn');
+  assert.ok(tile(p.root, 'titles').classList.contains('on'), 'the first part drawn');
   assert.equal(all(p.root, (c) => c.textContent === 'You are not carrying a Card Binder.').length, 0);
+  setCollectionsPart('codex');
+  p = page(me);
+  assert.ok(all(p.root, (c) => c.classList?.contains('codex-line')).length > 0, 'the codex drawn');
   // an unfound row: its group and its hint
   const rows = CX.codexRows();
   const u = rows.find((r) => !r.found && r.hint);
@@ -256,7 +264,7 @@ test('AUDIT CARDS-5 lane D\'s survivors (second pass): the Collections page - a 
   assert.ok(unfoundPieces.length > 0);
   assert.ok(unfoundPieces.every((s) => s.textContent === '?'), 'never its name or id');
   // the reset: the row closed
-  resetCollectionsPage();
+  resetCollectionsPage(); setCollectionsPart('codex');
   p = page(me);
   assert.equal(all(p.root, (c) => c.classList?.contains('codex-whole')).length, 0, 'the row closed');
   // the reset: the Cards part forgotten too

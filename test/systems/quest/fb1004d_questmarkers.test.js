@@ -28,7 +28,7 @@ import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { SITE_TYPES, MARKER_TYPES } from '../../../src/systems/quest/place.js';
 import { CURATED_QUEST_MARKERS, curatedMarkerSpot, mendedFoeSpot } from '../../../src/systems/quest/markerCuration.js';
 import { restandMendedQuestFoe, SEALED_SAVE_REACH_M, SEALED_SAVE_LEVEL_M } from '../../../src/scenes/quest/questFoeHost.js';
-import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH } from '../../../src/systems/quest/sceneMount.js';
+import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH } from '../../../src/systems/quest/sceneMount.js';
 import { registerWorldDataAsset, _resetWorldDataReplacement, installWorldDataReplacement, buildingDataFromJson } from '../../../src/formats/worldData/worldDataReplacement.js';
 import { ROW_CODECS } from '../../../src/formats/worldData/worldDataPack.js';
 import { patchJson } from '../../../src/formats/worldData/worldDataJson.js';
@@ -279,6 +279,7 @@ function liftInteriorStands(ctx) {
     getTexture: async () => ({ recordCount: 1000 }), uploadRecord: () => {}, billboardSize: () => ({ w: 1, h: 2 }), drawnFlat: (a, r) => [a, r],
     renderer: { createBillboardBatch: (_a, _r, _size, at) => ({ at: at[0] }) }, rideSceneMarker: () => {},
     templateByIndex, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH,
+    buildingStandSpot,   // PIN MOVED (FB1020c CROWD-CLEAR): the building stand's law is sceneMount.js's, the backstop inside it
   };
   return { adapter: new Function(...Object.keys(deps), source)(...Object.values(deps)), questFlats, foes };
 }

@@ -108,6 +108,7 @@ import { offerWaitingWords } from '../../ui/questlines/qlJournal.js';   // AUDIT
 // Genders enum the way C# does. Re-exported so the bridge's callers
 // are unchanged.
 import { positionHash, staticNpcData, layoutNpcData } from '../../characters/staticNpc.js';
+import { festivalQuestEnded } from '../../systems/festival/festivalClient.js';   // WITCH1: a quest done asks a find
 
 export { positionHash, staticNpcData, layoutNpcData };
 
@@ -467,9 +468,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // HUD escort faces' quest-end sweep rides the world ctx
     // AUDIT QUESTLINES LINES-7: and a questline's step gone without its end (an error terminated it) is offered again a day
     // later, never parsed again every tick
-    onQuestEnded: (q) => { questlines?.runner?.dropped?.(q); ctx.onQuestEnded?.(q); },
+    // WITCH1: and a quest done is a Witches' Festival find (systems/festival/festivalClient.js - nothing while it is not live)
+    onQuestEnded: (q) => { questlines?.runner?.dropped?.(q); festivalQuestEnded(q); ctx.onQuestEnded?.(q); },
   });
-  // QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): the questlines' five actions, after DFU's 82 - here, so every
+  // QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): the questlines' six actions, after DFU's 82 - here, so every
   // host's machine has them before a save or a script that says them is read (a first-match scan; none of DFU's claims
   // these lines - test/systems/questlines/ql4_actions.test.js).
   for (const template of questlineActionTemplates()) machine.registerAction(template);

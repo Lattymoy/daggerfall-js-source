@@ -100,6 +100,13 @@ export const FIT_PPUS = Object.freeze(Array.from({ length: 25 }, (_, i) => 15 + 
 /** TAMRIEL4: how much the agreement INSIDE the Bay weighs beside the agreement along its EDGE. */
 export const FIT_AREA_WEIGHT = 0.25;
 
+/** FIT-BITS: the set bits of a 32-bit word. @param {number} x */
+const popcount = (x) => {
+  x -= (x >>> 1) & 0x55555555;
+  x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+  return Math.imul((x + (x >>> 4)) & 0x0f0f0f0f, 0x01010101) >>> 24;
+};
+
 /**
  * THE FIT: where the Bay stands on the picture. The Bay's land (bayLand(x, y), Bay pixels, the one water law) is
  * laid on the picture's grid at each candidate scale (`ppus`, Bay pixels a picture pixel) as cells, four samples a cell
@@ -123,6 +130,20 @@ export const FIT_AREA_WEIGHT = 0.25;
 export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, span = 24, ppus = FIT_PPUS }) {
   let best = null, bestValue = -Infinity;
   const { w, land } = trace;
+  // FIT-BITS (2026-10-20, bible/07-Rendering/Performance-Priority.md FIT-BITS): the inside's score counted 32 cells a
+  // word - the picture's rows as two bitsets (its pixels that ARE 1, and that ARE 0: a cell agrees only with its own
+  // value, whatever else a picture holds), a cell agreeing where the mask's bit meets the one and its clear bit the
+  // zero. The same counts as a cell at a time, so the same fit: the boot paid ~0.8 s of its first world frame for the
+  // cell-at-a-time walk (25 scales, 49 x 49 offsets, up to 2,178 cells each).
+  const words = (w + 31) >>> 5;
+  const ones = new Uint32Array(words * trace.h + 1), zeros = new Uint32Array(words * trace.h + 1);
+  for (let y = 0; y < trace.h; y++) {
+    for (let x = 0; x < w; x++) {
+      const v = land[y * w + x], bit = 1 << (x & 31), at = y * words + (x >>> 5);
+      if (v === 1) ones[at] |= bit;
+      else if (v === 0) zeros[at] |= bit;
+    }
+  }
   for (const ppu of ppus) {
     const cols = Math.floor(BAY_W / ppu), rows = Math.floor(BAY_H / ppu);
     const mask = new Uint8Array(cols * rows);
@@ -134,6 +155,9 @@ export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, s
         mask[j * cols + i] = n >= 2 ? 1 : 0;
       }
     }
+    const mw = (cols + 31) >>> 5, tail = cols & 31 ? 2 ** (cols & 31) - 1 : 0xffffffff;
+    const bits = new Uint32Array(mw * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) if (mask[j * cols + i] === 1) bits[j * mw + (i >>> 5)] |= 1 << (i & 31);
     const edge = 2 * (cols + rows);
     for (let oy = around.oy - span; oy <= around.oy + span; oy++) {
       if (oy < 1 || oy + rows + 1 > trace.h) continue;
@@ -141,8 +165,15 @@ export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, s
         if (ox < 1 || ox + cols + 1 > w) continue;
         let score = 0;
         for (let j = 0; j < rows; j++) {
-          const row = (oy + j) * w + ox, mrow = j * cols;
-          for (let i = 0; i < cols; i++) if (mask[mrow + i] === land[row + i]) score++;
+          const row = (oy + j) * words, mrow = j * mw;
+          for (let k = 0; k < mw; k++) {
+            // the picture's 32 pixels from ox + 32k, as one word (a word past the window's last pixel is the tail's to clear)
+            const b = ox + (k << 5), at = row + (b >>> 5), s = b & 31;
+            const one = s ? (ones[at] >>> s) | (ones[at + 1] << (32 - s)) : ones[at];
+            const zero = s ? (zeros[at] >>> s) | (zeros[at + 1] << (32 - s)) : zeros[at];
+            const m = bits[mrow + k];
+            score += popcount((m & one) | (~m & zero & (k === mw - 1 ? tail : 0xffffffff)));
+          }
         }
         // the seam: each edge cell against the picture's pixel beyond it
         let seam = 0;

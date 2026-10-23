@@ -578,7 +578,11 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
   assert.equal(findHarbour({ rect: rectOf(E.veilhaven(), 4, 3), isWater }), null, 'the Bay\'s reach falls short of it - the isle\'s own is asked');
   const w = hostText('src/scenes/world.js');
   assert.match(w, /town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);
-  assert.match(rd('src/systems/naval/harbourBook.js'), /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), \.\.\.\(near\.reach \? \{ reach: near\.reach \} : \{\}\) \}\)/);
+  // PIN MOVED (FB1020c HARBOUR-REACH): the book sounds the reach it is handed (its own, HARBOUR_REACH without one), and an
+  // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js)
+  const book = rd('src/systems/naval/harbourBook.js');
+  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach \}\);/);
+  assert.match(book, /far = own === HARBOUR_REACH \? portRingReach\(near\.rect\) : 0;/);
   assert.match(w, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');
 });
 
@@ -617,7 +621,8 @@ test('AUDIT CAPTAIN\'S SEA P3/P12: an isle\'s place is never a spawn\'s template
 test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the nearest port isle (never a Bay temple a crossing away) and no Bay cemetery takes a vampire there; no teleport crosses the Veil; an isle\'s quest site resolves by its region\'s own name; an isle town\'s house is no deed\'s and none is sold there; an isle\'s port is a port for ship boarding whatever Travel Options says (mutants: each seam)', async () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /else if \(etherSea && inEther\(px\.x, px\.y\)\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const port = etherRisePort\(px\.x, px\.y\);\n\s+land = \{ x: port\.px, y: port\.py \}; kind = 'city';/);
-  assert.match(w, /const etherRisePort = \(x, y\) => islesNear\(x, y, ETHER_RISE_PX\)\.find\(\(i\) => i\.kind === 'port'\) \?\? veilhaven\(\);/);
+  // PIN MOVED (AUDIT SEA VENTURES C5/F2): the nearest port by distance, sought from ETHER_RISE_PX out until one stands within reach (Veilhaven the farthest)
+  assert.match(rd('src/systems/wild/etherWild.js'), /export function etherRisePort\(x, y\) \{\n  const h = veilhaven\(\), far = Math\.hypot\(h\.px - x, h\.py - y\);/);   // HOST-SPLIT (SEA VENTURES): out of bootWorld
   const { islesNear, veilhaven, inEther } = await import('../../../src/world/ethericSea.js');
   const rise = islesNear(7900, -5300, 60).find((i) => i.kind === 'port') ?? veilhaven();
   assert.ok(rise.kind === 'port' && inEther(rise.px, rise.py), 'a port isle of the sea');
@@ -678,6 +683,8 @@ async function crossingWorld(over = {}) {
   const { createCaptainLedger } = await import('../../../src/systems/naval/captainLedger.js');
   const src = hostText('src/scenes/world.js');
   const text = src.slice(src.indexOf('  const crossGate = createCrossingGate();'), src.indexOf('  let _navalWasOn = null;'));
+  // PIN MOVED (HOST-SPLIT at the merge of main into SEA VENTURES): her heading's law at the module's scope, the camera's yaw its argument
+  const boatForward = new Function(`${src.match(/\nconst boatForward = \(boat, yaw\) => \{[\s\S]*?\n\};\n/)[0]}\nreturn boatForward;`)();
   const log = [];
   const w = { etherSea: true, etherOut: true, sailing: true, paused: false, loading: false, overlay: null, transitioning: false, mode: 'exterior', busy: false, arriving: false, px: 150, py: 300, hostile: false, passengers: 0, teleport: null, ...over };
   const ledger = createCaptainLedger();
@@ -692,15 +699,16 @@ async function crossingWorld(over = {}) {
   const townTalk = { get overlayActive() { return !!w.overlay && !w.overlay.done; }, say: (t) => log.push(`say: ${t}`), showOverlay: (o) => { w.overlay = o; log.push('asked'); } };
   class YesNoBoxWindow { constructor(o) { Object.assign(this, o); this.done = false; } answer(yes) { if (this.done) return; this.done = true; (yes ? this.onYes : this.onNo)?.(); } withdraw() { this.done = true; log.push('withdrawn'); } }
   const scope = {
-    createCrossingGate: EC.createCrossingGate, CROSS_LAND_PX: ES.CROSS_LAND_PX, seaPixel: () => true,
+    createCrossingGate: EC.createCrossingGate, createCrossLand: EC.createCrossLand, seaPixel: () => true,   // SEA-BOUNTY: the land ring built by its own module
     get etherSea() { return w.etherSea; }, get etherOut() { return w.etherOut; }, csaRuntime, CROSS_CHECK_S: EC.CROSS_CHECK_S,
     gamePaused: () => w.paused, get _loading() { return w.loading; }, townTalk, modes: { get transitioning() { return w.transitioning; } }, _mode: () => w.mode,
     worldMoveBusy: () => w.busy, get _partyArrivalPending() { return w.arriving; },
     playerTravelPixel: () => ({ x: w.px, y: w.py }), crossingWayAt: EC.crossingWayAt, CROSS_X: ES.CROSS_X, inEther: ES.inEther,
     navalHostileNear: () => w.hostile, CROSS_REFUSED: EC.CROSS_REFUSED, CROSS_STALE: EC.CROSS_STALE, CROSS_FAILED: EC.CROSS_FAILED, csaPassengersOn: () => w.passengers, YesNoBoxWindow,
     crossingRows: EC.crossingRows, captainLedger: ledger, crossingTarget: EC.crossingTarget, CROSS_DAYS: EC.CROSS_DAYS,
+    _onlineWorldSession: () => !!w.online, get online() { return w.online ?? null; },   // ETHER-WILD: the question's warning is online's (offline here, as these pins were written)
     hudFade: { smashHUDToBlack: () => log.push('black'), fadeHUDFromBlack: () => log.push('fade in') },
-    csaCall: (fn) => fn(), cam: { yaw: 0 },
+    csaCall: (fn) => fn(), cam: { yaw: 0 }, boatForward,
     _teleportToPixel: async (px, py, local, opts) => {
       log.push(`teleport(${px},${py})`);
       if (w.teleport) return w.teleport(px, py, opts);
@@ -886,13 +894,15 @@ test('AUDIT CAPTAIN\'S SEA X15/X16: the chart goes with the world it charts - sh
   const src = hostText('src/scenes/world.js');
   assert.match(src, /const navalClear = \(\) => \{[^\n]*closeNavalYard\(\); closeEtherChart\(\);/);
   const open = src.slice(src.indexOf('  function openEtherChart() {'), src.indexOf('  /** AUDIT NAV1 (the helm): the shipwright\'s window over the world'));
-  const fwd = src.match(/ {2}const boatForward = \(boat\) => \{[\s\S]*?\n {2}\};\n/)[0];
+  const fwd = src.match(/\nconst boatForward = \(boat, yaw\) => \{[\s\S]*?\n\};\n/)[0];   // PIN MOVED (HOST-SPLIT at the merge of main into SEA VENTURES): at the module's scope, the camera's yaw its argument
   const seen = [];
   const w = { sailing: true, boat: { GameObject: { rotation: [0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)] } } };   // turned a quarter: her bow east
   const scope = {
     csaRuntime: { isSailing: () => w.sailing, get state() { return { CurrentBoat: w.boat }; } }, cam: { yaw: Math.PI },
     playerTravelPixel: () => ({ x: 6000, y: -5000 }), etherHost: { chart: (px, py, yaw) => { seen.push(yaw); return {}; } },
     createEtherChartOverlay: ({ word }) => { word(); return {}; }, townTalk: { showOverlay: () => {} },
+    _onlineWorldSession: () => false, online: null,   // ETHER-WILD: the word's pvp - offline here
+    seaVentures: { chartWord: () => ({ pvp: false, vaults: [] }) },   // SEA-VAULTS: the word's pvp and vaults the sea's ventures' (scenes/seaVenturesHost.js) - offline here
   };
   const openEtherChart = new Function('scope', `with (scope) { ${fwd}\n${open}\nreturn openEtherChart; }`)(scope);
   assert.equal(openEtherChart(), true);

@@ -32,8 +32,8 @@
   {
     "name": "BURNT-SAID-risen-old-line",
     "file": "src/scenes/world.js",
-    "old": "townTalk.say(d.burnt ? WILD_TEXT.burntLate() : WILD_TEXT.dropLate);",
-    "new": "townTalk.say(WILD_TEXT.dropLate);",
+    "old": "townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
+    "new": "townTalk.say(zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
     "tests": [
       "test/systems/fb1018b_burntsaid.test.js"
     ],

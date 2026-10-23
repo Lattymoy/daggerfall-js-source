@@ -271,6 +271,17 @@ Twigs, the Roots, Bamboo, Ginkgo Leaves, Palm, Aloe, Fig and Cactus do); in **au
 Hides cure to **Cured Leather** (tiers 1-3) or **Hardened Leather** (tiers 4-6) at a tanning rack, **2:1** (Tanner
 1:1). Butchery gives C&C's Raw Meat either way. DFU's own corpse loot is untouched: skinning adds, never replaces.
 
+DEX-HIDES (2026-10-21, `01-Overview/bugs/Field-Bugs-2026-10-20h.md`): Daggerfall Enemy Expansion's nine animals are
+skinned too, each by its own id (`net/professionLaw.js` HIDES): the Bat the Bat Leather, the Blood Spider the Spider
+Silk, the Mountain Lion the Tiger Pelt, the Land Dreugh the Dreugh Shell; and three hides of their own, **Wolf Pelt**
+(681, tier 2 - the Wolf, the Snow Wolf, the Dog), **Boar Hide** (682, tier 2) and **Mudcrab Chitin** (683, tier 1). The
+branch for `01-Overview/bugs/Field-Bugs-2026-10-21.md` had built the same slice, and at its merge took this one whole (the
+same keys; these ids may already stand in a player's Stores). What its audit (AUDIT FB1021, `01-Overview/audits/
+Audit-Field-Bugs-2026-10-21.md`) found here and carried: the Bear Hide's cure stands LAST of its tier (L2-1 - it is the
+Ram Kit's too, and a chain for Cured Leather spent every one before a Wolf Pelt); the Stores count Mudcrab Chitin as a
+mass, as the Scorpion's. The Land Dreugh shares the Dreugh's row whole, so no butchery: a departure from C&C, whose
+corpse feeds its body (L2-2).
+
 ### 4.5 Cloth, stone and the Board's counters
 
 - **Linen Bolt** and **Wool Bolt** are sold by the Notice Board's own supplier - the Weavers' counter on the Market
@@ -313,8 +324,8 @@ So the crowns sit on the richest veins, the free lands hold what no crown can, a
 
 ### 4.8 The new templates (600-699)
 
-Icons are DFU's own, recoloured at runtime (law 6): each row names the DFU icon it borrows. **600-602 and 604 are
-unused**: the Pick, the Woodcutter's Axe, the Sickle and the Fishing Rod this table first held are Foraging's own
+Icons are DFU's own, recoloured at runtime (law 6): each row names the DFU icon it borrows. **601, 602 and 604 are
+unused** (600 is the Materials Bag's since BAG1, `net/bagLaw.js` BAG_TEMPLATE - AUDIT FB1021 L4-10): the Pick, the Woodcutter's Axe, the Sickle and the Fishing Rod this table first held are Foraging's own
 Pick-Axe (1601), Wood-Axe (1600), Sickle (1602) and Fishing-Net (1603), and the Basket (1607) joined them (FORAGE0 14).
 The Basket's foods are Foraging's and C&C's own templates, not new ones (FORAGE0 14.6).
 
@@ -332,6 +343,7 @@ The Basket's foods are Foraging's and C&C's own templates, not new ones (FORAGE0
 | 673-675 | Rough Stone, Cut Stone, Mortar | Stores | DFU Lodestone, greyed |
 | 678 | Siege-cracked Gem | Stores | DFU Diamond, cracked overlay |
 | 680 | Arcane Essence | Stores | DFU Ectoplasm, tinted |
+| 681-683 | Wolf Pelt, Boar Hide, Mudcrab Chitin (DEX-HIDES: Daggerfall Enemy Expansion's animals, 4.4) | Stores | Nymph Hair's lock; Fairy Dragon's Scales' |
 | 685-688 | Hunter's Stew, Fisherman's Supper, Orchard Tart, Feast of the Hearth | pack (food) | C&C's Meat / Cooked Fish / Bread, tinted |
 | 690 | Ram Kit | Stores (a siege work) | DFU Battle Axe, tinted |
 | 692 | Repair Kit | pack | DFU Warhammer, tinted |
@@ -792,8 +804,8 @@ Orange, Mushroom, Egg - Foraging's own, `06-Systems/Foraging.md`) - and every di
 **Fisherman's Supper** - 2 Raw Fish, 1 Egg, 1 Green Leaves: Agility +5 for 2 hours; **Orchard Tart** - 2 Apple, 1 Egg,
 1 Yellow Berries: stamina regained +20% for 4 hours; **Feast of the Hearth** (rank 70) - 4 Raw Meat, 4 Raw Fish, 2
 Apple, 2 Orange, 2 Mushroom, 2 Egg: the whole party (the party's buff frame, PARTY-BUFFS) Strength, Endurance and
-Willpower +5 for a game day. C&C's own cooking at a fire (its Raw Fish and Raw Meat from the pack) is C&C's, untouched,
-and earns no Cooking XP - the service did not see it.
+Willpower +5 for a game day. C&C's own cooking at a fire (its Raw Fish and Raw Meat from the pack, or the Materials
+Bag - BAG-COOK, section 35) is C&C's, untouched, and earns no Cooking XP - the service did not see it.
 
 **Alchemy** - two doors, one book. DFU's own potion maker (pack ingredients) stays 1:1 and earns nothing online,
 because the service never sees it. The profession's door is the **brewing act** at an alchemy station: the
@@ -1360,6 +1372,176 @@ against the code before anything moved:
 Pins: `test/net/gatherspeed.test.js` (+4: G1, G2, G5, G7). Mutants: eight more in `tools/mutants/gatherspeed.json` (32), and
 the records the fixes moved re-aimed by content - 38 dead, AUDIT29-C4 equivalent as recorded.
 
+### 10.13 BOARD-SIFT - the work sifted and the market paged (2026-10-21)
+
+The owner's screenshot of a thread in the Discord's #feature-feedback ("Notice board market/work writs"), SaberGGaming:
+**"Definitely need sorting/filtering functions for work writs considering there are thousands of them and you have to
+scroll through them all to find what you want. The notice board market also doesnt show everything if there are too
+many weapons/armor/etc listed it stops after a certain number."** TheBard: **"The notice board in general needs some
+TLC. The writs especially."**
+
+FACT, read off the code before anything moved:
+
+- **The Market stopped at a hundred.** Each view answered its first MARKET_SHOWN (100) rows and nothing past them
+  (`server-account/src/market.js` marketRead): Crafted, Goods and Auctions read 500 and kept a hundred, Orders a hundred,
+  and nothing said more stood behind them. Materials differs: its first look is the Bay's cheapest hundred of every
+  material (and this region's fifty), and its search, family and tier choose the materials in the query (AUDIT 30 U2) -
+  any material, each to its own cheapest hundred, its front. It is not paged (AUDIT BOARD-SIFT names what that leaves).
+- **The Work tab was one grid in the service's order**: the Court's and the chapters' writs (6 x max(1, ceil(active / 100)) a
+  region a day, section 11, and each chapter's), then up to fifty guild writs, the contracts, up to fifty commissions -
+  under a panel for each of the region's chapters. An account fills three a day; finding them meant reading all of them.
+
+What changed:
+
+- **The Market turns pages** - Crafted, Goods, Auctions and Orders (`net/marketLaw.js` MARKET_PAGED_VIEWS). The service
+  reads `page` (marketPageOf: 0 to MARKET_PAGES_MAX - 1, 499 - AUDIT BOARD-SIFT: 49 stopped at 5,000 rows; anything
+  else the first) and answers MARKET_SHOWN rows that
+  many pages in, with the whole count (`page`, `total` - one COUNT in the view's own batch, so MARKET-SPEED's three round
+  trips stand). Every filter is in the query so a page is a page: Crafted's crafted-family filter, which ran after the
+  500-row cutoff, is the query's now (`pieceKeys`), and a Goods record goodOf would refuse is left out of the query too.
+  Each order ends on the row's id, so no row stands on two pages. Under the rows (`ui/marketTab.js` pagerNode): Previous,
+  "Page 2 of 7 · 643 in all", Next; a turn reads that page and brings its first row into view; one page draws none.
+- **A search, a least quality, an order.** Crafted and Auctions take a search of the pieces' names, read by the client
+  as the recipes it names - each word somewhere in the recipe's name or in the name its piece wears on the rows, or in
+  either read without its spaces, hyphens and apostrophes (`recipesNamed` over `ui/marketTab.js` recipeShownName,
+  `wordsIn` - AUDIT BOARD-SIFT: 52 recipes' pieces wear another name than their recipe's) - and sent as those recipes
+  (`recipes`), which the service reads within the view's families (`marketRecipesOf`, `pieceKeys`): "mithril sword" names
+  the Mithril Shortsword, Broadsword and Longsword, "iron staff" the Pine Staff its row calls an Iron Staff. Crafted takes the least quality
+  (Standard or better to Masterwork). Crafted, Goods and Auctions take an order (MARKET_SORTS): Cheapest first, the
+  default, still sorted by the landed price within its page (AUDIT 30 U16); Dearest first; Newest first; Best quality
+  first (Crafted); Ending soonest (Auctions' default). Goods takes no search: a pack piece's name is the client's, from the
+  player's own item templates, and the service holds no ARENA2 - its family and its order stand. A change reads the first
+  page; a view opens on its own defaults; a read that asks the defaults asks nothing new, so the request is the one it
+  always was. The market book's minute's cache is keyed by them too (`net/marketBook.js` keyOf).
+- **The Work tab's bar** (`ui/workSift.js`, wired by `ui/noticeWindow.js` workBody; each card handed in as an entry -
+  `writEntry`, `ui/workTab.js` entries): the kind (All work, Court writs, Chapter writs, Guild writs, Guild contracts,
+  Commissions - each with what it would show, the count the search and Only what I can fill leave, a kind with none not
+  offered); a search, each word among the card's words (its material one and many, its kind as its card writes it, its
+  guild and tag, a seat writ's seat and camp or stockpile, a commission's piece, crafter and poster, a contract's region)
+  or its kind's name on the bar; **Only what I can fill** - a Court or chapter writ whose Take
+  would fill it (held whole, the day's three not spent - writNode's own law), a guild writ the reader may deliver to and
+  holds a unit of within the guild Stores' room (`guildWritMost`, the card's Deliver's law), a commission naming the
+  reader with a piece that answers it, a contract never (it is earned in a raid); and the order - Ending soonest (the
+  default, for every kind - the contracts too, which SILVER-WAYS showed best-paying first: AUDIT BOARD-SIFT), Most silver (a guild writ's
+  pay a unit by what it still asks, a contract's pay to one defender), A to Z. The open work stands before the done (a
+  Court writ taken). Forty cards are drawn at once, "Show 40 more" under the last; where nothing matches, "No work
+  matches." and Show all work. The bar's choice is the professions book's for the session (`net/profBook.js`
+  state.workSift), so a board opened again opens on it.
+- **The chapters after the work.** The Merit lines without a card, How chapters work and the chapters' panels stand after
+  the grid and the forms, under "Chapters in Daggerfall" - a panel a chapter stood between the reader and the first writ.
+  What they say and their order among themselves are GUILD3d's and PLAIN-UI's, unchanged. At the merge of CRAFT-WRITS
+  (section 49, built beside this slice): the character's crafting writs stand over the bar under their own head, then
+  "Court and guild writs" over the bar and its grid - never sifted by it: three of the character's own, on their own day.
+- **Words**: 33 keys through the text core (`market.page.*`, `market.sift.*`, `notice.sift.*`, `notice.chapters.head`),
+  the English catalog regenerated (`tools/l10nExtract.mjs`) and drafted in-session for the thirteen whole languages
+  (`tools/l10nInSession.mjs`); the twelve still drafting owe them with the rest of the catalog.
+
+DFU has no member here - the board and its market are the port's own (NOTICE1, PROF5) - and no ledger row moves. THE
+FOUR HOSTS: none is touched; the board is a window its door mounts (`ui/noticeDoor.js`), and the world host's market
+deps are unchanged - the pager and the controls are the tab's own.
+
+Pins: `test/ui/boardsift.test.js` (10) and `test/net/boardsift_market.test.js` (4), as AUDIT BOARD-SIFT left them.
+Three pins moved, each marked PIN MOVED, because the work now stands ending soonest whatever order the service sent it
+in: `test/ui/audit31_tabs.test.js` (U2, U10) picks W2 by its guild and `test/net/prof6_client.test.js` takes the two
+guild writs the other way about - their fixtures list a five-day writ before a two-day one, which the service (soonest
+first) never sends; `test/net/silverways_client.test.js` takes the two contracts the other way about - its fixture is the
+service's own order (best-paying first, `contracts.js` contractBoard), which ending soonest departs from (AUDIT
+BOARD-SIFT, below). `test/net/market_recipe_family_limit.test.js` - the plan's index, the odd families' answers, Auctions'
+unknown piece unfiltered - passes unchanged. Mutants: `tools/mutants/boardsift.json` - its 38 all dead as the slice
+shipped (a 39th written survived and showed the service's paged answer checking its view where only paged views call it
+- the check is gone), 89 since its audit; and 16 records over the code the slice moved, re-aimed by content and judged
+again, all dead.
+
+### AUDIT BOARD-SIFT (2026-10-22, the owner: "Audit this")
+
+Two lanes: the author's own adversarial re-read, and three independent passes that read the commit cold - the service,
+the shared law and the market book; the board as a player meets it (in Chromium, with an IME); the record with its pins
+and mutants (its mutants judged on a copy of the tree) - none touching the tree while the others read. No HIGH. FOUND,
+each fixed and pinned (`test/ui/boardsift.test.js`, `test/net/boardsift_market.test.js`, `tools/mutants/boardsift.json`):
+
+- **MEDIUM - a search missed the names on the rows** (every lane). The search read recipe names; a row names its piece as
+  its record mints it (`scenes/world.js` marketPieceName: itemLongName of mintPiece), and 52 of 818 recipes' pieces wear
+  another: every Wakizashi DFU's "Wakazashi", the staves and bows in metal tiers (a Pine Staff is an "Iron Staff", and
+  "iron staff" found the Ironwood staves, which read "Adamantium Staff"), the Warforged pieces "Ebony"; "shortbow" and
+  "daikatana" found nothing ("Short Bow", "Dai-Katana"). FIXED: the client reads a search as the recipes whose name or
+  whose piece's shown name holds its words - each minted once a recipe and a language, 20 ms for all 819
+  (`ui/marketTab.js` recipeShownName) - each word read without spaces, hyphens and apostrophes too (`net/marketLaw.js`
+  wordsIn), and sends those recipes; the service reads them within the view's families (`marketRecipesOf`, `pieceKeys`),
+  AUDIT 30 U2's way for the materials. Every recipe is found by its own row's name (52 missed, now none); the shown name
+  is the player's language's, so a search in that language finds the piece. The record's "a piece is named by its recipe
+  on both ends" is struck where it stood.
+- **MEDIUM - the currency's switch kept the page** (lanes A and B, the author): Silver page 5 of 7, then Gold - "Page 5 of
+  5 · 30 in all" over no rows, and four presses of Previous to see one. FIXED: it reads from the first page, as every
+  other change does.
+- **MEDIUM - a page an act emptied said the market was empty** (lane B, the author): the one order on Orders page 2
+  filled - "Page 2 of 2 · 100 in all" over "No buy orders right now." FIXED (`ui/marketTab.js` load): a read that finds
+  its page past the last that stands reads that one.
+- **MEDIUM - a word composed was taken mid-word** (lane B, Chromium's IME through its DevTools protocol): the Work tab's
+  search redrew the whole window 150 ms after the keys rested, the field with it, and a phone keyboard's "mithril" with
+  one pause landed "mitmithril" ("みすミスリル" in Japanese); a phone's keyboard plausibly dropped at each pause too.
+  FIXED: the bar's own changes draw the results alone - the grid, "Show more", the bar's counts - never the bar, so the
+  field typed in stays (`ui/noticeWindow.js` workBody's `refresh`); a search waits for a composed word to be whole
+  (`ui/workSift.js` typedField - the market's two searches too); and the window's paint waits while a word is composed
+  in any of its fields (`render`'s `composing`).
+- **MEDIUM - a market list's choice stood behind the old rows** (lane B): MARKET-AUDIT holds a redraw while one of the
+  tab's lists has the focus, and a browser keeps the focus on a list after the choice - an answer the minute's cache gave
+  waited for a click elsewhere: "Cheapest first" over 897, 896, 895 silver. The Family list did the same since
+  MARKET-AUDIT. FIXED: a list a choice was made in is let go (`data-chosen`).
+- **MEDIUM - the default order moved the contracts, and the record said otherwise** (lane C): SILVER-WAYS' contracts came
+  best-paying first (`server-account/src/contracts.js` contractBoard), and the record called their fixture's order one
+  the service never sends. KEPT, and named: ending soonest is the bar's one default for every kind; "Most silver" now
+  orders a contract by what one defender is paid - the old order - where it had taken the pool (pay by defenders left).
+  The pin note is corrected above.
+- **MEDIUM - pins that could not fail** (lane C: 36 of 38 candidate mutants survived). Newest was also cheapest and no
+  auction carried a bid, so Newest, Auctions' Dearest and Newest and the standing bid's Cheapest were unpinned; three of
+  the Work tab's five kinds were never built in their producers' shapes, so a chapter writ counted as the Court's, a
+  commission as a guild's, a contract fillable, a commission's piece unasked, the day's allowance and the reader's own
+  guild dropped from the fill law, and the guild's, seat's, crafter's, poster's and region's words could all go unseen;
+  the order's, quality's and family's page reset; a default order sent; the Orders' count without its family; the
+  pager's cap, floor and scroll; the search's bound; a family Crafted does not list; work with no end; the chapters' head
+  over Merit lines alone. FIXED: a fixture whose every order puts a different row first, auctions with standing bids, two
+  families of orders and an arrows listing Crafted never lists, each order judged against a plain model of it; every kind
+  of work in its producer's shape (`writView`, `guildWritView` with a seat writ, `contractView`, `commissionView`), a
+  commission naming the reader with no piece, the day's three spent, the reader's own guild. 39 records became 89 - 88
+  dead, the id tie-break kept as recorded (equivalent: no row on two pages rests on SQLite answering equal keys alike in
+  two reads, which it does for one plan but does not promise); the five records the audit's own moves touched re-aimed by
+  content (`audit31.json` AUDIT31-tab-two-grids, `audit_chap2.json` T-BOARD-KIND-TEXT, `chap3a.json` CHAP3A-CARD-KIND,
+  `guild3.json` GUILD3a-your-writ-again, `marketaudit2.json` MARKET-AUDIT2-redraw-under-list), all dead; and every record
+  over the files the audit touched, 900, judged again - 886 dead, 13 equivalent as recorded, and one survivor that
+  survives the same on main before BOARD-SIFT (`audit30.json` AUDIT30-S5-a-piece-listed-off-the-road), left to its own arc.
+- **LOW** - a seat writ unfound by "seat", "stockpile" or "camp" (lane B): FIXED, its card's words. "ruby" missing the
+  "Rubies": FIXED, a material one and many. A Court or chapter writ's kind searched in the player's language alone while
+  its card writes it in English (lane B, in German): FIXED, the card's words too. The counts at odds - each kind counted
+  what no filter had left ("Commissions (1)" into "No work matches."), in the browser's numbers: FIXED, what the search
+  and the fill leave, in the player's language's (`currentLocale`); the tab's own count stays the work open to take, as
+  BOARD-UI made it. The focus fell to the page after "Show more" and the pages' presses (lane B): FIXED - the window keeps
+  a press that keys its focus, and Next and Previous take no press while a page is read (disabled, they had lost the
+  focus). "No Court writs in Daggerfall today" under a filter that sifted them away: FIXED. Rows past 5,000 unreachable
+  (every lane): MARKET_PAGES_MAX is 500 - 50,000 rows, past what the Bay holds at thirty listings an account. "Least
+  quality" read as "lowest" in six of the drafts (bg, cs, da, nb, id, ru): redrafted as a minimum. A Merit line's -8px
+  under the chapters' head: FIXED. Stale words - the pager's "none while a page is read", Goods' "cheapest first",
+  section 11's max(1, ...), the commit's "17" records re-aimed (16): corrected.
+
+NOT CHANGED, named:
+- **Pages read by OFFSET, each its own minute's** (lane A): a page cached a minute beside a page read fresh can show a row
+  twice or miss one as listings come and go; a page is whole within one read. A cursor's pages are named, not built.
+- **"Cheapest first" is landed within a page** (lanes A and B): the service pages by the listed price, and the courier's
+  share orders the page it answers (AUDIT 30 U16), so page 2 may begin cheaper landed than page 1 ends. As designed.
+- **A COUNT beside every paged read** (lane A): about twice the rows read for Crafted, Goods and Orders, and Auctions'
+  count walks every open auction where its first page stopped early on its index; every plan is indexed and none scans a
+  table. The count is what says "643 in all".
+- **Materials' first look** (lane C): the Bay's cheapest hundred of every material and this region's fifty - the brief's
+  "stops after a certain number" stands there until a search, a family or a tier is chosen, each of which reaches every
+  material. Its two reads (the Bay's and the region's, MARKET-AUDIT) would page together awkwardly; named.
+- **Goods unsearched**: a pack piece's name comes from the player's own item templates, which the service never holds.
+- **A market list's focus after an answer the cache did not give** (lane B): the window rebuilds the list and the focus
+  falls to the page, as the Family list's did since MARKET-AUDIT; keying the lists would hold every later answer behind
+  MARKET-AUDIT's rule while one keeps the focus.
+- **The live counts rebuilt at each paint** (lane B, plausible): a screen reader may not announce "Showing 40 of 213" or
+  the page's line - the window's whole-paint design (BOARD-UI).
+- **The Work tab's forty at a time is the client's**: the service still sends a region's Court and chapter writs whole,
+  and fifty guild writs and fifty commissions, soonest to end (PROF6's WRIT_SHOWN).
+
 ## 11. Writs - the Work tab
 
 - **Court writs** (the faucet): every region with a seat or hub posts **6 x max(1, ceil(active / 100)) a UTC day** (a
@@ -1391,6 +1573,9 @@ the records the fixes moved re-aimed by content - 38 dead, AUDIT29-C4 equivalent
   the Stores, and the deliverer must stand at that board (the relay knows it). AUDIT 31 R6: as built by PROF6 (28), a
   guild writ is delivered at ANY board of its region, on the client's word - the relay's witness is SEAT1b's, where a
   delivery raises influence; until then a lie buys a fast travel's worth, as a listing's does (26).
+
+- **Crafting writs** (CRAFT-WRITS, section 49): a character's own three a day - a potion, a dish and a kit - asked by the
+  guild that wants them, filled by goods the service saw it make.
 
 ## 12. Why a player comes back
 
@@ -2796,7 +2981,7 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   the rank, the account's rare hides (3 of tiers 5-6 a day, charged to the account that skins), the Stores, the day's lapse.
   `Online-Arc.md` PARTY-SKIN says the wire, the lease and the mixed builds.
 - **Bounded, not witnessed** (6): the id is the client's word and the tier the foe's the client names (`foe`, its
-  MobileTypes value); the account's day - ~~**30 hides,**~~ **3 of tiers 5-6** (CAP-OFF, 2026-10-07: the thirty gone, the three kept) - is
+  MobileTypes value, or since DEX-HIDES the Enemy Expansion's id - AUDIT FB1021 L4-3); the account's day - ~~**30 hides,**~~ **3 of tiers 5-6** (CAP-OFF, 2026-10-07: the thirty gone, the three kept) - is
   the whole defence, **decided in the harvest's own INSERT** (the day's rows of `profession = 'hunting'` an account, its high ones by a new `tier` column -
   AUDIT 32 L2: their units, the hides, a clean pelt's second among them, the last skinning cut to the day's room; it
   counted the rows, the bodies, so a day ran to 60 hides and its rare three to six).
@@ -2898,7 +3083,8 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
     player's own clothing first, as DFU's Clothing Store shelves it, and both.
   - **Rugs 3 Wool, tapestries 4 Wool** (DFU's 237-243) - FOUND: 9.3's "+ a dye" has nothing to colour, DFU's furniture
     takes no dye; **Large Skins 2 and Small Skins 1 of a pelt** (244-245; a fur's hide - the Rat's, the Bat's, the
-    Bear's, the Tiger's; never silk, chitin, scales, feathers or shell). Among the home's things, as PROF4's furniture.
+    Bear's, the Tiger's, and DEX-HIDES' Wolf's and Boar's (FIELD BUGS 2026-10-20h); never silk, chitin, scales, feathers or
+    shell). Among the home's things, as PROF4's furniture.
   - **The Fishing-Net** (FORAGE0 14.7): 2 Linen Bolt, rank 0 - Foraging's own 1603, its quality its life.
   - The steps (9.2): **a Tailor's clothing, a Leatherworker's leather armour**; Outfitting XP 20 x the tier, +500 the
     first, under the crafter's limit - AUDIT 32 S1 (Mac: "Whatever you think is best"): none for the 152 made wholly of
@@ -3111,8 +3297,9 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
   view's focus when one is set, every rate a whole number of cycles over its 60 s clock. Drawn after each mode's
   opaque world through the veiled bodies' hook, as the auras are (the street's pass, the dungeon's `lateWorldDraw`);
   never under the travel view; built at idle once a node is first marked; a glow that will not build costs the glow,
-  never the game (`createNodeGlowPass`, the world host's one door to it). NODE-OUTLINE (section 46, 2026-10-19): a node with a
-  picture is ringed along its own picture instead; the glow lights a node with none (a body drawn as a 3D character).
+  never the game (`createNodeGlowPass`, the world host's one door to it). NODE-OUTLINE (section 46, 2026-10-19) ringed a node with a
+  picture along its own picture instead, and NODE-GLINT (section 47, 2026-10-20) lights it ON that picture now - glints and a
+  sheen, the ring retired; the glow lights a node with none (a body drawn as a 3D character).
 - **Not built, named**: the held map's node marks (section 21's "the held map marks the patches and veins a character
   has worked before" - still as PROF1 and PROF2 left it); no setting turns the glow or the marks off (the professions'
   own switch does).
@@ -3278,7 +3465,9 @@ three). What sections 3.2, 3.3, 4.8, 9.3 and 9.4 left open for PROF9, DECIDED he
 - **What PROF9 is.** 15's row - Cooking - whole: the fire and its four dishes (9.3), the pan (9.4), the dishes as items and
   what eating them does, the feast at the party's table; the Cooking track and its four specialisations practised. C&C's
   own cooking at a fire - a Raw Fish from the pack turned to Cooked Fish (`scenes/camps.js` openCook) - is the mod's,
-  untouched, and earns nothing (9.3: "the service did not see it").
+  untouched, and earns nothing (9.3: "the service did not see it"). BAG-COOK (FIELD BUGS 2026-10-20c, "raw fish cant be
+  cooked over fires"): since BAG1 a haul's Raw Fish goes into the Materials Bag first, and the list read the pack alone;
+  it reads the pack, then the bag, and the cooked food goes into the pack (`06-Systems/Materials-Bag.md` section 16).
 - **The fire** (9.3: "any campfire, hearth or brazier"). DECIDED: any LIT fire within C&C's own reach of its flame
   (`survival/camp.js` BY_FIRE_REACH, 4 m) - anyone's campfire, a peer's included, and the world's braziers and fire bowls
   (`survival/hearth.js`, HEARTH1's records) - in the street and the wilderness (`scenes/world.js` cookFireHere), a building
@@ -3530,7 +3719,8 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   JSON precedent); the deploy's path filter names the three.
 - **The alchemy station** (9.3: "the brewing act at an alchemy station"; `professionLaw.js` ALCHEMY_FEE). DECIDED: an
   **Alchemist's**, open for trade (DFU's own potion seller; its `insideOpenShop` latch), **50 gold a brew** or a
-  transmutation as every station's fee, paid as the potions are bottled - or a home's **`alchemy` station** (HOME-STATIONS'
+  transmutation as every station's fee (**25** since CRAFT-PAYS, 2026-10-21, section 48 - AUDIT CRAFT-WRITS T7), paid as
+  the potions are bottled - or a home's **`alchemy` station** (HOME-STATIONS'
   first, its 50,000 licence; a hall member's). `scenes/worldModes.js` alchemyHere. The station's own press opens DFU's
   potion maker, 1:1 - online it asks first, the maker or the brew on the Stores page (STATION-DOOR,
   `01-Overview/bugs/Field-Bugs-2026-10-11f.md`). The Stores page's **The Alchemy Station**.
@@ -3548,7 +3738,8 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   Cook's law), quartered more than two tiers below, **+500 the first** - not for a cauldron wholly of the counter's goods
   (Water Breathing, Levitation: AUDIT 32 S1's law).
 - **The potions a brew makes** (9.3: "2 potions at Journeyman and 3 at Master (Brewer 3 at Journeyman)"): DECIDED **one
-  below Journeyman** - DFU's own maker's one a mix. AUDIT PROF-541 R2-S1: **one at any rank** for a potion wholly of the
+  below Journeyman** - DFU's own maker's one a mix; **two** since CRAFT-PAYS (2026-10-21, section 48 - AUDIT CRAFT-WRITS
+  T7). AUDIT PROF-541 R2-S1: **one at any rank** for a potion wholly of the
   Apothecaries' goods (Water Breathing, Levitation - `brewCount`'s `potion`, `!brewFirstPays`): the counter's silver (a
   fifth of DFU's price) brewed into three potions sold online at half the shop's was gold past the Bank's rate and cap
   (11 silver to 165 gold); the station says it.
@@ -3696,6 +3887,13 @@ Seats-Arc 7.5). What sections 1, 2, 3.3, 4.1, 4.3, 4.5, 9.3 and 9.4 left open fo
   came down 8 logical lines (its ceiling 36,233 -> 36,225). Pinned: `test/systems/fb1019f_disenchantsaid.test.js` (3);
   PIN MOVED `prof12_client.test.js` (AUDIT PROF12 E2's host pin, onto the module and the wiring line);
   `tools/mutants/fb1019f_disenchantsaid.json` (13, all dead).
+- **ESSENCE-LOOSE** (FIELD BUGS 2026-10-20h, the Discord's #bug-reports: a player's Arcane Essence "bought with gold";
+  `01-Overview/bugs/Field-Bugs-2026-10-20h.md`). A piece made or tempered with a LOOSE unit (`Materials-Bag.md` 15, A1) is
+  walled to gold on its row, and the disenchant read that as a gold purchase: its Essence went into the Stores as gold's,
+  and the Reforge with Essence refused it. Its origin is now **loose** where the piece's goods walled it
+  (`products.loose`, migration 0142, acct166) - a station's, as a smelt's products of loose goods are - and **gold** where
+  gold bought it, as before; the Reforge spends as a station does, loose first. The Stores page says a no-pack-form
+  material's loose units are "made from pack goods", and its gold line no longer offers the pack.
 - **Pinned**: `test/systems/prof12_law.test.js` (15), `test/net/prof12_service.test.js` (13, through the real Worker),
   `test/systems/prof12_client.test.js` (16), `test/net/prof12_apothecary.test.js` (4, the Apothecary through the real Worker). Mutants:
   `tools/mutants/prof12.json` (206: 205 dead - AUDIT PROF-541 R2's six among them - and PROF12-spends-no-hash recorded equivalent - B1's ingredient comparison holds everything DFU's hash refused).
@@ -4099,6 +4297,11 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   Loom beside each station - every piece the craft tempers, its step, its input and XP, Temper pressed or the rank said,
   the input short said; Reforge with Essence at the enchanting station - its rank below 50, each line a press from it,
   the Essence short said. The station's fee is a temper's and a reforge's, as a craft's and a disenchant's.
+  TEMPER-CARRIED (FIELD BUGS 2026-10-20c): the two temper sections stood in the station list of a book that carries
+  nothing, and every live book carries since BAG1, whose page (`profPages.js` drawCarryStores) listed neither - the
+  temper was drawn nowhere in the game. The carrying page lists both beside the anvil and the loom
+  (`profPages.js:"    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // FB1020c TEMPER-CARRIED: the tailor's"`).
+  Pinned by `test/ui/fb1020c_tempercarried.test.js`; `tools/mutants/fb1020c_tempercarried.json`.
 - **The four hosts**: `scenes/world.js` wired (the pack's pieces - not worn, no market act kept on them - and the step and
   the line laid on the answer); `worldModes.js` holds the stations the pages read and no piece of its own; `exterior.js`
   and `dungeonContext.js` hold no station - none to wire.
@@ -4759,7 +4962,11 @@ the slice wires a line into (`scenes/world.js`, `scenes/dungeonContext.js`, `net
 (`test/tooling/mutantdrift.test.js`), and those on the lines the slice moved were re-aimed and judged above.
 Ledger A (PROFESSIONS, GATHER-FEEL II).
 
-## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19)
+## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19; the ring RETIRED 2026-10-20 by NODE-GLINT, section 47)
+
+NODE-GLINT (section 47) took the ring away and kept the rest - the pictures, the mask and the pass's seams - and its module, test,
+probe and mutants live on under its names (`render/nodeGlint.js`, `test/scenes/nodeglint.test.js`, `tools/nodeGlintProbe.mjs`,
+`tools/mutants/nodeglint.json`). The record below is the ring's, its files named as they stood then (RETIRED).
 
 The owner: **"Overhaul gathering material visuals. Actually outline the sprite itself instead of a faint sparkle like it
 is now."** FACT: NODE-MARKS' glow (section 31) is a card stood before the node - a halo, a shimmer and motes, slight by
@@ -4781,7 +4988,7 @@ its root under a 20 m crown. DECIDED and BUILT (`render/nodeOutline.js`):
   the width and half of it) is the ring, in the profession's colour (`ui/nodeMarks.js`, the compass's) at the depth of
   the silhouette it borders, stood `OUTLINE_RING_BACK` behind it - so a wall before the node hides it, the ground or a
   tree behind it shows it, and it never draws over the node itself. **Why not shifted copies** (WEAPON-GLOW1's law): the
-  copies of a 3D tree's front cards drew over its own back cards - lines through the canopy (`tools/nodeOutlineProbe.mjs`,
+  copies of a 3D tree's front cards drew over its own back cards - lines through the canopy (`tools/nodeOutlineProbe.mjs`, RETIRED,
   2026-10-19: 18% of the ring over the tree); pushing the copies behind the whole tree hid the ring wherever another tree
   stood close behind, which in the jungle is everywhere.
 - **Its measure.** `OUTLINE_PX` 2.5 pixels at 1080 rows, with the image, never under 1.5 (a retro image's pixels are
@@ -4795,12 +5002,466 @@ its root under a 20 m crown. DECIDED and BUILT (`render/nodeOutline.js`):
   `lateWorldDraw`); never in a building nor under the travel view. One draw a picture into the atlas and one quad a node
   on screen; the frame's target, its viewport and the world's baseline handed back (blend off, depth LESS and written,
   faces culled, a scissor where one stood).
-- **Pinned**: `test/scenes/nodeoutline.test.js` (9); `tools/nodeOutlineProbe.mjs` compiles and links both programs in a
+- **Pinned** (RETIRED with the ring): `test/scenes/nodeoutline.test.js` (9); `tools/nodeOutlineProbe.mjs` compiles and links both programs in a
   real WebGL2 context, draws a herb flat of a two-flat batch and a 3D tree of crossed cards through the pass, and reads
   the frame back (15 checks: the ring outside every picture and within its width, the neighbour flat unringed, the
-  colours, one even ring at half kindling, a wall hiding it, the baseline back). Mutants: `tools/mutants/nodeoutline.json`
+  colours, one even ring at half kindling, a wall hiding it, the baseline back). Mutants (RETIRED): `tools/mutants/nodeoutline.json`
   (26, all dead). PIN MOVED: NODE-MARKS' and WB9g's hook pins (`nodemarks.test.js`, `invislook.test.js`,
   `wb9g_insignia.test.js`, `nodemarks.json`, `wb9g.json`) read `nodeOutlinePass`.
+
+## 47. NODE-GLINT - a node catching the light on its own picture (BUILT 2026-10-20)
+
+The owner, of NODE-OUTLINE's ring (section 46), after "a lot of players dont like how its not immersive": **"Lets just
+bring the glint back but better."** FACT: the ring was a 2.5-pixel line in the profession's compass colour at 95%,
+breathing, round every node within 120 m, sixteen at once - a mark painted on the world. NODE-MARKS' glow before it
+(section 31) was a card stood before the node - a halo, a shimmer and six motes, slight by intent - so the eye found a
+sparkle NEAR a node and never its shape; a tree's was a 2.6 x 3.4 m patch at its root under a 20 m crown. A herb's and a
+vein's pictures are their own (the herb's item picture, the ore's washed flat), but a node tree is the forest's own flat
+(`scenes/treeHost.js` treeKind's `flatsOf`: none of its own), so whatever marks a node is the only tell a tree has.
+DECIDED and BUILT (`render/nodeGlint.js` - section 46's module, moved; its pictures, its mask and its seams unchanged):
+
+- **The glow's parts, moved onto the picture.** The halo is gone (it was the patch at the root); the motes are GLINTS
+  on the picture; the shimmer is a SHEEN across it. Drawn over the node's rectangle, one quad a node, ADDED (ONE, ONE) as
+  the glow was - it only ever brightens - at the depth of the picture where it stands, `GLINT_PULL` (0.3 m) toward the
+  eye and never past half its way: a wall before the node hides it, the node never does.
+- **The glints.** `GLINT_COUNT` (6) a node, each living its own short life - `GLINT_RATE` 0.35 a second, each next one
+  `GLINT_RATE_STEP` 0.05 faster (21 to 36 lives a minute, whole over the glow's 60 s clock) - its light sin(pi x life)
+  cubed (`GLINT_FLASH`): born, brightest mid-life, gone dark - each life numbered on the clock's own wrap, so the life
+  at the wrap is the life at zero (AUDIT NODE-GLINT). Each life stands at a spot of the picture chosen afresh, once for
+  the node in the light's vertex stage (AUDIT NODE-GLINT: every fragment found it again): the first of `GLINT_TRIES` (6;
+  3 before the audit) points of the node's own pictures (`GLINT_ANCHORS`, 8 at most: a flat at its base, width and
+  height at its own scale; a 3D tree's crown about its root), taken in the plane the picture stands in - so a spot is a
+  point of the picture and moves with it as the eye moves (AUDIT NODE-GLINT: it was a share of the screen's box, a
+  different point each frame) - on the screen and before the eye: a flat's judged by its own picture at its own texel,
+  at its own depth; a 3D crown's by the silhouette, `GLINT_HOLD_PX` (1.5) round on every side. None, and that life is
+  dark. A white-hot core (`GLINT_CORE_WHITE`, 0.6 of the way to white) in a
+  soft bloom, and four thin rays turned a little (each life its own turn, within 17 degrees), reaching `GLINT_SHARE`
+  (0.35) of the picture's longer side on screen, between `GLINT_PX_MIN` (4) and `GLINT_PX` (14) pixels at 1080 rows, both
+  with the image, never under 1.5 (`glintPx`) - so a far herb, a speck, still glints, and a tree filling the screen
+  glints no larger than a near herb.
+- **The sheen.** A soft band of light rising a little aslant across the picture's own box and lit only where the
+  silhouette is - the picture's own shape catching the light - once every 6.7 s (`GLINT_SHEEN_HZ` 0.15), crossing in the
+  first half of the period (`GLINT_SHEEN_SHARE`) and dark the rest, at `GLINT_GAIN.sheen` (0.14) at most; none within
+  `GLINT_SHEEN_NEAR_M` (6 m), whole from `GLINT_SHEEN_FULL_M` (18 m) (`glintSheen`). (This said "the tree under the
+  axe and the herb under the sickle never flash" - the sheen's fade alone, while the glints flashed on at full: AUDIT
+  NODE-GLINT, and the next bullet.)
+- **The act's node is quiet** (AUDIT NODE-GLINT). The node an act works lights nothing of its own - no glint, no sheen,
+  no glow over a body: the Basket's finds and the Pick-Axe's strike are glints the player watches for (`systems/herbAct.js`,
+  `ui/professions/profActStyle.js` `.prof-glint`, a warm-white four-rayed star), and NODE-GLINT's stars on the very
+  node looked the same. The host marks it `quiet` (`scenes/gatherHost.js` marks), and `nodeGlows` dims a quiet mark
+  over the 0.6 s it kindles in and kindles it again when the act ends.
+- **The light.** A warm daylight (`GLINT_LIGHT`: 1, 0.95, 0.84) carrying `GLINT_TINT` (35%) of the profession's compass
+  colour (`glintTint`, `ui/nodeMarks.js`) - the professions still told apart, none painted in its colour whole.
+- **Kept.** NODE-MARKS' law for who is lit and how much (`nodeGlows`: kindled over 0.6 s, faded from 80 to 120 m, 16 at
+  most - the atlas's tiles); the frame's fog and the jungle's haze where its depth stands, and the sea's murk (AUDIT
+  NODE-GLINT, `dwWaterFogAdd` - the duel wall's law for an added light); the glow for a node with no
+  picture (a body drawn as a 3D character) and for SENSE1's look round; the build at idle, and a glint that will not
+  build handing every mark to the glow. Under reduced motion every glint stands at its first life's place at
+  `GLINT_STILL` (0.6) and no sheen crosses.
+- **Where** (THE FOUR HOSTS RULE), as section 46 left it: `scenes/world.js` wires it (`nodeGlintPass`, in the hook after
+  each mode's opaque world - the street's, and a dungeon's through its `lateWorldDraw`); `scenes/dungeonContext.js` holds
+  no pass of its own (its glow is SENSE1's); `scenes/worldModes.js` lights none in a building (`nodeMarksAt` answers none
+  there); `scenes/exterior.js`, the fixed-city bench, stands no gathering host and no node. Never under the travel view.
+- **Not a setting.** The owner's word was the glint itself; section 31's "no setting turns the glow or the marks off"
+  stands.
+- **Pinned**: `test/scenes/nodeglint.test.js` (11 - section 46's three on the pictures carried); `tools/nodeGlintProbe.mjs`
+  compiles and links both programs in a real WebGL2 context, draws a herb flat of a two-flat batch and a 3D tree of
+  crossed cards through the pass and reads the frames back (21 checks: over 24 moments of the glints' lives the herb and
+  the tree glint; light only added; every lit pixel within a glint's reach of the picture, and every glint's heart within
+  3 px of it; the neighbour flat unlit; near, no sheen; half kindled, half the light; still under reduced motion and
+  moving without it; a wall hiding it; through a long lens at 25 m the herb's sheen crossing it from its foot to its
+  crown, dark between crossings; the baseline back). Mutants: `tools/mutants/nodeglint.json` (52, all dead - section
+  46's 19 on the pictures, the mask and the pass carried and re-aimed, its 6 on the ring retired with it, its 2 on the
+  screen's clamp and the host's wiring made again as NODE-GLINT's). AUDIT NODE-GLINT's counts are its own, below. PIN MOVED: the world host's hook pins (`nodemarks.test.js`,
+  `invislook.test.js`, `wb9g_insignia.test.js`, `nodemarks.json`, `wb9g.json`) read `nodeGlintPass`;
+  `tv4_weather_above.test.js` names `nodeGlint.js` among the fogged passes never drawn under the travel view;
+  `l10n4_hardcoded.test.js` counts its three words under its new name (two since AUDIT NODE-GLINT).
+
+### AUDIT NODE-GLINT (2026-10-20, the owner: "Audit this")
+
+Two lanes: the author's own adversarial re-read, and three independent passes that read the commit cold - the GL and its
+cost, the record with its pins and mutants, and the glint in the world as a player meets it - none touching the tree
+while the others read. FOUND, each fixed and pinned (`test/scenes/nodeglint.test.js`, `tools/nodeGlintProbe.mjs`,
+`tools/mutants/nodeglint.json`):
+
+- **HIGH - the glints mimicked the act's own glint on the node being worked** (the world lane and the record lane). The
+  Basket's finds and the Pick-Axe's strike are glints the player must react to (`systems/herbAct.js`: a press before a
+  find shows spends it; `ui/professions/profReticle.js`: a strike within 2.5 degrees of the glint counts double), drawn
+  as a warm-white four-rayed star (`ui/professions/profActStyle.js` `.prof-glint`, about 23 px) - and NODE-GLINT's stars,
+  warm-white and four-rayed (about 28 px), kept flashing at full on the very node: about 2.8 a second over the herb in
+  the Basket's gaps. Only the sheen faded near; the record said "never flash". FIXED: the node an act works is quiet
+  (`scenes/gatherHost.js` marks' `quiet`; `nodeGlows` dims it over 0.6 s and kindles it again) - its glints, its sheen
+  and a body's glow alike; the record's words corrected where they stand.
+- **HIGH - every node behind the player was a full-screen pass** (the GL lane and the world lane; carried from
+  NODE-OUTLINE's `screenRect`, its cost now four times the ring's a pixel). One corner of a node's box behind the eye
+  made its rectangle the whole screen - a box wholly behind too, and one across the eye's plane off to the side. About 8
+  of a frame's 16 nodes in any wood (the GL lane's sampling at 1920 x 1080: 16.8 M light fragments a frame for herbs,
+  19-23 M for trees); in SwiftShader, 16 nodes behind the eye cost the glint 2,366 ms a frame and the ring 551. FIXED:
+  a box wholly behind the eye is none, one across its plane bounded where its edges cross `GLINT_NEAR_W` (the GL lane's
+  re-measure: 0.01 M fragments for herbs, 0.9 M for trees).
+- **MEDIUM - every fragment searched for every glint's spot** (the GL lane): six glints, up to three hashed tries and a
+  texel each, the same for the whole node, answered again at every pixel of its rectangle (the ring had discarded a
+  silhouette pixel after one fetch). FIXED: the spots are found once, in the light's vertex stage (`texelFetch` there is
+  WebGL2's own), and handed to the fragments flat; a fragment reads one texel and draws six stars.
+- **MEDIUM - glints came and went as the eye moved a pixel or the picture swayed** (the GL lane: on a leafy picture, 9
+  and 12 comings and goings over 20 one-pixel steps; the world lane, the author). A life's spot was a share of the
+  node's box on the screen, chosen again every frame against the moving, pixel-snapped silhouette - a different point
+  of the picture each frame - so a spot near a leaf's edge flipped between tries or went dark mid-flash, a frame at a
+  time as the player walked; under reduced motion the held glints hopped too, and a node sliding off the screen dragged
+  its spots (its box was held to the screen). A margin round the spot alone did not cure it (the probe: 10 over 12
+  steps - any test on the mask's pixels flips as they move under it). FIXED at the root: a spot is a point of one of
+  the node's pictures (`GLINT_ANCHORS` - a flat at its own base, width and height; a 3D tree's crown about its root), in
+  the plane the picture stands in, so it moves with the picture; a flat's judged at its own texel of its own picture
+  (`uFlatTex`), at its own depth - nothing about it changes as the eye moves; a 3D crown's (no one plane) by the
+  silhouette, `GLINT_HOLD_PX` round; six tries a life; the picture's box kept whole past the screen's edge
+  (`GLINT_OVERHANG`). The probe: none over 12 one-pixel steps on a leafy picture, where the same flat judged by the
+  silhouette came and went 4 times (a glint is gone when no light of it stands within 2.5 px of its place - a peak only
+  dimming under the detector's 300 as it slides across a pixel is the same glint).
+- **MEDIUM - a small tree's glints mostly dark** (the world lane). A far tree's batch is sized for its tallest tree (each
+  flat its own `_scales`), and its box at the batch's size stood round a small tree - about a quarter of its lives found
+  it; under reduced motion one small tree in six showed none. FIXED: a flat boxed at its own scale, and none beside the
+  3D tree it has given way to.
+- **MEDIUM - the record's numbers and some of its laws had no pin that could fail** (the record lane, by mutants that
+  survived): 14 constants held by a bound or not at all; every node on one seed, a spot never chosen afresh, the depth
+  its own texel's, the jungle's haze never sent; the rays' room pinned at half; the tree's reach unscaled, the scissor
+  kept, the depth written, the pass's end forgotten. FIXED: the constants pinned by value, each law by a pin or a probe
+  check - the 52 records are 98, all dead (two the audit's own first pins missed, made to fail).
+- **LOW-MEDIUM - every glint jumped once a minute** (every lane). The glints' brightness was whole over the 60 s clock,
+  their life's number was not: at the wrap it fell to nought and every lit glint moved, on every node at once (the GL
+  lane read 206 pixels change across the wrap, none on either side of it). FIXED: a life numbered on the clock's wrap.
+- **LOW - a batch the walk had not placed drew pixel-local** (the world lane): a stood pixel's batch has no origin until
+  the world's walk first reaches it, and its node, behind the player at night, was boxed some 800 m off - a ghost glint.
+  FIXED: the mark carries its pictures' frame (`origin`, its pixel's translation), the batch's own first.
+- **LOW** - `pow` of a sine a hair below nought (NaN on a real GPU; the GL lane, plausible): FIXED, held at nought. The
+  sea's murk never taken (inherited from the glow and the ring): FIXED, `dwWaterFogAdd`. A tile a texel over its
+  rectangle where the float carries the width over: FIXED, whole pixels. A 3D tree's front card hiding its own light (the
+  GL lane, plausible): FIXED, the nearer picture's depth. The pass's own glow never freed (carried from HOST-SPLIT):
+  FIXED. Text that said what is and was not (`render/nodeGlow.js`'s head, Rendering.md's glow line, Bantha-Jungle's
+  trunk, the world host's hook): FIXED. Section 46's addresses rewritten onto files that now say other things (`(9)`,
+  `(15 checks: the ring...)`): FIXED - section 46 is its own words again, RETIRED where it names the ring's files.
+
+NOT CHANGED, named:
+- **The light at night and underground** (the world lane - DESIGN, the owner's). The glint is a fixed warm daylight, so at
+  midnight in a wood or in a black corridor each node near carries the brightest point in view, many times its picture's
+  own light, and every 6.7 s the sheen lifts the whole far silhouette. The glow and the ring were the same. Scaling it by
+  the frame's light with a floor (`renderer.flatLightAt`; TELL2's `glintLit` is the precedent) trades the night's
+  findability for its immersion: put to the owner. ANSWERED - "Follow the light": GLINT-LIGHT, below.
+- **The tint separates Mining and Logging by 0.12, on green alone** (the world lane - DESIGN, LOW): the picture itself
+  tells the kind; the compass carries the colour whole.
+- **A flat's spot stands on its unswayed plane**: in a gale the picture leans under it (a tall crown's top by a few
+  tenths of a metre) and the glint drifts against its leaf - it never jumps. **A 3D crown is no one plane**: its spots
+  stand on the plane through its root, judged by the silhouette, and the crown's leaves slide across them by their
+  parallax as the eye moves round it - far slower than the screen's box did, but a spot there may still come and go;
+  anchoring to the leaf cards themselves (the tree's mesh, the GPU's alone) is named, not built.
+- **The 0.3 m pull lets the light show through a grass blade at a herb's foot**; **the sheen's distance is the camera's**,
+  not the player's (a third-person camera); **the sheen on a tile fitted to fewer texels is blocky at its edge** (at most
+  a pixel at fit 0.44 - the rectangles behind the eye were the worst, and are gone). Each minor.
+- **The probe's tree picture is no `treeKind.picturesOf`'s** (it stands the 3D tree alone: the far flat's handover cut is
+  the billboard program's, pinned by the Low Poly Trees' own tests), and **the probe is not in CI** - the repo's probes
+  are run by hand, as this one was.
+
+CHECKED, SOUND (the lanes, read at the commit): GLSL ES 3.00 on ANGLE, Metal and the mobile translators (the uint hash, the
+loops, `texelFetch` on the depth atlas, `gl_FragDepth` on every path not discarded); the depth convention (standard,
+LESS, the atlas's depth the frame's at the same pixel); the GL handed back; the fog, the haze and the focus; reduced
+motion; a gone node, a stump, a neighbour flat in a shared batch; a school over the water; the four hosts; flashing well
+under 3 Hz over small areas; the shapes the tests feed the pass the producers'.
+
+Counts after the audit: `test/scenes/nodeglint.test.js` 15; `tools/nodeGlintProbe.mjs` 26 checks;
+`tools/mutants/nodeglint.json` 98, all dead; NODE-MARKS' two records the audit moved (`nodemarks.json`) re-aimed, dead;
+`test/world/bantha1_jungle.test.js`'s haze sweep reads the glint's own upload.
+
+### GLINT-LIGHT - the glints follow the light (2026-10-20, the owner: "Follow the light")
+
+The audit's design question, put to the owner: at night and underground, should the glints follow the scene's light? The
+answer, the option as it was put: "Scale glints by the light where the node stands, with a floor so nodes stay findable
+at night. The sheen goes away in the dark."
+
+THE LIGHT is the one the node's own flat takes where it stands - `renderer.flatLightAt` (MAC-I: the billboard program's
+composition - the ambient with the moons' lift, the sun's half, the Masser's half, every lamp at the flats' falloff, the
+indirect light), asked once a node a frame at the node's place, into the pass's one array (`flatLightAt` takes an `out`
+for it now). Its LEVEL is its luma by the 601 weights (`glintLightLevel`, written so a grey light's level is that grey
+exactly), in the display space `flatLightAt` answers in - the frame's own on both lanes, since the Enhanced Lighting
+lane encodes each fragment back to display space itself (`enhancedLighting.js` `elFinish`); the first-person hand's tint
+reads the same answer the same way. A renderer that answers none (a probe, a test's stand-in) lights it as the day.
+- **The glints are as bright as that level** (`uAlpha` is the kindling times it): a clear day's 1, the light whole.
+- **THE FLOOR is the flats' own**, `FLAT_LIGHT_FLOOR` (0.25 - MAC-I's: dark enough to read as unlit, bright enough to
+  keep a silhouette), asked of `flatLightAt` itself. It is also the clock's own night ambient (`EXTERIOR_NIGHT_AMBIENT`),
+  so outdoors at night the glint simply takes the night's light, a quarter of the day's. The floor reaches only under
+  that: a dungeon's 0.12, a room's 0.18, a mine with no lamp near. TELL2's floor (`glintLit`: 0.35 plus 0.8 of the
+  albedo's luma) was weighed and not taken: it is a warning's, which must read before a blow lands, and a node's glint
+  is a find. If night nodes read too faint in play, the floor is the one number to raise, and TELL2's 0.35 is the next
+  precedent.
+- **The sheen goes out in the dark** (`glintSheenLight`, a smoothstep from `GLINT_SHEEN_DARK` 0.4 to `GLINT_SHEEN_LIT`
+  0.55, times the sheen's distance gain). The edges are set from the clock's own light at a node, measured through
+  `flatLightAt` over the world's own terms (`exteriorAmbient`, `sunScale`, the weather's scale, EV5's moons):
+
+  | Light at the node | Level | Sheen |
+  |---|---|---|
+  | a moonless night | 0.25 | none |
+  | a night under both full moons | 0.39 | none |
+  | a storm's noon ("a storming noon reads near-night", `worldClock.js`) | 0.35 | none |
+  | a rainy noon | 0.48 | part |
+  | a clear day's first hour (07:00) | 0.59 | whole |
+  | an overcast noon | 0.66 | whole |
+  | a clear noon | 1 | whole |
+
+  So every night is dark to the sheen, as the owner's "the sheen goes away in the dark" reads at night and underground.
+  A vein beside a lamp in a mine is lit, and its sheen crosses it: the light decides, not the clock.
+- **Not a DFU member**, as the glint is not. The light it follows is DFU's billboard composition (MAC-I's own citations).
+
+NOT CHANGED, named:
+- **The glint's colour stays the warm daylight's** (`GLINT_LIGHT` with its profession's 35%). It is scaled by the
+  light's level, not tinted by its colour: a moonlit or a torchlit glint is the daylight's colour, dimmer. The node's
+  own picture takes the light's colour.
+- **The glow does not follow the light** (a body's, SENSE1's finds - `render/nodeGlow.js`), as the audit named.
+- **The sun's shadow is not in the level**: `flatLightAt` reads no texture, so neither the lane's shadow map nor the
+  clouds' shadow reaches it (the clouds' is MAC-I's own recorded departure, in `flatLightAt`'s comment). A node in a wall's shadow at noon glints as one in the
+  sun, while its picture is shaded.
+- **The lane's eye adaptation is not in the level**: `flatLightAt` is the light before the lane's exposure, as the hand's
+  tint reads it.
+
+Counts after GLINT-LIGHT: `test/scenes/nodeglint.test.js` 18 (the level and the sheen's edges against the clock's own
+hours; `flatLightAt`'s `out`; the draw asking each node's light at its place and the floor); `tools/nodeGlintProbe.mjs`
+30 checks (a clear noon's light whole; at night a quarter, its brightest still clear on the picture; a black mine's held
+at the night's by the floor; far, at night, no sheen at any moment it crossed by day - `renderer.flatLightAt` itself
+over the probe's scene); `tools/mutants/nodeglint.json` 107, all dead.
+
+## 48. CRAFT-PAYS and POT-THIN - a crafter's bottle worth brewing, the flood of drops turned down, a cooked meal that weighs what it should (BUILT 2026-10-21)
+
+The Discord's #feature-feedback, TheBard, "Crafting seems unrewarding" (2026-10-21): **"It requires a great deal of
+gathering and then sinking money at the stations. The item I make I can loot with ease"**; Potions: **"I collect so many
+potions from enemy drops that I never need to make potions. I only make them to level the provisioning skill. The profit
+margin is also extremely low or even a loss ... who needs to buy pots when you find them everywhere?"**; Crafting Quests:
+**"crafting writs instead of only gathering writs ... potions of restore power needed by the mages guild. The reward can
+be crafting xp, silver, and rep"**; Food Weight: **"2 kilos per meat ... Or meat should reduce in weight once cooked"**;
+and **"whats the end goal for crafting?"**. The owner, passing it on: **"I definitely want to decrease pot drops on top of
+whatever you suggest relating to the posts"**.
+
+### 48.1 What stood (MEASURED, 2026-10-21)
+
+- **The drops.** A looting foe rolled DFU's random potion (3 in 100, `loot.js` addEnemyLootExtras), then POTION-COMMON's
+  Potion of Healing and MAGICKA-COMMON's Restore Power (`systems/healingSupply.js`) - 10 and 6 in 100 at Renown 20, 12 and
+  9 at Renown 40 (RENOWN-LOOT). **19 potions in 100 looting foes** at Renown 20, 24 at Renown 40; a J-O pile 18 + 10 + DFU's
+  4. The two potions a player drinks most were the two the loot gave most.
+- **The brew.** A Novice's brew (`alchemyLaw.js` brewCount) made **one** potion, for the alchemist's station fee of **50
+  gold** (`professionLaw.js` ALCHEMY_FEE, every station's) and a cauldron of three or four ingredients. A Potion of Healing
+  is DFU's 50 gold and half that at an online counter (ESSENTIALS-HALF): the brew lost money before its herbs were
+  counted, on exactly the rungs a brewer climbs by brewing.
+- **The food.** Climates & Calories' rows (`survival/items.js`, the mod's own `ItemTemplates.json`): a Raw Meat and a Raw
+  Fish **2 kg** each, the cooked Meat **2 kg** and the Cooked Fish **1.5** - the fire took no weight. A cooked Meat feeds
+  240 minutes and a Cooked Fish 200 (`survival/food.js` FOOD - AUDIT CRAFT-WRITS E8: "a cooked meal feeds 240" was the
+  Meat's alone); a meal eaten never banks past the clock (`eatLaw`'s "never a meal in the
+  future", AUDIT SURV-TIERS), so the hours a meal holds are the needs' own ladder - Peckish at 4 hours, Hungry at 12
+  (`needs.js` NEED) - whatever the meal weighs.
+
+### 48.2 What was done
+
+| Slice | What | The numbers |
+|---|---|---|
+| **POT-THIN** | The two potion faucets of `healingSupply.js` cut; DFU's random potion and the counter's shelf untouched | A foe's healing potion 4 in 100 at Renown 20 (it was 10), its Restore Power 2 (6); a J-O pile's 8 (18) and 4 (10). RENOWN-LOOT's ladder on new ends: a foe's healing 3 / 3.5 / 4 / 4.5 / 5 by stage (8-12), its Restore Power 1 to 3 (3-9); a pile's 6 to 10 (15-21) and 2 to 6 (5-15) - `HEALING_ENEMY_CHANCE_BEFORE` 2 and `HEALING_PILE_CHANCE_BEFORE` 4 the step's start (an invented one, below the live game's 6 and 12 - the names kept). **9 potions in 100 looting foes** at Renown 20, 11 at Renown 40 - half what they were (an expected count; at least one on some 8.7 in 100). OFFLINE takes LOOT-EASE's buff whole, so it is cut too - 4 and 2 - its brewer DFU's own potion maker at an Alchemist's (AUDIT CRAFT-WRITS E5: unsaid until the audit). Not touched, and now named: SEARCH1's searchables (`searchables.js` - a shelf's loot roll half random potions, uniform twentieths, so some 0.025 Healing or Restore Power a shelf searched) |
+| **CRAFT-PAYS: the brew** | A Novice's brew two potions; the alchemist's station 25 gold a brew | `brewCount` 2 below Journeyman (1); the rungs above stand - two at Journeyman, a Brewer's three, three at Master - because `prof_brews.count` is CHECKed 1 to 3 (migration 0070), and a fourth is a table's rebuild, not a number's change. The counter's goods still brew one (AUDIT PROF-541 R2-S1). `ALCHEMY_FEE` 25 (50): a brew is a bottle, not a blade - the forge's 50 on a Longsword is a sliver, on a 50-gold potion it was the margin. The same fee is the station's TRANSMUTATION's (`worldModes.js` - AUDIT CRAFT-WRITS T7: it halved too, unsaid until the audit). A home's station stays free |
+| **CRAFT-PAYS: the food** | A cut weighs a kilo, and cooking takes its water | Raw Meat and Raw Fish 1 kg (2), Meat 0.5 (2), Cooked Fish 0.5 (1.5); the dishes stand on these rows (`profTemplates.js` DISH_TEMPLATE_ROWS) - the Stew and the Supper 0.5 (2 and 1.5), the Feast 2 (8); the Tart stays the Bread's 1.5. Weight is read at the template (`inventory.js` unitWeightInKg), so every food already in a pack lightens with it |
+
+Arithmetic at a Novice's station, a Potion of Healing (Red Berries, Mercury, the Apothecaries' Troll's Blood and Elixir
+Vitae - 10 silver at the counter): before, 50 gold and a cauldron for one potion; now 25 gold and the cauldron for two, the
+fee a bottle 12.5 gold where it was 50, and a Brewer at Journeyman 8 a bottle. A brewer's own potions are now the steady
+supply and the drop a windfall - which is what the record already said a crafter's work is for (41.1, "what already
+works: what wears out or is eaten").
+
+**The service.** `brewCount` is the service's law too (`server-account/src/alchemy.js` brewAtStation): a Novice's brew is
+answered two. `ACCOUNT_VERSION` acct169 (acct168 and migration 0144 on its branch, renumbered past STAFF-PANEL1 at the merge). No migration.
+
+### 48.3 What it is for (the record's answer to "whats the end goal for crafting?")
+
+The record has one, and it was never said where a player reads it: **law 7** (section 1) - a craft reaches Rare at most, so
+a crafted piece is never the best a slot holds; loot is the ceiling. Crafting's telos is everything the ceiling is not:
+**what wears out or is eaten** (potions, dishes and the party's Feast, Repair Kits and the tempering that mends what loot
+gives, arrows, a Standard tool's harvests); **the seats' works** (a fortification is stone and timber, SEAT0 7.5); **the
+market** (a Masterwork with your name, commissions, regional prices); and the **Renown** a writ pays. POT-THIN is the first
+change that took a consumable back from the loot so the crafter could supply it; the next ones are 48.4's.
+
+### 48.4 Open, for the owner (DECIDED nothing here)
+
+- **Crafting writs** - BUILT the next day, at the owner's word: section 49 (CRAFT-WRITS).
+- **A meal that holds you longer.** The weight was the complaint's either-or; the other half ("it doesnt fill for very
+  long") is the needs' ladder, not the meal's satiety (48.1) - a change there is the survival arc's, all foods at once.
+- **The other stations' fee.** The forge, the workbench, the loom, the mason's bench and the jeweller's bench keep 50 gold
+  a craft; on their products it is a sliver, so they were left.
+- **The counter's half price** (ESSENTIALS-HALF) still sells a Potion of Healing for 25 gold online - the crafter's floor
+  and ceiling at once. Raising it is the economy arc's call.
+
+### 48.5 As built
+
+- `src/systems/healingSupply.js` (the four chances, the two steps' start), `src/systems/renownLoot.js` (the stage table's
+  two potion columns, a comment).
+- `src/net/alchemyLaw.js` (`brewCount`), `src/net/professionLaw.js` (`ALCHEMY_FEE`), `server-account/src/alchemy.js` (its
+  docblock), `server-account/src/service.js` and `wrangler.toml` (acct169), `src/ui/professions/profPages.js` (a docblock).
+- `src/systems/survival/items.js` (four rows), `vendor/climates-calories/README.md` (nine columns the port changes, not five).
+- **The four hosts**: none touched - the loot hooks are the shared rolls' on every host (`scenes/shared.js`
+  installHealingSupply), the station the pages', the weights the template's.
+- PIN MOVED: `test/systems/potion_common.test.js`, `test/systems/renownloot.test.js` (the potion numbers);
+  `test/systems/prof12_law.test.js`, `test/net/prof12_service.test.js`, `test/systems/prof12_client.test.js` (a Novice's two,
+  25 gold); `test/systems/survival/auditcc_items.test.js`, `test/systems/prof9_client.test.js` (the weights); the account
+  version's pins (acct169). Mutants re-aimed by content: `tools/mutants/potioncommon.json`, `lootease.json`,
+  `renownloot.json` (79, all dead), `prof12.json` (`PROF12-count-novice-one` - the mutant that WAS a Novice's two is now its
+  one; `PROF12-alchemy-fee` back to 50). AUDIT CRAFT-WRITS T5: the list holds 212 - one recorded equivalent
+  (`PROF12-spends-no-hash`) and one survivor (`PROF12-migration-unique`, which survives on main as well), so 210 to die;
+  "209 dead" miscounted it, and the three records re-aimed are the ones this change ran, not the whole list.
+- Ledger A: POTION-COMMON's row narrowed to POT-THIN's numbers; CRAFT-PAYS its own row.
+
+## 49. CRAFT-WRITS - the guilds' asks of a crafter, as built (BUILT 2026-10-22)
+
+The owner, of section 48: **"Why dont you actually build this instead of handing me a small fix?"** - the post's own
+proposal (48.4): **"crafting writs instead of only gathering writs. Something like; potions of restore power needed by
+the mages guild. The reward can be crafting xp, silver, and rep."** Every number below is DECIDED here, at that word.
+
+### 49.1 The shape
+
+- **Whose.** Every writ the board posted asked a gathered material from the Stores (section 11). A crafting writ asks what
+  a crafter MAKES, and is the ACCOUNT's: it is asked **three a UTC day**, drawn the first time any of its living realm
+  characters reads a board that day and written down (`craft_writs`, migration 0145 - `UNIQUE (day, player, slot)`, the
+  id's stem that first reader's realm id) - so a writ never changes under a rank won mid-day, and two accounts never race
+  for one. Filled whole at any board, by any of the account's characters with its OWN goods (`filled_char`), before the
+  day ends. AUDIT CRAFT-WRITS E1: as built first each character was asked three of its own, and an account of six chose
+  its best three of eighteen - the day's best by far and the easiest to fill; the draw is the account's now. **Three a
+  day** is the account's allowance (`CRAFT_WRITS_PER_DAY`, `MARKS_FAUCETS.craftWrit`), beside the Court's three - the
+  schema holds it (three slots a day, one row each), and the decision counts it again as the faucet's word.
+- **What.** Slot 0 a **potion** and slot 1 a **dish**, of Provisioning's (CRAFT3: Alchemy and Cooking are its); slot 2 a
+  **Repair Kit** of Smithing's where one of the account's characters has smithed at all, else a second potion (another
+  than slot 0's where Provisioning opens another). Each within the account's BEST crafter's rank (the most Provisioning
+  and Smithing any of its living realm characters holds, `ranksOf`) and **no more than two tiers below the highest it
+  opens** (`craftWritChoices`) - a Master is asked a Master's work, as XP quarters below that; an alt reading the board
+  sees its main's writs, and fills only what its own brews and pieces cover. Drawn from the account's own dice (its id,
+  the day, the slot - `CRAFT_WRIT_SALT`), never a character's, so the order its characters read the board in chooses
+  nothing.
+- **Never** a Repair Kit of a metal nothing yields (`marketLaw.js` UNYIELDED - the Daedric ingot; AUDIT CRAFT-WRITS E4:
+  a Master smith was asked a kit no smith could make).
+- **Never** a potion made wholly of the Apothecaries' goods (Water Breathing, Levitation - `brewFirstPays`): silver
+  spent at the counter and brewed would come back as more silver with no hand's work between (AUDIT PROF-541 R2-S1's law).
+- **Who asks** (`CRAFT_GUILDS`, the port's own choice - DFU's guilds post no writs): the **Mages Guild** most potions; the
+  **Temple of Stendarr** (mercy) the five remedies - Healing, Heal True, Cure Disease, Cure Poison, Purification; the
+  **Fighters Guild** Orc Strength, Stamina, the Hunter's Stew, the Fisherman's Supper and every Repair Kit; the **Temple
+  of Mara** the Orchard Tart and the Feast of the Hearth.
+
+### 49.2 What fills one - made, and handed over
+
+A writ's silver is minted only for an act the service witnessed (law 8), and the goods leave the character's realm record
+in the same batch (INT19's law for every crafted act):
+
+- **A potion writ**: the character's own **witnessed brews** of the potion - every potion a station bottled for it
+  (`prof_brews.count`), less what the crafting writs IT filled of that potion already took (`brewedLeftSql` - AUDIT
+  CRAFT-WRITS S1: the decision named the writ's product as a column inside its own subquery, so SQLite read the
+  subquery's row and every writ the character had filled, of any product, was taken from its brews; a stew writ filled
+  first refused the potion writ the card offered) - cover the count; AND that many potion BOTTLES of the recipe leave the
+  record's pack (`takeCraftGoods` - the plain before the Potent, a stack giving part of itself; never a worn, quest,
+  summoned, bound or LOCKED one - AUDIT CRAFT-WRITS C3, itemLock.js; never the recipe's sheet, which names the potion's key
+  too - E3). A potion is a potion: the brews are the witness and the record the goods,
+  so a looted bottle can be handed over only where a brew of the character's own stands behind it.
+- **WITNESSED WHOLE** (migration 0145, `prof_brews.witnessed`): a station spends a cauldron's LOOSE units first (AUDIT
+  BAG-CRAFT A1 - what the pack put in that the service never handed out: a looted herb, a reagent bought for gold), and a
+  potion of them is gold's goods, which never fetch silver (GOLD-MARKET). A brew is witnessed where it spent none
+  (`alchemy.js` brewAtStation writes it in the brew's own decision). Brews before the column read 0 - their units'
+  origins are unknown - so **a crafting writ counts the brews from this release on**.
+- **A dish or kit writ**: the pieces themselves, by provenance (`pieces`, exactly the count) - each the account's (a sold
+  one is its buyer's, `products.owner`) and this character's own make (`products.char_id` - a piece bought on the market
+  keeps its maker's), never walled to gold (`products.bought_with IS NOT 'gold'` - a loose-made piece's mark, AUDIT
+  BAG-CRAFT A1), on no listing, auction, road or home nor on its way back (`pieceOkSql`, PROF5's and INT19's guards), loose
+  in the record's pack and not locked; their `products` rows go with them, as a disenchant's. AUDIT CRAFT-WRITS T2: as
+  built first the guard was `bought_with IS NULL`, and `'marks'` is ALSO a piece made of goods bought for silver (AUDIT
+  PROF-541 B7) - every Repair Kit takes the Cured Leather the smith's counter sells, so a kit writ refused the kits a
+  smith made of it. The card's list is the newest pieces first (AUDIT CRAFT-WRITS S3: a piece's row outlives it - the
+  oldest twenty were a cook's long-eaten dinners), sixty at most, by the very guard the decision reads (S2: the board's
+  check named its outer piece as its own).
+
+### 49.3 The pay
+
+| What | The law (`craftWritLaw.js`) |
+|---|---|
+| **Silver** (Marks, a `craft-writ` mint) | A make's GATHERED inputs at their Marks values times **150%** (`CRAFT_PAY_PCT`, the Court's 1.2 for raw goods and a crafter's half again), and the goods ONLY A COUNTER SELLS (`COUNTER_ONLY` - the Apothecaries' reagents, sold at their value) at their cost alone (`bought` - AUDIT CRAFT-WRITS E2: half again on a reagent bought was silver in, more silver out, with only the brewing between), over the units one make gives a Novice (`NOVICE_YIELD`: a brew 2 - CRAFT-PAYS - a dish 1, a kit 1); never under **20 a tier** (`CRAFT_PAY_FLOOR` - a rank's skill is paid for, not only its herbs: THE FLOOR IS WHAT MOST WRITS PAY, and the knob that moves the faucet); never over **200** (`CRAFT_WRIT_PAY_MAX` - the count is lowered first) |
+| **The count** | Potions 4 at tiers 1-2, 3 at 3-4, 2 past; dishes 3, the feast 1; kits 3 at tiers 1-3, 2 at 4-5, 1 past - then fitted under the cap, and never past 20 (`CRAFT_WRIT_QTY_MAX`, the table's CHECK - E6: a count past it was dropped by the post's INSERT OR IGNORE) |
+| **XP** | Twice the pay (the Court writ's `writXp`), to the craft's track - Provisioning for potions and dishes, Smithing for kits - under the crafter's limit (`craftCapSql`, read in the decision) |
+| **Renown** | Twice the pay at the rate (`renownRate`) - the port's own ratio for a crafting writ. AUDIT CRAFT-WRITS T6: "the Court writ's ratio" was wrong - a Court writ's Renown is its tier's and units' (`writRenown`), 0.67 to 1.56 of its pay by the material |
+| **Standing** | `HALL_WRIT_REP` (2) with the asking guild on the character's Roll, where the Roll keeps the guild - a hall writ's own two statements (CHAP2a), while the Chapters are the account's |
+
+So, among the eighteen potions: Restore Power (the post's own) four for **108**, Healing four for **32**, Resist Fire
+four for **68**, Purification two for **140**; three Hunter's Stews **20**, a Feast of the Hearth **120**; three Iron
+Repair Kits **20**, an Orichalcum one **120** (the whole table is pinned, `craftwrits_law.test.js`). Every product but
+six (Restore Power, Resist Fire, Heal True, Healing, and Orc Strength and Water Walking by a silver or two) pays its
+tier's floor. A Novice's Restore Power writ asks two brews - 96 silver of reagents and two mined Silver - for 108 (the reagents
+back at cost, the Silver half again and twelve over), 216 Provisioning XP and 162 Renown; a Novice's Healing writ two
+brews of 20 silver at the counter and the gathered rest, for 32. A kit writ is the smith's floor: three Iron Repair Kits
+(their ingots and leather worth 9) for 20, an Orichalcum one (16) for 120 - less the Cured Leather's counter price (twice
+its value, 4) where it was bought, which the kit's `cost` counts at its value: at a public forge three Iron kits of bought
+leather come to some 7 silver under their pay (the forge's 50 gold a craft), a Quartermaster's 2 over, a home's 8 over
+(AUDIT CRAFT-WRITS E7: the kits' margins, unrecorded; every kit pays its floor, so the leather's value moves none).
+
+**The faucet** (AUDIT CRAFT-WRITS E1 and T6 - the first record's maxima were a character's, and wrong). At most three a
+day an account, at most 200 each by the law; the dearest writ the table makes is Purification's 140. Drawn at the
+account's best crafter's ranks, its three come to: **60 to 74** while that crafter is below rank 10 (tier 1); **60 to
+216** from rank 10 (Restore Power, Resist Fire and the Tart open); 60 to 228 up to rank 49; **280 to 360** at ranks 74-75;
+**300 to 380** for a Master (Purification 140, the Feast 120, Invisibility or a tier-6 kit 120). The Court's three a day
+pay up to 336 each, and no tier-2 Court writ more than 96 - so at tier 2 Restore Power's 108 sits above the gatherer's
+best (96 of it the reagents' cost), and at every other tier the crafter's faucet sits under the Court's. Appendix C's
+model is not re-run here. RECORDED for the owner: if the Marks minted outrun the Marks burnt again, `CRAFT_PAY_FLOOR`
+(what most writs pay) and the cap are the two knobs; `CRAFT_PAY_PCT` moves six products.
+
+### 49.4 Where it is seen
+
+- **The Work tab** (`ui/noticeWindow.js` craftNode): above the Court's writs, under **"Crafting writs - N of 3 today"**,
+  one card a writ - the guild's ask ("The Mages Guild asks you for 4 Potions of Restore Power"), what fills it ("Of your
+  own brewing - the bottles leave your pack."), its pay ("Pays 108 silver, 216 Provisioning experience, 162 Renown and
+  standing with the Mages Guild"), its time left, what the reading character holds ("3 brewed by you, 5 in your pack"),
+  and **Deliver** - waiting, with its reason on its title, in its name for a reader and on the card (a phone has no
+  hover), where something is short or the day's three are filled (AUDIT CRAFT-WRITS C8: the day's three were said on the
+  title alone). A press says the guild's thanks and marks its card filled at once, before the list read again comes back
+  (C1: a second press meanwhile asked the service again); the balance and the Renown are taken as a Court writ's
+  (`onTaken`). The realm's silence and a character changed before the answer are said in their own words (C6), every
+  other refusal the service's.
+- **The host** (`scenes/craftWritHost.js`, wired in `scenes/world.js` by one statement and one entry - HOST-SPLIT): what
+  the pack holds toward a writ, and its goods out of the pack inside the realm act that takes them out of the record
+  (`realmGoldAct` - the save checkpointed first, the goods out as the service is first asked; the disenchant's own
+  order). Back WHERE THEY STOOD (C9) on a refusal, on an `ok` that moved no record (C1: a request answered again,
+  `repeat` with no `realm` - as built first, a second press kept the goods it took out while the record kept them too,
+  and the next checkpoint lost them; the service refuses a filled writ under a new request now, `craft-writ-filled`,
+  S4), and on a throw before the service was asked. The book's `craftDeliver` (`net/profBook.js`) asks it once - the
+  realm act asks again itself; a fill moves the kept list's card and count and has a list read meanwhile read again (C1),
+  a record moved under the ask has the book read again (C4), and a brew, a dish or a kit lets the Work list go (C7: the
+  card's `brewed` stood a minute behind the station).
+- **The four hosts**: the Notice Board is `scenes/world.js`'s; `worldModes.js` and `dungeonContext.js` stand inside its
+  page and open no board of their own; `scenes/exterior.js` - FLAGGED in `craftWritHost.js`: the fixed-city bench never
+  goes online, so it posts no crafting writ, as no Court writ.
+
+**Audited** cold before its merge: `01-Overview/audits/Audit-Craft-Writs.md` (AUDIT CRAFT-WRITS) - what it found, and
+what changed, is marked with its ids above.
+
+### 49.5 As built
+
+- **The law**: `src/net/craftWritLaw.js` (products, guilds, the draw, the pay, the goods, the words); `src/net/marksLaw.js`
+  (`MARKS_FAUCETS.craftWrit`, `MARKS_KINDS['craft-writ']`).
+- **The service**: `server-account/src/craftWrits.js` (`craftWritBoard`, `deliverCraftWrit`, `sweepCraftWrits`);
+  `server-account/migrations/0145_craft_writs.sql` (acct168 and migration 0144 on its branch, renumbered past STAFF-PANEL1 at the merge); `alchemy.js` (a brew's `witnessed`); `index.js` (`/v1/writs/craft`,
+  `crafts` on `/v1/writs/list`, the refusals' statuses); `service.js` (the route listed, acct169 - CRAFT-PAYS and
+  CRAFT-WRITS one release); `progress.js` (INT16-INT17: a progression claim - its XP and Renown); `cron.js` (an unfilled
+  writ swept the day after its own; a filled one stays - a potion writ's brews are counted by it); `professions.js`
+  (`renownAnswer` exported). `realm.js` deletes nothing of them: they are the account's (E1), and a filled writ is the
+  memory of the brews its filler gave.
+- **The client**: `src/scenes/craftWritHost.js`, `src/net/profBook.js` (`craftDeliver`), `src/net/accountClient.js` (the
+  door, five refusals in words), `src/ui/noticeWindow.js`, `src/scenes/world.js`.
+- **The words**: 28 keys through the text core (`prof.craftWrit.*`, `notice.craftWrit.*`, five `account.refusal.craft*`) -
+  `locales/en/Port_Strings.csv` regenerated (`tools/l10nExtract.mjs`), the thirteen languages drafted whole written in
+  session (`tools/l10nInSession.mjs`, recorded as the machine's), each in the words its catalog already uses for a writ,
+  the pack, silver and Renown; the drafting twelve owe them with the rest.
+- **The deploy**: `.github/workflows/account-deploy.yml`'s path filter names `src/net/craftWritLaw.js` (the Worker bundles
+  it - ACC4's walk); its new imports (`marketLaw.js`, `itemTemplatesData.js`, `itemLock.js`) were listed already.
+- **Pinned**: `test/net/craftwrits_law.test.js` (7), `test/net/craftwrits_service.test.js` (13, through the real Worker),
+  `test/net/craftwrits_client.test.js` (7 - the book's delivery against the real Worker among them);
+  `tools/mutants/craftwrits.json` (88: 86 dead; `svc-room` equivalent - the marks table's CHECK refuses an overfill - and
+  `svc-cap` equivalent - the schema holds the day's three, E1). PIN MOVED: `marks1`, `prof5_law` (a fourth mint),
+  `auditscale` (the hour's clock 35), `scale4b` (the Work tab's first read of a day writes the day's three),
+  `accountworker` (the table), `int16`'s ROUTES list, `hostceiling` (bootWorld's ceiling 12 up at the merge with main, 36,243 to 36,255 - the host's one statement and one entry, five getters among them, the room main spent meanwhile), and the account version's pins (acct169) (AUDIT CRAFT-WRITS T5:
+  `int16_progress` was named here and never moved - it walks the routes itself). `fb1013e_writwall` waits on the real
+  Worker's board read by the clock (`performance.now`), not 400 turns - the read does more since the crafting writs ride
+  it, and the count ran out under a loaded suite.
 
 ## Appendix A - a day of a gatherer
 
@@ -4843,7 +5504,7 @@ At dusk the hub warns of a Motherlode in the Wrothgarian foothills in ten minute
 | Herbalism | common 0.8 s, steady 2.5 s, 3 degrees |
 | Hunting | trace 5-9 points, clean 0.8, torn 0.4 (as built, PROF7 - E held: 4 + tier points across 14 degrees, a zigzag of 3; begun within 2.5 degrees; the tolerance 3 degrees, x1.5 at Master, x (INT + AGI) / 2's band, sampled every 0.25 degree of its progress - AUDIT 32 L1; clean 0.6-6 s from the first move; Gentle 1.2 s) |
 | A body (PROF7) | `body:<day>:<12 hex>`, stamped at the player's own kill; a node while the pack holds a Skinning Knife; a hide 1, a clean pelt x1.5, a torn one its part lost; the part one body in four (Big Tooth, Spider's Venom, Giant Scorpion Stinger, Dragon's Scales); the butchery one Raw Meat (the Slaughterfish's Raw Fish), a Butcher's two, a Butcher's meat withdrawn spoiling at half the pace; ~~30 hides an account a day,~~ 3 of tiers 5-6 an account a day (AUDIT 32 L2: hides, not bodies; CAP-OFF, 2026-10-07: the thirty gone); lapsed at the UTC day's turn (B1); reached at DFU's corpse distance (H7); no ground, no hours, no witness; Hunting XP 15 x tier |
-| The hides (PROF7) | Rat Pelt 1, Bat Leather 2, Bear Hide 2, Tiger Pelt 3, Spider Silk 3, Scorpion Chitin 4, Slaughterfish Scales 4, Harpy Feathers 5, Dreugh Shell 5, Dragonling Scale 6 (655-664); Cured Leather tier 2, Hardened 5 (665-666); Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5 (668-671, the last unyielded); a hide 1 kg (Spider Silk and Harpy Feathers 0.25), a bolt 0.5; 8 x the tier's Marks value in gold, a leather and a Silk Bolt x1.5 |
+| The hides (PROF7) | Rat Pelt 1, Bat Leather 2, Bear Hide 2, Tiger Pelt 3, Spider Silk 3, Scorpion Chitin 4, Slaughterfish Scales 4, Harpy Feathers 5, Dreugh Shell 5, Dragonling Scale 6 (655-664); DEX-HIDES' Wolf Pelt 2, Boar Hide 2, Mudcrab Chitin 1 (681-683 - AUDIT FB1021 L2-4); Cured Leather tier 2, Hardened 5 (665-666); Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5 (668-671, the last unyielded); a hide 1 kg (Spider Silk and Harpy Feathers 0.25), a bolt 0.5; 8 x the tier's Marks value in gold, a leather and a Silk Bolt x1.5 |
 | The loom (PROF7) | a Clothing Store's, 50 gold a craft, a cure or a weave; a home's `loom` station, 50,000 gold; two hides a leather (tiers 1-3 Cured, 4-6 Hardened), a Tanner's two a unit (a choice at 50); three Spider Silk a Silk Bolt; no XP |
 | Outfitting's recipes (PROF7) | leather armour at Leather - Cuirass 6, Greaves 4, the rest 2 - Cured (rank 10) or Hardened (rank 55, a step); DFU's 76 garments in each cloth - a bolt, two, three, boots a bolt and a Cured Leather; rugs 3 Wool, tapestries 4 Wool, skins 2 and 1 of a pelt; the Fishing-Net 2 Linen; the steps a Tailor's clothing, a Leatherworker's leather armour; XP 20 x tier, +500 the first (AUDIT 32 S1: not the 152 made wholly of Linen and Wool) |
 | A garment's dye (PROF7) | DFU's ten clothing dyes (0-9), chosen at the loom, signed into the record (`u`); every garment (AUDIT 32 L3: the four unchangeable shirts too) |

@@ -47,7 +47,7 @@
   {
     "name": "F2-muzzle-prefers-the-sprite-record-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();\n      return muzzleRay(_tlDrawn, fovRad, forward);",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();\n      // PISTOLET: a pair's shot leaves the barrel of the pistol that fired it\n      if (gunPairUp()) return muzzleRay(gunPair.hands[playerWeapon.activeHand]?.drawn ?? null, fovRad, forward);\n      return muzzleRay(_tlDrawn, fovRad, forward);",
     "new": "      return muzzleRay(_tlDrawn, fovRad, forward) ?? ((fpArm.active() || fpArm.thirdActive()) ? fpArm.weaponMuzzle() : null);",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "MW2-hangs-on-a-bone-no-skeleton-has",
     "file": "src/characters/ownModels/ownWeaponModels.js",
-    "old": "    bone: 'Weapon Bone',",
-    "new": "    bone: 'Bip01 Nowhere',",
+    "old": "    model: 'thunderlock.nif',\n    bone: 'Weapon Bone',",
+    "new": "    model: 'thunderlock.nif',\n    bone: 'Bip01 Nowhere',",
     "tests": [
       "test/formats/morrowind/fieldgunmw.test.js"
     ]

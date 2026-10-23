@@ -504,7 +504,9 @@ test('audit18: the dungeon spell map keeps the FIRST duplicate, as DFU does', { 
   // dungeonContext into the shared one, so the pin follows the law
   // rather than the file it used to sit in.
   // AUDIT 68 S12-spellsstd-dup: through spellsStd.js's one fold, not a copy of it
-  assert.ok(/spellsByIndexMap\(readSpellsStd\(await fetch\('SPELLS\.STD'\)\)\)/.test(hostSrc('shared.js')));
+  // PIN MOVED (DEX4a): through the one RebuildClassicSpellsDict (systems/spell/standardSpells.js), which folds through it
+  assert.ok(/standardSpellsByIndex\(await fetch\('SPELLS\.STD'\)\)/.test(hostSrc('shared.js')));
+  assert.ok(readFileSync(new URL('../../src/systems/spell/standardSpells.js', import.meta.url), 'utf8').includes('spellsByIndexMap(mergeSpellRecords(readSpellsStd(bytes)))'));
   assert.equal(/new Map\(readSpellsStd\(/.test(hostSrc('shared.js')), false, 'the last-wins fold is gone');
 });
 
@@ -517,7 +519,7 @@ test('audit18 sweep: SPELLS.STD and MAGIC.DEF no longer share one catch', () => 
   // the registries through that loader and none of them reads the two
   // files itself.
   const src = hostSrc('shared.js');
-  const i = src.indexOf("readSpellsStd(await fetch('SPELLS.STD')");
+  const i = src.indexOf("standardSpellsByIndex(await fetch('SPELLS.STD')");   // PIN MOVED (DEX4a): the one rebuild
   const j = src.indexOf('readMagicDef(await fetch(');
   assert.ok(i > 0 && j > i, 'both reads live in loadMagicRegistries');
   assert.ok(src.slice(i, j).includes('} catch {'), 'a bad MAGIC.DEF must not null the spell table');

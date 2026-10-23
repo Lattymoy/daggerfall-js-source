@@ -511,7 +511,8 @@ test('TV2 host wiring: the click is a ray from the VIEW\'s eye through this fram
   const pick = w.slice(w.indexOf('function onTravelViewPick('), w.indexOf('function onTravelViewPick(') + 1400);
   assert.match(pick, /if \(!travelViewCanGo\(\)\) return;\n\s*const \[sx, sy\] = canvasPoint\(clientX, clientY, canvas\.getBoundingClientRect\(\)\);/, 'the canvas\'s own pixels (tapRay reads them)');
   assert.match(pick, /rayDirFromScreen\(sx, sy, canvas\.clientWidth, canvas\.clientHeight, _lastProj, _lastView, travelView\.eye, worldViewportRect\(/, 'from the eye the frame was drawn from');
-  assert.match(pick, /const hit = groundHit\(travelView\.eye, dir, \(x, z\) => heightAt\(x, z\)\);/);
+  // PIN MOVED (OW-HORIZON, 2026-10-20): met with the land as far as the view shows it - the built grid's, the far ring's past it - out to the haze's end
+  assert.match(pick, /const hit = horizonHit\(travelView\.eye, dir, \(x, z\) => tvGroundAt\(x, z, false\)\);/);
   assert.match(w, /if \(!row \|\| !travelCheckDiscovered\(row\)\) return null;/, 'an undiscovered place has no name to go to - DFU\'s own law, the travel map\'s');
   assert.match(w, /const TV_PLACE_GROW = 6144;/);
   assert.match(w, /woods\.getHeightMapValue\(px, py\) <= WATER_BYTE/, 'the water: roadsProducer\'s own byte law');

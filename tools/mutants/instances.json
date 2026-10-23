@@ -286,8 +286,8 @@
   {
     "name": "INSTANCES-HALL-INSTANCED",
     "file": "server/src/index.js",
-    "old": "    if (wdunHallOfRoom(instanceOf(key)?.base)) return { no: INSTANCE_DOOR_WORD };\n",
-    "new": "",
+    "old": "    if (wdunHallOfRoom(instanceOf(key)?.base) || seaRoomCell(instanceOf(key)?.base)) return { no: INSTANCE_DOOR_WORD };\n",
+    "new": "    if (seaRoomCell(instanceOf(key)?.base)) return { no: INSTANCE_DOOR_WORD };\n",
     "tests": [
       "test/net/instances2_relay.test.js"
     ],

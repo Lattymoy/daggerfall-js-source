@@ -719,6 +719,10 @@ export function spireTelegraphVs(vs) {
 export const TELEGRAPH_VS_SPIRE = spireTelegraphVs(TELEGRAPH_VS);
 /** EG-G2: the Spire's fragment stage (spireTelegraphFs over the gate's). */
 export const TELEGRAPH_FS_SPIRE = spireTelegraphFs(TELEGRAPH_FS);
+/** SHADER-STALL: the pass's one program, the gate's or (`spire`) the Spire's, as its constructor builds it - what a host
+ *  starts ahead of the build (render/glProgram.js startPrograms).
+ *  @param {boolean} spire @returns {ReadonlyArray<readonly [string, string]>} */
+export const telegraphPrograms = (spire) => [spire ? [TELEGRAPH_VS_SPIRE, TELEGRAPH_FS_SPIRE] : [TELEGRAPH_VS, TELEGRAPH_FS]];
 /** EG-G2: what the Spire's pass draws a shape with when the shape says nothing: no fog floor, the whole fill, no bits. */
 const NO_FOG_FLOOR = Object.freeze([0, 0, 1]);
 
@@ -728,7 +732,8 @@ export class GateTelegraphRenderer {
   constructor(gl, { spire = false } = {}) {
     this.gl = gl;
     this.spire = !!spire;
-    const prog = buildProgram(gl, this.spire ? TELEGRAPH_VS_SPIRE : TELEGRAPH_VS, this.spire ? TELEGRAPH_FS_SPIRE : TELEGRAPH_FS);
+    const [[vs, fs]] = telegraphPrograms(this.spire);
+    const prog = buildProgram(gl, vs, fs);
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uCentre', 'uCourt', 'uLo', 'uHi', 'uLift', 'uKind', 'uOrigin', 'uYaw', 'uR', 'uHalfArc', 'uBody', 'uEnd', 'uHalfW', 'uR0', 'uR1', 'uPts', 'uCount',

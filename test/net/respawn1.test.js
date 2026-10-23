@@ -69,6 +69,7 @@ const REAL = {
   team: 'PlayerEnemy', mobileTeam: 'PlayerEnemy', wabbajackActive: false, specialTransformationCompleted: false,
   abyssDestroyed: true,   // AUDIT OH-F B1: the save's alone - sharedWorld strips it, and the door does not admit it
   noBody: true,   // REVENANT-FATE (the 2026-10-02 audit): a foe gone with no body - the save's alone too, stripped the same way
+  bg: 2,   // AUDIT DEX D3: a body a mod's corpse prefab destroyed (1 risen, 2 burnt) - the memory carries it (validSharedFoe), on a dead record alone
   eliteFoe: true,   // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): the save's word on an elite - its alone, stripped the same way (every client's pick is the room's)
 };
 
@@ -102,8 +103,11 @@ test('RESPAWN1: the door admits the record the dungeon really publishes - every 
   // always did, because `health: 1` rode beside it. A field the door has no
   // law for is DROPPED in silence, which is the exact shape of the bug this
   // file exists for, so the claim is `k in out` now.
+  // AUDIT DEX D3: a field the publisher writes only beside another is offered beside it - `bg` (a mod prefab's gone body)
+  // on a dead record alone, the door refusing it otherwise as validFoeRecord's `bg` does
+  const BESIDE = { bg: { dead: true } };
   for (const k of memoryKeys) {
-    const one = validSharedFoe({ health: 1, [k]: REAL[k] });
+    const one = validSharedFoe({ health: 1, ...BESIDE[k], [k]: REAL[k] });
     assert.ok(one, `a record carrying only ${k} is refused - the door's law for it is not the publisher's`);
     assert.ok(k in one, `${k} is ADMITTED AND THEN DROPPED - the memory would carry it home and lose it at the door`);
   }

@@ -236,6 +236,9 @@ void main() {
   o = vec4(col * light * fogFactorAt(vWorld), 1.0);
 }`;
 
+/** SHADER-STALL: the pass's two programs, the sparks' and the meteor's, as its constructor builds them - what a host
+ *  starts ahead of the build (render/glProgram.js startPrograms). */
+export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS], [FX_METEOR_VS, FX_METEOR_FS]]));
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
@@ -245,8 +248,9 @@ function mat4Multiply(out, a, b) {
 export class GateFxRenderer {
   constructor(gl) {
     this.gl = gl;
-    this.sparks = buildProgram(gl, FX_SPARK_VS, FX_SPARK_FS, 'gate sparks');
-    this.meteor = buildProgram(gl, FX_METEOR_VS, FX_METEOR_FS, 'gate meteor');
+    const [sparks, meteor] = GATE_FX_PROGRAMS;
+    this.sparks = buildProgram(gl, sparks[0], sparks[1], 'gate sparks');
+    this.meteor = buildProgram(gl, meteor[0], meteor[1], 'gate meteor');
     this.us = {}; this.um = {};
     for (const n of ['uVP', 'uAt', 'uFloor', 'uEdge', 'uT', 'uPower', 'uPxPerM', 'uColor', 'uGrit', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.us[n] = gl.getUniformLocation(this.sparks, n);
     for (const n of ['uVP', 'uKind', 'uHead', 'uDir', 'uLen', 'uW', 'uEye', 'uColor', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.um[n] = gl.getUniformLocation(this.meteor, n);

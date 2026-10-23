@@ -154,8 +154,9 @@ test('WBX2 the seams: the court is handed the portal\'s door, and (SS3) no way h
   const gc = read('src/scenes/gate/gateCourt.js');
   assert.doesNotMatch(gc, /wayHome/, 'SS3: the court has no way home to take');
   assert.match(gc, /_portalFire\.origin = portal\.origin; _portalFire\.fade = portal\.fade; _portalFire\.spin = spin;\n\s*_fires\.push\(_portalFire\);/);
-  assert.match(gc, /portalPass\.draw\(_fires, proj, view, eye, seconds, fog\);/);
-  assert.match(gc, /portalPass = new GatePassRenderer\(gl, profile\);/);
+  // PIN MOVED (SHADER-STALL, render/glProgram.js compiledPass): the portal's pass built through the door once its programs are done
+  assert.match(gc, /const fire = _fires\.length \? portalPass\(true\) : null;[^\n]*\n\s*if \(fire\) \{\n\s*fire\.draw\(_fires, proj, view, eye, seconds, fog\);/);
+  assert.match(gc, /const portalPass = compiledPass\(gl, GATE_PASS_PROGRAMS, \(\) => new GatePassRenderer\(gl, \(profile \?\?= gateArchProfile\(\)\)\),/);   // GATE-MIX: asked on arrival, its opening its own
 });
 
 test('AUDIT SS the court\'s way home is PRESSED where its fire stands - the ray, the court\'s real floor collider and its exit targets as worldModes builds them: looking at the portal from 0.6 to 3 m before it, the press takes it within the door\'s reach (GATE-FBX: the bridge\'s membrane, pressed the same, is gone); looking away it does not, and past the reach it says too far. The square a dungeon door pads to (4.9 m across) swallowed every press from 0.6 to 2.4 m before the portal - SS3 made the press its only way through (mutants: the court\'s exits in the padded square; the fire\'s box too deep)', () => {

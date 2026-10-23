@@ -48,6 +48,7 @@ import { isBedroll, isEmberJar, isFirewood, spendCharge, REST_ITEM_TEXT, FIREWOO
 import { REST_KIND } from '../systems/survival/rest.js';   // AUDIT SURV-TIERS (the third pass): a camp's rest tends its tent's fire
 import { hearthNear, hearthAabb } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a camp's fire named by its camp
+import { hasBag } from '../net/bagLaw.js';   // FB1020c BAG-COOK: the Materials Bag's raw food at the fire
 
 /** The light hangs this far over the flame's base. */
 export const FIRE_LIGHT_UP = 0.6;
@@ -612,16 +613,26 @@ export function createCamps({
   }
   /** The cooking list. HEARTH1: `c` is the camp whose fire this is, or
    *  NULL for one of the world's own - a brazier burns for ever and
-   *  belongs to nobody, so there is no burn-down test to make. */
+   *  belongs to nobody, so there is no burn-down test to make.
+   *  FB1020c BAG-COOK: the pack's raw food, then the Materials Bag's -
+   *  a netted Raw Fish goes into the bag first (materialsBag.js
+   *  mintCarried), and the list read the pack alone, so a bag's owner
+   *  was told "You have nothing to cook." over a bag of fish. Read after
+   *  the pack as DFU's potion maker reads the wagon after it
+   *  (DaggerfallPotionMakerWindow.cs Refresh), and only while the pack
+   *  holds a bag (a sold bag's list is nobody's); the cooked food goes
+   *  into the pack. */
   function openCook(c) {
     const items = entity?.items ?? [];
-    const raw = cookables(items);
+    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];
+    const raw = [...cookables(items).map((it) => [it, items]), ...cookables(bag).map((it) => [it, bag])];
     if (!raw.length) { say(CAMP_TEXT.nothingToCook); return null; }
     if (c && !fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }
     const win = new ListPickerWindow({
-      items: raw.map((it) => ((it.stackCount ?? 1) > 1 ? `${it.name} (${it.stackCount})` : it.name)),
+      items: raw.map(([it]) => ((it.stackCount ?? 1) > 1 ? `${it.name} (${it.stackCount})` : it.name)),
       onPick: (i) => {
-        const r = cookFood(raw[i], items, { skillet: hasSkillet(items) });
+        const [it, from] = raw[i];
+        const r = cookFood(it, from, { skillet: hasSkillet(items), into: items });
         if (!r) return;
         say(r.text);
         advanceMinutes?.(r.minutes);

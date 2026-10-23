@@ -32,15 +32,18 @@ import { setItemFields } from '../../systems/item/itemTemplates.js';   // MW-EAR
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // MW-D32
 import { ownWerewolfSkin } from '../../systems/ownGlyphs.js';   // SHADOW-FANG: the skin my own werewolf wears
 import { ARMOR_ENUM } from '../enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType } from '../fpsWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType, isGunType, isPistoletType } from '../fpsWeapon.js';
 import { spriteGlow, meshGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
 import { loadThunderlockArt } from '../thunderlockArt.js';
-import { createRecoil, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS, armGunPose } from '../gun/gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm; MW-GUN-FEEL: the arm's kick and reload
+import { loadPistoletArt } from '../gun/pistoletArt.js';   // PISTOLET: the second gun's strip
+import { createGunPair } from '../gun/gunPair.js';   // PISTOLET: a pair of guns' own state, the module the rig wires (HOST-SPLIT)
+import { createRecoil, GUN_FEEL, PISTOLET_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS, armGunPose, RELOAD_CLOSE_LEAD } from '../gun/gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm; MW-GUN-FEEL: the arm's kick and reload
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from '../gun/gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { betterAmbience } from '../../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { orbColour, MUZZLE_FORWARD, orbArchiveFor } from '../../characters/thunderlockIds.js';   // FIELD-GUN17: the flash wears the orb's own colour, sampled rather than named
 import { worldRectPx } from '../../player/tapRay.js';   // FIELD-GUN19: the docked HUD's world strip, in canvas pixels - ROAD-E E5's one home for that flip
+import { installPistoletSounds, PISTOLET_SFX as PL_SFX } from '../../systems/pistolet.js';   // PISTOLET: the second gun's clips, the same door
 import { installThunderlockSounds, SFX as TL_SFX } from '../../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
 // separate component in DFU and a separate module here, drawn by the
@@ -93,7 +96,7 @@ import { castRate } from '../../systems/castSpeed.js';   // CAST-SPEED: the rate
 import '../swingLaw.js';   // AUDIT PRE-MERGE 0929 S5: SWING-LAW's reader of the weapon in the hand, registered as it loads - every rig's
 import { walkSpeed } from '../../player/motor.js';   // WW1: GetBaseSpeed's walk arm
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; TWO-HANDS: the lead's two lines, the port's own
-import { HANDS_MODE, twoHanded, runHandsWanted, runHandsKept, runPhaseOfBob } from '../twoHands/handsLaw.js';   // TWO-HANDS: how the hands are held, and when they run
+import { HANDS_MODE, twoHanded, runHandsWanted, runHandsKept, runPhaseOfBob, MIRROR_UV } from '../twoHands/handsLaw.js';   // TWO-HANDS: how the hands are held, and when they run
 import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION } from '../techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
 import '../../systems/martialPowers.js';   // MARTIAL3/4 (bible/05-Combat/Martial-Specialisations.md): what the martial paths and the weapons past 100 DO - registered at import, so every host's rig (exterior.js, world.js, worldModes.js' interiors, dungeonContext.js' dungeons) has them
 import { techniqueHands } from '../technique/techniqueFx.js';   // TECH-FX: a technique's push of the first-person layer
@@ -479,10 +482,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  one import away. */
   /** FPSWeapon's handedness mirror, as the lab's `flip` switch. */
   const handedFlip = () => getInt('Controls', 'Handedness', 0, 3) === 1;
-  const thunderlockHeld = () => {
-    const t = weaponTypeForItem(playerWeapon.weapon);
-    return t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic;
-  };
+  /** PISTOLET: ANY of the port's own guns - the name is the first one's, and every reader of it asks of a gun. */
+  const thunderlockHeld = () => isGunType(weaponTypeForItem(playerWeapon.weapon));
+  /** PISTOLET: the held gun's own row, sounds and widget tuning - the Thunderlock's GUN_FEEL or the Pistolet's. */
+  const pistoletHeld = () => isPistoletType(weaponTypeForItem(playerWeapon.weapon));
+  const heldFeel = () => (pistoletHeld() ? PISTOLET_FEEL : GUN_FEEL);
+  const heldSfx = () => (pistoletHeld() ? PL_SFX : TL_SFX);
+  const installGunSounds = () => { installThunderlockSounds(audio); installPistoletSounds(audio); };
+  /** PISTOLET: a PAIR of guns up - two Pistolets, one in each hand (combat/playerWeapon.js gunPair) - and its state. */
+  const gunPairUp = () => bindWorn && !!playerWeapon.gunPair;
+  const gunPair = createGunPair();
   /** FIELD-GUN8 (Mac: "Yes, 1:1"). THE LAB'S ONE MODULE DEPARTURE,
    *  carried. Weapon Widget ships Inertia OFF - "requires
    *  double-scaled weapon textures" - and the lab turns it ON for
@@ -854,7 +863,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // this test sits ahead of the palette guard: a Thunderlock draws
     // in a host that has not loaded ARENA2's palette yet, and a
     // classic weapon still cannot.
-    const thunderlock = type === WEAPON_TYPES.Thunderlock || type === WEAPON_TYPES.Thunderlock_Magic;
+    const thunderlock = isGunType(type);   // PISTOLET: either gun
     if (!thunderlock && !palette) return null;
     // DW1: the key carries the name the atlas is ASKED by. Under Diverse
     // Weapons a longsword and a broadsword are the same WEAPON_TYPE with
@@ -874,7 +883,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const key = `${type}:${item?.material ?? 0}:${thunderlock ? (gilded ? 'gilded' : '') : atlasFileName(item, WEAPON_FILE[type] ?? '', undefined, plain ? false : undefined)}`;
     if (!cache.has(key)) {
       cache.set(key, null);
-      (thunderlock
+      (isPistoletType(type)
+        ? loadPistoletArt(renderer, { magic: type === WEAPON_TYPES.Pistolet_Magic, gilded })   // PISTOLET: its own strip
+        : thunderlock
         ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic, gilded })
         : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0, item, { plain }))
         .then((art) => cache.set(key, art))
@@ -1074,8 +1085,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // closes on - a breech coming home is what this weapon does
       // instead of a scabbard, going out and coming back alike.
       if (thunderlockHeld()) {
-        if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
-        audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch());
+        if (!_tlSounds) { _tlSounds = true; installGunSounds(); }
+        audio.playOneShot(heldSfx().close, heldFeel().sfxVolume * 0.95, gunPitch(undefined, heldFeel()));
       } else {
         audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
       }
@@ -1111,7 +1122,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  The number is a judgement about where in the pump the mechanism
    *  should sound, and it is the prototype's, which is the only reason
    *  it is this number and not another. */
-  const TL_CLOSE_LEAD = 0.42;
+  const TL_CLOSE_LEAD = RELOAD_CLOSE_LEAD;   // AUDIT PISTOLET B6: the one number (gunFeel.js), the pair's too
   // AUDIT FIELD-GUN-MW F1 (2026-09-21): the flash's own clock under the arm - seconds since the arm's release,
   // -1 while dark. The classic lane reads the glow curve off the machine's frame, which counts from the CLICK;
   // under the arm the shot is the arm's release key, so the curve counts from that instead, on the same tick.
@@ -1126,7 +1137,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const tlReloadFrom = (m) => _tlShotAt + Math.max(0, ((m.frames?.StrikeDown ?? 6) - (m.hitFrame ?? 1)) * (m.tick ?? GUN_TICK_SECONDS));
   const flashFromClock = (dt) => {
     if (_tlFlashClock < 0) return 0;
-    const frame = Math.floor(_tlFlashClock / GUN_TICK_SECONDS);
+    const frame = Math.floor(_tlFlashClock / (playerWeapon.machine.tick ?? GUN_TICK_SECONDS));   // PISTOLET: the held gun's own tick
     const g = muzzleGlow(true, frame);
     _tlFlashClock += dt;
     if (frame > 0 && g === 0) _tlFlashClock = -1;   // past the curve's end (it opens dark on frame 0): dark until the next shot
@@ -1135,15 +1146,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   /** The weapon's own voice, and the flash it throws. `armShoots` is MW-D42's condition - the Morrowind arm is the
    *  thing on screen and the machine is a shooter - and `fired` is the frame its release let the held hit go. */
   function thunderlockVoice(dt, { armShoots = false, fired = false } = {}) {
-    const type = weaponTypeForItem(playerWeapon.weapon);
-    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) {
+    if (!thunderlockHeld()) {   // PISTOLET: any gun
       _tlState = 'Idle'; _tlOpened = false; _tlClosed = false; _tlFlashClock = -1; _tlShotAt = -1;
       if (entity) entity._thunderlockFlash = 0;   // FIELD-GUN13: put the lamp out with the weapon
       fpArm.setGunFeel(null);   // MW-GUN-FEEL: and the arm's kick and pump with it
       return;
     }
-    if (!_tlSounds) { _tlSounds = true; installThunderlockSounds(audio); }
+    if (!_tlSounds) { _tlSounds = true; installGunSounds(); }
     const m = playerWeapon.machine;
+    const feel = heldFeel(), sfx = heldSfx(), pair = gunPairUp();   // PISTOLET: the gun in hand's own row and clips; a pair's hands
     // AUDIT FIELD-GUN-MW F1: THE TRIGGER IS THE ARM'S RELEASE, UNDER THE ARM. MW-D42 held the bow's hit for rule
     // 24's "shoot release" and MW-D42d held its sound with it; the gun's hit now rides the same hold, but its VOICE
     // fired here on the machine leaving Idle - the click - so under the borrowed crossbow animation the bang, the
@@ -1158,8 +1169,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // played all three clips at full gain with no variance, and a
       // gun fired six times in four seconds is exactly where an ear
       // hears a sample repeating.
-      audio.playOneShot(TL_SFX.fire, GUN_FEEL.sfxVolume, gunPitch());
-      _tlRecoil.punch();
+      audio.playOneShot(sfx.fire, feel.sfxVolume, gunPitch(undefined, feel));
+      // PISTOLET: a pair's shot kicks the hand that fired it; one gun's, its own spring
+      if (pair) gunPair.punch(playerWeapon.strike?.hand ?? playerWeapon.leadHand, feel);
+      else { _tlRecoil.kick = feel.kick; _tlRecoil.back = feel.back; _tlRecoil.punch(); }
       // THE SHAKE MOVES THE ROOM, NOT THE WEAPON, because the camera
       // carries the weapon - the lab's own finding, in its probe's
       // words. The port has exactly one camera shaker (Better
@@ -1168,7 +1181,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // than threading a second one through four scenes. AUDIT 68
       // S09-tl-dead-state: it is the ONLY shake - the weapon's own
       // movement is the recoil spring above.
-      betterAmbience.weaponKick?.(GUN_FEEL.roomShake);
+      betterAmbience.weaponKick?.(feel.roomShake);
       _tlFlashClock = 0;
       _tlShotAt = m.now;   // MW-GUN-FEEL: the reload is owed from here
     }
@@ -1182,7 +1195,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // flash - the machine cannot leave Idle while it is away, but the
     // read says so rather than relying on that.
     if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : (armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame));
+    // PISTOLET: and which side of the body it flashes on - a pair's left pistol throws its light from the left hand
+    // (systems/thunderlock.js thunderlockMuzzleLight reads it)
+    // AUDIT PISTOLET A9 B1 D14: the light thrown from the side the firing gun is DRAWN on - the draw's own flip (a pair's
+    // hand through gunPair.flipOf, a single gun the Handedness setting), so a left-handed player's shot lights its side
+    if (entity) { entity._thunderlockFlashSide = (pair ? gunPair.flipOf(playerWeapon.activeHand, handedFlip()) : handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange; }
     _tlState = m.state;
+    // PISTOLET: a pair reloads hand by hand - each hand's own two clacks (combat/gun/gunPair.js), never the machine's one
+    if (pair) {
+      gunPair.voice(playerWeapon, (k) => audio.playOneShot(sfx[k], feel.sfxVolume * (k === 'open' ? 0.9 : 0.95), gunPitch(undefined, feel)));
+      return;
+    }
     // the reload, on the cooldown the shot left behind
     const cooling = m.now < m.cooldownUntil;
     if (!cooling) {
@@ -1194,24 +1217,30 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // The open waits for its shot's smoke now (tlReloadFrom); the classic lane, whose cooldown begins exactly there,
     // hears exactly what it did.
     if (_tlShotAt < 0 || m.now < tlReloadFrom(m) - 1e-9) return;
-    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(TL_SFX.open, GUN_FEEL.sfxVolume * 0.9, gunPitch()); }
-    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(TL_SFX.close, GUN_FEEL.sfxVolume * 0.95, gunPitch()); }
+    if (!_tlOpened) { _tlOpened = true; audio.playOneShot(sfx.open, feel.sfxVolume * 0.9, gunPitch(undefined, feel)); }
+    if (!_tlClosed && m.now >= m.cooldownUntil - TL_CLOSE_LEAD) { _tlClosed = true; audio.playOneShot(sfx.close, feel.sfxVolume * 0.95, gunPitch(undefined, feel)); }
   }
 
   /** FIELD-GUN12: the prototype's frame, drawn. `gunFrameRect` IS
    *  gun-proto.html's draw block, so what reaches the screen here and
    *  what reaches the lab's canvas are one function's answer rather
    *  than two that have been argued into agreement. */
-  function drawThunderlock(art, canvas, tint) {
+  function drawThunderlock(art, canvas, tint, hand = null) {
     const m = playerWeapon.machine;
-    const rec = art.records[m.state === 'Idle' ? 0 : 1];
+    // PISTOLET: `hand` draws one pistol of a pair from its own state (combat/gun/gunPair.js) - the striking hand plays the
+    // machine's frames and the other rests, each on its own rig and spring, the left one in the mirror. Without it, the
+    // one gun, exactly as it was.
+    const shot = hand ? gunPair.frameOf(hand, playerWeapon) : { record: m.state === 'Idle' ? 0 : 1, frame: m.frame };
+    const rec = art.records[shot.record];
     if (!rec) return;
-    const tex = rec.frames[Math.min(Math.max(0, m.frame), rec.frames.length - 1)];
+    const tex = rec.frames[Math.min(Math.max(0, shot.frame), rec.frames.length - 1)];
     if (!tex) return;
+    const flip = hand ? gunPair.flipOf(hand, handedFlip()) : handedFlip();
     const { rect } = gunFrameRect({
       canvasW: canvas.width, canvasH: canvas.height,
-      anchor: art.anchor, union: art.unionBox, rig: _tlRig,
-      kick: _tlKick, flip: handedFlip(),
+      anchor: art.anchor, union: art.unionBox, rig: hand ? gunPair.hands[hand].rig : _tlRig,
+      ...(hand ? { kick: gunPair.kickOf(hand, art.anchor.h, handedFlip()) } : { kick: _tlKick }), flip,
+      ...(art.pose ? { widthPct: art.pose.widthPct, raise: art.pose.raise, offset: art.pose.offset ?? 0 } : {}),   // PISTOLET: the art's own pose
     });
     // FIELD-GUN17: the frame the muzzle is measured against, kept as
     // it is DRAWN - with the bob, the sway and the kick already in it.
@@ -1224,8 +1253,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // every host without a docked large HUD hands back.
     // RETRO-UI: drawn on the UI canvas, measured on the real one - the muzzle is a canvas pixel the world ray reads
     const [rx, ry] = fromUiPoint(canvas, rect.x, rect.y), real = canvas.canvas ?? canvas;
-    _tlDrawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // RETRO1: and the lens's aspect
-    if (_dipPx) _tlDrawn.rect.y += _dipPx;   // TECH-FX: where a technique's dip drew it (drawInner) - the UI layer's pixels are the canvas's (ui/uiScreen.js uiCanvas offsets, never scales)
+    const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // RETRO1: and the lens's aspect
+    if (_dipPx) drawn.rect.y += _dipPx;
+    if (hand) gunPair.hands[hand].drawn = drawn; else _tlDrawn = drawn;   // PISTOLET: each pistol of a pair keeps its own muzzle record   // TECH-FX: where a technique's dip drew it (drawInner) - the UI layer's pixels are the canvas's (ui/uiScreen.js uiCanvas offsets, never scales)
     // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
     // by the darkening lighting").
     //
@@ -1257,14 +1287,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // (characters/thunderlockIds.js), so the two cannot disagree and
     // nobody typed a number. White until it has been seen, which is
     // exactly what this line was before.
-    const glow = muzzleGlow(m.state !== 'Idle', m.frame);
+    const glow = muzzleGlow(shot.record === 1, shot.frame);   // PISTOLET: a pair's resting pistol does not flash
     const flash = orbColour();
     const lit = (tint && glow > 0)
-      ? tint.map((v, i) => v + (flash[i] - v) * Math.min(1, glow * GUN_FEEL.flashLight * GUN_FEEL.flashGain))
+      ? tint.map((v, i) => v + (flash[i] - v) * Math.min(1, glow * heldFeel().flashLight * heldFeel().flashGain))
       : tint;
-    renderer.drawScreenQuad(tex, rect, undefined, lit ?? undefined);
-    const elementGlow = heldGlowNow();   // WEAPON-GLOW1: the element's outline over the frame, the held weapon's own
-    if (elementGlow) renderer.drawScreenQuadGlow?.(tex, rect, undefined, elementGlow, { art: [art.unionBox.w, art.unionBox.h], view: [canvas.width, canvas.height] });   // the frame is the union box, in native pixels
+    // PISTOLET: THE PICTURE IN THE MIRROR, not only its place. gunFrameRect mirrors the rect (AlignRight to AlignLeft) and
+    // the anchor inside the union, and the lab mirrors the whole sprite under the same switch (gun-proto.html,
+    // pistol-proto.html: ctx.scale(-1, 1)) - but this drew the texture unflipped, so a left-handed player's Thunderlock sat
+    // on the left as a RIGHT hand, its forearm cut mid-screen, and a pair's left pistol did the same. The source rect read
+    // right to left, the melee pair's own door (handsLaw.js MIRROR_UV, FPSWeapon.cs:381-390).
+    const uv = flip ? MIRROR_UV : undefined;
+    renderer.drawScreenQuad(tex, rect, uv, lit ?? undefined);
+    const elementGlow = hand ? glowOf(playerWeapon.handItem(hand)) : heldGlowNow();   // WEAPON-GLOW1: the element's outline over the frame, the held weapon's own (PISTOLET: each pistol's)
+    if (elementGlow) renderer.drawScreenQuadGlow?.(tex, rect, uv, elementGlow, { art: art.native ? [art.native.w, art.native.h] : [art.unionBox.w, art.unionBox.h], view: [canvas.width, canvas.height] });   // the frame is the union box, in native pixels (AUDIT PISTOLET B4: the Pistolet's union is in design pixels, its texture native)
   }
 
   /**
@@ -1288,7 +1324,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   function thunderlockSliding() {
     if (!playerWeapon.sheathed) return false;
     if (!gunWidgetSettings().offset) return false;   // AUDIT 68 S09-gun-sliding-offset-off: no Offset module, no slide - offsetCurrent never moves, so the gun pops as weaponWidget.draw's does
-    return Math.abs(_tlRig.offsetCurrent[1]) < Math.abs(GUN_FEEL.sheathTarget[1]) - 1e-3;
+    if (gunPairUp()) return gunPair.sliding(heldFeel());   // PISTOLET: either pistol of a pair still on its way out
+    return Math.abs(_tlRig.offsetCurrent[1]) < Math.abs(heldFeel().sheathTarget[1]) - 1e-3;
   }
 
   /** FIELD-GUN6: the frame's recoil kick, stepped once and read by
@@ -1302,8 +1339,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  the cooldown's own clock, so it is finishing exactly as the
    *  weapon becomes ready. */
   function thunderlockFeel(dt, frame = null) {
-    const type = weaponTypeForItem(playerWeapon.weapon);
-    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) return;
+    if (!thunderlockHeld()) return;   // PISTOLET: any gun
+    const feel = heldFeel();   // PISTOLET: the held gun's own spring, dip and widget tuning
+    // PISTOLET: A PAIR steps its two hands in its own module (combat/gun/gunPair.js) - each hand's rig on the gun's own
+    // settings, its spring, its guard and its own reload's dip; the Morrowind arm takes the striking hand's kick
+    if (gunPairUp()) {
+      gunPair.step(dt, playerWeapon, {
+        feel, settings: gunWidgetSettings(null, feel.widget), frame, leftHanded: handedFlip(), sheathed: !!playerWeapon.sheathed,
+        liveSpeed: entity ? liveStat(entity, 'speed') : 50, cursorActive: cursorActive(), swingHeld: _held,
+      });
+      const k = gunPair.hands[playerWeapon.activeHand]?.kick ?? { x: 0, y: 0 };
+      fpArm.setGunFeel(playerWeapon.sheathed ? null : armGunPose(-k.y, null));
+      return;
+    }
+    _tlRecoil.stiff = feel.stiff; _tlRecoil.damp = feel.damp; _tlRecoil.back = feel.back;
     _tlKick = _tlRecoil.step(dt);
     // FIELD-GUN12: THE RELOAD LOWER IS THE MOD'S OFFSET MODULE, driven
     // the way the lab drives it - `shown: false` while the pump runs -
@@ -1326,14 +1375,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const from = _tlShotAt >= 0 ? tlReloadFrom(m) : Infinity;
     const share = reloading && m.now >= from && m.cooldownUntil > from ? (m.now - from) / (m.cooldownUntil - from) : null;
     fpArm.setGunFeel(sheathed ? null : armGunPose(-_tlKick.y, share));
-    gunRigStep(_tlRig, gunWidgetSettings(), dt, {
+    gunRigStep(_tlRig, gunWidgetSettings(null, feel.widget), dt, {
       screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 },
       motion: frame?.motion ?? gunMotion({}),
       look: frame?.look ?? [0, 0],
       flip: handedFlip(),
       idle: m.state === 'Idle',
       shown: !reloading && !sheathed,
-      hiddenTarget: sheathed ? GUN_FEEL.sheathTarget : GUN_FEEL.hiddenTarget,
+      hiddenTarget: sheathed ? feel.sheathTarget : feel.hiddenTarget,
       liveSpeed: entity ? liveStat(entity, 'speed') : 50,
       cursorActive: cursorActive(),
       swingHeld: _held,
@@ -1352,7 +1401,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     if (playerWeapon.sheathed) return;
     const weapon = playerWeapon.weapon;
     const type = weaponTypeForItem(weapon);
-    const ranged = type === WEAPON_TYPES.Bow || type === WEAPON_TYPES.Thunderlock || type === WEAPON_TYPES.Thunderlock_Magic;
+    const ranged = type === WEAPON_TYPES.Bow || isGunType(type);   // PISTOLET: either gun
     if (!ranged) return;
     if (hasAmmoFor(entity.items, weapon)) return;
     playerWeapon.sheathed = true;
@@ -1481,6 +1530,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // first person and in third. The rig poses the weapon piece every frame and knows where it ends
       // (combat/rigMuzzle.js); the sprite's record stays the sprite's.
       if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();
+      // PISTOLET: a pair's shot leaves the barrel of the pistol that fired it
+      if (gunPairUp()) return muzzleRay(gunPair.hands[playerWeapon.activeHand]?.drawn ?? null, fovRad, forward);
       return muzzleRay(_tlDrawn, fovRad, forward);
     },
     refreshWorn() { syncWorn(); },
@@ -1710,7 +1761,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // CLIMB-HANDS: the hold, the shimmy, the free climb, the moves and the look off the wall - CLIMB-HANDS II: seen
       // through the frame's own world lens (the setting's field of view on the strip the world was drawn into, the bar
       // the hands stand on), so the fists stay on the stone as the view turns; asked only while there are hands to lay out
-      const handsClimb = handsLane && _climbLower >= CLIMB_HANDS_AFTER ? (camNow?.climb ?? null) : null;
+      // SPELL-CLIMB (#bug-reports, "Spell+Climbing=4 arms"): A CAST TAKES THE HANDS OFF THE STONE. DFU casts on its climb
+      // (EntityEffectManager.Update reads no climb) and its cast's hands play on the climb's empty screen; here the wall
+      // holds two fists, so while the cast's hands play the law is handed no climb - they are not drawn under the cast
+      // (drawLayer) and come back up onto the stone after it, eased, not popped back whole
+      const castTakesHands = fpsSpellCasting.isPlayingAnim && !eotbHidesSpellHands();
+      const handsClimb = handsLane && _climbLower >= CLIMB_HANDS_AFTER && !castTakesHands ? (camNow?.climb ?? null) : null;
       const handsLens = handsClimb || climbHands.law.present > 0 ? climbLens(cv(), { fov: fieldOfView(), viewport: renderer?.worldViewportRect ?? null, aspect: renderer?.worldProjAspect ?? null, offsetHeight: weaponOffsetHeight() }) : null;
       climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });
       const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !spellArmed() && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool();   // AUDIT 29 D2: no swing behind a gathering act's tool
@@ -2097,7 +2153,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // the same layout, the same light, under the same two lane gates the cast's hands stand under (the Morrowind arm
         // holds its own spell stance, MW-D39; the Beholder's third person hides both). The weapon is already down here:
         // shown()'s HasReadySpell leg hides it, which is what left the screen empty until the click.
-        if (readiedHandsOn() && !fpsSpellCasting.isPlayingAnim) {
+        // SPELL-CLIMB (#bug-reports, "Spell+Climbing=4 arms"): AND THEY YIELD TO THE HANDS ON THE WALL. The mod reads no
+        // climb - DFU's climb screen is empty, so nothing stood beside them - but the enhanced climb puts two fists on the
+        // stone (CLIMB-HANDS), and both pairs stood at once. The spell stays readied (a click on the wall still casts it);
+        // its hands stand down while the fists show and come back once they are off the screen.
+        if (readiedHandsOn() && !fpsSpellCasting.isPlayingAnim && !climbHands.showing()) {
           const sp = readiedSpell();
           const f = readiedHandsFrame(sp, fpsSpellCasting.isPlayingAnim);
           if (f >= 0) { drawSpellCastHands(renderer, c, spellArtFor(sp.element), f, { tint: fpTint }); spellHandsDrawn = true; }
@@ -2121,7 +2181,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // WALL. The classic sprite is lowered out of the screen for the climb (CLIMB4, below); the sprite lane's two fists
       // (or a fist and the reaching arm, looked off the wall) come up in its place. Above every sheathe gate - the hands
       // hold the stone whatever is drawn - and under the same vetoes the spell's hands take, and the held map's.
-      if (c && !paralyzed && !fpArm.active() && !eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(c, { tint: fpTint });
+      // SPELL-CLIMB: and never under a spell's hands - a cast in flight has them off the stone (frame(), castTakesHands),
+      // and a readied spell's stand down while the fists show (above): one pair of arms on the screen.
+      if (c && !paralyzed && !spellHandsDrawn && !fpArm.active() && !eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(c, { tint: fpTint });
       // TORCH-VIS (2026-09-18, Mac: "if you only have the torch equipped and no weapon, it doesn't show you
       // holding it in first person (morrowind)"): THE TORCH IS NOT THE WEAPON'S TO HIDE, and a SHEATHED STANCE IS
       // NOT A STOWED LIGHT. `shown()` is the WEAPON's visibility - this file says so itself a few lines up, where
@@ -2293,6 +2355,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // this frame - a weapon, a light, a shield, the gun, a spell's hands - which it yields to at once (never held over
       // them; the held sheet and the Morrowind arm are runHands' own vetoes)
       const runDrawn = runHands && (handsEmpty() || !(shown() || torchOnly || !!shieldRect || gunSliding || spellHandsDrawn));
+      // PISTOLET: A PAIR OF GUNS draws whole and returns, ahead of the melee pair's branch (whose clones are a sword's):
+      // each pistol through the gun's own frame (drawThunderlock's `hand`), the striking one over the other. Taken where
+      // the melee pair's is - the classic body's lane, no held sheet - and through the holster's slide.
+      if (c && gunPairUp() && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && (shown() || gunSliding)) {
+        for (const h of gunPair.order(playerWeapon)) {
+          const art = artFor(playerWeapon.handItem(h));
+          if (art?.anchor && art.unionBox) drawThunderlock(art, c, fpTint, h);
+        }
+        return;
+      }
       if (c && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && (runDrawn || (pairUp() && shown()))) {
         const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height) };   // CLIMB4: lowered for the climb, as the one sprite is
         // TWO-HANDS (AUDIT): the running fists first, then the pair over them - a punch thrown on the run is drawn from its

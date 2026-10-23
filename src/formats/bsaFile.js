@@ -146,6 +146,18 @@ export class BsaFile {
     return this._bytes.slice(position, position + size);
   }
 
+  /**
+   * REGION-VIEWS (2026-10-20, bible/07-Rendering/Performance-Priority.md REGION-VIEWS): record data as a view into the
+   * archive's own bytes - nothing copied - or null if index invalid. For a reader that only ever reads a record (the
+   * archive's bytes are held whole for its life): getRecordBytes' copy is DFU's ReadBytes, and the one a reader that
+   * edits a record in place (a block's automap, BlocksFile.getBlockAutoMap) is owed.
+   */
+  getRecordView(record) {
+    if (record < 0 || record >= this._directoryCount) return null;
+    const { position, size } = this._directory[record];
+    return this._bytes.subarray(position, position + size);
+  }
+
   _readCString(offset, maxLength) {
     let end = offset;
     const limit = offset + maxLength;

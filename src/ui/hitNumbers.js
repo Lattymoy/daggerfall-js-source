@@ -43,6 +43,10 @@ export function numberFor(r) {
   // 2026-10-18f TURNED-BLOW: in the Spire the ground can turn it too (a blow from traversal ground strikes nothing), and the
   // stand-in says which (scenes/eliteGates/egFight.js turnStandIn, `wardText` - "No footing")
   if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };
+  // FIELD BUGS 2026-10-20f LANDED-WORD: a body whose room says what a blow LANDED (an Elite Breach's - scenes/eliteGates/egFight.js
+  // `landsByWord`) shows no claim: its number is the room's word (`eland`), a moment later, as a duel's is the referee's. The
+  // claim was the number - a Redoubt 16 lord "took a literal million" on the screen and 31k by the room's count
+  if (r.target?.landsByWord) return null;
   const dmg = Math.max(0, Math.round(r.damage || 0));
   if (dmg === 0) return { kind: 'absorbed', text: '0', tag: null };
   if (r.backstab) return { kind: 'crit', text: String(dmg), tag: 'Backstab' };
@@ -135,10 +139,12 @@ export function tagHit(target, word, { now = Date.now() } = {}) {
 
 /** FIELD BUGS 2026-10-15e ROSE-SEEN: a FOLLOW-UP BLOW of mine (Open Hand's second, Many Endings' echo -
  *  systems/loot/lootPowers.js again) runs no formula, so the seam below never hears it and only the first blow rose: its own
- *  number, the power's name its tag. Only while the enhanced HUD has mounted the numbers. */
-export function showFollowUp(damage, word) {
+ *  number, the power's name its tag. Only while the enhanced HUD has mounted the numbers. FIELD BUGS 2026-10-20f LANDED-WORD:
+ *  on `target`, a body whose room says what a blow LANDED, none - its follow-up rides its blow's claim (playerDoor.js oweFoe),
+ *  and the room's word for that blow is its number. */
+export function showFollowUp(damage, word, target = null) {
   const n = Math.max(0, Math.round(damage || 0));
-  if (!registered || !(n > 0)) return null;
+  if (!registered || !(n > 0) || target?.landsByWord) return null;
   return showNumber({ kind: 'hit', text: String(n), tag: word ? String(word) : null });
 }
 

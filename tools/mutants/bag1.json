@@ -184,8 +184,8 @@
   {
     "name": "BAG1-a-shortfall-spends-gold",
     "file": "src/net/profBook.js",
-    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend', counter: work === true });",
-    "new": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'all', counter: work === true });",
+    "old": "order: work === true ? 'work' : 'spend', counter: work === true }",
+    "new": "order: work === true ? 'work' : 'all', counter: work === true }",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-BAG1-put-everything-in-stops-at-a-refusal",
     "file": "src/ui/professions/profPages.js",
-    "old": "if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); left = -1; break;",
-    "new": "stop = res?.text ?? null; left = -1; break;",
+    "old": "        else if (res?.kept) stop ??= res.text ?? null;",
+    "new": "        else if (true) stop ??= res?.text ?? null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "AUDIT2-BAG1-H2-a-first-ask-unsaved-kept",
     "file": "src/net/profBook.js",
-    "old": "      if (!saved && first) {",
-    "new": "      if (false) {",
+    "old": "          if (!saved) {\n            const k0 = keptOf(key);",
+    "new": "          if (false) {\n            const k0 = keptOf(key);",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "AUDIT2-BAG1-K12-said-as-a-craft",
     "file": "src/net/profBook.js",
-    "old": "if (_depositBusy) return { ok: false, error: 'deposit-busy' };",
-    "new": "if (_depositBusy) return { ok: false, error: 'prof-busy' };",
+    "old": "qtyOk(a?.qty) ? 'deposit-busy' : 'bad-qty'",
+    "new": "qtyOk(a?.qty) ? 'prof-busy' : 'bad-qty'",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -769,9 +769,9 @@
   },
   {
     "name": "AUDIT2-BAG1-D3-a-refusal-ends-the-run",
-    "file": "src/ui/professions/profPages.js",
-    "old": "        if (stop) break;",
-    "new": "        if (stop || refused.length) break;",
+    "file": "src/net/profBook.js",
+    "old": "            if (r?.kept === true) silent = true;",
+    "new": "            if (!r?.ok) silent = true;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

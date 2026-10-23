@@ -5,6 +5,8 @@
 // alchemist's and a general store's shelf stock a few a day, counted by the shop's quality and drawn from no roll.
 // MAGICKA-COMMON (LOOT-EASE, 2026-10-05, Mac: "majicka potions should be more common loot drops, same with health
 // pots"): the healing potion 10 in 100 a foe and 18 a pile, and the Potion of Restore Power beside it, 6 and 10.
+// POT-THIN (2026-10-21, the owner: "I definitely want to decrease pot drops"; Professions-Arc.md section 48): the healing
+// potion 4 in 100 a foe and 8 a pile, Restore Power 2 and 4 - PIN MOVED, each number below.
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -60,32 +62,32 @@ test('POTION-COMMON: an alchemist stocks 2 + a fifth of its quality a day, a gen
   assert.equal((wm.match(/stockShopShelf\(/g) ?? []).length, 3, 'the shelf, the counter and the probe - no fourth door');
 });
 
-test('POTION-COMMON: a J-O pile holds one 18 times in 100 and no other pile ever; a looting foe carries one 10 times in 100 and a foe with no loot table never (LOOT-EASE: 12 and 6 raised; mutants: either chance at 0 or back; every pile)', () => {
-  assert.equal(HEALING_PILE_CHANCE, 18);
-  assert.equal(HEALING_ENEMY_CHANCE, 10);
+test('POTION-COMMON: a J-O pile holds one 8 times in 100 and no other pile ever; a looting foe carries one 4 times in 100 and a foe with no loot table never (LOOT-EASE: 12 and 6 raised; POT-THIN: 18 and 10 cut; mutants: either chance at 0 or back; every pile)', () => {
+  assert.equal(HEALING_PILE_CHANCE, 8);
+  assert.equal(HEALING_ENEMY_CHANCE, 4);
   for (const key of ['J', 'O']) {
-    assert.equal(healing(addPileLootExtras([], key, at(0.17), { online: false })), 1, `${key}: 17 under 18`);
-    assert.equal(healing(addPileLootExtras([], key, at(0.18), { online: false })), 0, `${key}: 18 is not`);
+    assert.equal(healing(addPileLootExtras([], key, at(0.07), { online: false })), 1, `${key}: 7 under 8`);
+    assert.equal(healing(addPileLootExtras([], key, at(0.08), { online: false })), 0, `${key}: 8 is not`);
   }
   for (const key of ['A', 'I', 'P']) assert.equal(healing(addPileLootExtras([], key, at(0), { online: false })), 0, `${key}: never - J to O alone`);
-  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.09))), 1, '9 under 10');
-  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.1))), 0, '10 is not');
+  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.039))), 1, '3.9 under 4');
+  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.04))), 0, '4 is not');
   assert.equal(healing(addEnemyLootExtras([], { lootTableKey: '-', mapChance: 0 }, at(0))), 0, 'no loot table, no potion');
 });
 
-test('MAGICKA-COMMON (LOOT-EASE, 2026-10-05): DFU\'s own Potion of Restore Power - classicRecipeKeys[4], a bottle worth 75 - in a J-O pile 10 times in 100 and on a looting foe 6, never elsewhere, its draw after the healing potion\'s (mutants: another recipe\'s key; either chance moved; the draw first; the extras\' install dropping it)', () => {
+test('MAGICKA-COMMON (LOOT-EASE, 2026-10-05): DFU\'s own Potion of Restore Power - classicRecipeKeys[4], a bottle worth 75 - in a J-O pile 4 times in 100 and on a looting foe 2 (POT-THIN: 10 and 6), never elsewhere, its draw after the healing potion\'s (mutants: another recipe\'s key; either chance moved; the draw first; the extras\' install dropping it)', () => {
   assert.equal(MAGICKA_RECIPE_KEY, CLASSIC_RECIPE_KEYS[4]);
   assert.equal(potionRecipeByKey(MAGICKA_RECIPE_KEY)?.name, 'restorePower');
   const p = mintMagickaPotion();
   assert.deepEqual([p.group, p.templateIndex, p.potionRecipeKey, p.value], ['UselessItems1', POTION_TEMPLATE_INDEX, MAGICKA_RECIPE_KEY, 75]);
-  assert.deepEqual([MAGICKA_PILE_CHANCE, MAGICKA_ENEMY_CHANCE], [10, 6]);
+  assert.deepEqual([MAGICKA_PILE_CHANCE, MAGICKA_ENEMY_CHANCE], [4, 2]);
   for (const key of ['J', 'O']) {
-    assert.equal(magicka(addPileLootExtras([], key, at(0.09), { online: false })), 1, `${key}: 9 under 10`);
-    assert.equal(magicka(addPileLootExtras([], key, at(0.1), { online: false })), 0, `${key}: 10 is not`);
+    assert.equal(magicka(addPileLootExtras([], key, at(0.039), { online: false })), 1, `${key}: 3.9 under 4`);
+    assert.equal(magicka(addPileLootExtras([], key, at(0.04), { online: false })), 0, `${key}: 4 is not`);
   }
   for (const key of ['A', 'I', 'P']) assert.equal(magicka(addPileLootExtras([], key, at(0), { online: false })), 0, `${key}: never - J to O alone`);
-  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.05))), 1, '5 under 6');
-  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.06))), 0, '6 is not');
+  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.019))), 1, '1.9 under 2');
+  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.02))), 0, '2 is not');
   assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: '-', mapChance: 0 }, at(0))), 0, 'no loot table, no potion');
   // the order: DFU's trio, the field kit, the healing potion, then this one - a foe's sixth draw is the magicka potion's
   const foe = addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, seq(0.99, 0.99, 0.99, 0.99, 0.5, 0.01));
@@ -108,7 +110,7 @@ test('POTION-COMMON: installed with the smithing install, both extras roll - the
   // under 3, then the potion's 50
   const foe = addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, seq(0.99, 0.99, 0.99, 0.02, 0.5));
   assert.deepEqual([kits(foe), healing(foe)], [1, 0]);
-  const foe2 = addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, seq(0.99, 0.99, 0.99, 0.5, 0.05));
+  const foe2 = addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, seq(0.99, 0.99, 0.99, 0.5, 0.03));   // POT-THIN: under the foe's 4
   assert.deepEqual([kits(foe2), healing(foe2)], [0, 1]);
   // the hosts install it ONCE, after the smithing install - a Map keeps a name's first place, so a second, earlier call
   // would put the potion's draw first

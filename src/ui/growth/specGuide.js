@@ -19,8 +19,9 @@ import { MAGIC_SKILLS, SKILL_NAMES } from '../../systems/skills.js';
 import { masterSkillsActive, masterSkillsSwitchable, isMasteredSkill, careerGroupOf, masterySlots, masterableCount, masterCappedSkill } from '../../systems/masterSkills.js';
 import { signatureSpell } from '../../systems/signatureSpells.js';
 import { specResetRefusal, resetSpec, resetField } from '../../systems/specReset.js';   // SPEC-RESET: a held path given up, for gold
-import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, skillSwapRefusal, swapGroupOf, swapSkill, swappedCareer, swapOpens } from '../../systems/skillSwap.js';   // SKILL-SWAP: a class skill given up for another, for gold
+import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, skillSwapRefusal, swapGroupOf, swapSkill, swappedCareer, swapOpens, swapShortfall } from '../../systems/skillSwap.js';   // SKILL-SWAP: a class skill given up for another, for gold
 import { alreadyMasteredASkill } from '../../systems/advancement.js';   // AUDIT SUGGESTIONS-1019 L5-2: the 95 lock a swap moves
+import { usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // SWAP-CYCLE: the skill sum levels nothing on Oblivion's bar
 import { computeEntityMods } from '../../systems/entityMods.js';   // AUDIT SPEC-RESET L1-3: a chosen path's stats now
 import { sigilDueling } from '../../systems/sigil/sigil.js';
 import { lootRarityOn } from '../../systems/loot/lootRarity.js';
@@ -229,6 +230,8 @@ export function specGuideModel(entity) {
       const before = alreadyMasteredASkill(entity), after = alreadyMasteredASkill({ ...entity, career: swappedCareer(entity, out, inn) });
       return before === after ? null : after ? 'on' : 'off';
     },
+    // SWAP-CYCLE: the points the class's skills make up before the next level comes closer - none on Oblivion's bar
+    shortfall: (out, inn) => (usesVirtueLeveling(entity) ? 0 : swapShortfall(entity, out, inn)),
   } : null;
   // AUDIT SUGGESTIONS-1019 L5-1: a family's hint only where ONE swap would open a path, the masteries and slots as they stand
   for (const f of families) {
@@ -412,9 +415,10 @@ function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
   box.append(el('div', 'gr-skilltop', t('growth.swap.in', 'Take instead')), pick(t('growth.swap.in', 'Take instead'), sw.in, _swapIn, (v) => { _swapIn = v; }));
   const out = _swapOut, inn = _swapIn, refusal = sw.refusal(out, inn);
   const words = { out: SKILL_NAMES[out], inn: SKILL_NAMES[inn], gold: SKILL_SWAP_GOLD, group: groupWord(sw.group(out)) };
-  // AUDIT SUGGESTIONS-1019 L5-1/L5-2: what the swap costs beyond the gold, said beside the picks and again in the ask
-  const lock = sw.lockTurn(out, inn);
+  // AUDIT SUGGESTIONS-1019 L5-1/L5-2 and SWAP-CYCLE: what the swap costs beyond the gold, said beside the picks and again in the ask
+  const lock = sw.lockTurn(out, inn), short = Math.ceil(sw.shortfall(out, inn));
   const warns = [
+    ...(short > 0 ? [t('growth.swap.ground', 'Your level stays, but your class skills then earn nothing toward your next level until they make up {n, plural, one {# point} other {# points}}.', { n: short })] : []),
     ...(sw.slotsLeft(out) === 0 ? [t('growth.swap.noSlots', 'Your {group} mastery slots are spent, so {inn} could never be mastered.', words)] : []),
     ...(lock === 'on' ? [t('growth.swap.lockOn', 'With Master Skills off, {inn} at 100 as a primary skill holds your other skills at 95.', words)]
       : lock === 'off' ? [t('growth.swap.lockOff', 'With Master Skills off, your other skills are no longer held at 95 once {out} leaves your primary skills.', words)] : []),
@@ -546,12 +550,15 @@ export const SPEC_GUIDE_CSS = `
 .px-sys .gr-fam { font: inherit; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; min-height: 36px;
   color: #cfc7b1; background: rgba(15,17,22,0.55); border: 2px solid rgba(125,116,96,0.55); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .px-sys .gr-fam.on { color: #f3cf86; border-color: #c9a45a; background: rgba(60,48,26,0.55); }
-.px-sys .gr-count { font-size: 12px; min-width: 18px; padding: 0 5px; line-height: 18px; text-align: center; color: #10120f; background: #8fc7a0; }
+.px-sys .gr-count { box-sizing: border-box; min-width: 24px; height: 22px; padding: 0 6px; font-size: 16px; line-height: 20px; letter-spacing: 0; text-align: center;
+  color: #0f1a12; text-shadow: none; background: #8fc7a0; border: 1px solid #0c120e; box-shadow: inset 0 1px 0 #c4e6cd, inset 0 -2px 0 #5d9370; }   /* GROWTH-BOOK: the rail's plaque, in the path's green */
+:root[data-plus-dress="grimoire"] .px-sys .gr-count { color: #f3e2b8; background: #2f6a3c; border-color: #10261a; font-family: inherit;
+  box-shadow: inset 0 1px 0 rgba(200,240,200,0.35), inset 0 -2px 0 #1d4527; }
 .px-sys .gr-head { padding: 10px 12px; }
 .px-sys .gr-headline { font-size: 15px; line-height: 1.4; color: #e9e4d9; margin-bottom: 8px; }
 .px-sys .gr-skills { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; }
 .px-sys .gr-skill { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.px-sys .gr-skilltop { display: flex; justify-content: space-between; gap: 6px; font-size: 14px; }
+.px-sys .gr-skilltop { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 14px; height: 20px; line-height: 20px; }   /* GROWTH-BOOK: one height, so a mastered skill's mark never lifts its row */
 .px-sys .gr-skilltop .k { color: #e9e4d9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .px-sys .gr-skilltop .v { color: #ddd5bd; font-variant-numeric: tabular-nums; }
 .px-sys .gr-skillstate { font-size: 12px; color: #9c937d; }

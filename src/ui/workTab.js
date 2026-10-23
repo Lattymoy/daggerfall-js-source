@@ -25,6 +25,10 @@
 // raid here, what is left of it, the time left; paid as the defender's raid is counted, never to its own Officers and
 // Guildmaster; Withdraw where the reader's rank may; and POST A CONTRACT (a Guildmaster's, or an Officer's within the one
 // writ budget). Offered while the service lists them (`contracts` on the list - silver's switch, not the professions').
+//
+// BOARD-SIFT (2026-10-21): each card handed to the board as an entry (`entries`) - its kind, whether it is open and
+// fillable now, its silver, its end, its name and words - so the Work tab's bar sifts and orders it (ui/workSift.js).
+import { wordsOf } from './workSift.js';   // BOARD-SIFT: a card's words, as the bar searches them
 import { accountRefusalText } from '../net/accountClient.js';
 import { CRAFTED_FAMILIES, marketCatalogue, saleTax, MARKET_PRICE_MAX, WEAR_WHOLE } from '../net/marketLaw.js';
 import { RECIPES, QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
@@ -217,7 +221,7 @@ export function createWorkTab(w, ui) {
     const held = w.held(x.material);
     // AUDIT 31 U10: no more than the guild Stores can still take of it
     const room = Number.isSafeInteger(x.room) ? x.room : Infinity;
-    const most = Math.min(x.left, held, room);
+    const most = guildWritMost(x, held);
     // WRIT-WALL: what is held past `held` - looted, shop-bought, traded or gold-bought - named where it would fill more
     const walled = x.state === 'open' && mayDeliver(data, x) && held < Math.min(x.left, room) ? Number(w.walled?.(x.material)) || 0 : 0;
     const walledSaid = walled > 0 ? writWalledText(walled, w.countName(x.material, walled)) : null;
@@ -250,6 +254,9 @@ export function createWorkTab(w, ui) {
     li.append(el('span', 'notice-seal', ''));
     return li;
   }
+  /** AUDIT 31 U10: the units a delivery may bring a guild writ - what it still asks, what is held, what the guild Stores can
+   *  still take (BOARD-SIFT: the card's Deliver and the bar's "Only what I can fill" alike). */
+  const guildWritMost = (x, held = w.held(x.material)) => Math.min(x.left, held, Number.isSafeInteger(x.room) ? x.room : Infinity);
   const withdrawWrit = (x) => why(button('work-withdraw', t('prof.work.withdraw', 'Withdraw'), () => act(() => w.writs.withdraw(x.id), t('prof.work.withdrawnGuild', 'Withdrawn. The unpaid silver is back in the guild\'s treasury.'))),
     busyWhy());
 
@@ -507,15 +514,41 @@ export function createWorkTab(w, ui) {
     });
   };
 
+  /**
+   * BOARD-SIFT: this region's guild writs, contracts and commissions, each as the Work tab's bar sifts it (ui/workSift.js
+   * WorkEntry) - a guild writ fillable while the reader may deliver to it and has a unit it takes; a contract never at the
+   * board (it is earned in a raid); a commission naming the reader while a piece of theirs answers it. Its card is made
+   * only when it is drawn. AUDIT BOARD-SIFT: a writ's words its material one and many, and a seat writ's what its card
+   * says (its kind, its stockpile or Siege Camp - lane B L1: "seat" and "camp" found none); a contract's silver what one
+   * defender is paid (SILVER-WAYS' contracts came best-paying first, `contracts.js` contractBoard - "Most silver" keeps it).
+   * @returns {import('./workSift.js').WorkEntry[]}
+   */
+  function entries(data) {
+    if (data?.writsOpen !== true) return [];
+    const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [], gcs = data?.contracts ?? [];   // SILVER-WAYS: and its contracts
+    return [
+      ...gws.map((x) => {
+        const name = w.countName(x.material, 2), open = x.state === 'open';
+        const seat = x.seat != null ? [t('prof.work.writ.seatKind', 'Seat writ'), seatWritPlace({ name: x.seatName, camp: x.camp })] : [];
+        return { kind: 'guild', open, fill: open && mayDeliver(data, x) && guildWritMost(x) > 0, pay: Number(x.pay) * Number(x.left) || 0,
+          ends: Number(x.expiresAt) || 0, name, words: wordsOf(name, w.countName(x.material, 1), guildName(x.guild), ...seat), card: () => guildWritCard(x, data) };
+      }),
+      ...gcs.map((x) => ({ kind: 'contract', open: x.state === 'open', fill: false, pay: Number(x.pay) || 0, ends: Number(x.expiresAt) || 0,
+        name: guildName(x.guild), words: wordsOf(guildName(x.guild), w.regionNameOf(x.region)), card: () => contractCard(x, data) })),
+      ...cs.map((c) => {
+        const open = c.state === 'open';
+        return { kind: 'commission', open, fill: open && !!c.forMe && w.pieces(c).length > 0, pay: Number(c.pay) || 0, ends: Number(c.expiresAt) || 0,
+          name: recipeName(c.recipe), words: wordsOf(recipeName(c.recipe), c.crafter, c.poster), card: () => commissionCard(c) };
+      }),
+    ];
+  }
+
   return {
     /** Whether guild writs and commissions are this account's - the service's word on the list (AUDIT 31 U5). */
     open: (data) => data?.writsOpen === true,
     /** This region's guild writs and commissions - cards for the Court's grid (AUDIT 31 U14: one grid). */
-    cards(data) {
-      if (data?.writsOpen !== true) return [];
-      const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [], gcs = data?.contracts ?? [];   // SILVER-WAYS: and its contracts
-      return [...gws.map((x) => guildWritCard(x, data)), ...gcs.map((x) => contractCard(x, data)), ...cs.map((c) => commissionCard(c))];
-    },
+    cards: (data) => entries(data).map((e) => e.card()),
+    entries,
     /** "Yours", and the forms, under the grid - none while they are not this account's. */
     node(data) {
       if (data?.writsOpen !== true) return null;

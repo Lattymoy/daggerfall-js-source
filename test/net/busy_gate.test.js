@@ -21,6 +21,7 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
     // PIN MOVED (BUSY-HEART, 2026-10-16): and the heartbeat and the day's motherlodes (test/net/busy_heart.test.js)
     ['/v1/heartbeat', 'POST'], ['/v1/prof/motherlodes', 'POST'],
     ['/v1/towns/econ', 'POST'],   // PIN MOVED (AUDIT TOWN-ECON 2 CLI-8): and the towns' shares, an isolate's kept read
+    ['/v1/festival/town', 'POST'],   // PIN MOVED (WITCH1): and a town's Hearth Offerings, a replica's read
   ]);
   for (const [path, method] of BUSY_READS) {
     assert.ok(ROUTES.has(path), `${path}: a route the service serves`);

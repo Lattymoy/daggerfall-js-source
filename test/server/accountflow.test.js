@@ -24,6 +24,7 @@ import {
 } from '../../src/net/accountClient.js';
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { PASSWORD_MIN, PASSWORD_MAX } from '../../server-account/src/password.js';
+import { STAFF_STATUS } from '../../server-account/src/staff.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -108,8 +109,13 @@ test('ACC1e: every refusal word the SERVICE can emit has a sentence here - walke
   // this pin had them all missing except the one index.js spells - a
   // three-file list is an enumeration, and an enumeration disagrees with
   // the tree the day somebody adds a file.
+  // STAFF-PANEL1: but staff.js answers the staff panel (/v1/staff/*), never this screen, so its words are the
+  // panel's to say - walked all the same, below, against the status it answers each with.
   const files = readdirSync(new URL('../../server-account/src', import.meta.url))
-    .filter((f) => f.endsWith('.js')).sort();
+    .filter((f) => f.endsWith('.js') && f !== 'staff.js').sort();
+  const staffSays = [...src('server-account/src/staff.js').matchAll(/error:\s*'([a-z-]+)'/g)].map((m) => m[1]);
+  assert.ok(staffSays.length >= 5, 'the staff walk found nothing - it has stopped seeing its subject');
+  assert.deepEqual(staffSays.filter((w) => !(w in STAFF_STATUS)), [], 'the staff panel can be refused with a word it has no status for');
   assert.ok(files.length >= 4, `the walk found only ${files.length} service files - it has stopped seeing its subject`);
   // MAIL1: and the letter's law, whose refusals the service returns VERBATIM (letters.js `return words`) - a word
   // spelled in src/net/letterLaw.js reaches a player exactly as one spelled here does.

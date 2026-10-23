@@ -146,8 +146,8 @@
   {
     "name": "LAMP-KEEPER-II-named-as-the-keeper",
     "file": "src/scenes/worldModes.js",
-    "old": " ?? (pn?.lamp ? LAMP_TEXT.name() : null);",
-    "new": ";",
+    "old": " ?? (pn?.lamp ? LAMP_TEXT.name() : null) ?? (pn?.witch ? vendorOffice() : null);",
+    "new": " ?? (pn?.witch ? vendorOffice() : null);",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]

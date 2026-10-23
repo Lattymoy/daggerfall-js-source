@@ -98,6 +98,12 @@ function shopIron(n) {
   return { ...structuredClone(iron), stackCount: n };
 }
 
+/** CRAFT-WRITS: a wait on the real Worker's read by the clock, not a count of turns - the list's read does more since the
+ *  crafting writs ride it, and 400 turns ran out under a loaded suite. */
+async function until(done, ms = 20_000) {
+  const end = performance.now() + ms;   // never Date.now: this file holds it still
+  while (!done() && performance.now() < end) await tick();
+}
 /** The real board's Work tab, read off the real books - the Court's and the chapters' writs, and the guild writs beside them. */
 async function workTab(book, writs = null) {
   const notices = { seenAt: () => null, read: async () => ({ board: { notes: [], notices: [], me: {} } }), markSeen() {}, cached: () => null, draft: () => ({ subject: '', body: '', days: 7, button: '' }), noticeDraft: () => ({ subject: '', body: '', days: 3 }) };
@@ -106,7 +112,7 @@ async function workTab(book, writs = null) {
     ...(writs ? { writs, regionNameOf: () => 'another region', pieces: () => [] } : {}) } });
   await tick();
   byClass(host, 'notice-tab').find((t) => t.textContent.startsWith('Work')).click();
-  for (let i = 0; i < 400 && !byClass(host, 'notice-writ').some((c) => byClass(c, 'writ-kind')[0]?.textContent === 'Chapter writ'); i++) await tick();
+  await until(() => byClass(host, 'notice-writ').some((c) => byClass(c, 'writ-kind')[0]?.textContent === 'Chapter writ'));
   const card = (kind) => byClass(host, 'notice-writ').find((c) => byClass(c, 'writ-kind')[0]?.textContent === kind);
   return { host, v, card };
 }
@@ -202,7 +208,7 @@ test('WRIT-WALL mined Iron, counted: no walled line, Take open and delivering fr
   assert.ok(!takeOf(card).title, 'and no title');
   assert.deepEqual(walledOf(card), [], 'nothing walled: no line');
   takeOf(card).click();
-  for (let i = 0; i < 400 && !/Taken by you/.test(b.card('Chapter writ')?.textContent ?? ''); i++) await tick();
+  await until(() => /Taken by you/.test(b.card('Chapter writ')?.textContent ?? ''));
   assert.match(b.card('Chapter writ').textContent, /Taken by you/, 'delivered: the writ is the reader\'s');
   assert.deepEqual([s.stores(ann), s.carried(ann), heldOf(e, IRON)], [[], [['own', 20]], 20], 'its 40 put in from the bag and spent');
   b.v.unmount();

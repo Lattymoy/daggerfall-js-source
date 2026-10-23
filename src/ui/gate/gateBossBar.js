@@ -182,6 +182,13 @@ export const BOSS_BAR_CSS = `
 .wb-boss-bar.sea .wb-boss-fill { background: linear-gradient(180deg, #4fe0c0 0%, #1a8a86 55%, #0b3a4a 100%); }
 .wb-boss-bar.sea .wb-boss-tag { background: rgba(2,14,18,0.55); border-color: rgba(90,210,190,0.25); }
 .wb-boss-bar.sea .wb-boss-wrath { color: #ffd2a0; border-color: rgba(255,160,80,0.55); }
+/* STAR6: a fallen star's master - the same readout in the star's violet (its model's \`theme\`, ui/starfall/starBar.js) */
+.wb-boss-bar.star { color: #e6defa; }
+.wb-boss-bar.star .wb-boss-name { color: #c9b6ff; text-shadow: 0 0 3px #000, 0 0 10px rgba(150,110,255,0.55); }
+.wb-boss-bar.star .wb-boss-sub { color: #b7a9d8; }
+.wb-boss-bar.star .wb-boss-track { border-color: rgba(170,140,255,0.55); background: rgba(12,6,24,0.75); }
+.wb-boss-bar.star .wb-boss-fill { background: linear-gradient(180deg, #c7b0ff 0%, #7a52e0 55%, #2c1660 100%); }
+.wb-boss-bar.star .wb-boss-tag { background: rgba(12,6,24,0.55); border-color: rgba(170,140,255,0.25); }
 @media (max-width: 640px) {
   .wb-boss-bar { top: 72px; }
   .wb-boss-marks { column-gap: 10px; }
@@ -418,7 +425,7 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
     });
   }
   // THE CALLOUT - WB13c: in on a change, out over CALLOUT_OUT_MS, a line filling to its landing, Dagon's on a plate
-  const text = model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen : model.callout ? model.callout.text : model.warded ? BOSS_BAR_TEXT.warded : '';   // AUDIT SD III (T10): a fight's own word for its fall (the Hour's "Undone")
+  const text = model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen : model.callout ? model.callout.text : model.warded ? model.wardedText ?? BOSS_BAR_TEXT.warded : '';   // AUDIT SD III (T10): a fight's own word for its fall (the Hour's "Undone"); AUDIT STAR U3: and for its ward (the star's master's, in the player's language)
   const color = model.fallen ? model.ringCss ?? GATE_RING_CSS : model.callout ? model.callout.color : model.warded ? WARD_CSS : model.ringCss ?? GATE_RING_CSS;   // SERPENT1: the sea's ring colour
   if (text) {
     shown.outAt = null;

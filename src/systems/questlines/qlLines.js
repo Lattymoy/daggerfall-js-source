@@ -17,6 +17,10 @@
 //   THE INTRODUCTIONS (4.5) - a short line for each Tutorials group with a feature to go to: the crafts, the gear's own
 //     laws, the sea, the road, the tavern's tables, the Arena, the Bay's troubles, the Firmament. The Tutorials explain;
 //     an introduction gives a reason to go, and pays for it.
+//   THE THIRTEENTH OF FROSTFALL (STAR8, bible/11-Multiplayer/Starfall.md section 7) - the Starfall's, from a Wyrd Sister
+//     of Glenmoril. Seasonal: it begins only while the Witches' Festival is staged (`opens.event`), and a step whose deed
+//     is a fallen star waits for the next one - set aside, fail-free, if the Festival ends under it (qlLineRunner.js
+//     keepSeason). Online: its witnesses are the stars' receipts.
 //
 // Every word through t() (the Port_Strings catalog): a line's title, its lead, its giver, each step's title. A step's
 // title is its quest's DisplayName in English (test/systems/questlines/ql12_lines.test.js holds the two to one word).
@@ -28,21 +32,26 @@ import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js';   // AUDIT QUESTL
  * @typedef {{ quest: string, title: () => string, needs?: ReadonlyArray<LineNeed> }} LineStep
  *   `needs` what the step's deed cannot be done without (AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6): the step waits,
  *   saying so, until each holds - never started to fail every day
- * @typedef {'lootRarity'|'kingsGambit'|'naval'|'renown'} LineNeed
+ * @typedef {'lootRarity'|'kingsGambit'|'naval'|'renown'|'starfall'} LineNeed
  *   `lootRarity` Loot rarity on (a socket, a reforge); `kingsGambit` The King's Gambit on (its table); `naval` Naval
- *   Combat on (the sea's own deeds); `renown` the Renown a revenant comes at (revenant.js REVENANT_MIN_RENOWN, online)
- * @typedef {{ level?: number, after?: string, online?: boolean, account?: boolean }} LineOpens
+ *   Combat on (the sea's own deeds); `renown` the Renown a revenant comes at (revenant.js REVENANT_MIN_RENOWN, online);
+ *   `starfall` (STAR8) the Starfall running - the Witches' Festival's days (net/festivalLaw.js, through
+ *   net/starfall/starfallLaw.js starfallRuns), when stars fall to be held
+ * @typedef {{ level?: number, after?: string, online?: boolean, account?: boolean, event?: LineNeed }} LineOpens
  *   `level` the character's level at least; `after` another line finished first; `online` only where the account
  *   service answers (every endgame line: its witnesses are the service's rows); `account` a registered account, never a
- *   guest's (AUDIT QUESTLINES LINES-2: the service records no guest's receipt, so no witnessed deed could be done)
- * @typedef {{ id: string, group: 'cycle'|'hour'|'coil'|'intro', tier: number,
+ *   guest's (AUDIT QUESTLINES LINES-2: the service records no guest's receipt, so no witnessed deed could be done);
+ *   `event` (STAR8) a seasonal line's live event, a need that holds only while it is staged: the line begins only then,
+ *   and the window draws none not begun outside it (qlLineRunner.js rows - UI-Calm's law, nothing shown that cannot be
+ *   taken)
+ * @typedef {{ id: string, group: 'cycle'|'hour'|'coil'|'intro'|'festival', tier: number,
  *   title: () => string, lead: () => string, giver: () => string, opens: LineOpens, steps: ReadonlyArray<LineStep> }} Line
  */
 
 /** @param {Line} l @returns {Readonly<Line>} */
 const line = (l) => Object.freeze({ ...l, opens: Object.freeze({ ...l.opens }), steps: Object.freeze(l.steps.map((s) => Object.freeze({ ...s, ...(s.needs ? { needs: Object.freeze([...s.needs]) } : {}) }))) });
 
-/** The lines, in the window's order: the Cycle, the Hour, the Coil, then the introductions. */
+/** The lines, in the window's order: the Cycle, the Hour, the Coil, the Festival's, then the introductions. */
 export const QL_LINES = Object.freeze([
   line({
     id: 'burningDoors', group: 'cycle', tier: 3,
@@ -104,6 +113,19 @@ export const QL_LINES = Object.freeze([
       { quest: 'QLOC01', title: () => t('ql.step.QLOC01', 'The Sailors’ Tale') },
       { quest: 'QLOC02', title: () => t('ql.step.QLOC02', 'The Packet Lanes') },
       { quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin') },
+    ],
+  }),
+  line({
+    id: 'thirteenthFrostfall', group: 'festival', tier: 3,
+    title: () => t('ql.line.thirteenthFrostfall', 'The Thirteenth of Frostfall'),
+    lead: () => t('ql.line.thirteenthFrostfall.lead', 'At the Witches’ Festival the covens sing stars out of the sky. A witch of Glenmoril wants to know why.'),
+    giver: () => t('ql.line.thirteenthFrostfall.giver', 'Morwen, a Wyrd Sister of Glenmoril'),   // AUDIT STAR8 T1: of the Festival's Glenmoril Wyrd
+    opens: { level: 6, online: true, account: true, event: 'starfall' },
+    steps: [
+      { quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },
+      { quest: 'QLTF02', title: () => t('ql.step.QLTF02', 'The Coven on the Bluff') },
+      { quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars'), needs: ['starfall'] },
+      { quest: 'QLTF04', title: () => t('ql.step.QLTF04', 'What the Thread Is Worth') },
     ],
   }),
   line({
@@ -237,8 +259,11 @@ export function lineOpens(l, probe) {
   if (o.account && !(probe.registered?.() ?? true)) return false;
   if (Number.isFinite(o.level) && probe.level() < /** @type {number} */ (o.level)) return false;
   if (o.after && !probe.lineDone(o.after)) return false;
+  if (o.event && !eventHolds(l, probe)) return false;   // STAR8: a seasonal line begins only while its event is staged
   return unmetNeeds(l, 0, probe).length === 0;
 }
+/** STAR8: a seasonal line's event staged now (`opens.event`, a need) - a line with none always. */
+export const eventHolds = (l, probe) => !l.opens.event || (probe.need?.(l.opens.event) ?? true);
 
 /** A step's need, in words - the window's "Opens with ..." (the Features rows' own names). */
 const NEED_WORDS = Object.freeze({
@@ -246,6 +271,7 @@ const NEED_WORDS = Object.freeze({
   kingsGambit: () => t('ql.line.needs.kingsGambit', 'with The King\u2019s Gambit on'),
   naval: () => t('ql.line.needs.naval', 'with Naval Combat on'),
   renown: () => t('ql.line.needs.renown', 'at Renown {n}', { n: REVENANT_MIN_RENOWN }),
+  starfall: () => t('ql.line.needs.starfall', 'during the Witches’ Festival'),   // STAR8
 });
 
 /**
@@ -259,6 +285,8 @@ export function opensWords(l, probe, step = 0) {
   if (o.after && !probe.lineDone(o.after)) parts.push(t('ql.line.opensAfter', 'after {line}', { line: lineById(o.after)?.title() ?? o.after }));
   if (o.online && !probe.online()) parts.push(t('ql.line.opensOnline', 'online'));
   else if (o.account && !(probe.registered?.() ?? true)) parts.push(t('ql.line.opensAccount', 'with a registered account'));
-  for (const n of unmetNeeds(l, step, probe)) parts.push(NEED_WORDS[n]());
+  // STAR8: a seasonal line's event said once, beside the step's own needs (its first step's is the same Festival)
+  const needs = new Set([...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)]);
+  for (const n of needs) parts.push(NEED_WORDS[n]());
   return parts.length ? t('ql.line.opens', 'Opens {when}.', { when: parts.join(', ') }) : null;
 }

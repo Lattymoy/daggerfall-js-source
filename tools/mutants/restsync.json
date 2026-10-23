@@ -157,7 +157,7 @@
   {
     "name": "RESTSYNC-the-destroyed-kept",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse) || !foes.includes(f)) _sharedById.delete(id);",
+    "old": "    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);",
     "new": "    for (const [id, f] of _sharedById) if (!foes.includes(f)) _sharedById.delete(id);",
     "tests": [
       "test/net/restsync.test.js"

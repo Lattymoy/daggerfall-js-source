@@ -204,6 +204,7 @@ export function travelViewLine({ place = null, near = null, region = '' } = {}) 
  * @param {(key:string, e?:any) => void} [deps.onMark] - TV2: a click on a mark that takes one (a place's plate); OW-ATTACK: with the press
  * @param {(x:number, y:number, key:string|null, e?:any) => void} [deps.onContext] - WAYPOINTS: a right click (viewport
  *   pixels, and the pickable mark under it or null)
+ * @param {(x:number, y:number) => void} [deps.onPing] - PARTY-PING: the middle button, a point for the party
  * @param {() => Array<{key:string, at:number[], label?:string, sub?:string, kind?:string, pick?:boolean, edge?:boolean, badge?:any, color?:string, kin?:string|null, lv?:number|null, dist?:number, hub?:boolean, tip?:(() => any)|null, wpKind?:string, followed?:boolean}>} [deps.marks] - TV2/TV3/TV5: the
  *   keyed marks the readout draws, at WORLD points (projected here, through the frame's own matrices)
  * @param {() => number[][]} [deps.route] - TV2: the journey's way, world points from the feet on
@@ -410,6 +411,10 @@ export function createTravelView(deps) {
     if (p && p.id === e.pointerId && !p.moved && p.button === 2 && state === 'up' && e.type !== 'pointercancel') {
       const key = deps.hud?.pickAt?.(e.clientX, e.clientY) ?? null;
       deps.onContext?.(e.clientX, e.clientY, key, e);
+    }
+    // PARTY-PING: the middle button names a point for the party. A drag still orbits.
+    if (p && p.id === e.pointerId && !p.moved && p.button === 1 && state === 'up' && e.type !== 'pointercancel') {
+      deps.onPing?.(e.clientX, e.clientY);
     }
   }
   function onMouse(e) {   // the host's window mousedown/mouseup (the swing, Mouse0) - the canvas's are the view's
@@ -645,6 +650,8 @@ export function createTravelView(deps) {
     get blend() { return t; },
     /** TV2's ray and TV3's marks read the frame's own eye. */
     get eye() { return shown?.eye ?? null; },
+    /** PARTY-PING: a key while the view is up looks along this, not the body's. */
+    get fwd() { return shown?.fwd ?? null; },
     /** AUDIT DEEP2 D2: THE FLOATING ORIGIN MOVED by `offset` - every scene point the view holds moves with it. Unmoved,
      *  the feet's 819 m re-anchor read as a jump: the focus snapped to them and the eye lurched forward by its eased lag at
      *  every map pixel crossed (37 m at 400 m/s), and the frame's eye (the peers' and the sprite's 8-way view) stood a

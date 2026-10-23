@@ -158,6 +158,18 @@ jobs:
           mkdir -p site/preview/gun-lab
           cp -a production/dist-gun/. site/preview/gun-lab/
 
+      # THE PISTOL LAB, the same shape (bible/05-Combat/Pistol-Lab.md):
+      # its own config (vite.config.pistol.js), built from the production
+      # checkout, mounted at /preview/pistol-lab/.
+      - name: Build pistol lab
+        run: npx vite build --config vite.config.pistol.js
+        working-directory: production
+
+      - name: Mount the pistol lab under production site
+        run: |
+          mkdir -p site/preview/pistol-lab
+          cp -a production/dist-pistol/. site/preview/pistol-lab/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

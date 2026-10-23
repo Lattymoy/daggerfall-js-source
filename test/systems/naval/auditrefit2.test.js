@@ -71,7 +71,7 @@ test('AUDIT 2 the stars over a ship laid up: an accepted sky reads EVERY ship of
   k = 0.9;
   s.host.refitBoat({ uid: 77, hull: HULL.SmallShip });
   assert.equal(s.host.fleetStatus(laid).maxHull, Math.round(hullBuild(HULL.SmallShip).hullHp * 0.9), 'Boarders Away\'s price: her hull under her build\'s');
-  assert.match(hostText('src/scenes/naval/navalHost.js'), /if \(!\(Number\.isFinite\(k\) && k > 0 && k !== 1\)\) return;\n\s*if \(Number\.isFinite\(hurt\.hull\)\) hurt\.hull \*= k;/, 'Merchant Prince\'s price on her guns\' harm');
+  assert.match(hostText('src/scenes/naval/navalHost.js'), /const k = \(Number\.isFinite\(refit\) && refit > 0 \? refit : 1\) \* captainsDue\(\)\.guns;[^\n]*\n\s*if \(k === 1\) return;\n\s*if \(Number\.isFinite\(hurt\.hull\)\) hurt\.hull \*= k;/, 'Merchant Prince\'s price on her guns\' harm');   // PIN MOVED (SEA-SET): the refit's factor and the Tidemail's Captain's Due, one product
 });
 
 test('AUDIT 2 the stores: conjured steel is never melted; a store\'s OWN ingots go before one another counts too (iron before steel for Iron); a tier\'s stores are taken in the order that pays - the ingots-only first, so 10 steel ingots and 4 steel swords pay a Small Ship\'s Guns Steel (Steel and Iron together); the melt said is the joint take\'s (mutants: the summoned guard, the ingots\' order, the stores\' order, the joint melt)', () => {

@@ -66,7 +66,8 @@ test('RENOWN-BAR the HUD, executed: the row is the box and the bar and nothing e
     drawEnhancedHud(entity, 0, 0, { weapon: null, weaponSheathed: true });
     const root = document.body.children.find((n) => n.className === 'hud');
     const row = find(root, 'hud-renown');
-    assert.deepEqual(row.children.map(classes), [['hud-renownbox'], ['hud-track', 'hud-renowntrack']], 'the box and the bar: nothing beside them');
+    // SKILL-READY / FIRM-STARS (2026-10-20): and the two tiles that stand outside its ends (ui/hud/hudAdvance.js), hidden until they count
+    assert.deepEqual(row.children.map(classes), [['hud-renownbox'], ['hud-track', 'hud-renowntrack'], ['hst-cell', 'hud-adv', 'hud-adv-skill'], ['hst-cell', 'hud-adv', 'hud-adv-firm']], 'the box and the bar, and the two tiles beside them');
     const track = row.children[1];
     assert.deepEqual(track.children.map(classes), [['hud-fill'], ['hud-renownghost'], ['hud-renownnum']], 'the fill, the ghost and (UI3) the words, over both');
     assert.equal(words(track), '490 / 2,150 XP', 'UI3: the XP in the bar');

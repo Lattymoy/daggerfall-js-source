@@ -415,11 +415,12 @@
   {
     "name": "CRAFT4-svc-reforge-gold",
     "file": "server-account/src/alchemy.js",
-    "old": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE ${spendableSql('?1', '?2', '?9')} >= ?5`)",
+    "old": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE ${workableSql('?1', '?2', '?9')} >= ?5`)",
     "new": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE 1`)",
     "tests": [
       "test/net/craft4_temper.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the Reforge's decision a station's (workableSql: loose, bought and own - never gold's)."
   },
   {
     "name": "CRAFT4-svc-reforge-repeat",
@@ -433,11 +434,12 @@
   {
     "name": "CRAFT4-svc-reforge-gold-word",
     "file": "server-account/src/alchemy.js",
-    "old": "  return { error: st.own + st.bought + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };",
+    "old": "  return { error: workHeld(st) + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };",
     "new": "  return { error: 'stores-short', material: ARCANE_ESSENCE.key };",
     "tests": [
       "test/net/craft4_temper.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the refusal counts a station's units (workHeld)."
   },
   {
     "name": "CRAFT4-svc-routes",

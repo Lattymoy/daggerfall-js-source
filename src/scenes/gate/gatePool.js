@@ -35,7 +35,8 @@
 // Not a DFU member. Ledger A (WB).
 import { buildGateModel, gateArchProfile, insideGateStone, GATE_ARCHIVE, GATE_HEIGHT, GATE_HALF_W, PORTAL_CENTRE_Y, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N } from '../../world/gate/gateModel.js';
 import { gateArt } from '../../world/gate/gateArt.js';
-import { GatePassRenderer, gateSpinRate } from '../../render/gate/gatePass.js';
+import { GatePassRenderer, GATE_PASS_PROGRAMS, gateSpinRate } from '../../render/gate/gatePass.js';
+import { compiledPass } from '../../render/glProgram.js';   // SHADER-STALL: the fire built once its programs are done
 import { gateSceneXZ } from '../../systems/gate/gateOmen.js';
 import { gateYaw, gatePhase, gateCountdown, countdownText, countdownWords, gateModsOf, gatePortentsOf, gateBossOf, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../../net/gate/gateLaw.js';
 import { marksCardModel } from '../../ui/gate/gateMarksView.js';   // WB9a: tonight's marks, over the screen before the gate is entered
@@ -173,7 +174,10 @@ export function createGatePool({
   let box = null, boxAt = null;
   const profile = gateArchProfile(model);
   let mesh = null, meshTried = false;
-  let pass = null, passTried = false;
+  let pass = null;
+  // SHADER-STALL (render/glProgram.js compiledPass): the fire built the first frame a gate stands AND its programs are done
+  // - the beacon a frame or two later, never a frame frozen on their compile
+  const firePass = compiledPass(gl, GATE_PASS_PROGRAMS, () => new GatePassRenderer(gl, profile), (e) => console.warn('[gate] the fire would not build', e?.message ?? e));
   let place = null, g = null;
   let open = 0;
   /** AUDIT WB C6: the vortex's turn, accumulated at the open's rate as it eases (a turn in [0, 1)) */
@@ -200,11 +204,7 @@ export function createGatePool({
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[gate] the stone would not build', e?.message ?? e); mesh = null; }
   }
-  function ensurePass() {
-    if (pass || passTried || !gl) return;
-    passTried = true;
-    try { pass = new GatePassRenderer(gl, profile); } catch (e) { console.warn('[gate] the fire would not build', e?.message ?? e); pass = null; }
-  }
+  function ensurePass() { pass ??= firePass(); }
   function standCollider() {
     const col = collider();
     if (!col?.addMesh) return;

@@ -16,9 +16,11 @@ import { mintReceipt } from '../../src/net/gate/gateReceipt.js';
 import { mintEgReceipt } from '../../src/net/eliteGates/egReceipt.js';
 import { mintSdReceipt } from '../../src/net/superDungeon/sdReceipt.js';
 import { mintSerpentReceipt } from '../../src/net/serpent/serpentReceipt.js';
+import { mintStarReceipt } from '../../src/net/starfall/starReceipt.js';   // STAR8: the fallen stars' witness
+import { STAR_HOUR_MS } from '../../src/net/starfall/starfallLaw.js';
 import { egValkRedoubt } from '../../src/net/eliteGates/egPay.js';
 import { QL_SERVICE_LINES, QL_TITLES, QL_WITNESS_KINDS, qlTitleBit, qlStepClaimed } from '../../src/net/questlineClaims.js';
-import { claimQl, QL_WITNESS_SQL, QL_STATUS, qlTitleSteps, qlSwitchOf, questlinesOpenFor } from '../../server-account/src/questlines.js';
+import { claimQl, QL_WITNESS_SQL, QL_STATUS, qlTitleSteps, qlSwitchOf, questlinesOpenFor, qlStepsBefore, qlInOrderSql, QL_PURSES } from '../../server-account/src/questlines.js';
 import { titlesHeld } from '../../server-account/src/titles.js';
 import { ROUTES, OPEN_ROUTES } from '../../server-account/src/service.js';
 import { TITLES, verifyToken } from '../../src/net/identityToken.js';
@@ -29,6 +31,12 @@ import { createLineRunner, STEP_GAP_S, CLAIM_RETRY_MS, CLAIM_TRIES, CLAIM_SLOW_M
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { QUESTLINES_PREF } from '../../src/systems/questlines/qlLaw.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';
+import { FESTIVALS, QL_STARWARDEN_CAKES } from '../../src/net/festivalLaw.js';
+import { questlineService, hearPurse } from '../../src/scenes/quest/questlineHost.js';   // T-B: the purse's client door
+import { bindFestival, _resetFestivalClientForTests } from '../../src/systems/festival/festivalClient.js';
+import { soulCakesHeld } from '../../src/systems/festival/soulCake.js';
+const FESTIVAL_FROM_MS = FESTIVALS[0].fromMs;   // the Witches' Festival's first day, the Starfall's own (net/festivalLaw.js)
+const FEST_S = Math.floor(FESTIVAL_FROM_MS / 1000) + 3600;   // T-B: a second inside the festival's days
 
 const { subtle } = globalThis.crypto;
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -81,9 +89,19 @@ async function stood(t, extra = {}) {
     const res = await S.call('/v1/serpent/claim', { receipt: await mintSerpentReceipt({ d, b: 'sethrakul', s: who.id, c: 99, x: 'dealt', h: 4, l: 20 }, S.gatePriv, { subtle, nowS: now() }), character: CH, name: who.handle }, who.secret);
     assert.equal(res.body.recorded, true, `the serpent's row is written (${JSON.stringify(res.body)})`);
   };
+  /** STAR8: a fallen star held - its receipt claimed (its `stars_held` row), each one a star of its own, a night's three
+   *  and the next night's after them. */
+  let held = 0;
+  const STAR_N = Math.ceil(FESTIVAL_FROM_MS / STAR_HOUR_MS) + 5;
+  const star = async (who) => {
+    const i = held++;
+    const receipt = await mintStarReceipt({ n: STAR_N + Math.floor(i / 3), k: i % 3, s: who.id, c: 7, l: 14 }, S.gatePriv, { subtle, nowS: now() });
+    const res = await S.call('/v1/star/claim', { receipt, character: CH, name: who.handle }, who.secret);
+    assert.equal(res.body.recorded, true, `the star's row is written (${JSON.stringify(res.body)})`);
+  };
   const row = (who) => ({ ...raw.prepare('SELECT eg_keys, ql_titles, ql_key FROM players WHERE id = ?').get(who.id) });
   const steps = (who) => raw.prepare('SELECT line, step, opened_at, done_at, seen_at, choice FROM ql_steps WHERE account = ? ORDER BY line, step').all(who.id).map((r) => ({ ...r }));
-  return { S, raw, at, now, open, ql, gate, breach, redoubt, end, hour, serpent, row, steps };
+  return { S, raw, at, now, open, ql, gate, breach, redoubt, end, hour, serpent, star, row, steps };
 }
 
 test('QL12 THE LAW: every step the service pays is witnessable - by a kind this module reads or its line\'s `after` - and each kind has its SQL; a line\'s title waits on its witnessed steps before it; the switch reads off, dev and on; the Valkynaz\'s SQL is egValkRedoubt (mutants: a kind unread; the title\'s steps; the fifth)', async (t) => {
@@ -100,7 +118,15 @@ test('QL12 THE LAW: every step the service pays is witnessable - by a kind this 
   assert.deepEqual(qlTitleSteps('weirRoad'), [0, 1, 2]);
   assert.deepEqual(qlTitleSteps('hourThatWasNot'), [1]);
   assert.deepEqual(qlTitleSteps('oldCoil'), [2]);
+  assert.deepEqual(qlTitleSteps('thirteenthFrostfall'), [0, 2], 'STAR8: the first star, then the three');   // PIN MOVED (STAR8)
   assert.deepEqual(qlTitleSteps('nope'), []);
+  // AUDIT STARFALL B2: the witnessed steps an end waits on - its line's before it, the law's own numbers
+  assert.deepEqual([qlStepsBefore('thirteenthFrostfall', 0), qlStepsBefore('thirteenthFrostfall', 2), qlStepsBefore('weirRoad', 2), qlStepsBefore('burningDoors', 3), qlStepsBefore('covensHoard', 2), qlStepsBefore('nope', 1)], [[], [0], [0, 1], [2], [], []]);
+  assert.equal(qlInOrderSql('burningDoors', 2), '1', 'the line\'s first witnessed step waits on nothing');
+  assert.equal(qlInOrderSql('weirRoad', 2), '(SELECT COUNT(*) FROM ql_steps b WHERE b.account = ?1 AND b.line = ?2 AND b.step IN (0, 1) AND b.done_at IS NOT NULL) = 2');
+  // T-B: the Starwarden's purse, the one a line pays
+  assert.deepEqual({ ...QL_PURSES }, { thirteenthFrostfall: 30 });
+  assert.equal(QL_STARWARDEN_CAKES, 30);
   assert.deepEqual([qlSwitchOf('on'), qlSwitchOf('dev'), qlSwitchOf('off'), qlSwitchOf(undefined), qlSwitchOf('yes')], ['on', 'dev', 'off', 'off', 'off']);
   const dev = { handle: 'Mac' }, env = (v) => ({ QUESTLINES_OPEN: v, DEVELOPER_HANDLES: 'Mac' });
   assert.deepEqual([questlinesOpenFor(dev, env('on')), questlinesOpenFor({ handle: 'Ann' }, env('on'))], [true, true]);
@@ -120,8 +146,8 @@ test('QL12 THE LAW: every step the service pays is witnessable - by a kind this 
   }
 });
 
-test('QL12 THE BURNING DOORS: an `open` writes the step\'s opening; an `end` reads its witness - a receipt from before the LINE\'s first opening witnesses nothing, one at or after it does - the rite by a rite\'s own receipt or a fighter\'s that broke it, never a plain kill; the breach by a kill, never the rite alone; the Doorwarden once, on the step that completes the line\'s witnessed steps; the line\'s window, never a step\'s own; a later step\'s receipt its ceiling (mutants: `>=` for `>`; the rite\'s embers; the breach\'s rite; the title\'s steps; the title\'s guard; QL12-step-window; QL12-order-ceiling)', async (t) => {
-  const { S, at, open, ql, gate, row, steps } = await stood(t);
+test('QL12 THE BURNING DOORS: an `open` writes the step\'s opening; an `end` reads its witness - a receipt from before the LINE\'s first opening witnesses nothing, one at or after it does - the rite by a rite\'s own receipt or a fighter\'s that broke it, never a plain kill; the breach by a kill, never the rite alone; the Doorwarden once, on the step that completes the line\'s witnessed steps; the line\'s window, never a step\'s own; in the line\'s order (AUDIT STARFALL B2); a later step\'s receipt its ceiling (mutants: `>=` for `>`; the rite\'s embers; the breach\'s rite; the title\'s steps; the title\'s guard; QL12-step-window; QL12-order-ceiling; B2-the-order-unasked)', async (t) => {
+  const { S, raw, at, open, ql, gate, row, steps } = await stood(t);
   const me = await S.registered('Doorward');
   // A RECEIPT FROM BEFORE: a breach closed and a rite broken at T0, the line opened after
   await gate(me, 'dealt', 1);
@@ -141,6 +167,9 @@ test('QL12 THE BURNING DOORS: an `open` writes the step\'s opening; an `end` rea
   assert.deepEqual((await ql(me, 'burningDoors', 2)).body, { witnessed: true }, 'the rite\'s own receipt, after the line\'s opening');
   assert.deepEqual((await open(me, 'burningDoors', 3)).body, { opened: true });
   assert.deepEqual((await ql(me, 'burningDoors', 3)).body, { witnessed: false }, 'the rite alone closes no breach - and the T0+200 kill is older than the rite that witnessed the step before');
+  at(T0 + 350);
+  await gate(me, 'rite');
+  assert.deepEqual((await ql(me, 'burningDoors', 3)).body, { witnessed: false }, 'a second rite\'s own receipt, newer than the first: still no breach closed');
   // THE BREACH WITNESSED: the line's witnessed steps complete - the Doorwarden, told once
   at(T0 + 400);
   await gate(me, 'dealt');
@@ -152,12 +181,13 @@ test('QL12 THE BURNING DOORS: an `open` writes the step\'s opening; an `end` rea
   assert.deepEqual((await ql(me, 'burningDoors', 2)).body, { witnessed: true, titleHeld: 'doorwarden' }, 'on any of its steps');
   assert.equal(row(me).ql_titles, qlTitleBit('doorwarden'), 'the bit laid once');
   assert.deepEqual(steps(me).map((s) => [s.step, s.done_at, s.seen_at]), [[2, T0 + 300, T0 + 300], [3, T0 + 400, T0 + 400]], 'each step the receipt that witnessed it');
-  // A KILL AT THE LINE'S OPENING'S OWN SECOND IS AFTER IT
+  // A RECEIPT AT THE LINE'S OPENING'S OWN SECOND IS AFTER IT (PIN MOVED, AUDIT STARFALL B2: on the rite's step - the
+  // breach's end waits on the rite's step, so it was the rite's own second it read)
   const me2 = await S.registered('Doorward2');
   at(T0 + 500);
-  assert.deepEqual((await open(me2, 'burningDoors', 3)).body, { opened: true });
-  await gate(me2, 'dealt');
-  assert.deepEqual((await ql(me2, 'burningDoors', 3)).body, { witnessed: true }, 'a receipt written at the opening\'s second counts - the rite not yet, so no title');
+  assert.deepEqual((await open(me2, 'burningDoors', 2)).body, { opened: true });
+  await gate(me2, 'rite');
+  assert.deepEqual((await ql(me2, 'burningDoors', 2)).body, { witnessed: true }, 'a receipt written at the opening\'s second counts - the breach not yet, so no title');
   assert.equal(row(me2).ql_titles, 0);
   // ONE FIGHT, ONE STEP (AUDIT QUESTLINES SERVICE-5): a fighter who broke the rite (two embers) witnesses the rite - and
   // that one receipt never the breach as well; the breach is its own fight's
@@ -171,16 +201,18 @@ test('QL12 THE BURNING DOORS: an `open` writes the step\'s opening; an `end` rea
   at(T0 + 800);
   await gate(f, 'dealt');
   assert.deepEqual((await ql(f, 'burningDoors', 3)).body, { witnessed: true, title: 'doorwarden' });
-  // IN THE LINE'S ORDER, WHICHEVER END LANDS FIRST: the breach's end before the rite's - the rite's window closes at the
-  // breach's receipt, and the rite before it still witnesses its step
+  // IN THE LINE'S ORDER, WHICHEVER END IS ASKED FIRST (PIN MOVED, AUDIT STARFALL B2): the breach's end before the rite's is
+  // not witnessed - the rite's step is not done, and its receipt is the breach's floor - and asked again after the rite's
+  // end, it is, and pays the title
   const o = await S.registered('OutOfOrder');
   at(T0 + 900);
   await open(o, 'burningDoors', 2);
   await gate(o, 'rite');
   at(T0 + 950);
   await gate(o, 'dealt');
-  assert.deepEqual((await ql(o, 'burningDoors', 3)).body, { witnessed: true }, 'the breach\'s end first');
-  assert.deepEqual((await ql(o, 'burningDoors', 2)).body, { witnessed: true, title: 'doorwarden' }, 'the rite, older than the breach\'s receipt');
+  assert.deepEqual((await ql(o, 'burningDoors', 3)).body, { witnessed: false }, 'the breach\'s end first: the rite\'s step not done');
+  assert.deepEqual((await ql(o, 'burningDoors', 2)).body, { witnessed: true }, 'the rite');
+  assert.deepEqual((await ql(o, 'burningDoors', 3)).body, { witnessed: true, title: 'doorwarden' }, 'the breach asked again: newer than the rite');
   // THE TITLE ON THE ROW: held, on the wardrobe and worn, signed into a token
   assert.ok(titlesHeld({ handle: 'RiteBreaker', ql_titles: qlTitleBit('doorwarden') }, {}).includes('doorwarden'));
   const acct = await (await S.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${f.secret}` } })).json();
@@ -203,17 +235,27 @@ test('QL12 THE BURNING DOORS: an `open` writes the step\'s opening; an `end` rea
   at(T0 + 1030);
   assert.deepEqual((await open(late, 'burningDoors', 3)).body, { opened: true }, 'the breach\'s step opened after its breach closed');
   assert.deepEqual((await ql(late, 'burningDoors', 3)).body, { witnessed: true, title: 'doorwarden' }, 'the line\'s window');
-  // THE CEILING (SERVICE-5's order): a step's witness is older than the receipt that witnessed a later step - a rite
-  // broken after the breach's receipt witnesses no step before it
+  // THE CEILING (SERVICE-5's order): a step's witness is older than the receipt that witnessed a later step - which only a
+  // row written before B2's order can hold now (acct159-164 witnessed a later step first): a rite broken after that
+  // breach's receipt witnesses no step before it (PIN MOVED, AUDIT STARFALL B2: the breach's end was asked first)
   const c = await S.registered('Ceiling');
   at(T0 + 1100);
   await open(c, 'burningDoors', 2);
   await gate(c, 'dealt');
-  assert.deepEqual((await ql(c, 'burningDoors', 3)).body, { witnessed: true }, 'the breach first');
+  raw.prepare("INSERT INTO ql_steps (account, line, step, opened_at, done_at, seen_at) VALUES (?, 'burningDoors', 3, ?, ?, ?)").run(c.id, T0 + 1100, T0 + 1100, T0 + 1100);
   at(T0 + 1150);
   await gate(c, 'rite');
   assert.deepEqual((await ql(c, 'burningDoors', 2)).body, { witnessed: false }, 'a rite newer than the breach\'s receipt');
   assert.equal(row(c).ql_titles, 0);
+  // and such a line, its earlier step's receipt older than the later's, still pays its title when the last of them lands
+  const c2 = await S.registered('Ceiling2');
+  at(T0 + 1200);
+  await open(c2, 'burningDoors', 2);
+  await gate(c2, 'rite');
+  at(T0 + 1250);
+  await gate(c2, 'dealt');
+  raw.prepare("INSERT INTO ql_steps (account, line, step, opened_at, done_at, seen_at) VALUES (?, 'burningDoors', 3, ?, ?, ?)").run(c2.id, T0 + 1200, T0 + 1250, T0 + 1250);
+  assert.deepEqual((await ql(c2, 'burningDoors', 2)).body, { witnessed: true, title: 'doorwarden' }, 'the rite, older than the breach\'s receipt: the line whole');
 });
 
 test('QL12 THE WEIR ROAD: a Redoubt\'s row witnesses `redoubt`, a Rehearsal\'s never (its stake says so, or its end where the stake is gone); three Redoubts newer than the one that witnessed the step before witness `redoubts3`; a Valkynaz\'s - every fifth - witnesses `valkynaz`; the Weirwalker after all three (mutants: the Rehearsal\'s stake; its end; the count; the fifth; the order)', async (t) => {
@@ -260,7 +302,7 @@ test('QL12 THE WEIR ROAD: a Redoubt\'s row witnesses `redoubt`, a Rehearsal\'s n
   await open(you, 'weirRoad', 2);
   const b3 = await breach(you);
   await redoubt(you, b3, 5);
-  assert.deepEqual((await ql(you, 'weirRoad', 2)).body, { witnessed: true }, 'the Valkynaz\'s step alone: no title');
+  assert.deepEqual((await ql(you, 'weirRoad', 2)).body, { witnessed: false }, 'the Valkynaz\'s step alone: the two witnessed steps before it not done (PIN MOVED, AUDIT STARFALL B2)');
   assert.equal(row(you).ql_titles, 0);
 });
 
@@ -285,6 +327,137 @@ test('QL12 THE HOUR AND THE OLD COIL: an Hour broken witnesses the Hour\'s step 
   assert.deepEqual(titlesHeld({ handle: 'Witness', ql_titles: row(me).ql_titles }, {}).filter((x) => QL_TITLES.includes(x)), ['hourwitness', 'satakalwitness']);
 });
 
+test('STAR8 THE THIRTEENTH OF FROSTFALL: a star held after the line\'s first opening witnesses its first step, one held before it none; three more, each newer than that one, its third - two are not enough - and the three pay the Starwarden; the spindle\'s steps pay nothing (mutants: the star\'s table; the offset; the title\'s step)', async (t) => {
+  const { S, at, open, ql, star, row } = await stood(t);
+  const me = await S.registered('Starward', { character: CH });
+  await star(me);
+  at(T0 + 100);
+  assert.deepEqual((await open(me, 'thirteenthFrostfall', 0)).body, { opened: true });
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 0)).body, { witnessed: false }, 'a star held before the line');
+  at(T0 + 200);
+  await star(me);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 0)).body, { witnessed: true }, 'the first star: no title yet');
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 1, 'wound')).body, { why: 'unpaid' }, 'the Bluff is the client\'s');
+  assert.deepEqual((await open(me, 'thirteenthFrostfall', 2)).body, { opened: true });
+  at(T0 + 300);
+  await star(me);
+  await star(me);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: false }, 'two are not three');
+  at(T0 + 400);
+  await star(me);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: true, title: 'starwarden' });
+  assert.equal(row(me).ql_titles, qlTitleBit('starwarden'));
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 3, 'burned')).body, { why: 'unpaid' }, 'the spindle\'s fate is the client\'s');
+});
+
+test('AUDIT STARFALL B2: A STAR COUNTS FOR ONE STEP, WHICHEVER END IS ASKED FIRST - QLTF03\'s three asked before QLTF01\'s star is not witnessed (its earlier witnessed step not done); QLTF01 then takes the first star, and QLTF03 the three after it: the Starwarden on four stars, never three. The Weir Road\'s three Redoubts the same, after its first (mutants: B2-the-order-unasked; B2-the-steps-before-unread)', async (t) => {
+  const { S, raw, at, open, ql, star, breach, redoubt, gate, row, steps } = await stood(t);
+  const me = await S.registered('OutOfOrderStars', { character: CH });
+  at(T0 + 10);
+  assert.deepEqual((await open(me, 'thirteenthFrostfall', 0)).body, { opened: true });
+  for (const s of [20, 30, 40]) { at(T0 + s); await star(me); }
+  at(T0 + 50);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: false }, 'the three before the first star\'s end: QLTF01 not done');
+  assert.deepEqual(steps(me).map((s) => [s.step, s.done_at]), [[0, null], [2, null]], 'nothing written');
+  at(T0 + 60);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 0)).body, { witnessed: true }, 'QLTF01: the first star');
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: false }, 'two stars after it are not three');
+  at(T0 + 70);
+  await star(me);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: true, title: 'starwarden' }, 'the fourth: the Starwarden');
+  assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM stars_held WHERE account = ?').get(me.id).n, 4, 'four stars held');
+  assert.deepEqual(steps(me).map((s) => [s.step, s.seen_at]), [[0, T0 + 20], [2, T0 + 70]], 'one star a step: the first, and the third after it');
+  assert.equal(row(me).ql_titles, qlTitleBit('starwarden'));
+  // THE WEIR ROAD: `redoubts3` asked before `redoubt` waits, and its three are newer than the Redoubt that witnessed step 0
+  const w = await S.registered('OutOfOrderWeir');
+  await gate(w);   // proven, and the first breach's key
+  at(T0 + 100);
+  assert.deepEqual((await open(w, 'weirRoad', 0)).body, { opened: true });
+  const br = await breach(w);
+  for (const k of [1, 2, 3]) { at(T0 + 100 + k * 10); await redoubt(w, br, k); }
+  at(T0 + 200);
+  assert.deepEqual((await ql(w, 'weirRoad', 1)).body, { witnessed: false }, 'three Redoubts before the first Redoubt\'s end');
+  assert.deepEqual((await ql(w, 'weirRoad', 0)).body, { witnessed: true });
+  assert.deepEqual((await ql(w, 'weirRoad', 1)).body, { witnessed: false }, 'two after it are not three');
+  at(T0 + 210);
+  await redoubt(w, br, 4);
+  assert.deepEqual((await ql(w, 'weirRoad', 1)).body, { witnessed: true }, 'the fourth');
+});
+
+test('T-B THE STARWARDEN\'S PURSE: QLTF03\'s witnessed end lays Starwarden and, in the same guarded write, 30 Soul Cakes on the account\'s count while the festival is open for it - answered `purse`; never twice (a re-claim answers it held), never outside the festival\'s days or with its switch off, never to a guest (mutants: T-B-the-purse-unpaid; T-B-the-days-unread; T-B-the-switch-unread; T-B-the-purse-unguarded; T-B-the-purse-said-to-every-claim)', async (t) => {
+  const { S, raw, at, open, ql, star } = await stood(t, { FESTIVAL_OPEN: 'on' });
+  const cakes = (who) => raw.prepare('SELECT fest_cakes FROM players WHERE id = ?').get(who.id).fest_cakes;
+  /** The line run whole at `s`: its opening, a star and QLTF01's end, three stars more - answering QLTF03's end. */
+  const warden = async (who, s) => {
+    at(s);
+    await open(who, 'thirteenthFrostfall', 0);
+    await star(who);
+    assert.deepEqual((await ql(who, 'thirteenthFrostfall', 0)).body, { witnessed: true });
+    at(s + 10);
+    for (let i = 0; i < 3; i++) await star(who);
+    return (await ql(who, 'thirteenthFrostfall', 2)).body;
+  };
+  const me = await S.registered('Purse', { character: CH });
+  raw.prepare('UPDATE players SET fest_cakes = 7 WHERE id = ?').run(me.id);
+  assert.deepEqual(await warden(me, FEST_S), { witnessed: true, title: 'starwarden', purse: QL_STARWARDEN_CAKES }, 'the title and its purse');
+  assert.equal(cakes(me), 7 + 30, 'onto the account\'s count');
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: true, titleHeld: 'starwarden' }, 'a re-claim: held, no purse');
+  assert.equal(cakes(me), 37, 'paid once');
+  // OUTSIDE THE FESTIVAL'S DAYS: the title, no purse
+  const late = await S.registered('PurseLate', { character: CH });
+  assert.deepEqual(await warden(late, Math.floor(FESTIVALS[0].toMs / 1000) + 100), { witnessed: true, title: 'starwarden' }, 'the festival over');
+  assert.equal(cakes(late), 0);
+  // A GUEST: its end refused, nothing paid
+  const g = await S.guest();
+  at(FEST_S + 500);
+  await open(g, 'thirteenthFrostfall', 2);
+  assert.deepEqual((await ql(g, 'thirteenthFrostfall', 2)).body, { why: 'guest' });
+  assert.equal(cakes(g), 0, 'never to a guest');
+});
+
+test('T-B THE PURSE AND THE SWITCH: inside the festival\'s days, FESTIVAL_OPEN off pays the title and no purse (mutants: T-B-the-switch-unread)', async (t) => {
+  const { S, raw, at, open, ql, star } = await stood(t);
+  const me = await S.registered('PurseShut', { character: CH });
+  at(FEST_S);
+  await open(me, 'thirteenthFrostfall', 0);
+  await star(me);
+  await ql(me, 'thirteenthFrostfall', 0);
+  at(FEST_S + 10);
+  for (let i = 0; i < 3; i++) await star(me);
+  assert.deepEqual((await ql(me, 'thirteenthFrostfall', 2)).body, { witnessed: true, title: 'starwarden' }, 'the festival shut for the account');
+  assert.equal(raw.prepare('SELECT fest_cakes FROM players WHERE id = ?').get(me.id).fest_cakes, 0);
+});
+
+test('T-B THE PURSE ON THE PAGE: the questlines\' door hears a paid purse - "+30 Soul Cakes" through the festival\'s doors, and the pack\'s Soul Cakes restacked to the account\'s count (festivalClient.js refreshFestival); an answer with no purse says nothing (mutants: T-B-the-door-deaf; T-B-the-pack-unrestacked)', async (t) => {
+  const { S, at, open, ql, star } = await stood(t, { FESTIVAL_OPEN: 'on' });
+  const me = await S.registered('PurseDoor', { character: CH });
+  const kv = new Map([[SERVICE_KEY, 'https://accounts.invalid'], [SESSION_KEY, JSON.stringify({ secret: me.secret, id: me.id, kind: 'account' })]]);
+  const storage = { getItem: (k) => kv.get(k) ?? null, setItem: (k, v) => kv.set(k, v), removeItem: (k) => kv.delete(k) };
+  const door = questlineService({ search: '?online', fetch: S.fetch, storage });
+  const entity = { isPlayer: true, items: [] };
+  const said = [];
+  let count = 0;
+  bindFestival({ online: () => true, entity: () => entity, say: (l) => said.push(l), saved: () => {}, api: { mine: async () => ({ ok: true, data: { cakes: count } }), me: () => me.id } });
+  try {
+    at(FEST_S);
+    await door.claim({ line: 'thirteenthFrostfall', step: 0, phase: 'open' });
+    await star(me);
+    assert.deepEqual((await door.claim({ line: 'thirteenthFrostfall', step: 0, phase: 'end' })).data, { witnessed: true });
+    at(FEST_S + 10);
+    for (let i = 0; i < 3; i++) await star(me);
+    count = 30;   // the account's count as the festival's own read says it after the purse
+    const a = await door.claim({ line: 'thirteenthFrostfall', step: 2, phase: 'end' });
+    assert.deepEqual(a.data, { witnessed: true, title: 'starwarden', purse: 30 });
+    for (let i = 0; i < 4; i++) await new Promise((r) => setImmediate(r));
+    assert.deepEqual(said, ['+30 Soul Cakes'], 'said as a find is');
+    assert.equal(soulCakesHeld(entity.items), 30, 'the pack restacked to the count');
+    await door.claim({ line: 'thirteenthFrostfall', step: 2, phase: 'end' });
+    assert.deepEqual(said, ['+30 Soul Cakes'], 'a re-claim says nothing');
+    assert.equal(hearPurse({ ok: true, data: { witnessed: true, title: 'starwarden' } }), false);
+    assert.equal(hearPurse({ ok: false, error: 'offline' }), false);
+  } finally { _resetFestivalClientForTests(); }
+});
+
 test('QL12 THE COVENS\' HOARD: its last step is witnessed only behind the Burning Doors witnessed whole (the Doorwarden held - never its breach alone); Covenbane on its END, never its opening; the Weir Key once an account - to an end that keeps it, a seal no bar to a later keep, never twice and said so (mutants: the after-gate; the opening paying; the choice; the key\'s guard; the balance; keyHeld)', async (t) => {
   const { S, at, open, ql, gate, row, steps } = await stood(t);
   /** The Burning Doors witnessed whole at `s`: the line opened, a rite, its end, a breach, its end. */
@@ -302,15 +475,18 @@ test('QL12 THE COVENS\' HOARD: its last step is witnessed only behind the Burnin
   assert.deepEqual((await open(me, 'covensHoard', 2)).body, { opened: true });
   assert.deepEqual((await ql(me, 'covensHoard', 2, 'keep')).body, { witnessed: false }, 'the Burning Doors not yet witnessed');
   assert.deepEqual(row(me), { eg_keys: 0, ql_titles: 0, ql_key: 0 }, 'nothing paid');
-  // THE BREACH ALONE IS NOT THE LINE WHOLE (AUDIT QUESTLINES SERVICE-4)
+  // ONE STEP IS NOT THE LINE WHOLE (AUDIT QUESTLINES SERVICE-4) - PIN MOVED (AUDIT STARFALL B2): the breach's end asked
+  // before the rite's is not witnessed at all now; the rite's alone is, and the Doorwarden still not held
   await open(me, 'burningDoors', 2);
   at(T0 + 120);
   await gate(me, 'rite');
   at(T0 + 150);
   await gate(me);   // the first breach closed: the Spire's certain key
-  assert.deepEqual((await ql(me, 'burningDoors', 3)).body, { witnessed: true }, 'the breach witnessed');
-  assert.deepEqual((await ql(me, 'covensHoard', 2, 'keep')).body, { witnessed: false }, 'the breach alone: the Doorwarden not held');
-  assert.deepEqual((await ql(me, 'burningDoors', 2)).body, { witnessed: true, title: 'doorwarden' }, 'the rite, before the breach: the line whole');
+  assert.deepEqual((await ql(me, 'burningDoors', 3)).body, { witnessed: false }, 'the breach\'s end before the rite\'s: the line\'s order');
+  assert.deepEqual((await ql(me, 'covensHoard', 2, 'keep')).body, { witnessed: false }, 'the Doorwarden not held');
+  assert.deepEqual((await ql(me, 'burningDoors', 2)).body, { witnessed: true }, 'the rite witnessed');
+  assert.deepEqual((await ql(me, 'covensHoard', 2, 'keep')).body, { witnessed: false }, 'the rite alone: the Doorwarden not held');
+  assert.deepEqual((await ql(me, 'burningDoors', 3)).body, { witnessed: true, title: 'doorwarden' }, 'the breach, after the rite: the line whole');
   // AN OPENING ASKED AGAIN PAYS NOTHING (SERVICE-6: Covenbane was told at QLCH03's start)
   assert.deepEqual((await open(me, 'covensHoard', 2)).body, { opened: true });
   assert.equal(row(me).ql_titles & qlTitleBit('covenbane'), 0, 'no Covenbane at the opening');
@@ -388,16 +564,17 @@ test('QL12 THE ROUTE (AUDIT FIVE-ASKS A1\'s lesson): /v1/ql/claim is listed, beh
   assert.match(read('.github/workflows/account-deploy.yml'), /^ {6}- "src\/net\/questlineClaims\.js"$/m, 'the shared law deploys the service');
 });
 
-test('QL12 THE VOCABULARY: the five join TITLES last, in QL_TITLES\' order; a registered row holds each by its bit and a guest none; their words; their colours - each its own, more than 40 from every title\'s; a title\'s loot banner (mutants: the order; the guest; a word)', () => {
-  assert.deepEqual(TITLES.slice(-5), [...QL_TITLES]);
-  assert.deepEqual([...QL_TITLES], ['doorwarden', 'covenbane', 'weirwalker', 'hourwitness', 'satakalwitness']);
+test('QL12 THE VOCABULARY: the six join TITLES last, in QL_TITLES\' order; a registered row holds each by its bit and a guest none; their words; their colours - each its own, more than 40 from every title\'s; a title\'s loot banner (mutants: the order; the guest; a word)', () => {
+  // PIN MOVED (STAR8): the five and the Starwarden of the Thirteenth of Frostfall, its bit the sixth (63 every one)
+  assert.deepEqual(TITLES.slice(-8, -2) /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */, [...QL_TITLES]);
+  assert.deepEqual([...QL_TITLES], ['doorwarden', 'covenbane', 'weirwalker', 'hourwitness', 'satakalwitness', 'starwarden']);
   for (const t of QL_TITLES) {
     assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: qlTitleBit(t) }, {}), [t], `${t} by its bit alone`);
-    assert.deepEqual(titlesHeld({ handle: null, ql_titles: 31 }, {}), [], 'a guest row holds none');
+    assert.deepEqual(titlesHeld({ handle: null, ql_titles: 63 }, {}), [], 'a guest row holds none');
   }
-  assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: 31 }, {}), [...QL_TITLES], 'all five, in the lines\' order');
-  assert.deepEqual(QL_TITLES.map((t) => TITLE_TEXT[t]), ['Doorwarden', 'Covenbane', 'Weirwalker', 'Witness of the Hour', "Satakal's Witness"]);
-  assert.deepEqual(QL_TITLES.map((t) => cssRgba(TITLE_RGBA[t])), ['#e8400c', '#d0aa10', '#1f5fff', '#ada530', '#12b8b8'], 'the ember, the coven\'s gold, the Spire\'s blue, Akatosh\'s brass, the sea\'s teal');
+  assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: 63 }, {}), [...QL_TITLES], 'all six, in the lines\' order');
+  assert.deepEqual(QL_TITLES.map((t) => TITLE_TEXT[t]), ['Doorwarden', 'Covenbane', 'Weirwalker', 'Witness of the Hour', "Satakal's Witness", 'Starwarden']);
+  assert.deepEqual(QL_TITLES.map((t) => cssRgba(TITLE_RGBA[t])), ['#e8400c', '#d0aa10', '#1f5fff', '#ada530', '#12b8b8', '#7850ff'], 'the ember, the coven\'s gold, the Spire\'s blue, Akatosh\'s brass, the sea\'s teal, a falling star\'s violet');
   const apart = (a, b) => Math.hypot(...[0, 1, 2].map((i) => (a[i] - b[i]) * 255));
   for (const t of QL_TITLES) {
     for (const o of TITLES.filter((x) => x !== t)) assert.ok(apart(TITLE_RGBA[t], TITLE_RGBA[o]) > 40, `${t} apart from the ${o}'s (${apart(TITLE_RGBA[t], TITLE_RGBA[o]).toFixed(0)})`);

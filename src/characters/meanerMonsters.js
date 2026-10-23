@@ -30,10 +30,14 @@
 //
 // NOT CARRIED: the Unleveled Mobs arm (Init rewrites
 // RandomEncounters.EncounterTables[21] and [36] when that mod is
-// loaded) and the DEX warning boxes (a GUID lookup of another mod) -
-// neither mod is in the port; when Unleveled Mobs is integrated its
+// loaded) - that mod is not in the port; when it is integrated its
 // own switch is the arm's condition (Mac: no compatibility switches
-// between mods).
+// between mods). MUDEX1 (2026-10-20): the DEX arm is carried as the
+// swap its boxes ask for ("Please switch to MUDEX", :159-164) - beside
+// Daggerfall Enemy Expansion this mod's switch is MUDEX's, its author's
+// form of it for that mod (systems/enemyExpansion/dexSwitches.js), and
+// its own rows and xml stand aside; the boxes are not raised, as no
+// switch is left for the player to make.
 //
 // THE PORT'S SHAPE: DFU rewrites the global table once at Awake; the
 // port overlays the folded edit on the row a foe is minted from
@@ -47,6 +51,7 @@
 
 import { modSetting } from '../systems/modSettings.js';
 import { registerBillboardXml } from '../world/billboardXml.js';
+import { meanerMonstersAlone } from '../systems/enemyExpansion/dexSwitches.js';   // MUDEX1: beside DEX it is MUDEX
 
 export const MEANER_MONSTERS_VENDOR = 'meanerMonsters';
 
@@ -136,10 +141,10 @@ export const MEANER_MONSTERS_EDIT = foldMeanerMonsters(MEANER_MONSTERS_PCO_FLAG 
 export const meanerMonstersEnabled = (read = (k) => modSetting(MEANER_MONSTERS_VENDOR, k)) => !!read('Enabled');
 
 /** InitMod's write, at mint - the row a foe of `mobileType` is minted from under this mod: the
- *  base row with the folded edit over it when the mod is on. A class
+ *  base row with the folded edit over it when the mod is on as itself (MUDEX1: not beside DEX). A class
  *  enemy (128+) and any monster the table does not name come back
  *  untouched. Never mutates the base table. */
-export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersEnabled()) {
+export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersAlone(meanerMonstersEnabled())) {
   if (!on || !baseRow) return baseRow;
   const edit = MEANER_MONSTERS_EDIT[mobileType];
   return edit ? { ...baseRow, ...edit } : baseRow;
@@ -158,8 +163,8 @@ export const MEANER_MONSTERS_BILLBOARD_XML = Object.freeze({
 });
 
 /** One call per boot (systems/worldTick.js): the xml table joins the
- *  billboard-scale registry under the mod's live switch. */
+ *  billboard-scale registry under the mod's live switch - as itself (MUDEX1: MUDEX ships no xml). */
 export function installMeanerMonsters({ read = null } = {}) {
-  registerBillboardXml(MEANER_MONSTERS_VENDOR, MEANER_MONSTERS_BILLBOARD_XML, () => meanerMonstersEnabled(read ?? undefined));
+  registerBillboardXml(MEANER_MONSTERS_VENDOR, MEANER_MONSTERS_BILLBOARD_XML, () => meanerMonstersAlone(meanerMonstersEnabled(read ?? undefined)));
   return true;
 }

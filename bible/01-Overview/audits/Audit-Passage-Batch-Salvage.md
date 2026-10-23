@@ -76,7 +76,7 @@ press outside; virtual and remote rows. The bible's gates, the host ceilings, th
 ## Not fixed
 
 - **B6** a person on the ray within 8 m of her side loses the press to her.
-- **B3** a passenger may steer her by hand between her master's tries.
+- **B3** a passenger may steer her by hand between her master's tries. [FIXED by PASSAGE-HANDS, FIELD BUGS 2026-10-21d: her rudder, oars, sails, trim and lantern answer her master's hand alone, the panel a passenger's card - `01-Overview/bugs/Field-Bugs-2026-10-21d.md`.]
 - **A5** a hold brought ashore takes no weight.
 - **C6** the single-piece salvage's English refusals (LOOT9, LOCK1).
 - **C7** the tick's layer under the Plus face, unseen in a browser.

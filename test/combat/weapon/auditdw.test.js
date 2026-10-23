@@ -88,7 +88,8 @@ test('AUDIT-DW F1: the list drawer decodes THE RECORD it draws before the upload
   assert.match(rd('src/ui/paperDoll.js'), /await preloadTextureRecord\(archive, record, 0, 'Albedo', dye\);[^\n]*\n\s+const swap = decodedTextureTopDown/, 'the doll');
   assert.match(rd('src/combat/diverseWeapons/diverseWeaponsIcons.js'), /gate: moddedWeaponHUDAnimsEnabled, lazy: true/, 'the mod\'s icons are lazy');
   // PIN MOVED (AUDIT VE R1): the preload decodes each key from the one entry that answers it now - a lazy one is still skipped
-  assert.match(rd('src/systems/textureReplacement.js'), /if \(entry && !entry\.lazy && !decodedFrom\(key, entry\)\) todo\.push\(\[key, entry\]\);/, 'and the archive preload skips them');
+  // (AUDIT DEX B5: and a readOnly one the GPU holds alone)
+  assert.match(rd('src/systems/textureReplacement.js'), /if \(entry && !entry\.lazy && !decodedFrom\(key, entry\) && !releasedFrom\(key, entry\)\) todo\.push\(\[key, entry\]\);/, 'and the archive preload skips them');
 });
 
 // ── the widget clone's bench, the WW1 suite's shape ───────────────────
@@ -164,7 +165,7 @@ test('AUDIT-DW: checked and standing - the shipped set, the index, the door orde
   assert.match(door, /if \(!hasDiverseWeaponsSprite\(name\) \|\| typeof fetchFn !== 'function'\) return null;/);
   // the icon install sits at the scene boot, after the survival pair and before the archives load
   // PIN MOVED (AUDIT VE R2): the store's one registration follows the installs - the seam's own copy of it is gone
-  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+const textures = registerTextureStore\(\)/);
+  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+installEnemyExpansion\(\);[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+const textures = registerTextureStore\(\)/);   // PIN MOVED (DEX1): Daggerfall Enemy Expansion's Start after the Inits, before the archives load too
   // GetName's dye arm and its one exception, in one home
   assert.match(rd('src/characters/dyes.js'), /if \(!Number\.isFinite\(v\) \|\| v === DYE_COLORS\.Unchanged\) return '';/);
   // the records

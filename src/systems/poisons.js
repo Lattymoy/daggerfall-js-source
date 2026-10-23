@@ -44,6 +44,7 @@ import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { youFeelSomewhatBadText } from './diseases.js';
+import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ---- ItemEnums.Poisons, verbatim (0-7 weapon poisons, 8-11 drugs) ----
 export const POISONS = Object.freeze({
@@ -231,7 +232,7 @@ export function inflictPoison(target, poisonType, bypassResistance, { rolls = Ma
  */
 export function rollEnemyWeaponPoison(mobileType, playerLevel, rolls = Math.random) {
   if (playerLevel <= 1) return null;
-  const isClass = mobileType >= 128 && mobileType !== MOBILE_TYPES.None;
+  const isClass = isClassEnemyId(mobileType) && mobileType !== MOBILE_TYPES.None;
   if (!isClass && mobileType !== MOBILE_TYPES.Orc && mobileType !== MOBILE_TYPES.Centaur && mobileType !== MOBILE_TYPES.OrcSergeant) return null;
   const chanceToPoison = mobileType === MOBILE_TYPES.Assassin ? 60 : 5;
   if (!dice100(chanceToPoison, rolls())) return null;

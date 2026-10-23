@@ -139,7 +139,7 @@
   {
     "name": "REALM1-cors-shut",
     "file": "server-account/src/index.js",
-    "old": "'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass'",
+    "old": "'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass, x-staff-session'",
     "new": "'content-type, authorization'",
     "tests": [
       "test/server/realm1.test.js"

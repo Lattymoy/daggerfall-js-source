@@ -92,8 +92,8 @@
   {
     "name": "SFSKIN-glyphs-not-kept",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura, icon, nameAsAt })",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SFSKIN-wardrobe-glyphs-not-adopted",
     "file": "src/ui/accountFlow.js",
-    "old": "kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), secret: asked });",
-    "new": "kind: r.data.account?.kind, aura: auraStated(r.data.wardrobe), secret: asked });",
+    "old": "kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });",
+    "new": "kind: r.data.account?.kind, aura: auraStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ]

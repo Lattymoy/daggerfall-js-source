@@ -26,13 +26,20 @@ export const SPAWN_CHANCE = 0.30;
 // A spawned dungeon may be ELITE: the same template, the same look, but three foes stand at
 // every enemy marker and each foe has double health and deals double damage. Elite and normal
 // share ONE hash lane and split it: [0, SPAWN_CHANCE) is a normal dungeon, the next ELITE_CHANCE
-// is an elite one, the rest is empty land. So the rates are exactly 30% and 10%, a pixel never
+// is an elite one, the rest is empty land. So the bands are exactly 30% and 10%, a pixel never
 // holds both, every client agrees which spawns are elite, and a reload never flips one.
+// SPAWN-THIN then keeps three quarters of whichever band a pixel fell in (SPAWN_KEEP), on a second
+// lane, so the world is a quarter thinner and a survivor's kind does not change.
 
 /** The chance a pixel holds an ELITE spawned dungeon (on top of SPAWN_CHANCE, never the same pixel). */
 export const ELITE_CHANCE = 0.10;
-/** Either kind: the chance a pixel holds any spawned dungeon at all. */
+/** Either kind: the chance a pixel's roll falls in a spawn band. SPAWN-THIN (below) then keeps three quarters of those. */
 export const ANY_SPAWN_CHANCE = SPAWN_CHANCE + ELITE_CHANCE;
+/** SPAWN-THIN (2026-10-19, the owner: "Reduce the density of spawning dungeons by 25%"): a second roll, on its own
+ *  hash lane, keeps this share of the pixels the band already chose. The band is not narrowed, so a dungeon that
+ *  remains is the same kind on the same pixel - a normal stays normal, an elite stays elite - and one the keep
+ *  drops is simply absent. Changing WORLD_SALT would have moved every dungeon; this does not. */
+export const SPAWN_KEEP = 0.75;
 /** Foes per enemy marker in an elite dungeon (a normal dungeon has one). */
 export const ELITE_FOE_MULTIPLIER = 3;
 /** Health multiplier for an elite dungeon's foes. */
@@ -67,8 +74,17 @@ export function hash32(...ns) {
 /** The pixel's spawn roll, [0, 1). Deterministic in (salt, px, py). */
 export const spawnRoll = (salt, px, py) => hash32(salt, px, py, 1) / 4294967296;
 
-/** Does this pixel hold a spawned dungeon of either kind? Deterministic in (salt, px, py). */
-export const spawnsDungeon = (salt, px, py, chance = ANY_SPAWN_CHANCE) => spawnRoll(salt, px, py) < chance;
+/** SPAWN-THIN: does the keep roll spare this pixel? Its own lane (the kind band is lane 1, the template lane 2), so
+ *  thinning never moves a survivor from one kind to the other. */
+export const spawnKept = (salt, px, py, keep = SPAWN_KEEP) => hash32(salt, px, py, 3) / 4294967296 < keep;
+
+/** Does this pixel hold a spawned dungeon of either kind? Deterministic in (salt, px, py). An explicit `chance` other
+ *  than the world's band is a probe of that band alone (the pins pass 0 and 1) and is not thinned. */
+export function spawnsDungeon(salt, px, py, chance = ANY_SPAWN_CHANCE) {
+  if (!(spawnRoll(salt, px, py) < chance)) return false;
+  if (chance !== ANY_SPAWN_CHANCE) return true;
+  return spawnKept(salt, px, py);
+}
 
 /** SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): does no path cross this pixel?
  *  Every path in the network runs from its pixel's CENTRE out to the edges its compass byte names
@@ -136,10 +152,14 @@ export function createSpawnGround(woods) {
   };
 }
 
-/** Is this pixel's spawned dungeon elite? The slice of the same roll just above the normal share. */
+/** Is this pixel's spawned dungeon elite? The slice of the same roll just above the normal share. SPAWN-THIN: the
+ *  world's own band stands only where the keep spares the pixel, so an elite answer is a dungeon that stands. A probe
+ *  that names another band is that band alone, and is not thinned. */
 export const isEliteSpawn = (salt, px, py, normal = SPAWN_CHANCE, elite = ELITE_CHANCE) => {
   const r = spawnRoll(salt, px, py);
-  return r >= normal && r < normal + elite;
+  if (!(r >= normal && r < normal + elite)) return false;
+  if (normal !== SPAWN_CHANCE || elite !== ELITE_CHANCE) return true;
+  return spawnKept(salt, px, py);
 };
 
 /** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. */

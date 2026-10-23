@@ -50,7 +50,7 @@ Holdings tab (D4).
 | C3 | Bug | **A Bard offered the Lookout** answered "her Lookout now" and wandered: her bow is never a Bard's (`canLook`). | Refused ("leads her songs - he keeps no lookout"), and his list leaves it off. |
 | C4 | Bug | **Four tabs were cut under ~720 px** (the strip never wrapped and its host clips: at 360 px Quests and System half gone). | Tighter under 900 px and 660 px (the diamonds dropped), wrapped as a last resort - measured in Chromium, one row from 320 to 1280 px. |
 | C5 | Bug | **A horse never named, renamed with nothing,** answered "You do not own a horse." | "Your horse keeps no name - give him one." |
-| C6 | Nit | An empty Holdings rail (the standalone dungeon) drew the Stable: "You own no horse and no wagon". | "Nothing here to hold". |
+| C6 | Nit | An empty Holdings rail (the standalone dungeon) drew the Stable: "You own no horse and no wagon". | "Nothing here to hold". RETIRED by COLLECTIONS-II (2026-10-22): the Collections page is every player's, so the rail is never empty - the branch is gone and AH-C6 with it; the standalone dungeon's Holdings opens on Collections (`10-UI/Collections.md` section 8). |
 | C7 | Nit | The first gather's toast said the Professions key opens the Stores page (it lands on Professions). | "the pause menu's Holdings > Stores". |
 | C8 | Nit | A Gunner past her guns stood on the first Gunner's spot; a holder gone (ashore, fallen) still held his place; two stale notes. | Beside a gun; the next stands at the post; the notes. |
 
@@ -77,7 +77,7 @@ Holdings tab (D4).
 
 ## The mutants
 
-`tools/mutants/auditholdings.json` - 80 records, a fix's every line and the T5 gaps. The first run killed 74; six lived,
+`tools/mutants/auditholdings.json` - 80 records (77 now: AH-C6 retired with its branch by COLLECTIONS-II, the others earlier with theirs), a fix's every line and the T5 gaps. The first run killed 74; six lived,
 each because its pin reached the fix by another road, and each is pinned at its own now:
 
 - **AH-F3-sent-away-in-her-old-rig** - the page's sweep had already read her rig before Send away; the pin picks her rig

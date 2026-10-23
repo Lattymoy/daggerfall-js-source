@@ -333,7 +333,8 @@ test('ECOTONE1: the world host - the 3x3 read once a build; the kernel handed th
   assert.match(w, /ecotone: natureBorder,/);
   assert.match(read('src/world/terrain/terrainGen.js'), /ecotone,   \/\/ ECOTONE1/);
   // AUDIT PRECIP GROUND-2 (PIN MOVED): on the snow lane the set held and drawn is its twin
-  assert.match(w, /const loadGroundSet = async \(groundArchive, hold, winter = null\) => \{\n(?:\s+\/\/[^\n]*\n)*\s+const key = winter == null \? groundArchive : twinKey\(groundArchive\);\n\s+hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);/, 'the one home, held for the pixel');
+  // PIN MOVED (OW-HITCH): the one home is scenes/groundSets.js, the world host's module (HOST-SPLIT)
+  assert.match(read('src/scenes/groundSets.js'), /const loadGroundSet = async \(groundArchive, hold, winter = null\) => \{\n(?:\s+\/\/[^\n]*\n)*\s+const key = winter == null \? groundArchive : twinKey\(groundArchive\);\n\s+hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);/, 'the one home, held for the pixel');
   assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
   assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(a, pipeline, /);
   assert.match(w, /side: Int32Array\.of\(slot\(3\), slot\(5\), slot\(1\), slot\(7\)\),/, 'W, E, S, N of the 3x3 indexed (dz + 1) * 3 + (dx + 1)');

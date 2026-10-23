@@ -128,7 +128,7 @@
   {
     "name": "CART-AWAY-the-client-Deployed-inside-read-as-away",
     "file": "src/systems/wild/wildCart.js",
-    "old": "  return !wildInside(mask, p.x, p.y);",
+    "old": "  return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);",
     "new": "  return true;",
     "tests": [
       "test/systems/fb1015_cartaway.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "CART-AWAY-the-client-band-read-as-the-zone",
     "file": "src/systems/wild/wildCart.js",
-    "old": "  return !wildInside(mask, p.x, p.y);",
-    "new": "  return !(wildInside(mask, p.x, p.y) || mask.near[p.y * mask.width + p.x] === 1);",
+    "old": "  return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);",
+    "new": "  return !(wildInside(mask, p.x, p.y) || mask.near[p.y * mask.width + p.x] === 1) && !(etherWildRingAt(p.x, p.y) > 0);",
     "tests": [
       "test/systems/fb1015_cartaway.test.js"
     ]

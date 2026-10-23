@@ -119,8 +119,8 @@
  {
   "name": "MWNPC16-grown-cast",
   "file": "src/net/peer/peerBodies.js",
-  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve);",
-  "new": "      const cast = this._casts && !veiled && !dissolveShadowless(fx?.dissolve);",
+  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+  "new": "      const cast = this._casts && !veiled && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
   "tests": [
    "test/render/mwnpc16_bodyshadow.test.js"
   ]
@@ -128,8 +128,8 @@
  {
   "name": "MWNPC16-veiled-cast",
   "file": "src/net/peer/peerBodies.js",
-  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve);",
-  "new": "      const cast = this._casts && !(ow > 1) && !dissolveShadowless(fx?.dissolve);",
+  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+  "new": "      const cast = this._casts && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
   "tests": [
    "test/render/mwnpc16_bodyshadow.test.js"
   ]
@@ -371,8 +371,8 @@
  {
   "name": "AUDIT-MWNPC16-18-R1-dissolve-unread",
   "file": "src/net/peer/peerBodies.js",
-  "old": " && !dissolveShadowless(fx?.dissolve);",
-  "new": ";",
+  "old": " && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+  "new": " && !fx?.noShadow;",
   "tests": [
    "test/render/mwnpc16_bodyshadow.test.js"
   ]
@@ -434,8 +434,8 @@
  {
   "name": "AUDIT-MWNPC16-18-R2-boss-casts-nothing",
   "file": "src/net/peer/peerBodies.js",
-  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve);",
-  "new": "      const cast = this._casts && !veiled && !(g > 1) && !dissolveShadowless(fx?.dissolve);",
+  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+  "new": "      const cast = this._casts && !veiled && !(g > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
   "tests": [
    "test/render/mwnpc16_bodyshadow.test.js"
   ]

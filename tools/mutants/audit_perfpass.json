@@ -1,0 +1,245 @@
+[
+  {
+    "name": "ASS-the-need-unread",
+    "file": "src/render/glProgram.js",
+    "old": "    if (!(ready ??= startPrograms(gl, programs))() && !need) return null;",
+    "new": "    if (!(ready ??= startPrograms(gl, programs))()) return null;",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-settled-never",
+    "file": "src/render/glProgram.js",
+    "old": "get: () => !!pass || tried",
+    "new": "get: () => false",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-release-skipped",
+    "file": "src/render/glProgram.js",
+    "old": "    try { pass = make(); } catch (e) { fail(e); pass = null; releasePrograms(gl, programs); }",
+    "new": "    try { pass = make(); } catch (e) { fail(e); pass = null; }",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-warm-need-unread",
+    "file": "src/render/warmPrograms.js",
+    "old": "          if (step.need?.() === false) break;\n",
+    "new": "",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-play-started-without-the-extension",
+    "file": "src/render/playPrograms.js",
+    "old": "  if (!gl || !parallelCompile(gl)) return false;",
+    "new": "  if (!gl) return false;",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-a-play-pass-left-out",
+    "file": "src/render/playPrograms.js",
+    "old": ", ...NODE_GLINT_PROGRAMS];",
+    "new": "];",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-eg-telegraph-need-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      pass = telegraphOf(_shapes.length > 0);",
+    "new": "      pass = telegraphOf();",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-eg-crystal-need-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        crystalPass = crystalsOf(true);",
+    "new": "        crystalPass = crystalsOf();",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-court-telegraph-need-dropped",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      const pass = telegraphPass(!!(mark || shape || poolDraw.length));",
+    "new": "      const pass = telegraphPass();",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-court-blow-need-dropped",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "        const fxPass = fxPassOf(true);",
+    "new": "        const fxPass = fxPassOf();",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-court-way-need-dropped",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      const fire = _fires.length ? portalPass(true) : null;",
+    "new": "      const fire = _fires.length ? portalPass() : null;",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-settled-skip-dropped",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    while (warmed < warmDoors.length && warmDoors[warmed].settled) warmed++;",
+    "new": "",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-veil-warm-only-starts",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      void warmPrograms([{ start: () => veilReady ?? (() => true), run: () => { build(); }, need: () => !pass && !broken && !!veilGl }], { alive: () => !broken && !!veilGl });",
+    "new": "",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASS-the-veil-built-after-destroy",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "need: () => !pass && !broken && !!veilGl }], { alive: () => !broken && !!veilGl });",
+    "new": "need: () => !pass && !broken }], { alive: () => !broken });",
+    "tests": [
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "ASB-the-rest-judged-again",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "    let quiet = this._partial === null || this._partial !== `${spin ? 's' : 'm'}${t0}`;",
+    "new": "    let quiet = true;",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  },
+  {
+    "name": "ASB-the-frame-waits-for-a-read",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "      if (!lane() || !centre || !lines.size) return null;",
+    "new": "      if (!lane() || !centre || nowRead === null) return null;",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  },
+  {
+    "name": "ASB-the-winter-waits-for-a-read",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "      if (!centre || !lines.size) return fallback;",
+    "new": "      if (nowRead === null) return fallback;",
+    "tests": [
+      "test/systems/weather/snowbudget.test.js"
+    ]
+  },
+  {
+    "name": "ATP-never-let-go",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (byHome.size <= ROAD_CHOICES_KEPT) return;",
+    "new": "  return;",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "ATP-the-asked-not-renewed",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }",
+    "new": "  if (kept !== undefined) return kept;",
+    "tests": [
+      "test/systems/livingWorld/trippicks.test.js"
+    ]
+  },
+  {
+    "name": "ATV-one-pitch-for-every-line",
+    "file": "src/ui/virtualRows.js",
+    "old": "h = Math.max(h, s > 0 ? s : guess); }",
+    "new": "h = Math.max(h, guess); }",
+    "tests": [
+      "test/ui/virtheights.test.js"
+    ]
+  },
+  {
+    "name": "ATV-no-hold",
+    "file": "src/ui/virtualRows.js",
+    "old": "    hold(eye, was);\n",
+    "new": "",
+    "tests": [
+      "test/ui/virtheights.test.js"
+    ]
+  },
+  {
+    "name": "ATV-the-band-not-asked-again",
+    "file": "src/ui/virtualRows.js",
+    "old": "    for (let pass = 0; pass < AIM_PASSES && steer(); pass++);",
+    "new": "    steer();",
+    "tests": [
+      "test/ui/virtheights.test.js"
+    ]
+  },
+  {
+    "name": "ATV-the-sizes-unkept",
+    "file": "src/ui/virtualRows.js",
+    "old": "  const sized = sizes ?? new Map();",
+    "new": "  const sized = new Map();",
+    "tests": [
+      "test/ui/virtheights.test.js"
+    ]
+  },
+  {
+    "name": "ATV-heights-kept-across-a-remeasure",
+    "file": "src/ui/virtualRows.js",
+    "old": "        for (const it of items) sized.set?.(it, 0);\n",
+    "new": "",
+    "tests": [
+      "test/ui/virtheights.test.js"
+    ]
+  },
+  {
+    "name": "ATV-the-tile-it-was-built-with",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "row.querySelector?.('.tile')?.removeAttribute?.('title');",
+    "new": "tile.removeAttribute?.('title');",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "ATV-the-shop-resize-repaints",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "const onResize = () => { if (host) syncLists({ remeasure: true }); };",
+    "new": "const onResize = () => { if (host) render(); };",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  },
+  {
+    "name": "ATV-the-p2p-resize-repaints",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "  const onResize = () => syncLists({ remeasure: true });",
+    "new": "  const onResize = () => render();",
+    "tests": [
+      "test/ui/enhanced/tradevirt.test.js"
+    ]
+  }
+]

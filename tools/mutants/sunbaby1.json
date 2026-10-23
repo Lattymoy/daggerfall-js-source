@@ -100,8 +100,8 @@
   {
     "name": "SUNBABY1-host-weather-left",
     "file": "src/scenes/world.js",
-    "old": "  const shownWeather = () => (sunbaby.on ? SUNBABY_WEATHER : currentWeather());",
-    "new": "  const shownWeather = () => currentWeather();",
+    "old": "  const shownWeather = () => (sunbaby.on ? SUNBABY_WEATHER : seaStormShown() ?? currentWeather());",
+    "new": "  const shownWeather = () => (seaStormShown() ?? currentWeather());",
     "tests": ["test/net/sunbaby1_event.test.js"]
   },
   {

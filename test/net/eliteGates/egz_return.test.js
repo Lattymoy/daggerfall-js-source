@@ -443,9 +443,10 @@ test('EG-ZD THE FALL (section 16.5): the camera sinks 1.2 m over 1.2 s as the sc
 });
 
 test('EG-ZD THE SPANS\' CLOCK (section 10.8, EG-H1\'s host flag): the breach\'s client hands the host the corrected shared clock - its milliseconds (`breachNow`) and its anchored seconds (`spanSeconds`) - only inside the breach and once the room has answered a ping; the seconds never step for a median that wanders less than EG_SPAN_REANCHOR_MS, and move with one past it; the world host\'s `deadlandsSeconds` and `egNow` read them first, out of the frame (mutants: the welcome\'s clock kept in the breach; the clock read outside it; re-anchored on every sample)', () => {
-  const realNow = Date.now;
+  const realNow = Date.now, realPerf = performance.now;
   let wall = T0 + 400_000;
   Date.now = () => wall;
+  performance.now = () => 1000;   // the page's clock held still: a slow runner's pause must not read as a re-anchor
   try {
     const P = inBreach();
     assert.equal(P.client.breachNow(), null, 'no answer yet');
@@ -473,7 +474,7 @@ test('EG-ZD THE SPANS\' CLOCK (section 10.8, EG-H1\'s host flag): the breach\'s 
     P.out();
     assert.equal(P.client.breachNow(), null, 'outside the breach: the host\'s own clock');
     assert.equal(P.client.spanSeconds(), null);
-  } finally { Date.now = realNow; }
+  } finally { Date.now = realNow; performance.now = realPerf; }
   const W = rd('src/scenes/world.js');
   assert.match(W, /const deadlandsShared = anchoredClock\(\{ perf: \(\) => performance\.now\(\), wall: \(\) => Date\.now\(\) \+ _sharedOffsetMs \}\);\n\s+const deadlandsSeconds = \(\) => egClient\?\.spanSeconds\(\) \?\? deadlandsShared\(\);/);
   assert.match(W, /const egNow = \(\) => egClient\?\.breachNow\(\) \?\? Date\.now\(\) \+ _sharedOffsetMs;/);

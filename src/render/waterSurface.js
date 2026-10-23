@@ -492,7 +492,7 @@ void main() {
       float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;
       // AUDIT PRECIP GROUND-5: under the snow the water is the texel's the ground wears there - its winter record's mask
       // in the cover's share (a puddle frozen under snow is the winter art's, a thaw's the summer's)
-      float pc = snowCover(vLocalXZ, vWorldPos.y, vec3(0.0, 1.0, 0.0), wgx, wgy);
+      float pc = snowCover(vLocalXZ, vWorldPos.y, wgx, wgy);
       if (pc > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(puv, float(rec) + float(uSnowArr.x)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a, pc);
       edge *= smoothstep(0.3, 0.7, pa);
     }

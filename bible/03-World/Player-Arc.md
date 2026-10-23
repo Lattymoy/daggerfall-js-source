@@ -2446,6 +2446,9 @@ flat stands a BODY - an upright cylinder at its foot - and the player, on foot o
   how much of each row is picture, not air. A flat's drawn width is its widest reach - a bare tree's roots and branches,
   a signpost's board - never what a body walks into: 511.2, a bare winter tree 4.1 m across, stands a 1 m foot, 504.24
   a sapling 0.11 m, the temperate rocks 0.3 m, its stumps 0.55-0.68 m, the swamp's buttressed giant (502.24) 2.2 m.
+  A painted stand-in (the port's own art - the Witches' Festival's ward-staff, effigy and turnip lantern among it) has no
+  palette index to read, and its foot is measured off its own alpha (AUDIT WITCH1 D7: before, it stood its whole
+  picture's cover - a 2 px ward-staff an invisible wall).
   The still records of all twelve climate archives were drawn off the player's ARENA2 (in a scratch directory, never the
   tree) and six archives read by eye whole - 500, 502, 504, 508, 510, 511 - before the rule stood.
 - **None**: the flora Windfall sways Low or Medium (grass, flowers, ferns, bushes - a jungle of solid ferns could not be

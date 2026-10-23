@@ -721,11 +721,13 @@ Mac: **"So what about card collections? I think we add a new tab in holdings for
 collection"**; asked, **"One 'Collections' tab"**, the collectible cards **"Painted in code"**, and **"Tab + CARDS7 +
 CARDS8"**.
 
-- **THE COLLECTIONS PAGE** (`ui/collectionsPage.js`, the Holdings rail's last entry): a Codex | Cards switch. The CODEX
+- **THE COLLECTIONS PAGE** (`ui/collectionsPage.js`, the Holdings rail's last entry): a switch of its parts. The CODEX
   part draws LOOT10's own rows (`systems/loot/lootCodex.js`: every Legendary found and not, a row opened whole - its lines,
   power, lore and the day found - then the Aetheric sets), the rows the Reforge's Codex page draws, so the two never
-  disagree; the pack's Codex button still opens that window. The CARDS part is the binder's (below). The page shows while
-  Loot rarity makes Legendaries or a binder is carried.
+  disagree; the pack's Codex button still opens that window. The CARDS part is the binder's (below). The Codex part
+  shows while Loot rarity makes Legendaries, the Cards part while a binder is carried; the page itself is every player's
+  since COLLECTIONS-II (2026-10-22), the account's Titles, Auras, Icons and Glyphs its first four parts -
+  `10-UI/Collections.md`.
 - **CARDS7, THE RULES** (`net/iliac/iliacHand.js`, pure - it imports only `cardLaw.js`, `dice.js` and the catalog, so the
   relay can run it later): section 6.1 as built. Two decks of 30 (two of a card, one of a Legendary or rarer); three
   holdings drawn from the locations; magicka the turn's number to ten (and a card's bonus); a hand of four, a card drawn

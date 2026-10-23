@@ -165,7 +165,7 @@ test('AUDIT FIELD-GUN-MW by source: the gate reads `ranged`; the voice is told t
   assert.match(rig, /const held = holdShotForArm\(evs, dt, armShoots\);\n\s*thunderlockVoice\(dt, \{ armShoots, fired: held\.fired \}\);/, 'the hold first, the voice told');
   assert.match(rig, /const trigger = armShoots \? fired : \(m\.state !== 'Idle' && _tlState === 'Idle'\);/, 'the trigger under the arm is the release; classic keeps the click');
   assert.match(rig, /\(armShoots \? flashFromClock\(dt\) : muzzleGlow\(m\.state !== 'Idle', m\.frame\)\)/, 'the flash counts from the release under the arm');
-  assert.match(rig, /if \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\) return fpArm\.weaponMuzzle\(\);\n\s*return muzzleRay\(_tlDrawn, fovRad, forward\);/, 'the arm answers for its own muzzle');
+  assert.match(rig, /if \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\) return fpArm\.weaponMuzzle\(\);\n(?:\s*\/\/[^\n]*\n)?\s*if \(gunPairUp\(\)\) return muzzleRay\(gunPair\.hands\[playerWeapon\.activeHand\]\?\.drawn \?\? null, fovRad, forward\);\n\s*return muzzleRay\(_tlDrawn, fovRad, forward\);/, 'the arm answers for its own muzzle');
   assert.doesNotMatch(rig, /playerWeapon\.machine\.isBow\) \{\n\s*\/\/ The classic sprite path is untouched/, 'the bow-only gate is gone');
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /lastThirdModel = model;/, 'drawThird keeps its frame for the muzzle');

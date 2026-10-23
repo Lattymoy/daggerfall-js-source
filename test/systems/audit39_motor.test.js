@@ -351,8 +351,11 @@ test('AUDIT 39r: the AutoRun key can actually be HELD - the mouse buttons reach 
     assert.equal(held(keys, 'AutoRun'), false, 'nothing held');
     // the button the WHEEL is: DOM 1, Unity Mouse2.
     keys.add(mouseCode(1));
-    assert.equal(held(keys, 'AutoRun'), true, 'the latch is reachable at the shipped bindings');
+    assert.equal(held(keys, 'PartyPing'), true, 'the middle button reaches the held set at the shipped bindings');
     keys.delete(mouseCode(1));
+    keys.add('F3');
+    assert.equal(held(keys, 'AutoRun'), true, 'auto-run ships on F3');
+    keys.delete('F3');
     // ...and the right button is Unity's Mouse1 (SwingWeapon), the LEFT
     // is Mouse0 (ActivateCenterObject - the drawn bow's un-draw). The
     // DOM numbers the middle button 1 and the right 2, so the two

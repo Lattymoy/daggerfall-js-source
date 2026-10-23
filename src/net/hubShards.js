@@ -141,8 +141,9 @@ export const HUB_UP_QUEUE_BYTES = 8 * 1024 * 1024;
 export const HUB_SILENT_MS = 3 * HUB_SYNC_MS;
 /** AUDIT SCALE II R2-5: the attachment's law the bus may change after a shard's hello - a mute, a guild worn or taken
  *  off, its ribbon, its Renown - said back to the shard (a down batch's `att`), so the shard's own attachment, which every
- *  hello it says again is made of, is the bus's word and never the token's alone. */
-export const SHARD_LAW_KEYS = Object.freeze(['mu', 'gi', 'gt', 'gm', 'gio', 'rb', 'lv']);
+ *  hello it says again is made of, is the bus's word and never the token's alone. LEASE1 (net/roomLease.js): and a
+ *  freeze and the time of the last word on both (`fz`, `lt`) - a hub's shard mints its sockets' leases from its own copy. */
+export const SHARD_LAW_KEYS = Object.freeze(['mu', 'gi', 'gt', 'gm', 'gio', 'rb', 'lv', 'fz', 'lt']);
 /** The largest frame a shard hands the bus - the largest the hub takes (a shared quest, wire.js QUEST_FRAME_MAX). */
 export const HUB_FRAME_MAX = 64 * 1024;
 /** The frames a second a shard hands up for one socket, and the burst - a hub link says a few a second (its party's
@@ -154,7 +155,7 @@ export const HUB_UP_BURST = 32;
  *  the first sieve, never the verdict - JSON's last duplicate key wins, so a kept frame is parsed and, parsed as anything
  *  but the three (`{"t":"pose","t":"chat",...}`), handed up as it came (server/src/index.js `_message`): a line is the
  *  bus's to judge, a mute the bus applied with it. */
-export const shardKeeps = (s) => s.startsWith('{"t":"hello"') || s.startsWith('{"t":"ping"') || s.startsWith('{"t":"pose"');
+export const shardKeeps = (s) => s.startsWith('{"t":"hello"') || s.startsWith('{"t":"ping"') || s.startsWith('{"t":"pose"') || s.startsWith('{"t":"lease"');   // LEASE1: and its lease - a hub shard mints one, a region's shard reads one (net/roomLease.js)
 /** The close a shard gives a socket that came to the wrong one (its `hub` frame names the right one). */
 export const CLOSE_HUB = 4001;
 /** The first relay with the shards (RELAY_VERSION's number). */
@@ -187,4 +188,4 @@ export const HUB_WHO_MS = 15_000;
 /** How long the bus keeps its answer - every ask inside it is the one frame, which each shard's batch carries once. */
 export const HUB_WHO_KEEP_MS = 1000;
 /** The most of a guild that answer says (a guild holds GUILD_MEMBERS_MAX - net/guild/guildLaw.js - so this is headroom). */
-export const HUB_GUILD_WHO_MAX = 64;
+export const HUB_GUILD_WHO_MAX = 100;

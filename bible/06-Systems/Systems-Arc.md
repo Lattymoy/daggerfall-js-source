@@ -8281,6 +8281,16 @@ entry and its TTL clock, never the one the player is standing in (TTL1's own
 exception) - then rebuilds the pixels, which ask again. Pinned in
 `test/world/spawnroads.test.js`, mutants in `tools/mutants/spawnroads.json`.
 
+### SPAWN-THIN - A QUARTER FEWER RUINS (2026-10-19)
+
+The owner: "Reduce the density of spawning dungeons by 25%." The band is unchanged - 30% normal and 10% elite
+(`world/spawnedDungeons.js:"export const SPAWN_CHANCE = 0.30;"`, `world/spawnedDungeons.js:"export const ELITE_CHANCE = 0.10;"`).
+A second roll keeps three quarters of the pixels that band already chose
+(`world/spawnedDungeons.js:"export const SPAWN_KEEP = 0.75;"`), on its own hash lane, so a dungeon that remains is the
+same kind on the same pixel and one the keep drops is absent. The salt is not changed: changing it would move every
+dungeon. The relay's copy of the roll carries the same keep (`net/overworldLaw.js:"export const OW_SPAWN_KEEP = 0.75;"`).
+A character standing in a dropped dungeon does not find it on the next load. Authored dungeons are not this roll.
+
 ### DISC29-F - a mode change stops the riding loop, as UpdateMode does (2026-09-28, Skibbster)
 
 "Horse gallop audio loops if you enter an interior before stopping while mounted." The riding sound is one named

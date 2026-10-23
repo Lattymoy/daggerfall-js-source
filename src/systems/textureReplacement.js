@@ -192,7 +192,13 @@ const _vendor = new Map();
  *      texture pack overrides one (the same mod's tent reskins at
  *      50_7-0 and 67_10-0, where TEXTURE.050 is a real file carrying
  *      dozens of other records) - `standIn` absent.
- *  Nothing about the archive number tells them apart. */
+ *  Nothing about the archive number tells them apart.
+ *
+ *  AUDIT DEX B5: `readOnly` - DFU's own import flag for a mobile's pictures (TextureReplacement.GetMobileBillboardMaterial,
+ *  LoadFromCacheOrImport(..., readOnly: true), TextureReplacement.cs:574, :609: the texture lives on the GPU alone). The
+ *  picture is decoded with its archive as any is, and its CPU copy let go once the upload path has taken it
+ *  (decodedTexture); its size stays for the stand-in's answers. Asked again after its GPU copy was evicted, it draws
+ *  nothing until its decode - asked by the upload that finds the key empty - lands (vendorTextureStandIn getColor32). */
 export function addVendorTextures(entries) {
   let n = 0;
   for (const e of entries ?? []) {
@@ -205,7 +211,7 @@ export function addVendorTextures(entries) {
     // doll, decoded only when asked (`lazy`) - and its picture stands in for the studio's that will not load, and gives
     // the studio's picture its size and scale (entryColor32): a picture of any size stands as big as the one it covers.
     const prev = _vendor.get(key);
-    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null, readOnly: e.readOnly === true };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     if (prev?.studio && !entry.studio) {
       coverWith(prev, entry);
       dropDecoded(key);   // decoded again with what it covers
@@ -226,6 +232,7 @@ function coverWith(studio, under) {
   studio.under = under;
   if (under.standIn) studio.standIn = true;
   if (under.lazy) studio.lazy = true;
+  if (under.readOnly) studio.readOnly = true;   // AUDIT DEX B5
   studio.offset ??= under.offset ?? null;
 }
 /** STUDIO1: the records of `archive` the studio paints (frame 0, the plain picture) - what a tile set built outside
@@ -273,6 +280,29 @@ export function vendorRecordCount(archive) {
   let n = 0;
   for (const e of _vendor.values()) if (e.standIn && e.archive === Number(archive)) n = Math.max(n, e.record + 1);
   return n;
+}
+/** DEX2 (bible/04-Characters/Enemy-Expansion.md section 6): THE FRAMES OF A STAND-IN'S RECORD, off the registry - frame 0
+ *  to the first one no entry names, as DFU imports a custom archive's frames (TextureReplacement.GetMobileBillboardMaterial
+ *  takes each record's frames until one is missing). At least one: a record is its frame 0. The stand-in answered 1 for
+ *  every record, which no vendored art had needed until a mod's enemies walked - a mobile drawn from a stand-in never
+ *  animated. Kept per archive until a registration moves the tiers. */
+const _frameCounts = new Map();   // archive -> { gen, counts: Map(record -> frames) }
+export function vendorFrameCount(archive, record) {
+  const a = Number(archive);
+  let held = _frameCounts.get(a);
+  if (!held || held.gen !== _tierGen) {
+    const frames = new Map();
+    for (const e of _vendor.values()) {
+      if (!e.standIn || e.archive !== a || e.map !== 'Albedo') continue;
+      if (!frames.has(e.record)) frames.set(e.record, new Set());
+      frames.get(e.record).add(e.frame);
+    }
+    const counts = new Map();
+    for (const [r, set] of frames) { let n = 0; while (set.has(n)) n++; counts.set(r, n); }
+    held = { gen: _tierGen, counts };
+    _frameCounts.set(a, held);
+  }
+  return Math.max(1, held.counts.get(Number(record)) ?? 0);
 }
 /** A TextureFile stand-in for a vendor-only archive: sizes from the
  *  decoded PNGs, a bitmap the swap arm never reads.
@@ -334,11 +364,44 @@ const decodedOf = (archive, record) => {
   for (const [k, e] of _vendor) if (e.archive === Number(archive) && e.record === Number(record) && e.frame === 0 && e.map === 'Albedo' && _decoded.has(k)) return _decoded.get(k);
   return null;
 };
+/** AUDIT DEX B5: a record's size, scale and box - its decoded picture's, or what a readOnly picture let go kept of it
+ *  (`_released`): the stand-in measures a record whose pixels are on the GPU alone. */
+const measuredOf = (archive, record) => {
+  const d = decodedOf(archive, record);
+  if (d) return d;
+  const bare = _released.get(textureKey(archive, record, 0));
+  if (bare) return bare;
+  for (const [k, e] of _vendor) if (e.archive === Number(archive) && e.record === Number(record) && e.frame === 0 && e.map === 'Albedo' && _released.has(k)) return _released.get(k);
+  return null;
+};
+/** AUDIT DEX B5: A PICTURE ON ITS WAY - a readOnly frame let go once on the GPU and asked again (its GPU copy evicted).
+ *  Clear, 1x1, and `pending`: the renderer uploads nothing for it and keeps nothing at the key (render/renderer.js
+ *  uploadTexture), so the draw that wanted it asks again, and calls `pending()` - the decode, asked once the key is found
+ *  empty, never for a key the GPU still holds - the frame's emission map first, so the albedo never lands without it
+ *  (the pipeline uploads a frame's map beside its albedo only, scenes/dataPipeline.js uploadRecordFrame). One a frame,
+ *  one ask at a time; a picture that will not decode is asked no more until the tiers move (tierChanged). */
+const _pending = new Map();   // textureKey -> its placeholder
+const CLEAR_TEXEL = new Uint8ClampedArray(4);
+function pendingPicture(archive, record, frame) {
+  const key = textureKey(archive, record, frame);
+  let p = _pending.get(key);
+  if (!p) {
+    let asking = false;
+    p = Object.freeze({ width: 1, height: 1, colors: CLEAR_TEXEL, pending: () => {
+      if (asking) return;
+      asking = true;
+      const lit = _vendor.has(textureKey(archive, record, frame, 'Emission')) ? preloadTextureRecord(archive, record, frame, 'Emission') : Promise.resolve(null);
+      lit.then(() => preloadTextureRecord(archive, record, frame)).then((c32) => { if (c32) asking = false; });
+    } });
+    _pending.set(key, p);
+  }
+  return p;
+}
 export function vendorTextureStandIn(archive) {
   const recordCount = vendorRecordCount(archive);
   // STUDIO1: a studio picture over a stand-in answers the stand-in's size (`box`), as a classic file answers its record's
   // for a pack's bigger picture - a billboard stands as big, a doll piece fits its box
-  const size = (record) => { const d = decodedOf(archive, record); return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };
+  const size = (record) => { const d = measuredOf(archive, record); return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };   // AUDIT DEX B5: a picture let go keeps its size
   return {
     vendor: true,
     archive: Number(archive),   // WD2: billboardSize reads `t.archive` to lay a mod's xml scale on (billboardXml.js) - a stand-in without it lost every one
@@ -347,13 +410,13 @@ export function vendorTextureStandIn(archive) {
     // WD2: TextureFile.getScale's own shape, `{ width, height }` - rmbFlats' scaledBillboardSize reads those two, and the
     // `{ x, y }` this answered made every stand-in flat NaN-sized. A mod texture carries no classic record scale: zero
     // (MeshReader.GetBillboardMesh then leaves the size at the picture's own, and the xml scale is laid on after).
-    getScale: (record) => decodedOf(archive, record)?.recordScale ?? { width: 0, height: 0 },   // DS1: a built stand-in may carry its classic record's scale
+    getScale: (record) => measuredOf(archive, record)?.recordScale ?? { width: 0, height: 0 },   // DS1: a built stand-in may carry its classic record's scale
     // FIELD-GUN4: a classic record carries its own paper-doll offset
     // and this one has nowhere else to get one, so the registration
     // supplies it. Zero stays the answer for art that is never worn -
     // every icon door measures from its own rect and never asks.
     getOffset: (record) => vendorEntryOf(archive, record ?? 0)?.offset ?? { x: 0, y: 0 },
-    getFrameCount: () => 1,
+    getFrameCount: (record) => vendorFrameCount(archive, record),   // DEX2: a record's own frames (a mobile's walk), never one for all
     getWidth: (record) => size(record).width,
     getHeight: (record) => size(record).height,
     // FIELD-GUN4 (Mac, from play: "The paperdoll doesn't equip the
@@ -378,10 +441,16 @@ export function vendorTextureStandIn(archive) {
     // the other way round - the same HT3 fork the sprite itself just
     // paid, one pipeline over, and the reason it is resolved HERE is
     // that only this function knows which order it is holding.
-    getDFBitmap: (record) => { const d = decodedOf(archive, record); return { ...(d ? { width: d.width, height: d.height } : size(record)), data: null, rgba: topDownRgba(d) }; },   // STUDIO1: the picture's own size beside its own texels
+    getDFBitmap: (record, frame = 0) => { const d = decodedOf(archive, record), m = d ?? measuredOf(archive, record); return { ...(m ? { width: m.width, height: m.height } : size(record)), data: null, rgba: topDownRgba(d), record, frame }; },   // STUDIO1: the picture's own size beside its own texels; AUDIT DEX B5: and which picture it is, for getColor32
     /** STUDIO1: the box a studio picture over a stand-in is drawn in - the stand-in's own size - or null. */
-    getBox: (record) => decodedOf(archive, record)?.box ?? null,
-    getColor32: (record) => decodedOf(archive, record?.record ?? 0) ?? null,
+    getBox: (record) => measuredOf(archive, record)?.box ?? null,
+    // AUDIT DEX B5: the upload's fallback for a frame decodedTexture had no picture of - a readOnly one let go and asked
+    // again is on its way (pendingPicture), never another record's picture standing in for it under its key for good
+    getColor32: (bitmap) => {
+      const r = bitmap?.record ?? 0, f = bitmap?.frame ?? 0, key = textureKey(archive, r, f);
+      if (_vendor.get(key)?.readOnly) return _decoded.get(key) ?? pendingPicture(archive, r, f);
+      return decodedOf(archive, r) ?? null;
+    },
   };
 }
 // ---- DFMOD1: TEXTURES FROM A PLAYER-ATTACHED .dfmod ------------------
@@ -470,6 +539,7 @@ export function clearTextureReplacements() {
 // source still answers. A decode that lands after its entry stopped answering - a mod switched off while an area loads
 // (R8) - is dropped where it lands.
 const _decodedFrom = new Map();     // textureKey -> the source its picture was decoded from
+const _released = new Map();        // AUDIT DEX B5: textureKey -> { src, width, height, box, recordScale } - a readOnly picture the upload path took and the CPU let go
 const _bundleBytesOf = new Map();   // DFMOD3: textureKey -> the bytes a mod's decoded picture holds against the budget
 const srcOf = (e) => e?.src ?? e?.fileName ?? null;
 /** The entry whose picture a key answers with now - entryFor's order, behind Replace Game Artwork where the tier is:
@@ -482,6 +552,14 @@ const liveEntry = (key) => {
 };
 /** The picture decoded for a key from `entry`, or null - a picture decoded from anything else is not this entry's. */
 const decodedFrom = (key, entry) => (entry && _decodedFrom.get(key) === srcOf(entry) ? _decoded.get(key) ?? null : null);
+/** AUDIT DEX B5: `entry`'s readOnly picture went to the GPU and its CPU copy was let go - an archive's preload decodes it
+ *  no more (preloadTextureArchive); a draw that finds its GPU copy gone asks it again (pendingPicture). */
+const releasedFrom = (key, entry) => !!entry && _released.get(key)?.src === srcOf(entry);
+/** AUDIT DEX B5: the upload path has taken a readOnly picture - the CPU copy goes, the measure stays. */
+function release(key, entry, c32) {
+  _released.set(key, { src: srcOf(entry), width: c32.width, height: c32.height, box: c32.box ?? null, recordScale: c32.recordScale ?? null });
+  dropDecoded(key);
+}
 function dropDecoded(key) {
   _decoded.delete(key);
   _decodedFrom.delete(key);
@@ -490,6 +568,7 @@ function dropDecoded(key) {
 }
 function putDecoded(key, entry, c32) {
   dropDecoded(key);
+  _released.delete(key);   // AUDIT DEX B5: decoded again - its picture is here, not only on the GPU
   _decoded.set(key, c32);
   _decodedFrom.set(key, srcOf(entry));
   if (entry.image) { const b = c32.width * c32.height * 4; _bundleBytesOf.set(key, b); _bundleBytes += b; }   // DFMOD3: what it holds
@@ -508,6 +587,8 @@ let _tierGen = 0;
 function tierChanged() {
   _tierGen++;
   for (const [k, src] of [..._decodedFrom]) if (!sourceRegistered(k, src)) dropDecoded(k);
+  for (const [k, r] of [..._released]) if (!sourceRegistered(k, r.src)) _released.delete(k);   // AUDIT DEX B5
+  _pending.clear();   // AUDIT DEX B5: a picture that would not decode is asked again under the new tiers
 }
 /** AUDIT VE R1: what a scene's decoded archives are current with - every tier's registrations and Replace Game Artwork.
  *  A scene preloads an archive's pictures once; when this moves, its next ask of the archive decodes what answers now,
@@ -679,7 +760,7 @@ export async function preloadTextureArchive(archive, { decode = decodePng, concu
   const todo = [];
   for (const key of keys) {
     const entry = liveEntry(key);
-    if (entry && !entry.lazy && !decodedFrom(key, entry)) todo.push([key, entry]);
+    if (entry && !entry.lazy && !decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]);   // AUDIT DEX B5: nor one the GPU holds alone
   }
   const one = async ([key, entry]) => {
     try {
@@ -709,7 +790,7 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
   dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   const key = textureKey(archive, record, frame, map, dye);
   const entry = liveEntry(key);   // AUDIT VE R1: the entry that answers now - decodedTexture's
-  if (decodedFrom(key, entry)) return Promise.resolve(decodedTexture(archive, record, frame, map, dye));
+  if (decodedFrom(key, entry)) return Promise.resolve(decodedNow(key));   // AUDIT DEX B5: answered, not taken - the upload's read is decodedTexture's
   if (!entry || !hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);
   const ask = `${key}\n${srcOf(entry)}`;   // the asks in flight share one fetch - for one source
   if (!_decoding.has(ask)) {
@@ -719,7 +800,7 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
         if (!c32) return null;
         if (srcOf(liveEntry(key)) !== srcOf(entry)) return null;   // AUDIT VE R8: switched away while it decoded
         putDecoded(key, entry, c32);
-        return decodedTexture(archive, record, frame, map, dye);
+        return decodedNow(key);
       } catch (e) {
         console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
         return null;
@@ -737,6 +818,13 @@ export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo',
 export function decodedTexture(archive, record, frame = 0, map = 'Albedo', dye = null) {
   dye = standInDye(archive, record, frame, map, dye);   // THUNDERLOCK-ART: the port's own art takes no dye
   const key = textureKey(archive, record, frame, map, dye);
+  const pic = decodedNow(key);
+  // AUDIT DEX B5: a readOnly picture is the GPU's once the upload path has it (DFU's readOnly import) - the CPU copy goes
+  if (pic) { const e = liveEntry(key); if (e?.readOnly) release(key, e, pic); }
+  return pic;
+}
+/** The picture a key answers with now, kept where it is - decodedTexture's answer without its read (AUDIT DEX B5). */
+function decodedNow(key) {
   const v = vendorOf(key);
   // AUDIT VE R1/R8: the picture of the entry that answers now, never a stale one
   if (v) return (!v.gate || v.gate() === true) ? decodedFrom(key, liveEntry(key)) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it
@@ -753,3 +841,9 @@ export function decodedTextureTopDown(archive, record, frame = 0, map = 'Albedo'
 }
 
 export const decodedTextureCount = () => _decoded.size;
+/** AUDIT DEX B5: the bytes the decoded pictures hold on the CPU - the measure the readOnly release is held to. */
+export function decodedTextureBytes() {
+  let n = 0;
+  for (const c of _decoded.values()) n += c?.colors?.byteLength ?? 0;
+  return n;
+}

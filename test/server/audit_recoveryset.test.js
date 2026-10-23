@@ -282,7 +282,9 @@ test('AUDIT RECOVERY-SET B1 C8: in its host - a Close passed - the code stage of
   assert.match(menu, /const back = accountOpen \? \(\) => closeAccount\(\)/);
   assert.doesNotMatch(menu, /accountOpen = false; render\(\);/, 'a door closes the window around closeAccount');
   // the flow is the window's: built when there is none, started once, kept across renders, dropped with the window
-  assert.match(menu, /const fresh = !acctFlow;\n  if \(fresh\) \{\n    acctFlow = AccountFlow\(\{/);
+  // PIN MOVED (COLLECTIONS-II, bible/10-UI/Collections.md): built by the one construction the Collections page's flow is
+  assert.match(menu, /const fresh = !acctFlow;\n  if \(fresh\) acctFlow = newAccountFlow\(\(\) => acctPaint\?\.\(\)\);/);
+  assert.match(menu, /const newAccountFlow = \(onChange\) => AccountFlow\(\{ io: \{ fetch: \(\.\.\.a\) => globalThis\.fetch\(\.\.\.a\), base: serviceBase\(appStorage\(\)\) \}, storage: appStorage\(\), onChange \}\);/);
   assert.match(menu, /if \(fresh\) Promise\.resolve\(acctFlow\.start\(\)\)\.catch\(\(\) => \{\}\);/);
 });
 

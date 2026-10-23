@@ -79,7 +79,7 @@ export function storeFilterOptions(items, chosen = 'all') {
 }
 
 /**
- * The rarity menu: Any Rarity, then every tier this list holds, in the ladder's order, each with its count. A tier the
+ * The rarity menu: Rarity (every tier), then every tier this list holds, in the ladder's order, each with its count. A tier the
  * list does not hold is absent. The chosen one stays at nought, as the page menu's choice does.
  * @param {any[]} items
  * @param {string} chosen
@@ -91,7 +91,7 @@ export function storeRarityOptions(items, chosen = 'all') {
     const id = rarityOf(it);
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }
-  const out = [{ id: 'all', label: t('inventory.store.anyRarity', 'Any Rarity'), count: items.length }];
+  const out = [{ id: 'all', label: t('inventory.store.rarityMenu', 'Rarity'), count: items.length }];
   for (const id of RARITY_ORDER) {
     const count = counts.get(id) ?? 0;
     if (count > 0 || id === chosen) out.push({ id, label: RARITIES[id].label, count });
@@ -115,7 +115,7 @@ export function storeMaterialOf(it) {
 export const storeMaterialAccepts = (it, material) => !MATERIAL_IDS.has(material) || storeMaterialOf(it) === material;
 
 /**
- * The material menu: Any Material, then every metal this list holds, in MATERIAL_ORDER, each with its count. A metal
+ * The material menu: Material (every metal), then every metal this list holds, in MATERIAL_ORDER, each with its count. A metal
  * the list does not hold is absent. The chosen one stays at nought, as the rarity menu's choice does.
  * @param {any[]} items
  * @param {string} chosen
@@ -128,7 +128,7 @@ export function storeMaterialOptions(items, chosen = 'all') {
     if (!id) continue;
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }
-  const out = [{ id: 'all', label: t('inventory.store.anyMaterial', 'Any Material'), count: items.length }];
+  const out = [{ id: 'all', label: t('inventory.store.materialMenu', 'Material'), count: items.length }];
   for (const id of MATERIAL_ORDER) {
     const count = counts.get(id) ?? 0;
     if (count > 0 || id === chosen) out.push({ id, label: metalLabel(id), count });

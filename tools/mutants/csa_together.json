@@ -609,8 +609,8 @@
   {
     "name": "CSAL-buttons-slower-at-one",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex > 0) },",
-    "new": "kind: 'tap', action: A.slower, disabled: !(h.timeScaleIndex >= 0) },",
+    "old": "kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) > 0) },",
+    "new": "kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) >= 0) },",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "CSAL-buttons-faster-at-top",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "disabled: !(h.timeScaleIndex < h.timeScaleMax) });",
-    "new": "disabled: !(h.timeScaleIndex <= h.timeScaleMax) });",
+    "old": "disabled: !(Number(h.timeScaleIndex) < Number(h.timeScaleMax)) }];",
+    "new": "disabled: !(Number(h.timeScaleIndex) <= Number(h.timeScaleMax)) }];",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -825,8 +825,8 @@
   {
     "name": "CSAL-seam-chord-lingers",
     "file": "src/scenes/world.js",
-    "old": "    csaHelmInput.edges.clear(); csaHelmInput.chord.clear();   // CSA-L: the helm panel's taps were this frame's",
-    "new": "    csaHelmInput.edges.clear();   // CSA-L: the helm panel's taps were this frame's",
+    "old": "    csaHelmInput.edges.clear(); csaHelmInput.chord.clear(); csaJourneyHelm.edges.clear();",
+    "new": "    csaHelmInput.edges.clear(); csaJourneyHelm.edges.clear();",
     "tests": [
       "test/systems/csa_together.test.js"
     ]

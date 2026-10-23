@@ -25,7 +25,7 @@
 // to takes only when they digest to the order's (`ok`); the killer's piece is the killer's alone. The service fits the
 // drop to the room's own bounds first (remainsFit - the same law foldFall keeps), so an honest deposit always digests.
 // ═══════════════════════════════════════════════════════════════════
-import { WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REMAINS_MS, WILD_ROOM_REMAINS_MAX, sanitizeName, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_RESET_MS, WDUN_STALE_MS } from '../wire.js';
+import { WILD_ITEMS_MAX, WILD_REMAINS_ITEMS_MAX, WILD_REMAINS_MS, WILD_ROOM_REMAINS_MAX, sanitizeName, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_RESET_MS, WDUN_STALE_MS, SEA_FLEET_PERIOD_MS, SEA_FLEET_OFFSET_MS, SEA_FLEET_SAIL_MS, SEA_FLEET_LATE_MS } from '../wire.js';
 
 /** A remains' bytes in storage, at most - under the object store's own bound for one value (128 KiB), with room. */
 export const WILD_REMAINS_BYTES_MAX = 100 * 1024;
@@ -200,12 +200,14 @@ export function remainsOf(v) {
 //   inside { hall: { acct: seen } }   - who is in a hall, by heartbeat; a silent one lapses after WDUN_STALE_MS
 //   empty  { hall: since }            - when a hall last emptied; past WDUN_RESET_MS its world room is wiped
 //   crows  { hall: until }            - a hall a body lies in, told to everyone online until its remains go
+//   giants { g: until }               - ZONE-GIANTS: a giant down, and when it walks again
+//   fleets { n: until }               - SEA-EVENTS: a treasure fleet's sailing whose flagship is down, kept till the next is over
 // Pure: the hub (server/src/index.js `_wdun*`) reads, calls these and writes; the pins read the same.
 // ═══════════════════════════════════════════════════════════════════
 export const WDUN_KEY = 'wdun';
 export const WDUN_ACCTS_MAX = 20000;
 export const wdunDay = (now) => Math.floor(now / WDUN_DAY_MS);
-export const wdunEmpty = () => ({ locks: {}, inside: {}, empty: {}, crows: {}, piles: {}, eps: {}, giants: {} });   // ZONE-GIANTS: `giants` - a giant's index -> when it walks again
+export const wdunEmpty = () => ({ locks: {}, inside: {}, empty: {}, crows: {}, piles: {}, eps: {}, giants: {}, fleets: {} });   // ZONE-GIANTS: `giants` - a giant's index -> when it walks again; SEA-EVENTS: `fleets` - a sailing whose flagship is down -> when it is let go
 /** A stored record, made safe (anything malformed is dropped). */
 export function wdunOf(v) {
   const out = wdunEmpty();
@@ -224,6 +226,7 @@ export function wdunPrune(st, now) {
   for (const [acct, p] of Object.entries(st.piles)) if (!(p?.until > now)) { delete st.piles[acct]; moved = true; }
   for (const [h, until] of Object.entries(st.crows)) if (!(until > now)) { delete st.crows[h]; moved = true; }
   for (const [g, until] of Object.entries(st.giants ?? {})) if (!(until > now)) { delete st.giants[g]; moved = true; }   // ZONE-GIANTS: up again
+  for (const [n, until] of Object.entries(st.fleets ?? {})) if (!(until > now)) { delete st.fleets[n]; moved = true; }   // SEA-EVENTS: a sailing long past
   for (const [h, who] of Object.entries(st.inside)) {
     let last = 0;
     for (const [acct, seen] of Object.entries(who)) if (!(now - seen < WDUN_STALE_MS)) { last = Math.max(last, seen); delete who[acct]; moved = true; }
@@ -285,6 +288,7 @@ export function wdunState(st, acct, now) {
     locks: Object.entries(st.locks[acct] ?? {}).filter(([, u]) => u > now).map(([h, u]) => [h, u - now]),
     crows: wdunCrows(st, now),
     giants: wdunGiants(st, now),
+    fleets: wdunFleets(st, now),
   };
 }
 export const wdunCrows = (st, now) => Object.entries(st.crows).filter(([, u]) => u > now).map(([h, u]) => [h, u - now]);
@@ -313,3 +317,20 @@ export function wdunGiantDie(st, g, now) {
 }
 /** The giants down: `[[g, msLeft]]`. */
 export const wdunGiants = (st, now) => Object.entries(st.giants ?? {}).filter(([, u]) => u > now).map(([g, u]) => [Number(g), u - now]);
+
+// ── SEA-EVENTS (2026-10-22, the owner: "Build ever single bit of this"; bible/03-World/Eltheric-Ocean.md SEA-EVENTS): the hub
+// keeps which treasure fleet's flagship is down (systems/sea/seaEvents.js - its route and its ships are every client's own
+// pure pick off the sailing's number), so a fleet scattered is scattered for everyone.
+/** A treasure fleet's flagship sunk: sailing `n` - only while she is under way by the hub's own clock, or SEA_FLEET_LATE_MS
+ *  after (AUDIT SEA VENTURES A7: a word in her hour in port, or the hour before, scattered a sailing before she sailed) -
+ *  kept down till the sailing after it is over (a second report moves nothing). Returns whether it was news. */
+export function wdunFleetSunk(st, n, now) {
+  const start = Number.isSafeInteger(n) ? n * SEA_FLEET_PERIOD_MS + SEA_FLEET_OFFSET_MS : NaN;
+  if (!(now >= start && now <= start + SEA_FLEET_SAIL_MS + SEA_FLEET_LATE_MS)) return false;
+  st.fleets ??= {};
+  if (st.fleets[n] > now) return false;
+  st.fleets[n] = (n + 2) * SEA_FLEET_PERIOD_MS;
+  return true;
+}
+/** The sailings whose flagship is down: `[n]`, oldest first. */
+export const wdunFleets = (st, now) => Object.entries(st.fleets ?? {}).filter(([, u]) => u > now).map(([n]) => Number(n)).sort((a, b) => a - b);

@@ -111,7 +111,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
   const page = pageOf();
   try {
     assert.match(page.text(), /The Alchemy Station/);
-    assert.match(page.text(), /The alchemist's station - 50 gold a brew\. Provisioning 0 \(Novice\): a potion a brew; Potent 0% \(\+25% magnitude or duration\), \+5% for each herb you picked unbruised\./);   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
+    assert.match(page.text(), /The alchemist's station - 25 gold a brew\. Provisioning 0 \(Novice\): 2 potions a brew; Potent 0% \(\+25% magnitude or duration\), \+5% for each herb you picked unbruised\./);   // PIN MOVED (CRAFT-PAYS): 25 gold and a Novice's two. PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
     assert.equal(page.recipe('Healing').textContent, 'Healingneeds ingredients');
     assert.equal(page.recipe('Invisibility').textContent, 'Invisibilityrank 70');
     page.recipe('Healing').onclick();
@@ -124,17 +124,18 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     await settle(_alchemyForTests());
     page.draw();
     assert.deepEqual([book.held('reagent:troll-blood'), book.held('reagent:elixir-vitae')], [1, 1], 'the counter\'s goods in the Stores');
-    assert.match(page.text(), /A potion a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, and 500 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's
+    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, and 500 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's
     page.button('Brew').onclick();
     await settle(_alchemyForTests());
     assert.equal(player.items.length, 1);
     const [bottle] = player.items;
+    assert.equal(bottle.stackCount, 2, 'PIN MOVED (CRAFT-PAYS): a Novice\'s brew two bottles, one stack');
     assert.deepEqual([bottle.group, bottle.templateIndex, bottle.potionRecipeKey, bottle.value, bottle.potent, itemLongName(bottle)],
       ['UselessItems1', POTION_TEMPLATE_INDEX, potionById('healing').key, 50, undefined, 'Potion of Healing'], 'DFU\'s own Healing');
     assert.deepEqual(paid, [ALCHEMY_FEE], 'the fee kept with the brew and paid as its potion was bottled');
     assert.equal(book.track('alchemy').xp, 520);
     page.draw();
-    assert.match(page.text(), /You brewed a Potion of Healing \(\+520 Provisioning XP\)\./);   // PIN MOVED (CRAFT3): the world's word names the track it raised
+    assert.match(page.text(), /You brewed 2 Potions of Healing \(\+520 Provisioning XP\)\./);   // PIN MOVED (CRAFT-PAYS)   // PIN MOVED (CRAFT3): the world's word names the track it raised
     // A MASTER ALCHEMIST'S: three potions, Potent at +40%
     track('provisioning', xpForRank(100), null, 'master-alchemist');   // PIN MOVED (CRAFT3): the Master Alchemist stands under Provisioning, Alchemy's craft's track
     for (const k of ['p1:16', 'metal:mercury', 'reagent:troll-blood', 'reagent:elixir-vitae']) give(k, 1);

@@ -243,7 +243,7 @@ test('AUDIT B1/B4/B6: the window holds the wait; one held is no swing\'s, spell\
   assert.deepEqual(e.items, [], 'handed over, not copied');
   // the dungeon's save: gone with no body, laid with none
   assert.match(d, /\.\.\.\(f\.dead && \(f\.escaped \|\| f\.executed \|\| f\._swornAway\) \? \{ noBody: true \} : \{\}\)/);
-  assert.match(d, /if \(sf\.noBody && sf\.dead\) \{ if \(!f\.dead\) questPoolOps\.removeFoe\(f\);[^\n]*\n\s*patchFoe\(f, sf, wire\);/, 'ahead of the patch that lays a corpse');
+  assert.match(d, /if \(\(sf\.noBody \|\| sf\.bg\) && sf\.dead\) \{ if \(!f\.dead\) questPoolOps\.removeFoe\(f\);[^\n]*\n\s*patchFoe\(f, sf, wire\);/, 'ahead of the patch that lays a corpse (PIN MOVED, AUDIT DEX D3/D4: a mod prefab\'s gone body - `bg` - takes the same arm)');
   assert.match(d, /for \(const f of foes\) \{ if \(!f\) continue; f\.yielded = null; f\.executing = null; f\.sparing = null; f\.trophy = null; f\.yieldEvent = null; \}/, 'a same-dungeon load ends a judgement in flight');
   assert.match(d, /for \(const f of w\.foes\) delete f\.noBody;/, 'the room\'s door has no field for it');
 });

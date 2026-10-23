@@ -554,8 +554,8 @@
   {
     "name": "AUDIT31-tab-two-grids",
     "file": "src/ui/noticeWindow.js",
-    "old": "    for (const c of more) grid.append(c);",
-    "new": "    if (more.length) { const g2 = el('ul', 'notice-grid'); for (const c of more) g2.append(c); body.append(g2); }",
+    "old": "      grid.replaceChildren(...sifted.rows.map((e) => e.card()), ...gridWords());",
+    "new": "      const g2 = el('ul', 'notice-grid'); grid.replaceChildren(...sifted.rows.filter((e) => e.kind === 'court' || e.kind === 'chapter').map((e) => e.card()), ...gridWords()); g2.replaceChildren(...sifted.rows.filter((e) => e.kind !== 'court' && e.kind !== 'chapter').map((e) => e.card())); if (g2.children.length) body.append(g2);",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "AUDIT31-tab-room-ignored",
     "file": "src/ui/workTab.js",
-    "old": "    const most = Math.min(x.left, held, room);",
-    "new": "    const most = Math.min(x.left, held);",
+    "old": "Math.min(x.left, held, Number.isSafeInteger(x.room) ? x.room : Infinity);",
+    "new": "Math.min(x.left, held);",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -726,7 +726,7 @@
   {
     "name": "AUDIT31-tab-empty-filter",
     "file": "src/ui/marketTab.js",
-    "old": "st.family ? 'No Masterwork of that kind is up for auction.' :",
+    "old": "st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind is up for auction.' :",
     "new": "false ? 'No Masterwork of that kind is up for auction.' :",
     "tests": [
       "test/ui/audit31_tabs.test.js"

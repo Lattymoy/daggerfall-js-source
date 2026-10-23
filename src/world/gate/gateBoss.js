@@ -515,6 +515,28 @@ export const BOSS_CUES = Object.freeze({
   // WB13e: a Meteor or a Leap aimed where I stand, at its word - the parry's ring, high and sharp, at my feet
   sting: Object.freeze({ clip: CRYSTAL_CLIPS.hit, pitch: 2.2, volume: 1.3, reach: 20, at: 'point' }),
 });
+/** GATE-MIX (2026-10-20, the owner: "the game hitches, audio becomes super loud and even distorts"): A CUE AT ITS
+ *  TARGETS, THINNED. A cue `at: 'targets'` played one copy at every target - a Hellfire on five players was five of the
+ *  fire's full-scale cast in one frame, ten in his third phase (its second volley within 3 m of the first), and over a
+ *  reach of 40 to 80 m with a linear fall every copy near a group came in at nearly its whole level, so the copies
+ *  summed far past the clip. Now the target nearest my ear first, then the next that stands CUE_TARGET_APART_M or
+ *  more from every one kept, at most CUE_TARGET_COPIES: where it lands on me is still heard at my feet, a fall across
+ *  the court still from across it, and no two copies of one clip stand on top of each other. */
+export const CUE_TARGET_COPIES = 2;
+export const CUE_TARGET_APART_M = 10;
+/** The places a 'targets' cue sounds at, of `points` (each [x, y, z], the ear's frame) for an ear at `ear` - nearest
+ *  first, thinned as above; with no ear, the first. Pure. */
+export function cueTargetPlaces(points, ear) {
+  if (!Array.isArray(points) || !points.length) return [];
+  const d2 = (p, q) => (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
+  const order = Array.isArray(ear) ? points.slice().sort((p, q) => d2(p, ear) - d2(q, ear)) : points;
+  const kept = [], apart = CUE_TARGET_APART_M * CUE_TARGET_APART_M;
+  for (const p of order) {
+    if (kept.length >= CUE_TARGET_COPIES) break;
+    if (kept.every((k) => d2(k, p) >= apart)) kept.push(p);
+  }
+  return kept;
+}
 /**
  * WB8b: HIS ASPECT, HEARD - his elemental blows' wind-ups and landings under each aspect but his burning one: the
  * element's own cast (systems/enemySpells.js SPELL_CAST_SOUND - cold 353, shock 351, poison 350) as they are called,

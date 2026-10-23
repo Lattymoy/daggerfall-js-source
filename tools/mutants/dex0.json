@@ -1,0 +1,132 @@
+[
+ {
+  "name": "DEX0-the-knight-not-a-repaint",
+  "file": "tools/dexExtract.mjs",
+  "old": "Object.freeze([1504, 1505, 1509,",
+  "new": "Object.freeze([1504, 1509,",
+  "why": "AUDIT DEX B1: the Royal Knight (TEXTURE.482 under the authors' armour) back out of the fourth exception's list",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-the-trace-threshold-unread",
+  "file": "tools/dexExtract.mjs",
+  "old": "      if (t.iou >= SILHOUETTE_IOU) e.traced++;",
+  "new": "      e.traced++;",
+  "why": "every picture counted as tracing a frame - the authors' own drawings refused with the repaints",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-the-archive-share-moved",
+  "file": "tools/dexExtract.mjs",
+  "old": "e.traced >= SILHOUETTE_TRACED * e.of)",
+  "new": "e.traced > e.of / 2)",
+  "why": "an archive tracing Daggerfall's outlines on two pictures in five passes as the authors' own",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-no-mirror",
+  "file": "tools/dexExtract.mjs",
+  "old": "      for (const mirrored of [false, true]) {",
+  "new": "      for (const mirrored of [false]) {",
+  "why": "a repaint flipped left for right passes the measure",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-not-at-twice",
+  "file": "tools/dexExtract.mjs",
+  "old": "  for (const scale of [1, 2]) {",
+  "new": "  for (const scale of [1]) {",
+  "why": "a repaint drawn at twice its sprite's size passes the measure",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-a-rectangle-traced",
+  "file": "tools/dexExtract.mjs",
+  "old": "  return n === 0 || n === m.length ? null : { w, h, m };",
+  "new": "  return n === 0 ? null : { w, h, m };",
+  "why": "a full rectangle - every wall's outline - traced as a sprite's",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-the-allowance-unread",
+  "file": "tools/dexExtract.mjs",
+  "old": "        if (repainted.includes(e.archive) || Object.hasOwn(allowed, e.archive)) continue;",
+  "new": "        if (repainted.includes(e.archive)) continue;",
+  "why": "the owner's allowance (the demo's Bat) refused with the repaints the list missed",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-a-listed-repaint-unheld",
+  "file": "tools/dexExtract.mjs",
+  "old": "      for (const a of repainted) if (!at.has(a)) out.push(",
+  "new": "      for (const a of []) if (!at.has(a)) out.push(",
+  "why": "REPAINTED_ARCHIVES may name an archive the measure does not find",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "DEX0-guard-a-stale-allowance-unheld",
+  "file": "tools/dexExtract.mjs",
+  "old": "      for (const a of Object.keys(allowed).map(Number)) if (!at.has(a)) out.push(",
+  "new": "      for (const a of []) if (!at.has(a)) out.push(",
+  "why": "SILHOUETTE_ALLOWED may name an archive the measure finds nothing to allow in",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A4-M12-a-chance-not-the-dlls",
+  "file": "vendor/daggerfall-enemy-expansion/Scripts/BestiaryMod.cs",
+  "old": "                                mobile.ChanceForAttack2 = 50;",
+  "new": "                                mobile.ChanceForAttack2 = 33;",
+  "why": "the carried C# says a monster's second attack is 33% where the DLL stores 50: the record no longer what shipped",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A4-M13-the-ranged-frames-moved",
+  "file": "vendor/daggerfall-enemy-expansion/Scripts/BestiaryMod.cs",
+  "old": "mobile.RangedAttackAnimFrames = new int[] { 3, 2, 0, 0, 0, -1, 1, 1, 2, 3 };",
+  "new": "mobile.RangedAttackAnimFrames = new int[] { 3, 2, 0, 0, 0, -1, 1, 1, 2, 2 };",
+  "why": "the default ranged frames edited in the carried C# (an array initializer the IL keeps in a data blob)",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A4-M14-a-continue-gone",
+  "file": "vendor/daggerfall-enemy-expansion/Scripts/BestiaryMod.cs",
+  "old": "has unknown career '{careerName}'\");\n                            continue;\n",
+  "new": "has unknown career '{careerName}'\");\n",
+  "why": "the carried C# reads on past an unknown career - control flow the literal and member checks never see",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A4-M15-a-literal-cut-short",
+  "file": "vendor/daggerfall-enemy-expansion/Scripts/BestiaryMod.cs",
+  "old": "Defaulting to 100\");",
+  "new": "Defaulting to 1\");",
+  "why": "a literal cut to a prefix of the DLL's - held by a substring, never by the heap's own string",
+  "tests": [
+   "test/systems/enemyExpansion/dex0_record.test.js"
+  ]
+ }
+]

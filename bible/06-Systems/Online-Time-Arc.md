@@ -246,6 +246,7 @@ Nothing in this table changes. It is listed so the census has its other half.
 | The naval day: notoriety's decay, the port's grog, today's departures, the traffic seed | `world.js` (the naval `where`), `scenes/naval/navalHost.js`, `systems/naval/` |
 | The captain's day: a port's board and exchange, the Eltheric strands' regrowth, the legends' rise (CAPT-BOARD, ETHER-SEA, 2026-10-11) | `world.js` (the harbour office's and the Eltheric host's `day`), `scenes/harbourOffice.js`, `scenes/etherHost.js` |
 | The minute a character joins online at | `ui/enhanced/enhancedMenu.js` (`onlineCopyOf`) |
+| A sworn revenant's errand abroad, once the relay's clock is heard (OFFLINE-ROAD, FIELD BUGS 2026-10-21: it goes on while the player is away; AUDIT FB1021 L3-1: held to the session's monotonic time since the welcome, so a machine clock set forward mid-session moves it not a minute; before the relay is heard, the lived step - 5.3) | `systems/revenant/revenantCompanions.js` (`errandWorldNow`), `revenantErrands.js` (`errandWorldMinute`, `errandOnWorld`), `worldTick.js` (`hearSharedClock`'s mark) |
 
 ### 5.3 Your clock
 

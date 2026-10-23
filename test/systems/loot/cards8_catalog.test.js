@@ -24,7 +24,7 @@ test('CARDS8 the tiers are the loot\'s, and the painter\'s emblems are the list 
     'harpy', 'nymph', 'dreugh', 'daedra', 'atronach', 'dragon', 'knight', 'mage', 'thief', 'assassin', 'priest', 'warrior',
     'noble', 'prince', 'artifact', 'fire', 'frost', 'shock', 'heal', 'shadow', 'city', 'desert', 'fortress', 'dungeon', 'sea',
     'razor', 'staff', 'book', 'claymore', 'rose', 'daedric', 'scorpion', 'bat', 'boar', 'tree', 'gargoyle', 'banish', 'recall', 'sun',
-    'gate', 'serpent', 'gear', 'bear', 'cat', 'spider', 'fish', 'mummy', 'bow']);   // PIN MOVED (CARDS9): the bosses' own pictures; (KG-SET): the nine's
+    'gate', 'serpent', 'gear', 'bear', 'cat', 'spider', 'fish', 'mummy', 'bow', 'witch', 'candle']);   // PIN MOVED (WITCH1): the Witches' Festival's cauldron and candle; PIN MOVED (CARDS9): the bosses' own pictures; (KG-SET): the nine's
   assert.deepEqual([...CARD_EMBLEMS], [...EMBLEM_KEYS], 'AUDIT CARDS-5 B: the catalog\'s list is the painter\'s, no glyph drawn for no card');
   for (const list of [ILIAC_TIERS, ILIAC_TAGS, CARD_EMBLEMS, ILIAC_CARDS, ILIAC_LOCATIONS, STARTER_DECK]) assert.ok(Object.isFrozen(list));
   const used = new Set(ALL.map((c) => c.emblem));
@@ -123,9 +123,9 @@ test('CARDS8 the holdings: the Iliac Bay\'s places, each with its own rule', () 
 
 test('CARDS8 the first set, counted by kind and tier - a card added is a card meant', () => {
   const by = (key) => ILIAC_CARDS.reduce((m, c) => ({ ...m, [c[key]]: (m[c[key]] ?? 0) + 1 }), {});
-  assert.deepEqual(by('kind'), { unit: 82, spell: 14, prince: 11 });   // PIN MOVED (CARDS9): the three bosses' own, units; (KG-SET): the nine, units; PIN MOVED (EG-E): the Battlespire's thirteen lords', units
-  assert.deepEqual(by('tier'), { common: 31, magic: 25, rare: 15, legendary: 12, aetheric: 18, artifact: 6 });   // PIN MOVED (KG-SET): five commons, two magics, two rares; PIN MOVED (EG-E): the lords' thirteen, aetheric
-  assert.equal(ILIAC_CARDS.length, 107);   // PIN MOVED (EG-E): the lords' thirteen
+  assert.deepEqual(by('kind'), { unit: 87, spell: 15, prince: 11 });   // PIN MOVED (WITCH1): the festival's five units and a spell; PIN MOVED (CARDS9): the three bosses' own, units; (KG-SET): the nine, units; PIN MOVED (EG-E): the Battlespire's thirteen lords', units
+  assert.deepEqual(by('tier'), { common: 31, magic: 28, rare: 17, legendary: 13, aetheric: 18, artifact: 6 });   // PIN MOVED (WITCH1): three magics, two rares, a legend; PIN MOVED (KG-SET): five commons, two magics, two rares; PIN MOVED (EG-E): the lords' thirteen, aetheric
+  assert.equal(ILIAC_CARDS.length, 113);   // PIN MOVED (WITCH1): the festival's six; PIN MOVED (EG-E): the lords' thirteen
 });
 
 test('CARDS8 power and cost follow what the thing is in the game', () => {
@@ -141,7 +141,7 @@ test('CARDS8 power and cost follow what the thing is in the game', () => {
     ['giant-bat', 'imp', 'mages-guild-apprentice', 'rat', 'slaughterfish', 'thieves-guild-filcher']);   // PIN MOVED (KG-SET): the Slaughterfish, a 1/3 that tires
   // The legendary-or-higher cards: the Princes, the artifacts, and the Bay's few legends.
   assert.deepEqual(ILIAC_CARDS.filter((x) => rank(x.tier) >= rank('legendary') && x.kind === 'unit').map((x) => x.id), ['ancient-vampire', 'ancient-lich', 'king-gothryd', 'valkynaz-ruhn', 'sethrakul', 'brass-remnant',
-    'eg-grath', 'eg-spellmaster', 'eg-armsmaster', 'eg-ilthys', 'eg-cairnkeeper', 'eg-twins', 'eg-morvayn', 'eg-dusk', 'eg-stalker', 'eg-seyth', 'eg-colossus', 'eg-wyrm', 'eg-garoth']);   // PIN MOVED (CARDS9): the bosses' own, aetheric; PIN MOVED (EG-E): the Battlespire's lords', aetheric
+    'eg-grath', 'eg-spellmaster', 'eg-armsmaster', 'eg-ilthys', 'eg-cairnkeeper', 'eg-twins', 'eg-morvayn', 'eg-dusk', 'eg-stalker', 'eg-seyth', 'eg-colossus', 'eg-wyrm', 'eg-garoth', 'spectre-of-lysandus']);   // PIN MOVED (WITCH1): King Lysandus' Spectre, legendary; PIN MOVED (CARDS9): the bosses' own, aetheric; PIN MOVED (EG-E): the Battlespire's lords', aetheric
 });
 
 test('CARDS8 the starter deck: thirty, clean by the deck\'s law, common and magic alone', () => {
@@ -159,6 +159,6 @@ test('AUDIT CARDS-5: the catalog\'s rules are the ones looked at - every card\'s
   const { createHash } = await import('node:crypto');
   const rec = (c) => [c.id, c.name, c.kind, c.cost, c.power, c.tier, c.tags, c.fx];
   const body = JSON.stringify({ cards: ILIAC_CARDS.map(rec), locations: ILIAC_LOCATIONS.map(rec), starter: STARTER_DECK });
-  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [107, 11, 30]);   // PIN MOVED (CARDS9): the bosses' three; (KG-SET): the nine; PIN MOVED (EG-E): the lords' thirteen
-  assert.equal(createHash('sha256').update(body).digest('hex'), '894bf5ab19cf0745b72984674c02794286aedb09d33920618a8f5adb41907379');   // PIN MOVED (CARDS9): the bosses' three cards; (KG-SET, 2026-10-13): the nine The King's Gambit brought in (Kings-Gambit.md section 10.3); PIN MOVED (EG-E): the Battlespire's thirteen lords' cards (their words in systems/iliac/iliacCardWords.js since the merge of main past KG-SET)
+  assert.deepEqual([ILIAC_CARDS.length, ILIAC_LOCATIONS.length, STARTER_DECK.length], [113, 11, 30]);   // PIN MOVED (WITCH1): the festival's six; PIN MOVED (CARDS9): the bosses' three; (KG-SET): the nine; PIN MOVED (EG-E): the lords' thirteen
+  assert.equal(createHash('sha256').update(body).digest('hex'), 'a22ae0ae9c04025936f503e457f6f47759d44fcc104022688648fb55ac23333f');   // PIN MOVED (WITCH1): the festival's six cards; PIN MOVED (CARDS9): the bosses' three cards; (KG-SET, 2026-10-13): the nine The King's Gambit brought in (Kings-Gambit.md section 10.3); PIN MOVED (EG-E): the Battlespire's thirteen lords' cards (their words in systems/iliac/iliacCardWords.js since the merge of main past KG-SET)
 });

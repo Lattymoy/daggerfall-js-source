@@ -193,6 +193,25 @@ Nothing in DFU's own pool sets that flag, so the classic pairings are
 exactly what they were: a dagger can still be Wyrmbane or
 Nightwhisper.
 
+## PISTOLET: rarer, and a second gun beside it (2026-10-21)
+
+The owner, giving the Dwarven Pistolet its numbers: *"make the thunderlock in general more rare along with the new hand
+cannon"*. The Thunderlock's unique find keeps its weight and mints EITHER gun now, each half the time (`GUN_SHARE`, its
+one mint draw picking the gun and counting the Pellets - `systems/thunderlock.js`), so each turns up half as often as
+the Thunderlock did, at every source, and every seed draws what it drew. (The first cut was two finds at `FIND_WEIGHT`
+0.5, neither half nor seed-stable: AUDIT PISTOLET A5/A8/C2/C3/D6.) The Pistolet eats this weapon's Pellet, flies the
+same orb and runs this weapon's machine - and the rig's gun functions serve both (`heldFeel()`, `heldSfx()`). Its record
+is `Dwarven-Pistolet.md`.
+
+**A left-handed player's Thunderlock is drawn in the mirror** (PISTOLET, AUDIT PISTOLET D33). `gunFrameRect` mirrored the
+gun's place and the lab mirrored its whole sprite, but the game drew the texture unflipped, so a left-handed player's
+Thunderlock sat on the left as a RIGHT hand, its forearm cut mid-screen. The rig reads the source rect right to left
+under the same switch (`handsLaw.js MIRROR_UV`, the melee pair's door), and its muzzle light comes from the side the gun
+is drawn on.
+
+**The Last Lock claims both guns** (AUDIT PISTOLET C5): this weapon's exclusive Legendary record names the Pistolet's
+template beside its own, so a Legendary Pistolet is The Last Lock rather than a blade's record.
+
 ## FIELD-GUN: the two the audit walked past
 
 Mac, the first time he held one:
@@ -1966,6 +1985,10 @@ person in the lens; the fight's signal; and the live arm with the shipped gun (n
 fight up and down, off through the sheathe). PIN MOVED: `climb6` C16 (the hook between the neck and the matrices takes
 the `hold` line). Mutant records whose anchor this slice moved, re-aimed by content and re-run (both dead): `rvn10`'s
 `RVN10-end-keeps-low` and `RVN10-end-keeps-fights` (`endPlayerFights` forgets the harm's time too).
+
+PISTOL-STANCE (2026-10-22, `Dwarven-Pistolet.md`): the arm reaches this stance through `combat/gun/gunHold.js` now, which
+hands each gun the stance its row's `holdAs` names - the Thunderlock's `'rifle'` this one, the Pistolet's `'pistol'` its
+own one-handed hold. This stance, its step and its eases are unchanged; the riflestance pins pass as they stood.
 
 ## RIFLE-AIM-LOW (2026-10-18): the first-person aim under the crosshair
 

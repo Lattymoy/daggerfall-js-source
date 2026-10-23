@@ -270,14 +270,14 @@
     "note": "The window's Escape resumes past a face's confirm."
   },
   {
-    "name": "GROWTH3-window-not-widened",
+    "name": "GROWTH-BOOK-window-size-not-fixed",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "if (pauseTab === 'growth' && stageLive()) win.classList.add('px-win-wide');",
+    "old": "if (pauseTab === 'growth') win.classList.add('px-win-growth');",
     "new": "",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],
-    "note": "A sky cramped in the window's ordinary pane."
+    "note": "The window jumps between sizes as the Growth rail is pressed."
   },
   {
     "name": "GROWTH4-rows-only-while-open",

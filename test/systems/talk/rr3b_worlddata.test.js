@@ -27,9 +27,10 @@ import { BLOCK_TYPES } from '../../../src/formats/blocksFile.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { mergeNamedBuildings } from '../../../src/systems/talk/talkTopics.js';
 import { RR_ARMORER_BLOCK, RR_ARMORER_RECORD, rrMasterArmBuildingKey } from '../../../src/systems/roleplayRealism/rrQuestLine.js';
+import { hostText } from '../../hostText.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+const rd = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
 const WD = 'vendor/roleplay-realism/WorldData';
 const FILES = ['locationnew-RRfort01-16.json', 'RRFORT01.RMB.json', 'ARMRAM03.RMB-765-building14_master.json'];
 const json = (n) => JSON.parse(rd(`${WD}/${n}`));

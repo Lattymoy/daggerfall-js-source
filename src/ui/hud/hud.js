@@ -28,7 +28,7 @@ import { drawCrosshairAndModeIcon, crosshairCentreY } from './hudCrosshair.js'; 
 import { playerDamageFlash } from '../damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { playerBloodScreen, SCREEN_SPATTER_MIN } from '../bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
 import { bloodScreenOn } from '../../combat/blood/bloodSwitch.js';   // BLOOD2e: its row
-import { bloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../../combat/blood/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
+import { bloodAtlas, prewarmBloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../../combat/blood/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
 import { hudFade } from '../fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { cursorActive as freedCursor } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse is the tooltip's gate too (DaggerfallHUD.cs:141-147)
@@ -286,6 +286,7 @@ let _placedSpellIcons = [];
 // or covered returns before the rows, and the last frame's rects stood - a freed right-click there ended a spell with
 // nothing on the screen. Emptied on those returns, and a placement not drawn for a second answers none.
 let _placedAt = -Infinity;
+let _lensWarmed = false;   // OW-HITCH: the lens's blood sheet asked to grow in the page's idle time (drawHud)
 const PLACED_FRESH_MS = 1000;
 const nowMs = () => globalThis.performance?.now?.() ?? Date.now();
 export const activeSpellIconsPlaced = () => (nowMs() - _placedAt <= PLACED_FRESH_MS ? _placedSpellIcons : []);
@@ -516,6 +517,10 @@ export function hideHudTextSurfaces(hudText = null) {
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   { font = null, cursorActive = false, reticleHidden = false, windowCoversHud = null, hudHidden = false, detected = null, playerXZ = null, gate = null, quest = null, wayOut = null, party = null, ships = null, nodes = null, boats = null, largeHud = null, hover = null,
     arch = null,   // EG-F: my company's Elite arch, scene XZ, while it stands - the compass's mark (scenes/eliteGates/egArch.js compass)
+    // STAR6: the compass's event marks the host has long handed and this door never took - the sea serpent's (SERPENT1,
+    // scenes/world.js serpentCompassMark) and a found Hollow's (SD2c, sdCompassMark), each drawn by the enhanced HUD and
+    // dropped here, so neither showed - and a fallen star's (starfall.compassMark), scene XZ each, or null
+    serpent = null, sd = null, star = null,
     grip = null,   // CLIMB2: the enhanced climb's grip, { amount, low } or null
     steed = null,   // STEED1: the ridden horse's breath, the same shape (systems/upkeep/upkeepRuntime.js bar) - drawn in the grip's place, a rider holding no wall
     healthBar = null,   // DUEL-BAR: a duel's referee's vitality, { health, maxHealth }, while one is live (net/duel/duelBar.js duelVitality) - the health both skins read (hudVitals.js hudHealth)
@@ -630,6 +635,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // flash's latch says a blow landed (the RemoveHealth edge - an enemy's
   // hit, a trap, a fall; never a spell, a load or a surrender).
   const blow = playerDamageFlash.takeBlow();
+  // OW-HITCH: the lens's sheet grown ahead of the first blow, as the marks' is (bloodMarks.js asks it only with the marks
+  // on - the lens has its own row): asked once its row is on, and idempotent (a sheet made or begun answers at once)
+  if (!_lensWarmed && bloodScreenOn()) { _lensWarmed = true; prewarmBloodAtlas(); }
   if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
   playerBloodScreen.tick(dt);
   if (playerBloodScreen.count && renderer.uploadTexture) playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));
@@ -703,6 +711,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       playerXZ: playerXZ ?? null,
       gate: gate ?? null,   // WB1: the Oblivion Gate's scene XZ while the player stands in its ring - the compass's own mark
       arch: arch ?? null,   // EG-F: my company's Elite arch, scene XZ, while it stands (scenes/eliteGates/egArch.js compass)
+      serpent: serpent ?? null, sd: sd ?? null, star: star ?? null,   // STAR6: forwarded at last (SERPENT1's, SD2c's) - and the star's
       quest: quest ?? null,   // GUIDE5: the tracker's quest's place, scene XZ, on the street - the compass's quest mark
       wayOut: wayOut ?? null,   // WAYOUT1: underground, the way out along the walked trail, scene XZ (systems/wayOut.js)
       party: party ?? null,   // COMPASS-PARTY: the party's points (ui/partyMapMarks.js partyCompassPoints)

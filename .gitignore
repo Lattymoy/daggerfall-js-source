@@ -2,6 +2,7 @@ node_modules/
 dist/
 # the gun lab's own build (vite.config.gun.js)
 dist-gun/
+dist-pistol/
 .DS_Store
 
 # Original game data - freeware but not redistributable. NEVER commit.

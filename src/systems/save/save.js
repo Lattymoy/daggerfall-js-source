@@ -41,6 +41,7 @@ import { restackStones, nameEmbers, PORTAL_GIFT, givePortalGift } from '../gate/
 import { WALLET_GIFT, giveWalletGift } from '../walletItem.js';   // WALLET1: a character from before the wallet is given one, once
 import { BINDER_GIFT, giveBinderGift, cleanBinders } from '../iliac/iliacItems.js';   // CARDS8: and a Card Binder with the starter deck, once
 import { foldStrayWeirKeys } from '../eliteGates/weirKey.js';   // KEY-FACE: a Weir Key's face anywhere but the pack, folded away
+import { foldStrayFaces } from '../festival/soulCake.js';   // WITCH1: and the Witches' Festival's, the same law
 import '../professions/profTemplates.js';   // PROF2: the ores, ingots and stone a pack may hold, known to every scene a save loads in
 import '../rest/restItems.js';   // REST6: the seven rest supplies (1700-1706), known to every scene a save loads in
 import { repairPartsWeights } from '../comeSailAway/comeSailAwayItems.js';   // PARTS-WEIGHT: a boat's parts weighed as her hull alone
@@ -875,8 +876,11 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // out in a room (`decorOwn`) was stowed before its row was pack-only, or thrown on a body and never taken up: folded
   // away here, in the same place and for the same hosts as the repairs above. The pack keeps its own; the account's
   // balance restacks it.
-  const strayKeys = foldStrayWeirKeys(repairLists.filter((l) => l !== entity.items), arrayOf(snap.sceneCache?.scenes).map((s) => s?.decorOwn));
+  const strayLists = repairLists.filter((l) => l !== entity.items), strayRooms = arrayOf(snap.sceneCache?.scenes).map((s) => s?.decorOwn);
+  const strayKeys = foldStrayWeirKeys(strayLists, strayRooms);
   if (strayKeys) console.info(`[save] KEY-FACE: ${strayKeys} Weir Key face(s) outside the pack folded away - the account holds the keys`);
+  const strayFaces = foldStrayFaces(strayLists, strayRooms);   // WITCH1: and the festival's Soul Cakes and Hearth Offerings, the same law
+  if (strayFaces) console.info(`[save] KEY-FACE: ${strayFaces} festival face(s) outside the pack folded away - the account holds them`);
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
   // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
   // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank

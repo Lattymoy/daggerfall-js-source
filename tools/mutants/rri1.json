@@ -74,7 +74,7 @@
   {
     "name": "RRI1-10-the-stand-in-size-reads-the-bare-key-alone",
     "file": "src/systems/textureReplacement.js",
-    "old": "  const size = (record) => { const d = decodedOf(archive, record); return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };",
+    "old": "  const size = (record) => { const d = measuredOf(archive, record); return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };",
     "new": "  const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };",
     "tests": [
       "test/systems/rri1_items.test.js"

@@ -206,12 +206,15 @@ test('AUDIT WBX2 M7 the stone asks for a player sealed in it at every stand - it
   assert.match(read('src/scenes/gate/gatePool.js'), /const f = feet\(\);\n {4}if \(f && g && inGateRoot\(place, f\)\) landBefore\(g\);/);
 });
 
-test('AUDIT WBX2 M9 the sweep reads its cursors in one storage read (AUDIT RAID R2: four now - the raid receipts\' too; AUDIT SERPENT S5: five - the serpent receipts\'; SD9a: six - the Hour\'s; EG-ZA: seven - the Elite Breach\'s held receipts; AUDIT EG IV: eight - the breach calls\')', () => {
+test('AUDIT WBX2 M9 the sweep reads its cursors in one storage read (AUDIT RAID R2: four now - the raid receipts\' too; AUDIT SERPENT S5: five - the serpent receipts\'; SD9a: six - the Hour\'s; EG-ZA: seven - the Elite Breach\'s held receipts; AUDIT EG IV: eight - the breach calls\'; STAR3: nine - the star receipts\')', () => {
   const idx = read('server/src/index.js');
   // PIN MOVED (EG-ZA, bible/11-Multiplayer/Elite-Gates.md section 23 step 5): the hub holds a breach's receipts under
   // `egrc:<sub>` and its sweep is the gate's, widened by one prefix - its cursor joins the one read. PIN MOVED (AUDIT EG
   // IV, the net group; Elite-Gates.md section 23): a breach's lapsed calls (`egcall:<sub>`) are swept too - their cursor joins it
-  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall'\]\)\);/);
+  // PIN MOVED (STAR3, bible/11-Multiplayer/Starfall.md section 5): the hub keeps an account's star receipts under
+  // `starrc:<sub>` (the raid's keep) - their cursor joins the one read
+  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc'\]\)\);/);
+  assert.doesNotMatch(idx, /storage\.get\('sweep:starrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:egrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:egcall'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:gaterc'\)/);

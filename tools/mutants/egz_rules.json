@@ -457,8 +457,8 @@
   {
     "name": "EGZI-wire-toll-unread",
     "file": "src/net/wire.js",
-    "old": "export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'toll']);",
-    "new": "export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal']);",
+    "old": "export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'toll', 'eland', 'efair']);",
+    "new": "export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'eland', 'efair']);",
     "tests": ["test/net/eliteGates/egz_rules.test.js"]
   },
   {

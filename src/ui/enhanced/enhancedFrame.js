@@ -139,7 +139,11 @@ export const FRAME_ROLES = {
     'body .fmt-tip', 'body .fmt-say', 'body .fmt-hint',
     // EG-PLUS: the call's tracker, a plate over the world, and a section inside a breach window
     'body .eg-hud', 'body .eg-k-sec',
-    '.px-sys .cmp-sheet'],   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
+    // STAR6: the fallen star's tracker, a plate over the world (ui/starfall/starTracker.js)
+    'body .star-hud',
+    '.px-sys .cmp-sheet',   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
+    '.px-sys .coll-whole',   // COLLECTIONS-II: a wardrobe row opened whole - a box under its line
+    '.px-sys .codex-whole'],   // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list
   // panels that carry a brass edge on the left as their own mark
   panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line
   button: ['.port-host .port-btn', '.pack-shell .statflip-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
@@ -231,6 +235,7 @@ export const FRAME_ROLES = {
     'body .dfgambit-unit', 'body .dfgambit-stake', 'body .dfgambit-crown',   // KG3: a unit of the grid, a stake, a crown
     '.px-sys .cmp-vent',   // RVN-ERRAND: the errand's venture - the one chosen brass
     '.px-sys .coll-part', '.px-sys .binder-filter', '.px-sys .binder-chip',
+    '.px-sys .coll-filter', '.px-sys .coll-with', '.px-sys .coll-retry',   // COLLECTIONS-II: the wardrobe's filters, and a "comes with" press - AUDIT COLLECTIONS-II: and a failed read's Try again
     'body .eg-k-tile'],   // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards
   // HOLDINGS: where a holding is (`.hld-state`)
   chip: ['body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', '.px-sys .fam-chip',   // LEGACY3: a person's state
@@ -244,6 +249,7 @@ export const FRAME_ROLES = {
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-purse',
     '.px-sys .cmp-odds',
+    '.px-sys .coll-tag',   // COLLECTIONS-II: a row's readouts - whose it is, whether it can be had
     'body .eg-k-chip', 'body .eg-spire.enhanced .eg-chip'],   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
   well: ['body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
@@ -306,6 +312,7 @@ export const FRAME_ROLES = {
     'body .bounty-post',   // BOUNTY1: the board's notices
     'body .aw-tier',   // ARENA3: the ladder's ten tiers, a line each
     '.px-sys .codex-line',   // COLLECTIONS (CARDS-PLUS): the codex's Legendaries, a line each - the one opened brass
+    '.px-sys .coll-row',   // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass
     'body .dfgambit-regular', 'body .dfgambit-armyrow', 'body .dfgambit-piece',
     'body .eg-k-row'],   // EG-PLUS: a board's line, a recap's member - the reader's own brass   // KG3: a regular, a unit of your army, a piece
   // the fading wing rules and dividers of the quest page

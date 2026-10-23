@@ -218,7 +218,7 @@
   {
     "name": "EGZ-the-strike-rule-gone",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "if (egStruckOff(view, body, p.x, p.y, p.z)) return out;",
+    "old": "if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"

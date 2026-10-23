@@ -472,12 +472,20 @@ test('SCALE5b the foes fan, a method of its own with the budget asked before its
         await R.hello(ws, `f-${String(i).padStart(4, '0')}`, { x: (BX + far + rnd()) * PIXEL_UNITS, y: 0, z: (499 - BY + rnd()) * PIXEL_UNITS, yaw: 0, pitch: 0 });
         socks.push(ws);
       }
-      const { byteGate, inRange, FOES_ROOM_BYTES_PER_S } = relay;
+      // PIN MOVED (FOES-FIRST, Scale-Arc.md FOES-FIRST): every frame here is FULL and comes a second or more after its
+      // sender's last, so it goes first - its floor is minus FOES_FULL_RESERVE, and the bucket stands that far lower
+      // (it read byteGate's law, the floor at 0, for every frame alike). test/net/fb1021_foesfirst.test.js holds the rest.
+      // PIN MOVED (FOES-HOLD, Scale-Arc.md FOES-HOLD): a full frame the budget refuses is HELD for its turn, not dropped -
+      // each round here starts with an empty hold (the turns are test/net/fb1021b_foeshold.test.js's), and a refusal is
+      // counted held.
+      const { floorGate, inRange, FOES_ROOM_BYTES_PER_S, FOES_FULL_RESERVE } = relay;
+      const floor = -FOES_FULL_RESERVE;
       let dropped = 0, passed = 0, between = 0;
       const low = [], mid = [];   // how many times the index was asked for a frame refused below one listener's worth, and for one refused between
       for (let round = 0; round < 60; round++) {
         clock += 1000;   // past every sender's own meter
         for (const ws of socks) ws.sent.length = 0;
+        R.room._foesHolds = null;
         const from = socks[Math.floor(rnd() * socks.length)];
         const a = R.room._attach(from);
         const frame = JSON.stringify({ t: 'foes', data: { n: round, full: 1, f: Array.from({ length: 1 + Math.floor(rnd() * 8) }, (_, i) => ({ i, x: 1, y: 0, z: 1, h: 10 })) } });
@@ -485,10 +493,11 @@ test('SCALE5b the foes fan, a method of its own with the budget asked before its
         const heard = socks.filter((o) => o !== from && inRange(key, a.pose, R.room._attach(o).pose));
         const want = per * heard.length;
         // the bucket stood anywhere from empty to past the whole fan's cost
-        const bytes = [0, per / 2, per, (per + want) / 2, want - 1, want, want * 2][round % 7];
-        if (bytes >= per && bytes < want) between++;
+        const over = [0, per / 2, per, (per + want) / 2, want - 1, want, want * 2][round % 7];
+        const bytes = floor + over;
+        if (over >= per && over < want) between++;
         R.room._roomFoes = { bytes, at: clock };
-        const law = byteGate({ bytes, at: clock }, clock, want, FOES_ROOM_BYTES_PER_S);
+        const law = floorGate({ bytes, at: clock }, clock, want, FOES_ROOM_BYTES_PER_S, floor);
         let walked = 0;
         const all = R.room._all.bind(R.room);
         R.room._all = () => { walked++; return all(); };
@@ -500,10 +509,11 @@ test('SCALE5b the foes fan, a method of its own with the budget asked before its
         assert.deepEqual(R.room._roomFoes, law.bucket, `round ${round}: the bucket`);
         if (law.pass) passed++; else dropped++;
         assert.equal(R.room._meterOf(from).junk ?? 0, 0, `round ${round}: never junk`);
-        (bytes < per ? low : bytes < want ? mid : []).push(walked - before);
+        (over < per ? low : over < want ? mid : []).push(walked - before);
       }
       assert.ok(dropped > 10 && passed > 10 && between > 10, `both answers, and the band between one listener and all (${dropped} dropped, ${passed} passed, ${between} between)`);
-      assert.equal(R.room._metrics.c.drops, dropped, 'each drop counted');
+      assert.equal(R.room._metrics.c.held, dropped, 'each refusal held for its turn and counted');
+      assert.equal(R.room._metrics.c.drops, 0, 'and none dropped');
       assert.equal(R.room._metrics.c.foes, 60, 'and each frame');
       assert.ok(low.length > 5 && mid.length > 5);
       assert.ok(Math.max(...low) < Math.min(...mid), `a frame the room cannot afford for one listener walks nobody - the index asked ${JSON.stringify([...new Set(low)])} times for it, ${JSON.stringify([...new Set(mid)])} for one that walked`);
@@ -570,10 +580,10 @@ test('SCALE5b the metrics point: a socket refused \'room full\' is counted - the
 
 // ═══ PART FOUR: THE RELAY'S SETTINGS, AT RUN TIME (net/relayCfg.js) ═════════════════════════════════════════════════
 
-test('SCALE5b relayCfg: a setting is one of ten names and a string of at most RELAY_CFG_VALUE_MAX, or null (handed back to the var); the one in force is the hub\'s, else the var; a developer alone may set one; /relay\'s words (mutants: a name not a setting\'s; the bound unasked; null refused; the var over the hub\'s; a Dungeon Master let in)', async () => {
+test('SCALE5b relayCfg: a setting is one of eleven names and a string of at most RELAY_CFG_VALUE_MAX, or null (handed back to the var); the one in force is the hub\'s, else the var; a developer alone may set one; /relay\'s words (mutants: a name not a setting\'s; the bound unasked; null refused; the var over the hub\'s; a Dungeon Master let in)', async () => {
   const C = await import('../../src/net/relayCfg.js');
-  assert.deepEqual(C.RELAY_CFG_KEYS, ['bossBody', 'gateRole', 'serpentRole', 'sdRole', 'egDrain', 'groundGate', 'grantMode', 'grantRoll', 'grantStrip', 'grantDoor']);   // PIN MOVED (GRANT-DOOR, Spawn-Grants.md section 20: grantDoor); PIN MOVED (GRANT8-GRANT9, Spawn-Grants.md section 16: grantRoll and grantStrip, each off until a developer sets it); PIN MOVED (GRANT2, bible/11-Multiplayer/Spawn-Grants.md section 12: grantMode, the spawn grants' law); PIN MOVED (GROUND-GATE, bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): the old ground's door - a ground room refuses a build on an older ground while it is on; PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN's switch - the Spire's road shut while a deploy drains it
-  assert.deepEqual(Object.values(C.RELAY_CFG_VARS), ['BOSS_BODY', 'GATE_DISCORD_ROLE', 'SERPENT_DISCORD_ROLE', 'SD_DISCORD_ROLE', 'EG_DRAIN', 'GROUND_GATE', 'GRANT_MODE', 'GRANT_ROLL', 'GRANT_STRIP', 'GRANT_DOOR']);   // PIN MOVED (GRANT-DOOR): its var; PIN MOVED (GRANT8-GRANT9): their vars; PIN MOVED (GRANT2): GRANT_MODE, the spawn grants' law; PIN MOVED (GROUND-GATE): the old ground's door's var
+  assert.deepEqual(C.RELAY_CFG_KEYS, ['bossBody', 'gateRole', 'serpentRole', 'sdRole', 'egDrain', 'groundGate', 'grantMode', 'grantRoll', 'grantStrip', 'grantDoor', 'leaseDoor']);   // PIN MOVED (LEASE1, net/roomLease.js: leaseDoor - a lease room refuses a build that hands on no lease, off until the site serves it); PIN MOVED (GRANT-DOOR, Spawn-Grants.md section 20: grantDoor); PIN MOVED (GRANT8-GRANT9, Spawn-Grants.md section 16: grantRoll and grantStrip, each off until a developer sets it); PIN MOVED (GRANT2, bible/11-Multiplayer/Spawn-Grants.md section 12: grantMode, the spawn grants' law); PIN MOVED (GROUND-GATE, bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): the old ground's door - a ground room refuses a build on an older ground while it is on; PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN's switch - the Spire's road shut while a deploy drains it
+  assert.deepEqual(Object.values(C.RELAY_CFG_VARS), ['BOSS_BODY', 'GATE_DISCORD_ROLE', 'SERPENT_DISCORD_ROLE', 'SD_DISCORD_ROLE', 'EG_DRAIN', 'GROUND_GATE', 'GRANT_MODE', 'GRANT_ROLL', 'GRANT_STRIP', 'GRANT_DOOR', 'LEASE_DOOR']);   // PIN MOVED (LEASE1): its var; PIN MOVED (GRANT-DOOR): its var; PIN MOVED (GRANT8-GRANT9): their vars; PIN MOVED (GRANT2): GRANT_MODE, the spawn grants' law; PIN MOVED (GROUND-GATE): the old ground's door's var
   assert.deepEqual(C.validRelayCfgIn({ k: 'gateRole', v: '1555589839825670258' }), { k: 'gateRole', v: '1555589839825670258' });
   assert.deepEqual(C.validRelayCfgIn({ k: 'bossBody', v: null }), { k: 'bossBody', v: null });
   assert.deepEqual(C.validRelayCfgIn({ k: 'bossBody', v: 'x'.repeat(C.RELAY_CFG_VALUE_MAX) })?.v.length, C.RELAY_CFG_VALUE_MAX);

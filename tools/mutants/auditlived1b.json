@@ -244,8 +244,8 @@
   {
     "name": "AUDITLIVED1B-P4-heard-forgotten",
     "file": "src/systems/worldTick.js",
-    "old": "  _sharedClockHeard = true;\n  settleAbsence();",
-    "new": "  settleAbsence();",
+    "old": "  _sharedClockHeard = true;\n  _heardMark = Object.freeze(",
+    "new": "  _heardMark = Object.freeze(",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]

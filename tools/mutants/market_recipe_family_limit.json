@@ -2,15 +2,15 @@
   {
     "name": "CRAFTED-family-filter-after-cutoff",
     "file": "server-account/src/market.js",
-    "old": "AND (?2 IS NULL OR p.recipe IN (SELECT value FROM json_each(?2)))\n      ORDER BY l.price",
-    "new": "AND (?2 IS NULL OR 1 = 1)\n      ORDER BY l.price",
+    "old": "AND p.recipe IN (SELECT value FROM json_each(?2)) AND (?3 = 0",
+    "new": "AND (?2 IS NULL OR 1 = 1) AND (?3 = 0",
     "tests": ["test/net/market_recipe_family_limit.test.js"]
   },
   {
     "name": "AUCTIONS-family-filter-after-cutoff",
     "file": "server-account/src/market.js",
-    "old": "AND (?2 IS NULL OR p.recipe IN (SELECT value FROM json_each(?2)))\n      ORDER BY a.ends_at",
-    "new": "AND (?2 IS NULL OR 1 = 1)\n      ORDER BY a.ends_at",
+    "old": "AND (?2 IS NULL OR p.recipe IN (SELECT value FROM json_each(?2)))`;",
+    "new": "AND (?2 IS NULL OR 1 = 1)`;",
     "tests": ["test/net/market_recipe_family_limit.test.js"]
   }
 ]

@@ -92,8 +92,8 @@
   {
     "name": "WATCH-PROTECTS-team-chain",
     "file": "src/characters/enemy/enemyTargets.js",
-    "old": "    if (bout !== true && !civilian) {",
-    "new": "    if (bout !== true) {",
+    "old": "    if (bout !== true && !civilian && !star) {",
+    "new": "    if (bout !== true && !star) {",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "WATCH-PROTECTS-likelier",
     "file": "src/characters/enemy/enemyTargets.js",
-    "old": "targetPriority(targetAi && !civilian ? (targetAi.target ?? null) === null : false, see, distance);",
-    "new": "targetPriority(targetAi ? (targetAi.target ?? null) === null : false, see, distance);",
+    "old": "targetPriority(targetAi && !civilian && !star ? (targetAi.target ?? null) === null : false, see, distance);",
+    "new": "targetPriority(targetAi && !star ? (targetAi.target ?? null) === null : false, see, distance);",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -112,7 +112,7 @@
   {
     "name": "WATCH-PROTECTS-blow-dealt",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "calculateAttackDamage: _foeTarget.civilian ? QUARRY_BLOW : calculateAttackDamage,",
+    "old": "calculateAttackDamage: _foeTarget.civilian || _foeTarget.starWard ? QUARRY_BLOW : calculateAttackDamage,",
     "new": "calculateAttackDamage,",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "WATCH-PROTECTS-host-quarry",
     "file": "src/scenes/world.js",
-    "old": "    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...livingQuarry()].filter(",
-    "new": "    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter(",
+    "old": "    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...livingQuarry(), ...(starfall?.wards() ?? [])].filter(",
+    "new": "    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...(starfall?.wards() ?? [])].filter(",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

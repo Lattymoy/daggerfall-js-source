@@ -1,0 +1,712 @@
+[
+  {
+    "name": "SD-THROUGH-the-wire-drops-it",
+    "file": "src/net/wire.js",
+    "old": "  if (r.inAt != null) { if (!sdMs(r.inAt)) return null; out.inAt = r.inAt; }   // SD-THROUGH: the first soul through its Rift\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "the hub's store, its fan and every client's read project it away"
+  },
+  {
+    "name": "SD-THROUGH-an-unfound-record-kept",
+    "file": "src/net/wire.js",
+    "old": "  if (out.inAt != null && out.foundAt == null) return null;   // SD-THROUGH: nor steps through its Rift\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a record through an unfound Hollow's Rift believed"
+  },
+  {
+    "name": "SD-THROUGH-stamped-twice",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;",
+    "new": "if (!rec || sdPhase(rec, now) !== 'found') return null;",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a later soul's instant over the first's"
+  },
+  {
+    "name": "SD-THROUGH-stamped-unfound",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;",
+    "new": "if (!rec || sdPhase(rec, now) === 'gone' || rec.inAt != null) return null;",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "stamped before the find, or after the kill"
+  },
+  {
+    "name": "SD-THROUGH-the-tell-of-slot-0",
+    "file": "src/net/wire.js",
+    "old": "return intIn(b.s, 1, SD_SLOT_MAX) ? { s: b.s } : null;",
+    "new": "return intIn(b.s, 0, SD_SLOT_MAX) ? { s: b.s } : null;",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "the hub's own first beat's slot taken as a Hollow's"
+  },
+  {
+    "name": "SD-THROUGH-the-tell-never-made",
+    "file": "server/src/index.js",
+    "old": "    this._sdTellIn(s, rec, now);   // SD-THROUGH: one went through - the hub hears it, and every Hollow's Way Through stands\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "nobody's Hollow ever hears that one went through"
+  },
+  {
+    "name": "SD-THROUGH-the-door-unrouted",
+    "file": "server/src/index.js",
+    "old": "    if (path === SD_INTERNAL_IN) return this._sdInInternal(request);   // SD-THROUGH: a realm telling the hub its first soul stepped through\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "the realm's tell reaches no door"
+  },
+  {
+    "name": "SD-THROUGH-never-stamped",
+    "file": "server/src/index.js",
+    "old": "if (inn) { await this._sdSave(inn); this._sdFan(inn); }",
+    "new": "if (inn) { this._sdFan(inn); }",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "said once and forgotten - a hello after it never hears it"
+  },
+  {
+    "name": "SD-THROUGH-never-fanned",
+    "file": "server/src/index.js",
+    "old": "if (inn) { await this._sdSave(inn); this._sdFan(inn); }",
+    "new": "if (inn) { await this._sdSave(inn); }",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "everyone already inside never hears it"
+  },
+  {
+    "name": "SD-THROUGH-told-at-every-hello",
+    "file": "server/src/index.js",
+    "old": "this._sdInTold === s || this._sdInTelling === s",
+    "new": "this._sdInTelling === s",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "every hello into the Hour costs the hub a request"
+  },
+  {
+    "name": "SD-THROUGH-the-hubs-slot-unasked",
+    "file": "server/src/index.js",
+    "old": "const inn = rec && rec.s === c.s ? sdEnter(rec, Date.now()) : null;",
+    "new": "const inn = rec ? sdEnter(rec, Date.now()) : null;",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "another slot's tell stamps this Hollow (AUDIT SD-THROUGH C11: asked before the first stamp)"
+  },
+  {
+    "name": "SD-THROUGH-one-in-flight-unkept",
+    "file": "server/src/index.js",
+    "old": "    this._sdInTelling = s;\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a party through together tells the hub once a member (AUDIT SD-THROUGH A6a)"
+  },
+  {
+    "name": "SD-THROUGH-told-once-whatever-the-answer",
+    "file": "server/src/index.js",
+    "old": "if (res && (res.ok || res.status === 400)) { this._sdInTold = s; this._sdInOwed = null; return; }",
+    "new": "if (res) { this._sdInTold = s; this._sdInOwed = null; return; }",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a busy hub's answer taken for its word - never stamped (AUDIT SD-THROUGH A1)"
+  },
+  {
+    "name": "SD-THROUGH-a-404-final",
+    "file": "server/src/index.js",
+    "old": "if (res && (res.ok || res.status === 400)) { this._sdInTold = s; this._sdInOwed = null; return; }",
+    "new": "if (res && (res.ok || (res.status >= 400 && res.status < 500))) { this._sdInTold = s; this._sdInOwed = null; return; }",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "an older hub's 404 mid-deploy taken for good (AUDIT SD-THROUGH A5)"
+  },
+  {
+    "name": "SD-THROUGH-a-400-owed",
+    "file": "server/src/index.js",
+    "old": "if (res && (res.ok || res.status === 400)) { this._sdInTold = s; this._sdInOwed = null; return; }",
+    "new": "if (res && res.ok) { this._sdInTold = s; this._sdInOwed = null; return; }",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a body the hub will never take told on every alarm"
+  },
+  {
+    "name": "SD-THROUGH-the-rejection-unowed",
+    "file": "server/src/index.js",
+    "old": "    } catch (e) { console.warn('[sd] in', e?.message ?? e); }\n    this._sdInOwed = s;",
+    "new": "    } catch (e) { console.warn('[sd] in', e?.message ?? e); return; }\n    this._sdInOwed = s;",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "the hub unreachable: the tell dropped (AUDIT SD-THROUGH A6b)"
+  },
+  {
+    "name": "SD-THROUGH-the-alarm-never-told",
+    "file": "server/src/index.js",
+    "old": "    await this._sdInBeat(Date.now());   // AUDIT SD-THROUGH (A1): a realm's first soul through, owed the hub\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "an owed tell waits on the next admission - a lone fighter's for ever (AUDIT SD-THROUGH A1)"
+  },
+  {
+    "name": "SD-THROUGH-told-before-its-time",
+    "file": "server/src/index.js",
+    "old": "    if (now < (this._sdInRetryAt ?? 0)) { await this._sdCellArm(this._sdInRetryAt); return; }",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "every fight beat (4 a second) tells a busy hub again"
+  },
+  {
+    "name": "SD-THROUGH-the-woken-realm-forgets",
+    "file": "server/src/index.js",
+    "old": "if (this._sdInOwed === undefined) { const key = [...this._all()].map(([, b]) => b.key).find((k) => isSdRoom(k)); this._sdInOwed = key ? sdSlotOfRoom(key) : null; }",
+    "new": "if (this._sdInOwed === undefined) this._sdInOwed = null;",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "an eviction forgets the owed tell"
+  },
+  {
+    "name": "SD-THROUGH-a-returner-never-tells",
+    "file": "server/src/index.js",
+    "old": "{ this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH",
+    "new": "{ return null; }   // SD-THROUGH",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a tell lost on the first admission is never told by a fighter coming back"
+  },
+  {
+    "name": "SD-THROUGH-told-in-the-collapse",
+    "file": "server/src/index.js",
+    "old": "rec?.inAt != null || !sdAdmits(rec, now) ||",
+    "new": "rec?.inAt != null ||",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a return after the kill tells the hub"
+  },
+  {
+    "name": "SD-THROUGH-told-after-the-realms-own-fall",
+    "file": "server/src/index.js",
+    "old": "      if ((await this._sdFightOf())?.fell) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a returner in the gap before the hub hears the fall stands a Way Through the collapse refuses (AUDIT SD-THROUGH A4)"
+  },
+  {
+    "name": "SD-THROUGH-awaited",
+    "file": "server/src/index.js",
+    "old": "    this._sdTellIn(s, rec, now);   // SD-THROUGH: one went through",
+    "new": "    await this._sdTellIn(s, rec, now);   // SD-THROUGH: one went through",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "a hello waits on the hub"
+  },
+  {
+    "name": "SD-THROUGH-inside-message",
+    "file": "server/src/index.js",
+    "old": "        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');",
+    "new": "        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked'); void this._sdInBeat(now);",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "the dispatcher grows (HOST-SPLIT: a Room method of its own)"
+  },
+  {
+    "name": "SD-THROUGH-stood-before-anyone",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "new": "return !!rec && rec.s === s && sdPhase(rec, now) === 'found';",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a Way Through beside everyone from the find"
+  },
+  {
+    "name": "SD-THROUGH-stood-after-the-kill",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "new": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) !== 'gone';",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "it stands through the collapse"
+  },
+  {
+    "name": "SD-THROUGH-another-slots",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "return !!rec && rec.s === s && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "new": "return !!rec && rec.inAt != null && sdPhase(rec, now) === 'found';",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "an old Hollow's record stands the new Hollow's way"
+  },
+  {
+    "name": "SD-THROUGH-its-row-unkeyed",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  get to() { return t('sd.through.to', 'To the Shattered Hour'); },",
+    "new": "  get to() { return SD_END_TEXT.riftTo; },",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its plaque half in English (AUDIT SD-THROUGH B10)"
+  },
+  {
+    "name": "SD-THROUGH-the-heading-dropped",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "const size = SD_THROUGH_SIZE_M, a0 = Number.isFinite(yaw) ? yaw : 0;",
+    "new": "const size = SD_THROUGH_SIZE_M, a0 = 0;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "it stands by north, not by where I look (AUDIT SD-THROUGH B12)"
+  },
+  {
+    "name": "SD-THROUGH-the-bearings-mirrored",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map(",
+    "new": "const BESIDE = Object.freeze([-1, 1, 0, -2, 2, -3, 3, 4].map(",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "every client the same: the order is the law (AUDIT SD-THROUGH C5)"
+  },
+  {
+    "name": "SD-THROUGH-ahead-first",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map(",
+    "new": "const BESIDE = Object.freeze([0, 1, -1, 2, -2, 3, -3, 4].map(",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "it stands on the line I walk (AUDIT SD-THROUGH B1)"
+  },
+  {
+    "name": "SD-THROUGH-its-face-away",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "      const face = [-dir[0], 0, -dir[2]];",
+    "new": "      const face = [dir[0], 0, dir[2]];",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its back to me"
+  },
+  {
+    "name": "SD-THROUGH-the-disc-unswept",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  if (!discClear(at, size, face, probe)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its ring through the wall beside it (AUDIT SD-THROUGH B2)"
+  },
+  {
+    "name": "SD-THROUGH-the-ceiling-unasked",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  if (probe.ray([at[0], cy, at[2]], [0, 1, 0], R + SD_RIFT_AIR_M) != null) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its top through a low ceiling (AUDIT SD-THROUGH B2)"
+  },
+  {
+    "name": "SD-THROUGH-no-way-past-asked",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  if (probe.ray(chest, [-face[2], 0, face[0]], past) != null && probe.ray(chest, [face[2], 0, -face[0]], past) != null) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its ring across the only way on (AUDIT SD-THROUGH B2)"
+  },
+  {
+    "name": "SD-THROUGH-the-water-unasked",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  return water == null || at[1] >= water;",
+    "new": "  return true;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "it stands under a flooded block's water"
+  },
+  {
+    "name": "SD-THROUGH-the-half-way-pass-gone",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  for (const r of [SD_THROUGH_AHEAD_M, SD_THROUGH_AHEAD_M / 2]) {\n    for (const da of BESIDE) {",
+    "new": "  for (const r of [SD_THROUGH_AHEAD_M]) {\n    for (const da of BESIDE) {",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a small hall never stands one (AUDIT SD-THROUGH C5)"
+  },
+  {
+    "name": "SD-THROUGH-off-the-floor-stood",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "  if (ground == null || Math.abs(ground - feet[1]) > SD_STEP_M) return null;",
+    "new": "  if (ground == null) return null;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a jump stands it in the air (AUDIT SD-THROUGH B5)"
+  },
+  {
+    "name": "SD-THROUGH-nothing-ever-stood",
+    "file": "src/world/superDungeon/sdDungeon.js",
+    "old": "      if (standsWhole(at, size, face, probe)) return { at, size, face };",
+    "new": "      if (standsWhole(at, size, face, probe) && false) return { at, size, face };",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the law that waits for ever"
+  },
+  {
+    "name": "SD-THROUGH-the-probes-floor",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "return Number.isFinite(d) ? at[1] + 1 - d : null; },",
+    "new": "return Number.isFinite(d) ? at[1] - d : null; },",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "every floor a metre low"
+  },
+  {
+    "name": "SD-THROUGH-never-asked",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "      if (!out && feet && t >= askAt) {",
+    "new": "      if (!out && feet && t >= askAt && false) {",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "nobody's Way Through ever stands"
+  },
+  {
+    "name": "SD-THROUGH-asked-every-frame",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "        askAt = t + SD_THROUGH_ASK_MS;",
+    "new": "        askAt = t;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the world host's word made every frame"
+  },
+  {
+    "name": "SD-THROUGH-stood-for-the-fallen",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "        else if (w?.through && w.word == null && probe) {",
+    "new": "        else if (w?.through && probe) {",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "one the Hour refused for good stands a way it will not take"
+  },
+  {
+    "name": "SD-THROUGH-never-taken-out",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "        if (stood) { if (w && !w.returns) { end.clear(); out = true; ringAt = null; } }",
+    "new": "        if (stood) { /* kept */ }",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "it stands on after the kill"
+  },
+  {
+    "name": "SD-THROUGH-stood-again",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "        if (stood) { if (w && !w.returns) { end.clear(); out = true; ringAt = null; } }",
+    "new": "        if (stood) { if (w && !w.returns) { end.clear(); stood = false; ringAt = null; } }",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "taken out and stood again - its line said again"
+  },
+  {
+    "name": "SD-THROUGH-the-modules-heading-dropped",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "          const place = near ? null : sdThroughPlace(feet, yaw, probe);",
+    "new": "          const place = near ? null : sdThroughPlace(feet, 0, probe);",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the host's heading never reaches the law (AUDIT SD-THROUGH B12)"
+  },
+  {
+    "name": "SD-THROUGH-the-rifts-key",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "export const SD_THROUGH_KEY = 'sdrift:1';",
+    "new": "export const SD_THROUGH_KEY = 'sdrift:0';",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its press and plaque taken by the Hollow's Rift"
+  },
+  {
+    "name": "SD-THROUGH-the-rifts-title",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "riftTitle: () => SD_THROUGH_TEXT.title, ",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its plaque says The Rift"
+  },
+  {
+    "name": "SD-THROUGH-walked-into",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "look, clock, walkIn: false, riftYields: true });",
+    "new": "look, clock, riftYields: true });",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a walk takes one into the Hour - one life a Hollow (AUDIT SD-THROUGH B1)"
+  },
+  {
+    "name": "SD-THROUGH-its-press-firm",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "look, clock, walkIn: false, riftYields: true });",
+    "new": "look, clock, walkIn: false, riftYields: false });",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a press at the way out behind it takes the Hour (AUDIT SD-THROUGH B3)"
+  },
+  {
+    "name": "SD-THROUGH-the-plaque-on-the-rifts-key",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      if (key === riftKey && rift) { const n = riftCount(), to =",
+    "new": "      if (key === SD_RIFT_KEY && rift) { const n = riftCount(), to =",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the ring's own key never named"
+  },
+  {
+    "name": "SD-THROUGH-the-title-read-once",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "title: typeof riftTitle === 'function' ? riftTitle() : riftTitle, subs:",
+    "new": "title: riftTitle, subs:",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its title a function on the plaque (AUDIT SD-THROUGH B10: read as it is read)"
+  },
+  {
+    "name": "SD-THROUGH-the-press-on-the-rifts-key",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "      if (key === riftKey && rift) { seen(onRift()); return true; }",
+    "new": "      if (key === SD_RIFT_KEY && rift) { seen(onRift()); return true; }",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its press never taken"
+  },
+  {
+    "name": "SD-THROUGH-the-ray-on-the-rifts-key",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "    if (rift) out.push(riftPress(rift, riftKey, riftYields));",
+    "new": "    if (rift) out.push(riftPress(rift));",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the ray finds it under the Rift's key, firm"
+  },
+  {
+    "name": "SD-THROUGH-the-walk-in-unasked",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "const inRift = !!rift && walkIn && inSdPortal(",
+    "new": "const inRift = !!rift && inSdPortal(",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "walkIn false ignored: walked into all the same (AUDIT SD-THROUGH B1)"
+  },
+  {
+    "name": "SD-THROUGH-the-yield-unsaid",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "    ...(yields ? { yields: true } : {}),",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "riftYields ignored: its press firm (AUDIT SD-THROUGH B3)"
+  },
+  {
+    "name": "SD-THROUGH-by-the-rift-decided",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "          const place = near ? null : sdThroughPlace(feet, yaw, probe);",
+    "new": "          const place = near ? (out = true, null) : sdThroughPlace(feet, yaw, probe);",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "one by the Rift at the ask never gets one this visit (AUDIT SD-THROUGH B6)"
+  },
+  {
+    "name": "SD-THROUGH-not-yet-decided",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "if (place && end.stand({ rift: place, retAt: null, dynamicDraws, probe })) { stood = true; ringAt = place.at; say(SD_THROUGH_TEXT.opens); }",
+    "new": "if (place && end.stand({ rift: place, retAt: null, dynamicDraws, probe })) { stood = true; ringAt = place.at; say(SD_THROUGH_TEXT.opens); } else out = true;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a cramped first room, and none for the visit"
+  },
+  {
+    "name": "SD-THROUGH-the-rift-never-asked",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "          const at = riftOf()?.at;",
+    "new": "          const at = null;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a second ring beside the Rift for one back from the Hour"
+  },
+  {
+    "name": "SD-THROUGH-near-across-the-plan",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": " && Math.abs(feet[1] - at[1]) < SD_THROUGH_NEAR_RIFT_M;",
+    "new": ";",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a floor far above the Rift counted near it"
+  },
+  {
+    "name": "SD-THROUGH-its-light-held",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "> SD_THROUGH_LIGHT_M * SD_THROUGH_LIGHT_M) return NONE;",
+    "new": "> SD_THROUGH_LIGHT_M * SD_THROUGH_LIGHT_M) return end.lights();",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its light holds a slot from across the dungeon (AUDIT SD-THROUGH B9)"
+  },
+  {
+    "name": "SD-THROUGH-the-veil-on-the-farther",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "  return far2(a, eye) <= far2(b, eye) ? a : b;",
+    "new": "  return far2(a, eye) >= far2(b, eye) ? a : b;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the veil closes on the ring across the hall"
+  },
+  {
+    "name": "SD-THROUGH-the-veil-on-the-rift",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "  return far2(a, eye) <= far2(b, eye) ? a : b;",
+    "new": "  return b;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the veil never closes on the Way Through"
+  },
+  {
+    "name": "SD-THROUGH-drawn-in-a-fixed-order",
+    "file": "src/scenes/superDungeon/sdThrough.js",
+    "old": "  _pair[0] = nearIsThrough ? end : through; _pair[1] = nearIsThrough ? through : end;",
+    "new": "  _pair[0] = end; _pair[1] = through;",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "a farther window painted over the nearer (AUDIT SD-THROUGH B8)"
+  },
+  {
+    "name": "SD-THROUGH-the-word-without-it",
+    "file": "src/scenes/world.js",
+    "old": "through: sdThroughStands(rec, s, now), ",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the dungeon host never hears that one went through"
+  },
+  {
+    "name": "SD-THROUGH-the-hour-stands-one",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const sdThrough = _superTier ? createSdThrough(",
+    "new": "const sdThrough = (_superTier || _sdRealm) ? createSdThrough(",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "the Hour stands a way into itself"
+  },
+  {
+    "name": "SD-THROUGH-never-framed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    sdThrough?.frame(playerFeet ?? null, _fpYaw, playerFeet ? _sdEye : null);   // SD-THROUGH\n",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "it never stands in the game"
+  },
+  {
+    "name": "SD-THROUGH-never-freed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      sdThrough?.clear();   // SD-THROUGH: the Way Through, and its bell\n",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its meshes and its bell outlive the dungeon"
+  },
+  {
+    "name": "SD-THROUGH-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "      for (const l of sdRingsFarFirst(eye, through, look)) if (l && pass?.draw(",
+    "new": "      for (const l of sdRingsFarFirst(eye, through, null)) if (l && pass?.draw(",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "its window into the Hour never drawn - a dark ring"
+  },
+  {
+    "name": "SD-THROUGH-the-look-unforwarded",
+    "file": "src/scenes/worldModes.js",
+    "old": "          superRiftLook: (s) => host.superRiftLook?.(s) ?? null,",
+    "new": "",
+    "tests": [
+      "test/world/superDungeon/sdthrough_way.test.js"
+    ],
+    "why": "every look the dungeon host asks makes the whole word, four times a frame a ring (AUDIT SD-THROUGH B4)"
+  },
+  {
+    "name": "SD-THROUGH-the-retry-spent-early",
+    "file": "server/src/index.js",
+    "old": "{ await this._sdCellArm(this._sdInRetryAt); return; }   // an alarm sooner than the retry",
+    "new": "{ return; }   // an alarm sooner than the retry",
+    "tests": [
+      "test/net/superDungeon/sdthrough_relay.test.js"
+    ],
+    "why": "an alarm sooner than the retry spends it - the owed tell lost until something else wakes the realm"
+  }
+]

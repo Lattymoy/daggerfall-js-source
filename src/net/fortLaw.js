@@ -208,6 +208,18 @@ export function coastalAt(px, py, isWater, port = false) {
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isWater(px + dx, py + dy)) return true;
   return false;
 }
+/** How far the map pixels round a town's are asked for the sea: the port law's ring (world/portSites.js - a port town is
+ *  one the open sea bears on within it, its places' bearing read off it). FB1020c BERTH-RING: here, beside the coast's
+ *  other law, so the berth's and a cargo's port (systems/naval/harbourBoard.js deliveryPort, which the account Worker
+ *  bundles) read the one ring without the world's placement code; portSites.js re-exports both. */
+export const SEA_RING = 2;
+/** Whether the sea bears on a map pixel: a pixel of it (`isSea(x, y)`) within SEA_RING - the ring its bearing is read off
+ *  (world/portSites.js seaBearing), so a town it bears on has a seaward edge to stand its places on. Pure. */
+export function seaBears(px, py, isSea) {
+  if (typeof isSea !== 'function') return false;
+  for (let dy = -SEA_RING; dy <= SEA_RING; dy++) for (let dx = -SEA_RING; dx <= SEA_RING; dx++) if (isSea(px + dx, py + dy)) return true;
+  return false;
+}
 /** SEAT2b part two: whether `seat` (the seats' list's - its holder and its works' tiers, `forts`) is a Travel Options port
  *  for a character of guild `guild`: a Harbour standing there and the guild its holder (7.5: "the town is a Travel
  *  Options port for members"). */

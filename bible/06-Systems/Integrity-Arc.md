@@ -58,6 +58,15 @@ nothing. A copy given a fresh id is a new piece to the ledger, and a new piece i
 
 ### INT1 - the item law (`src/systems/item/itemLaw.js`)
 
+SOUL-LAW (FIELD BUGS 2026-10-20h, law 9, `acct166`; `01-Overview/bugs/Field-Bugs-2026-10-20h.md`; the Discord's "Soul Trap (Ogre)"):
+a Soul Gem or Azura's Star may hold the soul of one of Daggerfall Enemy Expansion's fifty (the Ogre is 282), whose ids
+the law reads headless from the mod's own tables (`src/systems/enemyExpansion/dexIds.js`) - law 8 took DFU's MobileTypes
+alone, so every such gem was a 'soul' finding and its trapper's trade was held, with a strike. Migration 0143 lifts what
+that finding alone laid, read as 0130 reads (0130's own lift, which kept strikes, ends no count), and keeps the soul's
+signature, as 0125 kept the key's. TRADE-WHOLE, found on the way: a trade's pack clamps its lot whole
+(`src/systems/tradePack.js` wholeLot) - a piece the law refuses is said and kept off the table, never set out on it to ride
+no wire.
+
 KEY-LAW (2026-10-17, law 7, `acct151`; `01-Overview/bugs/Field-Bugs-2026-10-17.md`; slick: "flagged by the new key
 thing"): the Weir Key's row (`src/systems/eliteGates/weirKeyRow.js`, a leaf) is read beside the registry, as the rest's,
 Deep Waters' fish and the two mods' are - this service loads none of the key's home, so law 6 found every Weir Key a
@@ -628,8 +637,11 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   (`characters/playerEntity.js` forcePlayerDeath - the SetHealth(0) door's AvoidDeath and withholding stood a fallen up).
   The fallen's game shows its killer its worn gear (`worn`, under the fall's id, each record minted alone so its place
   holds); the killer's body window picks ONE (`pick`, to the room that refereed the fall, with what the offer showed
-  there - `t`, `m`) within `WILD_REF.pickMs`, and the relay signs the fall - `f1` `{ f, c, k, r, w, wt }`, the fallen,
-  its realm character, the killer, the remains' id, the piece's place and what it was - and hands it to both; one away
+  there - `t`, `m`) within `WILD_REF.pickMs`, and the relay signs the fall - `f1` `{ f, c, k, r, w, wt, m, kc }`, the
+  fallen, its realm character, the killer, the remains' id, the piece's place and what it was (and SEA-BOUNTY's, 2026-10-22:
+  the room that refereed it and the killer's realm character - `03-World/Eltheric-Ocean.md` SEA-BOUNTY; an older relay's
+  receipt names neither; a SHIP wrecked at another captain's guns is signed apart, `n1` - SHIP-PVP) - and hands it to
+  both; one away
   hears it at its next zone word. Unpicked, it is signed without a piece; a building's or a dungeon's fall at once (no
   body is searched there); a fall waiting on its pick is kept in the room's storage (`WILD_FALL_PREFIX`) and signed by a
   room that restarted, and a full room's oldest is signed, never forgotten.

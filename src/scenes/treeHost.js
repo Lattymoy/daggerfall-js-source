@@ -211,7 +211,7 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
     gone: (n) => goneIn(book, n.key, 'logs'),
     goneSound: 'fall',   // GATHER-FEEL: the tree heard coming down, its ground struck as the picture lies flat (FALL_S)
     mark: (n) => (goneIn(book, n.key, 'logs') ? null : n.flat?.jungle != null ? jungleTreeMark(n.flat) : TREE_MARK),   // NODE-MARKS: a standing tree; a felled one's stump none; AUDIT BANTHA1 TREE-3: a jungle tree's outside its trunk
-    /** NODE-OUTLINE (render/nodeOutline.js): a standing tree's picture is its forest's own flat - and near the eye the 3D
+    /** NODE-OUTLINE (render/nodeGlint.js): a standing tree's picture is its forest's own flat - and near the eye the 3D
      *  tree that stands for it, found by the flat's centre (the very array its pixel's tree set holds). */
     picturesOf(n, entry) {
       const g = entry?.forest?.groups?.get(n.flat?.group);

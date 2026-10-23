@@ -151,7 +151,7 @@
 // bar under the list (`N new - jump to newest`) that takes them there.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
-import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
+import { isTextEntryTarget, swallowBrowserKey, bindings, neverTheFocus } from './input.js';   // FB1020h HUD-FOCUS: the controls over the world keep no focus
 import { actionForCode, codeMeans } from '../systems/inputActions.js';
 import { overlayOpen } from './enhanced/enhancedOverlays.js';
 import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the panel stands, ActivateCursor's key is its open key and not the cursor toggle
@@ -734,6 +734,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // "Friends and party" and nothing else. The word stays a title for the mouse; the badge names ITSELF, and the
     // button's accessible name becomes "Social 3" the moment there is a 3.
     b.setAttribute('title', 'Friends and party');
+    neverTheFocus(b);   // FB1020h HUD-FOCUS: a Tab walked onto it and the next Space (the game's Jump) pressed it
     const badge = el('span', 'dfchat-badge');
     b.append(badge); socialBadges.push(badge);
     b.addEventListener('click', () => social.onToggle?.());
@@ -771,6 +772,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   };
   box.append(tabs, cols, grip);   // CHAT-SIZE: the grip stands at the BOX's corner, over both columns
   // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
+  // FB1020h HUD-FOCUS: what stands over the world while the chat is shut is never the keyboard's focus (ui/input.js
+  // neverTheFocus) - Play online here, the touch skin's Chat, the Social button (above) and Show
+  for (const b of [here, openBtn, show]) neverTheFocus(b);
   root.append(peek, hint, status, here, openBtn, ...(socialOut ? [socialOut] : []), show, box);
   doc.body.append(root);
 

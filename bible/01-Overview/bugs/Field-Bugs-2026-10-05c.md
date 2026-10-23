@@ -24,7 +24,7 @@ vendored packs show, said so below. Nothing here was seen in a browser.
 | 2 | heavy ship parts never retrieved from storage | PackBoat lays her hold's weight on her parts and a hold has no ceiling, so a ship packed off a plundered hold was one 450 kg item: AddItem took it unasked, and set down, every take refused it for good | HOLD-WEIGHT |
 | 3 | a windmill disappeared | WD3's own law: a block a town mod serves stands only the mills its records place, and five of Kamer's seven farms have none in either mod - online both mods are everyone's since 2026-10-03 | kept as DFU reads it |
 | 4 | revenants stand there in a fight | a companion ranked foes by DFU's chain alone, whose +5 goes to a foe targeting NO ONE: an idle foe behind a wall outranked the one striking the player whenever it stood outside his view cone | ASSIST |
-| 5 | red brick teleporters not always working | `addRelay` never carried a flat's mark, so a FLAT Teleport (Collision03) walked into asked for triangles it has none of and never fired; a model's teleporter, or a flat one clicked, still worked | FLAT-RELAY |
+| 5 | red brick teleporters not always working | `addRelay` never carried a flat's mark, so a FLAT Teleport (Collision03) walked into asked for triangles it has none of and never fired; a model's teleporter, or a flat one clicked, still worked | FLAT-RELAY - refuted by FLAT-WALK (2026-10-21d); REOPENED, cause not found |
 | 6 | the Haunted House foe under the floor | SEALED-CELLAR's own house (Beautiful Villages' MANRAS02 #3 at Woodwing Palace, its foe marker 3.15 m down past a shut stair), fixed the same day (#620), very likely after the reporter's build; what was left: a foe a save made inside the house holds came back in the cellar | SEALED-SAVE |
 
 ## RAMP-INK (1)
@@ -115,8 +115,15 @@ collision pass hear an action by its OWN triangles, and kept the box for an acti
 flats keep the box", `Audit-PreMerge-0929.md`): `o.isFlat ? standsOnAction(...) : actionContact(...)`. `addEffect` and
 `addMoveFlat` carry the flat's mark; `addRelay` built its object without it. So a flat relay asked for triangles it was
 never given and was heard by nothing: a Collision03 flat Teleport walked into never fired, a MultiTrigger or Collision09
-one fired only when clicked, a model's always - "not always working". It carries the mark now; nothing else in `src/`
-reads a relay's `isFlat`. A corpse on the floor before the wall cannot stop a walk-in (corpses carry no collider) and
+one fired only when clicked, a model's always - "not always working". [REVERSED FOR THE WALK by FLAT-WALK, FIELD BUGS
+2026-10-21d: the corpus holds no Collision03 flat Teleport (13 MultiTrigger, 11 Direct, 1 None), DFU's flat box is a
+trigger no walk meets, and the walk-in this made sent Edworyan Laboratory's walkers to its entrance; the mark now keeps a
+flat relay off the walk - `01-Overview/bugs/Field-Bugs-2026-10-21d.md`.] It carries the mark now; nothing else in `src/`
+reads a relay's `isFlat`. [AUDIT FB1021d FW-3, 2026-10-22: no longer so - `actionSystem.js` walkHears reads it, and
+`dungeonSense.js` senseFlat reads any action's. And this report is OPEN again: FLAT-WALK showed the diagnosis false (no
+Collision03 flat Teleport exists), and the red brick teleporter is a model's relay (72100, Collision03), which neither
+change touched and which fired on 66 of 66 walks into Edworyan Laboratory's two in its whole build. What "not always
+working" was is not found. Wanted: the dungeon's name, or a save.] A corpse on the floor before the wall cannot stop a walk-in (corpses carry no collider) and
 takes a click only aimed under 0.6 m inside its box.
 
 `test/player/audit0929_actions.test.js` (+1): an editor flat's Collision03 Teleport, laid out by the real `layoutRdbBlock`

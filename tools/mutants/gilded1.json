@@ -20,8 +20,8 @@
   {
     "name": "GILDED1-a-line-over-the-band",
     "file": "src/systems/gilded.js",
-    "old": "    line('damage', 40),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
-    "new": "    line('damage', 50),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
+    "old": "  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),",
+    "new": "  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 50),",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

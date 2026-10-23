@@ -468,8 +468,8 @@
   {
     "name": "CHAP3A-LIST-OWNER",
     "file": "server-account/src/professions.js",
-    "old": "AND (owner = '' OR owner = ?3) ORDER BY kind, faction, slot\")",
-    "new": "ORDER BY kind, faction, slot\")",
+    "old": "AND owner IN ('', ?3) ORDER BY +kind, faction, slot\")",
+    "new": "ORDER BY +kind, faction, slot\")",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "CHAP3A-CARD-KIND",
     "file": "src/ui/noticeWindow.js",
-    "old": "el('span', 'writ-kind', own ? 'Your chapter writ' : poster ? 'Chapter writ' : 'Court writ')",
-    "new": "el('span', 'writ-kind', poster ? 'Chapter writ' : 'Court writ')",
+    "old": "{ return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }",
+    "new": "{ return isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]

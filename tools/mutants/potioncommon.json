@@ -11,7 +11,7 @@
   {
     "name": "POTION-COMMON-foe-chance-zero",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_ENEMY_CHANCE = 10;",
+    "old": "export const HEALING_ENEMY_CHANCE = 4;",
     "new": "export const HEALING_ENEMY_CHANCE = 0;",
     "tests": [
       "test/systems/potion_common.test.js"
@@ -20,7 +20,7 @@
   {
     "name": "POTION-COMMON-pile-chance-zero",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_PILE_CHANCE = 18;",
+    "old": "export const HEALING_PILE_CHANCE = 8;",
     "new": "export const HEALING_PILE_CHANCE = 0;",
     "tests": [
       "test/systems/potion_common.test.js"

@@ -31,9 +31,10 @@ const deg = (d) => (d * Math.PI) / 180;
 
 // ── THE CAMERA'S LAW ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('TV1 camera: Mac\'s band - 150 to 450 m over the traveller, 30 to 75 degrees down, and never into the cloud deck (its base less 60 m, a lid weather\'s floor 40 m)', () => {
+test('TV1 camera: Mac\'s band - 150 to 450 m over the traveller, 15 to 75 degrees down, and never into the cloud deck (its base less 60 m, a lid weather\'s floor 40 m)', () => {
   assert.deepEqual([TV_HEIGHT_MIN, TV_HEIGHT_MAX, TV_HEIGHT_DEFAULT], [150, 450, 260]);
-  assert.ok(near(TV_TILT_MIN, deg(30)) && near(TV_TILT_MAX, deg(75)) && near(TV_TILT_DEFAULT, deg(52)));
+  // PIN MOVED (OW-HORIZON, 2026-10-20): the floor 15 (it was 30, so as not to show the haze's wall inside the grid) - the horizon in the picture
+  assert.ok(near(TV_TILT_MIN, deg(15)) && near(TV_TILT_MAX, deg(75)) && near(TV_TILT_DEFAULT, deg(52)));
   assert.deepEqual([TV_CLOUD_MARGIN, TV_HEIGHT_FLOOR, TV_GROUND_CLEAR], [60, 40, 25]);
   // the deck, per the weather the clouds are drawn for (render/volumetricClouds.js VC_PROFILE) - the view reads the
   // same table the sky does, so the camera is under the very clouds the player sees
@@ -654,7 +655,7 @@ test('TV1 focus: setFocus writes w 1 with the point and w 0 without it, moving t
 test('TV1 host wiring: the frame draws from the view\'s eye risen out of the body\'s own camera, the fog from the traveller\'s head, the sky and the flats turned to the view, no grass, hand or crosshair plaque from the air', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const mwv0 = mwViewFrame\(\{\n\s*eyeOverride: travelView\?\.eye \?\? null,\n/);
-  assert.match(w, /const tvHeadEye = mwViewHoldChanged\(\) \? cam\.pos : \(mwv0\.ownEye \?\? mwv0\.eye\);\n\s*const tvf = travelView\?\.frame\(dt, \{ eye: tvHeadEye, fwd \}\) \?\? null;\n\s*const mwv = tvf \? \{ \.\.\.mwv0, eye: tvf\.eye \} : mwv0\.ownEye \? \{ \.\.\.mwv0, eye: tvHeadEye \} : mwv0;[^\n]*\n\s*const viewFwd = tvf \? tvf\.fwd : fwd;\n(?:\s*\/\/ [^\n]*\n|\s*_driverBodySeat = [^\n]*\n|\s*if \(_driverBodySeat\) [^\n]*\n|\s*else player\.drawYaw = null;\n)*\s*const tvFace = [^\n]*\n\s*setFlatLean\([^\n]*\n\s*renderer\.setFocus\(tvf \? cam\.pos : null, !!tvf && tvf\.blend >= 0\.5\);/);
+  assert.match(w, /const tvHeadEye = mwViewHoldChanged\(\) \? cam\.pos : \(mwv0\.ownEye \?\? mwv0\.eye\);\n\s*const tvf = travelView\?\.frame\(dt, \{ eye: tvHeadEye, fwd \}\) \?\? null;\n\s*const mwv = tvf \? \{ \.\.\.mwv0, eye: tvf\.eye \} : mwv0\.ownEye \? \{ \.\.\.mwv0, eye: tvHeadEye \} : mwv0;[^\n]*\n\s*const viewFwd = tvf \? tvf\.fwd : fwd;\n\s*const proj = horizonProj\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, tvf\);[^\n]*\n(?:\s*\/\/ [^\n]*\n|\s*_driverBodySeat = [^\n]*\n|\s*if \(_driverBodySeat\) [^\n]*\n|\s*else player\.drawYaw = null;\n)*\s*const tvFace = [^\n]*\n\s*setFlatLean\([^\n]*\n\s*renderer\.setFocus\(tvf \? cam\.pos : null, !!tvf && tvf\.blend >= 0\.5\);/);
   const setAt = w.indexOf('renderer.setFocus(tvf ? cam.pos : null, !!tvf && tvf.blend >= 0.5);');
   assert.ok(setAt > 0 && setAt < w.indexOf('renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);'), 'AUDIT TV B1: BEFORE beginFrame - its lane replay and its sun maps read the focus (AUDIT DEEP2: and the line must be there - a -1 passed this)');
   assert.match(w, /lookAt\(mwv\.eye, \[mwv\.eye\[0\] \+ viewFwd\[0\], mwv\.eye\[1\] \+ viewFwd\[1\], mwv\.eye\[2\] \+ viewFwd\[2\]\], \[0, 1, 0\]\)/);

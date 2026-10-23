@@ -1,0 +1,152 @@
+[
+ {
+  "name": "AUDIT-DEX-C4-the-abyss-class-the-128-bit",
+  "file": "src/scenes/oceanHolesAbyss.js",
+  "old": "    const flag = foe.isClass && type >= 128 && type <= 146;",
+  "new": "    const flag = foe.isClass;",
+  "why": "Ocean Holes' class range widened to the 128 bit: the abyss takes every one of Daggerfall Enemy Expansion's classes, always, for an undead marked WasHumanoid",
+  "tests": [
+   "test/scenes/oh_abyss.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A5-the-caster-shoots-no-more",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "    if (props.hasRangedAttack) { mobile.hasRangedAttack1 = true; mobile.hasRangedAttack2 = true; }   // both ranged and casting",
+  "new": "    if (props.hasRangedAttack) { mobile.hasRangedAttack1 = true; mobile.hasRangedAttack2 = false; }   // both ranged and casting",
+  "why": "a caster that also shoots keeps one ranged attack: the Necromancer Assassin (394) never draws its bow",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A5-the-monk-no-ranged",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "'Assassin', 'Monk', 'Archer'",
+  "new": "'Assassin', 'Archer'",
+  "why": "HasClassicRangedAttack forgets the Monk: under the mod it loses its ranged attack",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A5-H1-the-dungeon-monster-arm-classic",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (foeDeps && enemyEntityType(e.mobileType) === 'monster' && basics.maleTexture) {",
+  "new": "    if (foeDeps && e.mobileType <= 42 && basics.maleTexture) {",
+  "why": "the dungeon's monster arm is the classic range again: a mod's monster never stands in a dungeon",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A5-H2-the-dungeon-class-arm-past-43",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (foeDeps && enemyEntityType(e.mobileType) === 'class' && basics.maleTexture) {",
+  "new": "    if (foeDeps && e.mobileType > 43 && basics.maleTexture) {",
+  "why": "the dungeon's class arm takes every id past the monsters: a mod's monster is built as a class",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A5-H3-the-street-mint-128",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "      const isClass = enemyEntityType(mobileType) === 'class', career = loadEnemyCareer(mobileType, fetchBytes);",
+  "new": "      const isClass = mobileType >= 128, career = loadEnemyCareer(mobileType, fetchBytes);",
+  "why": "the street's mint reads a mod's monster (256-290) as a class: its progression share and its build a class's",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A5-H4-the-knockback-128",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    const isClass = enemyEntityType(f.mobileType) === 'class';   // DEX1: EntityTypes.EnemyClass, a mod's class (384+) too",
+  "new": "    const isClass = f.mobileType >= 128;",
+  "why": "the street's knockback weighs a mod's monster as a class",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A2-a-monsters-body-a-persons-hands",
+  "file": "src/systems/revenant/revenantFeud.js",
+  "old": "  return attacker?.isPlayer || isClassEnemyId(attacker?.mobileType ?? 0) ? 'h2h' : 'other';",
+  "new": "  return attacker?.isPlayer || (attacker?.mobileType ?? -1) >= 128 ? 'h2h' : 'other';",
+  "why": "a mod's monster's unarmed blow reads as a person's bare hands to a revenant's adaptation",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A10-a-short-line-reads-empty",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "      const cell = (c) => { if (c >= tokens.length) throw new RangeError('Index was outside the bounds of the array.'); return tokens[c]; };\n      const careerName = cell(nameIndex);",
+  "new": "      const cell = (c) => tokens[c];\n      const careerName = cell(nameIndex);",
+  "why": "a cell past a short career line is read as empty: the line writes the cells it has where the C# throws on the first it lacks",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A10-the-replacement-on-a-copy",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "      const spec = existing ?? { name: careerName, base: null, edits: [] };\n      let dropped = false;",
+  "new": "      const spec0 = existing ?? { name: careerName, base: null, edits: [] };\n      const spec = { ...spec0, edits: [] };\n      let dropped = false;",
+  "why": "a replacement's writes land on a copy, not the career already read: what the C# writes in place, before a throw or not, is lost",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "DEX1-a-road-levels-the-mod-by-the-number",
+  "file": "src/characters/enemy/enemyBasics.js",
+  "old": "export const enemyLevelOf = (type, level) => (isClassEnemyId(type) ? level",
+  "new": "export const enemyLevelOf = (type, level) => (type >= 128 ? level",
+  "why": "a road's trouble reads a class as `>= 128` (the roads' harness's old copy): the mod's Goblin, 256, is a person at the party's level, not its row's",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A6-the-door-unasked",
+  "file": "src/systems/textManager.js",
+  "old": "    for (const fn of _customEnemyNameText) {\n      const name = fn(id);",
+  "new": "    for (const fn of []) {\n      const name = fn(id);",
+  "why": "getLocalizedEnemyName asks no mod for a custom enemy's name in the player's language: a Lizard Man is \"Lizard Man\" in German",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A6-the-names-unregistered",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "  _dropNameText = registerCustomEnemyNameText(dexEnemyNameText);",
+  "new": "  _dropNameText = null;",
+  "why": "the install hands the text manager no name of the fifty: every language reads the mod's English",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A6-the-door-kept-after-reset",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "  _dropNameText?.();\n",
+  "new": "",
+  "why": "the mod's reset lets its names' door stand: a reset game still names the fifty",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-A6-an-English-not-the-mod-s",
+  "file": "src/systems/enemyExpansion/dexNames.js",
+  "old": "  258: () => t('dex.enemy.lizardMan', 'Lizard Man'),",
+  "new": "  258: () => t('dex.enemy.lizardMan', 'Lizardman'),",
+  "why": "the catalog's English drifts from the mod's Name column: under English the HUD reads a name the mod never wrote",
+  "tests": [
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ }
+]

@@ -31,6 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readPng, writePng } from './pngIO.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 const arg = (k, d) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1] ?? d;
 const num = (k, d) => Number(arg(k, d));
@@ -332,28 +333,6 @@ function bake(name, length, opts) {
   return { ...r, out: opts.out };
 }
 
-mkdirSync(OUT, { recursive: true });
-mkdirSync(PREVIEW, { recursive: true });
-
-// THE GRIP, in fractions of the trimmed art: the wooden pistol grip
-// runs down-right from about (0.90, 0.42) to the butt, so the band
-// that severs it runs across at about 30 degrees, a fist thick.
-const bandArg = arg('band', '0.935,0.555,-30,8,16').split(',').map(Number);
-const band = process.argv.includes('--no-gap') ? null : {
-  cx: bandArg[0], cy: bandArg[1], deg: bandArg[2], thick: bandArg[3], length: bandArg[4],
-};
-const gap = band;
-
-// 72px wide is not a look, it is the GRIP: the doll's fist is about
-// 8px across, the grip is a quarter of the art's height, and the gun
-// has to be big enough that a fist-sized hole lands on the grip
-// instead of eating the receiver with it.
-// ANGLED DOWN (Mac, 2026-09-19), because that is how a weapon hangs
-// off a fist - the classic doll never draws one lying flat. The
-// muzzle falls; `angle` is how far, so more is always more downward.
-const ANGLE = num('angle', 35);
-const gun = bake('gun-side.png', num('length', 72), { band, angle: ANGLE, out: 'gun-paperdoll.png' });
-
 /** THE AUDITION. Where a fist sits on a grip is a judgement call made
  *  against a doll this container does not have (no ARENA2 here), so
  *  the four candidates go on one sheet and whoever has the game picks.
@@ -365,64 +344,90 @@ export const GAP_CANDIDATES = [
   ['D', { cx: 0.935, cy: 0.555, deg: 28, thick: 8, length: 18 }, 'the first pass: not square to the grip'],
 ];
 
-if (process.argv.includes('--sheet')) {
-  const zoom = 6, pad = 10, labelH = 12;
-  const tiles = GAP_CANDIDATES.map(([, g]) => makeSprite('gun-side.png', num('length', 72), { band: g, angle: ANGLE }));
-  const tw = Math.max(...tiles.map((t) => t.sprite.width)) * zoom;
-  const thh = Math.max(...tiles.map((t) => t.sprite.height)) * zoom;
-  const W = pad + (tw + pad) * 2, H = pad + (thh + labelH + pad) * 2;
-  const out = new Uint8ClampedArray(W * H * 4);
-  for (let i = 0; i < out.length; i += 4) { out[i] = 20; out[i + 1] = 22; out[i + 2] = 26; out[i + 3] = 255; }
-  tiles.forEach((t, i) => {
-    const x = pad + (i % 2) * (tw + pad), y = pad + labelH + Math.floor(i / 2) * (thh + labelH + pad);
-    fistOn(out, W, H, x, y, zoom, t.band, t.sprite);
-    for (let py = 0; py < t.sprite.height * zoom; py++) for (let px = 0; px < t.sprite.width * zoom; px++) {
-      const sp = ((py / zoom | 0) * t.sprite.width + (px / zoom | 0)) * 4;
-      if (!t.sprite.data[sp + 3]) continue;
-      const d = ((y + py) * W + x + px) * 4;
-      out[d] = t.sprite.data[sp]; out[d + 1] = t.sprite.data[sp + 1]; out[d + 2] = t.sprite.data[sp + 2]; out[d + 3] = 255;
-    }
-    // a bar of dots per label, A=1 B=2 C=3 D=4: this file cannot draw
-    // text and a legend in the console is enough
-    for (let k = 0; k <= i; k++) for (let py = 0; py < 6; py++) for (let px = 0; px < 6; px++) {
-      const d = ((y - labelH + py + 2) * W + x + k * 9 + px) * 4;
-      out[d] = 200; out[d + 1] = 150; out[d + 2] = 70; out[d + 3] = 255;
-    }
-  });
-  writeFileSync(join(PREVIEW, 'gap-candidates.png'), writePng({ width: W, height: H, data: out }));
-  console.log(`\nsheet: scratch/gun-paperdoll/gap-candidates.png  (dots = A B C D, left-right then down)`);
-  for (const [k, g, why] of GAP_CANDIDATES) console.log(`  ${k}  --band=${g.cx},${g.cy},${g.deg},${g.thick},${g.length}  ${why}`);
-}
-// THE PELLET (FIELD-GUN16, 2026-09-20, Mac: "Shrink the inventory
-// icon for the pellet ammo"; FIELD-GUN18, the same day: "Shrink the
-// orb pellet ammo sprite in the inventory. It's too large"). 12px,
-// down from 16, down from 22.
-//
-// THE DEFAULT IS THE SHIPPED SIZE, so a re-bake reproduces what is in
-// public/art rather than quietly restoring the old one - the same law
-// FIELD-GUN15 just made a pin of for the sound picks, and for the same
-// reason: a tool whose default is not what shipped is a trap laid for
-// whoever runs it next.
-//
-// WHY 12 AND NOT ANOTHER NUMBER. The list cell is 50x38 and
-// `makeIconDrawer` never ENLARGES (`fit = Math.min(1, ...)`), so an
-// icon is drawn at its own size: 22 filled nearly half the cell width
-// - a pellet the size of a helmet - and 16 was still reading as a
-// cannonball beside a quiver of arrows.
-//
-// FIELD-GUN16's note claimed here that "14 starts eating the
-// engraving and 12 is a brown dot". THAT JUDGEMENT WAS WRONG, and it
-// is worth saying why rather than quietly moving the number: it was
-// made against an 8x PREVIEW in a container with no game in it, where
-// a sprite is inspected instead of glanced at. At 12 the dwarven
-// banding and the central boss both still read, and the person with
-// the game says 16 does not. The source is 1254px square, so any of
-// these is a clean downscale rather than a resample of a resample.
-const ammo = bake('gun-ammo-src.png', num('ammo', 12), { out: 'gun-ammo.png' });
+// AUDIT 68's rule: a module another imports for one function does not run its CLI on import (tools/lib/isMain.mjs) -
+// tools/pistoletArt.mjs imports punchBand from here (PISTOLET, 2026-10-21), so the bake is the program's alone.
+if (isMain(import.meta.url)) {
+  mkdirSync(OUT, { recursive: true });
+  mkdirSync(PREVIEW, { recursive: true });
 
-for (const r of [gun, ammo]) {
-  console.log(`${r.out.padEnd(20)} ${r.source} -> trimmed ${r.trimmed} -> ${r.size}${r.angle ? ` at ${r.angle}\u00b0 down` : ''}${r.cut ? `, ${r.cut} px cut for the hand` : ''}`);
+  // THE GRIP, in fractions of the trimmed art: the wooden pistol grip
+  // runs down-right from about (0.90, 0.42) to the butt, so the band
+  // that severs it runs across at about 30 degrees, a fist thick.
+  const bandArg = arg('band', '0.935,0.555,-30,8,16').split(',').map(Number);
+  const band = process.argv.includes('--no-gap') ? null : {
+    cx: bandArg[0], cy: bandArg[1], deg: bandArg[2], thick: bandArg[3], length: bandArg[4],
+  };
+  const gap = band;
+
+  // 72px wide is not a look, it is the GRIP: the doll's fist is about
+  // 8px across, the grip is a quarter of the art's height, and the gun
+  // has to be big enough that a fist-sized hole lands on the grip
+  // instead of eating the receiver with it.
+  // ANGLED DOWN (Mac, 2026-09-19), because that is how a weapon hangs
+  // off a fist - the classic doll never draws one lying flat. The
+  // muzzle falls; `angle` is how far, so more is always more downward.
+  const ANGLE = num('angle', 35);
+  const gun = bake('gun-side.png', num('length', 72), { band, angle: ANGLE, out: 'gun-paperdoll.png' });
+
+  if (process.argv.includes('--sheet')) {
+    const zoom = 6, pad = 10, labelH = 12;
+    const tiles = GAP_CANDIDATES.map(([, g]) => makeSprite('gun-side.png', num('length', 72), { band: g, angle: ANGLE }));
+    const tw = Math.max(...tiles.map((t) => t.sprite.width)) * zoom;
+    const thh = Math.max(...tiles.map((t) => t.sprite.height)) * zoom;
+    const W = pad + (tw + pad) * 2, H = pad + (thh + labelH + pad) * 2;
+    const out = new Uint8ClampedArray(W * H * 4);
+    for (let i = 0; i < out.length; i += 4) { out[i] = 20; out[i + 1] = 22; out[i + 2] = 26; out[i + 3] = 255; }
+    tiles.forEach((t, i) => {
+      const x = pad + (i % 2) * (tw + pad), y = pad + labelH + Math.floor(i / 2) * (thh + labelH + pad);
+      fistOn(out, W, H, x, y, zoom, t.band, t.sprite);
+      for (let py = 0; py < t.sprite.height * zoom; py++) for (let px = 0; px < t.sprite.width * zoom; px++) {
+        const sp = ((py / zoom | 0) * t.sprite.width + (px / zoom | 0)) * 4;
+        if (!t.sprite.data[sp + 3]) continue;
+        const d = ((y + py) * W + x + px) * 4;
+        out[d] = t.sprite.data[sp]; out[d + 1] = t.sprite.data[sp + 1]; out[d + 2] = t.sprite.data[sp + 2]; out[d + 3] = 255;
+      }
+      // a bar of dots per label, A=1 B=2 C=3 D=4: this file cannot draw
+      // text and a legend in the console is enough
+      for (let k = 0; k <= i; k++) for (let py = 0; py < 6; py++) for (let px = 0; px < 6; px++) {
+        const d = ((y - labelH + py + 2) * W + x + k * 9 + px) * 4;
+        out[d] = 200; out[d + 1] = 150; out[d + 2] = 70; out[d + 3] = 255;
+      }
+    });
+    writeFileSync(join(PREVIEW, 'gap-candidates.png'), writePng({ width: W, height: H, data: out }));
+    console.log(`\nsheet: scratch/gun-paperdoll/gap-candidates.png  (dots = A B C D, left-right then down)`);
+    for (const [k, g, why] of GAP_CANDIDATES) console.log(`  ${k}  --band=${g.cx},${g.cy},${g.deg},${g.thick},${g.length}  ${why}`);
+  }
+  // THE PELLET (FIELD-GUN16, 2026-09-20, Mac: "Shrink the inventory
+  // icon for the pellet ammo"; FIELD-GUN18, the same day: "Shrink the
+  // orb pellet ammo sprite in the inventory. It's too large"). 12px,
+  // down from 16, down from 22.
+  //
+  // THE DEFAULT IS THE SHIPPED SIZE, so a re-bake reproduces what is in
+  // public/art rather than quietly restoring the old one - the same law
+  // FIELD-GUN15 just made a pin of for the sound picks, and for the same
+  // reason: a tool whose default is not what shipped is a trap laid for
+  // whoever runs it next.
+  //
+  // WHY 12 AND NOT ANOTHER NUMBER. The list cell is 50x38 and
+  // `makeIconDrawer` never ENLARGES (`fit = Math.min(1, ...)`), so an
+  // icon is drawn at its own size: 22 filled nearly half the cell width
+  // - a pellet the size of a helmet - and 16 was still reading as a
+  // cannonball beside a quiver of arrows.
+  //
+  // FIELD-GUN16's note claimed here that "14 starts eating the
+  // engraving and 12 is a brown dot". THAT JUDGEMENT WAS WRONG, and it
+  // is worth saying why rather than quietly moving the number: it was
+  // made against an 8x PREVIEW in a container with no game in it, where
+  // a sprite is inspected instead of glanced at. At 12 the dwarven
+  // banding and the central boss both still read, and the person with
+  // the game says 16 does not. The source is 1254px square, so any of
+  // these is a clean downscale rather than a resample of a resample.
+  const ammo = bake('gun-ammo-src.png', num('ammo', 12), { out: 'gun-ammo.png' });
+
+  for (const r of [gun, ammo]) {
+    console.log(`${r.out.padEnd(20)} ${r.source} -> trimmed ${r.trimmed} -> ${r.size}${r.angle ? ` at ${r.angle}\u00b0 down` : ''}${r.cut ? `, ${r.cut} px cut for the hand` : ''}`);
+  }
+  writeFileSync(join(PREVIEW, 'gun-paperdoll-preview.png'), writePng(preview(gun.sprite, 8, true, gun.band)));
+  writeFileSync(join(PREVIEW, 'gun-ammo-preview.png'), writePng(preview(ammo.sprite, 8, false)));
+  console.log(`preview: ${PREVIEW}/`);
 }
-writeFileSync(join(PREVIEW, 'gun-paperdoll-preview.png'), writePng(preview(gun.sprite, 8, true, gun.band)));
-writeFileSync(join(PREVIEW, 'gun-ammo-preview.png'), writePng(preview(ammo.sprite, 8, false)));
-console.log(`preview: ${PREVIEW}/`);

@@ -457,6 +457,15 @@ one, never one hand's glow on both:
   blade, the pad's looks), `coats3d_horse3d`, `invislook` and `prbow1_bow` (the third-person draw's `glowLook: padLooks`),
   `mwtorch` (the left item named once).
 
+## A pair of guns (PISTOLET, 2026-10-21)
+
+The Dwarven Pistolet is one-handed, so two of them are a pair: `DUAL_GUN_TYPES` [19, 20] beside `DUAL_TYPES`, and a pair
+is TWO OF A KIND - two melee weapons or two Pistolets, never one of each (`handsModeOf`). The one machine keeps this
+page's flurry; what a gun adds is each hand's own reload (`combat/playerWeapon.js gunPair`), a pull falling to the loaded
+pistol when the law's hand is reloading, and no flurry frame skip. The sprite lane draws a gun pair through the gun's own
+frame (`combat/gun/gunPair.js`, ahead of `twoHands.drawPair`); the guard, the mirror and the two sway rules are this
+page's. Its record and its measured balance: `Dwarven-Pistolet.md`.
+
 ## Departures from DFU (Port-Ledger A, TWO-HANDS)
 
 1. ToggleHand/ApplyWeapon: with both hands up both are in use; H picks the lead, ends the exchange and bills no switch

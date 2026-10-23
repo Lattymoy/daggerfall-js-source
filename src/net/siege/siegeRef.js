@@ -108,6 +108,9 @@ export const SIEGE_WEAPON_MAX = Object.freeze({
 });
 /** The Thunderlock's template and span (characters/thunderlockIds.js, weapons.js THUNDERLOCK_SPAN - pinned equal). */
 export const SIEGE_THUNDERLOCK = Object.freeze({ template: 560, max: 26 });
+/** PISTOLET: the Dwarven Pistolet's template and span (characters/thunderlockIds.js PISTOLET_SPAN - pinned equal). A gun's
+ *  blow is a shot, as the Thunderlock's is (siegeIsBow). */
+export const SIEGE_PISTOLET = Object.freeze({ template: 562, max: 15 });
 /** DaggerfallUnityItem.GetWeaponMaterialModifier by material, Iron to Daedric (characters/weapons.js, pinned equal). */
 export const SIEGE_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
 /** Hand-to-hand's most at the skill's top (combat/formulas.js handToHandMaxDamage(100), pinned equal). */
@@ -142,7 +145,7 @@ export function siegeBlowMax(w, m, wa = null) {
  *  Daedric's 6) - the one number both referees' caps grow with (arenaLaw.js arenaBlowCap's table is this one, pinned
  *  equal). Null for a template neither names. */
 export function armsTop(w, m) {
-  const top = w === SIEGE_THUNDERLOCK.template ? SIEGE_THUNDERLOCK.max : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];
+  const top = w === SIEGE_THUNDERLOCK.template ? SIEGE_THUNDERLOCK.max : w === SIEGE_PISTOLET.template ? SIEGE_PISTOLET.max : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];
   if (!top) return null;
   return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);
 }
@@ -173,7 +176,7 @@ export function armsOf(items, lawful) {
   return [reach, bow];
 }
 /** Whether a template is a bow (its blow a shaft's). */
-export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template;
+export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template || w === SIEGE_PISTOLET.template;
 /** AUDIT-SEATS R8: THE HANDS - the look's two slots a weapon is wielded from (DFU's EquipSlots RightHand 19 and LeftHand
  *  21: characters/paperdoll/paperdoll.js EQUIP_SLOTS, pinned equal - this leaf imports nothing; net/remotePlayers.js composeLook
  *  writes each item's `equipSlot` off the equip table's own index). */

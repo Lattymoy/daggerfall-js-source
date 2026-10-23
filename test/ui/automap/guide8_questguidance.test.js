@@ -8,7 +8,6 @@
 // bible/03-World/Delve-Arc.md, GUIDE8.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import { GUIDANCE_PREF, GUIDANCE_TIERS, guidanceTier, townTierOn, dungeonQuestMarks, questCompassPick, townQuestBuildings, townBuildingLocal } from '../../../src/systems/quest/questGuidance.js';
 import { createTownSheet } from '../../../src/ui/town/townSheet.js';
@@ -23,8 +22,9 @@ import { createAutomapSheet } from '../../../src/ui/automap/automapSheet.js';
 import { floorStripLayout, paintFloorStrip, MARK_R, PLAN_PEN } from '../../../src/ui/ink/inkAutomap.js';
 import { QUEST_MARK_CSS } from '../../../src/ui/quest/questMarks.js';
 import { FEATURES, FEATURE_PREF_DEFAULTS } from '../../../src/systems/features.js';
+import { hostText } from '../../hostText.mjs';
 
-const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
+const src = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
 
 test('GUIDE8: the tier - Exact only on the enhanced skin and only when asked for', () => {
   const skin = uiSkin(), pref = getPref(GUIDANCE_PREF);

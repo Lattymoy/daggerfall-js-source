@@ -29,8 +29,8 @@
   {
     "name": "PERF-TOWN1-4-the-xml-scale-is-cached-too-so-a-toggled-mod-is-not-seen",
     "file": "src/world/rmbFlats.js",
-    "old": "  return textureReplacementEnabled() ? applyBillboardXml(t?.archive, record, size) : size;\n}",
-    "new": "  return size;\n}",
+    "old": "  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;\n  const s = billboardXmlScaleOf(t?.archive, record);",
+    "new": "  return size;\n  const s = billboardXmlScaleOf(t?.archive, record);",
     "tests": [
       "test/world/perftown1.test.js",
       "test/characters/enemy/meanerMonsters.test.js"

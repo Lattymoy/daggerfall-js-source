@@ -266,6 +266,11 @@ test('EG-E3 relay: THE ROOM TELLS THE HUB - an ended breach\'s room beats on unt
     await eg2.fire();
     await hub.fire();
     assert.deepEqual(posts[3].body, egRedoubtPost({ o: 'Ann', w: 10, h: 50, t: 6680 }), 'First of the Spire is once ever');
+    // FIELD BUGS 2026-10-20d LONE-HERALD (AUDIT FB1020d L2-3): a company of one's news, told by its room and folded by the hub, is posted alone
+    const eg3 = breach('aaaaaaaaaaaaaaaa', [rdEv(1, 20, { at: now(), n: 1, o: 'Mara', by: ['Mara'] })]);
+    await eg3.fire();
+    await hub.fire();
+    assert.equal(posts[4].body.content, '**Mara took Redoubt 20 of the Battlespire (Hall 100) alone** in 1:51:20.');
   });
 });
 

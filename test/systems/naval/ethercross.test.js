@@ -6,10 +6,10 @@ import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { crossingWayAt, createCrossingGate, crossingTarget, crossingRows, crossingWords, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED } from '../../../src/systems/naval/etherCrossing.js';
+import { crossingWayAt, createCrossingGate, crossingTarget, crossingRows, crossingWords, createCrossLand, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED } from '../../../src/systems/naval/etherCrossing.js';
 import { createCaptainLedger, ETHER_CHARTED_MAX, ETHER_HARVEST_KEEP, newEther, newLog, logLines } from '../../../src/systems/naval/captainLedger.js';
 import { createEtherHost, SIGHT_PX, HARVEST_REACH_PX, HARVEST_CASKS, STRAND_YIELD, HARVEST_DAYS, STRAND_SITE, CHART_BUY_PX, CHART_BUY_PRICE, PAPERS_CHANCE, PAPERS_PX } from '../../../src/scenes/etherHost.js';
-import { veilhaven, landfall, HOME_WATERS, VEIL_X, isleOfCell, islesNear, LEAGUE_PX, ETHER_BOX, etherDepthAt } from '../../../src/world/ethericSea.js';
+import { veilhaven, landfall, HOME_WATERS, VEIL_X, isleOfCell, islesNear, LEAGUE_PX, ETHER_BOX, etherDepthAt, CROSS_LAND_PX } from '../../../src/world/ethericSea.js';
 import { LEGENDS, hauntOf, legendById } from '../../../src/systems/naval/etherShips.js';
 import { goodOfTemplate } from '../../../src/systems/naval/tradeGoods.js';
 import { classById } from '../../../src/systems/naval/navalShips.js';
@@ -90,12 +90,25 @@ test('ETHER-CROSSING by source: asked at a helm in the exterior with no window u
   assert.match(src, /let _etherCrossing = false;   \/\/ ETHER-CROSSING: a voyage under way/);
   assert.ok(src.indexOf('let _etherCrossing = false;') < src.indexOf('const paused = gamePaused() || _loading || _partyArrivalPending || _etherCrossing;'), 'declared before any frame reads it');
   assert.match(src, /if \(!gamePaused\(\) && !_loading\) etherCrossStep\(dt\);/);
-  const land = src.slice(src.indexOf('const crossLandPx = (px, py) => {'), src.indexOf('function etherCrossStep(dt) {'));
-  assert.match(land, /if \(Math\.max\(Math\.abs\(dx\), Math\.abs\(dy\)\) === r && !seaPixel\(px \+ dx, py \+ dy\)\) \{ d = r; break ring; \}/);
+  // PIN MOVED (HOST-SPLIT, SEA VENTURES 2026-10-22): the distance to land out of bootWorld (etherCrossing.js createCrossLand),
+  // over the map's one water law - asked of it here by behaviour
+  assert.match(src, /const crossLandPx = createCrossLand\(seaPixel\);/);
+  const asked = [];
+  const island = (x, y) => { asked.push(`${x},${y}`); return !(x === 13 && y === 10); };   // one pixel of land, three east
+  const landPx = createCrossLand(island, 20);
+  assert.equal(landPx(10, 10), 3, 'the nearest land, Chebyshev');
+  const n = asked.length;
+  assert.equal(landPx(10, 10), 3, 'asked again');
+  assert.equal(asked.length, n, 'the last pixel\'s answer kept');
+  assert.equal(createCrossLand(() => true, 4)(0, 0), Infinity, 'none within its reach: Infinity');
+  assert.equal(createCrossLand((x, y) => !(x === 0 && y === 0), 4)(0, 0), 0, 'on land: none');
+  assert.equal(createCrossLand(island, 2)(10, 10), Infinity, 'past its reach');
+  assert.equal(CROSS_LAND_PX, 20);
+  assert.match(readFileSync(new URL('../../../src/systems/naval/etherCrossing.js', import.meta.url), 'utf8'), /if \(Math\.max\(Math\.abs\(dx\), Math\.abs\(dy\)\) === r && !seaPixel\(px \+ dx, py \+ dy\)\) \{ d = r; break ring; \}/, 'each ring\'s own pixels, asked once');
 });
 
 test('ETHER-SEA the ledger\'s record: isles charted once each (the log\'s islands), a legend\'s day, a strand\'s day (the newest kept), the way out, the crossings, the legends heard - kept whole by the save and cleaned field by field (mutants: each field, the bounds)', () => {
-  assert.deepEqual(newEther(), { charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [] });
+  assert.deepEqual(newEther(), { charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [], season: null, fleets: [], wrack: [] });   // PIN MOVED (SEA-SEASON): and no season's figures; (AUDIT SEA VENTURES D2, D4, D6): no fleet's flagship ended, no wrack hauled
   assert.equal(ETHER_CHARTED_MAX, 4096); assert.equal(ETHER_HARVEST_KEEP, 128);
   const a = createCaptainLedger();
   assert.equal(a.chartIsle('800,249'), true); assert.equal(a.chartIsle('800,249'), false); assert.equal(a.chartIsle(5), false);
@@ -119,7 +132,7 @@ test('ETHER-SEA the ledger\'s record: isles charted once each (the log\'s island
   const c = createCaptainLedger();
   c.restoreSaveData({ ether: { charted: ['1,2', '1,2', 'x', 5, '-3,4'], legends: { wake: 4, junk: 'q' }, harvested: { '1,1': 3, n: null }, from: { px: 'no' }, crossings: -4, heard: ['wake', 9, 'wake'] } });
   const e = c.getSaveData().ether;
-  assert.deepEqual(e, { charted: ['1,2'], legends: { wake: 4 }, harvested: { '1,1': 3 }, from: null, crossings: 0, heard: ['wake'] });
+  assert.deepEqual(e, { charted: ['1,2'], legends: { wake: 4 }, harvested: { '1,1': 3 }, from: null, crossings: 0, heard: ['wake'], season: null, fleets: [], wrack: [] });   // PIN MOVED (SEA-SEASON): no season's figures; (AUDIT SEA VENTURES D2, D4, D6): nor fleets nor wrack
   for (let i = 0; i < ETHER_CHARTED_MAX + 3; i++) c.chartIsle(`${i % 4000},${Math.floor(i / 4000)}`);
   assert.equal(c.charted().length, ETHER_CHARTED_MAX, 'no more than the charts hold');
   const lines = Object.fromEntries(logLines({ ...newLog(), islands: 3, deepest: 12, legends: ['The Drowned Queen'] }));
@@ -274,8 +287,8 @@ test('ETHER-CHART the model: the charted isles in view (a port named at any zoom
 test('ETHER-CHART the doors: the travel map\'s door opens the chart past the Veil; the freeport\'s harbourmaster\'s tab its rumours and its chart (mutants: the door, the tab\'s words)', () => {
   const src = read('src/scenes/world.js');
   assert.match(src, /\{ const p = playerTravelPixel\(\); if \(etherSea && inEther\(p\.x, p\.y\)\) return openEtherChart\(\); \}/);
-  assert.match(src, /const word = \(\) => \{ const p = playerTravelPixel\(\); return etherHost\.chart\(p\.x, p\.y, heading\(\)\); \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA X16): the ship's heading at her helm
-  assert.match(src, /const heading = \(\) => \{ const boat = csaRuntime\?\.isSailing\?\.\(\) \? csaRuntime\.state\.CurrentBoat : null; if \(!boat\) return cam\.yaw; const f = boatForward\(boat\); return Math\.atan2\(f\[0\], f\[2\]\); \};/);
+  assert.match(src, /const word = \(\) => \{ const p = playerTravelPixel\(\); return \{ \.\.\.etherHost\.chart\(p\.x, p\.y, heading\(\)\), \.\.\.seaVentures\.chartWord\(\) \}; \};/);   // PIN MOVED (SEA-VAULTS): the open sea's fights and the day's vaults the sea's ventures' (scenes/seaVenturesHost.js chartWord)   // PIN MOVED (ETHER-WILD): the word says the open sea's fights, for the chart's peace   // PIN MOVED (AUDIT CAPTAIN'S SEA X16): the ship's heading at her helm
+  assert.match(src, /const heading = \(\) => \{ const boat = csaRuntime\?\.isSailing\?\.\(\) \? csaRuntime\.state\.CurrentBoat : null; if \(!boat\) return cam\.yaw; const f = boatForward\(boat, cam\.yaw\); return Math\.atan2\(f\[0\], f\[2\]\); \};/);   // PIN MOVED (HOST-SPLIT at the merge of main into SEA VENTURES): boatForward out of bootWorld, the camera's yaw its argument
   const door = read('src/ui/naval/navalPlunderDoor.js');
   assert.match(door, /load: \(\) => import\('\.\.\/etherChartWindow\.js'\),/);
   const o = { ether: true, port: 'Veilhaven', waters: 'the Shallows, 7 leagues past the Veil', rumours: ['A tale.', 'Another.'], charted: 1, chart: { price: 150, fresh: 12, can: true, why: '' } };

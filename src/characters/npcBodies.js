@@ -263,6 +263,9 @@ export function createNpcBodies({ renderer, enabled = () => true, generation = (
     },
     /** Does this actor stand in a body - so its host draws no billboard for it? @param {string} laneName @param {any} id */
     has(laneName, id) { return !!bodies?.has(npcPeerId(laneName, id)); },
+    /** NPC-MARKS: how tall this actor's body stands (scene metres; 0 standing none) - its race's own height, where a mark
+     *  over its head is hung (scenes/npcMarksHost.js). @param {string} laneName @param {any} id */
+    heightOf(laneName, id) { return bodies?.heightOf(npcPeerId(laneName, id)) ?? 0; },
     /** The bodies, in the body pass (inside its batch - renderer.js beginCharacterSpriteBatch). @param {any} canvas @param {any} o */
     draw(canvas, o) {
       if (!bodies) return;
@@ -365,5 +368,7 @@ export function createPopulationLane({ laneName, renderer, collider = () => null
     destroy() { lane?.destroy(); lane = null; offered = false; ids.length = 0; batches.length = 0; },
     /** Does this actor stand in a body? @param {any} id */
     has(id) { return !!lane?.has(laneName, id); },
+    /** NPC-MARKS: how tall its body stands (0: none). @param {any} id */
+    heightOf(id) { return lane?.heightOf(laneName, id) ?? 0; },
   };
 }

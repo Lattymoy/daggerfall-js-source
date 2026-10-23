@@ -26,7 +26,7 @@ import { t, getLocalizedLocationName } from '../systems/textManager.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { instanceOwnerOf, holdEpochOf, instanceOfWord, isInstanceRoom, INSTANCE_DOOR_WORD } from '../net/instanceRoom.js';
 import { roomKeyFor } from '../net/online.js';
-import { wdunHallOfRoom } from '../net/wire.js';
+import { wdunHallOfRoom, seaRoomCell } from '../net/wire.js';
 import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch, remainsWholeAt, remainsInstanceEpoch } from '../systems/instancePlaces.js';
 import { isPrivateersHold } from '../systems/startDungeon.js';   // HOLD-ONCE: online the Hold's public room is entered once - its instance any time
 import { builtSizeFor } from '../world/smallerDungeons.js';   // QUEST-ELSEWHERE: the size the world builds a dungeon's public room at
@@ -67,8 +67,8 @@ export const buildingSite = (mapId, building, { layout = null, home = false } = 
  *  in its town's layout. Null for a place no room keys. */
 export const siteBase = (site) => roomKeyFor({ host: 'world', mode: site?.siteType === SITE_TYPES.Building ? 'interior' : 'dungeon', mapId: site?.mapId ?? 0, buildingKey: site?.buildingKey ?? 0, layout: site?.layout ?? null });
 /** A place that keeps no instance: a home (its owner's room), a zone hall (net/wire.js wdunHallOfRoom - the relay refuses
- *  one), a place no room keys. */
-const keepsNone = (site) => { const base = siteBase(site); return !base || !!site.home || wdunHallOfRoom(base) != null; };
+ *  one), an isle's dungeon (SEA-VAULTS: seaRoomCell - the open sea keeps none, the relay refuses one), a place no room keys. */
+const keepsNone = (site) => { const base = siteBase(site); return !base || !!site.home || wdunHallOfRoom(base) != null || seaRoomCell(base) != null; };
 
 export function createInstanceDoor(deps) {
   let ownerFor = null, owner = null;   // the account the owner digest is of, and the digest

@@ -300,7 +300,7 @@ The kinds, each ending in something the sea already does:
 |---|---|---|---|
 | bounty | a named pirate - her class one of the two strongest within two levels of the captain's (`bountyClass`; the flagship from level 12), her name her seed's - last seen SITE_PX map pixels off the port in open water (`siteFor`: every neighbour of her pixel sea, on the square ring, in from the drawn distance and then out past it (B6), eight ways round) | she is sunk or taken by the captain's hand (`advance`'s `end` with her `bounty` id); gone down by another hand, void (`lost` - B4) | PAY_BASE.bounty times her size, and her waters' distance |
 | hunt | CONTRACT_NEED.hunt pirate ships ended in the crown's waters | sunk or taken there, any of them (a boarding beaten off is no end) | PAY_BASE.hunt each |
-| delivery | a cargo to another port DELIVERY_PX_MIN or more off with the sea beside it (`deliveryPort` - PORT-TOWNS, below), its term DELIVERY_DAYS_BASE and a day a DELIVERY_PX_DAY pixels | the boat that took it on lies to that port's quay; wrecked, it is lost; held for a place that is no such port, void (`unported`) | PAY_BASE.delivery a pixel and its start |
+| delivery | a cargo to another port DELIVERY_PX_MIN or more off that the sea bears on (`deliveryPort` - PORT-TOWNS, below; within SEA_RING, BERTH-RING), its term DELIVERY_DAYS_BASE and a day a DELIVERY_PX_DAY pixels | the boat that took it on lies to that port's quay; wrecked, it is lost; held for a place that is no such port, void (`unported`) | PAY_BASE.delivery a pixel and its start |
 | salvage | a merchantman gone down SITE_PX off the port - CONTRACT_NEED.salvage casks of her cargo | each cask hauled out of the sea where she went down | PAY_BASE.salvage a cask, and the distance |
 | survey | the Admiralty's measure of the crown's shipping - CONTRACT_NEED.survey ships studied through the glass in its waters | each ship the glass studies (`KNOW.studied` by the glass, never a ship struck), each ship once - her seed kept on the contract (`seen` - L6: a harbour's ship stood again was counted again) | PAY_BASE.survey each |
 
@@ -314,18 +314,41 @@ seconds - or a cargo lost) STANDING_FAILED; given up from the tab, STANDING_ABAN
 further ("Clear Wayrest's waters: 2 of 3 pirate ships ended"), the screen's middle each done or failed.
 
 THE PORTS (PORT-TOWNS, `01-Overview/bugs/Field-Bugs-2026-10-13c.md`; the owner: "Even the port quests sending you to non port
-places"). The board's ports - the port a captain lies at (`world.js navalPortHere`, the nearest within a map pixel), a
+places"). The board's ports - the port a captain lies at (`world.js navalPortHere`, the nearest within a map pixel - within SEA_RING since BERTH-RING, below), a
 cargo's, a treasure chart's - are the TOWNS among Travel Options' harbours (`world.js navalPortList`, `portPlaces.js
 isPortTownType`) that the open sea bears on (`portSites.js seaBears` - INLAND-PORTS, `01-Overview/bugs/Field-Bugs-2026-10-14-inland-ports.md`):
 the towns that stand the port's places, 106 on the real map. The table is every place a ship may put
 in at - MAPS.BSA's 343 flagged locations and Hazelnut's extras - and 223 of its 378 are tombs, farms, inns, temples,
-manors, graveyards and ruins, which the board read as ports with harbourmasters until then. A cargo goes only to a port
+manors, graveyards and ruins, which the board read as ports with harbourmasters until then. A cargo went only to a port
 with the sea beside it - its own map pixel or one of the eight about it (`harbourBoard.js deliveryPort`, `net/fortLaw.js
-coastalAt`), the berth's reach: 101 of the 106, each answering to its own name from a sea pixel beside it - never to
-Daggerfall, Sentinel and Wayrest, two pixels off it. A capital inland is no port of the board's at all (36 of the 39
+coastalAt`), the berth's reach then: 101 of the 106, each answering to its own name from a sea pixel beside it - never to
+Daggerfall, Sentinel and Wayrest, two pixels off it (BERTH-RING, below, made the reach SEA_RING). A capital inland is no port of the board's at all (36 of the 39
 the byte's 0x10 marks have no open sea within two pixels), nor is a town by a lake inland (INLAND-PORTS: the twelve
 that took a cargo until then). A cargo already held for a place that is no such port is void at the office's tick, no
 regard lost, and said ("Contract void - ... No ship can make port there.").
+
+A PORT'S WATERS ARE THE PORT LAW'S RING (FB1020c BERTH-RING, 2026-10-20 - the field: the tutorial's *"sail from one
+harbor too another"* never registered). The berth - a boat of mine at her helm, slow, no hostile ship near, in a port's
+waters (`navalHost.js siteStep`, `yardHere`) - is what a delivery, the questlines' `port-reached` (the harbour office:
+a berth at another port a quarter league under sail after the port she last lay still in - VOYAGE-HOLD,
+`01-Overview/bugs/Field-Bugs-2026-10-21b.md` - "Under Sail", "The Packet Lanes") and the
+shipwright all ask; and a port's waters were a map pixel about the captain's (`navalPortHere`, and a place the port's
+data flags within one, `navalNearPort`). The shore DFU's kernel builds lies past it at twelve of the 106: no water a
+Small Ship lies in within a pixel of Daggerfall, Wayrest, Holwych, Ripmore, Isfakabi, Pencart, Aldbrugh, Gallocart,
+Wilderham, Longwich End, Longmore Field or Wartale - no voyage into or out of one counted, no cargo for one could be
+delivered, no shipwright stood there. Within SEA_RING - the open sea's reach that makes a town a port
+(`portSites.js seaBears`) - every one of the 106 has it. So the port lain at is the nearest board port within SEA_RING
+(`portSites.js:"export function boardPortAt(ports, x, y) {"` - by the crow's flight since VOYAGE-HOLD: by the ring's
+squares a tie went to the list's first, and Pencart's every pixel of water tied Longham's), handed whether or not a flagged place is within a
+pixel (`world.js:"nearPort, port: navalPortHere(), waters:"`); the berth, the shipwright and the crew's port read the two
+through one question (`navalHost.js:"const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };"`);
+and a cargo goes to a port the sea bears on within SEA_RING (`harbourBoard.js:"export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);"`)
+- all 106 now, Daggerfall, Sentinel and Wayrest among them. Left at its pixel, asked another question: `navalNearPort`'s
+other readers, the sea's traffic (`navalDirector.js factionWeights`, SEA-EASE's port weights) and its waters
+(CAPT-WATERS `watersOf`'s coastal) - who sails near a port, not whether she lies in one - and the quays' own port
+(`world.js navalHarbourNear`: the harbour it sounds stays in the book wherever she sails). The first berth of a log
+still only marks where she lies, unsaid (the office's law). `test/systems/naval/fb1020c_berthring.test.js` (the voyage on the
+real naval host and office; the twelve on ARENA2), `tools/mutants/fb1020c_berthring.json`.
 
 THE SITES (`navalHost.js siteStep`, SITE_CHECK_S apart, aboard): a held bounty's quarry is stood when the captain sails
 within SITE_REACH_PX map pixels of her waters - at the world's open water in her pixel (`world.js navalSitePoint`), else

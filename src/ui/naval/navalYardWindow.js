@@ -153,7 +153,70 @@ export function etherOfficeText(o) {
   const board = (o.rumours ?? []).map((r, i) => ({ id: `rumour:${i}`, title: 'Talk on the quay', words: r, terms: '', press: '', can: false, why: '' }));
   const c = o.chart;
   const letters = c ? [{ id: 'chart', title: 'A chart of these waters', words: c.fresh > 0 ? `${c.fresh} ${c.fresh === 1 ? 'isle' : 'isles'} your charts do not hold, marked on them.${c.can ? '' : ` ${c.why}`}` : c.why, press: `Buy - ${g(c.price)}`, can: !!c.can }] : [];
-  return { lede, board, held: [], letters, ether: true, heads: { board: ['The quay\'s talk', 'the legends of these waters'], letters: ['Charts', 'the harbormaster\'s'] } };
+  return { lede, board, held: [], letters, ether: true, heads: { board: ['The quay\'s talk', 'the legends of these waters'], letters: ['Charts', 'the harbormaster\'s'] }, wanted: o.wanted ? wantedText(o.wanted) : null, season: o.season ? seasonText(o.season) : null };
+}
+
+/**
+ * SEA-SEASON: A FREEPORT'S SECTION OF THE SEASON'S CAPTAINS, its words for its model (scenes/seaSeasonHost.js office) -
+ * pure: `{ head, lede, lists: [{ title, rows: [{ title, words }], none }], line }` - the season and its days left, the
+ * deepest voyages and the legends ended (each its rank, its captain and its figure), the player's own places and the
+ * last season's firsts.
+ * @param {any} s
+ */
+export function seasonText(s) {
+  const g = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
+  const leagues = (n) => t('sea.season.leagues', '{n, plural, one {{figure} league} other {{figure} leagues}}', { n, figure: g(n) });
+  const legends = (n) => t('sea.season.legends', '{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: g(n) });
+  const rows = (list, words) => list.map((r, i) => ({ title: `${i + 1}. ${r.name}`, words: words(r.n) }));
+  const mine = [
+    s.mine?.deep ? t('sea.season.mineDeep', 'You are {rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} for the deepest voyage ({figure}).', { rank: s.mine.deep.rank, figure: leagues(s.mine.deep.n) }) : '',
+    s.mine?.legends ? t('sea.season.mineLegends', 'You are {rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} for legends ended ({figure}).', { rank: s.mine.legends.rank, figure: legends(s.mine.legends.n) }) : '',
+  ].filter(Boolean).join(' ');
+  const firstOf = (list, words) => (list?.[0] ? `${list[0].name} (${words(list[0].n)})` : '');
+  const lastDeep = firstOf(s.last?.deep, leagues), lastLegends = firstOf(s.last?.legends, legends);
+  const last = [
+    lastDeep ? t('sea.season.lastDeep', 'Last season\'s deepest voyage: {who}.', { who: lastDeep }) : '',
+    lastLegends ? t('sea.season.lastLegends', 'Last season\'s most legends ended: {who}.', { who: lastLegends }) : '',
+  ].filter(Boolean).join(' ');
+  return {
+    head: [t('sea.season.head', 'The season\'s captains'), s.asking || !s.season ? '' : t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft })],
+    lede: s.asking ? t('sea.season.asking', 'The harbormaster is reading the season\'s boards...') : [t('sea.season.lede', 'Every captain of the realm, this season: how far past the Veil they have sailed, and how many of the six legends they have sunk or taken.'), mine, last].filter(Boolean).join(' '),
+    lists: s.asking ? [] : [
+      { title: t('sea.season.deepTitle', 'Deepest voyages'), rows: rows(s.deep ?? [], leagues), none: t('sea.season.deepNone', 'No captain has sailed past the Veil this season.') },
+      { title: t('sea.season.legendsTitle', 'Legends ended'), rows: rows(s.legends ?? [], legends), none: t('sea.season.legendsNone', 'No legend has been sunk or taken this season.') },
+    ],
+    line: s.line ?? null,
+  };
+}
+
+/**
+ * SEA-BOUNTY: A FREEPORT'S WANTED SECTION's words for its model (scenes/seaBountyHost.js office) - pure: `{ head, lede,
+ * rows: [{ id, title, words, presses: [{ label, can, n }] }], owed: { title, words, press, can } | null, mine, prizes,
+ * back, line }` - SHIP-PVP: `prizes` and `back` a wreck's prizes held for me and my hold's goods due back, each a row -
+ * each wanted captain's kills and bounty with a press for each post, the gold owed the player and its press, the bounty on
+ * the player's own head, and the last answer's line.
+ * @param {any} w
+ */
+export function wantedText(w) {
+  const g = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
+  const rows = (w.rows ?? []).map((r) => ({
+    id: r.char, title: r.name,
+    words: t('sea.bounty.row', '{kills, plural, =0 {No kills at sea of late} one {# kill at sea} other {# kills at sea}} - {gold} gold on their head', { kills: r.kills, gold: g(r.bounty) }),
+    presses: (w.posts ?? []).map((n) => ({ label: t('sea.bounty.post', 'Post {gold}', { gold: g(n) }), can: !w.busy && !(w.purse < n), n })),   // AUDIT SEA VENTURES E7: greyed past the purse
+  }));
+  return {
+    head: [t('sea.bounty.head', 'Wanted'), t('sea.bounty.headSub', 'the open sea\'s killers')],
+    lede: w.asking ? t('sea.bounty.asking', 'The harbormaster is reading the board...') : rows.length ? t('sea.bounty.lede', 'Gold posted on a captain\'s head is paid to whoever ends them at sea: a death at their hand, or a wreck at their guns. Each post is your own gold.') : t('sea.bounty.none', 'No captain of the open sea is wanted.'),
+    rows,
+    owed: w.owed > 0 ? { title: t('sea.bounty.owedTitle', 'Bounties owed you'), words: t('sea.bounty.owed', '{gold} gold for the wanted captains you ended at sea.', { gold: g(w.owed) }), press: t('sea.bounty.collect', 'Collect'), can: !w.busy } : null,
+    // AUDIT SEA VENTURES B4: my posts on heads gone, back to me by the same collect
+    refund: w.refund > 0 ? { title: t('sea.bounty.refundTitle', 'Bounties returned'), words: t('sea.bounty.refund', '{gold} gold you posted on captains who are gone, back to you.', { gold: g(w.refund) }), press: t('sea.bounty.collect', 'Collect'), can: !w.busy } : null,
+    mine: w.mine > 0 ? t('sea.bounty.mine', 'A bounty of {gold} gold stands on your own head.', { gold: g(w.mine) }) : null,
+    // SHIP-PVP: a wreck's prizes held for me to collect, and my hold's goods a killer left, mine to reclaim
+    prizes: w.prizes > 0 ? { title: t('sea.pvp.prizesTitle', 'Prizes taken at sea'), words: t('sea.pvp.prizes', '{n, plural, one {# piece} other {# pieces}} from wrecks you boarded, held for you.', { n: w.prizes }), can: !w.busy, press: t('sea.bounty.collect', 'Collect') } : null,
+    back: w.back > 0 ? { title: t('sea.pvp.backTitle', 'Your hold\'s goods'), words: t('sea.pvp.back', '{n, plural, one {# piece} other {# pieces}} of your hold, never collected by the captain who boarded you.', { n: w.back }), press: t('sea.pvp.reclaim', 'Reclaim'), can: !w.busy } : null,
+    line: w.line ?? null,
+  };
 }
 
 /**
@@ -280,6 +343,14 @@ export function mountNavalYardWindow(host, deps) {
   boardSec.append(boardHead, boardList);
   const heldSec = el('section', 'dfnaval-sec'), heldHead = el('h3', 'dfnaval-sechead'), heldList = el('ul', 'dfnaval-holdlist');
   heldHead.append(el('span', null, 'Your contracts'), el('span', 'dfnaval-count', 'under way'));
+  // SEA-BOUNTY: a freeport's Wanted section - the open sea's killers and the gold on their heads (wantedText)
+  const wantedSec = el('section', 'dfnaval-sec'), wantedHead = el('h3', 'dfnaval-sechead'), wantedLede = el('p', 'dfnaval-lede'), wantedList = el('ul', 'dfnaval-holdlist'), wantedLine = el('p', 'dfnaval-note');
+  wantedHead.append(el('span'), el('span', 'dfnaval-count'));
+  wantedSec.append(wantedHead, wantedLede, wantedList, wantedLine);
+  // SEA-SEASON: a freeport's section of the season's captains - the deepest voyages and the legends ended (seasonText)
+  const seasonSec = el('section', 'dfnaval-sec'), seasonHead = el('h3', 'dfnaval-sechead'), seasonLede = el('p', 'dfnaval-lede'), seasonList = el('ul', 'dfnaval-holdlist'), seasonLine = el('p', 'dfnaval-note');
+  seasonHead.append(el('span'), el('span', 'dfnaval-count'));
+  seasonSec.append(seasonHead, seasonLede, seasonList, seasonLine);
   heldSec.append(heldHead, heldList);
   const lettersSec = el('section', 'dfnaval-sec'), lettersHead = el('h3', 'dfnaval-sechead'), lettersList = el('ul', 'dfnaval-holdlist');
   lettersHead.append(el('span', null, 'Letters'), el('span', 'dfnaval-count', 'a rank\'s favours'));
@@ -299,7 +370,7 @@ export function mountNavalYardWindow(host, deps) {
   };
   /** A section's head words: the Bay's own, or an Eltheric harbourmaster's (`heads`). */
   const headWords = (headEl, words) => { const [a, b] = headEl.children; if (a && b && words) { a.textContent = words[0]; b.textContent = words[1]; } };
-  body.append(tabs, lede, sec, pSec, oLede, boardSec, heldSec, lettersSec, tLede, tradeSec);
+  body.append(tabs, lede, sec, pSec, oLede, boardSec, wantedSec, seasonSec, heldSec, lettersSec, tLede, tradeSec);
   win.append(head, body);
 
   let alive = true;
@@ -321,6 +392,50 @@ export function mountNavalYardWindow(host, deps) {
     for (const c of [...lettersList.children]) c.remove();
     for (const x of ot.letters) lettersList.append(officeRow(x.title, x.words, null, x.press, x.can, () => { const r = x.id === 'marque' ? o.buyMarque() : x.id === 'chart' ? o.buyChart() : o.buyCarrack(); note = r?.text ? { text: r.text, warn: !r.ok } : null; render(); }));   // ETHER-SEA: a chart of these waters
     lettersSec.style.display = ot.letters.length ? '' : 'none';
+    renderWanted(ot.wanted, o.wanted);   // SEA-BOUNTY
+    renderSeason(ot.season);   // SEA-SEASON
+  };
+  /** SEA-SEASON: the season's captains - shown with a freeport's model online; each board's title, then its rows. */
+  const renderSeason = (st) => {
+    seasonSec.style.display = st ? '' : 'none';
+    if (!st) return;
+    headWords(seasonHead, st.head);
+    seasonLede.textContent = st.lede;
+    for (const c of [...seasonList.children]) c.remove();
+    for (const list of st.lists) {
+      seasonList.append(el('li', 'dfnaval-item more', list.title));
+      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));
+      for (const r of list.rows) seasonList.append(officeRow(r.title, r.words));
+    }
+    seasonLine.textContent = st.line?.text ?? '';
+    seasonLine.className = `dfnaval-note${st.line?.warn ? ' warn' : ''}`;
+    if (st.line) seasonLine.removeAttribute('hidden'); else seasonLine.setAttribute('hidden', '');
+  };
+  /** SEA-BOUNTY: the Wanted section - shown with a freeport's model online, its presses the bounty's own (a post, a collect;
+   *  their answers said on the section's line when they come). */
+  const renderWanted = (wt, w) => {
+    wantedSec.style.display = wt ? '' : 'none';
+    if (!wt) return;
+    headWords(wantedHead, wt.head);
+    wantedLede.textContent = [wt.lede, wt.mine].filter(Boolean).join(' ');
+    for (const c of [...wantedList.children]) c.remove();
+    if (wt.owed) wantedList.append(officeRow(wt.owed.title, wt.owed.words, null, wt.owed.press, wt.owed.can, () => w.collect()));
+    if (wt.refund) wantedList.append(officeRow(wt.refund.title, wt.refund.words, null, wt.refund.press, wt.refund.can, () => w.collect()));   // AUDIT SEA VENTURES B4
+    if (wt.prizes) wantedList.append(officeRow(wt.prizes.title, wt.prizes.words, null, wt.prizes.press, wt.prizes.can, () => w.collectPrizes()));   // SHIP-PVP
+    if (wt.back) wantedList.append(officeRow(wt.back.title, wt.back.words, null, wt.back.press, wt.back.can, () => w.reclaim()));
+    for (const r of wt.rows) {
+      const li = el('li', 'dfnaval-item dfnaval-officerow');
+      li.setAttribute('data-row', r.id);
+      const text = el('div');
+      text.append(el('b', null, r.title), el('span', null, r.words));
+      const presses = el('div', 'dfnaval-presses');
+      for (const p of r.presses) { const b = button(p.label, 'dfnaval-btn dfnaval-tradebuy', () => w.post({ char: r.id, name: r.title }, p.n)); able(b, p.can); presses.append(b); }
+      li.append(text, presses);
+      wantedList.append(li);
+    }
+    wantedLine.textContent = wt.line?.text ?? '';
+    wantedLine.className = `dfnaval-note${wt.line?.warn ? ' warn' : ''}`;
+    if (wt.line) wantedLine.removeAttribute('hidden'); else wantedLine.setAttribute('hidden', '');
   };
   const renderTrade = (x) => {
     const xt = exchangeText(x);
@@ -356,7 +471,7 @@ export function mountNavalYardWindow(host, deps) {
     tradeTab.className = `dfnaval-btn${tab === 'trade' ? ' on' : ''}`;
     const onYard = tab === 'yard';
     for (const n of [lede, sec, pSec]) n.style.display = onYard ? '' : 'none';
-    for (const n of [oLede, boardSec, heldSec, lettersSec]) n.style.display = tab === 'office' ? '' : 'none';
+    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';
     for (const n of [tLede, tradeSec]) n.style.display = tab === 'trade' ? '' : 'none';
     const t = yardText(m);
     h2.textContent = t.title;

@@ -397,6 +397,9 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // MODS-ONLINE-4: the host's foes are the party's foes.
   meanerMonsters: Object.freeze({ Enabled: true }),
   pcaao: Object.freeze({ Enabled: true }),
+  // DEX0: the same reading for Daggerfall Enemy Expansion - which enemy stands is the table's at its spawn, and a peer
+  // fights the owner's foes; a player with it off would face Goblins and Trolls they could not see standing in a room.
+  'daggerfall-enemy-expansion': Object.freeze({ Enabled: true }),
   // MODS-ONLINE-4: a roll that leaves the roller's hands.
   unleveledLoot: Object.freeze({ Enabled: true }),
   // RRI1/RR1 (merged 2026-09-23), asked MODS-ONLINE-4's question - "does
@@ -501,6 +504,7 @@ export const ONLINE_PLAYERS_OWN_MODS = [
 export const ONLINE_WHOLE_MODS = Object.freeze({
   meanerMonsters: Object.freeze([]),
   pcaao: Object.freeze([]),
+  'daggerfall-enemy-expansion': Object.freeze([]),   // DEX0: the troll's getting back up is the room's too - online it does, the mod's shipped way
   unleveledLoot: Object.freeze([]),
   'roleplay-realism-items': Object.freeze([]),
   'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),   // who stands behind a counter and in a house: looks

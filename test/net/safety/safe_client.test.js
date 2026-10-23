@@ -708,3 +708,17 @@ test('AUDIT SAFE DOC-4 THE REPORTS REACH A MODERATOR IN THE GAME: /cases lists t
   await settle();
   for (const c of ['/mute', '/ban', '/strikes', '/cases', '/case', '/dismiss']) assert.ok(lines().some((l) => l.startsWith(c)), `/modhelp names ${c}`);
 });
+
+test('LEASE1 THE PAGE HANDS ITS HUB\'S LEASE TO EVERY ROOM IT HOLDS (net/roomLease.js): the hub\'s `lease` goes to each lease room whose relay knows the frame, ahead of the next frame the page sends there - never back to the hub, never to a relay before world242, which closes on it (mutants: the lease kept; handed to an old relay)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const hub = welcomedSession(FakeWS, sockets, CHAT_WORLD_ROOM, { v: 'world242' }), trade = welcomedSession(FakeWS, sockets, 'chat:trade', { v: 'world242' }), old = welcomedSession(FakeWS, sockets, 'chat:lfg', { v: 'world241' });
+  const host = createChatSafetyHost({ log: () => new ChatLog(), links: () => [hub.s, trade.s, old.s], storage: { getItem: () => null }, doc: fakeDocument(), touch: false, register: () => () => {}, win: fakeWindow() });
+  await host.start();
+  const leases = (ws) => ws.sent.map((f) => JSON.parse(f)).filter((f) => f.t === 'lease' && f.l);
+  hub.ws.receive({ t: 'lease', l: 'body.mac' });
+  await settle();
+  for (const l of [hub, trade, old]) l.s.sendChat('anyone selling iron?');
+  assert.deepEqual(leases(trade.ws), [{ t: 'lease', l: 'body.mac' }]);
+  assert.deepEqual(leases(hub.ws), [], 'the hub is handed none back');
+  assert.deepEqual(leases(old.ws), [], 'nor a relay that closes on the frame');
+});

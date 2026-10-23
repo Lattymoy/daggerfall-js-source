@@ -116,7 +116,7 @@ import { egFightPieceAt } from './egLaw.js';   // THE ASCENT - HEIGHT: a champio
 import { egLawOf, EG_BROKEN_LAW } from './egLaw.js';   // EG-PERFECT - THE BROKEN WAY (spec law 10): a fight hall's trial awaits its company
 // EG-H1 (EG8d): WHAT THE RELAY JUDGES - THE FAIR TRAIL and its time law (net/eliteGates/egFair.js), one judge for every shape and the
 // hall's own hazards (net/bossRef.js), and the body counted (net/bossBody.js) - the member's one life
-import { egFairNew, egFairPose, egFairOk, egFairRefuses, egFairCross, egRideHolds, egRideAt, egCrossMinMs, egFallenAt, egTrailAt, egFightFloorAt, EG_POSE_NEAR_MS, EG_SUPPORT_UP_M, EG_SUPPORT_DOWN_M, EG_TS_LAG_MAX_MS } from './egFair.js';
+import { egFairNew, egFairPose, egFairOk, EG_FAIR_WORDS, egFairRefuses, egFairCross, egRideHolds, egRideAt, egCrossMinMs, egFallenAt, egTrailAt, egFightFloorAt, EG_POSE_NEAR_MS, EG_SUPPORT_UP_M, EG_SUPPORT_DOWN_M, EG_TS_LAG_MAX_MS } from './egFair.js';
 import { egCompanyTag, EG_SHARE_WHOLE, EG_MEASURES, EG_MEASURE_MAX } from './egReceipt.js';   // EG-ZA: the company, the share and the measures a receipt carries
 import { judgePlace } from '../bossRef.js';
 import { bodyStruck, bodySaid, bodyHealed, bodyLife } from '../bossBody.js';
@@ -344,6 +344,23 @@ function doorOpener(B, spec, inHall) {
   if (A) A.wake = 1;
   return at[0];
 }
+/**
+ * FIELD BUGS 2026-10-20f (DOOR-WORD; bible/01-Overview/bugs/Field-Bugs-2026-10-20f.md, ilovemybonk: "it seemed the game doesnt
+ * register i made it to the end") - A MEMBER THE DOOR WILL NOT TAKE IS TOLD WHY: standing at the door in the hall it was heard
+ * arriving in, on a trail the door refuses (fairOf - broken since the last island, or crossed too much unseen), it is told
+ * once a hall (`efair`, to it alone: `w` the break's own word - `speed`, `air`, `void` - else `blind`). The door, `down` and
+ * every pose-gated credit refused it without a word: the member stood at the door, the objective still said *Cross.*, and
+ * nothing said what was wanted.
+ */
+function doorWord(B, spec, inHall, out) {
+  for (const b of inHall) {
+    const m = B.mem[b.sub];
+    if (!m || m.hereH !== B.h || m.downH === B.h || m.fairSaid === B.h || !egAtDoor(spec, b.x, b.z, b.y) || fairOf(B, b.sub)) continue;
+    const A = fairOfMember(B, b.sub);
+    m.fairSaid = B.h;
+    out.push({ k: 'efair', w: A && A.brk > 0 && EG_FAIR_WORDS.includes(A.why) ? A.why : 'blind', to: b.sub });
+  }
+}
 /** EG-H1: the room was woken (a new instance read the breach from storage) - after it, a hall woken before it opens its
  *  door on the first arrival when no saved trail is fair (doorOpener). */
 export function egFairWoke(B, now) { if (B && !B.end) B.fwake = now; }
@@ -488,6 +505,10 @@ function heraldOwe(B, now, ev) {
 }
 /** The company's entrants, in its order: `[sub, m]`. */
 const entrants = (B) => B.co.map((c) => [c.sub, B.mem[c.sub]]).filter(([, m]) => m?.in);
+/** FIELD BUGS 2026-10-20d LONE-HERALD: the company a Redoubt's news names - its entrants (`n`, the Descent's count, section 20)
+ *  and the name its post leads with (`o`): the opener's where the opener entered, else the first entrant's - an opener who never
+ *  stepped in (AUDIT EG IV lane3 #11) is not of the company that went, alone or not (AUDIT FB1020d L1-1). */
+const heraldCompany = (B) => { const E = entrants(B), opener = E.some(([sub]) => sub === B.s); return { n: E.length, o: opener || !E.length ? B.o ?? '' : E[0][1].name ?? '' }; };
 
 /**
  * A MEMBER FALLS (section 16.5): a death, or EG_ABSENT_TRIAL_MS gone in a trial. Their Reliquaries are lost; they become a
@@ -1306,8 +1327,9 @@ function redoubt(B, now, rng, out) {
   // EG-E3: THE HERALD'S NEWS - a Valkynaz's Redoubt (the hub says every tenth, the first tenth ever as First of the Spire,
   // and a band passed whose seal a deploy lifted), and a Court felled alone, once a member a breach
   // AUDIT EG V (L8-7): its seconds are from the breach's first wake - Hall 1's only for a breach begun there, so the start (`ew`)
-  // rides with them and the post says it
-  if (valk) heraldOwe(B, now, { k: 'rd', w, h: B.h, t: secs(now - B.wk), ew: B.ew ?? 0, o: B.o ?? '', by: earners.map(([, m]) => m.name ?? '') });
+  // rides with them and the post says it. FIELD BUGS 2026-10-20d LONE-HERALD: and the company's size, so a company of one is
+  // posted as one ("Mara took Redoubt 20 ... alone"), never as "<name>'s company"
+  if (valk) heraldOwe(B, now, { k: 'rd', w, h: B.h, t: secs(now - B.wk), ew: B.ew ?? 0, ...heraldCompany(B), by: earners.map(([, m]) => m.name ?? '') });
   if (lone && !L[0][1].lbSaid) { L[0][1].lbSaid = 1; heraldOwe(B, now, { k: 'lb', n: L[0][1].name ?? '', lk, c: entrants(B).length }); }
   if (valk) B.resp += EG_RESPITE_VALK_MS;
   // AUDIT EG V (L3-3, L8-3; section 16.1 - "an earner, in that circle"): the circle's damage and parts begun again for EVERY
@@ -1461,6 +1483,7 @@ export function egStep(B, now, bodies, rng) {
     if (B.F) fragStep(B, B.F, spec, now, inHall, inHall, rng, out);   // LAYER THREE: an alcove, a cache, a niche taken in the closing too
     if (spec.fork && forkClosing(B, spec, inHall, now)) out.push(egStageWord(B, now));   // EG-ZC: the Low Road's closing on either road
     goldRun(B, spec, now, out);
+    doorWord(B, spec, inHall, out);   // FIELD BUGS 2026-10-20f DOOR-WORD: a step through it refused (egDown) is told why
     const L = living(B);
     if (now >= B.su || (L.length && L.every(([, m]) => m.downH === B.h))) pull(B, now, out);
     return out;
@@ -1586,6 +1609,7 @@ function trial(B, spec, now, inHall, rng, out) {
     captiveStep(B, F, rng, out);   // AUDIT EG V (L3-19): a span's Captive freed
     const first = doorOpener(B, spec, inHall);
     if (first) door(B, spec, now, out, inHall, first.sub);   // EG-H1: a fair arrival opens it (section 21) - AUDIT EG V (h): and is named, THE TRAIL's
+    else doorWord(B, spec, inHall, out);   // FIELD BUGS 2026-10-20f DOOR-WORD: an arrival it will not take is told why
     if (span) { egBlowsStep(F, view, now, here, out, egWatchOf(B)); fightTail(F, now, out); }
     else egMovesOut(F, out);
     return;
@@ -1732,6 +1756,7 @@ function trial(B, spec, now, inHall, rng, out) {
   if (kind !== 'court' && egLordsOf(F).length) out.push(...EG_SEAM.step(egLordsFight(F, spec, lordCtx, now), now, here, rng));
   if (kind === 'deepway' && F.chamberDone && !F.saidDone) { F.saidDone = 1; out.push({ k: 'esay', w: 'chamberdone' }); }
   if (kind === 'deepway' && F.chamberDone && doorOpener(B, spec, inHall)) { door(B, spec, now, out); return; }   // EG-H1: a fair arrival
+  if (kind === 'deepway' && F.chamberDone) doorWord(B, spec, inHall, out);   // FIELD BUGS 2026-10-20f DOOR-WORD
   captiveStep(B, F, rng, out);
   hazards(B, F, spec, now, here, rng, out);
   legionCtx.hunted = huntStep(B, F, view, spec, now, inHall, out);   // EG-ZB (section 11.7): off the floors past six seconds, hunted
@@ -1934,14 +1959,19 @@ export function egBlow(B, sub, m, pose, now) {
   const mm = B.mem[sub], F = B.F;
   if (!mm || !mm.in || !mm.alive || mm.home || B.sg !== 'trial' || !F || !pose || m.k !== 'hit') return out;
   const spec = specOf(B), p = local(spec, { sub, sx: pose.sx, y: pose.y, z: pose.z, dead: false });
-  if (!p || egFairRefuses(fairOfMember(B, sub), now)) return out;   // EG-H1: a second break of the fair trail in a hall refuses its hits a while
-  const body = egBodyById(F, m.i);
+  const body = p ? egBodyById(F, m.i) : null;
   if (!body) return out;
+  // FIELD BUGS 2026-10-20f (LANDED-WORD; bible/01-Overview/bugs/Field-Bugs-2026-10-20f.md, ilovemybonk: "ive dumped a literal
+  // million damage into a redoubt 16 boss and it says at the end it only took 31k"): WHAT THE BLOW LANDED, TO ITS STRIKER ALONE
+  // (`eland`) - its screen's number, the duel's law (INT8: a miss said at once, a hit at the referee's word). The screen said
+  // the claim, and the purse, the lord's weight and its health decide what lands: a refused blow lands nothing and says so
+  const land = (d) => { out.push({ k: 'eland', i: m.i, d: Math.max(0, Math.round(d)), to: sub }); return out; };
+  if (egFairRefuses(fairOfMember(B, sub), now)) return land(0);   // EG-H1: a second break of the fair trail in a hall refuses its hits a while
   // EG-ZB (sections 11.7 and 21): A BLOW IS STRUCK FROM THE FIGHT GROUND (net/eliteGates/egWalkGraph.js egFightView) - a pose on
   // traversal ground (a step, a ledge, a side span, the top of an arch's wall over the floor) strikes nothing; an object
   // standing off it (a false wall in its alcove) is struck from beside it, as before (net/eliteGates/egBodies.js egHitBody)
   const view = egFightView(spec);
-  if (egStruckOff(view, body, p.x, p.y, p.z)) return out;   // THE ASCENT: the object's own floor by its feet; FIELD BUGS 2026-10-18f TURNED-BLOW: the rule moved into egBodies.js egStruckOff, the one law every screen asks too
+  if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);   // THE ASCENT: the object's own floor by its feet; FIELD BUGS 2026-10-18f TURNED-BLOW: the rule moved into egBodies.js egStruckOff, the one law every screen asks too
   const here = egPosedHere(B);   // AUDIT EG V (L2-2): the living company by its poses of this hall
   mm.pose = { x: p.x, z: p.z, h: B.h };   // AUDIT EG V (L3-22, L2-2): the hall it struck in, as egStep keeps a pose (a fall's Memento and egPosedHere read it)
   // AUDIT EG IV (lane1 #19): COUNTERSTROKE ARMED AT THE BLOW - a lord's blow landed within EG_COUNTER_M of this member since the
@@ -1959,9 +1989,10 @@ export function egBlow(B, sub, m, pose, now) {
   // EG-ZK (section 13.1): A BLOW ON A LORD THROUGH THE SEAM - joined (the director's admission, a lord standing), then the
   // gate's hand and purse times the lord's own weight, and what lands told the lord (its words in `out`)
   const said0 = out.length, lf = body.role === EG_ROLE.lord ? egLordsFight(F, spec, {}, now) : null;
-  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home })) return out;
+  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home })) return land(0);
   const r = lf ? EG_SEAM.hit(lf, sub, dm, m.r, p, now, m.q, { i: m.i, p: mm, x: mult, bx: vx.bx, name: mm.name, here, out, threatX: egThreatX(mm) }) : egHitBody(F, spec, mm, m.i, dm, m.r, p, now, m.q, mult, vx.bx);
   const got = r.got;
+  land(got);   // LANDED-WORD: told first, before what the blow's landing says to the room
   // a Shielded elite (section 8.7): its shield - a quarter of its health - takes the blows from behind first
   if (got) egShieldSoak(F, body, got, out);
   if (!got || !r.b) return out;

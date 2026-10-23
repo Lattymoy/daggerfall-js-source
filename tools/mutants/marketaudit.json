@@ -38,8 +38,8 @@
   {
     "name": "MARKET-AUDIT-S4-family-after-cutoff",
     "file": "server-account/src/market.js",
-    "old": "      AND (?2 IS NULL OR material IN (SELECT value FROM json_each(?2))) ORDER BY price DESC, at LIMIT ${MARKET_SHOWN}`).bind(nowS, familyKeys)]);",
-    "new": "      ORDER BY price DESC, at LIMIT ${MARKET_SHOWN}`).bind(nowS)]);",
+    "old": "    const from = `FROM market_orders WHERE state = 'open' AND expires_at > ?1\n      AND (?2 IS NULL OR material IN (SELECT value FROM json_each(?2)))`;",
+    "new": "    const from = `FROM market_orders WHERE state = 'open' AND expires_at > ?1 AND (?2 IS NULL OR 1 = 1)`;",
     "tests": [
       "test/net/marketaudit.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "MARKET-AUDIT-U6-word-kept",
     "file": "src/ui/marketTab.js",
-    "old": "  const go = (view) => { ui.hush?.(); st.view",
-    "new": "  const go = (view) => { st.view",
+    "old": "    ui.hush?.(); st.view = view;",
+    "new": "    st.view = view;",
     "tests": [
       "test/net/marketaudit.test.js"
     ]

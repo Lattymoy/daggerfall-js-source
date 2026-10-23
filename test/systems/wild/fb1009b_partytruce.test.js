@@ -47,7 +47,7 @@ test('PARTY-TRUCE: the host holds a party left out of the fight - wildFair asks 
   // party and its truce inside the one kin law, net/wild/wildRef.js wildKin, beside the duel and the guild
   assert.match(fair, /if \(wildKin\(\{ party: !!social\?\.isPartyPeer\(peerId\) \|\| _wildTruce\.holds\(peerId, Date\.now\(\)\),/);
   const frame = w.slice(w.indexOf('  const wildFrame = () => {'), w.indexOf('    if (playerEntity.health > 0 && !modes?.deathUp?.()) {', w.indexOf('  const wildFrame = () => {')));
-  assert.match(frame, /if \(_wildTruce\.frame\(social\?\.partyPeers\?\.\(\) \?\? new Set\(\), Date\.now\(\)\)\.length && here\) townTalk\.say\(WILD_TEXT\.truce\);/);
+  assert.match(frame, /if \(_wildTruce\.frame\(social\?\.partyPeers\?\.\(\) \?\? new Set\(\), Date\.now\(\)\)\.length && here\) townTalk\.say\(zoneWord\('truce'\)\);/);   // PIN MOVED (AUDIT SEA VENTURES C7): the ground's own words
   assert.match(w, /\n {2}const _wildTruce = createPartyTruce\(\);/);
   // PIN MOVED (INT9, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the defender's client resolves no blow now -
   // the RELAY referees the zone and asks the hub's party and its truce of every blow (the attacker's word is never enough)

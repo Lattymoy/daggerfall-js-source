@@ -263,6 +263,6 @@ test('ETHER-SHIPS by source: the director told the sea (its band and its legend)
   assert.match(host, /deep: !!entry\.deep \|\| !!entry\.ether \}\);/, 'her casks the deep\'s');
   const world = read('src/scenes/world.js');
   assert.match(world, /legendHere: \(px, py, o\) => etherHost\.legendHere\(px, py, o\),/);
-  assert.match(world, /sites: \(\) => \{ const p = playerTravelPixel\(\); return etherSea && inEther\(p\.x, p\.y\) \? \[\.\.\.harbourOffice\.sites\(\), \.\.\.etherHost\.sites\(p\.x, p\.y\)\] : harbourOffice\.sites\(\); \},/);
+  assert.match(world, /sites: \(\) => \{ const p = playerTravelPixel\(\); return etherSea && inEther\(p\.x, p\.y\) \? \[\.\.\.harbourOffice\.sites\(\), \.\.\.etherHost\.sites\(p\.x, p\.y\), \.\.\.seaVentures\.wrackSites\(p\.x, p\.y\)\] : harbourOffice\.sites\(\); \},/);   // PIN MOVED (SEA-EVENTS, 2026-10-22): and the Aether Storm's wrack
   assert.match(world, /waters: ether \? 'ether' : watersOf\(\{ nearPort, portPx: navalPortPx\(\) \}\), ether,/);
 });

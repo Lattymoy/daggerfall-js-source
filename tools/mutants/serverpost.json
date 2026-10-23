@@ -233,8 +233,8 @@
   {
     "name": "SERVERPOST-the-dropped-batch-a-refusal",
     "file": "server-account/src/index.js",
-    "old": "'realm-needed': 409, server: 503 });",
-    "new": "'realm-needed': 409 });",
+    "old": "'realm-needed': 409, server: 503,",
+    "new": "'realm-needed': 409,",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],

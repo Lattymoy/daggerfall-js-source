@@ -124,6 +124,7 @@ export function ensureSdHallArt(renderer) {
 
 /** The short way from hour `from` to hour `to` (-6 to 6). */
 const way = (from, to) => ((((to - from) % 12) + 18) % 12) - 6;
+export { way as sdHandWay };   // FIELD BUGS 2026-10-20f ORRERY-STONES: the Spire's hands go the Hour's way (scenes/eliteGates/egOrrery.js)
 
 /**
  * The Orrery's hall for slot `s`. `onTurn(i, a)` sends a turn (true when it left); `say(text)` puts a line up; `clock()`

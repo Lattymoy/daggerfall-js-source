@@ -114,12 +114,17 @@ void main() {
   o = vec4(col * fire + mix(vec3(0.3, 0.03, 0.0), vec3(0.22, 0.15, 0.03), th) * tint * (1.0 - fire), fire + tint * (1.0 - fire));   // premultiplied
 }`;
 
+/** SHADER-STALL: the pass's one program, as its constructor builds it - what a host starts ahead of the build
+ *  (render/glProgram.js startPrograms). */
+export const GATE_VEIL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[GATE_VEIL_VS, GATE_VEIL_FS]]));
+
 /** The veil's pass: one triangle over a canvas of its own. `draw(w, h, t, v, theme)` - `v` a veilAt answer, `theme` 0
  *  the fire's, 1 the Hour's brass (AUDIT SD II, L6 F8). */
 export class GateVeilRenderer {
   constructor(gl) {
     this.gl = gl;
-    this.prog = buildProgram(gl, GATE_VEIL_VS, GATE_VEIL_FS, 'gate veil');
+    const [[vs, fs]] = GATE_VEIL_PROGRAMS;
+    this.prog = buildProgram(gl, vs, fs, 'gate veil');
     this.u = {};
     for (const n of ['uRes', 'uTime', 'uFront', 'uCover', 'uHeat', 'uTheme']) this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();

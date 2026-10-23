@@ -218,8 +218,8 @@
   {
     "name": "RENOWN4-the-row-never-placed",
     "file": "src/ui/enhanced/enhancedHud.js",
-    "old": "  renown.append(renownBox, renownTrack);\n  bottom.append(renown);\n",
-    "new": "  renown.append(renownBox, renownTrack);\n",
+    "old": "  renown.append(adv.skill.cell, adv.firm.cell);\n  bottom.append(renown);\n",
+    "new": "  renown.append(adv.skill.cell, adv.firm.cell);\n",
     "tests": [
       "test/server/renown4.test.js"
     ]

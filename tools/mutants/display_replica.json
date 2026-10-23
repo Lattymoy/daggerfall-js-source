@@ -12,8 +12,8 @@
  {
   "name": "DISPLAYREPLICA-board-dropped",
   "file": "server-account/src/service.js",
-  "old": "  ['/v1/saves', 'GET'],\n  ['/v1/arena/board', 'POST'],\n]);",
-  "new": "  ['/v1/saves', 'GET'],\n]);",
+  "old": "  ['/v1/saves', 'GET'],\n  ['/v1/arena/board', 'POST'],\n  ['/v1/festival/town'",
+  "new": "  ['/v1/saves', 'GET'],\n  ['/v1/festival/town'",
   "tests": [
    "test/server/display_replica.test.js"
   ],

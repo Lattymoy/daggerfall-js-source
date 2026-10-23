@@ -27,7 +27,7 @@ test('MWNPC15-1 the werewolf is a person in its beast form: its look a person\'s
   assert.equal(npcShown(foeActor(foe(M.Thief))).wb, 0, 'a person on two legs');
   assert.equal(npcShown(foeActor(foe(M.Rat))).wb, 0, 'a creature is no wolf');
   assert.ok(CREATURE_MATCH[M.Werewolf].miss, 'never a creature');
-  assert.equal(CREATURE_MATCH[M.Wereboar].miss, 'no wereboar', 'Bloodmoon has no boar');
+  assert.equal(CREATURE_MATCH[M.Wereboar].miss, 'no wereboar', 'Bloodmoon has no wereboar (its boar, bm_frost_boar, is a beast)');
   const r = rosterLook({}, { mobileType: M.Werewolf, seed: 2 });
   assert.equal(r.wolf, true);
   assert.equal(r.items.filter((it) => it.group === 'Weapons').length, 0, 'its claws its own');

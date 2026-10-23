@@ -110,7 +110,7 @@
   {
     "name": "CARP-YARD-the-benchs-box-lost",
     "file": "src/scenes/merchantYardsHost.js",
-    "old": "          if (P.bench) add('bench', P.bench);   // CARP-YARD: the joinery's workbench\n",
+    "old": "      if (P.bench) add('bench', P.bench);   // CARP-YARD: the joinery's workbench\n",
     "new": "",
     "tests": [
       "test/systems/carpyard1.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "CARP-YARD-the-reach-unread",
     "file": "src/scenes/merchantYardsHost.js",
-    "old": "        if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH && Math.abs(f[1] - y.at[1]) <= YARD_BENCH_RISE) return y.site;",
-    "new": "        if (Math.abs(f[1] - y.at[1]) <= YARD_BENCH_RISE) return y.site;",
+    "old": "          if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH) return y.site;",
+    "new": "          return y.site;",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CARP-YARD-the-rise-unread",
     "file": "src/scenes/merchantYardsHost.js",
-    "old": "        if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH && Math.abs(f[1] - y.at[1]) <= YARD_BENCH_RISE) return y.site;",
-    "new": "        if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH) return y.site;",
+    "old": "        if (!y.at || !yardPoints(y.site.kind).bench || Math.abs(f[1] - y.at[1]) > YARD_BENCH_RISE) continue;",
+    "new": "        if (!y.at || !yardPoints(y.site.kind).bench) continue;",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]

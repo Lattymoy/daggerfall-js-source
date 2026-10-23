@@ -1,0 +1,122 @@
+[
+  {
+    "name": "STREETS-TAB-the-door-hands-no-streets",
+    "file": "src/scenes/world.js",
+    "old": "    _travelMap = buildTravelMapWindow({ ...travelTown(), onTravel: (pick, opts, computed) => {",
+    "new": "    _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => {",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the report as it stood: the travel key's window the bay alone, a townsperson's mark on no sheet it holds"
+  },
+  {
+    "name": "STREETS-TAB-the-mode-unread",
+    "file": "src/scenes/world.js",
+    "old": "    get modes() { return modes; },\n    get partyOnMaps() { return partyOnMaps; },",
+    "new": "    get partyOnMaps() { return partyOnMaps; },",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the module handed no mode: every read answers the street, indoors and in a dungeon too"
+  },
+  {
+    "name": "STREETS-TAB-the-M-key-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    toggleAutomap: () => toggleExteriorAutomap(),",
+    "new": "    toggleAutomap: () => {},",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the M key opens nothing on the streaming host"
+  },
+  {
+    "name": "STREETS-TAB-no-town-handed",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    return { town: townSheetBag(here.deps), where: here.deps.where, openOnSheet: 'world' };",
+    "new": "    return {};",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "standing in a town, the travel key's window still the bay alone"
+  },
+  {
+    "name": "STREETS-TAB-opened-on-the-streets",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "where: here.deps.where, openOnSheet: 'world' };",
+    "new": "where: here.deps.where, openOnSheet: 'town' };",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the travel key opens on the streets in a town - not where it always has"
+  },
+  {
+    "name": "STREETS-TAB-no-ask",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "where: here.deps.where, openOnSheet: 'world' };",
+    "new": "where: here.deps.where, openOnSheet: null };",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "no sheet asked for: the town context's first, the streets, and the travel key opens there"
+  },
+  {
+    "name": "STREETS-TAB-no-place",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    return { town: townSheetBag(here.deps), where: here.deps.where, openOnSheet: 'world' };",
+    "new": "    return { town: townSheetBag(here.deps), openOnSheet: 'world' };",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "no place said: the wilderness's offer, the bay alone, and the streets handed for nothing"
+  },
+  {
+    "name": "STREETS-TAB-handed-indoors",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    if ((host.modes?.mode ?? 'exterior') !== 'exterior') return {};\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the streets handed indoors and in a dungeon, the player's frame the building's"
+  },
+  {
+    "name": "STREETS-TAB-the-travel-key-own-bag",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    return { town: townSheetBag(here.deps), where:",
+    "new": "    return { town: townSheetBag({ ...here.deps, discovered: () => [] }), where:",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the travel key's streets from a bag of their own: the M key's marks not on them"
+  },
+  {
+    "name": "STREETS-TAB-the-M-key-own-bag",
+    "file": "src/ui/town/townMapDoor.js",
+    "old": "      town: townSheetBag(deps),   // FB1020c STREETS-TAB",
+    "new": "      town: { ...townSheetBag(deps), blocks: deps.blocks ?? [] },   // FB1020c STREETS-TAB",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the M key's sheet built beside the one bag: its rows without the town's yards, the two keys' streets apart"
+  },
+  {
+    "name": "STREETS-TAB-homes-unasked-at-the-travel-key",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    onlineHomes?.ensure(here.mapId);   // TOWN-MARKS: as at the town key",
+    "new": "    void 0;   // TOWN-MARKS: as at the town key",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "a town heard from long ago never asked again from the travel key's streets"
+  },
+  {
+    "name": "STREETS-TAB-the-M-key-in-the-wild",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    if (!here) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/fb1020c_streetstab.test.js"
+    ],
+    "why": "the M key in the wild reads a town that is not there"
+  }
+]

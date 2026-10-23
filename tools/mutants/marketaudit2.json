@@ -155,7 +155,7 @@
   {
     "name": "MARKET-AUDIT2-redraw-under-list",
     "file": "src/ui/marketTab.js",
-    "old": "    if (a?.tagName === 'SELECT' && a.classList?.contains?.('market-select')) {",
+    "old": "    if (a?.tagName === 'SELECT' && a.classList?.contains?.('market-select') && a.getAttribute?.('data-chosen') !== '1') {",
     "new": "    if (false) {",
     "tests": [
       "test/systems/marketaudit2.test.js"

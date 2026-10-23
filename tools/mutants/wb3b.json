@@ -291,7 +291,7 @@
   {
     "name": "WB3b-the-braziers-carried",
     "file": "src/world/gate/gateArena.js",
-    "old": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); });",
+    "old": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); if (l.carried) carried[n + i] = 1; });   // GATE-MIX: a flash's mask - no shadow caster",
     "new": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); carried[n + i] = 1; });",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"

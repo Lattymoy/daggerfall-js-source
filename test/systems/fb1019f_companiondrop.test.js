@@ -252,7 +252,7 @@ test('COMPANION-DROP A TAB FROM BEFORE THE WORD (AUDIT FB1019f B2): the fallen\'
   assert.deepEqual([out, coin(crewOf(twin).items), coin(swornOf(twin, s.a.id).companion.items)], [[], 75, 25]);
   assert.equal(wildTookAny(out, coined.body.gold), true, 'a companion\'s coin alone is said');
   assert.equal(wildTookAny([], { purse: 0, cart: 0 }), false, 'nothing taken, nothing said');
-  assert.ok(rd('src/scenes/world.js').includes('    else if (wildTookAny(out, d.gold)) townTalk.say(d.burnt ? WILD_TEXT.burntLate() : WILD_TEXT.dropLate);'), 'the risen word asks it');
+  assert.ok(rd('src/scenes/world.js').includes("    else if (wildTookAny(out, d.gold)) townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));"), 'the risen word asks it');   // PIN MOVED (AUDIT SEA VENTURES C7): the ground's own words
   // a take that touches no pack is that tab's as ever: a fallen with no companion - her bag, her cart and her purse
   const q = { isPlayer: true, name: 'Ilse Varn', characterId: 'char-fb1019f-b2', level: 20, stats: {}, skills: [], career: {}, activeEffects: [], items: [blade(W.Claymore, 1)], goldPieces: 400, health: 100, maxHealth: 100 };
   q.wagonItems = [blade(W.Saber, 1), goldStack(300)];

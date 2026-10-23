@@ -345,3 +345,12 @@ its slicing (moved to `src/combat/gun/gunSheet.js`, the game's home now -
 the lab reads it from there), the six-frame cycle, the sounds, and the
 art. What the weapon needed that the lab could not give it: the
 templates, the skill, the damage, the ammunition and the hosts.
+
+## The second lab
+
+**The pistol lab** (2026-10-21): a dwarven flintlock pistol, one in
+either hand, through this page's method - its own page, its own
+probe, its own deploy at `/preview/pistol-lab/`. It runs this lab's
+machine and sound player, the game's frame and feel that this lab
+graduated into, and the Two-Hands law for the pair.
+`bible/05-Combat/Pistol-Lab.md` is its record.

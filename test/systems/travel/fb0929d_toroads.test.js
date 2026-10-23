@@ -98,7 +98,7 @@ function constBlock(name) {
 /** A piece the host hands the view or the map, by its own shape. */
 function grab(re, what) { const m = re.exec(WORLD); assert.ok(m, `world.js: ${what}`); return m[1]; }
 const ON_LOWER = grab(/\n\s*onLower: (\(why\) => \{[^\n]*\}),\n/, 'the view\'s onLower');
-const ON_TRAVEL = grab(/buildTravelMapWindow\(\{ onTravel: (\(pick, opts, computed\) => \{\n[\s\S]*?\n {4}\}) \}\);/, 'the map\'s onTravel');
+const ON_TRAVEL = grab(/buildTravelMapWindow\(\{ \.\.\.travelTown\(\), onTravel: (\(pick, opts, computed\) => \{\n[\s\S]*?\n {4}\}) \}\);/, 'the map\'s onTravel');   // PIN MOVED (FB1020c STREETS-TAB): the travel key's bag takes the town's streets first - `travelTown` the automap toggle's (scenes/exteriorAutomapToggle.js), as the merge of main rebuilt it
 const ON_COORDS = grab(/\n\s*onTravelToCoords: (\(pick, opts\) => \{ [^\n]*? \}),/, 'the map\'s onTravelToCoords');
 const HOST = [
   lineSource('const TV_SEA_EPS_M = '), lineSource('const tvQuiet = '), lineSource('const tvTrip = '), lineSource('const tvWater = '),

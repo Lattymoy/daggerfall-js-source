@@ -257,6 +257,8 @@ export const MOD_CURATED = Object.freeze({
   // PI1: the four a player reaches for first - whether a body's gear lands round it, how hard it is thrown out, and the
   // two sizes most read (a weapon's and an armour piece's). The categories and the per-piece sizes stay in the mod's pane.
   'physical-items': Object.freeze(['Enemy Loot.Physical Enemy Drops', 'Enemy Loot.Impulse Strength', 'Item Sizes.Weapons', 'Item Sizes.Armor']),
+  // DEX0: the mod's one key - whether a fallen troll gets back up.
+  'daggerfall-enemy-expansion': Object.freeze(['Cheat.DisableTrollRespawn']),
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause',
@@ -1138,7 +1140,11 @@ export const FEATURES = Object.freeze([
   // while it is on. AUDIT 28 F4: the pack is read once, when the quest lists
   // are built (questLists.js) - so the row says the two halves apart.
   modFeature('foraging', () => t('features.mod.foraging.effect', 'Takes effect at once; its quests when the game next loads.'), 'world'),
-  modFeature('meanerMonsters', () => t('features.mod.meanerMonsters.effect', 'Takes effect on monsters that appear after the change.'), 'combat'),
+  modFeature('meanerMonsters', () => t('features.mod.meanerMonsters.effect', 'Takes effect on monsters that appear after the change. With Daggerfall Enemy Expansion on, it takes effect when the game next loads.'), 'combat'),
+  // DEX0: DAGGERFALL ENEMY EXPANSION - `combat`, beside the other bestiary mod. Loaded for the game or not, as DFU loads
+  // a mod (its rows, its tables and its hooks written at its install - modSettings.js latchModLoaded), so a switch
+  // flipped mid-game waits for the next load, as Roleplay & Realism's enemy appearance does.
+  modFeature('daggerfall-enemy-expansion', () => t('features.effect.gameLoads', 'Takes effect when the game next loads.'), 'combat'),
   modFeature('pcaao', () => t('features.effect.atOnce', 'Takes effect at once.'), 'combat'),
   modFeature('unleveledLoot', () => t('features.mod.unleveledLoot.effect', 'Takes effect on the next drop or shop restock.'), 'loot'),
   modFeature('weapon-widget', () => t('features.effect.atOnce', 'Takes effect at once.'), 'combat'),   // WW1: the widget reads its switches every frame
@@ -1262,6 +1268,21 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwNpcBodies', initial: 'near', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),
+  }),
+  // NPC-MARKS (2026-10-21, the owner: "vendors and quests npcs are hard to find due to everyone looking the same. Could we
+  // make a bobbing icon above their character for morrowind specifically?"): a bobbing mark over a Morrowind body whose
+  // click is a quest's (a yellow "!"), a merchant's (an amber coin) or a guild's or the arena's (a blue gem) - scenes/npcMarksHost.js. On by
+  // default. The VIEWER'S: how this machine draws the people, never the wire. Read every frame by each host's marks, so
+  // it lands at once; under the classic sprites nothing is drawn (the picture is the mark).
+  Object.freeze({
+    id: 'npc-marks',
+    group: 'world',
+    get title() { return t('features.npcMarks.title', 'Morrowind People Marks'); },
+    get note() { return t('features.npcMarks.note', 'With Morrowind People on, a small icon bobs over the people worth finding: a yellow mark over someone a '
+      + 'quest needs, a coin over a merchant, and a blue gem over guild trainers, guild quest givers and the arena\u2019s officers.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'npcMarks', initial: true, online: 'player' }),
   }),
   // BODY-CARD (2026-10-14, the owner: "Reimplement the billboard morrowind look as a toggle"; asked, the upright card
   // BODY-LEAN replaced): every Morrowind body and 3D horse - the player's, a peer's, the people's - stands on an UPRIGHT

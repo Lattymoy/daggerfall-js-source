@@ -19,6 +19,8 @@ import { SLOT_BOX } from '../iconFit.js';   // UI1: the row's picture box
 import { fittedImg } from '../textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { overlayAction, isTextEntryTarget } from '../input.js';
+import { landingTiles } from './landingTiles.js';   // TRADE-VIRT: a picture into its tile, not a repaint of the window
+import { virtualRows } from '../virtualRows.js';   // TRADE-VIRT: a long list draws the rows on screen
 import { TABS, tabAccepts } from '../native/nativeInventory.js';
 import { TRADE_ITEMS_MAX } from '../../net/wire.js';
 import { TRADE_RANGE_M } from '../../net/tradeSession.js';
@@ -77,9 +79,15 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   const stagedSet = () => new Set(entries().map((e) => e.item));
   const say = (t) => { note = t ?? ''; };
 
+  /** TRADE-VIRT: A VERB OF MINE PAINTS ONCE. The session tells the host of every change it makes (`onChange`, which the
+   *  host answers with this window's repaint) inside the verb - before the window has said the verb's answer - and the
+   *  window painted again after it: every offer, lock and confirm of mine was two whole paints. While a verb of mine
+   *  runs, the session's call waits for the one paint after it; a change the peer makes paints at once, as before. */
+  let quiet = false;
+  const acting = (f) => { quiet = true; try { return f(); } finally { quiet = false; } };
   /** Every change to my offer goes through the session, which answers `{ok, why}` and unlocks both sides. */
   const applyOffer = (next, gold = session.mine.gold) => {
-    const r = session.setOffer(next, gold);
+    const r = acting(() => session.setOffer(next, gold));
     say(r.ok ? '' : r.why);
     render();
   };
@@ -92,18 +100,34 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   };
   const unstage = (item) => { if (session.phase === 'open' && !session.myConfirm) applyOffer(entries().filter((e) => e.item !== item)); };   // AUDIT DROPS B1
 
-  const itemTile = (line) => {
-    const pic = linePicture(line, { box: SLOT_BOX.row, onReady: () => alive && render() });   // DISC22-D / DISC24-B: the pack's own door; UI1: fitted to the row's box
+  // TRADE-VIRT (bible/07-Rendering/Performance-Priority.md TRADE-VIRT): A PICTURE INTO ITS TILE (ui/enhanced/landingTiles.js).
+  // Its `onReady` was a fresh function a row, so the fitted door woke up to eight a picture, each a whole repaint that
+  // signed more rows up for the pictures still coming: 2,160 repaints of a cold 300-piece pack, 200 s to settle.
+  const tiles = landingTiles((line, landed) => {
+    const pic = linePicture(line, { box: SLOT_BOX.row, onReady: landed });   // DISC22-D / DISC24-B: the pack's own door; UI1: fitted to the row's box
     if (pic) {
       const tile = el('span', 'tile has-icon'); tile.append(fittedImg(pic)); tile.title = line.name; return tile;
     }
     const tile = el('span', 'tile', line.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase());
     tile.title = line.name; return tile;
-  };
+  }, { alive: () => alive });
+  const itemTile = (line) => tiles.tile(line);
+  /** TRADE-VIRT: the long lists on screen (ui/virtualRows.js, VIRT's law) - let go before a repaint builds, measured before
+   *  a scroll is given back and aimed after it; a resize repaints. */
+  let lists = [];
+  const keepList = (v) => { lists.push(v); return v; };
+  const dropLists = () => { for (const v of lists) v.dispose(); lists = []; };
+  const syncLists = (opts) => { for (const v of lists) v.sync(opts); };
+  /** The list's rows, whole when short and as a window over the scroll when long. */
+  /** AUDIT TRADE-VIRT: each list's rows' heights by item, kept across repaints (ui/virtualRows.js `sizes`) - the pack's,
+   *  the offer's and theirs, each its own */
+  const rowSizes = new Map();
+  const fill = (list, items, build, key) => { let sizes = rowSizes.get(key); if (!sizes) rowSizes.set(key, (sizes = new WeakMap())); return keepList(virtualRows(list, items, build, { sizes })); };
 
   const row = (item, side, count = null) => {
     const line = itemLine(item, deps.entity);
     const b = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: an offered piece wears its tier
+    b._tradeItem = item;   // TRADE-VIRT: the row's piece, for whoever reads the drawn rows (the probe, the pins)
     const tile = itemTile(line);
     const bar = wearBar(item);   // WEAR-UI: and its wear
     if (bar) { tile.append(bar); b.classList.add('hasbar'); }
@@ -139,12 +163,12 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     for (const t of TABS) { const b = el('button', `packtab${t === tab ? ' on' : ''}`, TAB_LABEL[t]); b.onclick = () => { tab = t; render(); }; tabs.append(b); }
     col.append(tabs);
     const list = el('div', 'remotelist');
+    col.append(list);
     const staged = stagedSet();
     const worn = (it) => it.equipSlot != null;
     const items = (deps.items() ?? []).filter((it) => !worn(it) && !staged.has(it) && tabAccepts(it, tab));
     if (!items.length) list.append(el('p', 'packempty', 'Nothing here fits this page.'));
-    for (const it of items) list.append(row(it, 'pack'));
-    col.append(list);
+    else fill(list, items, (it) => row(it, 'pack'), 'pack');   // TRADE-VIRT
     return col;
   };
 
@@ -155,9 +179,9 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     head.append(who, lockMark(session.myLock, 'You'));
     col.append(head);
     const list = el('div', 'remotelist');
-    if (!entries().length) list.append(el('p', 'packempty', 'Double-click an item to offer it.'));
-    for (const e of entries()) list.append(row(e.item, 'offer', e.count));
     col.append(list);
+    if (!entries().length) list.append(el('p', 'packempty', 'Double-click an item to offer it.'));
+    else fill(list, entries(), (e) => row(e.item, 'offer', e.count), 'offer');   // TRADE-VIRT
     const gold = el('div', 'goldbox');
     const input = el('input'); input.type = 'number'; input.min = '0'; input.max = String(deps.gold()); input.value = String(session.mine.gold);
     input.disabled = session.phase !== 'open' || session.myConfirm;   // AUDIT DROPS B1: confirmed = frozen
@@ -177,9 +201,9 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     head.append(who, lockMark(session.theirLock, session.peerName));
     col.append(head);
     const list = el('div', 'remotelist');
-    if (!n) list.append(el('p', 'packempty', 'Nothing offered yet.'));
-    for (const it of session.theirs.items) list.append(row(it, 'theirs'));
     col.append(list);
+    if (!n) list.append(el('p', 'packempty', 'Nothing offered yet.'));
+    else fill(list, session.theirs.items, (it) => row(it, 'theirs'), 'theirs');   // TRADE-VIRT
     col.append(el('div', 'goldbox', `Gold: ${session.theirs.gold}`));
     return col;
   };
@@ -234,19 +258,21 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     bar.append(cancel);
     const lock = el('button', 'act', session.myLock ? 'Unlock' : 'Lock');
     lock.disabled = !open || session.myConfirm || (!session.myLock && !session.hasContent);
-    lock.onclick = () => { const r = session.myLock ? session.unlock() : session.lock(); say(r.ok ? '' : (r.why ?? '')); render(); };
+    lock.onclick = () => { const r = acting(() => (session.myLock ? session.unlock() : session.lock())); say(r.ok ? '' : (r.why ?? '')); render(); };
     const confirm = el('button', 'act primary', session.myConfirm ? 'Confirmed' : 'Confirm');
     confirm.disabled = !open || !session.bothLocked || session.myConfirm;
-    confirm.onclick = () => { const r = session.confirm(); say(r.ok ? '' : (r.why ?? '')); render(); };
+    confirm.onclick = () => { const r = acting(() => session.confirm()); say(r.ok ? '' : (r.why ?? '')); render(); };
     bar.append(lock, confirm);
     return bar;
   };
 
   function render() {
-    if (!alive) return;
+    if (!alive || quiet) return;   // TRADE-VIRT: a verb of mine under way paints once, after it
     const prev = Array.from(hostEl.querySelectorAll('.packcol')).map((c) => c.scrollTop);
     const focusedGold = document.activeElement?.tagName === 'INPUT' && hostEl.contains(document.activeElement);
     if (focusedGold) return;   // never rebuild under a field the player is typing in; its own change/Enter repaints
+    dropLists();   // TRADE-VIRT: the old DOM's windows and waiting tiles go with it
+    tiles.clear();
     hostEl.innerHTML = '';
     const shell = el('div', 'px-home px-over trade-shell ptrade-shell');
     const win = el('div', 'px-win trade-win');
@@ -261,7 +287,9 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const d = detail(); if (d) body.append(d);
     win.append(body, footer());
     shell.append(win); hostEl.append(shell);
+    syncLists({ draw: false });   // TRADE-VIRT: measured and spaced first, so the scroll given back is the whole list's
     hostEl.querySelectorAll('.packcol').forEach((c, i) => { if (prev[i] != null) c.scrollTop = prev[i]; });
+    syncLists();
     if (session.isOver && !closing) closing = setTimeout(() => deps.onExit(), session.phase === 'done' ? 1400 : 600);
   }
 
@@ -274,9 +302,16 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
+  const onResize = () => syncLists({ remeasure: true });   // TRADE-VIRT: a long list's columns and rows measured again - AUDIT TRADE-VIRT: never a repaint, which put a typed stack count back to the whole stack
+  globalThis.addEventListener?.('resize', onResize);
   render();
   return {
     repaint: render,
-    unmount() { alive = false; if (closing) clearTimeout(closing); globalThis.removeEventListener('keydown', onKey, { capture: true }); },
+    unmount() {
+      alive = false; if (closing) clearTimeout(closing);
+      globalThis.removeEventListener('keydown', onKey, { capture: true });
+      globalThis.removeEventListener?.('resize', onResize);
+      dropLists(); tiles.clear();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
+    },
   };
 }

@@ -2,8 +2,8 @@
   {
     "name": "FINE-PEOPLE-the-fine-mends-the-law-alone",
     "file": "src/systems/standing.js",
-    "old": "changeLegalRep(player, regionIndex, pts, { kind: 'fine' }); raisePeopleForAnswer(player, regionIndex, pts); }",
-    "new": "changeLegalRep(player, regionIndex, pts, { kind: 'fine' }); }",
+    "old": "changeLegalRep(player, regionIndex, pts, { kind }); raisePeopleForAnswer(player, regionIndex, pts); }",
+    "new": "changeLegalRep(player, regionIndex, pts, { kind }); }",
     "tests": [
       "test/systems/fb1016b_finepeople.test.js"
     ]

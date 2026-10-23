@@ -65,7 +65,9 @@ test('YARD-SHED the service: a town\'s yards are answered with no session at all
 test('YARD-SHED the kept answer: kept YARDS_KEPT_S and asked again after, forgotten by a decor write here - an answer asked before that write never kept - and every decor route forgets its town (mutants: the age, the forgetting, the write count)', async () => {
   _resetYardsKept();
   let reads = 0, rows = [];
-  const ctx = { db: { prepare: () => ({ bind: () => ({ all: async () => { reads++; return { results: rows }; } }) }) } };
+  // PIN MOVED (YARD-SNAP): the town's built row first - stale here, so the rows are read as before
+  const stale = async () => ({ ver: 1, built: 0, rows: null });
+  const ctx = { db: { prepare: () => ({ bind: () => ({ first: stale, all: async () => { reads++; return { results: rows }; } }) }) } };
   await yardsKept(ctx, 7, 1000);
   await yardsKept(ctx, 7, 1000 + YARDS_KEPT_S - 1);
   assert.equal(reads, 1, 'kept');
@@ -76,10 +78,11 @@ test('YARD-SHED the kept answer: kept YARDS_KEPT_S and asked again after, forgot
   assert.equal(reads, 3, 'a write here: asked again at once');
   // an ask in flight across a write is answered but not kept
   let release;
-  const slow = { db: { prepare: () => ({ bind: () => ({ all: () => new Promise((r) => { release = () => { reads++; r({ results: rows }); }; }) }) }) } };
+  const slow = { db: { prepare: () => ({ bind: () => ({ first: stale, all: () => new Promise((r) => { release = () => { reads++; r({ results: rows }); }; }) }) }) } };
   forgetYards(7);
   const flying = yardsKept(slow, 7, 2000);
   forgetYards(7);
+  while (!release) await Promise.resolve();   // PIN MOVED (YARD-SNAP): the rows asked after the town's built row
   release();
   await flying;
   await yardsKept(ctx, 7, 2000);

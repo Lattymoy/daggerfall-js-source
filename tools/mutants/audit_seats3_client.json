@@ -146,8 +146,8 @@
   {
     "name": "SEATS3-D2-boards-one-cache",
     "file": "src/net/marketBook.js",
-    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(',')].join('|');",
-    "new": ", (q.pieces ?? []).join(',')].join('|');",
+    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(','),\n",
+    "new": ", (q.pieces ?? []).join(','),\n",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]

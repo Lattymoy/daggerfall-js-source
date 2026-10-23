@@ -34,7 +34,8 @@
 //                                                   cloak_front.png / cloak_top.png / cloak_torn.png /
 //                                                   wings_back.png / resonance.png / resonance_top.png /
 //                                                   maelstrom_top.png / maelstrom_side.png / warren.png /
-//                                                   warren_top.png there)
+//                                                   warren_top.png / firstlight.png / firstlight_top.png /
+//                                                   firstlight_side.png there)
 //
 // CRYSTAL-FIST (2026-10-05): and THE CRYSTAL RESONANCE, the sixth - from the side, every square node's law
 // (resonanceLit, on the wearer's own clock) stands lit is lit in the reference's purple itself, and every square over a
@@ -52,6 +53,12 @@ import { chromium } from 'playwright';
 // on the wearer's own clock), its coat the lilac and never washed past it over a bright floor; from above, the ring of light
 // whole in the lilac inside the rabbits' lane, the amethyst light within it, dark past the ground, and their tracks where they
 // landed; no jump at the wrap; nothing before it kindles.
+//
+// SPIRE-FIRST (2026-10-20): and FIRSTLIGHT, rebuilt as Serveride's own - from above its ring whole in the dawn's white, the
+// climb's lane lit behind the climb and dark ahead of it (node's law, dawnClimb); from X's side its spire standing whole once
+// taken and a third before, and the shaft of first light past the head as it is taken; no seam where the ring closes, no
+// jump at the wrap, nothing before it kindles.
+import { DAWN_R, DAWN_INNER_M, DAWN_HZ, DAWN_CLIMB, DAWN_START, DAWN_SPIRE_H, dawnMarkAngle } from '../src/render/auraRing.js';   // SPIRE-FIRST: where Firstlight's Redoubts, spires and climb are, by node's own law
 import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock, WARREN_R, WARREN_RING_IN, WARREN_BUNNIES, WARREN_BUNNY_M, WARREN_BUNNY, WARREN_LEAN, WARREN_PRINTS, warrenBunny, warrenClock, warrenPrintsInto } from '../src/render/auraRing.js';   // WIKIMAID: where the rabbits and their tracks are, by node's own law   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
@@ -465,6 +472,43 @@ try {
   check('no jump where the clock wraps', wrJump <= 45 && wrA.px.slice(0, WARREN_BUNNIES).every(lilacish), `${wrJump}`);
   const wrCold = await wr(wrEye, wrT, 0, mids, wrAt), wrBare = await wr(wrEye, wrT, 0, mids, wrAt, 1, true);
   check('unkindled, nothing stands', wrCold.px.every((c, i) => Math.abs(lum(c) - lum(wrBare.px[i])) < 6), `${Math.max(...wrCold.px.map((c, i) => Math.abs(lum(c) - lum(wrBare.px[i]))))}`);
+  // ── SPIRE-FIRST: FIRSTLIGHT ──
+  const fl = (eye, t, k, pts, at, none = false) => page.evaluate(([e, tt, kk, ps, a, n]) => window.draw(e, tt, kk, ps, 'firstlight', a, 0, 1, -1, null, { strict: true, none: n }), [eye, t, k, pts, at, none]);
+  const climbT = (c) => c / DAWN_HZ.climb, ang = (s) => (s - DAWN_START) * Math.PI * 2, onGround = (r, a) => [Math.cos(a) * r, 0.05, Math.sin(a) * r];
+  const flTop = [0, 3.4, 0.001], flHeld = climbT(0.7), xAt = DAWN_CLIMB.at + 9 * DAWN_CLIMB.step;
+  const flRingPts = Array.from({ length: 24 }, (_, i) => onGround(DAWN_R, (i / 24) * Math.PI * 2));
+  const flRing = await fl(flTop, flHeld, 1, flRingPts, [0, 0, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight_top.png') });
+  check('Firstlight draws without a GL error', flRing.error === 0 && flRing.drawn === 1, `error ${flRing.error}, drawn ${flRing.drawn}`);
+  check('from above, its ring whole round the feet in the dawn\'s white - warm, never blue', flRing.px.every((c) => lum(c) > 450 && c[0] >= c[2]), flRing.px.map(lum).join(' '));
+  // mid-climb: the lane between the dial's lines lit behind the climb's head and dark ahead of it, as node's law has it
+  const lane = DAWN_R - DAWN_INNER_M / 2, reach = 0.05 + (0.28 - DAWN_CLIMB.at) / (DAWN_CLIMB.step * 10);
+  const flMid = await fl(flTop, climbT(0.28), 1, [onGround(lane, ang(reach - 0.12)), onGround(lane, ang(reach + 0.12))], [0, 0, 0]);
+  check('mid-climb, the lane lit behind the climb and dark ahead of it', lum(flMid.px[0]) > lum(flMid.px[1]) + 40, `${lum(flMid.px[0])} / ${lum(flMid.px[1])}`);
+  // from X's side: its spire whole once taken, a third before; the shaft of first light past the head as it is taken
+  const ax = dawnMarkAngle(9), flEye = [Math.cos(ax) * 3.4, 0.9, Math.sin(ax) * 3.4], flAt = [0, 0.6, 0], xH = DAWN_SPIRE_H[1];
+  const spireAt = (y) => [Math.cos(ax) * DAWN_R, 0.05 + y, Math.sin(ax) * DAWN_R];
+  const flSide = await fl(flEye, flHeld, 1, [spireAt(xH * 0.6)], flAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight_side.png') });
+  const flBefore = await fl(flEye, climbT(0.02), 1, [spireAt(xH * 0.6)], flAt);
+  check('X\'s spire whole once taken, a third before', lum(flSide.px[0]) > 300 && lum(flBefore.px[0]) < 60, `${lum(flSide.px[0])} / ${lum(flBefore.px[0])}`);
+  const flShot = await fl(flEye, climbT(xAt + 0.06), 1, [spireAt(1.6)], flAt), flEarly = await fl(flEye, climbT(xAt - 0.01), 1, [spireAt(1.6)], flAt);
+  check('the shaft of first light past the head as X is taken, none before', lum(flShot.px[0]) > 120 && lum(flEarly.px[0]) < 40, `${lum(flShot.px[0])} / ${lum(flEarly.px[0])}`);
+  // no seam where the ring closes (-x), through the climb's lane and the dial within, at three moments - a pixel either
+  // side; the sunburst's rays and the lozenges are crisp at a pixel's scale, so their continuity there is the
+  // interpreter's exact pin (egeco_honours.test.js, a hair either side of the wrap), not this one's. No jump at the wrap
+  let flSeam = 0, flNear = 0;
+  for (const t of [2.5, 7.25, 31.75]) for (const r of [DAWN_R - 0.1, 0.5]) {
+    const got = await fl(flTop, t, 1, [[-r, 0.05, -0.006], [-r, 0.05, 0.006], [Math.cos(2.2) * r, 0.05, Math.sin(2.2) * r], [Math.cos(2.2 + 0.012 / r) * r, 0.05, Math.sin(2.2 + 0.012 / r) * r]], [0, 0, 0]);
+    flSeam += Math.abs(lum(got.px[0]) - lum(got.px[1])); flNear += Math.abs(lum(got.px[2]) - lum(got.px[3]));
+  }
+  check('no seam behind the wearer where the ring closes', flSeam <= Math.max(120, flNear * 2), `across the seam ${flSeam}, beside it ${flNear}`);
+  const flB = await fl(flTop, p.period - 1 / 240, 1, flRingPts, [0, 0, 0]), flA = await fl(flTop, 1 / 240, 1, flRingPts, [0, 0, 0]);
+  const flJump = Math.max(...flB.px.map((c, i) => Math.abs(lum(c) - lum(flA.px[i]))));
+  check('no jump where the clock wraps', flJump <= 45, `${flJump}`);
+  const flCold = await fl(flTop, flHeld, 0, flRingPts, [0, 0, 0]), flBare = await fl(flTop, flHeld, 0, flRingPts, [0, 0, 0], true);
+  check('unkindled, nothing stands', flCold.px.every((c, i) => Math.abs(lum(c) - lum(flBare.px[i])) < 6), `${Math.max(...flCold.px.map((c, i) => Math.abs(lum(c) - lum(flBare.px[i]))))}`);
+  if (shotsAt) { await fl([0.4, 2.3, 3.6], flHeld, 1, [], [0, 0.7, 0]); await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight.png') }); }
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

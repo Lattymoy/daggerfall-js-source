@@ -256,8 +256,8 @@
  {
   "name": "AUDITMWNPC2-K5-look-no-flies",
   "file": "src/characters/creatureBodies.js",
-  "old": ", ...(m.flies ? { flies: true } : {}) })]));",
-  "new": " })]));",
+  "old": ", ...(m.flies ? { flies: true } : {}) });",
+  "new": " });",
   "tests": [
    "test/characters/mwnpc_audit2.test.js"
   ]

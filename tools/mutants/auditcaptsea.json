@@ -507,8 +507,8 @@
   {
     "name": "ACS-C11-cook",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "atSea: !where().nearPort, wear: s.worth.wear });",
-    "new": "atSea: !where().nearPort, wear: 1 });",
+    "old": "atSea: !inPortWaters(), wear: s.worth.wear });",
+    "new": "atSea: !inPortWaters(), wear: 1 });",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1231,8 +1231,8 @@
   {
     "name": "ACS-H1-book",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "...(near.reach ? { reach: near.reach } : {})",
-    "new": "...{}",
+    "old": "const own = near.reach ?? HARBOUR_REACH;",
+    "new": "const own = HARBOUR_REACH;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1322,11 +1322,12 @@
   },
   {
     "name": "ACS-P4-rise-port",
-    "file": "src/scenes/world.js",
-    "old": "const etherRisePort = (x, y) => islesNear(x, y, ETHER_RISE_PX).find((i) => i.kind === 'port') ?? veilhaven();",
-    "new": "const etherRisePort = (x, y) => veilhaven();",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "    const port = islesNear(x, y, Math.min(r, far + 1)).find((i) => i.kind === 'port' && Math.hypot(i.px - x, i.py - y) <= r);\n    if (port) return port;",
+    "new": "    const port = null;\n    if (port) return port;",
     "tests": [
-      "test/systems/naval/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/sea/auditsea.test.js"
     ]
   },
   {
@@ -2961,7 +2962,7 @@
   {
     "name": "ACS-X16-heading",
     "file": "src/scenes/world.js",
-    "old": "if (!boat) return cam.yaw; const f = boatForward(boat); return Math.atan2(f[0], f[2]); };",
+    "old": "if (!boat) return cam.yaw; const f = boatForward(boat, cam.yaw); return Math.atan2(f[0], f[2]); };",
     "new": "return cam.yaw; };",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"

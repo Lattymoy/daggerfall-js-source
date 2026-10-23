@@ -148,10 +148,10 @@ test('GALLEON-WEIGHT the captains\' reckoning: a player\'s galleon makes a ship 
 
 test('CREW-HOLD and GALLEON-WEIGHT on the host, by source: a captain\'s ball on my boat takes her men as a player\'s crew stands them and strikes with its weight; a galley\'s ram on my boat; the serpent\'s blow through playerMen; my volley and a peer\'s own boat\'s carry the weight, a captain\'s none (SHIPS-2: but a captain\'s carrack\'s, the mod\'s seven); my boat\'s measure a player\'s (mutants: each seam)', () => {
   const n = src('scenes/naval/navalHost.js');
-  assert.match(n, /const hurt = shotDamage\(gun, zone, \{ braced: st\.guns\.braced, roll: random\(\), tough: PLAYER_CREW_TOUGHNESS, weight: e\.weight \}\);/, 'a ball on my boat');
+  assert.match(n, /const hurt = dueOnHull\(shotDamage\(gun, zone, \{ braced: st\.guns\.braced, roll: random\(\), tough: PLAYER_CREW_TOUGHNESS, weight: e\.weight \}\)\);/, 'a ball on my boat');   // PIN MOVED (SEA-SET): under the Tidemail's Captain's Due
   assert.match(n, /const hurt = shotDamage\(gun, zone, \{ roll: random\(\), weight: e\.weight \}\);/, 'a ball on a captain\'s ship: her men a captain\'s');
   assert.match(n, /hull: gun\.hull \* \(e\.weight \?\? 1\) \* \(0\.85 \+ 0\.3 \* random\(\)\)/, 'a ball in the serpent');
-  assert.match(n, /st\.damage\.apply\(\{ hull: dealt, sail: 0, crew: ramMen\(dealt, random\(\), PLAYER_CREW_TOUGHNESS\) \}, clock\);/, 'a galley\'s ram on my boat');
+  assert.match(n, /st\.damage\.apply\(\{ hull: Math\.round\(dealt \* captainsDue\(\)\.hull\), sail: 0, crew: ramMen\(dealt, random\(\), PLAYER_CREW_TOUGHNESS\) \}, clock\);/, 'a galley\'s ram on my boat');   // PIN MOVED (SEA-SET): her hull under the Tidemail's Captain's Due, her men as the ram takes them
   assert.match(n, /const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men,/, 'the serpent\'s blow');
   // SHIPS-2: by navalShips.js shipBatteryWeight - a player's ship's weight, a captain's carrack's the mod's seven
   assert.match(n, /const weight = shipBatteryWeight\(hull, solution\.side, isMine\(shooter\)\);[^\n]*\n\s+const launches = volleyLaunches\([^\n]*\{ skill, carry: pose\.velocity, weight \}\);/, 'my volley');

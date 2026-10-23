@@ -439,7 +439,7 @@
   {
     "name": "AUDIT-PASSAGE-A1-a-walk-not-refused",
     "file": "src/scenes/world.js",
-    "old": "    if (voyage && !plan?.kinds.includes('sea')) { noWay?.(); return false; }",
+    "old": "    if (voyage && !voyageSails(from, summary.pixel, plan)) { noWay?.(); return false; }",
     "new": "",
     "tests": [
       "test/scenes/naval/passagehost.test.js"

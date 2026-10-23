@@ -12,6 +12,18 @@ these as new skin options".
 **Permission: [Mac: record the artists' permission, or the link to it,
 here. The archive names one artist folder, "KAMER - Bounty Hunter".]**
 
+**What the pictures are (DEX0, 2026-10-19).** "Redrawn" was the archive's
+word, and it is not the whole truth. Measured silhouette for silhouette
+against every record of every TEXTURE file (the measure
+`tools/dexExtract.mjs` runs on Daggerfall Enemy Expansion, whose Bounty
+Hunter is this pack's 1504, pixel for pixel), most of the sheets are
+Daggerfall's own enemy-class sprites (TEXTURE.477-490) at their own size,
+under the artists' paint - 1524, 1525, 1526, 1535, 1536 and 1537 in every
+picture, the rest in part. A render of game data is game data, so the pack
+is carried on Port-Doctrine's **fourth exception** (Mac, 2026-10-19: "Bring
+under 3rd exception"), which names this directory;
+`test/tooling/doctrine.test.js` marks its row so.
+
 ## Layout
 
 `Textures/<archive>/<archive>_<record>-<frame>.png`, the key the port's sprite

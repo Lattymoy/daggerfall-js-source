@@ -65,8 +65,8 @@
   {
     "name": "LW3-range-floor",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)\n    .filter((t) => roadBound(res.job, home, t));",
-    "new": "    .filter((t) => t.mapId !== home.mapId)\n    .filter((t) => roadBound(res.job, home, t));",
+    "old": "    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)\n    .filter((t) => roadBound(job, home, t));",
+    "new": "    .filter((t) => t.mapId !== home.mapId)\n    .filter((t) => roadBound(job, home, t));",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "LW3-pick-per-town",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  const first = near.find((t) => String(t.mapId) === pick);",
-    "new": "  const first = near.find((t) => String(t.mapId) === pickWeighted(rng, weights));",
+    "old": "  const first = pickChoice(rng, choices);",
+    "new": "  const first = choices.picks.find((p) => pickChoice(rng, choices) === p.town)?.town ?? null;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]

@@ -164,8 +164,8 @@
  {
   "name": "MWNPC5b-fx-allocates",
   "file": "src/characters/foeBodies.js",
-  "old": "  const fx = f._mwFx ?? (f._mwFx = { glint: null, elite: 0, time: 0, dissolve: null });",
-  "new": "  const fx = { glint: null, elite: 0, time: 0, dissolve: null };",
+  "old": "  const fx = f._mwFx ?? (f._mwFx = { glint: null, elite: 0, time: 0, dissolve: null, noShadow: false });",
+  "new": "  const fx = { glint: null, elite: 0, time: 0, dissolve: null, noShadow: false };",
   "tests": [
    "test/characters/mwnpc5_foes.test.js"
   ]
@@ -182,8 +182,8 @@
  {
   "name": "MWNPC5b-castonly-veiled-drawn",
   "file": "src/render/renderer.js",
-  "old": "export const billboardBlended = (b) => !!b && !b.castOnly && !!(b.conceal || isSpectralArchive(b.archive));",
-  "new": "export const billboardBlended = (b) => !!b && !!(b.conceal || isSpectralArchive(b.archive));",
+  "old": "export const billboardBlended = (b) => !!b && !b.castOnly && !!(b.conceal || ghostShaded(b));",
+  "new": "export const billboardBlended = (b) => !!b && !!(b.conceal || ghostShaded(b));",
   "tests": [
    "test/render/mwnpc5_dungeon.test.js"
   ]

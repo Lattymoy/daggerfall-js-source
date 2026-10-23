@@ -641,7 +641,7 @@
   {
     "name": "FEED-after-the-frame",
     "file": "src/scenes/world.js",
-    "old": "    if (_mode() === 'exterior' && !gamePaused() && !_loading) laneShips();   // SEA-LANES: the Bay's packets about the player, stood and steered before the frame poses them\n",
+    "old": "    if (_mode() === 'exterior' && !gamePaused() && !_loading) { laneShips(); seaVentures.step(lightning?.strikes ?? 0); }   // SEA-LANES: the Bay's packets about the player, stood and steered before the frame poses them; SEA-EVENTS: the treasure fleet's, the Aether Storm's\n",
     "new": "",
     "tests": [
       "test/systems/naval/sealanes.test.js"

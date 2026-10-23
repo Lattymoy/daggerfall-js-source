@@ -685,7 +685,7 @@ test('AUDIT-SEATS G5 THE WORLD\'S BATTLE ARMS by source: the swing and the shaft
   assert.match(w, /const duelSpellOut = \(peerId, sp\) => \{\n\s*if \(!duelMgr\.fighting\) return siegeSpellOut\(peerId, sp\);/);
   assert.match(w, /siegeStrikeOut\(best, 'melee', weaponRig\.playerWeapon\.strikingWeapon, weaponRig\.playerWeapon\.machine\?\.state, 0, \{ off: weaponRig\.playerWeapon\.offStrike \}\);/);   // PIN MOVED (TWO-HANDS AUDIT)
   assert.match(w, /battle\.blow\(to, \{ w: weapon \? weapon\.templateIndex : -1, m: held\?\.material \?\? 0, d: r\.dmg, r: siegeBlowKind\(by\) \}\);/);
-  assert.match(w, /duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id\)/);
+  assert.match(w, /duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id, \{ off: !!weaponRig\.playerWeapon\?\.isOffHandItem\?\.\(m\.weapon\) \}\)/);
   assert.match(w, /const duelArrowTargets = \(\) => \{\n\s*if \(!duelMgr\.fighting\) \{\n\s*const bodies = battleFoeBodies\(royalSession\?\.active\(\) \? royalSession : siegeSession\);/);
   assert.match(w, /duelMark: \(\) => \{ if \(!duelMgr\.fighting\) return siegeSpellMarks\(\);/);
   assert.match(w, /return harm > 0 && siegeSession\.cast\(peerId, siegeCastClamp\(harm, false\)\);/);

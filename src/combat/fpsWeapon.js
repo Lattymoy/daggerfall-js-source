@@ -31,7 +31,7 @@ import { atlasFileName } from './diverseWeapons/diverseWeapons.js';   // DW1: FP
 import { customWeaponImage } from './diverseWeapons/diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
 import { MATERIAL_NAMES } from '../systems/item/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
-import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
+import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
 // WeaponTypes (DaggerfallUnityEnums), the animation-set ids.
@@ -51,7 +51,17 @@ export const WEAPON_TYPES = Object.freeze({
   // WEAPON_FILE below has no row for it and combat/thunderlockArt.js
   // loads it instead.
   Thunderlock: 17, Thunderlock_Magic: 18,
+  // PISTOLET (2026-10-21): the Dwarven Pistolet, the second gun, on the same terms - its frames off one strip
+  // (combat/gun/pistoletArt.js), no WEAPON*.CIF.
+  Pistolet: 19, Pistolet_Magic: 20,
 });
+
+/** PISTOLET: is this weapon type one of the port's own guns - the Thunderlock or the Pistolet, plain or enchanted? The one
+ *  question the machine, the rig and the arm ask of a gun that is not about which gun. */
+export const isGunType = (t) => t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic
+  || t === WEAPON_TYPES.Pistolet || t === WEAPON_TYPES.Pistolet_Magic;
+/** PISTOLET: the Pistolet's types, plain or enchanted. */
+export const isPistoletType = (t) => t === WEAPON_TYPES.Pistolet || t === WEAPON_TYPES.Pistolet_Magic;
 
 // GetWeaponFilename, verbatim.
 export const WEAPON_FILE = Object.freeze({
@@ -181,6 +191,7 @@ export const THUNDERLOCK_ANIMS = Object.freeze([
 export function getWeaponAnims(weaponType) {
   const T = WEAPON_TYPES;
   if (weaponType === T.Thunderlock || weaponType === T.Thunderlock_Magic) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
+  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return THUNDERLOCK_ANIMS;   // PISTOLET: the same table - an idle and six fire frames, AlignRight, every direction alike
   if (weaponType === T.Melee) return MELEE_ANIMS;
   if (weaponType === T.Dagger || weaponType === T.Dagger_Magic) return DAGGER_ANIMS;
   if (weaponType === T.Staff || weaponType === T.Staff_Magic) return STAFF_ANIMS;
@@ -205,6 +216,7 @@ export function plainWeaponType(type) {
     case T.Warhammer_Magic: return T.Warhammer;
     case T.Battleaxe_Magic: return T.Battleaxe;
     case T.Thunderlock_Magic: return T.Thunderlock;
+    case T.Pistolet_Magic: return T.Pistolet;
     default: return type;
   }
 }
@@ -226,6 +238,7 @@ export function weaponTypeForItem(item) {
   if (item.templateIndex === THUNDERLOCK_TEMPLATE) {
     return isEnchanted(item) ? T.Thunderlock_Magic : T.Thunderlock;
   }
+  if (item.templateIndex === PISTOLET_TEMPLATE) return isEnchanted(item) ? T.Pistolet_Magic : T.Pistolet;   // PISTOLET: the same arm
   const cls = customItemClass(item.templateIndex);   // RRI1: an Archer's Axe swings the battleaxe sheet, a Light Flail the flail's
   if (cls?.weaponType) return T[cls.weaponType(isEnchanted(item))];
   let result;

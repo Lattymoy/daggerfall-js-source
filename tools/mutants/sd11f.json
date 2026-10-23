@@ -137,11 +137,12 @@
   {
     "name": "SD11f-no-count-on-the-plaque",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "subs: n ? [riftTo, n] : [riftTo] }; }",
-    "new": "subs: [riftTo] }; }",
+    "old": "subs: n ? [to, n] : [to] }; }",
+    "new": "subs: [to] }; }",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
-    ]
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the plaque's row read as it is read (B10)."
   },
   {
     "name": "SD11f-the-hours-by-the-second",
@@ -182,11 +183,12 @@
   {
     "name": "SD11f-the-count-unhanded",
     "file": "src/scenes/world.js",
-    "old": "returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look:",
-    "new": "returns: sdReturnStands(rec, s, now), look:",
+    "old": "returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), count: sdRiftCount(rec, s, now), look:",
+    "new": "returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), look:",
     "tests": [
       "test/scenes/sd11f_scenes.test.js"
-    ]
+    ],
+    "note": "SD-THROUGH (re-aimed by content): the word carries `through` between."
   },
   {
     "name": "SD11f-the-count-unasked",

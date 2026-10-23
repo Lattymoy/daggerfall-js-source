@@ -273,7 +273,7 @@
   {
     "name": "AUDIT-CC-D1-port-repairs",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (where().nearPort) return;   // AUDIT CC-D1",
+    "old": "    if (inPortWaters()) return;   // AUDIT CC-D1",
     "new": "    // AUDIT CC-D1",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
@@ -284,7 +284,7 @@
   {
     "name": "AUDIT-CC-D1-port-order",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      else if (where().nearPort) said =",
+    "old": "      else if (inPortWaters()) said =",
     "new": "      else if (false) said =",
     "tests": [
       "test/systems/naval/auditcrew.test.js",

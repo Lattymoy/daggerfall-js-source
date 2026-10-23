@@ -69,7 +69,7 @@ export const KIT = Object.freeze({
 const range = (rolls, lo, hi) => lo + Math.floor(rolls() * (hi - lo));   // UnityEngine.Random.Range(int, int)
 const dice100 = (chance, rolls) => 1 + Math.floor(rolls() * 100) <= chance;   // Dice100.SuccessRoll
 const mint = (item) => mintCondition(setItemFields(item));
-/** AddOrEquipWornItem (:500-510) over the player: the 30-75% condition
+/** AddOrEquipWornItem (:501-511) over the player: the 30-75% condition
  *  on armor, weapons and garments; `equip` puts it on. */
 function addOrEquipWornItem(entity, item, equip, rolls) {
   addItem(entity.items, item);

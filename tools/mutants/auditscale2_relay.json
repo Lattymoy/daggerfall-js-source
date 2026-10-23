@@ -232,8 +232,8 @@
   {
     "name": "AS2-R3-3-layer-raid",
     "file": "server/src/index.js",
-    "old": "    if (a.ly) return;\n",
-    "new": "",
+    "old": "    if (a.ly) return;\n    if (!raidWordFits(",
+    "new": "    if (!raidWordFits(",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "AS2-R3-9-place-alone",
     "file": "server/src/index.js",
-    "old": "Array.from({ length: LAYERS_MAX }, (_, ly) => wipe(ly))",
-    "new": "[wipe(0)]",
+    "old": "sized.flatMap((room) => Array.from({ length: LAYERS_MAX }, (_, ly) => wipe(room, ly)))",
+    "new": "sized.flatMap((room) => [wipe(room, 0)])",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AS2-R3-9-occupied-wiped",
     "file": "server/src/index.js",
-    "old": "(_, ly) => wipe(ly)))).every(Boolean);",
-    "new": "(_, ly) => wipe(ly)))).some(Boolean);",
+    "old": "(_, ly) => wipe(room, ly))))).every(Boolean);",
+    "new": "(_, ly) => wipe(room, ly))))).some(Boolean);",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],

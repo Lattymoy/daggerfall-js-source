@@ -1,5 +1,5 @@
 // @ts-check
-// QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): THE QUESTLINES' ACTIONS - five lines a quest script may say
+// QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): THE QUESTLINES' ACTIONS - six lines a quest script may say
 // that DFU's machine does not know, registered by the quest bridge beside DFU's 82 (scenes/quest/questBridge.js), as
 // Jagget's four are (systems/quest/questActionsExtension.js, FORAGE1). Not DFU members; Port-Ledger A (QL4).
 //
@@ -29,10 +29,21 @@
 //                                                                   names a Person only from its name banks or FACTION.TXT's
 //                                                                   individuals; underscores are spaces. Said first in the
 //                                                                   start-up, before the talk shows the person.
+//   ql name _foe_ <Name> [female|male]                              STAR8: a quest's FOE by its own name, every one of it
+//                                                                   (a coven's Spinner, its sisters), and a class foe's
+//                                                                   gender, where SetFoeName rolls both (Foe.cs:271-296).
+//   ql gone _foe_ [_foe_ ...]                                       AUDIT STAR8 S1: a trigger - true once the foes named
+//                                                                   have stood and none stands now, the first not killed
+//                                                                   (QlGone): an ambush gone unfought, to be armed again.
+//
+// And the questlines' own rows of the quest tables (QL_PLACE_ROWS), laid as a mod lays its own.
 import { ActionTemplate } from '../quest/actions.js';
 import { Symbol as QuestSymbol } from '../quest/symbol.js';
+import { GENDERS } from '../../characters/nameHelper.js';   // STAR8: a foe's gender, named
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { isStamped, isEnding } from './qlLaw.js';
 import { sheetFor } from './qlSheets.js';   // AUDIT QUESTLINES BRANCH-10: an outcome is one its quest's sheet has
+import { addIntoQuestTables } from '../quest/tables.js';   // AUDIT STAR8 S4: the questlines' place rows
 
 const SYMBOL = '[a-zA-Z0-9_.]+';
 
@@ -210,7 +221,12 @@ export class QlPaid extends ActionTemplate {
 }
 
 /** `ql name _person_ <Name>` - the person's name, the script's own (underscores read as spaces); saved with the person
- *  (quest/person.js's `displayName`), so a load keeps it. A symbol that is no person warns and is done. */
+ *  (quest/person.js's `displayName`), so a load keeps it. STAR8: or a foe's - `ql name _foe_ <Name> [female|male]`, the
+ *  name every one of it wears and, a class foe, the gender it stands as (DFU's Foe.cs SetFoeName rolls a humanoid's at
+ *  55% male: the Coven on the Bluff's Spinner and her sisters are its women); saved with the foe (quest/foe.js's
+ *  `displayName`, `humanoidGender`). A person's gender is its own line's (`Person ... female`), and a monster stands as
+ *  DFU stands every monster: a gender word for either warns and is not taken. A symbol that is neither warns and is
+ *  done. */
 export class QlName extends ActionTemplate {
   static typeName = 'QlName';
   constructor(parentQuest) {
@@ -218,25 +234,82 @@ export class QlName extends ActionTemplate {
     /** @type {any} */
     this.personSymbol = null;
     this.given = '';
+    /** STAR8: `female`, `male`, or '' (none named) */
+    this.gender = '';
   }
-  get saveShape() { return [['personSymbol', 'sym'], ['given']]; }
-  get pattern() { return /^\s*ql name (?<sym>_[a-zA-Z0-9_.]+_) (?<given>[A-Za-z][A-Za-z'_-]{0,47})\s*$/; }
+  get saveShape() { return [['personSymbol', 'sym'], ['given'], ['gender']]; }
+  get pattern() { return /^\s*ql name (?<sym>_[a-zA-Z0-9_.]+_) (?<given>[A-Za-z][A-Za-z'_-]{0,47})(?: (?<gender>female|male))?\s*$/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
     const action = new QlName(parentQuest);
     action.personSymbol = new QuestSymbol(match.groups.sym);
     action.given = match.groups.given.replace(/_/g, ' ');
+    action.gender = match.groups.gender ?? '';
     return action;
   }
   update(_caller) {
+    const sym = this.personSymbol?.original ?? this.personSymbol?.name;
     const person = this.parentQuest.getPerson?.(this.personSymbol);
+    const foe = person ? null : this.parentQuest.getFoe?.(this.personSymbol) ?? null;
     if (person) person.displayName = this.given;
-    else console.warn(`[questlines] ql name: no person ${this.personSymbol?.original ?? this.personSymbol?.name}`);
+    if (foe) {
+      foe.displayName = this.given;
+      foe.namePending = false;
+      if (this.gender && isClassEnemyId(foe.foeType)) foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;
+    }
+    if (!person && !foe) console.warn(`[questlines] ql name: no person ${sym}`);
+    else if (this.gender && !(foe && isClassEnemyId(foe.foeType))) console.warn(`[questlines] ql name: ${sym} takes no gender here`);
     this.setComplete();
   }
 }
 
+/**
+ * AUDIT STAR8 S1: `ql gone _foe_ [_foe_ ...]` (one to four) - a trigger: true once one of the foes named has stood in a
+ * scene since the trigger last fired, none of them stands now (machine.js questFoeStands: a cull, a teleport's sweep, a
+ * load that did not bring it back), and the first is not all killed (its kills below its count). The Coven on the Bluff's
+ * Spinner, gone unkilled - the encounters' cull takes a quest foe past 120 m (scenes/exteriorFoes.js), a death's teleport
+ * sweeps the street - took the spindle with her, and the step could never end: QLTF02 clears its ambush on this, and the
+ * next arrival brings the coven again. Every foe named must be gone, so a second coven never stands beside the first.
+ * `seen` is saved: a foe that stood before a save and is not stood again by the load is gone. Not a DFU member.
+ */
+export class QlGone extends ActionTemplate {
+  static typeName = 'QlGone';
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    /** @type {any[]} */
+    this.foeSymbols = [];
+    this.seen = false;
+  }
+  get saveShape() { return [['foeSymbols', 'symArray'], ['seen']]; }
+  get pattern() { return /^\s*ql gone((?: _[a-zA-Z0-9_.]+_){1,4})\s*$/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new QlGone(parentQuest);
+    action.foeSymbols = match[1].trim().split(/\s+/).map((s) => new QuestSymbol(s));
+    return action;
+  }
+  checkTrigger(_caller) {
+    const quest = this.parentQuest;
+    const stands = quest?.hooks?.questFoeStands;
+    const foes = this.foeSymbols.map((s) => quest?.getFoe?.(s)).filter(Boolean);
+    if (typeof stands !== 'function' || !foes.length) return false;
+    if (foes.some((f) => stands(quest, f))) { this.seen = true; return false; }
+    if (!this.seen || foes[0].killCount >= Math.max(1, foes[0].spawnCount)) return false;
+    this.seen = false;   // fired: what stands next is seen afresh
+    return true;
+  }
+}
+
+/** AUDIT STAR8 S4: THE QUESTLINES' ROWS OF Quests-Places, laid as a mod lays its own (quest/tables.js addIntoQuestTables -
+ *  Roleplay & Realism's AddIntoTable), keyed so they are laid once. `templeArkay`: a temple of Arkay - its building's
+ *  faction in MAPS.BSA is FACTION.TXT's god, 21 (396 of the Bay's 2,980 temples) - which quest/place.js holds a temple
+ *  to as DFU holds a guild hall to its row's faction (QLTF04's priest of Arkay keeps vigil in Arkay's own temple). */
+export const QL_PLACE_ROWS = Object.freeze(['templeArkay,        0, 14, 21']);
+addIntoQuestTables({ places: QL_PLACE_ROWS.map((line) => ({ line, unlessKey: line.split(',')[0].trim() })) });
+
 /** The questlines' templates, in the order the bridge registers them (after DFU's 82 - a first-match scan, and no DFU
  *  pattern claims any of these lines: test/systems/questlines/ql4_actions.test.js). */
-export const questlineActionTemplates = () => [new QlAsk(null), new QlOutcome(null), new QlAct(null), new QlPaid(null), new QlName(null)];
+export const questlineActionTemplates = () => [new QlAsk(null), new QlOutcome(null), new QlAct(null), new QlPaid(null), new QlName(null), new QlGone(null)];

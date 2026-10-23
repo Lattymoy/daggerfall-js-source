@@ -87,7 +87,7 @@
   {
     "name": "A3-S3-BUMP",
     "file": "server-account/src/npcHalls.js",
-    "old": "    bumpRegions(db, 'key = ?1', key, nowS, 'changes() > 0'),\n",
+    "old": "    bumpRegions(db, 'key = ?1', key, nowS, `changes() > 0 AND (NOT EXISTS (SELECT 1 FROM world_witness w WHERE w.kind = '${HALL_WITNESS_KIND}'\n      AND w.key = ?1 AND w.account = ?3 AND w.late = 1) OR ${CONFIRMER_MAY_BE_IGNORED})`, player.id, nowS - 2 * SEAT_WITNESS_IGNORED_S),\n",
     "new": "",
     "tests": [
       "test/net/audit_chap3.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "A3-S3-BUMP-GUARD",
     "file": "server-account/src/npcHalls.js",
-    "old": "bumpRegions(db, 'key = ?1', key, nowS, 'changes() > 0'),",
-    "new": "bumpRegions(db, 'key = ?1', key, nowS),",
+    "old": "`changes() > 0 AND (NOT EXISTS (SELECT 1 FROM world_witness w",
+    "new": "`1 AND (NOT EXISTS (SELECT 1 FROM world_witness w",
     "tests": [
       "test/net/audit_chap3.test.js"
     ]
@@ -152,7 +152,7 @@
   {
     "name": "A3-S5-ANSWER",
     "file": "server-account/src/npcHalls.js",
-    "old": "  else if (await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };\n",
+    "old": "  if (!r?.meta?.changes && await db.prepare('SELECT 1 FROM npc_hall_strikes WHERE map_id = ?').bind(h.key).first()) return { error: 'hall-struck' };\n",
     "new": "",
     "tests": [
       "test/net/audit_chap3.test.js"

@@ -508,10 +508,11 @@ test('audit18 hosts: BOTH exterior hosts thread the weather style into the sky',
     // ES1 (2026-08-27) gave the call a fourth argument - the weather and
     // the classic clock, which the ENHANCED sky needs for its clouds and
     // its moons - so the night-sky flag is no longer the last thing on
-    // the line. It is still the third argument and still the weather's.
+    // the line. It is still the third argument and still the weather's. SEA-EVENTS: world.js's violence the Aether
+    // Storm's first, at sea (scenes/seaVenturesHost.js seaStormShown).
     assert.match(src(host), /sky\.use\([^;]*minute, weatherSkyOffset === 0[,)]/,
       `${host} shows NITE on every night minute regardless of weather`);
-    assert.match(src(host), /\{ weather, violence: weatherOverride \?\? currentWeatherRaw\(\), classicMinutes: playerTicker\.classicMinutes, skyMinutes: skyMinutes\(\), sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);\s*\/\/ WEATHER2a[^\n]*ES1/,
+    assert.match(src(host), /\{ weather, violence: weatherOverride \?\? (?:seaStormShown\(\) \?\? )?currentWeatherRaw\(\), classicMinutes: playerTicker\.classicMinutes, skyMinutes: skyMinutes\(\), sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);\s*\/\/ WEATHER2a[^\n]*ES1/,
       `${host} does not feed the enhanced sky its weather and clock (TIME1: the event clock the weather walks, the sky the moons are dated by)`);
   }
 });

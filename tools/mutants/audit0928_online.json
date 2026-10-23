@@ -238,7 +238,7 @@
   {
     "name": "A0928-R5-draw-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "return w && w.stamp === walkStamp && walkStamp > 0 ? w : walkBoat(boat, -1); };",
+    "old": "return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1); };",
     "new": "return walkBoat(boat, -1); };",
     "tests": [
       "test/scenes/audit0928_online.test.js"
@@ -265,8 +265,8 @@
   {
     "name": "A0928-R5-flat-scale-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        const s = n.lossyScaleOf(m, _flatScale);",
-    "new": "        const s = n.lossyScale;",
+    "old": "const s = n.lossyScaleOf(m, _flatScale);",
+    "new": "const s = n.lossyScale;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

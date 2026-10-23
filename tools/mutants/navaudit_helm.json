@@ -725,7 +725,7 @@
   {
     "name": "NAV1H-the-port-unread",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!enabled || !boat || !where().nearPort) return false;",
+    "old": "    if (!enabled || !boat || !inPortWaters()) return false;",
     "new": "    if (!enabled || !boat) return false;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"

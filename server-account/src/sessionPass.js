@@ -44,7 +44,7 @@ const PASS_INFO = 'dfo-session-pass-v1';
 /** The hot routes, by path: the measured busiest that read nothing of the account but a pass's fields (PRIMARY-TRIPS'
  *  counts; bible/11-Multiplayer/Scale-Arc.md SESSION-SIGN). The progression claims, the mint and every route that changes
  *  an account keep the lookup. */
-export const PASS_PATHS = Object.freeze(['/v1/heartbeat', '/v1/homes/town', '/v1/prof/pixels', '/v1/chapters/list', '/v1/seats/list']);
+export const PASS_PATHS = Object.freeze(['/v1/heartbeat', '/v1/homes/town', '/v1/prof/pixels', '/v1/chapters/list', '/v1/seats/list', '/v1/festival/town']);   // WITCH1: and a town's Hearth Offerings, asked as its homes are
 const PASS_PATH_SET = new Set(PASS_PATHS);
 /** The realm checkpoint (service.js's realm data path), a PUT. */
 const CHECKPOINT_RE = /^\/v1\/realm\/r[0-9a-f]{20}\/data$/;

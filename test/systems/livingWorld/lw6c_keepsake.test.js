@@ -105,5 +105,5 @@ test('LW6c the hosts: the talk shows the household\'s moment on the parchment be
   assert.match(w, /moment: \(p\) => livingIndoors\?\.town\(\)\?\.moment\?\.\(p\) \?\? null,/);
   assert.match(w, /keepsakes: \(\) => playerEntity\.items \?\? \[\],/);
   assert.match(w, /takeKeepsake: \(item\) => \{ const i = playerEntity\.items\?\.indexOf\(item\) \?\? -1; if \(i >= 0\) playerEntity\.items\.splice\(i, 1\); \},/);
-  assert.match(w, /items\.push\(mintKeepsake\(res\)\);/);
+  assert.match(rd('src/scenes/livingWorld/remainsGoods.js'), /items\.push\(mintKeepsake\(res\)\);/);   // PIN MOVED (HOST-SPLIT, SEA VENTURES 2026-10-22): livingRemainsLay moved verbatim out of bootWorld into scenes/livingWorld/remainsGoods.js
 });

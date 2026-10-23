@@ -212,6 +212,28 @@ export function dyeCloth(r, g, b, dye) {
   return [0, 1, 2].map((k) => Math.round(band[a][k] * (1 - f) + band[c][k] * f));
 }
 /**
+ * HOOD-GAP: the hood sits on the body. Under the hood's lower edge a run of 1-5 empty px with the body right below it
+ * (the neck the cleaned frames left open, the female's side walk above all) takes the colour of the hood's own foot px
+ * in that column - the shadow under the hood. Only the columns of the hood's lower edge (its foot within 6 px of the
+ * lowest), so a weapon or an arm raised beside the hood never closes onto it.
+ * @param {Uint8Array} d  @param {number} w  @param {number} h  @param {Int16Array} foot the hood's lowest px per column, or -1
+ */
+export function closeHoodFoot(d, w, h, foot) {
+  let low = -1;
+  for (let x = 0; x < w; x++) if (foot[x] > low) low = foot[x];
+  if (low < 0) return;
+  for (let x = 0; x < w; x++) {
+    const f = foot[x];
+    if (f < 0 || f < low - 6) continue;
+    let k = 1;
+    while (k <= 5 && f + k < h && d[((f + k) * w + x) * 4 + 3] === 0) k++;
+    if (k === 1 || k > 5 || f + k >= h) continue;   // nothing empty, too long a run (open air), or the canvas ends
+    const s = (f * w + x) * 4;
+    for (let y = f + 1; y < f + k; y++) { const o = (y * w + x) * 4; d[o] = d[s]; d[o + 1] = d[s + 1]; d[o + 2] = d[s + 2]; d[o + 3] = 255; }
+  }
+}
+
+/**
  * Lay a cloak over a composed body, in place. `cloak` = { strip (decoded PNG), dye, over }.
  * @param {{width:number,height:number,data:Uint8Array}} out  @param {{width:number,height:number,data:Uint8Array|Uint8ClampedArray}} cs
  * @param {number} dye  @param {boolean} over  @param {string} head the worn helmet's family: 'l', 'c' or 'p'
@@ -232,8 +254,16 @@ export function applyCloak(out, cs, dye, over, head = 'l', noSlivers = false, to
     const o = (y * w + x) * 4;
     if (c[at(LOIN, x, y) + 3] && d[o + 3] && isCloth(d[o], d[o + 1], d[o + 2])) [d[o], d[o + 1], d[o + 2]] = dyeCloth(d[o], d[o + 1], d[o + 2], dye);
   }
-  // the worn helmet's tips in the open air beside the hood go (they stand over nothing, so nothing is left behind)
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (c[at(TRIM, x, y) + 3]) d[(y * w + x) * 4 + 3] = 0;
+  // the worn helmet's tips in the open air beside the hood go (they stand over nothing, so nothing is left behind).
+  // A trim px at the hood's foot or below it (3 px up from its lowest px in that column, along the hood's lower edge -
+  // its foot within 6 px of the lowest) is the helmet's neck under the hood, not a tip: it stays, or the hood floats
+  // over a gap (HOOD-GAP, the female's side walk 2-2 / 2-3 and idle 17-0 in a chain or plate helmet).
+  const hoodFoot = new Int16Array(w).fill(-1);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (c[at(1, x, y) + 3]) hoodFoot[x] = y;
+  let lowFoot = -1;
+  for (let x = 0; x < w; x++) if (hoodFoot[x] > lowFoot) lowFoot = hoodFoot[x];
+  const neck = (x, y) => hoodFoot[x] >= 0 && hoodFoot[x] >= lowFoot - 6 && y >= hoodFoot[x] - 3;   // the lower edge, not the sides
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (c[at(TRIM, x, y) + 3] && !neck(x, y)) d[(y * w + x) * 4 + 3] = 0;
   const keep = [];                                                    // the shoulder armour, to lay back over the cape
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const o = (y * w + x) * 4; const s = at(SHO, x, y); if (c[s + 3] && d[o + 3] && (c[s] === 255 || (c[s] & TOP_BIT))) keep.push(o, d[o], d[o + 1], d[o + 2]); }
   const drawn = noSlivers ? new Uint8Array(w * h) : null;
@@ -271,6 +301,7 @@ export function applyCloak(out, cs, dye, over, head = 'l', noSlivers = false, to
     }
   }
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const q = at(1, x, y); if (c[q + 3]) put((y * w + x) * 4, q); }   // the hood
+  closeHoodFoot(d, w, h, hoodFoot);
   // the shoulder armour, last: as the body wears it without a cloak - over the cape's corners and over the hood's foot
   for (let n = 0; n < keep.length; n += 4) { const o = keep[n]; d[o] = keep[n + 1]; d[o + 1] = keep[n + 2]; d[o + 2] = keep[n + 3]; d[o + 3] = 255; }
 }

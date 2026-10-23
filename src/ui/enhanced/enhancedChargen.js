@@ -48,6 +48,7 @@ import { bitmapCanvas } from '../bitmapCanvas.js';
 import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
 import { overlayAction, isTextEntryTarget } from '../input.js';   // CG2: one definition of 'a DOM field's key is the field's'
 import { SKILL_NAMES } from '../../systems/skills.js';
+import { reviseClassDescription } from '../../systems/stockClasses.js';   // CLASS-USE: the description names the revised skills
 import { QUESTION_COUNT } from '../../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
 import { HELP_TOPICS, REP_GROUPS, REP_MAX, DIFFICULTY_MIN, DIFFICULTY_MAX, advancementMultiplier, daggerFraction, customClassDoc } from '../../systems/customClass.js';              // AUDIT 39: the builder's help picker; CC-REP: the reputation ledger's groups and reach; UXB1-H/I: the class document, the dagger
 import { ATTRIBUTE_BLURB, attributeLabel as attrName } from '../levelUp/levelUpView.js';   // UXB1-G: the port's own line per attribute, each true of the code (LV1's audit)
@@ -1717,7 +1718,7 @@ function paintInto() {
 export function attachChargenText(f, textRsc) {
   if (!textRsc) return f;
   f.describeRace = (race) => (race ? textRsc.linesById(race.descriptionId) : []);
-  f.describeClass = (i) => textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i);
+  f.describeClass = (i) => reviseClassDescription(i, textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i));
   f.describeText = (id) => textRsc.linesById(id);
   // THE BIOGRAPHY'S TWO TEXT SOURCES, and they are not decoration. The
   // BACKSTORY is what U13 built and what the character sheet's History

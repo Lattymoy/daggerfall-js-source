@@ -47,8 +47,8 @@
   {
     "name": "RETROUI-muzzle-in-layer",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "_tlDrawn = { rect: { ...rect, x: rx, y: ry },",
-    "new": "_tlDrawn = { rect: { ...rect, x: rect.x, y: rect.y },",
+    "old": "const drawn = { rect: { ...rect, x: rx, y: ry },",
+    "new": "const drawn = { rect: { ...rect, x: rect.x, y: rect.y },",
     "tests": [
       "test/systems/fb1003_retroui.test.js"
     ]
@@ -210,10 +210,11 @@
   {
     "name": "BODYGUARD-no-startup",
     "file": "src/systems/quest/clock.js",
-    "old": "(startersOf(q, name).length > 0 || closesStartUp(q, name))",
-    "new": "(startersOf(q, name).length > 0)",
+    "old": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && closesStartUp(q, this.symbol?.name)) return false;",
+    "new": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && false) return false;",
     "tests": [
-      "test/systems/quest/fb1003_bodyguard.test.js"
+      "test/systems/quest/fb1003_bodyguard.test.js",
+      "test/systems/quest/fb1021d_ravenclose.test.js"
     ]
   },
   {

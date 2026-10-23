@@ -83,8 +83,8 @@
   {
     "name": "BAGCRAFT-book-station-by-spend",
     "file": "src/net/profBook.js",
-    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend', counter: work === true });",
-    "new": "const r = await this.deposit(k, q, { order: 'spend', counter: work === true });",
+    "old": "order: work === true ? 'work' : 'spend', counter: work === true }",
+    "new": "order: 'spend', counter: work === true }",
     "tests": [
       "test/systems/fb1009d_bagcraft.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BAGCRAFT-book-writ-by-work",
     "file": "src/net/profBook.js",
-    "old": "const r = await this.deposit(k, q, { order: work === true ? 'work' : 'spend', counter: work === true });",
-    "new": "const r = await this.deposit(k, q, { order: 'work', counter: work === true });",
+    "old": "order: work === true ? 'work' : 'spend', counter: work === true }",
+    "new": "order: 'work', counter: work === true }",
     "tests": [
       "test/systems/fb1009d_bagcraft.test.js"
     ]

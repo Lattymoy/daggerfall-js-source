@@ -41,7 +41,7 @@ import {
   townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS, sheetY,
   paintTownStatic, paintTownOverlay, BLOCK_PX, TOWN_MARK_HALF,
 } from '../ink/inkTown.js';
-import { nameplateAnchor, resolveNameplates, WORLD_PER_PX } from '../nameplateLayout.js';
+import { nameplateAnchor, resolveNameplates, WORLD_PER_PX, STAR_PLATE } from '../nameplateLayout.js';   // FB1020c STAR-PLATE: the surrender's "*", one home
 import { readPartyBodies, PARTY_MARK_CSS } from '../partyMapMarks.js';   // DISC23-A: the party's bodies in the streets
 import { readTownBoards, readTownHomes, TOWN_MARK_REACH } from './townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing
 
@@ -201,7 +201,7 @@ export function createTownSheet(deps = {}) {
   }
 
   /** DISC23-A: the party members in the streets, in sheet space. The host hands their feet in the LOCATION's own
-   *  frame - the frame it measures the player's `local` in (scenes/world.js toggleExteriorAutomap) - so a member
+   *  frame - the frame it measures the player's `local` in (scenes/exteriorAutomapToggle.js townHere) - so a member
    *  crosses into the sheet by the player's own two steps: metres to layout pixels (WORLD_PER_PX, the host's
    *  townPlayer division), then +Z up (sheetY, EM-BUG3's one seam). Read fresh each paint: they walk. */
   function partyOnSheet() {
@@ -315,13 +315,19 @@ export function createTownSheet(deps = {}) {
       const solved = resolveNameplates(raw.map((n) => ({ x: n.px - n.w / 2, y: n.py - n.h / 2, w: n.w, h: n.h })));
       raw.forEach((n, i) => {
         const s = solved[i];
-        if (!s || s.replaced) return;   // the solver gave up on it
+        if (!s) return;
+        // FB1020c STAR-PLATE (a player's report, 2026-10-20: "citizens who mark locations on your map don't leave a mark"):
+        // A PLATE THE SOLVER GAVE UP ON IS DFU'S "*", NEVER NOTHING. The surrender (ui/nameplateLayout.js resolveNameplates,
+        // ExteriorAutomap.cs:1365-1376) letters it "*" where the solver left it, its building's name kept for the pointer
+        // (DaggerfallExteriorAutomapWindow.cs:870-878, :900-904) - as the classic window does. This sheet dropped it, so a
+        // building an NPC had just marked on a crowded town's plan had no mark at all: Daggerfall with 152 others found
+        // lettered 85 of its 153 names at rest, the marked one not among them.
         // EM8: the plate carries its QUARTER (its ink) and its
         // ANCHOR (where its building actually is) as well as where the
         // solver put its words - the overlay needs all three to tick
         // the building and lead back to it when the words have moved.
         rows.push({
-          text: n.text, quest: n.quest, quarter: n.quarter, size: n.size,
+          text: s.replaced ? STAR_PLATE : n.text, name: n.text, quest: n.quest, quarter: n.quarter, size: n.size,
           x: n.px, y: n.py + (s.offY ?? 0), anchorY: n.marked ? n.foot : n.py,
           ...(n.marked ? { marked: true } : {}),
         });
@@ -399,7 +405,7 @@ export function createTownSheet(deps = {}) {
         }
         for (const p of plates?.rows ?? []) {
           if (Math.abs(p.x - px) <= p.size * p.text.length * 0.3 && Math.abs(p.y - py) <= p.size) {
-            return { label: p.text, cursor: 'pointer' };
+            return { label: p.name ?? p.text, cursor: 'pointer' };   // FB1020c STAR-PLATE: a "*" names its building, as DFU's tooltip does
           }
         }
       }

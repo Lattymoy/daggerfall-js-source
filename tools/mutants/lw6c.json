@@ -199,9 +199,9 @@
   },
   {
     "name": "LW6c-laid",
-    "file": "src/scenes/world.js",
-    "old": "    items.push(mintKeepsake(res));",
-    "new": "    void mintKeepsake;",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
+    "old": "  items.push(mintKeepsake(res));",
+    "new": "  void mintKeepsake;",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]

@@ -91,10 +91,11 @@ test('LW-FIX5 the host: the remains laid with their key and asked their count; t
   const w = rd('src/scenes/world.js');
   assert.match(w, /lay: \(res, feet, key\) => livingRemainsLay\(d, res, feet, key\),/);
   assert.match(w, /count: \(pile\) => pile\?\.items\?\.length \?\? 0,/);
-  assert.match(w, /const rolls = lwRng\(textSeed\(key\), 0x676f6f64\);/);
-  assert.match(w, /generateLootItems\(enemyLootTableKey\(res\.cls, look\.basics\.lootTableKey \?\? '-'\), \{ level, gender: res\.sex \?\? 'male' \}, rolls\);/);
-  assert.match(w, /for \(const raw of \[createRandomWeapon\(level, rolls\), createRandomArmor\(level, rolls\)\]\) if \(raw && !isAmmunition\(raw\)\) items\.push\(mintCondition\(setItemFields\(raw\)\)\);/);
-  assert.match(w, /items\.push\(goldStack\(5 \+ Math\.floor\(rolls\(\) \* 20 \* level\)\)\);/);
+  const goods = rd('src/scenes/livingWorld/remainsGoods.js');   // PIN MOVED (HOST-SPLIT, SEA VENTURES 2026-10-22): livingRemainsLay moved verbatim out of bootWorld into scenes/livingWorld/remainsGoods.js
+  assert.match(goods, /const rolls = lwRng\(textSeed\(key\), 0x676f6f64\);/);
+  assert.match(goods, /generateLootItems\(enemyLootTableKey\(res\.cls, look\.basics\.lootTableKey \?\? '-'\), \{ level, gender: res\.sex \?\? 'male' \}, rolls\);/);
+  assert.match(goods, /for \(const raw of \[createRandomWeapon\(level, rolls\), createRandomArmor\(level, rolls\)\]\) if \(raw && !isAmmunition\(raw\)\) items\.push\(mintCondition\(setItemFields\(raw\)\)\);/);
+  assert.match(goods, /items\.push\(goldStack\(5 \+ Math\.floor\(rolls\(\) \* 20 \* level\)\)\);/);
 });
 
 test('LW-FIX5 the turned watch is followed by the struck body\'s IDENTITY as it was struck - the town\'s pool dresses its bodies again, and a dead guard still wearing an old body\'s mark is never the next watchman\'s; the conversions mark with it - WATCH-FIX: PIN MOVED, each guard followed once through its own mark (test/systems/livingWorld/watchfix_watch.test.js) (mutants: the body for the mark, each conversion, the follow once)', () => {

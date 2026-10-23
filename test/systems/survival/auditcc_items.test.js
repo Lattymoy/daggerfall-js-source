@@ -78,7 +78,7 @@ test('AUDIT C&C I5: FOOD THAT SPOILS IN THE PACK IS DRESSED AT EVERY STAGE - the
   // the card: putrid cannot be eaten (it read "Nourishes for 36 minutes (putrid)"); a raw one can still be cooked
   assert.deepEqual(pack.map((it) => survivalInfoTokens(it).map((t) => t.text)), [
     ['Putrid Bread', 'Weight: 1.50 kilograms', 'Putrid. Too disgusting to force down.'],
-    ['Putrid Raw Fish', 'Weight: 2.00 kilograms', 'Putrid. Too disgusting to force down.', 'Raw. Cook it at a fire.'],
+    ['Putrid Raw Fish', 'Weight: 1.00 kilograms', 'Putrid. Too disgusting to force down.', 'Raw. Cook it at a fire.'],   // PIN MOVED: CRAFT-PAYS, a raw fish a kilo (2)
     ['Putrid Apple', 'Weight: 0.10 kilograms', 'Putrid. Too disgusting to force down.'],
   ]);
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Bread, { foodStage: 3 }))[2].text, 'Nourishes for 45 minutes (rotten)', 'a stage short of putrid still feeds, by its stage');
@@ -135,10 +135,11 @@ test('AUDIT C&C I10: no camp word that nothing says - "Turn Climates & Calories 
     for (const k of ['name', 'baseWeight', 'hitPoints', 'basePrice', 'rarity', 'worldTextureArchive', 'worldTextureRecord']) if (m[k] !== t[k]) changed.push([t.name, k, m[k], t[k]]);
   }
   assert.deepEqual(changed, [
-    ['Cooked Fish', 'basePrice', 4, 6], ['Meat', 'basePrice', 50, 15], ['Raw Meat', 'basePrice', 10, 8], ['Waterskin', 'baseWeight', 2, 0.5], ['Skillet', 'basePrice', 500, 60],
-  ], 'the five columns the port changes');
+    ['Raw Fish', 'baseWeight', 2, 1], ['Cooked Fish', 'baseWeight', 1.5, 0.5], ['Cooked Fish', 'basePrice', 4, 6], ['Meat', 'baseWeight', 2, 0.5], ['Meat', 'basePrice', 50, 15],
+    ['Raw Meat', 'baseWeight', 2, 1], ['Raw Meat', 'basePrice', 10, 8], ['Waterskin', 'baseWeight', 2, 0.5], ['Skillet', 'basePrice', 500, 60],
+  ], 'the nine columns the port changes (PIN MOVED: CRAFT-PAYS, the four food weights - five before)');
   const readme = read('vendor/climates-calories/README.md').replace(/\s+/g, ' ');
-  for (const said of ['the meat 50 to 15', 'the skillet 500 to 60', 'the cooked fish 4 to 6', 'the raw meat 10 to 8', 'the waterskin\'s weight, 2 kilos to half a kilo', 'changes five columns', 'a row renaming 149, the men\'s Boots, "Shoes", which the port does not carry']) {
+  for (const said of ['the meat 50 to 15', 'the skillet 500 to 60', 'the cooked fish 4 to 6', 'the raw meat 10 to 8', 'the waterskin\'s weight, 2 kilos to half a kilo', 'changes nine columns', 'the raw meat and the raw fish 2 kilos to 1', 'the meat 2 kilos to half a kilo and the cooked fish 1.5 to half a kilo', 'a row renaming 149, the men\'s Boots, "Shoes", which the port does not carry']) {
     assert.ok(readme.includes(said), `the README says: ${said}`);
   }
   assert.equal(mod.find((r) => r.index === 149).name, 'Shoes', 'the vendored file\'s 149 row, which the README names');

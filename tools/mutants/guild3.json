@@ -63,8 +63,8 @@
   {
     "name": "GUILD3a-your-writ-again",
     "file": "src/ui/noticeWindow.js",
-    "old": "own ? 'Your chapter writ' : poster",
-    "new": "own ? 'Your writ' : poster",
+    "old": "'member' ? 'Your chapter writ' : isChapterWrit",
+    "new": "'member' ? 'Your writ' : isChapterWrit",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3a_merit.test.js"

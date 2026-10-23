@@ -45,6 +45,6 @@ test('LAIR-REACH the host: the lair\'s stand and the Rift ask ONE end - dungeonE
   assert.match(lair, /const far = \(reaches && dungeonEnd\(reaches\)\) \|\| dungeonEnd\(\);/, 'the lair\'s stand - the walk\'s end, else SD-REACH\'s');
   assert.match(lair, /if \(!far\) \{ releaseRevenantStand\(r\); return null; \}/, 'no end: the claim freed');
   assert.doesNotMatch(lair, /_layoutEnemies/, 'never the raw markers');
-  const rift = D.slice(D.indexOf('function standSdEnd() {'), D.indexOf('const probe = {', D.indexOf('function standSdEnd() {')));
+  const rift = D.slice(D.indexOf('function standSdEnd() {'), D.indexOf('const probe = sdProbeOf(collider);', D.indexOf('function standSdEnd() {')));   // SD-THROUGH (PIN MOVED): the end's one probe (scenes/superDungeon/sdEnd.js sdProbeOf)
   assert.match(rift, /const end = dungeonEnd\(\);/, 'the Rift');
 });

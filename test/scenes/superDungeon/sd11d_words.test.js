@@ -149,7 +149,8 @@ test('SD11d THE HOSTS SAY THROUGH THE VOICE, from the world host\'s own text: it
   assert.match(W, /sdSay: \(t, rank\) => sdSay\(t, rank\),/, 'handed to the mode machine');
   const WM = read('src/scenes/worldModes.js'), D = read('src/scenes/dungeonContext.js');
   assert.match(WM, /sdSay: \(t, rank\) => host\.sdSay\?\.\(t, rank\) \?\? false,/);
-  assert.match(D, /say: \(t\) => \{ if \(!opts\.sdSay\?\.\(t\)\) setMidScreenText\(t\); \}/, 'the hall\'s lines, the label\'s own where no voice answers');
+  assert.match(D, /const sdSayHere = \(t\) => \{ if \(!opts\.sdSay\?\.\(t\)\) setMidScreenText\(t\); \};/);   // AUDIT SD-THROUGH (PIN MOVED, C13): one named closure, the hall's and the Way Through's
+  assert.match(D, /onTurn: \(i, a\) => !!opts\.sdTurn\?\.\(i, a\), say: sdSayHere/, 'the hall\'s lines, the label\'s own where no voice answers');   // SD-THROUGH (PIN MOVED): the hall's own, by its turn beside it - the Way Through says its line the same way
   assert.match(D, /if \(!opts\.sdSay\?\.\(word \?\? SD_NO_RIFT\)\) setMidScreenText\(word \?\? SD_NO_RIFT\);/, 'the Rift\'s word');
   // the voice's frame, run from its own text: in the Hour it frames; leaving lets go what waits, once
   const log = [];

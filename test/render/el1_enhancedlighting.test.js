@@ -271,7 +271,7 @@ test('EL1: the renderer builds the classic set alone, compiles the lane once on 
   assert.equal(r._pointLights.length, 48 * 4, 'the flash plus 47 of the host\'s');
   assert.equal(r._pointLights[0], 1);
   // the cloud-shadow slot the water surface adds survives every install
-  assert.ok(Array.isArray(r._csLoc.water) && r._csLoc.water.length === 2);
+  assert.ok(Array.isArray(r._csLoc.water) && r._csLoc.water.length === 3);   // PIN MOVED (OW-HORIZON, 2026-10-20): the map, its square and the far law past it
 });
 
 test('EL1: on the lane every colour goes up decoded and the lane\'s uniforms ride each program; on classic the colours go up as given and nothing of the lane is uploaded', () => {
@@ -403,7 +403,8 @@ test('EL1: syncLightingLane is the host\'s one call, the flame colour rides the 
     assert.ok(!/nearestLights\([^)]*, 16,/.test(s), `${f}: no literal sixteen`);
     assert.match(s, /nearestLights\([^)]*renderer\.maxPointLights/, `${f}: the installed cap`);
   }
-  assert.match(hostText('src/scenes/world.js'), /new FarRingRenderer\(renderer\.gl, \{ lane: renderer\.lightingLane \}\)/, 'the ring takes the same lane');
+  // PIN MOVED (OW-HORIZON, 2026-10-20): the ring is handed the renderer itself, and takes its lane from it (and each frame its focus and its deck)
+  assert.match(hostText('src/scenes/world.js'), /new FarRingRenderer\(renderer\.gl, \{ renderer \}\)/, 'the ring takes the same lane');
   assert.match(hostText('src/scenes/world.js'), /exposure: renderer\.exposure/, 'and the same exposure');
   assert.match(read('src/scenes/worldModes.js'), /lanternColor\(!!renderer\.lightingLane, new Float32Array\(DUNGEON_LIGHT_COLOR\)\)/);
   assert.ok(!/lanternColor/.test(read('src/scenes/interior.js')), 'the interior\'s lights carry their own colours (interiorLightProperties) - no flame over them');

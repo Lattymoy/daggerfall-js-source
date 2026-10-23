@@ -216,15 +216,15 @@ test('PROF6 the Work tab: this region\'s guild writs under the guild blue (Deliv
   await ticks();
   const cards = byClass(host, 'notice-writ');
   assert.deepEqual(cards.map((c) => c.className.match(/seal-\w+/)[0]), ['seal-guild', 'seal-guild', 'seal-commission', 'seal-commission']);
-  assert.match(cards[0].textContent, /Guild writThe Silver Hand \[SH\] needs 280 more Oak Logs/);
-  assert.match(cards[0].textContent, /Pays 3 silver each - 520 \/ 800 delivered/);
-  assert.match(cards[0].textContent, /5 days left/);
-  assert.match(cards[0].textContent, /50 in your Stores/);
-  assert.equal(byClass(cards[1], 'work-withdraw').length, 0, 'another guild\'s: no Withdraw');
+  assert.match(cards[1].textContent, /Guild writThe Silver Hand \[SH\] needs 280 more Oak Logs/);   // PIN MOVED (BOARD-SIFT): the work ends soonest first - W2's two days before W1's five
+  assert.match(cards[1].textContent, /Pays 3 silver each - 520 \/ 800 delivered/);
+  assert.match(cards[1].textContent, /5 days left/);
+  assert.match(cards[1].textContent, /50 in your Stores/);
+  assert.equal(byClass(cards[0], 'work-withdraw').length, 0, 'another guild\'s: no Withdraw');
   // Deliver a typed number: its words move, no redraw
-  const n = cards[0].querySelectorAll('input').find((i) => i.getAttribute('data-focus') === 'supply|W1');
+  const n = cards[1].querySelectorAll('input').find((i) => i.getAttribute('data-focus') === 'supply|W1');
   n.value = '40'; n.oninput();
-  const go = byClass(cards[0], 'work-deliver')[0];
+  const go = byClass(cards[1], 'work-deliver')[0];
   assert.equal(go.textContent, 'Deliver 40');
   const before = reads();
   go.click();

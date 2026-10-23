@@ -2,8 +2,8 @@
   {
     "name": "ROSE-SEEN-no-number",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word);",
-    "new": "  if (false) showFollowUp(n, word);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (false) showFollowUp(n, word, target);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROSE-SEEN-the-whole-blow",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word);",
-    "new": "  if (!f?.dead) showFollowUp(n * 2, word);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (!f?.dead) showFollowUp(n * 2, word, target);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROSE-SEEN-untagged",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word);",
-    "new": "  if (!f?.dead) showFollowUp(n);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (!f?.dead) showFollowUp(n, null, target);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ROSE-SEEN-a-dead-foe-numbered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word);",
-    "new": "  showFollowUp(n, word);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  showFollowUp(n, word, target);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ROSE-SEEN-drawn-unmounted",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (!registered || !(n > 0)) return null;",
-    "new": "  if (!(n > 0)) return null;",
+    "old": "  if (!registered || !(n > 0) || target?.landsByWord) return null;",
+    "new": "  if (!(n > 0) || target?.landsByWord) return null;",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ROSE-SEEN-a-zero-drawn",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (!registered || !(n > 0)) return null;",
-    "new": "  if (!registered) return null;",
+    "old": "  if (!registered || !(n > 0) || target?.landsByWord) return null;",
+    "new": "  if (!registered || target?.landsByWord) return null;",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]

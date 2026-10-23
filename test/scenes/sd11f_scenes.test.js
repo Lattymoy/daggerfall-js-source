@@ -174,7 +174,7 @@ test('SD11f THE RIFT COUNTS ITS HOUR (L6 F5): its plaque\'s second row - found o
   assert.deepEqual(createSdEnd({}).hoverName(SD_RIFT_KEY), null);
   // the hosts: the Hollow's Rift asks the world host's word for it; the Hour's own Rift counts nothing (its readouts do)
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: \(\) => \(opts\.superRiftLook \? opts\.superRiftLook\(dfLocation\?\.sdSlot\) : sdEndWord\(\)\?\.look\) \?\? null, clock: sdEndClock \}\)/);   // PIN MOVED (AUDIT SD V P1): the end asked `hasRet`, its look off the host's look door
+  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\), riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: sdRiftLookNow, clock: sdEndClock \}\)/);   // PIN MOVED (AUDIT SD V P1): the end asked `hasRet`, its look off the host's look door   // AUDIT SD-THROUGH (PIN MOVED, C13): the Rift's look one named closure, the Way Through's too (test/scenes/sd27_audit.test.js pins its body)
   assert.match(W, /count: sdRiftCount\(rec, s, now\), look: riftLook\(rec, s, now, seen\), enter: \(\) => sdEnterRealm\(s\) \};/);
 });
 

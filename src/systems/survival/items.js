@@ -41,10 +41,16 @@ export const SURVIVAL_TEMPLATES = Object.freeze([
   { index: TEMPLATE.Apple, name: 'Apple', baseWeight: 0.1, hitPoints: 90, basePrice: 1, rarity: 3, worldTextureArchive: 213, worldTextureRecord: 1 },
   { index: TEMPLATE.Orange, name: 'Orange', baseWeight: 0.1, hitPoints: 90, basePrice: 2, rarity: 3, worldTextureArchive: 213, worldTextureRecord: 0 },
   { index: TEMPLATE.Bread, name: 'Bread', baseWeight: 1.5, hitPoints: 95, basePrice: 5, rarity: 3, worldTextureArchive: 211, worldTextureRecord: 31 },
-  { index: TEMPLATE.RawFish, name: 'Raw Fish', baseWeight: 2.0, hitPoints: 50, basePrice: 4, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 9 },
-  { index: TEMPLATE.CookedFish, name: 'Cooked Fish', baseWeight: 1.5, hitPoints: 80, basePrice: 6, rarity: 10, worldTextureArchive: 211, worldTextureRecord: 10 },
-  { index: TEMPLATE.Meat, name: 'Meat', baseWeight: 2.0, hitPoints: 90, basePrice: 15, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 40 },
-  { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 2.0, hitPoints: 60, basePrice: 8, rarity: 40, worldTextureArchive: 538, worldTextureRecord: 2 },
+  // CRAFT-PAYS (2026-10-21, the Discord's #feature-feedback: "Food is too heavy. Especially meat... meat should reduce in
+  // weight once cooked becasue most of that weight will be water"; bible/06-Systems/Professions-Arc.md section 48): the
+  // mod's raw meat and raw fish weighed two kilos a piece and kept it all through the fire. A cut is a kilo, and cooked it
+  // is half that - the water gone - so a cooked Meat weighs a quarter of what it did and a Cooked Fish a third (AUDIT
+  // CRAFT-WRITS T7: "a quarter" was the Meat's alone). The dishes stand on these rows
+  // (professions/profTemplates.js DISH_TEMPLATE_ROWS) and lighten with them; Bread and Rations are the mod's.
+  { index: TEMPLATE.RawFish, name: 'Raw Fish', baseWeight: 1.0, hitPoints: 50, basePrice: 4, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 9 },
+  { index: TEMPLATE.CookedFish, name: 'Cooked Fish', baseWeight: 0.5, hitPoints: 80, basePrice: 6, rarity: 10, worldTextureArchive: 211, worldTextureRecord: 10 },
+  { index: TEMPLATE.Meat, name: 'Meat', baseWeight: 0.5, hitPoints: 90, basePrice: 15, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 40 },
+  { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 1.0, hitPoints: 60, basePrice: 8, rarity: 40, worldTextureArchive: 538, worldTextureRecord: 2 },
   { index: TEMPLATE.Waterskin, name: 'Waterskin', baseWeight: 0.5, hitPoints: 10, basePrice: 10, rarity: 1, worldTextureArchive: 539, worldTextureRecord: 0 },
   { index: TEMPLATE.Skillet, name: 'Skillet', baseWeight: 5.0, hitPoints: 100, basePrice: 60, rarity: 5, worldTextureArchive: 218, worldTextureRecord: 4 },
   // AUDIT REST II H7: its condition is its FUEL (REST2's nights), never wear - a repair counter refilled eight nights for

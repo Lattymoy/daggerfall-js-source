@@ -500,8 +500,10 @@ export const skillsImprovable = (e = playerEntity) => countReadyToImprove(e, { n
 
 export function drawLevelNotices({ owed = levelOwed(), improvable = undefined, hidden = false, now = nowMs(), doc = (typeof document === 'undefined' ? null : document) } = {}) {
   if (!doc || !isEnhanced()) return null;
-  // AUDIT SUGGESTIONS-1019 L3-4: the skills counted only for a strip that shows
-  const rows = hidden ? [] : levelNotices.frame(now, { owed, improvable: improvable ?? skillsImprovable() });
+  // SKILL-READY (2026-10-20, Dudey: "dont use this annoying message bar for this anymore"): the skills a rest would raise
+  // are a tile beside the Renown bar now (ui/hud/hudAdvance.js, which counts them with skillsImprovable); the strip says
+  // their line only for a caller that hands a count in
+  const rows = hidden ? [] : levelNotices.frame(now, { owed, improvable: improvable ?? 0 });
   levelNotices.sweep(now, { owed });
   // Checked on every frame the strip is up rather than only when the
   // paint changes: the HUD host is built by the call that runs right

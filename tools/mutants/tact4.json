@@ -20,8 +20,8 @@
   {
     "name": "TACT4-casters-blade",
     "file": "src/ai/blowShapes.js",
-    "old": "  if (mobileType >= 128 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;",
-    "new": "  if (mobileType >= 128 && mobileType !== NONE) return BLADE;",
+    "old": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;",
+    "new": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLADE;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]

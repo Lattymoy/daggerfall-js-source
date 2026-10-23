@@ -73,6 +73,9 @@ export class QuestResourceBehaviour {
     // (JS has no fake-null), so the destroyed state is explicit.
     this.isComponentDestroyed = false;
     this._destroyHandlers = [];
+    // AUDIT STAR8 S1: the machine's tick this behaviour was last driven at - minted (a wave placing, a load's revival) or
+    // updated by its pool, each frame its body lives; volatile (machine.js questFoeStands, FOE_STANDS_TICKS)
+    this.beat = machine?.beat ?? 0;
   }
 
   bindHost(host) {
@@ -121,6 +124,7 @@ export class QuestResourceBehaviour {
   /** Update (:132-203), the order verbatim. */
   update() {
     if (this.isComponentDestroyed) return;   // AUDIT 63 F2: a destroyed component does not Update
+    this.beat = this.machine?.beat ?? this.beat;   // AUDIT STAR8 S1: driven - its body stands
     // DISC6 (Discord, 2026-09-23: "Theres no quest notification when you killed all monsters and no quest update in
     // the log"): THE TARGET IS WHATEVER THE QUEST HOLDS NOW. CacheTarget resolves the quest and the resource once and
     // keeps them - and a party's shared-quest resync (machine.updateSharedQuest, every change to a partner's log)

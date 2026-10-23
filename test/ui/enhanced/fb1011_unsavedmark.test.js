@@ -86,7 +86,7 @@ test('UNSAVED-MARK the pane: the Overworld row bound and not saved says so, the 
     assert.equal(find(view.body, 'ctl-unsaved').length, 0, 'and nothing is owed');
     assert.equal(one(view.body, 'ctl-pending'), undefined);
     // a second edit, then a walk away: dropped, and the page comes back owing nothing
-    bind('TravelView', 'F3');
+    bind('TravelView', 'F12');   // F3 is auto-run's default and F4 the ship's hold, so neither stages as a free key
     assert.equal(find(view.body, 'ctl-unsaved').length, 1);
     discardControlsStaging();
     render();

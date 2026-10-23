@@ -131,14 +131,13 @@ function pensAt(calls, x, y) {
   const near = calls.filter((c) => ['moveTo', 'arc', 'rect'].includes(c.fn) && Math.abs(c.args[0] - x) <= 7 && Math.abs(c.args[1] - y) <= 7);
   return { stroke: [...new Set(near.map((c) => c.strokeStyle))].sort(), fill: [...new Set(near.map((c) => c.fillStyle))].sort(), n: near.length };
 }
-/** Repaint the kept static layer and answer what it inked. */
-function repaint(win) {
-  const calls = win._layer.getContext('2d').calls;
-  calls.length = 0;
-  win._staticKey = '';
-  win._dirty = true;
-  win.tick(0.016);
-  return calls;
+/** MAP-PAN: the glyphs are inked on the marks layer, in that bake's paper. A document
+ *  with no 2D context inks them on the sheet, where they always were. */
+function inkOf(win) {
+  const layer = win._marksLayer;
+  const ctx = layer?.canvas?.getContext?.('2d');
+  if (ctx?.calls) return { calls: ctx.calls, paper: (x, y) => toPaper({ ox: layer.ox, oy: layer.oy, scale: layer.scale }, x, y) };
+  return { calls: win._layer.getContext('2d').calls, paper: (x, y) => toPaper(win._view, x, y) };
 }
 
 /** CIE76 over sRGB - townsheet.test.js's measure (test scaffolding: nothing at runtime measures a colour). */
@@ -291,12 +290,12 @@ test('MAP-KEY: each glyph is inked in its classic dot\'s hue walked toward the p
   assert.equal(markInks(null), null, 'no palette, no inks');
   withDocument(() => {
     const win = open(mkWin());
-    const calls = repaint(win);
+    const ink = inkOf(win);
     const marks = win._sheets.get('world').ensure().marks;
     assert.equal(marks.length, PLACES.length);
     for (const m of marks) {
-      const [x, y] = toPaper(win._view, m.x, m.y);
-      const pens = pensAt(calls, x, y);
+      const [x, y] = ink.paper(m.x, m.y);
+      const pens = pensAt(ink.calls, x, y);
       assert.ok(pens.n >= 2, `${m.kind} at ${m.x},${m.y} was inked`);
       const want = [PEN.halo, expected[m.kind]].sort();
       assert.deepEqual(pens.stroke, want, `${m.kind} (bucket ${m.colorIndex}): stroked in the halo, then its kind's ink`);
@@ -312,10 +311,10 @@ test('MAP-KEY: each glyph is inked in its classic dot\'s hue walked toward the p
   _setTravelMapArtForTests(null);
   withDocument(() => {
     const win = open(mkWin());
-    const calls = repaint(win);
+    const ink = inkOf(win);
     for (const m of win._sheets.get('world').ensure().marks) {
-      const [x, y] = toPaper(win._view, m.x, m.y);
-      assert.deepEqual(pensAt(calls, x, y).stroke, [PEN.halo, PEN.line].sort(), `${m.kind}: the plain pen`);
+      const [x, y] = ink.paper(m.x, m.y);
+      assert.deepEqual(pensAt(ink.calls, x, y).stroke, [PEN.halo, PEN.line].sort(), `${m.kind}: the plain pen`);
     }
     win.dispose();
   });
@@ -326,19 +325,20 @@ test('MAP-KEY: a palette that lands after the sheet rose tints it at once - aske
     _setTravelMapArtForTests(null);
     const win = open(mkWin());
     const dungeon = win._sheets.get('world').ensure().marks.find((m) => m.kind === 'dungeon');
-    const [x, y] = toPaper(win._view, dungeon.x, dungeon.y);
-    const layer = win._layer.getContext('2d').calls;
-    assert.deepEqual(pensAt(layer, x, y).stroke, [PEN.halo, PEN.line].sort(), 'no palette yet: the pen');
+    const ink = inkOf(win);
+    const [x, y] = ink.paper(dungeon.x, dungeon.y);
+    assert.deepEqual(pensAt(ink.calls, x, y).stroke, [PEN.halo, PEN.line].sort(), 'no palette yet: the pen');
     const chip = itemsOf(win).find((i) => i.dataset.kind === 'dungeon').children[0];
     assert.ok(chip.getContext('2d').calls.some((c) => c.strokeStyle === PEN.line), 'and the key\'s chip in the pen');
     for (let i = 0; i < 5; i++) win.tick(0.016);   // an idle sheet: nothing moves
     // the boot preload lands (world.js's preloadTravelMapArt), with the sheet up and nobody touching it
     _setTravelMapArtForTests({ locationPixelColors: LOCATION_PIXEL_COLOR_INDICES.map((_, b) => { const [r, g, bl] = INVENTED(b); return (((255 << 24) >>> 0) | (bl << 16) | (g << 8) | r) >>> 0; }) });
-    layer.length = 0;
+    ink.calls.length = 0;
     win.tick(0.016);
     win.tick(0.016);
+    const [x2, y2] = ink.paper(dungeon.x, dungeon.y);
     const want = tintOf(INVENTED(HEAD.dungeon));
-    assert.deepEqual(pensAt(layer, x, y).stroke, [PEN.halo, want].sort(), 'the sheet inks the dungeon orange without a pan');
+    assert.deepEqual(pensAt(ink.calls, x2, y2).stroke, [PEN.halo, want].sort(), 'the sheet inks the dungeon orange without a pan');
     const chip2 = itemsOf(win).find((i) => i.dataset.kind === 'dungeon').children[0];
     assert.ok(chip2.getContext('2d').calls.some((c) => c.strokeStyle === want), 'and the key\'s chip with it');
     win.dispose();

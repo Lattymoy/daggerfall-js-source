@@ -14,7 +14,7 @@
 //   128  the colour exactly, never dyed
 //     1  the pixel is cleared
 // A frame colour counts as cloth when the cloaked picture already showed cloak cloth there and some green of the ramp
-// dyes Light Brown to exactly that colour.
+// dyes Light Brown to exactly that colour, or when fix_hood_fragments.py laid it as cloth (<frames>/<body>/clothmask).
 //
 // usage: node build_hoodfix.mjs <repo> <frames root with male/with-hood and female/with-hood>   (needs pngjs)
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
@@ -77,7 +77,7 @@ for (const body of ['male', 'female']) {
     const cs = rd(`${V}/cloak/${body}/${rf}.png`);
     const cloak = { strip: cs, over: cloakOver(body, rf), noSlivers: cman[body]?.noSlivers === true };
     // the frames and the cloaked / plain composition of every outfit
-    const T = {}, C = {}, P = {}, strips = {};
+    const T = {}, C = {}, P = {}, strips = {}, MK = {};
     for (const [combo, g] of Object.entries(groups)) {
       strips[combo] = rd(`${V}/${body}/${combo}/${rf}.png`);
       T[combo] = {}; C[combo] = {}; P[combo] = {};
@@ -85,6 +85,8 @@ for (const body of ['male', 'female']) {
         const t = rd(`${sdir}/${fo}/${names[fo][rf]}`).data;
         for (let i = 0; i < t.length; i += 4) if (!t[i + 3]) t[i] = t[i + 1] = t[i + 2] = 0;
         T[combo][metal] = t;
+        const mp = `${framesRoot}/${body}/clothmask/${fo}/${names[fo][rf]}`;   // px fix_hood_fragments.py laid as the cloak's cloth
+        (MK[combo] ??= {})[metal] = existsSync(mp) ? rd(mp).data : null;
         C[combo][metal] = LA.composeStrip(strips[combo], `${code}~${DYE}`, cloak).data;
         P[combo][metal] = LA.composeStrip(strips[combo], code).data;
       }
@@ -103,7 +105,8 @@ for (const body of ['male', 'female']) {
       const enc = (k, p) => {
         const i = p * 4, t = T[combo][k], c = C[combo][k], pl = P[combo][k];
         if (!t[i + 3]) { st.clear++; return [0, 0, 0, 1]; }
-        const fromCloak = c[i + 3] && !eq(c, pl, i);
+        const mk = MK[combo]?.[k];
+        const fromCloak = (c[i + 3] && !eq(c, pl, i)) || (mk && mk[i] > 0);
         const green = fromCloak ? UNDYE.get(`${t[i]},${t[i + 1]},${t[i + 2]}`) : null;
         if (green) { st.cloth++; return [...green, 255]; }
         st.exact++;

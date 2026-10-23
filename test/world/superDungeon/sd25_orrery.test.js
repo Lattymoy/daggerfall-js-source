@@ -482,8 +482,9 @@ test('SD-LOOK S10 THE LAB: the Orrery\'s knobs stand the hall at any word from i
 test('SD-LOOK S10 THE HOSTS: the dungeon host hangs the orrery\'s decor on the realm\'s anchored clock (every screen\'s rings tick together) and hands the hall\'s halos and gem light on with the end\'s - drawn and lit where the hosts already draw and light the end\'s (world.js drawSdRift, the mode machine\'s light list), in kept lists, the end\'s alone when the hall has none (mutants: the hall\'s halos dropped; the gem\'s light dropped)', () => {
   const D = read('src/scenes/dungeonContext.js');
   assert.match(D, /createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, clock: sdEndClock,/);
-  assert.match(D, /sdEndHalos: sdEnd \? \(\) => sdEndWith\(sdEnd\.halos\(\), sdHall\?\.halos\(\), _sdEndHalos\) : undefined,/);
-  assert.match(D, /sdEndLights: sdEnd \? \(\) => sdEndWith\(sdEnd\.lights\(\), sdHall\?\.lights\(\), _sdEndLights\) : undefined,/);
+  // SD-THROUGH (PIN MOVED): or, in a Hollow (the hall is the Hour's), the Way Through's
+  assert.match(D, /sdEndHalos: sdEnd \? \(\) => sdEndWith\(sdEnd\.halos\(\), sdHall\?\.halos\(\) \?\? sdThrough\?\.halos\(\), _sdEndHalos\) : undefined,/);
+  assert.match(D, /sdEndLights: sdEnd \? \(\) => sdEndWith\(sdEnd\.lights\(\), sdHall\?\.lights\(\) \?\? sdThrough\?\.lights\(\), _sdEndLights\) : undefined,/);
   const i = D.indexOf('  const sdEndWith = (a, b, into) => {'), body = D.slice(i, D.indexOf('\n  };\n', i) + 5);
   const sdEndWith = new Function(`${body}\nreturn sdEndWith;`)();
   const a = [1, 2], kept = [];

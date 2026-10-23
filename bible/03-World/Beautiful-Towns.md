@@ -261,6 +261,19 @@ elsewhere.
   stair the author shut with a floor tile and marked with the editor's 199.14 and 199.13, which no game reads - eleven
   cellars, three lofts; each stands by the shut stair, off the room's entrance (FIELD BUGS 2026-10-05 SEALED-CELLAR,
   The Possessed Child in Tigonus). The list: 20 designs, 179 interiors, 22 markers - 13,084 buildings in 4,073 towns.
+- **The port's departure: a quest Person never stands in a standing person's pick box.** Daggerfall's own Mages Guild
+  hall of `MAGEAA11` #0 and `MAGEAA12` #18 (Beautiful Cities lays the same hall) holds two quest spawn markers, one
+  0.20 m from the guild's questor (182.15, faction 63). DFU draws a Person's marker at random (Place.cs GetSiteMarker)
+  and stands the Person on it (GameObjectHelper.AddQuestNPC) whoever stands there (DaggerfallInterior.AddPeople), so in
+  half the halls of that design the Person stood inside him - Ysolde Marnhel, the Burning Doors' giver, among them. A
+  Person whose spot shares a standing person's pick box (each its billboard's width, square on the floor) stands at the
+  site's nearest other spawn marker with a floor that shares none; none clear, DFU's own marker, never an item's marker
+  nor the room's door. An item is no one and stays; the Person's layout data (its name, its click) is still its drawn
+  marker's (`sceneMount.js:"export function buildingStandSpot(own, spots, collider, lift, w = null, people = null) {"`, the
+  building stands' `worldModes.js:"isItem ? null : size.w, ctx.people);"`). Over every interior of BLOCKS.BSA and both
+  packs it moves a Person of Ysolde's width in that hall alone; 89 buildings whose only spawn marker shares a resident's
+  box (24 of Daggerfall's, 18 of Beautiful Villages', 47 of Beautiful Cities') keep DFU's stand (FIELD BUGS 2026-10-20c
+  CROWD-CLEAR; `test/systems/quest/fb1020c_crowdclear.test.js`, `tools/mutants/fb1020c_crowdclear.json`).
 - **The port's curation: a tavern with no tavern.** Beautiful Villages rebuilds
   `TVRNAS00` and `TVRNAS06` as houses (the classic blocks hold three taverns
   each) and leaves the 274 roadside taverns standing on them (their location

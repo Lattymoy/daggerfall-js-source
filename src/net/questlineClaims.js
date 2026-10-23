@@ -7,7 +7,8 @@
 //
 // THE LAW (decision 8): the service pays only what it witnessed. A step done in an endgame place is witnessed by that
 // place's receipt, already on the service's own rows - a Dagon's Breach's (`gate_kills`, r1), an Elite Breach's Redoubt
-// (`eg_redoubts`, e1), an Hour's (`sd_kills`, h1), the Sea Serpent's (`serpent_kills`, l1) - and only one written after
+// (`eg_redoubts`, e1), an Hour's (`sd_kills`, h1), the Sea Serpent's (`serpent_kills`, l1), a fallen star's (`stars_held`,
+// j1 - STAR8) - and only one written after
 // the LINE was first opened on the service (its first `ql_steps.opened_at`), and IN THE LINE'S ORDER: newer than the
 // receipt that witnessed an earlier step of the line, older than one that witnessed a later step, so one receipt
 // witnesses one step (AUDIT QUESTLINES SERVICE-2, SERVICE-5). A row's `at` is the second its receipt was CLAIMED (every
@@ -29,8 +30,9 @@
  *  `rite` Dagon's faithful's rite broken (a rite's own receipt, or a fighter's that broke it: two embers);
  *  `breach` a Dagon's Breach closed (a kill, never the rite alone); `redoubt` an Elite Breach's Redoubt taken;
  *  `redoubts3` three of them; `valkynaz` a Valkynaz's Redoubt (every fifth Court - Elite-Gates.md section 13);
- *  `hour` the Brass Remnant broken; `serpent` the Sea Serpent slain. */
-export const QL_WITNESS_KINDS = Object.freeze(['rite', 'breach', 'redoubt', 'redoubts3', 'valkynaz', 'hour', 'serpent']);
+ *  `hour` the Brass Remnant broken; `serpent` the Sea Serpent slain; STAR8: `star` a fallen star held (the Starfall -
+ *  bible/11-Multiplayer/Starfall.md section 6), `stars3` three of them. */
+export const QL_WITNESS_KINDS = Object.freeze(['rite', 'breach', 'redoubt', 'redoubts3', 'valkynaz', 'hour', 'serpent', 'star', 'stars3']);
 
 /** The questlines the service pays, by id: how many steps; which are witnessed and by what; the title and the step that
  *  pays it; the key's step, the choice that keeps it and the line that must be witnessed whole first (its title held). */
@@ -40,6 +42,10 @@ export const QL_SERVICE_LINES = Object.freeze({
   weirRoad: Object.freeze({ steps: 4, witness: Object.freeze({ 0: 'redoubt', 1: 'redoubts3', 2: 'valkynaz' }), title: 'weirwalker', titleAt: 2 }),
   hourThatWasNot: Object.freeze({ steps: 2, witness: Object.freeze({ 1: 'hour' }), title: 'hourwitness', titleAt: 1 }),
   oldCoil: Object.freeze({ steps: 3, witness: Object.freeze({ 2: 'serpent' }), title: 'satakalwitness', titleAt: 2 }),
+  // STAR8 (bible/11-Multiplayer/Starfall.md section 7): the Thirteenth of Frostfall - its first star and three more, the
+  // Starwarden on the three, its last witnessed step (the Burning Doors' law: the last step, the spindle's fate, is the
+  // client's choice, and nothing is paid on the client's word)
+  thirteenthFrostfall: Object.freeze({ steps: 4, witness: Object.freeze({ 0: 'star', 2: 'stars3' }), title: 'starwarden', titleAt: 2 }),
 });
 
 /** The titles the questlines pay, in the lines' order (the vocabulary's spelling - net/identityToken.js TITLES). */

@@ -51,6 +51,7 @@ import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from '../quest/questMarks.js';   // G
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel beside its mark
 import { paintVendorMark } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's coin
 import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js';   // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
 /** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen
@@ -1014,49 +1015,10 @@ export function paintInkStatic(ctx, model, view, opts) {
   // laid over the mountains and the roads and under every place, so a town in the fog still reads
   if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
 
-  // the marks - and MAP2's harbour glyph beside a port's, while the mod
-  // restricts ship travel to ports (the classic page's ports button
-  // shows under the same condition, TravelOptionsMapWindow.cs:148)
-  const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
-  // MAP-FIELD6: EVERY halo first, then every glyph. One pass per mark
-  // would let a neighbour's halo fall on the ink already laid down, so
-  // a crowded coast would come out with bites taken out of it - which
-  // is worse than the tangle the halo is here to fix.
-  const inked = [];
-  const harbours = [];   // PORT-MAP: [beside, x, y] - a port's anchor, at every band
-  const wheels = [];   // OW-HUBS: [beside, x, y] - a carriage town's wheel, at every band, as a port's anchor
-  for (const m of model.marks) {
-    if (!visible(m.x, m.y)) continue;
-    const ink = shown.has(m.colorIndex);
-    if (ink) inked.push([m, ...toPaper(view, m.x, m.y)]);
-    if (opts.ports && m.port) harbours.push([ink, ...toPaper(view, m.x, m.y)]);
-    if (m.carriage) wheels.push([ink, ...toPaper(view, m.x, m.y), m]);
-  }
-  // HUB1: a hub's circle goes down FIRST - its glyph's halo and ink then sit on it, so the town reads on the colour
-  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);
-  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle
-  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);
-  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
-  for (const [m, x, y] of inked) {
-    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));   // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
-  }
-  // PORT-MAP (2026-10-04, Mac: "Also ports don't show on my map"): a port's anchor at EVERY band - beside its mark where
-  // the band inks the place, ON the place where it does not (far inks the cities alone, and the map opens far) - so the
-  // ports the quays stand at read from the first look. MAP2 drew them at mid and near only.
-  for (const [beside, x, y] of harbours) paintHarbour(ctx, x, y, beside);
-  for (const [beside, x, y, m] of wheels) paintCarriageWheel(ctx, x, y, beside, m);   // OW-HUBS
-  // MAP2: the mod's MARK (TravelOptionsMapWindow.cs:532-550, drawn in
-  // MarkLocationColor) - a ring on the marked place at EVERY band, whether
-  // or not the band inks the place itself: the mark is the thing the
-  // player put there to steer by.
-  if (opts.markColor && opts.markedMapId != null && opts.markedMapId >= 0) {
-    for (const m of model.marks) {
-      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y)) continue;
-      const [x, y] = toPaper(view, m.x, m.y);
-      ctx.strokeStyle = opts.markColor; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
-    }
-  }
+  // MAP-PAN: the world sheet hands a marks layer and this is one blit. A caller
+  // with none still inks the marks here, which is what the pins drive.
+  if (opts.marksLayer) blitMarksLayer(ctx, opts.marksLayer, view);
+  else paintInkMarks(ctx, model, view, opts);
   // the names - MAP-FIELD6: haloed the same way, and for the same
   // reason. A name set in a light serif over the sheet's own cracks was
   // the least readable thing on the page.
@@ -1092,6 +1054,167 @@ export function paintInkStatic(ctx, model, view, opts) {
   }
 }
 
+/** MAP-PAN: how far past the paper the marks layer is baked, as a fraction of the paper,
+ *  so a pan shifts the layer instead of walking every place. */
+export const MARKS_PAN_PAD = 0.5;
+/** MAP-PAN: the marks bitmap stays within this on a side. A paper already there bakes flush. */
+export const MARKS_DEVICE_MAX = 8192;
+/** MAP-PAN: and within this many device pixels altogether (64MB of RGBA). A 5K sheet
+ *  with half a paper of pad on both axes is under the side cap and still ~150MB. */
+export const MARKS_DEVICE_PIXELS = 16_777_216;
+
+/** The margin, in paper pixels, the marks layer bakes past each edge. Both axes shrink
+ *  by the same fraction once the bitmap's area would pass the cap. */
+export function marksMargin(paperW, paperH, dpr = 1) {
+  const axis = (paper) => {
+    const spare = MARKS_DEVICE_MAX - paper * dpr;
+    if (!(spare > 0) || !(dpr > 0) || !(paper > 0)) return 0;
+    return Math.min(paper * MARKS_PAN_PAD * dpr, spare / 2) / dpr;
+  };
+  const padX = axis(paperW);
+  const padY = axis(paperH);
+  const w0 = (paperW + 2 * padX) * dpr;
+  const h0 = (paperH + 2 * padY) * dpr;
+  if (!(w0 > 0) || !(h0 > 0) || w0 * h0 <= MARKS_DEVICE_PIXELS) return { padX, padY };
+  // the largest shared fraction of the two pads whose bitmap still fits
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    const w = (paperW + 2 * padX * mid) * dpr;
+    const h = (paperH + 2 * padY * mid) * dpr;
+    if (w <= MARKS_DEVICE_MAX && h <= MARKS_DEVICE_MAX && w * h <= MARKS_DEVICE_PIXELS) lo = mid;
+    else hi = mid;
+  }
+  return { padX: padX * lo, padY: padY * lo };
+}
+
+/**
+ * MAP-PAN: THE PLACE MARKS. Glyphs, a hub's circle, a seat's ring, a port's anchor,
+ * a carriage town's wheel, and the marked place's ring - everything a pan only
+ * translates. A glyph is a paper-pixel size, so a zoom does not scale this layer:
+ * it is painted again. Assumes the context's transform is already the paper's.
+ * `cullPad` is in map pixels (the bake asks for a glyph's reach past its edge).
+ */
+export function paintInkMarks(ctx, model, view, opts) {
+  const { paperW, paperH } = opts;
+  const band = opts.band ?? zoomBand(view.scale);
+  const { visible } = penOf(ctx, view, paperW, paperH);
+  const reach = opts.cullPad ?? 2;
+  // the marks - and MAP2's harbour glyph beside a port's, while the mod
+  // restricts ship travel to ports (the classic page's ports button
+  // shows under the same condition, TravelOptionsMapWindow.cs:148)
+  const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
+  // MAP-FIELD6: EVERY halo first, then every glyph. One pass per mark
+  // would let a neighbour's halo fall on the ink already laid down, so
+  // a crowded coast would come out with bites taken out of it - which
+  // is worse than the tangle the halo is here to fix.
+  const inked = [];
+  const harbours = [];   // PORT-MAP: [beside, x, y] - a port's anchor, at every band
+  const wheels = [];   // OW-HUBS: [beside, x, y] - a carriage town's wheel, at every band, as a port's anchor
+  for (const m of model.marks) {
+    if (!visible(m.x, m.y, reach)) continue;
+    const ink = shown.has(m.colorIndex);
+    if (ink) inked.push([m, ...toPaper(view, m.x, m.y)]);
+    if (opts.ports && m.port) harbours.push([ink, ...toPaper(view, m.x, m.y)]);
+    if (m.carriage) wheels.push([ink, ...toPaper(view, m.x, m.y), m]);
+  }
+  // HUB1: a hub's circle goes down FIRST - its glyph's halo and ink then sit on it, so the town reads on the colour
+  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);
+  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle
+  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);
+  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
+  for (const [m, x, y] of inked) {
+    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));   // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
+  }
+  // PORT-MAP (2026-10-04, Mac: "Also ports don't show on my map"): a port's anchor at EVERY band - beside its mark where
+  // the band inks the place, ON the place where it does not (far inks the cities alone, and the map opens far) - so the
+  // ports the quays stand at read from the first look. MAP2 drew them at mid and near only.
+  for (const [beside, x, y] of harbours) paintHarbour(ctx, x, y, beside);
+  for (const [beside, x, y, m] of wheels) paintCarriageWheel(ctx, x, y, beside, m);   // OW-HUBS
+  // MAP2: the mod's MARK (TravelOptionsMapWindow.cs:532-550, drawn in
+  // MarkLocationColor) - a ring on the marked place at EVERY band, whether
+  // or not the band inks the place itself: the mark is the thing the
+  // player put there to steer by.
+  if (opts.markColor && opts.markedMapId != null && opts.markedMapId >= 0) {
+    for (const m of model.marks) {
+      if (m.mapId !== opts.markedMapId || !visible(m.x, m.y, reach)) continue;
+      const [x, y] = toPaper(view, m.x, m.y);
+      ctx.strokeStyle = opts.markColor; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+}
+
+/** MAP-PAN: where the blit will put the bitmap, in paper pixels. The shift is whole
+ *  device pixels, which is the rect a retained layer has to cover. */
+function marksBlitRect(layer, view) {
+  const dpr = layer.dpr || 1;
+  const dx = Math.round((layer.ox - view.ox) * view.scale * dpr) / dpr;
+  const dy = Math.round((layer.oy - view.oy) * view.scale * dpr) / dpr;
+  return { dx, dy, dw: layer.canvas.width / dpr, dh: layer.canvas.height / dpr };
+}
+
+/** MAP-PAN: the blit of `layer` still covers the whole paper. A zoom does not.
+ *  The check is the rounded device-pixel rect the blit actually draws: a layer
+ *  whose edge already sits inside the view, or whose bitmap runs short, does not hold. */
+export function marksLayerHolds(layer, view, paperW, paperH) {
+  if (!layer?.canvas || layer.scale !== view.scale || !(view.scale > 0)) return false;
+  const { dx, dy, dw, dh } = marksBlitRect(layer, view);
+  const eps = 1e-4;
+  return dx <= eps && dy <= eps && dx + dw >= paperW - eps && dy + dh >= paperH - eps;
+}
+
+/** MAP-PAN: lay the marks layer on the paper, shifted by the pan. Smoothing stays off so a
+ *  fractional step does not blur a glyph that was painted crisp; the shift is whole device pixels. */
+export function blitMarksLayer(ctx, layer, view) {
+  const { dx, dy, dw, dh } = marksBlitRect(layer, view);
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(layer.canvas, dx, dy, dw, dh);
+  ctx.imageSmoothingEnabled = smooth;
+}
+
+/**
+ * MAP-PAN: bake the marks, or keep the bake a pan still covers. `contentKey` is everything
+ * but the pan (the scale, the band, the paper, what the marks read). A zoom changes the
+ * scale, so it bakes again. No 2D context answers `{ layer: null }` and the sheet inks
+ * the marks where it always did.
+ * @returns {{ layer: object|null, baked: boolean }}
+ */
+export function syncMarksLayer(prev, spec) {
+  const { view, paperW, paperH, dpr = 1, contentKey, model, markOpts = {}, createCanvas } = spec;
+  if (prev && prev.contentKey === contentKey && marksLayerHolds(prev, view, paperW, paperH)) {
+    return { layer: prev, baked: false };
+  }
+  const canvas = prev?.canvas ?? createCanvas?.();
+  const lctx = canvas?.getContext?.('2d');
+  if (!lctx) return { layer: null, baked: false };
+  const { padX, padY } = marksMargin(paperW, paperH, dpr);
+  const bw = paperW + 2 * padX;
+  const bh = paperH + 2 * padY;
+  // ceil, so the bitmap is never a device pixel short of the paper it claims:
+  // a short one fails the hold and would be baked again on the next frame
+  const dw = Math.max(1, Math.ceil(bw * dpr));
+  const dh = Math.max(1, Math.ceil(bh * dpr));
+  // AUDIT-MAP2: assigning a canvas's width resets its bitmap even to the same value
+  if (canvas.width !== dw || canvas.height !== dh) { canvas.width = dw; canvas.height = dh; }
+  const scale = view.scale;
+  const bakeView = { ox: view.ox - padX / scale, oy: view.oy - padY / scale, scale };
+  lctx.setTransform(1, 0, 0, 1, 0, 0);
+  lctx.clearRect(0, 0, canvas.width, canvas.height);
+  lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  lctx.lineCap = 'round';
+  lctx.lineJoin = 'round';
+  paintInkMarks(lctx, model, bakeView, {
+    ...markOpts, paperW: bw, paperH: bh, dpr, cullPad: 2 + 16 / scale,
+  });
+  return {
+    baked: true,
+    layer: { canvas, ox: bakeView.ox, oy: bakeView.oy, scale, paperW: bw, paperH: bh, contentKey, dpr },
+  };
+}
+
 /**
  * THE OVERLAY: the party, the selection and the player - the marks that
  * breathe or move without the sheet changing under them. `clear` false
@@ -1124,6 +1247,8 @@ export function paintInkOverlay(ctx, view, opts) {
   for (const b of opts.pois ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, POI_INK);
   // EVENT-TIP: the towns under attack, over the ring and under the party - a member standing in one reads over it
   for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);
+  // STAR6: the night's fallen stars, beside the raids - none ever falls in a town
+  for (const m of opts.stars ?? []) if (visible(m.x, m.y)) paintStarMark(ctx, view, m, pulse);
   // GUIDE5: where the quests point, over the raids and under the party - the diamond above its place, the followed
   // quest's filled
   for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);
@@ -1274,6 +1399,27 @@ export function paintRaidMark(ctx, view, m, pulse = 0) {
   ctx.moveTo(x + s, cy - s); ctx.lineTo(x - s, cy + s);   // the other, its hilt at the lower left
   ctx.moveTo(x + h - g, cy + h + g); ctx.lineTo(x + h + g, cy + h - g);   // each guard square across its blade
   ctx.moveTo(x - h - g, cy + h - g); ctx.lineTo(x - h + g, cy + h + g);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** STAR6: A FALLEN STAR - a four-pointed star in its violet on its pixel, a ring breathing about it as the gate's does,
+ *  outlined in the pen's ink so it reads on any parchment. Skin. */
+export function paintStarMark(ctx, view, m, pulse = 0) {
+  const [x, y] = toPaper(view, m.x, m.y);
+  const r = 7, w = 2.2;
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = STAR_VIOLET_CSS;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y - r); ctx.lineTo(x + w, y - w); ctx.lineTo(x + r, y); ctx.lineTo(x + w, y + w);
+  ctx.lineTo(x, y + r); ctx.lineTo(x - w, y + w); ctx.lineTo(x - r, y); ctx.lineTo(x - w, y - w); ctx.closePath();
+  ctx.fillStyle = STAR_VIOLET_CSS;
+  ctx.fill();
+  ctx.strokeStyle = PEN.line;
+  ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
 }

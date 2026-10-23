@@ -121,12 +121,36 @@ export const isWildRegion = (regionIndex) => regionIndex === WILD_REGION;
 // ── the live flag: where the player stands now ───────────────────────────────────────────────────────────────────────
 let _here = false;
 let _ring = 0;
-/** The world host's word each frame: the player stands in the zone, online (scenes/world.js) - and in which ring. */
-export function setWildHere(on, ring = 0) { _here = !!on; _ring = _here ? Math.max(1, Math.min(WILD_RINGS, ring | 0 || WILD_RINGS)) : 0; }
+let _kind = null;
+/** The world host's word each frame: the player stands in the zone, online (scenes/world.js) - and in which ring, and on
+ *  which ground (ETHER-WILD, 2026-10-21: `kind` - 'wroth' the Wrothgarian Mountains, 'ether' the Eltheric Ocean past
+ *  Veilhaven's peace, systems/wild/etherWild.js). Every law of the zone reads the flag alike; only its words read the kind. */
+export function setWildHere(on, ring = 0, kind = WILD_KIND) {
+  _here = !!on; _ring = _here ? Math.max(1, Math.min(WILD_RINGS, ring | 0 || WILD_RINGS)) : 0; _kind = _here ? (kind || WILD_KIND) : null;
+}
 /** Does the player stand in the zone now? (The foe pools ask at a spawn, the loot rolls at a death.) */
 export const wildHere = () => _here;
 /** The ring the player stands in (1 the outer, 4 the heart), 0 outside. */
 export const wildRing = () => _ring;
+/** ETHER-WILD: the ground of the zone the player stands in - 'wroth' or 'ether' - or null outside every zone. */
+export const wildZoneKind = () => _kind;
+
+// ── ETHER-WILD: THE ZONE'S WORDS BY ITS GROUND ───────────────────────────────────────────────────────────────────────
+// The mountains' words are WILD_TEXT's. Another ground registers its own (systems/wild/etherWild.js, the Eltheric Ocean's)
+// so this leaf imports nothing of it, and a word it does not name is the mountains'.
+/** The Wrothgarian Mountains' kind (setWildHere's default). */
+export const WILD_KIND = 'wroth';
+/** @type {Map<string, Record<string, any>>} */
+const _kindWords = new Map();
+/** A ground's own words: `name` (the zone's name in a sentence), `ringName(ring)`, and any WILD_TEXT key it says its own
+ *  way. */
+export function registerZoneWords(kind, words) { _kindWords.set(kind, words); }   // kept as given: a getter reads its words in the language of the moment
+/** A word of the zone - its ground's own, else the mountains' (WILD_TEXT's). `kind` defaults to where the player stands. */
+export const zoneWord = (key, kind = _kind) => (kind ? _kindWords.get(kind)?.[key] : undefined) ?? WILD_TEXT[key];
+/** The zone's name in a sentence ("the Wrothgarian Mountains" is WILD_NAME's own, as WILD_TEXT says it). */
+export const zoneName = (kind = _kind) => (kind ? _kindWords.get(kind)?.name : undefined) ?? WILD_NAME;
+/** A ring's name on the zone's ground (the mountains': wildRingName). */
+export const zoneRingName = (ring, kind = _kind) => ((kind ? _kindWords.get(kind)?.ringName : undefined) ?? wildRingName)(ring);
 /** WILD2: the mask the world host registered (the maps' own) - so a host with no map of its own (a dungeon's build)
  *  reads a place's ring by its map pixel. */
 let _mask = null;
@@ -485,6 +509,10 @@ export const WILD_TEXT = Object.freeze({
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
   truce: `No longer in your party. In the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
   walkInto: `It leads into the ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
+  // AUDIT SEA VENTURES C6, C7: two more of the zone's own, so a ground of its own says them its way (zoneWord) - through
+  // the text core (L10N4), read when they are said (a getter: a string where the callers read one)
+  get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in the mountains.'); },
+  get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in the Wrothgarian Mountains.'); },
   // WILD3: the strangers
   stranger: 'Stranger',
   strangerNear: (m) => `A stranger is near - ${Math.max(10, Math.round(m / 10) * 10)} m.`,
@@ -498,9 +526,9 @@ export const WILD_TEXT = Object.freeze({
   // pack with mine, so none is sent off from inside the zone (the teleport's own refusal, said of a companion), nothing of
   // mine reaches one waiting outside it, and one carried off knocked out leaves what it carries with me - through the
   // text core (L10N4), read when they are said
-  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave the {zone}.', { zone: WILD_NAME, name: name || t('wild.companion.yours', 'your companion') }),
-  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside the {zone}. Come out to hand over gear.', { zone: WILD_NAME, name: name || t('wild.companion.yoursFirst', 'Your companion') }),
-  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: WILD_NAME, name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
+  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave the {zone}.', { zone: zoneName(), name: name || t('wild.companion.yours', 'your companion') }),
+  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside the {zone}. Come out to hand over gear.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion') }),
+  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
   ringCross: (r, deeper) => `${deeper ? 'Deeper' : 'Back out'} - ${wildRingName(r)}: ${wildRingBonus(r)}.`,
@@ -564,7 +592,7 @@ let _death = null;
  *  goes. The screen holds WILD_DEATH_HOLD_S and takes no Enter while it stands (ui/deathScreen.js). */
 export function setWildDeath(d) {
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
-    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters) } : null;
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. */
 export function wildLettersOf(/** @type {any} */ items) {
@@ -576,5 +604,5 @@ export const wildDeath = () => _death;
 export function wildDeathLines(d = _death) {
   if (!d) return [];
   return [d.killer ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : '', WILD_TEXT.deathDrop(d.dropped),
-    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), WILD_TEXT.deathHold].filter(Boolean);
+    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);
 }

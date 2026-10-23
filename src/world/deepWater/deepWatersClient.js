@@ -21,7 +21,7 @@
 
 import { buildGlobalSteps, classifyPixel, PIXEL_MIXED, DeepWatersBake } from './deepWatersBake.js';
 import { bakeCacheKey, bakeStore, cachedBake, fnv1a, rectsFingerprint, rectsLookup } from './deepWatersBakeCache.js';
-import { setLocationTiles } from '../terrain/terrainTiles.js';
+import { locationRectReader } from '../terrain/terrainTiles.js';   // BOOT-RECTS: the walk's blocks parsed once
 import { buildDeepWatersPixel } from './deepWatersPixel.js';
 import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP: the Eltheric Ocean's bake beside the Bay's
 import { etherWoods } from '../ethericSea.js';
@@ -39,12 +39,11 @@ function defaultWorkerFactory() {
  */
 export function deepWatersLocationRects(woods, locations, maps, blocks) {
   const rows = [];
-  const scratch = new Uint8Array(128 * 128);
+  const rectOf = locationRectReader(maps, blocks);
   for (const [px, py, loc] of locations) {
     if (!loc || loc.spawned) continue;   // SPAWNED-DUNGEONS1 clones are the port's, not the baker's
     if (classifyPixel(woods, px, py) !== PIXEL_MIXED) continue;
-    scratch.fill(0);
-    const r = setLocationTiles(loc, maps, blocks, scratch);
+    const r = rectOf(loc);
     rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax]);
   }
   return rows;

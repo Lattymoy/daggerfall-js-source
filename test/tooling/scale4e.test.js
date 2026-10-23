@@ -29,6 +29,7 @@ function runBlock(yml, stepName) {
 }
 
 const OVERLOADED = 'A request to the Cloudflare API (/accounts/x/d1/database/y/query) failed.\n\n  D1 DB is overloaded. Requests queued for too long. [code: 7429]';
+const RESET = 'A request to the Cloudflare API (/accounts/x/d1/database/y/query) failed.\n\n  D1 DB exceeded its CPU time limit and was reset. [code: 7429]';
 const BROKEN = 'A request to the Cloudflare API (/accounts/x/d1/database/y/query) failed.\n\n  duplicate column name: seen [code: 7500]';
 
 /** The step run against `answers` - one per call of wrangler: 'ok', 'overloaded' or 'broken' (its last repeats). */
@@ -44,6 +45,7 @@ a=$(sed -n "\${n}p" "${dir}/answers"); [ -n "$a" ] || a=$(tail -n 1 "${dir}/answ
 case "$a" in
   ok) echo "Migrations applied" ;;
   overloaded) printf '%s\\n' ${JSON.stringify(OVERLOADED)} >&2; exit 1 ;;
+  reset) printf '%s\\n' ${JSON.stringify(RESET)} >&2; exit 1 ;;
   *) printf '%s\\n' ${JSON.stringify(BROKEN)} >&2; exit 1 ;;
 esac
 `);
@@ -82,6 +84,17 @@ test('SCALE4e a migration that fails for any other reason stops the deploy at on
   assert.equal(later.status, 1, later.out);
   assert.equal(later.calls.length, 2, 'an overload, then a real failure: it stops at the failure');
   assert.deepEqual(later.slept, [20]);
+});
+
+test('SCALE4e AUDIT LEAN-READS D3: a migration that ran past D1\'s CPU limit - code 7429, as an overload\'s is - is never asked again: asked again it resets the live database again (mutants: the reset retried as an overload, the overload known by its code)', () => {
+  const r = migrate(['reset', 'ok']);
+  assert.equal(r.status, 1, r.out);
+  assert.equal(r.calls.length, 1, 'asked once');
+  assert.deepEqual(r.slept, []);
+  assert.match(r.out, /::error::a migration ran past D1's CPU limit and the database was reset - never asked again/);
+  const after = migrate(['overloaded', 'reset']);
+  assert.equal(after.status, 1, after.out);
+  assert.equal(after.calls.length, 2, 'an overload asked again; the reset it met then, not');
 });
 
 test('SCALE4e a database overloaded past five and a half minutes stops the deploy, saying to re-run it (mutants: the last answer taken as success; a wait after the last ask)', () => {

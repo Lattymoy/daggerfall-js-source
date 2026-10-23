@@ -87,6 +87,15 @@ export const FIRM_CSS = `
 .fmt-root { position: fixed; inset: 0; z-index: 14; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
 .fmt-root.fmt-embed { position: absolute; z-index: auto; }   /* GROWTH3: drawn in the pause window's Growth tab, the stage's size */
 .fmt-root.fmt-embed .fmt-bar h2 { display: none; }   /* GROWTH3: the rail names the page */
+/* GROWTH-BOOK: in the tab the sky's words stand left of its side panel - the help line wraps there, never cut at both
+   ends, and the birthsign line is centred over the sky, not under the panel */
+@media (min-width: 761px) {
+  .fmt-root.fmt-embed .fmt-side { width: 280px; }
+  .fmt-root.fmt-embed .fmt-hint { left: 12px; right: 304px; transform: none; white-space: normal; max-width: none; text-align: center; line-height: 1.4; }
+  .fmt-root.fmt-embed .fmt-say { left: calc((100% - 292px) / 2); max-width: calc(100% - 316px); }
+  .fmt-root.fmt-embed:has(.fmt-side.shut) .fmt-hint { right: 12px; }
+  .fmt-root.fmt-embed:has(.fmt-side.shut) .fmt-say { left: 50%; max-width: calc(100% - 32px); }
+}
 .fmt-root canvas.fmt-sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 .fmt-root canvas.fmt-sky.drag { cursor: grabbing; }
 .fmt-root canvas.fmt-sky.over { cursor: pointer; }

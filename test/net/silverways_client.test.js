@@ -48,10 +48,11 @@ test('SILVER-WAYS the lines: a counted claim says its strike, a guild deed it co
     'The Silver Hand pays you 38 silver under its contract.',
   ]);
   // PIN MOVED (EG-E1): the cap's lines name the Spire's Redoubts, which strike under it too - and a Redoubt's names the Redoubt
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'raid'), ['No silver for this town. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.']);
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'), ['No silver for this breach. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.']);
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'serpent'), ['No silver for this serpent. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.'], 'SERPENT-SET: a serpent\'s capped line names the serpent');
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'eg'), ['No silver for this Redoubt. You can earn at most 150 silver a day from breaches, town defenses, serpents and Redoubts.'], 'EG-E1: a Redoubt\'s capped line names the Redoubt');
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'raid'), ['No silver for this town. You can earn at most 150 silver a day from breaches, town defenses, serpents, Redoubts and fallen stars.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'), ['No silver for this breach. You can earn at most 150 silver a day from breaches, town defenses, serpents, Redoubts and fallen stars.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'serpent'), ['No silver for this serpent. You can earn at most 150 silver a day from breaches, town defenses, serpents, Redoubts and fallen stars.'], 'SERPENT-SET: a serpent\'s capped line names the serpent');
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'eg'), ['No silver for this Redoubt. You can earn at most 150 silver a day from breaches, town defenses, serpents, Redoubts and fallen stars.'], 'EG-E1: a Redoubt\'s capped line names the Redoubt - PIN MOVED (STAR7): the cap names the fallen stars');
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'star'), ['No silver for this star. You\'ve reached today\'s limit of 150 silver.'], 'STAR7: a held star\'s capped line names the star - PIN MOVED (AUDIT STAR W2): the cap\'s number handed to the language, no explaining');
   assert.deepEqual(b.claimLines({ marks: { struck: 50, balance: 50 }, deed: null }), ['50 silver added to your account. You now hold 50 silver.']);
   assert.deepEqual(b.claimLines({ recorded: true }), [], 'a service from before them');
   assert.deepEqual(b.claimLines(null), []);
@@ -156,13 +157,15 @@ test('SILVER-WAYS the Work tab\'s contracts: each a card under its guild - what 
   await ticks();
   const cards = byClass(host, 'notice-writ');
   assert.equal(cards.length, 2);
-  assert.match(cards[0].textContent, /Guild contractThe Silver Hand \[SH\] pays the defenders of Daggerfall's towns against raiders/);
-  assert.match(cards[0].textContent, /40 silver each - 7 defenders left of 10/);
-  assert.match(cards[0].textContent, /5 days left/);
-  assert.match(cards[0].textContent, /Officers and the Guildmaster are not paid by their own guild's contracts\./, 'an Officer of the posting guild');   // BOARD-UI (PIN MOVED)
-  assert.match(cards[1].textContent, new RegExp(`paid when the raid is counted, less ${marksText(saleTax(20))} tax`));
-  assert.equal(byClass(cards[1], 'work-withdraw').length, 0, 'another guild\'s: no Withdraw');
-  byClass(cards[0], 'work-withdraw')[0].click();
+  // PIN MOVED (BOARD-SIFT): the work ends soonest first - C2's two days before C1's five
+  const [c2, c1] = cards;
+  assert.match(c1.textContent, /Guild contractThe Silver Hand \[SH\] pays the defenders of Daggerfall's towns against raiders/);
+  assert.match(c1.textContent, /40 silver each - 7 defenders left of 10/);
+  assert.match(c1.textContent, /5 days left/);
+  assert.match(c1.textContent, /Officers and the Guildmaster are not paid by their own guild's contracts\./, 'an Officer of the posting guild');   // BOARD-UI (PIN MOVED)
+  assert.match(c2.textContent, new RegExp(`paid when the raid is counted, less ${marksText(saleTax(20))} tax`));
+  assert.equal(byClass(c2, 'work-withdraw').length, 0, 'another guild\'s: no Withdraw');
+  byClass(c1, 'work-withdraw')[0].click();
   await ticks();
   assert.deepEqual(calls.at(-1), ['withdrawContract', 'C1']);
   assert.match(host.textContent, /The Silver Hand \[SH\]: 10 silver to each of 5 defenders more/);

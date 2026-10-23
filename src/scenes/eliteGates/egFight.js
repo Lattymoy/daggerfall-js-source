@@ -7,7 +7,7 @@
 //     (rising, walking, winding up, striking, flinching, falling); the errands' objects - the struck ones (rifts, anchors,
 //     banners, hearts, seals, braziers, standards, chains, pillars, sparks) as the Reckoning's crystals in their colours
 //     (render/courtCrystals.js), the stood-on ones (runes with their numerals, soul-gems, havens, the relic, the engine,
-//     the Orrery's stones, umbral discs) on the floor;
+//     the Orrery's stones' rings - each stone stands over its own, scenes/eliteGates/egOrrery.js - umbral discs) on the floor;
 //   THE BLOWS - each FULL shape stamp drawn by the telegraph pass (render/gate/gateTelegraph.js) in THE SPIRE DANGER EDGE,
 //     the TELEGRAPH BUDGET's order (net/eliteGates/egShape.js egShapeOrder), a CHECK's havens gold; each judged against MY OWN FEET at
 //     its landing (co-op's law - net/eliteGates/egShape.js egBlowVerdict), its share of my health through my saving throw, its push;
@@ -73,8 +73,9 @@ import { HIT_KINDS, CRYSTAL_R, CRYSTAL_H } from '../../net/gate/gateBrain.js';
 import { strikeDamage, savedShare } from '../../net/gate/gateStrike.js';
 import { bossFrame, crystalStandIn, hostStandIn, hostCue, BOSS_CUES, CRYSTAL_CLIPS } from '../../world/gate/gateBoss.js';
 import { wordShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's health's share, the relay's word
-import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_STYLE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_EDGE_SAFE, TELEGRAPH_POOL, TELEGRAPH_POOL_HAVEN, TELEGRAPH_POOL_SPIRE } from '../../render/gate/gateTelegraph.js';
-import { CourtCrystalRenderer } from '../../render/courtCrystals.js';
+import { GateTelegraphRenderer, telegraphPrograms, TELEGRAPH_KIND, TELEGRAPH_STYLE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_EDGE_SAFE, TELEGRAPH_POOL, TELEGRAPH_POOL_HAVEN, TELEGRAPH_POOL_SPIRE } from '../../render/gate/gateTelegraph.js';
+import { CourtCrystalRenderer, CRYSTAL_PROGRAMS } from '../../render/courtCrystals.js';
+import { compiledPass } from '../../render/glProgram.js';   // SHADER-STALL: the breach's passes built once their programs are done
 import { titleCardModel, drawGateTitleCard, TITLE_HOLD_MS } from '../../ui/gate/gateTitleCard.js';
 import { setBatchHitFlash, setBatchGlint } from '../../systems/hitFlash.js';
 import { groundViewModel, drawGateGround } from '../../ui/gate/gateGroundView.js';   // EG-ZG: the peril arrow and the chain's words, the gate's own readout
@@ -85,6 +86,8 @@ import { egFightFloors, egFloorPlan, egFloorPlanKeep, egHazardSurface, egPerilOf
 import { EG_SHADE_BAND } from '../../world/eliteGates/egTelegraph.js';   // AUDIT EG V (lane1 #13): in the dark every foe keeps the Shade's rim light
 import { drawEgSigils } from '../../ui/eliteGates/egSpireHud.js';   // EG-ZG: the marks over heads
 import { spireStoneWords } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): a stone's name and hour, over it
+import { EG_STONE_TOP_M } from './egOrrery.js';   // FIELD BUGS 2026-10-20f (ORRERY-STONES): a stone stands, its words over its crown
+import { reportPlayerAttack } from '../../combat/formulas.js';   // FIELD BUGS 2026-10-20f (LANDED-WORD): the number, at the room's word
 import { EG_NUMERALS } from '../../ui/eliteGates/egParty.js';   // AUDIT EG IV (lane1 #15): the company's numerals, an errand's member drawn by its
 import { egMemberOf } from '../../net/eliteGates/egLink.js';
 import { multiply } from '../../world/mat4.js';
@@ -509,7 +512,14 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     blowMet.add(who);
     return blowSeq;
   }
-  let pass = null, passTried = false, crystalPass = null, crystalTried = false;
+  // SHADER-STALL (render/glProgram.js compiledPass): the telegraphs and the crystals built the first frame a breach draws
+  // them AND their programs are done - never a frame frozen on a compile; their doors made again for each breach (leave).
+  // AUDIT SHADER-STALL: and the first frame a blow's telegraph or a crystal must be SEEN, built then whatever the driver
+  // says (`get(true)`) - a blow a player cannot see coming is the fight's own fault, never a compile's; started at the
+  // boot's idle where the driver compiles beside the frames (render/playPrograms.js), so that build waits on nothing
+  const telegraphDoor = () => compiledPass(gl, telegraphPrograms(true), () => new GateTelegraphRenderer(gl, { spire: true }), (e) => console.warn('[eg] the telegraphs would not build', e?.message ?? e));
+  const crystalDoor = () => compiledPass(gl, CRYSTAL_PROGRAMS, () => new CourtCrystalRenderer(gl), (e) => console.warn('[eg] the crystals would not build', e?.message ?? e));
+  let pass = null, telegraphOf = telegraphDoor(), crystalPass = null, crystalsOf = crystalDoor();
   /** EG-G2: THE SPIRE MIX over this screen's engine and the music; the blows I was stung for; the frame's barks */
   const mix = createSpireMix({ audio, music, now });
   const stung = new Set(), _barks = [];
@@ -566,11 +576,15 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
    *  sets' and the martial powers), the door that sends it (hostHit) and the swing's ring (scenes/dungeonContext.js swingOnHost). */
   let strikeAt = /** @type {number[]|null} */ (null);
   const _strikeAt = [0, 0, 0];
+  /** FIELD BUGS 2026-10-20f (LANDED-WORD): whether my relay says what each of my blows landed (`eland` - net/wire.js
+   *  relaySupportsEgLand, told each frame by the breach client) - then a blow's number is the room's word, never the claim */
+  let landWord = false;
   function turnStandIn(t, b) {
     const e = t.entity, view = egFightView(spec), at = strikeAt;
     const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);
     e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);   // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor
     e.wardText = off && at ? egNoFooting() : null;   // ui/hitNumbers.js: the ground's word, else the ward's
+    e.landsByWord = landWord;   // LANDED-WORD (ui/hitNumbers.js numberFor): a hit's number waits for the room's word of what landed
   }
 
   const play3 = (cue, at) => { if (!cue || !audio || !at) return; try { if (cue.id != null) audio.play3dId?.(cue.id, at, cue.volume, { maxDistance: cue.reach, distanceModel: 'linear', pitch: cue.pitch }); else audio.play3d?.(cue.clip, at, cue.volume, { maxDistance: cue.reach, distanceModel: 'linear', pitch: cue.pitch }); } catch { /* a sound is never the fight */ } };
@@ -1180,7 +1194,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       const orr = F.pg?.obj === 'orrery' && Array.isArray(F.pg.st) ? F.pg.st : null;
       if (orr) for (const b of F.bodies) {
         if (b.role !== EG_ROLE.obj || OBJ_KEY[b.k] !== 'stone' || b.goneAt || !Number.isFinite(orr[b.pt])) continue;
-        const at = egScreenAt(vp, egGivenAt(b, centre, tg));
+        const at = egScreenAt(vp, egGivenAt(b, centre, tg, centre[1] + egBodyHeight(b, tg) + EG_STONE_TOP_M));   // ORRERY-STONES: over its crown gear, never across its sign
         if (at) _sigils.push({ key: `orr${b.i}`, x: at[0], y: at[1], marks: [{ sigil: 'stone', text: spireStoneWords(b.pt, orr[b.pt]) }] });
       }
       const subs = _subs;
@@ -1322,6 +1336,15 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     hit: () => false,
     /** Every body my blows meet - lords, the legion, the struck objects - and a blow of mine on one (`hit` by number). */
     hostTargets: () => _targets,
+    /** FIELD BUGS 2026-10-20f (LANDED-WORD): whether my relay says what my blows land (the breach client, each frame). */
+    landsWord(on) { landWord = !!on; },
+    /** LANDED-WORD: the room's word that a blow of mine on body `i` landed `d` - its number (HN1's seam), the duel's law (INT8:
+     *  a miss said at once, a hit at the referee's word). A blow the room refused or the purse emptied lands 0, and says so. */
+    landed(i, d) {
+      if (!landWord || !Number.isInteger(i) || !Number.isFinite(d)) return false;
+      reportPlayerAttack({ hit: true, damage: d });
+      return true;
+    },
     hostHit({ i, d, r, tick = false } = /** @type {any} */ ({})) {
       if (!Number.isInteger(i) || !(Math.round(d) >= 1) || !Object.values(HIT_KINDS).includes(r)) return false;
       const E = link.state(), b = E.fight.bodies.find((q) => q.i === i);
@@ -1354,10 +1377,10 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       if (!centre) return false;
       let drew = false;
       if (_crystals.length) {
-        if (!crystalTried && gl) { crystalTried = true; try { crystalPass = new CourtCrystalRenderer(gl); } catch (e) { console.warn('[eg] the crystals would not build', e?.message ?? e); crystalPass = null; } }
+        crystalPass = crystalsOf(true);
         if (crystalPass) { crystalPass.draw(_crystals, proj, view, eye, seconds, fog); drew = drew || crystalPass.drawn > 0; }
       }
-      if (!passTried && gl) { passTried = true; try { pass = new GateTelegraphRenderer(gl, { spire: true }); } catch (e) { console.warn('[eg] the telegraphs would not build', e?.message ?? e); pass = null; } }
+      pass = telegraphOf(_shapes.length > 0);
       if (view) viewYaw = egViewYaw(view);
       if (proj && view) sigilsFrame(multiply(proj, view, _vp));
       egLookShapes(_shapes, egAccessNow(), stageNow);   // EG-G1/EG-G2: each shape in the shelf's palette, fill and style bit
@@ -1424,7 +1447,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       if (!hall && !centre && !cardUp && !groundUp && !sigilsUp && !drawn.size && !fireBatches.size && !ll.length && !trail.length && !hymn) return;   // AUDIT EG III (lane4 #2): nothing held - asked every frame out of the Spire, it touches nothing (never the Burning Court's card)
       // AUDIT EG V (L6-5; sections 11.9 and 29, EVERY ALLOCATION HAS AN OWNER): the passes' slots emptied before they are freed
       const p0 = pass, c0 = crystalPass;
-      pass = null; crystalPass = null; passTried = false; crystalTried = false; floorBuf = null;
+      pass = null; crystalPass = null; telegraphOf = telegraphDoor(); crystalsOf = crystalDoor(); floorBuf = null;
       try { p0?.destroy(); } catch { /* gone with its context */ }
       try { c0?.destroy(); } catch { /* gone with its context */ }
       for (const d of drawn.values()) destroy(d);

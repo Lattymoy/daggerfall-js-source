@@ -170,7 +170,7 @@ import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } fr
 import { CAPTAIN_PAGE_SECTIONS, captainPageShown, drawCaptainPage } from '../captainPage.js';   // CAPT-LOG: the captain's standing and log
 import { drawGrowthTab, resetGrowthTab, releaseGrowthTab, growthBack, growthAsks, growthPageAt, setGrowthSection, growthDue } from '../growth/growthTab.js';   // GROWTH1: the Growth tab - the level, the specialisations, the skies
 import { stageLive } from '../growth/growthStage.js';   // GROWTH3: a face up in the tab - the window's Escape asks it first
-import { COLLECTION_PAGE_SECTIONS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage, disarmCollectionsPage, setCollectionsPart } from '../collectionsPage.js';   // COLLECTIONS: the codex and the cards
+import { COLLECTION_PAGE_SECTIONS, COLLECTION_PARTS, collectionsPageShown, drawCollectionsPage, resetCollectionsPage, disarmCollectionsPage, setCollectionsPart, rereadCollectionsAccount } from '../collectionsPage.js';   // COLLECTIONS: the codex and the cards - AUDIT COLLECTIONS-II: its parts by name, and its read asked again when the account card closes
 import { swornBodyOf } from '../../systems/revenant/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../../characters/enemy/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
 import { affiliations } from '../../systems/affiliations.js';
@@ -238,6 +238,8 @@ import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
 import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { profileBadge, portraitSave, liveCharacter, characterLine } from '../profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
+import { profileIconNode } from '../profileIcons.js';   // WITCH1: a profile icon worn, in the mark's portrait
+import { ownIcon } from '../../systems/ownGlyphs.js';   // WITCH1: the icon the stored session says this device's player wears
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
@@ -1086,18 +1088,16 @@ function closeAccount() {
   accountOpen = false;
   acctFlow = null;
   acctPaint = null;
+  rereadCollectionsAccount();   // AUDIT COLLECTIONS-II (lane 2): what the card did, the Collections page reads again
   render();
 }
+/** COLLECTIONS-II: THE ONE CONSTRUCTION of an account flow (Home.md, THE ONE CONSTRUCTION SEAM) - the account card's,
+ *  and the Collections page's that reads the wardrobe and wears from it (ui/collections/wardrobePart.js). */
+const newAccountFlow = (onChange) => AccountFlow({ io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) }, storage: appStorage(), onChange });
 function accountBody() {
   const host = el('div', 'acctmount');
   const fresh = !acctFlow;
-  if (fresh) {
-    acctFlow = AccountFlow({
-      io: { fetch: (...a) => globalThis.fetch(...a), base: serviceBase(appStorage()) },
-      storage: appStorage(),
-      onChange: () => acctPaint?.(),
-    });
-  }
+  if (fresh) acctFlow = newAccountFlow(() => acctPaint?.());
   // PROFILE-MENU: the card's plate wears the corner mark's portrait and says whose face it is - the same character
   // the mark shows (profileCharacter), its face asked for as a COPY (the mark and a save tile may draw this very face)
   const save = profileCharacter();
@@ -1132,13 +1132,21 @@ function profileCharacter() {
   return mode === 'pause' ? liveCharacter(playerEntity) : newestPortraitSave();
 }
 
+/** WITCH1: THE PORTRAIT the corner mark and the card wear - the profile icon worn (ui/profileIcons.js, the stored session's
+ *  word), else the character's face asked for as a COPY (the Continue pane's tile may draw this very face). */
+function portraitOf(save) {
+  const icon = ownIcon(appStorage());
+  if (icon) return Promise.resolve(profileIconNode(document, icon));
+  return save ? loadFace(save, { scale: 2, copy: true }) : null;
+}
+
 function profileMark() {
   const who = storedSession(appStorage());
   const save = profileCharacter();
   return profileBadge(document, {
     session: who,
     save,
-    face: save ? loadFace(save, { scale: 2, copy: true }) : null,   // a COPY: the Continue pane's tile may draw this very face
+    face: portraitOf(save),   // WITCH1: the icon worn, else the face
     onOpen: () => { accountOpen = true; render(); },
   });
 }
@@ -2499,7 +2507,7 @@ function stepRow(key, name, note, { min, max, step: inc, fmt }) {
   if (note) main.append(el('div', 'row-note', note));
   row.append(main);
   const ctl = el('div', 'ctl');
-  const cur = () => Number(getPref(key)) || 1;
+  const cur = () => { const v = Number(getPref(key)); return Number.isFinite(v) ? v : 1; };   // MONSTER-VOL: 0 is a value (a muted volume), not unset
   const val = el('span', 'val', fmt(cur()));
   const step = (delta, label) => {
     const b = el('button', 'step', label);
@@ -2812,7 +2820,41 @@ function portRowsAudio() {
   if (!can) b.disabled = true;
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row];
+  return [row, monsterVolumeRow()];
+}
+
+/** MONSTER-VOL (2026-10-20, the owner: "add an option under audio for it called Monster Volume with 0 - 100%"): the
+ *  Audio tab's Volume row for what monsters say - calls, attack sounds, pain cries (systems/monsterVolume.js). */
+export const MONSTER_VOLUME_NAME = 'Monster Volume';
+function monsterVolumeRow() {
+  // drawn as Sound Volume and Music Volume are (settingRow's number arm): the name alone, then the value and its two
+  // arrows - 5% a press, 20% with Shift - and the row's tier
+  const key = 'monsterVolume';
+  const name = t('menu.audio.monsterVolume', MONSTER_VOLUME_NAME);
+  const row = el('div', 'row');
+  row.dataset.opt = key; row.dataset.pref = key;   // ORG2
+  const main = el('button', 'row-main');
+  main.append(el('div', 'row-name', name));
+  main.title = t('menu.audio.monsterVolumeNote', 'How loud monsters call, strike and cry out.');
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const cur = () => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };
+  const pct = (v) => `${Math.round(v * 100)}%`;
+  const val = el('span', 'val', pct(cur()));
+  ctl.append(val);
+  for (const [dir, glyph] of [[-1, '\u2039'], [1, '\u203a']]) {
+    const b = el('button', 'step', glyph);
+    b.setAttribute('aria-label', dir < 0 ? t('menu.settings.less', 'less {name}', { name }) : t('menu.settings.more', 'more {name}', { name }));
+    b.onclick = (e) => {
+      const next = Math.round(Math.max(0, Math.min(1, cur() + dir * (e.shiftKey ? 0.2 : 0.05))) * 100) / 100;
+      setPref(key, next);
+      val.textContent = pct(next);
+    };
+    ctl.append(b);
+  }
+  ctl.append(el('span', 'tier live'));
+  row.append(ctl);
+  return row;
 }
 
 /** The CONTROLS category's port rows: the touch layer's knobs, only
@@ -4586,7 +4628,7 @@ function pauseWindow() {
 
   const body = el('div', 'px-body');
   ({ quests: pauseQuests, stats: pauseStats, growth: pauseGrowth, holdings: pauseHoldings, family: pauseFamily, tutorials: drawTutorialsPane, system: pauseSystem })[pauseTab](body);   // TUT1 - GROWTH1
-  if (pauseTab === 'growth' && stageLive()) win.classList.add('px-win-wide');   // GROWTH3: a face on the stage - the window nearly the screen's
+  if (pauseTab === 'growth') win.classList.add('px-win-growth');   // GROWTH-BOOK: one size for every page of the tab (was GROWTH3's px-win-wide, a face up only)
   win.append(body);
   return win;
 }
@@ -4623,14 +4665,9 @@ function pauseHoldings(body) {
   wrap.append(rail);
   const detail = el('div', 'px-qdetail px-sys');   // the system page's dress, as the Stats detail wears it (PLUS4)
   const kit = { el, divider: pxDivider, meter: pxMeter };
-  // AUDIT HOLDINGS C6: a host with no page to show (the standalone dungeon sets no provider) says so - the Stable drawn
-  // there told a player who owns both that they own no horse and no wagon
-  if (!secs.length) {
-    detail.append(el('div', 'px-qverdict', 'Nothing here to hold'), el('p', null, 'Your horse, wagon, ships and companions can\u2019t be shown here.'));
-    wrap.append(detail);
-    body.append(wrap);
-    return;
-  }
+  // AUDIT HOLDINGS C6: a host with no page to show (the standalone dungeon sets no provider) never draws the Stable's "you
+  // own no horse" - AUDIT COLLECTIONS-II (lanes 2, 5): the rail is never empty now, the Collections page every player's
+  // (collectionsPageShown), so such a host opens on it; the empty rail's own words went with their last reader
   const draw = {
     stable: (d) => drawStablePage(d, render, kit),
     // a door the page opens over the world (the shipwright's window, the water's placing click): the pause goes down
@@ -4640,7 +4677,7 @@ function pauseHoldings(body) {
     companions: (d) => drawCompanionsPage(d, render, { ...kit, kindName: enemyDisplayName, here: swornBodyOf, stars: typeof hooks.openRevenantStars === 'function' ? hooks.openRevenantStars : null }),   // COMPANION-ROSTER - RVN-STARS: a sworn one's stars, over this window
     revenants: (d) => drawRevenantsPage(d, render, { ...kit, player: playerEntity, kindName: enemyDisplayName }),   // REVENANT-PAGE
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
-    collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity }),   // COLLECTIONS: the codex and the cards
+    collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity, account: newAccountFlow }),   // COLLECTIONS: the codex and the cards - COLLECTIONS-II: and the account's wardrobe, read through its own flow
   }[holdSec];
   draw?.(detail);
   wrap.append(detail);
@@ -6165,7 +6202,7 @@ export function mountEnhancedMenu(host, {
   else if (growthPageAt(at)) pauseTab = 'growth';   // GROWTH1: a Growth page by name (its rail set by resetGrowthTab, above)
   else if (at === 'mailbox') postOpen = true;   // SERVER-POST: the mailbox's door (/mail, either skin) - the pause face with its window open
   else if (at === 'report') { postOpen = true; postKeep = { view: 'report' }; }   // PRIVATE-REPORT: `/bug` - the mailbox's window on its report form
-  else if (at === 'collections' || at === 'cards' || at === 'codex') { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts
+  else if (at === 'collections' || COLLECTION_PARTS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = 'collections'; if (at !== 'collections') setCollectionsPart(at); }   // AUDIT CARDS-5 D14: the Collections page by name, or one of its parts - AUDIT COLLECTIONS-II (lanes 2, 5): every part, the wardrobe's four too
   else if (at === 'companions') { pauseTab = 'holdings'; holdSec = 'companions'; }   // RVN-STARS: back from a sworn one's stars
   _eff = null;
   render();

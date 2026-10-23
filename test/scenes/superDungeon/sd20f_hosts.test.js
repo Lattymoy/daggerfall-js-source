@@ -15,6 +15,7 @@ import { LOCATION_TYPES, CLIMATES } from '../../../src/formats/mapsFile.js';
 import { isMainStoryDungeon } from '../../../src/world/dungeon/dungeonTextures.js';
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, SD_COLLAPSE_MS, SD_CAST_OUT_LINE, SD_NO_RIFT } from '../../../src/net/superDungeon/sdLaw.js';
 import { SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../../../src/world/superDungeon/sdDungeon.js';
+import { sdSlotsKept } from '../../../src/systems/superDungeon/sdSlots.js';
 import { createSdVoice, SD_VOICE_RANK } from '../../../src/scenes/superDungeon/sdVoice.js';
 import { createSdEnd, SD_RIFT_KEY } from '../../../src/scenes/superDungeon/sdEnd.js';
 import { madeLevelRule, madeLevelSays } from '../../../src/systems/madeLevel.js';   // EG-H2: the made level's law the hosts' doors ask
@@ -40,12 +41,10 @@ const evalIn = (expr, env) => new Function(...Object.keys(env), `return (${expr}
 
 // ── H1: one life a Hollow, the account's and every tab's ─────────────
 
-/** world.js's kept slots (its own text) over one store, for the account `me()` names. */
+/** The kept slots (systems/superDungeon/sdSlots.js - PIN MOVED (WITCH1): out of world.js whole) over one store, for the account `me()` names. */
 function keptOf(store, me) {
-  const at = W.indexOf('\n  const sdSlotsKept = (key) => {');
-  assert.ok(at > 0, 'sdSlotsKept');
-  const text = W.slice(at + 1, W.indexOf('\n  };\n', at) + 5);
-  return new Function('appStorage', 'SD_ENTERED_MAX', '_accountSds', `${text}\nreturn sdSlotsKept;`)(() => store, SD_ENTERED_MAX, { me });
+  assert.match(W, /const _sdFallen = sdSlotsKept\(SD_FALLEN_KEY, \(\) => _accountSds\.me\(\)\);/, 'the world host keeps it by the signed-in account');
+  return (key) => sdSlotsKept(key, me, () => store);
 }
 const memStore = () => { const m = new Map(); return { m, getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 
@@ -78,7 +77,7 @@ test('SD20f ONE LIFE A HOLLOW IS THE ACCOUNT\'S, AND EVERY TAB\'S (H1): the slot
   const mine = keptOf(refusing, () => 'acct-a')(SD_FALLEN_KEY);
   mine.add(11);
   assert.equal(mine.has(11), true, 'this session holds it');
-  assert.match(W, /const keyNow = \(\) => \{ const me = _accountSds\.me\(\); return me \? `\$\{key\}:\$\{me\}` : key; \};/);
+  assert.match(read('src/systems/superDungeon/sdSlots.js'), /const keyNow = \(\) => \{ const id = me\(\); return id \? `\$\{key\}:\$\{id\}` : key; \};/);   // PIN MOVED (WITCH1): out of world.js whole, the account handed in
 });
 
 // ── H4: the cast-out once a stay ──────────────────────────────────────

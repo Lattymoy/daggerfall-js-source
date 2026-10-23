@@ -293,8 +293,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI6-device-clock",
     "file": "src/scenes/townEconHost.js",
-    "old": "relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null) }) : null;",
-    "new": "relayNowS: () => Math.floor(reading.nowMs() / 1000) }) : null;",
+    "old": "relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null), turnMs: dayTurnMs() }) : null;",
+    "new": "relayNowS: () => Math.floor(reading.nowMs() / 1000), turnMs: dayTurnMs() }) : null;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],

@@ -1,0 +1,250 @@
+[
+  {
+    "name": "BO-tree-stamps-never-kept",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "  life.shape = shape; life.on = on;   // held",
+    "new": "  // held",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-lives-eye-unread",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "root, root.localPosition, at);",
+    "new": "root, root.localPosition, null);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-lives-range-unread",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "life.lived = farTreeStep(life, dt, root, root.localPosition, at);",
+    "new": "life.lived = farTreeStep(life, dt, root, null, at);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-lives-missed-time-dropped",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "a.update(life.lived);",
+    "new": "a.update(dt);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-lives-one-stride",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "life = { ...farLife(seq++), lived: null };",
+    "new": "life = { ...farLife(0), lived: null };",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-particles-their-own-time",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "system.step(lived);",
+    "new": "system.step(1 / 60);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-particles-every-frame",
+    "file": "src/scenes/comeSailAway/farLife.js",
+    "old": "        if (lived !== null) for (const system of",
+    "new": "        for (const system of",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-runtime-eye-unread",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "createBoatLives({ eye: () => deps.pool?.lifeEye?.() ?? null });",
+    "new": "createBoatLives({ eye: () => null });",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-runtime-frame-time-unhanded",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    lives.animate(state.AllBoats, dt());",
+    "new": "    lives.animate(state.AllBoats, 0);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-runtime-particles-unstepped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    lives.particles(state.AllBoats);\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "BO-peers-tree-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "dt, s.boat.GameObject, s.shown, eye);",
+    "new": "dt, { _treeStamp: 0, _treeSwitch: 0, parent: null }, s.shown, eye);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HD-held-list-never-drawn-from",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (walk.heldAt === walkStamp && list.at === walk.stamp) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HD-list-kept-past-her-walk",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (walk.heldAt === walkStamp && list.at === walk.stamp) {",
+    "new": "      if (walk.heldAt === walkStamp) {",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HD-draw-made-walks-list-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (walk.heldAt === walkStamp && list.at === walk.stamp) {",
+    "new": "      if (list.at === walk.stamp) {",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HD-list-unstamped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        list.at = walk.stamp;\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HD-alone-unlisted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "          list.alone.push(e);\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js",
+      "test/systems/comeSailAway/fb1021_boats.test.js"
+    ]
+  },
+  {
+    "name": "HD-held-alone-unmade",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "one(e.gpu, placed(recs[e.i]), paint);",
+    "new": "one(e.gpu, recs[e.i].m, paint);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js",
+      "test/systems/comeSailAway/fb1021_boats.test.js",
+      "test/scenes/audit0928_online.test.js"
+    ]
+  },
+  {
+    "name": "HF-held-scale-never-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        const kept = e.at === walk.stamp;",
+    "new": "        const kept = false;",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-scale-kept-past-her-walk",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        const kept = e.at === walk.stamp;",
+    "new": "        const kept = e.at !== -1;",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-scale-unstamped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "e.sy = Math.abs(s[1]); e.at = walk.stamp; }",
+    "new": "e.sy = Math.abs(s[1]); }",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-place-a-term",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "a[4 + row] * m[13]",
+    "new": "a[4 + row] * m[14]",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-place-unrounded",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "const _placedAt = new Float32Array(16);",
+    "new": "const _placedAt = new Float64Array(16);",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-place-a-row-short",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "for (let row = 0; row < 3; row++) _placedAt",
+    "new": "for (let row = 0; row < 2; row++) _placedAt",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-place-unshifted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    if (a === null) return m;\n",
+    "new": "    return m;\n",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HD-AUDIT-held-paint-dropped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint);",
+    "new": "for (const e of list.alone) one(e.gpu, placed(recs[e.i]));",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-AUDIT-height-off-the-width",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "e.sy = Math.abs(s[1]); e.at = walk.stamp; }",
+    "new": "e.sy = Math.abs(s[0]); e.at = walk.stamp; }",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ]
+  },
+  {
+    "name": "HF-AUDIT-place-zero-dropped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "_placedAt[12 + row] = 0 + a[row] * m[12]",
+    "new": "_placedAt[12 + row] = a[row] * m[12]",
+    "tests": [
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
+    ],
+    "equivalent": true,
+    "why": "The leading `0 +` is mat4.js multiply's `let sum = 0`, kept so placedAt reads as the product's column 3 is summed. Dropped, a sum can differ only in a zero's sign, and only where every product before the last is -0 - and the last, the held shift's translation times her walk's homogeneous one (1), is never -0: the shift is multiply's own answer (heldShift), whose sums start at +0 and so never answer -0 (+0 + -0 is +0), and a +0 last term makes a -0 sum +0. Every place is the same float, its sign too - placed()'s, which is what the pin holds."
+  }
+]

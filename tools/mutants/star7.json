@@ -1,0 +1,610 @@
+[
+ {
+  "name": "STAR7-the-amount",
+  "file": "src/net/marksLaw.js",
+  "old": "star: Object.freeze({ amount: 30 }),",
+  "new": "star: Object.freeze({ amount: 40 }),",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-caps-kinds",
+  "file": "src/net/marksLaw.js",
+  "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star'])",
+  "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg'])",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-day-the-claims",
+  "file": "server-account/src/stars.js",
+  "old": "const day = starDayOf(n, k);",
+  "new": "const day = Math.floor(nowS / 86400);",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-account-unchecked",
+  "file": "server-account/src/stars.js",
+  "old": "if (c.s !== player.id) return { error: 'not-yours' };\n  const [n, k] = c.sf;",
+  "new": "const [n, k] = c.sf;",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-a-guest-counted",
+  "file": "server-account/src/stars.js",
+  "old": "if (!player.handle) {   // a guest",
+  "new": "if (false) {   // a guest",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-spoils-unkeyed",
+  "file": "server-account/src/stars.js",
+  "old": "const spoils = thanks ? spoilsAnswer(res[8], cid) : false;",
+  "new": "const spoils = thanks;",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-day-bound-dropped",
+  "file": "server-account/src/stars.js",
+  "old": "WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8",
+  "new": "WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8 + 1",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-silver-unguarded",
+  "file": "server-account/src/marks.js",
+  "old": "star: (p) => `EXISTS (SELECT 1 FROM stars_held WHERE star = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,",
+  "new": "star: (p) => `(?${p} IS NOT NULL OR ?${p + 1} IS NOT NULL)`,",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-cards-silent",
+  "file": "server-account/src/index.js",
+  "old": "sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), renown:",
+  "new": "sds: await sdRecordOf(ctx, who.player.id), renown:",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-public-card-silent",
+  "file": "server-account/src/index.js",
+  "old": "sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id) }",
+  "new": "sds: await sdRecordOf(ctx, body.id) }",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-renown-unspent",
+  "file": "server-account/src/progress.js",
+  "old": "case '/v1/star/claim': if (a.recorded === true) add('renown', n(a.renown?.credited)); break;",
+  "new": "case '/v1/star/claim': break;",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-cascade",
+  "file": "server-account/migrations/0141_stars_held.sql",
+  "old": "  PRIMARY KEY (star, account),\n  FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE\n);\n-- the day's bound",
+  "new": "  PRIMARY KEY (star, account),\n  FOREIGN KEY (account) REFERENCES players(id)\n);\n-- the day's bound",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-silk-number",
+  "file": "src/systems/sigil/sigilSets.js",
+  "old": "tier(4, 'bound-in-silk', 'Bound in Silk', { more: [60, 140] },",
+  "new": "tier(4, 'bound-in-silk', 'Bound in Silk', { more: [50, 140] },",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-strand-hits",
+  "file": "src/systems/sigil/sigilSets.js",
+  "old": "export const STRAND_HITS = 4;",
+  "new": "export const STRAND_HITS = 3;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-veil-line",
+  "file": "src/systems/sigil/sigilSets.js",
+  "old": "export const VEIL_BELOW = 0.3;",
+  "new": "export const VEIL_BELOW = 0.35;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-make",
+  "file": "src/systems/aetheric.js",
+  "old": "const spun = raidRec('starspun', 'Elven');",
+  "new": "const spun = raidRec('starspun', 'Mithril');",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-a-poison-piece",
+  "file": "src/systems/aetheric.js",
+  "old": "spun('left-pauldron', 'Left Pauldron of the Weave', 'Armor', 105, [a('armor'), a('stat', 'endurance'), a('resist', 'shock')],",
+  "new": "spun('left-pauldron', 'Left Pauldron of the Weave', 'Armor', 105, [a('armor'), a('stat', 'endurance'), a('resist', 'poison')],",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-records-unlisted",
+  "file": "src/systems/aetheric.js",
+  "old": "...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES, ...ELTHERIC_SET_PIECES]);",
+  "new": "...WYRD_SET_PIECES]);",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-chance",
+  "file": "src/systems/aetheric.js",
+  "old": "export const STARSPUN_SET_CHANCE = RAID_SET_CHANCE;",
+  "new": "export const STARSPUN_SET_CHANCE = 1 / 3;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-heart-takes-a-chance",
+  "file": "src/systems/aetheric.js",
+  "old": "if (!always && !(rolls() < STARSPUN_SET_CHANCE)) return null;",
+  "new": "if (!(rolls() < STARSPUN_SET_CHANCE)) return null;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-thread-frost",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "if (thread) { add(m().resist, 'poison', thread.poison);",
+  "new": "if (thread) { add(m().resist, 'frost', thread.poison);",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-silk-late",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "strandsAt(target, now) >= STRAND_HITS - 1) pct += silk.more;",
+  "new": "strandsAt(target, now) >= STRAND_HITS) pct += silk.more;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-silk-never-cut",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  if (had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed\n  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+  "new": "  if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-silk-forever",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+  "new": "else if (whole) _s.strands.set(target, { n: had + 1, until: Infinity });",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-one-count-moved",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "const now = _now(), had = strandsAt(target, now);",
+  "new": "const now = _now(), had = strandsAt(_s.strandFoe === target ? target : null, now);",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-death-kept",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  if (entity) _s.strands.delete(entity);   // STAR7: and its strands\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-veil-at-four",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  const v = tierOf(entity, 'starspun', 2);",
+  "new": "  const v = tierOf(entity, 'starspun', 1);",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-veil-unrecovered",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  _s.veilReady = now + v.recover;",
+  "new": "  _s.veilReady = now;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-veil-unheard",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  veil(entity, before, after, saved);   // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-veil-on-a-kill",
+  "file": "src/systems/sigil/sigilSetPowers.js",
+  "old": "  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * VEIL_BELOW;",
+  "new": "  if (!v || !(max > 0) || saved) return;\n  const line = max * VEIL_BELOW;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-glass-unstacked",
+  "file": "src/systems/starfall/starglassRow.js",
+  "old": "basePrice: 400, rarity: 20, stackable: true,",
+  "new": "basePrice: 400, rarity: 20, stackable: false,",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-the-law-unread",
+  "file": "src/systems/item/itemLaw.js",
+  "old": "HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map",
+  "new": "HEARTH_OFFERING_LAW_ROW]).map",
+  "tests": [
+   "test/server/star7_law.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-ground-unclear",
+  "file": "src/world/starfall/starglassArt.js",
+  "old": "  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!starglassTexel(x, y) && !outline.has(y * w + x)) { const i = (y * w + x) * 4; img.colors[i] = 0; img.colors[i + 1] = 0; img.colors[i + 2] = 0; }\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-art-twice",
+  "file": "src/world/starfall/starglassArt.js",
+  "old": "  if (_registered || typeof addVendorTextures !== 'function') return 0;",
+  "new": "  if (typeof addVendorTextures !== 'function') return 0;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-gold-per-level",
+  "file": "src/systems/starfall/starSpoils.js",
+  "old": "export const STAR_SPOILS_GOLD_PER_LEVEL = 60;",
+  "new": "export const STAR_SPOILS_GOLD_PER_LEVEL = 80;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-glass-one",
+  "file": "src/systems/starfall/starSpoils.js",
+  "old": "starglass((1 + Math.min(STARGLASS_MAX - 1, Math.floor(rolls() * STARGLASS_MAX))) * twice)",
+  "new": "starglass((1 + Math.min(STARGLASS_MAX - 1, Math.floor(rolls() * 1))) * twice)",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-heart-plain",
+  "file": "src/systems/starfall/starSpoils.js",
+  "old": "const twice = heartStar(n, k) ? 2 : 1;",
+  "new": "const twice = 1;",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-heart-no-set",
+  "file": "src/systems/starfall/starSpoils.js",
+  "old": "const set = rollStarspunPiece(rolls, twice === 2);",
+  "new": "const set = rollStarspunPiece(rolls);",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-list-order",
+  "file": "src/systems/starfall/starSpoils.js",
+  "old": "{ kind: 'item', item: s.starglass, tier: 'common' }, { kind: 'gold', gold: s.gold, tier: 'common' }];",
+  "new": "{ kind: 'gold', gold: s.gold, tier: 'common' }, { kind: 'item', item: s.starglass, tier: 'common' }];",
+  "tests": [
+   "test/systems/starfall/star7_rewards.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-no-act",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "const noteStar = (heart) => { noteAct('star-held'); if (heart)",
+  "new": "const noteStar = (heart) => { if (heart)",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-settled-forgotten",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "settled.add(e.r); markSettled(live(e.r)); keep(",
+  "new": "keep(",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-any-account",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "if (!mine || live(e.r)?.s !== mine) continue;   // another account's waits for its own sign-in",
+  "new": "if (!mine) continue;   // another account's waits for its own sign-in",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-guest-said-again",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "answer.data?.why === 'guest' && !guestSaid.has(e.r)) {",
+  "new": "answer.data?.why === 'guest') {",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-spoils-ungated",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true;",
+  "new": "const given = answer?.ok ? await granted(onSpoils, e, answer.data) : true;",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-spoils-unawaited",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "if (given && starClaimVerdict(answer) === 'done')",
+  "new": "if (starClaimVerdict(answer) === 'done')",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-expiry-ignored",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "return c && c.signed && (now == null || c.e > now) ? c : null; };",
+  "new": "return c && c.signed ? c : null; };",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-renown-anyone",
+  "file": "src/scenes/starfall/starRewards.js",
+  "old": "    if (data?.renown?.character !== who()) return;\n",
+  "new": "",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-recovery-keyless",
+  "file": "src/scenes/starfall/starRewards.js",
+  "old": "onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.store, inSave })",
+  "new": "onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.day, inSave })",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-silver-gate-kind",
+  "file": "src/scenes/starfall/starRewards.js",
+  "old": "return host.marksBook?.claimLines?.(data, 'star') ?? null;",
+  "new": "return host.marksBook?.claimLines?.(data, 'raid') ?? null;",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-profile-field",
+  "file": "src/ui/profileWindow.js",
+  "old": "const n = record && typeof record === 'object' ? record.stars?.held : null;",
+  "new": "const n = record && typeof record === 'object' ? record.stars?.count : null;",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-record-zero",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "return rec.held > 0 ? String(rec.held) : t('starfall.claim.noneYet', 'None yet');",
+  "new": "return String(rec.held);",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ]
+ },
+ {
+  "name": "STAR7-capped-unnamed",
+  "file": "src/net/marksBook.js",
+  "old": "kind === 'star' ? MARKS_TEXT.cappedStar() : ",
+  "new": "",
+  "tests": [
+   "test/net/silverways_client.test.js"
+  ]
+ },
+ {
+  "name": "B3-the-fill-out-of-the-batch",
+  "file": "server-account/src/stars.js",
+  "old": "    spoilsGrantStatement(db, player.id, 0, `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce),\n",
+  "new": "",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: INT5's fill rides the claim's own batch"
+ },
+ {
+  "name": "B3-the-fill-unguarded",
+  "file": "server-account/src/stars.js",
+  "old": "`EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce)",
+  "new": "`EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6) OR 1`, key, nonce)",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: the fill by this claim's row alone"
+ },
+ {
+  "name": "B3-own-for-every-device",
+  "file": "server-account/src/stars.js",
+  "old": "if (!thanks || had.cid !== cid) return",
+  "new": "if (!thanks) return",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: `own` is the row this device's claim id wrote"
+ },
+ {
+  "name": "B3-the-row-unstamped",
+  "file": "server-account/src/stars.js",
+  "old": "nowS, STAR_CLAIMS_DAY_MAX, thanks ? cid : null),",
+  "new": "nowS, STAR_CLAIMS_DAY_MAX, null),",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: the row carries the claim id that wrote it"
+ },
+ {
+  "name": "B3-the-snapshot-unsaid",
+  "file": "server-account/src/stars.js",
+  "old": "level: renownForXp(now.xp), credited: paid,",
+  "new": "level: renownForXp(now.xp), credited: 0,",
+  "tests": [
+   "test/net/starfall/star7_service.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: the Renown the row credited"
+ },
+ {
+  "name": "B3-lost-never-marked",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "        if (unheard !== !!e.lost && (unheard || answer?.ok)) mark(e, unheard);\n",
+  "new": "",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: an attempt never answered marks its entry"
+ },
+ {
+  "name": "B3-own-unread",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "answer.data?.own === true && e.lost === true;",
+  "new": "e.lost === true;",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: another device's row has nothing of this attempt's to finish"
+ },
+ {
+  "name": "B3-finished-twice",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "        if (unheard !== !!e.lost && (unheard || answer?.ok)) mark(e, unheard);\n",
+  "new": "        if (unheard) mark(e, true);\n",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: the mark cleared as the entry finishes - never twice"
+ },
+ {
+  "name": "B3-a-refusal-marks",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "answer?.error !== 'no-session' && !(answer?.status >= 400 && answer?.status < 500);",
+  "new": "answer?.error !== 'no-session';",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL B3: a refusal the service made is no lost attempt"
+ },
+ {
+  "name": "STAR7-act-for-anyone",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "    if (ch && ch === e.ch) { noteStar(heart); return; }\n",
+  "new": "    { noteStar(heart); return; }\n",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL 7: a star's act is the character that held it"
+ },
+ {
+  "name": "STAR7-owed-dropped",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "    keepOwed([...owed(), { ch: e.ch, h: heart ? 1 : 0 }].slice(-STAR_ACTS_MAX));\n",
+  "new": "",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL 7: owed the holder, never dropped"
+ },
+ {
+  "name": "STAR7-owed-twice",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "    keepOwed(list.filter((_, j) => j !== i));\n",
+  "new": "",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL 7: an owed act noted once"
+ },
+ {
+  "name": "STAR7-owed-unpaid",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "      payOwed();   // AUDIT STARFALL 7: an act owed the character standing now\n",
+  "new": "",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL 7: noted when the holder stands"
+ },
+ {
+  "name": "STAR7-who-unhanded",
+  "file": "src/scenes/starfall/starRewards.js",
+  "old": "claim: account.claim, me: account.me, who,",
+  "new": "claim: account.claim, me: account.me,",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "AUDIT STARFALL 7: the Starfall host hands the carrier the character standing"
+ }
+]

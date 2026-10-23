@@ -128,6 +128,51 @@ export const GUN_FEEL = Object.freeze({
 });
 
 /**
+ * PISTOLET (2026-10-21): THE DWARVEN PISTOLET'S FEEL - the owner's panel off the pistol lab (pistol-proto.html,
+ * bible/05-Combat/Pistol-Lab.md), "Must be these values/sounds exactly". The Thunderlock's rule, one weapon along: the
+ * lab settled these and the game reads them HERE, and the lab reads them back from here (src/tools/pistolLab.js
+ * PISTOL_OPENING), so the two cannot drift.
+ *
+ * Its own fields beside GUN_FEEL's shape:
+ *   - `scale` - the pose is NATIVE: one art pixel to one pixel of the 320-wide surface (the strip is a WEAPON*.CIF
+ *     record's size), times this. The rig turns it into `widthPct` off the art's own measured anchor.
+ *   - `widget` - Weapon Widget's Bob and Inertia, TUNED for this weapon on the lab's panel. The game keeps the player's
+ *     own module SWITCHES (and forces Inertia on, the Thunderlock's FIELD-GUN8 departure) and takes these MAGNITUDES:
+ *     combat/gun/gunViewmodel.js gunWidgetSettings(null, PISTOLET_FEEL.widget). A departure, named there.
+ *   - `sfx` - the three picks, file stems in public/sfx; systems/pistolet.js PISTOLET_SFX_FILES is built from them.
+ *   - `alphaCut` - the 1-bit cut the strip is hardened at (the screen quad's 0.5).
+ * `roomShake` and `flashRange` are the two judgements GUN_FEEL states as judgements, scaled: the lab's shake is 20 to the
+ * Thunderlock's 30, so its room shake is 2 to the Thunderlock's 3; a pistol's flash throws a torch's 14 where the
+ * rifle's throws 20.
+ */
+/** The reload's second clack lands this long before the gun is ready - the lab's 420ms. One number for the single gun's
+ *  voice (combat/weapon/weaponRig.js) and the pair's (combat/gun/gunPair.js) - AUDIT PISTOLET B6: it was two literals. */
+export const RELOAD_CLOSE_LEAD = 0.42;
+
+export const PISTOLET_FEEL = Object.freeze({
+  scale: 1.05, raise: -1, offset: 0,
+  fps: 12, reloadMs: 1400, hitFrame: 1,
+  kick: 3, back: 0, stiff: 400, damp: 36,
+  shake: 20, shakeRot: 2.5, shakeFreq: 60, shakeDecay: 5,
+  roomShake: 2,
+  sfxVolume: 1, sfxVary: 0.19,
+  sfx: Object.freeze({ fire: 'fire-shotgun', open: 'open-shell', close: 'close-ready' }),
+  hiddenTarget: Object.freeze([0, 0.7]),
+  sheathTarget: Object.freeze([0, 1]),
+  flashLight: 0.6, flashGain: 1.9, flashRange: 14,
+  alphaCut: 128,
+  widget: Object.freeze({
+    'Offset.Speed': 1,
+    'Bob.Length': 146, 'Bob.SizeX': 1, 'Bob.SizeY': 0.7, 'Bob.SpeedMove': 1, 'Bob.SpeedState': 1,
+    'Bob.Shape': 0, 'Bob.BobWhileIdle': true,
+    'Inertia.Scale': 2, 'Inertia.Speed': 2, 'Inertia.ForwardDepth': 0, 'Inertia.ForwardSpeed': 1,
+  }),
+});
+/** The Pistolet's frame clock and reload, in the machine's units (GUN_TICK_SECONDS's pair). */
+export const PISTOLET_TICK_SECONDS = 1 / PISTOLET_FEEL.fps;
+export const PISTOLET_COOLDOWN_SECONDS = PISTOLET_FEEL.reloadMs / 1000;
+
+/**
  * THE MUZZLE CURVE. The flash is on frames 1-2 of the sheet
  * (0-indexed), so the room it lights brightens on those and falls away
  * over the smoke - a lamp, not a step.
@@ -147,7 +192,7 @@ export function muzzleGlow(firing, frame) {
 }
 
 /** The lab's pitch jitter, as the one line both sides read. */
-export const gunPitch = (rolls = Math.random) => 1 + (rolls() * 2 - 1) * GUN_FEEL.sfxVary;
+export const gunPitch = (rolls = Math.random, feel = GUN_FEEL) => 1 + (rolls() * 2 - 1) * feel.sfxVary;   // PISTOLET: a gun's own row
 
 /** The lab's frame clock as a tick, which is what the machine reads. */
 export const GUN_TICK_SECONDS = 1 / GUN_FEEL.fps;

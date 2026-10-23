@@ -175,15 +175,26 @@
     ]
   },
   {
-    "name": "PROF12-count-novice-two",
+    "name": "PROF12-count-novice-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
-    "new": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
+    "old": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
+    "new": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
+    "note": "CRAFT-PAYS (2026-10-21, PIN MOVED): re-aimed by content - a Novice brews two now, and this mutant is the one it was.",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
     ]
+  },
+  {
+    "name": "CRAFT-PAYS-a-fourth-past-the-table",
+    "file": "src/net/alchemyLaw.js",
+    "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
+    "new": "  if (rank >= PROF_RANK_MAX) return 4;\n",
+    "tests": [
+      "test/systems/prof12_law.test.js"
+    ],
+    "why": "prof_brews.count is CHECKed 1 to 3 (migration 0070): a fourth would be refused by the INSERT OR IGNORE and answered as short Stores"
   },
   {
     "name": "PROF12-potent-expert-15",
@@ -614,8 +625,8 @@
   {
     "name": "PROF12-alchemy-fee",
     "file": "src/net/professionLaw.js",
-    "old": "export const ALCHEMY_FEE = 50;",
-    "new": "export const ALCHEMY_FEE = 40;",
+    "old": "export const ALCHEMY_FEE = 25;",
+    "new": "export const ALCHEMY_FEE = 50;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -949,11 +960,12 @@
   {
     "name": "PROF12-svc-dis-origin-gold",
     "file": "server-account/src/alchemy.js",
-    "old": "const origin = p.bought_with === 'gold' ? 'gold' :",
-    "new": "const origin = p.bought_with === 'gold!' ? 'gold' :",
+    "old": "const origin = p.bought_with === 'gold' ? (Number(p.loose)",
+    "new": "const origin = p.bought_with === 'gold!' ? (Number(p.loose)",
     "tests": [
       "test/net/prof12_service.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): a gold wall's Essence loose where the piece's goods walled it."
   },
   {
     "name": "PROF12-svc-dis-bad-id",

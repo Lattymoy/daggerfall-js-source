@@ -1,152 +1,152 @@
 [
- {
-  "name": "BUSYGATE-never-held",
-  "file": "src/net/accountClient.js",
-  "old": "  if (busyRead(path, method) && now() < _busy.until) {",
-  "new": "  if (false) {",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the gate unasked - every read sent into the overload"
- },
- {
-  "name": "BUSYGATE-held-at-once",
-  "file": "src/net/accountClient.js",
-  "old": "    await hold(BUSY_HOLD_MS);\n",
-  "new": "",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "a held read answered at once - a book that asks again on refusal spins"
- },
- {
-  "name": "BUSYGATE-count-not-kept",
-  "file": "src/net/accountClient.js",
-  "old": "      const n = _busy.n + 1;",
-  "new": "      const n = 1;",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "every overload answer the first - the wait never doubles"
- },
- {
-  "name": "BUSYGATE-retry-after-unread",
-  "file": "src/net/accountClient.js",
-  "old": "Math.max(busyWaitMs(n, rand()), retryAfterMs(after))",
-  "new": "busyWaitMs(n, rand())",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the answer's own Retry-After ignored"
- },
- {
-  "name": "BUSYGATE-never-started-again",
-  "file": "src/net/accountClient.js",
-  "old": "  _busy = { n: 0, until: _busy.until };   // BUSY-GATE: an answer starts the count again; a hold already running runs out\n",
-  "new": "",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "an answer leaves the count standing"
- },
- {
-  "name": "BUSYGATE-answer-cuts-hold",
-  "file": "src/net/accountClient.js",
-  "old": "  _busy = { n: 0, until: _busy.until };",
-  "new": "  _busy = { n: 0, until: 0 };",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "any answer ends the hold - a slow write's success reopens every read"
- },
- {
-  "name": "BUSYGATE-uncapped",
-  "file": "src/net/busyLaw.js",
-  "old": "const w = Math.min(BUSY_MAX_MS, BUSY_BASE_MS * 2 ** Math.max(0, n - 1));",
-  "new": "const w = BUSY_BASE_MS * 2 ** Math.max(0, n - 1);",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the doubling without its cap"
- },
- {
-  "name": "BUSYGATE-unspread",
-  "file": "src/net/busyLaw.js",
-  "old": "return Math.round(w / 2 + (w / 2) * Math.min(1, Math.max(0, r)));",
-  "new": "return w;",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "every client one overload told asks again in the same second"
- },
- {
-  "name": "BUSYGATE-fault-a-load",
-  "file": "src/net/busyLaw.js",
-  "old": "status === 503 && (error === 'server' || error === 'queue')",
-  "new": "status >= 500 && (error === 'server' || error === 'queue')",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "a 500, a fault, held as a load"
- },
- {
-  "name": "BUSYGATE-line-unread",
-  "file": "src/net/busyLaw.js",
-  "old": "(error === 'server' || error === 'queue')",
-  "new": "error === 'server'",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the sign-in line's queue holds nothing back"
- },
- {
-  "name": "BUSYGATE-shed-unread",
-  "file": "server-account/src/index.js",
-  "old": "    if (shedding(path, request.method, Date.now())) return overloaded(origin);\n",
-  "new": "",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the shed never asked - every read sent into the overload"
- },
- {
-  "name": "BUSYGATE-shed-never-opened",
-  "file": "server-account/src/index.js",
-  "old": "  noteOverload(Date.now());   // BUSY-GATE: and this isolate sheds the reads a moment (service.js)\n",
-  "new": "",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "an overload met opens nothing"
- },
- {
-  "name": "BUSYGATE-shed-forever",
-  "file": "server-account/src/service.js",
-  "old": "busyRead(path, method) && nowMs < busyShedUntil",
-  "new": "busyRead(path, method) && busyShedUntil > 0",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "once opened, shed for the isolate's life"
- },
- {
-  "name": "BUSYGATE-every-route-shed",
-  "file": "server-account/src/service.js",
-  "old": "busyRead(path, method) && nowMs < busyShedUntil",
-  "new": "nowMs < busyShedUntil",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "a write shed with the reads"
- },
- {
-  "name": "BUSYGATE-no-retry-after",
-  "file": "server-account/src/index.js",
-  "old": "  res.headers.set('retry-after', String(BUSY_RETRY_AFTER_S));\n",
-  "new": "",
-  "tests": [
-   "test/net/busy_gate.test.js"
-  ],
-  "note": "the overload's answer says nothing of how long to stand back"
- }
+  {
+    "name": "BUSYGATE-never-held",
+    "file": "src/net/accountClient.js",
+    "old": "  if (busyRead(path, method) && now() < _busy.until) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the gate unasked - every read sent into the overload"
+  },
+  {
+    "name": "BUSYGATE-held-at-once",
+    "file": "src/net/accountClient.js",
+    "old": "    await hold(BUSY_HOLD_MS);\n",
+    "new": "",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "a held read answered at once - a book that asks again on refusal spins"
+  },
+  {
+    "name": "BUSYGATE-count-not-kept",
+    "file": "src/net/accountClient.js",
+    "old": "      const n = again ? _busy.n + 1 : _busy.n;",
+    "new": "      const n = again ? 1 : _busy.n;",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "every overload answer the first - the wait never doubles (LEAN-READS: re-aimed by content at the code the slice moved)"
+  },
+  {
+    "name": "BUSYGATE-retry-after-unread",
+    "file": "src/net/accountClient.js",
+    "old": "Math.max(again ? busyWaitMs(n, rand()) : 0, retryAfterMs(after))",
+    "new": "(again ? busyWaitMs(n, rand()) : 0)",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the answer's own Retry-After ignored"
+  },
+  {
+    "name": "BUSYGATE-never-started-again",
+    "file": "src/net/accountClient.js",
+    "old": "  _busy = { n: 0, until: _busy.until };   // BUSY-GATE: an answer starts the count again; a hold already running runs out\n",
+    "new": "",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "an answer leaves the count standing"
+  },
+  {
+    "name": "BUSYGATE-answer-cuts-hold",
+    "file": "src/net/accountClient.js",
+    "old": "  _busy = { n: 0, until: _busy.until };",
+    "new": "  _busy = { n: 0, until: 0 };",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "any answer ends the hold - a slow write's success reopens every read"
+  },
+  {
+    "name": "BUSYGATE-uncapped",
+    "file": "src/net/busyLaw.js",
+    "old": "const w = Math.min(BUSY_MAX_MS, BUSY_BASE_MS * 2 ** Math.max(0, n - 1));",
+    "new": "const w = BUSY_BASE_MS * 2 ** Math.max(0, n - 1);",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the doubling without its cap"
+  },
+  {
+    "name": "BUSYGATE-unspread",
+    "file": "src/net/busyLaw.js",
+    "old": "return Math.round(w / 2 + (w / 2) * Math.min(1, Math.max(0, r)));",
+    "new": "return w;",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "every client one overload told asks again in the same second"
+  },
+  {
+    "name": "BUSYGATE-fault-a-load",
+    "file": "src/net/busyLaw.js",
+    "old": "status === 503 && (error === 'server' || error === 'queue')",
+    "new": "status >= 500 && (error === 'server' || error === 'queue')",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "a 500, a fault, held as a load"
+  },
+  {
+    "name": "BUSYGATE-line-unread",
+    "file": "src/net/busyLaw.js",
+    "old": "(error === 'server' || error === 'queue')",
+    "new": "error === 'server'",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the sign-in line's queue holds nothing back"
+  },
+  {
+    "name": "BUSYGATE-shed-unread",
+    "file": "server-account/src/index.js",
+    "old": "    if (shedding(path, request.method, Date.now())) return overloaded(origin);\n",
+    "new": "",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the shed never asked - every read sent into the overload"
+  },
+  {
+    "name": "BUSYGATE-shed-never-opened",
+    "file": "server-account/src/index.js",
+    "old": "  noteOverload(Date.now());   // BUSY-GATE: and this isolate sheds the reads a moment (service.js)\n",
+    "new": "",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "an overload met opens nothing"
+  },
+  {
+    "name": "BUSYGATE-shed-forever",
+    "file": "server-account/src/service.js",
+    "old": "busyRead(path, method) && nowMs < busyShedUntil",
+    "new": "busyRead(path, method) && busyShedUntil > 0",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "once opened, shed for the isolate's life"
+  },
+  {
+    "name": "BUSYGATE-every-route-shed",
+    "file": "server-account/src/service.js",
+    "old": "busyRead(path, method) && nowMs < busyShedUntil",
+    "new": "nowMs < busyShedUntil",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "a write shed with the reads"
+  },
+  {
+    "name": "BUSYGATE-no-retry-after",
+    "file": "server-account/src/index.js",
+    "old": "  res.headers.set('retry-after', String(BUSY_RETRY_AFTER_S));\n",
+    "new": "",
+    "tests": [
+      "test/net/busy_gate.test.js"
+    ],
+    "note": "the overload's answer says nothing of how long to stand back"
+  }
 ]

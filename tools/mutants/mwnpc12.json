@@ -38,8 +38,8 @@
  {
   "name": "MWNPC12-orcs-not-people",
   "file": "src/characters/foeBodies.js",
-  "old": "export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) ||",
-  "new": "export const isPersonFoe = (f) => isClassFoe(f) ||",
+  "old": "  return isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) ||",
+  "new": "  return isClassFoe(f) ||",
   "tests": [
    "test/characters/mwnpc12_steelorcs.test.js"
   ]
@@ -47,8 +47,8 @@
  {
   "name": "MWNPC12-orc-a-breton",
   "file": "src/characters/foeBodies.js",
-  "old": "  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;",
-  "new": "  const race = bay.race;",
+  "old": "  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? bay.race;",
+  "new": "  const race = modRace(f.mobileType) ?? bay.race;",
   "tests": [
    "test/characters/mwnpc12_steelorcs.test.js"
   ]
@@ -83,8 +83,8 @@
  {
   "name": "MWNPC12-roster-orc-bay",
   "file": "src/characters/foeBodies.js",
-  "old": "race: orc ? 'Orc' : race ?? bay.race,",
-  "new": "race: race ?? bay.race,",
+  "old": "race: orc ? 'Orc' : mod?.race ?? race ?? bay.race,",
+  "new": "race: mod?.race ?? race ?? bay.race,",
   "tests": [
    "test/characters/mwnpc12_steelorcs.test.js"
   ]

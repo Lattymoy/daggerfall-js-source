@@ -948,7 +948,8 @@ by `combat/weapon/weaponRig.js`.
 - **When**: the motor's hold (a hang or the free climb) and every move in flight. DFU's own climb keeps WeaponManager's empty
   screen (`climbRigInput` now says `classic`), and a leap's free flight draws none. On the classic lane only (not under the
   Morrowind arms), under the spell hands' vetoes and the held map's, above every sheathe gate: the hands hold the stone
-  whatever is drawn. The weapon still lowers away under them (CLIMB4).
+  whatever is drawn. [SPELL-CLIMB: and never beside a spell's hands - a readied spell's stand down for them, a cast takes
+  them off the stone; below.] The weapon still lowers away under them (CLIMB4).
 - **The layout** [CLIMB-HANDS II: `GRIP_APART` 93, and the fists pinned to the wall, below]: on DFU's 320x200 design
   surface, scaled like FPSWeapon. Two fists `GRIP_H` 150 tall, `GRIP_APART` 52 off the middle, each sleeve `BOTTOM_SLACK` 34
   under the bottom edge. No lift goes past that slack, so the cut sleeve never shows.
@@ -1150,6 +1151,22 @@ on a gone hand, whose first pin looked down too little for a pull-up's exit to s
 `tools/mutants/climbhands.json` re-run whole (68, all dead - four records re-aimed by content, each still putting back
 the behaviour its name says, and the slack's clamp no longer equivalent); the arm gate's three records in
 `tools/mutants/mwcast1.json`, `sw1.json` and `torchvis.json` re-aimed at the line that now carries six legs (all dead).
+
+## SPELL-CLIMB (FIELD BUGS 2026-10-22c): ONE PAIR OF ARMS ON THE SCREEN
+
+Panthyon, on #bug-reports: *"Spell+Climbing=4 arms"* - *"When you hold a spell and dont drop it, climbing will then
+manifest a second set of arms"*. The readied hands (RSH1, `05-Combat/Readied-Spellcasting-Hands.md`) and the fists on the
+wall were drawn by `combat/weapon/weaponRig.js` with no word of each other, and a cast on the wall did the same for its
+length. DFU's climb hides the weapon alone (`WeaponManager.Update`'s climbing return) and keeps a readied spell and its
+cast (`EntityEffectManager.Update` reads no climb), so the call is the port's, on the classic lane: a readied spell's
+hands stand down while the fists show and come back off the wall (the spell stays readied - a click there casts it); a
+cast's hands take the screen while they play - the law is handed no climb, the fists are not drawn - and the fists come
+back up onto the stone after it on the law's own ease, not popped back whole; DFU's own climb, which draws no fists,
+keeps the readied hands. The Morrowind lane never had two pairs: one arm rig, posed on the stone (CLIMB6). Record:
+`01-Overview/bugs/Field-Bugs-2026-10-22c.md`. Pinned: `test/combat/weapon/fb1022c_spellclimb.test.js` (4);
+`tools/mutants/fb1022c_spellclimb.json` (5, all dead). Pins moved, each marked: `climbhands.test.js`,
+`auditclimbhands.test.js` (A16), `rsh1_readiedhands.test.js`; `tools/mutants/climbhands.json` re-aimed by content and
+re-run whole.
 
 ## AUDIT CLIMB-DUNGEON (FIELD BUGS 2026-10-02): THE CLIMB IN DAGGERFALL'S DUNGEONS
 

@@ -270,7 +270,7 @@ export function createGateHost({ renderer = null, getTexture = null, uploadRecor
         _targets.push(T);
         // a Ward-Bearer holding his ward glows in its gold; WB14e: the Tithe-Imp burns in its own
         if ((a.k === HOST.bearer && t < s.shieldUntil) || a.k === HOST.tithe) {
-          const L = (b.light ??= { x: 0, y: 0, z: 0, range: HOST_LIGHT_RANGE, color: [0, 0, 0] }), C = a.k === HOST.tithe ? TITHE_GOLD : WARD_COLOR;
+          const L = (b.light ??= { x: 0, y: 0, z: 0, range: HOST_LIGHT_RANGE, color: [0, 0, 0], carried: a.k === HOST.tithe }), C = a.k === HOST.tithe ? TITHE_GOLD : WARD_COLOR;   // GATE-MIX: the running Tithe-Imp's casts no shadow (a moving caster redraws its cube every frame)
           const k = 0.8 + 0.25 * Math.sin(t / 180 + b.seed);
           L.x = COURT_CENTRE[0] + x; L.y = COURT_CENTRE[1] + HOST_LIGHT_Y; L.z = COURT_CENTRE[2] + z;
           L.color[0] = C[0] * k; L.color[1] = C[1] * k; L.color[2] = C[2] * k;

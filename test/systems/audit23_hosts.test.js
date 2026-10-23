@@ -139,7 +139,9 @@ test('AUDIT 23 C14 + combat-4: the exterior swing arms drain, tally fully, and n
   for (const [name, text] of [['exterior', EXTERIOR], ['world', WORLD]]) {
     assert.equal((text.match(/drainExteriorFatigue\(SWING_FATIGUE_COST\)/g) ?? []).length, 2,   // BALANCE1: DFU's swing loss on exertion's scale
       `${name}: the bow arm and the melee arm both drain`);
-    assert.ok(text.includes('tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon)'), `${name}: the full bow tally arm`);
+    // PIN MOVED (AUDIT PISTOLET A2): the bow arm tallies the hand's blow - whole for a bow or a lone gun, the off hand's
+    // weight for a pair's off-hand shot, as worldModes.js and dungeonContext.js always weighed it (THE FOUR HOSTS RULE)
+    assert.ok(text.includes('tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);   // AUDIT PISTOLET A2'), `${name}: the full bow tally arm`);
     assert.equal(/WEAPON_SKILL\[/.test(text), false, `${name}: the display-name double tally is gone`);
     assert.ok(text.includes("if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }"), `${name}: the bow frame-4 sound`);
   }

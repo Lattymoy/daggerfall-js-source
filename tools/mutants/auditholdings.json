@@ -369,8 +369,8 @@
   {
     "name": "AH-T1-every-boat-refitted-alike",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const k = Number(uid > 0 ? deps.refit?.({ uid })?.guns : 1);",
-    "new": "    const k = Number(deps.refit?.({ uid: 42 })?.guns ?? 1);",
+    "old": "    const refit = Number(uid > 0 ? deps.refit?.({ uid })?.guns : 1);",
+    "new": "    const refit = Number(deps.refit?.({ uid: 42 })?.guns ?? 1);",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -616,15 +616,6 @@
     "file": "src/ui/holdingsPages.js",
     "old": "const n = runtime.renameHorse(arg); return n == null ?",
     "new": "const n = runtime.renameHorse(arg); return !n ?",
-    "tests": [
-      "test/systems/naval/auditholdings.test.js"
-    ]
-  },
-  {
-    "name": "AH-C6-the-stable-on-an-empty-rail",
-    "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  if (!secs.length) {\n    detail.append(el('div', 'px-qverdict', 'Nothing here to hold')",
-    "new": "  if (false) {\n    detail.append(el('div', 'px-qverdict', 'Nothing here to hold')",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]

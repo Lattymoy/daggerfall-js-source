@@ -26,6 +26,7 @@ import { QUEST_FILES, packMachine, parsedQuest } from '../../qlSources.mjs';
 const WITNESS_ACT = Object.freeze({
   rite: ['rite-broken', 1], breach: ['breach-closed', 1], redoubt: ['redoubt-taken', 1], redoubts3: ['redoubt-taken', 3],
   valkynaz: ['valkynaz-felled', 1], hour: ['hour-broken', 1], serpent: ['serpent-slain', 1],
+  star: ['star-held', 1], stars3: ['star-held', 3],   // PIN MOVED (STAR8): the fallen stars
 });
 
 const scriptText = (name) => readFileSync(QUEST_FILES.get(name.toUpperCase()).path, 'utf8');
@@ -444,10 +445,10 @@ test('QL1/QL12 an outcome settles at the end its script names: a failure clock\'
 // ═══ AUDIT QUESTLINES (LINES, ACTS-2): the runner's gates, its stalls and its order ═══
 
 test('AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: a step whose deed needs a switch that is off, or the Renown a revenant comes at, waits and says so - never started to fail every day; each need is one the runner can read (mutants: the needs unread; the line begun regardless; the Renown)', () => {
-  assert.deepEqual(Object.keys(NEED_CHECKS).sort(), ['kingsGambit', 'lootRarity', 'naval', 'renown']);
+  assert.deepEqual(Object.keys(NEED_CHECKS).sort(), ['kingsGambit', 'lootRarity', 'naval', 'renown', 'starfall']);   // PIN MOVED (STAR8): the Starfall running
   for (const l of QL_LINES) for (const s of l.steps) for (const n of s.needs ?? []) assert.ok(n in NEED_CHECKS, `${s.quest} needs ${n}`);
   assert.deepEqual(QL_LINES.flatMap((l) => l.steps.filter((s) => s.needs).map((s) => `${s.quest}:${s.needs.join('+')}`)),
-    ['QLIG01:lootRarity', 'QLIG02:lootRarity', 'QLIS01:naval', 'QLIS02:naval', 'QLIS03:naval', 'QLIT02:kingsGambit', 'QLIW02:renown']);
+    ['QLTF01:starfall', 'QLTF03:starfall', 'QLIG01:lootRarity', 'QLIG02:lootRarity', 'QLIS01:naval', 'QLIS02:naval', 'QLIS03:naval', 'QLIT02:kingsGambit', 'QLIW02:renown']);   // PIN MOVED (STAR8): the Festival line's star steps
   // Loot rarity off: the Smith's Secrets never begins, and its row says why
   setPref(LOOT_RARITY_KEY, false);
   setPref(KINGS_GAMBIT_KEY, true);

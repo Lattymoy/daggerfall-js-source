@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB1020c-BAG-COOK-the-bag-unread",
+    "file": "src/scenes/camps.js",
+    "old": "    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];",
+    "new": "    const bag = [];",
+    "tests": [
+      "test/systems/fb1020c_bagcook.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BAG-COOK-the-bag-read-only-without-one",
+    "file": "src/scenes/camps.js",
+    "old": "const bag = hasBag(items) ?",
+    "new": "const bag = !hasBag(items) ?",
+    "tests": [
+      "test/systems/fb1020c_bagcook.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BAG-COOK-the-pack-unread",
+    "file": "src/scenes/camps.js",
+    "old": "    const raw = [...cookables(items).map((it) => [it, items]), ...cookables(bag).map((it) => [it, bag])];",
+    "new": "    const raw = [...cookables(bag).map((it) => [it, bag])];",
+    "tests": [
+      "test/systems/fb1020c_bagcook.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BAG-COOK-the-cooked-into-the-bag",
+    "file": "src/scenes/camps.js",
+    "old": "{ skillet: hasSkillet(items), into: items }",
+    "new": "{ skillet: hasSkillet(items) }",
+    "tests": [
+      "test/systems/fb1020c_bagcook.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BAG-COOK-into-unread",
+    "file": "src/systems/survival/camp.js",
+    "old": "    (Array.isArray(into) ? into : list).push(cooked);",
+    "new": "    list.push(cooked);",
+    "tests": [
+      "test/systems/fb1020c_bagcook.test.js"
+    ]
+  },
+  {
+    "name": "FB1020c-BAG-COOK-the-words-stale",
+    "file": "src/ui/professions/profPages.js",
+    "old": "All go into your Materials Bag, then your pack. A Raw Fish from your pack or bag cooked",
+    "new": "All go to your Stores. A Raw Fish from your pack cooked",
+    "tests": [
+      "test/systems/fb1020c_bagcook.test.js"
+    ]
+  }
+]

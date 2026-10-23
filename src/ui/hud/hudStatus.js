@@ -196,6 +196,22 @@ export const STATUS_GLYPHS = Object.freeze({
     '.kbaaaaaaak.kkk.', '.kbaaaaaackkkakk', '.kaaaaaaackkaaak', '.kkaaaaacckkaaak',
     '..kkaaacckkkbaak', '...kkkkkkk.kacck', '...........kkkkk', '................',
   ] }),
+  // SKILL-READY (2026-10-20, Dudey: "a symbol ... left of the renown bar when skills are ready to level up"): an arrow
+  // up in the level's gold - the skills a rest or a journey would raise (ui/hud/hudAdvance.js)
+  skillup: Object.freeze({ pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' }, rows: [
+    '................', '......kkkk......', '.....kkbckk.....', '....kkbbackk....',
+    '...kkbbaacckk...', '..kkbbaaaacckk..', '.kkbbaaaaaacckk.', '.kbbaaaaaaaacck.',
+    '.kkkkbbaacckkkk.', '....kbbaacck....', '....kbbaacck....', '....kbbaacck....',
+    '....kbbaacck....', '....kcccccck....', '....kkkkkkkk....', '................',
+  ] }),
+  // FIRM-STARS (2026-10-20, Dudey: "a symbol ... on the right of the renown bar" while the Firmament has stars not yet
+  // placed): a five-point star in the night sky's silver-blue (ui/hud/hudAdvance.js)
+  firmstar: Object.freeze({ pal: { a: '#bcd4ff', b: '#ffffff', c: '#6f8fd0' }, rows: [
+    '......kkk.......', '.....kkbkk......', '.....kbbak......', '....kkbbakk.....',
+    'kkkkkbbbaakkkkk.', 'kbbbbbbbaaaaaak.', 'kkbbbbbbaaaaakk.', '.kkaaaabaccckk..',
+    '..kkaaabccckk...', '..kkaaabccckk...', '..kaaaaacccck...', '.kkaaaakcccckk..',
+    '.kaaaakkkcccck..', '.kaakkk.kkkcck..', '.kkkk.....kkkk..', '................',
+  ] }),
   // a spore
   disease: Object.freeze({ pal: { a: '#c8d24a', b: '#eef59a', c: '#6e7a18' }, rows: [
     '....kkkkkkkk....', '...kkaakkaakk...', '...kaaakkaaak...', '.kkkkaakkaakkkk.',
@@ -310,7 +326,7 @@ export function needGlyph(chip) {
 /**
  * @typedef {{ key: string, kind: 'buff'|'debuff'|'set'|'warn'|'danger'|'more', name: string, foot: string|null,
  *   blink: boolean, item: boolean, recovering: boolean, spell: number|null, glyph: string|null, set: string|null,
- *   bundle: number|null, endable: boolean, say: string|null, cost: boolean }} StatusTile
+ *   tier?: number|null, bundle: number|null, endable: boolean, say: string|null, cost: boolean }} StatusTile
  */
 /**
  * The widget's tiles, in the order the foot row read them: the spells (mine, then others'), the set powers, the
@@ -337,7 +353,7 @@ export function statusTiles({ spells = [], powers = [], afflictions = [], needs 
     item: !!e.item, spell: Number.isInteger(e.icon) && e.icon >= 0 ? e.icon : null,
     bundle: e.bundleId ?? null, endable: !!e.endable && e.bundleId != null,   // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)
   }));
-  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null });
+  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null, tier: Number.isInteger(c.tier) ? c.tier : null });   // AUDIT STAR S2: and its tier, which the card reads
   for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });   // TELL9: a bleed's ticks
   // NEED-TIER: and how bad, at its foot ("2/3" - Hungry of Peckish, Hungry, Starving), as a spell's rounds are: the glyph
   // is one picture for every stage and the name goes where there is no room, so the foot is what says it there

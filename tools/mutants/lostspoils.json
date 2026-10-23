@@ -1,0 +1,376 @@
+[
+  {
+    "name": "LOST-SPOILS-the-kill-unasked",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  if (at == null) return { error: 'lost-no-kill' };\n",
+    "new": "",
+    "tests": [
+      "test/server/lostspoils_service.test.js",
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "A floor's leftovers would be written under no kill the service ever recorded."
+  },
+  {
+    "name": "LOST-SPOILS-a-gold-only-Redoubt-taken",
+    "file": "server-account/src/lostSpoils.js",
+    "old": " AND paid = 1').bind(kill.b",
+    "new": "').bind(kill.b",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A Redoubt taken twice in a week - its gold alone - would mail items it never threw."
+  },
+  {
+    "name": "LOST-SPOILS-anothers-kill-taken",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "'SELECT at FROM gate_kills WHERE day = ?1 AND account = ?2'",
+    "new": "'SELECT at FROM gate_kills WHERE day = ?1 OR account = ?2'",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "Another account's kill would hold my pieces."
+  },
+  {
+    "name": "LOST-SPOILS-the-window-dropped",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  if (at < nowS - LOST_WINDOW_S) return { error: 'lost-spent' };\n",
+    "new": "",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A kill of any age would take leftovers for ever."
+  },
+  {
+    "name": "LOST-SPOILS-a-landed-send-asked-anew",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  const fresh = asked.pieces.filter((p, k) => !there.has(batches[k]));",
+    "new": "  const fresh = asked.pieces;",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A send asked again after it landed would be refused past the window - and the client would give a second copy to the pack."
+  },
+  {
+    "name": "LOST-SPOILS-the-item-law-dropped",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  for (const p of asked.pieces) if (itemFindings(p.item).length) return { error: 'lost-item', i: p.i };\n",
+    "new": "",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A piece no honest client could roll would be written into the post."
+  },
+  {
+    "name": "LOST-SPOILS-the-waiting-bound-dropped",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  if ((Number(waiting?.n) || 0) + fresh.length > LOST_WAITING_MAX) return { error: 'lost-full' };",
+    "new": "  if (false) return { error: 'lost-full' };",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "An account's unclaimed pieces would grow without end."
+  },
+  {
+    "name": "LOST-SPOILS-the-sender-the-developers",
+    "file": "server-account/src/lostSpoils.js",
+    "old": ".bind(reader.id, lostBatchOf(kill, p.i), LOST_SENDER, subject,",
+    "new": ".bind(reader.id, lostBatchOf(kill, p.i), 'The Developers', subject,",
+    "tests": [
+      "test/server/lostspoils_service.test.js",
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "The Lost and Found's pieces would read as the developers' gifts."
+  },
+  {
+    "name": "LOST-SPOILS-a-place-unbounded",
+    "file": "src/net/lostLaw.js",
+    "old": "i < 0 || i >= LOST_INDEX_MAX || seen.has(i)",
+    "new": "i < 0 || seen.has(i)",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A kill could hold any number of pieces in the post."
+  },
+  {
+    "name": "LOST-SPOILS-a-place-twice",
+    "file": "src/net/lostLaw.js",
+    "old": "i >= LOST_INDEX_MAX || seen.has(i)) return",
+    "new": "i >= LOST_INDEX_MAX) return",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "One place could be sent twice in a send."
+  },
+  {
+    "name": "LOST-SPOILS-provenance-taken",
+    "file": "src/net/lostLaw.js",
+    "old": "Array.isArray(item) || item.provenance != null || !postItemHead(item)",
+    "new": "Array.isArray(item) || !postItemHead(item)",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A crafted piece's service-made identity would be copied into the post."
+  },
+  {
+    "name": "LOST-SPOILS-the-uid-kept",
+    "file": "src/net/lostLaw.js",
+    "old": "    const { uid: _uid, ...kept } = item;",
+    "new": "    const kept = item;",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A checkpoint's ledger key would ride into a second copy of the piece."
+  },
+  {
+    "name": "LOST-SPOILS-the-body-bound-dropped",
+    "file": "server-account/src/index.js",
+    "old": " : path === '/v1/post/lost' ? LOST_BODY_MAX : MAX_BODY_BYTES) : {};",
+    "new": " : MAX_BODY_BYTES) : {};",
+    "tests": [
+      "test/server/lostspoils_service.test.js",
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A large floor's leftovers - past 4 KiB - would be refused unread, every one into the pack."
+  },
+  {
+    "name": "LOST-SPOILS-a-final-refusal-asked-for-ever",
+    "file": "src/net/lostSpoils.js",
+    "old": "(r?.ok ? 'ok' : LOST_FINAL.includes(r?.error) ? 'refused' : 'later')",
+    "new": "(r?.ok ? 'ok' : 'later')",
+    "tests": [
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "A guest's or an old service's refusal would be asked for a week while the pieces sat in neither the post nor the pack."
+  },
+  {
+    "name": "LOST-SPOILS-the-gather-into-the-pack",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    const mailed = owedToMail(left);",
+    "new": "    const mailed = [];",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js",
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "Leaving would gather every piece into the pack, as before LOST-SPOILS."
+  },
+  {
+    "name": "LOST-SPOILS-the-record-kept-whole",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "pieces: (r.pieces ?? []).filter((/** @type {any} */ _p, /** @type {number} */ i) => !at.has(i)),",
+    "new": "pieces: r.pieces,",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A crash would hand the mailed pieces to the pack as well as the post."
+  },
+  {
+    "name": "LOST-SPOILS-a-refusal-kept-owed",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      if (word === 'refused' && mailBack(r.id)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A refusal that will never be a yes would leave the pieces owed for a week."
+  },
+  {
+    "name": "LOST-SPOILS-the-deadline-dropped",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      const late = !(wall() - (Number(r.mailAt) || 0) < LOST_OWED_MAX_MS);",
+    "new": "      const late = false;",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A send the service never takes would be asked for ever, the pieces in no pack."
+  },
+  {
+    "name": "LOST-SPOILS-given-to-the-wrong-character",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (!r0 || (r0.who != null && r0.who !== who())) return false;",
+    "new": "    if (!r0) return false;",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "Another character's leftovers would land in the pack of whoever stands."
+  },
+  {
+    "name": "LOST-SPOILS-sent-on-anothers-session",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "        if (!mine(r.acct)) { owing++; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "One account's leftovers would be sent on another's session."
+  },
+  {
+    "name": "LOST-SPOILS-mailed-unready",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    try { ready = mail.ready() && mine(rec.acct); } catch { ready = false; }",
+    "new": "    ready = true;",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A guest's floor would be owed to a mailbox it has not got."
+  },
+  {
+    "name": "LOST-SPOILS-the-old-floor-dropped",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      if (rec) gatherFloor();   // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one\n",
+    "new": "",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A second Redoubt's burst would drop the first's leftovers, and the next boot hand back every piece, pressed ones too."
+  },
+  {
+    "name": "LOST-SPOILS-a-saved-record-dropped-with-its-mail",
+    "file": "src/scenes/spoilsPool.js",
+    "old": ": mailOf(r).length ? [{ ...r, pieces: [] }] : []));",
+    "new": ": []));",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A save before the send landed would throw the owed pieces away."
+  },
+  {
+    "name": "LOST-SPOILS-the-cap-over-a-mail-record",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "list.filter((r) => mailOf(r).length > 0 || over-- <= 0);",
+    "new": "list.filter((r) => over-- <= 0);",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A record still owing the mailbox would be pushed out by the next crash records."
+  },
+  {
+    "name": "LOST-SPOILS-the-retry-never-armed",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));\n",
+    "new": "",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A send that met the service down would never be asked again this sitting."
+  },
+  {
+    "name": "LOST-SPOILS-the-backoff-dropped",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));",
+    "new": "    if (owing) retryMail();",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A kill the service never records would be asked every 30 s for eight days - tens of thousands of calls."
+  },
+  {
+    "name": "LOST-SPOILS-the-backoff-uncapped",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)))",
+    "new": "retryMail(LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1))",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "The wait would double without end - a send owed for days asked again only weeks on."
+  },
+  {
+    "name": "LOST-SPOILS-an-empty-round-counted",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (landed) idleRounds = 0; else if (owing) idleRounds++;",
+    "new": "    idleRounds = landed ? 0 : idleRounds + 1;",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "The first look of a sitting, owing nothing, would double the first true retry's wait."
+  },
+  {
+    "name": "LOST-SPOILS-mailed-onto-a-record-in-memory",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "    if (!ready || store?.persisted?.(STORE_KEY) === false) return [];",
+    "new": "    if (!ready) return [];",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A floor owed to the mailbox on a record the device would not keep - lost with the tab, or twice with the receipt given again."
+  },
+  {
+    "name": "LOST-SPOILS-a-landed-send-kept-owed",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "      if (word === 'ok') { mailLanded(r.id, owed); landed++; continue; }",
+    "new": "      if (word === 'ok') { landed++; continue; }",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "A landed send would stay owed and be sent again."
+  },
+  {
+    "name": "LOST-SPOILS-the-lost-piece-witnessed",
+    "file": "server-account/src/post.js",
+    "old": "{ witness: !isLostBatch(row.batch) }",
+    "new": "{ witness: true }",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "A piece the client rolled would come in witnessed: the mailbox a road past the budget."
+  },
+  {
+    "name": "LOST-SPOILS-every-gift-unwitnessed",
+    "file": "server-account/src/post.js",
+    "old": "{ witness: !isLostBatch(row.batch) }",
+    "new": "{ witness: false }",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "The developers' gifts would be charged to their readers' budget."
+  },
+  {
+    "name": "LOST-SPOILS-claim-all-never-stops",
+    "file": "src/net/serverPost.js",
+    "old": "        return { ok: false, error: r.error, items };",
+    "new": "        continue;",
+    "tests": [
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "Claim all would ask every piece of a refusal the next meets too."
+  },
+  {
+    "name": "LOST-SPOILS-two-claim-alls",
+    "file": "src/net/serverPost.js",
+    "old": "    if (this.busy || this.claimingAll) return { ok: false, error: 'busy', items: [] };\n",
+    "new": "",
+    "tests": [
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "A second Claim all beside the first."
+  },
+  {
+    "name": "LOST-SPOILS-claim-all-for-one",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "    if (waiting >= 2) {",
+    "new": "    if (waiting >= 1) {",
+    "tests": [
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "A Claim all beside the one Claim a single piece has."
+  },
+  {
+    "name": "LOST-SPOILS-claim-all-never-down",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "      if (b.busy || b.claimingAll) all.disabled = true;\n",
+    "new": "",
+    "tests": [
+      "test/net/lostspoils_client.test.js"
+    ],
+    "note": "Claim all pressable while a claim is out."
+  },
+  {
+    "name": "LOST-SPOILS-a-pool-left-without-the-door",
+    "file": "src/scenes/world.js",
+    "old": "  const sdSpoilsPool = createSpoilsPool({\n    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, mail: lostMail,",
+    "new": "  const sdSpoilsPool = createSpoilsPool({\n    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,",
+    "tests": [
+      "test/scenes/lostspoils_pool.test.js"
+    ],
+    "note": "The Hour's pool - the Brass Remnant's and a breach's Redoubts - would gather into the pack."
+  }
+]

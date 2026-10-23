@@ -1,0 +1,283 @@
+[
+  {
+    "name": "SEA-SET-stormwrack-number",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "tier(2, 'stormwrack', 'Stormwrack', { shock: [10, 30], speed: [2, 6] },",
+    "new": "tier(2, 'stormwrack', 'Stormwrack', { shock: [10, 31], speed: [2, 6] },",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-undertow-number",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "tier(4, 'undertow', 'Undertow', { more: [15, 40] },",
+    "new": "tier(4, 'undertow', 'Undertow', { more: [16, 40] },",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-due-number",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "{ guns: [10, 30], hull: [10, 25] },",
+    "new": "{ guns: [10, 30], hull: [10, 26] },",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-a-world-set",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "id: 'eltheric', name: `The ${ETHER_WORD} Tidemail`, prince: 'The Drowned Queen', colour: '#6fcfe6', aetheric: true,",
+    "new": "id: 'eltheric', name: `The ${ETHER_WORD} Tidemail`, prince: 'The Drowned Queen', colour: '#6fcfe6', aetheric: false,",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-fold-element",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "if (wrack) { add(m().resist, 'shock', wrack.shock);",
+    "new": "if (wrack) { add(m().resist, 'frost', wrack.shock);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-fold-stat",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "add(m().stats, 'speed', wrack.speed); }",
+    "new": "add(m().stats, 'agility', wrack.speed); }",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-undertow-whole-ashore",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "pct += atSea() ? tow.more : tow.more / 2;",
+    "new": "pct += tow.more;",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-undertow-any-zone",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "const atSea = () => wildZoneKind() === ETHER_KIND;",
+    "new": "const atSea = () => !!wildZoneKind();",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-undertow-bare-hand",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (tow && weapon) pct +=",
+    "new": "  if (tow) pct +=",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-due-guns",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "{ guns: 1 + v.guns / 100,",
+    "new": "{ guns: 1 + v.guns / 99,",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-due-hull",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "hull: Math.max(0, 1 - v.hull / 100) }",
+    "new": "hull: Math.max(0, 1 + v.hull / 100) }",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-due-tier",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  const v = tierOf(entity, 'eltheric', 2);\n  return v ? { guns:",
+    "new": "  const v = tierOf(entity, 'eltheric', 1);\n  return v ? { guns:",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-record-make",
+    "file": "src/systems/aetheric.js",
+    "old": "'eltheric', 'Adamantium', SERPENT_SET_POWER, affixes, lore);",
+    "new": "'eltheric', 'Ebony', SERPENT_SET_POWER, affixes, lore);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-record-shock",
+    "file": "src/systems/aetheric.js",
+    "old": "[m('armor'), m('stat', 'willpower'), m('resist', 'frost')],\n    'Dredged up",
+    "new": "[m('armor'), m('stat', 'willpower'), m('resist', 'shock')],\n    'Dredged up",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-record-off-middle",
+    "file": "src/systems/aetheric.js",
+    "old": "tide('cuirass', 'The Tidemail Cuirass', 'Armor', 102, [m('armor'), m('stat', 'endurance'), m('stat', 'strength')],",
+    "new": "tide('cuirass', 'The Tidemail Cuirass', 'Armor', 102, [t('armor'), m('stat', 'endurance'), m('stat', 'strength')],",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-records-not-registered",
+    "file": "src/systems/aetheric.js",
+    "old": "...STARSPUN_SET_PIECES, ...ELTHERIC_SET_PIECES]);",
+    "new": "...STARSPUN_SET_PIECES]);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-chance-legend-abyss",
+    "file": "src/systems/aetheric.js",
+    "old": "  legend: Object.freeze({ deep: 1 / 4, abyss: 1 }),",
+    "new": "  legend: Object.freeze({ deep: 1 / 4, abyss: 1 / 2 }),",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-chance-ruin",
+    "file": "src/systems/aetheric.js",
+    "old": "  ruin: Object.freeze({ deep: 1 / 20, abyss: 1 / 10 }),",
+    "new": "  ruin: Object.freeze({ deep: 1 / 10, abyss: 1 / 10 }),",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-chance-inherited",
+    "file": "src/systems/aetheric.js",
+    "old": "(Object.hasOwn(ELTHERIC_CHANCE, source) && Object.hasOwn(ELTHERIC_CHANCE[source], band) ? ELTHERIC_CHANCE[source][band] : 0);",
+    "new": "(ELTHERIC_CHANCE[source]?.[band] ?? 0);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-roll-always-draws",
+    "file": "src/systems/aetheric.js",
+    "old": "  if (!(chance > 0) || (chance < 1 && !(rolls() < chance))) return null;",
+    "new": "  if (!(chance > 0) || !(rolls() < chance)) return null;",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-roll-zero-draws",
+    "file": "src/systems/aetheric.js",
+    "old": "  if (!(chance > 0) || (chance < 1 && !(rolls() < chance))) return null;",
+    "new": "  if (chance < 1 && !(rolls() < chance)) return null;",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-pile-band",
+    "file": "src/systems/sea/seaSpoils.js",
+    "old": "  return inEther(px, py) ? etherBandAt(px).id : null;",
+    "new": "  return inEther(px, py) ? 'abyss' : null;",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-pile-source",
+    "file": "src/systems/sea/seaSpoils.js",
+    "old": "export const seaPileSource = (loc) => (loc?.ether && loc.wildRing > 0 ? 'vault' : 'ruin');",
+    "new": "export const seaPileSource = (loc) => 'ruin';",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-pile-first",
+    "file": "src/systems/sea/seaSpoils.js",
+    "old": "  if (piece) items.push(piece);",
+    "new": "  if (piece) items.unshift(piece);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-pile-bay-latitude",
+    "file": "src/systems/sea/seaSpoils.js",
+    "old": "py = 499 - Math.trunc(at.latitude / 128);",
+    "new": "py = Math.trunc(at.latitude / 128);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-seam-guns",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const k = (Number.isFinite(refit) && refit > 0 ? refit : 1) * captainsDue().guns;",
+    "new": "const k = (Number.isFinite(refit) && refit > 0 ? refit : 1);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-seam-legend",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (legend) legendTidemail(legend, s.seed, deps.ether?.legendEnded?.(legend.id, act), {",
+    "new": "    if (legend) void (legend, s.seed, deps.ether?.legendEnded?.(legend.id, act), {",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-seam-room-pile",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    seaPileMore(items, dfLocation, rolls);",
+    "new": "    seaPileMore(items, dfLocation);",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-chance-band-inherited",
+    "file": "src/systems/aetheric.js",
+    "old": "Object.hasOwn(ELTHERIC_CHANCE, source) && Object.hasOwn(ELTHERIC_CHANCE[source], band) ?",
+    "new": "Object.hasOwn(ELTHERIC_CHANCE, source) ?",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-pile-source-any-hall",
+    "file": "src/systems/sea/seaSpoils.js",
+    "old": "(loc?.ether && loc.wildRing > 0 ? 'vault' : 'ruin');",
+    "new": "(loc?.wildRing > 0 ? 'vault' : 'ruin');",
+    "tests": [
+      "test/systems/sea/seaset.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SET-law-unmoved",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "export const ITEM_LAW_VERSION = 11;",
+    "new": "export const ITEM_LAW_VERSION = 10;",
+    "tests": [
+      "test/systems/sea/seaset.test.js",
+      "test/systems/tech1_roster.test.js"
+    ],
+    "note": "the Eltheric Tidemail's law (11 - 10 on its branch, renumbered past PISTOLET's at the merge): a law of 10 found every one of its nine records 'aetheric'"
+  }
+]

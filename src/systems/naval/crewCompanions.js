@@ -26,7 +26,8 @@
 
 import { entityMaxEncumbrance, maxEncumbrance } from '../../combat/formulas.js';   // COMPANION-WEIGHT: DFU's MaxEncumbrance
 import { companionsWithYou, COMPANION_SLOTS } from '../companionSlots.js';   // COMPANION-SLOTS: the crew and the sworn revenants share the player's side
-import { wildHere, WILD_TEXT } from '../wild/wildZone.js';   // COMPANION-DROP: the open zone keeps him at my side
+import { wildHere, wildZoneKind, WILD_TEXT } from '../wild/wildZone.js';   // COMPANION-DROP: the open zone keeps him at my side
+import { ETHER_KIND } from '../wild/etherWild.js';   // ETHER-WILD: but not at sea, where her hold is the shelter
 
 /** How many hands walk ashore with the player at once (Mac: "Up to 2"). */
 export const COMPANION_MAX = 2;
@@ -49,13 +50,13 @@ export const COMPANION_TEXT = Object.freeze({ take: 'Take ashore', back: 'Send b
 /** COMPANION-DROP: is a companion ashore held at my side - sent back from inside the open zone - said in the zone's words
  *  (`say(text, seconds)`, the host's)? Answers true when he stays. @param {string} name @param {((text: string, s?: number) => void) | null | undefined} say */
 export function heldAtSide(name, say) {
-  if (!wildHere()) return false;
+  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;   // ETHER-WILD: at sea her hold is the shelter, open from anywhere already (Eltheric-Ocean.md ETHER-WILD)
   say?.(WILD_TEXT.companionStays(name), 3);
   return true;
 }
 /** COMPANION-DROP: does a pack a companion gives up now (knocked out, fallen from her roster - the host's stowPack) stay
  *  with me, in my own pack, rather than go to his boat's hold - inside the open zone, where it drops with mine. */
-export const packStaysAshore = () => wildHere();
+export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;   // ETHER-WILD: at sea it goes to her hold, as a hand sent aboard does
 
 /** @typedef {{ boat: number, name: string, role: string, mobile: number, gender: 'male'|'female', health: number|null, maxHealth: number|null, items: any[] }} Companion */
 /** @typedef {{ boat: number, name: string, until: number }} Resting */

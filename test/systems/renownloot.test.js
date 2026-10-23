@@ -55,7 +55,8 @@ test('RENOWN-LOOT the stage: offline LOOT-EASE\'s buff whole; online the roller\
 
 test('RENOWN-LOOT the table Mac chose: each knob moves the same share of LOOT-EASE\'s own step - the keep, every tier of the plain ladder, the healing and Restore Power chances, the rest supplies (online from none) - and offline and at Renown 20 they ARE LOOT-EASE\'s numbers (mutants: a before moved; the step\'s share; the settling dropped)', () => {
   //                  quarters: keep    blue at 0  healing  Restore Power  a foe's Ember Jar
-  const rows = [[2, 0.625, 45, 8, 3, 1.5], [3, 0.6875, 47.5, 9, 4.5, 2.25], [4, 0.75, 50, 10, 6, 3], [5, 0.8125, 52.5, 11, 7.5, 3.75], [6, 0.875, 55, 12, 9, 4.5]];
+  // POT-THIN (2026-10-21, PIN MOVED): the healing and Restore Power columns were 8-12 and 3-9
+  const rows = [[2, 0.625, 45, 3, 1, 1.5], [3, 0.6875, 47.5, 3.5, 1.5, 2.25], [4, 0.75, 50, 4, 2, 3], [5, 0.8125, 52.5, 4.5, 2.5, 3.75], [6, 0.875, 55, 5, 3, 4.5]];
   for (const [q, keep, blue, healing, magicka, jar] of rows) {
     assert.equal(plainFoeLootKeep(q), keep, `${q}: the keep`);
     assert.equal(plainFoeRarityWeights(q).magic.base, blue, `${q}: blue at level 0, per mille`);
@@ -64,8 +65,8 @@ test('RENOWN-LOOT the table Mac chose: each knob moves the same share of LOOT-EA
     assert.equal(new Map(restLootChances(REST_FOE_CHANCES, q)).get(REST_ITEM.EmberJar), jar, `${q}: a foe's Ember Jar`);
   }
   // the piles and the ladder's other tiers move alike
-  assert.deepEqual(healingSupplyChances(2).pile, { healing: 15, magicka: 5 });
-  assert.deepEqual(healingSupplyChances(6).pile, { healing: 21, magicka: 15 });
+  assert.deepEqual(healingSupplyChances(2).pile, { healing: 6, magicka: 2 });   // POT-THIN: 15 and 5
+  assert.deepEqual(healingSupplyChances(6).pile, { healing: 10, magicka: 6 });   // POT-THIN: 21 and 15
   assert.deepEqual(plainFoeRarityWeights(6), { magic: { base: 55, perTier: 5.5, cap: 210 }, rare: { base: 7, perTier: 1.4, cap: 44.5 }, legendary: { base: 0.175, perTier: 0.0875, cap: 3.5 } });
   assert.deepEqual(plainFoeRarityWeights(2).magic, { base: 45, perTier: 4.5, cap: 170 }, 'from FOE-CAP\'s first numbers');
   assert.equal(plainFoeRarityWeights(5).rare.perTier, 1.3, 'settled: a quarter of 0.4 past 1.2 is 1.3, never 1.2999999999999998');
@@ -136,22 +137,22 @@ test('RENOWN-LOOT the supplies, through the real hooks: a looting foe\'s healing
   const foe = (roll, renown) => { page(true, renown); return addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(roll)); };
   const pile = (roll, renown) => { page(true, renown); return addPileLootExtras([], 'J', at(roll), { online: false }); };
   try {
-    // a foe's healing potion: 8 in 100 at Renown 1, 10 at Renown 20
-    assert.equal(potions(foe(0.085, 1), HEALING_RECIPE_KEY), 0);
-    assert.equal(potions(foe(0.085, 20), HEALING_RECIPE_KEY), 1);
-    // its Restore Power: 6 at Renown 20, 9 at Renown 40
-    assert.equal(potions(foe(0.085, 20), MAGICKA_RECIPE_KEY), 0);
-    assert.equal(potions(foe(0.085, 40), MAGICKA_RECIPE_KEY), 1);
+    // a foe's healing potion: 3 in 100 at Renown 1, 4 at Renown 20 (POT-THIN: 8 and 10)
+    assert.equal(potions(foe(0.035, 1), HEALING_RECIPE_KEY), 0);
+    assert.equal(potions(foe(0.035, 20), HEALING_RECIPE_KEY), 1);
+    // its Restore Power: 2 at Renown 20, 3 at Renown 40 (POT-THIN: 6 and 9)
+    assert.equal(potions(foe(0.025, 20), MAGICKA_RECIPE_KEY), 0);
+    assert.equal(potions(foe(0.025, 40), MAGICKA_RECIPE_KEY), 1);
     // its Ember Jar: 3 at Renown 20, 4.5 at Renown 40; 1.5 at Renown 1
     assert.equal(jars(foe(0.04, 20)), 0);
     assert.equal(jars(foe(0.04, 40)), 1);
     assert.equal(jars(foe(0.02, 1)), 0);
     assert.equal(jars(foe(0.02, 20)), 1);
-    // a deep pile's healing potion: 15 at Renown 1, 18 at Renown 20, 21 at Renown 40
-    assert.equal(potions(pile(0.16, 1), HEALING_RECIPE_KEY), 0);
-    assert.equal(potions(pile(0.16, 20), HEALING_RECIPE_KEY), 1);
-    assert.equal(potions(pile(0.2, 20), HEALING_RECIPE_KEY), 0);
-    assert.equal(potions(pile(0.2, 40), HEALING_RECIPE_KEY), 1);
+    // a deep pile's healing potion: 6 at Renown 1, 8 at Renown 20, 10 at Renown 40 (POT-THIN: 15, 18 and 21)
+    assert.equal(potions(pile(0.07, 1), HEALING_RECIPE_KEY), 0);
+    assert.equal(potions(pile(0.07, 20), HEALING_RECIPE_KEY), 1);
+    assert.equal(potions(pile(0.09, 20), HEALING_RECIPE_KEY), 0);
+    assert.equal(potions(pile(0.09, 40), HEALING_RECIPE_KEY), 1);
     // a deep pile's Ember Jar: 6 at Renown 20, 9 at Renown 40
     assert.equal(jars(pile(0.07, 20)), 0);
     assert.equal(jars(pile(0.07, 40)), 1);
@@ -163,7 +164,7 @@ test('RENOWN-LOOT the supplies, through the real hooks: a looting foe\'s healing
     assert.equal(pileDraws(1), pileDraws(40));
     // offline: LOOT-EASE's whole
     offline();
-    assert.equal(potions(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.095)), HEALING_RECIPE_KEY), 1, 'offline: 10 in 100');
+    assert.equal(potions(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.035)), HEALING_RECIPE_KEY), 1, 'offline: 4 in 100');
   } finally { offline(); }
 });
 

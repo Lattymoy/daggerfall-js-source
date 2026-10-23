@@ -2,8 +2,8 @@
  {
   "name": "MWNPC10c-unarmed",
   "file": "src/characters/foeBodies.js",
-  "old": ": vampire || wolf ? [] : [rosterBlade(h)]);",
-  "new": ": vampire || wolf ? [] : []);",
+  "old": ": vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
+  "new": ": vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : []);",
   "tests": [
    "test/characters/mwnpc10c_roads.test.js"
   ]
@@ -47,8 +47,8 @@
  {
   "name": "MWNPC10c-race-ignored",
   "file": "src/characters/foeBodies.js",
-  "old": "race: orc ? 'Orc' : race ?? bay.race,",
-  "new": "race: orc ? 'Orc' : bay.race,",
+  "old": "race: orc ? 'Orc' : mod?.race ?? race ?? bay.race,",
+  "new": "race: orc ? 'Orc' : mod?.race ?? bay.race,",
   "tests": [
    "test/characters/mwnpc10c_roads.test.js"
   ]

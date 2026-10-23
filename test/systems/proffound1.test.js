@@ -7,7 +7,6 @@
 // in the shop's colour on both town maps (ui/town/townQuarters.js), from one law (world/buildingNames.js OPENED_SHOP_TYPES).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { BUILDING_TYPES, OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../../src/world/buildingNames.js';
 import { TOPIC_CATEGORIES, isBuildingTypeSkipped, makeBuildingKey } from '../../src/systems/talk/talkTopics.js';
 import { TopicTree, LIST_ITEM_TYPE, QUESTION_TYPE, EN, checkBuildingTypeInSkipList } from '../../src/systems/topicTree.js';
@@ -18,8 +17,9 @@ import { quarterOf, quarterOfType, SHOP_SET, HOUSE_SET, OPENED_SHOP_BYTES, CLASS
 import { isEnterable } from '../../src/ui/ink/inkTown.js';
 import { buildExteriorLayout } from '../../src/ui/exteriorAutomapWindow.js';
 import { createTownSheet } from '../../src/ui/town/townSheet.js';
+import { hostText } from '../hostText.mjs';
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
 
 /** The shop types the professions' stations stand in, read off the producer: every BUILDING_TYPES member the station
  *  questions of the interior host name (forgeHere through enchantHere; cookFireHere asks a fire, not a shop). */
@@ -136,7 +136,8 @@ test('PROF-FOUND THE HOSTS: townTalk\'s own grouping (no engine) lays the opened
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(host);
     assert.match(s, /createTownTalk\(\{/, `${host}: the shared talk`);
-    assert.match(s, /createTownMapWindow\(\{/, `${host}: the shared town map`);
+    // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the streaming host's M key hands the door the bag `townHere` builds for either key
+    assert.match(s, host === 'src/scenes/world.js' ? /createTownMapWindow\(here\.deps\)/ : /createTownMapWindow\(\{/, `${host}: the shared town map`);
   }
   assert.doesNotMatch(read('src/scenes/dungeonContext.js'), /createTownMapWindow/, 'the dungeon opens no town map');
 });

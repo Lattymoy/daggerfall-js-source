@@ -75,6 +75,42 @@ export function setOneShotObserver(fn) { _oneShotObserver = typeof fn === 'funct
  *  (s) - the arena's crowd bed's (systems/arena/arenaSound.js BED_FADE_S). */
 const BED_FADE_S = 0.4;
 
+/** GATE-MIX (2026-10-20, the owner: "in oblivion gates ... the game hitches, audio becomes super loud and even
+ *  distorts"): THE LIMITER - the last stage before the speakers, every bus through it. Nothing stood there: the boss's
+ *  clips peak at full scale in DAGGER.SND (his bark, his attack, a body's fall, the fire's cast - measured), his cues
+ *  play them at up to 2.2 times that, several land in one frame, and the court's score is pressed to a decibel under
+ *  the clip - so the sum went past 1 and the browser cut it square. Unity's mixer clips the same way; this is the
+ *  port's own stage, not a DFU member. A compressor run as a limiter (a hard ratio over LIMITER.threshold, fast to take
+ *  hold, quick to let go) holds a loud moment down cleanly, and a soft ceiling after it (`limiterCurve`) rounds off
+ *  what its attack lets through, so nothing reaches past LIMIT_CEILING by construction. Below the threshold the stage
+ *  is unity: the compressor's own make-up gain (the Web Audio spec's, `limiterTrim`) is taken back out. */
+export const LIMITER = Object.freeze({ threshold: -3, knee: 0, ratio: 20, attack: 0.001, release: 0.12 });
+/** The soft ceiling: straight up to LIMIT_LINEAR, then a tangent's shoulder to LIMIT_CEILING (both full-scale
+ *  amplitudes); the curve reaches LIMIT_RANGE times full scale (12 dB over it) - past that, its end. */
+export const LIMIT_LINEAR = 0.75;
+export const LIMIT_CEILING = 0.98;
+export const LIMIT_RANGE = 4;
+/** The ceiling at a signal amplitude `s`: itself to LIMIT_LINEAR, then bent to approach LIMIT_CEILING (its slope 1
+ *  where the bend begins, so the knee is not heard). Odd. Pure. */
+export function limitAmplitude(s) {
+  const a = Math.abs(s);
+  if (a <= LIMIT_LINEAR) return s;
+  const room = LIMIT_CEILING - LIMIT_LINEAR;
+  return Math.sign(s) * (LIMIT_LINEAR + room * Math.tanh((a - LIMIT_LINEAR) / room));
+}
+let _limiterCurve = null;
+/** The ceiling over the WaveShaper's [-1, 1] - its input is the signal over LIMIT_RANGE (the trim's gain carries it
+ *  there), its output the signal's own amplitude. Made once. */
+export function limiterCurve(n = 4097) {
+  if (_limiterCurve && _limiterCurve.length === n) return _limiterCurve;
+  const c = new Float32Array(n);
+  for (let i = 0; i < n; i++) c[i] = limitAmplitude(LIMIT_RANGE * ((2 * i) / (n - 1) - 1));
+  return (_limiterCurve = c);
+}
+/** The gain that takes a DynamicsCompressorNode's make-up back out: the spec's make-up is (1 / full-range gain)^0.6,
+ *  the full-range gain the curve's answer at full scale - with no knee, threshold + (0 - threshold) / ratio dB. */
+export const limiterTrim = ({ threshold, ratio } = LIMITER) => 10 ** ((0.6 * threshold * (1 - 1 / ratio)) / 20);
+
 export class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -108,7 +144,8 @@ export class AudioEngine {
       // DW-D: THE LISTENER - the last node before the speakers, every bus through it (this master, the reverb's
       // wet, the music's master): what Unity hangs on the AudioListener takes the whole mix (setListenerLowPass)
       this._listenerIn = this.ctx.createGain();
-      this._listenerIn.connect(this.ctx.destination);
+      this._sink = this._limiter();   // GATE-MIX: the limiter's input - the speakers themselves on a context without one
+      this._listenerIn.connect(this._sink);
       this._listenerFilter = null; this._listenerCut = 0;
       this._master = this.ctx.createGain();
       this._master.connect(this._listenerIn);
@@ -122,6 +159,24 @@ export class AudioEngine {
     }
     this._master.gain.value = getFloat('Controls', 'SoundVolume', 0, 1);
     return this._master;
+  }
+
+  /** GATE-MIX: the limiter (LIMITER, limiterCurve) built on this context and wired to the speakers - its compressor
+   *  answered as the stage's input. A context with no compressor or no shaper (an old engine, a test's) answers the
+   *  speakers: the mix plays as it did. */
+  _limiter() {
+    const ctx = this.ctx;
+    if (typeof ctx.createDynamicsCompressor !== 'function' || typeof ctx.createWaveShaper !== 'function') return ctx.destination;
+    const comp = ctx.createDynamicsCompressor(), trim = ctx.createGain(), ceiling = ctx.createWaveShaper();
+    for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) comp[k].value = LIMITER[k];
+    trim.gain.value = limiterTrim() / LIMIT_RANGE;   // the make-up taken back out, and the signal into the curve's [-1, 1]
+    ceiling.curve = limiterCurve();
+    ceiling.oversample = 'none';   // a straight curve under the shoulder is exact unsampled: the everyday mix untouched
+    comp.connect(trim);
+    trim.connect(ceiling);
+    ceiling.connect(ctx.destination);
+    this._limiterNodes = { comp, trim, ceiling };
+    return comp;
   }
 
   /** BA1: AudioLowPassFilter - a biquad low-pass at `cutoffHz` (Unity's default resonance Q 1). DW-D: a Web Audio
@@ -283,8 +338,9 @@ export class AudioEngine {
     const bus = this._listenerIn;
     try { bus.disconnect(); } catch { /* none */ }
     if (this._listenerFilter) { try { this._listenerFilter.disconnect(); } catch { /* gone */ } this._listenerFilter = null; }
-    if (want) { this._listenerFilter = this._lowpass(want); bus.connect(this._listenerFilter).connect(this.ctx.destination); }
-    else bus.connect(this.ctx.destination);
+    const sink = this._sink ?? this.ctx.destination;   // GATE-MIX: the limiter is still the last stage
+    if (want) { this._listenerFilter = this._lowpass(want); bus.connect(this._listenerFilter).connect(sink); }
+    else bus.connect(sink);
     this._listenerCut = want;
   }
   get listenerLowPass() { return this._listenerCut ?? 0; }

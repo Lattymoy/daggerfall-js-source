@@ -439,5 +439,15 @@
     "tests": [
       "test/server/grant7_case.test.js"
     ]
+  },
+  {
+    "name": "GRANT-star-in-a-room",
+    "file": "src/net/grantLaw.js",
+    "old": "'encr', 'star']);",
+    "new": "'encr']);",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ],
+    "note": "STAR-TUNE: a world room mints a star's kind"
   }
 ]

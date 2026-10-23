@@ -415,6 +415,11 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   border-top: 2px solid rgba(5,6,8,0.45); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16); }
 .inv-tip dt { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #a89f88; align-self: center; }
 .inv-tip dd { margin: 0; font-size: 14px; color: #efe8d6; text-align: right; font-variant-numeric: tabular-nums; }
+/* HUD-TIP / STATUS-TIPS (ui/hud/hudTip.js): the HUD's hover card is the pack's card - a narrower one, its lines plain words */
+.inv-tip.hud-tip { width: min(260px, 80vw); z-index: 39; }   /* over the HUD (z 4), under the asset picker (dataSource.js ASSET_PICKER_Z, MWFIX 1) */
+.inv-tip.hud-tip .hud-tip-line { margin: 0 0 4px; font-size: 14px; line-height: 1.3; color: #efe8d6; }
+.inv-tip.hud-tip .hud-tip-foot { margin: 6px 0 0; padding-top: 6px; font-size: 12px; color: #a89f88;
+  border-top: 2px solid rgba(5,6,8,0.45); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16); }
 .inv-menu { min-width: 190px; padding: 6px; display: flex; flex-direction: column; border: 2px solid; }
 .inv-menu-head { margin: 2px 6px 6px; padding-bottom: 6px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
   color: ${FRAME_TONES.brassHi}; border-bottom: 2px solid rgba(5,6,8,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -526,6 +531,11 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 .pack-shell .wornsock.dragging { opacity: 0.4; }
 body.draglock .pack-shell .wornsock { touch-action: none; }
 .pack-shell .wornshelf.dragover { outline: 2px solid var(--brass); outline-offset: 3px; }
+/* BELT-LANTERN: the lantern's own socket - one, not a pair; a lantern on the belt unlit stands dimmed; a lantern carried
+   over it lights its frame */
+.pack-shell .shelfpair.shelfone { grid-template-columns: calc((100% - 4px) / 2); justify-content: center; }   /* one socket, a pair's socket's size */
+.pack-shell .wornsock.unlit .tile img { filter: grayscale(0.6) brightness(0.7); }
+.pack-shell .shelfgrp-lantern .wornsock.dragover { outline: 2px solid var(--brass); outline-offset: 2px; }
 .pack-shell .shelflabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
 @media (max-width: 640px) { .pack-shell .shelflabel { letter-spacing: 0; } }   /* AUDIT FONT3 L6: after the rule it narrows - AMULETS and CRYSTALS whole in a 52px group (BRACELETS was cut before FONT3 too) */
@@ -739,7 +749,7 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
  *  one bevelled in the tier's colour (lit top-left, shaded bottom-right, the kit's light) with the colour's glow sunk
  *  inside, brighter under the pointer. NEVER BY COLOUR ALONE (AUDIT INV2 A8/A9's law): a tile carries its tier's
  *  pips in the free corner - one magic, two rare, three legendary, a diamond within a diamond for an Aetheric (SET6),
- *  a star for an artifact, two for the Gilded rung (GILDED1) - and the card says the word. The six hues are lootRarity.js
+ *  a star for an artifact, a crown for the Gilded rung (GILDED-RED) - and the card says the word. The six hues are lootRarity.js
  *  RARITIES' own, pinned against that table. A weapon that carries a sigil
  *  wears the rune (ui/sigilCard.js) in the tile's other free corner, in the arcane teal no tier wears, and its card
  *  draws the sigil's own block. Laid AFTER the kit so a tier outranks the kit's stone at the same weight. */
@@ -747,6 +757,12 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
  *  own black outline (a masked glyph's drop shadow is clipped by its mask, so the outline is drawn in). */
 export const LOCK_GLYPH_SVG = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='-1 -1 12 12' shape-rendering='crispEdges'><path fill='#f3cf86' stroke='#050608' stroke-width='2' paint-order='stroke' fill-rule='evenodd' d='M2 0H8V1H9V4H7V2H3V4H1V1H2ZM0 4H10V10H0ZM4 6V8H6V6Z'/></svg>`;
 const LOCK_GLYPH_URL = `url("data:image/svg+xml,${encodeURIComponent(LOCK_GLYPH_SVG)}")`;
+/** GILDED-RED (2026-10-22, Mac: "change the gilded rarity to red instead of gold (keep the gold skins) and give it a better
+ *  indicator than 2 stars"): the Gilded rung's pips - a gold crown set with three crimson jewels, its own black outline
+ *  drawn in as the padlock's is. A picture, not a glyph: a font's star took the tier's colour and read as the Artifact's
+ *  one doubled; the crown keeps the leaf's gold beside the rung's crimson. 11px, the size of the pips beside it. */
+export const GILDED_CROWN_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12' shape-rendering='crispEdges'><path d='M1 10.5V3l2.5 3L6 1l2.5 5L11 3v7.5Z' fill='#f6c945' stroke='#050608' stroke-width='1.4' paint-order='stroke' stroke-linejoin='round'/><rect x='5' y='7' width='2' height='2' fill='#ff3b4a'/><rect x='2' y='8' width='1.2' height='1.2' fill='#ff3b4a'/><rect x='8.8' y='8' width='1.2' height='1.2' fill='#ff3b4a'/></svg>`;
+const GILDED_CROWN_URL = `url("data:image/svg+xml,${encodeURIComponent(GILDED_CROWN_SVG)}")`;
 /** RARITY-UI: each tier's colours as custom properties - one table, laid globally by the Plus sheet (ITEM_FRAME_CSS) and
  *  scoped to one window by a sheet that must dress nothing else (AUDIT SET U1: the Sigil Broker's on the classic skin). */
 const RARITY_VARS = Object.freeze({
@@ -755,7 +771,7 @@ const RARITY_VARS = Object.freeze({
   legendary: `--rar: #e07a2e; --rar-hi: #f7b684; --rar-lo: #8e4518; --rar-rgb: 224,122,46; --rar-pips: '\\25c6\\25c6\\25c6';`,
   aetheric: `--rar: #bfe8ff; --rar-hi: #f0faff; --rar-lo: #4d7fa3; --rar-rgb: 191,232,255; --rar-pips: '\\25c8';`,
   artifact: `--rar: #b57bee; --rar-hi: #dcbcf8; --rar-lo: #683a9c; --rar-rgb: 181,123,238; --rar-pips: '\\2726';`,
-  gilded: `--rar: #ffcf4d; --rar-hi: #fff1b8; --rar-lo: #8f6410; --rar-rgb: 255,207,77; --rar-pips: '\\2726\\2726';`,   // GILDED1: gold leaf, two stars over the artifact's one
+  gilded: `--rar: #ff3b4a; --rar-hi: #ff7480; --rar-lo: #8e1622; --rar-rgb: 255,59,74; --rar-pips: ${GILDED_CROWN_URL};`,   // GILDED-RED: crimson (its light short of pink, so the bevel reads red), the crown for pips
 });
 /** LOOT2 (bible/06-Systems/Loot-Arc.md section 4): an EXALTED Legendary's pips - its three diamonds and a star. */
 export const EXALTED_PIPS = `--rar-pips: '\\25c6\\25c6\\25c6\\2605';`;
@@ -1028,7 +1044,7 @@ export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/ref
 .broker-offer.codex-gilded { grid-template-columns: minmax(0, 1fr); }   /* GILDED1: the Gilded rung's rows, at the page's head - a Legendary's row's shape */
 .broker-offer.codex-gilded .broker-set { white-space: normal; }
 .broker-offer.codex-gilded:not(.found) .broker-name { color: #8d8270; }
-.broker-offer.codex-gilded.found .broker-name { color: #ffcf4d; }
+.broker-offer.codex-gilded.found .broker-name { color: #ff3b4a; }
 .broker-offer.scry-row > .broker-offer-body { grid-column: 1 / span 2; }   /* AUDIT LOOT II B2: a family's row has no picture - its words take the frame's column too (a phone's as well), its price and press where his stand */
 .broker-offer.scry-row .broker-set { white-space: normal; }   /* the haunts read whole */
 /* SCRY-FIT (2026-10-12, a player: "the text is all scrunched - so you cannot purchase any of the actual scry readings"):
@@ -1587,6 +1603,8 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 /* CHAP3a: the account's Merit in a chapter here, under the day's count, on the guild seal's strip */
 .notice-merit { margin: -8px 4px 12px; padding: 4px 10px; font-size: 14px; letter-spacing: 0.03em; color: #e9e1cf;
   background: rgba(12,10,8,0.6); border-left: 2px solid rgba(120,150,190,0.6); }
+/* AUDIT BOARD-SIFT: a Merit line under the chapters' head, clear of it (its -8px meant the day's strip above it) */
+.notice-section + .notice-merit { margin-top: 0; }
 /* CHAP3b: a chapter of the region, its band and Strength, under the Merit lines */
 .notice-merit + .notice-chapter, .notice-worktoday + .notice-chapter { margin-top: -8px; }
 .notice-chapter { margin: 0 4px 12px; padding: 4px 10px; font-size: 14px; letter-spacing: 0.03em; color: #d8cfbb;
@@ -1814,6 +1832,12 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .market-pic, .prof-matpic { flex: none; vertical-align: middle; margin-right: 8px; image-rendering: pixelated; }
 .market-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .market-search { flex: 1 1 140px; min-width: 0; }
+/* BOARD-SIFT: a paged view's pages under its rows - Previous, the page and its count, Next - a finger's press on a phone */
+.market-pager { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: center; margin: 8px 0 4px; }
+.market-pageof { font-size: 13px; letter-spacing: 0.04em; color: #e9e1cf; text-align: center; }
+.market-page:disabled { opacity: 0.45; }
+@media (pointer: coarse) { .market-page { min-height: 44px; } }
+@media (max-width: 640px) { .market-pageof { order: -1; flex-basis: 100%; } }   /* a phone: the page over its two presses, side by side */
 .market-num { width: 5.5em; }
 .market-rows, .market-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .market-row, .market-listhead { display: grid; grid-template-columns: minmax(0, 1.6fr) auto minmax(0, 1.4fr) auto 60px; gap: 2px 12px; align-items: center;
@@ -1895,6 +1919,17 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .work-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .work-open.on { border-color: var(--brass, #c08a3e); background: rgba(192,138,62,0.16); }
 .work-none { font-style: italic; }
+/* BOARD-SIFT: the Work tab's bar over its grid - the kind, the search, "Only what I can fill", the order and the count -
+   on the day's dark strip; "Show more" under the grid, as wide as the cork */
+.work-sift { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 0 4px 12px; padding: 6px 10px;
+  background: rgba(12,10,8,0.72); border-left: 2px solid rgba(192,138,62,0.6); color: #e9e1cf; font-size: 13px; }
+.work-sift .work-select { flex: 0 1 auto; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.work-find { flex: 1 1 140px; min-width: 0; }
+.work-sift-fill { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.work-sift-count { margin-left: auto; color: #b9ab93; font-size: 12px; }
+.work-sift-more { display: block; width: calc(100% - 8px); margin: 10px 4px 0; }
+.work-sift-none { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (pointer: coarse) { .work-sift-fill, .work-sift-more { min-height: 44px; } }
 /* AUDIT 31 U2: every field under its visible name; U14: a field as tall as a button beside it, a form's select never
    clipped, an armed Decline marked */
 .work-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -2011,22 +2046,22 @@ ${rarityVarsCss()}
   letter-spacing: 1px; text-shadow: 0 0 4px rgba(var(--rar-rgb),0.7); }
 .inv-tip > .card[data-rarity] { border-top-color: var(--rar); }
 .bigicon[data-rarity] img { filter: drop-shadow(0 0 7px rgba(var(--rar-rgb),0.55)) drop-shadow(1px 1px 0 #050608); }
-/* GILDED1: THE GOLD LEAF CATCHES THE LIGHT. A Gilded piece's frame breathes a gold glow - stepped, so it reads as
+/* GILDED1: THE GOLD LEAF CATCHES THE LIGHT. A Gilded piece's frame breathes its rung's glow (GILDED-RED: crimson) - stepped, so it reads as
    pixels and not as a blur - wherever it stands: a pack tile, a worn row and socket, a hotbar slot. The states above and
    below still win the moment they last (a drop target, a refusal); a player who asks the system for less motion gets a
    still glow at its brighter end. */
-@keyframes gilded-glow { from { box-shadow: 0 0 0 1px #050608, 0 0 5px rgba(255,207,77,0.35), inset 0 0 9px rgba(255,207,77,0.16); }
-  to { box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,207,77,0.72), inset 0 0 15px rgba(255,207,77,0.32); } }
+@keyframes gilded-glow { from { box-shadow: 0 0 0 1px #050608, 0 0 5px rgba(255,59,74,0.35), inset 0 0 9px rgba(255,59,74,0.16); }
+  to { box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,59,74,0.72), inset 0 0 15px rgba(255,59,74,0.32); } }
 .pack-shell .pack-dock .itemrow[data-rarity="gilded"], .pack-shell .walletpieces .itemrow[data-rarity="gilded"],
 .pack-shell .equipped .wornrow[data-rarity="gilded"], .pack-shell .wornsock[data-rarity="gilded"],
 .hb .hb-slot[data-rarity="gilded"] .hb-frame, .hud-qdiamond .hud-qcell[data-rarity="gilded"]:not(.socket) .hud-qframe {
   animation: gilded-glow 2.6s steps(8, end) infinite alternate; }
-.bigicon[data-rarity="gilded"] img { filter: drop-shadow(0 0 9px rgba(255,207,77,0.8)) drop-shadow(0 0 2px #fff1b8) drop-shadow(1px 1px 0 #050608); }
+.bigicon[data-rarity="gilded"] img { filter: drop-shadow(0 0 9px rgba(255,59,74,0.8)) drop-shadow(0 0 2px #ff7480) drop-shadow(1px 1px 0 #050608); }
 @media (prefers-reduced-motion: reduce) {
   .pack-shell .pack-dock .itemrow[data-rarity="gilded"], .pack-shell .walletpieces .itemrow[data-rarity="gilded"],
   .pack-shell .equipped .wornrow[data-rarity="gilded"], .pack-shell .wornsock[data-rarity="gilded"],
   .hb .hb-slot[data-rarity="gilded"] .hb-frame, .hud-qdiamond .hud-qcell[data-rarity="gilded"]:not(.socket) .hud-qframe {
-    animation: none; box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,207,77,0.72), inset 0 0 15px rgba(255,207,77,0.32); } }
+    animation: none; box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,59,74,0.72), inset 0 0 15px rgba(255,59,74,0.32); } }
 /* AUDIT MERGE-PLUS D2: a list's picture keeps its icon INSIDE the tier's 2px frame - a worn pair's 28px tile is
    border-box, and its 28px icon cap painted over two of the frame's four edges */
 .pack-shell .loot-win .itemrow[data-rarity] .tile img, .trade-shell .itemrow[data-rarity] .tile img,

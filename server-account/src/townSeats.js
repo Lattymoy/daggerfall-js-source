@@ -50,6 +50,7 @@ import {
 import { utcDay, MARKS_MAX } from '../../src/net/marksLaw.js';   // AUDIT-SEATS S4: a struck Charter's fee refunded
 import { fortsLapsedStatements } from './seatForts.js';   // AUDIT SEATS-2 S5: a struck Charter's building projects fall with it
 import { DB_ROOT, replicaDb, d1Overloaded, bookmarkOf } from './service.js';   // STORM-SHED: the binding a request's counted Proxy wraps; SEAT-REPLICA: the kept read's session
+import { exactRows, witnessRow, strikeWitness, LEAN_ROWS } from './leanWitness.js';   // LEAN-WITNESS
 
 /** Whether the seats are open to this account: the switch, and at `dev` the developers alone. */
 export function seatsOpenFor(player, env) {
@@ -100,9 +101,23 @@ export function seatFacts(rows, nowS) {
   return { seats: out, ignored };
 }
 
+/** Every seat row's read, and (LEAN-WITNESS) the read of the rows that are not late, by their index whatever the
+ *  statistics (AUDIT LEAN-READS 2 A3) - one text each, the pins' too. */
+export const SEAT_ROWS_SQL = "SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'";
+export const SEAT_JUDGED_SQL = `SELECT key, account, report, at FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE kind = 'seat' AND ${LEAN_ROWS}`;
+/** Every seat row - LEAN-WITNESS: a developer's list alone, whose audit counts every witness. */
 async function allSeatRows(db) {
-  const { results = [] } = await db.prepare("SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'").all();
-  return results.map((r) => ({ key: String(r.key), account: r.account, report: r.report, at: Number(r.at) }));
+  const { results = [] } = await db.prepare(SEAT_ROWS_SQL).all();
+  return results.map(witnessRow);
+}
+/** LEAN-WITNESS (2026-10-19, migration 0135; bible/11-Multiplayer/Scale-Arc.md LEAN-WITNESS): THE SEAT ROWS THE LAW
+ *  JUDGES BY - the rows that are not late (idx_world_witness_lean_key), a seat an ignored account answered read whole
+ *  (leanWitness.js exactRows). seatFacts' facts and ignored over them are its facts over every row; its witnesses' counts
+ *  and audit are not, and nothing but a developer's list reads those. 32,775 rows a read on the day, one seat in 27
+ *  late's worth. */
+export async function judgedSeatRows(db, nowS) {
+  const { results = [] } = await db.prepare(SEAT_JUDGED_SQL).all();
+  return exactRows(db, 'seat', results.map(witnessRow), (rows) => seatFacts(rows, nowS).ignored);
 }
 
 /** STORM-SHED (2026-10-06 evening, the second overload - "D1 DB is overloaded"): HOW LONG ONE ISOLATE KEEPS THE SEATS'
@@ -143,7 +158,7 @@ async function seatRowsOf(db, nowS) {
   // none of its own to open; the binding opens this read's, so the read after a write here is still the primary's
   const opener = typeof db?.withSession === 'function' ? db : root;
   try { session = replicaDb(opener, from); } catch { /* a bookmark D1 refuses: the request's database */ }
-  const ask = allSeatRows(session).then((rows) => {
+  const ask = judgedSeatRows(session, nowS).then((rows) => {   // LEAN-WITNESS
     if ((seatRowWrites.get(root) ?? 0) === gen) {
       seatRowsKept.set(root, { at: nowS, rows });
       const mark = bookmarkOf(session);
@@ -204,7 +219,7 @@ export function seatFactsOfText(/** @type {unknown} */ text) {
 /** SEAT-FACTS: THE CLOCK'S MINUTE - every seat row read on the binding (the primary: the facts no older than any write
  *  before them) and what they say kept in the one row. 1, the facts kept. */
 export async function keepSeatFacts(/** @type {any} */ db, /** @type {number} */ nowS) {
-  const facts = seatFacts(await allSeatRows(db), nowS);
+  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS);   // LEAN-WITNESS
   await db.prepare('INSERT INTO seat_facts_kept (id, at, facts) VALUES (1, ?1, ?2) ON CONFLICT (id) DO UPDATE SET at = excluded.at, facts = excluded.facts')
     .bind(nowS, seatFactsText(facts)).run();
   return 1;
@@ -286,7 +301,7 @@ export async function listSeats({ db, nowS }, player, env) {
  * @param {{ fresh?: boolean }} [opts]
  */
 export async function confirmedSeats(db, nowS, { fresh = false } = {}) {
-  const { seats } = fresh ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS);   // SEAT-FACTS: the service's kept facts
+  const { seats } = fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS);   // SEAT-FACTS: the service's kept facts
   return new Map(seats.filter((s) => factConfirmed(s.fact)).map((s) => [s.key, { ...s.fact.seat, state: s.fact.state }]));
 }
 
@@ -333,7 +348,7 @@ export async function strikeSeat({ db, nowS }, dev, env, { key } = {}) {
   // through it, and the guild may pledge in the region again
   const h = await db.prepare('SELECT h.guild_id, g.name, g.tag FROM town_seat_holds h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.key = ?').bind(key).first();
   const rid = `strike-${key}`;
-  const [, , , , gone] = await db.batch([
+  const [, , , , late, , rest] = await db.batch([
     db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
       SELECT 'mint', NULL, 'guild', h.guild_id, 'seat-strike-refund', MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0)),
         ?2, ?3, 'seats', 'The registry', ?4
@@ -345,12 +360,12 @@ export async function strikeSeat({ db, nowS }, dev, env, { key } = {}) {
     db.prepare("UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'").bind(key),
     db.prepare("UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'").bind(key, week),
     db.prepare('DELETE FROM town_seat_holds WHERE key = ?').bind(key),
-    db.prepare("DELETE FROM world_witness WHERE kind = 'seat' AND key = ?").bind(String(key)),
+    ...strikeWitness(db, 'seat', 'key = ?1', String(key)),   // LEAN-WITNESS: its rows and its confirmation (0135's triggers take the key's row with its last answer)
     db.prepare(`INSERT INTO town_seat_history (key, week, kind, data, at)
       SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`)
       .bind(key, week, JSON.stringify({ by: dev.handle ?? null, ...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {}) }), nowS, rid),
     ...fortsLapsedStatements(db, key, nowS),   // AUDIT SEATS-2 S5: a building project falls with the Charter
   ]);
   forgetSeatRows(db, nowS);   // STORM-SHED: the struck seat's reports are gone - asked afresh here
-  return { ok: true, key, reports: Number(gone?.meta?.changes ?? 0) };
+  return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };
 }

@@ -258,7 +258,7 @@ export function aimAt(eyePos, at, view) {
  *   how far off the compass marks it (`reach`, NODE_MARK_M without one); null for a node never marked. Without it, a
  *   node is marked at NODE_MARK_SIZE while it is not gone for the day.
  * @property {(node: any, entry: any) => (Array<{ batch: any, first: number, count: number, centers?: number[][]|null, center?: number[]|null, entry?: any }>|null)} [picturesOf]
- *   NODE-OUTLINE (render/nodeOutline.js): the node's pictures where they are not the flats the host stood for it (a tree:
+ *   NODE-OUTLINE (render/nodeGlint.js): the node's pictures where they are not the flats the host stood for it (a tree:
  *   its forest's flat, and its centre - the 3D tree that stands for it near the eye); without it, the host's own
  * @property {(node: any) => (string|null)} [where] SETTLE-SAID: the act's check of the ground the node stands on, in the
  *   prompt's words (GROUND_WHERE_WORDS) - a ready plan there is no ready plan; null where it passes
@@ -1330,7 +1330,8 @@ export function createGatherHost(deps) {
      * should also stand out with a detailed slight glow"): THE NODES STANDING NEAR `pos` - underground the dungeon's,
      * above ground the stood pixels', and the loose ones (Hunting's bodies) where they lie - each its kind's mark says
      * stands within its reach: `{ key, profession, at: [x, y, z] its base in the scene, w, h, d, reach }`, `d` its
-     * distance on the ground, nearest first, at most NODE_MARK_MAX. One list, refilled each call (AUDIT WB D10's law): the
+     * distance on the ground, nearest first, at most NODE_MARK_MAX - and (AUDIT NODE-GLINT) `quiet` the node an act works,
+     * `origin` its pictures' frame in the scene. One list, refilled each call (AUDIT WB D10's law): the
      * compass and the glow read it at once and keep none of it. The professions shut, none.
      * @param {number[]} pos the player's feet, in the place's own frame
      */
@@ -1343,15 +1344,17 @@ export function createGatherHost(deps) {
         const r = k.markReach?.(markCtx);
         if (r) { walk = Math.max(walk, r.walk); max = Math.max(max, r.max); }
       }
-      const add = (k, n, x, y, z, src) => {
+      const add = (k, n, x, y, z, src, ox = 0, oy = 0, oz = 0) => {   // AUDIT NODE-GLINT: and the frame its pictures stand in (`o`)
         const m = k.mark ? k.mark(n, markCtx) : (k.gone(n) ? null : NODE_MARK_SIZE);
         if (!m) return;
         const reach = m.reach ?? NODE_MARK_M;
         const d = Math.hypot(x - pos[0], z - pos[2]);
         if (!(d <= reach)) return;
-        const r = _markPool[used] ??= { key: '', profession: '', at: [0, 0, 0], w: 0, h: 0, d: 0, reach: 0, pull: null, pictures: null, node: null, kind: null, src: null };
+        const r = _markPool[used] ??= { key: '', profession: '', at: [0, 0, 0], w: 0, h: 0, d: 0, reach: 0, pull: null, quiet: false, origin: [0, 0, 0], pictures: null, node: null, kind: null, src: null };
         used++;
         r.key = n.key; r.profession = k.professions[0]; r.at[0] = x; r.at[1] = y; r.at[2] = z; r.w = m.w; r.h = m.h; r.d = d; r.reach = reach; r.pull = m.pull ?? null;   // AUDIT BANTHA1 TREE-3: a mark's own pull
+        r.quiet = act?.node?.key === n.key;   // AUDIT NODE-GLINT: the node an act works lights nothing of its own - the act's glint is the one to watch
+        r.origin[0] = ox; r.origin[1] = oy; r.origin[2] = oz;   // AUDIT NODE-GLINT: its pictures' frame in the scene (its pixel's translation; underground none) - a batch the walk has not reached has no origin of its own
         r.node = n; r.kind = k; r.src = src;   // NODE-OUTLINE: where its pictures are found, once the list is cut
         out.push(r);
       };
@@ -1362,7 +1365,7 @@ export function createGatherHost(deps) {
         for (const s of nearPixels(pos, walk)) {
           const tr = deps.pixelTranslation(s.entry.px, s.entry.py, _t);
           const tx = tr[0], ty = tr[1], tz = tr[2];
-          for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz, s); }
+          for (const n of s.nodes) { const k = kindOf(n); if (k) add(k, n, n.local[0] + tx, n.local[1] + ty, n.local[2] + tz, s, tx, ty, tz); }
         }
       }
       for (const k of kinds) {
@@ -1374,7 +1377,7 @@ export function createGatherHost(deps) {
       }
       out.sort((a, b) => a.d - b.d);
       if (out.length > max) out.length = max;
-      // NODE-OUTLINE (render/nodeOutline.js): each mark's pictures - its kind's own (a tree is its forest's flat and the 3D
+      // NODE-OUTLINE (render/nodeGlint.js): each mark's pictures - its kind's own (a tree is its forest's flat and the 3D
       // tree that stands for it), else the flats its place stood for it; a loose node's (a body) none, and the glow
       for (const r of out) r.pictures = r.kind.picturesOf?.(r.node, r.src?.entry ?? null) ?? r.src?.pictures?.get(r.key) ?? null;
       return out;

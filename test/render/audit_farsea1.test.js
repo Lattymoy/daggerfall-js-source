@@ -17,7 +17,7 @@ import {
   RING_HAZE_HOLD, RING_RIM_START, RING_RIM_END,
 } from '../../src/render/farRing.js';
 import { waterSurfaceFs, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_ABSORB } from '../../src/render/waterSurface.js';
-import { CLOUD_SHADOW_GLSL } from '../../src/render/cloudShadow.js';
+import { CLOUD_SHADOW_GLSL, RING_CLOUD_GLSL } from '../../src/render/cloudShadow.js';
 import { EL_FAR_RING_FS, EL_EXPOSURE } from '../../src/render/enhancedLighting.js';
 import { WATER_DRAW_MASK_TABLE, packWaterMask } from '../../src/world/water/waterCorners.js';
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
@@ -26,7 +26,9 @@ const rd = (p) => readFileSync(p, 'utf8');
 const SEA_Y = ringHeight(0);
 const FS_W = waterSurfaceFs(CLOUD_SHADOW_GLSL);
 const fr = rd('src/render/farRing.js');
-const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); return fr.slice(a + 'const FS = `'.length, fr.indexOf('}`;', a) + 1).replace('${RING_SEA_GLSL}', RING_SEA_GLSL).replace('${RING_HAZE_GLSL}', RING_HAZE_GLSL); })();
+// PIN MOVED (OW-HORIZON, 2026-10-20): and the ring's sun block (render/cloudShadow.js RING_CLOUD_GLSL) - with no deck here its
+// sun is the scale whole, as before
+const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); return fr.slice(a + 'const FS = `'.length, fr.indexOf('}`;', a) + 1).replace('${RING_SEA_GLSL}', RING_SEA_GLSL).replace('${RING_CLOUD_GLSL}', RING_CLOUD_GLSL).replace('${RING_HAZE_GLSL}', RING_HAZE_GLSL); })();
 // the lane's ring without its eye's texture and its dither (a byte of noise): the sea is summed in the water's space
 const LANE_FS = EL_FAR_RING_FS.replace('float ex = uELExposure * elAdapt();', 'float ex = uELExposure;')
   .replace(/outColor = vec4\(col \+ \(bayer4\(gl_FragCoord\.xy\) - [0-9.]+\) \/ 255\.0, 1\.0\);/, 'outColor = vec4(col, 1.0);');
@@ -69,6 +71,7 @@ function ring({ d, h, L, sky, fog, fogRange, texel, openColor, lane = false }) {
     uSeaAmbient: L.amb, uSeaSunColor: L.sunColor, uSeaMoonColor: L.moonColor,
     uFogColor: fog, uFogStart: fogRange[0], uFogEnd: fogRange[1], uRimStart: RING_RIM_START, uRimEnd: RING_RIM_END, uHazeHold: RING_HAZE_HOLD,
     uSkyZenith: sky.z, uSkyHorizon: sky.h, uSeaF0: WATER_F0, uSeaLook: 1, uELExposure: EL_EXPOSURE, gl_FragCoord: [0, 0, 0, 1],
+    uCloudShadowRect: [0, 0, 0, 0], uCloudShadowFar: [1, 1], uCloudFar: 1,   // OW-HORIZON: no deck - the sun whole
   });
   fns.main();
   return fns.globals.outColor.slice(0, 3);
@@ -137,7 +140,8 @@ test('AUDIT FAR-SEA1 P1: the fill counted from the eye never leaves out a cell t
 });
 
 test('AUDIT FAR-SEA1 P4: a crossing builds the ring and its sea into ONE buffer, as the ring alone did', () => {
-  const punch = fr.slice(fr.indexOf('  punchHole(holeX, holeY, holeRadius) {'), fr.indexOf('\n  }\n', fr.indexOf('  punchHole(holeX, holeY, holeRadius) {')));
+  // PIN MOVED (OW-HORIZON, 2026-10-20): the hole takes the host's built pixels too
+  const punch = fr.slice(fr.indexOf('  punchHole(holeX, holeY, holeRadius, built = null) {'), fr.indexOf('\n  }\n', fr.indexOf('  punchHole(holeX, holeY, holeRadius, built = null) {')));
   assert.equal((punch.match(/new Uint32Array\(/g) || []).length, 1, 'one buffer');
   assert.ok(!/Uint32Array\.from|\.set\(/.test(punch), 'no second copy of the indices');
   assert.ok(punch.includes('const ringN = writeRingCells(out, hole);') && punch.includes('const fillN = writeSeaFill(out, ringN, cells, side);'), 'the fill written after the ring, into the hole\'s own room');

@@ -250,7 +250,7 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /const enhancedFront = !!sky\?\.cloudShadow && params\.get\('front'\) !== 'off';/, `${host}: the front rides the enhanced sky, and ?front=off is its kill switch`);
-    assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : currentWeatherIntensity\(\) \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along (WEATHER3b: and the map's intensity as the peak, none under a ?weather pin)`);
+    assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : (?:seaStormShown\(\) \? 1 : )?currentWeatherIntensity\(\) \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along (WEATHER3b: and the map's intensity as the peak, none under a ?weather pin)`);
     // AUDIT PRECIP FALL-2 (PIN MOVED): the world host's terms at the fall's own snow share (the law's lane; exterior.js has none)
     assert.match(h, /if \(fx\.changed\) wxFrom = wxNow;\s*\n\s*wxNow = enhancedFront \? blendTerms\(wxFrom, fallTerms\(weatherTerms\((?:fx\.snow)?\), fx\.intensity, weather, FALL_LIGHT\), fx\.t\) : weatherTerms\(\);/, `${host}: the terms cross from what was ON SCREEN, and classic takes the row whole`);   // PIN MOVED (RAIN-SPRINKLE): the row under what falls (test/systems/weather/fb1001_rainsprinkle.test.js)
     // AUDIT PRECIP FALL-4 (PIN MOVED): on the law's lane the ear hears the DROPS' level (fx.rain - null off it, the fall's
@@ -259,7 +259,7 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
     assert.match(h, /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/, `${host}: what falls is what the front shows`);
     assert.match(h, /if \(precip\.enhanced\) \{\s*\n\s*precip\.intensity = fx\.intensity;/, `${host}: the intensity is set inside the enhanced branch only`);
     assert.match(h, /precip\.drawFall\(precipShown, proj, view/, `${host}: the draw takes the shown mode (PRECIP1: the fall at the air's snow share)`);
-    assert.match(h, /const fogNow = wxNow\.fog;/, `${host}: the fog row is the front's`);
+    assert.match(h, host.endsWith('world.js') ? /const fogNow = horizonFog\(wxNow\.fog, tvf\);/ : /const fogNow = wxNow\.fog;/, `${host}: the fog row is the front's`);   // PIN MOVED (OW-HORIZON, 2026-10-20): the streaming host's through the travel view's horizon - the row itself on the ground
     assert.doesNotMatch(h.slice(h.indexOf('function frame(now)')), /[^.]weatherSun\b(?!\s*=)/, `${host}: no frame consumer reads the raw sun scale any more`);
     assert.doesNotMatch(h.slice(h.indexOf('function frame(now)')), /\bweatherFog\b(?!\s*=)/, `${host}: no frame consumer reads the raw fog row any more`);
     // AUDIT PRECIP FALL-3 (PIN MOVED): the world host's terms through phaseTerms - the word's own numbers off the law's
@@ -377,7 +377,7 @@ test('AUDIT 57 F1 + F2 + F3 (hosts): the flash waits for the storm, ?front=off i
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     // WEATHER2b: the crossing stamp is read the same way, after the jump's and before the front's tick
-    assert.match(h, /const jump = weatherJumpStamp\(\) !== seenJump;\s*\n\s*seenJump = weatherJumpStamp\(\);\s*\n\s*if \(jump\) sky\.weatherJump\(\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*const crossing = weatherCrossingStamp\(\) !== seenCrossing;\s*\n\s*seenCrossing = weatherCrossingStamp\(\);\s*\n\s*if \(crossing && !jump\) sky\.weatherArrive\(\);\s*\n\s*const fx = weatherFront\.tick\(/, `${host}: the stamp is read once, the sky told first, the front told on the same tick`);
+    assert.match(h, /const jump = weatherJumpStamp\(\) !== seenJump;\s*\n\s*seenJump = weatherJumpStamp\(\);\s*\n\s*if \(jump\) sky\.weatherJump\(\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*const crossing = weatherCrossingStamp\(\) !== seenCrossing(?: \|\| seaVentures\.stormTurned\(\))?;(?:\s*\/\/[^\n]*)?\s*\n\s*seenCrossing = weatherCrossingStamp\(\);\s*\n\s*if \(crossing && !jump\) sky\.weatherArrive\(\);\s*\n\s*const fx = weatherFront\.tick\(/, `${host}: the stamp is read once, the sky told first, the front told on the same tick`);
     assert.match(h, /let seenJump = weatherJumpStamp\(\);/, `${host}: the boot's stamp is the baseline - a boot is never a jump`);
     assert.match(h, /const lightningShown = !enhancedFront \|\| fx\.shown === 'storm' \? lightning : null;/, `${host}: the flash follows the shown storm under the front and the player on classic`);
     assert.match(h, /const strobeNow = lightning \? lightning\.tick\(dt\) : 1;/, `${host}: the player ticks every frame regardless`);

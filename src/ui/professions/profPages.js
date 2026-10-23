@@ -157,8 +157,9 @@ import { t, localizedText, formatMessage, formatNumber } from '../../systems/tex
  *   CRAFT4: the pack's known Magic and Rare pieces an Enchanter reforges with Essence, each line it may roll
  * @property {(offer: { item: any, name: string, tier: string }, index: number) => Promise<{ ok: boolean, text: string }>} [essenceReforge]
  *   CRAFT4: a line rolled again for Arcane Essence
- * @property {(key: string, qty: number, order?: string) => Promise<{ ok: boolean, text: string, kept?: boolean }>} [deposit]   BAG1: carried units of a
- *   material - out of the bag and the pack - into the Stores
+ * @property {(plan: { material: string, qty: number, order: string }[]) => Promise<{ ok: boolean, text: string, kept?: boolean }[]>} [deposit]   BAG1:
+ *   carried units of a material - out of the bag and the pack - into the Stores; FB1020c ONE-SAVE: a plan of put-ins as
+ *   one batch (profBook.js depositMany - one save for them all), one answer a put-in, in order
  * @property {() => boolean} [inTown]   BAG1: whether the Stores are reached here - in a town, indoors or out
  * @property {(key: string) => number} [room]   BAG1: how many more units of a material the bag and the pack can take
  * @property {(key: string) => number} [carriedHeld]   BAG1: how many units of a material the bag and the pack hold
@@ -250,6 +251,9 @@ export const BAG_PAGE_WORDS = Object.freeze({
   emptied: (moved, left) => `${moved.toLocaleString('en-US')} moved into your pack.${left > 0 ? ` ${left.toLocaleString('en-US')} stay in your bag: your pack can carry no more.` : ''}`,
   /** AUDIT2 BAG1 U1: a material whose Stores are full, passed over by Put everything in without asking */
   storesFull: 'Your Stores can\'t hold any more of it.',
+  /** FB1020c ONE-SAVE: a put-in the counting-house has not answered yet - its goods out of the bag, asked again later (the
+   *  world host's BAG_DEPOSIT_KEPT_TEXT, this its one home) */
+  kept: 'The counting-house is slow to answer. Your goods are on their way to the Stores.',
   /** AUDIT BAG1: what went in, and each material that would not with its reason - a refusal partway said only itself, and
    *  the units that had gone in were never said; `stop` the counting-house's silence, which ends the run */
   allInDone: (n, refused = [], stop = null) => [
@@ -478,13 +482,15 @@ const UNLOCKS = Object.freeze({
   carpentry: () => [[t('prof.page.unlocks.carpentry1', 'Pine: staves, bows, arrows, the Basket, a plain single bed'), 1], [t('prof.page.unlocks.carpentry2', 'Oak: tables, chairs, a plain double bed'), 2],
     [t('prof.page.unlocks.carpentry3', 'Cherry: a fancy single bed'), 3], [t('prof.page.unlocks.carpentry4', 'Teak: a fancy double bed'), 4], [t('prof.page.unlocks.logging5', 'Mahogany'), 5],
     [t('prof.page.unlocks.carpentry6', 'Ironwood, Ghostwood: staves and bows'), 6]],
-  // PROF7: the hides by their tiers (PROF0 4.4); Outfitting's leathers and cloths by theirs (9.3)
-  hunting: () => [[t('prof.page.unlocks.hunting1', 'Rat Pelt'), 1], [t('prof.page.unlocks.hunting2', 'Bat Leather, Bear Hide'), 2], [t('prof.page.unlocks.hunting3', 'Tiger Pelt, Spider Silk'), 3],
+  // PROF7: the hides by their tiers (PROF0 4.4) - DEX-HIDES (FIELD BUGS 2026-10-20h): Daggerfall Enemy Expansion's three
+  // with them; Outfitting's leathers and cloths by theirs (9.3)
+  hunting: () => [[t('prof.page.unlocks.hunting1', 'Rat Pelt, Mudcrab Chitin'), 1], [t('prof.page.unlocks.hunting2', 'Bat Leather, Bear Hide, Wolf Pelt, Boar Hide'), 2], [t('prof.page.unlocks.hunting3', 'Tiger Pelt, Spider Silk'), 3],
     [t('prof.page.unlocks.hunting4', 'Scorpion Chitin, Slaughterfish Scales'), 4], [t('prof.page.unlocks.hunting5', 'Harpy Feathers, Dreugh Shell'), 5], [t('prof.page.unlocks.hunting6', 'Dragonling Scale'), 6]],
-  // AUDIT 32 R4: the skins by their pelt's tier (the Rat's open at 0, the Bat's and the Bear's at 10, the Tiger's at 25),
+  // AUDIT 32 R4: the skins by their pelt's tier (the Rat's open at 0, the Bat's, the Bear's, the Wolf's and the Boar's at
+  // 10 - DEX-HIDES - the Tiger's at 25),
   // and Standard-bearer's Silk said for what it waits on
   outfitting: () => [[t('prof.page.unlocks.outfitting1', 'Linen clothing; the Rat\'s skins; the Fishing-Net'), 1],
-    [t('prof.page.unlocks.outfitting2', 'Cured Leather armor; Wool clothing, rugs and tapestries; the Bat\'s and the Bear\'s skins'), 2],
+    [t('prof.page.unlocks.outfitting2', 'Cured Leather armor; Wool clothing, rugs and tapestries; the Bat\'s, the Bear\'s, the Wolf\'s and the Boar\'s skins'), 2],
     [t('prof.page.unlocks.outfitting3', 'The Tiger\'s skins'), 3], [t('prof.page.unlocks.outfitting4', 'Silk clothing'), 4],
     [t('prof.page.unlocks.outfitting5', 'Hardened Leather armor; Standard-bearer\'s Silk clothing (its silk comes with the sieges)'), 5]],
   // PROF8: every haul is Raw Fish - the rank sets its XP (a haul is worked at the rank's own tier); the sea's finds need
@@ -759,20 +765,29 @@ export function storesRows(stores, { family = null, query = '', sort = 'tier' } 
 }
 
 /** A Stores card's split: own, bought and (GOLD-MARKET) bought with gold - "own" alone where nothing was bought. AUDIT
- *  BAG-CRAFT A1: and what a station's put-in brought from the pack, loose. */
+ *  BAG-CRAFT A1: and what a station's put-in brought from the pack, loose. FB1020h ESSENCE-LOOSE: a material with no pack
+ *  form (Arcane Essence, a Ram Kit) never came from the pack itself - its loose units were MADE of goods that did (a piece
+ *  of them disenchanted, a kit of them built), and say so. */
 export function storesSplit(r) {
   const gold = r.gold | 0, loose = r.loose | 0;
   const own = () => t('prof.page.stores.own', '{n} own', { n: r.own }), bought = () => t('prof.page.stores.bought', '{n} bought', { n: r.bought });
   if (!gold && !loose) return r.bought ? `${own()} · ${bought()}` : t('prof.page.stores.ownOnly', 'own');
+  const fromPack = () => (withdrawable(r.material) ? t('prof.page.stores.fromPack', '{n} from your pack', { n: loose }) : t('prof.page.stores.fromPackGoods', '{n} made from pack goods', { n: loose }));
   return [r.own ? own() : null, r.bought ? bought() : null, gold ? t('prof.page.stores.boughtGold', '{n} bought with gold', { n: gold }) : null,
-    loose ? t('prof.page.stores.fromPack', '{n} from your pack', { n: loose }) : null].filter(Boolean).join(' · ');
+    loose ? fromPack() : null].filter(Boolean).join(' · ');
 }
 /** GOLD-MARKET: what the page says of a material gold bought (Professions-Arc 10.8's wall). */
 export const GOLD_GOODS_LINE = 'Bought with gold. It can go to your pack or be sold on the market for gold, but no station, craft, writ or silver sale takes it.';
-const goldGoodsLine = () => t('prof.page.stores.goldGoods', GOLD_GOODS_LINE);
+/** FB1020h ESSENCE-LOOSE: and of one with no pack form (Arcane Essence of a piece bought with gold) - it never goes to the
+ *  pack (AUDIT PROF12 E1), so the line no longer says it can. */
+export const GOLD_STAYS_LINE = 'Bought with gold, or made from a piece bought with gold. It can be sold on the market for gold, but no station, craft, writ or silver sale takes it.';
+const goldGoodsLine = (/** @type {string} */ m) => (withdrawable(m) ? t('prof.page.stores.goldGoods', GOLD_GOODS_LINE) : t('prof.page.stores.goldStays', GOLD_STAYS_LINE));
 /** AUDIT BAG-CRAFT A1: what the page says of a material a station's put-in brought from the pack - the stations' wall. */
 export const LOOSE_GOODS_LINE = 'From your pack. Stations can use it, or it can go back to your pack. Writs, guilds and sales only take what you gathered or took from your Stores.';
-const looseGoodsLine = () => t('prof.page.stores.looseGoods', LOOSE_GOODS_LINE);
+/** FB1020h ESSENCE-LOOSE: and of one with no pack form, made of such goods (Arcane Essence of a piece made from them) -
+ *  the stations' wall, its pack never offered. */
+export const LOOSE_MADE_LINE = 'Made from goods from your pack. Stations can use it, but writs, guilds and sales only take what you gathered or took from your Stores.';
+const looseGoodsLine = (/** @type {string} */ m) => (withdrawable(m) ? t('prof.page.stores.looseGoods', LOOSE_GOODS_LINE) : t('prof.page.stores.looseMade', LOOSE_MADE_LINE));
 
 /**
  * THE STORES PAGE.
@@ -846,8 +861,8 @@ export function drawStoresPage(detail, rerender, kit) {
     detail.append(el('p', 'px-note', withdrawable(pick.material)
       ? t('prof.page.stores.withdrawNote', 'A withdrawn material becomes an item in your pack and can\'t go back into the Stores. Writs are delivered on a Notice Board\'s Work tab.')
       : staysLine(pick)));   // SEAT2b part two: a siege work's road
-    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine()));
-    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine()));   // AUDIT BAG-CRAFT A1: an older book's page (another device's put-in)
+    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine(pick.material)));
+    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine(pick.material)));   // AUDIT BAG-CRAFT A1: an older book's page (another device's put-in)
   }
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawStationTiles(detail, rerender, kit, [
@@ -1001,8 +1016,9 @@ function drawCarryStores(detail, rerender, kit) {
       _stores.busy = true; rerender();
       // AUDIT BAG1: a material refused (its Stores full) is said and passed over - the rest still go in; the counting-house
       // silent (a deposit kept) ends the run, its goods on their way
-      let moved = 0, stop = null;
-      const refused = [];
+      // FB1020c ONE-SAVE: every put-in planned first, then ONE batch (the provider's deposit - profBook.js depositMany): one
+      // save for them all, where a put-in a material each waited on a save of the whole game, in series, every button held
+      const refused = [], plan = [];
       for (const r of storesRows(carryRows(book, p.carriedHeld, p.heldKeys), {}, p.name)) {
         // AUDIT2 BAG1 U1: as many as the Stores have room for - a material whose Stores are full is said, never asked
         let room = storesRoomOf(book, r);
@@ -1010,16 +1026,20 @@ function drawCarryStores(detail, rerender, kit) {
         if (held > 0 && room < 1) { refused.push({ name: r.name, text: BAG_PAGE_WORDS.storesFull }); continue; }
         // LOOT-LOOSE: what the service counts by `all` (every origin as it was), then the rest held as loose (`work`)
         for (const [n, order] of /** @type {[number, string][]} */ ([[r.carried, 'all'], [r.uncounted | 0, 'work']])) {
-          let left = Math.min(n, room);
-          while (left > 0) {
-            const q = Math.min(left, DEPOSIT_MAX);
-            const res = await p.deposit(r.material, q, order);
-            if (!res?.ok) { if (res?.kept) stop = res.text ?? null; else refused.push({ name: r.name, text: res?.text ?? null }); left = -1; break; }
-            moved += q; left -= q; room -= q;
+          for (let left = Math.min(n, room); left > 0; left -= DEPOSIT_MAX) {
+            const qty = Math.min(left, DEPOSIT_MAX);
+            plan.push({ material: r.material, qty, order, name: r.name });
+            room -= qty;
           }
-          if (stop || left < 0) break;
         }
-        if (stop) break;
+      }
+      const answers = plan.length ? await p.deposit(plan) : [];
+      let moved = 0, stop = null;
+      const said = new Set();
+      for (const [i, res] of answers.entries()) {
+        if (res?.ok) moved += plan[i].qty;
+        else if (res?.kept) stop ??= res.text ?? null;
+        else if (!said.has(plan[i].material)) { said.add(plan[i].material); refused.push({ name: plan[i].name, text: res?.text ?? null }); }
       }
       _stores.busy = false;
       _stores.word = BAG_PAGE_WORDS.allInDone(moved, refused, stop);
@@ -1068,14 +1088,15 @@ function drawCarryStores(detail, rerender, kit) {
     put.disabled = _stores.busy || !town || inMost < 1 || !p.deposit;
     put.title = !town ? BAG_WORDS.town : pick.carried + (pick.uncounted | 0) > 0 && inMost < 1 ? BAG_PAGE_WORDS.storesFull : '';
     // LOOT-LOOSE: the counted units first, by `all` (a `work` order moves no gold's), then the loose by `work`
+    // FB1020c ONE-SAVE: the two as one batch - one save
     put.onclick = run(async () => {
       const q = Math.max(1, Math.min(_stores.qty, inMost)), counted = Math.min(q, pick.carried);
-      let res = counted > 0 ? await p.deposit?.(pick.material, counted, 'all') : null;
-      if (q > counted && (!res || res.ok)) {
-        const loose = await p.deposit?.(pick.material, q - counted, 'work');
-        res = loose?.ok && res?.ok ? { ...loose, text: BAG_PAGE_WORDS.allInDone(q) } : loose;
-      }
-      return res;
+      const plan = [...(counted > 0 ? [{ material: pick.material, qty: counted, order: 'all' }] : []), ...(q > counted ? [{ material: pick.material, qty: q - counted, order: 'work' }] : [])];
+      const answers = (await p.deposit?.(plan)) ?? [];
+      const failed = answers.find((res) => !res?.ok);
+      const went = answers.reduce((n, res, i) => n + (res?.ok ? plan[i].qty : 0), 0);
+      if (failed) return went > 0 ? { ...failed, text: BAG_PAGE_WORDS.allInDone(went, [], failed.text ?? null) } : failed;
+      return answers.length > 1 ? { ...answers[1], text: BAG_PAGE_WORDS.allInDone(q) } : answers[0];
     });
     if (withdrawable(pick.material)) bar.append(qty, take, put);
     detail.append(bar);
@@ -1087,15 +1108,17 @@ function drawCarryStores(detail, rerender, kit) {
     if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));   // UNCOUNTED: what Put in makes of them (LOOT-LOOSE)
     detail.append(el('p', 'px-note', withdrawable(pick.material) ? BAG_PAGE_WORDS.takenNote
       : staysLine(pick)));
-    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine()));
-    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine()));   // AUDIT BAG-CRAFT A1: a carrying book's page
+    if ((pick.gold | 0) > 0) detail.append(el('p', 'px-note', goldGoodsLine(pick.material)));
+    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine(pick.material)));   // AUDIT BAG-CRAFT A1: a carrying book's page
   }
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawStationTiles(detail, rerender, kit, [   // MENU-ORDER
     ['forge', (d) => drawForge(d, rerender, kit)],
     ['anvil', (d) => drawAnvil(d, rerender, kit)],
+    ['temper-anvil', (d) => drawTemper(d, rerender, kit, 'anvil')],   // FB1020c TEMPER-CARRIED: CRAFT4's temper, here too - every live book carries
     ['workbench', (d) => drawWorkbench(d, rerender, kit)],
     ['loom', (d) => drawLoom(d, rerender, kit)],
+    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // FB1020c TEMPER-CARRIED: the tailor's
     ['mason', (d) => drawMasonBench(d, rerender, kit)],
     ['fire', (d) => drawCookFire(d, rerender, kit)],
     ['jeweller', (d) => drawJewellerBench(d, rerender, kit)],
@@ -2432,7 +2455,7 @@ function drawCookFire(detail, rerender, { el, divider }) {
     box.append(go, quick);
     detail.append(box);
   }
-  detail.append(el('p', 'px-note', t('prof.page.fire.sources', 'Raw Meat comes from skinning, Raw Fish from the net, the Mushroom, the Egg, the Apple and the Orange from the Basket, and herbs from their patches. All go to your Stores. A Raw Fish from your pack cooked over the flame is a plain meal and gives no Cooking experience.')));
+  detail.append(el('p', 'px-note', t('prof.page.fire.sources', 'Raw Meat comes from skinning, Raw Fish from the net, the Mushroom, the Egg, the Apple and the Orange from the Basket, and herbs from their patches. All go into your Materials Bag, then your pack. A Raw Fish from your pack or bag cooked over the flame is a plain meal and gives no Cooking experience.')));   // FB1020c BAG-COOK: the bag first since BAG1, and the fire's Cook food reads it
   if (elsewhere && !_cook.act) detail.append(el('p', 'px-note', handsLine(elsewhere)));
   if (_cook.word) detail.append(el('p', 'prof-word', _cook.word));
 }
@@ -2707,7 +2730,7 @@ export function potentLine(rank, specs, unbruised = 0, potion = null, steps = 0)
 /**
  * PROF12: THE ALCHEMY STATION - DFU's twenty (alchemyLaw POTIONS, its own order), each its rank (its price's tier), the
  * chosen one's cauldron as the Stores hold it (an herb's group the one held more of - brewKeys), what a brew makes (1-3
- * potions) and its Potent chance, the XP; Brew (no act - 9.4: "DFU's windows stay 1:1"); an ingredient the Apothecaries
+ * potions; a Novice's 2 since CRAFT-PAYS) and its Potent chance, the XP; Brew (no act - 9.4: "DFU's windows stay 1:1"); an ingredient the Apothecaries
  * sell, bought where it is short (4.5); and a Transmuter's transmutations (two of a metal and a Mercury into the next).
  * Only at an alchemy station: an Alchemist's, its fee a brew, or the player's own home's.
  * @param {HTMLElement} detail @param {() => void} rerender @param {{ el: Function, divider: (w: string) => HTMLElement }} kit
@@ -2855,9 +2878,10 @@ function drawEnchantingStation(detail, rerender, { el, divider }) {
   const short = purseShort(station, 'enchanter');
   if (short) detail.append(el('p', 'px-note prof-short', short));
   const pieces = p.disenchantable();
-  // AUDIT PROF-541 B8: the Essence's room - every origin counted, as the service counts it (storesFullIn's sum)
+  // AUDIT PROF-541 B8: the Essence's room - every origin counted, as the service counts it (storesFullIn's sum) -
+  // FB1020h ESSENCE-LOOSE: its loose units too (storesRoomOf)
   const ess = book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(book, ARCANE_ESSENCE.key) };
-  const room = (book.state?.caps?.stores ?? STORES_MAX) - ((ess.own | 0) + (ess.bought | 0) + (ess.gold | 0));
+  const room = storesRoomOf(book, ess);
   // DISENCHANT-SAID: said when no piece gives Essence - a piece listed under one stands greyed below, its reason beside it
   if (!pieces.some((pc) => pc.essence >= 1)) detail.append(el('p', 'px-note', t('prof.page.enchant.none', 'No crafted piece in your pack has enough enchantment to give Essence. Only pieces a player crafted online can be taken apart.')));
   // CRAFT-LIMIT-SAID: each piece's XP as the service credits it (the Firmament's percent on disenchantXp, under the room the
@@ -2984,7 +3008,7 @@ function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
   if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }
   detail.append(el('p', 'px-note', ESSENCE_REFORGE_HOW));
   const ess = p.book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(p.book, ARCANE_ESSENCE.key) };
-  const have = (ess.own | 0) + (ess.bought | 0);   // never gold's units, as the service spends
+  const have = (ess.own | 0) + (ess.bought | 0) + (ess.loose | 0);   // never gold's units, as the service spends - FB1020h ESSENCE-LOOSE: a station's, its loose too
   const pieces = p.reforgeable();
   if (!pieces.length) detail.append(el('p', 'px-note', ESSENCE_REFORGE_NONE));
   for (const pc of pieces) {

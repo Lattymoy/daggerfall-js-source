@@ -43,6 +43,7 @@ import { mintHourlock, mintGilded, GILDED_RECORDS } from './gilded.js';   // GIL
 import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
 import { mintGem } from './gems.js';   // GEM2: the graded gems
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
+import { createPistolet, PISTOLET_TEMPLATE } from './pistolet.js';   // PISTOLET: the second gun, the same way
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
  *  spelling - mwRaceId derives the Morrowind id from it), `classIndex`
@@ -181,6 +182,9 @@ export function testGearRows(gender) {
   // tests the refusal, not the weapon.
   rows.push({ kind: 'thunderlock', label: 'Dwarven Thunderlock', templateIndex: THUNDERLOCK_TEMPLATE });
   rows.push({ kind: 'pellets', label: 'Dwemer Pellets (30)', templateIndex: PELLET_TEMPLATE, stackCount: 30 });
+  // PISTOLET: two of them - one-handed, so the pair (one in each hand) is what wants testing, and the Pellets above feed both
+  rows.push({ kind: 'pistolet', label: 'Dwarven Pistolet', templateIndex: PISTOLET_TEMPLATE });
+  rows.push({ kind: 'pistolet', label: 'Dwarven Pistolet (a pair\'s second)', templateIndex: PISTOLET_TEMPLATE });
   // The full steel suit - every armor slot.
   for (const [name, t] of Object.entries(A)) rows.push({ kind: 'armor', label: `Steel ${name.replace(/_/g, ' ')}`, templateIndex: t, material: M.Steel });
   // Material rows that change the Morrowind mapping.
@@ -222,6 +226,7 @@ export function testItemOf(row) {
   // find and the legendary mint with - a second literal here is how
   // the test character's gun and the found one drift apart.
   if (row.kind === 'thunderlock') return createThunderlock();
+  if (row.kind === 'pistolet') return createPistolet();
   if (row.kind === 'pellets') return createPellets(row.stackCount);
   if (row.kind === 'armor') {
     // MAC-N1: through SetItem's value write - this armor was minted

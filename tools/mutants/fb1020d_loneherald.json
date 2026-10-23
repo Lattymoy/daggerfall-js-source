@@ -1,0 +1,222 @@
+[
+  {
+    "name": "FB1020D-news-no-size",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "t: secs(now - B.wk), ew: B.ew ?? 0, ...heraldCompany(B)",
+    "new": "t: secs(now - B.wk), ew: B.ew ?? 0, o: B.o ?? ''",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the size left off the Redoubt's news"
+  },
+  {
+    "name": "FB1020D-news-opener-always",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "o: opener || !E.length ? B.o ?? '' : E[0][1].name ?? ''",
+    "new": "o: B.o ?? ''",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the opener named for a company it is not in (alone or not)"
+  },
+  {
+    "name": "FB1020D-news-living-counted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "return { n: E.length, o:",
+    "new": "return { n: E.filter(([, m]) => m.alive).length, o:",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the living counted, not the entrants (the Descent's count)"
+  },
+  {
+    "name": "FB1020D-read-drops-size",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0, ew:",
+    "new": "n: 0, ew:",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the hub's read drops the size"
+  },
+  {
+    "name": "FB1020D-read-takes-any",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0, ew:",
+    "new": "n: Number.isSafeInteger(e.n) ? e.n : 0, ew:",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "a size out of shape taken"
+  },
+  {
+    "name": "FB1020D-fold-drops-rd",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0,",
+    "new": "else owe({ kind: 'rd', o: e.o,",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the reckoning drops the size from the Redoubt's post"
+  },
+  {
+    "name": "FB1020D-fold-drops-first",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "owe({ kind: 'first', o: e.o, n: e.n ?? 0,",
+    "new": "owe({ kind: 'first', o: e.o,",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the reckoning drops the size from First of the Spire"
+  },
+  {
+    "name": "FB1020D-fold-drops-seal",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "o: e.o, n: e.n ?? 0 }); }",
+    "new": "o: e.o }); }",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the reckoning drops the size from a seal lifted"
+  },
+  {
+    "name": "FB1020D-unsaid-read-as-one",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "const lone = (n) => n === 1;",
+    "new": "const lone = (n) => n <= 1;",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "news that did not say its size read as a company of one"
+  },
+  {
+    "name": "FB1020D-name-taken-raw",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "(lone(n) ? heraldName(o) || 'Someone' : companyOf(o))",
+    "new": "(lone(n) ? String(o ?? '') || 'Someone' : companyOf(o))",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "a lone name taken raw (a mention, a link)"
+  },
+  {
+    "name": "FB1020D-no-name-for-nobody",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "(lone(n) ? heraldName(o) || 'Someone' : companyOf(o))",
+    "new": "(lone(n) ? heraldName(o) : companyOf(o))",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "no name said for a name that says nothing"
+  },
+  {
+    "name": "FB1020D-rd-alone-unsaid",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "(Hall ${h})${lone(n) ? ' alone' : ''}**",
+    "new": "(Hall ${h})**",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "the tenth Redoubt's post never says alone"
+  },
+  {
+    "name": "FB1020D-first-names-kept",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "const names = lone(n) ? [] : namesOf(by);",
+    "new": "const names = namesOf(by);",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "First of the Spire lists its one name"
+  },
+  {
+    "name": "FB1020D-first-alone-unsaid",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "${lone(n) ? 'alone, ' : ''}in ${egHeraldTime(t)}",
+    "new": "in ${egHeraldTime(t)}",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "First of the Spire never says alone"
+  },
+  {
+    "name": "FB1020D-seal-alone-unsaid",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "is the first through${lone(n) ? ', alone' : ''}.",
+    "new": "is the first through.",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "a seal's post never says alone"
+  },
+  {
+    "name": "FB1020D-news-lone-only",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "o: opener || !E.length ? B.o",
+    "new": "o: E.length !== 1 ? B.o",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "AUDIT FB1020d L1-1: an opener who never stepped in leading a company of two or more"
+  },
+  {
+    "name": "FB1020D-news-home-not-counted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const E = entrants(B), opener",
+    "new": "const E = entrants(B).filter(([, m]) => !m.home), opener",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "AUDIT FB1020d L2-2: a member gone home not counted"
+  },
+  {
+    "name": "FB1020D-news-forsaken-not-counted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const E = entrants(B), opener",
+    "new": "const E = entrants(B).filter(([, m]) => !m.forsaken), opener",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "AUDIT FB1020d L2-2: a forsaken member not counted"
+  },
+  {
+    "name": "FB1020D-hud-called-after-wake",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;",
+    "new": "const co = E.co;",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "AUDIT FB1020d L1-3: the tracker counting the called company once the door is shut"
+  },
+  {
+    "name": "FB1020D-hud-entrants-before-wake",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;",
+    "new": "const co = E.co.filter((c) => c[5] === 1);",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "AUDIT FB1020d L1-3: the gather forgetting the called who may yet come"
+  },
+  {
+    "name": "FB1020D-hud-rows-called",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "egCompanyRows({ ...E, co })",
+    "new": "egCompanyRows(E)",
+    "tests": [
+      "test/net/eliteGates/fb1020d_loneherald.test.js"
+    ],
+    "why": "AUDIT FB1020d L1-3: a row for a member who never came"
+  },
+  {
+    "name": "FB1020D-letter-says-company",
+    "file": "server-account/src/egHonours.js",
+    "old": "'You were the first ever to take Redoubt 10",
+    "new": "'Your company was the first ever to take Redoubt 10",
+    "tests": [
+      "test/net/eliteGates/egz_recap.test.js"
+    ],
+    "why": "AUDIT FB1020d L1-4: First of the Spire's letter calling one a company"
+  }
+]

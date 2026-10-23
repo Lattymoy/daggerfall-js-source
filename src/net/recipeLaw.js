@@ -260,8 +260,9 @@ export const garmentGroup = (templateIndex) => (templateIndex <= 181 ? 'MensClot
  *  furniture takes no dye, so "a dye" has nothing to colour - and the skins of a pelt, Large two, Small one. */
 export const RUGS = Object.freeze([[237, 'Small Plain Rug'], [238, 'Large Plain Rug'], [239, 'Small Fine Rug'], [240, 'Large Fine Rug']]);
 export const TAPESTRIES = Object.freeze([[241, 'Large Tapestry'], [242, 'Medium Tapestry'], [243, 'Small Tapestry']]);
-/** The pelts the skins are cut from: a fur's hide, never silk, chitin, scales, feathers or shell. */
-export const PELTS = Object.freeze(['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger']);
+/** The pelts the skins are cut from: a fur's hide, never silk, chitin, scales, feathers or shell - DEX-HIDES (FIELD BUGS
+ *  2026-10-20h): and the Wolf Pelt and the Boar Hide, Daggerfall Enemy Expansion's furs. */
+export const PELTS = Object.freeze(['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger', 'hide:wolf', 'hide:boar']);
 /** The Fishing-Net (FORAGE0 14.7): Foraging's 1603, 2 Linen Bolt, rank 0. */
 export const FISHING_NET_TEMPLATE = 1603;
 const tierOfKey = (key) => minedMaterial(key)?.tier ?? 1;

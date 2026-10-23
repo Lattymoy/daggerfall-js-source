@@ -222,8 +222,8 @@
   {
     "name": "COMPANION-DROP-the-crew-never-held",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "  if (!wildHere()) return false;\n  say?.(WILD_TEXT.companionStays(name), 3);",
-    "new": "  if (true) return false;\n  say?.(WILD_TEXT.companionStays(name), 3);",
+    "old": "  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;   // ETHER-WILD: at sea her hold is the shelter, open from anywhere already (Eltheric-Ocean.md ETHER-WILD)\n  say?.(WILD_TEXT.companionStays(name), 3);",
+    "new": "  if (true) return false;   // ETHER-WILD: at sea her hold is the shelter, open from anywhere already (Eltheric-Ocean.md ETHER-WILD)\n  say?.(WILD_TEXT.companionStays(name), 3);",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
     ]
@@ -240,7 +240,7 @@
   {
     "name": "COMPANION-DROP-his-pack-to-the-hold-in-the-zone",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "export const packStaysAshore = () => wildHere();",
+    "old": "export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;",
     "new": "export const packStaysAshore = () => false;",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"

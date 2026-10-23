@@ -56,3 +56,17 @@ the readied hands hold.
 The mod's copied class carries one difference from DFU's that the port does
 not take: its `OnGUI` returns while `GameManager.IsGamePaused`, which the
 port's frame already does (no rig draws under a window).
+
+## SPELL-CLIMB (FIELD BUGS 2026-10-22c): the hands on the wall come first
+
+Panthyon, on #bug-reports: *"When you hold a spell and dont drop it, climbing
+will then manifest a second set of arms"*. The mod reads no climb - DFU's climb
+screen is empty, so nothing stood beside its hands - but the enhanced climb
+puts two fists on the stone (CLIMB-HANDS, `03-World/Parkour-Arc.md`), and both
+pairs stood at once. A departure from the mod's `AnimateSpellCast`: the readied
+hands also wait on `!climbHands.showing()` - they stand down while the fists
+show and come back once those are off the screen. The spell stays readied, and
+a click on the wall casts it; while that cast plays its hands take the screen
+and the fists come back up onto the stone after it. DFU's own climb draws no
+fists, so there the readied hands stand as the mod has them. Record:
+`01-Overview/bugs/Field-Bugs-2026-10-22c.md`.

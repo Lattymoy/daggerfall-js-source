@@ -62,8 +62,8 @@
   {
     "name": "SCALE4f-stmt-wait-uncounted",
     "file": "server-account/src/metrics.js",
-    "old": "          } finally { add(tally, 'ms', Date.now() - started); }\n        };\n      }\n      return v.bind(target);",
-    "new": "          } finally { /* uncounted */ }\n        };\n      }\n      return v.bind(target);",
+    "old": "} finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "new": "} finally { tripDone(tally, 0); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
     "tests": [
       "test/server/scale4f.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE4f-batch-wait-uncounted",
     "file": "server-account/src/metrics.js",
-    "old": "            if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));\n            return rs;\n          } finally { add(tally, 'ms', Date.now() - started); }",
-    "new": "            if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));\n            return rs;\n          } finally { /* uncounted */ }",
+    "old": "} finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "new": "} finally { tripDone(tally, 0); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
     "tests": [
       "test/server/scale4f.test.js"
     ],

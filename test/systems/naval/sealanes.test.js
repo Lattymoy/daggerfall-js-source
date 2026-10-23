@@ -428,7 +428,7 @@ function feedOn({ at = { x: 200, y: 200 }, clock = 1.7e12 } = {}) {
 }
 
 test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, every LANE_LIST_MS the world hands the host every packet of the lanes about the player at the shared clock (AUDIT BAY A19 PIN MOVED: those within LANE_LIST_M of the player) - the lanes of the map\'s own ports (Travel Options\' list, by its water and the ocean\'s climate), a lane\'s way sounded once and only near the player, each packet in the scene with her seeds, her leg, her ports by key and name and her home port\'s region', () => {
-  assert.match(WORLD, /if \(_mode\(\) === 'exterior' && !gamePaused\(\) && !_loading\) laneShips\(\);[^\n]*\n\s*naval\.frame\(dt \* worldTimeScale\(\)/, 'stood and steered before the frame poses them, outdoors and running');
+  assert.match(WORLD, /if \(_mode\(\) === 'exterior' && !gamePaused\(\) && !_loading\) \{ laneShips\(\);[^\n]*\n\s*naval\.frame\(dt \* worldTimeScale\(\)/, 'stood and steered before the frame poses them, outdoors and running');   // PIN MOVED (SEA-EVENTS, 2026-10-22): the sea's events stepped beside the lanes (scenes/seaVenturesHost.js step)
   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and its sounding's reach - an isle port's its shore's
   assert.match(WORLD, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/, 'the harbour named, its key a lane port\'s');   // PIN MOVED (AUDIT HOLDINGS O1): and whether its scan's pixels are built
   // the clock where the lane's first packet lies at her home port, by the player

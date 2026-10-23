@@ -19568,7 +19568,7 @@ from the scratchpad, the pack mounted over a wagon of thirteen):
 
 DFU's inventory window filters only the local list (AddLocalItem) and moves one row per click. The enhanced remote pane already filtered the player's own stores (WAGON-FILTER, above). A container — a chest, a corpse — now carries that same bar, and a rarity menu beside it.
 
-- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Any Rarity. The material menu is the same shape for armour and weapons: Any Material, then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial ="`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
+- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Rarity, every tier, with no count of its own - All already says it (FILTER-FIT, 2026-10-17: the menu names itself; it read Any Rarity, and the count made it too wide for a one-column window). The material menu is the same shape for armour and weapons: Material (every metal; it read Any Material), then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial ="`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
 - **Take all** walks those rows from the top, and its button stays on that list. **Stash all** walks the current pack page from the top, into the store beside it - the wagon, the player's own storage, the Materials Bag - and its button sits centred on the bottom edge of the pack's item list. A container's window never opens the pack (MAC-M2 B: a chest and a corpse are for taking), so Stash all is not on it; a fresh pack starts on Weapons. Each row goes through the one plan a click uses (`planTake`, `planStore`), and a take off someone else's keeping - a stranger's cupboard, a shut shop's shelf - is marked stolen exactly as a single take is (STOLEN-GOODS, `theftTarget`).
 - **Where it stops.** The first row the pack or the destination cannot hold stays, and so does everything under it. A row refused for another reason is left where it is and the walk continues. A stack that only partly fits is the last row moved. Stash all into a room container would stop at 64 rows (`LOOT_LIST_MAX`): a longer list is never told to the other players, who hear the container when its window closes, not row by row. No window offers that today (above); the stop stands for the layout that does.
 - **What does not change.** The ground and a reward tray have no bar and no buttons. The classic skin draws none of this.
@@ -19788,6 +19788,11 @@ hourglass is: `ui/enhanced/enhancedPost.js`.
   letterbox's own manner.
 - Pins: `test/net/serverpost_client.test.js`; PIN MOVED: `test/ui/enhanced/outsideTap.test.js` (five scrims, the envelope inside the
   pause face's; the face under the account window inert; the window's place reset on a tap outside).
+- **LOST-SPOILS (2026-10-22): Claim all.** A boss's floor's leftovers come a piece an item, from the Lost and Found
+  (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` LOST-SPOILS), so the list stands *Claim all (N)* above itself while two
+  or more items wait (`.pm-claimrow`, the window's own foot row set right), down while a claim or a Claim all runs, as
+  a piece's Claim is while one is out. Pressed, it claims each in turn (`net/serverPost.js` claimAll) and says what landed
+  (`post.claimedAll`), or that and where it stopped. One waiting item has only its own Claim.
 
 
 ## EVERY-STANDING - every organization's standing, a setting (FIELD BUGS 2026-10-09e)
@@ -19857,6 +19862,11 @@ mounted pack); mutants `tools/mutants/virt.json` (42: 41 dead, 1 equivalent as r
 `ui1.json`'s UI1-the-second-waiter-dropped and AUDIT-UI-A4-the-cache-unbounded, `shiftstow.json`'s
 AUDIT-WAGON-FILTER-S8.
 
+TRADE-VIRT (2026-10-20, `07-Rendering/Performance-Priority.md` TRADE-VIRT) carried this law to the shop counter and the
+trade between players, which had kept both causes, and gave the landing its one home: `ui/enhanced/landingTiles.js` -
+the pack's `liveTile` asks it (`_waitingTiles`, `tileLanded` and `paintLandedTiles` above are its `waiting`, `landed`
+and `pass` now), and each counter keeps its own by it. The tile pin's fakes moved to `test/virtFakes.mjs`.
+
 ### AUDIT VIRT (2026-10-16, "Please audit this")
 
 Four lenses read the slice cold, each against HEAD and the tree before it, in node and in Chromium: the windowing law
@@ -19918,3 +19928,61 @@ The whole suite on the slice: 28,025 passed and one failed - `test/systems/profe
 (its "a mix" card not found). It fails the same way on the commit before VIRT, in the same 248-file batch at four at a
 time, and passes alone and under a loaded CPU on both: older than this slice, and left for its own.
 
+
+## SKILL-READY, FIRM-STARS, STATUS-TIPS, BELT-LANTERN, MONSTER-VOL (2026-10-20, Dudey)
+
+The owner's words: "add a symbol that tells you when you hover over it that you have stars not applied for the
+firmament ... on the right of the renown bar and when skills are ready to level up left of the renown bar (dont use this
+annoying message bar for this anymore) and when you click the firmament symbol it can bring you to firmament"; "make every
+other icon of debuffs, buffs, hunger etc hoverable ... so it tells you in a toolbox like in the inventory what it does";
+"can we add an lantern only slot in the inventroy"; "decrease the monster scream frequenzy by 60% please and also add an
+option under audio for it called Monster Volume with 0 - 100%".
+
+- **The two tiles beside the Renown bar** (`ui/hud/hudAdvance.js`, built by `ui/enhanced/enhancedHud.js` advTile). Left:
+  the skills a rest or a journey would raise (`levelNotice.js` skillsImprovable), their count at the foot. Right: the
+  Firmament's stars and craft points not yet placed (the book's purses less the tree in force, `firmamentLaw.js`
+  pointsLeft); a press opens the Growth tab's Firmament page (`setHudPauseAt`, wired by `scenes/world.js`). Each is a
+  buff's own tile with a 16px glyph (`hudStatus.js` STATUS_GLYPHS `skillup`, `firmstar`), on the bar's line and past the
+  hotbar's ends where the hotbar is wider (CLEAR-HOTBAR, `advanceReach`). Each is its own piece of the movable HUD
+  (Alt+U: `skillsReady`, `starsUnspent`). The book is read once, again when the Renown rises, and again after
+  `BOOK_RETRY_MS` when a read found no sky. The level strip no longer draws the skills' standing line; the level's own row
+  stays, and under DFO Grimoire its words are in the page's full ink (LEVEL-INK).
+- **The status tiles' hover card** (`ui/hud/statusTips.js`, `ui/hud/hudTip.js`): with the mouse freed every tile shows
+  the pack's hover card - a spell's effects from its live entries, a disease's daily losses, a need's meaning and what
+  the needs take now, a boon's gains, a set power's tier, the open zone's rules. The browser's own title stands down.
+- **The lantern's slot** (`systems/beltLantern.js`): one socket after the Crystals (Plus's row, the Grimoire's column -
+  there each socket is the column's height shared out, so it fits without scrolling). A lantern there carries
+  `beltLantern: true`, hangs at the waist when lit whatever Handheld Torches' waist switch says (`playerTorch.js`
+  lanternAtWaist, `handheldTorches.js` atWaist), and is lit when hung and put out when taken off.
+  BELT-WAIST (`01-Overview/bugs/Field-Bugs-2026-10-21b.md`): the socket holds the lantern AT THE WAIST - the one hung, or
+  a lit one the waist switch hangs there (`beltLantern.js` waistLanternOf) - and the hand's row never does, so a lantern
+  lit by O, Use or the hotbar is drawn where the world hangs it, not on the shield's panel. O lights the hung lantern
+  first, a hung one takes no hand with the switch off, and the hotbar's lantern leaves a shield on.
+- **Monsters** (`characters/enemy/enemySounds.js` attractStep, `scenes/hostCombat.js` tickEnemySound): a monster's attract
+  clock runs at 1/2.5 of the game's, so it calls 40% as often; the city watch and a companion keep theirs. The Audio
+  tab's **Monster Volume** (`systems/monsterVolume.js`, uiPrefs `monsterVolume`, 0-100%) scales a monster's call, its
+  attack sound and its pain cry.
+
+- **A quest's words before the NPC's door** (QUEST-WORDS-FIRST, `scenes/quest/questClickFirst.js`, wired in
+  `scenes/worldModes.js` openStaticNpc; Dudey: "you get the complete quest message plus reward when you press exit in
+  the dialog options which is weird and wrong"). A click on a building's NPC that a live quest's Person heard ticks the
+  quest machine at once; if that raised a window in the building's slot (the quest's box, then its reward), the talk
+  window or the guild's or shop's popup opens once the slot is clear. Before, the talk window paused the world and drew
+  over the building's slot, so the quest's tick, its words and its reward came only after Exit. A departure from
+  PlayerActivate.cs:1523-1528 (the owner's call): a DoClick that raised words opens the NPC's door after them; one that
+  raised nothing still ends the activation.
+
+`test/ui/hud/hud_advance_tips.test.js`.
+
+## TAB-WALK, HUD-FOCUS - Tab is never the browser's walk, and the chat's buttons never keep the focus (FIELD BUGS 2026-10-20h)
+
+A player's report, as the coordinator summed it up: "TAB focusing the Socials button". PX15 kept Tab's browser default
+wherever the QuickDial did not answer it: on the classic skin, before the boot's last await, and with the dial
+rebound. That default is the browser's walk of the page's focus, not DFU's behaviour (DFU binds
+nothing to Tab). With the chat shut online, the walk stopped on the Social button, the first control the sheet draws
+over the world, and the next Space (Jump) pressed it. The hosts' one swallow now takes a Tab aimed at the page itself
+(`ui/input.js` isPageFocusWalk, in swallowBrowserKey), so an unanswered Tab does nothing. A field's Tab, a window's own
+walk and Ctrl+Tab are left alone. The chat's controls over the world (Play online here, the touch skin's Chat, both
+Social buttons, Show) are never the keyboard's focus (`ui/input.js` neverTheFocus): they are out of the walk, a mouse
+press gives them no focus, and a focus they get another way is given back. The record:
+`01-Overview/bugs/Field-Bugs-2026-10-20h.md`; the pins `test/ui/fb1020h_tabwalk.test.js`.
