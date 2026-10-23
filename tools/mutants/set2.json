@@ -128,11 +128,13 @@
   {
     "name": "SET2-the-cost-under-1",
     "file": "src/systems/spellcost.js",
-    "old": "if (Number.isFinite(n)) sp = Math.max(1, Math.round(n));",
-    "new": "if (Number.isFinite(n)) sp = Math.round(n);",
+    "old": "if (cut) sp = Math.max(1, Math.round((sp * (100 - budgeted('castCut', cut))) / 100));",
+    "new": "if (cut) sp = Math.round((sp * (100 - budgeted('castCut', cut))) / 100);",
     "tests": [
       "test/systems/set2_seams.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "PWR1 (bible/05-Combat/Power-Arc.md section 4): the cuts land through the castCut channel, under its ceiling of 37.5%, on a price already at CAST_COST_FLOOR (5) or more - at least 3 is ever left, so the floor of 1 cannot be reached; the guard is kept as the line it was, and set2_seams pins the price on the curve."
   },
   {
     "name": "SET2-the-headroom-gate-skipped",

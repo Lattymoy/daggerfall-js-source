@@ -42,12 +42,12 @@ function balanced(text, from, open = '(', close = ')') {
 const seq = (...v) => { let i = 0; return () => v[i++]; };
 const magicSword = (extra = {}) => ({ group: 'Weapons', templateIndex: 120, material: 0, rarity: 'magic', affixes: [], ...extra });
 
-test('SIGIL1 the law: a sigil\'s power is a per cent of damage at its full rank, in its tier\'s band (Magic 2-5, Rare 4-8, Legendary 7-12); a won weapon carries one 200 per mille alone and 40 more a fighter past the first, the band\'s floor rising a seventh a fighter so eight always win its top; five stages - Faint, Kindled, Bright, Radiant, Ascendant - each 20% more of the power, the sigil\'s own rank by what it has drunk and the wielder\'s Renown opening each at 1, 10, 20, 30, 40, the lower of the two standing; no Renown, dormant (mutants: a band, the chance, the floor, a stage\'s share or threshold, the lower of the two, a forged record taken)', () => {
+test('SIGIL1 the law: a sigil\'s power is a per cent of damage at its full rank, in its tier\'s band (Magic 2-5, Rare 4-8, Legendary 7-12); a won weapon carries one 200 per mille alone and 40 more a fighter past the first, the band\'s floor rising a seventh a fighter so eight always win its top; five stages - Faint, Kindled, Bright, Radiant, Ascendant - each 20% more of the power, the sigil\'s own rank by what it has drunk and the wielder\'s Renown opening each at 1, 5, 10, 15, 20 (PWR4: the soft cap\'s), the lower of the two standing; no Renown, dormant (mutants: a band, the chance, the floor, a stage\'s share or threshold, the lower of the two, a forged record taken)', () => {
   assert.deepEqual(SIGIL_BANDS, { magic: [2, 5], rare: [4, 8], legendary: [7, 12] });
   assert.equal(SIGIL_POWER_MAX, 12);
   assert.deepEqual([SIGIL_CHANCE_BASE, SIGIL_CHANCE_PER], [200, 40]);
   assert.deepEqual(SIGIL_STAGES.map((s) => [s.name, s.xp, s.renown, s.share]), [
-    ['Faint', 0, 1, 20], ['Kindled', 5000, 10, 40], ['Bright', 12500, 20, 60], ['Radiant', 22500, 30, 80], ['Ascendant', 37500, 40, 100],
+    ['Faint', 0, 1, 20], ['Kindled', 5000, 5, 40], ['Bright', 12500, 10, 60], ['Radiant', 22500, 15, 80], ['Ascendant', 37500, 20, 100],   // PWR4: re-spaced to the soft cap
   ]);
   assert.equal(SIGIL_XP_MAX, 37500);
   assert.deepEqual([1, 2, 4, 8, 99, 0, Number.NaN].map(sigilChance), [200, 240, 320, 480, 480, 200, 200], 'one in five alone, nearly one in two for a full party');
@@ -69,13 +69,13 @@ test('SIGIL1 the law: a sigil\'s power is a per cent of damage at its full rank,
   // the rank, the stage, the per cent
   const s = (xp, power = 10) => ({ power, party: 1, xp });
   assert.deepEqual([0, 4999, 5000, 12499, 12500, 22499, 22500, 37499, 37500].map((x) => sigilRank(s(x))), [0, 0, 1, 1, 2, 2, 3, 3, 4]);
-  assert.deepEqual([null, 0, 1, 9, 10, 19, 20, 29, 30, 39, 40, 50, 1.5, Number.NaN].map(renownSigilStage), [-1, -1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, -1, -1]);
-  assert.equal(sigilStageIn(s(37500), 12), 1, 'an Ascendant sigil in a Renown 12 hand stands at Kindled');
+  assert.deepEqual([null, 0, 1, 4, 5, 9, 10, 14, 15, 19, 20, 50, 1.5, Number.NaN].map(renownSigilStage), [-1, -1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, -1, -1]);
+  assert.equal(sigilStageIn(s(37500), 6), 1, 'an Ascendant sigil in a Renown 6 hand stands at Kindled');
   assert.equal(sigilStageIn(s(0), 50), 0, 'a Faint sigil in a Renown 50 hand stands at Faint');
   assert.equal(sigilStageIn(s(37500), null), -1, 'no Renown: dormant');
   assert.deepEqual([0, 5000, 12500, 22500, 37500].map((x) => sigilPercent(s(x, 12), 40)), [2.4, 4.8, 7.2, 9.6, 12]);
   assert.deepEqual([0, 5000, 12500, 22500, 37500].map((x) => sigilPercent(s(x, 5), 40)), [1, 2, 3, 4, 5]);
-  assert.equal(sigilPercent(s(37500, 12), 25), 7.2, 'held at Bright by Renown 25');
+  assert.equal(sigilPercent(s(37500, 12), 12), 7.2, 'held at Bright by Renown 12');
   assert.equal(sigilPercent(s(37500, 12), null), 0);
   // the record
   assert.ok(validSigil({ power: 1, party: 1, xp: 0 }));
@@ -105,8 +105,8 @@ test('SIGIL1 the blow: online, with my Renown known, my weapon\'s sigil adds its
   assert.equal(sigilBlow(held(0), 10, me, rat), 10, 'a second weapon carries its own');
   setSigilRenown(40);
   assert.equal(sigilBlow(held(37500), 100, me, rat), 112, 'Ascendant in a Renown 40 hand: the whole power');
-  setSigilRenown(12);
-  assert.equal(sigilBlow(held(37500), 100, me, rat), 104, 'held at Kindled by Renown 12: 4.8 of 100');
+  setSigilRenown(6);
+  assert.equal(sigilBlow(held(37500), 100, me, rat), 104, 'held at Kindled by Renown 6: 4.8 of 100');
   setSigilRenown(40);
   assert.equal(sigilBlow(held(37500), 100, { isPlayer: true, peer: true }, rat), 100, 'a peer\'s blow resolved here - the duel\'s stub');
   assert.equal(sigilBlow(held(37500), 100, me, { isPlayer: true }), 100, 'a blow at a player');
@@ -173,7 +173,7 @@ test('SIGIL1 the drink and the words: the weapon in my hand drinks the Renown XP
   setSigilOnline(true);
   assert.equal(drinkSigil(sword, 100), null, 'online, my Renown unknown: nothing');
   assert.equal(sword.sigil.xp, 4990);
-  setSigilRenown(5);
+  setSigilRenown(2);
   const before = sword.sigil;
   const copy = { ...sword };   // a save's or a stream's copy
   assert.equal(drinkSigil(sword, 5), null, 'short of the stage');
@@ -190,8 +190,8 @@ test('SIGIL1 the drink and the words: the weapon in my hand drinks the Renown XP
   assert.equal(drinkSigil(sword, 0), null);
   assert.equal(drinkSigil(sword, -5), null);
   assert.equal(drinkSigil(null, 5), null);
-  assert.equal(sigilRiseLine('Longsword', 1), 'The sigil on your Longsword brightens: Kindled. Your Renown limits it to Faint until Renown 10.');
-  setSigilRenown(10);
+  assert.equal(sigilRiseLine('Longsword', 1), 'The sigil on your Longsword brightens: Kindled. Your Renown limits it to Faint until Renown 5.');
+  setSigilRenown(5);
   assert.equal(sigilRiseLine('Longsword', 1), 'The sigil on your Longsword brightens: Kindled.');
   assert.equal(sigilRiseLine('Longsword', 9), null);
   // the tooltip
@@ -200,9 +200,9 @@ test('SIGIL1 the drink and the words: the weapon in my hand drinks the Renown XP
   assert.deepEqual(sigilLines(rare(0)), ['Sigil (Dormant: works online only): +8% at Ascendant'], 'offline');
   setSigilOnline(true);
   assert.deepEqual(sigilLines(rare(0)), ['Sigil (Dormant: works online only): +8% at Ascendant'], 'online, my Renown unknown');
-  setSigilRenown(15);
+  setSigilRenown(7);
   assert.deepEqual(sigilLines(rare(7000)), ['Sigil (Kindled): +3.2% damage, +8% at Ascendant', 'Kindled: 7,000 / 12,500 to Bright', 'Won in a fight of 3']);
-  assert.deepEqual(sigilLines(rare(30000)), ['Sigil (Kindled): +3.2% damage, +8% at Ascendant', 'Limited to Kindled by your Renown (Bright at Renown 20)', 'Won in a fight of 3']);
+  assert.deepEqual(sigilLines(rare(30000)), ['Sigil (Kindled): +3.2% damage, +8% at Ascendant', 'Limited to Kindled by your Renown (Bright at Renown 10)', 'Won in a fight of 3']);
   setSigilRenown(40);
   assert.deepEqual(sigilLines(rare(37500, 1)), ['Sigil (Ascendant): +8% damage, +8% at Ascendant'], 'full, and won alone');
   assert.deepEqual(sigilLines(rare(0, 1)), ['Sigil (Faint): +1.6% damage, +8% at Ascendant', 'Faint: 0 / 5,000 to Kindled']);

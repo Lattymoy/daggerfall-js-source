@@ -101,8 +101,8 @@
   {
     "name": "RVN1-backstab-never-told",
     "file": "src/combat/formulas.js",
-    "old": "    const info = { backstab: notes.backstab, blow: whole };",
-    "new": "    const info = { backstab: false, blow: whole };",
+    "old": "    const info = { backstab: notes.backstab, blow: whole, leech: openLedger('leech') };",
+    "new": "    const info = { backstab: false, blow: whole, leech: openLedger('leech') };",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

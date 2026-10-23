@@ -35,6 +35,7 @@ import { fatigueLossMultiplierFor, applyFallLanding, WARDROBE_FALL_MOST, WARDROB
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../../src/player/motor.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
 import { codexRows, imprintChoices, FAMILY_HINT, noteFind, _resetCodexForTests } from '../../src/systems/loot/lootCodex.js';
+import { budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the skill channel's curve
 
 const on = () => { _resetForTests(); setPref('lootRarity', true); };
 const off = () => { _resetForTests(); setPref('lootRarity', false); };
@@ -148,7 +149,7 @@ test('LOOT15: the powers through their own readers - the degrees in the felt tem
   cowl.variant = 1;   // the casual cloak's hooded variant (temperature.js HOODED_CLOAK_VARIANTS)
   assert.equal(hoodUp(cowl), true);
   const hooded = wear(player(), cowl);
-  assert.equal(skillValue(hooded, SKILLS.Stealth) - 30, 25 + 25, 'the cowl\'s Stealth line and the hood\'s 25');
+  assert.equal(skillValue(hooded, SKILLS.Stealth) - 30, Math.floor(budgeted('skill', 25 + 25)), 'the cowl\'s Stealth line and the hood\'s 25 - PWR1: summed past the skill channel\'s knee, on its curve');
   cowl.variant = 0;
   computeEntityMods(hooded);
   assert.equal(skillValue(hooded, SKILLS.Stealth) - 30, 25, 'the hood down: its line alone');

@@ -18,11 +18,11 @@
 //   Berserker's leech
 //   War Rhythm, Frenzy, the       the SWING PACE (characters/weaponStates.js registerSwingPaceMod - MARTIAL2's door)
 //   Bladedancer's quickening
-//   Iron Discipline, the          the DAMAGE modifier (playerEntity.js - a foe's BLOW alone, the door's own mark:
-//   Juggernaut's guard, the       sigilSetPowers.js pendingPlayerBlow; whole points, the fraction carried)
-//   Brawler's dazed foe
-//   Dancer's Step, the            the BLOW EVASION (asked before any modifier, so no set's charge is spent on it)
-//   Shadowdancer's window
+//   Iron Discipline, the          the GUARD channel (PWR1: systems/power/powerBudget.js registerGuardSource - a foe's
+//   Juggernaut's guard, the       BLOW alone, the door's own mark: sigilSetPowers.js pendingPlayerBlow; whole points,
+//   Brawler's dazed foe           the fraction carried at the door)
+//   Dancer's Step                 the EVADE channel (PWR1: powerBudget.js registerEvadeSource - the door's one roll)
+//   the Shadowdancer's window     the BLOW EVASION (an event, asked before any modifier, so no set's charge is spent on it)
 //   Stand Firm                    the HURT listener (a hurt that crosses its line, with a recovery)
 //   War Rhythm, Bloodlust,        the KILL listener (playerKills.js)
 //   Tireless, Felling Strike's
@@ -39,6 +39,12 @@
 //                                 potion lands, the heal through playerHeal.js - never on a foe no kill of mine counts
 //                                 (the City Watch, my own allies: AUDIT MARTIAL L1 L5)
 //
+// PWR1 (bible/05-Combat/Power-Arc.md section 4): every passive and every window that adds or lightens is a NUMBER - a
+// source of its channel (the blow, the pace, the guard, the evade, the leech, the kill's heal, the round's regeneration),
+// summed with every other system's at the door and landed through the channel's curve (each alone under its knee, so its
+// words hold). Phantom Strike's window turns a blow WHOLE on its own clock - an EVENT, its own roll before the channel's,
+// its words whole.
+//
 // NEVER AT A PLAYER: a technique never meets a player's body (TECH law 3 - neither resolution tells one), every blow
 // modifier here refuses a player target, and a duel's blow at me passes my damage door without asking the port. THE CLOCK
 // is real seconds, as the set powers' and the arcane paths'; a reload starts every power ready.
@@ -49,7 +55,7 @@ import { martialAwake, MARTIAL_NUMBERS, MARTIAL_BY_ID, signatureById } from './m
 import './weaponMastery.js';   // MARTIAL2: the weapons past 100 - registered at import beside the paths, so every host that has one has the other
 import { sigilDueling } from './sigil/sigil.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS } from './entityMods.js';
-import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
+import { registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerStrikeListener } from '../combat/formulas.js';
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
@@ -58,6 +64,7 @@ import { registerTechniqueLandedListener, registerTechniqueUsedListener } from '
 import { foeUnaware } from '../combat/playerWeapon.js';   // the host's one word that a foe had not noticed me
 import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's one law of what a foe's blow is
 import { healMine } from './playerHeal.js';
+import { registerEvadeSource, registerGuardSource, ledgerShare } from './power/powerBudget.js';   // PWR1: the path's guard and evade summed at the door; the leech, the kill's and the round's ledgers
 import { playerDoor, oweFoe } from './playerDoor.js';
 import { foeGroup, TOLL_REFUND_S } from './loot/lootPowers.js';   // the loot's one foe group (a class foe is a man - AUDIT SCHOOLS L1 H2); its felling bound (AUDIT MARTIAL L1 M1)
 import { regenBarred } from './courtRules.js';   // WBX6: the Deadlands keep no regeneration (AUDIT MARTIAL L3 F3)
@@ -73,7 +80,7 @@ const N = MARTIAL_NUMBERS;
  *  reaches; this keeps a later number from passing it unseen. */
 export const MARTIAL_BLOW_MOST = 40;
 
-// ── the session's memory, its clock, its dice and its voice ─────────
+// ── the session's memory, its clock, its dice (Phantom Strike's own roll) and its voice ─────────
 let _now = () => performance.now() / 1000;
 let _rand = Math.random;
 const fresh = () => ({
@@ -82,7 +89,7 @@ const fresh = () => ({
   rallyUntil: 0,                         // Warblade: Rallying Cleave's window
   quickUntil: 0,                         // Bladedancer: Cyclone's quickening
   evadeUntil: 0,                         // Shadowdancer: Phantom Strike's window
-  guardUntil: 0, guardOwed: 0,           // Juggernaut: Earthsplitter's guard (and Iron Discipline's carry beside it)
+  guardUntil: 0,                         // Juggernaut: Earthsplitter's guard (PWR1: the guard channel carries its fraction)
   leechUntil: 0,                         // Berserker: Savage Whirl's leech
   standReady: 0,                         // Juggernaut: Stand Firm's recovery
   marks: new WeakMap(),                  // Ranger: foe entity -> marked until
@@ -184,7 +191,7 @@ export function martialStrike(attacker, target, damage, weapon = null, info = nu
   if (id === 'blademaster' && info?.blow !== false) { _s.flow = Math.min(N.flowingSteel.stacks, flowStacks(now) + 1); _s.flowUntil = now + N.flowingSteel.seconds; }
   // AUDIT MARTIAL L1 L4: what the foe could lose, never the overkill (AUDIT SCHOOLS L1 M6's `took`) - told before any
   // door subtracts, its health is what it had
-  if (id === 'berserker' && now < _s.leechUntil) healMine(attacker, ((Number.isFinite(target.health) ? Math.min(damage, Math.max(0, target.health)) : damage) * N.savageWhirl.leech) / 100);
+  if (id === 'berserker' && now < _s.leechUntil) healMine(attacker, ((Number.isFinite(target.health) ? Math.min(damage, Math.max(0, target.health)) : damage) * ledgerShare(info?.leech, N.savageWhirl.leech)) / 100);   // PWR1: the blow's leech channel
   _s.struck.add(target);   // Opening Strike: the foe's first landed blow was this one
 }
 
@@ -206,7 +213,9 @@ export function martialPace(ctx) {
 
 // ── what lands on me ───────────────────────────────────────────────
 
-/** The percent lighter a foe's blow lands on me now: Iron Discipline, the Juggernaut's guard, the Brawler's dazed foe. */
+/** THE GUARD (PWR1: a source of the guard channel, summed at the door - powerBudget.js guardHurt, whole points, the
+ *  fraction carried there): the percent lighter a foe's blow lands on me now - Iron Discipline, the Juggernaut's guard,
+ *  the Brawler's dazed foe. */
 export function martialGuardPct(entity) {
   const id = awakeMartialId(entity);
   const blow = id ? pendingPlayerBlow() : null;
@@ -219,21 +228,14 @@ export function martialGuardPct(entity) {
     default: return 0;
   }
 }
-/** THE DAMAGE DOOR: a foe's blow lighter, in whole points with the fraction carried (AUDIT SCHOOLS L1 M2's law). */
-export function martialDamageMod(entity, dmg) {
-  const pct = martialGuardPct(entity);
-  if (!(pct > 0) || !(dmg > 0)) return dmg;
-  const owed = (dmg * pct) / 100 + _s.guardOwed;
-  const cut = Math.floor(owed + 1e-9);
-  _s.guardOwed = owed - cut;
-  return Math.max(0, dmg - cut);
-}
-/** THE BLOW EVASION: Dancer's Step, one blow in ten; Phantom Strike's window, one in three - asked before any modifier. */
+/** THE BLOW EVASION'S CHANCE (PWR1, bible/05-Combat/Power-Arc.md section 4: a source of the evade channel, one roll for
+ *  every source at the door - systems/power/powerBudget.js rollEvade): Dancer's Step, one foe blow in ten - the passive. */
+export const martialEvadeChance = (entity, ctx) => (ctx?.blow && awakeMartialId(entity) === 'bladedancer' ? 100 / N.dancersStep.oneIn : 0);
+/** THE WINDOW'S EVASION - PWR1: a window that turns a blow WHOLE on its own clock is an EVENT, its own roll asked before
+ *  the channel's, its words whole: Phantom Strike's window, one foe blow in three. */
 export function martialEvade(entity) {
-  const id = awakeMartialId(entity);
-  if (!id || !pendingPlayerBlow()) return false;
-  const oneIn = id === 'bladedancer' ? N.dancersStep.oneIn : id === 'shadowdancer' && _now() < _s.evadeUntil ? N.phantomStrike.oneIn : 0;
-  if (!(oneIn > 0) || !(_rand() < 1 / oneIn)) return false;
+  if (awakeMartialId(entity) !== 'shadowdancer' || !(_now() < _s.evadeUntil) || !pendingPlayerBlow()) return false;
+  if (!(_rand() < 1 / N.phantomStrike.oneIn)) return false;
   say(t('martial.say.evade', 'You dodge the attack.'));
   return true;
 }
@@ -250,24 +252,25 @@ export function martialHurt(entity, { before = 0, after = 0, saved = false } = {
 }
 /** THE ROUND: Grit - a little health and fatigue back, each round; the health none in the court (WBX6 courtRules.js - a
  *  regeneration, as a career's Regenerate Health is: AUDIT MARTIAL L3 F3). */
-export function martialRound(entity) {
+export function martialRound(entity, round = null) {
   if (awakeMartialId(entity) !== 'brawler') return;
-  if (entity.health > 0 && entity.health < entity.maxHealth && !regenBarred()) healMine(entity, (entity.maxHealth * N.grit.health) / 100);
+  // PWR1: the round's regeneration channel, in tenths of a percent (powerBudget.js POWER_CHANNELS.regen)
+  if (entity.health > 0 && entity.health < entity.maxHealth && !regenBarred()) healMine(entity, (entity.maxHealth * ledgerShare(round?.regen, 10 * N.grit.health)) / 1000);
   fatigueMine(entity, N.grit.fatigue);
 }
 /** MY KILL: War Rhythm, Bloodlust, Tireless - and Felling Strike's heal, for a foe it landed on that a kill of mine
  *  fells within the loot's felling bound (AUDIT MARTIAL L1 M1: judged at the landing, before the pool's door, a foe a
  *  party's toughness or its Shield kept standing healed me; the Undertow's law - AUDIT WORLD-REWARDS B2 - a foe's own). */
-export function martialKill(foe) {
+export function martialKill(foe, info = null) {
   if (!foe || neverCounts(foe)) return;
   const m = me();
   const id = awakeMartialId(m);
   if (id === 'warblade') _s.rhythmUntil = _now() + N.warRhythm.seconds;
-  else if (id === 'bloodletter') healMine(m, (m.maxHealth * N.bloodlust.health) / 100);
+  else if (id === 'bloodletter') healMine(m, (m.maxHealth * ledgerShare(info?.heal, N.bloodlust.health)) / 100);   // PWR1: the kill's heal channel
   else if (id === 'woodsman') {
     fatigueMine(m, N.tireless.fatigue);
     const at = _s.felling.get(foe);
-    if (at !== undefined && _now() - at <= TOLL_REFUND_S) { healMine(m, (m.maxHealth * N.fellingStrike.heal) / 100); _s.felling.delete(foe); }
+    if (at !== undefined && _now() - at <= TOLL_REFUND_S) { healMine(m, (m.maxHealth * ledgerShare(info?.heal, N.fellingStrike.heal)) / 100); _s.felling.delete(foe); }
   }
 }
 /** THE FOLD: Light Step and Windborne. */
@@ -353,8 +356,9 @@ export const MARTIAL_POWERS = 'martialPowers';
 registerWeaponBlowMod(MARTIAL_POWERS, martialBlow);
 registerPlayerStrikeListener(MARTIAL_POWERS, martialStrike);
 registerSwingPaceMod(MARTIAL_POWERS, martialPace);
-registerPlayerDamageMod(MARTIAL_POWERS, martialDamageMod);
-registerPlayerBlowEvasion(MARTIAL_POWERS, martialEvade);
+registerGuardSource(MARTIAL_POWERS, martialGuardPct);   // PWR1: the guard channel
+registerEvadeSource(MARTIAL_POWERS, { chance: martialEvadeChance, said: () => say(t('martial.say.evade', 'You dodge the attack.')) });   // PWR1: the evade channel
+registerPlayerBlowEvasion(MARTIAL_POWERS, martialEvade);   // PWR1: Phantom Strike's window, an event before the channel's roll
 registerPlayerHurtListener(MARTIAL_POWERS, martialHurt);
 registerMagicRoundHook(MARTIAL_POWERS, martialRound);
 registerPlayerKillListener(MARTIAL_POWERS, martialKill);
@@ -363,6 +367,6 @@ registerTechniqueLandedListener(MARTIAL_POWERS, martialLanded);
 registerTechniqueUsedListener(MARTIAL_POWERS, martialUsed);
 
 /** Tests only: every window and recovery fresh, a clock and dice of their own (seconds; [0, 1)). */
-export function _resetMartialPowersForTests() { _s = fresh(); _carry = new WeakMap(); _say = (line) => { hudText(line); }; _now = () => performance.now() / 1000; _rand = Math.random; }   // AUDIT MARTIAL L5 L2: the clock and the dice too
+export function _resetMartialPowersForTests() { _s = fresh(); _carry = new WeakMap(); _say = (line) => { hudText(line); }; _now = () => performance.now() / 1000; _rand = Math.random; }   // AUDIT MARTIAL L5 L2: the clock and the dice too (PWR1: the passives' evasion is the door's roll - powerBudget.js _setPowerBudgetRandForTests)
 export function _setMartialPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }
 export function _setMartialPowersRandForTests(fn) { _rand = typeof fn === 'function' ? fn : Math.random; }

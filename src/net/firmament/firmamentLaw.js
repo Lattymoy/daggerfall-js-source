@@ -48,6 +48,19 @@ export const CRAFT_RANK_MAX = 100;
 const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.trunc(Number(v) || 0)));
 /** The Stars a Renown level gives: 0 at Renown 1, 98 at 50. */
 export const starsFor = (renown) => STARS_PER_RENOWN * (clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) - 1);
+/** PWR4 (bible/05-Combat/Power-Arc.md section 7; Mac: "20; past it, loadouts"): the Renown a sky's Stars stop growing at
+ *  (net/renown.js RENOWN_SOFT_CAP - restated here, as FIRM_RENOWN_MAX is, so the Worker's graph stays this file and the
+ *  tree; test/net/firmament/pwr4_soft_cap.test.js holds the two equal). */
+export const FIRM_RENOWN_SOFT_CAP = 20;
+/** PWR4: the Stars a sky in force may spend - Renown's own to the soft cap (38), never more; the Stars earned past it open
+ *  more skies (FIRM_SKIES_AT), never a taller one. */
+export const activeStarsFor = (renown) => starsFor(Math.min(clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX), FIRM_RENOWN_SOFT_CAP));
+/** PWR4: the Renown that opens each sky past the first - a second at 30, a third at 40 (Mac: "Each Star past 20 fills up
+ *  to two more saved Firmament trees and attunement sets, swappable out of combat"): every ten Renown past the soft cap,
+ *  twenty Stars past it, one more sky, each holding what the first holds. */
+export const FIRM_SKIES_AT = Object.freeze([30, 40]);
+/** PWR4: how many skies a Renown keeps - 1 to 3. */
+export const skiesFor = (renown) => 1 + FIRM_SKIES_AT.filter((at) => clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) >= at).length;
 /** The Craft points a character's profession ranks give (any iterable of ranks, each 0..100). */
 export function craftPointsFor(ranks) {
   let sum = 0;
@@ -280,13 +293,58 @@ function reachFrom(start, set) {
   seen.delete(start);
   return seen;
 }
+// ─── PWR2: TWO COMBAT KEYSTONES AWAKE (bible/05-Combat/Power-Arc.md section 5; Mac: "2 sets, 2 combat keystones") ───
+/** The most combat keystones (`<sign>.k`, the battle ring's) that wake in one sky. A life keystone is the trades'. */
+export const FIRM_KEYSTONES_AWAKE = 2;
+/** Whether a key is a combat keystone. */
+export const isCombatKeystone = (key) => { const n = firmNode(key); return !!n && n.kind === 'keystone' && n.ring === 'combat'; };
+/**
+ * THE STARS THAT WAKE in `tree`: walked out from the start, nearest first (the sky's own breadth, its neighbours in key
+ * order), a star waking while it fits - FIRM_KEYSTONES_AWAKE combat keystones at most, and the purses (`stars`, `craft`;
+ * PWR4 holds the Stars a sky may spend to Renown 20's) - and a star that sleeps carrying nothing past it. So what wakes
+ * is always joined to the start, and what an allocation holds past a limit sleeps, never taken (Mac: "Nothing taken,
+ * extras sleep"). A Set of keys, the start not among them.
+ * @param {{ start?: any, keys?: any }} tree @param {{ stars?: number, craft?: number }} [purse]
+ */
+export function awakeKeys(tree, { stars = Infinity, craft = Infinity } = {}) {
+  const out = new Set();
+  const start = tree?.start;
+  if (!start || !isStart(start)) return out;
+  const have = new Set(cleanKeys(tree.keys));
+  let combat = 0, life = 0, keystones = 0;
+  const seen = new Set([start]);
+  const q = [start];
+  for (let i = 0; i < q.length; i++) {
+    const k = q[i];
+    if (k !== start) {
+      const n = firmNode(k);
+      if (!n) continue;
+      if (isCombatKeystone(k) && keystones >= FIRM_KEYSTONES_AWAKE) continue;
+      const c = combat + (n.ring === 'life' ? 0 : 1), l = life + (n.ring === 'life' ? 1 : 0);
+      if (c > stars || c + l > stars + craft) continue;
+      combat = c; life = l;
+      if (isCombatKeystone(k)) keystones++;
+      out.add(k);
+      if (!passable(k, start)) continue;   // a keystone ends a path
+    }
+    for (const nb of [...(FIRM_ADJ.get(k) ?? [])].sort()) if (have.has(nb) && !seen.has(nb)) { seen.add(nb); q.push(nb); }
+  }
+  return out;
+}
+/** The allocated stars that sleep: `tree.keys` less awakeKeys. */
+export const sleepingKeys = (tree, purse) => { const awake = awakeKeys(tree, purse); return cleanKeys(tree?.keys).filter((k) => !awake.has(k)); };
+
 /**
  * WHY AN ALLOCATION IS NOT WHOLE, or null when it is: 'firm-start' (no start, or one the sky has not), 'firm-key' (a key
  * the sky has not, a start among the stars, a repeat), 'firm-path' (a star not joined to the start through the stars
- * allocated), 'firm-points' (more than the purses hold).
+ * allocated), 'firm-points' (more than the purses hold), 'firm-keystones' (PWR2: more than FIRM_KEYSTONES_AWAKE combat
+ * keystones). PWR2: `prev`, the sky held now - an allocation past a limit that a NEW law set (two keystones; PWR4's Stars
+ * to Renown 20) may only shrink: one that takes nothing new is no fault, and what it holds past the limit sleeps
+ * (awakeKeys); anything it adds must fit.
  * @param {{ start?: any, keys?: any }} tree @param {number} stars @param {number} craft
+ * @param {{ start?: any, keys?: any } | null} [prev]
  */
-export function treeFault(tree, stars, craft) {
+export function treeFault(tree, stars, craft, prev = null) {
   const start = tree?.start;
   const keys = tree?.keys;
   if (!Array.isArray(keys)) return 'firm-key';
@@ -296,7 +354,10 @@ export function treeFault(tree, stars, craft) {
   if (clean.length !== keys.length) return 'firm-key';
   const set = new Set(clean);
   if (reachFrom(start, set).size !== set.size) return 'firm-path';
-  if (!fits(clean, stars, craft)) return 'firm-points';
+  const held = prev?.start === start ? new Set(cleanKeys(prev.keys)) : null;
+  const shrinks = !!held && clean.every((k) => held.has(k));
+  if (!fits(clean, stars, craft) && !shrinks) return 'firm-points';
+  if (clean.filter(isCombatKeystone).length > FIRM_KEYSTONES_AWAKE && !shrinks) return 'firm-keystones';
   return null;
 }
 /** The stars a refund of `key` takes with it - `key` and every star that only reached the start through it. */
@@ -365,12 +426,13 @@ export const refundSilver = (removed, renown) => (clampInt(renown ?? 1, 1, FIRM_
 
 // ─── WHAT THE SKY ADDS ───────────────────────────────────────────────
 
-/** Every channel's raw sum over the start and the stars allocated: `{ key: value }`. */
-export function totals(tree) {
+/** Every channel's raw sum over the start and the stars allocated that WAKE (PWR2: awakeKeys - `purse` the purses the
+ *  sky may spend): `{ key: value }`. */
+export function totals(tree, purse = undefined) {
   /** @type {Record<string, number>} */
   const out = {};
   if (!tree?.start) return out;
-  for (const k of [tree.start, ...(tree.keys ?? [])]) {
+  for (const k of [tree.start, ...awakeKeys(tree, purse)]) {
     const n = firmNode(k);
     if (!n) continue;
     for (const [s, v] of Object.entries(n.stats)) out[s] = (out[s] ?? 0) + v;
@@ -380,14 +442,15 @@ export function totals(tree) {
 /** Whether a stat's value is a PRICE - against its holder: less of a good thing, or more damage taken (`blowTaken`,
  *  `spellTaken`). Only a battle keystone carries one (pinned). */
 export const isPrice = (key, v) => (/Taken$/.test(key) ? v > 0 : v < 0);
-/** The sums over the start and the stars allocated, the gains and the prices apart: `{ gains, prices }`. */
-export function treeParts(tree) {
+/** The sums over the start and the stars allocated that WAKE (PWR2: awakeKeys), the gains and the prices apart:
+ *  `{ gains, prices }`. */
+export function treeParts(tree, purse = undefined) {
   /** @type {Record<string, number>} */
   const gains = {};
   /** @type {Record<string, number>} */
   const prices = {};
   if (!tree?.start) return { gains, prices };
-  for (const k of [tree.start, ...(tree.keys ?? [])]) {
+  for (const k of [tree.start, ...awakeKeys(tree, purse)]) {
     const n = firmNode(k);
     if (!n) continue;
     for (const [s, v] of Object.entries(n.stats)) { const to = isPrice(s, v) ? prices : gains; to[s] = (to[s] ?? 0) + v; }
@@ -416,8 +479,8 @@ export function capped(raw) {
  * (Martyr's Vow's -4 spell damage left a capped mage at +30). Each channel's price rides on the stats under PRICES, so
  * a group read at the blow or the cast pays it after its own cap too.
  */
-export function treeStats(tree) {
-  const { gains, prices } = treeParts(tree);
+export function treeStats(tree, purse = undefined) {
+  const { gains, prices } = treeParts(tree, purse);
   /** @type {Record<string, number>} */
   const out = {};
   /** @type {Record<string, number>} */

@@ -43,6 +43,7 @@ import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { duelStandIn } from '../../src/combat/duelCombat.js';
 import { raisePlayerSkills } from '../../src/scenes/shared.js';
 import { CharSheet } from '../../src/ui/charsheet.js';
+import { _setPowerBudgetRandForTests, _resetPowerBudgetForTests, budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the evasion's one roll, the channel's curve
 
 const { Destruction: DES, Restoration: RES, Illusion: ILL, Alteration: ALT, Thaumaturgy: THA, Mysticism: MYS } = SKILLS;
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -71,7 +72,7 @@ function pathMage(id, raw = 150) {
 }
 const reset = () => {
   POW._resetArcanePowersForTests(); _resetSetPowersForTests(); _resetPlayerHealForTests();
-  POW._setArcanePowersClockForTests(null); POW._setArcanePowersRandForTests(null);
+  POW._setArcanePowersClockForTests(null); _resetPowerBudgetForTests();
   setSigilDueling(false); setPlayerDoor(null);
 };
 /** Every test hook set back, however the test ends. */
@@ -223,13 +224,13 @@ test('AUDIT SCHOOLS L1 M3: FORESIGHT IS ASKED BEFORE ANY MODIFIER - a foreseen b
   registerPlayerDamageMod('auditSchoolsProbe', (_e, dmg) => { heard.push(dmg); return dmg; });
   try {
     const orc = realFoe(MT.knight);
-    POW._setArcanePowersRandForTests(() => 1 / 8 - 1e-9);
+    _setPowerBudgetRandForTests(() => 1 / 8 - 1e-9);
     setStruck(orc, se, 50);
     assert.equal(hurtPlayer(se, 50), false);
     assert.deepEqual([se.health, heard], [1000, []], 'foreseen: nothing landed, no modifier asked');
     hurtPlayer(se, 50);
     assert.deepEqual([se.health, heard], [950, [50]], 'a fall: never foreseen');
-    POW._setArcanePowersRandForTests(() => 1 / 8);
+    _setPowerBudgetRandForTests(() => 1 / 8);
     setStruck(orc, se, 50); hurtPlayer(se, 50);
     assert.deepEqual([se.health, heard], [900, [50, 50]], 'the roll at one in eight exactly: seven in eight land');
   } finally { registerPlayerDamageMod('auditSchoolsProbe', null); }
@@ -416,7 +417,7 @@ test('AUDIT SCHOOLS L5 M1: EVERY NUMBER ON BOTH SIDES OF ITS LINE - Rift Lance\'
   door([mark], se);
   const at = now;
   engine(se, [mark]).applySpellToFoe(signatureSpell('seer'), 20, mark, { entity: se });
-  now = at + 11.9; assert.equal(spellPierce(se, mark.entity), 20, 'laid open at 11.9 s');
+  now = at + 11.9; assert.equal(spellPierce(se, mark.entity), Math.floor(budgeted('pierce', 20)), 'laid open at 11.9 s (PWR1: the mark\'s 20 on the pierce channel\'s curve)');
   now = at + 12.1; assert.equal(spellPierce(se, mark.entity), 0, 'closed at 12.1 s');
   reset(); POW._setArcanePowersClockForTests(() => now);
   const el = pathMage('elementalist', 100);
@@ -505,7 +506,7 @@ test('AUDIT SCHOOLS L5 LOW: SOUL WELL PAYS FOR NO CITY WATCH AND FOR NO TRAP THA
   _resetPlayerHealForTests();
   assert.equal(gained(realFoe(MT.knight, { activeEffects: [{ kind: 'soulTrap', chance: 50, roundsRemaining: 0, ended: true }] })), plain, 'an ended trap: 10%');
   _resetPlayerHealForTests();
-  assert.equal(gained(realFoe(MT.knight, { activeEffects: [{ kind: 'soulTrap', chance: 50, roundsRemaining: 3 }] })), Math.floor(sb.maxMagicka * 0.2), 'a live trap of mine: 20%');
+  assert.equal(gained(realFoe(MT.knight, { activeEffects: [{ kind: 'soulTrap', chance: 50, roundsRemaining: 3 }] })), Math.floor((sb.maxMagicka * budgeted('killMana', 20)) / 100), 'a live trap of mine: 20%, on the kill\'s magicka channel past its knee (PWR1)');
 }));
 
 // ── the spell engine (lane 2) ───────────────────────────────────────

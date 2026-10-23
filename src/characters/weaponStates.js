@@ -107,11 +107,19 @@ export function swingFrameSeconds(speed, { heft = 1, handling = 1 } = {}) {
 // `fn(ctx, w) -> percent` (`w` the swing reader's answer where the frame's law has read it already, else null - a
 // modifier that needs the weapon reads it itself, and only once it knows it may pay: AUDIT MARTIAL L2 F3, the reader is
 // no free call, and the override's arm read it again for every swing of every wielder): the frame's time is divided by 1 +
-// their sum, at most SWING_PACE_MOST, and never under SWING_FRAME_MIN - no swing is quicker than 0.45 s, whatever
-// quickens it (SWING-LAW's floor). Asked only for a wielder the port knows (`ctx.entity`), every frame of a swing: a
-// list, never a Map's iterator.
-/** The most every pace modifier together quickens a swing (%). */
-export const SWING_PACE_MOST = 50;
+// their sum through the pace channel's curve (PWR1, bible/05-Combat/Power-Arc.md section 4: whole to its knee, then
+// approaching SWING_PACE_MOST, which was a hard stop), and never under SWING_FRAME_MIN - no swing is quicker than 0.45 s,
+// whatever quickens it (SWING-LAW's floor). Asked only for a wielder the port knows (`ctx.entity`), every frame of a
+// swing: a list, never a Map's iterator.
+/** The most every pace modifier together approaches (%) - the pace channel's ceiling (systems/power/powerBudget.js
+ *  POWER_CHANNELS.pace, its home: restated so this file stays a leaf - tools/neutral/build-viewer.mjs pastes its source;
+ *  test/systems/power/pwr1_budget.test.js holds the two equal). */
+export const SWING_PACE_MOST = 60;
+/** The pace channel's curve (`pct -> landed`), registered as the swing law loads (combat/swingLaw.js installSwingLaw -
+ *  the budget's budgeted('pace', ...)); without one the sum stands, never past SWING_PACE_MOST, as a host with no
+ *  reader reads no heft. */
+let _paceCurve = null;
+export function registerSwingPaceCurve(fn) { _paceCurve = typeof fn === 'function' ? fn : null; }
 /** @type {Array<[string, (ctx: any, w: any) => number]>} */
 let _pace = [];
 /** Register a swing pace modifier by name; a non-function removes the name. */
@@ -119,15 +127,20 @@ export function registerSwingPaceMod(name, fn) {
   _pace = _pace.filter(([n]) => n !== name);
   if (typeof fn === 'function') _pace.push([name, fn]);
 }
-/** The percent every modifier quickens this swing by, at most SWING_PACE_MOST; one that throws or answers no number is
- *  none. */
+/** The percent every modifier quickens this swing by - their sum through the pace channel's curve, under
+ *  SWING_PACE_MOST; one that throws or answers no number is none. */
 export function swingPacePct(ctx, w = null) {
+  const sum = swingPaceSum(ctx, w);
+  return _paceCurve ? _paceCurve(sum) : Math.min(SWING_PACE_MOST, sum);
+}
+/** PWR1: every pace modifier's percent, summed before the curve (the Stats page shows it beside what lands). */
+export function swingPaceSum(ctx, w = null) {
   if (!ctx?.entity || _pace.length === 0) return 0;
   let pct = 0;
   for (let i = 0; i < _pace.length; i++) {
     try { const v = _pace[i][1](ctx, w); if (Number.isFinite(v) && v > 0) pct += v; } catch { /* a modifier is not the swing's problem */ }
   }
-  return Math.min(SWING_PACE_MOST, pct);
+  return pct;
 }
 /** A frame's time `t`, paced (`w` the reader's answer the law already read, or null). */
 function paced(t, ctx, w) {

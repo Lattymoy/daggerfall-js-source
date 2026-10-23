@@ -828,9 +828,12 @@ const REFUSAL_WORDS = {
   'firm-start': () => t('account.refusal.firmStart', 'Choose a birthsign first.'),
   'firm-path': () => t('account.refusal.firmPath', 'A star has no path back to your birthsign.'),
   'firm-points': () => t('account.refusal.firmPoints', 'Not enough points.'),
+  'firm-keystones': () => t('account.refusal.firmKeystones', 'Only two combat keystones can be awake. Remove one first.'),   // PWR2
   'firm-rate': () => t('account.refusal.firmRate', 'Too many changes this hour. Try again later.'),
   'firm-stale': () => t('account.refusal.firmStale', 'Your stars changed in another session. Check them and try again.'),
   'firm-respec-empty': () => t('account.refusal.firmRespecEmpty', 'Nothing is learned yet.'),
+  'firm-sky': () => t('account.refusal.firmSky', 'No such sky.'),   // PWR4
+  'firm-sky-closed': () => t('account.refusal.firmSkyClosed', 'That sky opens at a higher Renown.'),   // PWR4
   'repair-no-faction': () => t('account.refusal.repairNoFaction', 'That character\'s record holds no such faction, so nothing was repaired.'),   // SUMMON-REPAIR: the review's repair (tools/realmReview.mjs)
   'repair-not-set': () => t('account.refusal.repairNotSet', 'That faction does not have that flag on this character, so nothing was repaired. Check that it is the right character.'),   // SUMMON-REPAIR: a repair aimed at the wrong character mends nothing
   'mend-not-negative': () => t('account.refusal.mendNotNegative', 'That character\'s gold is not below zero, so nothing was mended. Check that it is the right character.'),   // PURSE-MEND: the review's mend (tools/realmReview.mjs)
@@ -2283,6 +2286,7 @@ export function accountFirmament({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS 
     state: (character) => post('/v1/firmament/state', { character }),
     set: (character, tree, rid) => post('/v1/firmament/set', { character, tree, rid }),
     respec: (character, rid, realm = null, region = null) => post('/v1/firmament/respec', { character, rid, ...(realm ? { realm } : {}), ...(Number.isSafeInteger(region) ? { region } : {}) }),   // the whole sky back for gold
+    swap: (character, slot, rid) => post('/v1/firmament/swap', { character, slot, rid }),   // PWR4: a sky kept aside, exchanged with the one in force
   };
 }
 

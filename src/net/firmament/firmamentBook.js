@@ -40,7 +40,7 @@ export function mintFirmRid(rand = (b) => globalThis.crypto.getRandomValues(b)) 
  * refusal giving back exactly what it took); with no realm there is no respec ('realm-needed' - online play is the
  * realm's). `wallet()` is the host's: `{ gold, pay, credit?, region? }`.
  * @param {{ door: { account?: () => string|null, state: (character: string) => Promise<any>, set: (character: string, tree: string, rid: string) => Promise<any>,
- *   respec?: (character: string, rid: string, realm?: any, region?: number|null) => Promise<any> },
+ *   respec?: (character: string, rid: string, realm?: any, region?: number|null) => Promise<any>, swap?: (character: string, slot: number, rid: string) => Promise<any> },
  *   storage?: any, character?: () => string|null, rid?: () => string, realm?: { act: (o: any) => Promise<any> } | null, wallet?: (() => any) | null }} o
  */
 export function createFirmamentBook({ door, storage = null, character = () => null, rid = () => mintFirmRid(), realm = null, wallet = null }) {
@@ -107,6 +107,9 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     state.craft = Number.isSafeInteger(data?.craft) ? data.craft : state.craft;
     if (data?.ranks && typeof data.ranks === 'object') state.ranks = { ...data.ranks };
     if (data?.refund) state.refund = { freeBelow: Number(data.refund.freeBelow) || 10, perStar: Number(data.refund.perStar) || 10 };
+    if (typeof data?.freeRespec === 'boolean') state.freeRespec = data.freeRespec;   // PWR2: the character's one free respec still to come
+    state.skies = Number.isSafeInteger(data?.skies) ? data.skies : (state.skies ?? 1);   // PWR4: the skies the Renown keeps
+    if (Array.isArray(data?.aside)) state.aside = data.aside.map((s) => String(s ?? ''));   // PWR4: the skies kept aside, packed
     state.open = true;
     state.error = null;
     state.status = null;
@@ -181,19 +184,40 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       while (queued) { const next = queued; queued = null; r = await send(next); }
       return r;
     },
+    /** PWR4 (bible/05-Combat/Power-Arc.md section 7): THE SWAP - the sky in force exchanged with the one kept in `slot` (1 or
+     *  2, a slot the Renown has opened). Out of combat is the caller's word (the window asks systems/power/attuneActions.js
+     *  inCombat, and swaps the attunement set with the sky on success). Answers `{ ok, error? }`. */
+    async swap(slot) {
+      const who = character();
+      if (!who) return { ok: false, error: 'firm-character' };
+      if (state.sending || respecking) return { ok: false, error: 'firm-busy' };
+      if (!Number.isSafeInteger(slot) || slot < 1 || slot >= (state.skies ?? 1)) return { ok: false, error: 'firm-sky-closed' };
+      if (typeof door.swap !== 'function') return { ok: false, error: 'server' };
+      state.sending = unpackTree(state.aside?.[slot - 1] ?? '');
+      tell();
+      let r;
+      try { r = await door.swap(who, slot, rid()); } finally { state.sending = null; }
+      if (r?.ok) { keep(null); apply(r.data); tell(); return { ok: true }; }
+      state.error = r?.error ?? 'server';
+      tell();
+      return { ok: false, error: state.error };
+    },
+    /** PWR2: what a respec costs this character now - nothing while its one free respec is still to come. */
+    respecPrice() { return state.freeRespec === true ? 0 : FIRM_RESPEC_GOLD; },
     /** Whether a respec can be paid now: a sky with something in it, the gold in the wallet, nothing on its way. */
     canRespec() {
       const w = wallet?.();
-      return !!state.tree?.start && !state.sending && !!realm && !!w && w.gold() >= FIRM_RESPEC_GOLD && typeof door.respec === 'function';
+      return !!state.tree?.start && !state.sending && !!realm && !!w && w.gold() >= book.respecPrice() && typeof door.respec === 'function';
     },
-    /** THE RESPEC: every star and the birthsign back, for FIRM_RESPEC_GOLD gold. */
+    /** THE RESPEC: every star and the birthsign back, for FIRM_RESPEC_GOLD gold (PWR2: the first for nothing). */
     async respec() {
       const who = character();
       if (!who) return { ok: false, error: 'firm-character' };
       if (state.sending) return { ok: false, error: 'firm-busy' };
       if (!state.tree?.start) return { ok: false, error: 'firm-respec-empty' };
       const w = wallet?.();
-      if (!w || w.gold() < FIRM_RESPEC_GOLD) return { ok: false, error: 'firm-gold' };
+      const price = book.respecPrice();
+      if (!w || w.gold() < price) return { ok: false, error: 'firm-gold' };
       if (typeof door.respec !== 'function') return { ok: false, error: 'server' };
       if (!realm) return { ok: false, error: 'realm-needed' };   // AUDIT UICALM-FIRM1 L2 L1: the gold is a realm record's, paid on the service
       const id = rid();
@@ -203,7 +227,7 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       tell();
       let r;
       try {
-        r = await realm.act({ reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve, call: (/** @type {any} */ at) => door.respec(who, id, at, region) });
+        r = await realm.act({ reserve: walletReserve(w, price).reserve, call: (/** @type {any} */ at) => door.respec(who, id, at, region) });
       } finally { state.sending = null; respecking = false; }
       if (r?.ok) {
         keep(null);   // a change kept from before is over a sky that is gone

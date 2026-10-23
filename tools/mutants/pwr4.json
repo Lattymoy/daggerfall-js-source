@@ -1,0 +1,146 @@
+[
+  {
+    "name": "PWR4-the-soft-cap-moved",
+    "file": "src/net/renown.js",
+    "old": "export const RENOWN_SOFT_CAP = 20;",
+    "new": "export const RENOWN_SOFT_CAP = 30;",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-restated-cap-moved",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const FIRM_RENOWN_SOFT_CAP = 20;",
+    "new": "export const FIRM_RENOWN_SOFT_CAP = 25;",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-renown-power-uncapped",
+    "file": "src/net/renown.js",
+    "old": "export const renownPower = (level) => clampInt(level ?? 1, 1, RENOWN_SOFT_CAP);",
+    "new": "export const renownPower = (level) => clampInt(level ?? 1, 1, RENOWN_MAX);",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-bonus-past-the-cap",
+    "file": "src/net/renown.js",
+    "old": "  const L = renownPower(level);\n  return { hp: RENOWN_HP_PER_LEVEL",
+    "new": "  const L = clampInt(level, 1, RENOWN_MAX);\n  return { hp: RENOWN_HP_PER_LEVEL",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-stars-past-the-cap",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const activeStarsFor = (renown) => starsFor(Math.min(clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX), FIRM_RENOWN_SOFT_CAP));",
+    "new": "export const activeStarsFor = (renown) => starsFor(clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX));",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-a-stage-threshold",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  Object.freeze({ xp: 12500, renown: 10, name: 'Bright', share: 60 }),",
+    "new": "  Object.freeze({ xp: 12500, renown: 12, name: 'Bright', share: 60 }),",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-last-stage-past-the-cap",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  Object.freeze({ xp: 37500, renown: 20, name: 'Ascendant', share: 100 }),",
+    "new": "  Object.freeze({ xp: 37500, renown: 30, name: 'Ascendant', share: 100 }),",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-a-sky-moved",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const FIRM_SKIES_AT = Object.freeze([30, 40]);",
+    "new": "export const FIRM_SKIES_AT = Object.freeze([30, 45]);",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-one-more-sky",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const skiesFor = (renown) => 1 + FIRM_SKIES_AT.filter(",
+    "new": "export const skiesFor = (renown) => 2 + FIRM_SKIES_AT.filter(",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-slot-unread",
+    "file": "server-account/src/firmament.js",
+    "old": "  if (slot >= purses.skies) return { error: 'firm-sky-closed' };",
+    "new": "  void purses;",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-exchange-one-way",
+    "file": "server-account/src/firmament.js",
+    "old": "        .bind(player.id, character, slot, prevPacked, nowS),",
+    "new": "        .bind(player.id, character, slot, '', nowS),",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-repeat-swapped-again",
+    "file": "server-account/src/firmament.js",
+    "old": "  const prior = await db.prepare('SELECT char_id FROM firmament_sets WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();\n  const read = async",
+    "new": "  const prior = null;\n  const read = async",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-swap-route-dropped",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/firmament/state', '/v1/firmament/set', '/v1/firmament/respec', '/v1/firmament/swap',",
+    "new": "  '/v1/firmament/state', '/v1/firmament/set', '/v1/firmament/respec',",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-a-title-renown",
+    "file": "src/net/identityToken.js",
+    "old": "  Object.freeze({ id: 'renowned', at: 30 }), Object.freeze({ id: 'paragon', at: 40 }),",
+    "new": "  Object.freeze({ id: 'renowned', at: 25 }), Object.freeze({ id: 'paragon', at: 40 }),",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-held-below-its-renown",
+    "file": "server-account/src/titles.js",
+    "old": "  for (const { id, at } of RENOWN_TITLES) if (Number(player?.renownBest) >= at) held.push(id);",
+    "new": "  for (const { id, at } of RENOWN_TITLES) if (Number(player?.renownBest) >= at - 1) held.push(id);",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  },
+  {
+    "name": "PWR4-the-best-off-the-wrong-track",
+    "file": "server-account/src/honours.js",
+    "old": "'SELECT MAX(xp) AS best FROM renown_tracks WHERE player = ?1'",
+    "new": "'SELECT MIN(xp) AS best FROM renown_tracks WHERE player = ?1'",
+    "tests": [
+      "test/net/firmament/pwr4_soft_cap.test.js"
+    ]
+  }
+]

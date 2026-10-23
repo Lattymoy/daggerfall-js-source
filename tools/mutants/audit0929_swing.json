@@ -48,8 +48,8 @@
   {
     "name": "AUDIT0929-S5-the-reader-unregistered",
     "file": "src/combat/swingLaw.js",
-    "old": "export function installSwingLaw() { registerSwingReader(readSwing); }\ninstallSwingLaw();",
-    "new": "export function installSwingLaw() { registerSwingReader(readSwing); }",
+    "old": "registerSwingPaceCurve((pct) => budgeted('pace', pct)); }\ninstallSwingLaw();",
+    "new": "registerSwingPaceCurve((pct) => budgeted('pace', pct)); }",
     "tests": [
       "test/systems/audit0929_swing.test.js",
       "test/systems/swinglaw.test.js"

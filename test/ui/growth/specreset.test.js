@@ -36,8 +36,9 @@ import { _resetForTests } from '../../../src/systems/uiPrefs.js';
 const { LongBlade: LB, ShortBlade: SB, Archery: AR, Axe: AX, Destruction: DES, Restoration: RES, Alteration: ALT, Mysticism: MYS, Illusion: ILL, Thaumaturgy: THA, HandToHand: HH, BluntWeapon: BL } = SKILLS;
 
 /** A made character of the given career groups, every skill at 30, `mastered` mastered (growth1_tab's hero). */
-function hero({ primary, major, minor, mastered = [] }) {
+function hero({ primary, major, minor, mastered = [], freeReset = false }) {
   const p = structuredClone(playerEntity);
+  if (!freeReset) p.freeSpecResetUsed = true;   // PWR2: the one free reset spent - the paid law (the free one: its own test)
   createCharacter(p, { name: 'Tester', hp: 12, primarySkills: primary, majorSkills: major, minorSkills: minor,
     stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 } }, -1, { rolls: () => 0.5 });
   p.career = { ...p.career, primarySkills: primary, majorSkills: major, minorSkills: minor };
@@ -75,6 +76,19 @@ test('SPEC-RESET THE PRICE: 200,000 gold a family, one constant both laws\' boxe
   // AUDIT SPEC-RESET L4-5: the several-open boxes say the price on a row of its own (the classic parchment box is 288 px)
   assert.deepEqual(AP.pathsOpenRows([AP.PATH_BY_ID.warden]).slice(-2), ['Choose one in your skill screen.', 'Resetting it later costs 200,000 gold.']);
   assert.deepEqual(MP.martialOpenRows([MP.MARTIAL_BY_ID.ranger], { growth: true }).slice(-2), ['See them all and choose one on the Growth tab of the pause menu.', 'Resetting it later costs 200,000 gold.']);
+});
+
+test('PWR2 THE FREE RESET (bible/05-Combat/Power-Arc.md section 5; Mac: "Nothing taken, extras sleep" - everyone gets one free specialisation reset): a character that never spent it resets either family for nothing, once - the next pays the price; a save carries the word (mutants: the free reset never spent; spent and still free; the save forgets it)', () => {
+  const e = held(0, { freeReset: true });
+  assert.equal(specResetRefusal(e, 'arcane'), null, 'no coin and no refusal: the free one');
+  assert.equal(resetSpec(e, 'arcane').ok, true);
+  assert.equal(e.arcanePath, null);
+  assert.equal(e.goldPieces, 0, 'nothing paid');
+  assert.equal(e.freeSpecResetUsed, true, 'and spent');
+  assert.match(specResetRefusal(e, 'martial'), /Resetting costs 200,000 gold/, 'the next is paid, either family');
+  const back = structuredClone(playerEntity);
+  restorePlayer(back, JSON.parse(JSON.stringify(snapshotPlayer(e))));
+  assert.equal(back.freeSpecResetUsed, true, 'the save keeps it spent');
 });
 
 test('SPEC-RESET THE LAW: a held path given up for exactly the price - the coins first, then a letter of credit and the coins after (court.js deductGold\'s order); the family\'s path cleared and nothing else: the other family, the masteries and the spellbook stand; the Growth rail counts the choice open again (mutants: the price unpaid; the wrong family cleared; the masteries taken)', () => {

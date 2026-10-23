@@ -10,6 +10,7 @@
 // registry, as SET2's spell-cost modifiers do (systems/spellcost.js registerSpellCostMod).
 
 import { liveStat, MAX_STAT_VALUE } from './statMods.js';
+import { budgeted } from './power/powerBudget.js';   // PWR1: the modifiers' percents through the castSpeed channel's curve (a leaf)
 
 /** The Speed a cast runs at rate 1 - the attribute's middle. */
 export const CAST_SPEED_PIVOT = 50;
@@ -30,15 +31,21 @@ export function speedCastRate(speed) {
   return 1 + (s - CAST_SPEED_PIVOT) / CAST_SPEED_SPAN;
 }
 
-/** The rate a cast runs at: Speed's share plus every modifier's percent, clamped. 1 for no caster. */
+/** The rate a cast runs at: Speed's share plus every modifier's percent - PWR1 (bible/05-Combat/Power-Arc.md section
+ *  4): summed and landed through the castSpeed channel's curve - clamped. 1 for no caster. */
 export function castRate(entity) {
   if (!entity) return 1;
-  let r = speedCastRate(liveStat(entity, 'speed'));
-  for (const fn of _mods.values()) {
-    const pct = fn(entity);
-    if (Number.isFinite(pct)) r += pct / 100;
-  }
+  const r = speedCastRate(liveStat(entity, 'speed')) + budgeted('castSpeed', castSpeedSum(entity)) / 100;
   return Math.min(CAST_RATE_MAX, Math.max(CAST_RATE_MIN, r));
+}
+/** PWR1: every casting-speed modifier's percent, summed before the curve (the Stats page shows it beside what lands). */
+export function castSpeedSum(entity) {
+  let pct = 0;
+  for (const fn of _mods.values()) {
+    const v = fn(entity);
+    if (Number.isFinite(v)) pct += v;
+  }
+  return pct;
 }
 
 /** A rate a caller handed in, made safe: a finite positive number inside the clamp, else 1. */

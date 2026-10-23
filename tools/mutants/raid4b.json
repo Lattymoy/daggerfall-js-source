@@ -272,16 +272,16 @@
   {
     "name": "RAID4b-hold-at-half",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (hold && d > 0 && belowHalf(entity)) {",
-    "new": "if (hold && d > 0 && entity.health <= entity.maxHealth / 2) {",
+    "old": "  return hold && belowHalf(entity) ? hold.less : 0;",
+    "new": "  return hold && entity.health <= entity.maxHealth / 2 ? hold.less : 0;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
   },
   {
     "name": "RAID4b-hold-carry-dropped",
-    "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _holdOwed = owed - cut;\n",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  _guardOwed[k] = exact - whole;\n",
     "new": "",
     "tests": [
       "test/systems/raid4b_sets.test.js"

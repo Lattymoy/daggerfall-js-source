@@ -28,6 +28,7 @@ import { itemDamageLine, weaponDamageRange } from '../systems/item/itemInfo.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
 import { armorLabelValue } from './native/nativeInventory.js';
 import { lineComparison, lootRarityOn } from '../systems/loot/lootRarity.js';   // LOOT18: the lines against what a wear replaces
+import { attunePreview } from '../systems/power/attunement.js';   // PWR2: the comparison wears a piece as putting it on would leave it
 
 /** The seven parts in DFU's BodyParts order (ItemEnums.cs:140-150), named off the enum's own members ("RightArm" says
  *  "Right arm"), so no second list of them stands anywhere. No lookbehind in the split (SAFARI1: a Safari before 16.4
@@ -128,7 +129,7 @@ export function wearComparison(entity, item) {
   // the port's points, over the table as it stands and over the table the wear would leave
   const slotsThen = [...table];
   for (const s of leavers) slotsThen[s] = null;
-  slotsThen[slot] = asKnown(item);   // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it
+  slotsThen[slot] = attunePreview(entity, asKnown(item));   // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it; PWR2: attuned, as putting it on with room would leave it
   const pointsNow = foldedPoints(entity, table);
   const pointsThen = foldedPoints(entity, slotsThen);
   const before = dollArmour(entity);

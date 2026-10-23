@@ -47,8 +47,8 @@
   {
     "name": "SIGIL1-kindled-sooner",
     "file": "src/systems/sigil/sigil.js",
-    "old": "xp: 5000, renown: 10,",
-    "new": "xp: 4000, renown: 10,",
+    "old": "xp: 5000, renown: 5,",
+    "new": "xp: 4000, renown: 5,",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SIGIL1-ascendant-renown-sooner",
     "file": "src/systems/sigil/sigil.js",
-    "old": "xp: 37500, renown: 40,",
-    "new": "xp: 37500, renown: 35,",
+    "old": "xp: 37500, renown: 20,",
+    "new": "xp: 37500, renown: 19,",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
     ]

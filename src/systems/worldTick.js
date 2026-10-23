@@ -162,6 +162,7 @@ import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminde
 import { localizedText, formatText, getLocalizedRegionName } from './textManager.js';      // L10N3d: the two lines in the player's language; L10N3e: the region shown
 
 import { handleStartingCrimeGuildQuests } from './crimeGuilds.js';   // CG2: PlayerEntity.Update:531
+import { openLedger } from './power/powerBudget.js';   // PWR1: the round's regeneration ledgers (a leaf)
 
 const SHARED_DAY_SEED = 0x44415953;   // 'DAYS'
 /** AUDIT WORLD6b C5: each consumer of a day's rolls has its own SALT - the price walk and the faction powers fired
@@ -416,7 +417,11 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // fold - its magery arm SUMS the two producers into the one
     // maxMagickaModifier the accessor reads. Player-gated inside.
     passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes: sky, sinks });   // DISC10-D V1: the cadence off the round, the sky off the clock (LIVED1: the world's)
-    for (const fn of _roundHooks.values()) fn(entity, { nowMinutes: r + 1, sinks, say });   // RR1: EntityEffectBroker.OnNewMagicRound's other subscribers (a mod's, by name)
+    // RR1: EntityEffectBroker.OnNewMagicRound's other subscribers (a mod's, by name); PWR1 (bible/05-Combat/Power-Arc.md
+    // section 4): the ROUND'S LEDGERS - every hook's regeneration of this one round summed through the regen channel's
+    // curve, its magicka through manaRegen's (systems/power/powerBudget.js openLedger)
+    const round = { nowMinutes: r + 1, sinks, say, regen: openLedger('regen'), manaRegen: openLedger('manaRegen') };
+    for (const fn of _roundHooks.values()) fn(entity, round);
     rounds++;
   }
   return rounds;

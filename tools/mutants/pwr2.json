@@ -1,0 +1,292 @@
+[
+  {
+    "name": "PWR2-the-most-moved",
+    "file": "src/systems/power/attunement.js",
+    "old": "export const ATTUNE_MOST = 3;",
+    "new": "export const ATTUNE_MOST = 4;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-an-artifact-left-out",
+    "file": "src/systems/power/attunement.js",
+    "old": "  if (item.artifact === true) return true;",
+    "new": "  if (item.artifact === true) return false;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-a-legendary-without-a-record",
+    "file": "src/systems/power/attunement.js",
+    "old": "  if (item.rarity === 'legendary') return typeof item.legendary === 'string';",
+    "new": "  if (item.rarity === 'legendary') return true;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-gilded-left-out",
+    "file": "src/systems/power/attunement.js",
+    "old": "  if (item.rarity === 'gilded') return typeof item.gilded === 'string';",
+    "new": "  if (item.rarity === 'gilded') return false;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-oldest-kept",
+    "file": "src/systems/power/attunement.js",
+    "old": ".sort((a, b) => attunedStamp(b) - attunedStamp(a));",
+    "new": ".sort((a, b) => attunedStamp(a) - attunedStamp(b));",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-off-still-binding",
+    "file": "src/systems/power/attunement.js",
+    "old": "  if (!attunable(item) || !attunementOn()) return true;",
+    "new": "  if (!attunable(item)) return true;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-preview-in-place",
+    "file": "src/systems/power/attunement.js",
+    "old": "  return { ...item, attuned: Number.MAX_SAFE_INTEGER };",
+    "new": "  item.attuned = Number.MAX_SAFE_INTEGER;\n  return item;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-preview-room-unread",
+    "file": "src/systems/power/attunement.js",
+    "old": " || attunedStamp(item) > 0 || attuneRoom(entity) <= 0) return item;",
+    "new": " || attunedStamp(item) > 0) return item;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-combat-unread",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  if (combat) return t('attune.refuse.combat', 'You cannot attune with enemies nearby.');",
+    "new": "  if (false) return t('attune.refuse.combat', 'You cannot attune with enemies nearby.');",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-release-in-combat",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  if (combat) return t('attune.refuse.combatRelease',",
+    "new": "  if (false) return t('attune.refuse.combatRelease',",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-room-unread",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  if (attuneRoom(entity) <= 0) return t('attune.refuse.full',",
+    "new": "  if (false) return t('attune.refuse.full',",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-settle-never-attunes",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  if (!combat && entity.equip) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-settle-in-combat",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  if (!combat && entity.equip) {",
+    "new": "  if (entity.equip) {",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-a-stale-stamp-kept",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  for (const it of stampedPieces(entity).slice(ATTUNE_MOST)) { delete it.attuned; changed = true; }",
+    "new": "  void stampedPieces;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-set-in-force-not-kept",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "  entity.attuneSkies = { ...(entity.attuneSkies ?? {}), [slot]: out };",
+    "new": "  void out;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-slot-not-restored",
+    "file": "src/systems/power/attuneActions.js",
+    "old": "    if (it) it.attuned = nextStamp(entity);\n  }",
+    "new": "    void it;\n  }",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-drawback-asleep",
+    "file": "src/systems/enchantments.js",
+    "old": "const sleeps = (e) => Number.isInteger(e?.type) && e.type < VALUE_COUNTS_BELOW;",
+    "new": "const sleeps = (e) => Number.isInteger(e?.type);",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-goods-awake",
+    "file": "src/systems/enchantments.js",
+    "old": "    const awake = !(asleep && sleeps(e));",
+    "new": "    const awake = true;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-mark-kept-on-a-trade",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "'horseBond', 'horseFed', 'attuned']);",
+    "new": "'horseBond', 'horseFed']);",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-save-forgets-the-skies",
+    "file": "src/systems/save/save.js",
+    "old": "  entity.attuneSkies = attuneSkiesOf(snap.attuneSkies);",
+    "new": "  entity.attuneSkies = {};",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-two-sets-moved",
+    "file": "src/systems/power/attunement.js",
+    "old": "export const SETS_AWAKE_MOST = 2;",
+    "new": "export const SETS_AWAKE_MOST = 3;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-rank-by-the-registry-first",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  ranked.sort((a, b) => b.count - a.count || b.stage - a.stage || SIGIL_SET_IDS.indexOf(a.id) - SIGIL_SET_IDS.indexOf(b.id));",
+    "new": "  ranked.sort((a, b) => SIGIL_SET_IDS.indexOf(a.id) - SIGIL_SET_IDS.indexOf(b.id));",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-stage-unread",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  ranked.sort((a, b) => b.count - a.count || b.stage - a.stage || SIGIL_SET_IDS.indexOf(a.id) - SIGIL_SET_IDS.indexOf(b.id));",
+    "new": "  ranked.sort((a, b) => b.count - a.count || SIGIL_SET_IDS.indexOf(a.id) - SIGIL_SET_IDS.indexOf(b.id));",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-limit-unsaid",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "    const limited = !!may && !may.has(id);",
+    "new": "    const limited = false;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-three-keystones",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const FIRM_KEYSTONES_AWAKE = 2;",
+    "new": "export const FIRM_KEYSTONES_AWAKE = 3;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-third-awake",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "      if (isCombatKeystone(k) && keystones >= FIRM_KEYSTONES_AWAKE) continue;",
+    "new": "      void keystones;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-a-keystone-passable",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "      if (!passable(k, start)) continue;   // a keystone ends a path",
+    "new": "      void passable;",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ],
+    "equivalent": true,
+    "why": "every keystone is a leaf of the sky - its one road in (test/systems/power/pwr2_attunement.test.js pins each keystone's one road) - and another start is no key a held tree can carry (firmamentLaw.js cleanKeys), so a walk past either finds nothing more; the check keeps awakeKeys the law reachFrom is should the sky grow a road past one"
+  },
+  {
+    "name": "PWR2-the-shrink-refused",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  if (clean.filter(isCombatKeystone).length > FIRM_KEYSTONES_AWAKE && !shrinks) return 'firm-keystones';",
+    "new": "  if (clean.filter(isCombatKeystone).length > FIRM_KEYSTONES_AWAKE) return 'firm-keystones';",
+    "tests": [
+      "test/systems/power/pwr2_attunement.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-free-respec-never",
+    "file": "server-account/src/firmament.js",
+    "old": "  const free = purses.freeRespec === true;\n  const gold = free ? 0 : FIRM_RESPEC_GOLD;",
+    "new": "  const free = false;\n  const gold = free ? 0 : FIRM_RESPEC_GOLD;",
+    "tests": [
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-free-respec-never-spent",
+    "file": "server-account/src/firmament.js",
+    "old": "      ...(free ? [db.prepare('INSERT INTO firmament_free",
+    "new": "      ...(false ? [db.prepare('INSERT INTO firmament_free",
+    "tests": [
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-free-reset-never-spent",
+    "file": "src/systems/specReset.js",
+    "old": "  if (freeSpecReset(entity)) entity.freeSpecResetUsed = true;   // PWR2: spent now, whichever family",
+    "new": "  if (freeSpecReset(entity)) void 0;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "PWR2-the-save-forgets-the-free-reset",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.freeSpecResetUsed = entity.freeSpecResetUsed === true;",
+    "new": "  snap.freeSpecResetUsed = false;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  }
+]

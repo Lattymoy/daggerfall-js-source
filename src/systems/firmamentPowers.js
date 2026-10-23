@@ -39,13 +39,13 @@ import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS, NUMBER_
 import { registerSpellPowerMod, registerSpellPierceMod } from './spell/spellPower.js';
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
-import { registerPlayerDamageMod, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
 import { registerAbsorptionChance } from './absorption.js';
-import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's one law of what a foe's blow is
 import { foeGroup } from './loot/lootPowers.js';   // the loot's one foe group
 import { healMine, manaMine } from './playerHeal.js';
+import { registerEvadeSource, registerGuardSource, ledgerShare } from './power/powerBudget.js';   // PWR1: the sky's guard and evade summed at the door; the kill's and the round's ledgers
 import { playerDoor } from './playerDoor.js';
 import { setOnlineLayerExtra, renownHpOf, renownMpOf } from './renownLayer.js';
 import { evenHpOf } from './levelEven.js';   // AUDIT LEVEL-EVEN L2-4: the floored body a health star's share is of
@@ -73,12 +73,8 @@ export function withoutFirmament(entity, fn) {
   try { computeEntityMods(entity); return fn(); } finally { _quiet = false; entity._mods = kept; }
 }
 
-let _rand = Math.random;
 /** The fraction a percent of a blow leaves, carried to the next, by weapon (or by my fists). */
 let _carry = new WeakMap();
-/** AUDIT UICALM-FIRM1 L1 M4: the fraction a damage taken leaves, ONE CARRY A CHANNEL - a blow's and a spell's percents
- *  may have opposite signs, and one shared carry made a lighter spell land harder */
-let _takenOwed = { blow: 0, spell: 0 };
 
 /** A percent of `damage`, whole, the fraction carried on `key` - the sets' own law (sigilSetPowers.js setBlow) - kept
  *  unless the blow is the Stats page's estimate (AUDIT MARTIAL L2 F7). */
@@ -162,24 +158,18 @@ export function firmamentCastCost(entity, sp, spell = null) {
 
 // ── what lands on me ─────────────────────────────────────────────────
 
-/** The damage door: a foe's blow by `blowTaken`, everything else by `spellTaken` - whole points, the fraction carried. */
-export function firmamentDamage(entity, dmg) {
+/** THE SKY'S GUARD (PWR1, bible/05-Combat/Power-Arc.md section 4: a source of the guard channel, summed at the door -
+ *  systems/power/powerBudget.js guardHurt, whole points and the fraction carried there): a foe's blow by `blowTaken`,
+ *  everything else by `spellTaken`, as a percent LIGHTER (the channels are written as a percent more taken: a price is
+ *  positive, a guard negative). */
+export function firmamentGuardPct(entity, ctx) {
   const c = fight(entity);
-  if (c === NONE || !(dmg > 0)) return dmg;
-  const ch = pendingPlayerBlow() ? 'blow' : 'spell';
-  const pct = ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0);
-  if (!pct) return dmg;
-  const exact = (dmg * pct) / 100 + _takenOwed[ch];
-  const whole = pct >= 0 ? Math.floor(exact + 1e-9) : Math.ceil(exact - 1e-9);
-  _takenOwed[ch] = exact - whole;
-  return Math.max(0, dmg + whole);
+  if (c === NONE) return 0;
+  return -((ctx?.blow ? c.blowTaken : c.spellTaken) ?? 0);
 }
-/** A foe's blow, `evade` in a hundred, missing me entirely - asked before any modifier (the door's own order). */
-export function firmamentEvade(entity) {
-  const c = fight(entity);
-  if (!c.evade || !pendingPlayerBlow()) return false;
-  return _rand() * 100 < c.evade;
-}
+/** THE SKY'S EVADE (PWR1: a source of the evade channel, one roll for every source at the door - powerBudget.js
+ *  rollEvade): `evade` in a hundred, a foe's blow alone. */
+export const firmamentEvadeChance = (entity, ctx) => (ctx?.blow ? (fight(entity).evade ?? 0) : 0);
 /** The chance a destruction spell that strikes me is absorbed. */
 export const firmamentAbsorb = (target) => fight(target).absorb ?? 0;
 
@@ -187,22 +177,24 @@ export const firmamentAbsorb = (target) => fight(target).absorb ?? 0;
 
 const neverCounts = (e) => !!e?.isPlayer || !!e?.peer || e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';   // a player felled is no beast's kill
 const me = () => playerDoor()?.player?.() ?? playerEntity;
-/** My kill: `killHeal` and `killMana` percent of my maximum back. */
-export function firmamentKill(foe) {
+/** My kill: `killHeal` and `killMana` percent of my maximum back - PWR1: each its kill channel's share (playerKills.js
+ *  opens the kill's ledgers). */
+export function firmamentKill(foe, info = null) {
   if (!foe || neverCounts(foe)) return;
   const m = me();
   const c = fight(m);
-  if (c.killHeal) healMine(m, (m.maxHealth * c.killHeal) / 100);
-  if (c.killMana) manaMine(m, (m.maxMagicka * c.killMana) / 100);
+  if (c.killHeal) healMine(m, (m.maxHealth * ledgerShare(info?.heal, c.killHeal)) / 100);
+  if (c.killMana) manaMine(m, (m.maxMagicka * ledgerShare(info?.mana, c.killMana)) / 100);
 }
 /** The magic round: regeneration (tenths of a percent of the maximum), and the layer's health and magicka kept to the
  *  sky as it acts now. */
-export function firmamentRound(entity) {
+export function firmamentRound(entity, round = null) {
   if (!mine(entity)) return;
   firmamentLayer(entity);
   const c = fight(entity);
-  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);
-  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);
+  // PWR1: each its round channel's share, in the same tenths (worldTick.js opens the round's ledgers)
+  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) healMine(entity, (entity.maxHealth * ledgerShare(round?.regen, c.hpRegen)) / 1000);
+  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * ledgerShare(round?.manaRegen, c.mpRegen)) / 1000);
 }
 /** The sky's health and magicka on the online layer - none while it sleeps: a key star's raw points, and a small
  *  star's share of the maximum as it stands without the layer (renownLayer.js: the save's own). */
@@ -227,8 +219,8 @@ registerSpellPowerMod(FIRMAMENT_POWERS, firmamentSpellPower);
 registerSpellPierceMod(FIRMAMENT_POWERS, firmamentSpellPierce);
 registerSpellCostMod(FIRMAMENT_POWERS, firmamentCastCost);
 registerCastSpeedMod(FIRMAMENT_POWERS, firmamentCastSpeed);
-registerPlayerDamageMod(FIRMAMENT_POWERS, firmamentDamage);
-registerPlayerBlowEvasion(FIRMAMENT_POWERS, firmamentEvade);
+registerGuardSource(FIRMAMENT_POWERS, firmamentGuardPct);   // PWR1: the guard channel
+registerEvadeSource(FIRMAMENT_POWERS, { chance: firmamentEvadeChance });   // PWR1: the evade channel (the sky's evade said nothing before, and says nothing)
 registerAbsorptionChance(FIRMAMENT_POWERS, firmamentAbsorb);
 registerPlayerKillListener(FIRMAMENT_POWERS, firmamentKill);
 registerMagicRoundHook(FIRMAMENT_POWERS, firmamentRound);
@@ -240,5 +232,4 @@ onFirmamentChange(() => {
 });
 
 /** Tests only: fresh carries, and dice of their own ([0, 1)). */
-export function _resetFirmamentPowersForTests() { _carry = new WeakMap(); _takenOwed = { blow: 0, spell: 0 }; }
-export function _setFirmamentPowersRandForTests(fn) { _rand = typeof fn === 'function' ? fn : Math.random; }
+export function _resetFirmamentPowersForTests() { _carry = new WeakMap(); }

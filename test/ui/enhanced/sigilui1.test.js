@@ -24,7 +24,7 @@ const kids = (n, cls) => (n.children ?? []).flatMap((c) => [...(c.classList?.con
 const one = (n, cls) => kids(n, cls)[0] ?? null;
 
 test('SIGIL-UI the view: the stage it stands at in MY hand (the lower of its growth and my Renown), dormant offline, HELD when my Renown is short of its growth with the Renown that frees it, and the drink toward its next stage - fully grown at the last (mutants: the stage read off the growth alone, the held note lost, the bar measured from zero)', () => {
-  online(15);
+  online(7);   // PWR4: a Kindled Renown (the stages 1/5/10/15/20)
   const v = sigilView(sword(7420));
   assert.deepEqual([v.rank, v.stage, v.dormant, v.held, v.name], [1, 1, false, false, 'Kindled']);
   assert.deepEqual([v.from, v.to, v.next, v.full, v.party], [5000, 12500, 'Bright', 6, 3]);
@@ -33,7 +33,7 @@ test('SIGIL-UI the view: the stage it stands at in MY hand (the lower of its gro
   assert.equal(sigilProgressText(v), '7,420 / 12,500 to Bright');
   assert.deepEqual(v.stages.map((s) => [s.grown, s.awake]), [[true, true], [true, true], [false, false], [false, false], [false, false]]);
   const held = sigilView(sword(23900));
-  assert.deepEqual([held.rank, held.stage, held.held, held.name, held.unlock], [3, 1, true, 'Kindled', 20], 'grown to Radiant, held at Kindled until Renown 20');
+  assert.deepEqual([held.rank, held.stage, held.held, held.name, held.unlock], [3, 1, true, 'Kindled', 10], 'grown to Radiant, held at Kindled until Renown 10');
   assert.deepEqual(held.stages.map((s) => [s.grown, s.awake]), [[true, true], [true, true], [true, false], [true, false], [false, false]]);
   const top = sigilView(sword(37500));
   assert.deepEqual([top.to, top.next, top.frac], [null, null, 1]);
@@ -50,7 +50,7 @@ test('SIGIL-UI the view: the stage it stands at in MY hand (the lower of its gro
 
 test('SIGIL-UI the block: the rune, "Sigil" and the stage, what it gives now and at Ascendant, five gems (grown, and lit where my Renown lets it burn), a progress bar at its share with the numbers and the fight that won it; held says the Renown it waits for, fresh says how it grows, dormant says it wakes online - the Info box\'s whole dress (CARD-FIT); the card\'s is two rows - the stage and the numbers, the five stages as one bar with the stage it grows into filled as far as it has drunk, the blow in a line, the Renown\'s hold (mutants: the gems unlit, the bar\'s share lost, the held note dropped; the card\'s fill on the wrong stage; the card\'s long words back)', () => {
   withDom(() => {
-    online(15);
+    online(7);   // PWR4: a Kindled Renown (the stages 1/5/10/15/20)
     const box = sigilCard(sword(7420), { full: true });
     assert.equal(box.tagName, 'SECTION');
     assert.equal(box.className, 'sigilbox');
@@ -70,7 +70,7 @@ test('SIGIL-UI the block: the rune, "Sigil" and the stage, what it gives now and
     assert.equal(one(box, 'sigil-party').textContent, 'won in a fight of 3');
     assert.equal(one(box, 'sigil-note'), null, 'neither held nor fresh: no note');
     const held = sigilCard(sword(23900), { full: true });
-    assert.equal(one(held, 'sigil-note').textContent, 'Your Renown limits it to Kindled. Bright at Renown 20');
+    assert.equal(one(held, 'sigil-note').textContent, 'Your Renown limits it to Kindled. Bright at Renown 10');
     assert.deepEqual(kids(held, 'sigil-gem').map((g) => g.className), ['sigil-gem grown awake', 'sigil-gem grown awake', 'sigil-gem grown', 'sigil-gem grown', 'sigil-gem']);
     const fresh = sigilCard(sword(0, { sigil: { power: 3, party: 1, xp: 0 } }), { full: true });
     assert.equal(one(fresh, 'sigil-note').textContent, 'It grows as you earn Renown with this weapon.');
@@ -89,7 +89,7 @@ test('SIGIL-UI the block: the rune, "Sigil" and the stage, what it gives now and
     assert.equal(one(c, 'sigil-effect').textContent, '+2.4% damage (up to +6%)');
     for (const cls of ['sigil-meter', 'sigil-party', 'sigil-note']) assert.equal(one(c, cls), null, `no ${cls} on the card`);
     const cheld = sigilCard(sword(23900));
-    assert.equal(one(cheld, 'sigil-note').textContent, 'Renown limit: Bright at Renown 20');
+    assert.equal(one(cheld, 'sigil-note').textContent, 'Renown limit: Bright at Renown 10');
     assert.deepEqual(kids(cheld, 'sigil-gem').map((g) => g.className.includes('next')), [false, false, false, false, true], 'its OWN growth fills - Radiant drunk, Ascendant filling - whatever my Renown lets it burn at');
     assert.equal(one(sigilCard(sword(0, { sigil: { power: 3, party: 1, xp: 0 } })), 'sigil-note'), null, 'how a sigil grows is the Info box\'s');
     setSigilOnline(false);
@@ -110,7 +110,7 @@ test('SIGIL-UI the block: the rune, "Sigil" and the stage, what it gives now and
 test('SIGIL-UI the card carries the BLOCK, not three more lines: the tier list leaves the sigil out where the block stands (the default keeps it for every other reader), and both of the pack\'s cards - the hover card and the Info box - append the block (mutants: the lines doubled under the block, the Info box without it)', () => {
   _resetForTests();
   setPref(LOOT_RARITY_KEY, true);
-  online(15);
+  online(7);   // PWR4: a Kindled Renown (the stages 1/5/10/15/20)
   const it = sword(7420);
   const all = rarityLines(it);
   const bare = rarityLines(it, { sigil: false });

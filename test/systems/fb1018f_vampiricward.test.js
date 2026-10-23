@@ -59,6 +59,7 @@ test('VAMPIRIC-WARD GORTWOG\'S CLEAVER ON THE WARDEN: the Legendary as the loot 
   assert.deepEqual(rec.enchantment, { type: T.VampiricEffect, param: 1 }, 'the Cleaver carries Vampiric Effect when strikes');
   const cleaver = LR.applyRarity(createWeapon(rec.templates[0], 0, () => 0.5), 'legendary', lcg(1), [rec]);
   cleaver.isIdentified = true;
+  cleaver.attuned = 1;   // PWR2 (systems/power/attunement.js): its power awake, as the wielder's settle leaves a blade it swings
   assert.ok((cleaver.enchantments ?? []).some((e) => e.type === T.VampiricEffect && e.param === 1), 'minted with it');
   const warden = bossStandIn(bossLookOf('warden'), 'The Warden');
   const swing = (k) => { const p = me(), d = calculateAttackDamage(p, warden, { weapon: cleaver, toHitMod: 1000, rolls: () => (k + 0.5) / 20 }); return { d, healed: p.health - 100 }; };

@@ -70,6 +70,7 @@ import { renownHpOf, onlineMpOf, offlineVitals } from '../renownLayer.js';   // 
 import { stashedItemLists } from '../../net/realm/realmGoldLaw.js';   // AUDIT PRE-MERGE 0929 D3: every list of the character's own things a save carries
 import { DEPOSIT_MAX, depositOrderOk } from '../../net/bagLaw.js';   // AUDIT2 BAG1: a deposit's stamp, kept to a deposit's bounds
 import { resetBlowEffects } from '../blowEffects.js';   // AUDIT TELL L2: a load forgets the last game's landings
+import { attuneSkiesOf } from '../power/attunement.js';   // PWR4: the attunement sets the skies kept aside carry
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -362,6 +363,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.pathPrompted = entity.pathPrompted === true;   // SCHOOLS1: the one ask, made
   snap.martialPath = isMartialPathId(entity.martialPath) ? entity.martialPath : null;   // MARTIAL1: the martial specialisation (systems/martialPaths.js; given up only by systems/specReset.js)
   snap.martialPrompted = entity.martialPrompted === true;   // MARTIAL1: its one ask, made
+  snap.freeSpecResetUsed = entity.freeSpecResetUsed === true;   // PWR2: the one free specialisation reset, spent (systems/specReset.js)
+  snap.attuneSkies = attuneSkiesOf(entity.attuneSkies);   // PWR4: the attunement set each sky kept aside carries (systems/power/attuneActions.js)
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   // AUDIT MARTIAL L3 F1: the permanent martial path's MIRROR, in the one record every older build carries whole - an older
   // build drops `martialPath` (a key it never knew), and the new build, finding none, asked again: a second choice of a
@@ -842,6 +845,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.pathPrompted = snap.pathPrompted === true;   // SCHOOLS1
   entity.martialPath = isMartialPathId(snap.martialPath) ? snap.martialPath : null;   // MARTIAL1: an id no table holds reads as none
   entity.martialPrompted = snap.martialPrompted === true;   // MARTIAL1
+  entity.freeSpecResetUsed = snap.freeSpecResetUsed === true;   // PWR2: a save from before it has its free reset to come
+  entity.attuneSkies = attuneSkiesOf(snap.attuneSkies);   // PWR4
   // AUDIT MARTIAL L3 F1: an OLDER BUILD's save (no `martialPath` key at all - a newer one writes null for none) - the
   // career's mirror bears witness to the choice that build dropped, already asked
   const mirror = snap.career?.martialMirror;

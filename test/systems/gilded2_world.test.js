@@ -301,7 +301,7 @@ test('GILDED2 THE LOOK: named as an artifact is (no metal before it); its card t
   assert.equal(itemLongName(o), 'The Dragonfire Oath');
   assert.equal(itemLongName(s), 'The Sunken Sovereign');
   for (const [it, r] of [[o, DRAGONFIRE_OATH], [s, SUNKEN_SOVEREIGN]]) {
-    assert.deepEqual(LR.rarityLines(it), ['Gilded', ...r.affixes.map((a) => LR.affixLabel(a)), `${r.power.name}: ${r.power.brief}`, r.lore]);
+    assert.deepEqual(LR.rarityLines(it), ['Gilded', ...r.affixes.map((a) => LR.affixLabel(a)), `${r.power.name}: ${r.power.brief}`, LR.attuneLineText(false), r.lore]);   // PWR2: its attunement said
   }
   assert.deepEqual(CX.codexGilded().map((r) => [r.id, r.found, r.name, r.hint]), [
     ['the-hourlock', false, null, CX.GILDED_HINT],

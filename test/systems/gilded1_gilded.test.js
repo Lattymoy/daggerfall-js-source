@@ -270,7 +270,7 @@ test('GILDED1 THE LOOK: named as an artifact is (no metal before it); its card t
   const h = mintHourlock();
   assert.equal(itemLongName(h), 'The Hourlock');
   assert.deepEqual(LR.rarityLines(h), ['Gilded', '+40% damage', '+15 Agility', '+30 Archery', '+10 Shock damage',
-    `${HOUR_TOLLS.name}: ${HOUR_TOLLS.brief}`, HOURLOCK.lore]);
+    `${HOUR_TOLLS.name}: ${HOUR_TOLLS.brief}`, LR.attuneLineText(false), HOURLOCK.lore]);   // PWR2: its power's attunement said, after the power
   assert.ok(quickslotKey(h).endsWith('|gthe-hourlock'), 'its record in its key');
   assert.ok(!quickslotKey(createThunderlock()).includes('|g'), 'and nothing new in another piece\'s - a save\'s keys still resolve');
   // the codex

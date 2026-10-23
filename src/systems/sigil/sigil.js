@@ -50,7 +50,10 @@
 // THE STAGES, each a share of the power: Faint 20%, Kindled 40%, Bright
 // 60%, Radiant 80%, Ascendant 100%. The sigil's own rank opens at
 // 0 / 5,000 / 12,500 / 22,500 / 37,500 xp; the wielder's Renown opens
-// the same five at 1 / 10 / 20 / 30 / 40.
+// the same five at 1 / 5 / 10 / 15 / 20 (PWR4, bible/05-Combat/Power-Arc.md
+// section 7 - Mac: "sigil stages (re-spaced 1/5/10/15/20)": a layer of
+// power stops at the soft cap, net/renown.js RENOWN_SOFT_CAP; 1 / 10 /
+// 20 / 30 / 40 before it).
 //
 // THE BLOW: the whole weapon blow (FormulaHelper's, after the strength
 // and the material, before DFU's mod hook) times the per cent, its fraction carried
@@ -92,10 +95,10 @@ export const SIGIL_CHANCE_PER = 40;
  *  the share of the power it wakes (per cent). */
 export const SIGIL_STAGES = Object.freeze([
   Object.freeze({ xp: 0, renown: 1, name: 'Faint', share: 20 }),
-  Object.freeze({ xp: 5000, renown: 10, name: 'Kindled', share: 40 }),
-  Object.freeze({ xp: 12500, renown: 20, name: 'Bright', share: 60 }),
-  Object.freeze({ xp: 22500, renown: 30, name: 'Radiant', share: 80 }),
-  Object.freeze({ xp: 37500, renown: 40, name: 'Ascendant', share: 100 }),
+  Object.freeze({ xp: 5000, renown: 5, name: 'Kindled', share: 40 }),
+  Object.freeze({ xp: 12500, renown: 10, name: 'Bright', share: 60 }),
+  Object.freeze({ xp: 22500, renown: 15, name: 'Radiant', share: 80 }),
+  Object.freeze({ xp: 37500, renown: 20, name: 'Ascendant', share: 100 }),   // PWR4: the soft cap's (net/renown.js RENOWN_SOFT_CAP)
 ]);
 /** A sigil drinks no more than its last stage asks. */
 export const SIGIL_XP_MAX = SIGIL_STAGES[SIGIL_STAGES.length - 1].xp;

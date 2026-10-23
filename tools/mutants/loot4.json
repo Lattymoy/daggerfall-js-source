@@ -128,8 +128,8 @@
   {
     "name": "LOOT4-a-duel-blow",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return damage;",
-    "new": "  if (!(damage > 0) || !mine(attacker) || !target || target.warded) return damage;",
+    "old": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return null;",
+    "new": "  if (!(damage > 0) || !mine(attacker) || !target || target.warded) return null;",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT4-the-ward-cut",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return damage;",
-    "new": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer) return damage;",
+    "old": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return null;",
+    "new": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer) return null;",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]

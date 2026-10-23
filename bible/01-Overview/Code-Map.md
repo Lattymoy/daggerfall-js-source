@@ -43,7 +43,7 @@ and what it takes out lands loose in `src/scenes/` or `src/systems/`.
 | `app/` | The desktop app's Electron shell (`main.cjs`, preloads, packaging). |
 | `bible/` | The design record, one folder a section (`01-Overview/` to `12-Enhanced-AI/`). `Home.md` is the index and its Process rules bind every change. `01-Overview/` holds the overview pages - this map, `Port-Doctrine.md`, `Port-Ledger.md`, `Host-Split.md` - and files its dated records by kind: `audits/` (every audit and review), `bugs/` (the field-bug passes, the bug lists, the incident), `handoffs/` (hand-offs, integrations, the dated asks and status snapshots). |
 | `test/` | Every test, in the folder of the layer it tests and, there, its feature's folder (`test/systems/arena/`) - mapped below. `bible/09-Testing/Testing.md` has one row per file, by its name. |
-| `tools/` | Developer tools run by hand or by the suite: probes, bakes, gates, the mutation lists (`tools/mutants/`). |
+| `tools/` | Developer tools run by hand or by the suite: probes, bakes, gates, the mutation lists (`tools/mutants/`), the power measure (`tools/power/` - `05-Combat/Power-Arc.md`). |
 | `scripts/` | Build, release and bake scripts run by npm and CI (`buildTag`, `desktopRelease`, `updateNumber`, the `bake*` scripts). |
 | `public/` | Vite's static root, copied into the build as-is: art, sound, fonts, the mods' assets. No game data (`Port-Doctrine.md`). |
 | `vendor/` | Daggerfall Unity mods' published files, kept as handed over, for reference and for the bakes. |
@@ -314,6 +314,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
 | `src/systems/online/` | The online save: checkpoints, homes, the lane, the sync - the law. |
 | `src/systems/party/` | A party: travelling, resting and walking together - the law. |
+| `src/systems/power/` | The Power arc's law (`05-Combat/Power-Arc.md`): the one power budget - its channels, their curve, the evasion's one roll and the guard's door (`powerBudget.js`, a leaf); attunement - which powers are awake (`attunement.js`, a leaf) - and its doors (`attuneActions.js`); the Stats page's power budget (`powerSheet.js`). |
 | `src/systems/professions/` | The professions' law (`06-Systems/Professions-Arc.md`): their items, templates and sounds. |
 | `src/systems/quest/` | The quest machine: the parser, its tables, actions and conditions. |
 | `src/systems/questlines/` | The questlines over the quest machine (`06-Systems/Questlines-Arc.md`): the objective sheets and branch patches by family, the actions, the rewards, the acts feed and the elite foe's act (`qlEliteFoe.js`, which the dungeon host hands its place - AUDIT QUESTLINES ACTS-8), the questlines, their runner and the guilds' ladders - the law. |

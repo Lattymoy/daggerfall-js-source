@@ -42,6 +42,11 @@ export const resetField = (family) => (Object.hasOwn(LAW, family) ? LAW[family].
 /** The bank account a reset may draw on: online the Empire's, offline none. */
 const resetAccount = (entity) => (entity?._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);
 
+/** PWR2 (bible/05-Combat/Power-Arc.md section 5; Mac, of the characters the new limits find over them: "Everyone gets
+ *  one free Firmament respec and one free specialisation reset"): whether this character's one free reset is still
+ *  unspent - either family's, once (the save's `freeSpecResetUsed`). */
+export const freeSpecReset = (entity) => entity?.freeSpecResetUsed !== true;
+
 /** What can pay a reset: the coins and letters (totalGoldAmount), and online the Empire's account. */
 export function resetGold(entity) {
   const account = resetAccount(entity);
@@ -53,6 +58,7 @@ export function specResetRefusal(entity, family) {
   if (!Object.hasOwn(LAW, family)) return t('schools.refuse.none', 'No such specialization.');
   const held = resetHeld(entity, family);
   if (!held) return t('growth.spec.reset.refuse.nothing', 'You have no specialization of this kind to reset.');
+  if (freeSpecReset(entity)) return null;   // PWR2: the one free reset pays nothing
   const have = resetGold(entity);
   if (have >= SPEC_RESET_GOLD) return null;
   const words = { gold: SPEC_RESET_GOLD, have };
@@ -68,7 +74,8 @@ export function resetSpec(entity, family) {
   const why = specResetRefusal(entity, family);
   if (why) return { ok: false, text: why };
   const held = resetHeld(entity, family);
-  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));
+  if (freeSpecReset(entity)) entity.freeSpecResetUsed = true;   // PWR2: spent now, whichever family
+  else payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));
   entity[LAW[family].field] = null;
   entity[LAW[family].prompted] = true;
   computeEntityMods(entity);

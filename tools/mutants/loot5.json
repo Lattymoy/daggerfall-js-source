@@ -155,8 +155,8 @@
   {
     "name": "LOOT5-dawnward-at-once",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "    if (dawn && _s.charges >= dawn.charges) { _s.charges = 0; say('Dawnward turns the blow aside.'); return 0; }",
-    "new": "    if (dawn && _s.charges >= 1) { _s.charges = 0; say('Dawnward turns the blow aside.'); return 0; }",
+    "old": "  if (!dawn || _s.charges < dawn.charges) return false;",
+    "new": "  if (!dawn || _s.charges < 1) return false;",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]
@@ -164,11 +164,13 @@
   {
     "name": "LOOT5-the-raven-on-a-fall",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (blow) {\n    const dawn = kind('dawnward');",
-    "new": "  if (true) {\n    const dawn = kind('dawnward');",
+    "old": "export const lootEvadeChance = (entity, ctx) => (mine(entity) && ctx?.blow ? (powerKind",
+    "new": "export const lootEvadeChance = (entity, ctx) => (mine(entity) ? (powerKind",
     "tests": [
       "test/systems/loot5_powers.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "PWR1: the damage door asks the evade channel only of a foe's blow (playerEntity.js hurtPlayer's `ctx.blow && rollEvade`, powerBudget.js registerEvadeSource's contract), so the source's own check is belt-and-braces - martialPowers.js, arcanePowers.js and firmamentPowers.js keep the same one (MARTIAL4-a-fall-evaded); test/systems/loot5_powers.test.js 'a fall is no blow to evade' holds the door"
   },
   {
     "name": "LOOT5-the-hex-forever",
@@ -200,8 +202,8 @@
   {
     "name": "LOOT5-the-last-stand-always",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;",
-    "new": "  if (last) d *= 1 - last.less / 100;",
+    "old": "  if (last && share(entity) < last.below / 100) pct += last.less;",
+    "new": "  if (last) pct += last.less;",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]
@@ -272,8 +274,8 @@
   {
     "name": "LOOT5-the-sap-the-same-when-low",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);",
-    "new": "    healMine(entity, (entity.maxHealth * hist.pct) / 100);",
+    "old": "ledgerShare(round?.regen, 10 * (share(entity) < 0.5 ? hist.low : hist.pct))",
+    "new": "ledgerShare(round?.regen, 10 * hist.pct)",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]

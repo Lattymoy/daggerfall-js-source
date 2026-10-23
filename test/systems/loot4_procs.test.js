@@ -286,9 +286,11 @@ test('LOOT4: the focus - my spells cost less, all I wear under the cap; register
   for (const t of [133, 135, 136, 137, 138, 134]) wear(me, Object.assign(mintCondition({ group: 'Jewellery', templateIndex: t, flags: 0 }), { rarity: 'rare', affixes: [{ id: 'focus', value: 10 }] }));
   assert.equal(LP.lootCastCost(me, 100), 100 - LP.FOCUS_CAP, 'never past the cap');
   const src = strip(read('src/systems/loot/lootPowers.js'));
-  for (const [seam, fn] of [['registerWeaponBlowMod', 'lootBlow'], ['registerPlayerStrikeListener', 'lootStrike'], ['registerPlayerBlowLanded', 'lootLanded'], ['registerSpellCostMod', 'lootCastCost']]) {
+  for (const [seam, fn] of [['registerWeaponBlowMod', 'lootBlowPct'], ['registerPlayerStrikeListener', 'lootStrike'], ['registerPlayerBlowLanded', 'lootLanded'], ['registerSpellCostMod', 'lootCastCost']]) {
     assert.match(src, new RegExp(`\\n${seam}\\(LOOT_POWERS, ${fn}\\);`), `${seam} -> ${fn}`);
   }
+  // PWR1 (bible/05-Combat/Power-Arc.md section 4): the percents in the blow channel's sum, the flat points after it
+  assert.match(src, /\nregisterWeaponBlowMod\(LOOT_SEAR, lootSear, \{ outside: 'flat' \}\);/, 'the sear, outside the sum');
   assert.match(read('src/scenes/world.js'), /from '\.\.\/systems\/loot\/lootPowers\.js'; import \{ setSetPowersVoice/, 'the game imports it beside the sets');
 });
 

@@ -111,7 +111,7 @@ export function weaponMasteryPace(ctx, w) {
 }
 
 export const WEAPON_MASTERY = 'weaponMastery';
-registerWeaponBlowMod(WEAPON_MASTERY, weaponMasteryBlow);
+registerWeaponBlowMod(WEAPON_MASTERY, weaponMasteryBlow, { outside: 'skill' });   // PWR1: the skill's own, outside the blow channel's sum (x1.4 whole, as the school's potency)
 registerSwingPaceMod(WEAPON_MASTERY, weaponMasteryPace);
 
 /** Tests only: no fraction carried. */

@@ -165,8 +165,8 @@
   {
     "name": "ACCOMPARE-the-unidentified-piece-read-whole",
     "file": "src/ui/armourCard.js",
-    "old": "slotsThen[slot] = asKnown(item);",
-    "new": "slotsThen[slot] = item;",
+    "old": "slotsThen[slot] = attunePreview(entity, asKnown(item));",
+    "new": "slotsThen[slot] = attunePreview(entity, item);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]

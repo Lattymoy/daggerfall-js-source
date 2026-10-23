@@ -46,6 +46,7 @@ import {
   sigilParty, drinkSigil, sigilRiseLine, sigilOnline, sigilLines, sigilHasBlow, setSigilDueling, sigilDueling,
 } from './sigil.js';
 import { equipTableOf } from '../equip.js';
+import { SETS_AWAKE_MOST } from '../power/attunement.js';   // PWR2: two sets awake (a leaf)
 import { isShieldTemplate } from '../armorMaterials.js';
 import { isAmmunition } from '../item/itemTemplates.js';
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
@@ -467,11 +468,29 @@ export function setState(id, pieces, renown, awake = true, { text = true } = {})
     }),
   };
 }
+/**
+ * PWR2 (bible/05-Combat/Power-Arc.md section 5; Mac: "2 sets"): THE SETS THAT MAY WAKE - of every set worn, the
+ * SETS_AWAKE_MOST with the most pieces worn, then the higher stage, then the registry's order. The player chooses by
+ * what they wear: a third set's pieces sleep, and its card says why (`limited`). Before PWR2 every worn set woke - nine
+ * places held four 2-piece tiers at once.
+ */
+export function awakeSetIds(entity, renown = sigilRenown()) {
+  const ranked = [];
+  for (const [id, pieces] of wornSetPieces(entity)) { const st = setState(id, pieces, renown, true, { text: false }); if (st) ranked.push(st); }
+  ranked.sort((a, b) => b.count - a.count || b.stage - a.stage || SIGIL_SET_IDS.indexOf(a.id) - SIGIL_SET_IDS.indexOf(b.id));
+  return new Set(ranked.slice(0, SETS_AWAKE_MOST).map((st) => st.id));
+}
 /** Every set an entity wears at least one piece of, in the registry's order - what the card, the paperdoll and the
- *  powers read. `renown` and `awake` default to the session's. */
+ *  powers read. `renown` and `awake` default to the session's. PWR2: a set past the two that may wake (awakeSetIds)
+ *  stands asleep, `limited`. */
 export function wornSets(entity, renown = sigilRenown(), awake = setsAwake(), opts = undefined) {
   const out = [];
-  for (const [id, pieces] of wornSetPieces(entity)) { const st = setState(id, pieces, renown, awake, opts); if (st) out.push(st); }
+  const may = awake ? awakeSetIds(entity, renown) : null;
+  for (const [id, pieces] of wornSetPieces(entity)) {
+    const limited = !!may && !may.has(id);
+    const st = setState(id, pieces, renown, awake && !limited, opts);
+    if (st) out.push(limited ? { ...st, limited: true } : st);
+  }
   return out;
 }
 /**
@@ -482,7 +501,7 @@ export function wornSets(entity, renown = sigilRenown(), awake = setsAwake(), op
 export function awakeTier(entity, id, index) {
   if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;
   const pieces = wornSetPieces(entity).get(id);
-  if (!pieces) return null;
+  if (!pieces || !awakeSetIds(entity).has(id)) return null;   // PWR2: a third set sleeps
   const st = setState(id, pieces, sigilRenown(), true);
   const t = st?.tiers[index];
   return t && t.awake ? t.values : null;
@@ -594,7 +613,8 @@ export function setCardView(item, wearer = setsWearer()) {
   const set = setById(id);
   if (!set) return null;
   const pieces = wornSetPieces(wearer).get(id) ?? [];
-  const sleep = setsSleep();
+  // PWR2: a set worn past the two that may wake sleeps for that reason alone (setsSleep's are every set's)
+  const sleep = setsSleep() ?? (pieces.length && !awakeSetIds(wearer).has(id) ? 'limit' : null);
   const st = setState(id, pieces, sigilRenown(), sleep == null);
   return {
     id, name: set.name, prince: set.prince, role: set.role, colour: set.colour, aetheric: set.aetheric,
@@ -603,7 +623,8 @@ export function setCardView(item, wearer = setsWearer()) {
     sleep, tiers: st.tiers,
   };
 }
-const SLEEP_WORDS = Object.freeze({ offline: 'sets only work online', renown: 'waiting for your Renown', duel: "sets don't work in duels" });
+const SLEEP_WORDS = Object.freeze({ offline: 'sets only work online', renown: 'waiting for your Renown', duel: "sets don't work in duels",
+  limit: 'two other sets are awake' });   // PWR2
 /** Why the sets sleep, in the page's words, or null. */
 export const setSleepText = (sleep) => SLEEP_WORDS[sleep] ?? null;
 /** AUDIT SET U11: a set piece's sigil in words - a set's ARMOUR asleep in a duel, as its set's own lines say (the

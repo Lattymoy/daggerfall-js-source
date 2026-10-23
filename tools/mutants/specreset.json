@@ -38,8 +38,8 @@
   {
     "name": "SPEC-RESET-price-unpaid",
     "file": "src/systems/specReset.js",
-    "old": "  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));\n",
-    "new": "",
+    "old": "  else payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));",
+    "new": "  else void 0;",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L1-1-account-unread",
     "file": "src/systems/specReset.js",
-    "old": "  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));",
-    "new": "  payUndoable(entity, SPEC_RESET_GOLD, null);",
+    "old": "  else payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));",
+    "new": "  else payUndoable(entity, SPEC_RESET_GOLD, null);",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]

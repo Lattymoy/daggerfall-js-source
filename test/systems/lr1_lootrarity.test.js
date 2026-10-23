@@ -368,9 +368,9 @@ test('LR2: the fold - worn affixes land on liveStat, skillValue, the armour term
   // the weapon's own damage affix, over its roll
   on();
   const w = sword();
-  w.affixes = [{ id: 'damage', value: 50 }];
-  assert.equal(LR.affixWeaponDamage(w, 10), 15);
-  assert.equal(weaponDamageMods(w, 10), 15, 'RF1: through the registered weapon modifier');
+  w.affixes = [{ id: 'damage', value: 40 }];   // PWR1: a Legendary line's top - the roll channel's knee, so whole
+  assert.equal(LR.affixWeaponDamage(w, 10), 14);
+  assert.equal(weaponDamageMods(w, 10), 14, 'RF1: through the registered weapon modifier');
   assert.equal(LR.affixWeaponDamage(sword(), 10), 10);
   off();
   assert.equal(LR.affixWeaponDamage(w, 10), 10, 'off: the roll stands');

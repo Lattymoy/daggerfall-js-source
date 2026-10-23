@@ -8,7 +8,8 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { setFirmamentTree, setFirmamentOnline, firmamentInForce, firmActMult, _resetFirmamentLiveForTests } from '../../src/systems/firmamentLive.js';
-import { firmamentAwake, firmamentDamage, firmamentLayer, firmamentCastCost, firmamentFold, withoutFirmament, _resetFirmamentPowersForTests } from '../../src/systems/firmamentPowers.js';
+import { firmamentAwake, firmamentLayer, firmamentCastCost, firmamentFold, withoutFirmament, _resetFirmamentPowersForTests } from '../../src/systems/firmamentPowers.js';
+import { guardHurt, _resetPowerBudgetForTests } from '../../src/systems/power/powerBudget.js';   // PWR1: what lands on me is the guard channel's door
 import { FIRM_NODES } from '../../src/net/firmament/firmamentTree.js';
 import { pathTo, treeStats, blowPct, pctOf } from '../../src/net/firmament/firmamentLaw.js';
 import { createCharacter } from '../../src/systems/chargen.js';
@@ -195,11 +196,12 @@ test('FIRM1 powers: WHAT LANDS ON ME - a spell\'s damage by its channel, and the
   assert.ok(renownHpOf(p) > renownOnly, 'the sky\'s health rides the layer');
   setRenownLayer(p, null);
   assert.equal(renownHpOf(p), 0, 'offline, the whole layer goes - nothing of it in a save');
-  // a spell's damage (no blow pending) by `spellTaken`; none asleep
+  // a spell's damage (no blow pending) by `spellTaken`; none asleep - PWR1: through the guard channel's door
   setFirmamentTree(walk('rt.start', named('Spell Turning')));   // 4% less
-  assert.equal(firmamentDamage(p, 100), 96);
+  _resetPowerBudgetForTests();
+  assert.equal(guardHurt(p, 100, { blow: false, attacker: null }), 96);
   setSigilDueling(true);
-  assert.equal(firmamentDamage(p, 100), 100);
+  assert.equal(guardHurt(p, 100, { blow: false, attacker: null }), 100);
 });
 
 test('FIRM1 powers: THE GATHERING ACTS - the herb\'s window and the tug\'s, the Firmament\'s act channels wider (1 with no tree)', () => {

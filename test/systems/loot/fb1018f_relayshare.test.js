@@ -76,6 +76,10 @@ import { newSerpentFight, joinSerpentFight, serpentStateOf } from '../../../src/
 import { validSerpentOut } from '../../../src/net/wire.js';
 import { numberFor } from '../../../src/ui/hitNumbers.js';   // AUDIT FB1018f L6-7: a turned blow's word
 import { HIT_KINDS } from '../../../src/net/gate/gateBrain.js';
+import { budgeted } from '../../../src/systems/power/powerBudget.js';
+/** PWR1 (bible/05-Combat/Power-Arc.md section 4): the Kiss's +50% on a blow of `d` - alone past the blow channel's knee, so on
+ *  its curve (+38%, the fraction floored on a fresh blade). */
+const kiss = (d) => Math.floor((d * budgeted('blow', 50)) / 100);
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -177,19 +181,19 @@ test('RELAY-SHARE THE REPORT: a Rare imprinted at the Reforge with Sweet Mother\
   const orc = makeEnemyEntity(7, ENEMY_BASICS[7], null, 1, ROLL);
   const whole = weaponAttackDamage(me, orc, 0, sword(), ROLL);
   orc.health = Math.floor(orc.maxHealth * 0.2);
-  assert.equal(weaponAttackDamage(me, orc, 0, sword(), ROLL), whole + Math.floor(whole / 2), 'an orc under a quarter: +50%');
+  assert.equal(weaponAttackDamage(me, orc, 0, sword(), ROLL), whole + kiss(whole), 'an orc under a quarter: +50%');
   // the gate's Warden: his stand-in's placeholder is whole (STAND_IN_WHOLE - 1e9 before STAND-IN-WHOLE); the relay's word (the bar's) says 200 of 1000
   const h = court(fight({ hp: 200, max: 1000 }));
   const warden = h.c.target().entity;
   assert.equal(warden.health, STAND_IN_WHOLE, 'his placeholder');   // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE)
   const plain = weaponAttackDamage(me, bossStandIn({ mobile: 31 }, 'unread'), 0, sword(), ROLL);
-  assert.equal(weaponAttackDamage(me, warden, 0, sword(), ROLL), plain + Math.floor(plain / 2), 'the Warden under a quarter: +50%');
+  assert.equal(weaponAttackDamage(me, warden, 0, sword(), ROLL), plain + kiss(plain), 'the Warden under a quarter: +50%');
   const shot = weaponAttackDamage(me, bossStandIn({ mobile: 31 }, 'unread'), 0, bow(), ROLL);
-  assert.equal(weaponAttackDamage(me, warden, 0, bow(), ROLL), shot + Math.floor(shot / 2), 'a shaft too');
+  assert.equal(weaponAttackDamage(me, warden, 0, bow(), ROLL), shot + kiss(shot), 'a shaft too');
   h.link.st = fight({ hp: 250, max: 1000 });
   assert.equal(weaponAttackDamage(me, warden, 0, sword(), ROLL), plain, 'at a quarter: nothing');
   h.link.st = fight({ hp: 249, max: 1000 });
-  assert.equal(weaponAttackDamage(me, warden, 0, sword(), ROLL), plain + Math.floor(plain / 2), 'the word read at the blow, not at his first sight');
+  assert.equal(weaponAttackDamage(me, warden, 0, sword(), ROLL), plain + kiss(plain), 'the word read at the blow, not at his first sight');
   // an Elite Breach: every foe there is the relay's - a Court's lord at a fifth of the word
   // both on the hall's first fight piece (P0, a disc of r 11), struck from beside the first - off the fight
   // ground the relay lands nothing and the screen turns the blow (TURNED-BLOW), so no power answers there
@@ -197,7 +201,7 @@ test('RELAY-SHARE THE REPORT: a Rare imprinted at the Reforge with Sweet Mother\
   B.fight.frame(); await new Promise((r) => setTimeout(r, 0)); B.fight.frame();
   const lords = B.fight.hostTargets();
   const low = lords.find((q) => q.i === 1).entity, high = lords.find((q) => q.i === 2).entity;
-  assert.equal(weaponAttackDamage(me, low, 0, sword(), ROLL), plain + Math.floor(plain / 2), 'a lord under a quarter: +50%');
+  assert.equal(weaponAttackDamage(me, low, 0, sword(), ROLL), plain + kiss(plain), 'a lord under a quarter: +50%');
   assert.equal(weaponAttackDamage(me, high, 0, sword(), ROLL), plain, 'a lord at nine tenths: nothing');
 });
 
@@ -347,7 +351,7 @@ test('RELAY-SHARE STANDING NOWHERE TURNS EVERY BLOW (AUDIT FB1018f L6-7, and lan
   H.fight.frame(); await new Promise((r) => setTimeout(r, 0)); H.fight.frame();
   const whole = H.fight.hostTargets().find((q) => q.i === 1);
   assert.equal(whole.entity.warded, false);
-  assert.equal(weaponAttackDamage(me, whole.entity, 0, sword(), ROLL), plain + Math.floor(plain / 2), 'beside it: +50%');
+  assert.equal(weaponAttackDamage(me, whole.entity, 0, sword(), ROLL), plain + kiss(plain), 'beside it: +50%');
 });
 
 test('RELAY-SHARE A STRUCK OBJECT READS ITS WORD AS IT FALLS (lane L3\'s survivor): an Elite Breach\'s rift at three quarters of its word, then a fifth - its stand-in\'s share each frame\'s, never the share it was first drawn at (mutants: the object\'s reader frozen at its first sight)', async () => {

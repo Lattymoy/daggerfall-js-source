@@ -18,6 +18,7 @@ import { PIXEL_STACK } from './pixelifyFive.js';   // the Enhanced Plus face: Pi
 import { temperatureStatRows, boonStatRows } from './temperatureCard.js';   // TEMP-UI: the felt temperature's parts; AUDIT SURV-BOONS C13: and the boons
 import { savingChance, elementalResistanceChance, ELEMENTS, EFFECT_FLAGS } from '../systems/spellcast.js';   // STATS-RESIST: the saving throw's own law
 import { t, localizedText } from '../systems/textManager.js';   // L10N4: the card's words in the player's language; the attributes are DFU's own
+import { powerBudgetRows } from '../systems/power/powerSheet.js';   // PWR1: the power budget's rows
 
 const FLIP_MS = 900;
 // THE TURN, one set of numbers for the keyframes and for FIREFOX-FLIP's face swap below: the first leg runs to FLIP_MID
@@ -215,6 +216,20 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   sk.append(row(skillName, `${s.skill}%`), row(SKILL_NAMES[SKILLS.CriticalStrike], `${s.crit.skill}%`), row(SKILL_NAMES[SKILLS.Backstabbing], `${s.backstab.skill}%`), row(SKILL_NAMES[SKILLS.Dodging], `${s.dodging}%`));
   page.append(sk);
 
+  // PWR1 (bible/05-Combat/Power-Arc.md section 4): THE POWER BUDGET - each channel's sources summed, and what lands of the
+  // sum through its curve (systems/power/powerSheet.js reads the doors' own sums), so a stack's diminishing is never hidden
+  const budget = powerBudgetRows(entity, { weapon: s.weapon, foe: foe.entity, usingRightHand: opts.usingRightHand ?? true });
+  if (budget.length) {
+    const pb = section(t('stats.budget', 'Power budget'), 12);
+    for (const b of budget) {
+      const v = (n) => (b.unit === '%' ? `+${one(n)}%` : `+${one(n)}`);
+      pb.append(row(budgetLabel(b), b.landed < b.sum - 1e-9 ? t('stats.budget.value', '{sum} \u2192 {landed}', { sum: v(b.sum), landed: v(b.landed) }) : v(b.sum),
+        t('stats.budget.tip', 'Every source on this adds. Up to {knee} each adds in full; past it each adds less, approaching {ceiling}.', { knee: v(b.knee), ceiling: v(b.ceiling) })));
+    }
+    pb.title = t('stats.budget.title', 'Your powers, gear and Firmament add together on each of these, then land through one curve.');
+    page.append(pb);
+  }
+
   // TEMP-UI (2026-10-12, the owner: "allowing players to see their personal temperature in their inventory"): THE FELT
   // TEMPERATURE, part by part - the land, the season, the hour, the weather, a roof or the ground, the resistances, the
   // race, the clothing, the armour, a fire, the wet, the bare skin, a drink to hand, a garment's degrees - adding up to
@@ -243,6 +258,24 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   return page;
 }
 function safeName(item) { try { return itemLongName(item); } catch { return item?.name ?? ''; } }
+/** PWR1: a power-budget row's name - its channel's, or the skill, the body part or the element its fold landed on. */
+function budgetLabel(b) {
+  switch (b.channel) {
+    case 'blow': return t('stats.budget.blow', 'Weapon damage from powers');
+    case 'roll': return t('stats.budget.roll', 'Weapon damage from its lines');
+    case 'guard': return t('stats.budget.guard', 'Less damage taken');
+    case 'evade': return t('stats.budget.evade', 'Chance to evade a blow');
+    case 'pace': return t('stats.budget.pace', 'Swing speed');
+    case 'castSpeed': return t('stats.budget.castSpeed', 'Casting speed');
+    case 'spell': return t('stats.budget.spell', 'Spell damage');
+    case 'pierce': return t('stats.budget.pierce', 'Off saving throws against your spells');
+    case 'absorb': return t('stats.budget.absorb', 'Chance to absorb a Destruction spell');
+    case 'skill': return t('stats.budget.skill', '{skill} from gear and the sky', { skill: SKILL_NAMES[Number(b.key)] ?? String(b.key) });
+    case 'armor': return t('stats.budget.armor', 'Armor on the {part}', { part: PART_NAMES[Number(b.key)] ?? String(b.key) });
+    case 'resist': return t('stats.budget.resist', '{element} resistance', { element: String(b.key) });
+    default: return b.channel;
+  }
+}
 /** STATS-RESIST: the seven harms a saving throw is asked against, each `{ label, save, ward, total, immune }` - `total`
  *  the chance it is turned away at all (the ward first, then the throw). */
 export const RESIST_ROWS = Object.freeze([

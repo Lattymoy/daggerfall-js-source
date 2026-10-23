@@ -112,6 +112,7 @@ import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtLis
 import { registerPlayerKillListener } from '../playerKills.js';
 import { registerSpellCostMod } from '../spellcost.js';
 import { healMine, manaMine } from '../playerHeal.js';   // SERPENT-SET: Shed Skin heals through the loot's own heal; EG15: the Discipline returns magicka through its own
+import { registerGuardSource } from '../power/powerBudget.js';   // PWR1: Hold the Line in the guard channel
 import { registerPlayerCastListener } from '../playerCasts.js';   // EG15: the player's own casts, told (a leaf)
 import { RESIST_ELEMENTS } from '../loot/lootRarity.js';   // EG15: the five elements the resistance channel names (it imports no power file)
 import { CAST_SETTING_MAX } from '../../net/wire.js';   // EG15: the cast frame's byte - an ally's shield rides it
@@ -265,19 +266,30 @@ let _carry = new WeakMap();
  * resolved here, or a foe's.
  */
 export function setBlow(weapon, damage, attacker, target, info) {
+  return setSear(weapon, setBlowPct(weapon, damage, attacker, target, info), attacker, target);
+}
+/** PWR1 (bible/05-Combat/Power-Arc.md section 4): THE SEAR - the Burning Gate's flat fire, no percent of the blow, so
+ *  outside the blow channel's sum (entityMods.js registerWeaponBlowMod `outside: 'flat'`), after the per cents as it
+ *  always was. */
+export function setSear(weapon, damage, attacker, target) {
+  if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || target.warded) return damage;
+  const ruhn = awakeTiersOf(attacker)?.get('ruhn');
+  return ruhn?.[0] && !fireProof(target) ? damage + ruhn[0].sear : damage;   // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch
+}
+/** PWR1: the sets' PERCENTS on my blow - a source of the blow channel (Riposte and the Discipline spent here, as before). */
+export function setBlowPct(weapon, damage, attacker, target, info) {
   if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer) return damage;
   if (target.warded) return damage;   // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)
   const t = awakeTiersOf(attacker);
   if (!t || !t.size) return damage;
   const now = _now();
-  let pct = 0, flat = 0;
+  let pct = 0;
   const dag = t.get('dagon');
   if (dag?.[1]) pct += dag[1].more * (belowHalf(attacker) ? 2 : 1);
   if (dag?.[2]) pct += dag[2].stack * rampageStacks(now);
   const noc = t.get('nocturnal');
   if (noc?.[1] && info?.unaware) pct += noc[1].more;
   const ruhn = t.get('ruhn');
-  if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;   // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch
   if (ruhn?.[2] && now < _s.wrathUntil) pct += ruhn[2].more;
   const oath = t.get('oath');
   const keep = !info?.estimate;   // AUDIT MARTIAL L2 F7: the Stats page's estimate spends no window and carries nothing
@@ -305,7 +317,6 @@ export function setBlow(weapon, damage, attacker, target, info) {
     if (keep) _carry.set(key, Math.max(0, exact - more));
     out += more;
   }
-  out += flat;
   return out;   // AUDIT SET M2: Cleave shares the blow that LANDED - setStrike, at the formula's tail
 }
 /** AUDIT SET M2: MY WEAPON'S BLOW, LANDED (formulas.js registerPlayerStrikeListener - the attack's final damage, after
@@ -464,24 +475,24 @@ function spite(entity, blow, took) {
   if (back > 0) door.hurtFoe(f, back);
 }
 
-// ── the damage I take: Unbroken's halving, Hold the Line, Iron Hide ──
+// ── the damage I take: Unbroken's halving, Hold the Line (the guard channel), Iron Hide, Gearward, the Reprieve ──
 function unbrokenHalves(entity, dmg) {
   return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor(dmg / 2) : dmg;   // AUDIT SET L1: whole points - a half point left health fractional, and a later blow of the rest spent Unbroken's save on a wound that was never lethal
 }
-/** RAID4b: Hold the Line's share of a hurt, in whole points - the fraction carried to the next hurt (the blow's own
- *  law), so a Faint tenth takes a point of every ten a run of small blows deals, not none of them. */
-let _holdOwed = 0;
-/** THE DAMAGE MODIFIER (my one damage door, before a Shield spell's pool): Unbroken's halving, then (RAID4b) Hold the
- *  Line while I stand under half health, then Iron Hide's ward, spent point for point on whatever is left. */
+/** THE SETS' GUARD (PWR1, bible/05-Combat/Power-Arc.md section 4: a source of the guard channel, summed at the door with
+ *  every other - systems/power/powerBudget.js guardHurt, whole points, its fraction carried there): Hold the Line while I
+ *  stand under half health. */
+export function setGuardPct(entity) {
+  if (!entity?.isPlayer || entity.peer) return 0;
+  const hold = tierOf(entity, 'oath', 2);
+  return hold && belowHalf(entity) ? hold.less : 0;
+}
+/** THE DAMAGE MODIFIER (my one damage door, before a Shield spell's pool), what is an EVENT or no percent: Unbroken's
+ *  halving (a death save's tail on its own clock - PWR1 keeps it outside the guard channel, its words whole), then Iron
+ *  Hide's ward, spent point for point on whatever is left; Gearward's winding; the Reprieve's shield. Hold the Line is the
+ *  guard channel's (setGuardPct), asked before this door. */
 export function setDamageMod(entity, dmg) {
   let d = unbrokenHalves(entity, dmg);
-  const hold = tierOf(entity, 'oath', 2);
-  if (hold && d > 0 && belowHalf(entity)) {
-    const owed = (d * hold.less) / 100 + _holdOwed;
-    const cut = Math.min(d, Math.floor(owed + 1e-9));
-    _holdOwed = owed - cut;
-    d -= cut;
-  }
   if (_s.ward > 0 && d > 0 && tierOf(entity, 'orcsbane', 2)) {
     const took = Math.min(_s.ward, d);
     _s.ward -= took;
@@ -915,11 +926,14 @@ export function setRound(entity) {
 
 // ── registered at import ───────────────────────────────────────────
 export const SIGIL_SETS_POWER = 'sigilSets';
+export const SIGIL_SETS_SEAR = 'sigilSetsSear';   // PWR1: the Burning Gate's sear, outside the blow channel's sum
 registerEntityFold(SIGIL_SETS_POWER, setFold);
-registerWeaponBlowMod(SIGIL_SETS_POWER, setBlow);
+registerWeaponBlowMod(SIGIL_SETS_POWER, setBlowPct);   // PWR1: the percents, in the blow channel's sum
+registerWeaponBlowMod(SIGIL_SETS_SEAR, setSear, { outside: 'flat' });   // PWR1: the Burning Gate's sear, after it
 registerPlayerStruckListener(SIGIL_SETS_POWER, setStruck);
 registerPlayerStrikeListener(SIGIL_SETS_POWER, setStrike);   // AUDIT SET M2
 registerPlayerDamageMod(SIGIL_SETS_POWER, setDamageMod);
+registerGuardSource(SIGIL_SETS_POWER, setGuardPct);   // PWR1
 registerPlayerDeathSave(SIGIL_SETS_POWER, setDeathSave);
 registerPlayerHurtListener(SIGIL_SETS_POWER, setHurt);
 registerPlayerDoorOpen(SIGIL_SETS_POWER, setDoorOpen);   // AUDIT FINAL F10
@@ -1009,4 +1023,4 @@ export function setHudChips(entity, now = _now()) {
 
 /** Tests only: a clock of their own (seconds), and every power fresh. */
 export function _setSetPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }
-export function _resetSetPowersForTests() { _s = fresh(); _carry = new WeakMap(); _blow = null; _bossBlowAt = -Infinity; _pendingBoss = false; _spireBlowAt = -Infinity; _pendingSpire = false; _holdOwed = 0; _say = (line) => { hudText(line); }; _sound = null; _allies = null; _spireRoom = () => null; }
+export function _resetSetPowersForTests() { _s = fresh(); _carry = new WeakMap(); _blow = null; _bossBlowAt = -Infinity; _pendingBoss = false; _spireBlowAt = -Infinity; _pendingSpire = false; _say = (line) => { hudText(line); }; _sound = null; _allies = null; _spireRoom = () => null; }

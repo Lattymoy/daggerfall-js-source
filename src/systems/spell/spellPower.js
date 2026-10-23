@@ -36,6 +36,7 @@ import { SKILLS } from '../skills.js';
 import { SKILL_SOFT_CAP, climbedSkill } from '../skillSoftcap.js';
 import { isOnlinePage } from '../online/onlineLane.js';
 import { sigilDueling } from '../sigil/sigil.js';   // SCHOOLS2: a self perk sleeps in a refereed fight, as every loot and set power does
+import { budgeted } from '../power/powerBudget.js';   // PWR1: the spell's percents and the pierce's points, each through its channel's curve
 
 /** Each effective point of Destruction past 100 is this much more damage (CLIMB-PAST's CLIMB_OVERCAP_SPEED_PER_POINT). */
 export const DESTRUCTION_POTENCY_PER_POINT = 0.01;
@@ -73,16 +74,24 @@ export function registerSpellPowerMod(name, fn) { if (typeof fn === 'function') 
 /** Named modifiers, `fn(caster, target) -> points` off the target's saving throw. A non-function removes the name. */
 export function registerSpellPierceMod(name, fn) { if (typeof fn === 'function') _pierce.set(name, fn); else _pierce.delete(name); }
 
-/** The multiplier on MY damage spell's landed amount: the school past 100, times every modifier's percent. 1 for
- *  anything that is not my spell at a target the port may strengthen. */
+/** The multiplier on MY damage spell's landed amount: the school past 100, times every modifier's percent summed and
+ *  landed through the spell channel's curve (PWR1, bible/05-Combat/Power-Arc.md section 4 - the loot's potency, the
+ *  paths', the sky's: their 105 summed approached 75). 1 for anything that is not my spell at a target the port may
+ *  strengthen. */
 export function spellPowerMult(caster, target, opts = {}) {
   if (!ownSpellAt(caster, target)) return 1;
+  return schoolPotency(caster, opts) * Math.max(SPELL_POWER_FLOOR, 1 + budgeted('spell', spellPowerSum(caster, target)) / 100);
+}
+/** PWR1: every spell-power modifier's percent at `target`, summed before the curve (0 for what is not my spell at a
+ *  target the port may strengthen) - the Stats page shows it beside what lands. */
+export function spellPowerSum(caster, target) {
+  if (!ownSpellAt(caster, target)) return 0;
   let pct = 0;
   for (const fn of _power.values()) {
     const v = fn(caster, target);
     if (Number.isFinite(v) && v !== 0) pct += v;   // FIRM1: a keystone's price may be a percent LESS (Martyr's Vow)
   }
-  return schoolPotency(caster, opts) * Math.max(SPELL_POWER_FLOOR, 1 + pct / 100);
+  return pct;
 }
 
 /** SCHOOLS3: named listeners told when MY spell LANDED - `fn({ caster, target, foe, spell, r, self, reflected, took,
@@ -102,6 +111,10 @@ export function tellSpellLanded(info) {
 
 /** The points MY damage spell takes off the target's saving throw - never negative, none but my own at no player. */
 export function spellPierce(caster, target) {
+  return Math.floor(budgeted('pierce', spellPierceSum(caster, target)) + 1e-9);   // PWR1: the pierce channel's curve, whole points
+}
+/** PWR1: every pierce modifier's points, summed before the curve. */
+export function spellPierceSum(caster, target) {
   if (!ownSpellAt(caster, target)) return 0;
   let n = 0;
   for (const fn of _pierce.values()) {

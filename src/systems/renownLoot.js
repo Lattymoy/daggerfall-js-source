@@ -6,14 +6,15 @@
 // LOOT-EASE (section 19) gave every plain foe and every deep pile the same buff over the loot the live game had: three
 // pieces in four kept where PLAIN-LOOT kept two, the plain ladder a quarter bluer and half again yellower, healing
 // potions commoner, Restore Power and the rest supplies dropping at all online. Online that buff is now SCALED BY THE
-// ROLLER'S RENOWN, in the sigils' own five stages (systems/sigil/sigil.js renownSigilStage: Renown 1, 10, 20, 30 and 40):
+// ROLLER'S RENOWN, in the sigils' own five stages (systems/sigil/sigil.js renownSigilStage: Renown 1, 5, 10, 15 and 20 -
+// PWR4's soft cap re-spaced them, bible/05-Combat/Power-Arc.md section 7; 1, 10, 20, 30 and 40 before it):
 //
 //     stage      Renown   the buff      items kept   blue at level 0   healing (a foe)   Restore Power (a foe)
-//     Faint        1-9    half             62.5%          4.5%               3%                 1%
-//     Kindled     10-19   three quarters   68.75%         4.75%              3.5%               1.5%
-//     Bright      20-29   all              75%            5%                 4%                 2%
-//     Radiant     30-39   five quarters    81.25%         5.25%              4.5%               2.5%
-//     Ascendant   40-50   half again       87.5%          5.5%               5%                 3%
+//     Faint        1-4    half             62.5%          4.5%               3%                 1%
+//     Kindled      5-9    three quarters   68.75%         4.75%              3.5%               1.5%
+//     Bright      10-14   all              75%            5%                 4%                 2%
+//     Radiant     15-19   five quarters    81.25%         5.25%              4.5%               2.5%
+//     Ascendant   20-50   half again       87.5%          5.5%               5%                 3%
 //
 // (POT-THIN, 2026-10-21: the two potion columns were 8 to 12 and 3 to 9 - systems/healingSupply.js.)
 //

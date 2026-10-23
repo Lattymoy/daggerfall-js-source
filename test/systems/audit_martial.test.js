@@ -77,6 +77,7 @@ import { rriMeleeWeaponAnimTime } from '../../src/systems/roleplayRealismItems/r
 import { liveStat } from '../../src/systems/statMods.js';
 import { THUNDERLOCK_TEMPLATE } from '../../src/characters/thunderlockIds.js';
 import { raisePlayerSkills } from '../../src/scenes/shared.js';
+import { _setPowerBudgetRandForTests, _resetPowerBudgetForTests } from '../../src/systems/power/powerBudget.js';   // PWR1: the evasion's one roll
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const { LongBlade: LB, ShortBlade: SB, Axe: AX, BluntWeapon: BL, Archery: AR, HandToHand: HH } = SKILLS;
@@ -121,7 +122,7 @@ let _clock = 100;
 /** Every hook back at its rest - at each test's start and its end (AUDIT SCHOOLS L5 M5's law). */
 function reset() {
   POW._resetMartialPowersForTests(); WM._resetWeaponMasteryForTests(); _resetSetPowersForTests(); _resetPlayerHealForTests(); _resetTechniquesForTests();
-  _clock = 100; POW._setMartialPowersClockForTests(() => _clock); POW._setMartialPowersRandForTests(null);
+  _clock = 100; POW._setMartialPowersClockForTests(() => _clock); POW._setMartialPowersRandForTests(null); _resetPowerBudgetForTests();
   setSigilDueling(false); setPlayerDoor(null); setPref(LOOT_RARITY_KEY, true); setCourtRules(false); setLocale('en');
 }
 /** A test's body between two rests - the hooks reset at its start and at its end, whatever it throws (an async body
@@ -503,17 +504,17 @@ test('AUDIT MARTIAL L4 L4 / L4 L6 / L4 N1 / L4 N2: the martial ask is never the 
 
 // ── LANE 5: what the pins could not fail ────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT MARTIAL L5 H1: BAL10\'S FISTS WHERE THEY RUN - both cores\' OUTER calls (calculateAttackDamage, PCAAO\'s pcaaoAttackDamage) lay the blow modifiers over a bare-handed blow whole (a +7 probe, the same roll), with the host\'s word that the foe had not noticed me; never the beast\'s fists, never a foe\'s (mutants: either core\'s result discarded; the overhaul\'s host word dropped)', () => clean(() => {
+test('AUDIT MARTIAL L5 H1: BAL10\'S FISTS WHERE THEY RUN - both cores\' OUTER calls (calculateAttackDamage, PCAAO\'s pcaaoAttackDamage) lay the blow modifiers over a bare-handed blow whole (a +2 probe - under the blow channel\'s knee, PWR1 - the same roll), with the host\'s word that the foe had not noticed me; never the beast\'s fists, never a foe\'s (mutants: either core\'s result discarded; the overhaul\'s host word dropped)', () => clean(() => {
   const me = fighter([HH], 100);
   const calls = [];
   const stock = (who, at, unaware = false) => calculateAttackDamage(who, at, { weapon: null, rolls: () => 0.3, unaware });
   const over = (who, at, unaware = false) => pcaaoAttackDamage(who, at, { weapon: null, rolls: () => 0.3, dfRand: () => 0, unaware });
   const s0 = stock(me, realFoe(ORC), true), o0 = over(me, realFoe(ORC), true);
   assert.ok(s0 > 0 && o0 > 0, `both cores land the fist (${s0}, ${o0})`);
-  registerWeaponBlowMod('audit-fist-probe', (w, d, a, t, info) => { if (w === null) calls.push([!!a?.isPlayer, !!info?.unaware]); return w === null ? d + 7 : d; });
+  registerWeaponBlowMod('audit-fist-probe', (w, d, a, t, info) => { if (w === null) calls.push([!!a?.isPlayer, !!info?.unaware]); return w === null ? d + 2 : d; });
   try {
-    assert.equal(stock(me, realFoe(ORC), true), s0 + 7, 'the stock core: the probe whole');
-    assert.equal(over(me, realFoe(ORC), true), o0 + 7, 'the overhaul\'s outer call: the probe whole');
+    assert.equal(stock(me, realFoe(ORC), true), s0 + 2, 'the stock core: the probe whole');
+    assert.equal(over(me, realFoe(ORC), true), o0 + 2, 'the overhaul\'s outer call: the probe whole');
     assert.deepEqual(calls, [[true, true], [true, true]], 'each with the host\'s word');
     calls.length = 0;
     const beast = fighter([HH], 100); beast.isInBeastForm = true;

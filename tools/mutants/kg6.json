@@ -310,8 +310,8 @@
   {
     "name": "KG6-A-honours",
     "file": "server-account/src/honours.js",
-    "old": "iliac: answers[1], gambit: answers[2] };",
-    "new": "iliac: answers[1] };",
+    "old": "iliac: answers[1], gambit: answers[2], renownBest: renownForXp(",
+    "new": "iliac: answers[1], renownBest: renownForXp(",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ],

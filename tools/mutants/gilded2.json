@@ -128,7 +128,7 @@
   {
     "name": "GILDED2-no-tide-heal",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "{ healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); }",
+    "old": "{ healMine(me, (me.maxHealth * ledgerShare(info?.heal, p.heal)) / 100); _undertow.delete(foe); }",
     "new": "{ _undertow.delete(foe); }",
     "tests": [
       "test/systems/gilded2_world.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "GILDED2-one-heal-a-swing",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); }",
-    "new": "healMine(me, (me.maxHealth * p.heal) / 100); _undertow = new WeakMap(); }",
+    "old": "healMine(me, (me.maxHealth * ledgerShare(info?.heal, p.heal)) / 100); _undertow.delete(foe); }",
+    "new": "healMine(me, (me.maxHealth * ledgerShare(info?.heal, p.heal)) / 100); _undertow = new WeakMap(); }",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

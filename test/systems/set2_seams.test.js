@@ -23,6 +23,7 @@ import { tryAbsorption, registerAbsorptionChance } from '../../src/systems/absor
 import { setPlayerDoor, playerDoor } from '../../src/systems/playerDoor.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the channels' curve
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -110,12 +111,13 @@ test('SET2 PCAAO\'s core reads the port\'s layers at the stock\'s own places - t
   const sword = createWeapon(120, 0, () => 0.5);
   const mods = { ...pcaaoModules(), rolePlayRealismArchery: false };
   const bare = pcaaoWeaponAttackDamage(me(), rat(), 0, 0, sword, () => 0.5, mods);
-  registerWeaponDamageMod('set2-roll', (w, d) => d + 10);
+  // PWR1 (bible/05-Combat/Power-Arc.md section 4): probes under both channels' knees, so each lands whole
+  registerWeaponDamageMod('set2-roll', (w, d) => d + 1);
   let info = null;
-  registerWeaponBlowMod('set2-blow', (w, d, a, t, i) => { info = i; return d * 2; });
+  registerWeaponBlowMod('set2-blow', (w, d, a, t, i) => { info = i; return d + 1; });
   try {
     const both = pcaaoWeaponAttackDamage(me(), rat(), 0, 0, sword, () => 0.5, mods, { unaware: true });
-    assert.equal(both, (bare + 10) * 2, `the roll's modifier, then the blow's (${bare} -> ${both})`);
+    assert.equal(both, bare + 1 + 1, `the roll's modifier, then the blow's (${bare} -> ${both})`);
     assert.equal(info?.unaware, true, 'the host\'s word reaches the blow modifier under this core');
   } finally { registerWeaponDamageMod('set2-roll', null); registerWeaponBlowMod('set2-blow', null); }
   const p = strip(read('src/combat/pcaao.js'));
@@ -208,12 +210,15 @@ test('SET2 a player\'s cast cost: the port\'s modifiers over it after DFU\'s flo
   const p = me();
   const plain = calculateCastCost(spell, p).sp;
   registerSpellCostMod('set2-cost', (e, sp) => sp * 0.5);
+  // PWR1: the cut through the castCut channel's curve (half the price asked, past its knee)
+  const cut = (n) => Math.max(1, Math.round((plain * (100 - budgeted('castCut', ((plain - n) * 100) / plain))) / 100));
   try {
-    assert.equal(calculateCastCost(spell, p).sp, Math.max(1, Math.round(plain * 0.5)));
+    assert.equal(calculateCastCost(spell, p).sp, cut(plain * 0.5));
     assert.equal(calculateCastCost(spell, p, { portMods: false }).sp, plain, 'a foe\'s price: none of mine');
     assert.equal(calculateCastCost(spell, { ...p, isPlayer: false }).sp, plain, 'nor any caster that is not the player');
     registerSpellCostMod('set2-cost', () => 0.2);
-    assert.equal(calculateCastCost(spell, p).sp, 1, 'never under 1');
+    assert.equal(calculateCastCost(spell, p).sp, cut(0.2), 'a price asked to nothing lands on the curve - never past its ceiling, never under 1');
+    assert.ok(cut(0.2) >= 1);
     assert.ok(CAST_COST_FLOOR >= 1);
   } finally { registerSpellCostMod('set2-cost', null); }
   assert.match(strip(read('src/characters/enemy/enemyCasting.js')), /calculateCastCost\(spell, playerEntity, \{ portMods: false \}\)\.sp/);
@@ -226,7 +231,7 @@ test('SET2 the port\'s absorption chances: each rolled on its own after the effe
   assert.equal(tryAbsorption(dmg, 0, target()), 0, 'nothing registered: nothing absorbed');
   registerAbsorptionChance('set2-eye', (t) => (t.isPlayer ? 100 : 0));
   try {
-    assert.ok(tryAbsorption(dmg, 0, target()) > 0, 'a 100% source drinks it');
+    assert.ok(tryAbsorption(dmg, 0, target(), { rolls: () => 0 }) > 0, 'a 100% source drinks it - PWR1: under its landed chance, the absorb channel\'s curve');
     assert.equal(tryAbsorption(heal, 0, target()), 0, 'not a heal - DFU\'s school gate');
     assert.equal(tryAbsorption(dmg, 0, { ...target(), magicka: 200 }), 0, 'no room: DFU\'s headroom gate');
     let n = 0;

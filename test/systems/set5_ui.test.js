@@ -198,7 +198,7 @@ test('SET5 the HUD\'s chips for the powers: a window running burns (the Rampage\
 
 test('SET5 the set block, built: the name and the pieces of nine, the Prince and the role, nine places lit where worn, the stage line (the piece to grow and the Renown, or the sleep, or what would wake it), three tiers lit when awake with Ascendant\'s numbers under the pointer; null for no set piece (mutants: the places unlit; a sleeping tier lit; the stage line lost)', () => {
   withDom(() => {
-    fresh(); online(12);
+    fresh(); online(6);   // PWR4: Kindled's Renown (the stages 1/5/10/15/20)
     const e = player();
     const helm = piece(107, 'dagon', XP[1], 'Helm');
     wear(e, helm, piece(106, 'dagon', XP[2]), piece(105, 'dagon', XP[2]), piece(102, 'dagon', XP[2]));
@@ -215,7 +215,7 @@ test('SET5 the set block, built: the name and the pieces of nine, the Prince and
     assert.deepEqual(places.map((p) => p.classList.contains('on')), [true, true, true, true, false, false, false, false, false]);
     assert.equal(places[0].title, 'Head - worn');
     assert.equal(places[8].title, 'Weapon');
-    assert.equal(one(box, 'set-stage').textContent, 'Kindled · Bright: grow your Helm, reach Renown 20');
+    assert.equal(one(box, 'set-stage').textContent, 'Kindled · Bright: grow your Helm, reach Renown 10');
     const tiers = kids(box, 'set-tier');
     assert.deepEqual(tiers.map((t) => t.classList.contains('awake')), [true, true, false]);
     assert.deepEqual(tiers.map((t) => one(t, 'set-at').textContent), ['2', '4', '6']);
@@ -228,7 +228,7 @@ test('SET5 the set block, built: the name and the pieces of nine, the Prince and
     assert.equal(card.className, 'setbox compact');
     assert.equal(one(card, 'set-count').textContent, '4/9 · Kindled');
     assert.equal(one(card, 'set-role'), null, 'the Prince and the role are the Info box\'s');
-    assert.equal(one(card, 'set-stage').textContent, 'Bright: grow your Helm, reach Renown 20');
+    assert.equal(one(card, 'set-stage').textContent, 'Bright: grow your Helm, reach Renown 10');
     const rows = kids(card, 'set-tier');
     assert.deepEqual(rows.map((t) => t.classList.contains('awake')), [true, true, false]);
     assert.equal(one(rows[1], 'set-tier-text').textContent, SIGIL_SETS.dagon.tiers[1].brief({ more: 6 }));

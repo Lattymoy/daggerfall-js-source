@@ -88,6 +88,8 @@ import { dressClassOf } from '../clothingStanding.js';   // LOOT14: a garment's 
 import { survivalOn } from '../survival/switch.js';   // LOOT14: the warmth and weatherproof lines' reader - a leaf
 import { hoodCapable } from '../survival/temperature.js';   // LOOT15: Unseen answers a hood (HOOD-SAID's one law)
 import { ROLLED_TIERS } from '../rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
+import { attunementOn, attunable, attunedStamp, ATTUNE_MOST } from '../power/attunement.js';   // PWR2: the card's attunement line
+import { t } from '../textManager.js';   // PWR2: the attunement line in the player's language (L10N4)
 import { setPieceKind, rollSetSigil, rollSetJoin, setLines, setSigilLines } from '../sigil/sigilSets.js';   // SET4: a won piece of armour or a shield may carry a set's sigil; a weapon's may join one; SET5: the set in words
 import { TECHNIQUE_IDS, TECHNIQUE_BANDS, TECHNIQUE_PER_MILLE, techniqueById, techniquesFor, techniqueBrief, techniqueParts } from '../../combat/technique/techniqueRoster.js';   // TECH1: a weapon's technique - the roster's one table (a leaf)
 
@@ -2292,11 +2294,22 @@ export function rarityLines(item, { sigil = true, set = true, lore = true, techn
   { const c = gemCapLine(item); if (c) out.push(c); }   // GEM1: and law 6, when it holds the gems
   { const p = item.legendary ? powerOf(item.legendary) : item.gilded ? powerOf(item.gilded) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief - GILDED1: a Gilded record's too
   { const im = imprintLine(item); if (im) out.push(im); }   // LOOT10: a Rare's imprinted power
+  { const a = attuneLine(item); if (a) out.push(a); }   // PWR2: whether its power is awake
   if (sigil) out.push(...setSigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown (AUDIT SET U11: a set piece's, asleep in a duel)
   if (set) out.push(...setLines(item));   // SET5: its set - what is worn of it, and its three tiers (a card that draws the set's block asks without)
   const words = !lore ? null : item.legendary ? legendaryById(item.legendary)?.lore : item.aetheric ? (_aethericLore?.(item) ?? null) : item.gilded ? (_gilded?.loreOf(item) ?? null) : null;   // GILDED1: and a Gilded record's   // SET6: an Aetheric piece's own; CARD-FIT: the card's list asks without (the Info box says it)
   if (words) out.push(words);
   return out;
+}
+/** PWR2 (bible/05-Combat/Power-Arc.md section 5): A POWER PIECE'S ATTUNEMENT, for its card - attuned, or asleep until it
+ *  is (a piece's stamp in its holder's hands is a live one: systems/power/attuneActions.js clears a stale one). Null for a
+ *  piece with no power, or with the ladder off. */
+/** PWR2 (bible/05-Combat/Power-Arc.md section 5): the card's attunement line - awake, or asleep with how to wake it. */
+export const attuneLineText = (on) => (on ? t('loot.attune.on', 'Attuned: its power is awake')
+  : t('loot.attune.off', 'Not attuned: its power sleeps (attune it out of combat, up to {n} at once)', { n: ATTUNE_MOST }));
+export function attuneLine(item) {
+  if (!attunementOn() || !attunable(item)) return null;   // the law binds where its doors are (attuneActions.js)
+  return attuneLineText(attunedStamp(item) > 0);
 }
 /** The skin colour for an item's name, or null for Common / off. */
 export function rarityColour(item) {

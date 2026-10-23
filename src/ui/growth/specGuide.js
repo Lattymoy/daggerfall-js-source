@@ -18,7 +18,7 @@ import { MARTIAL_PATHS, MARTIAL_SKILLS, MARTIAL_FAMILY, martialPathOf, martialCh
 import { MAGIC_SKILLS, SKILL_NAMES } from '../../systems/skills.js';
 import { masterSkillsActive, masterSkillsSwitchable, isMasteredSkill, careerGroupOf, masterySlots, masterableCount, masterCappedSkill } from '../../systems/masterSkills.js';
 import { signatureSpell } from '../../systems/signatureSpells.js';
-import { specResetRefusal, resetSpec, resetField } from '../../systems/specReset.js';   // SPEC-RESET: a held path given up, for gold
+import { specResetRefusal, resetSpec, resetField, freeSpecReset } from '../../systems/specReset.js';   // SPEC-RESET: a held path given up, for gold; PWR2: the one free reset
 import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, skillSwapRefusal, swapGroupOf, swapSkill, swappedCareer, swapOpens, swapShortfall } from '../../systems/skillSwap.js';   // SKILL-SWAP: a class skill given up for another, for gold
 import { alreadyMasteredASkill } from '../../systems/advancement.js';   // AUDIT SUGGESTIONS-1019 L5-2: the 95 lock a swap moves
 import { usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // SWAP-CYCLE: the skill sum levels nothing on Oblivion's bar
@@ -174,7 +174,8 @@ function resetModel(entity, id, law, held, on) {
     : t('growth.spec.reset.only', 'No other {family} path can open for you, so a reset would only let you choose {name} again.', { family: famWord(id), name: held.name }))
     ?? specResetRefusal(entity, id);
   const rows = () => [
-    t('growth.spec.reset.ask', 'Reset {name} for {gold, number} gold?', { name: held.name, gold: SPEC_RESET_GOLD }),
+    freeSpecReset(entity) ? t('growth.spec.reset.askFree', 'Reset {name} for free? Your one free reset is used up by it.', { name: held.name })   // PWR2
+      : t('growth.spec.reset.ask', 'Reset {name} for {gold, number} gold?', { name: held.name, gold: SPEC_RESET_GOLD }),
     '',
     id !== 'arcane' ? t('growth.spec.reset.loseTechnique', 'You lose its passive and its signature technique.')
       : (entity?.spells ?? []).some((sp) => isSignatureSpell(sp) && sp.path === held.id) ? t('growth.spec.reset.loseSpell', 'You lose its passive. Its signature spell stays in your spellbook as an ordinary spell.')

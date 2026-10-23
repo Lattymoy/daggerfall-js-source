@@ -37,6 +37,7 @@ import { masterSkill } from '../../src/systems/masterSkills.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { SPECIAL_ABILITY } from '../../src/systems/rest/rest.js';
+import { budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the spell channel's curve
 
 const D = SKILLS.Destruction;
 const on = () => { _resetForTests(); setPref('lootRarity', true); LP._resetLootPowersForTests(); _resetSetPowersForTests(); setPlayerDoor(null); };
@@ -208,7 +209,7 @@ test('BAL9c POTENCY: what I wear, summed under 30, the loot\'s all under 50, thr
   me.magicka = 160;
   assert.equal(LP.SPELL_POWER_MOST, 50);
   assert.equal(LP.lootSpellPower(me, foe()), 50);
-  assert.equal(lands(BOLT(100), me), 150);
+  assert.equal(lands(BOLT(100), me), Math.round(100 * (1 + budgeted('spell', 50) / 100)), 'PWR1: the loot\'s 50, past the spell channel\'s knee, on its curve');
   me.magicka = 150;   // three quarters exactly: not above
   assert.equal(lands(BOLT(100), me), 130);
   // never at a player, never a peer's, nothing with the switch off

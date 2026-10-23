@@ -162,7 +162,7 @@ test('FIRM1 service: THE TREE\'S HAND ON A HARVEST - the haul\'s XP the professi
   assert.ok(fished.body.xp >= plain.body.xp);   // FIRM2: a haul of five XP floors a few percent to nothing
 });
 
-test('FIRM1 service: THE RESPEC - the whole sky back for 10,000 gold, paid on a realm character\'s record in the respec\'s own batch; asked twice, charged once; short of gold, nothing moves', async () => {
+test('FIRM1 service: THE RESPEC - the first free (PWR2), then the whole sky back for 10,000 gold, paid on a realm character\'s record in the respec\'s own batch; asked twice, charged once; short of gold, nothing moves', async () => {
   const s = await stand();
   const mac = await s.seated('Mac', { renown: 30 });
   const R = await seatRealm(s.env, mac.secret, 'Mac', { name: 'Mac', level: 9, goldPieces: FIRM_RESPEC_GOLD + 2500, items: [] });
@@ -173,6 +173,14 @@ test('FIRM1 service: THE RESPEC - the whole sky back for 10,000 gold, paid on a 
   const gold = () => { const row = s.raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(R.id); return JSON.parse(new TextDecoder().decode(s.env.SAVES._map.get(row.obj))).goldPieces; };
   const respec = (id, at = R.at()) => s.call('/v1/firmament/respec', { character: R.id, rid: id, realm: at }, mac.secret);
   assert.equal((await s.call('/v1/firmament/respec', { character: R.id, rid: rid() }, mac.secret)).body.error, 'realm-needed', 'a realm character names where its record stands');
+  // PWR2 (bible/05-Combat/Power-Arc.md section 5; Mac: "Nothing taken, extras sleep"): the character's first respec is
+  // free - the record moves on, nothing paid, the free one spent in the same batch
+  assert.equal((await s.state(mac)).body.freeRespec, true);
+  const free = await respec(rid());
+  assert.deepEqual([free.status, free.body.respec, free.body.gold, free.body.free, free.body.freeRespec], [200, true, 0, true, false], JSON.stringify(free.body));
+  assert.equal(gold(), FIRM_RESPEC_GOLD + 2500, 'nothing paid');
+  assert.equal((await s.state(mac)).body.freeRespec, false, 'spent');
+  assert.equal((await s.set(mac, tree)).status, 200);
   const id = rid();
   const at = R.at();
   const r = await respec(id, at);

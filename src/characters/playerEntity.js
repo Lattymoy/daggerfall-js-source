@@ -20,6 +20,7 @@
 import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from '../systems/skills.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 65 SL-4: PlayerEntity.cs:128's socialGroupCount = 11
 import { pageHas } from '../systems/pageQuery.js';   // AUDIT ANTICHEAT A1: the probe gate's one parse a search
+import { rollEvade, guardHurt } from '../systems/power/powerBudget.js';   // PWR1: the evasion and the guard, each summed through its channel's curve (a leaf)
 
 export const playerEntity = {
   isPlayer: true,
@@ -376,7 +377,14 @@ export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } =
   if (!(dmg > 0)) return false;
   const portSays = !bypassShield && !spare;   // SET2: never on a SetHealth(0) door, never on a duel's blow
   if (portSays) {
-    if (_foeBlow() && playerBlowEvaded(entity)) return false;   // AUDIT SCHOOLS L1 M3: before any modifier spends a charge
+    const ctx = { blow: !!_foeBlow(), attacker: null };
+    if (ctx.blow && playerBlowEvaded(entity)) return false;   // AUDIT SCHOOLS L1 M3: before any modifier spends a charge (an event: Dawnward's charges)
+    // PWR1 (bible/05-Combat/Power-Arc.md section 4): THE EVASION AND THE GUARD, SUMMED - one roll against the evade
+    // channel's curve over every source's chance (a foe's blow alone), then every guard's percent through the guard
+    // channel's, before the modifiers that are no percent (a ward's points, a flat Bulwark, Unyielding's ceiling)
+    if (ctx.blow && rollEvade(entity, ctx)) return false;
+    dmg = guardHurt(entity, dmg, ctx);
+    if (!(dmg > 0)) return false;
     dmg = playerDamageMods(entity, dmg);
     if (!(dmg > 0)) return false;
   }

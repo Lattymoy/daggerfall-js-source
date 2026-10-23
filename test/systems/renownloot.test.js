@@ -1,6 +1,6 @@
 // RENOWN-LOOT (2026-10-05, Mac: "Instead of a flat loot increase, lets also tie it to renoun level"; asked, Mac chose
 // "Half → all → half again", "The roller's own" Renown, and offline "Keep this PR's numbers"): LOOT-EASE's buff, grown
-// with the roller's Renown in the sigils' five stages - half at Renown 1, all at Renown 20, half again at Renown 40;
+// with the roller's Renown in the sigils' five stages - half at Renown 1, all at Renown 10, half again at Renown 20 (PWR4: the stages re-spaced to the soft cap);
 // offline LOOT-EASE's whole. bible/06-Systems/Loot-Arc.md section 20; systems/renownLoot.js.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,18 +42,18 @@ test('RENOWN-LOOT the stage: offline LOOT-EASE\'s buff whole; online the roller\
     assert.equal(RENOWN_LOOT_OFFLINE_QUARTERS, 4);
     for (const r of [null, 1, 20, 50]) assert.equal(renownLootQuarters({ online: false, renown: r }), 4, `offline, Renown ${r}: LOOT-EASE's whole`);
     assert.equal(renownLootQuarters({ online: true, renown: null }), 2, 'online, not yet known: the first stage');
-    const want = { 1: 2, 9: 2, 10: 3, 19: 3, 20: 4, 29: 4, 30: 5, 39: 5, 40: 6, 50: 6 };
+    const want = { 1: 2, 4: 2, 5: 3, 9: 3, 10: 4, 14: 4, 15: 5, 19: 5, 20: 6, 50: 6 };   // PWR4: the sigils' stages re-spaced 1/5/10/15/20
     for (const [r, q] of Object.entries(want)) assert.equal(renownLootQuarters({ online: true, renown: Number(r) }), q, `Renown ${r}`);
     for (let r = 1; r <= 50; r++) assert.equal(renownLootQuarters({ online: true, renown: r }), RENOWN_LOOT_QUARTERS[renownSigilStage(r)], `Renown ${r}: the sigils' own stage`);
     // the page's door - scenes/world.js's setSigilOnline / setSigilRenown - is what a roll reads
     offline(); assert.equal(renownLootQuarters(), 4);
     page(true); assert.equal(renownLootQuarters(), 2);
-    page(true, 33); assert.equal(renownLootQuarters(), 5);
+    page(true, 17); assert.equal(renownLootQuarters(), 5);
     page(false, 33); assert.equal(renownLootQuarters(), 4, 'a page that leaves its seat is offline again');
   } finally { offline(); }
 });
 
-test('RENOWN-LOOT the table Mac chose: each knob moves the same share of LOOT-EASE\'s own step - the keep, every tier of the plain ladder, the healing and Restore Power chances, the rest supplies (online from none) - and offline and at Renown 20 they ARE LOOT-EASE\'s numbers (mutants: a before moved; the step\'s share; the settling dropped)', () => {
+test('RENOWN-LOOT the table Mac chose: each knob moves the same share of LOOT-EASE\'s own step - the keep, every tier of the plain ladder, the healing and Restore Power chances, the rest supplies (online from none) - and offline and at Renown 10 they ARE LOOT-EASE\'s numbers (mutants: a before moved; the step\'s share; the settling dropped)', () => {
   //                  quarters: keep    blue at 0  healing  Restore Power  a foe's Ember Jar
   // POT-THIN (2026-10-21, PIN MOVED): the healing and Restore Power columns were 8-12 and 3-9
   const rows = [[2, 0.625, 45, 3, 1, 1.5], [3, 0.6875, 47.5, 3.5, 1.5, 2.25], [4, 0.75, 50, 4, 2, 3], [5, 0.8125, 52.5, 4.5, 2.5, 3.75], [6, 0.875, 55, 5, 3, 4.5]];
@@ -82,7 +82,7 @@ test('RENOWN-LOOT the table Mac chose: each knob moves the same share of LOOT-EA
 
 // ─── THE ROLLS ───────────────────────────────────────────────────────
 
-test('RENOWN-LOOT the keep, through the real spawn: a plain foe\'s pieces kept on their coin at the roller\'s Renown - a coin of 0.65 keeps at Renown 10 and not at 1, 0.7 at 20 and not at 10, 0.85 at 40 and not at 30; offline three in four; online before the Renown is known, Renown 1\'s (mutants: the keep never read at the Renown; the stage read wrong)', () => {
+test('RENOWN-LOOT the keep, through the real spawn: a plain foe\'s pieces kept on their coin at the roller\'s Renown - a coin of 0.65 keeps at Renown 5 and not at 1, 0.7 at 10 and not at 5, 0.85 at 20 and not at 15; offline three in four; online before the Renown is known, Renown 1\'s (mutants: the keep never read at the Renown; the stage read wrong)', () => {
   _resetPrefsForTests(); setPref('lootRarity', false);
   const player = { level: 5, gender: 'female', stats: { luck: 50 }, activeEffects: [] };
   const basics = { ...ENEMY_BASICS[7], lootTableKey: 'F', mapChance: 100 };   // the Orc: a table, a kit, a sure map
@@ -96,7 +96,7 @@ test('RENOWN-LOOT the keep, through the real spawn: a plain foe\'s pieces kept o
     return atSpawn.filter((it) => !isGoldPieces(it)).length;
   };
   try {
-    for (const [renown, coin, keeps] of [[1, 0.65, false], [10, 0.65, true], [10, 0.7, false], [20, 0.7, true], [30, 0.85, false], [40, 0.85, true]]) {
+    for (const [renown, coin, keeps] of [[1, 0.65, false], [5, 0.65, true], [5, 0.7, false], [10, 0.7, true], [15, 0.85, false], [20, 0.85, true]]) {
       page(true, renown);
       assert.equal(kept(coin) > 0, keeps, `Renown ${renown}, a coin of ${coin}: ${keeps ? 'kept' : 'gold alone'}`);
     }
@@ -108,13 +108,13 @@ test('RENOWN-LOOT the keep, through the real spawn: a plain foe\'s pieces kept o
     // AUDIT 625 L6: the threshold itself, not a band around it - 0.7499 keeps and 0.75 does not
     assert.ok(kept(0.7499) > 0);
     assert.equal(kept(0.75), 0);
-    page(true, 40);
-    assert.ok(kept(0.8749) > 0, 'Renown 40: under 87.5% keeps');
+    page(true, 20);
+    assert.ok(kept(0.8749) > 0, 'Renown 20: under 87.5% keeps');
     assert.equal(kept(0.875), 0, 'and 87.5% does not');
   } finally { offline(); _resetPrefsForTests(); }
 });
 
-test('RENOWN-LOOT the kit at death: a plain foe\'s worn piece rolls the plain ladder at the Renown of the page its death is rolled on - at level 8 a roll of 0.085 is blue at Renown 20 and white at Renown 1, 0.095 blue at Renown 40 alone (mutants: the kit\'s ladder never read at the Renown)', () => {
+test('RENOWN-LOOT the kit at death: a plain foe\'s worn piece rolls the plain ladder at the Renown of the page its death is rolled on - at level 8 a roll of 0.085 is blue at Renown 10 and white at Renown 1, 0.095 blue at Renown 20 alone (mutants: the kit\'s ladder never read at the Renown)', () => {
   _resetPrefsForTests(); setPref('lootRarity', true);
   const body = () => {
     const sword = createWeapon(120, 1);
@@ -122,11 +122,11 @@ test('RENOWN-LOOT the kit at death: a plain foe\'s worn piece rolls the plain la
   };
   const tierAt = (renown, roll) => { page(true, renown); const b = body(); rollCorpseKit(b.e, { rolls: at(roll) }); return rarityOf(b.e.items[1]); };   // the body's piece (AUDIT 625 L2: a laddered copy)
   try {
-    // tier 8's Magic threshold, per mille: 45 + 8 x 4.5 = 81 at Renown 1, 90 at Renown 20, 99 at Renown 40
+    // tier 8's Magic threshold, per mille: 45 + 8 x 4.5 = 81 at Renown 1, 90 at Renown 10, 99 at Renown 20
     assert.equal(tierAt(1, 0.085), 'common');
-    assert.equal(tierAt(20, 0.085), 'magic');
-    assert.equal(tierAt(20, 0.095), 'common');
-    assert.equal(tierAt(40, 0.095), 'magic');
+    assert.equal(tierAt(10, 0.085), 'magic');
+    assert.equal(tierAt(10, 0.095), 'common');
+    assert.equal(tierAt(20, 0.095), 'magic');
     offline();
     const b = body(); rollCorpseKit(b.e, { rolls: at(0.085) });
     assert.equal(rarityOf(b.e.items[1]), 'magic', 'offline: LOOT-EASE\'s ladder (90 at tier 8)');
@@ -137,31 +137,31 @@ test('RENOWN-LOOT the supplies, through the real hooks: a looting foe\'s healing
   const foe = (roll, renown) => { page(true, renown); return addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(roll)); };
   const pile = (roll, renown) => { page(true, renown); return addPileLootExtras([], 'J', at(roll), { online: false }); };
   try {
-    // a foe's healing potion: 3 in 100 at Renown 1, 4 at Renown 20 (POT-THIN: 8 and 10)
+    // a foe's healing potion: 3 in 100 at Renown 1, 4 at Renown 10 (POT-THIN: 8 and 10)
     assert.equal(potions(foe(0.035, 1), HEALING_RECIPE_KEY), 0);
-    assert.equal(potions(foe(0.035, 20), HEALING_RECIPE_KEY), 1);
-    // its Restore Power: 2 at Renown 20, 3 at Renown 40 (POT-THIN: 6 and 9)
-    assert.equal(potions(foe(0.025, 20), MAGICKA_RECIPE_KEY), 0);
-    assert.equal(potions(foe(0.025, 40), MAGICKA_RECIPE_KEY), 1);
-    // its Ember Jar: 3 at Renown 20, 4.5 at Renown 40; 1.5 at Renown 1
-    assert.equal(jars(foe(0.04, 20)), 0);
-    assert.equal(jars(foe(0.04, 40)), 1);
+    assert.equal(potions(foe(0.035, 10), HEALING_RECIPE_KEY), 1);
+    // its Restore Power: 2 at Renown 10, 3 at Renown 20 (POT-THIN: 6 and 9)
+    assert.equal(potions(foe(0.025, 10), MAGICKA_RECIPE_KEY), 0);
+    assert.equal(potions(foe(0.025, 20), MAGICKA_RECIPE_KEY), 1);
+    // its Ember Jar: 3 at Renown 10, 4.5 at Renown 20; 1.5 at Renown 1
+    assert.equal(jars(foe(0.04, 10)), 0);
+    assert.equal(jars(foe(0.04, 20)), 1);
     assert.equal(jars(foe(0.02, 1)), 0);
-    assert.equal(jars(foe(0.02, 20)), 1);
-    // a deep pile's healing potion: 6 at Renown 1, 8 at Renown 20, 10 at Renown 40 (POT-THIN: 15, 18 and 21)
+    assert.equal(jars(foe(0.02, 10)), 1);
+    // a deep pile's healing potion: 6 at Renown 1, 8 at Renown 10, 10 at Renown 20 (POT-THIN: 15, 18 and 21)
     assert.equal(potions(pile(0.07, 1), HEALING_RECIPE_KEY), 0);
-    assert.equal(potions(pile(0.07, 20), HEALING_RECIPE_KEY), 1);
-    assert.equal(potions(pile(0.09, 20), HEALING_RECIPE_KEY), 0);
-    assert.equal(potions(pile(0.09, 40), HEALING_RECIPE_KEY), 1);
-    // a deep pile's Ember Jar: 6 at Renown 20, 9 at Renown 40
-    assert.equal(jars(pile(0.07, 20)), 0);
-    assert.equal(jars(pile(0.07, 40)), 1);
+    assert.equal(potions(pile(0.07, 10), HEALING_RECIPE_KEY), 1);
+    assert.equal(potions(pile(0.09, 10), HEALING_RECIPE_KEY), 0);
+    assert.equal(potions(pile(0.09, 20), HEALING_RECIPE_KEY), 1);
+    // a deep pile's Ember Jar: 6 at Renown 10, 9 at Renown 20
+    assert.equal(jars(pile(0.07, 10)), 0);
+    assert.equal(jars(pile(0.07, 20)), 1);
     // every stage draws as many rolls as every other
     const draws = (renown, run) => { let n = 0; page(true, renown); run(() => { n++; return 0.5; }); return n; };
     const foeDraws = (r) => draws(r, (rolls) => addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, rolls));
     const pileDraws = (r) => draws(r, (rolls) => addPileLootExtras([], 'J', rolls, { online: false }));
-    assert.equal(foeDraws(1), foeDraws(40));
-    assert.equal(pileDraws(1), pileDraws(40));
+    assert.equal(foeDraws(1), foeDraws(20));
+    assert.equal(pileDraws(1), pileDraws(20));
     // offline: LOOT-EASE's whole
     offline();
     assert.equal(potions(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.035)), HEALING_RECIPE_KEY), 1, 'offline: 4 in 100');

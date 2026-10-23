@@ -28,6 +28,7 @@ import { EFFECT_FLAGS } from '../../src/systems/spellcast.js';
 import { setWorldMinutes } from '../../src/systems/worldTick.js';
 import { KNIGHT_CITY_WATCH } from '../../src/characters/mobile/mobileTypes.js';
 import { BRIEF_MAX } from '../../src/systems/sigil/sigilSets.js';
+import { _setPowerBudgetRandForTests } from '../../src/systems/power/powerBudget.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -35,6 +36,7 @@ let T = 0;
 LP._setLootPowersClockForTests(() => T);
 let R = 0.5;
 LP._setLootPowersRandForTests(() => R);
+_setPowerBudgetRandForTests(() => R);   // PWR1: the Raven's evasion is the door's one roll (systems/power/powerBudget.js rollEvade)
 const said = [];
 const fresh = () => {
   _resetForTests(); setPref('lootRarity', true); LP._resetLootPowersForTests(); _resetSetPowersForTests(); _resetSigilSetsForTests();

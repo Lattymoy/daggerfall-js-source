@@ -28,6 +28,7 @@ import * as words from '../../src/ui/craftXpWords.js';
 import * as pages from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { renownXpFor, RENOWN_SOFT_CAP } from '../../src/net/renown.js';   // PWR4: the Renown a laid sky is paid by
 import { mintPieces } from '../../src/systems/smithItems.js';
 import { FIRM_NODES } from '../../src/net/firmament/firmamentTree.js';
 import { packTree, pathTo, treeStats, xpPct, scaleXp } from '../../src/net/firmament/firmamentLaw.js';
@@ -55,12 +56,20 @@ async function standBook(env = {}) {
     ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, m, qty);
   const track = (prof, xp) => raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = excluded.xp`).run(mac.id, mac.character, prof, xp, NOON);
+  // PWR2/PWR4 (bible/05-Combat/Power-Arc.md sections 5 and 7): a sky laid as the service would take one - with the Renown
+  // that pays for it (the Worker reads the sky that WAKES under the character's purses, firmamentLaw.js awakeKeys; a sky
+  // past them sleeps): Renown 20's Stars, the most a sky in force spends
+  const sky = (tree) => {
+    raw.prepare('INSERT INTO firmament (player, char_id, tree, updated_at) VALUES (?, ?, ?, ?)').run(mac.id, mac.character, packTree(tree), NOON);
+    raw.prepare(`INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at) VALUES (?, ?, 'Mac', ?, ?, ?)
+      ON CONFLICT (player, char_id) DO UPDATE SET xp = excluded.xp`).run(mac.id, mac.character, renownXpFor(RENOWN_SOFT_CAP), NOON, NOON);
+  };
   const xpOf = (prof) => Number(raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(mac.id, mac.character, prof)?.xp ?? 0);
   const door = accountProf({ fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, mac) });
   // AUDIT FB1018f L5-1: a second book of the same character - a second tab, its acts its own (one craft at a time a book)
   const mk = () => createProfBook({ door, storage: memStorage(), character: () => mac.character, now: () => NOON * 1000, sleep: noWait });
   const book = mk();
-  return { s, raw, mac, give, track, xpOf, book, mk };
+  return { s, raw, mac, give, track, sky, xpOf, book, mk };
 }
 
 /** AUDIT FB1018f L5-1: ACTS DECIDED AT ONCE - every act's batch (its decision, `INSERT OR IGNORE INTO prof_crafts` and its
@@ -220,14 +229,14 @@ test('CRAFT-LIMIT-SAID one law: at every room the limit leaves - none, one, shor
 test('CRAFT-LIMIT-SAID the Firmament\'s hand: a tree to Anvil\'s Song in force, the anvil\'s line says the 60 with its Smithing percent on it (scaleXp) and the 500 whole, as the Worker pays it - the line said 60; the jeweller\'s Ring its craft\'s percent; the anvil\'s temper its percent, as the Worker pays it (mutants: the percent unread; the 500 scaled; a discipline\'s percent its own; a temper\'s figure unscaled)', async (t) => {
   t.mock.method(Date, 'now', () => NOON * 1000);
   _resetFirmamentLiveForTests();
-  const { raw, mac, track, give, book } = await standBook({ FIRMAMENT_OPEN: 'on' });
+  const { mac, track, give, book, sky } = await standBook({ FIRMAMENT_OPEN: 'on' });
   // the law's own shortest walk from the Warrior's start to Anvil's Song (+8% Smithing experience)
   const song = [...FIRM_NODES.values()].find((n) => n.name === 'Anvil\'s Song');
   const tree = { start: 'wr.start', keys: [] };
   tree.keys.push(...pathTo(tree, song.key));
   const pct = xpPct(treeStats(tree), 'smithing');
   assert.ok(pct >= 8, `the stars' Smithing experience (${pct}%)`);
-  raw.prepare('INSERT INTO firmament (player, char_id, tree, updated_at) VALUES (?, ?, ?, ?)').run(mac.id, mac.character, packTree(tree), NOON);
+  sky(tree);
   setFirmamentOnline(true);
   setFirmamentTree(tree);
   track('smithing', xpForRank(30));
@@ -539,7 +548,7 @@ test('AUDIT FB1018f L5-6 the Firmament\'s hand at the fire, the alchemy station 
   assert.ok(pP > 0 && pE > 0 && pB > 0 && pS > 0, 'every craft its percent');
   try {
     const A = await standBook({ FIRMAMENT_OPEN: 'on' });
-    A.raw.prepare('INSERT INTO firmament (player, char_id, tree, updated_at) VALUES (?, ?, ?, ?)').run(A.mac.id, A.mac.character, packTree(tree), NOON);
+    A.sky(tree);
     setFirmamentOnline(true);
     setFirmamentTree(tree);
     A.track('provisioning', xpForRank(30));
@@ -590,7 +599,7 @@ test('AUDIT FB1018f L5-6 the Firmament\'s hand at the fire, the alchemy station 
     } finally { page.done(); }
     // the fire's clean pan with the town's step, the percent on it, as the Worker pays it
     const S = await standBook({ FIRMAMENT_OPEN: 'on' });
-    S.raw.prepare('INSERT INTO firmament (player, char_id, tree, updated_at) VALUES (?, ?, ?, ?)').run(S.mac.id, S.mac.character, packTree(tree), NOON);
+    S.sky(tree);
     S.track('provisioning', xpForRank(30));
     assert.equal((await S.book.refresh()).ok, true);
     page = standPage(S.book, { fire: true, cookSteps: () => 1 });

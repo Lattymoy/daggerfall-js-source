@@ -134,8 +134,8 @@
   {
     "name": "FIRM1-respec-free",
     "file": "server-account/src/firmament.js",
-    "old": "(payFromSave(save, FIRM_RESPEC_GOLD, region ?? null) ? null : 'realm-gold')",
-    "new": "(payFromSave(save, 0, region ?? null) ? null : 'realm-gold')",
+    "old": "payFromSave(save, gold, region ?? null)",
+    "new": "payFromSave(save, 0, region ?? null)",
     "tests": [
       "test/net/firm1_service.test.js"
     ]
@@ -143,8 +143,8 @@
   {
     "name": "FIRM1-respec-gold-not-given-back",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "r = await realm.act({ reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve,",
-    "new": "r = await realm.act({ reserve: () => { w.pay(FIRM_RESPEC_GOLD); return () => {}; },",
+    "old": "r = await realm.act({ reserve: walletReserve(w, price).reserve,",
+    "new": "r = await realm.act({ reserve: () => { w.pay(price); return () => {}; },",
     "tests": [
       "test/net/firmament/firm1_book.test.js"
     ]

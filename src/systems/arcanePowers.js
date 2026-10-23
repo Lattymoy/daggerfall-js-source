@@ -38,12 +38,12 @@ import { registerSpellPowerMod, registerSpellPierceMod, registerSpellLandedListe
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
 import { registerEntityFold, newMods, EMPTY_MODS } from './entityMods.js';
-import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
+import { registerPlayerHurtListener, playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
 import { registerAbsorptionChance } from './absorption.js';
-import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's one law of what a foe's blow is
 import { healMine, manaMine } from './playerHeal.js';
+import { registerEvadeSource, registerGuardSource, ledgerShare } from './power/powerBudget.js';   // PWR1: the path's guard and evade summed at the door; the kill's and the round's ledgers
 import { playerDoor } from './playerDoor.js';
 import { isMagicallyConcealed } from './effects.js';
 import { near, foeGroup, elementShare } from './loot/lootPowers.js';   // AUDIT SCHOOLS (L1 H1-H2, L3 F1): the one reach law, the one foe group, the one element share
@@ -57,13 +57,12 @@ const N = PATH_NUMBERS;
 /** The classic elements by index (DFU ElementTypes) as the loot's element share names them. */
 const ELEMENT_NAMES = Object.freeze(['fire', 'frost', 'poison', 'shock', 'magic']);
 
-// ── the session's memory, its clock, its dice and its voice ─────────
+// ── the session's memory, its clock and its voice (PWR1: the evasion's dice are the door's) ─────────
 let _now = () => performance.now() / 1000;
-let _rand = Math.random;
 const fresh = () => ({
   slipReady: 0, absolutionReady: 0,      // Trickster, Hierophant
   conflux: 0, confluxUntil: 0,           // Elementalist
-  guardUntil: 0, guardOwed: 0,           // Warden's Living Aegis, and the fraction its lighter blows carry
+  guardUntil: 0,                         // Warden's Living Aegis (PWR1: the guard channel carries its fraction)
   wardUntil: 0,                          // Wardwright's Prismatic Ward
   marks: new WeakMap(),                  // Seer: foe entity -> laid open until
   stacked: new WeakSet(),                // Elementalist: the casts Conflux has counted (one stack a cast)
@@ -162,23 +161,13 @@ export function pathFold(entity) {
   mods.skills[SKILLS.Streetwise] = N.glamour.streetwise;
   return mods;
 }
-/** Foresight: a foe's blow, one in eight, evaded - asked by the door BEFORE any modifier (AUDIT SCHOOLS L1 M3: as a
- *  damage modifier it ran after the sets', which spent Iron Hide's ward and Gearward's winding on a blow that never came). */
-export function pathEvade(entity) {
-  if (awakePathId(entity) !== 'seer' || !pendingPlayerBlow()) return false;
-  if (!(_rand() < 1 / N.foresight.oneIn)) return false;
-  say(t('schools.say.foresight', 'Foresight: you saw the blow coming.'));
-  return true;
-}
-/** The damage door: the Warden's guard - a foe's blow lighter, in whole points with the fraction carried (AUDIT SCHOOLS
- *  L1 M2: a raw share left health fractional - 183.2 after three 7-point blows - as Hold the Line's carry does not). */
-export function pathDamageMod(entity, dmg) {
-  if (awakePathId(entity) !== 'warden' || !pendingPlayerBlow() || !(_now() < _s.guardUntil)) return dmg;
-  const owed = (dmg * N.livingAegis.lighter) / 100 + _s.guardOwed;
-  const cut = Math.floor(owed + 1e-9);
-  _s.guardOwed = owed - cut;
-  return Math.max(0, dmg - cut);
-}
+/** Foresight's chance: a foe's blow, one in eight, evaded - PWR1 (bible/05-Combat/Power-Arc.md section 4): a source of
+ *  the evade channel, one roll for every source, asked by the door BEFORE any modifier (AUDIT SCHOOLS L1 M3's order:
+ *  systems/power/powerBudget.js rollEvade). */
+export const pathEvadeChance = (entity, ctx) => (awakePathId(entity) === 'seer' && ctx?.blow ? 100 / N.foresight.oneIn : 0);
+/** The Warden's guard - PWR1: a source of the guard channel, a foe's blow lighter while Living Aegis holds; the door
+ *  lands it in whole points with the fraction carried (AUDIT SCHOOLS L1 M2's law, powerBudget.js guardHurt). */
+export const pathGuardPct = (entity, ctx) => (awakePathId(entity) === 'warden' && ctx?.blow && _now() < _s.guardUntil ? N.livingAegis.lighter : 0);
 /** The hurt listener: Slip Away and Absolution - a hurt that takes me across the line, while ready. Never one a death
  *  save turned aside (AUDIT SCHOOLS L1 M4: `saved` - the Vigil's and Shed Skin's own rule, AUDIT 625 P1: the death that
  *  never happened spent Absolution's heal and its three minutes).
@@ -199,24 +188,28 @@ export function pathHurt(entity, { before = 0, after = 0, saved = false } = {}) 
   }
 }
 /** The magic round: Steadfast. */
-export function pathRound(entity) {
+export function pathRound(entity, round = null) {
   if (awakePathId(entity) !== 'warden' || !shieldHolds(entity)) return;
-  if (entity.health > 0 && entity.health < entity.maxHealth) healMine(entity, (entity.maxHealth * N.steadfast.pct) / 100);
+  // PWR1: the round's regeneration channel, in tenths of a percent (powerBudget.js POWER_CHANNELS.regen)
+  if (entity.health > 0 && entity.health < entity.maxHealth) healMine(entity, (entity.maxHealth * ledgerShare(round?.regen, 10 * N.steadfast.pct)) / 1000);
 }
 /** My kill: Death's Due and Soul Well. */
-export function pathKill(foe) {
+export function pathKill(foe, info = null) {
   if (!foe || neverCounts(foe)) return;
   const m = me();
   const id = awakePathId(m);
+  // PWR1: each its kill channel's share (playerKills.js opens the kill's ledgers)
   if (id === 'necromancer') {
-    healMine(m, (m.maxHealth * N.deathsDue.health) / 100);
-    manaMine(m, (m.maxMagicka * N.deathsDue.magicka) / 100);
+    healMine(m, (m.maxHealth * ledgerShare(info?.heal, N.deathsDue.health)) / 100);
+    manaMine(m, (m.maxMagicka * ledgerShare(info?.mana, N.deathsDue.magicka)) / 100);
   } else if (id === 'soulbinder') {
     const trapped = (foe.activeEffects ?? []).some((a) => a.kind === 'soulTrap' && !a.ended && !a.by);   // mine: a peer's trap carries `by`
-    manaMine(m, (m.maxMagicka * (trapped ? N.soulWell.trapped : N.soulWell.magicka)) / 100);
+    manaMine(m, (m.maxMagicka * ledgerShare(info?.mana, trapped ? N.soulWell.trapped : N.soulWell.magicka)) / 100);
   }
 }
-/** The Wardwright's ward: the chance a Destruction spell that strikes me is absorbed, while Prismatic Ward's holds. */
+/** The Wardwright's ward: the chance a Destruction spell that strikes me is absorbed, while Prismatic Ward's holds - PWR1:
+ *  a window that turns a spell WHOLE on its own clock is an EVENT, its own roll outside the absorb channel, its words whole
+ *  (absorption.js `outside`). */
 export const pathAbsorbChance = (target) => (awakePathId(target) === 'wardwright' && _now() < _s.wardUntil ? N.prismaticWard.chance : 0);
 
 // ── the riders ──────────────────────────────────────────────────────
@@ -305,15 +298,14 @@ registerSpellPierceMod(ARCANE_POWERS, pathSpellPierce);
 registerSpellCostMod(ARCANE_POWERS, pathCastCost);
 registerCastSpeedMod(ARCANE_POWERS, pathCastSpeed);
 registerEntityFold(ARCANE_POWERS, pathFold);
-registerPlayerDamageMod(ARCANE_POWERS, pathDamageMod);
-registerPlayerBlowEvasion(ARCANE_POWERS, pathEvade);   // AUDIT SCHOOLS L1 M3: Foresight, before any modifier
+registerGuardSource(ARCANE_POWERS, pathGuardPct);   // PWR1: the Warden's guard, in the guard channel
+registerEvadeSource(ARCANE_POWERS, { chance: pathEvadeChance, said: () => say(t('schools.say.foresight', 'Foresight: you saw the blow coming.')) });   // PWR1 (AUDIT SCHOOLS L1 M3's order kept: before any modifier)
 registerPlayerHurtListener(ARCANE_POWERS, pathHurt);
 registerMagicRoundHook(ARCANE_POWERS, pathRound);
 registerPlayerKillListener(ARCANE_POWERS, pathKill);
-registerAbsorptionChance(ARCANE_POWERS, pathAbsorbChance);
+registerAbsorptionChance(ARCANE_POWERS, pathAbsorbChance, { outside: true });   // PWR1: Prismatic Ward, a window that turns a spell whole - its own roll
 registerSpellLandedListener(ARCANE_POWERS, pathLanded);
 
 /** Tests only: every recovery and window fresh, a clock and dice of their own (seconds; [0, 1)). */
 export function _resetArcanePowersForTests() { _s = fresh(); _say = (line) => { hudText(line); }; }
 export function _setArcanePowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }
-export function _setArcanePowersRandForTests(fn) { _rand = typeof fn === 'function' ? fn : Math.random; }

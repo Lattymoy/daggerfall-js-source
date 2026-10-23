@@ -2076,7 +2076,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       } })
     : null;
   setFirmamentBook(firmBook);
-  firmBook?.onChange((st) => setFirmamentTree(st.tree));
+  firmBook?.onChange((st) => setFirmamentTree(st.tree, { stars: st.stars, craft: st.craft }));   // PWR2/PWR4: the purses it plays under
   // PROF5 (bible/06-Systems/Professions-Arc.md 26): the market's book - the Market tab's reads through a minute's cache,
   // a piece listed, bought, cancelled back or collected KEPT before it is asked (net/marketBook.js). Its answers tell the
   // Marks book the balance. Online only.

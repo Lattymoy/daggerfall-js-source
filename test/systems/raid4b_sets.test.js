@@ -41,6 +41,7 @@ import { KNIGHT_CITY_WATCH } from '../../src/characters/mobile/mobileTypes.js';
 import { AFFIX_RANGES, validAffix, affixesWorth, RARITIES } from '../../src/systems/loot/lootRarity.js';
 import { validLootItem } from '../../src/systems/loot/loot.js';
 import { getItemHands, ITEM_HANDS } from '../../src/characters/equipTable.js';
+import { budgeted, guardHurt, _resetPowerBudgetForTests } from '../../src/systems/power/powerBudget.js';   // PWR1: the channels' curve; the guard's door
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -175,7 +176,7 @@ test('RAID4b Riposte (the Broken Oath, 4): a foe\'s blow that TAKES my health op
   fresh(); online(40);
   const asc = wearSet(player(), 'oath', 4, XP[4]);
   blow(asc, 10);
-  assert.equal(weaponBlowMods(sword(), 100, asc, RAT), 140, 'Ascendant: +40%');
+  assert.equal(weaponBlowMods(sword(), 100, asc, RAT), 100 + Math.floor(budgeted('blow', 40)), 'Ascendant: +40% - alone past the blow channel\'s knee, on its curve (PWR1)');
 });
 
 test('RAID4b Run Them Down (the Thief-Taker\'s Garb, 4): my weapon blows at a foe UNDER half its health deal their per cent more, arrows too; never at half or above, never at a foe with no health to read (mutants: at half health; the attacker\'s health read)', () => {
@@ -257,21 +258,26 @@ test('RAID4b Blood for Blood (Orcsbane Harness, 4): each foe\'s blow that takes 
 test('RAID4b Hold the Line (the Broken Oath, 6): while I stand UNDER half health every hurt my door takes is its per cent less, in whole points with the fraction carried to the next hurt; never at half or above (mutants: at half health; the fraction dropped)', () => {
   fresh(); online(1);
   const e = wearSet(player(), 'oath', 6);
+  // PWR1 (bible/05-Combat/Power-Arc.md section 4): Hold the Line is a source of the guard channel - the door's guardHurt
+  // lands it, in whole points with the fraction carried
+  _resetPowerBudgetForTests();
+  const guarded = (n) => guardHurt(e, n, { blow: false, attacker: null });
   e.health = 50;
-  assert.equal(setDamageMod(e, 100), 100, 'at half: not under it');
+  assert.equal(guarded(100), 100, 'at half: not under it');
   e.health = 49;
-  assert.equal(setDamageMod(e, 100), 90, '10% less at Faint');
-  assert.deepEqual([3, 3, 3, 3].map((n) => setDamageMod(e, n)), [3, 3, 3, 2], 'three tenths a hurt, carried: the fourth takes the whole point');
+  assert.equal(guarded(100), 90, '10% less at Faint');
+  assert.deepEqual([3, 3, 3, 3].map(guarded), [3, 3, 3, 2], 'three tenths a hurt, carried: the fourth takes the whole point');
   hurtPlayer(e, 20);
   assert.equal(e.health, 31, 'through my door: eighteen of twenty');
   fresh(); online(40);
   const asc = wearSet(player(), 'oath', 6, XP[4]);
   asc.health = 10;
-  assert.equal(setDamageMod(asc, 100), 75, 'Ascendant: 25% less');
+  _resetPowerBudgetForTests();
+  assert.equal(guardHurt(asc, 100, { blow: false, attacker: null }), 75, 'Ascendant: 25% less (under the guard channel\'s knee, whole)');
   fresh(); online(1);
   const four = wearSet(player(), 'oath', 4);
   four.health = 10;
-  assert.equal(setDamageMod(four, 100), 100, 'four pieces: nothing');
+  assert.equal(guardHurt(four, 100, { blow: false, attacker: null }), 100, 'four pieces: nothing');
 });
 
 test('RAID4b Iron Hide (Orcsbane Harness, 6): a kill when it is ready wards me - the next points of damage my door takes are turned aside, spent point for point - said and sounded, and it recovers in its time, said ready again at the round; a kill inside the recovery wards nothing, and a ward is never piled on a ward (mutants: no recovery; the ward stacked; the ward spent twice; the ward taken off a sleeping set)', () => {

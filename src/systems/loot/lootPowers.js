@@ -61,7 +61,10 @@ import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-1
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
 import { lootRarityOn, validAffix, powerOf, registerLegendaryFind, readLines } from './lootRarity.js';   // GEM1: readLines, law 6's reading
 import { equipTableOf } from '../equip.js';
-import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtListener, playerEntity } from '../../characters/playerEntity.js';
+import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../../characters/playerEntity.js';
+import { registerEvadeSource, registerGuardSource, ledgerShare } from '../power/powerBudget.js';   // PWR1: the evasion and the guard summed at the door; a ledger's share
+import { powerAwake } from '../power/attunement.js';   // PWR2: a piece's power wakes only attuned
+import '../power/attuneActions.js';   // PWR2: attunement's doors and its settle at every equip change, registered wherever the powers are
 import { registerPlayerKillListener } from '../playerKills.js';
 import { registerAbsorptionChance } from '../absorption.js';
 import { registerMagicRoundHook, skyMinutes } from '../worldTick.js';   // TIME1: a moon power answers to the sky's night
@@ -183,12 +186,15 @@ const say = (line) => { try { _say(line); } catch { /* a line is not the power's
  *  none on anything else. */
 const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];
 /** Every power MY entity's worn pieces carry - `[{ id, power, item }]`, ONE entry an id (a power counts once): a
- *  Legendary's own record, and (LOOT10) a Rare's imprint. None for anyone but me, with the switch off, or in a duel. */
+ *  Legendary's own record, and (LOOT10) a Rare's imprint. None for anyone but me, with the switch off, or in a duel.
+ *  PWR2 (bible/05-Combat/Power-Arc.md section 5): a piece's power only while it is attuned (systems/power/attunement.js
+ *  powerAwake - three at once, out of combat). */
 export function wornPowers(entity) {
   if (!mine(entity) || !lootRarityOn() || setsDueling()) return [];
   const out = [];
   const seen = new Set();
   for (const it of wornPieces(entity)) {
+    if (!powerAwake(entity, it)) continue;
     for (const id of powerIds(it)) {
       if (typeof id !== 'string' || seen.has(id)) continue;
       const power = powerOf(id);
@@ -224,8 +230,22 @@ const gainMana = manaMine;   // SCHOOLS3: the one magicka gift, moved to playerH
  * blow resolved here, a foe's, or the Warden's ward.
  */
 export function lootBlow(weapon, damage, attacker, target, info) {
-  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return damage;
-  let out = damage;
+  return lootSear(weapon, lootBlowPct(weapon, damage, attacker, target, info), attacker, target, info);
+}
+/** PWR1 (bible/05-Combat/Power-Arc.md section 4): the loot's PERCENTS on my blow - a source of the blow channel. */
+export function lootBlowPct(weapon, damage, attacker, target, info) {
+  const parts = lootBlowParts(weapon, damage, attacker, target, info);
+  return parts && parts.pct > 0 ? damage + shareOf(weapon ?? attacker, damage, parts.pct, !info?.estimate) : damage;
+}
+/** PWR1: the loot's FLAT points on my blow - an element's sear and the venom - no percent of it, so outside the blow
+ *  channel's sum (entityMods.js registerWeaponBlowMod `outside: 'flat'`), added after it, as the sets' sear is. */
+export function lootSear(weapon, damage, attacker, target, info) {
+  const parts = lootBlowParts(weapon, damage, attacker, target, info);
+  return parts && parts.flat > 0 ? damage + parts.flat : damage;
+}
+/** What the loot lays on my blow at a foe - `{ pct, flat }`, or null for a blow it does not answer. */
+function lootBlowParts(weapon, damage, attacker, target, info) {
+  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return null;
   const group = foeGroup(target);
   let pct = 0, flat = 0;
   for (const a of linesOf(weapon, 'slayer')) if (a.param === group) pct += a.value;
@@ -248,8 +268,7 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       default: break;
     }
   }
-  if (pct > 0) out += shareOf(weapon ?? attacker, damage, pct, !info?.estimate);
-  return out + flat;
+  return { pct, flat };
 }
 
 // ── the strike: leech ───────────────────────────────────────────────
@@ -261,7 +280,7 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
   let pct = 0;
   for (const a of linesOf(weapon, 'leech')) pct += a.value;
   pct = Math.min(LEECH_CAP, pct);   // BAL7
-  if (pct > 0) healMine(attacker, (damage * pct) / 100);
+  if (pct > 0) healMine(attacker, (damage * ledgerShare(info?.leech, pct)) / 100);   // PWR1: the leech channel's share, every leech of this blow summed (formulas.js)
   // LOOT5: the powers that answer a blow that landed. TWO-HANDS (AUDIT 2): a charge a power takes per blow - Conduit's
   // mana, Flow's stack, the Undertow's stack - only from a blow that counts whole (formulas.js `blow`:
   // an off-hand blow counts DUAL.OFF_DAMAGE of the time), so a pair charges them as its damage edge allows, not its blow
@@ -367,32 +386,52 @@ export function lootLanded(entity, attacker, took) {
 }
 
 // ── LOOT5: the damage I take ────────────────────────────────────────
-/** MY damage door's modifier (before a Shield spell's pool): a FOE'S BLOW turned aside whole - Dawnward's five charges,
- *  the Raven's evasion - then lessened by its Hex, by Bedrock's stacks, by Bulwark's points (never under 1); ANY hurt
- *  lessened by the Last Stand under its line, then no more than Unyielding's share of my health. A fall or a poison is
- *  no blow (`pendingPlayerBlow` - the sets' own law of one). */
+/** DAWNWARD (the door's evasion events - characters/playerEntity.js registerPlayerBlowEvasion, asked before any chance or
+ *  modifier): a FOE'S BLOW turned aside whole once its charges are full. An event on its own count, not a chance - it
+ *  stays outside the evade channel's sum (PWR1, bible/05-Combat/Power-Arc.md section 4), bound as an attuned power is. */
+export function lootDawnward(entity) {
+  if (!mine(entity) || !pendingPlayerBlow()) return false;
+  const dawn = powerKind(entity, 'dawnward');
+  if (!dawn || _s.charges < dawn.charges) return false;
+  _s.charges = 0;
+  say('Dawnward turns the blow aside.');
+  return true;
+}
+/** THE RAVEN'S EVASION (PWR1: a source of the evade channel, summed at the door with every other - powerBudget.js
+ *  rollEvade): its chance on a foe's blow. */
+export const lootEvadeChance = (entity, ctx) => (mine(entity) && ctx?.blow ? (powerKind(entity, 'evade')?.chance ?? 0) : 0);
+/** THE LOOT'S GUARD (PWR1: a source of the guard channel, summed at the door - powerBudget.js guardHurt): the Hex on the
+ *  foe that struck, Bedrock's stacks, a foe's blow alone; the Last Stand under its line, any hurt. Each a percent, summed
+ *  with every other guard's - before PWR1 each multiplied what the last had left. */
+export function lootGuardPct(entity, ctx) {
+  if (!mine(entity)) return 0;
+  const powers = wornPowers(entity);
+  if (!powers.length) return 0;
+  const kind = (k) => powers.find((p) => p.power.kind === k)?.power ?? null;
+  const blow = ctx?.blow ? pendingPlayerBlow() : null;
+  const now = _now();
+  let pct = 0;
+  const hex = kind('hex');
+  if (blow && hex && hexed(blow.attacker, now)) pct += hex.less;
+  const bed = kind('bedrock');
+  if (blow && bed) pct += bed.less * bedrockStacks(now);
+  const last = kind('laststand');
+  if (last && share(entity) < last.below / 100) pct += last.less;
+  return pct;
+}
+/** MY damage door's modifier (before a Shield spell's pool), what is no percent: a FOE'S BLOW lessened by Bulwark's
+ *  points (never under 1), then ANY hurt no more than Unyielding's share of my health. A fall or a poison is no blow
+ *  (`pendingPlayerBlow` - the sets' own law of one). PWR1: Dawnward is the door's evasion event now (lootDawnward), the
+ *  Raven its evade channel's (lootEvadeChance), the Hex, Bedrock and the Last Stand its guard channel's (lootGuardPct). */
 export function lootDamageMod(entity, dmg) {
   if (!mine(entity) || !(dmg > 0)) return dmg;
   const powers = wornPowers(entity);
   if (!powers.length) return dmg;
   const blow = pendingPlayerBlow();
-  const now = _now();
   const kind = (k) => powers.find((p) => p.power.kind === k)?.power ?? null;
-  if (blow) {
-    const dawn = kind('dawnward');
-    if (dawn && _s.charges >= dawn.charges) { _s.charges = 0; say('Dawnward turns the blow aside.'); return 0; }
-    const raven = kind('evade');
-    if (raven && _rand() * 100 < raven.chance) { say('You evade the blow.'); return 0; }
-  }
   let d = dmg;
-  const hex = kind('hex');
-  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - hex.less / 100;
-  const bed = kind('bedrock');
-  if (blow && bed) d *= 1 - (bed.less * bedrockStacks(now)) / 100;
   const wall = kind('bulwark');
   if (blow && wall) d = Math.max(1, d - wall.less);
-  const last = kind('laststand');
-  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;
   const titan = kind('unyielding');
   if (titan && entity.maxHealth > 0) d = Math.min(d, Math.max(1, Math.ceil((entity.maxHealth * titan.most) / 100)));
   return Math.max(dmg > 0 && d > 0 ? 1 : 0, Math.round(d));
@@ -466,24 +505,24 @@ export const hasteBundle = (p) => ({
 });
 /** MY KILL (playerKills.js - every pool's word that my own blow killed a foe): Sanctified's, Orc Rage's and (GILDED2) the Undertow's heal, Soul
  *  Siphon's magicka, Tribute's gold, Courier's Haste. */
-export function lootKill(foe) {
+export function lootKill(foe, info = null) {
   if (!foe || neverCounts(foe)) return;
   const door = playerDoor();
   const me = door?.player?.() ?? playerEntity;
   // BAL9c: the wellspring lines I wear - that share of my magicka back, summed under the cap (Soul Siphon's own door)
   const well = mine(me) ? Math.min(WELLSPRING_CAP, wornSum(me, 'wellspring')) : 0;
-  if (well > 0 && me.maxMagicka > 0) gainMana(me, (me.maxMagicka * well) / 100);
+  if (well > 0 && me.maxMagicka > 0) gainMana(me, (me.maxMagicka * ledgerShare(info?.mana, well)) / 100);   // PWR1: the kill's magicka channel
   const powers = wornPowers(me);
   if (!powers.length) return;
   const now = _now();
   for (const { power: p } of powers) {
     switch (p.kind) {
-      case 'sanctified': if (foeGroup(foe) === p.group) healMine(me, (me.maxHealth * p.heal) / 100); break;
-      case 'rage': healMine(me, (me.maxHealth * p.heal) / 100); break;
-      case 'siphon': gainMana(me, (me.maxMagicka * p.pct) / 100); break;
+      case 'sanctified': if (foeGroup(foe) === p.group) healMine(me, (me.maxHealth * ledgerShare(info?.heal, p.heal)) / 100); break;   // PWR1: the kill's heal channel
+      case 'rage': healMine(me, (me.maxHealth * ledgerShare(info?.heal, p.heal)) / 100); break;
+      case 'siphon': gainMana(me, (me.maxMagicka * ledgerShare(info?.mana, p.pct)) / 100); break;
       case 'tribute': { const g = p.gold * Math.max(1, foe.level | 0); addGoldPieces(me, g); say(`Tribute: ${g} gold.`); break; }
       case 'toll': if (p.refund && _lastToll?.foe === foe && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) { addItem(me.items, createPellets(1)); _lastToll = null; } break;   // GILDED1: the felling shot's pellet, back
-      case 'undertow': { const u = _undertow.get(foe); if (u && now - u.at <= TOLL_REFUND_S) { healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); } break; }   // GILDED2: a foe it fells, the tide's heal - each its own (AUDIT WORLD-REWARDS B2)
+      case 'undertow': { const u = _undertow.get(foe); if (u && now - u.at <= TOLL_REFUND_S) { healMine(me, (me.maxHealth * ledgerShare(info?.heal, p.heal)) / 100); _undertow.delete(foe); } break; }   // GILDED2: a foe it fells, the tide's heal - each its own (AUDIT WORLD-REWARDS B2)
       case 'haste':
         if (now >= _s.hasteReady && door?.castOnPlayer) { _s.hasteReady = now + p.recover; _s.recovering.add('haste'); door.castOnPlayer(hasteBundle(p)); }
         break;
@@ -542,18 +581,19 @@ const READY = Object.freeze({
 });
 /** THE MAGIC ROUND: Hist-Sap's regeneration, (BAL9c) the Wellspring of Artaeum's magicka, and "ready again" for a
  *  recovery that ran out with its power still worn. */
-export function lootRound(entity) {
+export function lootRound(entity, round = null) {
   if (!mine(entity)) return;
   const hist = powerKind(entity, 'regen');
   if (hist && entity.maxHealth > 0 && entity.health > 0 && entity.health < entity.maxHealth) {
-    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);
+    // PWR1: the round's regeneration channel, in tenths of a percent (powerBudget.js POWER_CHANNELS.regen)
+    healMine(entity, (entity.maxHealth * ledgerShare(round?.regen, 10 * (share(entity) < 0.5 ? hist.low : hist.pct))) / 1000);
   }
   // BAL9c: the Wellspring of Artaeum - a share of my magicka, more under half; never for a career that cannot regenerate
   // it (NoRegenSpellPoints), where rest's own gate holds it back (offline - REST-MANA1: online every career's comes back)
   const well = powerKind(entity, 'attune');
   if (well && entity.maxMagicka > 0 && entity.health > 0 && Number.isFinite(entity.magicka) && entity.magicka < entity.maxMagicka
     && !(hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen())) {
-    gainMana(entity, (entity.maxMagicka * (entity.magicka < entity.maxMagicka / 2 ? well.low : well.pct)) / 100);
+    gainMana(entity, (entity.maxMagicka * ledgerShare(round?.manaRegen, 10 * (entity.magicka < entity.maxMagicka / 2 ? well.low : well.pct))) / 1000);   // PWR1
   }
   if (!_s.recovering.size) return;
   const now = _now();
@@ -596,7 +636,9 @@ export function wardrobeFold(entity) {
 
 // ── registered at import ───────────────────────────────────────────
 export const LOOT_POWERS = 'lootPowers';
-registerWeaponBlowMod(LOOT_POWERS, lootBlow);
+export const LOOT_SEAR = 'lootSear';   // PWR1: the loot's flat points, outside the blow channel's sum
+registerWeaponBlowMod(LOOT_POWERS, lootBlowPct);   // PWR1: the percents, in the blow channel's sum
+registerWeaponBlowMod(LOOT_SEAR, lootSear, { outside: 'flat' });   // PWR1: the flat points, after it
 registerPlayerStrikeListener(LOOT_POWERS, lootStrike);
 registerPlayerBlowLanded(LOOT_POWERS, lootLanded);
 registerSpellCostMod(LOOT_POWERS, lootCastCost);
@@ -604,6 +646,9 @@ registerCastSpeedMod(LOOT_POWERS, lootCastSpeed);   // CAST-SPEED
 registerSpellPowerMod(LOOT_POWERS, lootSpellPower);   // BAL9c
 registerSpellPierceMod(LOOT_POWERS, lootSpellPierce);   // BAL9c
 registerPlayerDamageMod(LOOT_POWERS, lootDamageMod);   // LOOT5
+registerPlayerBlowEvasion(LOOT_POWERS, lootDawnward);   // PWR1: Dawnward, the door's event before any chance or modifier
+registerEvadeSource(LOOT_POWERS, { chance: lootEvadeChance, said: () => say('You evade the blow.') });   // PWR1: the Raven, in the evade channel
+registerGuardSource(LOOT_POWERS, lootGuardPct);   // PWR1: the Hex, Bedrock, the Last Stand, in the guard channel
 registerPlayerDeathSave(LOOT_POWERS, lootDeathSave);
 registerPlayerHurtListener(LOOT_POWERS, lootHurt);
 registerPlayerKillListener(LOOT_POWERS, lootKill);

@@ -21,10 +21,12 @@ let _mentoring = false;
 const _listeners = new Set();
 const tell = () => { for (const fn of _listeners) { try { fn(); } catch { /* a listener is not the tree's problem */ } } };
 
-/** The host's word: the tree this character plays under (the book's), or null for none. */
-export function setFirmamentTree(tree) {
+/** The host's word: the tree this character plays under (the book's), or null for none - and (PWR2, PWR4) the purses it
+ *  plays under, `{ stars, craft }` the service's view: a star the sky holds past them, or past two combat keystones,
+ *  sleeps (net/firmament/firmamentLaw.js awakeKeys). None given, nothing sleeps for want of Stars. */
+export function setFirmamentTree(tree, purse = undefined) {
   _tree = tree?.start ? { start: tree.start, keys: [...(tree.keys ?? [])] } : EMPTY_TREE;
-  _stats = treeStats(_tree);
+  _stats = treeStats(_tree, purse);
   for (const fn of _listeners) { try { fn(); } catch { /* a listener is not the tree's problem */ } }
 }
 /** The host's word: this page plays online (the tree in force) or not. */

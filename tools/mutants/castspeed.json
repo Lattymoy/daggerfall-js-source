@@ -49,8 +49,8 @@
   {
     "name": "CASTSPEED-percent-as-whole",
     "file": "src/systems/castSpeed.js",
-    "old": "    if (Number.isFinite(pct)) r += pct / 100;",
-    "new": "    if (Number.isFinite(pct)) r += pct;",
+    "old": "budgeted('castSpeed', castSpeedSum(entity)) / 100;",
+    "new": "budgeted('castSpeed', castSpeedSum(entity));",
     "tests": [
       "test/systems/castspeed.test.js"
     ]

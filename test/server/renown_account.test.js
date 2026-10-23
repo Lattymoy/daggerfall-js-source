@@ -53,7 +53,7 @@ test('RENOWN-ACCOUNT the rate: every source pays RENOWN_RATE_PCT (75) of its ful
   assert.equal(RENOWN_RAID_QUESTS, 3);
   assert.deepEqual([renownRaidXp(null), renownRaidXp(1), renownRaidXp(10), renownRaidXp(27), renownRaidXp(RENOWN_MAX)], [585, 585, 1395, 2925, 2925], 'they were 780, 1,860 and 3,900');
   // THE PARTY: the bonus rides on the rated kill, so its base is a quarter less too
-  assert.equal(renownPartyXp(renownKillXp(30, RENOWN_MAX), 8), 383, 'eight at level 30 - it was 510');
+  assert.equal(renownPartyXp(renownKillXp(30, RENOWN_MAX), 8), 293, 'eight at level 30 - it was 510, then 383; PWR5 (Mac: "the party\'s Renown bonus at most +30%") holds the bonus at +30%');
   assert.equal(renownPartyXp(renownKillXp(20, RENOWN_MAX), 4), 195);
   // THE CURVE did not move: the grind is slower because every source pays less, never because a level costs more
   assert.deepEqual([2, 10, 20, 50].map(renownXpFor), [100, 5510, 68200, 2318660]);

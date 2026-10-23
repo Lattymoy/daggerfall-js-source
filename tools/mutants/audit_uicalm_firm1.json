@@ -64,11 +64,11 @@
   },
   {
     "name": "AUF-L1M4-one-carry",
-    "file": "src/systems/firmamentPowers.js",
-    "old": "  const exact = (dmg * pct) / 100 + _takenOwed[ch];",
-    "new": "  const exact = (dmg * pct) / 100 + _takenOwed.blow;",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  const exact = (dmg * pct) / 100 + _guardOwed[k];",
+    "new": "  const exact = (dmg * pct) / 100 + _guardOwed.blow;",
     "tests": [
-      "test/systems/audit_uicalm_firm1.test.js"
+      "test/systems/power/pwr1_budget.test.js", "test/systems/audit_uicalm_firm1.test.js"
     ]
   },
   {
@@ -164,8 +164,8 @@
   {
     "name": "AUF-L2M4-switch-not-on-trades",
     "file": "server-account/src/firmament.js",
-    "old": "export const firmStatsFrom = (row, player, env) => (firmamentOpenFor(player, env) ? treeStats(unpackTree(row?.tree ?? '')) : {});",
-    "new": "export const firmStatsFrom = (row, player, env) => treeStats(unpackTree(row?.tree ?? ''));",
+    "old": "export function firmStatsFrom(row, player, env) {\n  if (!firmamentOpenFor(player, env)) return {};",
+    "new": "export function firmStatsFrom(row, player, env) {",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUF-L5M11-set-no-rate",
     "file": "server-account/src/firmament.js",
-    "old": "  if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };\n  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const fault",
-    "new": "  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const fault",
+    "old": "  if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };\n  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const prevPacked = String(row?.tree ?? '');\n  const prev = unpackTree(prevPacked);",
+    "new": "  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const prevPacked = String(row?.tree ?? '');\n  const prev = unpackTree(prevPacked);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUF-L5M11-respec-no-guard",
     "file": "server-account/src/firmament.js",
-    "old": "      mustChange(db),\n      db.prepare(\"UPDATE firmament SET tree = ''",
-    "new": "      db.prepare(\"UPDATE firmament SET tree = ''",
+    "old": "      mustChange(db),\n      ...(free ? [db.prepare('INSERT INTO firmament_free",
+    "new": "      ...(free ? [db.prepare('INSERT INTO firmament_free",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -451,18 +451,18 @@
   },
   {
     "name": "AUF-L5H5-evade-always",
-    "file": "src/systems/firmamentPowers.js",
-    "old": "  return _rand() * 100 < c.evade;",
-    "new": "  return true;",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  if (!(roll < p)) return false;",
+    "new": "  if (!(roll < 100)) return false;",
     "tests": [
-      "test/systems/audit_uicalm_firm1.test.js"
+      "test/systems/power/pwr1_budget.test.js", "test/systems/audit_uicalm_firm1.test.js"
     ]
   },
   {
     "name": "AUF-L5H5-killheal-tenfold",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  if (c.killHeal) healMine(m, (m.maxHealth * c.killHeal) / 100);",
-    "new": "  if (c.killHeal) healMine(m, (m.maxHealth * c.killHeal) / 10);",
+    "old": "  if (c.killHeal) healMine(m, (m.maxHealth * ledgerShare(info?.heal, c.killHeal)) / 100);",
+    "new": "  if (c.killHeal) healMine(m, (m.maxHealth * ledgerShare(info?.heal, c.killHeal)) / 10);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "AUF-L5H5-regen-tenfold",
     "file": "src/systems/firmamentPowers.js",
-    "old": "healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);",
-    "new": "healMine(entity, (entity.maxHealth * c.hpRegen) / 100);",
+    "old": "healMine(entity, (entity.maxHealth * ledgerShare(round?.regen, c.hpRegen)) / 1000);",
+    "new": "healMine(entity, (entity.maxHealth * ledgerShare(round?.regen, c.hpRegen)) / 100);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -569,7 +569,7 @@
   {
     "name": "AUF-L5H3-tree-never-in-force",
     "file": "src/scenes/world.js",
-    "old": "  firmBook?.onChange((st) => setFirmamentTree(st.tree));",
+    "old": "  firmBook?.onChange((st) => setFirmamentTree(st.tree, { stars: st.stars, craft: st.craft }));",
     "new": "  void setFirmamentTree;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"

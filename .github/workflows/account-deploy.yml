@@ -287,6 +287,8 @@ on:
       - "src/systems/enchantmentCatalogue.js"
       - "src/systems/enchantments.js"
       - "src/systems/entityMods.js"
+      - "src/systems/power/powerBudget.js"
+      - "src/systems/power/attunement.js"
       - "src/systems/equip.js"
       - "src/systems/features.js"
       - "src/systems/feudLedger.js"

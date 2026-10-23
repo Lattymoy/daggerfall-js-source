@@ -117,7 +117,7 @@ const CATALOGUE = {
   'title:hearthkeeper': 'festival seasonal', 'title:warden': 'seats open', 'title:protector': 'seats open', 'title:crowned': 'seats open',
   'title:keeper': 'seats open', 'title:champion': 'seats open', 'title:chaptermaster': 'chapters dormant', 'title:chapterofficer': 'chapters dormant',
   'title:formermaster': 'chapters dormant', 'title:highmaster': 'chapters dormant', 'title:seasonmaster': 'chapters dormant', 'title:grandchampion': 'ranked open',
-  'title:arenachampion': 'ranked ranked', 'title:iliacchampion': 'ranked ranked', 'title:grandmaster': 'ranked ranked', 'title:ilovelamp': 'world open',
+  'title:arenachampion': 'ranked ranked', 'title:iliacchampion': 'ranked ranked', 'title:grandmaster': 'ranked ranked', 'title:ilovelamp': 'world open', 'title:renowned': 'world open', 'title:paragon': 'world open', 'title:legend': 'world open',   // PWR4: Renown 30, 40 and 50
   'title:founder': 'account closed', 'title:disciple': 'patrons patron', 'title:apostle': 'patrons dormant', 'title:hierophant': 'patrons patron',
   'title:herald': 'patrons patron', 'title:developer': 'staff staff', 'title:dungeonmaster': 'staff staff', 'title:shadowfang': 'bestowed bestowed',
   'title:penitent': 'bestowed bestowed', 'title:aegis': 'bestowed bestowed', 'title:primarch': 'bestowed bestowed', 'title:crystalfist': 'bestowed bestowed',

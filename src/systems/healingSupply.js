@@ -24,17 +24,17 @@
 //
 // RENOWN-LOOT (2026-10-05, Mac: "tie it to renoun level"; systems/renownLoot.js): those raises - and the Restore
 // Power potion's own two chances, whose step starts from none - are LOOT-EASE's buff, and online they come by the
-// roller's Renown: half of each at Renown 1, all at Renown 20, half again at Renown 40 (a foe's healing potion 3, 4
-// and 5 in 100; its Restore Power 1, 2 and 3 - POT-THIN's, below). Offline, the numbers below. `healingSupplyChances` is
-// the one read.
+// roller's Renown: half of each at Renown 1, all at Renown 10, half again at Renown 20 (a foe's healing potion 3, 4
+// and 5 in 100; its Restore Power 1, 2 and 3 - POT-THIN's, below; PWR4 re-spaced the stages - Renown 20 and 40 before).
+// Offline, the numbers below. `healingSupplyChances` is the one read.
 //
 // POT-THIN (2026-10-21, the Discord's #feature-feedback, "Crafting seems unrewarding": "I collect so many potions from
 // enemy drops that I never need to make potions... who needs to buy pots when you find them everywhere?"; the owner:
 // "I definitely want to decrease pot drops"; bible/06-Systems/Professions-Arc.md section 48): THE FLOOD TURNED DOWN. A
-// looting foe at Renown 20 carried 19 potions in 100 (this file's 10 and 6, DFU's random 3); it carries 9 in 100 now -
+// looting foe at Renown 20 (Renown 10 since PWR4) carried 19 potions in 100 (this file's 10 and 6, DFU's random 3); it carries 9 in 100 now -
 // the healing potion 4 and Restore Power 2 (AUDIT CRAFT-WRITS E8: an expected count, the chance of at least one some
 // 8.7 in 100) - so the brewer's bottle is the steady supply and the
-// drop a windfall. RENOWN-LOOT's ladder stands on new ends: a foe's healing potion 3 at Renown 1 to 5 at Renown 40 (it
+// drop a windfall. RENOWN-LOOT's ladder stands on new ends: a foe's healing potion 3 at Renown 1 to 5 at Renown 20 (it
 // was 8 to 12), its Restore Power 1 to 3 (3 to 9); a deep pile's healing potion 6 to 10 (15 to 21), its Restore Power 2
 // to 6 (5 to 15). DFU's own random potion (3 a foe, 4 a pile) and the counter's shelf are untouched.
 //

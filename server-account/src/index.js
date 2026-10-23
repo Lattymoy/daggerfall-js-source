@@ -149,7 +149,8 @@
 // burnt in the change's batch. Behind FIRMAMENT_OPEN:
 //   POST /v1/firmament/state { character }            -> { tree, renown, stars, craft, ranks, left, refund }
 //   POST /v1/firmament/set { character, tree, rid }   -> { ...state, silver, balance? } | { repeat, ... }
-//   POST /v1/firmament/respec { character, rid, realm?, region? } -> { ...state, respec, gold, realm? } (the whole sky back for 10,000 gold)
+//   POST /v1/firmament/respec { character, rid, realm?, region? } -> { ...state, respec, gold, realm? } (the whole sky back for 10,000 gold; PWR2: the first free)
+//   POST /v1/firmament/swap { character, slot, rid }  -> { ...state, aside, swapped } | { repeat, ... }   (PWR4: a sky kept aside, exchanged)
 //   POST /v1/auth/token { character? }    -> { ..., level, xp }   (RENOWN4: xp, the track's total)
 //   (REALM-DOOR: the token says whether that character is one of the account's realm characters, `rc`)
 //   (ARENA4b: and, for a realm character, the level on its tile - its summary's - as `cl`, 1..1000)
@@ -265,7 +266,7 @@ import { LOST_BODY_MAX } from '../../src/net/lostLaw.js';
 import { sendReport, myReports, reportInbox, readReport, closeReport } from './reports.js';   // PRIVATE-REPORT: a player's private report
 import { REPORT_BODY_BYTES } from '../../src/net/reportLaw.js';
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
-import { firmamentState, setFirmament, respecFirmament, FIRM_STATUS } from './firmament.js';   // FIRM1: the Firmament - a character's passive tree
+import { firmamentState, setFirmament, respecFirmament, swapFirmamentSky, FIRM_STATUS } from './firmament.js';   // FIRM1: the Firmament - a character's passive tree; PWR4: its skies
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
 import { witnessHall, listHalls, strikeHall } from './npcHalls.js';
 import { witnessTown, claimTownWatch, townsEcon, raidActStatements, strikeTown, auditTowns, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: the players' share
@@ -1139,7 +1140,7 @@ const service = {
       // CARDS10: and Iliac Hand's season #1 (iliac.js), on the same doors; KG6: and The King's Gambit's (gambit.js);
       // SIGN-BATCH: the three games' reads in ONE batch (honours.js withHonours), each answered as its with*Honours answers; EG-E2: and
       // the Spire Champions - the last season's Descent's top tens (egHonours.js), read beside them
-      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withEgHonours(honoursCtx, await withHonours(honoursCtx, who.player, nowS), nowS);
+      if (ARENA_HONOUR_PATHS.has(path)) who.player = await withEgHonours(honoursCtx, await withHonours(honoursCtx, who.player, nowS, ctx), nowS);   // PWR4: the best Renown, a plain read, on the mint's session
 
       if (path === '/v1/auth/token' && request.method === 'POST') {
         const key = await signingKey(env, subtle);
@@ -1662,11 +1663,12 @@ const service = {
       //
       // A character's passive tree: read with its purses, and changed WHOLE - the law judges the tree asked for against the
       // purses this service counts, and a refund's silver is burnt in the change's own batch (firmament.js).
-      if (path === '/v1/firmament/state' || path === '/v1/firmament/set' || path === '/v1/firmament/respec') {
+      if (path === '/v1/firmament/state' || path === '/v1/firmament/set' || path === '/v1/firmament/respec' || path === '/v1/firmament/swap') {
         if (request.method !== 'POST') return no('method', 405, origin);
         const r = path === '/v1/firmament/state' ? await firmamentState(ctx, who.player, env, body)
           : path === '/v1/firmament/set' ? await setFirmament(ctx, who.player, env, body)
-            : await respecFirmament({ ...ctx, bucket: env.SAVES }, who.player, env, body);   // a realm character's record is in R2
+            : path === '/v1/firmament/swap' ? await swapFirmamentSky(ctx, who.player, env, body)   // PWR4: a sky kept aside, exchanged
+              : await respecFirmament({ ...ctx, bucket: env.SAVES }, who.player, env, body);   // a realm character's record is in R2
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.silver) ? { silver: r.silver } : {}), ...(r.error === 'seq' && Number.isSafeInteger(r.seq) ? { seq: r.seq } : {}) }, /** @type {Record<string, number>} */ (FIRM_STATUS)[r.error] ?? 400, origin);
         return json(r, 200, origin);
       }

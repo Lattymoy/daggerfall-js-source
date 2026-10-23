@@ -174,6 +174,8 @@ import { SOUND } from '../../systems/soundClips.js';
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { attune, release } from '../../systems/power/attuneActions.js';   // PWR2: a power piece's attunement, chosen from its card
+import { attunable, attunedStamp, attunementOn } from '../../systems/power/attunement.js';
 import { isLanternItem, waistLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf (BELT-WAIST: whatever hangs at the waist)
 /** Slot id -> where it sits on the body, and what to call it.
  *
@@ -2467,6 +2469,13 @@ function hangLantern(item) {
   if (deps.entity?.lightSource !== item) use(item, null);
   else { refresh(); refreshFigure(); render(); }
 }
+/** PWR2: attune a power piece, or release it - the door's answer said either way. */
+function attuneAct(item, on) {
+  const r = on ? release(deps.entity, item) : attune(deps.entity, item);
+  notice = r.text;
+  refresh();
+  render();
+}
 /** BELT-LANTERN: take it off the belt; a lit one goes out. */
 function unhangLantern(item) {
   const lit = deps.entity?.lightSource === item;
@@ -3472,6 +3481,14 @@ function itemActs(picked, side, { qty = true } = {}) {
       const lb = el('button', 'act', onBelt ? 'Take off belt' : 'Hang at belt');
       lb.onclick = onBelt ? () => unhangLantern(picked) : () => hangLantern(picked);
       acts.append(lb);
+    }
+    // PWR2 (bible/05-Combat/Power-Arc.md section 5): a power piece is attuned, or released, from its card - out of combat,
+    // three at once; the door says why when it will not
+    if (attunementOn() && attunable(picked)) {
+      const on = attunedStamp(picked) > 0;
+      const ab = el('button', 'act', on ? 'Release' : 'Attune');
+      ab.onclick = () => attuneAct(picked, on);
+      acts.append(ab);
     }
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move

@@ -31,6 +31,7 @@
 import { skillValue, SKILLS } from './skills.js';
 import { isOnlinePage } from './online/onlineLane.js';   // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
 import { pathCastSchool } from './arcanePaths.js';   // SCHOOLS3: a signature spell is cast in its path's two schools (a leaf)
+import { budgeted } from './power/powerBudget.js';   // PWR1: the price's cuts summed through the castCut channel's curve (a leaf)
 
 export const CAST_COST_FLOOR = 5;
 
@@ -223,9 +224,14 @@ export function calculateCastCost(spell, casterEntity, { portMods = true, online
   if (spell.minimumCastingCost) sp = CAST_COST_FLOOR;
   if (sp < CAST_COST_FLOOR) sp = CAST_COST_FLOOR;
   if (portMods && casterEntity?.isPlayer && _costMods.size) {
+    // PWR1 (bible/05-Combat/Power-Arc.md section 4): every modifier asked at the price itself, its cut SUMMED - never at
+    // what the one before it left - and the sum landed through the castCut channel's curve (a price - a keystone's dearer
+    // spell - takes its part off the sum). Before PWR1 a chain, each a percent of the price the last had cut.
+    let cut = 0;
     for (const fn of _costMods.values()) {
-      try { const n = fn(casterEntity, sp, spell); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }   // LOOT15: and the spell, for a power that reads its school
+      try { const n = fn(casterEntity, sp, spell); if (Number.isFinite(n) && sp > 0) cut += ((sp - n) * 100) / sp; } catch { /* a set is not the cast's problem */ }   // LOOT15: and the spell, for a power that reads its school
     }
+    if (cut) sp = Math.max(1, Math.round((sp * (100 - budgeted('castCut', cut))) / 100));
   }
   if (portMods && casterEntity?.isPlayer) for (const fn of _freeCasts.values()) { try { if (fn(casterEntity, spell) === true) { sp = 0; break; } } catch { /* a door is not the cast's problem */ } }   // EG-ZS
   return { gold, sp };

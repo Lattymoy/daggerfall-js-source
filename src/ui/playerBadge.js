@@ -52,6 +52,7 @@
 import { TITLES, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../net/identityToken.js';
 import { chapterTitleText } from '../net/npcChapterLaw.js';   // CHAP4c: a chapter's seat's title, worded off its claim
 import { seatTitleText } from '../net/townSeatLaw.js';   // SEAT1c: a seat title in words, off its claim
+import { t } from '../systems/textManager.js';   // PWR4: the Renown titles' words in the player's language (L10N4)
 
 /** SEAT1c: THE PLACE A SEAT TITLE NAMES - the client's own seat by key (`{ name, region }`), or null. The host sets it
  *  once its seats are derived (scenes/world.js); until then, and offline, a seat title reads its plain word. */
@@ -137,6 +138,10 @@ export const TITLE_TEXT = Object.freeze({
   // earned by an account's Hearth Offerings giving 25 cakes; both held for good
   witchwarden: 'Witchwarden',
   hearthkeeper: 'Hearthkeeper',
+  // PWR4 (bible/05-Combat/Power-Arc.md section 7): the long road's three - Renown 30, 40 and 50 - in the player's language
+  get renowned() { return t('title.renowned', 'Renowned'); },
+  get paragon() { return t('title.paragon', 'Paragon of the Bay'); },
+  get legend() { return t('title.legend', 'Legend of the Iliac'); },
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -379,6 +384,10 @@ export const TITLE_RGBA = Object.freeze({
   starwarden: Object.freeze([0.471, 0.314, 1, 1]),           // #7850ff
   witchwarden: WITCH_FIRE,     // WITCH1: the coven's green - the colour a face that cannot draw a gradient uses
   hearthkeeper: HEARTH_TALLOW,   // WITCH1: the tallow's amber
+  // PWR4: the long road's three - a road's steel, then the open sky's blue, then the sea's own teal at its end
+  renowned: Object.freeze([0.722, 0.769, 0.839, 1]),   // #b8c4d6
+  paragon: Object.freeze([0.498, 0.702, 0.902, 1]),    // #7fb3e6
+  legend: Object.freeze([0.310, 0.820, 0.773, 1]),     // #4fd1c5
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left

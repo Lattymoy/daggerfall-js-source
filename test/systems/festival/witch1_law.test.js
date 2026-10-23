@@ -88,8 +88,8 @@ test('WITCH1 THE WARES: every one in the window\'s order and its price; the acco
   assert.ok(!SALE_RID_RE.test('0123456789a'));
 });
 
-test('WITCH1 THE TOKEN\'S VOCABULARY: Witchwarden and Hearthkeeper last among the titles, Witchfire last among the auras, the four icons; a claim naming an icon it does not hold is refused whole', () => {
-  assert.deepEqual(TITLES.slice(-2), ['witchwarden', 'hearthkeeper']);
+test('WITCH1 THE TOKEN\'S VOCABULARY: Witchwarden and Hearthkeeper after the titles before them (PWR4\'s three Renown titles after them, the vocabulary only appended), Witchfire last among the auras, the four icons; a claim naming an icon it does not hold is refused whole', () => {
+  assert.deepEqual(TITLES.slice(-5), ['witchwarden', 'hearthkeeper', 'renowned', 'paragon', 'legend']);
   assert.equal(AURAS.at(-1), 'witchfire');
   assert.deepEqual(ICONS, ['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake']);
   assert.deepEqual(FESTIVAL_ICONS, ICONS);

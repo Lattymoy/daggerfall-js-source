@@ -21,8 +21,8 @@ import {
   setFirmamentTree, setFirmamentOnline, setFirmamentMentoring, onFirmamentChange, firmActMult, firmStat, _resetFirmamentLiveForTests,
 } from '../../src/systems/firmamentLive.js';
 import {
-  firmamentLayer, firmamentFold, firmamentEvade, firmamentKill, firmamentRound, firmamentBlow, firmamentAbsorb, firmamentSpellPierce, withoutFirmament,
-  _resetFirmamentPowersForTests, _setFirmamentPowersRandForTests,
+  firmamentLayer, firmamentFold, firmamentEvadeChance, firmamentKill, firmamentRound, firmamentBlow, firmamentAbsorb, firmamentSpellPierce, withoutFirmament,
+  _resetFirmamentPowersForTests,
 } from '../../src/systems/firmamentPowers.js';
 import { setFirmament, respecFirmament, FIRM_OPS_MAX, FIRM_PACKED_MAX } from '../../server-account/src/firmament.js';
 import { setSigilDueling, _resetSigilForTests } from '../../src/systems/sigil/sigil.js';
@@ -47,6 +47,7 @@ import { harvestXp, xpForRank } from '../../src/net/professionLaw.js';
 import { craftXp } from '../../src/net/recipeLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
+import { _setPowerBudgetRandForTests, _resetPowerBudgetForTests } from '../../src/systems/power/powerBudget.js';   // PWR1: the evasion's one roll
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const DAY = 86_400;
@@ -120,7 +121,7 @@ const STATS = { strength: 70, intelligence: 50, willpower: 50, agility: 50, endu
 const career = buildCustomCareer({ name: 'W', hp: 8, stats: STATS,
   skills: [SKILLS.LongBlade, SKILLS.Axe, SKILLS.HandToHand, SKILLS.Destruction, SKILLS.Mercantile, SKILLS.Swimming, SKILLS.Archery, SKILLS.Medical, SKILLS.Etiquette, SKILLS.Streetwise, SKILLS.Lockpicking, SKILLS.Climbing] });
 
-beforeEach(() => { _resetFirmamentLiveForTests(); _resetFirmamentPowersForTests(); _setFirmamentPowersRandForTests(null); _resetSigilForTests(); });
+beforeEach(() => { _resetFirmamentLiveForTests(); _resetFirmamentPowersForTests(); _resetPowerBudgetForTests(); _resetSigilForTests(); });
 
 // ─── LANE 1: the law, the sky and the powers ────────────────────────
 
@@ -585,10 +586,10 @@ test('AUDIT UICALM-FIRM1 L5 H5: the combat channels as they act - an evasion on 
   me.isPlayer = true; me.peer = false; me.activeEffects = []; me.maxHealth = 1000; me.health = 500; me.maxMagicka = 100; me.magicka = 50;
   const foe = { isPlayer: false, health: 50 };
   // an evasion asked at the door, on the dice: just under the chance, the blow misses; just over, it lands
-  const blow = (roll) => { _setFirmamentPowersRandForTests(() => roll); me.health = 500; setStruck(foe, me, 10); hurtPlayer(me, 10); return 500 - me.health; };
+  const blow = (roll) => { _setPowerBudgetRandForTests(() => roll); me.health = 500; setStruck(foe, me, 10); hurtPlayer(me, 10); return 500 - me.health; };
   assert.equal(blow((c.evade - 0.5) / 100), 0);
   assert.ok(blow((c.evade + 0.5) / 100) > 0);
-  assert.equal(firmamentEvade(me), false, 'no blow at the door, no evasion');
+  assert.equal(firmamentEvadeChance(me, { blow: false }), 0, 'no blow at the door, no evasion');   // PWR1: the evade channel's source, asked for a foe's blow alone
   me.health = 500; firmamentKill({ isPlayer: false, health: 0 });
   assert.equal(me.health, 500 + (1000 * c.killHeal) / 100);
   me.health = 500; firmamentKill({ isPlayer: true, health: 0 });
@@ -640,7 +641,7 @@ test('AUDIT UICALM-FIRM1 L5 H2/H3: the hosts - every strike and spell at a playe
   for (const pre of spells) assert.match(pre, /withoutFirmament\(playerEntity, \(\) => $/, pre);
   assert.match(w, /\n {2}setFirmamentOnline\(params\.has\('online'\)\);/);
   assert.match(w, /\n {4}setFirmamentOnline\(false\);   \/\/ FIRM1: the sky sleeps offline/);
-  assert.match(w, /\n {2}firmBook\?\.onChange\(\(st\) => setFirmamentTree\(st\.tree\)\);/);
+  assert.match(w, /\n {2}firmBook\?\.onChange\(\(st\) => setFirmamentTree\(st\.tree, \{ stars: st\.stars, craft: st\.craft \}\)\);/);   // PWR2/PWR4: with the purses it plays under (the keystones awake, the soft cap)
   assert.match(w, /announceRenownRise\(level, \{ stars: starsFor\(level\) - starsFor\(was\),/);
   assert.match(w, /firmBook\?\.read\(\)\.catch\(\(\) => \{\}\);   \/\/ FIRM1: a Renown level is a Star/);
 });

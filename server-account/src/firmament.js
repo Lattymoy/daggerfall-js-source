@@ -28,9 +28,10 @@ import { renownTrackOf, renownCharacterOk } from './renownTracks.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { rankOfXp, PROFESSIONS } from '../../src/net/professionLaw.js';
 import {
-  starsFor, craftPointsFor, treeFault, unpackTree, packTree, treeDiff, refundSilver, treeStats, pointsLeft, cleanKeys,
-  FIRM_RID_RE, REFUND_FREE_BELOW_RENOWN, REFUND_SILVER_PER_STAR, FIRM_RESPEC_GOLD,
+  activeStarsFor, craftPointsFor, treeFault, unpackTree, packTree, treeDiff, refundSilver, treeStats, pointsLeft, cleanKeys,
+  FIRM_RID_RE, REFUND_FREE_BELOW_RENOWN, REFUND_SILVER_PER_STAR, FIRM_RESPEC_GOLD, skiesFor, FIRM_SKIES_AT,
 } from '../../src/net/firmament/firmamentLaw.js';
+import { renownForXp } from '../../src/net/renown.js';   // PWR4: a harvest's read of the sky's purses, off the track's own xp
 
 /** The switch the service's config holds (FIRMAMENT_OPEN): off, dev (the developers alone), on. */
 export const FIRM_SWITCH = Object.freeze(['off', 'dev', 'on']);
@@ -46,11 +47,34 @@ export const FIRM_OPS_WINDOW_S = 3600;
 /** The longest packed tree a request may carry (every star's key, with room). */
 export const FIRM_PACKED_MAX = 16_384;
 
-/** The statement that reads a character's tree - read in another act's own round trip (a harvest's). */
-export const firmStatement = (db, playerId, charId) => db.prepare('SELECT tree FROM firmament WHERE player = ?1 AND char_id = ?2').bind(playerId, charId);
+/** The statement that reads a character's tree - read in another act's own round trip (a harvest's). PWR2/PWR4
+ *  (bible/05-Combat/Power-Arc.md sections 5 and 7): and in the same statement what its purses are made of - the Renown
+ *  track's xp and every profession track's xp - so the stats read are the sky that WAKES (firmamentLaw.js awakeKeys:
+ *  two combat keystones, and the Stars to Renown 20's). */
+export const firmStatement = (db, playerId, charId) => db.prepare(`SELECT tree,
+    (SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2) AS renown_xp,
+    (SELECT json_group_array(json_array(profession, xp)) FROM prof_tracks WHERE player = ?1 AND char_id = ?2) AS prof_xps
+  FROM firmament WHERE player = ?1 AND char_id = ?2`).bind(playerId, charId);
+/** PWR4: the purses a sky plays under, from a renown level and the profession ranks (pursesOf's, and a tree row's). */
+const purseFrom = (renown, ranks) => ({ renown, stars: activeStarsFor(renown), craft: craftPointsFor(Object.values(ranks)), ranks, skies: skiesFor(renown) });
+/** The profession ranks a track list gives - the known professions alone. */
+function ranksFrom(rows) {
+  const known = new Set(PROFESSIONS.map((p) => p.id));
+  /** @type {Record<string, number>} */
+  const ranks = {};
+  for (const [profession, xp] of rows ?? []) if (known.has(profession)) ranks[profession] = rankOfXp(Number(xp ?? 0));
+  return ranks;
+}
 /** The capped stats a tree row gives (none for no row): what a harvest's yield and XP read. AUDIT UICALM-FIRM1 L2 M4:
- *  none while the Firmament is shut to this account - the switch is the tree's whole hand, its words and its trades. */
-export const firmStatsFrom = (row, player, env) => (firmamentOpenFor(player, env) ? treeStats(unpackTree(row?.tree ?? '')) : {});
+ *  none while the Firmament is shut to this account - the switch is the tree's whole hand, its words and its trades.
+ *  PWR4: the sky that wakes under the row's own purses. */
+export function firmStatsFrom(row, player, env) {
+  if (!firmamentOpenFor(player, env)) return {};
+  let profs = [];
+  try { profs = JSON.parse(String(row?.prof_xps ?? '[]')); } catch { profs = []; }
+  const purse = purseFrom(row?.renown_xp == null ? 1 : renownForXp(Number(row.renown_xp)), ranksFrom(Array.isArray(profs) ? profs : []));
+  return treeStats(unpackTree(row?.tree ?? ''), purse);
+}
 /** A character's capped stats, read on their own (none while the switch shuts it, as firmStatsFrom). */
 export async function firmStatsOf(db, player, env, charId) {
   return firmStatsFrom(await firmStatement(db, player.id, charId).first(), player, env);
@@ -58,24 +82,28 @@ export async function firmStatsOf(db, player, env, charId) {
 
 /** A character's purses as this service counts them: `{ renown, stars, craft, ranks }`. */
 async function pursesOf(ctx, playerId, charId) {
-  const [track, profs] = await Promise.all([
+  const [track, profs, free] = await Promise.all([
     renownTrackOf(ctx, playerId, charId),
     ctx.db.prepare('SELECT profession, xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(playerId, charId).all(),
+    ctx.db.prepare('SELECT 1 AS spent FROM firmament_free WHERE player = ?1 AND char_id = ?2').bind(playerId, charId).first(),   // PWR2 (0163)
   ]);
-  const known = new Set(PROFESSIONS.map((p) => p.id));
-  /** @type {Record<string, number>} */
-  const ranks = {};
-  for (const r of profs?.results ?? []) if (known.has(r.profession)) ranks[r.profession] = rankOfXp(Number(r.xp ?? 0));
-  const renown = track?.level ?? 1;
-  return { renown, stars: starsFor(renown), craft: craftPointsFor(Object.values(ranks)), ranks };
+  const ranks = ranksFrom((profs?.results ?? []).map((r) => [r.profession, r.xp]));
+  return { ...purseFrom(track?.level ?? 1, ranks), freeRespec: !free };
 }
 
-/** What the window reads: the tree, the purses and what is left in them, and the refund's price. */
+/** PWR4: the statement that reads the skies a character keeps aside (0164) - `[{ slot, tree }]`. */
+const skiesStatement = (db, playerId, charId) => db.prepare('SELECT slot, tree FROM firmament_skies WHERE player = ?1 AND char_id = ?2').bind(playerId, charId);
+/** PWR4: the skies kept aside as the view says them - each slot's packed tree, '' for none (slot 1 first). */
+const asideOf = (rows) => FIRM_SKIES_AT.map((_, i) => String((rows ?? []).find((r) => Number(r.slot) === i + 1)?.tree ?? ''));
+
+/** What the window reads: the tree, the purses and what is left in them, and the refund's price - PWR4: and how many
+ *  skies the Renown keeps (`skies`), with the ones kept aside (`aside`, when read). */
 function view(tree, purses, extra = {}) {
   return {
-    tree: packTree(tree), renown: purses.renown, stars: purses.stars, craft: purses.craft, ranks: purses.ranks,
+    tree: packTree(tree), renown: purses.renown, stars: purses.stars, craft: purses.craft, ranks: purses.ranks, skies: purses.skies ?? 1,
     left: pointsLeft(tree.keys, purses.stars, purses.craft),
     refund: { freeBelow: REFUND_FREE_BELOW_RENOWN, perStar: REFUND_SILVER_PER_STAR, respecGold: FIRM_RESPEC_GOLD },
+    freeRespec: purses.freeRespec === true,   // PWR2: the character's one free respec is still to come
     ...extra,
   };
 }
@@ -88,15 +116,72 @@ export async function firmamentState(ctx, player, env, body = {}) {
   if (!renownCharacterOk(character)) return { error: 'firm-character' };
   const closed = shut(player, env);
   if (closed) return closed;
-  const [row, purses] = await Promise.all([firmStatement(ctx.db, player.id, character).first(), pursesOf(ctx, player.id, character)]);
-  return view(unpackTree(row?.tree ?? ''), purses);
+  const [row, purses, aside] = await Promise.all([firmStatement(ctx.db, player.id, character).first(), pursesOf(ctx, player.id, character), skiesStatement(ctx.db, player.id, character).all()]);
+  return view(unpackTree(row?.tree ?? ''), purses, { aside: asideOf(aside?.results) });
+}
+
+/**
+ * PWR4 (bible/05-Combat/Power-Arc.md section 7): POST /v1/firmament/swap { character, slot, rid } - THE SKY IN FORCE
+ * EXCHANGED with the one kept in `slot` (1 or 2: the sky Renown 30 opens, the sky Renown 40 opens), under the request's id,
+ * in one batch over the two trees it read. Nothing is refunded or charged: no star is taken back, a sky is set aside whole.
+ * Out of combat is the client's word (systems/power/attuneActions.js inCombat), as every swap of a sky is. Answers the
+ * view with `aside` and `swapped`; `repeat` for a request already made. Refusals: 'firm-character', 'firm-rid',
+ * 'firm-closed', 'firm-rate', 'firm-sky' (no such slot), 'firm-sky-closed' (a slot the Renown has not opened), the law's
+ * (a kept sky the purses no longer hold - never, while Renown only rises), 'firm-stale'.
+ */
+export async function swapFirmamentSky(ctx, player, env, body = {}) {
+  const { db, nowS, rand } = ctx;
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('swapFirmamentSky needs an integer epoch-seconds clock');
+  const { character, slot, rid } = body ?? {};
+  if (!renownCharacterOk(character)) return { error: 'firm-character' };
+  if (typeof rid !== 'string' || !FIRM_RID_RE.test(rid)) return { error: 'firm-rid' };
+  if (!Number.isSafeInteger(slot) || slot < 1 || slot > FIRM_SKIES_AT.length) return { error: 'firm-sky' };
+  const prior = await db.prepare('SELECT char_id FROM firmament_sets WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  const read = async () => Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character), skiesStatement(db, player.id, character).all()]);
+  if (prior) {
+    if (prior.char_id !== character) return { error: 'firm-rid' };
+    const [now, purses, aside] = await read();
+    return view(unpackTree(now?.tree ?? ''), purses, { repeat: true, aside: asideOf(aside?.results), swapped: slot });
+  }
+  const closed = shut(player, env);
+  if (closed) return closed;
+  if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };
+  const [row, purses, aside] = await read();
+  if (slot >= purses.skies) return { error: 'firm-sky-closed' };
+  const prevPacked = String(row?.tree ?? '');
+  const inPacked = asideOf(aside?.results)[slot - 1];
+  const incoming = unpackTree(inPacked);
+  const fault = treeFault(incoming, purses.stars, purses.craft);
+  if (fault) return { error: fault };
+  const nonce = mintId(rand);
+  try {
+    await db.batch([
+      // THE SWAP'S ROW: over the tree it was asked over - a change landed first fails the whole batch
+      db.prepare(`INSERT INTO firmament_sets (player, rid, char_id, prev, tree, silver, at, n)
+        SELECT ?1, ?4, ?2, ?3, ?5, 0, ?6, ?7
+        WHERE COALESCE((SELECT tree FROM firmament WHERE player = ?1 AND char_id = ?2), '') = ?3`)
+        .bind(player.id, character, prevPacked, rid, inPacked, nowS, nonce),
+      mustChange(db),
+      db.prepare(`INSERT INTO firmament_skies (player, char_id, slot, tree, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)
+        ON CONFLICT (player, char_id, slot) DO UPDATE SET tree = excluded.tree, updated_at = excluded.updated_at`)
+        .bind(player.id, character, slot, prevPacked, nowS),
+      db.prepare(`INSERT INTO firmament (player, char_id, tree, updated_at) VALUES (?1, ?2, ?3, ?4)
+        ON CONFLICT (player, char_id) DO UPDATE SET tree = excluded.tree, updated_at = excluded.updated_at`)
+        .bind(player.id, character, inPacked, nowS),
+    ]);
+  } catch {
+    return { error: 'firm-stale' };
+  }
+  const kept = asideOf(aside?.results);
+  kept[slot - 1] = prevPacked;
+  return view(incoming, purses, { aside: kept, swapped: slot });
 }
 
 /**
  * POST /v1/firmament/set { character, tree, rid } - THE WHOLE TREE THE CHARACTER WANTS (`tree` packed), under the
  * request's id. Answers the view, with `silver` the refunds burnt and `balance` after them where any were; `repeat` for
  * a request already made. Refusals: 'firm-character', 'firm-rid', 'firm-closed', 'firm-rate', the law's (firm-start,
- * firm-key, firm-path, firm-points), 'marks-closed' and 'marks-short' (a refund to pay and no silver to pay it),
+ * firm-key, firm-path, firm-points, PWR2's firm-keystones), 'marks-closed' and 'marks-short' (a refund to pay and no silver to pay it),
  * 'firm-stale' (another change landed first - the client reads again).
  */
 export async function setFirmament(ctx, player, env, body = {}) {
@@ -125,11 +210,12 @@ export async function setFirmament(ctx, player, env, body = {}) {
     : { start: bar < 0 ? body.tree : body.tree.slice(0, bar), keys: bar < 0 || bar === body.tree.length - 1 ? [] : body.tree.slice(bar + 1).split(',') };
   if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };
   const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);
-  const fault = treeFault(want, purses.stars, purses.craft);
-  if (fault) return { error: fault };
-  const next = { start: want.start ?? null, keys: cleanKeys(want.keys) };
   const prevPacked = String(row?.tree ?? '');
   const prev = unpackTree(prevPacked);
+  // PWR2 (bible/05-Combat/Power-Arc.md section 5): a sky past a limit a new law set (two combat keystones) may only shrink
+  const fault = treeFault(want, purses.stars, purses.craft, prev);
+  if (fault) return { error: fault };
+  const next = { start: want.start ?? null, keys: cleanKeys(want.keys) };
   const nextPacked = packTree(next);
   if (nextPacked === packTree(prev)) return view(prev, purses);   // already so
   // WHAT IS TAKEN BACK: every star the change removes - choosing a first sign takes nothing back
@@ -171,7 +257,8 @@ export async function setFirmament(ctx, player, env, body = {}) {
 }
 
 /**
- * POST /v1/firmament/respec { character, rid, realm?, region? } - THE WHOLE SKY TAKEN BACK for FIRM_RESPEC_GOLD gold: every
+ * POST /v1/firmament/respec { character, rid, realm?, region? } - THE WHOLE SKY TAKEN BACK for FIRM_RESPEC_GOLD gold (PWR2:
+ * a character's first one for nothing - 0163's firmament_free; answered `free`): every
  * star and the birthsign, to choose again. A realm character's record pays the gold in the respec's own batch (realm.js
  * prepareRealmRecord, the wallet's own order - its purse, its letters, then `region`'s account), asked first where the
  * record stands (realmActFirst: a respec asked again after its answer was lost finds its record one on - that is it,
@@ -203,7 +290,11 @@ export async function respecFirmament(ctx, player, env, body = {}) {
   const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);
   const prevPacked = String(row?.tree ?? '');
   if (!unpackTree(prevPacked).start) return { error: 'firm-respec-empty' };
-  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, FIRM_RESPEC_GOLD, region ?? null) ? null : 'realm-gold'));
+  // PWR2 (bible/05-Combat/Power-Arc.md section 5): the character's first respec is free - its record still moves on (the
+  // same order, nothing paid), and the free one is spent in the same batch (0163: a second free one fails it whole)
+  const free = purses.freeRespec === true;
+  const gold = free ? 0 : FIRM_RESPEC_GOLD;
+  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (gold === 0 || payFromSave(save, gold, region ?? null) ? null : 'realm-gold'));
   if (prep.error) return prep;
   const nonce = mintId(rand);
   try {
@@ -215,6 +306,7 @@ export async function respecFirmament(ctx, player, env, body = {}) {
         WHERE COALESCE((SELECT tree FROM firmament WHERE player = ?1 AND char_id = ?2), '') = ?3`)
         .bind(player.id, character, prevPacked, rid, nowS, nonce),
       mustChange(db),
+      ...(free ? [db.prepare('INSERT INTO firmament_free (player, char_id, rid, at) VALUES (?1, ?2, ?3, ?4)').bind(player.id, character, rid, nowS)] : []),
       db.prepare("UPDATE firmament SET tree = '', updated_at = ?3 WHERE player = ?1 AND char_id = ?2").bind(player.id, character, nowS),
     ]);
   } catch {
@@ -224,12 +316,12 @@ export async function respecFirmament(ctx, player, env, body = {}) {
     return { error: 'firm-stale' };
   }
   await dropObjects(ctx.bucket, [prep.prev]);
-  return view({ start: null, keys: [] }, purses, { respec: true, gold: FIRM_RESPEC_GOLD, realm: { seq: prep.seq } });
+  return view({ start: null, keys: [] }, { ...purses, freeRespec: false }, { respec: true, gold, free, realm: { seq: prep.seq } });
 }
 
 /** The statuses a refusal answers with. */
 export const FIRM_STATUS = Object.freeze({
-  'firm-character': 400, 'firm-rid': 400, 'firm-key': 400, 'firm-start': 400, 'firm-path': 400, 'firm-points': 409,
+  'firm-character': 400, 'firm-rid': 400, 'firm-key': 400, 'firm-start': 400, 'firm-path': 400, 'firm-points': 409, 'firm-keystones': 409,
   'firm-closed': 403, 'firm-rate': 429, 'firm-stale': 409, 'marks-closed': 403, 'marks-short': 409,
-  'firm-respec-empty': 409, 'realm-needed': 400, 'realm-gold': 409, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503, body: 400,
+  'firm-respec-empty': 409, 'firm-sky': 400, 'firm-sky-closed': 409, 'realm-needed': 400, 'realm-gold': 409, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503, body: 400,
 });

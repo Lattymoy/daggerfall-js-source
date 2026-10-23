@@ -28,6 +28,7 @@ import { equipItem } from '../../src/systems/equip.js';
 import { mintCondition } from '../../src/systems/item/itemTemplates.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { validLootItem } from '../../src/systems/loot/loot.js';
+import { budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the castSpeed channel's curve
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`../fixtures/mw/${n}`, import.meta.url)));
 const on = () => { _resetForTests(); setPref('lootRarity', true); LP._resetLootPowersForTests(); _resetSetPowersForTests(); setPlayerDoor(null); };
@@ -61,7 +62,10 @@ test('CAST-SPEED: the rate - Speed 50 casts at 1, a quarter either way at 100 an
   try {
     assert.equal(CS.castRate(caster(50)), 1.2, 'twenty percent on');
     CS.registerCastSpeedMod('test', () => 500);
-    assert.equal(CS.castRate(caster(100)), CS.CAST_RATE_MAX, 'never past the top');
+    // PWR1 (bible/05-Combat/Power-Arc.md section 4): the modifiers' sum lands through the castSpeed channel's curve - under
+    // its ceiling, so under the top
+    assert.equal(CS.castRate(caster(100)), Math.min(CS.CAST_RATE_MAX, 1.25 + budgeted('castSpeed', 500) / 100), 'never past the top');
+    assert.ok(CS.castRate(caster(100)) < CS.CAST_RATE_MAX);
     CS.registerCastSpeedMod('test', () => -500);
     assert.equal(CS.castRate(caster(0)), CS.CAST_RATE_MIN, 'nor under the floor');
     CS.registerCastSpeedMod('test', () => NaN);

@@ -7,7 +7,8 @@
 // and whether it takes both hands, and the live Strength. Bare hands and a beast's claws weigh nothing.
 //
 // Not a DFU member. Ledger A (SWING-LAW).
-import { registerSwingReader } from '../characters/weaponStates.js';
+import { registerSwingReader, registerSwingPaceCurve } from '../characters/weaponStates.js';
+import { budgeted } from '../systems/power/powerBudget.js';   // PWR1: the pace channel's curve, handed to the leaf
 import { WEAPON_TYPES } from './fpsWeapon.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
@@ -60,5 +61,5 @@ export function swingFamily(ctx) {
  *  hand in the law (its saber ticked 0.199 s for the reader's 0.210), where "the law reads the weapon in the hand". Now
  *  this module registers it as it loads, and combat/weapon/weaponRig.js - the one maker of a swing's ctx - imports it, so no
  *  rig exists without it. Kept for a caller that cleared the reader and wants it back. */
-export function installSwingLaw() { registerSwingReader(readSwing); }
+export function installSwingLaw() { registerSwingReader(readSwing); registerSwingPaceCurve((pct) => budgeted('pace', pct)); }
 installSwingLaw();

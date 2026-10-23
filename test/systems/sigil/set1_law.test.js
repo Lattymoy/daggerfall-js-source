@@ -170,14 +170,14 @@ test('SET1 the stage: the lowest worn piece\'s rank capped by the Renown\'s stag
   assert.deepEqual(st.tiers[0].values, { strength: 3, critical: 6 }, 'Kindled\'s numbers');
   assert.equal(st.tiers[1].text, 'Your weapon deals 6% more damage, or 12% more while you are below half health');
   assert.equal(st.tiers[1].full, 'Your weapon deals 12% more damage, or 24% more while you are below half health', 'and what it is at Ascendant');
-  // Renown 9 opens only Faint: the Renown holds it
-  st = setState('dagon', pieces, 9, true);
+  // Renown 4 opens only Faint: the Renown holds it (PWR4: the stages 1/5/10/15/20)
+  st = setState('dagon', pieces, 4, true);
   assert.equal(st.stage, 0);
   assert.equal(st.heldPiece, null);
   assert.equal(st.heldRenown, true);
-  assert.equal(st.renownNext, 10);
+  assert.equal(st.renownNext, 5);
   // they meet at Kindled: both hold it
-  st = setState('dagon', pieces, 10, true);
+  st = setState('dagon', pieces, 5, true);
   assert.equal(st.stage, 1);
   assert.equal(st.heldPiece, pieces[1]);
   assert.equal(st.heldRenown, true);

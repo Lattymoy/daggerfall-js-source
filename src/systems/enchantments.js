@@ -55,6 +55,7 @@ import { skillValue } from './skills.js';
 import { unitWeightInKg } from './inventory.js';   // AUDIT-RR2 G1: ExtraWeight's base
 import { enchantmentCost, defaultParam } from './enchantmentCatalogue.js';   // G4: the legacy value sum reads M4's costs
 import { artifactHook } from './artifactEffects.js';   // V3: the nine artifact classes' sub-registry
+import { powerAwake } from './power/attunement.js';   // PWR2: an artifact's worn payloads wake only attuned (a leaf)
 import { applyDressStanding } from './clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the clothing reaction, a leaf
 
 // EnchantmentTypes moved HOME to formats/magicDef.js (V3) - it is
@@ -835,6 +836,11 @@ function anyNearbyOfAffinity(ctx, affinityParam, range) {
  *  edge re-enters here with PAYLOAD.Breaks via the onBreak hook. */
 export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = null, ctx = null, collection = null } = {}) {
   let damageOut = damage;
+  // PWR2 (bible/05-Combat/Power-Arc.md section 5): A DEPARTURE - a piece's GOOD rows (sleeps, below) run their worn
+  // payloads (Equipped, Held, Strikes, the magic round's, the reroll) only while it is attuned; DFU's EntityEffectManager
+  // runs them whenever it is equipped. Used, Unequipped, Breaks and the Enchanted callback stay DFU's own, and a
+  // drawback always bites.
+  const asleep = !powerAwake(entity, item);
   ctx = mergeCtx(ctx);   // E2: the host's mounted ctx rides under any per-call one
   // AUDIT 39: the mounted classic clock, as doEnchantedPayloads reads
   // it. The stamps written here are read back against the ABSOLUTE
@@ -859,12 +865,13 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
       return Math.max(0, damageOut);
     }
     const env = { param: e.param, entity, target, item, damage, round, nowMinutes, ctx, collection };
-    if ((flags & PAYLOAD.Equipped) && (row.flags & PAYLOAD.Equipped)) row.equipped?.(env);
+    const awake = !(asleep && sleeps(e));
+    if (awake && (flags & PAYLOAD.Equipped) && (row.flags & PAYLOAD.Equipped)) row.equipped?.(env);
     // Unequipped runs UNGATED by the row's own flags (:1001-1003 -
     // UnequipHeldItem is called for every effect template)
     if (flags & PAYLOAD.Unequipped) row.unequipped?.(env);
     if ((flags & PAYLOAD.Used) && (row.flags & PAYLOAD.Used)) applyResults(row.used?.(env), env);
-    if ((flags & PAYLOAD.Strikes) && (row.flags & PAYLOAD.Strikes)) {
+    if (awake && (flags & PAYLOAD.Strikes) && (row.flags & PAYLOAD.Strikes)) {
       const r = row.strikes?.(env);
       if (r?.strikesModulateDamage) damageOut += r.strikesModulateDamage;
       // AUDIT WBX F2 (2026-09-26): a blow on the Oblivion Gate's boss wears no gear (WBX6 - world/gate/gateBoss.js's stand-in
@@ -883,8 +890,8 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
       // bundle is :1730-1731's `fromEquippedItem != null`. The
       // port's pump walks equipped items once per round, so ONE gate
       // admits both - the flags stay verbatim per class.
-      if ((flags & PAYLOAD.MagicRound) && (row.flags & (PAYLOAD.MagicRound | PAYLOAD.Held))) row.magicRound?.(env);
-      if ((flags & PAYLOAD.RerollEffect) && (row.flags & PAYLOAD.RerollEffect)) row.reroll?.(env);   // E2: RerollItemEffects' payload (:2026)
+      if (awake && (flags & PAYLOAD.MagicRound) && (row.flags & (PAYLOAD.MagicRound | PAYLOAD.Held))) row.magicRound?.(env);
+      if (awake && (flags & PAYLOAD.RerollEffect) && (row.flags & PAYLOAD.RerollEffect)) row.reroll?.(env);   // E2: RerollItemEffects' payload (:2026)
       if ((flags & PAYLOAD.Enchanted) && (row.flags & PAYLOAD.Enchanted)) row.enchanted?.(env);
     }
   }
@@ -953,10 +960,11 @@ export function computeEnchantmentMods(entity, ctx = null, { clampMagicka = true
     improvedAcuteHearing: false, improvedAthleticism: false, improvedAdrenalineRush: false,
   };
   for (const item of equippedEnchantedItems(entity)) {
+    const asleep = !powerAwake(entity, item);   // PWR2: a sleeping piece's good rows hold no constant effect
     for (const e of itemEnchantments(item)) {
       const row = REGISTRY.get(e.type);
       if (!row) break;   // the same unknown-key abort, per item
-      if (row.flags & PAYLOAD.Held) row.constant?.({ param: e.param, entity, item, ctx, mods });
+      if ((row.flags & PAYLOAD.Held) && !(asleep && sleeps(e))) row.constant?.({ param: e.param, entity, item, ctx, mods });
     }
   }
   entity._enchantMods = mods;
@@ -1044,10 +1052,11 @@ export function restartHeldEnchantments(entity, ctx = null) {
   for (const item of items) {
     _fx.removeItemPinnedEffects?.(entity, item);
     const at = item.timeEffectsLastRerolled ?? nowMinutes;
+    const asleep = !powerAwake(entity, item);   // PWR2: a sleeping piece's held spell is not restarted
     for (const e of itemEnchantments(item)) {
       const row = REGISTRY.get(e.type);
       if (!row) break;   // the unknown-key abort, per item
-      if (e.type === T.CastWhenHeld) instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes: at }, true);
+      if (e.type === T.CastWhenHeld && !(asleep && sleeps(e))) instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes: at }, true);
     }
   }
   if (entity?._enchantMods || items.length) computeEnchantmentMods(entity, ctx, { clampMagicka: false });
@@ -1063,6 +1072,10 @@ function equippedEnchantedItems(entity) {
   }
   return out;
 }
+/** PWR2 (bible/05-Combat/Power-Arc.md section 5): whether row `e` sleeps on a piece not attuned - a GOOD row (DFU's goods
+ *  are the types under VALUE_COUNTS_BELOW: an artifact's powers, a Legendary's held spell); a drawback (a curse's, the
+ *  damned blade's Health Leech) bites whatever, or a piece left unattuned would shed its curse and keep its lines. */
+const sleeps = (e) => Number.isInteger(e?.type) && e.type < VALUE_COUNTS_BELOW;
 
 /** The read-time consumers - each answers 0/false with no fold
  *  computed yet, so a host that never pumps stays exactly pre-E1. */
@@ -1111,16 +1124,22 @@ setEnchantmentHooks({
   // StopEquippedItem fires Unequipped on every leaver (:163/:202/:231
   // -> :586). nowMinutes is the ctx clock seam (ctx.now) - an
   // unmounted host equips at minute 0, the headless charter.
-  onItemEquipped: (entity, item) => {
-    if (!isEnchantedItem(item)) return;
-    const nowMinutes = mergeCtx(null)?.now?.() ?? 0;
-    // HELD-REWEAR: decided ONCE for the piece, before its first held power restamps the clock - an item with two
-    // Cast-When-Held powers is billed for both or for neither
-    const ctx = heldEquipIsFree(item, nowMinutes) ? { heldEquipFree: true } : null;
-    doItemEnchantmentPayloads(PAYLOAD.Equipped | PAYLOAD.Held, item, { entity, nowMinutes, ctx });
-  },
-  onItemUnequipped: (entity, item) => {
-    if (!isEnchantedItem(item)) return;
-    doItemEnchantmentPayloads(PAYLOAD.Unequipped, item, { entity });
-  },
+  onItemEquipped: (entity, item) => wakeItemPayloads(entity, item),
+  onItemUnequipped: (entity, item) => sleepItemPayloads(entity, item),
 });
+/** StartEquippedItem's payload door - the arriving piece's Equipped|Held (ItemEquipTable.cs:149 -> :576). PWR2: also
+ *  the attuning of a piece already worn (systems/power/attuneActions.js), when its payloads wake. */
+export function wakeItemPayloads(entity, item) {
+  if (!isEnchantedItem(item)) return;
+  const nowMinutes = mergeCtx(null)?.now?.() ?? 0;
+  // HELD-REWEAR: decided ONCE for the piece, before its first held power restamps the clock - an item with two
+  // Cast-When-Held powers is billed for both or for neither
+  const ctx = heldEquipIsFree(item, nowMinutes) ? { heldEquipFree: true } : null;
+  doItemEnchantmentPayloads(PAYLOAD.Equipped | PAYLOAD.Held, item, { entity, nowMinutes, ctx });
+}
+/** StopEquippedItem's payload door - every leaver's Unequipped (ItemEquipTable.cs:163/:202/:231 -> :586). PWR2: also
+ *  the release of a piece still worn. */
+export function sleepItemPayloads(entity, item) {
+  if (!isEnchantedItem(item)) return;
+  doItemEnchantmentPayloads(PAYLOAD.Unequipped, item, { entity });
+}

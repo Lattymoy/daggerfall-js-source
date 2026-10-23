@@ -20,6 +20,7 @@
 //     CAREER flag, and a persistent absorb state.
 import { SKILLS, skillValue } from './skills.js';
 import { effectCost, effectSchool, TARGET_COST_MULT, CAST_COST_FLOOR } from './spellcost.js';
+import { budgeted } from './power/powerBudget.js';   // PWR1: the port's absorption chances summed through the absorb channel's curve (a leaf)
 
 /** DFCareer.SpellAbsorptionFlags (:361-368). specialAdvantages.js
  *  mints its own ABSORPTION_FLAGS copy of the same enum (AUDIT 23
@@ -74,11 +75,28 @@ export function careerAbsorbs(career, { day = false, inside = true } = {}) {
 }
 
 /** SET2 (Mora's Mantle's Eye of Mora, bible/11-Multiplayer/Sigil-Sets.md): THE PORT'S OWN ABSORPTION CHANCES - named
- *  sources, `fn(target) -> per cent`, each rolled on its own after the effect's arm and before the career's, under
- *  DFU's own two gates (a Destruction effect, and room in the target's magicka for what it drinks). A source answers 0
- *  for any target it is not about. */
+ *  sources, `fn(target) -> per cent`, rolled after the effect's arm and before the career's, under DFU's own two gates
+ *  (a Destruction effect, and room in the target's magicka for what it drinks). A source answers 0 for any target it is
+ *  not about. PWR1 (bible/05-Combat/Power-Arc.md section 4): SUMMED and rolled ONCE, through the absorb channel's curve
+ *  - before PWR1 each rolled on its own (the Mantle's 30, the Hagraven's 15, the Wardwright's 40 and the sky's 15 together
+ *  turned aside seven bolts in ten). DFU's own three arms - the effect, the career, the enchantment - keep DFU's own rolls,
+ *  and a signature's window its own (`outside`). */
 const _absorbChances = new Map();
-export function registerAbsorptionChance(name, fn) { if (typeof fn === 'function') _absorbChances.set(name, fn); else _absorbChances.delete(name); }
+/** A source registered `{ outside: true }` is an event on its own clock (a signature's window - systems/arcanePowers.js
+ *  the Wardwright's Prismatic Ward): rolled on its own, its words whole, before the channel's one roll. */
+const _outsideAbsorbChances = new Map();
+export function registerAbsorptionChance(name, fn, { outside = false } = {}) {
+  _absorbChances.delete(name); _outsideAbsorbChances.delete(name);
+  if (typeof fn === 'function') (outside ? _outsideAbsorbChances : _absorbChances).set(name, fn);
+}
+const chanceOf = (fn, target) => { try { return Number(fn(target)) || 0; } catch { return 0; } };
+/** PWR1: the port's own absorption chances at `target`, summed before the absorb channel's curve (the Stats page shows
+ *  it beside what lands). */
+export function portAbsorbSum(target) {
+  let port = 0;
+  for (const fn of _absorbChances.values()) { const c = chanceOf(fn, target); if (c > 0) port += c; }
+  return port;
+}
 
 /** TryAbsorption (:1160-1200). Returns the spell points absorbed, or 0
  *  when the effect passes through. `absorbing` is DFU's persistent
@@ -97,11 +115,12 @@ export function tryAbsorption(effect, targetType, target, { day = false, inside 
   // persistent flag - DFU's own order, not classic's override.
   const chance = spellAbsorptionChance(target);
   if (chance > 0 && Math.floor(rolls() * 100) < chance) return cost;
-  for (const fn of _absorbChances.values()) {   // SET2: the port's own, each its own roll - none is rolled that answers 0
-    let c = 0;
-    try { c = Number(fn(target)) || 0; } catch { c = 0; }
+  for (const fn of _outsideAbsorbChances.values()) {   // PWR1: a window's, its own roll - none is rolled that answers 0
+    const c = chanceOf(fn, target);
     if (c > 0 && Math.floor(rolls() * 100) < c) return cost;
   }
+  const port = portAbsorbSum(target);   // SET2: the port's own - PWR1: summed, one roll for them all, none if none answers
+  if (port > 0 && Math.floor(rolls() * 100) < budgeted('absorb', port)) return cost;
   if (careerAbsorbs(target?.career, { day, inside })) return cost;
   // ABSORB-NERF (2026-09-30, Discord: "Nerf spell absorption, it breaks the game"): the AbsorbsSpells enchantment is
   // a 50% roll, no longer DFU's flat always (:1196)

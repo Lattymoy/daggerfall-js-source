@@ -162,8 +162,8 @@
   {
     "name": "SWING-LAW-the-reader-never-installed",
     "file": "src/combat/swingLaw.js",
-    "old": "export function installSwingLaw() { registerSwingReader(readSwing); }",
-    "new": "export function installSwingLaw() { }",
+    "old": "export function installSwingLaw() { registerSwingReader(readSwing); registerSwingPaceCurve",
+    "new": "export function installSwingLaw() { registerSwingPaceCurve",
     "tests": [
       "test/systems/swinglaw.test.js"
     ]

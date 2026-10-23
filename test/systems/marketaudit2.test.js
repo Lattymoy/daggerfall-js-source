@@ -103,7 +103,8 @@ test('MARKET-AUDIT: every realm act that pays out of the purse reserves through 
   }
   // the hosts' wallets answer the undo
   // FIRM1: and the Firmament's respec, its gold reserved through walletReserve as the guild's founding is
-  assert.match(src('src/net/firmament/firmamentBook.js'), /reserve: walletReserve\(w, FIRM_RESPEC_GOLD\)\.reserve/);
+  assert.match(src('src/net/firmament/firmamentBook.js'), /reserve: walletReserve\(w, price\)\.reserve/);   // PWR2: the respec's price (the first for nothing)
+  assert.match(src('src/net/firmament/firmamentBook.js'), /respecPrice\(\) \{ return state\.freeRespec === true \? 0 : FIRM_RESPEC_GOLD; \}/);
   assert.equal((src('src/scenes/world.js').match(/pay: \(n\) => payUndoable\(playerEntity, n, /g) ?? []).length, 3, 'the market\'s, the guild\'s and the Firmament\'s');
   // PIN MOVED (INSTANCES' HOST-SPLIT, 2026-10-15): the yards' wallet left bootWorld for scenes/homeYards.js - the player handed it
   assert.equal((src('src/scenes/homeYards.js').match(/pay: \(n\) => payUndoable\(entity, n, /g) ?? []).length, 1, 'the yards\'');

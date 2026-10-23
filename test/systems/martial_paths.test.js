@@ -48,6 +48,7 @@ import { mintCondition, setItemFields } from '../../src/systems/item/itemTemplat
 import { WEAPONS } from '../../src/characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE } from '../../src/characters/thunderlockIds.js';
 import { FIRM_NODES } from '../../src/net/firmament/firmamentTree.js';
+import { _setPowerBudgetRandForTests, _resetPowerBudgetForTests, budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the evasion's one roll, the channel's curve
 
 const { LongBlade: LB, ShortBlade: SB, Axe: AX, BluntWeapon: BL, Archery: AR, HandToHand: HH, Destruction: DES, Restoration: RES } = SKILLS;
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -89,7 +90,7 @@ function door(foes = [], me = null) {
 let _clock = 100;
 const reset = () => {
   POW._resetMartialPowersForTests(); WM._resetWeaponMasteryForTests(); _resetSetPowersForTests(); _resetPlayerHealForTests(); _resetTechniquesForTests();
-  _clock = 100; POW._setMartialPowersClockForTests(() => _clock); POW._setMartialPowersRandForTests(null);
+  _clock = 100; POW._setMartialPowersClockForTests(() => _clock); POW._setMartialPowersRandForTests(null); _resetPowerBudgetForTests();
   setSigilDueling(false); setPlayerDoor(null); setPref(LOOT_RARITY_KEY, true);
 };
 /** The blow's whole registry on a 100 at `target` - every modifier the port registers (asleep ones answer nothing). */
@@ -351,9 +352,14 @@ test('MARTIAL2 + BAL10 THE SWING: every short blade handles as the Dagger in all
     bz.health = 90;
     const bctx = { entity: bz, weaponType: 12, usingRightHand: true };
     assert.equal(swingPacePct(bctx, readSwing(bctx)), 10, 'Frenzy\'s 10 under half');
-    assert.equal(SWING_PACE_MOST, 50);
+    // PWR1 (bible/05-Combat/Power-Arc.md section 4): every pace together through the pace channel's curve - whole to
+    // its knee (the climb's own 40), then approaching SWING_PACE_MOST (the channel's ceiling, 60), never reaching it
+    assert.equal(SWING_PACE_MOST, 60);
     registerSwingPaceMod('martial-probe', () => 80);
-    try { assert.equal(swingPacePct(bctx, readSwing(bctx)), 50, 'every pace together, at most 50'); } finally { registerSwingPaceMod('martial-probe', null); }
+    try {
+      const got = swingPacePct(bctx, readSwing(bctx));
+      assert.ok(Math.abs(got - (40 + (50 * 20) / 70)) < 1e-9 && got < SWING_PACE_MOST, `every pace together, on the curve: ${got}`);
+    } finally { registerSwingPaceMod('martial-probe', null); }
     assert.equal(swingPacePct(bctx, readSwing(bctx)), 10, 'a name removed');
   });
 });
@@ -363,16 +369,17 @@ test('BAL10 THE FISTS: a player\'s bare-handed blow reads the blow modifiers in 
   const seen = [];
   const p = fighter(); p.skills[HH] = 50;
   const target = foe({ careerIndex: 7 });
-  // AUDIT MARTIAL L5 L2: the same roll with the probe off, so "it landed" is the probe's 7 and nothing else
+  // AUDIT MARTIAL L5 L2: the same roll with the probe off, so "it landed" is the probe's 2 and nothing else (PWR1: under
+  // the blow channel's knee on a fist's blow, so whole)
   const without = calculateAttackDamage({ ...p, isPlayer: true }, target, { rolls: () => 0, unaware: true });
   const withoutO = pcaaoHandToHandAttackDamage(p, target, 0, true, () => 0, { unaware: false });
-  registerWeaponBlowMod('bal10-probe', (w, d, a, t, info) => { seen.push([w, info?.unaware ?? null]); return d + 7; });
+  registerWeaponBlowMod('bal10-probe', (w, d, a, t, info) => { seen.push([w, info?.unaware ?? null]); return d + 2; });
   try {
     const plain = calculateAttackDamage({ ...p, isPlayer: true }, target, { rolls: () => 0, unaware: true });
     assert.deepEqual(seen.at(-1), [null, true], 'the stock core: the fists, with the host\'s word');
-    assert.equal(plain, without + 7, 'the modifier landed whole');
+    assert.equal(plain, without + 2, 'the modifier landed whole');
     seen.length = 0;
-    assert.equal(pcaaoHandToHandAttackDamage(p, target, 0, true, () => 0, { unaware: false }), withoutO + 7);
+    assert.equal(pcaaoHandToHandAttackDamage(p, target, 0, true, () => 0, { unaware: false }), withoutO + 2);
     assert.deepEqual(seen, [[null, false]], 'the overhaul\'s core too');
     seen.length = 0;
     pcaaoHandToHandAttackDamage({ ...p, isInBeastForm: true }, target, 0, true, () => 0);
@@ -417,11 +424,11 @@ test('MARTIAL4 THE PASSIVES: each through its own seam, on both sides of its lin
   // Bladedancer: one foe blow in ten misses
   reset();
   const bd = pathFighter('bladedancer'); bd.health = bd.maxHealth = 1000; door([], bd);
-  POW._setMartialPowersRandForTests(() => 0.099); setStruck(orc, bd, 10); hurtPlayer(bd, 10);
+  _setPowerBudgetRandForTests(() => 0.099); setStruck(orc, bd, 10); hurtPlayer(bd, 10);
   assert.equal(bd.health, 1000, 'one in ten: missed whole');
-  POW._setMartialPowersRandForTests(() => 0.1); setStruck(orc, bd, 10); hurtPlayer(bd, 10);
+  _setPowerBudgetRandForTests(() => 0.1); setStruck(orc, bd, 10); hurtPlayer(bd, 10);
   assert.equal(bd.health, 990);
-  POW._setMartialPowersRandForTests(() => 0); hurtPlayer(bd, 10);
+  _setPowerBudgetRandForTests(() => 0); hurtPlayer(bd, 10);
   assert.equal(bd.health, 980, 'a fall is never evaded');
   // Bloodletter: a kill heals 5%; the City Watch never counts
   reset();
@@ -574,7 +581,9 @@ test('MARTIAL3 THE RIDERS: each through the one landing door both resolutions te
   const shaft = { weapon: weapon(WEAPONS.Long_Bow), technique: { id: 'huntersMark', mult: 1, pierce: 1 }, pos: [0, 0, 0] };
   reset(); me = pathFighter('ranger'); const deer = foe({ careerIndex: 0 }); const rd = rec('d', deer); door([rd], me);
   playerArrowHitFoe(shaft, rd, { playerEntity: me, rolls: () => 0 });
-  assert.equal(blow100(weapon(WEAPONS.Long_Bow), me, deer), 140, 'playerArrowHitFoe told the landing: the mark (20) on a beast (20)');
+  // PWR1: the mark's 20 and the beast's 20 sum to 40, past the blow channel's knee - landed on its curve (136, the mark
+  // unheard 120)
+  assert.equal(blow100(weapon(WEAPONS.Long_Bow), me, deer), 100 + Math.floor(budgeted('blow', 40)), 'playerArrowHitFoe told the landing: the mark (20) on a beast (20)');
 });
 
 test('BAL10 THE FIRMAMENT: every weapon family two notables that raise its skill - Axe and Blunt a third - stats moved, never a key; no sign passes a cap (mutants: a notable\'s skill dropped)', () => {

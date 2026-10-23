@@ -29,8 +29,8 @@
   {
     "name": "RENOWN1-party-splits-the-kill",
     "file": "src/net/renown.js",
-    "old": "  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + RENOWN_PARTY_BONUS_PCT * (n - 1))) / 100);",
-    "new": "  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + RENOWN_PARTY_BONUS_PCT * (n - 1))) / 100 / n);",
+    "old": "RENOWN_PARTY_BONUS_PCT * (n - 1)))) / 100);",
+    "new": "RENOWN_PARTY_BONUS_PCT * (n - 1)))) / 100 / n);",
     "tests": [
       "test/net/renown1.test.js"
     ]

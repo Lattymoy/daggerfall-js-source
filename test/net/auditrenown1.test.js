@@ -28,7 +28,7 @@ import { createGuest, overRate } from '../../server-account/src/accounts.js';
 import { reportRenownXp } from '../../server-account/src/renownTracks.js';
 import {
   RENOWN_XP_MAX, RENOWN_XP_REPORT_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX, RENOWN_REPORT_MS, RENOWN_RID_RE, renownRidOf,
-  renownXpFor, renownProgressText,
+  renownXpFor, renownProgressText, renownBonus,
 } from '../../src/net/renown.js';
 import { mintRenownOrder, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import {
@@ -468,22 +468,23 @@ const liveEntity = (over = {}) => {
   return e;
 };
 
-test('AUDIT RENOWN1 GAME-4: the layer rides ABOVE the lycanthrope\'s limiter - a Renown 50 werewolf keeps its 147 through the urge (it fell to 100 of 100), the urge\'s clamp and every full heal read the same ceiling, and the cure heals to the whole maximum (it left 100 of 247) (mutants: the limiter capping the layer; the cure to the raw value)', () => {
+test('AUDIT RENOWN1 GAME-4: the layer rides ABOVE the lycanthrope\'s limiter - a Renown 50 werewolf keeps its layer (PWR4: Renown 20\'s, the soft cap - 57) through the urge (it fell to 100 of 100), the urge\'s clamp and every full heal read the same ceiling, and the cure heals to the whole maximum (it left 100 of the whole) (mutants: the limiter capping the layer; the cure to the raw value)', () => {
   const e = liveEntity();
+  const layer = renownBonus(50).hp;   // PWR4 (bible/05-Combat/Power-Arc.md section 7): the soft cap's - 57 at Renown 20 and past it
   setRenownLayer(e, 50);
-  assert.equal(e.maxHealth, 247);
-  e.health = 247;
+  assert.equal(e.maxHealth, 100 + layer);
+  e.health = 100 + layer;
   createLycanthropyCurse(e, LYCANTHROPY_TYPES?.Werewolf ?? 1, { now: 0, rolls: () => 0.5 });
   const t = NEED_TO_KILL_PERIOD + 600;   // ten hours into the urge
   lycanthropyMagicRound(e, { nowMinutes: t, clockMinutes: t });
   const lim = e.maxHealthLimiter;
   assert.ok(lim >= 1 && lim < 100, `the urge has lowered the limit (${lim})`);
-  assert.equal(e.maxHealth, lim + 147, 'Daggerfall\'s own maximum limited, the layer above it');
-  assert.equal(e.health, lim + 147, 'the clamp reads the same ceiling');
-  assert.equal(currentMaxHealth(e), lim + 147, 'and so does every full heal');
+  assert.equal(e.maxHealth, lim + layer, 'Daggerfall\'s own maximum limited, the layer above it');
+  assert.equal(e.health, lim + layer, 'the clamp reads the same ceiling');
+  assert.equal(currentMaxHealth(e), lim + layer, 'and so does every full heal');
   e.health = 10;
   cureLycanthropy(e, { nowMinutes: t + 1 });
-  assert.deepEqual([e.health, e.maxHealth], [247, 247], 'the cure\'s full heal');
+  assert.deepEqual([e.health, e.maxHealth], [100 + layer, 100 + layer], 'the cure\'s full heal');
   const plain = { maxHealth: 80, health: 80, maxHealthLimiter: 50 };
   assert.equal(currentMaxHealth(plain), 50, 'offline, a plain entity: the limiter alone, as before');
 });
@@ -495,7 +496,7 @@ test('AUDIT RENOWN1 GAME-5: the magery\'s third is of Daggerfall\'s own maximum,
   const offMax = e.maxMagicka;
   setRenownLayer(e, 50);
   passiveSpecialsMagicRound(e, { nowMinutes: 2, clockMinutes: 60 * 12 });
-  assert.equal(e.maxMagicka, offMax + 98, 'the whole layer on top, not two thirds of it');
+  assert.equal(e.maxMagicka, offMax + renownBonus(50).mp, 'the whole layer on top, not two thirds of it (PWR4: Renown 20\'s)');
   e.magicka = e.maxMagicka;
   assert.deepEqual(offlineVitals(e), { health: e.health * 100 / e.maxHealth, magicka: offMax, maxMagicka: offMax }, 'full online is full offline');
   assert.equal(keepFraction(5, 10, 0), 0, 'nothing held under a maximum of nothing');

@@ -27,9 +27,12 @@ import { t, localizedTable } from '../systems/textManager.js';   // UI-CALM: the
 import { FIRM_NODES, FIRM_EDGES, SIGNS, SERPENT, FIRM_RADII, signById } from '../net/firmament/firmamentTree.js';
 import {
   pathTo, refundTakes, firmCostOf, fits, pointsLeft, treeDiff, refundSilver, statWords, statDef, overCap, treeStats, treeParts, FIRM_RESPEC_GOLD,
-  buildCode, treeOfCode, treeFault,
+  buildCode, treeOfCode, treeFault, isCombatKeystone, FIRM_KEYSTONES_AWAKE, sleepingKeys,   // PWR2: two combat keystones awake
 } from '../net/firmament/firmamentLaw.js';
 import { firmamentBook } from '../net/firmament/firmamentBook.js';
+import { inCombat, swapAttunementSet } from '../systems/power/attuneActions.js';   // PWR4: a sky swapped out of combat, its attunement set with it
+import { playerDoor } from '../systems/playerDoor.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { accountRefusalText } from '../net/accountClient.js';   // AUDIT UICALM-FIRM1 L4 L4: a refusal the window has no words for, in the account's
 import { FRAME_TONES } from './enhanced/enhancedFrame.js';
 import { GRIM_TONES, GRIMOIRE_STACK, px } from './grimoireDress.js';
@@ -240,6 +243,8 @@ export function refusalOf(tree, key, stars, craft) {
   const path = pathTo(tree, key);
   if (!path.length) return t('firmament.no.path', 'Your stars have no path to this star.');
   const want = [...tree.keys, ...path];
+  // PWR2 (bible/05-Combat/Power-Arc.md section 5): two combat keystones awake - a third is refused (the service's own law)
+  if (want.filter(isCombatKeystone).length > FIRM_KEYSTONES_AWAKE) return t('firmament.no.keystones', 'Only two combat keystones can be awake. Remove one first.');
   if (fits(want, stars, craft)) return null;
   const c = firmCostOf(path), left = pointsLeft(tree.keys, stars, craft);
   if (c.combat > left.stars) return t('firmament.no.stars', 'You need {need} {need, plural, one {Star} other {Stars}} and have {have}. Craft points can only be spent on craft stars.', { need: c.combat, have: Math.max(0, left.stars) });
@@ -250,6 +255,8 @@ const signFirst = () => t('firmament.no.signFirst', 'Choose a birthsign first: o
 /** The respec with nothing to take back, and without the gold - the press's title and the service's refusal. */
 const respecNone = () => t('firmament.respec.none', 'Nothing to reset yet.');
 const needGold = () => t('firmament.respec.needGold', 'You need {gold, number} gold to respec.', GOLD);
+/** PWR2 (bible/05-Combat/Power-Arc.md section 5): the respec's tip while the character's one free respec is to come. */
+const freeTip = () => t('firmament.respec.tipFree', 'Remove all your stars and your birthsign. Your first respec is free.');
 
 // ─── THE WINDOW ─────────────────────────────────────────────────────
 
@@ -318,10 +325,15 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   const goBtn = btn(t('firmament.accept', 'Accept'), 'fmt-go', () => openConfirm());
   const sideBtn = btn(t('firmament.summary', 'Summary'), '', () => { side.classList.toggle('shut'); });
   const signBtn = btn(t('firmament.signBtn', 'Birthsign'), '', () => focusSign(), t('firmament.signAria', 'Center on your birthsign'));
+  /** PWR2: whether this character's respec costs nothing now (its one free respec, still to come). */
+  const freeNow = () => book?.respecPrice?.() === 0;
+  // PWR4 (bible/05-Combat/Power-Arc.md section 7): THE SKIES - past Renown 20 the Stars open more skies, never a taller one:
+  // a second at Renown 30 and a third at 40, each kept aside whole and swapped with the one in force, out of combat
+  const skiesBtn = btn(t('firmament.skiesBtn', 'Skies'), '', () => openSkies(), t('firmament.skies.tip', 'Switch between your saved skies.'));
   const respecBtn = btn(t('firmament.respecBtn', 'Respec'), '', () => openRespec(), t('firmament.respec.tip', 'Remove all your stars and your birthsign for {gold, number} gold.', GOLD));
   const shareBtn = btn(t('firmament.shareBtn', 'Share'), '', () => openShare(), t('firmament.shareAria', 'Copy your build code, or load one'));
   const exitBtn = btn(t('firmament.close', 'Close'), 'fmt-exit', () => close());
-  bar.append(title, starsChip, craftChip, find, signBtn, sideBtn, shareBtn, undoBtn, respecBtn, goBtn, exitBtn);
+  bar.append(title, starsChip, craftChip, find, signBtn, sideBtn, shareBtn, undoBtn, skiesBtn, respecBtn, goBtn, exitBtn);
   const side = el('div', 'fmt-side');
   side.setAttribute('data-grim', 'ink');
   if ((globalThis.innerWidth ?? 1280) < 760) side.classList.add('shut');
@@ -430,9 +442,11 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     goBtn.textContent = n ? t('firmament.acceptN', 'Accept ({n})', { n }) : t('firmament.accept', 'Accept');
     goBtn.disabled = !n || !online || respecking;   // AUDIT UICALM-FIRM1 L2 M1: no change while the sky is being taken back
     undoBtn.disabled = !n;
+    // PWR4: the skies, shown once the Renown keeps more than one
+    skiesBtn.hidden = !((book?.state?.skies ?? 1) > 1);
     // THE RESPEC: a sky with something learned in it, and (online) the gold in the purse
     respecBtn.disabled = !committed.start || (!preview && !book?.canRespec?.());
-    respecBtn.title = !committed.start ? respecNone() : respecBtn.disabled ? needGold() : t('firmament.respec.tip', 'Remove all your stars and your birthsign for {gold, number} gold.', GOLD);
+    respecBtn.title = !committed.start ? respecNone() : respecBtn.disabled ? needGold() : freeNow() ? freeTip() : t('firmament.respec.tip', 'Remove all your stars and your birthsign for {gold, number} gold.', GOLD);
     drawSide();
     dirty = true;
   }
@@ -479,6 +493,8 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     const p = purse();
     let foot = null, no = false;
     if (held().has(key)) {
+      // PWR2: a star the allocation holds past a limit sleeps (firmamentLaw.js awakeKeys) - its tip says so first
+      if (n.kind !== 'start' && sleepingKeys(pending, { stars: p.stars, craft: p.craft }).includes(key)) parts.push(el('p', 'ft no', t('firmament.tip.asleep', 'Asleep: past what your sky can hold awake (two combat keystones, and the Stars your Renown gives). It gives nothing until you make room.')));
       if (n.kind === 'start') foot = t('firmament.tip.ownSign', 'Your birthsign. Right-click to reset all stars and choose again.');
       else {
         const takes = refundTakes(pending, key);
@@ -605,6 +621,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (r.error) { say(BUILD_REFUSALS[r.error] ?? notACode(), true); return false; }
     const p = purse();
     const fault = treeFault(r.tree, p.stars, p.craft);
+    if (fault === 'firm-keystones') { say(t('firmament.build.keystones', 'That build has more than two combat keystones. Only two can be awake.'), true); return false; }   // PWR2
     if (fault === 'firm-points') {
       const c = firmCostOf(r.tree.keys);
       const needStars = Math.max(c.combat, c.combat + c.life - p.craft);
@@ -623,17 +640,53 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
         : t('firmament.build.loaded', 'Build loaded. Press {accept} to keep it.', { accept: t('firmament.accept', 'Accept') }));
     return true;
   }
+  /** PWR4: THE SKIES, asked first - the sky in force and each kept aside, a Swap for each the Renown has opened. */
+  function openSkies() {
+    const st = book?.state ?? {};
+    const skies = Number.isSafeInteger(st.skies) ? st.skies : 1;
+    confirming = 'respec';
+    const rows = [el('h3', null, t('firmament.skies.ask', 'Your skies'))];
+    rows.push(el('p', null, t('firmament.skies.what', 'Past Renown 20 your Stars open more skies instead of a taller one: a second at Renown 30, a third at Renown 40. Each keeps its own stars and the pieces you were attuned to.')));
+    for (let slot = 1; slot <= 2; slot++) {
+      const open = slot < skies;
+      const packed = String(st.aside?.[slot - 1] ?? '');
+      const n = packed.includes('|') ? packed.slice(packed.indexOf('|') + 1).split(',').filter(Boolean).length : 0;
+      const line = el('div', 'row');
+      line.append(el('span', null, !open ? t('firmament.skies.closed', 'Sky {n}: opens at Renown {at}.', { n: slot + 1, at: slot === 1 ? 30 : 40 })
+        : packed ? t('firmament.skies.kept', 'Sky {n}: {stars, plural, one {# star} other {# stars}}.', { n: slot + 1, stars: n }) : t('firmament.skies.empty', 'Sky {n}: empty.', { n: slot + 1 })));
+      if (open) line.append(btn(t('firmament.skies.swap', 'Swap in'), 'fmt-go', () => swapSky(slot)));
+      rows.push(line);
+    }
+    const back = el('div', 'row');
+    back.append(btn(t('firmament.back', 'Back'), '', () => confirmBox.classList.remove('on')));
+    confirmBox.replaceChildren(...rows, back);
+    confirmBox.classList.add('on');
+  }
+  async function swapSky(slot) {
+    confirmBox.classList.remove('on');
+    if (inCombat()) { say(t('firmament.skies.combat', 'You cannot change skies with enemies nearby.'), true); return; }
+    const r = preview ? { ok: true } : book ? await book.swap(slot) : { ok: false, error: 'offline' };
+    if (dead) return;
+    if (!r?.ok) { say(refusalText(r?.error ?? 'server', false), true); return; }
+    swapAttunementSet(playerDoor()?.player?.() ?? playerEntity, slot);   // the attunements in force go with the sky; the slot's come back
+    committed = preview ? cloneTree(pending) : cloneTree(book?.current?.() ?? { start: null, keys: [] });
+    pending = cloneTree(committed);
+    refresh();
+    focusSign();
+    say(t('firmament.skies.done', 'Sky swapped.'));
+  }
   /** THE RESPEC, asked first: every star and the birthsign back, for the gold. */
   function openRespec() {
     if (respecBtn.disabled) return;
     confirming = 'respec';
     const row = el('div', 'row');
-    const yes = btn(t('firmament.respec.go', 'Respec · {gold, number} gold', GOLD), 'fmt-go', () => respec());
+    const yes = btn(freeNow() ? t('firmament.respec.goFree', 'Respec · free') : t('firmament.respec.go', 'Respec · {gold, number} gold', GOLD), 'fmt-go', () => respec());
     const no = btn(t('firmament.back', 'Back'), '', () => confirmBox.classList.remove('on'));
     row.append(no, yes);
     confirmBox.replaceChildren(el('h3', null, t('firmament.respec.ask', 'Reset all stars?')),
       el('p', null, t('firmament.respec.what', 'This removes all your stars and your birthsign and gives back their points, so you can choose again.')),
-      el('p', null, t('firmament.respec.cost', 'It costs {gold, number} gold, taken from the gold you carry first, then from your bank account.', GOLD)), row);
+      el('p', null, freeNow() ? t('firmament.respec.costFree', 'It is free: every character has one free respec, and this uses it.')
+        : t('firmament.respec.cost', 'It costs {gold, number} gold, taken from the gold you carry first, then from your bank account.', GOLD)), row);
     confirmBox.classList.add('on');
     yes.focus?.({ preventScroll: true });
   }
@@ -673,6 +726,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   /** Each read when it is said (textManager.js localizedTable: a getter a key). */
   const REFUSALS = /** @type {Readonly<Record<string, string>>} */ (localizedTable({
     'firm-points': () => t('firmament.refusal.points', 'Not enough points.'), 'firm-path': () => t('firmament.refusal.path', 'A star isn\'t connected to your birthsign.'),
+    'firm-keystones': () => t('firmament.refusal.keystones', 'Only two combat keystones can be awake. Remove one first.'),   // PWR2 (bible/05-Combat/Power-Arc.md section 5)
     'firm-key': () => t('firmament.refusal.key', 'One of those stars is unknown.'), 'firm-start': () => t('firmament.refusal.start', 'Choose a birthsign first.'),
     'firm-closed': () => t('firmament.refusal.closed', 'The Firmament isn\'t available to you right now.'),
     'firm-stale': () => t('firmament.refusal.stale', 'Your stars changed in another session. Check them and try again.'),

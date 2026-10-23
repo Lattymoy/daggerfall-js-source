@@ -241,10 +241,10 @@ test('SET4 the rise: said ONCE FOR A SET when its own rank - its lowest piece\'s
   r = drinkWorn(w2, ahead, 1, itemLongName);
   assert.deepEqual(r, { lines: [`The sigil on your ${itemLongName(ahead)} brightens: Bright.`], rose: false }, 'the sword rose, its set did not: the sword\'s own line');
   // the Renown holds it
-  fresh(); online(12);
+  fresh(); online(6);   // PWR4: Kindled's Renown (the stages 1/5/10/15/20)
   const h = wear(player(), piece(BODY[0], 'mora', XP[2] - 1), piece(BODY[1], 'mora', XP[2] - 1));
   r = drinkWorn(h, null, 1);
-  assert.deepEqual(r.lines, ['Your Mora\'s Mantle brightens: Bright. Your Renown limits it to Kindled until Renown 20.']);
+  assert.deepEqual(r.lines, ['Your Mora\'s Mantle brightens: Bright. Your Renown limits it to Kindled until Renown 10.']);
   // two sets rising in one drink: a line each, in the registry's order
   fresh(); online(40);
   const two = wear(player(), piece(BODY[0], 'mora', XP[1] - 1), piece(BODY[1], 'malacath', XP[1] - 1));
@@ -257,8 +257,8 @@ test('SET4 the rise lines: every set at every stage in its own words; the Renown
     for (let rank = 0; rank < SIGIL_STAGES.length; rank++) assert.equal(setRiseLine(set.id, rank), `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${SIGIL_STAGES[rank].name}.`);   // AUDIT SETS L2: never "Your The ..." 
   }
   setSigilRenown(1);
-  assert.equal(setRiseLine('ruhn', 4), 'Your Ruhn\'s Regalia brightens: Ascendant. Your Renown limits it to Faint until Renown 10.');
-  setSigilRenown(30);
+  assert.equal(setRiseLine('ruhn', 4), 'Your Ruhn\'s Regalia brightens: Ascendant. Your Renown limits it to Faint until Renown 5.');
+  setSigilRenown(15);
   assert.equal(setRiseLine('ruhn', 3), 'Your Ruhn\'s Regalia brightens: Radiant.', 'the Renown opens it: no hold');
   assert.equal(setRiseLine('sheogorath', 1), null);
   assert.equal(setRiseLine('dagon', 5), null);

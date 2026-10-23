@@ -198,6 +198,9 @@ export const ITEM_FIELDS = Object.freeze({
   // ACQUIRE1 (bible/10-UI/Loot-Banner.md): the piece has stood in the player's own keeping (systems/acquireWatch.js) - true,
   // or absent. The RECEIVER's mark, as equipSlot and questItem are: loot.js validLootItem strips it off the wire
   acquired: bool(),
+  // PWR2 (bible/05-Combat/Power-Arc.md section 5): the piece's power is attuned - the order its holder attuned it in
+  // (systems/power/attunement.js: the three latest wake), or absent. The RECEIVER's mark: a piece given away comes unattuned
+  attuned: int({ min: 1 }),
   // WAGONS1/WAGONS2 (bible/06-Systems/Wagons.md): which wagon a Small Cart item is (systems/wagon/wagonKinds.js - absent, the
   // cart) and its paint (systems/wagon/wagonLooks.js: `{ o, w, f, c }`, each one of six - absent, as built)
   wagonKind: oneOf(['cart', 'openWagon', 'caravan']),

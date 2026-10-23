@@ -353,8 +353,8 @@
   {
     "name": "EGECO2-champion-off-the-mint",
     "file": "server-account/src/index.js",
-    "old": "who.player = await withEgHonours(honoursCtx, await withHonours(honoursCtx, who.player, nowS), nowS);",
-    "new": "who.player = await withHonours(honoursCtx, who.player, nowS);",
+    "old": "who.player = await withEgHonours(honoursCtx, await withHonours(honoursCtx, who.player, nowS, ctx), nowS);",
+    "new": "who.player = await withHonours(honoursCtx, who.player, nowS, ctx);",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ],

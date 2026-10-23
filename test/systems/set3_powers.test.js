@@ -102,13 +102,14 @@ test('SET3 registered at import, under one name, at every seam SET2 opened: the 
   assert.ok(entityFoldNames().includes('sigilSets'), 'the fold');
   const src = strip(read('src/systems/sigil/sigilSetPowers.js'));
   for (const [seam, fn] of [
-    ['registerEntityFold', 'setFold'], ['registerWeaponBlowMod', 'setBlow'], ['registerPlayerStruckListener', 'setStruck'],
+    ['registerEntityFold', 'setFold'], ['registerWeaponBlowMod', 'setBlowPct'], ['registerPlayerStruckListener', 'setStruck'],   // PWR1: the percents in the blow channel's sum
     ['registerPlayerStrikeListener', 'setStrike'],   // AUDIT SET M2: the blow that landed
     ['registerPlayerDamageMod', 'setDamageMod'], ['registerPlayerDeathSave', 'setDeathSave'], ['registerPlayerHurtListener', 'setHurt'],
     ['registerPlayerDoorOpen', 'setDoorOpen'],   // AUDIT FINAL F10: the door takes the blow's mark as it opens
     ['registerPlayerKillListener', 'setKill'], ['registerSpellCostMod', 'setCastCost'], ['registerAbsorptionChance', 'setAbsorbChance'],
     ['registerMagicRoundHook', 'setRound'],
   ]) assert.match(src, new RegExp(`\\n${seam}\\(SIGIL_SETS_POWER, ${fn}\\);`), `${seam} -> ${fn}`);
+  assert.match(src, /\nregisterWeaponBlowMod\(SIGIL_SETS_SEAR, setSear, \{ outside: 'flat' \}\);/, 'PWR1: the sear, after the sum');
 });
 
 test('SET3 the 2-piece stat tiers: one fold over RF1\'s channels for MY entity with the set awake - Orc-Hide\'s armour on all seven parts and its Endurance, the Ravager\'s Strength and Critical Strike, Shadow\'s Grace\'s Stealth and Agility, Forbidden Lore\'s Intelligence and all six schools, the Burning Gate\'s fire resistance - at the set\'s own stage, read by the formulas\' accessors; nothing at one piece (mutants: a part left out; a school left out; the resistance on the wrong element; a stat on the wrong name)', () => {
@@ -145,7 +146,7 @@ test('SET3 the stat tiers grow together: the numbers stand at the SET\'s stage -
   wearSet(mixed, 'malacath', 1, XP[4]);
   const low = piece(BODY[1], 'malacath', 0); mixed.items.push(low); equipItem(mixed, low);
   assert.equal(entityStatMod(mixed, 'endurance'), 2, 'one Faint piece holds the set at Faint');
-  setSigilRenown(20);   // Bright opens at Renown 20 (the Renown only rises in play; the test lowers it for the cap)
+  setSigilRenown(10);   // Bright opens at Renown 10 (PWR4: the stages 1/5/10/15/20; the Renown only rises in play; the test lowers it for the cap)
   computeEntityMods(asc);
   assert.equal(entityStatMod(asc, 'endurance'), 4, 'Ascendant pieces under a Bright Renown stand at Bright: 2 + 4 x 2/4');
   const w = strip(read('src/scenes/world.js'));

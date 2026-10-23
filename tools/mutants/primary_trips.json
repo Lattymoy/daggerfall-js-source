@@ -82,8 +82,8 @@
   {
     "name": "SIGN-BATCH-apart",
     "file": "server-account/src/honours.js",
-    "old": "  const res = reads.length ? await ctx.db.batch(reads) : [];",
-    "new": "  const res = await Promise.all(reads.map((r) => r.all()));",
+    "old": "    reads.length ? ctx.db.batch(reads) : [],\n",
+    "new": "    Promise.all(reads.map((r) => r.all())),\n",
     "tests": [
       "test/server/primary_trips.test.js"
     ],

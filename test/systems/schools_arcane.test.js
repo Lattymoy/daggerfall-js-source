@@ -36,6 +36,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { validCastData } from '../../src/net/wire.js';
 import { characterFindings, judgeSave } from '../../server-account/src/judge.js';
+import { _setPowerBudgetRandForTests, _resetPowerBudgetForTests, budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the evasion's one roll, the channel's curve
 
 const { Destruction: DES, Restoration: RES, Illusion: ILL, Alteration: ALT, Thaumaturgy: THA, Mysticism: MYS } = SKILLS;
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -68,7 +69,7 @@ function pathMage(id, raw = 150) {
  *  fraction, the clock, the dice and the duel's word - a failing assertion left them for the next test). */
 const reset = () => {
   POW._resetArcanePowersForTests(); _resetSetPowersForTests(); _resetPlayerHealForTests();
-  POW._setArcanePowersClockForTests(null); POW._setArcanePowersRandForTests(null);
+  POW._setArcanePowersClockForTests(null); _resetPowerBudgetForTests();
   setSigilDueling(false); setPlayerDoor(null);
 };
 /** My cast's wrapper as the cast engine mints it - the token carrying what the cast took (hostMagic.js newCast). */
@@ -386,7 +387,7 @@ test('SCHOOLS3 THE RIDERS, through the cast engine\'s landing door: each signatu
   door([mark], se);
   assert.equal(spellPierce(se, mark.entity), 0);
   engine(se, [mark]).applySpellToFoe(signatureSpell('seer'), 20, mark, { entity: se });
-  assert.equal(spellPierce(se, mark.entity), 20);
+  assert.equal(spellPierce(se, mark.entity), Math.floor(budgeted('pierce', 20)), 'laid open: the mark\'s 20, past the pierce channel\'s knee (PWR1) - 18');
   assert.equal(spellPierce(se, foeEnt()), 0, 'that foe alone');
   now += 13;
   assert.equal(spellPierce(se, mark.entity), 0, 'gone after 12 seconds');
@@ -582,16 +583,16 @@ test('SCHOOLS4 THE PASSIVES, each through its own seam: Spellsteel, Unseen Strik
   const se = pathMage('seer', 100);
   se.health = se.maxHealth = 1000;
   door([], se);
-  POW._setArcanePowersRandForTests(() => 0.1);
+  _setPowerBudgetRandForTests(() => 0.1);
   const orc = foeEnt();
   setStruck(orc, se, 50); hurtPlayer(se, 50);
   assert.equal(se.health, 1000, 'foreseen');
   hurtPlayer(se, 50);
   assert.equal(se.health, 950, 'a fall is never foreseen');
-  POW._setArcanePowersRandForTests(() => 0.2);
+  _setPowerBudgetRandForTests(() => 0.2);
   setStruck(orc, se, 50); hurtPlayer(se, 50);
   assert.equal(se.health, 900, 'seven in eight land');
-  POW._setArcanePowersRandForTests(null);
+  _setPowerBudgetRandForTests(null);
   // Slip Away: a hurt across a third - Invisible 5 rounds, ready again after 2 minutes
   reset();
   now = 0;
@@ -646,7 +647,7 @@ test('SCHOOLS4 THE PASSIVES, each through its own seam: Spellsteel, Unseen Strik
   assert.ok(Math.abs(tenth - sm * 0.1) < 1, '10%');
   sb.magicka = 0;
   const fifth = gained(() => reportPlayerKill(foeEnt({ activeEffects: [{ kind: 'soulTrap', chance: 50, roundsRemaining: 3 }] })));
-  assert.ok(Math.abs(fifth - sm * 0.2) < 1, 'my trap held it: 20%');
+  assert.ok(Math.abs(fifth - (sm * budgeted('killMana', 20)) / 100) < 1, 'my trap held it: 20%, on the kill\'s magicka channel past its knee (PWR1)');
   sb.magicka = 0;
   const peer = gained(() => reportPlayerKill(foeEnt({ activeEffects: [{ kind: 'soulTrap', chance: 50, roundsRemaining: 3, by: 'peer-0002' }] })));
   assert.ok(Math.abs(peer - sm * 0.1) < 1, 'a peer\'s trap is not mine: 10%');

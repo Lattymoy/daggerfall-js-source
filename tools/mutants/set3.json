@@ -11,7 +11,7 @@
   {
     "name": "SET3-setBlow-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerWeaponBlowMod(SIGIL_SETS_POWER, setBlow);\n",
+    "old": "registerWeaponBlowMod(SIGIL_SETS_POWER, setBlowPct);",
     "new": "",
     "tests": [
       "test/systems/set3_powers.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "SET3-the-sear-inside-the-per-cent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;",
-    "new": "if (ruhn?.[0] && !fireProof(target)) pct += ruhn[0].sear;",
+    "old": "return ruhn?.[0] && !fireProof(target) ? damage + ruhn[0].sear : damage;",
+    "new": "return ruhn?.[0] && !fireProof(target) ? damage + Math.floor((damage * ruhn[0].sear) / 100) : damage;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "SET3-the-sear-on-a-fire-immune-foe",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;",
-    "new": "if (ruhn?.[0]) flat += ruhn[0].sear;",
+    "old": "return ruhn?.[0] && !fireProof(target) ? damage + ruhn[0].sear : damage;",
+    "new": "return ruhn?.[0] ? damage + ruhn[0].sear : damage;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]

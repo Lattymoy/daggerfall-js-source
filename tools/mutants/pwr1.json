@@ -1,0 +1,245 @@
+[
+  {
+    "name": "PWR1-the-ceiling-ratio",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "export const CEILING_OVER_KNEE = 1.5;",
+    "new": "export const CEILING_OVER_KNEE = 2;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-hyperbola-numerator",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  return c.knee + (e * span) / (span + e);",
+    "new": "  return c.knee + (e * span) / span;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-knee-read-strictly",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  if (!c || !Number.isFinite(x) || x <= c.knee) return Number.isFinite(x) ? x : 0;",
+    "new": "  if (!c || !Number.isFinite(x) || x < 0) return Number.isFinite(x) ? x : 0;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-blow-knee-off-its-source",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  blow: channel({ knee: 30, unit: '%' }),",
+    "new": "  blow: channel({ knee: 50, unit: '%' }),",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-evade-knee-off-its-source",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  evade: channel({ knee: 15, unit: '%' }),",
+    "new": "  evade: channel({ knee: 25, unit: '%' }),",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-skill-knee-off-its-source",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  skill: channel({ knee: 30, unit: 'points' }),",
+    "new": "  skill: channel({ knee: 60, unit: 'points' }),",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-ledger-each-alone",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "      sum += x;\n      const now = budgeted(channel, sum);\n      const got = now - landed;",
+    "new": "      sum += x;\n      const now = landed + budgeted(channel, x);\n      const got = now - landed;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-ledger-unopened",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "export const ledgerShare = (ledger, x) => (ledger ? ledger.take(x) : x);",
+    "new": "export const ledgerShare = (ledger, x) => x;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-evasion-uncurved",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  const p = Math.min(100, budgeted('evade', sum));",
+    "new": "  const p = Math.min(100, sum);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-voice-the-first-always",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "    if (at < v) { try {",
+    "new": "    if (true) { try {",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-guard-uncurved",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  const pct = budgeted('guard', guardSum(entity, ctx));",
+    "new": "  const pct = guardSum(entity, ctx);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-one-carry-for-both",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  const k = ctx?.blow ? 'blow' : 'other';",
+    "new": "  const k = 'blow';",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-blow-uncurved",
+    "file": "src/systems/power/powerBudget.js",
+    "old": "  const lands = budgeted(channel, pct);",
+    "new": "  const lands = pct;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-chain-back",
+    "file": "src/systems/entityMods.js",
+    "old": "    try { const next = fn(weapon, damage, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) gained += next - damage; }",
+    "new": "    try { const next = fn(weapon, damage + gained, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) gained = next - damage; }",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-skill-own-summed",
+    "file": "src/systems/entityMods.js",
+    "old": "  (outside === 'skill' ? _skillBlowMods : outside === 'flat' ? _flatBlowMods : _blowMods).set(name, fn);",
+    "new": "  (outside === 'flat' ? _flatBlowMods : _blowMods).set(name, fn);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-flat-summed",
+    "file": "src/systems/entityMods.js",
+    "old": "  (outside === 'skill' ? _skillBlowMods : outside === 'flat' ? _flatBlowMods : _blowMods).set(name, fn);",
+    "new": "  (outside === 'skill' ? _skillBlowMods : _blowMods).set(name, fn);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-flat-before-the-skill",
+    "file": "src/systems/entityMods.js",
+    "old": "  for (const m of [_skillBlowMods, _flatBlowMods]) {",
+    "new": "  for (const m of [_flatBlowMods, _skillBlowMods]) {",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-roll-uncurved",
+    "file": "src/systems/entityMods.js",
+    "old": "  return gained ? landGain('roll', damage, gained, null) : damage;",
+    "new": "  return damage + gained;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-folds-unbudgeted",
+    "file": "src/systems/entityMods.js",
+    "old": "  if (entity.isPlayer && !entity.peer) budgetFolds(out);",
+    "new": "  if (false) budgetFolds(out);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-a-foe-budgeted",
+    "file": "src/systems/entityMods.js",
+    "old": "  if (entity.isPlayer && !entity.peer) budgetFolds(out);",
+    "new": "  budgetFolds(out);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-cut-unrecorded",
+    "file": "src/systems/entityMods.js",
+    "old": "    if (n < v) cut.push({ channel: ch, key, sum: v, landed: n });",
+    "new": "    void cut;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-window-summed",
+    "file": "src/systems/arcanePowers.js",
+    "old": "registerAbsorptionChance(ARCANE_POWERS, pathAbsorbChance, { outside: true });",
+    "new": "registerAbsorptionChance(ARCANE_POWERS, pathAbsorbChance);",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-absorb-uncurved",
+    "file": "src/systems/absorption.js",
+    "old": "  if (port > 0 && Math.floor(rolls() * 100) < budgeted('absorb', port)) return cost;",
+    "new": "  if (port > 0 && Math.floor(rolls() * 100) < port) return cost;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-pace-curve-not-handed",
+    "file": "src/combat/swingLaw.js",
+    "old": "export function installSwingLaw() { registerSwingReader(readSwing); registerSwingPaceCurve((pct) => budgeted('pace', pct)); }",
+    "new": "export function installSwingLaw() { registerSwingReader(readSwing); void budgeted; }",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-cast-uncurved",
+    "file": "src/systems/castSpeed.js",
+    "old": "  const r = speedCastRate(liveStat(entity, 'speed')) + budgeted('castSpeed', castSpeedSum(entity)) / 100;",
+    "new": "  const r = speedCastRate(liveStat(entity, 'speed')) + castSpeedSum(entity) / 100;",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-sheet-an-empty-channel",
+    "file": "src/systems/power/powerSheet.js",
+    "old": "    if (c && Number.isFinite(sum) && sum > 0) rows.push(",
+    "new": "    if (c && Number.isFinite(sum)) rows.push(",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  },
+  {
+    "name": "PWR1-the-sheet-off-a-copy",
+    "file": "src/systems/power/powerSheet.js",
+    "old": "key = null, landed = budgeted(channel, sum)) => {",
+    "new": "key = null, landed = sum) => {",
+    "tests": [
+      "test/systems/power/pwr1_budget.test.js"
+    ]
+  }
+]

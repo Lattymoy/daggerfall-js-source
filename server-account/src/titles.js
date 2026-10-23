@@ -92,7 +92,7 @@
 // worn by a row nobody has looked at since.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
+import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES, RENOWN_TITLES } from '../../src/net/identityToken.js';
 import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
@@ -368,6 +368,9 @@ export function titlesHeld(player, env) {
   if (player?.arena?.champion === true) held.push('arenachampion');
   if (player?.iliac?.champion === true) held.push('iliacchampion');   // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top
   if (player?.gambit?.champion === true) held.push('grandmaster');   // KG6: The King's Gambit's season #1 (gambit.js), while they hold the top
+  // PWR4 (bible/05-Combat/Power-Arc.md section 7): THE LONG ROAD'S THREE - one of the account's characters at Renown 30,
+  // 40, 50 (the row's `renownBest`, honours.js withHonours), every one it reaches; a row read without it holds none
+  for (const { id, at } of RENOWN_TITLES) if (Number(player?.renownBest) >= at) held.push(id);
   // SD9b: HOURBREAKER - rolled on a Brass Remnant's kill's first write and laid on the row (sds.js claimSd, `sd_honours`),
   // held for good. A guest's kill is never written, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');

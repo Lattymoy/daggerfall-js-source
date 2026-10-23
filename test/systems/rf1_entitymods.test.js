@@ -34,6 +34,7 @@ import { skillValue, SKILLS } from '../../src/systems/skills.js';
 import { entityMaxEncumbrance, maxEncumbrance, calculateSuccessfulHit } from '../../src/combat/formulas.js';
 import { mintCondition } from '../../src/systems/item/itemTemplates.js';
 import { runMagicRoundsFor } from '../../src/systems/worldTick.js';
+import { budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the roll channel's curve
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -110,13 +111,16 @@ test('RF1: DFU\'s enchantment channel is INSIDE the accessor, verbatim - Strengt
   } finally { registerEntityFold('rf1-c', null); }
 });
 
-test('RF1: the weapon-damage modifiers run in registration order over the roll, and none is DFU\'s roll alone', () => {
+test('RF1: the weapon-damage modifiers each answer the roll itself, their gains summed and landed through the roll channel\'s curve (PWR1), and none is DFU\'s roll alone', () => {
   const w = { group: 'Weapons', templateIndex: 120, material: 1 };
   assert.equal(weaponDamageMods(w, 10), 10, 'the loot-rarity modifier is registered and (LR5) the switch is ON, but this weapon carries no affixes: the roll stands');
   registerWeaponDamageMod('rf1-x', (weapon, d) => d + 3);
   registerWeaponDamageMod('rf1-y', (weapon, d) => d * 2);
   try {
-    assert.equal(weaponDamageMods(w, 10), 26);
+    // PWR1 (bible/05-Combat/Power-Arc.md section 4): +3 and +10, each of the roll of 10 - 130% summed, never the chain's 26
+    assert.equal(weaponDamageMods(w, 10), 10 + Math.floor((10 * budgeted('roll', 130)) / 100));
+    registerWeaponDamageMod('rf1-y', (weapon, d) => d + 1);
+    assert.equal(weaponDamageMods(w, 10), 14, 'under the knee: whole');
   } finally { registerWeaponDamageMod('rf1-x', null); registerWeaponDamageMod('rf1-y', null); }
   assert.equal(weaponDamageMods(w, 10), 10);
 });

@@ -14,7 +14,7 @@
 //
 // Pure but for the text core: no DOM. Not a DFU member - Daggerfall Unity has no accounts. Ledger A (COLLECTIONS-II).
 import { t, intlLocale } from '../../systems/textManager.js';
-import { TITLES, AURAS, ICONS, GLYPHS } from '../../net/identityToken.js';
+import { TITLES, AURAS, ICONS, GLYPHS, RENOWN_TITLES } from '../../net/identityToken.js';
 import { TITLE_TEXT, AURA_TEXT } from '../playerBadge.js';
 import { ICON_TEXT } from '../profileIcons.js';
 import { GLYPH_LABEL } from '../enhanced/enhancedAccount.js';
@@ -125,6 +125,8 @@ const remnant = (/** @type {keyof typeof REMNANT_ODDS} */ k) => () => t('coll.ho
 const serpent = (/** @type {keyof typeof SERPENT_ODDS} */ k) => () => t('coll.how.serpent', 'A chance of one in {n} each time a Sea Serpent you fought is slain, if your own fire dealt a real share of your ship’s.', { n: SERPENT_ODDS[k] });   // AUDIT COLLECTIONS-II (lane 1): rolled a player, on a dealing claim alone (serpents.js)
 const redoubt = (/** @type {keyof typeof REDOUBT_OF} */ k) => () => t('coll.how.redoubt', 'Take Redoubt {n} or a deeper one in the Elite Breach (a Rehearsal does not count).', { n: REDOUBT_OF[k] });
 const hoursFirst = () => t('coll.how.hoursfirst', 'Granted by name to the first company to break an Abyss Dungeon.');
+/** PWR4: a long road's title - the Renown it asks, its one home's (net/identityToken.js RENOWN_TITLES). */
+const renownRoad = (/** @type {string} */ id) => () => t('coll.how.renownRoad', 'Reach Renown {at} with any of your characters.', { at: RENOWN_TITLES.find((r) => r.id === id)?.at ?? 0 });
 const spireFirst = () => t('coll.how.spirefirst', 'Granted by name to the first company to take Redoubt 10.');
 const arenaTop = () => t('coll.how.arenachampion', 'Stand first on the Arena’s ranked board this season, with at least {bouts} rated bouts against {foes} different opponents.', { bouts: ARENA_CHAMPION_MIN_BOUTS, foes: ARENA_CHAMPION_MIN_FOES });
 /** AUDIT COLLECTIONS-II (lane 4): the crown's own row names its kingdom (the glyph's word, in the player's language) - a
@@ -220,6 +222,10 @@ export const WARDROBE = Object.freeze({
     starwarden: E('questlines', 'seasonal', questline('starwarden')),
     witchwarden: E('festival', 'seasonal', wyrd('title:witchwarden')),
     hearthkeeper: E('festival', 'seasonal', () => t('coll.how.hearthkeeper', 'Set a Hearth Offering at your home’s door during the Witches’ Festival, and have other players take {n} Soul Cakes from it.', { n: HEARTHKEEPER_GIVEN })),   // AUDIT COLLECTIONS-II (lane 1): `fest_given` counts the cakes others take (festival.js takeFromOffering)
+    // PWR4 (bible/05-Combat/Power-Arc.md section 7): the long road's three, held while one of the account's characters stands at the Renown
+    renowned: E('world', 'open', renownRoad('renowned')),
+    paragon: E('world', 'open', renownRoad('paragon')),
+    legend: E('world', 'open', renownRoad('legend')),
   }),
   aura: Object.freeze({
     dagonfire: E('broker', 'open', broker('aura:dagonfire'), { look: () => t('coll.look.dagonfire', 'A ring of Oblivion’s fire burning on the ground at your feet.') }),

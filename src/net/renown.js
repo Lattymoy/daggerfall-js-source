@@ -185,6 +185,10 @@ export const RENOWN_OVER_MAX = 3;
 export const RENOWN_PARTY_BONUS_PCT = 10;
 /** The most partymates the bonus counts - the party's own seats. */
 export const RENOWN_PARTY_COUNT_MAX = 8;
+/** PWR5 (2026-10-23, bible/05-Combat/Power-Arc.md section 8; Mac: "Pay by contribution" - "Party Renown bonus capped at
+ *  +30%"): the most the party's bonus adds, per cent - a group still earns more a head, never seventy per cent more by
+ *  its headcount (a party of four reaches it; eight paid +70% before PWR5). */
+export const RENOWN_PARTY_BONUS_MOST = 30;
 /** RENOWN-ACCOUNT: what every source pays, per cent of its full rate - three quarters, a slower grind. */
 export const RENOWN_RATE_PCT = 75;
 
@@ -227,7 +231,7 @@ export const renownSerpentXp = (renown = null) => RENOWN_SERPENT_QUESTS * renown
  *  base, so the party's XP is at the rate too. */
 export function renownPartyXp(xp, present) {
   const n = clampInt(present, 1, RENOWN_PARTY_COUNT_MAX);
-  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + RENOWN_PARTY_BONUS_PCT * (n - 1))) / 100);
+  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + Math.min(RENOWN_PARTY_BONUS_MOST, RENOWN_PARTY_BONUS_PCT * (n - 1)))) / 100);   // PWR5: at most +30%
 }
 
 /* ═══ WHAT IT GIVES, ONLINE ═══════════════════════════════════════════
@@ -235,14 +239,30 @@ export function renownPartyXp(xp, present) {
  * "On top" (Mac): Daggerfall's own maximum health and magicka are what
  * they always were, and online the level ADDS to both. Level 1 adds
  * nothing, so a character with no track yet plays online exactly as it
- * plays offline; level 50 adds 147 health and 98 magicka.
+ * plays offline; level 20 adds 57 health and 38 magicka.
+ *
+ * PWR4 (2026-10-23, bible/05-Combat/Power-Arc.md section 7; Mac: "20;
+ * past it, loadouts"): WIDER, NOT TALLER - THE SOFT CAP. Every layer of
+ * Renown that is POWER - this health and magicka, the Firmament's active
+ * Stars (net/firmament/firmamentLaw.js activeStarsFor), the sigil's
+ * stages (systems/sigil/sigil.js SIGIL_STAGES, re-spaced 1/5/10/15/20),
+ * the hero's threat that answers it (systems/heroThreat.js) - reads the
+ * Renown no higher than RENOWN_SOFT_CAP (renownPower). Past it Renown
+ * buys breadth: two more skies to swap between (activeStarsFor's
+ * neighbours, FIRM_SKIES_AT) and the titles of the long road. Before
+ * PWR4 every layer grew to 50, some 155 hours: a veteran's edge that only
+ * time bought (Power-Arc.md section 2).
  */
 export const RENOWN_HP_PER_LEVEL = 3;
 export const RENOWN_MP_PER_LEVEL = 2;
+/** PWR4: the Renown every layer of power stops growing at (Mac: "20"). */
+export const RENOWN_SOFT_CAP = 20;
+/** PWR4: the Renown a layer of power reads - the level, no higher than the soft cap. */
+export const renownPower = (level) => clampInt(level ?? 1, 1, RENOWN_SOFT_CAP);
 
-/** The health and magicka a level adds online. */
+/** The health and magicka a level adds online - PWR4: to the soft cap's. */
 export function renownBonus(level) {
-  const L = clampInt(level, 1, RENOWN_MAX);
+  const L = renownPower(level);
   return { hp: RENOWN_HP_PER_LEVEL * (L - 1), mp: RENOWN_MP_PER_LEVEL * (L - 1) };
 }
 

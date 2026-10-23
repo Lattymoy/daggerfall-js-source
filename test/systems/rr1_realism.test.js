@@ -445,7 +445,7 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(rd('src/combat/weapon/weaponRig.js'), /const poseProbe = \(\) => \(\{ \.\.\.weaponPoseOf\(playerWeapon\), weaponType: weaponTypeForItem\(playerWeapon\.weapon\) \}\);/, 'the pair through its one law (HARD2c)');
   assert.match(rd('src/combat/weapon/weaponRig.js'), /setWeaponPoseProbe\(poseProbe\);/, 'AUDIT 68 S09-rig-globals-last-built: re-claimed by the stepping rig');
   assert.match(rd('src/player/mountRig.js'), /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\)/);
-  assert.match(rd('src/systems/worldTick.js'), /for \(const fn of _roundHooks\.values\(\)\) fn\(entity, \{ nowMinutes: r \+ 1, sinks, say \}\);/);
+  assert.match(rd('src/systems/worldTick.js'), /const round = \{ nowMinutes: r \+ 1, sinks, say, regen: openLedger\('regen'\), manaRegen: openLedger\('manaRegen'\) \};\s*for \(const fn of _roundHooks\.values\(\)\) fn\(entity, round\);/);   // PWR1: with the round's ledgers
   assert.match(rd('src/systems/guild/guilds.js'), /return guild\?\.neverExpels && !underworldRuleOf\(guild\) && newRank < 0 \? 0 : newRank;/);
   assert.match(rd('src/systems/guild/guildServiceFlow.js'), /const rows = moved\.lines \? moved\.lines\.map\(\(t\) => \(\{ text: t\.replaceAll\('%pcn', entity\?\.name \?\? ''\), center: true \}\)\) : undefined;/);
   const inst = rd('src/systems/roleplayRealism/rrInstall.js');

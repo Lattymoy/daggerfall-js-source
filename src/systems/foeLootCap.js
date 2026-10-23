@@ -73,7 +73,8 @@ export const PLAIN_FOE_RARITY_WEIGHTS_BEFORE = Object.freeze({
 const _ladders = new Map();
 /** RENOWN-LOOT (systems/renownLoot.js): the plain ladder at `quarters` of LOOT-EASE's buff - every tier's base, step and
  *  cap moved that share of the way from FOE-CAP's first numbers: 4.5% blue at level 0 at Renown 1 online, LOOT-EASE's
- *  own (PLAIN_FOE_RARITY_WEIGHTS) offline and at Renown 20, 5.5% at Renown 40. One frozen ladder a share. */
+ *  own (PLAIN_FOE_RARITY_WEIGHTS) offline and at Renown 10, 5.5% at Renown 20 (PWR4's re-spaced stages; Renown 20 and
+ *  40 before it). One frozen ladder a share. */
 export function plainFoeRarityWeights(quarters = renownLootQuarters()) {
   if (quarters === 4) return PLAIN_FOE_RARITY_WEIGHTS;
   let w = _ladders.get(quarters);
