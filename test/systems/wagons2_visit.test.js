@@ -287,7 +287,7 @@ test('WAGONS2-VISIT THE DOOR: another\'s caravan is entered by the ONE descripto
   const [room, visit] = calls[0];
   assert.deepEqual(room, caravanDescriptorAt(t, (p) => p.map((v) => v * 2)), 'the one law');
   assert.deepEqual({ ...room, turn: Math.round(room.turn) }, { v: 2, kind: 'caravan', origin: [20, 2, 20], turn: 90, step: [16, 0, 20], yaw: -Math.PI / 2 });
-  assert.deepEqual(visit, { privateRoom: `caravan:${'a'.repeat(24)}`, cabinOwner: 'Ann', look: t.look, k: t.k, at: [20, 2, 20], cell: null });
+  assert.deepEqual(visit, { privateRoom: `caravan:${'a'.repeat(24)}`, cabinOwner: 'Ann', look: t.look, k: t.k, at: [20, 2, 20], cell: null, entry: 'private', guild: null });   // GUILD-PANE 3: and its door, which a pool that says none gives as private
   assert.deepEqual(access.returnToWagon(room), { position: [8, 0, 10], yaw: -Math.PI / 2 }, 'out behind its door');
   for (const [tt, r] of [[{ ...t, owner: '' }, 'caravan:x'], [t, ''], [null, 'caravan:x']]) assert.equal(await access.visit(tt, r), false);
   busy = true; assert.equal(await access.visit(t, 'caravan:x'), false); busy = false;

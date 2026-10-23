@@ -541,7 +541,7 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   const book = new GuildBook({ door: {}, character: () => 'c', wallet: {}, realm: { act: async () => ({ ok: true }) }, pack: { items: () => entity.items, add() {}, changed() {}, refuses: (it) => packTradeRefusal(it, entity) } });
   assert.deepEqual(await book.vaultPut(caravan), { ok: false, error: 'vault-goods' });
   const w = src('scenes/world.js'), wm = src('scenes/worldModes.js'), sp = readFileSync(new URL('../../../src/ui/socialPanel.js', import.meta.url), 'utf8');
-  assert.match(w, /reach: \(\) => _storesReached\(\), refuses: \(it\) => packTradeRefusal\(it, playerEntity\) \}/);
+  assert.match(w, /reach: \(\) => _storesReached\(\) \|\| caravanVaultReached\(\{ modes, items: playerEntity\.items, tag: myGuildTag\(\) \}\), refuses: \(it\) => packTradeRefusal\(it, playerEntity\) \}/);   // GUILD-PANE 3: and a guild caravan
   assert.match(sp, /tradeRefusal\(it\) == null && !g\.pack\.refuses\?\.\(it\) && !isLocked\(it\)/);
   // the keyed shop
   assert.match(wm, /\n {4}if \(loadedWagonHeld\(it\)\) return 0;   \/\/ WAGONS2 \(AUDIT\)/);

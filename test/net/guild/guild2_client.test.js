@@ -18,6 +18,8 @@ import { DEVICES_DRAWN, divisionPath, divisionComplement, bannerSvg, shieldSvg, 
 import { bannerKeyOf } from '../../../src/scenes/hallBanners.js';
 import { paintSwatch } from '../../../src/ui/heraldrySwatch.js';
 import { GuildBook } from '../../../src/net/guild/guildBook.js';
+import * as caravanVisit from '../../../src/systems/caravanVisit.js';
+import { newWagonItem } from '../../../src/systems/wagon/wagonKinds.js';
 import {
   createSocialPanel, GUILD_RENAME_COST_TEXT, guildRenameSoonText, GUILD_VAULT_REACH_TEXT, GUILD_VAULT_EMPTY_TEXT, armsWhy, guildWordText, GUILD_LEDGER_WORDS,
 } from '../../../src/ui/socialPanel.js';
@@ -413,6 +415,46 @@ test('GUILD2b the Vault page (AUDIT M1-M3): the town read live - a page left ope
   t.book.guild = { ...t.book.guild, id: 'gOTHER000000' };
   assert.equal(t.book.vaultNow(), null, 'another guild\'s view is no view');
   assert.deepEqual(await t.book.vaultTake(0), { ok: false, error: 'guild-vault-empty' }, 'nor taken from');
+});
+
+test('GUILD-PANE 3 the Vault page in a guild caravan: the reach the host hands (the town, or the caravan helper) opens Take and Put in with no note when the caravan\'s door is the guild\'s, and shuts them with the note - its words naming the caravan - in a party caravan, a visit to another guild\'s, or on the road; a put goes through the real book (mutants: the caravan unread; the old words)', async () => {
+  assert.equal(typeof caravanVisit.caravanVaultReached, 'function', 'systems/caravanVisit.js exports caravanVaultReached');
+  assert.equal(GUILD_VAULT_REACH_TEXT, 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.');
+  const pieces = [{ slot: 0, name: 'Ebony Dagger', count: 1, by: 'Aldric', at: 5 }];
+  const carried = (entry) => { const items = [newWagonItem('caravan')]; caravanVisit.setDrivenCaravanEntry(items, entry); return items; };
+  /** The world host's reach, as its line reads it: the town (here never) or the caravan I stand in. */
+  const town = () => false;
+  const hostReach = (t, where) => { t.book.pack.reach = () => town() || caravanVisit.caravanVaultReached({ modes: where.modes, items: where.items, tag: 'HND' }); t.panel.render(); };
+  const ARROW = { ...ARROWS };
+  const open = async (where) => {
+    const t = await tab(view(), { vaultItems: pieces, pack: [ARROW] }, 'vault');
+    hostReach(t, where);
+    await t.go('vault');
+    return t;
+  };
+  const inGuild = await open({ modes: { caravanRoom: {}, caravanVisit: null }, items: carried('guild') });
+  assert.equal(texts(inGuild.panel.root).includes(GUILD_VAULT_REACH_TEXT), false, 'no note in a guild caravan');
+  assert.equal(button(inGuild.panel.root, 'Take').disabled, false);
+  assert.equal(button(inGuild.panel.root, 'Put in').disabled, false);
+  button(inGuild.panel.root, 'Put in').fire('click');
+  await settle(); await settle();
+  assert.equal(inGuild.calls.filter((c) => c[0] === 'vaultPut').length, 1, 'a put goes through the book');
+  const visiting = await open({ modes: { caravanRoom: {}, caravanVisit: { entry: 'guild', guild: 'HND' } }, items: carried('private') });
+  assert.equal(button(visiting.panel.root, 'Take').disabled, false, 'a guildmate\'s guild caravan');
+  for (const [name, where] of [
+    ['a party caravan of mine', { modes: { caravanRoom: {}, caravanVisit: null }, items: carried('party') }],
+    ['a party caravan I visit', { modes: { caravanRoom: {}, caravanVisit: { entry: 'party', guild: 'HND' } }, items: carried('guild') }],
+    ['another guild\'s', { modes: { caravanRoom: {}, caravanVisit: { entry: 'guild', guild: 'OTH' } }, items: carried('guild') }],
+    ['the road', { modes: { caravanRoom: null, caravanVisit: null }, items: carried('guild') }],
+  ]) {
+    const away = await open(where);
+    assert.ok(texts(away.panel.root).includes(GUILD_VAULT_REACH_TEXT), `${name}: the note`);
+    assert.equal(button(away.panel.root, 'Take').disabled, true, `${name}: Take waits`);
+    assert.equal(button(away.panel.root, 'Put in').disabled, true, `${name}: Put in waits`);
+    button(away.panel.root, 'Put in').disabled = false; button(away.panel.root, 'Put in').fire('click');
+    await settle(); await settle();
+    assert.equal(away.calls.filter((c) => c[0] === 'vaultPut' || c[0] === 'vaultTake').length, 0, `${name}: a press that slipped through sends nothing`);
+  }
 });
 
 test('GUILD2b the Members page: the guildmaster sets each member\'s standing at the vault - as their rank, no access, puts in, takes out with a limit a day - and Set says it; revoking is "as their rank"; an officer sees each standing but sets none (mutants: grants offered to an officer; the limit unsent)', async () => {
