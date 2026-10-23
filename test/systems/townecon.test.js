@@ -466,7 +466,8 @@ test('TOWN-ECON LAW-3 the wiring: both doors of a counter\'s Buy hand the mark t
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /markCounterBought\(staged, \{ price, \.\.\.asked \}\);/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-1): and the purchase's own holiday and guild
   assert.match(wm, /markCounterBought\(\[it\], \{ price \}\);/);
-  assert.match(wm, /const lot = tradeCost\('Sell', \[it\], \{ quality: b\.quality, priceAdjustment: shopAdjustment\(b, 'Sell'\) \}\);\n\s+return getTradePrice\('Sell', lot\.cost, b\.quality, \{\n[^\n]*\n[^\n]*\n\s+\}, lot\.pieces, lot\.resale\);/);
+  // DEEDS2: the haggle's skills are its one door now (systems/partyTalents.js haggleOf)
+  assert.match(wm, /const lot = tradeCost\('Sell', \[it\], \{ quality: b\.quality, priceAdjustment: shopAdjustment\(b, 'Sell'\) \}\);\n\s+return getTradePrice\('Sell', lot\.cost, b\.quality, haggleOf\(playerEntity\), lot\.pieces, lot\.resale\);/);
   const nt = rd('src/ui/native/nativeTrade.js');
   assert.match(nt, /const \{ cost, modeActionEnabled, pieces, resale \} = this\.cost\(\);/);
   assert.match(nt, /getTradePrice\(this\.mode, cost, ctx\.quality \?\? 0, ctx\.skills \?\? \{\}, pieces, resale\);/);

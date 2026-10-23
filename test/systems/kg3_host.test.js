@@ -46,6 +46,7 @@ import { iliacGrade } from '../../src/systems/iliac/iliacPatrons.js';
 import { giveBinderAtChargen } from '../../src/systems/iliac/iliacItems.js';
 import { skillValue, SKILLS } from '../../src/systems/skills.js';
 import { liveStat } from '../../src/systems/statMods.js';
+import { haggleOf } from '../../src/systems/partyTalents.js';   // DEEDS2: the card pack's haggle is the haggle's one door
 
 beforeEach(() => resetPrefs());
 
@@ -473,7 +474,7 @@ function cardHost({ friendly = false } = {}) {
     buildingDirectory: () => ({ locationName: 'Daggerfall' }), registerPlayerHurtListener: () => {},
     isOnlinePage: () => false, mwViewFirstPerson: () => {}, homeTownOf: (b) => b?.townMapId || 0, worldMinutes: () => 0, MINUTES_PER_DAY: 1440,
     RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
-    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat,
+    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat, haggleOf,
     gambitTableOn, openGambitTableGame: (o) => openGambitTableGame({ ...o, doc }), isTouchDevice: () => false, regularLook, seatTopByte, cursorKeyClaimed: () => false, gambitBoardKey, audio: null,
     canvas: { clientWidth: W, clientHeight: H, getBoundingClientRect: () => ({ left: 0, top: 0 }), setPointerCapture() {} }, ...hand, CARD_W, CARD_L, chipDiscs, cardMatrix,
     worldViewportRect: () => null, rayDirFromScreen, projectToScreen, performance,

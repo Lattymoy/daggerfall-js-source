@@ -263,7 +263,8 @@ test('MAC-G: the sheet carries the list, and the pause page draws it', () => {
   assert.match(menu, /\[\['advantage', t\('pause\.stats\.advantages', 'Advantages'\)\], \['disadvantage', t\('pause\.specials\.disadvantages', 'Disadvantages'\)\]\]/);
   // the SOURCE tag, because Resistance To Magic from the blood and from
   // the class are different facts about a re-rollable character
-  assert.match(menu, /r\.source === 'race' \? \(m\.race \|\| t\('pause\.specials\.race', 'Race'\)\) : \(m\.career \|\| t\('pause\.specials\.class', 'Class'\)\)/);
+  // (DEEDS3: and a deed's own word, for an advantage earned in play - bible/06-Systems/Deeds-And-Talents.md section 6.4)
+  assert.match(menu, /r\.source === 'race' \? \(m\.race \|\| t\('pause\.specials\.race', 'Race'\)\)\s*: r\.source === 'deed' \? t\('pause\.specials\.deed', 'Deed'\) : \(m\.career \|\| t\('pause\.specials\.class', 'Class'\)\)/);
   assert.match(read('src/ui/enhanced/enhancedStyle.js'), /\.px-stat \.v\.px-src \{ font-size: 13px;/);
 });
 

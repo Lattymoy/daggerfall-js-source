@@ -22,6 +22,11 @@ import { startDisease, diseaseCount } from '../../src/systems/diseases.js';
 import { HOLIDAY_DAYS_OF_YEAR, HOLIDAYS } from '../../src/systems/holidays.js';
 import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
 import { calculateCost, calculateTradePrice } from '../../src/systems/shopStock.js';
+import { setPref as setTalentsPref } from '../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const player = (over = {}) => ({
   name: 'Bob', isPlayer: true, level: 2, health: 30, maxHealth: 30,

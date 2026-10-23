@@ -5285,8 +5285,8 @@ function statsSpecials(detail, m) {
 }
 
 /** DEEDS3 (bible/06-Systems/Deeds-And-Talents.md section 6): THE DEEDS - each advantage a deed earns, where it stands
- *  (earned, done with no slot left, or the tally toward it), and the disadvantages overcome. A deed the career cannot
- *  take is not listed. Shown while Deeds and Talents is in force. */
+ *  (earned, done with no slot left, the tally toward it, or held back by a disadvantage it waits on), and the
+ *  disadvantages overcome. A deed the character cannot take is not listed. Shown while Deeds and Talents is in force. */
 function statsDeeds(detail, deeds) {
   if (!deeds) return;
   const earned = deeds.rows.filter((r) => r.state === 'earned').length;
@@ -5294,7 +5294,9 @@ function statsDeeds(detail, deeds) {
   for (const r of deeds.rows) {
     if (r.state === 'closed') continue;
     const row = el('div', 'px-stat');
-    row.append(el('span', 'k', `${r.name} \u2014 ${r.label}`));
+    // AUDIT DEEDS D6: a deed a disadvantage holds back is shown, with what it waits on - its tally counts the overcoming's
+    const waits = r.state === 'blocked' ? ` (${t('pause.deeds.blocked', 'after your {blocker}', { blocker: r.blocker })})` : '';
+    row.append(el('span', 'k', `${r.name} \u2014 ${r.label}${waits}`));
     row.append(el('span', `v${r.state === 'earned' ? ' won' : ''}`, r.state === 'earned' ? t('pause.deeds.earned', 'Earned')
       : r.state === 'unslotted' ? t('pause.deeds.unslotted', 'Done, no slot') : `${Math.min(r.have, r.need)} / ${r.need}`));
     detail.append(row);

@@ -28,6 +28,11 @@ import { SPECIAL_ABILITY_BITS } from '../../src/systems/specialAdvantages.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { RACES } from '../../src/systems/races.js';
 import { FATIGUE_LOSS, FATIGUE_DRAIN_SCALE } from '../../src/systems/statMods.js';
+import { setPref as setTalentsPref } from '../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 const charged = (loss, mult = 1) => Math.trunc(loss * mult * FATIGUE_DRAIN_SCALE);   // BALANCE1: DFU's loss x the multiplier x exertion's scale, truncated once
 
 const ARENA2 = process.env.ARENA2_PATH;

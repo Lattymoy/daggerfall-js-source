@@ -3749,6 +3749,11 @@
   "tr": "a228bbe087c7",
   "by": "claude-in-session"
  },
+ "combat.pacifiedByParty": {
+  "en": "b89dcc15d868",
+  "tr": "d89816a2fda6",
+  "by": "claude-in-session"
+ },
  "credits.ambientText.terms": {
   "en": "9a9906c28b67",
   "tr": "f118aba8d0d0",
@@ -4324,6 +4329,91 @@
   "tr": "edba5865ffe1",
   "by": "claude-in-session"
  },
+ "deeds.earned": {
+  "en": "f7fa844be119",
+  "tr": "a425bea84def",
+  "by": "claude-in-session"
+ },
+ "deeds.fearConquered": {
+  "en": "069038b28f63",
+  "tr": "5550113d77be",
+  "by": "claude-in-session"
+ },
+ "deeds.name.baneBeasts": {
+  "en": "06b9032462aa",
+  "tr": "a733d5f15195",
+  "by": "claude-in-session"
+ },
+ "deeds.name.baneDaedra": {
+  "en": "e861187262bd",
+  "tr": "3e063d1ef010",
+  "by": "claude-in-session"
+ },
+ "deeds.name.baneDead": {
+  "en": "ac0955572566",
+  "tr": "c5ea51431df7",
+  "by": "claude-in-session"
+ },
+ "deeds.name.baneMen": {
+  "en": "150e5cfe0944",
+  "tr": "347bdac87446",
+  "by": "claude-in-session"
+ },
+ "deeds.name.lastStand": {
+  "en": "123b2cd949d7",
+  "tr": "28a5eefbadf1",
+  "by": "claude-in-session"
+ },
+ "deeds.name.temperedFire": {
+  "en": "112096c547b6",
+  "tr": "88fe39066ed9",
+  "by": "claude-in-session"
+ },
+ "deeds.name.temperedFrost": {
+  "en": "400c6f8d2de1",
+  "tr": "f9c472bfda86",
+  "by": "claude-in-session"
+ },
+ "deeds.name.temperedMagic": {
+  "en": "129e04c221ea",
+  "tr": "6530f97d4901",
+  "by": "claude-in-session"
+ },
+ "deeds.name.temperedPoison": {
+  "en": "224c04bb4f06",
+  "tr": "17275d91faad",
+  "by": "claude-in-session"
+ },
+ "deeds.name.temperedShock": {
+  "en": "3e609dc3ec43",
+  "tr": "e4df19a6a378",
+  "by": "claude-in-session"
+ },
+ "deeds.row.lowered": {
+  "en": "d336dc1e7e13",
+  "tr": "331217dfda18",
+  "by": "claude-in-session"
+ },
+ "deeds.row.overcome": {
+  "en": "8906b72c23c5",
+  "tr": "568b26792dd5",
+  "by": "claude-in-session"
+ },
+ "deeds.toleranceLifted": {
+  "en": "576d121db11b",
+  "tr": "144b5aec7c8c",
+  "by": "claude-in-session"
+ },
+ "deeds.unslotted": {
+  "en": "34bfb53c82a6",
+  "tr": "9571c7a04498",
+  "by": "claude-in-session"
+ },
+ "deeds.weaknessLowered": {
+  "en": "7d6bddd5a4b8",
+  "tr": "277643409603",
+  "by": "claude-in-session"
+ },
  "dex.enemy.archerRider": {
   "en": "684bf52c59e7",
   "tr": "7f120deafabd",
@@ -4687,6 +4777,21 @@
  "features.combatVoices.title": {
   "en": "0a891cfd47b5",
   "tr": "fb5d311d816d",
+  "by": "claude-in-session"
+ },
+ "features.deedsAndTalents.effect": {
+  "en": "f9a1316da05d",
+  "tr": "77f288da0a32",
+  "by": "claude-in-session"
+ },
+ "features.deedsAndTalents.note": {
+  "en": "c2c2c7f9acbb",
+  "tr": "f0795a051e95",
+  "by": "claude-in-session"
+ },
+ "features.deedsAndTalents.title": {
+  "en": "87273aa71462",
+  "tr": "73fc257da7e5",
   "by": "claude-in-session"
  },
  "features.dungeonMap3d.note": {
@@ -9694,6 +9799,11 @@
   "tr": "9afff93aa2d1",
   "by": "claude-in-session"
  },
+ "party.goodWord.gold": {
+  "en": "27bbe8d45516",
+  "tr": "051c92bd4ca1",
+  "by": "claude-in-session"
+ },
  "pause.ask.hint": {
   "en": "3b4376983a26",
   "tr": "6c28586b303c",
@@ -9712,6 +9822,26 @@
  "pause.controlsNoArt": {
   "en": "3ce6c532dd3f",
   "tr": "438b6c943816",
+  "by": "claude-in-session"
+ },
+ "pause.deeds.blocked": {
+  "en": "a8f799b967a8",
+  "tr": "fc9e5ddc7d4a",
+  "by": "claude-in-session"
+ },
+ "pause.deeds.earned": {
+  "en": "257f305b043a",
+  "tr": "db7417b3054e",
+  "by": "claude-in-session"
+ },
+ "pause.deeds.title": {
+  "en": "e1e5629e7751",
+  "tr": "dfcc6b68fc03",
+  "by": "claude-in-session"
+ },
+ "pause.deeds.unslotted": {
+  "en": "ccea23e0650a",
+  "tr": "3c65528f587a",
   "by": "claude-in-session"
  },
  "pause.door.arena": {
@@ -10037,6 +10167,11 @@
  "pause.specials.class": {
   "en": "41ff354b2b33",
   "tr": "2410a87b91cd",
+  "by": "claude-in-session"
+ },
+ "pause.specials.deed": {
+  "en": "525c8fb03776",
+  "tr": "a9077f57c034",
   "by": "claude-in-session"
  },
  "pause.specials.disadvantages": {

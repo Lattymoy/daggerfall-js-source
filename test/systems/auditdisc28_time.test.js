@@ -39,7 +39,7 @@ import { createBankAccounts, borrowLoan, hasDefaulted } from '../../src/systems/
 import { startDisease, DISEASES } from '../../src/systems/diseases.js';
 import { createInfection, INFECTION } from '../../src/systems/infection.js';
 import { passiveGuardSpawns } from '../../src/systems/encounters.js';
-import { RESURRECT_HEALTH_PCT, RESURRECT_TEXT } from '../../src/systems/resurrect.js';
+import { rezHealthPct, RESURRECT_TEXT } from '../../src/systems/resurrect.js';   // DEEDS2: the rise's share is rezHealthPct's (the caster's Medical)
 
 afterEach(() => { setSharedClock(null); setRacialQuestHost(null); });
 
@@ -134,7 +134,7 @@ test('AUDIT DISC28 TM-2: a Resurrect replays no dead minute of the encounter loo
   const deps = ['playerTicker', 'playerEntity', 'amGroupRollOwner', 'online', 'player', 'partyNear', 'modes', 'walkMode', 'playerSpawned',
     'intermittentEnemySpawn', '_musicInLocationRect', 'maps', 'playerTravelPixel', 'SOLITARY_TYPES', 'partyExtraFoes', 'partySize',
     '_standEncounterFoe', '_questRegionIndex', 'passiveGuardSpawns', 'legalRepOf', 'setCrimeCommitted', 'CRIMES', '_witnessResponse',
-    'cityGuards', '_guardPool', 'reviveForPlay', 'RESURRECT_HEALTH_PCT', 'RESURRECT_TEXT', 'townTalk', 'DeathScreen', 'sharedClockOn', 'worldMinutes', 'skyMinutes',   // LIVED1: the spawn roll's sky; TIME1: the sky's own clock
+    'cityGuards', '_guardPool', 'reviveForPlay', 'rezHealthPct', 'RESURRECT_TEXT', 'townTalk', 'DeathScreen', 'sharedClockOn', 'worldMinutes', 'skyMinutes',   // LIVED1: the spawn roll's sky; TIME1: the sky's own clock
     'statedDeathLoss', 'stateDeathLoss', 'effectiveLevel',
     'revenantPresence', 'takeRevenantNotice', 'revenantToReturn', 'exteriorFoes', 'revenantSay', 'forgetLastSlew',
     'wildGhostEnd', 'wildHere', 'WILD_GIANT_CHANCE', 'WILD_GIANT'];   // WILD1/WILD3: the open zone's - no ghost, not in it   // AUDIT FEUD: the Resurrect forgets this death's killer   // REVENANT: none here - the loop reads, and stands nobody   // SOFTCAP2: the mentor's level the loop's roll reads   // THE MERGE: DEATH-PENALTY's screen loss, withdrawn by a rescue (AUDIT 28 B5)
@@ -152,7 +152,7 @@ test('AUDIT DISC28 TM-2: a Resurrect replays no dead minute of the encounter loo
     // this pin counts is the encounter roll's own ask - every minute the loop walks asks it once
     () => { guardCalls++; return null; }, () => true, { getClimateIndex: () => 0 }, () => ({ x: 0, y: 0 }), new Set(), () => 0, () => 1, () => {}, () => 1,
     (ctx) => passiveGuardSpawns(ctx, () => 0), legalRepOf, setCrimeCommitted, CRIMES, () => {},
-    { makeNpcGuardsIntoEnemies: () => Promise.resolve() }, () => [], reviveForPlay, RESURRECT_HEALTH_PCT, RESURRECT_TEXT,
+    { makeNpcGuardsIntoEnemies: () => Promise.resolve() }, () => [], reviveForPlay, rezHealthPct, RESURRECT_TEXT,
     { overlay: null, overlayActive: false, say() {}, closeOverlay() {} }, class { restoreView() {} }, () => true, worldMinutes, skyMinutes, () => null, () => {}, (x) => x?.level ?? 1,
     () => false, () => null, () => null, { foes: [] }, () => false, () => {}, () => {}, () => false, 0.15, 16);
   host.runEncounterTick([0, 0, 0]);   // a living frame: the marker at now

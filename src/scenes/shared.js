@@ -1003,33 +1003,42 @@ export function parkourDeps(entity, say = null, { hold = null } = {}) {
  *  REBUILD, which is what PlayerGPS measures every distance from.
  */
 /** DEEDS1: a live Detect Enemy - it marks the foes within its own range, so the heard markers start past it. */
+/** AUDIT DEEDS B4: a foe the hearing marks - a hostile one, never my companion, a body on my side, or a foe calmed. */
+const heardFoe = (f) => f?.companion == null && f?.entity?.team !== 'PlayerAlly' && f?.entity?.mobileTeam !== 'PlayerAlly'
+  && f?.team !== 'PlayerAlly' && f?.ai?.isHostile !== false;
 const detectsEnemies = (entity) => (entity?.activeEffects ?? []).some((a) => !a.ended && DETECT_KIND_FLAG[a.kind] === NEARBY.Enemy);
 export function createDetectFeed(entity, { entities = () => [], loot = () => [], feet = () => [0, 0, 0] } = {}) {
   const scan = createNearbyScan(() =>
     updateNearbyObjects(feet(), { entities: entities(), loot: loot() }));
   let markers = [];
+  let built = { list: null, key: '' };   // AUDIT DEEDS B6: the markers of one scan and one set of detectors, built once
   return {
     tick(dt) {
-      // DEEDS1 (bible/06-Systems/Deeds-And-Talents.md section 4.2): ACUTE HEARING MARKS FOES - in force, every foe
-      // within its sound's reach (DFU's attract radius times the hearing multiplier, enemySounds.js) shows as Detect
-      // Enemy shows it
+      // DEEDS1 (bible/06-Systems/Deeds-And-Talents.md section 4.2): ACUTE HEARING MARKS FOES - in force, every hostile
+      // foe within its sound's reach (DFU's attract radius times the hearing multiplier, enemySounds.js) shows as Detect
+      // Enemy shows it; never a companion, an ally or a calmed foe (AUDIT DEEDS B4)
       const heard = hearsFoes(entity) ? ATTRACT_RADIUS * acuteHearingMultiplier(entity) : 0;
       if (!hasLiveDetector(entity) && !heard) {
         // No detector: drop the list rather than let a stale one sit.
         // DFU has no equivalent because it never stops scanning, but
         // a port that DOES stop must not resume from a stale snapshot.
         if (markers.length) { scan.reset(); markers = []; }
+        built = { list: null, key: '' };
         return markers;
       }
       const list = scan.tick(dt);
+      const detectors = (entity?.activeEffects ?? []).filter((a) => !a.ended && DETECT_KIND_FLAG[a.kind] != null).map((a) => a.kind).join();
+      const key = `${heard}|${detectors}`;
+      if (built.list === list && built.key === key) return markers;   // the scan rebuilds every 0.33 s; nothing moved
+      built = { list, key };
       markers = detectedMarkers(entity, list);
       const beyond = detectsEnemies(entity) ? NEARBY_DEFAULT_MAX_RANGE : 0;   // a live Detect Enemy has marked those nearer already
-      if (heard) for (const no of getNearbyObjects(list, NEARBY.Enemy, heard) ?? []) if (no.distance >= beyond) markers.push([no.pos[0], no.pos[2]]);
+      if (heard) for (const no of getNearbyObjects(list, NEARBY.Enemy, heard) ?? []) if (no.distance >= beyond && heardFoe(no.ref)) markers.push([no.pos[0], no.pos[2]]);
       return markers;
     },
     get markers() { return markers; },
     /** A scene transition: the previous scene's objects are gone. */
-    reset() { scan.reset(); markers = []; },
+    reset() { scan.reset(); markers = []; built = { list: null, key: '' }; },
     /** X9: a FRESH scan on demand, bypassing both the 0.33s cadence
      *  and the live-detector gate. Dispel is a one-shot at cast, and
      *  DFU reads PlayerGPS's list at that instant - a list the port

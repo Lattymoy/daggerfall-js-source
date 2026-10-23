@@ -652,7 +652,6 @@ export const settingsKeyOf = (e) => [
 function effectMagnitude(e, casterLevel, saveScaled, element, flag, target, rolls, caster = null) {
   let n = rollMagnitude(e, casterLevel, rolls);
   if (saveScaled) n = Math.trunc(n * savingThrow(element, flag, target, 0, rolls, isDamageHealthEffect(e) ? spellPierce(caster, target) : 0) / 100);
-  if (saveScaled && caster !== target && isDamageHealthEffect(e)) reportPlayerEndured(target, flag);   // DEEDS3: a damaging spell faced (Tempered, Hardened)
   return n;
 }
 
@@ -1931,6 +1930,13 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     }
     sinks?.say?.(localizedText('spellAbsorbed', SPELL_ABSORBED_TEXT));
   }
+  // DEEDS3 (bible/06-Systems/Deeds-And-Talents.md section 6.1): A FOE'S SPELL ENDURED, told once a landing by the spell's
+  // element (playerEndures.js) - a foe's or a trap's, never mine, a party mate's gift, a held item's, one turned back, a
+  // quest's (assignSave), or another player's. AUDIT DEEDS D2/D4: it was told from the magnitude roll - once a Damage
+  // Health effect and once a round of a lasting one (one Wildfire counted 31), and never for a Magic spell, as no Magic
+  // damage reaches a player
+  if (assignSave && target?.isPlayer && !ctx.allyCast && ctx.heldItem == null && !(out.reflected > 0)
+    && caster?.entity !== target && !caster?.entity?.isPlayer && caster?.entity?.team !== 'PlayerAlly') reportPlayerEndured(target, flag);
   return out;
 }
 

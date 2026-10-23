@@ -35,6 +35,7 @@ import { iliacGrade } from '../../src/systems/iliac/iliacPatrons.js';
 import { giveBinderAtChargen } from '../../src/systems/iliac/iliacItems.js';
 import { skillValue, SKILLS } from '../../src/systems/skills.js';
 import { liveStat } from '../../src/systems/statMods.js';
+import { haggleOf } from '../../src/systems/partyTalents.js';   // DEEDS2: the card pack's haggle is the haggle's one door
 import { attachTouch } from '../../src/ui/touch/touch.js';
 import { setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
 import { HOLDEM_FIRST_MS, newTable, sit, tableLook } from '../../src/net/holdemTable.js';
@@ -98,7 +99,7 @@ function host({ online = false, id = 'peer-me', geom = 'fake', at = [600, 560], 
     buildingDirectory: () => ({ locationName: 'Daggerfall' }), registerPlayerHurtListener: () => {},
     isOnlinePage: () => online, mwViewFirstPerson: () => {}, homeTownOf: (b) => b?.townMapId || 0, worldMinutes: () => 0, MINUTES_PER_DAY: 1440,
     RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
-    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat,
+    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat, haggleOf,
     // KG3: the block opens The King's Gambit on the seat too - its names, real (its cloth's listeners want a window)
     gambitTableOn, openGambitTableGame: (o) => openGambitTableGame({ ...o, doc }), isTouchDevice: () => false, regularLook, seatTopByte, cursorKeyClaimed: () => false, gambitBoardKey, audio: null,
     // the cards' own: the gestures and the held hand, real; the screen's geometry the rig's or the frame's

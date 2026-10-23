@@ -219,7 +219,7 @@ export function updatePoisons(entity, currentMinute, sinks, rolls = Math.random,
  */
 export function inflictPoison(target, poisonType, bypassResistance, { rolls = Math.random, currentMinute = 0 } = {}) {
   if (careerTolerance(target.career ?? {}, EFFECT_FLAGS.Poison) === 'Immune') return null;
-  reportPlayerEndured(target, EFFECT_FLAGS.Poison);   // DEEDS3: a poison faced (the player's alone - the leaf asks)
+  if (!bypassResistance) reportPlayerEndured(target, EFFECT_FLAGS.Poison);   // DEEDS3: a foe's dose faced (the player's alone - the leaf asks); AUDIT DEEDS D1: never a drug taken, which bypasses the throw
   if (bypassResistance || savingThrow(2, EFFECT_FLAGS.Poison, target, 0, rolls) !== 0) {
     if (target.level !== 1) return startPoison(target, poisonType, currentMinute, rolls);
   }

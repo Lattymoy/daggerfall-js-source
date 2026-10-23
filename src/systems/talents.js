@@ -7,14 +7,15 @@
 // masterSkillsActive) - an entity playing online answers true whatever the shelf says; anything else reads the
 // Features row's switch (features.js `deedsAndTalents`, on by default, and the online lane forces it on too).
 //
-// THE CAREER KEEPS ITS PRICE (section 4.3). The table prices a class when the builder makes it: a custom class built
-// with the switch on carries `advPricing: 'dfo'` and is charged DFO's prices while the switch is on, DFU's when it is
-// off. Every other career keeps the multiplier it carries - the eighteen stock classes (CLASS.CFG's own, set by hand,
-// not by the table: of them only the Archer carries a repriced pick) and every class built before DEEDS. The live
-// multiplier adds CreateCharCustomClass's own slope (customClass.js advancementMultiplier: 2.7 / 52 a point) for each
-// point the career's specials cost now, as they stand after any disadvantage a deed overcame, minus what they cost when
-// the class was made. A deed's GRANT costs nothing (it was earned); an OVERCOMING repays the disadvantage's discount
-// (deeds.js), at the price the career is charged.
+// THE CAREER KEEPS ITS PRICE (section 4.3). The table prices a class when the builder makes it, and for good: a custom
+// class built with the switch on carries `advPricing: 'dfo'` (DFO's prices), one built with it off `'dfu'`, and every
+// other career - the eighteen stock classes (CLASS.CFG's own multipliers, set by hand, not by the table: of them only
+// the Archer carries a repriced pick) and every class built before DEEDS - keeps the multiplier it carries. AUDIT DEEDS
+// A1/A2: the price never follows the live switch - a class built off and played on paid DFU's prices for DFO's effects,
+// and one built on could turn the switch off for a rest and train at DFU's. The one thing that moves the multiplier is
+// an OVERCOMING, in force (deeds.js): it repays the disadvantage's discount at the price the class was made with,
+// CreateCharCustomClass's own slope (customClass.js advancementMultiplier: 2.7 / 52 a point) a point. A deed's GRANT
+// costs nothing - it was earned.
 //
 // Departs from DFU's CreateCharSpecialAdvantageWindow.InitializeAdjustmentDict (the prices), PassiveSpecialsEffect
 // .RegenerateHealth (the amount), FormulaHelper.CalculateAdrenalineRushToHit (the bar), and AcrobatMotor / PlayerEntity's
@@ -59,22 +60,35 @@ export function rowsOvercome(rows, overcome) {
 
 const priceOf = (rows, dfo) => rows.reduce((sum, r) => sum + advDisAdjustment(r.primary, r.secondary, dfo), 0);
 
-/** The difficulty points the career's specials are charged now, less what they cost when the class was made: DFO's
- *  table charges only a class it built (`advPricing: 'dfo'`), and only in force. */
+/** The difficulty points an overcoming repays: the career's specials as they stand after the deeds' overcomings, less
+ *  as they were made, both at the price the class was made with - 0 out of force, or with nothing overcome. */
 export function careerPriceDelta(entity) {
   const made = careerAsMade(entity?.career);
-  if (!made) return 0;
+  const overcome = entity?.deeds?.overcome;
+  if (!made || !Array.isArray(overcome) || !overcome.length || !talentsInForce(entity)) return 0;
   const rows = classSpecials(made);
-  const inForce = talentsInForce(entity);
-  const builtDfo = made.advPricing === 'dfo';
-  const now = inForce ? rowsOvercome(rows, entity?.deeds?.overcome) : rows;
-  return priceOf(now, builtDfo && inForce) - priceOf(rows, builtDfo);
+  const dfo = made.advPricing === 'dfo';
+  return priceOf(rowsOvercome(rows, overcome), dfo) - priceOf(rows, dfo);
 }
+
+/** AUDIT DEEDS A3: the HUD asks every skill's readiness every frame (advancement.js countReadyToImprove), so a career's
+ *  repayment is remembered by what decides it - the career, its overcomings and the switch. */
+const _delta = new WeakMap();
+const priceDeltaOf = (entity) => {
+  const career = entity?.career;
+  if (!career || !(entity?.deeds?.overcome?.length > 0)) return 0;
+  const key = `${entity.deeds.overcome.length}|${talentsInForce(entity)}|${career.advPricing ?? ''}`;
+  const hit = _delta.get(career);
+  if (hit?.key === key) return hit.delta;
+  const delta = careerPriceDelta(entity);
+  _delta.set(career, { key, delta });
+  return delta;
+};
 
 /** The advancement multiplier skill advancement reads (advancement.js): the stored one, moved by careerPriceDelta. */
 export function careerAdvancementMultiplier(entity) {
   const stored = entity?.career?.advancementMultiplier ?? 1;
-  const delta = careerPriceDelta(entity);
+  const delta = priceDeltaOf(entity);
   if (delta === 0) return stored;
   return Math.min(MULTIPLIER_MAX, Math.max(MULTIPLIER_MIN, stored + MULTIPLIER_PER_POINT * delta));
 }
@@ -94,18 +108,24 @@ export function regenerateAmount(entity) {
 /** Acute Hearing marks foes on the compass in force (the host scales the reach by enemySounds.js's own law). */
 export const hearsFoes = (entity) => carries(entity, SPECIAL_ABILITY_BITS.acuteHearing) && talentsInForce(entity);
 
-/** Adrenaline Rush's bar: under a quarter of maximum health in force; off, the core's own (8 classic, 6 overhaul). */
+/** The player's own, in force - AUDIT DEEDS B2/B3: a foe carrying the career bit (the Acrobat's class, the atronachs, the
+ *  Dreugh) keeps the core's law, and a refereed fight's sheet for a peer (duelCombat.js) is no player of mine. */
+const mineInForce = (entity) => !!entity?.isPlayer && !entity.peer && talentsInForce(entity);
+
+/** Adrenaline Rush's bar: under a quarter of maximum health for the player in force; else the core's own (8 classic, 6
+ *  overhaul). */
 export const RUSH_DIVISOR = 4;
 export function inAdrenalineRush(entity, coreDivisor) {
   if (!entity || !carries(entity, SPECIAL_ABILITY_BITS.adrenalineRush)) return false;
-  const div = talentsInForce(entity) ? RUSH_DIVISOR : coreDivisor;
+  const div = mineInForce(entity) ? RUSH_DIVISOR : coreDivisor;
   return (entity.health ?? 0) < Math.trunc((entity.maxHealth ?? 0) / div);   // C# integer division
 }
-/** The rush's blows, in force: 20% harder, 30% with Improved Adrenaline Rush (enchantments.js's fold field). */
+/** The rush's blows, the player's in force: 20% harder, 30% with Improved Adrenaline Rush (enchantments.js's fold field)
+ *  - at a foe alone: never at a player, nor at a warded body (the blow modifiers' own rule, entityMods.js). */
 export const RUSH_DAMAGE = 0.2;
 export const IMPROVED_RUSH_DAMAGE = 0.3;
-export function rushBlow(damage, attacker) {
-  if (!(damage > 0) || !talentsInForce(attacker) || !inAdrenalineRush(attacker, RUSH_DIVISOR)) return damage;
+export function rushBlow(damage, attacker, target = null) {
+  if (!(damage > 0) || !mineInForce(attacker) || target?.isPlayer || target?.warded || !inAdrenalineRush(attacker, RUSH_DIVISOR)) return damage;
   return Math.round(damage * (1 + (attacker._enchantMods?.improvedAdrenalineRush ? IMPROVED_RUSH_DAMAGE : RUSH_DAMAGE)));
 }
 

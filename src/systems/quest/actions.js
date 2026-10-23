@@ -1549,8 +1549,10 @@ export class GivePc extends ActionTemplate {
       return;
     }
     if (isGoldPieces(item.daggerfallUnityItem)) item.goldPaid = true;
+    // DEEDS2: the party's good word first - AUDIT DEEDS C4: the questline's scale records the purse it scales (qlLayer.js),
+    // and a late settlement pays from that record, so the word rides under the scale, never beside it
+    if (isGoldPieces(item.daggerfallUnityItem)) rewardGold(this.parentQuest, item.daggerfallUnityItem);
     this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);
-    if (isGoldPieces(item.daggerfallUnityItem)) rewardGold(this.parentQuest, item.daggerfallUnityItem);   // DEEDS2: the party's good word, before the split
     shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward
     if (this.textId !== 0) {
       this.parentQuest.hooks?.giveItemToPlayer?.(item.daggerfallUnityItem, true);   // AddPosition.Front

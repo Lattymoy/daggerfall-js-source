@@ -30,6 +30,11 @@ import { creditKeptKills, KeptKillLedger } from '../../../src/scenes/quest/quest
 import { questlineActionTemplates } from '../../../src/systems/questlines/qlActions.js';
 import { freshState } from '../../../src/systems/questlines/qlState.js';
 import { setLocale, patchLocaleTable, clearLocaleTables, parseStringTableCsv } from '../../../src/systems/textManager.js';
+import { setPref as setTalentsPref } from '../../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');

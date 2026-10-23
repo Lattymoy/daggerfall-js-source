@@ -22,8 +22,8 @@ import { SKILLS, skillValue } from './skills.js';
 import { liveStat } from './statMods.js';
 import { talentsInForce } from './talents.js';
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration, and no care
-import { playerEntity } from '../characters/playerEntity.js';
-import { PARTY_TALENT_MAX } from '../net/wire.js';   // the pose's own bound - one home, the wire's
+import { PARTY_TALENT_MAX } from '../net/wire.js';
+import { t } from './textManager.js';   // L10N4: the good word's line in the player's language   // the pose's own bound - one home, the wire's
 
 /** The skills a party pose carries, in its order (the wire's `tk`). Medical stands first: resurrect.js reads it. */
 export const TALENT_SKILLS = Object.freeze([
@@ -48,7 +48,7 @@ export const WORD_DIVISOR = 10;
 
 /** PARTY-REST1's law of the same place, the pose's own terms (moved here from scenes/world.js, its one home now): the
  *  same map pixel, the same kind of place, and inside, the same building. */
-export const samePlace = (a, b) => !!(a && b && a.px === b.px && a.py === b.py && a.in === b.in && (a.in !== 2 || a.bk === b.bk));
+export const samePartyPlace = (a, b) => !!(a && b && a.px === b.px && a.py === b.py && a.in === b.in && (a.in !== 2 || a.bk === b.bk));
 
 /** My talents for the party pose: thirteen whole numbers, 0 to TALENT_MAX. */
 export function talentPose(entity) {
@@ -66,7 +66,8 @@ export function partyTalentsFrame(members, here, distance) {
   const out = [];
   for (const m of members ?? []) {
     const tk = m?.p?.tk;
-    if (m?.online === false || !Array.isArray(tk) || tk.length !== TALENT_POSE_LEN || !samePlace(here, m.p)) continue;
+    if (m?.online === false || !Array.isArray(tk) || tk.length !== TALENT_POSE_LEN || !samePartyPlace(here, m.p)) continue;
+    if (!(m.p.h > 0)) continue;   // AUDIT DEEDS C3: a fallen member's body is drawn, and lends nothing
     let d = Infinity;
     try { d = Number(distance?.(m.acct)); } catch { /* no body drawn: too far, not an error */ }
     if (d <= TALENT_REACH) out.push(tk);
@@ -77,6 +78,9 @@ export function partyTalentsFrame(members, here, distance) {
 export const nearTalents = () => _near;
 export function _setNearTalents(list) { _near = Array.isArray(list) ? list : []; }
 
+/** AUDIT DEEDS C2: my own skill as a talent - held to the pose's ceiling, as a member's lent one is, so worn Enhances
+ *  Skill gear cannot lift the good word or the care past what the record promises (+20% at 200). */
+const ownTalent = (entity, skillId) => Math.min(TALENT_MAX, Math.max(0, skillValue(entity, skillId) || 0));
 const bestNear = (skillId) => {
   const i = TALENT_SKILLS.indexOf(skillId);
   let best = 0;
@@ -95,15 +99,21 @@ export function partySkill(entity, skillId) {
 // ── care ───────────────────────────────────────────────────────────
 
 let _lastHurt = -Infinity;
-/** A hurt landed on me (characters/playerEntity.js's hurt listener): care waits CARE_CALM_MS. */
+/** A hurt came at me (characters/playerEntity.js's door-open word - told on every call, a duel's and a bout's spared
+ *  blows too: AUDIT DEEDS C1): care waits CARE_CALM_MS. */
 export function notePlayerHurt(now = Date.now()) { _lastHurt = now; }
+let _fighting = () => false;
+/** AUDIT DEEDS C1: the host's word that I am in a refereed fight (an arena bout, a duel) - no care there at all, as no
+ *  potion is drunk on the sand. */
+export function setCareBarred(fn) { _fighting = typeof fn === 'function' ? fn : () => false; }
 
 /** The health a care pulse gives me now - 0 in a fight, at full health, dead, barred, or with no Medical near. */
 export function careAmount(entity, now = Date.now()) {
   if (!entity?.isPlayer || !talentsInForce(entity) || now - _lastHurt < CARE_CALM_MS || regenBarred()) return 0;
+  try { if (_fighting()) return 0; } catch { /* no host's word: no fight */ }
   const health = entity.health ?? 0, max = entity.maxHealth ?? 0;
   if (!(health > 0) || !(health < max)) return 0;
-  const pct = Math.trunc(Math.max(skillValue(entity, SKILLS.Medical), bestNear(SKILLS.Medical)) / CARE_PER_POINTS);
+  const pct = Math.trunc(Math.max(ownTalent(entity, SKILLS.Medical), bestNear(SKILLS.Medical)) / CARE_PER_POINTS);
   return pct > 0 ? Math.max(1, Math.round((max * pct) / 100)) : 0;
 }
 /** The magic round's care (worldTick.js registerMagicRoundHook): a pulse every CARE_PER_ROUNDS rounds. */
@@ -118,7 +128,7 @@ export function careRound(entity, { nowMinutes = 0, sinks = null } = {}) {
 /** A tenth of the best Etiquette or Streetwise, mine or a near member's - 0 out of force. */
 export function partyWord(entity) {
   if (!talentsInForce(entity)) return 0;
-  const best = Math.max(skillValue(entity, SKILLS.Etiquette), skillValue(entity, SKILLS.Streetwise),
+  const best = Math.max(ownTalent(entity, SKILLS.Etiquette), ownTalent(entity, SKILLS.Streetwise),
     bestNear(SKILLS.Etiquette), bestNear(SKILLS.Streetwise));
   return Math.trunc(best / WORD_DIVISOR);
 }
@@ -132,14 +142,15 @@ export function haggleOf(entity) {
   };
 }
 
-/** A quest's gold raised by the good word, a percent a point (quest/actions.js GivePc, before the party's split).
- *  Answers the gold added. */
-export function rewardGold(quest, dfItem, entity = playerEntity) {
+/** A quest's gold raised by the good word, a percent a point (quest/actions.js GivePc, before the questline's scale and
+ *  the party's split). `entity` is the quest machine's player (its hooks.playerEntity) - this module never reaches for
+ *  the client's singleton, so the account Worker that bundles it carries none. Answers the gold added. */
+export function rewardGold(quest, dfItem, entity = quest?.hooks?.playerEntity?.() ?? null) {
   const pct = partyWord(entity);
   const gold = dfItem?.stackCount ?? 0;
   const more = pct > 0 && gold > 0 ? Math.trunc((gold * pct) / 100) : 0;
   if (more <= 0) return 0;
   dfItem.stackCount = gold + more;
-  quest?.hooks?.addHUDText?.(`A good word for you adds ${more} gold to the reward.`);
+  quest?.hooks?.addHUDText?.(t('party.goodWord.gold', 'A good word for you adds {gold} gold to the reward.', { gold: more }));
   return more;
 }

@@ -26,6 +26,10 @@ import { createQuestlines, OFFERS_MAX } from '../../../src/systems/questlines/ql
 import { filedOutcome } from '../../../src/systems/notebook.js';   // AUDIT QUESTLINES UI-5: the filed outcome, a side record
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+import { TALENTS_PREF } from '../../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setPref(TALENTS_PREF, false);
 const VENDOR = join(ROOT, 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
 const questFile = new Map(readdirSync(join(VENDOR, 'Quests')).map((f) => [f.replace(/\.txt$/i, '').toUpperCase(), f]));

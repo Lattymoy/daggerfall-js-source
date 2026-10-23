@@ -17,6 +17,11 @@ import { SPECIAL_ABILITY } from '../../src/systems/rest/rest.js';
 import { applySpell, REGENERATING_TEXT, FEEL_DRAINED_TEXT } from '../../src/systems/effects.js';
 import { NOT_ENOUGH_SPELL_POINTS_TEXT, identifySpellPass } from '../../src/systems/tradeModes.js';
 import { ITEM_GROUPS } from '../../src/characters/equipRules.js';
+import { setPref as setTalentsPref } from '../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');

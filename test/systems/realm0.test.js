@@ -40,6 +40,11 @@ import { shareQuestGold, GivePc } from '../../src/systems/quest/actions.js';
 import { QuestMachine } from '../../src/systems/quest/machine.js';
 import { tradeRefusal, createTradePack } from '../../src/systems/tradePack.js';
 import { ONLINE_CHECKPOINT_MS, checkpointAllowed, checkpointDue, checkpointedTradePack } from '../../src/systems/online/onlineCheckpoint.js';
+import { setPref as setTalentsPref } from '../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** Runs `fn` as if the page were `search`, then restores the page. */

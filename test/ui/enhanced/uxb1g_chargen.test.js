@@ -21,6 +21,11 @@ import { ATTRIBUTE_BLURB } from '../../../src/ui/levelUp/levelUpView.js';
 import { STAT_KEYS_ORDER } from '../../../src/systems/chargen.js';
 import { SKILLS, SKILL_NAMES } from '../../../src/systems/skills.js';
 import { ENHANCED_CSS } from '../../../src/ui/enhanced/enhancedStyle.js';
+import { setPref as setTalentsPref } from '../../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const CAREER = { name: 'Mage', hitPointsPerLevel: 8, advancementMultiplier: 1, strength: 40, intelligence: 60, willpower: 72, agility: 48, endurance: 52, personality: 55, speed: 48, luck: 57,
   primarySkills: [SKILLS.Mysticism, SKILLS.Alteration, SKILLS.Thaumaturgy], majorSkills: [SKILLS.Illusion, SKILLS.Destruction, SKILLS.Restoration],

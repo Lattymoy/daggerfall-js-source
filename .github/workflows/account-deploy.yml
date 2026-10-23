@@ -406,6 +406,9 @@ on:
       - "src/poi/poiImage.js"
       - "server/src/staffFeedLaw.js"
       - "src/ui/touch/touchDevice.js"
+      - "src/systems/talents.js"
+      - "src/systems/partyTalents.js"
+      - "src/systems/playerEndures.js"
   workflow_dispatch:
 
 permissions:

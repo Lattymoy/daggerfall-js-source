@@ -1171,7 +1171,7 @@ import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-R
 import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 import { createExteriorAutomapToggle } from './exteriorAutomapToggle.js';   // HOST-SPLIT
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
-import { haggleOf, samePlace, talentPose, partyTalentsFrame } from '../systems/partyTalents.js';   // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5): the haggle's one door, the party's place law and its talents
+import { haggleOf, samePartyPlace as samePlace, talentPose, partyTalentsFrame } from '../systems/partyTalents.js';   // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5): the haggle's one door, the party's place law and its talents
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -26072,7 +26072,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       bk: mode === 'interior' ? (modes?.interiorBuilding?.buildingKey ?? null) : null,
     };
   };
-  // PARTY-REST1's `samePlace` lives in systems/partyTalents.js now (DEEDS2: the party's talents ask it too) - imported above
+  // PARTY-REST1's `samePlace` lives in systems/partyTalents.js now, as samePartyPlace (DEEDS2: the party's talents ask it too) - imported above
   /** PARTY-REST3 (2026-09-20, per-request: "how near is near" - a world-map pixel is roughly 832x416 METERS
    *  (dfworkshop.net's own figure for Daggerfall Unity's world-pixel scale), so `samePlace` alone would call two
    *  players on opposite sides of an entire city, or an entire wilderness pixel, "near" each other. This is the

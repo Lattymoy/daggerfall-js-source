@@ -79,7 +79,7 @@ export const CATEGORIES = Object.freeze([
     sec("light", "Your light", [
       "feat:torches-from-items", "Enhancements/PlayerTorchFromItems", "feat:mod-handheld-torches"]),
     sec("character", "Character & survival", [
-      "feat:mod-oblivion-remaster-leveling", "feat:mod-project-legacy", "feat:mod-climates-calories", "feat:mod-roleplay-realism"]),
+      "feat:mod-oblivion-remaster-leveling", "feat:deeds-and-talents", "feat:mod-project-legacy", "feat:mod-climates-calories", "feat:mod-roleplay-realism"]),
     sec("moving", "Climbing & gathering", [
       "feat:enhanced-climbing", "Enhancements/AdvancedClimbing", "feat:mod-foraging"]),
     sec("start", "Starting a new game", [

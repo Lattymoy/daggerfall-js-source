@@ -34,6 +34,7 @@ import { seatTopByte } from '../../../src/player/seatPose.js';
 import { iliacGrade } from '../../../src/systems/iliac/iliacPatrons.js';
 import { skillValue, SKILLS } from '../../../src/systems/skills.js';
 import { liveStat } from '../../../src/systems/statMods.js';
+import { haggleOf } from '../../../src/systems/partyTalents.js';   // DEEDS2: the card pack's haggle is the haggle's one door
 import { fakeRoom } from '../../fakeRoom.mjs';
 
 const { subtle } = webcrypto;
@@ -238,7 +239,7 @@ function host({ online = true, relay = true, realm = false }) {
     worldMinutes: () => 0, MINUTES_PER_DAY: 1440,
     RemoteCardTable, mode: 'interior', regularsToStand, regularBark, BARK_MS, showdownWinners: hudm.showdownWinners, HOLDEM_REFUSALS: hudm.HOLDEM_REFUSALS,
     // PIN MOVED (CARDS9/10, at the merge): the block prices a pack at the table and opens Iliac Hand on the seat - their names, real
-    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat,
+    cardPackPrice, buyCardPack, openIliacTableGame: (o) => openIliacTableGame({ ...o, doc }), iliacGrade, skillValue, SKILLS, liveStat, haggleOf,
     // KG3: the block opens The King's Gambit on the seat too - its names, real (its cloth's listeners want a window)
     gambitTableOn, openGambitTableGame: (o) => openGambitTableGame({ ...o, doc }), isTouchDevice: () => false, regularLook, seatTopByte, cursorKeyClaimed: () => false, gambitBoardKey, audio: null,
   };

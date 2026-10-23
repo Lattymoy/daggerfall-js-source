@@ -26,6 +26,8 @@ import { talentsInForce, careerAsMade, rowsOvercome } from './talents.js';
 import { cannotAdd, classSpecials, parseCareerData, labelFor, ATTACK_BITS, EFFECT_BITS } from './specialAdvantages.js';
 import { ENEMY_GROUPS, enemyEntityGroup } from '../combat/enemyGroups.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { raceById, raceByKey } from './races.js';
+import { t } from './textManager.js';   // L10N4: the deeds' words in the player's language   // AUDIT DEEDS D5: the blood's own tolerances count as carried
 
 /** How many earned advantages a character holds. */
 export const DEED_SLOTS = 3;
@@ -43,18 +45,19 @@ export const ENDURE_STEP = 40;
 export const DEED_ELEMENTS = Object.freeze(['toFire', 'toFrost', 'toShock', 'toPoison', 'toMagic']);
 const GROUPS = Object.freeze(['humanoid', 'animals', 'undead', 'daedra']);
 
-/** Every deed an advantage is earned by, in the order a tally is checked. */
+/** Every deed an advantage is earned by, in the order a tally is checked. `name` is read in the player's language (L10N4:
+ *  a getter over t(), read as it is read). */
 export const DEEDS = Object.freeze([
-  Object.freeze({ id: 'baneMen', name: 'Bane of Men', primary: 'bonusToHit', secondary: 'humanoid' }),
-  Object.freeze({ id: 'baneBeasts', name: 'Bane of Beasts', primary: 'bonusToHit', secondary: 'animals' }),
-  Object.freeze({ id: 'baneDead', name: 'Bane of the Dead', primary: 'bonusToHit', secondary: 'undead' }),
-  Object.freeze({ id: 'baneDaedra', name: 'Bane of the Daedra', primary: 'bonusToHit', secondary: 'daedra' }),
-  Object.freeze({ id: 'lastStand', name: 'Last Stand', primary: 'adrenalineRush', secondary: '' }),
-  Object.freeze({ id: 'temperedFire', name: 'Tempered: Fire', primary: 'resistance', secondary: 'toFire' }),
-  Object.freeze({ id: 'temperedFrost', name: 'Tempered: Frost', primary: 'resistance', secondary: 'toFrost' }),
-  Object.freeze({ id: 'temperedShock', name: 'Tempered: Shock', primary: 'resistance', secondary: 'toShock' }),
-  Object.freeze({ id: 'temperedPoison', name: 'Tempered: Poison', primary: 'resistance', secondary: 'toPoison' }),
-  Object.freeze({ id: 'temperedMagic', name: 'Tempered: Magic', primary: 'resistance', secondary: 'toMagic' }),
+  Object.freeze({ id: 'baneMen', get name() { return t('deeds.name.baneMen', 'Bane of Men'); }, primary: 'bonusToHit', secondary: 'humanoid' }),
+  Object.freeze({ id: 'baneBeasts', get name() { return t('deeds.name.baneBeasts', 'Bane of Beasts'); }, primary: 'bonusToHit', secondary: 'animals' }),
+  Object.freeze({ id: 'baneDead', get name() { return t('deeds.name.baneDead', 'Bane of the Dead'); }, primary: 'bonusToHit', secondary: 'undead' }),
+  Object.freeze({ id: 'baneDaedra', get name() { return t('deeds.name.baneDaedra', 'Bane of the Daedra'); }, primary: 'bonusToHit', secondary: 'daedra' }),
+  Object.freeze({ id: 'lastStand', get name() { return t('deeds.name.lastStand', 'Last Stand'); }, primary: 'adrenalineRush', secondary: '' }),
+  Object.freeze({ id: 'temperedFire', get name() { return t('deeds.name.temperedFire', 'Tempered: Fire'); }, primary: 'resistance', secondary: 'toFire' }),
+  Object.freeze({ id: 'temperedFrost', get name() { return t('deeds.name.temperedFrost', 'Tempered: Frost'); }, primary: 'resistance', secondary: 'toFrost' }),
+  Object.freeze({ id: 'temperedShock', get name() { return t('deeds.name.temperedShock', 'Tempered: Shock'); }, primary: 'resistance', secondary: 'toShock' }),
+  Object.freeze({ id: 'temperedPoison', get name() { return t('deeds.name.temperedPoison', 'Tempered: Poison'); }, primary: 'resistance', secondary: 'toPoison' }),
+  Object.freeze({ id: 'temperedMagic', get name() { return t('deeds.name.temperedMagic', 'Tempered: Magic'); }, primary: 'resistance', secondary: 'toMagic' }),
 ]);
 export const DEED_BY_ID = Object.freeze(Object.fromEntries(DEEDS.map((d) => [d.id, d])));
 
@@ -75,7 +78,7 @@ export function deedsSaved(d) {
   return { kills, stand: count(src.stand), endured, granted: [...new Set(granted)], unslotted: [...new Set(unslotted)], overcome };
 }
 /** The character's live tallies (made whole on first touch). */
-export function deedsOf(entity) {
+export function deedTallies(entity) {
   if (!entity) return deedsSaved(null);
   if (!entity.deeds || typeof entity.deeds !== 'object' || !entity.deeds.kills) entity.deeds = deedsSaved(entity.deeds);
   return entity.deeds;
@@ -121,6 +124,11 @@ export function applyDeeds(entity) {
 
 // ── what a tally earns ─────────────────────────────────────────────
 
+/** The specials the character carries from birth: the career as made and the birth race's (AUDIT DEEDS D5 - a Breton's
+ *  Resistance to Magic or a Nord's to Frost is carried already, so no Tempered deed is offered over it). The live race
+ *  (a vampire's) is not asked: a curse can end. */
+const madeSpecials = (entity) => classSpecials(careerAsMade(entity?.career) ?? {}, raceById(entity?.raceId) ?? raceByKey(entity?.race) ?? null);
+const careerRows = (rows) => rows.filter((r) => r.source === 'career');
 const toleranceOf = (rows, element) => rows.find((r) => r.secondary === element
   && ['resistance', 'immunity', 'lowTolerance', 'criticalWeakness'].includes(r.primary))?.primary ?? null;
 const stepsToNormal = (tol) => (tol === 'criticalWeakness' ? 2 : tol === 'lowTolerance' ? 1 : 0);
@@ -128,7 +136,7 @@ const hasOvercome = (d, primary, secondary) => d.overcome.some((o) => o.primary 
 
 /** The tally a deed needs, given the career as made (a Bane past its phobia, Tempered past its weakness). */
 export function deedNeed(entity, deed) {
-  const made = classSpecials(careerAsMade(entity?.career) ?? {});
+  const made = careerRows(madeSpecials(entity));
   if (deed.primary === 'bonusToHit') {
     const phobic = made.some((r) => r.primary === 'phobia' && r.secondary === deed.secondary);
     return BANE_KILLS[deed.secondary] + (phobic ? FEAR_KILLS[deed.secondary] : 0);
@@ -138,7 +146,7 @@ export function deedNeed(entity, deed) {
 }
 /** What the tally has toward a deed. */
 export function deedHave(entity, deed) {
-  const d = deedsOf(entity);
+  const d = deedTallies(entity);
   if (deed.primary === 'bonusToHit') return d.kills[deed.secondary] ?? 0;
   if (deed.primary === 'adrenalineRush') return d.stand;
   return d.endured[deed.secondary] ?? 0;
@@ -148,13 +156,14 @@ export function deedHave(entity, deed) {
 export function checkDeeds(entity) {
   const said = [];
   if (!entity?.career || !talentsInForce(entity)) return said;
-  const d = deedsOf(entity);
-  const made = classSpecials(careerAsMade(entity.career));
+  const d = deedTallies(entity);
+  const birth = madeSpecials(entity);
+  const made = careerRows(birth);
   // overcomings first: a Bane waits on its phobia, Tempered on its weakness
   for (const g of GROUPS) {
     if (made.some((r) => r.primary === 'phobia' && r.secondary === g) && !hasOvercome(d, 'phobia', g) && d.kills[g] >= FEAR_KILLS[g]) {
       d.overcome.push({ primary: 'phobia', secondary: g });
-      said.push(`Fear conquered: you no longer suffer your Phobia of ${labelFor(g)}.`);
+      said.push(t('deeds.fearConquered', 'Fear conquered: you no longer suffer your Phobia of {group}.', { group: labelFor(g) }));
     }
   }
   for (const e of DEED_ELEMENTS) {
@@ -162,14 +171,14 @@ export function checkDeeds(entity) {
     const n = d.endured[e];
     if (tol === 'criticalWeakness' && !hasOvercome(d, 'criticalWeakness', e) && n >= ENDURE_STEP) {
       d.overcome.push({ primary: 'criticalWeakness', secondary: e, to: 'lowTolerance' });
-      said.push(`Hardened: your Critical Weakness ${labelFor(e)} is now a Low Tolerance.`);
+      said.push(t('deeds.weaknessLowered', 'Hardened: your Critical Weakness {element} is now a Low Tolerance.', { element: labelFor(e) }));
     }
     if ((tol === 'lowTolerance' || tol === 'criticalWeakness') && !hasOvercome(d, 'lowTolerance', e) && n >= stepsToNormal(tol) * ENDURE_STEP) {
       d.overcome.push({ primary: 'lowTolerance', secondary: e });
-      said.push(`Hardened: you no longer suffer a Low Tolerance ${labelFor(e)}.`);
+      said.push(t('deeds.toleranceLifted', 'Hardened: you no longer suffer a Low Tolerance {element}.', { element: labelFor(e) }));
     }
   }
-  const live = rowsOvercome(made, d.overcome);
+  const live = [...rowsOvercome(made, d.overcome), ...birth.filter((r) => r.source === 'race')];
   for (const deed of DEEDS) {
     if (d.granted.includes(deed.id) || d.unslotted.includes(deed.id)) continue;
     const pick = { primary: deed.primary, secondary: deed.secondary };
@@ -178,10 +187,10 @@ export function checkDeeds(entity) {
     if (d.granted.length < DEED_SLOTS) {
       d.granted.push(deed.id);
       live.push(pick);
-      said.push(`Deed done: ${deed.name}. ${label} is yours (${d.granted.length} of ${DEED_SLOTS} deeds).`);
+      said.push(t('deeds.earned', 'Deed done: {deed}. {advantage} is yours ({n} of {max} deeds).', { deed: deed.name, advantage: label, n: d.granted.length, max: DEED_SLOTS }));
     } else {
       d.unslotted.push(deed.id);
-      said.push(`Deed done: ${deed.name} - but all ${DEED_SLOTS} of your deeds are taken.`);
+      said.push(t('deeds.unslotted', 'Deed done: {deed} - but all {max} of your deeds are taken.', { deed: deed.name, max: DEED_SLOTS }));
     }
   }
   if (said.length) applyDeeds(entity);
@@ -194,7 +203,7 @@ export function checkDeeds(entity) {
 export function deedKill(entity, foe) {
   if (!entity?.isPlayer || !talentsInForce(entity) || !foe || neverCounts(foe)) return [];
   const g = deedGroupOf(foe);
-  const d = deedsOf(entity);
+  const d = deedTallies(entity);
   if (g) d.kills[g] += 1;
   if ((entity.health ?? 0) > 0 && (entity.health ?? 0) < Math.trunc((entity.maxHealth ?? 0) / STAND_DIVISOR)) d.stand += 1;
   return checkDeeds(entity);
@@ -202,7 +211,7 @@ export function deedKill(entity, foe) {
 /** I endured a spell or a poison carrying `flags` (playerEndures.js's word). Answers the lines earned. */
 export function deedEndured(entity, flags) {
   if (!entity?.isPlayer || !talentsInForce(entity)) return [];
-  const d = deedsOf(entity);
+  const d = deedTallies(entity);
   let any = false;
   for (const e of DEED_ELEMENTS) if (flags & EFFECT_BITS[e]) { d.endured[e] += 1; any = true; }
   return any ? checkDeeds(entity) : [];
@@ -210,30 +219,41 @@ export function deedEndured(entity, flags) {
 
 // ── the sheet's rows ───────────────────────────────────────────────
 
+/** The made disadvantage a deed waits on (AUDIT DEEDS D6): its group's Phobia, or its element's weakness - one an
+ *  overcoming lifts. null when nothing it can lift stands in the way. */
+const blockerOf = (deed, live) => live.find((r) => r.secondary === deed.secondary
+  && ((deed.primary === 'bonusToHit' && r.primary === 'phobia')
+   || (deed.primary === 'resistance' && (r.primary === 'lowTolerance' || r.primary === 'criticalWeakness')))) ?? null;
+
 /** Every deed for the character sheet: its name, the advantage, and where it stands - 'earned', 'unslotted' (done, no
- *  slot), 'progress' (with have / need), or 'closed' (nothing to earn: the career carries it or cannot take it). */
+ *  slot), 'progress' (with have / need), 'blocked' (with have / need, and the disadvantage it waits on - AUDIT DEEDS D6:
+ *  the deed past a phobia or a weakness, its tally counting the overcoming's), or 'closed' (nothing to earn: the
+ *  character carries it or cannot take it). */
 export function deedRows(entity) {
-  const d = deedsOf(entity);
-  const live = rowsOvercome(classSpecials(careerAsMade(entity?.career) ?? {}), d.overcome);
+  const d = deedTallies(entity);
+  const birth = madeSpecials(entity);
+  const live = [...rowsOvercome(careerRows(birth), d.overcome), ...birth.filter((r) => r.source === 'race')];
   return DEEDS.map((deed) => {
     const label = deed.secondary ? `${labelFor(deed.primary)} ${labelFor(deed.secondary)}` : labelFor(deed.primary);
+    const blocker = blockerOf(deed, live);
     const state = d.granted.includes(deed.id) ? 'earned' : d.unslotted.includes(deed.id) ? 'unslotted'
-      : cannotAdd({ primary: deed.primary, secondary: deed.secondary }, live) ? 'closed' : 'progress';
-    return { id: deed.id, name: deed.name, label, state, have: deedHave(entity, deed), need: deedNeed(entity, deed) };
+      : blocker ? 'blocked' : cannotAdd({ primary: deed.primary, secondary: deed.secondary }, live) ? 'closed' : 'progress';
+    const row = { id: deed.id, name: deed.name, label, state, have: deedHave(entity, deed), need: deedNeed(entity, deed) };
+    return blocker && state === 'blocked' ? { ...row, blocker: `${labelFor(blocker.primary)} ${labelFor(blocker.secondary)}` } : row;
   });
 }
 /** The overcomings, as the sheet says them. */
 export function overcomeRows(entity) {
-  return deedsOf(entity).overcome.map((o) => (o.to
-    ? `${labelFor(o.primary)} ${labelFor(o.secondary)} lowered to ${labelFor(o.to)}`
-    : `${labelFor(o.primary)} ${labelFor(o.secondary)} overcome`));
+  return deedTallies(entity).overcome.map((o) => (o.to
+    ? t('deeds.row.lowered', '{from} lowered to {to}', { from: `${labelFor(o.primary)} ${labelFor(o.secondary)}`, to: labelFor(o.to) })
+    : t('deeds.row.overcome', '{what} overcome', { what: `${labelFor(o.primary)} ${labelFor(o.secondary)}` })));
 }
 
 /** The character sheet's specials (specialAdvantages.js classSpecials over the folded career) with each advantage a
  *  deed laid on marked `source: 'deed'` - a pick the career as made never carried. */
 export function deedSpecials(entity, rows) {
-  const made = classSpecials(careerAsMade(entity?.career) ?? {});
-  const granted = deedsOf(entity).granted.map((id) => DEED_BY_ID[id]).filter(Boolean);
+  const made = careerRows(madeSpecials(entity));
+  const granted = deedTallies(entity).granted.map((id) => DEED_BY_ID[id]).filter(Boolean);
   return (rows ?? []).map((r) => (r.source === 'career'
     && granted.some((g) => g.primary === r.primary && g.secondary === r.secondary)
     && !made.some((m) => m.primary === r.primary && m.secondary === r.secondary) ? { ...r, source: 'deed' } : r));

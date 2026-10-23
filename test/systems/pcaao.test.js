@@ -45,6 +45,11 @@ import { newMods } from '../../src/systems/entityMods.js';   // AUDIT SET P-M1: 
 
 // BALANCE1: this file pins DFU's / the mod's own wear verbatim, so it runs the port's wear scale at 1 (test/systems/balance1.test.js pins the scale)
 _wearScaleForTests(1);
+import { setPref as setTalentsPref } from '../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ALL_ON = { Enabled: true, equipmentDamageEnhanced: true, fadingEnchantedItems: true, fixedStrengthDamageModifier: true, armorHitFormulaRedone: true, criticalStrikesIncreaseDamage: true, conditionBasedEffectiveness: true, softMaterialRequirements: true };

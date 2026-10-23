@@ -44,7 +44,7 @@ import { reviveForPlay } from '../../../src/systems/deathRespawn.js';
 import { stateDeathLoss, statedDeathLoss } from '../../../src/systems/deathPenalty.js';
 import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../../../src/ui/deathScreen.js';
 import { WILD_DEATH_HOLD_S, setWildDeath } from '../../../src/systems/wild/wildZone.js';
-import { rezSnapshot, rezFor, resurrectionSpell, RESURRECT_TEXT, RESURRECT_HEALTH_PCT, RESURRECT_HOLD_MS, RESURRECT_TYPE, RESURRECT_SUBTYPE } from '../../../src/systems/resurrect.js';
+import { rezSnapshot, rezFor, rezHealthPct, resurrectionSpell, RESURRECT_TEXT, RESURRECT_HEALTH_PCT, RESURRECT_HOLD_MS, RESURRECT_TYPE, RESURRECT_SUBTYPE } from '../../../src/systems/resurrect.js';
 import { buildCustomSpell } from '../../../src/systems/spell/spellMaker.js';
 import { validPartyPose, validPartyFrame } from '../../../src/net/wire.js';
 import { RemotePlayers } from '../../../src/net/remotePlayers.js';
@@ -196,7 +196,7 @@ async function party({ model = MODELS.bloodline, online = true, ear = true } = {
   const v = {
     _respawning: false, _rezSeen: null, _deadMark: null, _partyComposedAt: 0, _deathWasOnline: true,
     social: { acct: 'acct-ysolde', others: () => r.ysoldeHears ?? [] }, modes: { sdRealmSlot: () => null, clearDeath() {} },
-    legacyHost: r.host, madeRuleHere, rezSnapshot, rezFor, reviveForPlay, playerEntity: r.e, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, DeathScreen,
+    legacyHost: r.host, madeRuleHere, rezSnapshot, rezFor, reviveForPlay, playerEntity: r.e, RESURRECT_HEALTH_PCT, rezHealthPct, RESURRECT_TEXT, DeathScreen,
     statedDeathLoss, stateDeathLoss, townTalk: r.townTalk, wildGhostEnd: () => {}, forgetLastSlew: () => {}, player: { stopAutorun() {} },
   };
   r.ysolde = v;

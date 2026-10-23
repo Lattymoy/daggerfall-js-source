@@ -378,6 +378,9 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
     // arcane path's only memory across an older build's carry, and SPEC-RESET leaves a path given up's signature spell in
     // the book: the carry gave the path back with the 200,000 still spent, or swapped a newer choice for it, free
     snap.career.arcaneMirror = { path: snap.arcanePath, prompted: snap.pathPrompted, of: snap.characterId };
+    // AUDIT DEEDS D3: and the deeds', in the same record - an older build drops `deeds` (a key it never knew) and its
+    // re-save would have wiped every tally, slot and overcoming
+    snap.career.deedsMirror = { ...snap.deeds, of: snap.characterId };
   }
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
   // E4: `data.playerEntity.goldPieces = entity.GoldPieces`
@@ -860,7 +863,11 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity._mentor = null;   // SOFTCAP1: recomputed by the party frame, never restored
   entity.career = snap.career ? { ...snap.career } : entity.career;
   if (snap.career) { delete entity.career.martialMirror; delete entity.career.arcaneMirror; }   // AUDIT MARTIAL L3 F1: a mirror is the save's, never the live career's
-  entity.deeds = deedsSaved(snap.deeds);   // DEEDS3: a save from before it holds none
+  // DEEDS3: a save from before it holds none; AUDIT DEEDS D3: an older build's re-save, the career's mirror (its own
+  // character's alone)
+  const deedsMirror = snap.career?.deedsMirror;
+  entity.deeds = deedsSaved(snap.deeds !== undefined ? snap.deeds : (deedsMirror?.of === snap.characterId ? deedsMirror : null));
+  delete entity.career?.deedsMirror;   // a mirror is the save's, never the live career's
   applyDeeds(entity);   // DEEDS3: the deeds laid over the career as made, at once (the next magic round lays them again)
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in

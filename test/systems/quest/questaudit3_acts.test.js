@@ -32,6 +32,11 @@ import { prepareQuestShare, receiveSharedQuest } from '../../../src/systems/ques
 import { getMacroValue, getContextValue } from '../../../src/systems/quest/questMacros.js';
 import { TextRsc } from '../../../src/formats/textRsc.js';
 import { packMachine, questSource } from '../../qlSources.mjs';
+import { setPref as setTalentsPref } from '../../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');

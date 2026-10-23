@@ -103,7 +103,10 @@ test('PARTY-REST1c (2026-09-20, per-request: "when the member initializes the re
   assert.match(tick, /win\._start\(partyRestModeFromCode\(restingRow\.p\.rest\.mode\), restingRow\.p\.rest\.hoursRemaining\);/,
     'seeded with the RESTING MEMBER\'S own live hoursRemaining (not the leader\'s specifically) - a follower who joins mid-nap sees the same clock the resting member does, whoever that is');
   const w2 = rd('src/scenes/world.js');
-  assert.match(w2, /const samePlace = \(a, b\) => !!\(a && b && a\.px === b\.px && a\.py === b\.py && a\.in === b\.in && \(a\.in !== 2 \|\| a\.bk === b\.bk\)\);/,
+  // DEEDS2: the law moved to systems/partyTalents.js (samePartyPlace, the party's talents ask it too) and world.js imports
+  // it under its old name - the law itself is pinned where it lives, the import where it is read
+  assert.match(w2, /import \{[^}]*samePartyPlace as samePlace[^}]*\} from '\.\.\/systems\/partyTalents\.js';/);
+  assert.match(rd('src/systems/partyTalents.js'), /export const samePartyPlace = \(a, b\) => !!\(a && b && a\.px === b\.px && a\.py === b\.py && a\.in === b\.in && \(a\.in !== 2 \|\| a\.bk === b\.bk\)\);/,
     'px, py, in, and - only indoors - bk: two shops sharing one town pixel are not "the same place" here either, same law net/wire.js\'s own doc comment on bk states');
   // PARTY-REST3 (2026-09-20, per-request: "how near is near" - a world-map pixel is ~832x416 METERS, so
   // samePlace alone is nowhere near "together"): a second, tighter law - real distance, off the SAME 3D

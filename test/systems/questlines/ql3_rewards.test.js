@@ -32,6 +32,10 @@ import { SKILLS } from '../../../src/systems/skills.js';
 import { goldStack } from '../../../src/systems/inventory.js';
 import { patchLocaleTable, currentLocale, TextCollections, runtimeCollectionName } from '../../../src/systems/textManager.js';
 import { quietText } from '../../../src/ui/quest/questLens.js';
+import { TALENTS_PREF } from '../../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setPref(TALENTS_PREF, false);
 
 loadTables();
 setPref(QUESTLINES_PREF, true);

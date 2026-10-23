@@ -17,6 +17,11 @@ import { SKILLS } from '../../src/systems/skills.js';
 import { GUILDS } from '../../src/systems/guild/guilds.js';
 import { TEMPLATES } from '../../src/systems/useItem.js';
 import { HOLIDAYS } from '../../src/systems/holidays.js';
+import { setPref as setTalentsPref } from '../../src/systems/uiPrefs.js';
+import { TALENTS_PREF } from '../../src/systems/talents.js';
+// DEEDS (bible/06-Systems/Deeds-And-Talents.md): this file pins its own law with Deeds and Talents switched off (on by
+// default since DEEDS0) - the arc's law in force is test/systems/deeds_talents.test.js's
+setTalentsPref(TALENTS_PREF, false);
 
 /** The page's own switch (onlineLane.js isOnlinePage), for the doors that read it themselves. */
 function onlinePage(fn) {

@@ -11,6 +11,7 @@
 import { plainFoeLootRule, capFoeLoot, plainFoeRarityWeights, capLootList } from '../systems/foeLootCap.js';   // FOE-CAP: a plain foe's cap and ladder (RENOWN-LOOT: at the roller's Renown)
 import { renownLootQuarters, lootEased } from '../systems/renownLoot.js';   // RENOWN-LOOT: LOOT-EASE's buff by the roller's Renown
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
+import { partySkill } from '../systems/partyTalents.js';   // DEEDS2: whether the party's tongue, not mine, won a calm (AUDIT DEEDS C5)
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
 import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // AUDIT 39: SuppressOptionalCombatVoices, the racial override's own gate
@@ -41,7 +42,7 @@ import { bloodHit } from '../combat/blood/bloodDecals.js';   // BLOOD1b: the blo
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 import { ATTRACT_RADIUS, ignoreHumanSounds, attractStep } from '../characters/enemy/enemySounds.js';   // AUDIT 24 (wave 41); TELL2: a person's wind-up is a swing, not a voice
 import { enemyDisplayName, ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // AUDIT 24 (wave 42); TELL1: the bark a breaking blow wrings out
-import { getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3e: the enemy's name in the player's language
+import { getLocalizedEnemyName, t } from '../systems/textManager.js';   // L10N3e: the enemy's name in the player's language
 import { windupHolds, windupStruck, tacticsNow, overreachOpen, poiseTrack, LOCAL_TARGET } from '../ai/tactics.js';   // TELL1: poise and the stagger (bible/12-Enhanced-AI/Feud-Arc.md section 3); TELL2: the cues' clock; TELL4: the punish window
 import { blowK, blowWeight, behind, TELL } from '../ai/tells.js';   // TELL1: a blow's weight on the poise meter; TELL2: the cues' numbers
 import { noteFeud, feudWeakBlow } from '../systems/feudLedger.js';   // RVN1: my staggers and back hits, in a fight's ledger (a leaf); RVN3: a blow of its weakness
@@ -977,12 +978,18 @@ export function tryLanguagePacification(ai, entity, mobileType, playerEntity, {
   // all three enemy pools share, so one read covers dungeon foes,
   // exterior foes and the city watch alike.
   const comprehend = comprehendLanguagesChance(playerEntity);
+  // DEEDS2 (bible/06-Systems/Deeds-And-Talents.md section 5.2): the roll reads the party's best speaker near me
+  // (partyTalents.js partySkill). AUDIT DEEDS C5: a calm a partner's tongue won is no feat of my own - it tallies as an
+  // attempt, and the line says whose it was
+  const lent = partySkill(playerEntity, lang) > skillValue(playerEntity, lang);
   if (calculateEnemyPacification(playerEntity, lang, sheathed, undefined, comprehend)) {
     ai.isHostile = false;
     // languagePacified %e/%s. L10N3e: %e is GetLocalizedEnemyName's (EnemySenses.cs:519) - the name in the player's
     // language; the sentence around it is still the port's own (L10N3d's recorded difference from DFU's row).
-    say(`${getLocalizedEnemyName(mobileType, enemyDisplayName(mobileType) ?? 'The enemy')} is pacified by your ${SKILL_NAMES[lang]} skill.`);
-    tallySkill(playerEntity, lang, 3);
+    const who = getLocalizedEnemyName(mobileType, enemyDisplayName(mobileType) ?? 'The enemy');
+    say(lent ? t('combat.pacifiedByParty', '{foe} is pacified by your party\'s {skill}.', { foe: who, skill: SKILL_NAMES[lang] }) : `${who} is pacified by your ${SKILL_NAMES[lang]} skill.`);
+    if (!lent) tallySkill(playerEntity, lang, 3);
+    else if (lang !== SKILLS.Etiquette && lang !== SKILLS.Streetwise) tallySkill(playerEntity, lang, 1);
     return { pacified: true, lang };
   }
   // :525-526 - a failed roll still counts as USING a monster tongue,

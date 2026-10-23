@@ -113,10 +113,15 @@ test('AUDIT 63 F11: every host site that builds the formula\'s skills object rea
   const wm = read('../../src/scenes/worldModes.js');
   assert.equal(/personality:\s*playerEntity\.stats\?\.personality\s*\?\?\s*50/.test(wm), false,
     'no host site may pass the PERMANENT stat into CalculateTradePrice');
-  assert.equal((wm.match(/liveStat\(playerEntity, 'personality'\)/g) ?? []).length, 7,
-    'all seven worldModes sites read LivePersonality');   // PIN MOVED (CARDS9): the card table's pack, priced at the counter's own law
+  // PIN MOVED (DEEDS2): the seven sites take the haggle's one door (systems/partyTalents.js haggleOf), and the door reads
+  // the stat live - a site that built its own literal again would read whatever it chose
+  assert.equal((wm.match(/haggleOf\(playerEntity\)/g) ?? []).length, 7,
+    'all seven worldModes sites take the one door');   // PIN MOVED (CARDS9): the card table's pack, priced at the counter's own law
+  assert.equal((wm.match(/personality:/g) ?? []).length, 0, 'and none builds the skills object itself');
+  assert.match(read('../../src/systems/partyTalents.js'), /personality: \(entity\?\.stats\?\.personality == null \? 50 : liveStat\(entity, 'personality'\)\) \+ partyWord\(entity\),/,
+    'the door reads LivePersonality');
   const ga = read('../../src/systems/guild/guildServiceActions.js');
-  assert.ok(/liveStat\(entity, 'personality'\)/.test(ga), 'and the temple cure with them');
+  assert.ok(/calculateTradePrice\(costBeforeBargaining, quality, haggleOf\(entity\), false\)/.test(ga), 'and the temple cure with them');
 });
 
 // ── F12: DaggerfallGuildServicePopupWindow.cs:389-395 ─────────────
