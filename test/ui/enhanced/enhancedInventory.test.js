@@ -775,7 +775,7 @@ test('U58 + AUDIT 26: only the REMOTE list sends the click to the quest system',
   const body = src.slice(from, src.indexOf('\nfunction ', from + 20));
   // WHERE-ROBES: through the one home every remote door shares (itemTransfer.js sendQuestItemClick, driven in
   // test/systems/fb1004c_robes.test.js) - the side guard is still the row's
-  assert.match(body, /if \(from === 'remote'\) sendQuestItemClick\(item, deps\.getQuest \?\? null\);/,
+  assert.match(body, /if \(from === 'remote' && remote\.kind !== 'vault'\) sendQuestItemClick\(item, deps\.getQuest \?\? null\);/,   // PIN MOVED (GUILD-PANE): a vault's view is no quest's piece
     'the pane never tells the quest system, or the local list is sending clicks the classic window does not send');
   // and it happens on the CLICK, before the pick - a player who looks
   // and does not take has still clicked
@@ -1387,7 +1387,7 @@ test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was 
   // REWARD tray alone keeps the two-step: a single click must not
   // claim G6's one-shot choice.
   const src = read('src/ui/enhanced/enhancedInventory.js');
-  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward'\) \{ take\(item\); return; \}/,
+  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward' && remote\.kind !== 'vault'\) \{ take\(item\); return; \}/,   // PIN MOVED (GUILD-PANE): and the vault's click only shows its card
     'the remote click takes for container, ground and wagon');
   // ...and it happens AFTER the quest look is counted (AUDIT 26's law:
   // looking at a quest item in a pile counts, taking it doubly so) and
