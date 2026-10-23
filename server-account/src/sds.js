@@ -29,6 +29,7 @@
 
 import { verifySdReceipt } from '../../src/net/superDungeon/sdReceipt.js';
 import { seededRng } from '../../src/systems/wind/wind.js';
+import { bossWeekStatement, bossWeekAnswer } from './bossWeek.js';   // PWR5: the week's finest, in the Hour's claim
 
 /** The account's grants on its row (`players.sd_honours`, migration 0088), bit by bit. */
 export const SD_HONOUR_TITLE = 1;
@@ -66,7 +67,7 @@ export async function sdRecordOf({ db }, playerId) {
  * @param {unknown} receipt
  * @param {CryptoKey|null} publicKey
  */
-export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publicKey) {
+export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publicKey, { wd = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifySdReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -78,6 +79,7 @@ export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publi
   const bits = (title ? SD_HONOUR_TITLE : 0) | (aura ? SD_HONOUR_AURA : 0);
   const prior = Number(player.sd_honours) || 0;   // HONOUR-BANNER (AUDIT FIVE-ASKS E1): what the account held before this claim, off the session's row
   const nonce = hex(rand(new Uint8Array(8)));
+  const week = bossWeekStatement({ db, nowS, rand }, player, 'sd', c, wd);   // PWR5 (Power-Arc section 8): the week's finest, taken for this kill and device where nothing has yet (bossWeek.js)
   const [row, , count] = await db.batch([
     // THE ROW, stamped with this claim's nonce
     db.prepare('INSERT OR IGNORE INTO sd_kills (slot, account, boss, earned, lv, title, aura, nonce, at, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)')
@@ -86,8 +88,10 @@ export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publi
     db.prepare('UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)')
       .bind(player.id, bits, c.d, nonce),
     db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1').bind(player.id),
+    ...(week ? [week] : []),
   ]);
   const broken = int(count?.results?.[0]?.n);
-  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };
-  return { recorded: true, slot: c.d, title, aura, titleNew: title && !(prior & SD_HONOUR_TITLE), auraNew: aura && !(prior & SD_HONOUR_AURA), broken };
+  const said = week ? await bossWeekAnswer({ db }, player, 'sd', c, wd) : {};   // PWR5: a claim asked again answers its week the same
+  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken, ...said };
+  return { recorded: true, slot: c.d, title, aura, titleNew: title && !(prior & SD_HONOUR_TITLE), auraNew: aura && !(prior & SD_HONOUR_AURA), broken, ...said };
 }

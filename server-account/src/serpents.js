@@ -58,6 +58,7 @@ import { SERPENT_EMBERS } from '../../src/net/serpent/serpentHoardLaw.js';   // 
 import { renownForXp, renownSerpentXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 import { seededRng } from '../../src/systems/wind/wind.js';   // SERPENT5: the honours' own stream
+import { bossWeekStatement, bossWeekAnswer } from './bossWeek.js';   // PWR5: the week's finest, in the serpent's claim
 
 /** A device's claim id - the key a serpent's hoard is given under (the raids' RAID_CID_RE). */
 export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;
@@ -185,6 +186,9 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
     db.prepare(track).bind(player.id, character),
     db.prepare('SELECT COUNT(*) AS n FROM serpent_kills WHERE account = ?1').bind(player.id),
     ...(hoard ? hoardOf(db, c.d, player.id, cid, nowS) : []),
+    // PWR5 (Power-Arc section 8): the week's finest, taken for this kill and the hoard's device where nothing has yet
+    // (bossWeek.js) - after the hoard's pair, before the silver, which is read last
+    ...(hoard ? [bossWeekStatement({ db, nowS, rand }, player, 'serpent', c, cid)] : []),
     // SERPENT-SET: THE SILVER, last - by THIS claim's row alone (marks.js CLAIM_GUARDS.serpent), once a (day, account)
     ...(stmt ? [stmt] : []),
   ]);
@@ -192,15 +196,17 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const spoils = hoard ? hoardAnswer(res[8], cid) : false;
   const struck = !!stmt && Number(res[res.length - 1]?.meta?.changes ?? 0) > 0;
   const slain = int(count?.results?.[0]?.n);
+  // PWR5: the week's finest go with the hoard - the device given it, where the week is this kill's
+  const week = spoils ? await bossWeekAnswer({ db }, player, 'serpent', c, cid) : {};
   if (!row?.results?.length) {
     // AUDIT 625 P4: the row's own embers - written by the claim that counted it, whatever this ask says
     const kept = await db.prepare('SELECT stones FROM serpent_kills WHERE day = ?1 AND account = ?2').bind(c.d, player.id).first();
-    return { recorded: false, why: 'claimed', slain, spoils, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };
+    return { recorded: false, why: 'claimed', slain, spoils, ...week, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };
   }
   const total = after?.results?.length ? int(after.results[0].xp) : null;
   const was = before?.xp ?? 0;
   return {
-    recorded: true, slain, spoils, stones: embers, day: c.d, ...(stmt ? { struck } : {}),
+    recorded: true, slain, spoils, ...week, stones: embers, day: c.d, ...(stmt ? { struck } : {}),
     title, aura, titleNew: title && !(prior & SERPENT_HONOUR_TITLE), auraNew: aura && !(prior & SERPENT_HONOUR_AURA),   // SERPENT5
     renown: total === null
       ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing

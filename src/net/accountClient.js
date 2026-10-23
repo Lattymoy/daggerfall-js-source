@@ -70,6 +70,7 @@ import { busyRead, busyAnswer, busyWaitMs, retryAfterMs, BUSY_HOLD_MS } from './
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
 import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
+import { bossWeekDevice } from './bossWeek.js';   // PWR5: the device a boss's week is taken from
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -1781,7 +1782,7 @@ export const claimGateReceipt = (io, receipt, extra = null) => call(io, '/v1/gat
 export function accountGates({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
-    claim: async (receipt, extra = null) => { const i = io(); return i ? claimGateReceipt(i, receipt, extra) : { ok: false, error: 'no-session' }; },
+    claim: async (receipt, extra = null) => { const i = io(); return i ? claimGateReceipt(i, receipt, { ...(extra ?? {}), wd: bossWeekDevice(storage) }) : { ok: false, error: 'no-session' }; },   // PWR5: this device's week key (net/bossWeek.js)
     /** AUDIT WB A9: the signed-in account's id - the receipts this device may offer are its alone. */
     me: () => storedSession(storage)?.id ?? null,
   };
@@ -1846,7 +1847,7 @@ export function accountStars({ fetch, storage }) {
 
 /** SD9b: a Brass Remnant's receipt the relay signed for this account, carried to the service - `{ recorded, slot, title,
  *  aura, broken }`, or `{ recorded: false, why }` (`claimed`, `guest`). */
-export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receipt });
+export const claimSdReceipt = (io, receipt, wd = null) => call(io, '/v1/sd/claim', { receipt, ...(wd ? { wd } : {}) });   // PWR5: this device's week key (net/bossWeek.js)
 
 /**
  * SD9b: THE HOURS' ONE CALL, bound to this device's stored session (the gates' own shape). With no session there is no
@@ -1856,7 +1857,7 @@ export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receip
 export function accountSds({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
-    claim: async (receipt) => { const i = io(); return i ? claimSdReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
+    claim: async (receipt) => { const i = io(); return i ? claimSdReceipt(i, receipt, bossWeekDevice(storage)) : { ok: false, error: 'no-session' }; },
     /** The signed-in account's id - the receipts this device may offer are its alone (AUDIT WB A9's law). */
     me: () => storedSession(storage)?.id ?? null,
   };

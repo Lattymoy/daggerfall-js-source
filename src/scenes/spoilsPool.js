@@ -98,6 +98,7 @@ import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.j
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a piece's light named by its piece
 import { LOST_OWED_MAX_MS } from '../net/lostLaw.js';   // LOST-SPOILS: how long a floor's leftovers are asked after
 import { t } from '../systems/textManager.js';
+import { weekBase } from '../net/bossWeek.js';   // PWR5: a floor never holds the week's finest
 
 /** WBX3: an item's picture stands this many metres a texel tall on the floor, and never taller than the most. */
 export const SPOILS_ICON_M_PER_PX = 0.022;
@@ -607,7 +608,7 @@ export function createSpoilsPool({
       if (rec) gatherFloor();   // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one
       rec = { day, acct };
       t0 = now(); lastT = t0; from = [...at];
-      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)
+      const list = typeof roll === 'function' ? roll() : weekBase(spoilsList(seed >>> 0, Math.max(1, level | 0), claims));   // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's); PWR5: never the week's finest (net/bossWeek.js)
       launches = spewLaunches(seededRng(((seed >>> 0) ^ 0x5a5a) >>> 0), list.length, bearing);
       if (keep) launches = launches.map((l) => keepLaunch(from, l, keep));   // WB9f: every piece rests on the court's floor
       const plane = keep && Number.isFinite(keep.floorY) ? floorRayAt(keep.floorY) : null;
@@ -625,7 +626,7 @@ export function createSpoilsPool({
      *  @param {{ day: any, seed?: number, level?: number, acct?: string, roll?: (() => any[]) | null, text?: string, owner?: any, kept?: string | null, claims?: any }} o */
     grant({ day, seed, level, acct = '', roll = null, text = SPOILS_TEXT.granted, owner = undefined, kept = null, claims = null }) {
       if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again
-      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite
+      const list = typeof roll === 'function' ? roll() : weekBase(spoilsList(seed >>> 0, Math.max(1, level | 0), claims));   // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite; PWR5: never the week's finest
       // AUDIT RAID R4: ANOTHER CHARACTER'S - the one that fought for them, when another stands here: kept on the device
       // as a crash's record is (never in this pack), and the crash's door hands them over when that character stands up
       if (owner !== undefined && owner !== who()) { spend(day, acct, list, owner); if (kept) say(kept); return true; }

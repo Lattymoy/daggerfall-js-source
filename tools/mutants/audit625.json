@@ -623,7 +623,7 @@
   {
     "name": "AUDIT625-P4-the-answer-silent",
     "file": "server-account/src/serpents.js",
-    "old": "    recorded: true, slain, spoils, stones: embers, day: c.d,",
+    "old": "    recorded: true, slain, spoils, ...week, stones: embers, day: c.d,",
     "new": "    recorded: true, slain, spoils, day: c.d,",
     "why": "the answer silent on the row's embers",
     "tests": [
@@ -633,7 +633,7 @@
   {
     "name": "AUDIT625-P4-the-repeat-silent",
     "file": "server-account/src/serpents.js",
-    "old": "    return { recorded: false, why: 'claimed', slain, spoils, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };",
+    "old": "    return { recorded: false, why: 'claimed', slain, spoils, ...week, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };",
     "new": "    return { recorded: false, why: 'claimed', slain, spoils };",
     "why": "a repeat silent on the row's embers",
     "tests": [

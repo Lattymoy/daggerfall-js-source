@@ -42,6 +42,7 @@ import { AFFIX_RANGES, validAffix, affixesWorth, RARITIES } from '../../src/syst
 import { validLootItem } from '../../src/systems/loot/loot.js';
 import { getItemHands, ITEM_HANDS } from '../../src/characters/equipTable.js';
 import { budgeted, guardHurt, _resetPowerBudgetForTests } from '../../src/systems/power/powerBudget.js';   // PWR1: the channels' curve; the guard's door
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -528,7 +529,7 @@ test('RAID4b the spoils pool\'s own keys for a town\'s thanks: the grant rolls t
 });
 
 test('RAID4b the host: world.js rolls a town\'s thanks off each raid receipt - AUDIT RAID R4: when the account service says the claim is the (raid, account)\'s - its raid, seed, party and account, at the level it was fought at, into the pack of the character that fought it (else kept for it), one tab at a time - through a pool of the town\'s own keys that tells the hub nothing, clears on a save and is asked at the crash\'s door by its key; the new powers\' sounds (mutants: the receipt never granted; the town\'s pool on the gate\'s keys; the save never clearing it; the crash\'s door never asked)', () => {
-  const w = strip(read('src/scenes/world.js'));
+  const w = strip(hostText('src/scenes/world.js'));   // PIN MOVED (HOST-SPLIT, PWR5): the grants live in scenes/bossSpoilsHost.js, read with the host
   assert.match(w, /onRaidReceipt: \(r\) => \{ raidClaims\?\.add\(r, characterIdOf\(playerEntity\), [^;]+\); \},/);
   assert.match(w, /onSpoils: \(entry\) => grantRaidSpoils\(entry\),/);
   assert.match(w, /function grantRaidSpoils\(entry\) \{\s*const c = readRaidReceipt\(entry\?\.r\);\s*if \(!c\) return;\s*const level = Math\.max\(1, Math\.floor\(Number\(entry\.lv\) \|\| playerEntity\.level \|\| 1\)\);\s*spoilsLock\(\(\) => raidSpoils\.grant\(\{ day: raidSpoilsDay\(c\.w\), acct: c\.s, roll: \(\) => raidSpoilsList\(c\.c, level, c\.y\), text: RAID_SPOILS_TEXT\.granted,\s*owner: entry\.ch, kept: RAID_SPOILS_TEXT\.kept\(entry\.nm\) \}\)\)/);

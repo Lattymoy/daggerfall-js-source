@@ -35,6 +35,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { itemFindings } from '../../src/systems/item/itemLaw.js';
 import { LOST_BATCH, LOST_WINDOW_S, LOST_WAITING_MAX, lostKillOf, lostBatchOf, lostPiecesOf } from '../../src/net/lostLaw.js';
+import { isTopPiece } from '../../src/net/bossWeek.js';   // PWR5: the week's finest, never a Warden's or an Hour's floor's
+import { arenaWeekOf } from '../../src/net/arena/arenaLaw.js';
 
 /** Who the Lost and Found's pieces are from, as the box shows them (src/net/postLaw.js postHead's 40). */
 export const LOST_SENDER = 'Lost and Found';
@@ -57,6 +59,20 @@ async function killAt(db, account, kill) {
       ? await db.prepare('SELECT at FROM sd_kills WHERE slot = ?1 AND account = ?2').bind(kill.slot, account).first()
       : await db.prepare('SELECT at FROM eg_redoubts WHERE b = ?1 AND account = ?2 AND w = ?3 AND paid = 1').bind(kill.b, account, kill.w).first();
   return Number.isSafeInteger(row?.at) ? row.at : null;
+}
+
+/** PWR5 (bible/05-Combat/Power-Arc.md section 8; src/net/bossWeek.js): whether a Warden's or an Hour's kill fell under the
+ *  week's law - a row of its boss's week is written (every claim under the law writes its week's, where none is yet), so a
+ *  floor of it never held the week's finest (they go into the pack, never on the floor). A kill of a week before the law
+ *  wrote none, and its floor's leftovers are mailed as they were. A Redoubt's floor holds its own (its paid row's law). */
+async function underWeek(db, account, kill, at) {
+  if (kill.kind !== 'gate' && kill.kind !== 'sd') return false;
+  const boss = kill.kind === 'gate'
+    ? "'gate:' || (SELECT boss FROM gate_kills WHERE day = ?3 AND account = ?1)"
+    : "'sd:' || (SELECT boss FROM sd_kills WHERE slot = ?3 AND account = ?1)";
+  const row = await db.prepare(`SELECT 1 AS y FROM boss_weeks WHERE account = ?1 AND wk = ?2 AND boss = ${boss}`)
+    .bind(account, arenaWeekOf(at), kill.kind === 'gate' ? kill.day : kill.slot).first();
+  return !!row;
 }
 
 /**
@@ -83,6 +99,8 @@ export async function mailLostSpoils({ db, nowS }, reader, { day, pieces } = {})
   const at = await killAt(db, reader.id, kill);
   if (at == null) return { error: 'lost-no-kill' };
   if (at < nowS - LOST_WINDOW_S) return { error: 'lost-spent' };
+  // PWR5: the week's finest are never a floor's - one asked for from a floor under the week's law is no leftover
+  if (fresh.some((p) => isTopPiece(p.item)) && await underWeek(db, reader.id, kill, at)) return { error: 'lost-item', i: fresh.find((p) => isTopPiece(p.item)).i };
   const waiting = await db.prepare("SELECT COUNT(*) AS n FROM server_post WHERE to_id = ?1 AND substr(batch, 1, ?2) = ?3 AND claimed_at IS NULL")
     .bind(reader.id, LOST_BATCH.length, LOST_BATCH).first();
   if ((Number(waiting?.n) || 0) + fresh.length > LOST_WAITING_MAX) return { error: 'lost-full' };

@@ -469,8 +469,36 @@ inside BAL8's window (5 s), the first two to strike it there; a third lands noth
 whole window. No crowd fells a fighter faster than a pair at BAL8's ceiling - two of 180 in 5 s, its whole vitality. (A
 pool of damage could not say so: a fighter falls before any pool its vitality's size fills.)
 
-THE WEEKLY LOCKOUT on each boss's top-tier roll (Mac's call 7) is this section's next part, written at its slice.
+THE WEEK'S FINEST (Mac: "Weekly per boss" - "each boss rolls Legendary-and-up, set and Gilded pieces for an account
+once an arena week; repeat kills still pay gold, Marks and Embers (the Elite Gates' weekly law the template)" -
+`net/bossWeek.js`, `server-account/src/bossWeek.js`, migration 0165):
 
-A DEPARTURE: Ledger A (PWR5). `test/systems/power/pwr5_group.test.js` (5); the doors' own suites moved with it
+- **The bosses**: those whose kills the account service counts off a receipt the relay signed - the Burning Court's
+  Warden (`accounts.js` claimGate), the Shattered Hour's Brass Remnant (`sds.js` claimSd), the sea serpent
+  (`serpents.js` claimSerpent). The Elite Breach's Redoubts kept the law first (`egEconomy.js`, once an account a Redoubt
+  an arena week) and keep their own. A town raid and a fallen star are no boss: their own day's caps hold them.
+- **The finest**: a piece of Legendary rank or over by the item's own rarity - a Legendary (an Exalted one too), a set's
+  piece (Aetheric), an artifact, a Gilded (`BOSS_TOP_RARITIES`, `lootRarity.js` RARITIES pinned equal). Never by the glow a
+  list dresses a piece in: an ember glows as an artifact and a card as a set's piece, and both are every kill's.
+- **The week**: the arena's (`arenaWeekOf`) of the kill - the receipt's issue time - so a receipt held past Monday is
+  still the week it was won in. The first claim of a kill of that boss in its week takes the week for the account and
+  the device that claimed it (`boss_weeks`, its row a boss an account an arena week); every claim of that kill from that
+  device answers `top`, a claim asked again the same; any other kill of it that week, or that kill from another device,
+  not. The serpent's week goes with its hoard (the device its `cid` names); the gate's and the Hour's devices name
+  themselves (`bossWeekDevice`, a key the device keeps). A claim that names no device (a build from before) neither
+  takes the week nor is answered it; a guest holds none.
+- **Never on the floor**: every spoils list a receipt rolls drops its finest (`weekBase`) - the court's burst, the Hour's
+  throw, the pack's grant and the hoard alike - so what every kill gives at the receipt is the same, and a floor's
+  leftovers mailed never hold one (`lostSpoils.js` refuses one from a kill under the law). The week's finest are a SECOND
+  roll of the same list, on the receipt's seed mixed with the service's own draw at the claim (`bossTopSeed`, as the
+  Elite Breach's spoils roll), its finest pieces alone (`weekTop`), into the pack or kept for the character that fought
+  (`scenes/bossSpoilsHost.js` gateWeek, sdWeek, the serpent's grant), under the pool's own key for them (`bossTopDay`,
+  never said to the hub). A page can read a receipt's seed; it cannot read a draw the service has not made - so no kill
+  is rolled in advance and claimed first because it rolled well.
+- **Repeats still pay**: the gold, the embers, the Marks, the card, the gems and every other piece of the list; the week
+  taken is said once, in the chat, for a kill counted now.
+- The odds of the finest are each list's own, unmoved: a week's roll is the roll a kill always made.
+
+A DEPARTURE: Ledger A (PWR5). `test/systems/power/pwr5_group.test.js` (5), `pwr5_week.test.js` (7); the doors' own suites moved with it
 (`test/systems/partyloot.test.js`, `test/systems/sigil/sigil1.test.js`, `test/net/siege/seat2b_guards_relay.test.js`,
 each a PWR5 test); `tools/mutants/pwr5.json`.

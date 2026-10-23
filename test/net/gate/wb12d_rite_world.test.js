@@ -43,6 +43,8 @@ import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { seededRng } from '../../../src/systems/wind/wind.js';
 import { sigilParty } from '../../../src/systems/sigil/sigil.js';
 import { GLOBAL_SCALE } from '../../../src/player/activate.js';
+import { weekBase } from '../../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DAY = 700;
@@ -929,12 +931,12 @@ test('WB12d the spoils: a receipt of the rite alone pays its ember and nothing e
   assert.equal(took.length, 1, 'granted: the ember alone');
   assert.deepEqual(said, [SPOILS_TEXT.rite]);
   assert.equal(pool.spew({ day: DAY + 1, seed: 4242, level: 20, acct: 'a', at: [0, 0, 0], bearing: 0, claims: { x: 'stood', r: 1 } }), true);
-  assert.equal(pool.state().pieces.length, plain.length + 1, 'spewed: an ember more');
+  assert.equal(pool.state().pieces.length, weekBase(plain).length + 1, 'spewed: an ember more');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase)
   assert.equal(COURT_STRIKE_TEXT.spilledRite(), 'Your ember from the broken rite falls to the floor.');
   const court = read('src/scenes/gate/gateCourt.js');
   assert.match(court, /spoils\.spew\(\{ day: s\.day, seed: claims\.c, level: spoilsLevel\(player\(\)\?\.level \?\? 1, claims\.l\), at, bearing, acct: claims\.s, keep, claims \}\)/);
   assert.match(court, /say\(claims\.x === 'rite' \? COURT_STRIKE_TEXT\.spilledRite\(\) : COURT_STRIKE_TEXT\.spilled\(\)\);/);
-  assert.match(read('src/scenes/world.js'), /spoilsPool\.grant\(\{ day: c\.d, seed: c\.c, level: spoilsLevel\(playerEntity\.level \?\? 1, c\.l\), acct: c\.s, claims: c, text: c\.x === 'rite' \? SPOILS_TEXT\.rite : SPOILS_TEXT\.granted \}\)/);
+  assert.match(hostText('src/scenes/world.js'), /spoilsPool\.grant\(\{ day: c\.d, seed: c\.c, level: spoilsLevel\(playerEntity\.level \?\? 1, c\.l\), acct: c\.s, claims: c, text: c\.x === 'rite' \? SPOILS_TEXT\.rite : SPOILS_TEXT\.granted \}\)/);
 });
 
 test('WB12d the claim: a rite\'s own receipt is "Rite recorded." and closes no breach; refused its claims by a service from before acct62, it is kept for its week - for that refusal alone (mutants: let go; said a breach; kept on any refusal; the verdict blind to the receipt)', async () => {

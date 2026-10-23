@@ -325,5 +325,276 @@
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
+  },
+  {
+    "name": "PWR5-the-finest-a-rare",
+    "file": "src/net/bossWeek.js",
+    "old": "export const BOSS_TOP_RARITIES = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);",
+    "new": "export const BOSS_TOP_RARITIES = Object.freeze(['rare', 'legendary', 'aetheric', 'artifact', 'gilded']);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-finest-no-legendary",
+    "file": "src/net/bossWeek.js",
+    "old": "export const BOSS_TOP_RARITIES = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);",
+    "new": "export const BOSS_TOP_RARITIES = Object.freeze(['aetheric', 'artifact', 'gilded']);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-week-the-expiry",
+    "file": "src/net/bossWeek.js",
+    "old": "export const bossWeekOf = (c) => arenaWeekOf(c?.i);",
+    "new": "export const bossWeekOf = (c) => arenaWeekOf(c?.e);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-seed-unsalted",
+    "file": "src/net/bossWeek.js",
+    "old": "egSpoilsSeed(((Number(seed) >>> 0) ^ TOP_SALT) >>> 0, nonce)",
+    "new": "egSpoilsSeed(Number(seed) >>> 0, nonce)",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-floor-whole",
+    "file": "src/net/bossWeek.js",
+    "old": "export const weekBase = (list) => (Array.isArray(list) ? list.filter((p) => !isTopPiece(p?.item)) : []);",
+    "new": "export const weekBase = (list) => (Array.isArray(list) ? list : []);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-week-whole",
+    "file": "src/net/bossWeek.js",
+    "old": "export const weekTop = (list) => (Array.isArray(list) ? list.filter((p) => isTopPiece(p?.item)) : []);",
+    "new": "export const weekTop = (list) => (Array.isArray(list) ? list : []);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-top-key-the-receipts",
+    "file": "src/net/bossWeek.js",
+    "old": "export const bossTopDay = (day) => `top:${day}`;",
+    "new": "export const bossTopDay = (day) => day;",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-device-unkept",
+    "file": "src/net/bossWeek.js",
+    "old": "    if (typeof had === 'string' && BOSS_WEEK_CID_RE.test(had)) return had;\n",
+    "new": "",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-gate-week-unwritten",
+    "file": "server-account/src/accounts.js",
+    "old": "  const week = c.x === 'rite' ? null : bossWeekStatement({ db, nowS, rand }, player, 'gate', c, wd);",
+    "new": "  const week = null;",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-device-unread",
+    "file": "server-account/src/bossWeek.js",
+    "old": "r && r.ref === bossWeekRef(c) && r.cid === mine ?",
+    "new": "r && r.ref === bossWeekRef(c) ?",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-ref-unread",
+    "file": "server-account/src/bossWeek.js",
+    "old": "r && r.ref === bossWeekRef(c) && r.cid === mine ?",
+    "new": "r && r.cid === mine ?",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-a-claim-with-no-device-takes-it",
+    "file": "server-account/src/bossWeek.js",
+    "old": "  const boss = bossWeekKey(kind, c), mine = cidOf(cid);\n  if (!boss || !mine) return null;\n  const draw",
+    "new": "  const boss = bossWeekKey(kind, c), mine = cidOf(cid) ?? '0000000000000000';\n  if (!boss || !mine) return null;\n  const draw",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hours-week-unwritten",
+    "file": "server-account/src/sds.js",
+    "old": "    ...(week ? [week] : []),\n  ]);",
+    "new": "  ]);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-serpents-week-without-the-hoard",
+    "file": "server-account/src/serpents.js",
+    "old": "  const week = spoils ? await bossWeekAnswer({ db }, player, 'serpent', c, cid) : {};",
+    "new": "  const week = await bossWeekAnswer({ db }, player, 'serpent', c, cid);",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-lost-refusal-unasked",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  if (fresh.some((p) => isTopPiece(p.item)) && await underWeek(db, reader.id, kill, at))",
+    "new": "  if (false && fresh.some((p) => isTopPiece(p.item)) && await underWeek(db, reader.id, kill, at))",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-lost-week-unread",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "  if (kill.kind !== 'gate' && kill.kind !== 'sd') return false;\n  const boss",
+    "new": "  if (kill.kind !== 'gate' && kill.kind !== 'sd') return false;\n  return true;\n  const boss",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-gate-hook-unheard",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "          try { const line = await onWeek(r, answer.data); if (typeof line === 'string' && line) say(line); } catch { weekGiven = false; }",
+    "new": "          void onWeek;",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-gate-receipt-let-go-on-a-failed-grant",
+    "file": "src/net/gate/gateClaims.js",
+    "old": "        if (weekGiven && gateClaimVerdict(answer, live(r)) === 'done') {",
+    "new": "        if (gateClaimVerdict(answer, live(r)) === 'done') {",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hours-hook-unheard",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "          try { const line = await onWeek(r, answer.data); if (typeof line === 'string' && line) say(line); } catch { weekGiven = false; }",
+    "new": "          void onWeek;",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hours-receipt-let-go-on-a-failed-grant",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "        if (weekGiven && sdClaimVerdict(answer) === 'done') {",
+    "new": "        if (sdClaimVerdict(answer) === 'done') {",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-taken-line-on-a-claim-asked-again",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "data?.top === false && data.recorded === true ? BOSS_WEEK_TEXT.taken(name) : null",
+    "new": "data?.top === false ? BOSS_WEEK_TEXT.taken(name) : null",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hoard-whole",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "roll: () => weekBase(serpentSpoilsList(c.c, level, c.x)),",
+    "new": "roll: () => serpentSpoilsList(c.c, level, c.x),",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hour-grant-whole",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "roll: () => weekBase(sdSpoilsList(c.c, level)),",
+    "new": "roll: () => sdSpoilsList(c.c, level),",
+    "tests": [
+      "test/net/superDungeon/sd10b_audit.test.js",
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-week-rolled-on-the-receipt",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "    const list = weekTop(roll(data.topSeed >>> 0));",
+    "new": "    const list = weekTop(roll(acct.length));",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-gate-burst-whole",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "roll() : weekBase(spoilsList(seed >>> 0, Math.max(1, level | 0), claims));   // WB12d: the receipt's rite; SD9e",
+    "new": "roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite; SD9e",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-gate-grant-whole",
+    "file": "src/scenes/spoilsPool.js",
+    "old": "roll() : weekBase(spoilsList(seed >>> 0, Math.max(1, level | 0), claims));   // RAID4b",
+    "new": "roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hour-burst-whole",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
+    "old": "roll: () => weekBase(sdSpoilsList(c.c, lv)) })",
+    "new": "roll: () => sdSpoilsList(c.c, lv) })",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-week-said-to-the-hub",
+    "file": "src/scenes/world.js",
+    "old": "onSpent: (day) => isBossTopDay(day) || socialLink()?.sendGateSpent?.(day) === true,",
+    "new": "onSpent: (day) => socialLink()?.sendGateSpent?.(day) === true,",
+    "tests": [
+      "test/systems/power/pwr5_week.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-gate-claim-names-no-device",
+    "file": "src/net/accountClient.js",
+    "old": "claimGateReceipt(i, receipt, { ...(extra ?? {}), wd: bossWeekDevice(storage) })",
+    "new": "claimGateReceipt(i, receipt, extra)",
+    "tests": [
+      "test/net/gate/wb5b_gate_claim.test.js"
+    ]
+  },
+  {
+    "name": "PWR5-the-hour-claim-names-no-device",
+    "file": "src/net/accountClient.js",
+    "old": "claimSdReceipt(i, receipt, bossWeekDevice(storage))",
+    "new": "claimSdReceipt(i, receipt)",
+    "tests": [
+      "test/server/sd9b_claim.test.js"
+    ]
   }
 ]

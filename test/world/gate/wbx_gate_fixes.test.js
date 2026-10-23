@@ -48,6 +48,8 @@ import { damageEquipment } from '../../../src/combat/formulas.js';
 import { RELAY_VERSION } from '../../../src/net/wire.js';
 import { relayVersionAtLeast } from '../../relayVersion.mjs';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { weekBase } from '../../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
+import { spoilsList } from '../../../src/scenes/spoilsPool.js';   // PWR5: what the floor holds
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = (key, over = {}) => ({ i: 1, a: ATTACKS[key].id, at: 10000, x: 0, z: 0, yw: 0, tg: [], ...over });
@@ -219,7 +221,7 @@ test('WBX3 each piece is itself on the floor: an item stands as its own picture 
   for (let i = 0; i < 400; i++) { clock.t += 16; p.frame(); }
   const st = p.state();
   const items = st.pieces.filter((x) => x.kind === 'item'), gold = st.pieces.find((x) => x.kind === 'gold');
-  assert.ok(items.length === 5 && items.every((x) => x.rest && x.icon), 'every item rests as its own picture');   // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): three pieces, the Warden's gem and the ember
+  assert.ok(items.length === weekBase(spoilsList(77, 10)).filter((x) => x.kind === 'item').length && items.every((x) => x.rest && x.icon), 'every item rests as its own picture');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase)   // PIN MOVED (GEM2, bible/06-Systems/Gem-Sockets.md): three pieces, the Warden's gem and the ember
   assert.ok(gold.rest && !gold.icon, 'gold keeps its pile');
   assert.ok(uploads.length >= 1 && uploads.every((u) => u[0] === SPOILS_ICON_ARCHIVE && u[1] === 'icon:207_3'), 'uploaded under the pool\'s pseudo-archive, keyed by the picture');
   const size = iconSize(30, 20);

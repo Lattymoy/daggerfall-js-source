@@ -24,6 +24,7 @@ import { GATE_STATE_EMPTY } from '../../src/net/gate/gateLink.js';
 import { mintReceipt } from '../../src/net/gate/gateReceipt.js';
 import { COURTS, COURT_R } from '../../src/net/gate/gateBrain.js';
 import { courtToDungeon } from '../../src/world/gate/gateArena.js';
+import { weekBase } from '../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const flat = floorRayAt(0);
@@ -189,7 +190,7 @@ test('WB9f each landing told: the floor says each piece\'s rest once, where it l
   const h = pool({ restLog: log });
   h.p.spew({ day: 703, seed: 5, level: 4, at: [0, 3.1, 0], bearing: 0 });
   h.run(5000);
-  const list = spoilsList(5, 4), s = h.p.state().pieces;
+  const list = weekBase(spoilsList(5, 4)), s = h.p.state().pieces;   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase)
   assert.equal(log.length, list.length, 'once a piece');
   for (const e of log) {
     const i = s.findIndex((q) => q.pos[0] === e.pos[0] && q.pos[2] === e.pos[2]);

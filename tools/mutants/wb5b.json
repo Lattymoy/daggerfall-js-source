@@ -30,8 +30,8 @@
   {
     "name": "WB5b-no-key-no-refusal",
     "file": "server-account/src/accounts.js",
-    "old": "{ strike = null, region = null, deeds = null, weir = null } = {}) {\n  if (!publicKey) return { error: 'no-gate-key' };\n",
-    "new": "{ strike = null, region = null, deeds = null, weir = null } = {}) {\n",
+    "old": "{ strike = null, region = null, deeds = null, weir = null, wd = null } = {}) {\n  if (!publicKey) return { error: 'no-gate-key' };\n",
+    "new": "{ strike = null, region = null, deeds = null, weir = null, wd = null } = {}) {\n",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -156,7 +156,7 @@
   {
     "name": "WB5b-a-knock-with-no-session",
     "file": "src/net/accountClient.js",
-    "old": "    claim: async (receipt, extra = null) => { const i = io(); return i ? claimGateReceipt(i, receipt, extra) : { ok: false, error: 'no-session' }; },",
+    "old": "    claim: async (receipt, extra = null) => { const i = io(); return i ? claimGateReceipt(i, receipt, { ...(extra ?? {}), wd: bossWeekDevice(storage) }) : { ok: false, error: 'no-session' }; },",
     "new": "    claim: async (receipt, extra = null) => claimGateReceipt({ fetch, base: serviceBase(storage), secret: null }, receipt, extra),",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"

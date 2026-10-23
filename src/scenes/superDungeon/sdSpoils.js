@@ -17,6 +17,7 @@ import { readSdReceipt } from '../../net/superDungeon/sdReceipt.js';
 import { remnantPose } from './sdRemnant.js';
 import { spoilsLevel } from '../spoilsPool.js';
 import { sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT } from '../../systems/superDungeon/sdSpoils.js';
+import { weekBase } from '../../net/bossWeek.js';   // PWR5: the arena's floor never holds the week's finest
 
 /** Its spoils leave it this long into its fall - its body still sinking, the cage of its chest above the floor
  *  (scenes/superDungeon/sdRemnant.js SD_REM_SINK_MS is the whole sink); a receipt not come this long after it never will. */
@@ -71,7 +72,7 @@ export function createSdSpoils({ link, pool, slot, receipt, level, feet = () => 
           const f = feet();
           const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : pose.yw;
           const lv = spoilsLevel(level(), c.l);   // AUDIT WBX S2: never past the level the fight admitted
-          if (pool.spew({ day: sdSpoilsDay(c.d), seed: c.c, level: lv, at, bearing, acct: c.s, keep: SD_SPOILS_KEEP, roll: () => sdSpoilsList(c.c, lv) })) say(SD_SPOILS_TEXT.spilled);
+          if (pool.spew({ day: sdSpoilsDay(c.d), seed: c.c, level: lv, at, bearing, acct: c.s, keep: SD_SPOILS_KEEP, roll: () => weekBase(sdSpoilsList(c.c, lv)) })) say(SD_SPOILS_TEXT.spilled);
         } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS && link.counted?.()) {
           saidFi = s.fi;
           say(SD_SPOILS_TEXT.none);

@@ -671,7 +671,7 @@
   {
     "name": "WB12d-the-spew-without-the-receipt",
     "file": "src/scenes/spoilsPool.js",
-    "old": "spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite",
+    "old": "weekBase(spoilsList(seed >>> 0, Math.max(1, level | 0), claims));   // WB12d: the receipt's rite",
     "new": "spoilsList(seed >>> 0, Math.max(1, level | 0));   // WB12d: the receipt's rite",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -698,7 +698,7 @@
   {
     "name": "WB12d-the-verdict-blind",
     "file": "src/net/gate/gateClaims.js",
-    "old": "if (gateClaimVerdict(answer, live(r)) === 'done')",
+    "old": "if (weekGiven && gateClaimVerdict(answer, live(r)) === 'done')",
     "new": "if (gateClaimVerdict(answer) === 'done')",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -761,7 +761,7 @@
   {
     "name": "WB12d-the-grant-without-the-receipt",
     "file": "src/scenes/spoilsPool.js",
-    "old": "spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "old": "weekBase(spoilsList(seed >>> 0, Math.max(1, level | 0), claims));   // RAID4b",
     "new": "spoilsList(seed >>> 0, Math.max(1, level | 0));   // RAID4b",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"

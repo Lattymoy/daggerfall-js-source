@@ -47,13 +47,15 @@ import { ARMOR_MATERIAL } from '../../../src/systems/armorMaterials.js';
 // the relay
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
+import { weekBase } from '../../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
 const near = (a, b, e = 1e-6) => a.length === b.length && [...a].every((v, i) => Math.abs(v - b[i]) < e);
 const tick = () => new Promise((r) => setImmediate(r));
 const T0 = 1_800_000_000_000;
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, PWR5): the grants live in scenes/bossSpoilsHost.js, read with the host
 /** A `function name(` of world.js's own, its text. */
 const fnOf = (name) => { const at = W.indexOf(`\n  function ${name}(`); assert.ok(at > 0, name); return W.slice(at + 1, W.indexOf('\n  }\n', at) + 4); };
 /** A `const name = (` of world.js's own, its text (an arrow whose body closes `\n  };`). */
@@ -211,7 +213,7 @@ function receiptHost() {
   let slot = null;
   const grants = [];
   const env = {
-    readSdReceipt, isSdRoom, modes: { sdRealmSlot: () => slot }, spoilsLevel, playerEntity: { level: 30 }, spoilsLock: (f) => Promise.resolve().then(f),
+    readSdReceipt, isSdRoom, host: { modes: { sdRealmSlot: () => slot } }, weekBase, spoilsLevel, playerEntity: { level: 30 }, spoilsLock: (f) => Promise.resolve().then(f),
     sdSpoilsPool: { grant: (o) => { grants.push(o); return true; } }, sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT, _sdReceipts: new Map(),
   };
   const body = `${fnOf('sdSpoilsReceipt')}\n${fnOf('grantSdSpoils')}\n${fnOf('sdReceiptsLeft')}\nreturn { sdSpoilsReceipt, sdReceiptsLeft };`;
@@ -235,7 +237,7 @@ test('AUDIT SD MY HOUR RECEIPT, WHEREVER IT COMES: the hub\'s hand of it (at the
   await tick();
   assert.equal(h.grants.length, 1);
   assert.deepEqual([h.grants[0].day, h.grants[0].acct, h.grants[0].text], [sdSpoilsDay(7), 'acct-a', SD_SPOILS_TEXT.granted]);
-  assert.deepEqual(JSON.parse(JSON.stringify(h.grants[0].roll())), JSON.parse(JSON.stringify(sdSpoilsList(1234, 7))), 'the Hour\'s roll, at the fight\'s level');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.grants[0].roll())), JSON.parse(JSON.stringify(weekBase(sdSpoilsList(1234, 7)))), 'the Hour\'s roll, at the fight\'s level');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): never the week's finest (net/bossWeek.js weekBase)
   assert.equal(h.kept.size, 0);
   h.sdReceiptsLeft();
   await tick();

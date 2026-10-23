@@ -19,7 +19,7 @@
   },
   {
     "name": "AUDIT-SD-C1-granted-every-frame",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/bossSpoilsHost.js",
     "old": "if (c) grantSdSpoils(c); }\n    _sdReceipts.clear();",
     "new": "if (c) grantSdSpoils(c); }",
     "tests": [

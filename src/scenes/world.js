@@ -405,8 +405,7 @@ import { drawGateMarksCard } from '../ui/gate/gateMarksView.js';   // WB9a: toni
 import { createGateLink, GATE_NO_TEXT, gateRefusalText } from '../net/gate/gateLink.js'; import { readReceipt } from '../net/gate/gateReceipt.js';   // AUDIT WB A2: a receipt's day, seed and account, for its spoils outside the court   // WB3b: what the client holds of a gate's fight - the relay's words, folded
 import { createGateClaims } from '../net/gate/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createRaidClaims } from '../net/raid/raidClaims.js';   // RAID4: the raid receipts, carried to the account service until counted and paid
-import { readRaidReceipt } from '../net/raid/raidReceipt.js';   // RAID4b: a raid receipt's raid, seed, party and account, for a town's thanks
-import { raidSpoilsList, raidSpoilsDay, RAID_SPOILS_KEYS, RAID_SPOILS_TEXT, RAID_SPOILS_RECORDS_MAX } from '../systems/raidSpoils.js';   // RAID4b: a town's thanks
+import { RAID_SPOILS_KEYS, RAID_SPOILS_TEXT, RAID_SPOILS_RECORDS_MAX } from '../systems/raidSpoils.js';   // RAID4b: a town's thanks
 import { createSerpentOmen, insideSerpentRing, SERPENT_OMEN_SETTLE_MS } from '../systems/serpent/serpentOmen.js';   // SERPENT1 (Mac: "a large scale sea serpent in the ocean"): the sea serpent's sighting - its lines, its ring, its compass mark
 import { findSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea
 import { createSerpentLink } from '../net/serpent/serpentLink.js'; import { readSerpentReceipt } from '../net/serpent/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
@@ -431,16 +430,15 @@ import { remnantBarModel, sdBarNear } from '../ui/superDungeon/sdRemnantBar.js';
 import { createSdVoice, SD_VOICE_RANK } from './superDungeon/sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gate/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
 import { playSerpentSound, SERPENT_VOICE_ROWS } from '../systems/serpent/serpentSounds.js';   // SERPENT1: its voice - DAGGER.SND's own, pitched for its size
-import { serpentSpoilsList, serpentSpoilsDay, SERPENT_SPOILS_KEYS, SERPENT_SPOILS_TEXT, SERPENT_SPOILS_RECORDS_MAX } from '../systems/serpent/serpentSpoils.js';   // SERPENT1: the Old Coil's hoard
+import { SERPENT_SPOILS_KEYS, SERPENT_SPOILS_TEXT, SERPENT_SPOILS_RECORDS_MAX } from '../systems/serpent/serpentSpoils.js';   // SERPENT1: the Old Coil's hoard
 import { createSerpentClaims } from '../net/serpent/serpentClaims.js';   // SERPENT1: its receipts carried to the account service
 import { createSdClaims } from '../net/superDungeon/sdClaims.js';   // SD9b: the Hour's receipts carried to the account service
 import { announceHonour } from '../ui/lootBanner.js';   // HONOUR-BANNER: a title or an aura granted, as a loot banner
-import { readSdReceipt } from '../net/superDungeon/sdReceipt.js';   // SD9e: my Hour receipt, read for its spoils
-import { SD_SPOILS_KEYS, SD_SPOILS_RECORDS_MAX, SD_SPOILS_TEXT, sdSpoilsDay, sdSpoilsSlot, sdSpoilsList } from '../systems/superDungeon/sdSpoils.js';   // SD9e: the Brass Remnant's spoils
+import { SD_SPOILS_KEYS, SD_SPOILS_RECORDS_MAX, SD_SPOILS_TEXT, sdSpoilsSlot } from '../systems/superDungeon/sdSpoils.js';   // SD9e: the Brass Remnant's spoils
 import { egSpoilsDay, egSpoilsList, egSpoilsSeedOf, EG_SPOILS_TEXT } from '../systems/eliteGates/egSpoils.js';   // EG-E: a Redoubt's spoils; AUDIT EG V: on the claim's seed
 import { egReliquaryGrant } from '../systems/eliteGates/egSpoils.js';   // AUDIT EG III (Elite-Gates.md section 16.3): an end's Reliquaries opened
 import { createSdSpoils, clearOfPillars } from './superDungeon/sdSpoils.js';   // SD9e: thrown from where it fell; AUDIT SD: the way home clear of the arena's pillars
-import { slainLine, serpentBossOf, serpentBossById, sameSerpentSite, SERPENT_NATIVE_PER_M } from '../net/serpent/serpentLaw.js';   // SERPENT1: the hub's word of its kill, in the chat (AUDIT SERPENT S1: my own site's alone)
+import { slainLine, serpentBossOf, sameSerpentSite, SERPENT_NATIVE_PER_M } from '../net/serpent/serpentLaw.js';   // SERPENT1: the hub's word of its kill, in the chat (AUDIT SERPENT S1: my own site's alone)
 import { createGateCourt, courtSaySeconds } from './gate/gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { arsenalSeams } from './gate/gateArsenal.js';   // WB14a: the arsenal's seams on my peer id and my body, wired in one entry
 import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
@@ -1175,6 +1173,8 @@ import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-R
 import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 import { createExteriorAutomapToggle } from './exteriorAutomapToggle.js';   // HOST-SPLIT
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+import { createBossSpoils } from './bossSpoilsHost.js';   // HOST-SPLIT; PWR5: and the week's finest
+import { isBossTopDay } from '../net/bossWeek.js';   // PWR5: a week's finest's spent mark, never said to the hub
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -23698,6 +23698,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     store: _spoilsStore,
     say: (text) => chatNotice(text),
     onMarks: (marks, data) => { showHaul(claimHauls(data ?? { marks }, 'gate')); return marksBook?.claimLines(data ?? { marks }, 'gate') ?? null; },   // MARKS1: the gate's Marks, struck as it is counted; SILVER-WAYS: and the guild's deed
+    onWeek: (r, data) => gateWeek(r, data),   // PWR5: the week's finest (scenes/bossSpoilsHost.js)
   }) : null;
   // ═══ ARENA4 (2026-10-02, Mac: "choose to matchmake for a real opponent to take on in real time"; "view your ranking
   // and even player leaderboards"): THE ARENA ONLINE ON THIS SCREEN (scenes/arena/arenaOnline.js) - the hall's own socket, a
@@ -23798,7 +23799,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     nowS: relayNowS,
     store: _spoilsStore,
     say: (text) => chatNotice(text),
-    onSpoils: (entry) => grantSerpentSpoils(entry),
+    onSpoils: (entry, data) => grantSerpentSpoils(entry, data),   // PWR5: and the week's finest, by the claim's answer
     onMarks: (data) => { showHaul(claimHauls(data, 'serpent')); return marksBook?.claimLines(data, 'serpent') ?? null; },   // SERPENT-SET: the serpent's silver, the raids' own door
     announce: (kind, key) => announceHonour(kind, key),   // SERPENT5: Coilbreaker's and The Maelstrom's popup, the Hour's own door
     onRecorded: (data) => {
@@ -23823,6 +23824,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     store: _spoilsStore,
     say: (text) => chatNotice(text),
     announce: (kind, key) => announceHonour(kind, key),   // HONOUR-BANNER (2026-10-14): Hourbreaker and The Turning Hour as a loot popup, beside the line
+    onWeek: (r, data) => sdWeek(r, data),   // PWR5: the week's finest (scenes/bossSpoilsHost.js)
   }) : null;
   // SILVER-FINDS (bible/06-Systems/Professions-Arc.md 10.5): A LOOT FIND - every host's loot door rolls its container once
   // (systems/silverFinds.js: a body, a treasure pile, a search's find) and a find asks the marks book, whose service's
@@ -23882,7 +23884,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     store: _spoilsStore,
     who: () => characterIdOf(playerEntity),
     iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),   // WBX3: each piece as its own picture - the pack's; AUDIT WBX S6: drawn for its wearer, as the pack draws it
-    onSpent: (day) => socialLink()?.sendGateSpent?.(day) === true,   // AUDIT WBX S1: a receipt spent here - the hub forgets its copy, so no other device or tab gives it again; AUDIT SD II (L5 F4): whether it went - a word that did not is owed
+    onSpent: (day) => isBossTopDay(day) || socialLink()?.sendGateSpent?.(day) === true,   // PWR5: a week's finest is no receipt of the hub's; AUDIT WBX S1: a receipt spent here - the hub forgets its copy, so no other device or tab gives it again; AUDIT SD II (L5 F4): whether it went - a word that did not is owed
     me: _accountGates.me,   // AUDIT SD II (L5 F4): said on its own account's socket alone
     itemName: (item) => lootPileName([item]),   // WB9f: a piece's word on the plaque, the loot piles' own (.cs:534-548)
   });
@@ -23950,66 +23952,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     itemName: (item) => lootPileName([item]), gathered: SD_SPOILS_TEXT.gathered,
   });
   onSlotSaved((characterId) => { try { sdSpoilsPool.saved(characterId); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } });   // SD9e
-  /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that comes while this player is not in its court (cast out before
-   *  the kill, gone, handed it by the hub's next hello) is its spoils straight into the pack; in its court the burst
-   *  gives them. Once a receipt either way - the pool keeps which are spent. */
-  function grantSpoilsOutside(r) {
-    const c = readReceipt(r);
-    if (!c || !spoilsPool || modes?.gateArenaDay?.() === c.d) return;
-    spoilsLock(() => spoilsPool.grant({ day: c.d, seed: c.c, level: spoilsLevel(playerEntity.level ?? 1, c.l), acct: c.s, claims: c, text: c.x === 'rite' ? SPOILS_TEXT.rite : SPOILS_TEXT.granted }))   // AUDIT WBX S2: never past the level the fight admitted; WB12d: the rite's ember
-      .catch((e) => console.warn('[gate] spoils', e?.message ?? e));
-  }
-  /** RAID4b: A TOWN'S THANKS, off a receipt the relay signed at the cleanse - AUDIT RAID R4: given when the account
-   *  service says this claim is the (raid, account)'s (net/raid/raidClaims.js onSpoils: a second browser, a phone or a hub's
-   *  hello handing the receipt again is answered no), rolled at the level the character fought at, straight into the
-   *  pack when that character stands here - else kept on the device for it, as a crash's record is - once a receipt and
-   *  account, one tab at a time. */
-  function grantRaidSpoils(entry) {
-    const c = readRaidReceipt(entry?.r);
-    if (!c) return;
-    const level = Math.max(1, Math.floor(Number(entry.lv) || playerEntity.level || 1));
-    spoilsLock(() => raidSpoils.grant({ day: raidSpoilsDay(c.w), acct: c.s, roll: () => raidSpoilsList(c.c, level, c.y), text: RAID_SPOILS_TEXT.granted,
-      owner: entry.ch, kept: RAID_SPOILS_TEXT.kept(entry.nm) }))
-      .catch((e) => console.warn('[raid] spoils', e?.message ?? e));
-  }
-  /** SERPENT1: THE OLD COIL'S HOARD, off a receipt the relay signed at the kill - given when the account service says
-   *  this claim is the (serpent, account)'s (net/serpent/serpentClaims.js onSpoils), rolled at the level the character fought at
-   *  and by how it earned it, straight into the pack when that character stands here - else kept for it. */
-  /** SD9e: MY HOUR RECEIPT'S SPOILS - one from my own realm, while I stand in it, is kept for the burst on the arena's
-   *  floor (scenes/superDungeon/sdSpoils.js - SD_SPEW_AT_MS into the fall); any other (the hub's at a hello, a realm I have left) is
-   *  its spoils straight into the pack, rolled at the level the fight admitted and mine, once a receipt and account, one
-   *  tab at a time. */
-  const _sdReceipts = new Map();
-  function sdSpoilsReceipt(r, room) {
-    const c = readSdReceipt(r);
-    if (!c) return;
-    // AUDIT SD II (L1 F4, L5 C2): a receipt for the Hour I stand in waits for its throw WHICHEVER link handed it - the
-    // hub's (my realm's socket blinking at the kill) went straight into the pack, and the floor then said "No spoils"
-    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }
-    grantSdSpoils(c);
-  }
-  /** Its spoils straight into the pack - once a receipt and account (the pool refuses one already thrown or given). */
-  function grantSdSpoils(c) {
-    const level = spoilsLevel(playerEntity.level ?? 1, c.l);
-    spoilsLock(() => sdSpoilsPool.grant({ day: sdSpoilsDay(c.d), acct: c.s, roll: () => sdSpoilsList(c.c, level), text: SD_SPOILS_TEXT.granted }))
-      .catch((e) => console.warn('[sd] spoils', e?.message ?? e));
-  }
-  /** AUDIT SD: OUT OF THE REALM, a receipt kept for a burst that never came (left before it - the way back, a death, the
-   *  Hour's end) is its spoils straight into the pack, not a week's wait for the hub's next hello. */
-  function sdReceiptsLeft() {
-    for (const r of _sdReceipts.values()) { const c = readSdReceipt(r); if (c) grantSdSpoils(c); }
-    _sdReceipts.clear();
-  }
-  function grantSerpentSpoils(entry) {
-    const c = readSerpentReceipt(entry?.r);
-    if (!c) return undefined;
-    // AUDIT SERPENT D2: never past the level the fight admitted (the receipt's), nor the standing character's own
-    const level = spoilsLevel(entry.ch === characterIdOf(playerEntity) ? playerEntity.level ?? 1 : Number(entry.lv) || c.l || 1, c.l);
-    // AUDIT SERPENT D6: its promise is the carrier's - a grant that fails leaves the receipt unsettled, asked again
-    const boss = serpentBossById(c.b);
-    return spoilsLock(() => serpentSpoils.grant({ day: serpentSpoilsDay(c.d), acct: c.s, roll: () => serpentSpoilsList(c.c, level, c.x), text: SERPENT_SPOILS_TEXT.granted(boss),
-      owner: entry.ch, kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }));
-  }
+  const { _sdReceipts, grantRaidSpoils, grantSerpentSpoils, grantSpoilsOutside, sdReceiptsLeft, sdSpoilsReceipt, gateWeek, sdWeek } = createBossSpoils({   // HOST-SPLIT: src/scenes/bossSpoilsHost.js; PWR5: and the week's finest
+    raidSpoils, sdSpoilsPool, serpentSpoils, spoilsPool,
+    get modes() { return modes; },
+    get chatNotice() { return chatNotice; },   // PWR5: the week taken, in the chat (a const made below)
+  });
   /** WB5: THE CRASH'S DOOR (scenes/spoilsPool.js recoverSpoils) - asked once for each character that stands up in this
    *  session, online or not, before it can save: a boss's spoils no save of theirs holds are handed back. */
   /** WB6a: THE DEADLANDS' SKY AND SEA (render/deadlands.js), built the first time a court is stood in - a pass that will

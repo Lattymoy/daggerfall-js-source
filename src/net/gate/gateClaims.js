@@ -74,10 +74,11 @@ export function gateRecordText(rec) {
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void }|null,
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void, onClosed?: (closed: number) => void,
  *   me?: () => (string|null), onMarks?: (marks: any, data?: any) => (string|string[]|null),
+ *   onWeek?: (receipt: string, data: any) => (string|null|Promise<string|null>),
  * }} deps `claim` is net/accountClient.js accountGates' - `{ ok, data }` or `{ ok: false, error, why? }`, never a
  *   throw; `me` the signed-in account's id (accountGates' `me`), null for none
  */
-export function createGateClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onClosed = () => {}, me = () => null, onMarks = () => null }) {
+export function createGateClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onClosed = () => {}, me = () => null, onMarks = () => null, onWeek = () => null }) {
   /** an offer under way; a receipt that came in during it (offered as soon as it ends); the last offer's time */
   let busy = false, again = false, lastAt = -Infinity;
   /** AUDIT WB A9: the account the last frame saw signed in (undefined before the first); AUDIT WBX W4: when it was asked */
@@ -125,7 +126,14 @@ export function createGateClaims({ claim, store = null, nowS = () => Math.floor(
           guestSaid.add(r);
           say(live(r)?.x === 'rite' ? GATE_CLAIM_TEXT.guestRite : GATE_CLAIM_TEXT.guest);
         }
-        if (gateClaimVerdict(answer, live(r)) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
+        // PWR5 (bible/05-Combat/Power-Arc.md section 8): the week's finest as the service answered this kill (`top`, and the
+        // seed they roll on) - handed over before the receipt is let go, so a grant that fails is asked again (a claim asked
+        // again is answered the same)
+        let weekGiven = true;
+        if (answer?.ok && (answer.data?.recorded === true || answer.data?.why === 'claimed') && typeof answer.data.top === 'boolean') {
+          try { const line = await onWeek(r, answer.data); if (typeof line === 'string' && line) say(line); } catch { weekGiven = false; }
+        }
+        if (weekGiven && gateClaimVerdict(answer, live(r)) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
       }
     } finally { busy = false; }
     if (again) { again = false; void flush(); }

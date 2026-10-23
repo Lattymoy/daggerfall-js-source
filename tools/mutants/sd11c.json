@@ -188,9 +188,9 @@
   },
   {
     "name": "SD11c-L5C2-the-hubs-hand-granted-in-my-Hour",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }",
-    "new": "    if (isSdRoom(room) && modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "    if (host.modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }",
+    "new": "    if (isSdRoom(room) && host.modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }",
     "tests": [
       "test/systems/sd11c_page.test.js",
       "test/systems/sd9e_spoils.test.js"
@@ -299,7 +299,7 @@
   {
     "name": "SD11c-L5F4-the-gates-word-unanswered",
     "file": "src/scenes/world.js",
-    "old": "    onSpent: (day) => socialLink()?.sendGateSpent?.(day) === true,",
+    "old": "    onSpent: (day) => isBossTopDay(day) || socialLink()?.sendGateSpent?.(day) === true,",
     "new": "    onSpent: (day) => { socialLink()?.sendGateSpent?.(day); },",
     "tests": [
       "test/systems/sd11c_page.test.js"

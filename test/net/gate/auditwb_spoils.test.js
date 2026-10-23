@@ -9,6 +9,7 @@ import { createSpoilsPool, spoilsList, spoilsStore, recoverSpoils, spentKey, SPO
 import { createGateClaims, gateClaimVerdict, GATE_CLAIM_MENDABLE, GATE_CLAIMS_KEY, GATE_ME_POLL_MS } from '../../../src/net/gate/gateClaims.js';
 import { accountGates, call, SESSION_KEY } from '../../../src/net/accountClient.js';
 import { mintReceipt, importReceiptKey } from '../../../src/net/gate/gateReceipt.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const subtle = globalThis.crypto.subtle;
@@ -45,10 +46,10 @@ test('AUDIT WB A2 a receipt with no floor is its spoils straight into the pack -
 });
 
 test('AUDIT WB A2 the seams: every receipt the link folds is offered to the pool outside its court; inside it, the burst gives them', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, PWR5): the grants live in scenes/bossSpoilsHost.js, read with the host
   assert.match(w, /onReceipt: \(r\) => \{ gateClaims\?\.add\(r\); grantSpoilsOutside\(r\); \},/);
   const fn = w.slice(w.indexOf('function grantSpoilsOutside(r) {'), w.indexOf('function grantSpoilsOutside(r) {') + 500);
-  assert.match(fn, /if \(!c \|\| !spoilsPool \|\| modes\?\.gateArenaDay\?\.\(\) === c\.d\) return;/, 'in its own court the floor gives them');
+  assert.match(fn, /if \(!c \|\| !spoilsPool \|\| host\.modes\?\.gateArenaDay\?\.\(\) === c\.d\) return;/, 'in its own court the floor gives them');
   // AUDIT WBX S2/S4: one tab at a time (the Web Locks API), and never past the level the fight admitted the account at
   assert.match(fn, /spoilsLock\(\(\) => spoilsPool\.grant\(\{ day: c\.d, seed: c\.c, level: spoilsLevel\(playerEntity\.level \?\? 1, c\.l\), acct: c\.s, claims: c, text: c\.x === 'rite' \? SPOILS_TEXT\.rite : SPOILS_TEXT\.granted \}\)\)/, 'the receipt\'s own seed and account - WB12d: and its rite');
   // WBX3: the burst's own seed and account - and, once the pieces have left him, whose they are said (they are nobody else's)
@@ -87,7 +88,7 @@ test('AUDIT WB A7 the crash records are a list, one a day and character: a secon
   const got = [];
   // AUDIT WBX S3: a record of this build is cleared by the save that holds it - never by a clock: a slot stamped after
   // it holds nothing the record knows of
-  assert.equal(recoverSpoils(store, (p) => got.push(p), { who: 'char-2', saves: [info('char-2', WALL + 5), info('char-1', WALL + 5)] }), 7, 'char-2\'s own, whatever either clock says');   // PIN MOVED (CARDS9): seed 12's hoard carries the Warden's own card; PIN MOVED (GEM2): and his gem
+  assert.equal(recoverSpoils(store, (p) => got.push(p), { who: 'char-2', saves: [info('char-2', WALL + 5), info('char-1', WALL + 5)] }), 6, 'char-2\'s own, whatever either clock says');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase) - seed 12's hoard's Legendary is the week's, never in the grant   // PIN MOVED (CARDS9): seed 12's hoard carries the Warden's own card; PIN MOVED (GEM2): and his gem
   assert.equal(store.get(SPOILS_STORE_KEY).length, 2, 'both kept: no save of char-2 has landed');
   assert.equal(a.p.saved('char-1'), 1, 'char-1\'s save, its pieces in the pack, clears char-1\'s record');
   assert.deepEqual(store.get(SPOILS_STORE_KEY).map((r) => r.who), ['char-2'], 'char-1\'s cleared, char-2\'s waits');

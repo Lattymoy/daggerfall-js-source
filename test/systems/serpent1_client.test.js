@@ -606,7 +606,7 @@ test('SERPENT1 hosts: THE WORLD HOST wires it whole - the naval host\'s seam rea
     'serpent: () => serpentOmen?.mapMark() ?? null',
     'serpent: serpentCompassMark()',
     'onReceipt: (r) => { const c = readSerpentReceipt(r); serpentClaims?.add(',
-    'onSpoils: (entry) => grantSerpentSpoils(entry)',
+    'onSpoils: (entry, data) => grantSerpentSpoils(entry, data)',   // PIN MOVED (PWR5): and the claim's answer - the week's finest
   ]) assert.ok(world.includes(pin), pin);
   const body = world.indexOf('serpentRenderer()?.drawBody(_serpentDraw)'), csa = world.indexOf('if (csaOn()) csa.draw(renderer);   // CSA-B');
   const sea = world.indexOf('serpentRenderer()?.drawSea(_serpentDraw)'), naval = world.indexOf('if (naval?.enabled) navalRender.draw(naval.drawFrame());');

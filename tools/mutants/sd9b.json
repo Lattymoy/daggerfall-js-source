@@ -74,7 +74,7 @@
   {
     "name": "SD9B-claimed-as-recorded",
     "file": "server-account/src/sds.js",
-    "old": "  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };\n",
+    "old": "  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken, ...said };\n",
     "new": "",
     "tests": [
       "test/server/sd9b_claim.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "SD9B-every-refusal-a-400",
     "file": "server-account/src/index.js",
-    "old": "const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);",
-    "new": "const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);",
+    "old": "const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), { wd: body.wd ?? null });   // PWR5: the claiming device's week key (bossWeek.js)\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);",
+    "new": "const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), { wd: body.wd ?? null });   // PWR5: the claiming device's week key (bossWeek.js)\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "SD9B-a-knock-with-no-session",
     "file": "src/net/accountClient.js",
-    "old": "    claim: async (receipt) => { const i = io(); return i ? claimSdReceipt(i, receipt) : { ok: false, error: 'no-session' }; },",
+    "old": "    claim: async (receipt) => { const i = io(); return i ? claimSdReceipt(i, receipt, bossWeekDevice(storage)) : { ok: false, error: 'no-session' }; },",
     "new": "    claim: async (receipt) => { const i = io(); return claimSdReceipt(i ?? { fetch, base: serviceBase(storage), secret: '' }, receipt); },",
     "tests": [
       "test/server/sd9b_claim.test.js"

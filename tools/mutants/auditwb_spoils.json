@@ -37,8 +37,8 @@
   },
   {
     "name": "AUDWB-A2-granted-in-its-court",
-    "file": "src/scenes/world.js",
-    "old": "    if (!c || !spoilsPool || modes?.gateArenaDay?.() === c.d) return;",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "    if (!c || !spoilsPool || host.modes?.gateArenaDay?.() === c.d) return;",
     "new": "    if (!c || !spoilsPool) return;",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"

@@ -1403,6 +1403,7 @@ const service = {
           strike: (d) => gateStrikeStatement(ctx, who.player, env, d), region: body.region ?? null,
           deeds: (d) => deedStatements(ctx, who.player, env, { kind: 'gate', event: deedEvent('gate', d), character, guard: [d] }),
           weir: egGateWeir(ctx, who.player),   // AUDIT EG IV (lane3 #16): the Weir Key's roll in the claim's own batch (eg.js)
+          wd: body.wd ?? null,   // PWR5: the claiming device's week key (bossWeek.js)
         });
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
@@ -1516,7 +1517,7 @@ const service = {
         // (src/net/superDungeon/sdReceipt.js); the session says who is asking, never the body, and sds.js `claimSd` holds the rest - the
         // signature, the account, one row a (slot, account), and on that first write the Hour's grants off its seed. A
         // refusal says its rung, as the gate's does (AUDIT WB A5): the client keeps a receipt the service can mend.
-        const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        const r = await claimSd(ctx, who.player, body.receipt, await gatePublicKey(env, subtle), { wd: body.wd ?? null });   // PWR5: the claiming device's week key (bossWeek.js)
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
         if (r.recorded === true) return json({ ...r, weir: await rollWeirKey(ctx, who.player, { kind: 'sd' }) }, 200, origin);   // EG-PLAY: an Hour broken rolls a Weir Key, one in three

@@ -170,7 +170,11 @@ test('WB5b the client: with no session there is no account to claim for - nothin
   assert.match(sent[0].url, /\/v1\/gate\/claim$/);
   assert.equal(sent[0].init.method, 'POST');
   assert.equal(sent[0].init.headers.authorization, 'Bearer SECRETSECRETSECRETSECRET');
-  assert.deepEqual(JSON.parse(sent[0].init.body), { receipt: 'r1.a.b' });
+  const sentBody = JSON.parse(sent[0].init.body);
+  assert.deepEqual(Object.keys(sentBody), ['receipt', 'wd'], 'the receipt, and this device\'s week key alone');   // PIN MOVED (PWR5, net/bossWeek.js bossWeekDevice)
+  assert.equal(sentBody.receipt, 'r1.a.b');
+  assert.match(sentBody.wd, /^[0-9a-f]{16}$/);
+  assert.equal(sentBody.wd, mem.get('pwr5.bossWeekDevice'), 'kept on the device: the same key at every claim');
 });
 
 /** A device queue over a Map store, a scripted service, and two clocks. */

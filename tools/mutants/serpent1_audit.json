@@ -1004,7 +1004,7 @@
   },
   {
     "name": "AUDIT-SERPENT-D2-hoard-level",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/bossSpoilsHost.js",
     "old": "const level = spoilsLevel(entry.ch === characterIdOf(playerEntity) ? playerEntity.level ?? 1 : Number(entry.lv) || c.l || 1, c.l);",
     "new": "const level = Math.max(1, Math.floor(Number(entry.lv) || c.l || playerEntity.level || 1));",
     "tests": [
@@ -1013,7 +1013,7 @@
   },
   {
     "name": "AUDIT-SERPENT-D6-world-promise",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/bossSpoilsHost.js",
     "old": "return spoilsLock(() => serpentSpoils.grant(",
     "new": "void spoilsLock(() => serpentSpoils.grant(",
     "tests": [
@@ -1261,8 +1261,8 @@
   {
     "name": "AUDIT-SERPENT-D-world-claims-no-store",
     "file": "src/scenes/world.js",
-    "old": "    nowS: relayNowS,\n    store: _spoilsStore,\n    say: (text) => chatNotice(text),\n    onSpoils: (entry) => grantSerpentSpoils(entry),",
-    "new": "    nowS: relayNowS,\n    store: null,\n    say: (text) => chatNotice(text),\n    onSpoils: (entry) => grantSerpentSpoils(entry),",
+    "old": "    nowS: relayNowS,\n    store: _spoilsStore,\n    say: (text) => chatNotice(text),\n    onSpoils: (entry, data) => grantSerpentSpoils(entry, data),   // PWR5: and the week's finest, by the claim's answer",
+    "new": "    nowS: relayNowS,\n    store: null,\n    say: (text) => chatNotice(text),\n    onSpoils: (entry, data) => grantSerpentSpoils(entry, data),   // PWR5: and the week's finest, by the claim's answer",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1272,9 +1272,9 @@
   },
   {
     "name": "AUDIT-SERPENT-D-world-hoard-no-owner",
-    "file": "src/scenes/world.js",
-    "old": "      owner: entry.ch, kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }));",
-    "new": "      kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }));",
+    "file": "src/scenes/bossSpoilsHost.js",
+    "old": "      owner: entry.ch, kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }))",
+    "new": "      kept: SERPENT_SPOILS_TEXT.kept(entry.nm, boss) }))",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1347,7 +1347,7 @@
   },
   {
     "name": "AUDIT-SERPENT-D-world-hoard-unlocked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/bossSpoilsHost.js",
     "old": "spoilsLock(() => serpentSpoils.grant(",
     "new": "Promise.resolve().then(() => serpentSpoils.grant(",
     "tests": [
@@ -1359,7 +1359,7 @@
   },
   {
     "name": "AUDIT-SERPENT-D-world-hoard-level-any",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/bossSpoilsHost.js",
     "old": "const level = spoilsLevel(entry.ch === characterIdOf(playerEntity) ? playerEntity.level ?? 1 : Number(entry.lv) || c.l || 1, c.l);",
     "new": "const level = 60;",
     "tests": [

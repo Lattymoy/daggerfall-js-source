@@ -65,11 +65,12 @@ export function sdRecordText(rec) {
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void }|null,
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void, onBroken?: (broken: number) => void,
  *   me?: () => (string|null), announce?: (kind: 'title'|'aura', key: string) => any,
+ *   onWeek?: (receipt: string, data: any) => (string|null|Promise<string|null>),
  * }} deps `claim` is net/accountClient.js accountSds' - `{ ok, data }` or `{ ok: false, error, why? }`, never a throw;
  *   `nowS` the relay's clock (null unheard); `me` the signed-in account's id, null for none; `announce` HONOUR-BANNER's
  *   popup for a grant (ui/lootBanner.js announceHonour), beside its chat line
  */
-export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onBroken = () => {}, me = () => null, announce = () => {} }) {
+export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onBroken = () => {}, me = () => null, announce = () => {}, onWeek = () => null }) {
   let busy = false, again = false, lastAt = -Infinity;
   let lastMe, meAt = -Infinity;
   const settled = new Set(), guestSaid = new Set();
@@ -110,7 +111,14 @@ export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Da
           guestSaid.add(r);
           say(SD_CLAIM_TEXT.guest);
         }
-        if (sdClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
+        // PWR5 (bible/05-Combat/Power-Arc.md section 8): the week's finest as the service answered this kill (`top`, and the
+        // seed they roll on) - handed over before the receipt is let go, so a grant that fails is asked again (a claim asked
+        // again is answered the same)
+        let weekGiven = true;
+        if (answer?.ok && (answer.data?.recorded === true || answer.data?.why === 'claimed') && typeof answer.data.top === 'boolean') {
+          try { const line = await onWeek(r, answer.data); if (typeof line === 'string' && line) say(line); } catch { weekGiven = false; }
+        }
+        if (weekGiven && sdClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
       }
     } finally { busy = false; }
     if (again) { again = false; void flush(); }

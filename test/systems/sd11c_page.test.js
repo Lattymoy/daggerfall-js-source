@@ -53,6 +53,8 @@ import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
 import { dungeonStartDoorFor } from '../../src/systems/save/save.js';
 import { respawnFlavorText } from '../../src/systems/deathRespawn.js';
 import { SD_FIGHT_TEXT as FIGHT_WORDS } from '../../src/net/superDungeon/sdFightLink.js';
+import { weekBase } from '../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -62,7 +64,7 @@ const seeded = (s) => () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; re
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e;
 const dist2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const M = 60_000, H = 3_600_000, T0 = 1_800_000_000_000;
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, PWR5): the grants live in scenes/bossSpoilsHost.js, read with the host
 const WM = read('src/scenes/worldModes.js');
 /** A `function name(` of a host's own (two-space indent), its text. */
 const fnIn = (src, name) => { const at = src.indexOf(`\n  function ${name}(`); assert.ok(at > 0, name); return src.slice(at + 1, src.indexOf('\n  }\n', at) + 4); };
@@ -382,7 +384,7 @@ function receiptHost() {
   let slot = null;
   const grants = [];
   const env = {
-    readSdReceipt, isSdRoom, modes: { sdRealmSlot: () => slot }, spoilsLevel, playerEntity: { level: 30 }, spoilsLock: (f) => Promise.resolve().then(f),
+    readSdReceipt, isSdRoom, host: { modes: { sdRealmSlot: () => slot } }, weekBase, spoilsLevel, playerEntity: { level: 30 }, spoilsLock: (f) => Promise.resolve().then(f),
     sdSpoilsPool: { grant: (o) => { grants.push(o); return true; } }, sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT, _sdReceipts: new Map(),
   };
   const body = `${fnOf('sdSpoilsReceipt')}\n${fnOf('grantSdSpoils')}\n${fnOf('sdReceiptsLeft')}\nreturn { sdSpoilsReceipt, sdReceiptsLeft };`;
@@ -497,7 +499,7 @@ test('SD11c THE SPENT WORD IS OWED UNTIL IT GOES (L5 F4): a spend whose word cou
   t = 10_000; resend();
   assert.equal(calls.length, 4);
   const w = strip(W);
-  assert.match(w, /onSpent: \(day\) => socialLink\(\)\?\.sendGateSpent\?\.\(day\) === true,\s*\n\s*me: _accountGates\.me,/);
+  assert.match(w, /onSpent: \(day\) => isBossTopDay\(day\) \|\| socialLink\(\)\?\.sendGateSpent\?\.\(day\) === true,\s*\n\s*me: _accountGates\.me,/);
   assert.match(w, /onSpent: \(day\) => \{ const s = sdSpoilsSlot\(day\); return s == null \|\| socialLink\(\)\?\.sendSdSpent\?\.\(s\) === true; \},\s*\n\s*me: _accountGates\.me,/);
   assert.match(w, /gateClaims\?\.tick\(\);\s*\n\s*if \(gateOmen\) reportGateSite\(\);\s*\n\s*resendSpentWords\(\);/, 'on the gate frame');   // (PIN MOVED: after DISCORD-GATES' report, whose own pin holds its line to the claims' tick)
 });

@@ -206,7 +206,10 @@ test('SD9b THE CLIENT\'S CALL: with no session nothing is sent; with one, the re
   assert.equal(got.ok, true);
   assert.match(sent[0][0], /\/v1\/sd\/claim$/);
   assert.equal(sent[0][1].method, 'POST');
-  assert.deepEqual(JSON.parse(sent[0][1].body), { receipt: 'h1.x.' }, 'the receipt, nothing else of mine');
+  const sentBody = JSON.parse(sent[0][1].body);
+  assert.deepEqual(Object.keys(sentBody), ['receipt', 'wd'], 'the receipt, and this device\'s week key - nothing else of mine');   // PIN MOVED (PWR5, net/bossWeek.js bossWeekDevice)
+  assert.equal(sentBody.receipt, 'h1.x.');
+  assert.match(sentBody.wd, /^[0-9a-f]{16}$/);
 });
 
 test('SD9b THE DEVICE\'S BOOK: a signed receipt the relay handed is kept (one a Hollow and account) and offered at once; counted, let go with the count and the grants said; claimed before, let go; a guest\'s kept and said once; a mendable refusal kept, another let go; an unsigned or expired one never kept; another account\'s waits for its sign-in; a refusing store keeps it in memory; the clock - at once the first frame, then no sooner than the retry (mutants: an unsigned one kept; another\'s offered; the grants unsaid)', async () => {

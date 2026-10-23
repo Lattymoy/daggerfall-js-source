@@ -23,6 +23,7 @@ import { claimSerpent } from '../../server-account/src/serpents.js';
 import { RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX } from '../../src/net/renown.js';
 import { createSerpentClaims, serpentClaimVerdict, SERPENT_CLAIM_RETRY_MS } from '../../src/net/serpent/serpentClaims.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const subtle = globalThis.crypto.subtle;
 const rand = (b) => globalThis.crypto.getRandomValues(b);
@@ -128,13 +129,13 @@ test('AUDIT-D carrier: the hoard on `spoils: true` alone; one cid a receipt acro
 });
 
 test('AUDIT-D world host by source: the serpent queue\'s own guard, relay clock and store; the hoard\'s owner, lock, keys, crash door, slot save and realm hooks', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, PWR5): the grants live in scenes/bossSpoilsHost.js, read with the host
   const at = w.indexOf("const serpentClaims = params.has('online') ? createSerpentClaims({");
   const q = w.slice(at, w.indexOf('  }) : null;', at));
   assert.match(q, /nowS: relayNowS,/); assert.match(q, /store: _spoilsStore,/);
   assert.match(q, /onRecorded: \(data\) => \{\n\s+if \(data\?\.renown\?\.character !== characterIdOf\(playerEntity\)\) return;/);
-  const g = w.slice(w.indexOf('function grantSerpentSpoils(entry) {'), w.indexOf('function grantSerpentSpoils(entry) {') + 1400);
-  assert.match(g, /spoilsLock\(\(\) => serpentSpoils\.grant\(/); assert.match(g, /owner: entry\.ch,/);
+  const g = w.slice(w.indexOf('function grantSerpentSpoils(entry, data = null) {'), w.indexOf('function grantSerpentSpoils(entry, data = null) {') + 1400);
+  assert.match(g, /spoilsLock\(\(\) => serpentSpoils\.grant\(\{ day: serpentSpoilsDay\(c\.d\)[^\n]*\n\s*owner: entry\.ch, kept: SERPENT_SPOILS_TEXT\.kept\(entry\.nm, boss\) \}\)\)/);   // PIN MOVED (PWR5): the hoard's own grant's owner - the week's finest name theirs beside it
   assert.match(w, /const serpentSpoils = createSpoilsPool\(\{[\s\S]{0,300}keys: SERPENT_SPOILS_KEYS,/);
   assert.ok(w.includes('onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store'));
   assert.ok(w.includes('onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId);'));

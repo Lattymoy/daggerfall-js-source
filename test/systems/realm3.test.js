@@ -23,6 +23,8 @@ import { createBankAccounts } from '../../src/systems/banking.js';
 import { BOOT_DOOR_KEYS } from '../../src/systems/online/onlineLane.js';
 import { LETTER_OF_CREDIT_TEMPLATE, goldStack } from '../../src/systems/inventory.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // TERMS1: a request that makes an account carries the versions ticked
+import { weekBase } from '../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
+import { spoilsList } from '../../src/scenes/spoilsPool.js';   // PWR5: what the second grant holds
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const MIGRATIONS = readdirSync(new URL('../../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort();
@@ -267,7 +269,7 @@ test('REALM P1.3: a realm checkpoint that lands clears the gate\'s spoils it was
   // and at the next boot, what no landed checkpoint held is handed over; what one held is not
   const again = [];
   assert.ok(recoverSpoils(store, (x) => again.push(x), { who, saves: [] }) > 0);
-  assert.equal(again.length, pack.length - again.length, 'only the second grant\'s pieces come back');
+  assert.equal(again.length, weekBase(spoilsList(7, 8)).length, 'only the second grant\'s pieces come back');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase) - the two grants no longer hold as many pieces as each other
   // the world host wires it: the sink captures what the pool holds and tells it when the checkpoint lands
   const w = src('src/scenes/world.js');
   assert.match(w, /const holding = _realmSaveHooks\.held\(who\);\s*\n\s*return realmSession\.checkpoint\(realmSaveWithHeld\(snap, holding\), realmSummaryOf\(playerEntity\)\)\.then\(\(r\) => \{ if \(r\?\.ok && holding\?\.length\) _realmSaveHooks\.landed\(who, holding\); return r; \}\)/);

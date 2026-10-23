@@ -31,6 +31,8 @@ import { remnantPose } from '../../src/scenes/superDungeon/sdRemnant.js';
 import { realmColliderTris } from '../../src/world/superDungeon/sdRealm.js';
 import { Collider } from '../../src/player/collider.js';
 import { bossCardRoll } from '../../src/systems/bossCards.js';   // CARDS9: the Remnant's card, the hoard's last draw
+import { weekBase } from '../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the host read whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -148,7 +150,7 @@ test('SD9e THE POOL\'S ROLL: the burst throws the list its `roll` answers - the 
   assert.equal(said.at(-1), 'The Hour\'s spoils are in your pack.', 'each piece taken, then its own words');
   const g = createSpoilsPool({ ray: () => null, now: () => 0, take: () => {}, store: memStore(), who: () => 'c', wall: () => 1, say: (t) => said.push(t) });
   g.spew({ day: 9, seed: 5, level: 10, at: [0, 2, 0], bearing: 0, acct: 'acc' });
-  assert.deepEqual(g.state().pieces.map((q) => [q.kind, q.tier]), spoilsList(5, 10).map((q) => [q.kind, q.tier]), 'no roll: the gate\'s');
+  assert.deepEqual(g.state().pieces.map((q) => [q.kind, q.tier]), weekBase(spoilsList(5, 10)).map((q) => [q.kind, q.tier]), 'no roll: the gate\'s');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase)
   g.gather();
   assert.equal(said.at(-1), SPOILS_TEXT.gathered);
 });
@@ -184,7 +186,7 @@ test('SD9e THE BURST: SD_SPEW_AT_MS into its fall, my spoils leave the cage of i
   assert.deepEqual([o.day, o.seed, o.level, o.acct, o.keep], [sdSpoilsDay(4), 1234, 7, 'acct-a', SD_SPOILS_KEEP]);
   assert.deepEqual(o.at.map((v) => +v.toFixed(6)), at.map((v) => +v.toFixed(6)), 'out of its chest, where it fell, as it sinks');
   assert.ok(Math.abs(o.bearing - Math.atan2(0 - 3, 10 + 4)) < 1e-9, 'toward my feet');
-  assert.deepEqual(JSON.parse(JSON.stringify(o.roll())), JSON.parse(JSON.stringify(sdSpoilsList(1234, 7))), 'the Hour\'s roll, at the fight\'s level');
+  assert.deepEqual(JSON.parse(JSON.stringify(o.roll())), JSON.parse(JSON.stringify(weekBase(sdSpoilsList(1234, 7)))), 'the Hour\'s roll, at the fight\'s level');   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase)
   assert.deepEqual(said, [SD_SPOILS_TEXT.spilled]);
   F.at(T0 + 30_000); d.frame(); d.frame();
   assert.equal(pool.calls.spew.length, 1, 'once a fight');
@@ -247,13 +249,13 @@ test('SD9e ON THE ARENA\'S FLOOR: over the realm\'s REAL collider (its floors an
 // ── the host ──────────────────────────────────────────────────────────
 
 test('SD9e THE HOST: world.js keeps the Hour\'s pool under its own keys - the dungeon\'s ray, the pack\'s take, each piece\'s own picture, its words - says a spent receipt to the hub as its slot, keeps my realm\'s receipt for the burst and grants one that came outside it, hands the pool to the saves, the loads and the crash\'s door; the realm stands its pieces to the ray and the press, lights them and draws their lines (mutants: the gate\'s keys; spent unsaid; the burst\'s receipt granted; no crash door; the realm\'s targets unstood)', () => {
-  const w = strip(read('src/scenes/world.js'));
+  const w = strip(hostText('src/scenes/world.js'));   // PIN MOVED (HOST-SPLIT, PWR5): the grants live in scenes/bossSpoilsHost.js, read with the host
   assert.match(w, /const sdSpoilsPool = createSpoilsPool\(\{[\s\S]*?keys: SD_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,[\s\S]*?\}\);/);
   assert.match(w, /onSpent: \(day\) => \{ const s = sdSpoilsSlot\(day\); return s == null \|\| socialLink\(\)\?\.sendSdSpent\?\.\(s\) === true; \}/);   // AUDIT SD II (L5 F4, PIN MOVED): whether it went - a word that did not is owed
   assert.doesNotMatch(/const sdSpoilsPool = createSpoilsPool\(\{[\s\S]*?\n {2}\}\);/.exec(w)[0], /feet:/, 'the press is its one hand (GATE-UX): no feet');
   assert.match(/const sdSpoilsPool = createSpoilsPool\(\{[\s\S]*?\n {2}\}\);/.exec(w)[0], /take: takeSpoil, [\s\S]*gathered: SD_SPOILS_TEXT\.gathered,/, 'the pack\'s plain take - no embers here - and its own words');
   assert.match(w, /online\.onSdReceipt = \(r, room\) => \{ sdClaims\?\.add\(r\); sdSpoilsReceipt\(r, room\); \};/);
-  assert.match(w, /function sdSpoilsReceipt\(r, room\) \{[\s\S]*?if \(modes\?\.sdRealmSlot\?\.\(\) === c\.d\) \{ _sdReceipts\.set\(c\.d, r\); return; \}[\s\S]*?sdSpoilsPool\.grant\(\{ day: sdSpoilsDay\(c\.d\), acct: c\.s, roll: \(\) => sdSpoilsList\(c\.c, level\), text: SD_SPOILS_TEXT\.granted \}\)/);
+  assert.match(w, /function sdSpoilsReceipt\(r, room\) \{[\s\S]*?if \(host\.modes\?\.sdRealmSlot\?\.\(\) === c\.d\) \{ _sdReceipts\.set\(c\.d, r\); return; \}[\s\S]*?sdSpoilsPool\.grant\(\{ day: sdSpoilsDay\(c\.d\), acct: c\.s, roll: \(\) => weekBase\(sdSpoilsList\(c\.c, level\)\), text: SD_SPOILS_TEXT\.granted \}\)/);
   assert.match(w, /onSlotSaved\(\(characterId\) => \{ try \{ sdSpoilsPool\.saved\(characterId\); \}/);
   assert.match(w, /recoverSpoils\(_spoilsStore, takeSpoil, \{ who, saves: enumerateSaves\(\)\.info\.values\(\), onHanded: \(rec\) => sdSpoilsPool\.adopt\(rec\), key: SD_SPOILS_KEYS\.store, inSave: _spoilsInSave \}\)/);
   assert.match(w, /sdSpoilsPool\.loaded\(characterId\);/);

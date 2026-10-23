@@ -11,6 +11,7 @@ import { createSpoilsPool, spoilsList, recoverSpoils, mailOf, SPOILS_STORE_KEY, 
 import { LOST_OWED_MAX_MS, LOST_INDEX_MAX, LOST_ITEM_BYTES, LOST_BODY_MAX } from '../../src/net/lostLaw.js';
 import { sdSpoilsList, sdSpoilsDay } from '../../src/systems/superDungeon/sdSpoils.js';
 import { egSpoilsList, egSpoilsDay } from '../../src/systems/eliteGates/egSpoils.js';
+import { weekBase } from '../../src/net/bossWeek.js';   // PWR5: the week's finest, never the floor's
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const WALL = 1_700_000_000_000;
@@ -74,7 +75,7 @@ test('LOST-SPOILS what is left on the floor goes to the mailbox: a pressed piece
   const all = harness();
   burst(all, 701, 5, 3);
   settle(all);
-  spoilsList(5, 3).forEach((p, i) => all.p.pick(`${p.kind === 'gold' ? 'spoilGold:' : 'spoil:'}${i}`));
+  weekBase(spoilsList(5, 3)).forEach((p, i) => all.p.pick(`${p.kind === 'gold' ? 'spoilGold:' : 'spoil:'}${i}`));
   assert.equal(all.p.gather(), 0);
   await flush();
   assert.deepEqual([all.sends.length, all.mailSaid.length], [0, 0]);
@@ -194,7 +195,7 @@ test('LOST-SPOILS ONE WRITE: the device restarted with a send out hands the pack
 });
 
 test('LOST-SPOILS A NEW BURST OVER A FLOOR NOT YET LEFT GATHERS IT FIRST - a breach\'s next Redoubt had thrown its spoils over the last one\'s, whose leftovers were on no floor and in no pack until the next boot handed back the whole of them, pressed pieces too; with a door, the old floor\'s items go to the mailbox (mutants: the old floor dropped under the new)', async () => {
-  const one = spoilsList(99, 8), two = spoilsList(7, 8);
+  const one = weekBase(spoilsList(99, 8)), two = weekBase(spoilsList(7, 8));   // PIN MOVED (PWR5, bible/05-Combat/Power-Arc.md section 8): a floor never holds the week's finest (net/bossWeek.js weekBase)
   const h = harness({ mail: false });
   burst(h, 700, 99); settle(h); h.p.pick('spoil:0');
   assert.equal(burst(h, 701, 7), true, 'the next burst');
