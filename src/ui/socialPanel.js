@@ -210,7 +210,7 @@ export const guildRenameSoonText = (at, nowS) => {
   const days = Math.max(1, Math.ceil((at - nowS) / 86_400));
   return `The guild was renamed recently. It can be renamed again in ${days} ${days === 1 ? 'day' : 'days'}.`;
 };
-export const GUILD_VAULT_REACH_TEXT = 'You can use the vault in any town. View it here; put items in and take them out in town.';
+export const GUILD_VAULT_REACH_TEXT = 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.';   // GUILD-PANE 3: and a caravan whose door is the guild's; said through t() ('social.vault.reach') where it is shown
 export const GUILD_VAULT_EMPTY_TEXT = 'The vault is empty. Put an item in from your pack below.';
 /** GUILD2c: why a draft of arms will not stand, in the law's own terms (heraldryLaw.js heraldryOf). */
 export function armsWhy(h) {
@@ -1546,7 +1546,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     // on the road kept Take alive and sent takes out of town
     const reachNow = () => g.pack?.reach?.() !== false;
     const reach = reachNow();
-    if (!reach) out.push(el('div', 'dfsocial-empty', GUILD_VAULT_REACH_TEXT));
+    if (!reach) out.push(el('div', 'dfsocial-empty', t('social.vault.reach', GUILD_VAULT_REACH_TEXT)));
     if (!vv) {
       out.push(el('div', 'dfsocial-note', g.vaultError ? `The vault cannot be read now: ${guildWordText(g.vaultError)}` : 'Reading the vault...'));
       if (g.vaultError) {

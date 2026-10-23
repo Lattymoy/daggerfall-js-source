@@ -424,7 +424,7 @@ test('GUILD-PANE 3 the Vault page in a guild caravan: the reach the host hands (
   const carried = (entry) => { const items = [newWagonItem('caravan')]; caravanVisit.setDrivenCaravanEntry(items, entry); return items; };
   /** The world host's reach, as its line reads it: the town (here never) or the caravan I stand in. */
   const town = () => false;
-  const hostReach = (t, where) => { t.book.pack.reach = () => town() || caravanVisit.caravanVaultReached({ modes: where.modes, items: where.items, tag: 'HND' }); t.panel.render(); };
+  const hostReach = (t, where) => { t.book.pack.reach = () => town() || caravanVisit.caravanVaultReached(where.modes, where.items, 'HND'); t.panel.render(); };
   const ARROW = { ...ARROWS };
   const open = async (where) => {
     const t = await tab(view(), { vaultItems: pieces, pack: [ARROW] }, 'vault');

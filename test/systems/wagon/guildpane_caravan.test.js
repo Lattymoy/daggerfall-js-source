@@ -77,7 +77,7 @@ test('GUILD-PANE 3 THE VISIT CARRIES ITS DOOR: createCaravanAccess().visit hands
 
 test('GUILD-PANE 3 THE REACH: the world host\'s reach is the town OR a guild caravan - the helper reads the caravan I stand in (modes.caravanRoom), the visit (modes.caravanVisit), my caravan\'s door (the pack\'s active wagon) and my guild\'s tag; outside a caravan, or in a party or private caravan, none (mutants: the room unread; the visit unread; my own door unread; the tag unread)', () => {
   assert.equal(typeof visitLaw.caravanVaultReached, 'function', 'systems/caravanVisit.js exports caravanVaultReached');
-  const reached = (modes, items, tag) => visitLaw.caravanVaultReached({ modes, items, tag });
+  const reached = (modes, items, tag) => visitLaw.caravanVaultReached(modes, items, tag);
   const room = { kind: 'caravan' };
   // my own caravan
   assert.equal(reached({ caravanRoom: room, caravanVisit: null }, caravanPack('guild'), 'HND'), true, 'my own guild caravan');
@@ -97,7 +97,7 @@ test('GUILD-PANE 3 THE REACH: the world host\'s reach is the town OR a guild car
 
 test('GUILD-PANE 3 THE WIRING (by source): the book\'s pack reach is the town or the caravan helper - one added expression, no added line in the host - and the inTown of the professions\' Stores is unchanged (the vault alone reaches into a caravan)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /reach: \(\) => _storesReached\(\) \|\| caravanVaultReached\(\{ modes, items: playerEntity\.items, tag: myGuildTag\(\) \}\), refuses: \(it\) => packTradeRefusal\(it, playerEntity\) \}/);
+  assert.match(w, /reach: \(\) => _storesReached\(\) \|\| caravanVaultReached\(modes, playerEntity\.items, guildBook\?\.guild\?\.tag\), refuses: \(it\) => packTradeRefusal\(it, playerEntity\) \}/);
   assert.match(w, /import \{[^}]*\bcaravanVaultReached\b[^}]*\} from '\.\.\/systems\/caravanVisit\.js'/);
   assert.match(w, /inTown: \(\) => _storesReached\(\),/, 'the professions\' Stores stay in town');
   assert.equal((w.match(/caravanVaultReached\(/g) ?? []).length, 1, 'one use');
@@ -105,7 +105,7 @@ test('GUILD-PANE 3 THE WIRING (by source): the book\'s pack reach is the town or
 
 test('GUILD-PANE 3 THE WORDS: the vault\'s reach note names the caravan, routed through t() as social.vault.reach with its English row (mutants: the old words; the key unrouted)', async () => {
   const sp = read('src/ui/socialPanel.js');
-  assert.match(sp, /GUILD_VAULT_REACH_TEXT = t\('social\.vault\.reach', /, 'through t()');
+  assert.match(sp, /dfsocial-empty', t\('social\.vault\.reach', GUILD_VAULT_REACH_TEXT\)\)/, 'through t()');
   const rows = new Map(parseStringTableCsv(read('locales/en/Port_Strings.csv')));
   assert.equal(rows.get('social.vault.reach'), REACH_WORDS, 'the English row');
   const { GUILD_VAULT_REACH_TEXT } = await import('../../../src/ui/socialPanel.js');
