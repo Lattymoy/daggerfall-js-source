@@ -32,8 +32,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-overview-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);",
-    "new": "  const late = (asked === 'overview') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);\n  if (late) await late.run();",
+    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);",
+    "new": "  const late = (asked === 'overview') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);\n  if (late) await late.run();",
     "why": "the Overview's audit row a trip after its reads (a tab's row now rides the batch the account is read in)",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-sections-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);",
-    "new": "  const late = (asked === 'market' || asked === 'history') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);\n  if (late) await late.run();",
+    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);",
+    "new": "  const late = (asked === 'market' || asked === 'history') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);\n  if (late) await late.run();",
     "why": "Market and History's audit row a trip after their sections (a tab's row now rides the batch the account is read in)",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-trades-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);",
-    "new": "  const late = (asked === 'trades') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);\n  if (late) await late.run();",
+    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);",
+    "new": "  const late = (asked === 'trades') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);\n  if (late) await late.run();",
     "why": "the Trades tab's audit row a trip after its read (a tab's row now rides the batch the account is read in)",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-economy-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);",
-    "new": "  const late = (asked === 'economy') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);\n  if (late) await late.run();",
+    "old": "  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);",
+    "new": "  const late = (asked === 'economy') && n.t ? n.reads.pop() : null;\n  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);\n  if (late) await late.run();",
     "why": "the Economy tab's audit row a trip after its reads (a tab's row now rides the batch the account is read in)",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -134,7 +134,8 @@
     "file": "server-account/src/staffPlayers.js",
     "old": "    return (c?.id ?? null) === (got[0]?.results?.[0]?.id ?? null) ? { c, got: got.slice(1) } : null;",
     "new": "    return { c, got: got.slice(1) };",
-    "why": "a tab read beside the list shows chosen()'s character with the reads of PICK_SQL's where the two part (a list past its cut)",
+    "why": "equivalent: PICK_SQL chooses over the list's own cut in the list's own order, so it never parts from chosen() - the check stands as the net should a plan ever order the two apart, a tab then read again rather than shown with another character's reads (the checker's review of the fold; before PICK_SQL chose over the list's cut this died)",
+    "equivalent": true,
     "tests": [
       "test/server/staffspeed_players.test.js"
     ]
@@ -142,9 +143,20 @@
   {
     "name": "STAFF-SPEED-PLAYERS-pick-tie-unbroken",
     "file": "server-account/src/staffPlayers.js",
-    "old": "updated_at DESC, rowid DESC LIMIT 1)';",
-    "new": "updated_at DESC LIMIT 1)';",
-    "why": "PICK_SQL breaks a tie of updated_at its own way, not the list's, so a tab of two characters saved the same second reads again",
+    "old": "updated_at DESC, r DESC LIMIT 1)`;",
+    "new": "updated_at DESC LIMIT 1)`;",
+    "why": "equivalent: PICK_SQL sorts the list as its walk of realm_characters_player gives it (a tie by rowid, last first), and SQLite's sort keeps a tie in the order it is fed - the tie-break says the list's order rather than leaning on the sort (the checker's review of the fold; before PICK_SQL chose over the list's cut this died)",
+    "equivalent": true,
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-pick-past-cut",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const PICK_SQL = `(SELECT id FROM (${charsSql('?1', 'id, dead_at, updated_at, rowid AS r')}) ORDER BY id = ?2 DESC, dead_at IS NOT NULL, updated_at DESC, r DESC LIMIT 1)`;",
+    "new": "const PICK_SQL = '(SELECT id FROM realm_characters WHERE player = ?1 ORDER BY id = ?2 DESC, dead_at IS NOT NULL, updated_at DESC, rowid DESC LIMIT 1)';",
+    "why": "PICK_SQL chooses over every character, not the list's cut, so a tab of a list past its cut reads one the list does not hold, throws its reads away and reads again",
     "tests": [
       "test/server/staffspeed_players.test.js"
     ]
@@ -155,6 +167,16 @@
     "old": "{ onceIn: READ_ONCE_S, ...(ahead ? { onlyIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ?)', args: [id] } } : {}) });",
     "new": "{ onceIn: READ_ONCE_S });",
     "why": "a tab named of no account writes its read's row, the row riding the batch that looks the account up",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-guest-after-handle",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    p = await guestNamed(db, String(said), got[1]?.results ?? []);",
+    "new": "    p = await guestNamed(db, String(said));",
+    "why": "a guest's name read a trip after the handle missed, not beside it",
     "tests": [
       "test/server/staffspeed_players.test.js"
     ]

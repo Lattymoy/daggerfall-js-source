@@ -27,7 +27,7 @@
 // (`kept`: by its object's key, and every write is a new object, so a kept view never goes stale), the trades read by
 // migration 0151's indexes, and every list pages (`from`, answered `next`).
 import { displayName, devicesOf, closeAllSessions, handleRefusal, wornNameRefusal, isMuted } from './accounts.js';
-import { findAccount, strikesRead, isBanned, nameAsked, guestNamed } from './sanctions.js';
+import { findAccount, strikesRead, isBanned, nameAsked, guestNamed, guestsRead } from './sanctions.js';
 import { canModerate, handleList } from './titles.js';
 import { REALM_ID_RE, REALM_PLAYING_S, realmSaveTextOf, realmNameOf, mustChange } from './realm.js';
 import { possessedItemLists, ledgerKeyOf } from './judge.js';
@@ -248,10 +248,11 @@ const charsSql = (who = '?1', cols = `id, name, summary, seq, lease, lease_at, o
 /** STAFF-PANEL-SPEED: a profile asked by a name is read keyed on this - the account its handle names (?1, folded), one
  *  probe of the handle's unique index (0001's idx_players_handle_lc), as findAccount reads it. */
 const BY_HANDLE = '(SELECT id FROM players WHERE handle_lc = ?1)';
-/** STAFF-PANEL-SPEED: chosen() in SQL, over the characters of ?1 and the one asked (?2) - it, else the one played last that
- *  lives, else the last played, the list's own order (its index's: a tie by rowid, last first) - so a tab reads its
- *  character beside the account. The answer checks it against chosen() over the list, and reads again where they part. */
-const PICK_SQL = '(SELECT id FROM realm_characters WHERE player = ?1 ORDER BY id = ?2 DESC, dead_at IS NOT NULL, updated_at DESC, rowid DESC LIMIT 1)';
+/** STAFF-PANEL-SPEED: chosen() in SQL, over the list of ?1's characters (charsSql's own cut, so never one the list does not
+ *  hold - the checker's review) and the one asked (?2) - it, else the one played last that lives, else the last played, the
+ *  list's own order (its index's: a tie by rowid, last first) - so a tab reads its character beside the account. The answer
+ *  checks it against chosen() over the list, and reads again where they part. */
+const PICK_SQL = `(SELECT id FROM (${charsSql('?1', 'id, dead_at, updated_at, rowid AS r')}) ORDER BY id = ?2 DESC, dead_at IS NOT NULL, updated_at DESC, r DESC LIMIT 1)`;
 
 /**
  * A PROFILE'S FACTS, one batch: the strikes, the open case, the judge's findings standing and this week's, the ledger's
@@ -541,8 +542,9 @@ function tabOf(ctx, env, tab, id, body, chars) {
  * A PROFILE - opened (no tab): the summary card, each tab's badge, the tab it opens on and that tab; a tab named: that tab
  * alone. STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows"; "it need to not hurt server
  * performance"): the account, its characters and what it shows first in one batch - the badges' facts (by id, or keyed on
- * the handle), or the tab named by id; a guest's name is findAccount's own way (guestNamed) once the handle misses. The
- * tab a profile opens on is read once the badges choose it, a trip of its own: never a tab the answer may not show.
+ * the handle), or the tab named by id; a guest's name is findAccount's own read past the handles, beside the handle's and
+ * finding a guest only where it misses (guestsRead), then the guest's reads by its id. The tab a profile opens on is read
+ * once the badges choose it, a trip of its own: never a tab the answer may not show.
  * @param {any} ctx @param {any} env @param {any} body @param {(act: string, target?: string|null, detail?: object|null, how?: object) => any} audit
  */
 async function profileOf(ctx, env, body, audit) {
@@ -561,14 +563,15 @@ async function profileOf(ctx, env, body, audit) {
   };
   const key = byId ? body.target : String(said).toLowerCase();
   let n = next(byId ? '?1' : BY_HANDLE, key);
-  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...n.reads]);
+  const guests = byId ? [] : [guestsRead(db, String(said), key)];
+  let got = await db.batch([db.prepare(`SELECT * FROM players WHERE ${byId ? 'id' : 'handle_lc'} = ?1`).bind(key), ...guests, ...n.reads]);
   /** @type {any} */
   let p = got[0]?.results?.[0];
-  if (p) got = got.slice(1);
+  if (p) got = got.slice(1 + guests.length);
   else if (byId) return { error: 'no-player' };
   else {
-    // a name no handle wears: findAccount's own way past the handles, then the account's reads by its id
-    p = await guestNamed(db, String(said));
+    // a name no handle wears: findAccount's own word on the guests read beside the handle, then the account's reads by its id
+    p = await guestNamed(db, String(said), got[1]?.results ?? []);
     if ('error' in p) return p;
     n = next('?1', p.id);
     got = await db.batch(n.reads);

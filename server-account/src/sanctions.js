@@ -92,12 +92,18 @@ export async function findAccount(db, { target, name }) {
  *  batch of its own asks the same. @param {unknown} name */
 export const nameAsked = (name) => (typeof name === 'string' && name.trim() && name.length <= 64 ? name.trim() : null);
 /** findAccount past the handles: a guest's generated name, when exactly one guest wears it - the row, or `{ error }`.
- *  STAFF-PANEL-SPEED: a door that read the handle in a batch of its own, and missed, asks this alone. @param {any} db @param {string} said */
-export async function guestNamed(db, said) {
-  const guests = (await db.prepare('SELECT * FROM players WHERE handle IS NULL AND guest_name = ?1 LIMIT 2').bind(said).all())?.results ?? [];
+ *  STAFF-PANEL-SPEED: a door that read the handle in a batch of its own, and missed, asks this alone - or says what the
+ *  guests it `read` beside the handle (guestsRead) are. @param {any} db @param {string} said @param {any[]|null} [read] */
+export async function guestNamed(db, said, read = null) {
+  const guests = read ?? (await guestsRead(db, said).all())?.results ?? [];
   if (guests.length > 1) return { error: 'ambiguous' };
   return guests[0] ?? { error: 'no-player' };
 }
+/** guestNamed's read as a statement. STAFF-PANEL-SPEED (the checker's review of the profile fold: the guests were read a
+ *  trip after the handle missed): `handleLc` the handle a door's batch reads beside it, so the guests are found only where
+ *  no handle wears the name, as findAccount asks them only then. @param {any} db @param {string} said @param {string|null} [handleLc] */
+export const guestsRead = (db, said, handleLc = null) => db.prepare(`SELECT * FROM players WHERE handle IS NULL AND guest_name = ?1${handleLc === null ? ''
+  : ' AND NOT EXISTS (SELECT 1 FROM players WHERE handle_lc = ?2)'} LIMIT 2`).bind(said, ...(handleLc === null ? [] : [handleLc]));
 
 /**
  * A MUTE WRITTEN, by anyone the caller has already judged may write it - MOD1's row (`muted_until`, `muted_by`) and its

@@ -124,20 +124,23 @@ test('STAFF-PANEL-SPEED players: a profile by a name, a guest\'s name, a tab of 
   const byId = await ok({ target: B }, 3);
   assert.deepEqual(byName, byId);
   for (const tab of PLAYER_TABS) assert.deepEqual(await ok({ name: 'brisk', tab }, 3), await ok({ target: B, tab }, 2), tab);
-  // a guest's name: the handle misses, findAccount's own way finds the guest, its reads by its id
+  // a guest named as a handle is: the handle's account, as findAccount answers (the guests read beside it find none)
+  s.raw.prepare("UPDATE players SET guest_name = 'Brisk' WHERE id = ?").run((await s.guest()).id);
+  assert.deepEqual(await ok({ name: 'Brisk' }, 3), byId);
+  // a guest's name: the handle misses, findAccount's own read of the guests beside it finds the guest, its reads by its id
   const fox = await s.guest();
   s.raw.prepare("UPDATE players SET guest_name = 'Wandering Fox' WHERE id = ?").run(fox.id);
   s.raw.prepare("INSERT INTO realm_characters (id, player, name, created_at, updated_at) VALUES ('r00000000000000000077', ?, 'Foxy', ?, ?)").run(fox.id, t, t);
-  const guest = await ok({ name: 'Wandering Fox' }, 5);
+  const guest = await ok({ name: 'Wandering Fox' }, 4);
   assert.deepEqual([guest.target, guest.tab, guest.card.name], [fox.id, 'overview', 'Wandering Fox']);
   assert.deepEqual(guest, await ok({ target: fox.id }, 3));
-  assert.deepEqual(await ok({ name: 'Wandering Fox', tab: 'economy' }, 4), await ok({ target: fox.id, tab: 'economy' }, 2));
+  assert.deepEqual(await ok({ name: 'Wandering Fox', tab: 'economy' }, 3), await ok({ target: fox.id, tab: 'economy' }, 2));
   // two guests of one name, and a name nobody wears, refused as findAccount refuses them
   const owl = [await s.guest(), await s.guest()];
   s.raw.prepare("UPDATE players SET guest_name = 'Twin Owl' WHERE id IN (?, ?)").run(owl[0].id, owl[1].id);
   for (const [body, status, error] of [[{ name: 'Twin Owl' }, 409, 'ambiguous'], [{ name: 'nobody-here' }, 404, 'no-player'], [{ name: 'Twin Owl', tab: 'skills' }, 409, 'ambiguous']]) {
     const r = await counted(s, '/v1/staff/player', body);
-    assert.deepEqual([r.status, r.body?.error, r.trips <= 3], [status, error, true], `${JSON.stringify(body)}: ${r.trips} trips`);
+    assert.deepEqual([r.status, r.body?.error, r.trips <= 2], [status, error, true], `${JSON.stringify(body)}: ${r.trips} trips`);
   }
   // a tab of an account that is not there: refused, and no row written for it
   for (const tab of [null, ...PLAYER_TABS]) {
@@ -151,13 +154,17 @@ test('STAFF-PANEL-SPEED players: a profile by a name, a guest\'s name, a tab of 
   ins.run('r00000000000000000081', twin.id, 'TwinA', t, t - 100, null);
   ins.run('r00000000000000000082', twin.id, 'TwinB', t, t - 100, null);
   for (const tab of ['skills', 'economy']) assert.deepEqual(await ok({ target: twin.id, tab }, 2), await ok({ name: 'Twin', tab }, 3), tab);
-  // a list past its cut, every character in it dead and one living past it: chosen() takes the list's first, so the tab
-  // reads again with it - never the living one PICK_SQL finds past the cut
+  // a list past its cut, every character in it dead and one living past it: chosen() takes the list's first, and so does
+  // PICK_SQL, which chooses over the list's own cut - beside the list, never the living one past the cut read and thrown
+  // away (the checker's review: it was 3 trips, the reads of the one past the cut unused)
   const many = await s.registered('Manyfold');
   ins.run('r00000000000000000099', many.id, 'Alive', t, t - 10_000, null);
   s.raw.prepare('INSERT INTO realm_wealth_hours (char_id, hour, player, level, gain, loss, played_s, checkpoints) VALUES (?, ?, ?, 3, 10, 0, 600, 2)').run('r00000000000000000099', Math.floor(t / 3600) * 3600, many.id);
   for (let i = 0; i < 90; i++) ins.run(`r1${String(i).padStart(19, '0')}`, many.id, `Fallen${i}`, t, t - i, t);
-  const econ = (await ok({ target: many.id, tab: 'economy' }, 3)).data;
+  for (const body of [{}, { char: 'r00000000000000000099' }]) {
+    assert.deepEqual(await ok({ target: many.id, tab: 'skills', ...body }, 2), await ok({ name: 'Manyfold', tab: 'skills', ...body }, 3), `skills ${JSON.stringify(body)}`);
+  }
+  const econ = (await ok({ target: many.id, tab: 'economy' }, 2)).data;
   assert.deepEqual([econ.char, econ.hours, econ.characters.length], ['r1' + '0'.repeat(19), [], 90]);
   assert.deepEqual(econ, (await ok({ name: 'Manyfold', tab: 'economy' }, 3)).data);
   // no character, by a name: the tab answers none and still writes its row
