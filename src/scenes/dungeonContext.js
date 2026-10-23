@@ -351,6 +351,7 @@ import { isStartDungeon } from '../systems/startDungeon.js';   // TUT1: the star
 import { takeOwed } from '../systems/playerDoor.js';   // FIELD BUGS 2026-10-12g OPEN-HAND: a follow-up blow owed a body the relay runs, sent in its blow's one claim
 import { createRoomLoot } from './roomLootHost.js';   // HOST-SPLIT
 import { createSearchRoom } from './searchRoom.js';   // GRAVE-PARTY: whose a searched object's word is - the searcher's party's, never a stranger's
+import { heldGuildVaultDoor } from './guildVaultHost.js';   // GUILD-PANE: the guild vault, viewed from the dungeon's pack
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 
 
@@ -2634,6 +2635,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       openCharSheet: () => { const w = api.makeCharSheet(); if (w) activeOverlay = w; }, handArm: () => weaponRig.handArm?.(),   // TWO-HANDS (AUDIT 2): the pack's figure's two hands through the rig's door. MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
+      guildVault: heldGuildVaultDoor,   // GUILD-PANE: the guild vault, view-only underground (its reach is a town's or a guild caravan's, which a dungeon is neither) - the world host's book, held in scenes/guildVaultHost.js; none on the standalone `?dungeon` page
       ...useHooks,   // U53: the one bag
       // G5: a DROPPED pile hands DaggerfallLoot's whole identity
       // (playerOwned + TextureArchive/TextureRecord + position); an RDB

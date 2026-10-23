@@ -13024,6 +13024,56 @@
   "tr": "946b95b32a92",
   "by": "claude-in-session"
  },
+ "inventory.vault.again": {
+  "en": "042c862e4467",
+  "tr": "f360775cb8af",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.close": {
+  "en": "63a754e4555d",
+  "tr": "28d3bfae8255",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.empty": {
+  "en": "c1cda188157b",
+  "tr": "5f3759705c69",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.error": {
+  "en": "deb16cdb719a",
+  "tr": "d293f5596806",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.meta": {
+  "en": "49e123cce2b3",
+  "tr": "0e933be2a971",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.reading": {
+  "en": "4ddd36e74e75",
+  "tr": "f299580abcfe",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.reward": {
+  "en": "e62353f293c6",
+  "tr": "cc469e2f3eba",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.standing": {
+  "en": "242d7508ac01",
+  "tr": "bf7d0626dee5",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.standingLimit": {
+  "en": "02c931771c9a",
+  "tr": "b7cabc266b2f",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.title": {
+  "en": "d1c83fcee5cf",
+  "tr": "841536be69a9",
+  "by": "claude-in-session"
+ },
  "knight.seatHouse": {
   "en": "30a6b1d5eb6d",
   "tr": "888d5075f738",

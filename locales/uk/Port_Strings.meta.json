@@ -1439,6 +1439,56 @@
   "tr": "8c6ccf371e82",
   "by": "claude-in-session"
  },
+ "inventory.vault.again": {
+  "en": "042c862e4467",
+  "tr": "b3c1505da212",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.close": {
+  "en": "63a754e4555d",
+  "tr": "38ac528380ec",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.empty": {
+  "en": "c1cda188157b",
+  "tr": "2dcad5dba110",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.error": {
+  "en": "deb16cdb719a",
+  "tr": "cfd8704de239",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.meta": {
+  "en": "49e123cce2b3",
+  "tr": "b56986ebea7e",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.reading": {
+  "en": "4ddd36e74e75",
+  "tr": "e8617bb7196d",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.reward": {
+  "en": "e62353f293c6",
+  "tr": "42d91485fd55",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.standing": {
+  "en": "242d7508ac01",
+  "tr": "b59f3c1f0b1c",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.standingLimit": {
+  "en": "02c931771c9a",
+  "tr": "87461c0a5498",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.title": {
+  "en": "d1c83fcee5cf",
+  "tr": "4f69b7effc4b",
+  "by": "claude-in-session"
+ },
  "lamp.granted": {
   "en": "801073835a6b",
   "tr": "2ef5a83f4a5e",

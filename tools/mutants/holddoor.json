@@ -11,8 +11,8 @@
   {
     "name": "HOLD-title-unread",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "|| (kind === 'storage' && typeof deps.loot?.title === 'string' && deps.loot.title) || REMOTE_TITLE[kind],",
-    "new": "|| REMOTE_TITLE[kind],",
+    "old": "      || (kind === 'storage' && typeof deps.loot?.title === 'string' && deps.loot.title)\n",
+    "new": "",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

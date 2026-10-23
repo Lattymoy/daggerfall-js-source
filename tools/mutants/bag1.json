@@ -84,8 +84,8 @@
   {
     "name": "BAG1-the-bag-a-floor",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
-    "new": "  if (state.usingWagon || state.chooseOne) return null;",
+    "old": "  if (state.usingWagon || state.usingBag || state.usingVault || state.chooseOne) return null;",
+    "new": "  if (state.usingWagon || state.usingVault || state.chooseOne) return null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

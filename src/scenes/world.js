@@ -914,7 +914,8 @@ import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
 import { PostBox, postNoticeText } from '../net/serverPost.js';   // SERVER-POST: the server's post the pause face's mailbox draws
 import { lostSpoilsMail } from '../net/lostSpoils.js';   // LOST-SPOILS: a boss's floor's leftovers to the mailbox
-import { GuildBook } from '../net/guild/guildBook.js';   // GUILD1b: the guild the Guild tab draws
+import { GuildBook } from '../net/guild/guildBook.js';
+import { holdGuildBook, heldGuildVaultDoor } from './guildVaultHost.js';   // GUILD-PANE: the guild vault as the pack's pane sees it   // GUILD1b: the guild the Guild tab draws
 import { sellProceeds } from '../systems/tradeModes.js';   // GUILD-LETTER: a withdrawal weighed as the trade window weighs a sale
 import { realmLetterOfCredit } from '../net/realm/realmGoldLaw.js';   // GUILD-LETTER: the letter the service writes on a realm record, one maker
 import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
@@ -12919,6 +12920,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
     postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: an item on the chat's open tab
+    guildVault: heldGuildVaultDoor,   // GUILD-PANE: the guild vault as a pane beside the pack (scenes/guildVaultHost.js) - the building's and the street's alike
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -21847,7 +21849,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
     // then the bank account of the region the player stands in - HOME1's order (worldModes homeAccount), and the
     // account minted on first use as the bank window mints it.
-    guildBook = new GuildBook({
+    guildBook = holdGuildBook(new GuildBook({   // GUILD-PANE: and the pack's vault pane reads this book (scenes/guildVaultHost.js)
       door: accountGuilds({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
       // GUILD2b (bible/11-Multiplayer/Guild-Overhaul.md): the pack a vault's piece leaves and arrives in - the item made
       // whole as the save's loader makes one (setItemFields), added as DFU's AddItem adds; the one checkpoint asked
@@ -21889,7 +21891,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT GUILD-YARD C3, AUDIT PROF-541 G1: a rank moved (a keeper made or unmade), found by whichever look, reads the
       // town again, as onHall does - its halls' `keeper` was the town's answer's, believed a minute
       onRank: () => { onlineHomes?.bump?.(); onlineHomes?.ensure?.(_musicLoc?.mapTableData?.mapId, { force: true })?.catch?.(() => {}); },
-    });
+    }));
     socialPanel = createSocialPanel({
       social,
       mail,

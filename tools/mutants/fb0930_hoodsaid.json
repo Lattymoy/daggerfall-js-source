@@ -74,8 +74,8 @@
   {
     "name": "HOOD-SAID-use-kept-on-a-hooded-piece",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (usableItem(picked) && (!hooded || isEnchanted(picked))) {",
-    "new": "  if (usableItem(picked)) {",
+    "old": "  if (usableItem(picked) && (!hooded || isEnchanted(picked)) && !(side !== 'local' && remote?.kind === 'vault')) {",
+    "new": "  if (usableItem(picked) && !(side !== 'local' && remote?.kind === 'vault')) {",
     "tests": [
       "test/systems/fb0930_hoodsaid.test.js",
       "test/systems/survival/auditsurv.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "HOOD-SAID-the-enchanted-cloaks-used-payload-out-of-reach",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (usableItem(picked) && (!hooded || isEnchanted(picked))) {",
-    "new": "  if (usableItem(picked) && !hooded) {",
+    "old": "  if (usableItem(picked) && (!hooded || isEnchanted(picked)) && !(side !== 'local' && remote?.kind === 'vault')) {",
+    "new": "  if (usableItem(picked) && !hooded && !(side !== 'local' && remote?.kind === 'vault')) {",
     "tests": [
       "test/systems/fb0930_hoodsaid.test.js",
       "test/systems/survival/auditsurv.test.js"

@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-BATCH-C3-stash-all-while-choosing",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    if (STORE_FILTER_KINDS.has(remote.kind) && !salvageSel) {",
-    "new": "    if (STORE_FILTER_KINDS.has(remote.kind)) {",
+    "old": "    if (STORE_BULK_KINDS.has(remote.kind) && !salvageSel) {",
+    "new": "    if (STORE_BULK_KINDS.has(remote.kind)) {",
     "tests": [
       "test/systems/batchsalvage.test.js"
     ]
