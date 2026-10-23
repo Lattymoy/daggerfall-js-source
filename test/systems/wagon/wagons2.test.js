@@ -542,7 +542,8 @@ test('WAGONS2 (AUDIT) THE CARAVAN KEPT: the wagon a player drives while it holds
   assert.deepEqual(await book.vaultPut(caravan), { ok: false, error: 'vault-goods' });
   const w = src('scenes/world.js'), wm = src('scenes/worldModes.js'), sp = readFileSync(new URL('../../../src/ui/socialPanel.js', import.meta.url), 'utf8');
   assert.match(w, /reach: \(\) => _storesReached\(\) \|\| caravanVaultReached\(modes, playerEntity\.items, guildBook\?\.guild\?\.tag\), refuses: \(it\) => packTradeRefusal\(it, playerEntity\) \}/);   // GUILD-PANE 3: and a guild caravan
-  assert.match(sp, /tradeRefusal\(it\) == null && !g\.pack\.refuses\?\.\(it\) && !isLocked\(it\)/);
+  assert.match(sp, /vaultPutRefusal\(it, g\.pack\) == null/);   // PIN MOVED (GUILD-PANE): the page's offers and the pane's puts are one law, which asks the pack's own refusal (the loaded wagon) among the rest
+  assert.match(readFileSync(new URL('../../../src/net/guild/guildVaultPut.js', import.meta.url), 'utf8'), /const packs = pack\?\.refuses\?\.\(item\);/);
   // the keyed shop
   assert.match(wm, /\n {4}if \(loadedWagonHeld\(it\)\) return 0;   \/\/ WAGONS2 \(AUDIT\)/);
   assert.match(wm, /for \(let i = sellable\.length - 1; i >= 0; i--\) if \(loadedWagonHeld\(sellable\[i\]\)\) sellable\.splice\(i, 1\);/);

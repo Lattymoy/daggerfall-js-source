@@ -19,10 +19,26 @@
 // Not a DFU member (Ledger A: the guild vault is the port's own). Pure but for the book it is handed: no DOM, no clock.
 import { setItemFields } from '../systems/item/itemTemplates.js';
 import { accountRefusalText } from '../net/accountClient.js';
+import { vaultMayPut, vaultMayTake } from '../net/guild/guildVaultLaw.js';
+import { vaultPutRefusal } from '../net/guild/guildVaultPut.js';
+import { t } from '../systems/textManager.js';
 
 /** @typedef {{ shown: () => boolean, warm: () => Promise<any>, read: (o?: { again?: boolean }) => Promise<any>, view: () => any, error: () => (string|null), errorText: () => string,
  *   version: () => number, items: () => any[], slotOf: (item: any) => (number|null), slots: () => { used: number, max: number }, reach: () => boolean,
- *   busy: () => boolean, standing: () => any }} GuildVaultDoor */
+ *   busy: () => boolean, standing: () => any, mine: (item: any) => boolean, mayPut: () => boolean, mayTake: (item: any) => boolean,
+ *   putRefusal: (item: any) => (string|null), reachText: () => string, take: (item: any, count?: (number|null)) => Promise<{ ok: boolean, error?: string, text?: string }>,
+ *   put: (item: any, count?: (number|null)) => Promise<{ ok: boolean, error?: string, text?: string }>,
+ *   takeGate: (item: any, count?: (number|null)) => ({ ok: boolean, error: string, text: string }|null),
+ *   putGate: (item: any, count?: (number|null)) => ({ ok: boolean, error: string, text: string }|null) }} GuildVaultDoor */
+
+/** The Social page's reach note (ui/socialPanel.js GUILD_VAULT_REACH_TEXT - one sentence, one key, two faces). */
+const VAULT_REACH_TEXT = 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.';
+/** The words of the two gates the door keeps itself; every other refusal is the account's (net/accountClient.js). */
+const gateWords = (error) => (error === 'vault-reach' ? t('social.vault.reach', VAULT_REACH_TEXT)
+  : error === 'vault-busy' ? t('inventory.vault.busy', 'A moment.') : accountRefusalText(error));
+/** A piece's stack: its count, or one. */
+const stackOf = (item) => (Number.isSafeInteger(item?.stackCount) && item.stackCount >= 1 ? item.stackCount : 1);
+const refused = (error, text = null) => ({ ok: false, error, text: text ?? gateWords(error) });
 
 /** A row's key: the slot, when its piece was put there and how many - a slot emptied and filled again is another row. */
 const rowKey = (row) => `${row.slot}|${row.at}|${row.count}`;
@@ -38,6 +54,8 @@ export function createGuildVaultDoor({ book }) {
   /** @type {Map<string, any>} the views kept by row key - the last view's alone */
   let kept = new Map();
   const slotsOf = new WeakMap();
+  /** @type {WeakMap<object, any>} the row (as the service answered it) each view stands for */
+  const rowsOf = new WeakMap();
   /** @type {any} the view the items were last made from, and the items */
   let madeFrom = null;
   /** @type {any[]} */
@@ -100,6 +118,7 @@ export function createGuildVaultDoor({ book }) {
             item = setItemFields({ ...row.rec, ...(row.count > 1 ? { stackCount: row.count } : {}) });
           } catch (e) { console.warn('[guild] a vault piece could not be drawn', e?.message ?? e); continue; }
           slotsOf.set(item, row.slot);
+          rowsOf.set(item, row);
         }
         next.set(key, item);
         out.push(item);
@@ -122,6 +141,71 @@ export function createGuildVaultDoor({ book }) {
     busy: () => !!bookNow()?.busy,
     /** This member's standing at the vault, as the last read said it (`{ level, limit, granted, taken }`), or null. */
     standing: () => door.view()?.me ?? null,
+    /** Whether a row is this character's own deposit (the service says so - `mine`; an older service says nothing: not mine). */
+    mine: (item) => rowsOf.get(item)?.mine === true,
+    /** Whether this member's standing puts in. */
+    mayPut: () => vaultMayPut(door.standing()),
+    /** Whether this member may take the row: its own deposit at any standing, else the rank and the day's limit. */
+    mayTake(item) {
+      const st = door.standing();
+      return door.mine(item) || vaultMayTake(st, Number(st?.taken ?? 0));
+    },
+    /** Why this piece of the pack can never go in (the one law, net/guild/guildVaultPut.js), in words - or null. */
+    putRefusal: (item) => vaultPutRefusal(item, bookNow()?.pack ?? null),
+    reachText: () => gateWords('vault-reach'),
+    /**
+     * A ROW TAKEN OUT: `count` of its stack (all of it where absent). The gates the Social page keeps, once, here: the
+     * reach, a book that is busy (one act at a time), the standing (the rank, the day's limit - neither asked of the member's
+     * own deposit, which comes back at any standing), the count. Then the book's vaultTake: the piece is in the pack on the
+     * service's answer, whether or not a pane is still up to hear it. `{ ok, error?, text? }`.
+     */
+    async take(item, count = null) {
+      const b = bookNow();
+      const no = door.takeGate(item, count);
+      if (no || !b) return no ?? refused('guild-vault-empty');
+      const stack = stackOf(item);
+      const r = await b.vaultTake(door.slotOf(item), (count ?? stack) === stack ? null : count);
+      return r?.ok ? { ok: true } : refused(r?.error ?? 'server');
+    },
+    /** The gates a take passes before the book is asked, as a refusal `{ ok: false, error, text }` - or null: it may go. Synchronous, so a press is answered in the frame it is made. */
+    takeGate(item, count = null) {
+      if (!door.view() || door.slotOf(item) == null) return refused('guild-vault-empty');
+      if (!door.reach()) return refused('vault-reach');
+      if (door.busy()) return refused('vault-busy');
+      if (!door.mine(item)) {
+        const st = door.standing();
+        if (st?.level !== 'withdraw') return refused('guild-vault-rank');
+        if (!vaultMayTake(st, Number(st.taken ?? 0))) return refused('guild-vault-limit');
+      }
+      const n = count ?? stackOf(item);
+      return !Number.isSafeInteger(n) || n < 1 || n > stackOf(item) ? refused('bad-vault-count') : null;
+    },
+    /**
+     * A PIECE OF THE PACK PUT IN: `count` of its stack (all of it where absent). The reach, busy, the standing (a member
+     * who puts in), the law of the piece (vaultPutRefusal), a free slot - in that order - then the book's vaultPut, which takes
+     * the piece out of the pack at once and puts it back on a refusal. `{ ok, error?, text? }`.
+     */
+    async put(item, count = null) {
+      const b = bookNow();
+      const no = door.putGate(item, count);
+      if (no || !b) return no ?? refused('guild-vault-empty');
+      const stack = stackOf(item);
+      const r = await b.vaultPut(item, (count ?? stack) === stack ? null : count);
+      return r?.ok ? { ok: true } : refused(r?.error ?? 'server');
+    },
+    /** The gates a put passes (take's twin): reach, busy, a shelf read, the standing, the piece's law, a free slot, the count. */
+    putGate(item, count = null) {
+      if (!bookNow() || !door.shown()) return refused('guild-vault-empty');
+      if (!door.reach()) return refused('vault-reach');
+      if (door.busy()) return refused('vault-busy');
+      if (!door.view()) return refused('guild-vault-empty');
+      if (!door.mayPut()) return refused('guild-vault-rank');
+      const why = door.putRefusal(item);
+      if (why) return refused('vault-goods', why);
+      if (door.slots().used >= door.slots().max) return refused('guild-vault-full');
+      const n = count ?? stackOf(item);
+      return !Number.isSafeInteger(n) || n < 1 || n > stackOf(item) ? refused('bad-vault-count') : null;
+    },
   };
   return door;
 }

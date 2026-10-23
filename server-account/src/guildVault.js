@@ -61,6 +61,8 @@ const standingOf = (m) => vaultStanding(Number(m.rank), m.vault_level == null ? 
 const takenToday = (m, nowS) => (Number(m.vault_day) === Math.floor(nowS / DAY_S) ? Number(m.vault_taken ?? 0) : 0);
 /** A piece's name as the vault's lines say it: its own, bounded. */
 const pieceName = (rec) => String(wagonItemName(rec) ?? rec?.name ?? 'an item').slice(0, 64);   // WAGONS2 (FINAL AUDIT): a Caravan's row and its log line said "Small Cart" (its record's name)
+/** GUILD-PANE: whether a vault row is `character`'s own deposit - put in by that account playing that character. */
+const ownDeposit = (/** @type {any} */ row, /** @type {string} */ playerId, /** @type {any} */ character) => !!row && String(row.dep_player) === String(playerId) && row.dep_char === character;
 /** Whether the guild holds a hall (its cupboards add the vault's second shelves). */
 const holdsHall = async (db, gid) => !!(await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?').bind(gid).first());
 /** AUDIT2 GUILD2 S3: the vault's bound as the batch reads it (`?1` the guild) - the shelves, and the hall's while it holds
@@ -76,7 +78,7 @@ export async function vaultOf({ db, nowS }, player, { character } = {}) {
   const a = await guildActorOf(db, player, character);
   if ('error' in a) return a;
   const gid = a.me.guild_id;
-  const { results: rows = [] } = await db.prepare('SELECT slot, rec, name, count, dep_name, at FROM guild_vault WHERE guild_id = ? ORDER BY slot').bind(gid).all();
+  const { results: rows = [] } = await db.prepare('SELECT slot, rec, name, count, dep_name, dep_player, dep_char, at FROM guild_vault WHERE guild_id = ? ORDER BY slot').bind(gid).all();
   const { results: log = [] } = await db.prepare('SELECT at, who, kind, name, count FROM guild_vault_log WHERE guild_id = ? ORDER BY seq DESC LIMIT ?').bind(gid, GUILD_VAULT_LOG_SHOWN).all();
   const me = await db.prepare('SELECT * FROM guild_members WHERE rowid = ?').bind(a.me.rid).first();
   const parse = (/** @type {string} */ t) => { try { return JSON.parse(t); } catch { return null; } };
@@ -84,7 +86,8 @@ export async function vaultOf({ db, nowS }, player, { character } = {}) {
     ok: true,
     vault: {
       max: guildVaultSlots(await holdsHall(db, gid)),
-      items: rows.map((r) => ({ slot: Number(r.slot), rec: parse(r.rec), name: r.name, count: Number(r.count), by: r.dep_name, at: Number(r.at) })),
+      // GUILD-PANE: `mine` - the reader's own deposit (the depositor's account AND character), which its depositor takes back at any standing
+      items: rows.map((r) => ({ slot: Number(r.slot), rec: parse(r.rec), name: r.name, count: Number(r.count), by: r.dep_name, at: Number(r.at), mine: ownDeposit(r, player.id, character) })),
       log: log.map((l) => ({ at: Number(l.at), who: l.who, kind: l.kind, name: l.name, count: Number(l.count) })),
       me: { ...standingOf(me ?? a.me), taken: takenToday(me ?? a.me, nowS) },
     },
@@ -166,7 +169,9 @@ export async function vaultPut(ctx, player, { character, realm = null, pick, ite
 /**
  * TAKE A PIECE OUT: `{ character, realm, slot, count, at }` - the slot's piece, or `count` of its stack, into the taker's
  * record; `at` when the slot was read (the client's view), so a slot emptied and filled again under it is never the one
- * taken. The member's standing must allow it and its day's limit hold. Refusals: `guild-vault-rank`, `guild-vault-limit`,
+ * taken. The member's standing must allow it and its day's limit hold - unless the piece is the taker's OWN deposit
+ * (GUILD-PANE, Travis: "Yes" at no access, "Never counts" against a withdrawer's day): that comes back to any member still
+ * in the guild, at any standing, and counts nothing. Refusals: `guild-vault-rank`, `guild-vault-limit`,
  * `guild-vault-empty`, `guild-vault-moved`, and the realm's own.
  * @param {any} ctx
  */
@@ -181,10 +186,16 @@ export async function vaultTake(ctx, player, { character, realm = null, slot, co
   const gid = a.me.guild_id;
   const me = await db.prepare('SELECT * FROM guild_members WHERE rowid = ?').bind(a.me.rid).first();
   const standing = standingOf(me ?? a.me);
-  if (standing.level !== 'withdraw') return { error: 'guild-vault-rank' };
-  if (!vaultMayTake(standing, takenToday(me ?? a.me, nowS))) return { error: 'guild-vault-limit' };
-  if (!Number.isSafeInteger(slot) || slot < 0 || slot >= 100) return { error: 'bad-vault-slot' };
-  const row = await db.prepare('SELECT * FROM guild_vault WHERE guild_id = ? AND slot = ?').bind(gid, slot).first();
+  const slotOk = Number.isSafeInteger(slot) && slot >= 0 && slot < 100;
+  // GUILD-PANE: the slot is read FIRST - whether the piece is the taker's own decides which law the take is under. A slot
+  // that is not one, or is empty, is under the standing's law as it always was (the rank's refusal before the slot's)
+  const row = slotOk ? await db.prepare('SELECT * FROM guild_vault WHERE guild_id = ? AND slot = ?').bind(gid, slot).first() : null;
+  const own = ownDeposit(row, player.id, character);
+  if (!own) {
+    if (standing.level !== 'withdraw') return { error: 'guild-vault-rank' };
+    if (!vaultMayTake(standing, takenToday(me ?? a.me, nowS))) return { error: 'guild-vault-limit' };
+  }
+  if (!slotOk) return { error: 'bad-vault-slot' };
   if (!row || (at != null && Number(row.at) !== at)) return { error: row ? 'guild-vault-moved' : 'guild-vault-empty' };
   const have = Number(row.count);
   const n = count == null ? have : count;
@@ -210,14 +221,23 @@ export async function vaultTake(ctx, player, { character, realm = null, slot, co
       // the slot, only as it was read - cleared, or its stack cut. AUDIT GUILD2 G1: and holding the very piece read - a
       // slot emptied and filled again in the same second, with a stack of the same count, kept its `at` and its count, and
       // the taker was given the piece it saw while the vault lost the one put in after
+      // GUILD-PANE: and, for an own-back, still the taker's own deposit - a slot emptied and filled again by another member with
+      // the very same piece, in the same second, is never the one taken back (?8 and ?9: the depositor's account and character)
       rest
-        ? db.prepare('UPDATE guild_vault SET rec = ?4, count = ?5 WHERE guild_id = ?1 AND slot = ?2 AND at = ?3 AND count = ?6 AND rec = ?7').bind(gid, slot, Number(row.at), JSON.stringify(rest), left, have, row.rec)
-        : db.prepare('DELETE FROM guild_vault WHERE guild_id = ?1 AND slot = ?2 AND at = ?3 AND count = ?4 AND rec = ?5').bind(gid, slot, Number(row.at), have, row.rec),
+        ? db.prepare(`UPDATE guild_vault SET rec = ?4, count = ?5 WHERE guild_id = ?1 AND slot = ?2 AND at = ?3 AND count = ?6 AND rec = ?7${own ? ' AND dep_player = ?8 AND dep_char = ?9' : ''}`)
+          .bind(...[gid, slot, Number(row.at), JSON.stringify(rest), left, have, row.rec], ...(own ? [player.id, character] : []))
+        : db.prepare(`DELETE FROM guild_vault WHERE guild_id = ?1 AND slot = ?2 AND at = ?3 AND count = ?4 AND rec = ?5${own ? ' AND dep_player = ?6 AND dep_char = ?7' : ''}`)
+          .bind(...[gid, slot, Number(row.at), have, row.rec], ...(own ? [player.id, character] : [])),
       mustChange(db),
       // THE DAY'S COUNT is the decision: a take past the limit moves nothing (a second tab racing the last take). AUDIT
       // GUILD2 G4: and the member's standing as it was read - a guildmaster's revoke, or a demotion, that lands between the
       // read and this batch refuses the take (the limit bound here is the standing read; a standing moved is not it)
-      db.prepare(`UPDATE guild_members SET vault_taken = CASE WHEN vault_day = ?3 THEN vault_taken + 1 ELSE 1 END, vault_day = ?3
+      // GUILD-PANE: an own-back counts nothing and ignores the standing - it asks only that the member still stands in the
+      // guild. The guard sets a column to itself (SQLite's changes() counts the matched row, D1's meta.changes with it), so a
+      // member removed between the read and the batch changes no row and mustChange refuses the whole batch
+      own
+        ? db.prepare('UPDATE guild_members SET vault_day = vault_day WHERE rowid = ?1 AND guild_id = ?2').bind(a.me.rid, gid)
+        : db.prepare(`UPDATE guild_members SET vault_taken = CASE WHEN vault_day = ?3 THEN vault_taken + 1 ELSE 1 END, vault_day = ?3
         WHERE rowid = ?1 AND guild_id = ?2 AND (?4 = 0 OR (CASE WHEN vault_day = ?3 THEN vault_taken ELSE 0 END) < ?4)
           AND rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7`).bind(a.me.rid, gid, day, limit, Number(me?.rank ?? a.me.rank), me?.vault_level ?? null, Number(me?.vault_limit ?? 0)),
       mustChange(db),
@@ -228,7 +248,9 @@ export async function vaultTake(ctx, player, { character, realm = null, slot, co
     const moved = await recordMovedOf(db, player.id, side.at);
     if (moved) return moved;
     const again = await db.prepare('SELECT * FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(a.me.rid, gid).first();
-    if (!again || standingOf(again).level !== 'withdraw') return { error: 'guild-vault-rank' };   // AUDIT GUILD2 G4
+    if (!again) return { error: 'guild-vault-rank' };   // no longer a member: an own-back's only guard
+    if (own) return { error: 'guild-vault-moved' };   // GUILD-PANE: still a member, so the slot is what moved - it is no longer this member's piece, or no piece
+    if (standingOf(again).level !== 'withdraw') return { error: 'guild-vault-rank' };   // AUDIT GUILD2 G4
     if (!vaultMayTake(standingOf(again), takenToday(again, nowS))) return { error: 'guild-vault-limit' };
     return { error: 'guild-vault-moved' };
   }

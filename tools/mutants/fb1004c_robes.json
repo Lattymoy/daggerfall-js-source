@@ -30,7 +30,7 @@
   {
     "name": "ROBES-quickact-no-click",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "{ sendQuestItemClick(item, deps.getQuest ?? null); take(item); return true; }",
+    "old": "{ if (remote?.kind !== 'vault') sendQuestItemClick(item, deps.getQuest ?? null); take(item); return true; }",
     "new": "{ take(item); return true; }",
     "tests": [
       "test/systems/fb1004c_robes.test.js"

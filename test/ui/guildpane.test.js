@@ -249,7 +249,7 @@ test('GUILD-PANE 1 THE DOOR: shown for a guild, a realm character playing, onlin
   assert.equal(door.slotOf(third[1]), slot.slot);
   const slots = door.slots();
   assert.deepEqual(slots, { used: 3, max: GUILD_VAULT_SLOTS });
-  assert.deepEqual(door.standing(), { level: 'withdraw', limit: 0, granted: false, taken: 1 }, 'this member\'s standing, with the one take counted');
+  assert.deepEqual(door.standing(), { level: 'withdraw', limit: 0, granted: false, taken: 0 }, 'this member\'s standing - the guildmaster took her own arrows back, which counts nothing');
   assert.equal(door.reach(), true);
   r.state.reach = false;
   assert.equal(door.reach(), false);
@@ -732,7 +732,7 @@ test('GUILD-PANE 2 TAKE: a click on a vault row takes the whole stack - one act 
       assert.deepEqual(r.gate.calls, ['take'], 'one act');
       assert.deepEqual([r.entity.items[0].name, r.entity.items[0].stackCount], ['Arrow', 20], 'the whole stack');
       assert.equal(remoteRows(host).some((row) => /Arrow/.test(named(row))), false, 'off the shelf');
-      assert.deepEqual(s.record(s.gm).items.map((i) => [i.name, i.stackCount]), [['Arrow', 20]], 'and in the record the service wrote');
+      assert.equal(s.record(s.gm).items.filter((i) => i.name === 'Arrow').reduce((n, i) => n + i.stackCount, 0), 40, 'and in the record the service wrote: the twenty beside the twenty she kept');
       assert.equal(host.querySelector('.packtip'), null, 'no card left up');
     });
   });
@@ -759,7 +759,7 @@ test('GUILD-PANE 2 THE HOW-MANY FIELD: Control-click opens a vault piece\'s card
       again.querySelectorAll('.act').find((b) => b.textContent === 'Take').onclick();
       assert.ok(await until(() => r.entity.items.length === 1), 'five arrive');
       assert.deepEqual([r.entity.items[0].stackCount, r.gate.calls], [5, ['take']]);
-      assert.deepEqual(r.book.vaultNow().items.filter((x) => x.name === 'Arrow').map((x) => x.count), [15], 'fifteen stay');
+      assert.ok(await until(() => r.book.vaultNow().items.filter((x) => x.name === 'Arrow').map((x) => x.count).join() === '15'), 'fifteen stay');
     });
     // the other way: a stack on the pack's own card
     const m = await rig(s, s.member, { items: [BLADE, ARROWS(10)] });
@@ -773,7 +773,7 @@ test('GUILD-PANE 2 THE HOW-MANY FIELD: Control-click opens a vault piece\'s card
       tip.querySelectorAll('.act').find((b) => /^Put in vault/.test(b.textContent)).onclick();
       assert.ok(await until(() => m.gate.calls.includes('put') && m.entity.items.find((i) => i.name === 'Arrow')?.stackCount === 6), 'four go in');
       assert.deepEqual(m.gate.calls, ['put']);
-      assert.equal(m.book.vaultNow().items.some((x) => x.name === 'Arrow' && x.count === 4 && x.mine), true, 'four on the shelf, hers');
+      assert.ok(await until(() => m.book.vaultNow()?.items.some((x) => x.name === 'Arrow' && x.count === 4 && x.mine)), 'four on the shelf, hers');
     });
   });
 });
@@ -798,7 +798,7 @@ test('GUILD-PANE 2 PUT: shift-click puts the whole stack in the vault and a drag
       dom.win.fire('pointerup', { pointerId: 7, clientX: 80, clientY: 80 });
       assert.ok(await until(() => m.gate.calls.length === 2 && m.entity.items.length === 0), 'the blade goes');
       assert.deepEqual(m.gate.calls, ['put', 'put']);
-      assert.equal(remoteRows(host).length, 5, 'five on the shelf');
+      assert.ok(await until(() => remoteRows(host).length === 5), 'five on the shelf');
     });
   });
 });
@@ -819,9 +819,8 @@ test('GUILD-PANE 2 BUSY: while an act is out the rows draw disabled and a second
       assert.equal(noticeOf(), 'A moment.');
       assert.deepEqual(r.gate.calls, ['take'], 'no second act');
       release();
-      assert.ok(await until(() => r.entity.items.length === 1 && !r.door.busy()));
+      assert.ok(await until(() => r.entity.items.length === 1 && !remoteRows(host).some((row) => row.classList.contains('busy'))), 'enabled again once the answer is drawn');
       assert.deepEqual(r.gate.calls, ['take']);
-      assert.equal(remoteRows(host).some((row) => row.classList.contains('busy')), false, 'enabled again');
     });
   });
 });
@@ -842,7 +841,7 @@ test('GUILD-PANE 2 WORDS OF A REFUSAL: a member who may not take is told the ran
     await pane(dom, w, async ({ host }) => {
       await openVault(host, w);
       vaultNamed(host, /Arrow/).onclick({});
-      assert.ok(await until(() => w.entity.items.length === 1));
+      assert.ok(await until(() => w.entity.items.length === 1 && w.book.vaultNow()?.me.taken === 1), 'hers, and the day counted on the read that follows');
       vaultNamed(host, /Longsword/).onclick({});
       assert.equal(noticeOf(), accountRefusalText('guild-vault-limit'), 'the second is past her one a day');
       assert.deepEqual(w.gate.calls, ['take']);

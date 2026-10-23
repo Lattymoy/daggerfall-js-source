@@ -1387,7 +1387,7 @@ test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was 
   // REWARD tray alone keeps the two-step: a single click must not
   // claim G6's one-shot choice.
   const src = read('src/ui/enhanced/enhancedInventory.js');
-  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward' && remote\.kind !== 'vault'\) \{ take\(item\); return; \}/,   // PIN MOVED (GUILD-PANE): and the vault's click only shows its card
+  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward' && !\(remote\.kind === 'vault' && \(e\?\.ctrlKey \|\| e\?\.metaKey\)\)\) \{ take\(item\); return; \}/,   // PIN MOVED (GUILD-PANE): and the vault's click only shows its card
     'the remote click takes for container, ground and wagon');
   // ...and it happens AFTER the quest look is counted (AUDIT 26's law:
   // looking at a quest item in a pile counts, taking it doubly so) and
