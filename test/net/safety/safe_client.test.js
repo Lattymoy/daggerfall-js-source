@@ -523,6 +523,24 @@ test('AUDIT SAFE CLIENT-2 + RELAY-3 THE PAGE IS BANNED: the hub says the ban\'s 
   assert.match(log.tab(log.active).messages.at(-1).text, /Your ban was lifted/);
 });
 
+test('STAFF-PANEL5-CUT-FIX A STAFF MEMBER CUT OFF: the hub hands the cut\'s order (`law`) - read as its own kind, carried to every room by the ban\'s door (where a room closes the account\'s sockets it postdates, server/src/index.js `_banFrame`), and the token the minter holds let go, so no room opens on one from before the cut; nothing latched, nothing said (mutants: the kind unread; carried by the mute\'s door; the token kept)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const now = () => 1_000_000;
+  const hub = welcomedSession(FakeWS, sockets, CHAT_WORLD_ROOM, { now }), trade = welcomedSession(FakeWS, sockets, 'chat:trade', { now });
+  const log = new ChatLog({ now });
+  let forgot = 0;
+  const host = createChatSafetyHost({ log: () => log, links: () => [hub.s, trade.s], storage: { getItem: () => null }, doc: fakeDocument(), touch: false, register: () => () => {}, win: fakeWindow(), minter: () => ({ forget() { forgot++; } }), now });
+  await host.start();
+  const order = orderOf({ o: 'staffcut', s: 'acct-me', i: 1, e: 61 });
+  assert.equal(orderKindOf(order), 'staffcut');
+  const said = log.tab(log.active)?.messages.length ?? 0;
+  hub.ws.receive({ t: 'law', order });
+  assert.deepEqual(JSON.parse(trade.ws.sent.at(-1)), { t: 'ban', order }, 'carried by the ban\'s door');
+  assert.equal(forgot, 1, 'the token from before the cut let go');
+  assert.deepEqual([hub.s.barred, trade.s.barred], [false, false], 'nothing latched: each room closes what it must');
+  assert.equal(log.tab(log.active)?.messages.length ?? 0, said, 'nothing said');
+});
+
 test('AUDIT SAFE CLIENT-2 THE MINTER LETS GO OF A TOKEN MINTED BEFORE THE BAN: the host\'s word (`forget`), and a mint the service refuses as `banned` - no room is handed the old token after, though TOKEN_REUSE_MS has not run (mutants: forget a no-op; a refused mint keeping the held token)', async () => {
   const storage = signedIn();
   let banned = false;

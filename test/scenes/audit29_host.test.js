@@ -282,7 +282,7 @@ test('AUDIT 29: the hosts by source - the seams the audit moved', () => {
   assert.ok(m.indexOf('if (e.profActEnded) return;') < m.indexOf('// U43: THE ONE DISPATCH.'));
   // D2: the press alone gated underground; the rig swings nothing behind the tool; the street casts no spell mid-act
   assert.match(d, /if \(held && opts\.profActing\?\.\(\)\) return;/);
-  assert.match(rigSrc, /const canAttack = [^\n]*&& !actTool\(\);/);
+  assert.match(rigSrc, /const canAttack = [^\n]*&& !actTool\(\) && !pelletsOwed\(\);/);   // PIN MOVED (AUDIT PISTOL-PORT A5): the gate still holds the tool off, and now a shot with no Pellet left for it
   assert.match(w, /if \(_act\.cast && (?:!_holdFire && )?!gatherHost\?\.acting\(\)\) magic\.interceptAttack\(true\);/);
   // C2 + D3: a dungeon vein on Interact alone, before QG1
   assert.match(m, /\(mode === 'dungeon' \? tryExitDungeon : tryExit\)\(\{ pressCast: _act\.pressCast, interact: useEdge, actClick \}\)/);   // PIN MOVED (AUDIT 2026-10-01 part four, CLICK-LIFT): and the act's click to its release

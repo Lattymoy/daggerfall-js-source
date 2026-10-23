@@ -193,8 +193,9 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
   const carry = (order) => {
     const kind = orderKindOf(order);
     if (!kind) return 0;
+    if (kind === 'staffcut') try { minter()?.forget?.(); } catch { /* each room's own close holds without it */ }   // STAFF-PANEL5-CUT-FIX: a staff cut - the token held from before it opens no room more
     let n = 0;
-    for (const l of allLinks()) if (kind === 'ban' ? l?.sendBanOrder?.(order) : l?.sendMuteOrder?.(order)) n++;
+    for (const l of allLinks()) if (kind === 'mute' ? l?.sendMuteOrder?.(order) : l?.sendBanOrder?.(order)) n++;
     return n;
   };
   const adoptList = (list) => {
@@ -437,9 +438,13 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
     },
     /** AUDIT SAFE CLIENT-13: a room the host made after the chat started (the arena's hall and its watching sockets,
      *  scenes/arena/arenaOnline.js through world.js makeHall) - wired, carried to and left on a ban as the chat's own are.
+     *  STAFF-PANEL5-FREEZE-FIX (round two, a review: every room but the hub's is a lease room, so a new hall link that held
+     *  no lease was heard in nothing with the door on - its one queue word lost while the hall said queued): it takes the
+     *  page's newest lease at once, as the sailing cabin's lane does (net/roomLease.js), and the hub's next as every link.
      *  Answers the link. */
     adoptLink(link) {
       if (!link) return link;
+      for (const x of links()) link.leaseFrom?.(x);
       extra.add(link);
       wire(link);
       return link;

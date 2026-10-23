@@ -26,14 +26,14 @@
   Controls: click fires (and asks for the pointer lock - the Inertia
   module needs a look to lag); under "per hand" the right button fires
   the left pistol. Space fires too, hold either for auto. 1/2/3/4 pick
-  the trigger (single, alternate, volley, per hand). W walks, Shift
-  runs, C crouches, S stops. Arrows scrub frames while idle, G shows the
+  the trigger (single, alternate, volley, per hand). W walks, A and D
+  strafe, Shift runs, C crouches, J jumps, S stops. Arrows scrub frames while idle, G shows the
   boxes, Tab hides the panels, Esc releases the mouse.
 -->
 <style>
   html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
     font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
-  canvas { display:block; width:100vw; height:100vh; cursor:crosshair; }
+  canvas { display:block; width:100vw; height:100vh; cursor:crosshair; image-rendering:pixelated; }
   .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.82);
     border:1px solid #55503f; padding:10px 12px; width:min(330px,44vw);
     max-height:calc(100vh - 40px); overflow:auto; }
@@ -121,6 +121,7 @@
 
   <h2>Movement</h2>
   <label><span>walking</span><input id="walk" type="checkbox"><span class="v">W/S</span></label>
+  <label><span>strafe</span><input id="strafe" type="range" min="-1" max="1" step="1" value="0"><span class="v" id="vstrafe"></span></label>
   <label><span>running</span><input id="run" type="checkbox"><span class="v">Shift</span></label>
   <label><span>crouching</span><input id="crouch" type="checkbox"><span class="v">C</span></label>
   <label><span>SPD</span><input id="spd" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vspd"></span></label>
@@ -137,39 +138,20 @@
 
 <script type="module">
 import {
-  PISTOL_STRIP, PISTOL_OPENING, PAIR_TRIGGER, stripCellRect, hardenAlpha, nativeWidthPct, createPair,
-  ALIGN, contentBox, unionBox, gunFrameRect, muzzleLight, guardStep, guardOffset,
-  createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
-  SFX_CANDIDATES, createSfxPlayer,
+  PISTOL_STRIP, stripCellRect, hardenAlpha, createPair,
+  contentBox, unionBox, muzzleLight, createScreenShake, SFX_CANDIDATES, createSfxPlayer,
+  createPistolHands, pistolHandFired, pistolDrawOrder,
+  pistolPageState, pistolPageStep, pistolPageRect, pistolJumpClimb,   // AUDIT PISTOL-PORT D7: the page's wiring, a module the pins run
 } from '/src/tools/pistolLab.js';
+import { lookScale } from '/src/ui/lookSettings.js';   // AUDIT PISTOL-PORT B2: the game's own mouse look
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
-const O = PISTOL_OPENING;
 
-// THE OWNER'S PICKS (PISTOL-LAB 2): the lists are the gun lab's, and a
-// pick a list does not offer is an error, never a quiet fall to its head.
-const pickOf = (slot, name) => {
-  if (!SFX_CANDIDATES[slot].some(([n]) => n === name)) throw new Error(`no ${slot} clip ${name}`);
-  return name;
-};
-const W = O.widget;
-const state = {
-  trigger: PAIR_TRIGGER.Alternate, lead: 'R', guard: true,
-  scale: O.scale, offset: O.offset, raise: O.raise,
-  fps: O.fps, cool: O.reloadMs, hit: O.hitFrame, auto: false,
-  kick: O.kick, back: O.back, stiff: O.stiff, damp: O.damp,
-  shake: O.shake, shakeRot: O.shakeRot, shakeFreq: O.shakeFreq, shakeDecay: O.shakeDecay,
-  sfxFire: pickOf('fire', O.sfxFire), sfxOpen: pickOf('reload-open', O.sfxOpen), sfxClose: pickOf('reload-close', O.sfxClose),
-  sfxVol: O.sfxVol, sfxVary: O.sfxVary, sfxOn: true,
-  drop: O.drop, offsetSpeed: W['Offset.Speed'], modOffset: true,
-  modBob: true, bobLength: W['Bob.Length'], bobSizeX: W['Bob.SizeX'], bobSizeY: W['Bob.SizeY'],
-  bobSpeedMove: W['Bob.SpeedMove'], bobSpeedState: W['Bob.SpeedState'], bobShape: W['Bob.Shape'], bobIdle: W['Bob.BobWhileIdle'],
-  modInertia: true, inScale: W['Inertia.Scale'], inSpeed: W['Inertia.Speed'], inFwd: W['Inertia.ForwardDepth'], inFwdSpeed: W['Inertia.ForwardSpeed'],
-  walk: false, run: false, crouch: false, spd: 50,
-  alphaCut: O.alphaCut, light: O.light, room: 0.62, grid: false,
-};
+// THE OWNER'S PICKS (PISTOL-LAB 2) and every opening number: the row's, the page's state built in the lab module (AUDIT
+// PISTOL-PORT D7: pistolLab.js pistolPageState - a pick a list does not offer is an error, never a quiet fall to its head)
+const state = pistolPageState();
 const NUM = {
   scale:1, offset:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
   shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1, sfxVol:1, sfxVary:1,
@@ -236,11 +218,11 @@ stripImg.onerror = () => { $('note').textContent = `art/${PISTOL_STRIP.file} did
 stripImg.src = new URL(`art/${PISTOL_STRIP.file}`, document.baseURI).href;
 
 // ── the pair, a rig, a spring and a guard per hand, one camera ──────
+// PISTOL-PORT: the pair and every hand's state are the GAME'S (combat/gun/pistolPair.js, combat/gun/pistolViewmodel.js) -
+// this page runs the Dwarven Pistolet's own frame, as gun-proto.html runs the Thunderlock's (FIELD-GUN12)
 const pair = createPair({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit });
 const HANDS = ['R', 'L'];
-const rigs = { R: createWidgetRig(), L: createWidgetRig() };
-const recoils = { R: createRecoil(), L: createRecoil() };
-const guards = { R: 0, L: 0 };
+const hands = createPistolHands();
 const shake = createScreenShake();
 
 const sfx = createSfxPlayer();
@@ -253,13 +235,13 @@ globalThis.__pistolLabSfx = SFX_CANDIDATES;
 let scrub = -1;
 let hitFlash = 0;
 let look = [0, 0];
-const LOOK_RADIANS_PER_PX = 0.0025;
+let jumpT = -1;   // AUDIT PISTOL-PORT B1: seconds into a jump, -1 on the ground
 
 const CONTROLS = ['trigger','lead','guard','scale','offset','raise','fps','cool','hit','auto',
   'kick','back','stiff','damp','shake','shakeRot','shakeFreq','shakeDecay','drop','offsetSpeed','modOffset',
   'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
   'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
-  'walk','run','crouch','spd','light','room','grid',
+  'walk','strafe','run','crouch','spd','light','room','grid',
   'sfxFire','sfxOpen','sfxClose','sfxVol','sfxVary','sfxOn'];
 // THE ROW IS THE TRUTH, the markup a copy of it: every control is set
 // from `state` before it is bound, so a slider's `value=` that drifted
@@ -271,22 +253,12 @@ for (const id of [...CONTROLS, 'alphaCut']) {
 for (const id of CONTROLS) bind(id);
 bind('alphaCut', rebuild);
 
-// AUDIT PISTOLET B2: past Diverse Weapons' preset, as the game lays the Pistolet's own tuning (gunWidgetSettings' `preset`)
-const widgetSettings = () => labWidgetSettings({
-  'Modules.Offset': state.modOffset, 'Modules.Bob': state.modBob, 'Modules.Inertia': state.modInertia,
-  'Offset.Speed': state.offsetSpeed,
-  'Bob.Length': state.bobLength, 'Bob.SizeX': state.bobSizeX, 'Bob.SizeY': state.bobSizeY,
-  'Bob.SpeedMove': state.bobSpeedMove, 'Bob.SpeedState': state.bobSpeedState,
-  'Bob.Shape': state.bobShape, 'Bob.BobWhileIdle': state.bobIdle,
-  'Inertia.Scale': state.inScale, 'Inertia.Speed': state.inSpeed,
-  'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
-}, null, { preset: false });
 
 /** Every shot, whichever door it came through: the hand's own spring,
  *  one punch of the camera's trauma each (a volley is two), the voice. */
-const shot = (hands) => {
-  for (const h of hands) { recoils[h].punch(state.kick); shake.punch(); sfx.play(state.sfxFire); }
-  return hands;
+const shot = (fired) => {
+  for (const h of fired) { pistolHandFired(hands, h, state.kick); shake.punch(); sfx.play(state.sfxFire); }
+  return fired;
 };
 let held = null;   // the button held, for auto
 const press = (button) => { held = button; scrub = -1; shot(pair.pull(button)); };
@@ -300,7 +272,10 @@ canvas.addEventListener('mousedown', (e) => {
 addEventListener('mouseup', release);
 addEventListener('mousemove', (e) => {
   if (document.pointerLockElement !== canvas) return;
-  look = [look[0] + e.movementX * LOOK_RADIANS_PER_PX, look[1] - e.movementY * LOOK_RADIANS_PER_PX];
+  // AUDIT PISTOL-PORT B2: the camera turns as the GAME's does - its MouseLookSensitivity (2.0 out of the box), not a
+  // fixed 1.0 - so a flick sways the pistols here as far as it does in the game (the Inertia follows the turn)
+  const k = lookScale();
+  look = [look[0] + e.movementX * k, look[1] - e.movementY * k];
 });
 document.addEventListener('pointerlockchange', () => {
   $('lockHint').style.display = document.pointerLockElement === canvas ? 'none' : '';
@@ -310,7 +285,10 @@ const setPick = (id, v) => { state[id] = v; $(id).value = v; };
 addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) press(0); }
   if (e.code === 'KeyW') setTick('walk', true);
-  if (e.code === 'KeyS') setTick('walk', false);
+  if (e.code === 'KeyS') { setTick('walk', false); setPick('strafe', 0); }
+  if (e.code === 'KeyA') setPick('strafe', state.strafe === -1 ? 0 : -1);
+  if (e.code === 'KeyD') setPick('strafe', state.strafe === 1 ? 0 : 1);
+  if (e.code === 'KeyJ' && jumpT < 0) jumpT = 0;
   if (e.code === 'KeyC') setTick('crouch', !state.crouch);
   if (e.shiftKey) setTick('run', true);
   const triggerKey = { Digit1: 'single', Digit2: 'alternate', Digit3: 'volley', Digit4: 'perHand' }[e.code];
@@ -371,12 +349,12 @@ function drawCrosshair() {
 
 // ── the frame ────────────────────────────────────────────────────────
 let last = performance.now();
-const reloadSfx = { R: { open: false, close: false }, L: { open: false, close: false } };
 
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
-  const dpr = Math.min(2, devicePixelRatio || 1);
-  const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+  // AUDIT PISTOL-PORT B2: the canvas in CSS pixels, as the game's is (render/renderer.js beginFrame) - Bob and Inertia
+  // move in pixels, so a canvas of device pixels showed a high-DPI screen half the sway the game does
+  const w = innerWidth, h = innerHeight;
   if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
 
   pair.trigger = state.trigger; pair.lead = state.lead;
@@ -395,27 +373,22 @@ function frame(now) {
 
   const drawn = pair.hands();
   const dual = drawn.length === 2;
-  const per = {};
-  for (const hd of HANDS) {
-    const m = pair[hd];
-    // THE RELOAD'S TWO ENDS, per hand (gun-proto.html's timing)
-    const rs = reloadSfx[hd];
-    if (m.state === 'Cooling' && !rs.open) { rs.open = true; sfx.play(state.sfxOpen, 0.9); }
-    if (m.state === 'Cooling' && !rs.close && m.cooledMs >= Math.max(0, state.cool - 420)) { rs.close = true; sfx.play(state.sfxClose, 0.95); }
-    if (m.state !== 'Cooling') { rs.open = false; rs.close = false; }
-    const rc = recoils[hd];
-    rc.stiff = state.stiff; rc.damp = state.damp; rc.back = state.back;
-    // THE GUARD (handsLaw): while the OTHER pistol fires and this one
-    // does not, this one lowers a share of its own drawn height - a pair
-    // only, and never in a volley, where both hands are the striking hand
-    const other = pair[hd === 'R' ? 'L' : 'R'];
-    guards[hd] = guardStep(guards[hd], dual && state.guard && other.state === 'Firing' && m.state !== 'Firing', dt);
-    per[hd] = { kick: rc.step(dt), frame: m.state === 'Firing' ? m.frame : (scrub >= 0 ? scrub : 0) };
-  }
+  // THE RELOAD'S TWO ENDS, per hand, and THE HANDS' FRAME - each hand's spring, its guard (handsLaw: while the OTHER pistol
+  // fires and this one does not, a pair only, never in a volley), its picture, and its rig: the mod's frame, one rig per
+  // hand on one clock, the left stepped flipped, which is Two-Hands' two sway rules for free - Bob OUTWARD, Inertia the
+  // screen's direction. The game's own (pistolViewmodel.js); this page only says what its panel holds
+  // (pistolLab.js pistolPageStep). AUDIT PISTOL-PORT B1: a jump as the game's motor makes one (pistolJumpClimb).
+  const vertical = jumpT >= 0 ? pistolJumpClimb(jumpT) : null;
+  if (vertical === null) jumpT = -1; else jumpT += dt;
+  pistolPageStep(hands, pair, state, dt, {
+    drawn, scrub, look, cursorActive: document.pointerLockElement !== canvas, screen: { width: canvas.width, height: canvas.height },
+    vertical, play: (clip, gain) => sfx.play(clip, gain),
+  });
 
-  const glow = Math.max(...drawn.map((hd) => muzzleLight(pair[hd].state, per[hd].frame)));
+  const glow = Math.max(...drawn.map((hd) => muzzleLight(pair[hd].state, hands[hd].frame)));
   const lit = state.room * (1 + glow * state.light * 1.9);
   bobWorld = bobWorld * 0.86 - look[0] * canvas.width * 0.18;
+  look = [0, 0];
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = false;
@@ -430,40 +403,17 @@ function frame(now) {
   ctx.restore();
   drawCrosshair();
 
-  // THE MOD'S FRAME, one rig per hand on one clock. The left rig runs
-  // flipped, which is Two-Hands' two sway rules for free: Bob goes
-  // OUTWARD (the mod's flipped sprite takes it mirrored) and Inertia
-  // keeps the screen's direction (inertiaStep pre-signs it for a flip).
-  const s = widgetSettings();
-  const motion = labMotion({ walking: state.walk, running: state.run, crouching: state.crouch, liveSpeed: state.spd });
   const shown = {};
-  for (const hd of HANDS) {
-    widgetRigStep(rigs[hd], s, dt, {
-      screenRect: { width: canvas.width, height: canvas.height }, motion, look,
-      flip: hd === 'L', idle: pair[hd].state === 'Idle',
-      shown: pair[hd].state !== 'Cooling', hiddenTarget: [0, state.drop], liveSpeed: state.spd,
-      cursorActive: document.pointerLockElement !== canvas,
-    });
-  }
-  look = [0, 0];
-
   if (art) {
-    const widthPct = nativeWidthPct(art.anchor.w, state.scale);
-    // the striking hand over the other (Two-Hands)
-    for (const hd of pair.order) {
-      if (!drawn.includes(hd)) continue;
+    // the hand that fired last over the other (Two-Hands)
+    for (const hd of pistolDrawOrder(pair.order, drawn)) {
       const flip = hd === 'L';
-      const [, guardY] = guardOffset(guards[hd], flip ? 'left' : 'right', { height: art.anchor.h * state.scale });
-      const k = per[hd].kick;
-      // AUDIT 68 S08's law: the GAME's frame, called - never restated here
-      const { rect, anchorRect } = gunFrameRect({
-        canvasW: canvas.width, canvasH: canvas.height, anchor: art.anchor, union: art.union,
-        rig: rigs[hd], kick: { x: k.x, y: k.y + guardY }, flip,
-        widthPct, align: ALIGN.Right, offset: state.offset, raise: state.raise,
-      });
+      // AUDIT 68 S08's law: the GAME's frame, called - never restated here (pistolViewmodel.js pistolHandRect, at the
+      // panel's pose: pistolLab.js pistolPageRect)
+      const { rect, anchorRect } = pistolPageRect(hands, hd, state, art, canvas);
       ctx.save();
       if (flip) { ctx.translate(rect.x + rect.w / 2, 0); ctx.scale(-1, 1); ctx.translate(-(rect.x + rect.w / 2), 0); }
-      ctx.drawImage(art.frames[per[hd].frame], rect.x, rect.y, rect.w, rect.h);
+      ctx.drawImage(art.frames[hands[hd].frame], rect.x, rect.y, rect.w, rect.h);
       ctx.restore();
       if (state.grid) {
         ctx.strokeStyle = 'rgba(192,138,62,0.9)'; ctx.lineWidth = 1;
@@ -477,10 +427,10 @@ function frame(now) {
 
   // The probe's window on the frame (tools/pistolProtoProbe.mjs).
   const hand = (hd) => ({
-    drawn: drawn.includes(hd), state: pair[hd].state, frame: per[hd].frame, shots: pair[hd].shots,
-    reloading: pair[hd].state === 'Cooling', guard: guards[hd], kick: per[hd].kick,
+    drawn: drawn.includes(hd), state: pair[hd].state, frame: hands[hd].frame, shots: pair[hd].shots,
+    reloading: pair[hd].state === 'Cooling', guard: hands[hd].guard, kick: hands[hd].kick,
     rect: shown[hd]?.rect ?? null, anchorRect: shown[hd]?.anchorRect ?? null,
-    channels: { position: [...rigs[hd].position], scale: [...rigs[hd].scale], offset: [...rigs[hd].offset] },
+    channels: { position: [...hands[hd].rig.position], scale: [...hands[hd].rig.scale], offset: [...hands[hd].rig.offset] },
   });
   globalThis.__pistolLab = {
     ready: !!art, trigger: pair.trigger, lead: pair.lead, order: [...pair.order], lastShot: pair.lastShot,
@@ -489,7 +439,7 @@ function frame(now) {
   };
 
   const cycle = PISTOL_STRIP.frames / state.fps * 1000 + state.cool;
-  const line = (hd) => `${hd} ${(pair[hd].state === 'Cooling' ? 'RELOAD' : pair[hd].state).padEnd(8)} frame ${per[hd].frame + 1}/${PISTOL_STRIP.frames}  shots ${pair[hd].shots}`;
+  const line = (hd) => `${hd} ${(pair[hd].state === 'Cooling' ? 'RELOAD' : pair[hd].state).padEnd(8)} frame ${hands[hd].frame + 1}/${PISTOL_STRIP.frames}  shots ${pair[hd].shots}`;
   const ls = pair.lastShot;
   $('stat').textContent =
     `${state.trigger}${dual ? `, lead ${state.lead}` : ''}\n` +

@@ -338,8 +338,8 @@
   {
     "name": "AUDIT-SAFE-D11-mod-leaves-case",
     "file": "server-account/src/safety.js",
-    "old": "  } else if (!lift) {\n    // the case modCase shows this actor",
-    "new": "  } else if (false) {\n    // the case modCase shows this actor",
+    "old": "      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone\n      : db.prepare(",
+    "new": "      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone\n      : false && db.prepare(",
     "tests": [
       "test/server/safe_audit.test.js"
     ]

@@ -86,8 +86,9 @@ test('EG-ZM THE TIMERS ROW\'S DOOR (section 20): where the host hands the boards
   // THE PAUSE FACE: a handoff, as the sheet's doors - and a door that opened nothing resumes
   const menu = rd('src/ui/enhanced/enhancedMenu.js');
   // PIN MOVED (AUDIT GROWTH LANE2-3): a Growth face under the window is asked first, then the hand-off as before
-  assert.match(menu, /\nconst timersDoor = \(fn\) => \{\n\s*if \(pauseTab === 'growth' && growthAsks\(\)\) \{ [^\n]*return; \}\n\s*onAction\('handoff'\); if \(!fn\(\)\) onAction\('resume'\);\n\};\n/);
-  assert.match(menu, /timersWindow\(document, \{ read: \(\) => hooks\.timers\?\.\(\{ ask: true \}\) \?\? null, onClose: [^\n]*, door: timersDoor \}\);/);
+  // PIN MOVED (AUDIT SEASON-BOOK S3): the hand-off through its one home, its handler read before the face goes down
+  assert.match(menu, /\nconst timersDoor = \(fn\) => \{\n\s*if \(pauseTab === 'growth' && growthAsks\(\)\) \{ [^\n]*return; \}\n\s*handoff\(fn, \(r\) => !!r\);\n\};\n/);
+  assert.match(menu, /timersWindow\(document, \{ read: \(\) => hooks\.timers\?\.\(\{ ask: true \}\) \?\? null, onClose: [^\n]*, door: timersDoor, focus: timersFocusIn \}\);/);   // PIN MOVED (AUDIT SEASON-BOOK U3): the focus in at its opening alone
 });
 
 test('EG-ZM THE START WINDOW\'S DOOR (section 20): where the host hands the boards\' door, the start window\'s last row is the boards - with keys or with the Rehearsal alone; picked, the list leaves the slot before the boards are opened, and comes back once they close (once, however often their close is told), or at once where none opened; a window ended meanwhile is not opened again (mutants: the row unoffered; the list left in the slot; the window never back; back twice; back after its end)', () => {

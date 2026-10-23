@@ -78,8 +78,8 @@
   {
     "name": "A4-stats-door-never-resumes",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "b.onclick = () => { onAction('handoff'); if (fn() === false) onAction('resume'); };",
-    "new": "b.onclick = () => { onAction('handoff'); fn(); };",
+    "old": "b.onclick = () => { handoff(fn); };",
+    "new": "b.onclick = () => { handoff(fn, () => true); };",
     "tests": [
       "test/ui/enhanced/audit27h.test.js",
       "test/ui/escbook.test.js",

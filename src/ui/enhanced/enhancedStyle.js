@@ -2817,6 +2817,53 @@ ${SUPPORT_MARKS_CSS}
   .px-postwin .pm-item { flex-direction: column; align-items: stretch; }
 }
 @media (max-height: 560px) { .px-win.px-postwin { max-height: calc(100dvh - 20px); } }   /* AUDIT SERVER-POST: a short screen's window, as the timers' */
+/* SEASON-BOOK (the owner: "a new pause menu icon, like we did for the timers and mail. A condensed place to see season
+   related content and descriptions"): THE LAUREL - a wreath beside the envelope (ui/enhanced/enhancedSeason.js; placed as
+   the envelope is - 420px off the edge stands in until it is measured), and its window on the hourglass's own stage
+   (.px-timersstage): a section a clock - its title and countdown, its rows a name, the player's standing and a line on it. */
+.px-seasonmark { position: absolute; top: 12px; right: 420px; z-index: 4; display: flex; align-items: center;
+  min-height: 44px; min-width: 44px; justify-content: center; padding: 0 6px; background: none; border: 0; cursor: pointer; }
+.px-seasonmark:focus-visible { outline: 2px solid #f3cf86; outline-offset: 2px; }
+.px-laurel { display: block; width: 36px; height: 36px; image-rendering: pixelated; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.8));
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'><rect x='2' y='0' width='1' height='1' fill='%23f3cf86'/><rect x='9' y='0' width='1' height='1' fill='%23f3cf86'/><rect x='1' y='1' width='2' height='1' fill='%23f3cf86'/><rect x='3' y='1' width='1' height='1' fill='%23c08a3e'/><rect x='8' y='1' width='1' height='1' fill='%23c08a3e'/><rect x='9' y='1' width='2' height='1' fill='%23f3cf86'/><rect x='0' y='2' width='2' height='1' fill='%23f3cf86'/><rect x='2' y='2' width='1' height='1' fill='%23c08a3e'/><rect x='9' y='2' width='1' height='1' fill='%23c08a3e'/><rect x='10' y='2' width='2' height='1' fill='%23f3cf86'/><rect x='0' y='3' width='1' height='1' fill='%23f3cf86'/><rect x='1' y='3' width='1' height='1' fill='%23c08a3e'/><rect x='2' y='3' width='1' height='1' fill='%23d8cfae'/><rect x='9' y='3' width='1' height='1' fill='%23d8cfae'/><rect x='10' y='3' width='1' height='1' fill='%23c08a3e'/><rect x='11' y='3' width='1' height='1' fill='%23f3cf86'/><rect x='0' y='4' width='2' height='1' fill='%23f3cf86'/><rect x='2' y='4' width='1' height='1' fill='%23c08a3e'/><rect x='9' y='4' width='1' height='1' fill='%23c08a3e'/><rect x='10' y='4' width='2' height='1' fill='%23f3cf86'/><rect x='0' y='5' width='1' height='1' fill='%23f3cf86'/><rect x='1' y='5' width='1' height='1' fill='%23c08a3e'/><rect x='2' y='5' width='1' height='1' fill='%23d8cfae'/><rect x='9' y='5' width='1' height='1' fill='%23d8cfae'/><rect x='10' y='5' width='1' height='1' fill='%23c08a3e'/><rect x='11' y='5' width='1' height='1' fill='%23f3cf86'/><rect x='0' y='6' width='2' height='1' fill='%23f3cf86'/><rect x='2' y='6' width='1' height='1' fill='%23c08a3e'/><rect x='9' y='6' width='1' height='1' fill='%23c08a3e'/><rect x='10' y='6' width='2' height='1' fill='%23f3cf86'/><rect x='1' y='7' width='1' height='1' fill='%23f3cf86'/><rect x='2' y='7' width='1' height='1' fill='%23c08a3e'/><rect x='3' y='7' width='1' height='1' fill='%23d8cfae'/><rect x='8' y='7' width='1' height='1' fill='%23d8cfae'/><rect x='9' y='7' width='1' height='1' fill='%23c08a3e'/><rect x='10' y='7' width='1' height='1' fill='%23f3cf86'/><rect x='1' y='8' width='2' height='1' fill='%23f3cf86'/><rect x='3' y='8' width='2' height='1' fill='%23c08a3e'/><rect x='7' y='8' width='2' height='1' fill='%23c08a3e'/><rect x='9' y='8' width='2' height='1' fill='%23f3cf86'/><rect x='2' y='9' width='2' height='1' fill='%23f3cf86'/><rect x='4' y='9' width='4' height='1' fill='%23c08a3e'/><rect x='8' y='9' width='2' height='1' fill='%23f3cf86'/><rect x='4' y='10' width='4' height='1' fill='%23b8322b'/><rect x='3' y='11' width='2' height='1' fill='%23b8322b'/><rect x='7' y='11' width='2' height='1' fill='%23b8322b'/></svg>") center / contain no-repeat; }
+.px-seasonmark:hover .px-laurel, .px-seasonmark:focus-visible .px-laurel { transform: translateY(-2px); transition: transform 160ms steps(2); }
+.px-win.px-seasonwin { height: auto; max-height: min(700px, 88dvh); width: min(660px, 94vw); background: #0a0c11; }   /* wider than the timers': a row's line on it wraps less */
+.px-win.px-seasonwin .px-body { padding: 20px 24px 22px; overflow-y: auto; }
+.px-seasonwin .sb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.px-seasonwin .sb-title { margin: 0; font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase; color: #efe8d6; }
+.px-seasonwin .sb-empty { margin: 12px 0 0; color: var(--dim); font-size: 13px; }
+.px-seasonwin .sb-section { --sb-accent: #f3cf86; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(192,138,62,0.35); }
+.px-seasonwin .sb-seats { --sb-accent: #c08a3e; } .px-seasonwin .sb-festival { --sb-accent: ${STAR_VIOLET_CSS}; }
+.px-seasonwin .sb-shead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 12px; }   /* AUDIT SEASON-BOOK U7: a narrow screen's clock goes under its title, never squeezes it to a word a line */
+.px-seasonwin .sb-stext { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.px-seasonwin .sb-stitle { margin: 0; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); overflow-wrap: break-word; }
+.px-seasonwin .sb-ssub { font-size: 12px; color: var(--dim); }
+.px-seasonwin .sb-clock { flex: 0 0 auto; margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.px-seasonwin .sb-count { font-size: 18px; color: #f3cf86; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.px-seasonwin .sb-when { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.px-seasonwin .sb-lead { margin: 6px 0 2px; font-size: 12px; line-height: 1.45; color: #cfc6ad; }
+.px-seasonwin .sb-row { display: flex; align-items: center; gap: 12px; padding: 7px 0 7px 14px; position: relative;
+  border-bottom: 1px solid rgba(125,116,96,0.2); }
+.px-seasonwin .sb-row:last-of-type { border-bottom: 0; }
+.px-seasonwin .sb-row::before { content: ''; position: absolute; left: 2px; top: 14px; width: 5px; height: 5px; background: var(--sb-accent); transform: rotate(45deg); }
+.px-seasonwin .sb-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.px-seasonwin .sb-line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+.px-seasonwin .sb-name { font-size: 14px; color: #efe8d6; }
+.px-seasonwin .sb-standing { font-size: 13px; color: #f3cf86; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.px-seasonwin .sb-about { margin: 0; font-size: 12px; line-height: 1.4; color: var(--dim); }
+.px-seasonwin .sb-door { flex: 0 0 auto; min-height: 44px; padding: 0 14px; font-size: 13px; }   /* AUDIT SEASON-BOOK U10: the 44px target on every screen - a landscape phone's too */
+.px-seasonwin .sb-foot { margin: 8px 0 0; font-size: 11px; line-height: 1.4; color: var(--dim); font-style: italic; }
+/* Stone's light ground, the timers window's lift (AUDIT TIMERS1 UI-4): every word past 4.5:1 over a hard black drop */
+:root[data-plus-theme="stone"] .px-seasonwin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
+:root[data-plus-theme="stone"] .px-seasonwin .sb-count, :root[data-plus-theme="stone"] .px-seasonwin .sb-standing { color: #ffe3a6; }
+:root[data-plus-theme="stone"] .px-seasonwin .sb-lead { color: #fbf8f0; }
+@media (max-width: 560px) {
+  .px-win.px-seasonwin .px-body { padding: 16px 14px 18px; }
+  .px-seasonwin .sb-count { font-size: 16px; }
+  .px-seasonwin .sb-row { flex-wrap: wrap; row-gap: 6px; }   /* a phone's door under its words, the words the whole width */
+  .px-seasonwin .sb-text { flex-basis: 100%; }
+}
+@media (max-height: 560px) { .px-win.px-seasonwin { max-height: calc(100dvh - 20px); } }   /* a short screen's window, as the timers' */
 .px-over .px-win.px-acctwin { align-self: center; max-height: min(640px, 86dvh); }
 @media (max-width: 480px) {
   /* On a phone the wordmark owns the top, so the mark loses its caption
@@ -2892,6 +2939,10 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
   padding-bottom: calc(var(--plus-pad-clearance, 0px) + 64px); }
 html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-timersstage) > .px-win {
   max-height: calc(100dvh - max(7dvh, 64px) - var(--plus-pad-clearance, 0px) - 64px); }
+/* AUDIT SEASON-BOOK U5: the windows on the hourglass's stage (the timers', the mailbox's, the season's) clear the
+   controller's prompt bar too - their last line had stood under it on a phone. */
+html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage { padding-bottom: calc(var(--plus-pad-clearance, 0px) + 10px); }
+html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { max-height: min(680px, calc(100dvh - var(--plus-pad-clearance, 0px) - 34px)); }
 /* AUDIT TIMERS1 UI-1: the timers window's stage is not the pause stage - two classes, so the rule above (one class,
    later) cannot take its padding and pin the window to the left; centred, its own padding, its list the one scroll.
    UI-2: and over the game on a short screen the pause window stands clear of the corner marks (the profile and the
@@ -2901,6 +2952,11 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 @media (max-height: 560px) {
   .px-stage.px-timersstage { padding: 10px 12px; }
   .px-win.px-timerswin { max-height: calc(100dvh - 20px); }
+  .px-over .px-stage:not(.px-acctstage):not(.px-timersstage) { padding-top: max(7dvh, 64px); }
+}
+/* AUDIT SEASON-BOOK U4: and on a portrait phone - a row of four marks (profile, hourglass, envelope, laurel; 56px tall)
+   had the tops of the tabs under it below about 686px tall, a tap on GROWTH's top opening the season window. */
+@media (max-width: 480px) {
   .px-over .px-stage:not(.px-acctstage):not(.px-timersstage) { padding-top: max(7dvh, 64px); }
 }
 

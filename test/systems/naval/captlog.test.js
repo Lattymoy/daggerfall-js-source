@@ -247,7 +247,7 @@ test('CAPT-LOG the world\'s wiring: one ledger a world host, in its own save slo
   // out again were counted every pass)
   assert.match(host, /tallyPlunder\(all\.filter\(\(it\) => !left\.includes\(it\)\)\);/);
   assert.match(host, /deps\.captain\?\.note\?\.\('claimed'\);/);
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /captain: \(d\) => drawCaptainPage\(d, render, \{ \.\.\.kit, door: \(fn\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \}, growth: \(\) => \{ setGrowthSection\('captain'\); pauseTab = 'growth'; render\(\); \} \}\),/);   // PIN MOVED (GROWTH3): the stars' button goes to the Growth tab
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /captain: \(d\) => drawCaptainPage\(d, render, \{ \.\.\.kit, door: \(fn\) => \{ handoff\(fn\); \}, growth: \(\) => \{ setGrowthSection\('captain'\); pauseTab = 'growth'; render\(\); \} \}\),/);   // PIN MOVED (GROWTH3): the stars' button goes to the Growth tab
 });
 
 /** The player's boat wrecked where a pirate alongside boards her at once (navaudit_boarding.test.js's own). */

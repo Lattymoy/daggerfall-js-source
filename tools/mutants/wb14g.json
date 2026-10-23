@@ -112,7 +112,7 @@
   {
     "name": "WB14g-the-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct174';",
+    "old": "export const ACCOUNT_VERSION = 'acct176';",
     "new": "export const ACCOUNT_VERSION = 'acct159';",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"

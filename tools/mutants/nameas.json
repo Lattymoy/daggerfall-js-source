@@ -157,7 +157,7 @@
   {
     "name": "NAMEAS-the-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct174';",
+    "old": "export const ACCOUNT_VERSION = 'acct176';",
     "new": "export const ACCOUNT_VERSION = 'acct121';",
     "tests": [
       "test/server/duel_record.test.js",

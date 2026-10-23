@@ -47,8 +47,8 @@
   {
     "name": "a-throwing-veto-takes-the-damage-door-with-it",
     "file": "src/characters/playerEntity.js",
-    "old": "{ if (_staff.god) return true; try { return !!_damageVeto?.(); } catch { return false; } };",
-    "new": "{ if (_staff.god) return true; return !!_damageVeto?.(); };",
+    "old": "{ if (_staff.god || staffFrozen()) return true; try { return !!_damageVeto?.(); } catch { return false; } };",
+    "new": "{ if (_staff.god || staffFrozen()) return true; return !!_damageVeto?.(); };",
     "tests": [
       "test/characters/arrestshield.test.js"
     ]

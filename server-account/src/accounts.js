@@ -479,6 +479,7 @@ export async function creditPlay({ db, nowS }, playerId, sessionId = null) {
          ELSE 0 END,
        played_at = MAX(COALESCE(played_at, ?1), ?1)
      WHERE id = ?3 AND COALESCE(banned_until, 0) <= ?1
+       AND COALESCE(frozen_until, 0) <= ?1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)
        AND (?4 IS NULL OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))
      RETURNING played_s`,
   ).bind(nowS, PLAY_GRACE_S, playerId, sessionId).first();

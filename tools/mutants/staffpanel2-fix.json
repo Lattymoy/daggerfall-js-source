@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL2-FIX-repeat-unread",
     "file": "server-account/src/safety.js",
-    "old": "  if (click && await db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
-    "new": "  if (false && await db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
+    "old": "    click ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
+    "new": "    false ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
     "why": "a press sent twice is not known for the first",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL2-FIX-fallback-no-dev",
     "file": "server-account/src/safety.js",
-    "old": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, isDeveloper(actor, env) ? 1 : 0).first();",
-    "new": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, 0).first();",
+    "old": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, isDeveloper(actor, env) ? 1 : 0).first(),",
+    "new": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, 0).first(),",
     "why": "an Admin's act in the game misses the spawn case it was shown",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -381,6 +381,16 @@
     ]
   },
   {
+    "name": "STAFF-PANEL2-FIX-cut-relay-untold",
+    "file": "server-account/src/staff.js",
+    "old": "[await staffCutOrder(env, subtle, at, playerId)]",
+    "new": "[null]",
+    "why": "the relay never told of the cut",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
     "name": "STAFF-PANEL2-FIX-cut-not-lifted",
     "file": "server-account/src/staff.js",
     "old": "      db.prepare('UPDATE players SET staff_suspended = 0 WHERE id = ?').bind(target.id),\n",
@@ -393,7 +403,7 @@
   {
     "name": "STAFF-PANEL2-FIX-cut-not-invitable",
     "file": "server-account/src/staff.js",
-    "old": "const role = staffRole(restore ? { ...target, staff_suspended: 0 } : target, env);",
+    "old": "const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);",
     "new": "const role = staffRole(target, env);",
     "why": "a member cut off can never be invited back",
     "tests": [
@@ -438,6 +448,66 @@
     "why": "a recovery leaves the panel signed in",
     "tests": [
       "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-door-refuses-cut",
+    "file": "server/src/index.js",
+    "old": " && kind !== 'staffcut' && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "new": " && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "why": "the relay's door refuses the cut",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-hub-refuses-cut",
+    "file": "server/src/index.js",
+    "old": "['ban', 'mute', 'staffcut'], true);",
+    "new": "['ban', 'mute'], true);",
+    "why": "the hub takes no cut",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-cut-closes-nothing",
+    "file": "server/src/index.js",
+    "old": "    if (c.o === 'staffcut') return this._staffCut(c, hand ? order : null);",
+    "new": "    if (c.o === 'staffcut') return true;",
+    "why": "the cut closes nothing",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-cut-closes-newer",
+    "file": "server/src/index.js",
+    "old": "if (b.sub === c.s && !(b.gio > c.i)) { if (law) this._send(ws, law); this._banClose(ws, 'staff-cut'); }",
+    "new": "if (b.sub === c.s) { if (law) this._send(ws, law); this._banClose(ws, 'staff-cut'); }",
+    "why": "a socket on a token newer than the cut closed",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-cut-said-banned",
+    "file": "server/src/index.js",
+    "old": "if (law) this._send(ws, law); this._banClose(ws, 'staff-cut');",
+    "new": "if (law) this._send(ws, law); this._banClose(ws);",
+    "why": "a cut closed as a ban",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-order-any-fields",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o === 'staffcut' && (c.mu !== undefined ||",
+    "new": "  if (false && (c.mu !== undefined ||",
+    "why": "a cut order carrying another kind's fields",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
     ]
   },
   {
@@ -696,6 +766,176 @@
     "old": "also: (x) => closing(x, 'banned') })",
     "new": "also: () => [] })",
     "why": "a ban leaves its case open",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-room-takes-no-cut",
+    "file": "server/src/index.js",
+    "old": "['ban', 'staffcut'], false);",
+    "new": "['ban'], false);",
+    "why": "finding 27: a room takes no cut carried in, so its sockets keep their staff glyphs",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-nothing-handed",
+    "file": "server/src/index.js",
+    "old": "    const law = order ? JSON.stringify({ t: 'law', order }) : null;",
+    "new": "    const law = null;",
+    "why": "finding 27: the hub hands the cut to nobody to carry",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-hello-unrefused",
+    "file": "server/src/index.js",
+    "old": "    if (this._bans.get(`cut:${sub}`)?.i >= (",
+    "new": "    if (false && this._bans.get(`cut:${sub}`)?.i >= (",
+    "why": "finding 27: a token from before the cut opens the hub again",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-hello-own-second",
+    "file": "server/src/index.js",
+    "old": "`cut:${sub}`)?.i >= (Number.isSafeInteger(ti) ? ti : 0))",
+    "new": "`cut:${sub}`)?.i > (Number.isSafeInteger(ti) ? ti : 0))",
+    "why": "finding 27: a token of the cut's own second let in",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-book-unkept",
+    "file": "server/src/index.js",
+    "old": "    if (kept) this._bans.set(`cut:${c.s}`, { i: c.i, bn: 0, sig: '' });",
+    "new": "    if (false) this._bans.set(`cut:${c.s}`, { i: c.i, bn: 0, sig: '' });",
+    "why": "finding 27: the cut never kept, so nothing is refused at a hello",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-book-unsaved",
+    "file": "server/src/index.js",
+    "old": "    if (kept) await this._saveBans(nowS);",
+    "new": "    void kept;",
+    "why": "finding 27: the cut kept in memory alone - a wake forgets it",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-kind-unread",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null;",
+    "new": "return o === 'mute' || o === 'ban' ? o : null;",
+    "why": "finding 27: the client carries no cut",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-mute-door",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "kind === 'mute' ? l?.sendMuteOrder?.(order) : l?.sendBanOrder?.(order)",
+    "new": "kind === 'ban' ? l?.sendBanOrder?.(order) : l?.sendMuteOrder?.(order)",
+    "why": "finding 27: the cut carried by the mute's door, which takes none",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-token-kept",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (kind === 'staffcut') try { minter()?.forget?.(); }",
+    "new": "if (false) try { minter()?.forget?.(); }",
+    "why": "finding 27: the token held from before the cut opens the next room with its glyphs",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-audit-unread",
+    "file": "server-account/src/staff.js",
+    "old": ", ...minted.map((r) => r.sub)])]",
+    "new": "])]",
+    "why": "finding 28: a session deleted before the cut leaves its hidden sockets open",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-sessions-unread",
+    "file": "server-account/src/staff.js",
+    "old": "...(await Promise.all(hashes.map((h) => hiddenSubOf(h, subtle)))), ",
+    "new": "",
+    "why": "finding 28: a live session's subject (no token minted yet) left without a hide order",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-outcome-unwritten",
+    "file": "server-account/src/staff.js",
+    "old": "      await audit('cut-relay', target.id, pushed, { outcome: relay ? 'ok' : 'failed' }).run();",
+    "new": "",
+    "why": "finding 29: the relay's answer never in the log",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-outcome-always-ok",
+    "file": "server-account/src/staff.js",
+    "old": "{ outcome: relay ? 'ok' : 'failed' }",
+    "new": "{ outcome: 'ok' }",
+    "why": "finding 29: a failed push written as done",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-relay-any",
+    "file": "server-account/src/staff.js",
+    "old": "const relay = pushed.took === pushed.orders;",
+    "new": "const relay = pushed.took > 0;",
+    "why": "finding 29: a staffcut refused read as taken because its hide orders were",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-second-cut-refused",
+    "file": "server-account/src/staff.js",
+    "old": "const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);",
+    "new": "const role = staffRole(restore ? { ...target, staff_suspended: 0 } : target, env);",
+    "why": "finding 29: a cut pressed again on a member already cut answers no-staff and pushes nothing",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-request-clock",
+    "file": "server-account/src/staff.js",
+    "old": "  const at = Math.max(ctx.nowS, Math.floor(Date.now() / 1000));",
+    "new": "  const at = ctx.nowS;",
+    "why": "finding 31: the orders stamped with the request's start",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-hides-request-clock",
+    "file": "server-account/src/staff.js",
+    "old": "mintHideOrder({ s: x }, key, { subtle, nowS: at })",
+    "new": "mintHideOrder({ s: x }, key, { subtle, nowS: ctx.nowS })",
+    "why": "finding 31: the hide orders stamped with the request's start",
     "tests": [
       "test/server/staffpanel2fix.test.js"
     ]

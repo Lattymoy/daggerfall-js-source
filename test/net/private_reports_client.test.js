@@ -10,7 +10,7 @@ import { ReportDesk, reportContext, mintReportRid } from '../../src/net/privateR
 import { reportWordsOf, reportContextOf, REPORT_RID_RE, REPORT_INBOX_MAX } from '../../src/net/reportLaw.js';
 import { postWindow } from '../../src/ui/enhanced/enhancedPost.js';
 import { myReportStateText, reportBuildText } from '../../src/ui/enhanced/enhancedReport.js';
-import { HELP_LINES, HOST_COMMANDS, mailboxCommandOf, parseChatLine } from '../../src/net/chatCommands.js';
+import { HELP_LINES, HOST_COMMANDS, mailboxCommandOf, pauseCommandOf, parseChatLine } from '../../src/net/chatCommands.js';
 import { ENHANCED_CSS } from '../../src/ui/enhanced/enhancedStyle.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -455,10 +455,13 @@ test('PRIVATE-REPORT the doors: `/bug` the form and `/mail` the mailbox, on eith
   assert.deepEqual(parseChatLine('/bug'), { kind: 'host', name: 'bug' }, 'never said to the room');
   assert.ok(HELP_LINES.some((l) => l.startsWith('/bug - ')), '/help says it');
   const world = src('src/scenes/world.js');
-  assert.match(world, /import \{ breachCommandOf, helpLines, mailboxCommandOf \} from '\.\.\/net\/chatCommands\.js';/);
-  assert.match(world, /\{ const at = mailboxCommandOf\(text\); if \(at\) \{/);
+  // PIN MOVED (SEASON-BOOK): the host asks pauseCommandOf, mailboxCommandOf's lines and `/season` (test/ui/enhanced/seasonbook.test.js)
+  assert.match(world, /import \{ breachCommandOf, helpLines, pauseCommandOf, pauseCommandRefusal \} from '\.\.\/net\/chatCommands\.js';/);
+  assert.match(world, /\{ const at = pauseCommandOf\(text\); if \(at\) \{/);
+  assert.equal(pauseCommandOf('/bug'), 'report');
+  assert.equal(pauseCommandOf('/mail'), 'mailbox');
   const door = src('src/ui/pauseDoor.js');
-  assert.match(door, /if \(\(hooks\.at === 'mailbox' \|\| hooks\.at === 'report'\) && typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\);/);
+  assert.match(door, /if \(\(hooks\.at === 'mailbox' \|\| hooks\.at === 'report' \|\| hooks\.at === 'season'\) && typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\);/);   // PIN MOVED (SEASON-BOOK): and `/season`
   const menu = src('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /else if \(at === 'report'\) \{ postOpen = true; postKeep = \{ view: 'report' \}; \}/);
   // AUDIT PRIVATE-REPORT UI-2: Escape in the mailbox's fields leaves the window; UI-10: a held key in a field is the field's

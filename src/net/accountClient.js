@@ -861,6 +861,13 @@ const REFUSAL_WORDS = {
   'case-closed': () => t('account.refusal.caseClosed', 'That case is already closed.'),
   'admin-sanction': () => t('account.refusal.adminSanction', 'An Admin set this. Only an Admin can lift or shorten it.'),
   'bad-click': () => t('account.refusal.badClick', 'That request was not sent properly. Try again.'),
+  // STAFF-PANEL5-FREEZE (server-account/src/staffFreeze.js): a staff freeze - every door but signing out, the account, the
+  // realm's loads, the token and the staff chat; a frozen seller's goods; a fall naming a frozen player; the Staff tab's own
+  frozen: () => t('account.refusal.frozen', 'Your account is frozen by staff. You can still talk to staff in the Staff tab.'),
+  'market-seller-frozen': () => t('account.refusal.marketSellerFrozen', 'That seller\'s goods are on hold for now.'),
+  'fallen-frozen': () => t('account.refusal.fallenFrozen', 'That player is held by staff. Nothing can be taken from them.'),
+  'bad-text': () => t('account.refusal.badText', 'Write something to send.'),
+  'no-thread': () => t('account.refusal.noThread', 'There is no staff chat open for you right now.'),
 };
 /** AUDIT SAFE CLIENT-2 (2026-10-17): THE SERVICE'S LAST WORD ON A BAN - `{ until, reason }` off the newest `banned`
  *  refusal any door answered (`call`), or null. The service refuses a banned account on every door but signing out
@@ -1725,6 +1732,17 @@ export function accountDuels({ fetch, storage }) {
   return {
     claim: async (receipt) => { const i = io(); return i ? claimDuelReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
+  };
+}
+
+/** STAFF-PANEL5-FREEZE (net/staffChat.js; server-account/src/staffFreeze.js playerStaffChat): MY STAFF CHAT THREAD'S TWO
+ *  CALLS, bound to this device's stored session as the duels' are - `read(after)` answers `{ open, frozen: { until, reason }
+ *  | null, lines: [{ id, at, staff, text }], invite }` (lines past `after`), `send(text)` `{ ok, line: { id, at, staff, text } }`. */
+export function accountStaffChat({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    read: async (/** @type {number} */ after = 0) => { const i = io(); return i ? call(i, '/v1/staff-chat/read', { after }) : { ok: false, error: 'no-session' }; },
+    send: async (/** @type {string} */ text) => { const i = io(); return i ? call(i, '/v1/staff-chat/send', { text }) : { ok: false, error: 'no-session' }; },
   };
 }
 

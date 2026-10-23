@@ -46,7 +46,7 @@
 import { verifyPassword, mintRecoveryCode, canonicalCode } from './password.js';
 import { mintId, mintSecret, hashSecret, displayName, overRate, clearRate, overAccountRate } from './accounts.js';
 import { isDeveloper, canModerate, handleList, developerHandles, moderatorHandles, staffSuspended, TIER_LISTS, MOD_TIERS } from './titles.js';
-import { isBanned } from './sanctions.js';
+import { isBanned, pushLaw, staffCutOrder } from './sanctions.js';
 import { staffCases, CASE_ROUTES } from './staffCases.js';
 import { staffDesk, DESK_ROUTES } from './staffDesk.js';   // STAFF-PANEL3-DESK: notes, the watchlist, your settings, and the Admins' notice, scorecard and reported notes
 import { staffPlayers, PLAYER_ROUTES } from './staffPlayers.js';
@@ -54,6 +54,15 @@ import { staffStatus, STATUS_ROUTES } from './staffStatus.js';   // STAFF-PANEL6
 import { staffRealm, REALM_ROUTES } from './staffRealm.js';
 import { staffCensus, CENSUS_ROUTES } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the item and gold census, the contested pieces
 import { staffEconomy, ECON_ROUTES } from './staffEconomy.js';   // STAFF-PANEL3-ECON: market and trades, node activity, economy
+import { staffFollow, FOLLOW_ROUTES } from './staffFollow.js';   // STAFF-PANEL5-FOLLOW: a follow token, minted and written down
+import { staffMessage, MESSAGE_ROUTES } from './staffMessage.js';
+import { staffNet, NET_ROUTES } from './staffNet.js';   // STAFF-PANEL5-FEEDS: Network bursts
+import { staffMonsters, MONSTER_ROUTES } from './staffMonsters.js';   // STAFF-PANEL5-FEEDS: Monster watch
+import { staffReactions, REACTION_ROUTES } from './staffReactions.js';   // STAFF-PANEL5-FEEDS: the bot check
+import { staffHidden, HIDDEN_ROUTES, hiddenEnd, hiddenSubOf } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: Hide me, and the mark's end
+import { signingKey } from './signing.js';
+import { mintHideOrder, ID_RE } from '../../src/net/identityToken.js';   // STAFF-PANEL5-CUT-FIX: a cut's hide orders
+import { staffFreeze, FREEZE_ROUTES, FREEZE_STATUS } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE
 
 /** The header a staff session rides in - never `authorization`, which is the game's. */
 export const STAFF_SESSION_HEADER = 'x-staff-session';
@@ -61,6 +70,12 @@ export const STAFF_SESSION_HEADER = 'x-staff-session';
 export const STAFF_IDLE_S = 30 * 60;
 /** ...and this long after it opened, acts or not. */
 export const STAFF_MAX_S = 8 * 60 * 60;
+/** STAFF-PANEL5-CUT-FIX: how far back a cut reads the audit log for the hidden subjects its member was minted tokens for.
+ *  shortcut: a hidden socket open longer than this on a token minted before it is missed; upgrade when the relay asks a
+ *  hidden socket's session again after its hello. */
+export const CUT_HIDDEN_S = 24 * 60 * 60;
+/** The most hidden subjects one cut orders closed (two a staff session: its Hide me game's and its follow eye's). */
+const CUT_SUBS_MAX = 50;
 /** How stale `last_act` may grow before an act writes it again (one write a minute at most). */
 export const STAFF_TOUCH_S = 60;
 /** How far a signature's second may stand from the service's clock, either way. */
@@ -110,6 +125,13 @@ export const STAFF_STATUS = Object.freeze({
   // STAFF-PANEL2-FIX (safety.js modAct): a case another act took or closed, a spawn case a Moderator asked for, an Admin's
   // sanction a Moderator would lift, a press with no one-time id, and a cut member an Admin would add back
   'case-acted': 409, 'case-closed': 409, 'admin-sanction': 403, 'bad-click': 400, 'staff-suspended': 409,
+  'no-signing-key': 503,   // STAFF-PANEL5-FOLLOW (staffFollow.js): a service with no key mints no follow token
+  'staff-session-lapsed': 409,   // STAFF-PANEL5-HIDDEN-R2 (staffHidden.js hiddenToken): the game's mint, its hiding lapsed - /v1/auth/token's 409
+  // STAFF-PANEL5-MESSAGE (staffMessage.js): a message past 200 characters, and a second inside a staff member's 5 seconds
+  'staff-message-long': 400, 'staff-message-rate': 429,
+  // STAFF-PANEL5-FEEDS (staffMonsters.js): a Flag whose spawn case did not open
+  'flag-failed': 500,
+  ...FREEZE_STATUS,   // STAFF-PANEL5-FREEZE (staffFreeze.js): a freeze's and the staff chat's own words
 });
 
 const enc = new TextEncoder();
@@ -137,7 +159,7 @@ export function ownerKeys(env) {
   return out;
 }
 /** Whether `pub` is this owner's key in the config - the only way a config key stands. @param {any} player @param {any} env @param {unknown} pub */
-const configKey = (player, env, pub) => typeof pub === 'string' && isOwner(player, env) && ownerKeys(env).get(String(player.handle).toLowerCase()) === pub;
+export const configKey = (player, env, pub) => typeof pub === 'string' && isOwner(player, env) && ownerKeys(env).get(String(player.handle).toLowerCase()) === pub;
 
 /** Every handle a role list names - the team an owner manages. @param {any} env */
 function staffHandles(env) {
@@ -286,6 +308,32 @@ const STAFF_WHO_SQL = `SELECT s.key_id AS s_key, s.last_act AS s_act, s.expires_
   WHERE s.token_hash = ?`;
 
 /**
+ * STAFF-PANEL5-CUT-FIX: THE CUT'S ORDERS, pushed after its batch. A hide order for every hidden subject the member could
+ * hold - their staff sessions' (`hashes`, read before the batch deleted them) and every subject the audit log says a hidden
+ * token was minted for in CUT_HIDDEN_S (staffHidden.js `hidden-token`, written before the token is handed out): a session
+ * deleted before the cut (an idle-out, a sign-in's prune, a new password) left its hidden sockets open, and its subject is
+ * no account the staffcut names. STAFF-PANEL5-HIDDEN-R2: and every follow eye's (staffFollow.js, the `follow` and
+ * `follow-home` rows' subject, in the same CUT_HIDDEN_S - a socket outlives the token that opened it). Then the staffcut,
+ * unless `cut` is false (a Moderator removed, below). Every order is stamped with the clock read after the batch, so a
+ * token minted while the request ran is no newer than them. Answers `{ orders, took, hidden }`.
+ * @param {any} ctx @param {any} env @param {string} playerId @param {string[]} hashes @param {boolean} [cut]
+ */
+async function cutPush(ctx, env, playerId, hashes, cut = true) {
+  const { db, subtle } = ctx;
+  const at = Math.max(ctx.nowS, Math.floor(Date.now() / 1000));
+  const minted = (await db.prepare(`SELECT json_extract(detail, '$.sub') AS sub, MAX(at) AS t FROM staff_audit WHERE actor = ?1 AND act IN ('hidden-token', 'follow', 'follow-home') AND at > ?2
+    GROUP BY sub ORDER BY t DESC LIMIT ?3`).bind(playerId, at - CUT_HIDDEN_S, CUT_SUBS_MAX).all())?.results ?? [];
+  const subs = [...new Set([...(await Promise.all(hashes.map((h) => hiddenSubOf(h, subtle)))), ...minted.map((r) => r.sub)])].filter((x) => typeof x === 'string' && ID_RE.test(x));
+  const key = await signingKey(env, subtle);
+  const orders = [...(key ? await Promise.all(subs.map((x) => mintHideOrder({ s: x }, key, { subtle, nowS: at }))) : []), ...(cut ? [await staffCutOrder(env, subtle, at, playerId)] : [])];
+  const took = await Promise.all(orders.map((o) => pushLaw(env, (u, i) => globalThis.fetch(u, i), o)));
+  return { orders: orders.length, took: took.filter(Boolean).length, hidden: subs.length };
+}
+
+/** A member's staff sessions' stored hashes, read before a batch deletes them (a cut's, a removal's). @param {any} db @param {string} playerId */
+const sessionHashes = async (db, playerId) => ((await db.prepare('SELECT token_hash FROM staff_sessions WHERE player_id = ? LIMIT 20').bind(playerId).all())?.results ?? []).map((r) => r.token_hash);
+
+/**
  * WHO IS THIS STAFF MEMBER? One read: the session, its account and its key. Dead - and deleted - when it is past its
  * idle or its whole life, when the account is off every list or banned, when its key was forgotten or cut (or is a config
  * key the config no longer names), or when the account no longer holds the handle the key was registered under. `act` false (a poll) does not count as being there.
@@ -295,18 +343,20 @@ export async function staffSession(ctx, env, token, { act = true } = {}) {
   if (typeof token !== 'string' || token.length < 16 || token.length > 128) return null;
   const { db, subtle, nowS } = ctx;
   const hash = await hashSecret(token, { subtle });
-  const row = await db.prepare(STAFF_WHO_SQL).bind(hash).first();
+  // STAFF-PANEL-SPEED (mob: "slow when moving in menus"): an act's touch rides the lookup's trip. Its guard is the idle and
+  // the life the checks below hold the session to, so either landing first answers the same; one they kill is deleted below
+  const [row] = await Promise.all([db.prepare(STAFF_WHO_SQL).bind(hash).first(),
+    act && db.prepare('UPDATE staff_sessions SET last_act = ?1 WHERE token_hash = ?2 AND last_act <= ?3 AND last_act > ?4 AND expires_at > ?1')
+      .bind(nowS, hash, nowS - STAFF_TOUCH_S, nowS - STAFF_IDLE_S).run()]);
   if (!row) return null;
   const role = staffRole(row, env);
   if (!role || row.s_expires <= nowS || row.s_act + STAFF_IDLE_S <= nowS || !row.k_handle || row.k_handle !== row.handle_lc || (row.k_cfg && !configKey(row, env, row.k_pub)) || isBanned(row, nowS)) {
+    // STAFF-PANEL5-HIDDEN-R2: its hidden sockets stay hidden, its game is minted nothing (staffHidden.js LAPSED_SQL), and
+    // a cut or a removal finds them in the audit log (cutPush) - every other delete of a session row is the same
     await db.prepare('DELETE FROM staff_sessions WHERE token_hash = ?').bind(hash).run();
     return null;
   }
-  let lastAct = row.s_act;
-  if (act && nowS - lastAct >= STAFF_TOUCH_S) {
-    await db.prepare('UPDATE staff_sessions SET last_act = ? WHERE token_hash = ?').bind(nowS, hash).run();
-    lastAct = nowS;
-  }
+  const lastAct = act && nowS - row.s_act >= STAFF_TOUCH_S ? nowS : row.s_act;   // the touch above wrote it
   return { player: row, role, owner: isOwner(row, env), hash, keyId: row.s_key, idleAt: lastAct + STAFF_IDLE_S, expiresAt: row.s_expires };
 }
 
@@ -333,9 +383,10 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   }
   if (path === '/v1/staff/logout') {
     const all = body.all === true;
+    await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]);   // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown
     await db.batch([
       all ? db.prepare('DELETE FROM staff_sessions WHERE player_id = ?').bind(me.id) : db.prepare('DELETE FROM staff_sessions WHERE token_hash = ?').bind(who.hash),
-      audit('logout', null, { all }),
+      audit('logout', null, all ? { all } : { all, sub: await hiddenSubOf(who.hash, subtle) }),   // STAFF-PANEL5-HIDDEN-R2: the session's subject, so its sign-out ends its own hiding alone (staffHidden.js LAPSED_SQL)
     ]);
     return { ok: true, all };
   }
@@ -345,6 +396,8 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   }
   if (path === '/v1/staff/key/forget') {
     if (typeof body.id !== 'string') return { error: 'body' };
+    const keyed = (await db.prepare('SELECT token_hash FROM staff_sessions WHERE key_id = ? AND player_id = ?').bind(body.id, me.id).all())?.results ?? [];
+    if (keyed.length) await hiddenEnd(ctx, env, me.id, keyed.map((r) => r.token_hash));   // STAFF-PANEL5-HIDDEN: a forgotten key's hidden sockets closed with its sessions
     const [, gone] = await db.batch([
       audit('key-forget', null, { id: body.id.slice(0, 40) }, { okIf: { sql: 'EXISTS (SELECT 1 FROM staff_keys WHERE id = ? AND player_id = ? AND revoked_at IS NULL)', args: [body.id, me.id] } }),
       db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE id = ? AND player_id = ? AND revoked_at IS NULL').bind(nowS, body.id, me.id),
@@ -361,6 +414,14 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (REALM_ROUTES.includes(path)) return staffRealm(ctx, env, path, body, who, audit);   // STAFF-PANEL3-REALM: trade holds, rollbacks, fixes, gains, removals - Admins'
   if (CENSUS_ROUTES.includes(path)) return staffCensus(ctx, env, path, body, who, audit);   // STAFF-PANEL4-CENSUS: Admin only
   if (ECON_ROUTES.includes(path)) return staffEconomy(ctx, env, path, body, who, audit);   // STAFF-PANEL3-ECON: an Admin's alone
+  if (FOLLOW_ROUTES.includes(path)) return staffFollow(ctx, env, path, body, who, audit);   // STAFF-PANEL5-FOLLOW: Admins and Moderators
+  // ═══ STAFF-PANEL5-MESSAGE: Message on screen, and each message's state - Admins and Moderators both (staffMessage.js) ═══
+  if (MESSAGE_ROUTES.includes(path)) return staffMessage(ctx, env, path, body, who, audit);
+  if (NET_ROUTES.includes(path)) return staffNet(ctx, env, path, body, who, audit);
+  if (MONSTER_ROUTES.includes(path)) return staffMonsters(ctx, env, path, body, who, audit);
+  if (REACTION_ROUTES.includes(path)) return staffReactions(ctx, env, path, body, who, audit);
+  if (HIDDEN_ROUTES.includes(path)) return staffHidden(ctx, env, path, body, who, audit);   // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js)
+  if (FREEZE_ROUTES.includes(path)) return staffFreeze(ctx, env, path, body, who, audit);   // STAFF-PANEL5-FREEZE: freeze (Admins) and the staff chat (both)
 
   // ═══ THE ADMINS' DOORS: THE PANEL'S MODERATORS (mob, 07:42Z: "add it so admins can add or remove moderatoers") ═══
   // /v1/staff/mods lists them; /v1/staff/mod/add and /mod/remove { handle } - a registered account, not banned, not staff
@@ -369,8 +430,8 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (path === '/v1/staff/mods' || path === '/v1/staff/mod/add' || path === '/v1/staff/mod/remove') {
     if (who.role !== 'admin') return denied('staff-admin');
     if (path === '/v1/staff/mods') {
-      const r = await db.prepare('SELECT id, handle FROM players WHERE staff_mod = 1 ORDER BY handle_lc LIMIT 500').all();
-      await audit('mods-read', null, null, { onceIn: STAFF_READ_ROW_S }).run();
+      // STAFF-PANEL-SPEED: the read and its audit row in one trip, one transaction - never shown without its row
+      const [r] = await db.batch([db.prepare('SELECT id, handle FROM players WHERE staff_mod = 1 ORDER BY handle_lc LIMIT 500'), audit('mods-read', null, null, { onceIn: STAFF_READ_ROW_S })]);
       return { mods: (r.results ?? []).map((p) => ({ id: p.id, handle: p.handle })), config: staffHandles(env).filter((h) => !developerHandles(env).has(h)) };
     }
     const lc = handleLc(body.handle);
@@ -388,12 +449,16 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
     }
     if (target.staff_mod !== 1) return { error: staffRole(target, env) ? 'staff-config' : 'no-staff' };
     if (staffRole({ ...target, staff_mod: 0 }, env)) return { error: 'staff-config' };   // the config holds them still
+    const hashes = await sessionHashes(db, target.id);
     await db.batch([
       audit('mod-remove', target.id, { handle: target.handle }, { okIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)', args: [target.id] } }),
       db.prepare('UPDATE players SET staff_mod = 0 WHERE id = ?').bind(target.id),
       db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL').bind(nowS, target.id),
       ...['staff_sessions', 'staff_invites'].map((t) => db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id)),
     ]);
+    // STAFF-PANEL5-HIDDEN: their hidden sockets closed with their sessions - STAFF-PANEL5-HIDDEN-R2: every one the cut
+    // would find (a session idled out or pruned before the removal, a follow eye's), the cut's own union, no staffcut
+    await cutPush(ctx, env, target.id, hashes, false);
     return { ok: true, handle: target.handle };
   }
 
@@ -401,13 +466,12 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (!who.owner) return denied('staff-owner');
   if (path === '/v1/staff/team') {
     const handles = staffHandles(env).slice(0, 90);   // D1 binds 100 at most; the lists name a dozen
-    const r = await db.prepare(`SELECT p.*,
+    const [r] = await db.batch([db.prepare(`SELECT p.*,
         (SELECT COUNT(*) FROM staff_keys k WHERE k.player_id = p.id AND k.handle_lc = p.handle_lc AND k.revoked_at IS NULL) AS keys,
         (SELECT COUNT(*) FROM staff_sessions s WHERE s.player_id = p.id AND s.expires_at > ?1 AND s.last_act > ?2) AS live,
         (SELECT MAX(expires_at) FROM staff_invites i WHERE i.player_id = p.id AND i.expires_at > ?1) AS invite_until
       FROM players p WHERE p.staff_mod = 1 OR p.handle_lc IN (${['NULL', ...handles.map((_, i) => `?${i + 3}`)].join(', ')})`)
-      .bind(nowS, nowS - STAFF_IDLE_S, ...handles).all();
-    await audit('team-read', null, null, { onceIn: STAFF_READ_ROW_S }).run();
+      .bind(nowS, nowS - STAFF_IDLE_S, ...handles), audit('team-read', null, null, { onceIn: STAFF_READ_ROW_S })]);   // STAFF-PANEL-SPEED: one trip, its row with it
     return {
       team: (r.results ?? []).map((p) => ({
         id: p.id, handle: p.handle, role: staffRole({ ...p, staff_suspended: 0 }, env), owner: isOwner(p, env), keys: p.keys, sessions: p.live, inviteUntil: p.invite_until ?? null,
@@ -418,24 +482,30 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (path === '/v1/staff/invite' || path === '/v1/staff/cut') {
     const lc = handleLc(body.handle);
     const target = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
-    // STAFF-PANEL2-FIX: a member cut off holds no role, but an owner's invite brings them back - lifting the cut with it
-    const restore = path === '/v1/staff/invite' && staffSuspended(target);
-    const role = staffRole(restore ? { ...target, staff_suspended: 0 } : target, env);
+    // STAFF-PANEL2-FIX: a member cut off holds no role, but an owner's invite brings them back - lifting the cut with it.
+    // STAFF-PANEL5-CUT-FIX (mob: "a failed push must be retryable and audited"): and cut again, the relay's orders are pushed again
+    const cutOff = staffSuspended(target);
+    const restore = path === '/v1/staff/invite' && cutOff;
+    const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);
     if (!target || !role) return { error: 'no-staff' };
     if (path === '/v1/staff/cut') {
       if (target.id === me.id) return { error: 'staff-self' };
       // STAFF-PANEL2-FIX (design doc, Weak spots: "Cutting off a staff member misses most doors"): the cut is stored
       // (`staff_suspended`, every role path reads it - titles.js), and it ends the member's game sessions as well as
       // their panel's, so no game door and no fresh token is theirs until they sign in again - and that token carries no
-      // staff glyph. What their open sockets hold now stays until they drop or their lease lapses: the relay's order that
-      // closes them ships with the relay release, not with the service
+      // staff glyph. The relay is told to close what they hold now (sanctions.js staffCutOrder; the hub hands it on to every
+      // room their game holds); `relay` says whether it took every order, and the log says it too (`cut-relay`)
+      const hashes = await sessionHashes(db, target.id);
       await db.batch([
         db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL').bind(nowS, target.id),
         ...['staff_sessions', 'staff_invites', 'sessions'].map((t) => db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id)),
         db.prepare('UPDATE players SET staff_suspended = 1 WHERE id = ?').bind(target.id),
-        audit('cut', target.id, { handle: target.handle, role }),
+        audit('cut', target.id, { handle: target.handle, role, ...(cutOff ? { again: true } : {}) }),
       ]);
-      return { ok: true, handle: target.handle };
+      const pushed = await cutPush(ctx, env, target.id, hashes);
+      const relay = pushed.took === pushed.orders;
+      await audit('cut-relay', target.id, pushed, { outcome: relay ? 'ok' : 'failed' }).run();   // failed: `took` short of `orders`
+      return { ok: true, handle: target.handle, relay };
     }
     const code = mintRecoveryCode(rand);
     const canon = canonicalCode(code);
@@ -457,10 +527,10 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   const before = Number.isSafeInteger(body.before) && body.before > 0 ? body.before : null;
   const limit = Number.isSafeInteger(body.limit) ? Math.min(Math.max(body.limit, 1), STAFF_AUDIT_PAGE) : STAFF_AUDIT_PAGE;
   const view = { actor: str(body.actor), target: str(body.target), act: str(body.act) };
-  const r = await db.prepare(`SELECT * FROM staff_audit WHERE (?1 IS NULL OR actor = ?1) AND (?2 IS NULL OR target = ?2)
+  // STAFF-PANEL-SPEED: the page and its row in one trip - the read first, so it never lists its own row
+  const [r] = await db.batch([db.prepare(`SELECT * FROM staff_audit WHERE (?1 IS NULL OR actor = ?1) AND (?2 IS NULL OR target = ?2)
     AND (?3 IS NULL OR act = ?3) AND (?4 IS NULL OR id < ?4) ORDER BY id DESC LIMIT ?5`)
-    .bind(view.actor, view.target, view.act, before, limit).all();
-  await audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S }).run();
+    .bind(view.actor, view.target, view.act, before, limit), audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })]);
   return {
     rows: (r.results ?? []).map((a) => {
       let detail = null;

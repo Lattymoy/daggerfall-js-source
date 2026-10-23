@@ -157,7 +157,7 @@ import { overlayOpen } from './enhanced/enhancedOverlays.js';
 import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the panel stands, ActivateCursor's key is its open key and not the cursor toggle
 import { isTouchDevice } from './touch/touch.js';
 import { CHAT_MAX } from '../net/wire.js';
-import { tagOf, findQuery, findLines, playerFound, CHAT_FIND_MAX } from '../net/chat.js';   // CHAT-FIND: the search's own law
+import { tagOf, findQuery, findLines, playerFound, CHAT_FIND_MAX, copyText } from '../net/chat.js';   // CHAT-FIND: the search's own law
 import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag beside a name, as over a head
 import { glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears its glyphs everywhere it is drawn (TITLE-C: its title over the head alone, never in the chat); cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
@@ -953,6 +953,14 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       lineMenu = { line: n, menu };
     });
   };
+  /** STAFF-PANEL5-FREEZE: a line's Copy button (the Staff tab's Discord invite) - the browser's clipboard; one that refuses
+   *  leaves the words on the line to select. */
+  const copyButton = (words) => {
+    const b = el('button', 'dfchat-rowbtn dfchat-copy', copyText());
+    b.type = 'button';
+    b.addEventListener('click', (e) => { e.stopPropagation?.(); try { win.navigator?.clipboard?.writeText?.(words)?.catch?.(() => {}); } catch { /* the words stay on the line */ } });
+    return b;
+  };
   const lineNode = (line, withTime, withChan = false, hit = '') => {
     const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.dm ? ' dm' : ''}${line.kind === 'ooc' ? ' ooc' : ''}${line.kind === 'roll' ? ' roll' : ''}${line.kind === 'me' ? ' me' : ''}${line.kind === 'rp' ? ' rp' : ''}${line.ping ? ' ping' : ''}`);
     if (line.tab) n.dataset.ch = line.tab;   // CHAT-COLOURS: the channel it was said on - its colour is the sheet's
@@ -967,7 +975,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // hash off an empty id, identical on every notice and therefore
     // exactly the thing a player could be fooled by. Its own colour
     // instead, which is a mark no player's line can wear.
-    if (line.system) { const text = el('span', 'dfchat-text', line.text); n.append(text); return { node: n, chan, time, nameEl: null, tag: null, text }; }
+    if (line.system) { const text = el('span', 'dfchat-text', line.text); n.append(text); if (line.copy) n.append(copyButton(line.copy)); return { node: n, chan, time, nameEl: null, tag: null, text }; }   // STAFF-PANEL5-FREEZE: a game's line that offers its words to copy
     const nameEl = el('span', 'dfchat-name', line.name || '?'), tag = el('span', 'dfchat-tag', `#${tagOf(line.id)}`), text = el('span', 'dfchat-text', line.ping ? null : line.text);
     if (line.ping) text.append(...mentionParts(line.text, log.self));   // PING1: my @name picked out in the words
     if (hit) {   // CHAT-FIND: a search's result wears where the query stands - in the name, in the words, or (a '#' query) the tag

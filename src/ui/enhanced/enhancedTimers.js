@@ -68,9 +68,9 @@ export function anchorBeside(mark, profile, host, gap = 10) {
  * its button, which hands the source's own door (`doors[door]`, read at the press) to `door(fn)` - the caller's way of
  * opening it (the pause face hands its place on first).
  * @param {Document} doc
- * @param {{ read: () => any, onClose: () => void, every?: number, door?: (fn: () => any) => any }} o
+ * @param {{ read: () => any, onClose: () => void, every?: number, door?: (fn: () => any) => any, focus?: boolean }} o
  */
-export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => fn() }) {
+export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => fn(), focus = true }) {
   const el = (tag, cls, text) => {
     const n = doc.createElement(tag);
     if (cls) n.className = cls;
@@ -159,6 +159,7 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
   draw();
   tick = setInterval(step, every);
   // AUDIT TIMERS1 UI-5: the focus goes INTO the window (it had stayed on the hourglass, under the scrim)
-  globalThis.requestAnimationFrame?.(() => close.focus?.());
+  // AUDIT SEASON-BOOK U3: when the window opens - never when the face repaints around it, and never scrolling the list
+  if (focus) globalThis.requestAnimationFrame?.(() => close.focus?.({ preventScroll: true }));
   return { root: win, stop: () => { if (tick) clearInterval(tick); tick = null; }, draw, close };
 }

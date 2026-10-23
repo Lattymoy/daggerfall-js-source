@@ -305,7 +305,7 @@
   {
     "name": "EGZM-press-resumes-under-the-boards",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  onAction('handoff'); if (!fn()) onAction('resume');",
+    "old": "  handoff(fn, (r) => !!r);",
     "new": "  onAction('resume'); fn();",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "EGZM-timers-window-never-handed-the-door",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "render(); }, door: timersDoor });   // EG-ZM: a row's door",
-    "new": "render(); } });   // EG-ZM: a row's door",
+    "old": "door: timersDoor, focus: timersFocusIn });   // EG-ZM: a row's door",
+    "new": "focus: timersFocusIn });   // EG-ZM: a row's door",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]

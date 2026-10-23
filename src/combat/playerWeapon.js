@@ -26,10 +26,12 @@ import {
   MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
   blowSchedule,   // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
 } from '../characters/weaponStates.js';
-import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS, PISTOLET_FEEL, PISTOLET_TICK_SECONDS, PISTOLET_COOLDOWN_SECONDS } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
+import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS, PISTOLET_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES, isGunType, isPistoletType } from './fpsWeapon.js';
+import { createPair, PAIR_TRIGGER } from './gun/pistolPair.js';   // PISTOL-PORT: a Pistolet fires on the pistol lab's own machines
+import { FIRE_FRAMES } from './gun/gunSheet.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
@@ -301,8 +303,15 @@ export class PlayerWeapon {
     this._lastHand = null;
     this._lastEnd = -Infinity;
     this._burdenCarry = 0;   // AUDIT 2: the fraction of a tick the off hand's last blow owed its burden, paid on its next (handsLaw.js offHandHold)
-    /** PISTOLET: a pair of guns reloads HAND BY HAND - the machine time each hand is loaded again (see gunPair). */
-    this._reload = { R: 0, L: 0 };
+    /** PISTOL-PORT: the pistol lab's pair a Pistolet fires on (one pistol or two - `_pistolsFor`), each hand's strike as it
+     *  was pulled and its direction - null for every other weapon. */
+    this.pistols = null;
+    this._pistolsAway = null;   // the pistols while another weapon is in use - their reloads run on (AUDIT PISTOLET A3)
+    this._pistolHeld = null;   // AUDIT PISTOL-PORT A3: the items in each hand last frame, so a pistol moved takes its machine
+    this._pistolHits = [];   // AUDIT PISTOL-PORT A2: the hands whose hit is due, handed to the host one an update
+    this._classicCooldown = 0;   // AUDIT PISTOL-PORT C1: what the classic machine was owed when the pistols took it over
+    this._pistolStrikes = { R: null, L: null };
+    this._pistolDir = { R: 'StrikeDown', L: 'StrikeDown' };
     this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
     this.lastDrawMs = 0;   // PCO1: the last bow shot's weaponAnimTime (_bowAnimTimeMs)
     // TECH1 (bible/05-Combat/Weapon-Techniques.md): the swing in flight is a technique's - its blow (combat/technique/techniqueBlow.js:
@@ -419,42 +428,147 @@ export class PlayerWeapon {
   }
 
   /**
-   * PISTOLET: A PAIR OF GUNS - two Dwarven Pistolets, one in each hand (handsLaw.js DUAL_GUN_TYPES).
-   *
-   * The machine is ONE, as a pair of swords' is: one shot at a time, the hands taking turns by the law's flurry. What a
-   * gun adds is the RELOAD, and a pair's point is that it is each hand's own: the pistol just fired reloads while the
-   * other is still loaded. So the ranged cooldown the machine sets at a shot's end (weaponStates.js machineStep) is moved
-   * onto the hand that fired (`_reload`), and the machine's own gate is left at the soonest either hand is loaded again.
-   * The pistol lab's finding (bible/05-Combat/Pistol-Lab.md), carried: a pull the law gives to a hand still reloading
-   * falls to the loaded one - a sword can always swing, a pistol mid-reload cannot fire.
+   * PISTOLET: A PAIR OF GUNS - two Dwarven Pistolets, one in each hand (handsLaw.js DUAL_GUN_TYPES). They fire on the
+   * pistol lab's own pair (PISTOL-PORT, `_pistolsFor` below): each pistol its own machine, its own six frames and its own
+   * reload, the hands taking turns by the law's flurry - and a pull the law gives to a hand still reloading falls to the
+   * loaded one (a sword can always swing; a pistol mid-reload cannot fire).
    */
   get gunPair() {
     return this.handsMode === HANDS_MODE.Dual && isGunType(weaponTypeForItem(this.handItem('R'))) && isGunType(weaponTypeForItem(this.handItem('L')));
   }
-  /** PISTOLET: is a hand of a gun pair loaded (machine time). */
-  handLoaded(hand) { return this.machine.now >= (this._reload[hand] ?? 0); }
-  /** PISTOLET: the machine time a hand of a gun pair is loaded again (0 when it is) - the rig lowers each pistol on it. */
-  handReloadUntil(hand) { return this._reload[hand] ?? 0; }
+  /** PISTOLET: is a hand's pistol loaded - its own machine Idle (a hand with no pistol is never waiting). */
+  handLoaded(hand) { return this.pistols ? this.pistols[hand].state === 'Idle' : true; }
+  /** PISTOLET: the machine time a hand's pistol is loaded again (0 when it is). */
+  handReloadUntil(hand) {
+    const left = this.pistols ? this._pistolLeft(hand) : 0;
+    return left > 0 ? this.machine.now + left : 0;
+  }
+
+  /**
+   * PISTOL-PORT (bible/05-Combat/Dwarven-Pistolet.md "PISTOL-PORT"; the owner: "I want the prototype itself implemented
+   * just like we did with thunderlock"): A PISTOLET FIRES ON THE PISTOL LAB'S OWN MACHINES - one pistol, or a pair -
+   * combat/gun/pistolPair.js createPair: two of the gun lab's machines and the page's trigger law, each pistol its own six
+   * frames and its own reload, so a pair's second shot leaves while the first is still mid-shot, as it does on the page.
+   * The classic machine keeps every reader it has as the pistols' MIRROR (`_pistolsMirror`): a strike while any pistol
+   * fires, the latest one's frame, and the soonest a pistol is loaded; and its 'hit' is the pistol whose hit frame it is,
+   * that hand's weapon and strike made current for the hosts that fire the shot. The pair, or null: a weapon that is no
+   * Pistolet puts it by (`_pistolsAway`, stepped while it is, so a reload runs on the clock as AUDIT PISTOLET A3 kept it -
+   * never skipped by drawing a sword and the pistol back); sheathed, the pistols in the hands keep theirs.
+   */
+  _pistolsFor() {
+    const pair = this.gunPair;
+    const held = pair ? this.handItem('R') : (this.weapon ?? (this.sheathed ? this.handItem(this.leadHand) : null));
+    if (!isPistoletType(weaponTypeForItem(held))) {
+      if (this.pistols) this._pistolsPutBy();
+      return null;
+    }
+    const trigger = pair ? PAIR_TRIGGER.Alternate : PAIR_TRIGGER.Single;
+    if (!this.pistols) this._classicCooldown = this.machine.cooldownUntil;   // AUDIT PISTOL-PORT C1: kept for the weapon put by
+    this.pistols ??= this._pistolsAway ?? createPair({ trigger, fps: PISTOLET_FEEL.fps, cooldownMs: PISTOLET_FEEL.reloadMs, hitFrame: PISTOLET_FEEL.hitFrame });
+    this._pistolsAway = null;
+    this.pistols.trigger = trigger;
+    // AUDIT PISTOL-PORT A3: A RELOAD IS THE PISTOL'S, NOT THE HAND'S - a pistol moved to the other hand (unequipped and
+    // worn in the other, its equip delay nought) takes its own machine with it; on the hand's, one Pistolet juggled
+    // between the hands fired a pair's rate at full damage
+    const R = this.handItem('R'), L = this.handItem('L'), was = this._pistolHeld;
+    if (was && ((R && R === was.L && R !== was.R) || (L && L === was.R && L !== was.L))) [this.pistols.R, this.pistols.L] = [this.pistols.L, this.pistols.R];
+    this._pistolHeld = { R, L };
+    // one pistol is the page's single, on the machine of the hand that HOLDS it - a pair broken mid-reload keeps the
+    // pistol left its own reload (AUDIT PISTOLET A3); where it is drawn is the rig's (pistolLane.js flipOf)
+    this.pistols.lead = pair ? this.leadHand : (held === this.handItem('L') && held !== this.handItem('R') ? 'L' : 'R');
+    return this.pistols;
+  }
+  /** PISTOL-PORT: the seconds until a pistol is loaded again - its frames still to play and its reload, nought when Idle. */
+  _pistolLeft(hand) {
+    const g = this.pistols[hand];
+    if (g.state === 'Idle') return 0;
+    if (g.state === 'Cooling') return Math.max(0, g.cooldownMs - g.cooledMs) / 1000;
+    return Math.max(0, FIRE_FRAMES / g.fps - g._t) + g.cooldownMs / 1000;
+  }
+  /** PISTOL-PORT: the classic machine as the pistols' mirror - in the latest firing pistol's strike while any fires. */
+  _pistolsMirror() {
+    const m = this.machine, p = this.pistols, hands = p.hands();
+    const firing = hands.filter((h) => p[h].state === 'Firing');
+    const h = firing.includes(p.last) ? p.last : firing[0];
+    m.state = h ? this._pistolDir[h] : 'Idle';
+    m.frame = h ? p[h].frame : 0;
+    m.tick = 1 / p.R.fps; m.hitFrame = p.R.hitFrame;   // AUDIT PISTOL-PORT C4: the pistols' own frame clock - the arm's flash runs on it
+    m.cooldownUntil = m.now + Math.min(...hands.map((x) => this._pistolLeft(x)));
+  }
+  /** PISTOL-PORT: a pull - the page's (`pull`), or a technique's the lead hand's (`fireHand`). True when a pistol fired. */
+  _pistolShot(state, lead) {
+    const p = this.pistols, pair = this.gunPair;
+    const fired = lead ? p.fireHand(p.lead) : p.pull(0);
+    if (!fired.length) return false;
+    const h = fired[0];
+    this._pistolStrikes[h] = { hand: pair ? h : this.leadHand, flurry: !!p.lastShot?.flurry, off: pair && h !== this.leadHand };
+    this._pistolDir[h] = state;
+    this.strike = this._pistolStrikes[h];
+    if (pair) this.weapon = this.handItem(h);
+    this._pistolsMirror();
+    return true;
+  }
+  /** AUDIT PISTOL-PORT A9: the pistols put by for another weapon - their reloads run on (`_pistolsAway`), and the classic
+   *  machine stops mirroring them: no shot of theirs is still to land, nor finished as the new weapon's blow, and the new
+   *  weapon never waits out a pistol's reload. AUDIT PISTOL-PORT C1: but it does wait out its OWN - the classic machine is
+   *  given back what it was owed when the pistols took it (a Thunderlock swapped through a Pistolet for one frame by the
+   *  quickslot key, its equip delay nought, fired again at once: three times its rate). */
+  _pistolsPutBy() {
+    const m = this.machine;
+    this._pistolsAway = this.pistols; this.pistols = null; this._pistolHits.length = 0;
+    m.state = 'Idle'; m.frame = 0; m.cooldownUntil = Math.max(this._classicCooldown, m.now); this.strike = null;
+  }
+  /** AUDIT PISTOL-PORT A5: the pistol shots pulled whose hit is not yet handed to the host - each owes its Pellet. */
+  pistolShotsDue() {
+    const p = this.pistols;
+    return p ? this._pistolHits.length + p.hands().filter((h) => p[h].state === 'Firing' && p[h].frame < p[h].hitFrame).length : 0;
+  }
+  /**
+   * PISTOL-PORT: one step of the pistols, on the machine's clock - each pistol's hit, the mirror, and the strike's end.
+   * AUDIT PISTOL-PORT A2: ONE HIT AN UPDATE. Every host fires a 'hit' with the weapon, strike and blow the player weapon
+   * holds as it reads the event, and two machines can hit in one step (a flurry pulled a frame apart, a 50 ms frame): both
+   * were the second pistol's - its weapon, its off-hand blow, its barrel. So a hit due is queued, in the order the pistols
+   * fired, and handed out one an update with its own hand current; the second lands a frame later, never as the first.
+   * AUDIT PISTOL-PORT A6: a pistol no longer drawn (a pair broken between a pull and its hit) fires nothing.
+   */
+  _pistolsStep(dt) {
+    const m = this.machine, p = this.pistols;
+    m.now += dt;
+    m.ranged = true;
+    const ev = p.step(dt);
+    const due = ['R', 'L'].filter((h) => ev[h] === 'hit');
+    if (due.length === 2 && due[0] === p.last) due.reverse();   // the earlier shot first - `last` fired most recently
+    this._pistolHits.push(...due);
+    const evs = [];
+    while (this._pistolHits.length) {
+      const h = this._pistolHits.shift();
+      if (!p.hands().includes(h)) continue;
+      this.strike = this._pistolStrikes[h] ?? this.strike;
+      if (this.gunPair) this.weapon = this.handItem(h);
+      evs.push('hit');
+      break;
+    }
+    this._pistolsMirror();
+    if (this.strike && m.state === 'Idle' && !this._pistolHits.length) {
+      evs.push('done');
+      this.strike = null;   // the pistols keep their own flurry clock (pistolPair.js `last`, `lastEnd`) - the classic one is a sword's
+    }
+    return evs;
+  }
   /** TWO-HANDS: a NEW strike begun on the machine - the law picks its hand, and with both hands up the weapon in use is
    *  that hand's from its first frame (a rig whose weapon no equip table supplies - bindWorn off - stays single, so
    *  its weapon is never touched). Every door that starts a melee strike comes through here; `lead` makes it the lead
    *  hand's whatever the exchange (a technique: the weapon it was chosen for). */
   _attack(state, { lead = false } = {}) {
-    let s = lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike();
-    // PISTOLET: a gun pair's pull falls to the loaded pistol when the law's hand is still reloading (gunPair, above)
-    if (this.gunPair && !this.handLoaded(s.hand)) {
-      if (lead) return false;   // AUDIT PISTOLET A6: a technique is the lead hand's (techniqueStrike) - never the off hand's because the lead is reloading
-      const other = s.hand === 'L' ? 'R' : 'L';
-      if (!this.handLoaded(other)) return false;
-      s = { hand: other, flurry: s.flurry, off: other !== this.leadHand };
-    }
+    if (this._pistolsFor()) return this._pistolShot(state, lead);   // PISTOL-PORT: a Pistolet's pull is the page's
+    const s = lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike();
     if (!machineAttack(this.machine, state)) return false;
     this.strike = s;
     if (twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws) this.weapon = this.handItem(s.hand);
     // TWO-HANDS (AUDIT): a flurry's blow is thrown from the raised hand - it starts FLURRY_FROM_FRAME frames into its
     // swing (handsLaw.js DUAL: quickness in frames, never in a tick's time, so it is the same at every frame rate)
-    // PISTOLET: never a gun's - its six frames are a mechanism's, its quickness is the other hand being loaded (gunPair)
-    if (s.flurry && !this.gunPair) this.machine.frame = DUAL.FLURRY_FROM_FRAME;
+    // (a Pistolet never comes here - its pull is the page's, above, its six frames a mechanism's)
+    if (s.flurry) this.machine.frame = DUAL.FLURRY_FROM_FRAME;
     // TWO-HANDS (AUDIT 2): the off hand's burden, in whole ticks held at its swing's end (handsLaw.js offHandHold) - read
     // off the striking weapon and the Strength as SWING-LAW reads them, on the tick this swing runs at
     if (this.offStrike) {
@@ -731,6 +845,8 @@ export class PlayerWeapon {
     this.machine.isBow = t === WEAPON_TYPES.Bow;
     // ARROW2: the bow's idle frame is the setting's (FPSWeapon.cs:533-534) - read per step, as DFU reads Settings there
     this.machine.bowIdleDrawn = this.machine.isBow && !getBool('Controls', 'BowDrawback');
+    if (this._pistolsFor()) return this._pistolsStep(dt);   // PISTOL-PORT: a Pistolet steps on the pistol lab's machines
+    this._pistolsAway?.step(dt);   // and pistols put by for another weapon reload on
     // THE PORT'S OWN WEAPON is RANGED but not a BOW, and the
     // difference is the whole of why it is worth saying: a bow DRAWS -
     // StrikeUp winds up, the string holds at frame 3, StrikeDown
@@ -740,8 +856,7 @@ export class PlayerWeapon {
     // the cooldown, and a shot that spends ammunition - through
     // `machine.ranged`. The skill it is scored on is Archery either
     // way; that is weaponSkillUsed's answer, not the machine's.
-    // PISTOLET: either gun - the Thunderlock's machine, the Pistolet's cadence off its own row (gunFeel.js PISTOLET_FEEL)
-    const thunderlock = isGunType(t), pistolet = isPistoletType(t);
+    const thunderlock = isGunType(t);   // PISTOL-PORT: the Thunderlock - a Pistolet never steps this machine (`_pistolsStep`, above)
     this.machine.ranged = t === WEAPON_TYPES.Bow || thunderlock;
     this.machine.frames = thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
     // FIELD-GUN7: and the three the lab settled that the game was
@@ -750,20 +865,10 @@ export class PlayerWeapon {
     // a cooldown that moves with the character) and the hit frame
     // (the muzzle flash, not the melee frame after it). Null for
     // every other weapon, which is the classic answer untouched.
-    this.machine.tick = thunderlock ? (pistolet ? PISTOLET_TICK_SECONDS : GUN_TICK_SECONDS) : null;
-    this.machine.cooldown = thunderlock ? (pistolet ? PISTOLET_COOLDOWN_SECONDS : GUN_COOLDOWN_SECONDS) : null;
-    this.machine.hitFrame = thunderlock ? (pistolet ? PISTOLET_FEEL.hitFrame : GUN_FEEL.hitFrame) : null;
+    this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
+    this.machine.cooldown = thunderlock ? GUN_COOLDOWN_SECONDS : null;
+    this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
     const evs = machineStep(this.machine, dt, this.liveSpeed, this.animCtx?.() ?? null);
-    // PISTOLET: EACH GUN HAND'S RELOAD IS ITS OWN - the hand that fired owns the reload, a pair waits only for its sooner
-    // hand, and a lone gun for its own. AUDIT PISTOLET A3: the times are the machine's clock, so they are kept whatever
-    // the hands do - a pair broken for one frame (one pistol unequipped, a light lit) wiped them, and the pistol left
-    // fired inside its own reload; and a fresh second pistol beside one reloading is loaded, and fires.
-    if (thunderlock && evs.includes('done') && this.strike) this._reload[this.strike.hand] = this.machine.cooldownUntil;
-    if (thunderlock && this.machine.state === 'Idle') {
-      this.machine.cooldownUntil = this.gunPair
-        ? Math.min(this._reload.R, this._reload.L)
-        : Math.max(this.machine.cooldownUntil, this._reload[this.leadHand] ?? 0);
-    }
     // TWO-HANDS: a strike that ends is the one the next alternates from - its hand, and the machine time it ended
     if (evs.includes('done')) { this._lastHand = this.strike?.hand ?? this.leadHand; this._lastEnd = this.machine.now; this.strike = null; }
     return evs;

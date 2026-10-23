@@ -468,15 +468,15 @@ export async function staffCensus(ctx, env, path, body, who, audit) {
     if (path === '/v1/staff/census/jumps') {
       if (kind === 'marks') return { error: 'census-no-tally' };   // an account's balance, never a save's: marks_ledger is its trail
       const hours = within(body.hours, CENSUS_JUMP_HOURS, CENSUS_JUMP_HOURS_MAX);
-      const got = await keptRead(`jumps:${kind}:${hours}`, nowS, () => jumpsOf(db, kind, nowS, hours));
-      await audit('census-jumps-read', null, { kind, hours }, { onceIn: CENSUS_CACHE_S }).run();
+      // STAFF-PANEL-SPEED: the audit row with the read, one trip
+      const [got] = await Promise.all([keptRead(`jumps:${kind}:${hours}`, nowS, () => jumpsOf(db, kind, nowS, hours)), audit('census-jumps-read', null, { kind, hours }, { onceIn: CENSUS_CACHE_S }).run()]);
       return { kind, name: kindName(kind), hours, at: got.at, jumps: got.data.slice(from, from + CENSUS_PAGE), next: from + CENSUS_PAGE < got.data.length ? from + CENSUS_PAGE : null };
     }
     const days = within(body.days, CENSUS_TREND_DAYS, CENSUS_TREND_DAYS_MAX);
-    const got = await keptRead(`census:${kind}`, nowS, () => censusNow(db, kind));
+    // STAFF-PANEL-SPEED: the census, its trend and the audit row together - none waits on another's answer
+    const [got, trend] = await Promise.all([keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)), trendOf(db, kind, utcDay(nowS) - days + 1),
+      audit('census-read', null, { kind }, { onceIn: CENSUS_CACHE_S }).run()]);
     const c = got.data;
-    const trend = await trendOf(db, kind, utcDay(nowS) - days + 1);
-    await audit('census-read', null, { kind }, { onceIn: CENSUS_CACHE_S }).run();
     return {
       kind, name: kindName(kind), at: got.at, total: c.carried + (c.stores ?? 0) + c.vaults + c.market,
       where: { carried: c.carried, stores: c.stores, vaults: c.vaults, market: c.market },
@@ -491,8 +491,8 @@ export async function staffCensus(ctx, env, path, body, who, audit) {
     const before = body.before == null ? null : placeOf(body.before);
     if (before === null && body.before != null) return { error: 'body' };
     const sort = body.sort === 'newest' ? 'newest' : 'urgent';
-    const page = await contestedPage(db, { sort, before, char, open: body.open === true });
-    await audit('contested-read', null, { sort, ...(char ? { char } : {}) }, { onceIn: CENSUS_CACHE_S }).run();
+    // STAFF-PANEL-SPEED: the audit row with the page's batch, one trip
+    const [page] = await Promise.all([contestedPage(db, { sort, before, char, open: body.open === true }), audit('contested-read', null, { sort, ...(char ? { char } : {}) }, { onceIn: CENSUS_CACHE_S }).run()]);
     return page;
   }
 

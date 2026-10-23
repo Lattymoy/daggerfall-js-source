@@ -2,8 +2,8 @@
   {
     "name": "AUDWB-A1-the-silent-kept-seated",
     "file": "server/src/index.js",
-    "old": "    if (this.state.getWebSockets().length >= cap) { this._unseatSilent(Date.now()); if (",
-    "new": "    if (this.state.getWebSockets().length >= cap) { if (",
+    "old": "    if (seatsTaken(this, hs, cap) >= cap) { this._unseatSilent(Date.now()); if (",
+    "new": "    if (seatsTaken(this, hs, cap) >= cap) { if (",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]

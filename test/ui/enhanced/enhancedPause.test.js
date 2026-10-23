@@ -494,7 +494,7 @@ test('PX25: the Stats page carries the doors, and only the ones a host handed ov
   // The window goes DOWN before it opens: two overlays at once is the
   // stacking bug U55 found the other way round on this seam. ESC-BOOK:
   // as a handoff - the door's window takes the slot, nothing relocks.
-  assert.match(fn, /b\.onclick = \(\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \};/);
+  assert.match(fn, /b\.onclick = \(\) => \{ handoff\(fn\); \};/);   // PIN MOVED (AUDIT SEASON-BOOK S3): the handoff's one home
   assert.match(read('src/ui/enhanced/enhancedStyle.js'), /\.px-sheetdoors \.act \{ min-height: 44px; \}/);
 });
 

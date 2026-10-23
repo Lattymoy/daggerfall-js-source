@@ -8,7 +8,7 @@
   { "name": "STAFF1-longest-begun", "file": "src/net/staffCommands.js", "old": "if (!rungs[r] || n.length < fold(rungs[r].name).length) rungs[r] = p;", "new": "if (!rungs[r]) rungs[r] = p;", "tests": ["test/net/staff1.test.js"] },
   { "name": "STAFF1-player-first-begun", "file": "src/net/staffCommands.js", "old": "    if (n === want) return p;\n", "new": "", "tests": ["test/net/staff1.test.js"] },
   { "name": "STAFF1-hyphen-kept", "file": "src/net/staffCommands.js", "old": ".replace(/[\\s-]+/g, ' ')", "new": ".replace(/\\s+/g, ' ')", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-god-not-withheld", "file": "src/characters/playerEntity.js", "old": "{ if (_staff.god) return true; try {", "new": "{ try {", "tests": ["test/net/staff1.test.js"] },
+  { "name": "STAFF1-god-not-withheld", "file": "src/characters/playerEntity.js", "old": "{ if (_staff.god || staffFrozen()) return true; try {", "new": "{ if (staffFrozen()) return true; try {", "tests": ["test/net/staff1.test.js"] },
   { "name": "STAFF1-switch-truthy", "file": "src/characters/playerEntity.js", "old": "if (typeof god === 'boolean') _staff.god = god;", "new": "if (god !== undefined) _staff.god = !!god;", "tests": ["test/net/staff1.test.js"] },
   { "name": "STAFF1-fly-unwired", "file": "src/scenes/shared.js", "old": "|| staffFly() || freeFlight();", "new": "|| freeFlight();", "tests": ["test/net/staff1.test.js"] },
   { "name": "STAFF1-dungeon-fly-unwired", "file": "src/scenes/dungeonContext.js", "old": "hasActiveEffect(playerEntity, 'levitate') && !levitateWarded() || staffFly(),", "new": "hasActiveEffect(playerEntity, 'levitate') && !levitateWarded(),", "tests": ["test/net/staff1.test.js"] },

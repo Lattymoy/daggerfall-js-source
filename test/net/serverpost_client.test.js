@@ -279,7 +279,7 @@ test('SERVER-POST the wiring: the pause face stands the envelope beside the hour
   assert.match(menu, /function postEnvelope\(home, glass\) \{\n  if \(!hooks\.post\?\.\(\)\) return null;/, 'online only - where the host hands a box');
   assert.match(menu, /postAnchor = anchorPost\(envelope, glass, home\.querySelector\?\.\('\.px-profile'\), home\);/);
   assert.match(menu, /else if \(postOpen && hooks\.post\?\.\(\)\) \{\n[^\n]*\n\s*const pstage = el\('div', 'px-stage px-timersstage px-poststage'\);/);
-  assert.match(menu, /for \(const n of \[stage, home\.querySelector\?\.\('\.px-profile'\), mark, envelope\]\) n\?\.setAttribute\?\.\('inert', ''\);/);
+  assert.match(menu, /for \(const n of \[stage, home\.querySelector\?\.\('\.px-profile'\), mark, envelope, laurel\]\) n\?\.setAttribute\?\.\('inert', ''\);/);   // PIN MOVED (SEASON-BOOK): and the laurel beside it
   assert.match(menu, /: postOpen && postView \? \(\) => \{ postOpen = false; postKeep = \{\}; postFocusBack = true; render\(\); \}/, 'Escape closes it first');
   assert.match(menu, /stopTimers\(\);   \/\/ TIMERS1: a rebuild builds the window again, with its own tick\n  stopPost\(\);/);
   assert.match(menu, /releaseShotsPane\(\);   \/\/ LOAD1[^\n]*\n      stopPost\(\);   \/\/ SERVER-POST/, 'and on unmount');
@@ -387,17 +387,18 @@ test('AUDIT SERVER-POST the doors: /mail opens the mailbox on either skin and wh
   assert.ok(HOST_COMMANDS.includes('mail') && HOST_COMMANDS.includes('mailbox'));
   assert.ok(HELP_LINES.some((l) => l.startsWith('/mail - ')), '/help says it');
   const world = src('src/scenes/world.js');
-  // PIN MOVED (PRIVATE-REPORT): the line read by chatCommands.js mailboxCommandOf - `/mail` and `/mailbox` the mailbox, `/bug` its form
-  assert.match(world, /\{ const at = mailboxCommandOf\(text\); if \(at\) \{[^\n]*\n[^\n]*if \(!postSource\(\)\)[^\n]*\n\s*if \(!modes\?\.openPauseAt\?\.\(at\)\) hudCtx\.togglePause\(\{ at \}\);/);
+  // PIN MOVED (PRIVATE-REPORT): the line read by chatCommands.js mailboxCommandOf - `/mail` and `/mailbox` the mailbox, `/bug` its form;
+  // PIN MOVED (SEASON-BOOK): through pauseCommandOf, `/season` beside them - the mailbox's lines still refused without a box
+  assert.match(world, /\{ const at = pauseCommandOf\(text\); if \(at\) \{[^\n]*\n[^\n]*if \(!\(at === 'season' \? timersSource\(\) : postSource\(\)\)\)[^\n]*\n\s*if \(!modes\?\.openPauseAt\?\.\(at\)\) hudCtx\.togglePause\(\{ at \}\);/);
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /openPauseAt: \(at\) => \{\n\s*if \(mode === 'dungeon' && dungeonCtx\) \{ dungeonCtx\.togglePause\(\{ at \}\); return true; \}\n\s*if \(mode === 'interior' && interiorCtx\) \{ interiorKeyCtx\.togglePause\(\{ at \}\); return true; \}\n\s*return false;/, 'indoors and underground, their own pause');
   const door = src('src/ui/pauseDoor.js');
-  assert.match(door, /if \(\(hooks\.at === 'mailbox' \|\| hooks\.at === 'report'\) && typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\);/, 'either skin');   // PIN MOVED (PRIVATE-REPORT): and `/bug` (its form, at `report`)
+  assert.match(door, /if \(\(hooks\.at === 'mailbox' \|\| hooks\.at === 'report' \|\| hooks\.at === 'season'\) && typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\);/, 'either skin');   // PIN MOVED (SEASON-BOOK): and `/season`   // PIN MOVED (PRIVATE-REPORT): and `/bug` (its form, at `report`)
   assert.ok(door.indexOf("hooks.at === 'mailbox'") < door.indexOf('if (isEnhanced() && typeof document'), 'before the skin is asked');
   assert.match(door, /\.filter\(\(n\) => !n\.closest\?\.\('\[inert\]'\)\);/, 'Tab never into what is out of reach');
   const menu = src('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /else if \(at === 'mailbox'\) postOpen = true;/, 'the door lands on the window');
-  assert.match(menu, /closeOnOutsideTap\(home, '\.px-acctwin', [^\n]*\n\s*for \(const n of \[stage, mark, envelope\]\) n\?\.setAttribute\?\.\('inert', ''\);/, 'the face under the account window inert');
+  assert.match(menu, /closeOnOutsideTap\(home, '\.px-acctwin', [^\n]*\n\s*for \(const n of \[stage, mark, envelope, laurel\]\) n\?\.setAttribute\?\.\('inert', ''\);/, 'the face under the account window inert');   // PIN MOVED (SEASON-BOOK): the laurel too
   assert.match(menu, /postKeep = \{\};\n/, 'the window\'s place reset with the visit');
   assert.match(menu, /postView = postWindow\(document, \{ box: \(\) => hooks\.post\?\.\(\) \?\? null, keep: postKeep,/);
 });

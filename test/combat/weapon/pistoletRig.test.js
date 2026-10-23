@@ -85,8 +85,11 @@ test('a single Pistolet kicks at ITS kick - the feel\'s, never the spring\'s def
   // a SOURCE pin: the drawn rect carries the kick among the widget's own offsets, so a pixel measure cannot tell 3 from 5
   // cleanly - the punch's line can
   const { readFileSync } = await import('node:fs');
+  // PIN MOVED (PISTOL-PORT): a Pistolet's shot is punched by its lane at the feel's kick (the page's `shot`); the rig's own
+  // spring line is the Thunderlock's alone now
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /else \{ _tlRecoil\.kick = feel\.kick; _tlRecoil\.back = feel\.back; _tlRecoil\.punch\(\); \}/);
+  assert.match(readFileSync('src/combat/gun/pistolLane.js', 'utf8'), /pistolHandFired\(hands, h, feel\.kick\);/);
+  assert.match(rig, /_tlRecoil\.kick = feel\.kick; _tlRecoil\.back = feel\.back; _tlRecoil\.punch\(\);/);
   assert.notEqual(PISTOLET_FEEL.kick, GUN_FEEL.kick, 'the two guns kick apart - the line is what tells them');
   assert.equal(createRecoil().kick, GUN_FEEL.kick, 'the spring\'s default is the rifle\'s');
 });

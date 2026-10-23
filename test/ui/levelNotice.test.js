@@ -658,7 +658,7 @@ test('LV3 by source: an UNBOUND sheet action presses nothing and shows no button
   assert.match(m, /const g = el\('button', n \? 'act primary' : 'act', n \? t\('pause\.door\.growthCount', 'Growth \(\{n\}\)', \{ n \}\) : t\('pause\.door\.growth', 'Growth'\)\);/, 'the page\'s door is always drawn, not gated on state');
   assert.doesNotMatch(m, /readyToLevelUp/, 'the Stats page never reads the flag (its Growth door counts it through growthTab.js growthDue): WHICH screen the door opens is the door\'s question');
   assert.doesNotMatch(m, /doors\.unshift\(\['Level up'/, 'and there is no second, conditional door for the same window');
-  assert.match(m, /b\.onclick = \(\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \};/, 'the pause window goes down first for the doors that LEAVE this page - a handoff, ESC-BOOK: nothing relocks under the window they open');
+  assert.match(m, /b\.onclick = \(\) => \{ handoff\(fn\); \};/, 'PIN MOVED (AUDIT SEASON-BOOK S3: the handoff\'s one home) - the pause window goes down first for the doors that LEAVE this page - a handoff, ESC-BOOK: nothing relocks under the window they open');
 });
 
 test('FIRM1: A RENOWN LEVEL IS SAID AS A LEVEL IS - the fanfare, "You have risen" with the Renown and its new Stars on the strip, and gone as news goes (it owes nothing); the classic lane says it in a line', () => {

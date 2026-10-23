@@ -1244,10 +1244,12 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   // MARKET-SPEED: the hour's acts counted and the listing read at once - the hour's refusal still the first word
   const [over, l] = await Promise.all([
     overRate(ctx, `market:${me}`, MARKET_OPS_MAX, MARKET_WINDOW_S),
-    db.prepare(`SELECT l.*, ${sellerStoppedSql('l', '?2')} AS seller_stopped FROM market_listings l WHERE l.id = ?1`).bind(id, nowS).first(),
+    db.prepare(`SELECT l.*, ${sellerStoppedSql('l', '?2')} AS seller_stopped,
+      (SELECT frozen_until FROM players WHERE id = l.seller) AS seller_frozen FROM market_listings l WHERE l.id = ?1`).bind(id, nowS).first(),
   ]);
   if (over) return { error: 'market-rate' };
   if (!l || l.state !== 'open' || Number(l.expires_at) <= nowS) return { error: 'market-gone' };
+  if (Number(l.seller_frozen) > nowS) return { error: 'market-seller-frozen' };   // STAFF-PANEL5-FREEZE: a frozen account's listings sell nothing
   if (l.seller === me) return { error: 'market-own' };
   // STAFF-PANEL3-REALM: a seller held or banned sells nothing - the word every game already reads for a listing it can no
   // longer buy (a word of its own would need its text in every language the game ships)
@@ -1951,9 +1953,10 @@ export async function marketBid(ctx, player, env, { character, region, auction: 
   if (!idOk(id)) return { error: 'bad-listing' };
   if (!bidOk(amount)) return { error: 'bad-bid' };   // AUDIT 31 L6: a bid's bound is the Marks cap, never a price's
   if (await overRate(ctx, `market:${me}`, MARKET_OPS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
-  const a = await db.prepare(`SELECT a.*, (SELECT bidder FROM market_bids WHERE id = a.high_bid) AS high_bidder, ${sellerStoppedSql('a', '?2')} AS seller_stopped
-    FROM market_auctions a WHERE a.id = ?1`).bind(id, nowS).first();
+  const a = await db.prepare(`SELECT a.*, (SELECT bidder FROM market_bids WHERE id = a.high_bid) AS high_bidder, ${sellerStoppedSql('a', '?2')} AS seller_stopped,
+    (SELECT frozen_until FROM players WHERE id = a.seller) AS seller_frozen FROM market_auctions a WHERE a.id = ?1`).bind(id, nowS).first();
   if (!a || a.state !== 'open' || Number(a.ends_at) <= nowS) return { error: 'market-gone' };
+  if (Number(a.seller_frozen) > nowS) return { error: 'market-seller-frozen' };   // STAFF-PANEL5-FREEZE: nor its auctions
   if (a.seller === me) return { error: 'market-own' };
   if (Number(a.seller_stopped)) return { error: 'market-gone' };   // STAFF-PANEL3-REALM: a seller held or banned (sellerStoppedSql)
   if (a.high_bidder === me) return { error: 'auction-leading' };

@@ -25,6 +25,7 @@ import {
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { PASSWORD_MIN, PASSWORD_MAX } from '../../server-account/src/password.js';
 import { STAFF_STATUS } from '../../server-account/src/staff.js';
+import { STAFF_CHAT_STATUS } from '../../server-account/src/staffFreeze.js';   // STAFF-PANEL5-FREEZE: the Staff tab's refusals, a player's
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -112,10 +113,13 @@ test('ACC1e: every refusal word the SERVICE can emit has a sentence here - walke
   // STAFF-PANEL1: but staff.js answers the staff panel (/v1/staff/*), never this screen, so its words are the
   // panel's to say - walked all the same, below, against the status it answers each with. STAFF-PANEL6-STATUS: and so do
   // the panel's own modules beside it (staffCases.js, staffStatus.js, every staff*.js).
-  const panel = (/** @type {string} */ f) => /^staff[A-Z.]/.test(f);
+  // STAFF-PANEL5-FREEZE: and so are the panel's own modules beside it (staffCases.js, staffFreeze.js - `staff<Thing>.js`,
+  // the builders' rule); the one door of theirs a player opens, the Staff tab's (staffFreeze.js STAFF_CHAT_STATUS), is
+  // this screen's, below
+  const panel = (f) => f === 'staff.js' || /^staff[A-Z]\w*\.js$/.test(f);
   const files = readdirSync(new URL('../../server-account/src', import.meta.url))
     .filter((f) => f.endsWith('.js') && !panel(f)).sort();
-  const staffSays = readdirSync(new URL('../../server-account/src', import.meta.url)).filter((f) => f.endsWith('.js') && panel(f))
+  const staffSays = readdirSync(new URL('../../server-account/src', import.meta.url)).filter(panel)
     .flatMap((f) => [...src(`server-account/src/${f}`).matchAll(/error:\s*'([a-z-]+)'/g)].map((m) => m[1]));
   assert.ok(staffSays.length >= 5, 'the staff walk found nothing - it has stopped seeing its subject');
   assert.deepEqual(staffSays.filter((w) => !(w in STAFF_STATUS)), [], 'the staff panel can be refused with a word it has no status for');
@@ -126,6 +130,7 @@ test('ACC1e: every refusal word the SERVICE can emit has a sentence here - walke
   const words = new Set();
   for (const m of text.matchAll(/error:\s*'([a-z-]+)'/g)) words.add(m[1]);
   for (const m of text.matchAll(/no\('([a-z-]+)'/g)) words.add(m[1]);
+  for (const w of Object.keys(STAFF_CHAT_STATUS)) words.add(w);   // STAFF-PANEL5-FREEZE: the Staff tab's refusals
   // The two the service COMPOSES rather than spells: `handle-${r}` and
   // `password-${r}`. The suffixes are derived from what each refusal
   // FUNCTION actually returns, not from a list written here - the first

@@ -272,8 +272,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-world-tp-by-name",
     "file": "src/scenes/world.js",
-    "old": "client.ask(typeof name === 'string' ? target : { id: name.id })",
-    "new": "client.ask(target)",
+    "old": "client.ask({ ...(typeof name === 'string' ? target : { id: name.id }), nt: 1 })",
+    "new": "client.ask({ ...target, nt: 1 })",
     "why": "a chat line's TP asks by an object as a name, never by the socket",
     "tests": [
       "test/net/staffTeleport.test.js"

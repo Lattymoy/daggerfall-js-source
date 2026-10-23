@@ -310,7 +310,10 @@ export async function streamPage(db, v, nowS) {
   // ─── what the flags need, in one trip: the accounts, how often each pair dealt, and the usual prices ───
   const accounts = new Set(page.flatMap((r) => [r.a, r.b]).filter(Boolean));
   const L = ECON_LIMITS;
-  const [who, pairs] = accounts.size ? await readAll(db, [
+  const priced = (/** @type {any} */ r) => (r.src === 'sale' && r.what === 'material') || r.src === 'fill';
+  const usualOf = (/** @type {'marks'|'gold'} */ cur) => usualPrices(db, cur, page.filter((r) => priced(r) && r.currency === cur).map((r) => r.material), nowS);
+  // STAFF-PANEL-SPEED: and each currency's usual prices beside them - none waits on another's answer
+  const [[who, pairs], marks, gold] = await Promise.all([accounts.size ? readAll(db, [
     db.prepare('SELECT id, handle, guest_name, created_at FROM players WHERE id IN (SELECT value FROM json_each(?1))').bind(ids(accounts)),
     db.prepare(`SELECT MIN(a, b) AS x, MAX(a, b) AS y, COUNT(*) AS n FROM (
         SELECT buyer AS a, seller AS b FROM market_sales WHERE buyer IN (SELECT value FROM json_each(?1)) AND seller IN (SELECT value FROM json_each(?1)) AND at >= ?2
@@ -318,14 +321,10 @@ export async function streamPage(db, v, nowS) {
         UNION ALL SELECT a_player, b_player FROM realm_trades WHERE a_player IN (SELECT value FROM json_each(?1)) AND b_player IN (SELECT value FROM json_each(?1))
           AND state = 'done' AND created_at >= ?2
       ) WHERE a != b GROUP BY x, y`).bind(ids(accounts), nowS - L.repeat.days * DAY_S),
-  ]) : [[], []];
+  ]) : [[], []], usualOf('marks'), usualOf('gold')]);
+  const usual = { marks, gold };
   const people = new Map(who.map((p) => [p.id, p]));
   const dealt = new Map(pairs.map((p) => [pairKey(p.x, p.y), num(p.n)]));
-  const priced = (/** @type {any} */ r) => (r.src === 'sale' && r.what === 'material') || r.src === 'fill';
-  const usual = {
-    marks: await usualPrices(db, 'marks', page.filter((r) => priced(r) && r.currency === 'marks').map((r) => r.material), nowS),
-    gold: await usualPrices(db, 'gold', page.filter((r) => priced(r) && r.currency === 'gold').map((r) => r.material), nowS),
-  };
   const fresh = (/** @type {string|null} */ id) => !!id && people.has(id) && num(people.get(id).created_at) >= nowS - L.fresh.days * DAY_S;
 
   const rows = page.map((r) => {
@@ -525,7 +524,8 @@ function guildsRanked(/** @type {any} */ db, /** @type {string} */ sort, /** @ty
 export function economy(db, nowS, days) {
   return kept(db, `economy:${days}`, nowS, ECON_KEEP_S, async () => {
     const today = utcDay(nowS), fromDay = today - days + 1;
-    const [places, accounts, guilds, escrow, ledger, faucets, sales, games, rich] = await readAll(db, [
+    // STAFF-PANEL-SPEED: the richest guilds' kept list asked beside the batch, never after it
+    const [[places, accounts, guilds, escrow, ledger, faucets, sales, games, rich], ranked] = await Promise.all([readAll(db, [
       db.prepare(`SELECT (SELECT COALESCE(SUM(gold), 0) FROM market_gold) AS market_gold, (SELECT COALESCE(SUM(realm_gold), 0) FROM guilds) AS guild_realm,
         (SELECT COALESCE(SUM(MAX(treasury - realm_gold, 0)), 0) FROM guilds) AS guild_legacy, (SELECT COALESCE(SUM(rent_due), 0) FROM homes) AS rent_held`),
       db.prepare('SELECT COALESCE(SUM(balance), 0) AS s, COUNT(*) AS n FROM marks WHERE balance > 0'),
@@ -545,7 +545,7 @@ export function economy(db, nowS, days) {
           (SELECT m.gold FROM market_gold m WHERE m.player = c.player AND m.char_id = c.id) AS market_gold
         FROM realm_characters c LEFT JOIN players p ON p.id = c.player
         WHERE c.wealth >= ${RICH_FLOOR} AND c.dead_at IS NULL ORDER BY c.wealth DESC LIMIT ${RICHEST}`),
-    ]);
+    ]), guildsRanked(db, 'gold', nowS)]);
     const p = places[0] ?? {};
     const minted = /** @type {Record<string, number>} */ ({}), burnt = /** @type {Record<string, number>} */ ({});
     const line = new Map();
@@ -567,7 +567,7 @@ export function economy(db, nowS, days) {
     for (const r of sales) { tax += num(r.tax); fee += num(r.fee); const d = at(r.day); if (d) d.goldOut += num(r.tax) + num(r.fee); }
     let gain = 0, loss = 0;
     for (const r of games) { gain += num(r.gain); loss += num(r.loss); const d = at(r.day); if (d) { d.gameGain += num(r.gain); d.gameLoss += num(r.loss); } }
-    const topGuilds = (await guildsRanked(db, 'gold', nowS)).guilds.slice(0, RICHEST);
+    const topGuilds = ranked.guilds.slice(0, RICHEST);
     return {
       asOf: nowS, days, from: fromDay, to: today,
       gold: {
@@ -669,12 +669,11 @@ export async function staffEconomy(ctx, env, path, body, who, audit) {
   if (path === '/v1/staff/econ/stream') {
     const v = await streamView(db, body, nowS);
     if ('error' in v) return v;
-    const page = await streamPage(db, v, nowS);
-    // one row a view (its filters), whatever its page or its moving window
-    await audit('market-read', v.player?.id ?? null, {
+    // one row a view (its filters), whatever its page or its moving window - STAFF-PANEL-SPEED: sent with the page's first reads
+    const [page] = await Promise.all([streamPage(db, v, nowS), audit('market-read', v.player?.id ?? null, {
       item: v.item, priceMin: v.priceMin, priceMax: v.priceMax, region: v.region, kinds: v.kinds.length === STREAM_KINDS.length ? null : v.kinds,
       since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),
-    }, { onceIn: READ_ROW_S }).run();
+    }, { onceIn: READ_ROW_S }).run()]);
     return page;
   }
 
@@ -696,8 +695,8 @@ export async function staffEconomy(ctx, env, path, body, who, audit) {
 
   if (path === '/v1/staff/econ/economy') {
     const days = Math.min(int(body.days, 1, Number.MAX_SAFE_INTEGER) ?? ECON_DAYS_DEFAULT, ECON_DAYS_MAX);
-    const answer = await economy(db, nowS, days);
-    await audit('economy-read', null, { days }, { onceIn: READ_ROW_S }).run();
+    // STAFF-PANEL-SPEED: the audit row with the economy's reads, one trip
+    const [answer] = await Promise.all([economy(db, nowS, days), audit('economy-read', null, { days }, { onceIn: READ_ROW_S }).run()]);
     return answer;
   }
 

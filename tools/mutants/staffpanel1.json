@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL1-mod-remove-keys-kept",
     "file": "server-account/src/staff.js",
-    "old": "      db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL').bind(nowS, target.id),\n      ...['staff_sessions', 'staff_invites'].map((t) => db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id)),\n    ]);\n    return { ok: true, handle: target.handle };\n  }\n\n  // ═══ THE OWNERS' DOORS ═══",
-    "new": "    ]);\n    return { ok: true, handle: target.handle };\n  }\n\n  // ═══ THE OWNERS' DOORS ═══",
+    "old": "      db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL').bind(nowS, target.id),\n      ...['staff_sessions', 'staff_invites'].map((t) => db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id)),\n    ]);\n    // STAFF-PANEL5-HIDDEN: their hidden sockets closed",
+    "new": "    ]);\n    // STAFF-PANEL5-HIDDEN: their hidden sockets closed",
     "why": "a removed Moderator keeps their keys and sessions",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL1-a-before-no-row",
     "file": "server-account/src/staff.js",
-    "old": "  await audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S }).run();",
-    "new": "  if (!before) await audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S }).run();",
+    "old": "    .bind(view.actor, view.target, view.act, before, limit), audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })]);",
+    "new": "    .bind(view.actor, view.target, view.act, before, limit), ...(before ? [] : [audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })])]);",
     "why": "a read naming a `before` leaves no row, and any `before` past the newest row is the first page",
     "tests": [
       "test/server/staffpanel1.test.js"

@@ -54,8 +54,8 @@
   {
     "name": "AUDIT-SAFE-RELAY-4-the-door-reaps-nothing",
     "file": "server/src/index.js",
-    "old": "    const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute'], true);\n    await this._reap();\n",
-    "new": "    const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute'], true);\n",
+    "old": "    const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute', 'staffcut'], true);   // STAFF-PANEL2-FIX: and a staff member cut off\n    await this._reap();\n",
+    "new": "    const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute', 'staffcut'], true);   // STAFF-PANEL2-FIX: and a staff member cut off\n",
     "tests": [
       "test/net/safety/safe_relay_audit.test.js"
     ],

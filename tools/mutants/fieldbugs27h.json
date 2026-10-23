@@ -29,7 +29,7 @@
   {
     "name": "ESC-BOOK-stats-door-resumes",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "b.onclick = () => { onAction('handoff'); if (fn() === false) onAction('resume'); };",
+    "old": "b.onclick = () => { handoff(fn); };",
     "new": "b.onclick = () => { onAction('resume'); if (fn() === false) onAction('resume'); };",
     "tests": [
       "test/ui/escbook.test.js"

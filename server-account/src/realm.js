@@ -568,6 +568,8 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
     (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
     (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
     (SELECT ban_reason FROM players p WHERE p.id = realm_characters.player) AS ban_reason_now,
+    (SELECT frozen_until FROM players p WHERE p.id = realm_characters.player) AS frozen_until_now,
+    (SELECT frozen_reason FROM players p WHERE p.id = realm_characters.player) AS frozen_reason_now,
     (SELECT 1 FROM sessions s WHERE s.id = ?3 AND s.player_id = realm_characters.player) AS session_alive,
     (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally
     FROM realm_characters WHERE id = ?1 AND player = ?2`).bind(id, playerId, session),
@@ -584,6 +586,9 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   // pass was minted saves nothing (a request the lookup answered knows both already; the save asks them all the same)
   if (session != null && row.session_alive == null) return { error: 'auth' };
   if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };
+  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "checkpoints still save"): and the freeze - a frozen player
+  // only looks around, so its save moves nothing while the freeze stands
+  if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS) return { error: 'frozen', player: { frozen_until: row.frozen_until_now, frozen_reason: row.frozen_reason_now } };
   if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again
   if (row.lease !== lease) return { error: 'lease' };
   if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };   // the service's own: a client whose last answer was lost resyncs

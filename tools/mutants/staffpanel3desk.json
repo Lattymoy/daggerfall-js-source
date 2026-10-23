@@ -72,8 +72,8 @@
   {
     "name": "STAFF-PANEL3-DESK-notes-read-every",
     "file": "server-account/src/staffDesk.js",
-    "old": "await audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S }).run();",
-    "new": "await audit('notes-read', row.id, { name: displayName(row) }).run();",
+    "old": "audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S })]);",
+    "new": "audit('notes-read', row.id, { name: displayName(row) })]);",
     "why": "every read of the notes a row",
     "tests": [
       "test/server/staffpanel3desk.test.js"

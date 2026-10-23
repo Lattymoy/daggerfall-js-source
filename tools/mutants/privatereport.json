@@ -282,8 +282,8 @@
   {
     "name": "PRIVREP-the-classic-skin-without-a-way-in",
     "file": "src/ui/pauseDoor.js",
-    "old": "(hooks.at === 'mailbox' || hooks.at === 'report')",
-    "new": "hooks.at === 'mailbox'",
+    "old": "(hooks.at === 'mailbox' || hooks.at === 'report' || hooks.at === 'season')",
+    "new": "(hooks.at === 'mailbox' || hooks.at === 'season')",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],

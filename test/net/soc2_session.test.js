@@ -49,13 +49,13 @@ test('SOC2: the account\'s pair - minted once in the storage handed in, kept, th
 test('SOC2: the hello carries the account when the session holds both halves and NOTHING when it does not - a presence session is never handed one, a build before SOC1 sends the hello it always sent (mutants: the account defaulted from storage; one half sent; the keys on the presence hello)', () => quiet(() => {
   const { ws } = hubLink();
   const hello = JSON.parse(ws.sent[0]);
-  assert.deepEqual(hello, { t: 'hello', id: 'peer-me', secret: 'secret-of-peer-me', name: 'Mac', look: { race: 'Breton', gender: 'male', faceIndex: 0, items: [] }, pose: null, acct: 'acct-me', asecret: 'secret-of-acct-me', ps: 1, hs: 1 });   // AUDIT FRIENDS-SYNC F5: and `ps`, this build's word that it reads the player's picture; SCALE5c (PIN MOVED): and `hs`, that it knows the hub's shards
+  assert.deepEqual(hello, { t: 'hello', id: 'peer-me', secret: 'secret-of-peer-me', name: 'Mac', look: { race: 'Breton', gender: 'male', faceIndex: 0, items: [] }, pose: null, acct: 'acct-me', asecret: 'secret-of-acct-me', ps: 1, hs: 1, sm: 1, fv: 1 });   // AUDIT FRIENDS-SYNC F5: and `ps`, this build's word that it reads the player's picture; SCALE5c (PIN MOVED): and `hs`, that it knows the hub's shards; PIN MOVED: and `sm`, that it shows a staff message's box (STAFF-PANEL5-MESSAGE), and `fv`, the freeze screen (STAFF-PANEL5-FREEZE)
   assert.ok(ws.sent[0].startsWith('{"t":"hello"'), 'the prefix the relay reads first');
   const half = hubLink({ acct: 'acct-me', asecret: null });
   assert.ok(!('acct' in JSON.parse(half.ws.sent[0])) && !('asecret' in JSON.parse(half.ws.sent[0])), 'one half is no account');
   assert.equal(half.s.acct, null);
   const none = hubLink({ acct: null, asecret: null });
-  assert.deepEqual(Object.keys(JSON.parse(none.ws.sent[0])), ['t', 'id', 'secret', 'name', 'look', 'pose', 'hs'], 'the old hello, key for key (PIN MOVED, SCALE5c: a hub link says it knows the hub\'s shards)');
+  assert.deepEqual(Object.keys(JSON.parse(none.ws.sent[0])), ['t', 'id', 'secret', 'name', 'look', 'pose', 'hs', 'sm', 'fv'], 'the old hello, key for key (PIN MOVED, SCALE5c: a hub link says it knows the hub\'s shards; PIN MOVED, STAFF-PANEL5-MESSAGE and -FREEZE: and that it shows a staff message\'s box and the freeze screen)');
   // one half set on the session AFTER construction (world.js sets both; a caller that sets one is not the port's) - the hello's own door
   const lone = hubLink({ acct: null, asecret: null });
   lone.s.acct = 'acct-me'; lone.ws.drop(1006); lone.clock.t += 60_000; lone.s.tick();

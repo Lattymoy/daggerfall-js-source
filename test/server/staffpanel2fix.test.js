@@ -304,7 +304,7 @@ test('STAFF-PANEL2-FIX 6: A CLAIMED HIGH CASE LEFT IDLE returns to the top, and 
   } finally { s.restore(); }
 });
 
-test('STAFF-PANEL2-FIX 8: CUTTING OFF A STAFF MEMBER holds at every door - the stored flag takes every role (the panel, the game\'s /v1/mod doors, Discord, a token\'s staff glyphs), and the cut ends their game sessions; an owner\'s invite brings them back (mutants: each suspended check; the sessions left)', async () => {
+test('STAFF-PANEL2-FIX 8: CUTTING OFF A STAFF MEMBER holds at every door - the stored flag takes every role (the panel, the game\'s /v1/mod doors, Discord, a token\'s staff glyphs), the cut ends their game sessions, and the relay is ordered to close their sockets; an owner\'s invite brings them back (mutants: each suspended check; the sessions left; no order pushed)', async () => {
   const s = await stand();
   try {
     const asyId = s.g.Asynian.id;
@@ -318,8 +318,13 @@ test('STAFF-PANEL2-FIX 8: CUTTING OFF A STAFF MEMBER holds at every door - the s
     assert.ok((await glyphs(s.g.Asynian.secret)).includes('mod'));
     assert.equal((await s.game('/v1/mod/cases', {}, s.g.Asynian.secret)).status, 200);
     const cut = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session);
-    assert.deepEqual([cut.status, cut.body], [200, { ok: true, handle: 'Asynian' }]);
+    assert.deepEqual([cut.status, cut.body], [200, { ok: true, handle: 'Asynian', relay: true }]);
     assert.equal(s.row(asyId).staff_suspended, 1);
+    // the order at the relay's door: the account's sockets closed
+    const r = await verifyOrder(s.pushed.at(-1), s.identityPublic, { subtle, nowS: nowS(), kind: 'staffcut' });
+    assert.ok(r.ok, r.why);
+    assert.deepEqual(Object.keys(r.claims).sort(), ['e', 'i', 'o', 's']);
+    assert.equal(r.claims.s, asyId);
     // every session gone: the panel's, and the game's
     assert.equal((await s.staff('/v1/staff/me', {}, s.asy.session)).status, 401);
     assert.equal((await s.game('/v1/mod/cases', {}, s.g.Asynian.secret)).status, 401);
@@ -355,6 +360,67 @@ test('STAFF-PANEL2-FIX 8: CUTTING OFF A STAFF MEMBER holds at every door - the s
     assert.equal((await s.game('/v1/mod/cases', {}, back.body.secret)).status, 200);
     assert.deepEqual(s.raw.prepare("SELECT act FROM staff_audit WHERE act = 'cut' ORDER BY id").all().map((x) => x.act), ['cut', 'cut', 'cut']);
   } finally { s.restore(); }
+});
+
+test('STAFF-PANEL5-CUT-FIX: THE CUT ORDERS EVERY HIDDEN SOCKET CLOSED, ITS PUSH IS IN THE LOG AND IS PUSHED AGAIN - a hide order for each subject a hidden token was minted for, its staff session deleted since or not (finding 28); the relay\'s answer written down, and a cut pressed again on a member already cut pushes every order again (29); every order stamped after the batch, so a token minted while it ran is no newer (31) (mutants: the audit log unread; the outcome unwritten; a second cut refused; the request\'s clock)', async () => {
+  const s = await stand();
+  const fetch0 = globalThis.fetch;
+  const realNow = Date.now;
+  try {
+    const asyId = s.g.Asynian.id;
+    const hiddenSub = async () => {
+      const t = await s.game('/v1/auth/token', {}, s.g.Asynian.secret);
+      const c = (await verifyToken(t.body.token, s.identityPublic, { subtle, nowS: nowS() })).claims;
+      assert.equal(c.hd, 1, 'a hidden token');
+      return c.s;
+    };
+    const ordersOf = async (kind, at = nowS()) => (await Promise.all(s.pushed.map((o) => verifyOrder(o, s.identityPublic, { subtle, nowS: at, kind })))).filter((r) => r.ok).map((r) => r.claims);
+    // a hidden socket on a session that idled out - its row deleted (openStaff's prune, staffSession's, a new password)
+    const gone = await hiddenSub();
+    s.raw.prepare('DELETE FROM staff_sessions WHERE player_id = ?').run(asyId);
+    const back = await s.staff('/v1/staff/login', { handle: 'Asynian', password: PASSWORD, ...(await s.asy.key.proof('login', 'Asynian')) });
+    assert.equal(back.status, 200, JSON.stringify(back.body));
+    const live = await hiddenSub();
+    assert.notEqual(live, gone, 'a new session, a new subject');
+    // the relay busy for the staffcut (its hide orders taken)
+    const kindOf = (o) => JSON.parse(Buffer.from(o.split('.')[1], 'base64url').toString()).o;
+    globalThis.fetch = async (url, init) => {
+      if (String(url) !== RELAY) return fetch0(url, init);
+      const { order } = JSON.parse(init.body);
+      s.pushed.push(order);
+      return kindOf(order) === 'staffcut' ? new Response('busy', { status: 503 }) : Response.json({ ok: true });
+    };
+    s.pushed.length = 0;
+    // the batch commits a few seconds after the request began (a slow database)
+    let skew = 0;
+    Date.now = () => realNow() + skew;
+    const batch = s.env.DB.batch.bind(s.env.DB);
+    s.env.DB.batch = async (st) => { const r = await batch(st); skew += 3000; return r; };
+    const t0 = nowS();
+    const cut = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session);
+    s.env.DB.batch = batch;
+    assert.deepEqual([cut.status, cut.body], [200, { ok: true, handle: 'Asynian', relay: false }]);
+    assert.deepEqual(new Set((await ordersOf('hide', t0 + 3)).map((c) => c.s)), new Set([gone, live]), 'the deleted session\'s subject too');
+    const [order] = await ordersOf('staffcut', t0 + 3);
+    assert.equal(order.s, asyId);
+    assert.ok(order.i >= t0 + 3, 'stamped after the batch');
+    assert.ok((await ordersOf('hide', t0 + 3)).every((c) => c.i >= t0 + 3), 'its hide orders too');
+    Date.now = realNow;
+    const relayRow = () => s.raw.prepare("SELECT outcome, detail FROM staff_audit WHERE act = 'cut-relay' AND target = ? ORDER BY id DESC").get(asyId);
+    assert.deepEqual([relayRow().outcome, JSON.parse(relayRow().detail)], ['failed', { orders: 3, took: 2, hidden: 2 }]);
+    // pressed again: every order pushed again, the relay taking them now
+    globalThis.fetch = fetch0;
+    s.pushed.length = 0;
+    const again = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session);
+    assert.deepEqual([again.status, again.body], [200, { ok: true, handle: 'Asynian', relay: true }]);
+    assert.deepEqual(new Set((await ordersOf('hide')).map((c) => c.s)), new Set([gone, live]));
+    assert.equal((await ordersOf('staffcut'))[0]?.s, asyId);
+    assert.deepEqual([relayRow().outcome, JSON.parse(relayRow().detail)], ['ok', { orders: 3, took: 3, hidden: 2 }]);
+    assert.ok(s.raw.prepare("SELECT 1 FROM staff_audit WHERE act = 'cut' AND target = ? AND detail LIKE '%\"again\":true%'").get(asyId), 'the second cut written as one');
+    assert.equal(s.row(asyId).staff_suspended, 1);
+    // nobody else's: a player never staff is still no staff to cut
+    assert.deepEqual((await s.staff('/v1/staff/cut', { handle: 'Troll' }, s.mob.session)).body, { error: 'no-staff' });
+  } finally { Date.now = realNow; globalThis.fetch = fetch0; s.restore(); }
 });
 
 test('STAFF-PANEL2-FIX 8: A NEW PASSWORD ENDS THE STAFF PANEL\'S SESSIONS - changed from the game, or recovered with a code (mutants: each closeStaffSessions)', async () => {

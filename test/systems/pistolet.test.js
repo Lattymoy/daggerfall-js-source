@@ -20,7 +20,7 @@ import { HANDS_MODE, DUAL_GUN_TYPES, handsModeOf, dualEligible, DUAL, GUARD } fr
 import { PlayerWeapon, handDesc } from '../../src/combat/playerWeapon.js';
 import { GUN_FEEL, PISTOLET_FEEL, PISTOLET_TICK_SECONDS, PISTOLET_COOLDOWN_SECONDS } from '../../src/combat/gun/gunFeel.js';
 import { gunWidgetSettings, TUNED_FIELDS } from '../../src/combat/gun/gunViewmodel.js';
-import { createGunPair } from '../../src/combat/gun/gunPair.js';
+import { createPistolLane } from '../../src/combat/gun/pistolLane.js';   // PISTOL-PORT: the rig's pistols on the page's frame
 import { loadPistoletArt, cutStrip, pistoletGildKeep, flashPoint, PISTOL_STRIP } from '../../src/combat/gun/pistoletArt.js';
 import { PISTOL_OPENING } from '../../src/tools/pistolLab.js';
 import { uniqueFinds } from '../../src/systems/loot/lootRarity.js';
@@ -297,33 +297,31 @@ test('the pair’s cadence against one Pistolet and the Thunderlock: more shots,
 });
 
 test('a single Pistolet runs its OWN cadence, not the Thunderlock’s', () => {
+  // PIN MOVED (PISTOL-PORT): a Pistolet fires on the pistol lab's own machine, its clock the feel's row - never the
+  // classic machine's, which is the Thunderlock's alone
   const pw = pairWeapon(createPistolet(), null);
   pw._attack('StrikeDown'); pw.update(1 / 60);
-  assert.equal(pw.machine.tick, PISTOLET_TICK_SECONDS);
-  assert.equal(pw.machine.cooldown, PISTOLET_COOLDOWN_SECONDS);
-  assert.equal(pw.machine.hitFrame, PISTOLET_FEEL.hitFrame);
+  assert.deepEqual([pw.pistols.R.fps, pw.pistols.R.cooldownMs, pw.pistols.R.hitFrame], [PISTOLET_FEEL.fps, PISTOLET_FEEL.reloadMs, PISTOLET_FEEL.hitFrame]);
+  assert.equal(1 / pw.pistols.R.fps, PISTOLET_TICK_SECONDS); assert.equal(pw.pistols.R.cooldownMs / 1000, PISTOLET_COOLDOWN_SECONDS);
   const tl = pairWeapon(createThunderlock(), null);
   tl._attack('StrikeDown'); tl.update(1 / 60);
   assert.equal(tl.machine.cooldown, GUN_FEEL.reloadMs / 1000, 'and the Thunderlock keeps its own');
 });
 
-test('the rig’s pair module: each hand its spring, the resting hand guards, the left one flipped, the striking one drawn over', () => {
-  const pair = createGunPair();
+test('the rig’s pistols on the page’s frame: each hand its spring, the resting hand guards, the left one flipped, the hand that fired last drawn over (PIN MOVED: PISTOL-PORT - combat/gun/pistolLane.js on the page’s own pair and frame, where combat/gun/gunPair.js composed a pair of its own)', () => {
+  const lane = createPistolLane();
   const pw = pairWeapon(createPistolet(), createPistolet());
   pw._attack('StrikeDown');
-  pair.punch(pw.strike.hand, PISTOLET_FEEL);
-  for (let i = 0; i < 6; i++) pair.step(1 / 60, pw, { feel: PISTOLET_FEEL, settings: gunWidgetSettings(null, PISTOLET_FEEL.widget) });
-  assert.ok(pair.hands.R.recoil.y !== 0 && pair.hands.L.recoil.y === 0, 'the right’s spring kicked, the left’s did not');
-  assert.ok(pair.hands.L.guard > 0.5 && pair.hands.R.guard === 0, 'the resting left lowers into its guard');
-  const k = pair.kickOf('L', 100);
-  assert.ok(k.y > 0.5 * GUARD.LOWER * 100, `straight down, a share of its height (${k.y.toFixed(1)})`);
-  assert.equal(k.x, 0);
-  assert.deepEqual(pair.order(pw), ['L', 'R'], 'the striking right drawn last');
-  assert.equal(pair.flipOf('L'), true); assert.equal(pair.flipOf('R'), false);
-  assert.equal(pair.flipOf('R', true), true, 'a left-handed player’s pair is the mirror');
-  // the frame each shows: the striking hand the machine’s, the other its rest
-  assert.deepEqual(pair.frameOf('L', pw), { record: 0, frame: 0 });
-  assert.equal(pair.frameOf('R', pw).record, 1);
+  assert.deepEqual(lane.fired(pw.pistols, PISTOLET_FEEL), ['R'], 'the right fired - its own machine’s shot');
+  for (let i = 0; i < 6; i++) { pw.update(1 / 60); lane.step(1 / 60, pw.pistols, { feel: PISTOLET_FEEL }); }
+  assert.ok(lane.hands.R.recoil.y !== 0 && lane.hands.L.recoil.y === 0, 'the right’s spring kicked, the left’s did not');
+  assert.ok(lane.hands.L.guard > 0.5 && lane.hands.R.guard === 0, 'the resting left lowers into its guard');
+  assert.deepEqual(lane.order(pw.pistols), ['L', 'R'], 'the right, fired last, drawn over');
+  assert.equal(lane.flipOf(pw.pistols, 'L'), true); assert.equal(lane.flipOf(pw.pistols, 'R'), false);
+  assert.equal(lane.flipOf(pw.pistols, 'R', true), true, 'a left-handed player’s pair is the mirror');
+  // the picture each shows: the firing hand its own machine’s, the other its rest
+  assert.ok(lane.hands.R.firing);
+  assert.deepEqual([lane.hands.L.firing, lane.hands.L.frame], [false, 0]);
 });
 
 test('the first-person art the loader cuts: native size, 1-bit, the muzzle on the flash, and gold on the pistol only', async () => {

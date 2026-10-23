@@ -226,7 +226,7 @@ function openPauseFlowNow(show, hooks) {
   if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // SERVER-POST: the mailbox (`/mail`, ui/enhanced/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
   // its door opens the enhanced pause on either skin, as the family's pages do
-  if ((hooks.at === 'mailbox' || hooks.at === 'report') && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);   // PRIVATE-REPORT: `/bug`, its form
+  if ((hooks.at === 'mailbox' || hooks.at === 'report' || hooks.at === 'season') && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);   // PRIVATE-REPORT: `/bug`, its form; SEASON-BOOK: `/season`, the laurel's window
   // GROWTH4: the Growth tab (the classic sheet's specialisation rows, a door to the level or the skies) - the classic pause
   // has no tabs, so its pages open the enhanced pause on either skin, as the family's do (the owner, asked: the classic skin
   // reaches it)

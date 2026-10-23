@@ -222,8 +222,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-read-audited-always",
     "file": "server-account/src/staffCensus.js",
-    "old": "await audit('census-read', null, { kind }, { onceIn: CENSUS_CACHE_S }).run();",
-    "new": "await audit('census-read', null, { kind }, {}).run();",
+    "old": "audit('census-read', null, { kind }, { onceIn: CENSUS_CACHE_S }).run()",
+    "new": "audit('census-read', null, { kind }, {}).run()",
     "why": "every page a census-read row",
     "tests": [
       "test/server/staffpanel4census.test.js"

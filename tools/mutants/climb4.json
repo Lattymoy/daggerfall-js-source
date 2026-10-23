@@ -499,8 +499,8 @@
   {
     "name": "CLIMB4-swing-while-climbing",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!fpsSpellCasting.isPlayingAnim && !climbing && !actTool();",
-    "new": "!fpsSpellCasting.isPlayingAnim && !actTool();",
+    "old": "!fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && !pelletsOwed();",
+    "new": "!fpsSpellCasting.isPlayingAnim && !actTool() && !pelletsOwed();",
     "tests": [
       "test/player/climb4.test.js"
     ]

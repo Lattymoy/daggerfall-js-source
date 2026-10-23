@@ -293,15 +293,21 @@ export async function modCase({ db }, actor, env, { target, name, caseId = null 
   const c = await db.prepare(`SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (?2 IS NULL OR id = ?2) AND (kind = 'chat' OR ?3 = 1)
     ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, typeof caseId === 'string' ? caseId : null, isDeveloper(actor, env) ? 1 : 0).first();
   if (!c) return { error: 'no-case' };
-  const lines = (await db.prepare('SELECT at, sub, name, tab, text FROM mod_case_lines WHERE case_id = ?1 ORDER BY at, sub').bind(c.id).all())?.results ?? [];
-  const reports = (await db.prepare('SELECT reason, note FROM mod_reports WHERE case_id = ?1 ORDER BY at').bind(c.id).all())?.results ?? [];
-  return {
-    ok: true,
-    case: { id: c.id, target: row.id, kind: c.kind, name: displayName(row), status: c.status, reports: c.reports, credible: c.credible,
-      reasons: [...new Set(reports.map((r) => String(r.reason)))], notes: reports.map((r) => r.note).filter(Boolean), ai: verdictOf(c, true), auto: c.auto ?? null,
-      lines: lines.map((l) => ({ at: l.at, sub: l.sub, name: l.name, tab: l.tab, text: l.text })) },
-  };
+  const [lines, reports] = await Promise.all(caseReads(db, c.id).map(async (st) => (await st.all())?.results ?? []));   // STAFF-PANEL-SPEED: one trip
+  return { ok: true, case: caseView(row, c, lines, reports) };
 }
+
+/** STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows (it's waiting on the server)"): ONE CASE'S
+ *  READS - its lines, then its reports - for modCase, or for the staff panel's own batch (staffCases.js), and the case
+ *  as a moderator reads it from their rows (caseView). @param {any} db @param {string} caseId */
+export const caseReads = (db, caseId) => [
+  db.prepare('SELECT at, sub, name, tab, text FROM mod_case_lines WHERE case_id = ?1 ORDER BY at, sub').bind(caseId),
+  db.prepare('SELECT reason, note FROM mod_reports WHERE case_id = ?1 ORDER BY at').bind(caseId),
+];
+/** @param {any} row the account @param {any} c its case's row @param {any[]} lines @param {any[]} reports caseReads' rows */
+export const caseView = (row, c, lines, reports) => ({ id: c.id, target: row.id, kind: c.kind, name: displayName(row), status: c.status, reports: c.reports, credible: c.credible,
+  reasons: [...new Set(reports.map((r) => String(r.reason)))], notes: reports.map((r) => r.note).filter(Boolean), ai: verdictOf(c, true), auto: c.auto ?? null,
+  lines: lines.map((l) => ({ at: l.at, sub: l.sub, name: l.name, tab: l.tab, text: l.text })) });
 
 /** DISMISS the account's open case - a moderator's: the act recorded, the case's automatic mutes voided (one still
  *  running lifted - its unmute order answered, for the moderator's client to carry and pushed to the relay's door).
@@ -354,15 +360,16 @@ const utcMinute = (until) => new Date(until * 1000).toISOString().slice(0, 16).r
 /**
  * ONE MODERATOR'S ACT on an account, found by id or name (findAccount). `act` mute (`minutes`, 0 lifts), ban (`days`,
  * `reason`), unban, dismiss; `caseId` the case it answers (else the one modCase shows the actor); `click` the press's
- * one-time id; `actorName` what the record says (the door's words beside the name); `keepLonger` a button's: never
- * shorten what stands (DISCORD-5); `resolution` the case's closing words from the act's answer, else the act's own with
- * `from` (the door: 'staff panel', 'in the game', 'Discord') beside them. The order for the rooms
+ * one-time id; `row` the account's row, from a door that found it already (STAFF-PANEL-SPEED: staffCases.js); `actorName`
+ * what the record says (the door's words beside the name); `keepLonger` a button's: never shorten what stands
+ * (DISCORD-5); `resolution` the case's closing words from the act's answer, else the act's own with `from` (the door:
+ * 'staff panel', 'in the game', 'Discord') beside them. The order for the rooms
  * goes to `push` (the relay's door, by default). Answers the act's own answer with `case` and `order`, or `{ error }`.
  * STAFF-PANEL2-FIX: the act's audit row written once, whatever its outcome, by `audit` (the panel's; else as the actor's
  * staff role) - a throw is written down as failed and thrown on. One who is no moderator is answered and not written: the
  * game's /v1/mod doors are every player's to knock at, and the audit log is staff's.
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto, rand: (b: Uint8Array) => void }} ctx @param {any} actor @param {any} env
- * @param {{ act: 'mute'|'ban'|'unban'|'dismiss', target?: unknown, name?: unknown, caseId?: unknown, click?: unknown, minutes?: any, days?: any,
+ * @param {{ act: 'mute'|'ban'|'unban'|'dismiss', target?: unknown, name?: unknown, row?: any, caseId?: unknown, click?: unknown, minutes?: any, days?: any,
  *   reason?: unknown, actorName?: string, from?: string, keepLonger?: boolean, resolution?: (r: any) => string }} ask
  * @param {{ push?: (order: string) => unknown, audit?: (act: string, target?: string|null, detail?: object|null, how?: object) => any }} [io]
  */
@@ -405,25 +412,25 @@ export async function modAct(ctx, actor, env, ask, { push, audit } = {}) {
  *  @param {((order: string) => unknown)|undefined} push @param {any} at */
 async function actOnce(ctx, actor, env, ask, push, at) {
   const { db, nowS, subtle } = ctx;
-  const row = await findAccount(db, { target: ask.target, name: ask.name });
+  const row = ask.row ?? await findAccount(db, { target: ask.target, name: ask.name });   // STAFF-PANEL-SPEED: the panel's, found already
   if ('error' in row) return row;
   const name = displayName(row);
   at.target = row.id; at.name = name;
   const click = ask.click ?? null;
   if (click !== null && !(typeof click === 'string' && CLICK_RE.test(click))) return { error: 'bad-click' };
   at.click = click;
-  if (click && await db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1').bind(click).first()) return { ok: true, repeat: true, target: row.id, name };
   const lift = ask.act === 'unban' || (ask.act === 'mute' && ask.minutes === 0);
-  /** @type {any} */
-  let c = null;
-  if (!lift && ask.caseId != null) {
-    c = typeof ask.caseId === 'string' ? await db.prepare('SELECT * FROM mod_cases WHERE id = ?1 AND target = ?2').bind(ask.caseId, row.id).first() : null;
-    if (!c) return { error: 'no-case' };
-  } else if (!lift) {
-    // the case modCase shows this actor: the chat case first, a spawn case a developer's alone
-    c = await db.prepare(`SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (kind = 'chat' OR ?2 = 1)
-      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, isDeveloper(actor, env) ? 1 : 0).first();
-  }
+  // STAFF-PANEL-SPEED: the press's one-time id and the act's case read together, one trip - neither needs the other's answer
+  const [seen, c] = await Promise.all([
+    click ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1').bind(click).first() : null,
+    lift ? null : ask.caseId != null
+      ? (typeof ask.caseId === 'string' ? db.prepare('SELECT * FROM mod_cases WHERE id = ?1 AND target = ?2').bind(ask.caseId, row.id).first() : null)
+      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone
+      : db.prepare(`SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (kind = 'chat' OR ?2 = 1)
+      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, isDeveloper(actor, env) ? 1 : 0).first(),
+  ]);
+  if (seen) return { ok: true, repeat: true, target: row.id, name };
+  if (!lift && ask.caseId != null && !c) return { error: 'no-case' };
   if (ask.act === 'dismiss' && !c) return { error: 'no-case' };
   const take = click ?? caseIdOf(ctx.rand);
   if (c) {

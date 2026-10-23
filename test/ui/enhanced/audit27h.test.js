@@ -124,12 +124,22 @@ test('AUDIT 27h A4: a door that opened nothing RESUMES - the page gone and nothi
   // the Stats page's door, as written, over the pause door's own act law
   const menu = rd('src/ui/enhanced/enhancedMenu.js');
   const at = menu.indexOf('function pauseStats(body)');
-  const onclick = /b\.onclick = (\(\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \});/.exec(menu.slice(at, menu.indexOf('\nfunction ', at + 10)));
+  // PIN MOVED (AUDIT SEASON-BOOK S3): the door through the menu's one handoff - and the pause door's close UNMOUNTS the face,
+  // whose unmount empties `onAction`, as the real one does (this test's close had never unmounted, so a resume asked of
+  // the emptied handler passed here and did nothing in play)
+  const onclick = /b\.onclick = (\(\) => \{ handoff\(fn\); \});/.exec(menu.slice(at, menu.indexOf('\nfunction ', at + 10)));
   assert.ok(onclick, 'the Stats door');
+  const body = /\nfunction handoff\(fn, opened = \(r\) => r !== false\) \{\n([\s\S]*?)\n\}\n/.exec(menu);
+  assert.ok(body, 'the handoff');
+  assert.match(menu, /\n {6}onAction = \(\) => \{\};/, 'the unmount empties the handler');
   const press = (opened) => {
     const seen = [];
-    const onAction = pauseMenuAct({ relock: () => seen.push('relock') }, () => seen.push('close'));
-    run(onclick[1], { onAction, fn: () => { seen.push('door'); return opened; } })();
+    const live = { onAction: null, fn: () => { seen.push('door'); return opened; }, handoff: null };
+    // eslint-disable-next-line no-new-func
+    const inLive = (expr) => new Function('scope', `with (scope) { return (${expr}); }`)(live);
+    live.handoff = inLive(`function (fn, opened = (r) => r !== false) {${body[1]}}`);
+    live.onAction = pauseMenuAct({ relock: () => seen.push('relock') }, () => { seen.push('close'); live.onAction = () => {}; });
+    inLive(onclick[1])();
     return seen;
   };
   assert.deepEqual(press(true), ['close', 'door'], 'a door that opened hands off: nothing relocks under its window');

@@ -1,0 +1,502 @@
+[
+ {
+  "name": "VM-guard-lowers-the-firing-hand-too",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "dual && guard && other.state === 'Firing' && m.state !== 'Firing'",
+  "new": "dual && guard && other.state === 'Firing'",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-guard-never",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "s.guard = guardStep(s.guard, dual && guard && other.state === 'Firing' && m.state !== 'Firing', dt);",
+  "new": "s.guard = guardStep(s.guard, false, dt);",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-bob-while-reloading",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "idle: machines[h].state === 'Idle',",
+  "new": "idle: machines[h].state !== 'Firing',",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-bob-while-firing",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "idle: machines[h].state === 'Idle',",
+  "new": "idle: true,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-no-reload-dip",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "shown: machines[h].state !== 'Cooling' && !away,",
+  "new": "shown: !away,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-holster-to-the-reload-dip",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "hiddenTarget: away ? awayTarget : hiddenTarget,",
+  "new": "hiddenTarget,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "VM-picture-stuck-on-the-first",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "s.frame = s.firing ? m.frame : restFrame;",
+  "new": "s.frame = s.firing ? 0 : restFrame;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-no-open-clack",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "{ s.opened = true; play('open', 0.9); }",
+  "new": "{ s.opened = true; }",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-close-clack-at-the-end",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "m.cooledMs >= Math.max(0, cooldownMs - RELOAD_CLOSE_LEAD * 1000)",
+  "new": "m.cooledMs >= cooldownMs",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-clacks-never-rearm",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "    if (m.state !== 'Cooling') { s.opened = false; s.closed = false; }\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-guard-does-not-lower",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "kick: { x: s.kick.x, y: s.kick.y + guardY }",
+  "new": "kick: { x: s.kick.x, y: s.kick.y }",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-order-fixed",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "order.filter((h) => drawn.includes(h))",
+  "new": "['R', 'L'].filter((h) => drawn.includes(h))",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-switches-dropped",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "return switches ? { ...s, offset: !!switches.offset, bob: !!switches.bob } : s;",
+  "new": "return s;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-kick-the-recoil-default",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "hands[h].recoil.punch(kick);",
+  "new": "hands[h].recoil.punch();",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "VM-spring-the-recoil-default",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "rc.stiff = spring.stiff; rc.damp = spring.damp; rc.back = spring.back;",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PP-no-fall-to-the-loaded-hand",
+  "file": "src/combat/gun/pistolPair.js",
+  "old": "const h = loaded(s.hand) ? s.hand : (loaded(otherHand(s.hand)) ? otherHand(s.hand) : null);",
+  "new": "const h = loaded(s.hand) ? s.hand : null;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistolLab.test.js",
+   "test/combat/pistolet_law.test.js",
+   "test/systems/pistolet.test.js"
+  ]
+ },
+ {
+  "name": "PP-order-never-moves",
+  "file": "src/combat/gun/pistolPair.js",
+  "old": "    pair.order = [otherHand(h), h];\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PP-technique-to-the-law",
+  "file": "src/combat/gun/pistolPair.js",
+  "old": "pair.fireHand = (h) => (loaded(h) && shoot(h, { off: h !== pair.lead, flurry: false }) ? [h] : []);",
+  "new": "pair.fireHand = () => pair.pull(0);",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/pistolet_law.test.js"
+  ]
+ },
+ {
+  "name": "PL-single-mirrored-by-its-hand",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded",
+  "new": "handOnLeft(h, leftHanded)",
+  "tests": [
+   "test/combat/pistolet_law.test.js",
+   "test/combat/weapon/pistoletRig.test.js",
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PL-pair-handedness-ignored",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded",
+  "new": "pistols.hands().length === 2 ? handOnLeft(h, false) : leftHanded",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "PL-the-rifle-width",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "widthPct: art.pose.widthPct,",
+  "new": "widthPct: undefined,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PL-holster-ignored",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "away: sheathed,",
+  "new": "away: false,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "PL-switches-dropped",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "settings: pistolWidgetSettings(PISTOL_PANEL, switches),",
+  "new": "settings: pistolWidgetSettings(PISTOL_PANEL),",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PL-kick-ignored",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "pistolHandFired(hands, h, feel.kick);",
+  "new": "pistolHandFired(hands, h, 0);",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PL-guard-of-no-height",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "heightPx: art.anchor.h,",
+  "new": "heightPx: 0,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PW-one-pistol-on-the-pair-trigger",
+  "file": "src/combat/playerWeapon.js",
+  "old": "const trigger = pair ? PAIR_TRIGGER.Alternate : PAIR_TRIGGER.Single;",
+  "new": "const trigger = PAIR_TRIGGER.Alternate;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PW-one-pistol-always-the-right",
+  "file": "src/combat/playerWeapon.js",
+  "old": "(held === this.handItem('L') && held !== this.handItem('R') ? 'L' : 'R')",
+  "new": "'R'",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/pistolet_law.test.js"
+  ]
+ },
+ {
+  "name": "PW-reload-forgets-the-frames",
+  "file": "src/combat/playerWeapon.js",
+  "old": "return Math.max(0, FIRE_FRAMES / g.fps - g._t) + g.cooldownMs / 1000;",
+  "new": "return g.cooldownMs / 1000;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/pistolet_law.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "PW-mirror-first-firing",
+  "file": "src/combat/playerWeapon.js",
+  "old": "const h = firing.includes(p.last) ? p.last : firing[0];",
+  "new": "const h = firing[0];",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "PW-mirror-waits-for-both",
+  "file": "src/combat/playerWeapon.js",
+  "old": "m.cooldownUntil = m.now + Math.min(...hands.map((x) => this._pistolLeft(x)));",
+  "new": "m.cooldownUntil = m.now + Math.max(...hands.map((x) => this._pistolLeft(x)));",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/pistolet_law.test.js",
+   "test/systems/pistolet.test.js"
+  ]
+ },
+ {
+  "name": "PW-technique-to-the-off-hand",
+  "file": "src/combat/playerWeapon.js",
+  "old": "const fired = lead ? p.fireHand(p.lead) : p.pull(0);",
+  "new": "const fired = p.pull(0);",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/pistolet_law.test.js"
+  ]
+ },
+ {
+  "name": "PW-off-hand-full-blow",
+  "file": "src/combat/playerWeapon.js",
+  "old": "off: pair && h !== this.leadHand };",
+  "new": "off: false };",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PW-hit-wears-the-last-pull",
+  "file": "src/combat/playerWeapon.js",
+  "old": "      this.strike = this._pistolStrikes[h] ?? this.strike;\n      if (this.gunPair) this.weapon = this.handItem(h);\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PW-pistol-on-the-classic-machine",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    if (this._pistolsFor()) return this._pistolShot(state, lead);   // PISTOL-PORT: a Pistolet's pull is the page's\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/systems/pistolet.test.js"
+  ]
+ },
+ {
+  "name": "PW-strike-never-ends",
+  "file": "src/combat/playerWeapon.js",
+  "old": "      evs.push('done');\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js",
+   "test/combat/pistolet_law.test.js"
+  ]
+ },
+ {
+  "name": "PW-reloading-pistol-loaded",
+  "file": "src/combat/playerWeapon.js",
+  "old": "handLoaded(hand) { return this.pistols ? this.pistols[hand].state === 'Idle' : true; }",
+  "new": "handLoaded(hand) { return true; }",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/pistolet_law.test.js",
+   "test/systems/pistolet.test.js"
+  ]
+ },
+ {
+  "name": "WR-flash-always-right",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1;",
+  "new": "entity._thunderlockFlashSide = 1;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-flash-handedness-ignored",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1;",
+  "new": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), false) ? -1 : 1;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-flash-off-the-lead",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1;",
+  "new": "entity._thunderlockFlashSide = pistols.flipOf(p, p.lead, handedFlip()) ? -1 : 1;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-pistol-shot-silent",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "for (const _h of armShoots ? (fired ? [playerWeapon.strike?.hand ?? 'R'] : []) : shot) {",
+  "new": "for (const _h of armShoots ? (fired ? [playerWeapon.strike?.hand ?? 'R'] : []) : []) {",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js",
+   "test/systems/pistolet.test.js"
+  ]
+ },
+ {
+  "name": "WR-pistol-reload-silent",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "      if (!_heldHit) pistols.voice(p, feel, (k, gain) =>",
+  "new": "      if (!_heldHit) void ((k, gain) =>",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "WR-pistol-flash-the-orb",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "    const flash = ph ? PAINTED_FLASH : orbColour();",
+  "new": "    const flash = orbColour();",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "WR-pistols-pop-on-sheath",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "    if (pistolsUp()) return pistols.sliding(playerWeapon.pistols, heldFeel());",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-pair-drawn-in-a-fixed-order",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "for (const h of pistols.order(playerWeapon.pistols)) {",
+  "new": "for (const h of ['R', 'L']) {",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-arm-kick-off-the-right",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "armGunPose(-pistols.hands[h].kick.y, share)",
+  "new": "armGunPose(-pistols.hands.R.kick.y, share)",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-single-on-the-thunderlock-path",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "hand = pistolsUp() ? playerWeapon.pistols.lead : null",
+  "new": "hand = null",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "WR-muzzle-of-the-right",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "pistols.hands[playerWeapon.gunPair ? playerWeapon.activeHand : playerWeapon.pistols.lead]?.drawn",
+  "new": "pistols.hands.R?.drawn",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-muzzle-record-shared",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "if (ph) ph.drawn = drawn; else _tlDrawn = drawn;",
+  "new": "_tlDrawn = drawn;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "WR-player-switches-dropped",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "feel, switches: readWidgetSettings(), frame,",
+  "new": "feel, switches: null, frame,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "WR-single-reload-no-pump",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "const share = !playerWeapon.gunPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;",
+  "new": "const share = null;",
+  "tests": [
+   "test/combat/gun/pistolport.test.js",
+   "test/combat/weapon/pistoletRig.test.js"
+  ]
+ },
+ {
+  "name": "PW-swap-skips-the-reload",
+  "file": "src/combat/playerWeapon.js",
+  "old": "this.pistols ??= this._pistolsAway ?? createPair(",
+  "new": "this.pistols ??= createPair(",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "PW-put-by-pistols-frozen",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    this._pistolsAway?.step(dt);   // and pistols put by for another weapon reload on\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ }
+]

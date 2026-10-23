@@ -43,13 +43,13 @@ branch:
 |---|---|---|---|
 | A1 | HIGH | An off-hand shot took none of DUAL's terms - no 0.8 share, no Agility to-hit, no 0.8 blow (so it charged Undertow and Struck every shot): a shot's damage is rolled where it LANDS, the shot carried no `off`, and the duel's roll took `off` for melee alone | FIXED: the impact asks the gun the shot left (`PlayerWeapon.isOffHandItem`, read in `arrowFlight.js playerArrowHitFoe`); the duel takes `off` for a shot (`duelCombat.js`, relay world245 - world242 on its branch, renumbered past main's world242-244 at the merge); pinned (`test/combat/pistolet_law.test.js` A1, A1b), mutants OH-* |
 | A2 | MED | `world.js` and `exterior.js` tallied an off-hand shot's skill as a whole blow; `worldModes.js` and `dungeonContext.js` weighed it (THE FOUR HOSTS RULE) | FIXED: both pass `playerWeapon.blowWeight`; pinned (`twohands.test.js`'s tally counts), mutant OH-tally-unweighed |
-| A3 | MED | Any frame the pair was broken (a light lit, one pistol taken off) wiped both hands' reloads - the late hand fired inside its own reload - and a fresh second pistol was held back by the first's | FIXED: each hand's `_reload` is kept; the lone gun is gated by its own, the pair by the soonest; pinned (A3, A3b, A3c), mutants RL-* |
+| A3 | MED | Any frame the pair was broken (a light lit, one pistol taken off) wiped both hands' reloads - the late hand fired inside its own reload - and a fresh second pistol was held back by the first's | FIXED: each hand's `_reload` is kept; the lone gun is gated by its own, the pair by the soonest; pinned (A3, A3b, A3c), mutants RL-* (PISTOL-PORT: each pistol's own machine keeps it now, `playerWeapon.pistols`; the RL-* records RETIRED with `_reload`, the law re-aimed in `pistolport.json` and AUDIT PISTOL-PORT's) |
 | A4 | MED | The balance test applied 0.8 by arithmetic and touched no damage code - green while the game ran at x1.32 | FIXED: measured through the machine and `playerArrowHitFoe` (A4: the share 14/17 at the span's top, a pair 9.2/s against 7.7, x1.20); the page's table re-measured |
 | A5 | MED | The Pistolet's find was a second `rolls()` draw inside `rollUniqueFinds` at every tier-4+ source, moving every later draw (Loot-II-Arc law 9) | FIXED: ONE gun find, the Thunderlock's at its old weight; its one mint draw picks the gun (`GUN_SHARE` 0.5) and counts the Pellets - every seed its seed; pinned (`pistolet.test.js`, LOOT8 green unmoved), mutants GF-* |
-| A6 | LOW | A technique (the lead hand's) was thrown by the off hand while the lead reloaded | FIXED: the fallback refuses a technique; pinned (A6), mutant TQ-technique-to-the-off-hand |
+| A6 | LOW | A technique (the lead hand's) was thrown by the off hand while the lead reloaded | FIXED: the fallback refuses a technique; pinned (A6), mutant TQ-technique-to-the-off-hand (PISTOL-PORT: `pistolPair.js fireHand`, the record RETIRED and re-aimed as PW-technique-to-the-off-hand and PP-technique-to-the-law) |
 | A7 | HIGH | A Sovereign minted before PISTOLET (an Ebony Saber, Long Blade) failed `validGildedMarks` under the same item law: the judge's `gilded` finding, a trade hold, a week's then a month's hold after three | FIXED: the record's saber era (`SOVEREIGN_SABER_ERA`, read through `gildedRecordOf` by the law and the lore); `ITEM_LAW_VERSION` 10, the account service acct170 (acct168 on its branch, renumbered past main's acct168-169 at the merge); pinned, mutants SE-* |
 | A8 | MED | "Together about as often as the Thunderlock" held only at Luck 50 below the cap: the cap and Luck's nudge are per find, unscaled by weight | FIXED with A5: one find - each gun exactly half at every source, cap and Luck included |
-| A9 | LOW | The muzzle light's side ignored Handedness | FIXED: the side the firing gun is drawn on (`gunPair.flipOf(hand, handedFlip())`); pinned on the real rig (`pistoletRig.test.js`, both handednesses, pair and single), mutant TL-light-side-ignored |
+| A9 | LOW | The muzzle light's side ignored Handedness | FIXED: the side the firing gun is drawn on (`gunPair.flipOf(hand, handedFlip())`); pinned on the real rig (`pistoletRig.test.js`, both handednesses, pair and single), mutant TL-light-side-ignored (PISTOL-PORT: `pistolLane.js flipOf`; the brightest flash's side since AUDIT PISTOL-PORT B4) |
 | A10 | LOW | `SIEGE_PISTOLET.max` was held only by a literal `15 + 2` | FIXED: pinned to `weaponMaxDamage(562)` as the Thunderlock's is (`pistolet_pins.test.js`), mutants SR-* |
 
 Checked clean: the item's rows and proficiency; the fallback never fires an unloaded hand and cannot double-fire; one
@@ -106,7 +106,7 @@ Morrowind assets parse and resolve; the bakes byte-exact; the account Worker loa
 | D9 | HIGH | The install test could never fail | FIXED: six records, each a stand-in with its offset; mutants PLD-install-* |
 | D10 | HIGH | The per-hand doll records unpinned (a gold Sovereign in the right hand could show plain) | FIXED: every (record, file, offset) and the gilded right hand; mutants PLD-* |
 | D11 | HIGH | Twelve mutants of the rig's Pistolet paths survived every suite | FIXED: the real rig in Node (`test/combat/weapon/pistolRigHarness.js`, `pistoletRig.test.js`, 7 tests); mutants WR-*, all dead (one after M3) |
-| D12 | MED | `gunPair.js` pinned only for its guard | FIXED: `test/combat/gun/gunPair.test.js` (5) steps a real pair; mutants GP-* |
+| D12 | MED | `gunPair.js` pinned only for its guard | FIXED: `test/combat/gun/gunPair.test.js` (5) steps a real pair; mutants GP-*. RETIRED by PISTOL-PORT (2026-10-22) with the module: the page's own frame is pinned by `test/combat/gun/pistolport.test.js`, mutants in `tools/mutants/pistolport.json` |
 | D13 | MED | No committed mutant record | FIXED: `tools/mutants/pistolet.json` (81) |
 | D14 | MED | The light's side false for a left-handed player | FIXED with A9 |
 | D15 | MED | "24x17, a classic dagger's doll record" - those are 56x17 and 36x45 | FIXED: the page, the tool and the test's message |
@@ -150,14 +150,16 @@ Morrowind assets parse and resolve; the bakes byte-exact; the account Worker loa
 
 ## What stands
 
-- New pins: `test/combat/pistolet_law.test.js` (7), `test/combat/gun/gunPair.test.js` (5),
+- New pins: `test/combat/pistolet_law.test.js` (7), `test/combat/gun/gunPair.test.js` (5, RETIRED by PISTOL-PORT),
   `test/combat/weapon/pistoletRig.test.js` (7, over `pistolRigHarness.js`), `test/systems/pistolet_pins.test.js` (10);
   `pistolet.test.js`, `fieldgunmw.test.js`, `pistolLab.test.js` and `twohands.test.js` extended.
 - `tools/mutants/pistolet.json`: 81 mutants over `pistolet.js`, `thunderlock.js`, `gilded.js`, `playerWeapon.js`,
   `handsLaw.js`, `arrowFlight.js`, `duelCombat.js`, `gunPair.js`, `weaponRig.js`, `pistoletArt.js`, `fpArm.js`,
   `ownWeaponModels.js`, `siegeRef.js`, `itemInfo.js` and the lab - 79 dead, 2 equivalent and recorded with their
   reason (`PW-both-empty-still-fires`: the machine's gate already refuses; `PW-pistolet-on-the-rifle-hit-frame`: both
-  feels fire on frame 1).
+  feels fire on frame 1). PISTOL-PORT RETIRED 33 of them with the code they named - both equivalent ones among them - so
+  `pistolet.json` holds 50; their laws are held by `pistolport.json` and `audit_pistolport.json`
+  (`Audit-Pistol-Port.md` D8, D9).
 - To deploy: the relay (world245; world242 on its branch) and the account service (acct170; acct168 on its branch; item law 10). An older relay rolls an off-hand shot
   at a player whole; an older judge reads an old Sovereign saber as a forgery.
 

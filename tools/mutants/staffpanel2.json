@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL2-read-every-time",
     "file": "server-account/src/staffCases.js",
-    "old": "await audit('cases-read', null, { sort }, { onceIn: 10 * 60 }).run();",
-    "new": "await audit('cases-read', null, { sort }).run();",
+    "old": "const said = audit('cases-read', null, { sort }, { onceIn: 10 * 60 });",
+    "new": "const said = audit('cases-read', null, { sort });",
     "why": "every poll a row",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "STAFF-PANEL2-look-lets-go",
     "file": "server-account/src/staffCases.js",
-    "old": "    await keep();\n    await audit(path === '/v1/staff/case'",
-    "new": "    await audit(path === '/v1/staff/case'",
+    "old": "    const k = keep();\n",
+    "new": "    const k = null;\n",
     "why": "the holder's look lets the claim go",
     "tests": [
       "test/server/staffpanel2.test.js"

@@ -58,8 +58,10 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and the HUD's 2026-10-20 three (`hud/hudTip.js`: the HUD's hover card, the pack's own card; `hud/statusTips.js`: what a buff, a debuff, a need or a disease tile says under the pointer - STATUS-TIPS; `hud/hudAdvance.js`: the two tiles beside the Renown bar, the skills ready and the Firmament's stars not yet placed, clear of the hotbar - SKILL-READY, FIRM-STARS; `UI-Arc.md`)
 - and TRADE-VIRT's LANDING TILES (`enhanced/landingTiles.js`: a picture into the tile that waited on it, one pass a frame - the pack's, the shop counter's and the trade between players' one home; `07-Rendering/Performance-Priority.md` TRADE-VIRT)
 - and BOARD-SIFT's BAR (`workSift.js`: the Notice Board's Work tab sifted and ordered - the kind, a search, Only what I can fill, the order, forty cards at a time; `06-Systems/Professions-Arc.md` 10.13)
-- and COLLECTIONS-II's WARDROBE (`collections/wardrobeCatalogue.js`: every title, aura, profile icon and glyph, where it comes from, whether it can be had now and how; `collections/wardrobePart.js`: the Collections page's part a kind, read off the account and worn from - `10-UI/Collections.md`);
-406 modules
+- and COLLECTIONS-II's WARDROBE (`collections/wardrobeCatalogue.js`: every title, aura, profile icon and glyph, where it comes from, whether it can be had now and how; `collections/wardrobePart.js`: the Collections page's part a kind, read off the account and worn from - `10-UI/Collections.md`)
+- and SEASON-BOOK's LAUREL (`enhanced/enhancedSeason.js`: the pause face's third mark beside the hourglass and the envelope, and its window - the ranked season, the seats' Season and the festival, each counting down, the player's standing on each board - `10-UI/UI-Arc.md` SEASON-BOOK);
+- and STAFF-PANEL5's TWO (`freezeScreen.js`: the "frozen by staff" banner over the world while a staff freeze stands - why, until when, and the server's Discord invite with its Copy button, above the HUD and below the asset picker; `staffMessageBox.js`: a staff member's Message on screen, the box in the middle of one player's screen until they press OK - the design doc "DFO Staff Panel: design", Freeze player and Message on screen);
+409 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

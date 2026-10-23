@@ -32,9 +32,11 @@
 // reporter's own "threat" makes a case Medium at most; a claimed High case nobody touched for HIGH_IDLE_S returns to the
 // top of its level; a claim ends with the staff session that took it (safety.js claimHeldSql).
 import { displayName } from './accounts.js';
-import { modCase, modAct, claimHeldSql } from './safety.js';
+import { caseReads, caseView, modAct, claimHeldSql } from './safety.js';
 import { strikesLook, findAccount } from './sanctions.js';
+import { canModerate } from './titles.js';
 import { LADDER_BAN_AT, STRIKE_WINDOW_S } from '../../src/net/safety/safetyLaw.js';
+import { ID_RE } from '../../src/net/identityToken.js';
 
 /** A claim lets go this long after its holder's last look or act on the case (design doc: "a starting number to tune"). */
 export const CLAIM_S = 30 * 60;
@@ -109,7 +111,7 @@ export const HOME_WATCH = Object.freeze({
   id: 'reports', label: 'Reports', role: 'moderator',
   /** @param {any} ctx @param {any} env @param {{ player: any, role: string }} who @param {number} n */
   async top(ctx, env, who, n) {
-    const r = /** @type {any} */ (await staffCases(ctx, env, '/v1/staff/cases', {}, who, () => ({ run: async () => null })));
+    const r = /** @type {any} */ (await staffCases(ctx, env, '/v1/staff/cases', {}, who, () => null));
     return { items: r.cases.slice(0, n).map((/** @type {any} */ c) => ({ level: c.level, why: c.why.join(' · '), sub: c.target, name: c.name })), high: r.high, total: r.total };
   },
 });
@@ -132,14 +134,24 @@ export async function staffCases(ctx, env, path, body, who, audit) {
   if (path === '/v1/staff/cases') {
     const sort = body.sort === 'newest' ? 'newest' : 'urgent';
     const from = Number.isSafeInteger(body.from) && body.from > 0 ? body.from : 0;
-    // STAFF-PANEL2-FIX: a Moderator's list is the chat cases alone; an Admin's every kind
-    const rows = (await db.prepare(`SELECT c.*, p.handle, p.guest_name, h.handle AS holder_handle, h.guest_name AS holder_guest, ${claimHeldSql('c', 2)} AS claim_live
+    // STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows (it's waiting on the server)"): the
+    // list's reads and its audit row in one batch, one trip - none needs another's answer (Home's watch writes no row)
+    const said = audit('cases-read', null, { sort }, { onceIn: 10 * 60 });
+    const read = await db.batch([
+      // STAFF-PANEL2-FIX: a Moderator's list is the chat cases alone; an Admin's every kind
+      db.prepare(`SELECT c.*, p.handle, p.guest_name, h.handle AS holder_handle, h.guest_name AS holder_guest, ${claimHeldSql('c', 2)} AS claim_live
       FROM mod_cases c JOIN players p ON p.id = c.target LEFT JOIN players h ON h.id = c.claimed_by
-      WHERE c.status = 'open' AND (c.kind = 'chat' OR ?3 = 1) ORDER BY c.opened_at DESC LIMIT ?1`).bind(CASES_RANKED_MAX, nowS, admin ? 1 : 0).all())?.results ?? [];
-    const reports = rows.length ? (await db.prepare(`SELECT r.case_id, r.reason, r.counted, r.at FROM mod_reports r JOIN mod_cases c ON c.id = r.case_id
-      WHERE c.status = 'open'`).all())?.results ?? [] : [];
-    const strikes = rows.length ? (await db.prepare(`SELECT a.target, COUNT(*) AS n FROM mod_actions a WHERE a.kind IN ('mute', 'ban') AND a.at > ?1
-      AND a.void_at IS NULL AND a.target IN (SELECT target FROM mod_cases WHERE status = 'open') GROUP BY a.target`).bind(nowS - STRIKE_WINDOW_S).all())?.results ?? [] : [];
+      WHERE c.status = 'open' AND (c.kind = 'chat' OR ?3 = 1) ORDER BY c.opened_at DESC LIMIT ?1`).bind(CASES_RANKED_MAX, nowS, admin ? 1 : 0),
+      db.prepare(`SELECT r.case_id, r.reason, r.counted, r.at FROM mod_reports r JOIN mod_cases c ON c.id = r.case_id
+      WHERE c.status = 'open'`),
+      db.prepare(`SELECT a.target, COUNT(*) AS n FROM mod_actions a WHERE a.kind IN ('mute', 'ban') AND a.at > ?1
+      AND a.void_at IS NULL AND a.target IN (SELECT target FROM mod_cases WHERE status = 'open') GROUP BY a.target`).bind(nowS - STRIKE_WINDOW_S),
+      // the cases taken from this member, told on the first page alone
+      ...(from ? [] : [db.prepare(`SELECT c.id, c.target, p.handle, p.guest_name, h.handle AS holder FROM mod_cases c JOIN players p ON p.id = c.target
+      LEFT JOIN players h ON h.id = c.claimed_by WHERE c.status = 'open' AND c.claim_from = ?1 AND c.claimed_by IS NOT ?1 AND ${claimHeldSql('c', 2)}`).bind(me.id, nowS)]),
+      ...(said ? [said] : []),
+    ]);
+    const [rows, reports, strikes] = read.slice(0, 3).map((/** @type {any} */ x) => x?.results ?? []);
     const strikesOf = new Map(strikes.map((s) => [s.target, Number(s.n)]));
     const ranked = rows.map((c) => {
       const mine = reports.filter((r) => r.case_id === c.id);
@@ -160,36 +172,44 @@ export async function staffCases(ctx, env, path, body, who, audit) {
       || (nowS - b.lastReport < 3600 ? 1 : 0) - (nowS - a.lastReport < 3600 ? 1 : 0)   // reports still coming in
       || a.openedAt - b.openedAt);
     const page = ranked.slice(from, from + CASES_PAGE);
-    const lost = from ? [] : ((await db.prepare(`SELECT c.id, c.target, p.handle, p.guest_name, h.handle AS holder FROM mod_cases c JOIN players p ON p.id = c.target
-      LEFT JOIN players h ON h.id = c.claimed_by WHERE c.status = 'open' AND c.claim_from = ?1 AND c.claimed_by IS NOT ?1 AND ${claimHeldSql('c', 2)}`).bind(me.id, nowS).all())?.results ?? [])
-      .map((c) => ({ id: c.id, target: c.target, name: displayName(c), by: c.holder ?? null }));
-    await audit('cases-read', null, { sort }, { onceIn: 10 * 60 }).run();
+    const lost = from ? [] : (read[3]?.results ?? []).map((/** @type {any} */ c) => ({ id: c.id, target: c.target, name: displayName(c), by: c.holder ?? null }));
     return { cases: page, next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE : null, total: ranked.length, high: ranked.filter((c) => c.level === 'high').length, lost };   // STAFF-PANEL6-STATUS: `high`, the Reports' "N high of M"
   }
 
   // every other door names one account: by its id, or a name (sanctions.js findAccount) - and its open case: the one
-  // `case` names, else its chat case first; a Moderator's, chat cases alone (STAFF-PANEL2-FIX)
-  const row = await findAccount(db, { target: body.target, name: body.name });
-  if ('error' in row) return row;
+  // `case` names, else its chat case first; a Moderator's, chat cases alone (STAFF-PANEL2-FIX). The whole row: a case
+  // read shows it (safety.js caseView)
   const named = typeof body.case === 'string' ? body.case : null;
-  const open = await db.prepare(`SELECT id, kind, claimed_by, claim_until, ${claimHeldSql('mod_cases', 2)} AS claim_live FROM mod_cases WHERE target = ?1 AND status = 'open'
-    AND (?3 IS NULL OR id = ?3) AND (kind = 'chat' OR ?4 = 1) ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, nowS, named, admin ? 1 : 0).first();
+  const openOf = (/** @type {string} */ id) => db.prepare(`SELECT *, ${claimHeldSql('mod_cases', 2)} AS claim_live FROM mod_cases WHERE target = ?1 AND status = 'open'
+    AND (?3 IS NULL OR id = ?3) AND (kind = 'chat' OR ?4 = 1) ORDER BY kind = 'chat' DESC LIMIT 1`).bind(id, nowS, named, admin ? 1 : 0).first();
+  // STAFF-PANEL-SPEED: an account named by its id is read beside its open case, one trip; one named by a name is found first
+  const byId = typeof body.target === 'string' && ID_RE.test(body.target);
+  const [row, early] = await Promise.all([findAccount(db, { target: body.target, name: body.name }), byId ? openOf(body.target) : null]);
+  if ('error' in row) return row;
+  const open = byId && row.id === body.target ? early : await openOf(row.id);
   const theirs = held(open) && open.claimed_by !== me.id;
-  /** The holder's look or act keeps the claim - and moves it to the session that looked (a claim ends with its session). */
+  /** The holder's look or act keeps the claim - and moves it to the session that looked (a claim ends with its session):
+   *  the statement, or null when there is none to keep. */
   const keep = () => (open && held(open) && open.claimed_by === me.id
-    ? db.prepare("UPDATE mod_cases SET claim_until = ?3, claim_session = ?4 WHERE id = ?1 AND claimed_by = ?2 AND status = 'open'").bind(open.id, me.id, nowS + CLAIM_S, who.hash).run() : null);
+    ? db.prepare("UPDATE mod_cases SET claim_until = ?3, claim_session = ?4 WHERE id = ?1 AND claimed_by = ?2 AND status = 'open'").bind(open.id, me.id, nowS + CLAIM_S, who.hash) : null);
 
   if (path === '/v1/staff/case' || path === '/v1/staff/strikes') {
-    const look = await strikesLook(ctx, me, env, { target: row.id });
+    if (!canModerate(me, env)) return { error: 'not-moderator' };   // strikesLook's own refusal, asked before the batch below writes
+    const one = path === '/v1/staff/case';
+    if (one && !open) return { error: 'no-case' };   // safety.js modCase's answer: the account has no open case this member may read
+    // STAFF-PANEL-SPEED: the case's lines and reports, the claim kept, the audit row and the claim read back - one batch,
+    // in the order they were made one after another, so the page is never shown without its row - and beside it the
+    // record's reads (strikesLook: mod_actions alone, which the batch never writes), the same trip
+    const k = keep();
+    const [look, out] = await Promise.all([strikesLook(ctx, me, env, { target: row.id, row }),
+      db.batch([...(one ? caseReads(db, open.id) : []), ...(k ? [k] : []),
+        audit(one ? 'case-read' : 'strikes-read', row.id, { name: displayName(row) }, { onceIn: 10 * 60 }),
+        ...(open ? [db.prepare(`SELECT c.claimed_by, c.claim_until, h.handle, h.guest_name, ${claimHeldSql('c', 2)} AS claim_live FROM mod_cases c
+        LEFT JOIN players h ON h.id = c.claimed_by WHERE c.id = ?1`).bind(open.id, nowS)] : [])])]);
     if ('error' in look) return look;
-    const one = path === '/v1/staff/case' ? await modCase(ctx, me, env, { target: row.id, caseId: open?.id ?? '' }) : null;
-    if (one && 'error' in one) return one;
-    await keep();
-    await audit(path === '/v1/staff/case' ? 'case-read' : 'strikes-read', row.id, { name: displayName(row) }, { onceIn: 10 * 60 }).run();
-    const c = open ? await db.prepare(`SELECT c.claimed_by, c.claim_until, h.handle, h.guest_name, ${claimHeldSql('c', 2)} AS claim_live FROM mod_cases c
-      LEFT JOIN players h ON h.id = c.claimed_by WHERE c.id = ?1`).bind(open.id, nowS).first() : null;
+    const c = open ? out[out.length - 1]?.results?.[0] ?? null : null;
     return {
-      ...(one ? { case: one.case } : {}), record: look,
+      ...(one ? { case: caseView(row, open, out[0]?.results ?? [], out[1]?.results ?? []) } : {}), record: look,
       claim: held(c) ? { by: c.claimed_by, name: c.handle ?? c.guest_name ?? null, until: c.claim_until, mine: c.claimed_by === me.id } : null,
     };
   }
@@ -228,11 +248,12 @@ export async function staffCases(ctx, env, path, body, who, audit) {
   // a panel's Mute and Ban carry the press's one-time id (the design doc: "Mute and Ban send the case id and a one-time
   // click id"), so a press sent twice is one strike - one sent with none is refused by modAct as a bad one, and written
   const r = await modAct(ctx, me, env, {
-    act: /** @type {'mute'|'ban'|'unban'|'dismiss'} */ (act), target: row.id, caseId: body.case ?? null,
+    act: /** @type {'mute'|'ban'|'unban'|'dismiss'} */ (act), target: row.id, row, caseId: body.case ?? null,
     click: (act === 'mute' || act === 'ban') && typeof body.click !== 'string' ? '' : body.click ?? null,
     minutes: body.minutes, days: body.days, reason: body.reason, actorName: asName, from: 'staff panel',
   }, { audit });
   if (r.error) return r;
-  await keep();
+  // STAFF-PANEL-SPEED: an act that closed the open case leaves it no claim to keep (keep's UPDATE asks it open) - no trip
+  if (r.case !== open?.id) await keep()?.run();
   return { ...r, order: undefined };   // no rooms to carry it to: the relay's door has it
 }

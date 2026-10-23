@@ -29,7 +29,7 @@
 import { canModerate, isDeveloper } from './titles.js';
 import { displayName, isMuted } from './accounts.js';
 import { signingKey } from './signing.js';
-import { mintOrder, mintBanOrder, ID_RE } from '../../src/net/identityToken.js';
+import { mintOrder, mintBanOrder, mintStaffCutOrder, ID_RE } from '../../src/net/identityToken.js';
 import { STRIKE_WINDOW_S, LADDER_BAN_AT, ladderMinutes, BAN_DAYS_MAX, banUntil } from '../../src/net/safety/safetyLaw.js';
 import { MUTE_MAX_MIN } from '../../src/net/moderation.js';
 import { SAFE_LAW_PATH } from '../../src/net/wire.js';
@@ -186,15 +186,17 @@ export async function unbanAccount({ db, nowS }, actor, env, { target, name, act
 
 /**
  * A MODERATOR'S LOOK at an account: its strikes, the next rung (a mute's minutes, or 'ban' past the ladder), whether it
- * is muted or banned now, and its last HISTORY_MAX acts.
- * @param {{ db: any, nowS: number }} ctx @param {any} actor @param {any} env @param {{ target?: unknown, name?: unknown }} who
+ * is muted or banned now, and its last HISTORY_MAX acts. STAFF-PANEL-SPEED: `row` the account's row, from a door that
+ * found it already (staffCases.js).
+ * @param {{ db: any, nowS: number }} ctx @param {any} actor @param {any} env @param {{ target?: unknown, name?: unknown, row?: any }} who
  */
-export async function strikesLook({ db, nowS }, actor, env, { target, name }) {
+export async function strikesLook({ db, nowS }, actor, env, { target, name, row: found = null }) {
   if (!canModerate(actor, env)) return { error: 'not-moderator' };
-  const row = await findAccount(db, { target, name });
+  const row = found ?? await findAccount(db, { target, name });
   if ('error' in row) return row;
-  const strikes = await strikesOf(db, row.id, nowS);
-  const acts = (await db.prepare('SELECT kind, until, reason, actor_name, case_id, at, void_at FROM mod_actions WHERE target = ?1 ORDER BY at DESC, id DESC LIMIT ?2').bind(row.id, HISTORY_MAX).all())?.results ?? [];
+  // STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows"): the strikes and the history, one trip
+  const [strikes, acts] = await Promise.all([strikesOf(db, row.id, nowS),
+    db.prepare('SELECT kind, until, reason, actor_name, case_id, at, void_at FROM mod_actions WHERE target = ?1 ORDER BY at DESC, id DESC LIMIT ?2').bind(row.id, HISTORY_MAX).all().then((/** @type {any} */ r) => r?.results ?? [])]);
   return {
     ok: true, target: row.id, name: displayName(row), strikes,
     next: strikes >= LADDER_BAN_AT ? 'ban' : ladderMinutes(strikes),
@@ -225,9 +227,12 @@ export async function lawOrder(env, subtle, nowS, { s, mu, bn }) {
  * Worker fetching another's workers.dev address on the same account may be refused outright (Cloudflare's error 1042),
  * and a push that fails is silent by design, so the binding is the door and the address only names the path; a Worker
  * without it (a test, a local run) fetches the address.
+ * STAFF-PANEL5-MESSAGE: `hear`, for a caller that reads more of the door's answer than yes or no - handed the body of an
+ * answer the door took (a staff message's: how many of its target's sockets the hub handed the nudge).
  * @param {any} env @param {(url: string, init: any) => Promise<Response>} fetchFn @param {string|null} order
+ * @param {((said: any) => void)|null} [hear]
  */
-export async function pushLaw(env, fetchFn, order) {
+export async function pushLaw(env, fetchFn, order, hear = null) {
   const url = env?.RELAY_LAW_URL;
   if (!order || typeof url !== 'string' || !url.startsWith('https://') || !url.endsWith(SAFE_LAW_PATH)) return false;
   const init = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order }), signal: AbortSignal.timeout(LAW_PUSH_MS) };
@@ -236,6 +241,19 @@ export async function pushLaw(env, fetchFn, order) {
     const said = res.ok ? await res.json().catch(() => null) : null;
     // the hub's own word: the Worker answers 200 only for an order the hub took (AUDIT SAFE RELAY-13)
     if (!res.ok || said?.ok === false) console.warn('[safety] the relay\'s door said', res.status, said?.error ?? '');
+    else hear?.(said);
     return res.ok && said?.ok !== false;
   } catch (e) { console.warn('[safety] the relay\'s door', /** @type {any} */ (e)?.message ?? e); return false; }
+}
+
+/**
+ * STAFF-PANEL2-FIX (design doc, Weak spots: "the cut also ends game sessions and pushes a relay order that strips staff
+ * glyphs"): THE CUT'S ORDER FOR THE RELAY - `{o:'staffcut', s, i, e}`, signed (identityToken.js mintStaffCutOrder): the
+ * hub closes every socket of account `s` whose token was minted before it, so its staff glyphs leave with them; the
+ * account's next token (staff.js /v1/staff/cut ended its game sessions, so only after it signs in again) carries none.
+ * null for a service with no key. @param {any} env @param {SubtleCrypto} subtle @param {number} nowS @param {string} s
+ */
+export async function staffCutOrder(env, subtle, nowS, s) {
+  const key = await signingKey(env, subtle);
+  return key ? mintStaffCutOrder({ s }, key, { subtle, nowS }) : null;
 }

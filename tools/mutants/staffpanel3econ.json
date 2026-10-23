@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL3-ECON-stream-audit-every-page",
     "file": "server-account/src/staffEconomy.js",
-    "old": "      since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),\n    }, { onceIn: READ_ROW_S }).run();",
-    "new": "      since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),\n    }).run();",
+    "old": "      since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),\n    }, { onceIn: READ_ROW_S }).run()]);",
+    "new": "      since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),\n    }).run()]);",
     "why": "every page of a view a row",
     "tests": [
       "test/server/staffpanel3econ.test.js"

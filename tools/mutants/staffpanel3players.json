@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-search-unaudited",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    await audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S }).run();\n",
-    "new": "",
+    "old": ", audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S })]);",
+    "new": "]);",
     "why": "a search unwritten",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-read-unaudited",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    await audit('player-read', p.id, { tab }, { onceIn: READ_ONCE_S }).run();\n",
-    "new": "",
+    "old": "body, audit('player-read', p.id, { tab }, { onceIn: READ_ONCE_S }));",
+    "new": "body, db.prepare('SELECT 1'));",
     "why": "a profile read unwritten",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-devices-unaudited",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    await audit('devices-read', p.id, null, { onceIn: READ_ONCE_S }).run();\n",
-    "new": "",
+    "old": ", audit('devices-read', p.id, null, { onceIn: READ_ONCE_S }).run()]);",
+    "new": "]);",
     "why": "a device list read unwritten",
     "tests": [
       "test/server/staffpanel3players.test.js"

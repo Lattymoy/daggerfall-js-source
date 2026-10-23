@@ -162,12 +162,12 @@
   {
     "name": "AUDIT-SCALE2-R2-7-upmiss-dropped",
     "file": "server/src/index.js",
-    "old": "          this._upRetry = body;\n",
-    "new": "          this._upRetry = null;\n",
+    "old": "{ this._upRetry = body; await busMissed",
+    "new": "{ this._upRetry = null; await busMissed",
     "tests": [
       "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a missed hand-up let go"
+    "note": "a missed hand-up let go STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): the miss kept only on its first time, its lease asks answered by a pass (staffFreeze.js busMissed)."
   },
   {
     "name": "AUDIT-SCALE2-R2-7-up-notok-taken",

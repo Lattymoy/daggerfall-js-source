@@ -105,10 +105,11 @@ export const noteText = (/** @type {unknown} */ t) => {
  * THE WATCH'S EVENTS for this member: who of their list is playing now (`online` - a login is the realm seat taken, and
  * the service keeps no row a sign-in, so it says who holds a seat now and the panel tells the change), and what happened
  * in (since, until] - chat reports on them, and for an Admin the cases the reviewer opened, the judge's findings, and
- * trades and sales past WATCH_BIG_*. Newest first, each source WATCH_SOURCE_MAX at most. One trip.
- * @param {any} db @param {{ player: any, role: string }} who @param {{ since: number, until: number, nowS: number }} span
+ * trades and sales past WATCH_BIG_*. Newest first, each source WATCH_SOURCE_MAX at most. One trip, `row` (a read's audit
+ * row) last in it (STAFF-PANEL-SPEED).
+ * @param {any} db @param {{ player: any, role: string }} who @param {{ since: number, until: number, nowS: number }} span @param {any} [row]
  */
-export async function watchEvents(db, who, { since, until, nowS }) {
+export async function watchEvents(db, who, { since, until, nowS }, row = null) {
   const me = who.player.id;
   const admin = who.role === 'admin';
   const W = '(SELECT target FROM staff_watch WHERE staff = ?1)';
@@ -144,7 +145,7 @@ export async function watchEvents(db, who, { since, until, nowS }) {
         ORDER BY x.at DESC LIMIT ?4`).bind(me, since, until, WATCH_SOURCE_MAX, WATCH_BIG_GOLD, WATCH_BIG_MARKS),
     );
   }
-  const got = (await db.batch(reads)).map((/** @type {any} */ r) => r?.results ?? []);
+  const got = (await db.batch(row ? [...reads, row] : reads)).slice(0, reads.length).map((/** @type {any} */ r) => r?.results ?? []);
   const [list, on, reports, cases = [], flags = [], trades = [], sales = []] = got;
   const watched = new Set(list.map((/** @type {any} */ w) => w.target));
   const name = (/** @type {any} */ r) => displayName(r);
@@ -246,9 +247,10 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
       return { ok: true, note: { id, at: nowS, by: me.id, byName: displayName(me), text } };
     }
     const before = Number.isSafeInteger(body.before) && body.before > 0 ? body.before : null;
-    const r = (await db.prepare('SELECT id, author, author_name, text, at FROM staff_notes WHERE target = ?1 AND (?2 IS NULL OR id < ?2) ORDER BY id DESC LIMIT ?3')
-      .bind(row.id, before, STAFF_NOTES_PAGE + 1).all())?.results ?? [];
-    await audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S }).run();
+    // STAFF-PANEL-SPEED (mob: "slow when moving in menus"): the page and its audit row in one batch, one trip
+    const [found] = await db.batch([db.prepare('SELECT id, author, author_name, text, at FROM staff_notes WHERE target = ?1 AND (?2 IS NULL OR id < ?2) ORDER BY id DESC LIMIT ?3')
+      .bind(row.id, before, STAFF_NOTES_PAGE + 1), audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S })]);
+    const r = found?.results ?? [];
     const page = r.slice(0, STAFF_NOTES_PAGE);
     return {
       target: row.id, name: displayName(row),
@@ -259,9 +261,9 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
 
   // ═══ THE WATCHLIST - each member's own (mob, 06:28Z) ═══
   if (path === '/v1/staff/watch') {
-    const r = (await db.prepare(`SELECT w.target, w.at, p.handle, p.guest_name FROM staff_watch w JOIN players p ON p.id = w.target WHERE w.staff = ?1
-      ORDER BY w.at DESC, w.target LIMIT ?2`).bind(me.id, STAFF_WATCH_MAX).all())?.results ?? [];
-    await audit('watch-read', null, null, { onceIn: READ_ROW_S }).run();
+    const [found] = await db.batch([db.prepare(`SELECT w.target, w.at, p.handle, p.guest_name FROM staff_watch w JOIN players p ON p.id = w.target WHERE w.staff = ?1
+      ORDER BY w.at DESC, w.target LIMIT ?2`).bind(me.id, STAFF_WATCH_MAX), audit('watch-read', null, null, { onceIn: READ_ROW_S })]);   // STAFF-PANEL-SPEED: one trip
+    const r = found?.results ?? [];
     return { watch: r.map((w) => ({ sub: w.target, name: displayName(w), at: w.at })), max: STAFF_WATCH_MAX, next: null };   // one page: the list is bounded
   }
   if (path === '/v1/staff/watch/add' || path === '/v1/staff/watch/remove') {
@@ -290,8 +292,7 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
     const until = Number.isSafeInteger(body.until) && body.until > 0 ? Math.min(body.until, nowS) : nowS;
     const since = Math.max(Number.isSafeInteger(body.since) ? body.since : 0, nowS - WATCH_WINDOW_S);
     const from = Number.isSafeInteger(body.from) && body.from > 0 ? body.from : 0;
-    const { online, events } = await watchEvents(db, who, { since, until, nowS });
-    await audit('watch-events', null, null, { onceIn: READ_ROW_S }).run();
+    const { online, events } = await watchEvents(db, who, { since, until, nowS }, audit('watch-events', null, null, { onceIn: READ_ROW_S }));
     return { online, events: events.slice(from, from + WATCH_PAGE), next: from + WATCH_PAGE < events.length ? from + WATCH_PAGE : null, total: events.length, cursor: until, since };
   }
 
@@ -338,9 +339,10 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
     const days = body.days === undefined ? AI_SCORE_DAYS : body.days;
     if (!Number.isSafeInteger(days) || days < 1 || days > AI_SCORE_DAYS_MAX) return { error: 'bad-days' };
     const mode = body.mode === 'on' ? 'on' : 'shadow';
-    const r = (await db.prepare(`SELECT COALESCE(ai_category, 'none') AS category, status, (ai_category IS NOT NULL AND ai_severity >= ?3) AS said, COUNT(*) AS n
+    const [found] = await db.batch([db.prepare(`SELECT COALESCE(ai_category, 'none') AS category, status, (ai_category IS NOT NULL AND ai_severity >= ?3) AS said, COUNT(*) AS n
       FROM mod_cases WHERE resolved_at > ?1 AND status IN ('actioned', 'dismissed') AND resolved_by IS NOT 'the clock' AND ai_state = 'done' AND ai_mode = ?2
-      GROUP BY 1, 2, 3`).bind(nowS - days * 86400, mode, FLAG_SEVERITY).all())?.results ?? [];
+      GROUP BY 1, 2, 3`).bind(nowS - days * 86400, mode, FLAG_SEVERITY), audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S })]);   // STAFF-PANEL-SPEED: one trip
+    const r = found?.results ?? [];
     const blank = () => ({ cases: 0, saidActed: 0, saidDismissed: 0, clearActed: 0, clearDismissed: 0, agreed: 0, rate: /** @type {number|null} */ (null) });
     /** @type {Map<string, ReturnType<typeof blank>>} */
     const by = new Map();
@@ -357,7 +359,6 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
       }
     }
     for (const c of [...by.values(), total]) c.rate = c.cases ? Math.round((c.agreed / c.cases) * 1000) / 1000 : null;
-    await audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S }).run();
     return { days, mode, severity: FLAG_SEVERITY, categories: [...by.entries()].map(([category, c]) => ({ category, ...c })).sort((a, b) => b.cases - a.cases), total };
   }
 
@@ -365,7 +366,8 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
     const from = Number.isSafeInteger(body.from) && body.from > 0 ? body.from : 0;
     const board = path === '/v1/staff/board/reported';
     // a note hidden by its reports first, then the most reporters, then the newest report
-    const r = (await (board
+    // STAFF-PANEL-SPEED: the page and its audit row in one batch, one trip
+    const [found] = await db.batch([board
       ? db.prepare(`SELECT n.id, n.map_id, n.author, n.author_name, n.subject, n.body, n.at, n.expires_at, n.hidden, COUNT(r.reporter) AS reports, MAX(r.at) AS last
           FROM board_reports r JOIN board_notes n ON n.id = r.note_id WHERE n.expires_at > ?1 GROUP BY n.id
           ORDER BY (n.hidden = 1) DESC, reports DESC, last DESC, n.id LIMIT ?2 OFFSET ?3`).bind(nowS, REPORTED_PAGE + 1, from)
@@ -376,8 +378,8 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
           SELECT 'auction', a.id, a.seller, 'piece', NULL, NULL, 1, COALESCE(a.high, a.opening), NULL, a.at, COUNT(r.reporter), MAX(r.at)
             FROM market_auction_reports r JOIN market_auctions a ON a.id = r.auction WHERE a.state = 'open' GROUP BY a.id
         ) x LEFT JOIN (SELECT id AS pid, handle, guest_name FROM players) p ON p.pid = x.seller
-        ORDER BY x.reports DESC, x.last DESC, x.id LIMIT ?1 OFFSET ?2`).bind(REPORTED_PAGE + 1, from)).all())?.results ?? [];
-    await audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S }).run();
+        ORDER BY x.reports DESC, x.last DESC, x.id LIMIT ?1 OFFSET ?2`).bind(REPORTED_PAGE + 1, from), audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S })]);
+    const r = found?.results ?? [];
     const page = r.slice(0, REPORTED_PAGE);
     const next = r.length > REPORTED_PAGE ? from + REPORTED_PAGE : null;
     if (board) {

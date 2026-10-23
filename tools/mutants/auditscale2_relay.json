@@ -152,7 +152,7 @@
   {
     "name": "AS2-R3-3-empty-admitted",
     "file": "server/src/index.js",
-    "old": "    if (walked && layerOf(request.headers.get(LAYER_HEADER)) > 0 && request.headers.get(LAYER_ASK_HEADER) === '1' && !this.state.getWebSockets().length) {",
+    "old": "    if (walked && layerOf(request.headers.get(LAYER_HEADER)) > 0 && request.headers.get(LAYER_ASK_HEADER) === '1' && this.state.getWebSockets().length === hiddenSeats(this)) {",
     "new": "    if (false) {",
     "tests": [
       "test/net/auditscale2_relay.test.js"
@@ -162,7 +162,7 @@
   {
     "name": "AS2-R3-3-held-layer-empty",
     "file": "server/src/index.js",
-    "old": "request.headers.get(LAYER_ASK_HEADER) === '1' && !this.state.getWebSockets().length) {",
+    "old": "request.headers.get(LAYER_ASK_HEADER) === '1' && this.state.getWebSockets().length === hiddenSeats(this)) {",
     "new": "request.headers.get(LAYER_ASK_HEADER) === '1') {",
     "tests": [
       "test/net/auditscale2_relay.test.js"

@@ -47,7 +47,7 @@
   {
     "name": "F2-muzzle-prefers-the-sprite-record-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();\n      // PISTOLET: a pair's shot leaves the barrel of the pistol that fired it\n      if (gunPairUp()) return muzzleRay(gunPair.hands[playerWeapon.activeHand]?.drawn ?? null, fovRad, forward);\n      return muzzleRay(_tlDrawn, fovRad, forward);",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();\n      // PISTOL-PORT: a Pistolet's shot leaves the barrel of the pistol that fired it - a pair's striking hand, one pistol its lead\n      if (pistolsUp()) return muzzleRay(pistols.hands[playerWeapon.gunPair ? playerWeapon.activeHand : playerWeapon.pistols.lead]?.drawn ?? null, fovRad, forward);\n      return muzzleRay(_tlDrawn, fovRad, forward);",
     "new": "      return muzzleRay(_tlDrawn, fovRad, forward) ?? ((fpArm.active() || fpArm.thirdActive()) ? fpArm.weaponMuzzle() : null);",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"

@@ -62,7 +62,7 @@ test('HOLDINGS the Stats rail is the character sheet again - its six pages and t
   const hold = MENU.slice(MENU.indexOf('function pauseHoldings(body)'), MENU.indexOf('// ── PX7: THE SYSTEM PAGE'));
   for (const page of ['drawStablePage', 'drawFleetPage', 'drawCompanionsPage', 'drawRevenantsPage', 'drawStoresPage']) assert.match(hold, new RegExp(page));
   assert.match(hold, /if \(!secs\.some\(\(\[id\]\) => id === holdSec\)\) holdSec = secs\[0\]\?\.\[0\] \?\? 'stable';/, 'a page gone falls to the first');
-  assert.match(hold, /door: \(fn\) => \{ onAction\('handoff'\); if \(fn\(\) === false\) onAction\('resume'\); \}/, 'a door the Fleet opens is the sheet doors\' handoff');
+  assert.match(hold, /door: \(fn\) => \{ handoff\(fn\); \}/, 'a door the Fleet opens is the sheet doors\' handoff (PIN MOVED, AUDIT SEASON-BOOK S3: its one home)');
   assert.match(hold, /el\('div', 'px-qdetail px-sys'\)/, 'the system page\'s dress, as the Stats detail wears it');
 });
 

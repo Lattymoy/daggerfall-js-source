@@ -110,7 +110,7 @@ export function clearOverlays() { stack.length = 0; unlisten(); }
  * itself: a drag that ends outside a list is not a tap. The close
  * runs inside the gesture, so a host's relock rides it (MAC1).
  */
-export function closeOnOutsideTap(shell, keep, close) {
+export function closeOnOutsideTap(shell, keep, close, { swallow = false } = {}) {
   if (!shell?.addEventListener) return () => {};
   const onDown = (e) => {
     if (e.button != null && e.button !== 0) return;
@@ -118,7 +118,29 @@ export function closeOnOutsideTap(shell, keep, close) {
     if (t && t !== shell && typeof t.closest === 'function' && t.closest(keep)) return;
     e.preventDefault?.();
     close(e);
+    if (swallow) swallowTapClick(shell.ownerDocument ?? globalThis.document);
   };
   shell.addEventListener('pointerdown', onDown);
   return () => shell.removeEventListener('pointerdown', onDown);
+}
+/** How long a closed window's tap may still click, ms - a touch's or a pad's release follows its press well inside it. */
+export const TAP_CLICK_MS = 700;
+/**
+ * AUDIT SEASON-BOOK U1: A WINDOW CLOSED BY ITS PRESS, AND THE FACE DRAWN AGAIN UNDER THE FINGER, NEVER TAKES THE RELEASE.
+ * The close runs on the press (the gesture's - MAC1), and a window over the pause face repaints the face at once, so a
+ * touch's click - or the pad's A, which clicks at its release (ui/plus/gamepadInput.js) - landed on whatever the repaint
+ * put under it: the game resumed, the hourglass or the account window opened, a tab turned. The next click of that tap
+ * is eaten; a new press, or TAP_CLICK_MS, ends the watch. A window that closes back to the game (the pause face's own
+ * scrim) does not ask for this - its click is the game's.
+ */
+export function swallowTapClick(doc) {
+  if (!doc?.addEventListener) return;
+  let timer = null, over = false;
+  const done = () => { over = true; doc.removeEventListener('click', eat, true); doc.removeEventListener('pointerdown', done, true); if (timer) clearTimeout(timer); };
+  const eat = (e) => { e.preventDefault?.(); e.stopPropagation?.(); e.stopImmediatePropagation?.(); done(); };
+  doc.addEventListener('click', eat, true);
+  // a new press is a new gesture - watched for once this press's own dispatch is over (never this press), and only
+  // while the watch still stands
+  setTimeout(() => { if (!over) doc.addEventListener('pointerdown', done, true); }, 0);
+  timer = setTimeout(done, TAP_CLICK_MS);
 }

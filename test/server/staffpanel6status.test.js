@@ -384,7 +384,7 @@ test('STAFF-PANEL6-STATUS: HOME - the top n of each watch the caller may see, wo
   assert.deepEqual(admin.watches.find((x) => x.id === 'boom'), { id: 'boom', label: 'boom', items: [], high: 0, total: 0, more: 0, failed: true });
   const mod = await homeOf({}, {}, { player: {}, role: 'moderator' }, 10, list);
   assert.ok(!mod.watches.some((x) => x.id === 'admins'), 'an Admin\'s watch is not a Moderator\'s');
-  assert.deepEqual(HOME_WATCHES.map((x) => [x.id, x.role]), [['reports', 'moderator'], ['economy', 'admin'], ['gains', 'admin'], ['contested', 'admin'], ['watchlist', 'moderator'], ['status', 'admin']]);   // every staff module's watch, the design's Home order
+  assert.deepEqual(HOME_WATCHES.map((x) => [x.id, x.role]), [['reports', 'moderator'], ['economy', 'admin'], ['gains', 'admin'], ['contested', 'admin'], ['bursts', 'admin'], ['monsters', 'admin'], ['freeze', 'admin'], ['watchlist', 'moderator'], ['status', 'admin']]);   // every staff module's watch, the design's Home order (PIN MOVED, STAFF-PANEL5: the feeds' two and the freeze's)
   assert.equal(HOME_WATCHES[0], REPORTS_WATCH);
 });
 
@@ -407,7 +407,7 @@ test('STAFF-PANEL6-STATUS: HOME through the Worker - the Reports watch ranked as
     const cases = (await s.staff('/v1/staff/cases', {}, s.asy.session)).body;
     assert.deepEqual([cases.high, cases.cases.map((x) => x.target)], [2, rep.items.map((i) => i.sub)], 'the same ranking as the Reports list');
     const one = (await s.staff('/v1/staff/home', { n: 3 }, s.mob.session)).body;
-    assert.deepEqual(one.watches.map((x) => [x.id, x.items.length]), [['reports', 3], ['economy', 0], ['gains', 0], ['contested', 0], ['watchlist', 0], ['status', 0]], 'an Admin: every watch, the quiet ones in their usual order');
+    assert.deepEqual(one.watches.map((x) => [x.id, x.items.length]), [['reports', 3], ['economy', 0], ['gains', 0], ['contested', 0], ['bursts', 0], ['monsters', 0], ['freeze', 0], ['watchlist', 0], ['status', 0]], 'an Admin: every watch, the quiet ones in their usual order (PIN MOVED, STAFF-PANEL5: the feeds\' two and the freeze\'s)');
     for (const n of [4, 0, '5', 100]) assert.deepEqual((await s.staff('/v1/staff/home', { n }, s.mob.session)).body, { error: 'body' }, String(n));
     await s.staff('/v1/staff/home', { n: 10 }, s.asy.session);
     const rows = s.audits('home-read');

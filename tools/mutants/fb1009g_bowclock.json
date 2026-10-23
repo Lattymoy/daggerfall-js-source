@@ -11,7 +11,7 @@
   {
     "name": "BOWCLOCK-the-drawn-release-waits-on-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!!m.ranged && m.state === 'Idle' && (",
+    "old": "!!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (",
     "new": "!!m.ranged && (",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "BOWCLOCK-the-touch-tap-starts-a-shot-the-arm-cannot-draw",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (armCannotDraw()) return;   // BOW-CLOCK: nor a shot the Morrowind arm cannot draw yet\n",
-    "new": "",
+    "old": "      if (armCannotDraw() || pelletsOwed()) return;   // BOW-CLOCK: nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it\n",
+    "new": "      if (pelletsOwed()) return;\n",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]

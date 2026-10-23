@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-home-read-every-time",
     "file": "server-account/src/staffStatus.js",
-    "old": "await audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run();",
-    "new": "await audit('home-read', null, { n }).run();",
+    "old": "audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run()",
+    "new": "audit('home-read', null, { n }).run()",
     "why": "every Home read a row",
     "tests": [
       "test/server/staffpanel6status.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-home-read-unwritten",
     "file": "server-account/src/staffStatus.js",
-    "old": "await audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run();",
-    "new": "",
+    "old": "homeOf(ctx, env, who, n), audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run()]",
+    "new": "homeOf(ctx, env, who, n)]",
     "why": "Home's read of the reports unaudited",
     "tests": [
       "test/server/staffpanel6status.test.js"

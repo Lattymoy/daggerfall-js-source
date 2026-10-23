@@ -95,7 +95,18 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     // STAFF-PANEL4-CENSUS: the census and the contested pieces (staffCensus.js)
     '/v1/staff/census/find', '/v1/staff/census', '/v1/staff/census/jumps', '/v1/staff/contested', '/v1/staff/contested/piece', '/v1/staff/contested/trail',
     // STAFF-PANEL3-ECON: the economy (staffEconomy.js)
-    '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/harvests', '/v1/staff/econ/stream'].sort());
+    '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/harvests', '/v1/staff/econ/stream',
+    // STAFF-PANEL5-FOLLOW: a follow token (staffFollow.js)
+    '/v1/staff/follow',
+    // STAFF-PANEL5-MESSAGE: Message on screen (staffMessage.js)
+    '/v1/staff/message', '/v1/staff/messages',
+    // STAFF-PANEL5-FEEDS: Network bursts, Monster watch and its Flag, the bot check (the relay's /v1/staff/net-feed takes no session)
+    '/v1/staff/net', '/v1/staff/monsters', '/v1/staff/monster/flag', '/v1/staff/reactions', '/v1/staff/reactions/keep',
+    // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js) - PIN MOVED
+    '/v1/staff/hide',
+    // STAFF-PANEL5-FREEZE: freeze and the staff chat (staffFreeze.js)
+    '/v1/staff/freeze', '/v1/staff/unfreeze', '/v1/staff/freezes', '/v1/staff/freeze-push', '/v1/staff/talk', '/v1/staff/chat', '/v1/staff/chat-send',
+    '/v1/staff/chat-close', '/v1/staff/chats'].sort());
   // no secret to set anywhere: the config holds the lists and a public key, and nothing else of the panel's
   const toml = src('server-account/wrangler.toml');
   assert.match(toml, /^OWNER_HANDLES = "Lattymoy,SirMcMobdon"$/m);

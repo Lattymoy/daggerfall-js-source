@@ -149,16 +149,18 @@ export async function gainsRanked(db, nowS, days) {
   const had = mine.get(days);
   if (had && Date.now() - had.at < GAINS_KEEP_MS) return had.rows;
   const since = nowS - days * 24 * 3600;
-  const [config, line] = await Promise.all([budgetConfig(db), progressConfig(db)]);
-  const chars = (await db.prepare(`SELECT f.char_id AS id, c.name, c.player, p.handle, p.guest_name, c.held, c.level_seen, COUNT(*) AS n,
+  // STAFF-PANEL-SPEED: the configs, the characters and the accounts' XP asked together - none waits on another's answer
+  const [config, line, charsRead, xpRead] = await Promise.all([budgetConfig(db), progressConfig(db), db.prepare(`SELECT f.char_id AS id, c.name, c.player, p.handle, p.guest_name, c.held, c.level_seen, COUNT(*) AS n,
       SUM(CAST(json_extract(f.detail, '$.over') AS INTEGER)) AS past, SUM(CAST(json_extract(f.detail, '$.gain') AS INTEGER)) AS gained, MAX(f.at) AS last,
       (SELECT g.detail FROM realm_findings g WHERE g.char_id = f.char_id AND g.kind IN ('measure', 'budget') ORDER BY g.id DESC LIMIT 1) AS latest
     FROM realm_findings f JOIN realm_characters c ON c.id = f.char_id LEFT JOIN players p ON p.id = c.player
-    WHERE f.at >= ?1 AND f.kind IN ('measure', 'budget') GROUP BY f.char_id ORDER BY past DESC LIMIT ?2`).bind(since, GAINS_RANKED_MAX).all())?.results ?? [];
-  const xp = (await db.prepare(`SELECT h.player, p.handle, p.guest_name, h.stream, SUM(h.over) AS over, SUM(h.amount) AS amount, MAX(h.hour) AS last
+    WHERE f.at >= ?1 AND f.kind IN ('measure', 'budget') GROUP BY f.char_id ORDER BY past DESC LIMIT ?2`).bind(since, GAINS_RANKED_MAX).all(),
+    db.prepare(`SELECT h.player, p.handle, p.guest_name, h.stream, SUM(h.over) AS over, SUM(h.amount) AS amount, MAX(h.hour) AS last
     FROM progress_hours h LEFT JOIN players p ON p.id = h.player
     WHERE h.stream IN (${XP_STREAMS.map((_, i) => `?${i + 2}`).join(', ')}) AND h.hour >= ?1 AND h.over > 0
-    GROUP BY h.player, h.stream ORDER BY over DESC LIMIT ${GAINS_RANKED_MAX}`).bind(since, ...XP_STREAMS).all())?.results ?? [];
+    GROUP BY h.player, h.stream ORDER BY over DESC LIMIT ${GAINS_RANKED_MAX}`).bind(since, ...XP_STREAMS).all()]);
+  const chars = charsRead?.results ?? [];
+  const xp = xpRead?.results ?? [];
   /** @type {Map<string, any>} the accounts' XP past the line, by stream */
   const xpOf = new Map();
   for (const x of xp) {
@@ -257,12 +259,15 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
   if (path === '/v1/staff/trade-holds') {
     const sort = body.sort === 'newest' ? 'newest' : 'urgent';
     const from = fromOf(body.from);
-    const rows = (await db.prepare(`SELECT c.id, c.name, c.player, p.handle, p.guest_name, c.held, c.held_at, c.held_until, c.strikes, c.law_holds, c.dupes, c.review,
+    // STAFF-PANEL-SPEED: the read and its audit row in one batch; 0162's index walks the holds newest first, a tie as its old scan gave it
+    const [read] = await db.batch([db.prepare(`SELECT c.id, c.name, c.player, p.handle, p.guest_name, c.held, c.held_at, c.held_until, c.strikes, c.law_holds, c.dupes, c.review,
         c.wealth, c.allowance, c.lease, c.lease_at, c.dead_at,
         (SELECT json_object('kind', f.kind, 'at', f.at, 'detail', json(f.detail)) FROM realm_findings f WHERE f.char_id = c.id AND f.kind != 'staff' ORDER BY f.id DESC LIMIT 1) AS finding,
         (SELECT json_object('at', f.at, 'detail', json(f.detail)) FROM realm_findings f WHERE f.char_id = c.id AND f.kind = 'staff' AND json_extract(f.detail, '$.act') = 'hold' ORDER BY f.id DESC LIMIT 1) AS staff
       FROM realm_characters c LEFT JOIN players p ON p.id = c.player
-      WHERE c.held IS NOT NULL OR c.review IS NOT NULL ORDER BY c.held_at DESC LIMIT ?1`).bind(HOLDS_RANKED_MAX).all())?.results ?? [];
+      WHERE c.held IS NOT NULL OR c.review IS NOT NULL ORDER BY c.held_at DESC LIMIT ?1`).bind(HOLDS_RANKED_MAX),
+    audit('trade-holds-read', null, { sort }, { onceIn: READ_ROW_S })]);
+    const rows = read?.results ?? [];
     const ranked = rows.map((r) => {
       const finding = parse(r.finding);
       const s = parse(r.staff);
@@ -276,17 +281,16 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
     });
     if (sort === 'urgent') ranked.sort((x, y) => LEVELS.indexOf(y.level) - LEVELS.indexOf(x.level) || Number(y.since ?? 0) - Number(x.since ?? 0));
     const { page, next, total } = pageOf(ranked, from);
-    await audit('trade-holds-read', null, { sort }, { onceIn: READ_ROW_S }).run();
     return { characters: page, next, total };
   }
 
   if (path === '/v1/staff/gains') {
     const days = Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= GAINS_DAYS_MAX ? body.days : GAINS_DAYS;
     const sort = body.sort === 'newest' ? 'newest' : 'urgent';
-    const all = await gainsRanked(db, nowS, days);
+    // STAFF-PANEL-SPEED: the audit row with the gains' reads, one trip
+    const [all] = await Promise.all([gainsRanked(db, nowS, days), audit('gains-read', null, { days, sort }, { onceIn: READ_ROW_S }).run()]);
     const list = sort === 'newest' ? [...all].sort((x, y) => y.last - x.last) : all;
     const { page, next, total } = pageOf(list, fromOf(body.from));
-    await audit('gains-read', null, { days, sort }, { onceIn: READ_ROW_S }).run();
     return { days, gains: page, next, total };
   }
 
