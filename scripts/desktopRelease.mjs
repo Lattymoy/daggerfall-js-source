@@ -50,19 +50,11 @@
 // they were built for (`shell`, a digest of the shell's sources at the commit): a release that changes the shell goes
 // out by the installer. And the publish job measures the update a player of the release before takes (`delta`).
 //
-// CLOSED-SOURCE (2026-10-23, the field: players "cannot access their launcher" days after the source went private):
-// THE DOWNLOADS STAY PUBLIC WHERE THE SOURCE IS NOT. GitHub serves a private repository's release files to its readers
-// alone, so every door a player had - the site's Download, the launcher's update check and news, the game channel -
-// answered 404. Releases are cut in the repository every shell already names (app/lib/downloads.cjs RELEASES_URL),
-// kept public and holding nothing but releases, while the source lives private under another name; `repo` prints it
-// for the two workflows that write releases.
-//
 //   node scripts/desktopRelease.mjs alias <dir>           each download copied under its name from before BR5
 //   node scripts/desktopRelease.mjs check <dir>           exit 1 naming any file missing
 //   node scripts/desktopRelease.mjs notes <tag>           the release body, markdown, to stdout (gh api: GH_TOKEN)
 //   node scripts/desktopRelease.mjs renotes <tag> <body>  a published release's body, its notes read again (REL7)
 //   node scripts/desktopRelease.mjs latest <tag> [<cur>]  "true" when <tag> should be marked latest
-//   node scripts/desktopRelease.mjs repo                  CLOSED-SOURCE: the repository players download from, owner/name
 //   node scripts/desktopRelease.mjs shell                 DA13: the shell's id at HEAD, to stdout
 //   node scripts/desktopRelease.mjs seed <dist> <file>    DA13: the bundled copy's index (VERSION, DFO_SHELL)
 //   node scripts/desktopRelease.mjs pack <dist> <dir>     DA13: the game's pack and manifest (VERSION, DFO_UPDATE, DFO_SHELL)
@@ -305,11 +297,8 @@ export function githubApi(path, exec = execFileSync) {
   }
 }
 
-/** CLOSED-SOURCE: the repository players download from - owner/name, read off the link every shell already holds. */
-export const releasesRepository = () => new URL(RELEASES_URL).pathname.split('/').slice(1, 3).join('/');
-
 /** The repository the pull requests are read from: the workflow's own, or the one the downloads name. */
-const repository = () => process.env.GITHUB_REPOSITORY || releasesRepository();
+const repository = () => process.env.GITHUB_REPOSITORY || new URL(RELEASES_URL).pathname.split('/').slice(1, 3).join('/');
 
 /**
  * The notes a release brings: for each pull request merged since `from`,
@@ -536,11 +525,7 @@ function main(argv) {
     console.log(String(shouldMarkLatest(a, b)));
     return 0;
   }
-  if (cmd === 'repo') {
-    console.log(releasesRepository());
-    return 0;
-  }
-  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | repo | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]');
+  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]');
   return 2;
 }
 
