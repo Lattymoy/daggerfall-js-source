@@ -24,6 +24,11 @@ import * as session from '../../src/systems/inventorySession.js';
 import { setItemFields } from '../../src/systems/item/itemTemplates.js';
 import { itemLine } from '../../src/ui/enhanced/enhancedInventory.js';
 import { stolenLine } from '../../src/systems/stolenGoods.js';
+import { packTradeRefusal } from '../../src/systems/tradePack.js';
+import { HOW_MANY_ITEMS } from '../../src/systems/item/itemTransfer.js';
+import { packOnlyText } from '../../src/systems/item/itemBound.js';
+import { lockedText } from '../../src/systems/item/itemLock.js';
+import { accountRefusalText } from '../../src/net/accountClient.js';
 import { newWagonItem } from '../../src/systems/wagon/wagonKinds.js';
 import * as storeFilter from '../../src/ui/storeFilter.js';
 import { GUILD_VAULT_SLOTS } from '../../src/net/guild/guildVaultLaw.js';
@@ -44,6 +49,8 @@ after(() => { Date.now = realNow; });
 
 const tick = () => new Promise((r) => setImmediate(r));
 const settle = async (n = 10) => { for (let i = 0; i < n; i++) await tick(); };
+/** Wait (a bounded number of macrotasks) until `f()` is truthy - an act through the real Worker answers on its own time. */
+const until = async (f, n = 400) => { for (let i = 0; i < n && !f(); i++) await tick(); return f(); };
 
 // ─── THE RIG: a service, a guild with a vault, a pack over a real book ────────────────────────────────────────────
 
@@ -99,8 +106,14 @@ async function stood(opts) {
  */
 async function rig(svc, who, { reach = true, realm = true, items = null, door: withDoor = true, whenAsked = null } = {}) {
   const entity = { name: who.handle, stats: { strength: 50 }, items: (items ?? svc.record(who).items).map((i) => setItemFields(i)), goldPieces: 0, bankAccounts: [{ accountGold: 0 }] };
-  const gate = { reads: 0, hold: null, fail: null };
+  const gate = { reads: 0, hold: null, fail: null, calls: [], holdAct: null };
   const fetch = async (url, init) => {
+    const route = new URL(String(url)).pathname;
+    if (route.startsWith('/v1/guilds/vault/')) {
+      gate.calls.push(route.split('/').at(-1));   // 'put' | 'take' | 'grant' - the acts the service was asked
+      const hold = gate.holdAct?.(route.split('/').at(-1));
+      if (hold) await hold;
+    }
     if (String(url).endsWith('/v1/guilds/vault')) {
       gate.reads++;
       const mine = gate.reads;
@@ -114,7 +127,7 @@ async function rig(svc, who, { reach = true, realm = true, items = null, door: w
     return svc.fetch(url, init);
   };
   const state = { reach, character: who.character };
-  const pack = { items: () => entity.items, add: (rec) => entity.items.push(setItemFields({ ...rec })), changed() {}, reach: () => state.reach };
+  const pack = { items: () => entity.items, add: (rec) => entity.items.push(setItemFields({ ...rec })), changed() {}, reach: () => state.reach, refuses: (it) => packTradeRefusal(it, entity) };
   const book = new GuildBook({
     door: accountGuilds({ fetch, storage: sessionStorageOf(SESSION_KEY, who) }), character: () => state.character,
     wallet: () => ({ gold: () => 0, pay() {}, credit() {} }), pack, realm: realm ? realmActOver(() => who.realm.at()) : null,
@@ -125,6 +138,7 @@ async function rig(svc, who, { reach = true, realm = true, items = null, door: w
 
 // ─── THE PANE'S HANDS ────────────────────────────────────────────────────────────────────────────────────────────
 
+const REACH_WORDS = 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.';
 const named = (row) => row.querySelector('.itemname')?.children?.[0]?.textContent ?? '';
 const actsOf = (host) => host.querySelectorAll('.act').map((b) => b.textContent);
 const actBtn = (host, label) => host.querySelectorAll('.act').find((b) => b.textContent === label);
@@ -377,13 +391,13 @@ test('GUILD-PANE 1 THE ROWS: a vault holding a sword, a stack of 20 arrows and a
       assert.match(meta, /^3 of 50 slots · \d+\.\d\d kg$/);
       assert.ok(Math.abs(Number(/· ([\d.]+) kg/.exec(meta)[1]) - total) < 0.011, `the shelf's weight (${meta} against ${total})`);
       // the card of the stolen piece shows its mark
-      rows[2].onclick({});
+      rows[2].onclick({ ctrlKey: true });   // Control, as DFU's split popup is asked for: the card, not the take
       const tip = host.querySelector('.packtip');
       assert.ok(tip, 'a press shows the card');
       assert.ok(tip.querySelectorAll('.boundline').some((p) => p.textContent === stolenLine()), 'the stolen mark');
       assert.equal(dom.all(tip).find((n) => n.tagName === 'H3')?.textContent, itemLine(items[2]).name);
       assert.ok(tip.querySelectorAll('dd').some((d) => d.textContent === 'Guild Vault'), 'Where: Guild Vault');
-      rows[0].onclick({});
+      rows[0].onclick({ ctrlKey: true });
       assert.equal(host.querySelector('.packtip').querySelectorAll('.boundline').length, 0, 'the sword is clean');
     });
     // a hall adds fifty shelves
@@ -511,10 +525,10 @@ test('GUILD-PANE 1 THE FILTER: the bar narrows the vault by search, category and
 
 // ─── READ-ONLY ──────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('GUILD-PANE 1 READ-ONLY: every way a piece could leave the vault or enter it moves nothing - a row\'s click, the card, the right-click menu, the pad\'s quick act, Take all, Stash all, shift-click, a drag in, Stow, the gold button; the pane items are frozen and the pack and the book\'s view stand as they were (mutants: a click that takes; Stow offered; a shift that puts or drops; a drag that stows; the gold field; the bulk buttons)', async () => {
+test('GUILD-PANE 2 UNREACHED: below ground or on the road (the reach false) the pane is a view - every way a piece could leave the vault or enter it is refused with the reach note and moves nothing: a row\'s click, the card\'s Take, the right-click menu, the pad\'s quick act, shift-click, a drag in, the card\'s Stow, Take all, Stash all and the gold button; the pane items are frozen and the pack and the book\'s view stand as they were (decided: "View-only pane") (mutants: the reach unread by a take; by a put; a shift that drops; a drag that stows; the gold field; the bulk buttons)', async () => {
   const s = await stood();
   await withDomAsync(async (dom) => {
-    const r = await rig(s, s.gm, { items: [{ ...SWORD, name: 'Pack Sword' }, { ...RARE, name: 'Pack Dagger' }] });
+    const r = await rig(s, s.gm, { reach: false, items: [{ ...SWORD, name: 'Pack Sword' }, { ...RARE, name: 'Pack Dagger' }] });
     r.entity.goldPieces = 500;
     const dropped = [];
     await pane(dom, r, async ({ host }) => {
@@ -524,90 +538,72 @@ test('GUILD-PANE 1 READ-ONLY: every way a piece could leave the vault or enter i
       Object.freeze(frozen);
       const packBefore = JSON.stringify(r.entity.items);
       const viewBefore = JSON.stringify(r.book.vaultNow());
-      const guard = () => {
-        assert.equal(JSON.stringify(r.entity.items), packBefore, 'the pack is as it was');
-        assert.equal(JSON.stringify(r.book.vaultNow()), viewBefore, 'the book\'s view is as it was');
-        assert.equal(r.entity.goldPieces, 500, 'the purse too');
-        assert.equal(dropped.length, 0, 'nothing dropped in the world');
-        assert.equal(r.gate.reads, reads, 'no read, no act asked of the service');
-      };
       const reads = r.gate.reads;
-      // the controls
+      const reach = () => host.querySelector('.vaultreach')?.textContent;
+      const guard = (what) => {
+        assert.equal(JSON.stringify(r.entity.items), packBefore, `${what}: the pack is as it was`);
+        assert.equal(JSON.stringify(r.book.vaultNow()), viewBefore, `${what}: the book's view is as it was`);
+        assert.equal(r.entity.goldPieces, 500, `${what}: the purse too`);
+        assert.equal(dropped.length, 0, `${what}: nothing dropped in the world`);
+        assert.deepEqual(r.gate.calls, [], `${what}: no act asked of the service`);
+        assert.equal(r.gate.reads, reads, `${what}: no read either`);
+      };
+      const said = (what) => assert.equal(JSON.parse(globalThis.__pack()).notice, REACH_WORDS, `${what}: the reach note is said`);
+      assert.equal(reach(), REACH_WORDS, 'the note stands over the list');
       const acts = actsOf(host);
       for (const bad of ['Take all', 'Stash all', 'Drop gold', 'Stow gold', 'Store gold']) assert.equal(acts.includes(bad), false, `no ${bad}`);
       assert.equal(host.querySelector('.goldbtn'), null, 'no gold button over the vault');
       assert.equal(host.querySelector('.stashfoot'), null, 'no Stash all foot');
-      assert.equal(host.querySelectorAll('.storehint').some((p) => /^Shift-click/.test(p.textContent)), false, 'no shift-click hint: it does nothing yet');
-      // a remote row's click: only the card
+      // a remote row's click
       remoteRows(host)[0].onclick({});
-      guard();
+      guard('a row\'s click'); said('a row\'s click');
+      // the card (Control-click), and its Take
+      remoteRows(host)[0].onclick({ ctrlKey: true });
       let tip = host.querySelector('.packtip');
       assert.ok(tip, 'the card shows');
-      const cardActs = tip.querySelectorAll('.act').map((b) => b.textContent);
-      for (const bad of ['Take', 'Take this one', 'Use', 'Stow', 'Put in the guild vault']) assert.equal(cardActs.includes(bad), false, `no ${bad} on the vault's card`);
-      assert.ok(cardActs.includes('Info'), 'its Info stands');
+      const cardActs = tip.querySelectorAll('.act');
+      assert.equal(cardActs.some((b) => b.textContent === 'Use'), false, 'no Use on a vault piece\'s card');
+      const take = cardActs.find((b) => b.textContent === 'Take');
+      assert.ok(take, 'a Take on the card');
+      take.onclick();
+      guard('the card\'s Take'); said('the card\'s Take');
       // quick act (the pad's X) on a vault row
       const row = remoteRows(host)[1];
       row.isConnected = true;   // the fake document keeps no connectedness
       assert.equal(inventoryQuickAct(row), true);
-      guard();
+      guard('the pad'); said('the pad');
       // the right-click menu
       const hadWindow = 'window' in globalThis, was = globalThis.window;
       globalThis.window = { innerWidth: dom.w, innerHeight: dom.h, getComputedStyle: () => ({ position: 'absolute' }) };   // the menu is placed against the window
       try { remoteRows(host)[2].oncontextmenu({ preventDefault() {}, clientX: 10, clientY: 10 }); } finally { if (hadWindow) globalThis.window = was; else delete globalThis.window; }
-      const menu = dom.doc.querySelectorAll('.inv-menu-item').map((b) => b.textContent);
-      assert.ok(menu.includes('Info'), 'the menu opened: its Info stands');
-      for (const bad of ['Take', 'Use', 'Stow']) assert.equal(menu.includes(bad), false, `no ${bad} in the vault row's menu`);
-      guard();
-      // a pack piece: the card has no Stow, shift-click does nothing, a drag over the vault is refused
-      const pack = packRows(host);
-      assert.ok(pack.length >= 2);
-      pack[0].onclick({});
+      const menu = dom.doc.querySelectorAll('.inv-menu-item');
+      assert.ok(menu.some((b) => b.textContent === 'Info'), 'the menu opened: its Info stands');
+      assert.equal(menu.some((b) => b.textContent === 'Use'), false, 'no Use in the vault row\'s menu');
+      menu.find((b) => b.textContent === 'Take')?.onclick({ stopPropagation() {} });
+      guard('the menu\'s Take');
+      // a pack piece: the card's Stow, shift-click, a drag over the vault window and off the panel
+      packRows(host)[0].onclick({});
       tip = host.querySelector('.packtip');
-      assert.ok(tip, 'the pack piece\'s card');
-      assert.equal(tip.querySelectorAll('.act').some((b) => /^(Stow|Store|Put in|Drop)/.test(b.textContent)), false, 'no Stow on the card');
-      guard();
-      pack[1].onclick({ shiftKey: true });
-      guard();
-      // a drag from the pack onto the vault window, and off the panel
+      const stow = tip.querySelectorAll('.act').find((b) => /^Put in vault/.test(b.textContent));
+      assert.ok(stow, 'a Put in vault on the card');
+      stow.onclick();
+      guard('the card\'s Stow'); said('the card\'s Stow');
+      packRows(host)[1].onclick({ shiftKey: true });
+      guard('shift-click'); said('shift-click');
       const win = dom.doc.querySelectorAll('.loot-win')[0];
       const at = (n) => { dom.doc.elementFromPoint = () => n; };
-      const p0 = packRows(host)[0];
-      at(win); p0.onpointerdown({ pointerId: 7, button: 0, pointerType: 'mouse', clientX: 10, clientY: 10 });
+      at(win); packRows(host)[0].onpointerdown({ pointerId: 7, button: 0, pointerType: 'mouse', clientX: 10, clientY: 10 });
       dom.win.fire('pointermove', { pointerId: 7, clientX: 80, clientY: 80 });
-      assert.equal(dom.doc.querySelectorAll('.dragghost')[0]?.querySelector('.ghostact')?.textContent, '', 'no verb for a release over the vault');
-      assert.ok(dom.doc.querySelectorAll('.dragghost')[0].classList.contains('refused'), 'shown as refused');
       dom.win.fire('pointerup', { pointerId: 7, clientX: 80, clientY: 80 });
-      guard();
+      guard('a drag in'); said('a drag in');
       at(dom.body);
       packRows(host)[0].onpointerdown({ pointerId: 8, button: 0, pointerType: 'mouse', clientX: 10, clientY: 10 });
       dom.win.fire('pointermove', { pointerId: 8, clientX: 300, clientY: 300 });
       dom.win.fire('pointerup', { pointerId: 8, clientX: 300, clientY: 300 });
-      guard();
+      guard('a drag off the panel');
     }, { physicalDropOn: () => true, physicalDrop: (list) => dropped.push(...list), dropItem: (it) => dropped.push(it), onDrop: (list) => dropped.push(...list) });
   });
 });
-
-test('GUILD-PANE 1 READ-ONLY (a map\'s use): a treasure map in the vault is never read out of it - the card has no Use, and its row\'s click only shows the card (mutants: Use offered on the vault side; a map intercepted)', async () => {
-  const s = await stand({ gmItems: [{ group: 'MiscItems', templateIndex: 164, name: 'Map', value: 10 }] });
-  await s.putIn(s.gm, 0);
-  await withDomAsync(async (dom) => {
-    const r = await rig(s, s.gm);
-    const revealed = [];
-    await pane(dom, r, async ({ host }) => {
-      await openVault(host, r);
-      assert.equal(remoteRows(host).length, 1);
-      remoteRows(host)[0].onclick({});
-      const tip = host.querySelector('.packtip');
-      assert.ok(tip);
-      assert.equal(tip.querySelectorAll('.act').some((b) => b.textContent === 'Use'), false);
-      assert.equal(revealed.length, 0);
-      assert.equal(r.book.vaultNow().items.length, 1, 'the map is still on the shelf');
-    }, { revealMap: (...a) => revealed.push(a) });
-  });
-});
-
-// ─── THE REPAINT ────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('GUILD-PANE 1 THE REPAINT: an open vault pane repaints when the book\'s version moves and closes itself when its vault is gone - one poll, set when the pane opens, cleared when it is hidden and when the pack closes (mutants: no poll; a poll left running; the vault kept open on another character)', async () => {
   const s = await stood();
@@ -710,7 +706,333 @@ test('GUILD-PANE 1 THE WORDS: each new string of the pane goes through t() with 
     'social.vault.reach': 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.',
   };
   for (const [k, en] of Object.entries(want)) assert.equal(rows.get(k), en, k);
-  const pane = read('src/ui/enhanced/enhancedInventory.js') + read('src/systems/inventorySession.js');
+  const pane = read('src/ui/enhanced/enhancedInventory.js') + read('src/systems/inventorySession.js') + read('src/scenes/guildVaultHost.js');
   for (const k of Object.keys(want)) assert.ok(pane.includes(`'${k}'`), `${k} is read by the pane`);
   assert.match(read('src/ui/socialPanel.js'), /GUILD_VAULT_REACH_TEXT = '(You can use the vault in any town or a guild caravan\. View it here; put items in and take them out in town or in a guild caravan\.)'/);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// SLICE 2: PUT IN, TAKE OUT, AND YOUR OWN DEPOSITS BACK - the pane's moves
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+const packNamed = (host, re) => packRows(host).find((r) => re.test(named(r)));
+const vaultNamed = (host, re) => remoteRows(host).find((r) => re.test(named(r)));
+const noticeOf = () => JSON.parse(globalThis.__pack()).notice;
+const qtyInput = (dom, tip) => dom.all(tip).find((n) => n.tagName === 'INPUT');
+const BLADE = { ...SWORD, name: 'Brenna\'s Blade' };
+
+test('GUILD-PANE 2 TAKE: a click on a vault row takes the whole stack - one act asked of the service, the piece in the pack on the answer, the shelf read again and the pane drawn on it (mutants: a click that only picks; the count dropped; two acts)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [] });
+    await pane(dom, r, async ({ host }) => {
+      await openVault(host, r);
+      vaultNamed(host, /Arrow/).onclick({});
+      assert.ok(await until(() => r.entity.items.length === 1 && remoteRows(host).length === 2), 'the piece arrives and the shelf shrinks');
+      assert.deepEqual(r.gate.calls, ['take'], 'one act');
+      assert.deepEqual([r.entity.items[0].name, r.entity.items[0].stackCount], ['Arrow', 20], 'the whole stack');
+      assert.equal(remoteRows(host).some((row) => /Arrow/.test(named(row))), false, 'off the shelf');
+      assert.deepEqual(s.record(s.gm).items.map((i) => [i.name, i.stackCount]), [['Arrow', 20]], 'and in the record the service wrote');
+      assert.equal(host.querySelector('.packtip'), null, 'no card left up');
+    });
+  });
+});
+
+test('GUILD-PANE 2 THE HOW-MANY FIELD: Control-click opens a vault piece\'s card with its field and Take; Take moves the count typed - 5 of 20 - and a count the law refuses moves nothing and asks the question again; a stack on the pack\'s card puts in the count typed (mutants: the field unread by a take; by a put)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [] });
+    await pane(dom, r, async ({ host }) => {
+      await openVault(host, r);
+      vaultNamed(host, /Arrow/).onclick({ ctrlKey: true });
+      const tip = host.querySelector('.packtip');
+      const field = qtyInput(dom, tip);
+      assert.ok(field, 'the how-many field on the card');
+      assert.equal(field.value, '20', 'it starts at the most that would move');
+      field.value = '99'; field.oninput();
+      tip.querySelectorAll('.act').find((b) => b.textContent === 'Take').onclick();
+      assert.equal(noticeOf(), HOW_MANY_ITEMS(20), 'the popup\'s own question');
+      assert.deepEqual(r.gate.calls, [], 'nothing asked of the service');
+      const again = host.querySelector('.packtip');
+      const f2 = qtyInput(dom, again);
+      f2.value = '5'; f2.oninput();
+      again.querySelectorAll('.act').find((b) => b.textContent === 'Take').onclick();
+      assert.ok(await until(() => r.entity.items.length === 1), 'five arrive');
+      assert.deepEqual([r.entity.items[0].stackCount, r.gate.calls], [5, ['take']]);
+      assert.deepEqual(r.book.vaultNow().items.filter((x) => x.name === 'Arrow').map((x) => x.count), [15], 'fifteen stay');
+    });
+    // the other way: a stack on the pack's own card
+    const m = await rig(s, s.member, { items: [BLADE, ARROWS(10)] });
+    await pane(dom, m, async ({ host }) => {
+      await openVault(host, m);
+      packNamed(host, /Arrow/).onclick({});
+      const tip = host.querySelector('.packtip');
+      const field = qtyInput(dom, tip);
+      assert.ok(field, 'the pack card\'s field');
+      field.value = '4'; field.oninput();
+      tip.querySelectorAll('.act').find((b) => /^Put in vault/.test(b.textContent)).onclick();
+      assert.ok(await until(() => m.gate.calls.includes('put') && m.entity.items.find((i) => i.name === 'Arrow')?.stackCount === 6), 'four go in');
+      assert.deepEqual(m.gate.calls, ['put']);
+      assert.equal(m.book.vaultNow().items.some((x) => x.name === 'Arrow' && x.count === 4 && x.mine), true, 'four on the shelf, hers');
+    });
+  });
+});
+
+test('GUILD-PANE 2 PUT: shift-click puts the whole stack in the vault and a drag from the pack onto its window does the same - each exactly one act, the piece off the pack at once and on the shelf as hers; the ghost says "Put in vault" (mutants: shift that picks; the drag unread; the verb)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const m = await rig(s, s.member, { items: [BLADE, ARROWS(10)] });
+    await pane(dom, m, async ({ host }) => {
+      await openVault(host, m);
+      assert.equal(host.querySelectorAll('.storehint').some((p) => p.textContent === 'Shift-click an item in your pack to put the whole stack in the guild vault.'), true, 'the gesture says itself');
+      packNamed(host, /Arrow/).onclick({ shiftKey: true });
+      assert.ok(await until(() => m.gate.calls.length === 1 && !m.entity.items.some((i) => i.name === 'Arrow') && remoteRows(host).length === 4), 'the whole stack goes');
+      assert.deepEqual(m.gate.calls, ['put']);
+      assert.equal(m.book.vaultNow().items.find((x) => x.name === 'Arrow' && x.mine)?.count, 10);
+      // a drag
+      const win = dom.doc.querySelectorAll('.loot-win')[0];
+      dom.doc.elementFromPoint = () => win;
+      packNamed(host, /Blade|Staff|Longsword/).onpointerdown({ pointerId: 7, button: 0, pointerType: 'mouse', clientX: 10, clientY: 10 });
+      dom.win.fire('pointermove', { pointerId: 7, clientX: 80, clientY: 80 });
+      assert.equal(dom.doc.querySelectorAll('.dragghost')[0]?.querySelector('.ghostact')?.textContent, 'Put in vault', 'the verb the release will do');
+      dom.win.fire('pointerup', { pointerId: 7, clientX: 80, clientY: 80 });
+      assert.ok(await until(() => m.gate.calls.length === 2 && m.entity.items.length === 0), 'the blade goes');
+      assert.deepEqual(m.gate.calls, ['put', 'put']);
+      assert.equal(remoteRows(host).length, 5, 'five on the shelf');
+    });
+  });
+});
+
+test('GUILD-PANE 2 BUSY: while an act is out the rows draw disabled and a second press is refused with "A moment." - one act asked, the piece landing on the answer (mutants: no busy gate; rows not marked)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [] });
+    let release = null;
+    r.gate.holdAct = (act) => (act === 'take' ? new Promise((res) => { release = res; }) : null);
+    await pane(dom, r, async ({ host }) => {
+      await openVault(host, r);
+      vaultNamed(host, /Arrow/).onclick({});
+      await until(() => r.gate.calls.length === 1);
+      assert.equal(r.door.busy(), true);
+      assert.equal(remoteRows(host).every((row) => row.classList.contains('busy')), true, 'the rows draw disabled');
+      vaultNamed(host, /Longsword/).onclick({});
+      assert.equal(noticeOf(), 'A moment.');
+      assert.deepEqual(r.gate.calls, ['take'], 'no second act');
+      release();
+      assert.ok(await until(() => r.entity.items.length === 1 && !r.door.busy()));
+      assert.deepEqual(r.gate.calls, ['take']);
+      assert.equal(remoteRows(host).some((row) => row.classList.contains('busy')), false, 'enabled again');
+    });
+  });
+});
+
+test('GUILD-PANE 2 WORDS OF A REFUSAL: a member who may not take is told the rank\'s words and the service is not asked; at the day\'s limit, the limit\'s; a service refusal shows its own words and the shelf is read again (mutants: the standing unread; a refusal silent)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const m = await rig(s, s.member, { items: [] });
+    await pane(dom, m, async ({ host }) => {
+      await openVault(host, m);
+      vaultNamed(host, /Longsword/).onclick({});
+      assert.equal(noticeOf(), accountRefusalText('guild-vault-rank'));
+      assert.deepEqual(m.gate.calls, []);
+    });
+    const mid = `m${s.raw.prepare('SELECT rowid AS rid FROM guild_members WHERE char_id = ?').get(s.member.character).rid}`;
+    assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: mid, level: 'withdraw', limit: 1 }, s.gm.secret)).status, 200);
+    const w = await rig(s, s.member, { items: [] });
+    await pane(dom, w, async ({ host }) => {
+      await openVault(host, w);
+      vaultNamed(host, /Arrow/).onclick({});
+      assert.ok(await until(() => w.entity.items.length === 1));
+      vaultNamed(host, /Longsword/).onclick({});
+      assert.equal(noticeOf(), accountRefusalText('guild-vault-limit'), 'the second is past her one a day');
+      assert.deepEqual(w.gate.calls, ['take']);
+    });
+    // a service refusal: the piece went from under the pane
+    const g = await rig(s, s.gm, { items: [] });
+    await pane(dom, g, async ({ host }) => {
+      await openVault(host, g);
+      const slot = g.door.view().items.find((x) => x.name === 'Steel Longsword');
+      assert.equal((await s.call('/v1/guilds/vault/take', { character: s.gm.character, realm: s.gm.realm.at(), slot: slot.slot, at: slot.at }, s.gm.secret)).status, 200);
+      const before = g.entity.items.length;
+      vaultNamed(host, /Longsword/).onclick({});
+      assert.ok(await until(() => noticeOf() === accountRefusalText('guild-vault-empty')), 'the service\'s own words');
+      assert.equal(g.entity.items.length, before, 'nothing came');
+      assert.ok(await until(() => remoteRows(host).length === 1), 'and the shelf is read again');
+    });
+  });
+});
+
+test('GUILD-PANE 2 THE RESERVE UNDONE: a put the service refuses puts the piece back in the pack - the very object, at its place - and says why (mutants: the undo dropped)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const m = await rig(s, s.member, { items: [BLADE, ARROWS(10)] });
+    await pane(dom, m, async ({ host }) => {
+      await openVault(host, m);
+      const blade = m.entity.items[0];
+      const mid = `m${s.raw.prepare('SELECT rowid AS rid FROM guild_members WHERE char_id = ?').get(s.member.character).rid}`;
+      assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: mid, level: 'none' }, s.gm.secret)).status, 200);   // after the pane read her standing
+      packNamed(host, /Blade|Staff|Longsword/).onclick({ shiftKey: true });
+      assert.ok(await until(() => noticeOf() === accountRefusalText('guild-vault-rank')), 'the service\'s words');
+      assert.deepEqual(m.gate.calls, ['put'], 'it was asked once');
+      assert.equal(m.entity.items[0], blade, 'the very piece, at its place');
+      assert.equal(m.entity.items.length, 2);
+      assert.equal(s.record(s.member).items.length, 2, 'and the record never lost it');
+    });
+  });
+});
+
+test('GUILD-PANE 2 CLOSING MID-ACT: the pack closed while a take is out still lands the piece in the pack - the book owns the act (mutants: the take\'s landing tied to the pane)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [] });
+    let release = null;
+    r.gate.holdAct = (act) => (act === 'take' ? new Promise((res) => { release = res; }) : null);
+    await pane(dom, r, async ({ host, view }) => {
+      await openVault(host, r);
+      vaultNamed(host, /Arrow/).onclick({});
+      await until(() => r.gate.calls.length === 1);
+      view.unmount();
+      release();
+      assert.ok(await until(() => r.entity.items.length === 1), 'the piece lands with no pane');
+      assert.equal(r.entity.items[0].name, 'Arrow');
+    });
+  });
+});
+
+test('GUILD-PANE 2 WHAT MAY NOT GO IN never reaches the service: a locked piece, a bound one, a quest\'s, a worn one, the loaded wagon, a letter of credit, a pack-only piece - each refused in words, by the door and by the pane (mutants: a clause of vaultPutRefusal dropped)', async () => {
+  const s = await stood();
+  const caravan = newWagonItem('caravan');
+  const cases = [
+    ['locked', { ...SWORD, locked: true }, /locked/],
+    ['bound', { ...SWORD, bound: true }, /Bound|bound/],
+    ['quest', { ...SWORD, questItem: true }, /Quest items cannot be traded/],
+    ['worn', { ...SWORD, equipSlot: 1 }, /Unequip/],
+    ['wagon', caravan, /Empty your wagon/],
+    ['letter', { group: 'MiscItems', templateIndex: 275, name: 'Letter of Credit', value: 500 }, /stays with you online/],
+  ];
+  await withDomAsync(async (dom) => {
+    const m = await rig(s, s.member, { items: [...cases.map(([, it]) => it)] });
+    m.entity.wagonItems = [{ group: 'Ingredients', templateIndex: 1 }];   // the loaded wagon
+    await m.door.read();
+    for (const [name, , re] of cases) {
+      const it = m.entity.items.find((x) => (name === 'wagon' ? x.wagonKind === 'caravan' : name === 'letter' ? x.templateIndex === 275 : name === 'locked' ? x.locked : name === 'bound' ? x.bound : name === 'quest' ? x.questItem : x.equipSlot === 1));
+      const why = m.door.putRefusal(it);
+      assert.ok(why && re.test(why.text ?? why), `${name}: ${JSON.stringify(why)}`);
+      const r = await m.door.put(it);
+      assert.deepEqual([r.ok, r.error], [false, 'vault-goods'], `${name}: the door refuses`);
+      assert.match(r.text, re, `${name}: in words`);
+    }
+    assert.deepEqual(m.gate.calls, [], 'the service was asked of none');
+    assert.equal(m.entity.items.length, cases.length, 'and the pack still holds every one');
+    // by the pane: a locked piece's shift-click says why and sends nothing
+    await pane(dom, m, async ({ host }) => {
+      await openVault(host, m);
+      packRows(host)[0].onclick({ shiftKey: true });
+      assert.match(noticeOf() ?? '', /locked/);
+      assert.deepEqual(m.gate.calls, []);
+    });
+  });
+});
+
+test('GUILD-PANE 2 THE DOOR\'S GATES, in the plan\'s order: the reach, then busy, then the standing, then the law of the piece, then a free slot; a take by the rank or the limit unless the piece is the taker\'s own (mutants: an order swapped; own-back unread; the full vault unread)', async () => {
+  const s = await stood();
+  const m = await rig(s, s.member, { items: [BLADE, { ...SWORD, name: 'Locked Blade', locked: true }] });
+  await m.door.read();
+  const blade = m.entity.items[0];
+  const locked = m.entity.items[1];
+  const sword = m.door.items()[0];
+  m.state.reach = false;
+  assert.equal((await m.door.put(blade)).error, 'vault-reach', 'the reach first');
+  assert.equal((await m.door.take(sword)).error, 'vault-reach');
+  m.state.reach = true;
+  m.book.busy = true;
+  assert.equal((await m.door.put(blade)).error, 'vault-busy');
+  assert.equal((await m.door.take(sword)).error, 'vault-busy');
+  m.book.busy = false;
+  assert.equal((await m.door.take(sword)).error, 'guild-vault-rank', 'a depositor takes no other\'s');
+  assert.equal(m.door.mine(sword), false);
+  assert.equal(m.door.mayPut(), true);
+  assert.equal((await m.door.put(locked)).error, 'vault-goods', 'the law of the piece');
+  // a full vault
+  for (let i = 3; i < GUILD_VAULT_SLOTS; i++) {
+    s.raw.prepare('INSERT INTO guild_vault (guild_id, slot, rec, name, count, dep_player, dep_char, dep_name, at) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)')
+      .run(s.gid, i, JSON.stringify(ARROWS(1)), 'Arrow', s.gm.id, s.gm.character, 'Aldric', T0);
+  }
+  await m.door.read({ again: true });
+  assert.equal(m.door.slots().used, GUILD_VAULT_SLOTS);
+  assert.equal((await m.door.put(blade)).error, 'guild-vault-full', 'no free slot');
+  assert.deepEqual(m.gate.calls, [], 'none of it asked of the service');
+  // no vault read: nothing to take from, nothing to put in against
+  const bare = await rig(s, s.member, { items: [BLADE] });
+  assert.equal((await bare.door.put(bare.entity.items[0])).error, 'guild-vault-empty', 'unread: no shelves to put on');
+  assert.equal((await bare.door.take({ name: 'not a row' })).error, 'guild-vault-empty');
+});
+
+test('GUILD-PANE 2 TAKE BACK: a member who may not take sees "Take back" on her own deposit\'s card and no Take on another\'s; her click takes it back, another\'s says the rank\'s words; with no access she still has no Put in vault on a pack piece (mutants: own-back unread; Take offered to a depositor)', async () => {
+  const s = await stood();
+  await s.putIn(s.member, 0);
+  await withDomAsync(async (dom) => {
+    const m = await rig(s, s.member, { items: [{ ...SWORD, name: 'Spare Blade' }] });
+    await pane(dom, m, async ({ host }) => {
+      await openVault(host, m);
+      const mine = vaultNamed(host, /Brenna/);
+      assert.ok(mine, 'her piece is on the shelf');
+      mine.onclick({ ctrlKey: true });
+      let acts = host.querySelector('.packtip').querySelectorAll('.act').map((b) => b.textContent);
+      assert.equal(acts.includes('Take back'), true);
+      assert.equal(acts.includes('Take'), false);
+      vaultNamed(host, /Longsword/).onclick({ ctrlKey: true });
+      acts = host.querySelector('.packtip').querySelectorAll('.act').map((b) => b.textContent);
+      assert.equal(acts.some((a) => /^Take/.test(a)), false, 'no Take on another\'s piece');
+      mine.onclick({});
+      assert.ok(await until(() => m.entity.items.some((i) => /Brenna/.test(i.name))), 'her own comes back');
+      assert.deepEqual(m.gate.calls, ['take']);
+      assert.equal(m.book.vaultNow().me.taken, 0, 'counting nothing');
+    });
+    // no access: a pack piece has no Put in vault
+    const mid = `m${s.raw.prepare('SELECT rowid AS rid FROM guild_members WHERE char_id = ?').get(s.member.character).rid}`;
+    assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: mid, level: 'none' }, s.gm.secret)).status, 200);
+    const n = await rig(s, s.member, { items: [{ ...SWORD, name: 'Spare Blade' }] });
+    await pane(dom, n, async ({ host }) => {
+      await openVault(host, n);
+      packRows(host)[0].onclick({});
+      assert.equal(host.querySelector('.packtip').querySelectorAll('.act').some((b) => /^Put in vault/.test(b.textContent)), false);
+    });
+  });
+});
+
+test('GUILD-PANE 2 THE CARD OF A VAULT ROW: Control-click opens it; Take some... in the right-click menu is its door on a touch screen; the hint tells both gestures (mutants: no way to a count without a Control key)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [] });
+    await pane(dom, r, async ({ host }) => {
+      await openVault(host, r);
+      assert.equal(host.querySelectorAll('.storehint').some((p) => p.textContent === 'Click a row to take it. Control-click for its card and a count.'), true);
+      const hadWindow = 'window' in globalThis, was = globalThis.window;
+      globalThis.window = { innerWidth: dom.w, innerHeight: dom.h, getComputedStyle: () => ({ position: 'absolute' }) };
+      try { vaultNamed(host, /Arrow/).oncontextmenu({ preventDefault() {}, clientX: 10, clientY: 10 }); } finally { if (hadWindow) globalThis.window = was; else delete globalThis.window; }
+      const items = dom.doc.querySelectorAll('.inv-menu-item');
+      const some = items.find((b) => b.textContent === 'Take some...');
+      assert.ok(some, 'the menu offers a count');
+      some.onclick({ stopPropagation() {} });
+      assert.ok(host.querySelector('.packtip'), 'the card is up');
+      assert.ok(qtyInput(dom, host.querySelector('.packtip')), 'with its field');
+      assert.deepEqual(r.gate.calls, [], 'and nothing taken yet');
+    });
+  });
+});
+
+test('GUILD-PANE 2 THE WORDS: the pane\'s new strings go through t() with their English rows (mutants: a key unrouted; a row missing)', () => {
+  const rows = new Map(parseStringTableCsv(read('locales/en/Port_Strings.csv')));
+  const want = {
+    'inventory.vault.busy': 'A moment.',
+    'inventory.vault.hint': 'Shift-click an item in your pack to put the whole stack in the guild vault.',
+    'inventory.vault.hintCard': 'Click a row to take it. Control-click for its card and a count.',
+    'inventory.vault.put': 'Put in vault',
+    'inventory.vault.takeBack': 'Take back',
+    'inventory.vault.some': 'Take some...',
+  };
+  for (const [k, en] of Object.entries(want)) assert.equal(rows.get(k), en, k);
+  const pane = read('src/ui/enhanced/enhancedInventory.js') + read('src/scenes/guildVaultHost.js');
+  for (const k of Object.keys(want)) assert.ok(pane.includes(`'${k}'`), `${k} is read`);
 });
