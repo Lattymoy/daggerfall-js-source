@@ -598,7 +598,7 @@
   {
     "name": "AC6-E5-lost-sit-unsaid",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) { g.sat = false; g.why = 'The table did not hear you sit down - sit again.'; }",
+    "old": "    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) { g.sat = false; g.why = 'Your seat did not register. Sit down again.'; }",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "AC6-E10-deals-for-nobody",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  const next = !online ? '' : online.full ? 'The next game deals in a moment.' : 'Waiting for another player to sit down.';",
-    "new": "  const next = online ? 'The next game deals in a moment.' : '';",
+    "old": "  const next = !online ? '' : online.full ? 'The next game starts in a moment.' : 'Waiting for another player to sit down.';",
+    "new": "  const next = online ? 'The next game starts in a moment.' : '';",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -726,8 +726,8 @@
   {
     "name": "AC6-E19-full-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "      : online && !view ? 'Both chairs are filled - the game deals in a moment.'",
-    "new": "      : false ? 'Both chairs are filled - the game deals in a moment.'",
+    "old": "      : online && !view ? 'Both seats are taken. The game starts in a moment.'",
+    "new": "      : false ? 'Both seats are taken. The game starts in a moment.'",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]

@@ -60,6 +60,13 @@ export const ATTACK_SOUND_THRESHOLD = 0.5;
  *  cadence is a foe announcing itself while it is near you, and a companion is near you always: a sworn revenant
  *  barked every six seconds on average for as long as it walked with the player. Its attack sound is DFU's. */
 export const COMPANION_ATTRACT_SCALE = 6;
+/** MONSTER-QUIET (2026-10-20, Dudey: "decrease the monster scream frequenzy by 60% please"): a MONSTER's attract clock
+ *  runs at 1 / FOE_ATTRACT_SCALE of the game's at the host's one seam (scenes/hostCombat.js tickEnemySound) - 7.5 to
+ *  22.5 s between calls where DFU's waits 3 to 9, so it calls 40% as often. This source stays DFU's, clock and all; a
+ *  class foe (the city watch's Halt) and a companion (COMPANION_ATTRACT_SCALE, already quieter) keep their cadence. */
+export const FOE_ATTRACT_SCALE = 2.5;
+/** MONSTER-QUIET: the step the seam hands a source's clock for `dt` of the game's. */
+export const attractStep = (source, dt, companion = false) => (companion || isClassEnemyId(source?.mobileType) ? dt : dt / FOE_ATTRACT_SCALE);
 
 /**
  * IgnoreHumanSounds (:219-226), verbatim:

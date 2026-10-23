@@ -220,7 +220,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   // ─── THE READS ─────────────────────────────────────────────────────
   const cache = new Map();
   // MARKET-ANY: and the crafted pieces a "My listings" read names (the service says how each may list)
-  const keyOf = (view, q) => [slot(), view, q.region, q.family ?? '', q.tier ?? '', q.material ?? '', (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','), (q.board ?? []).join(',')].join('|');   // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute)
+  const keyOf = (view, q) => [slot(), view, q.region, q.family ?? '', q.tier ?? '', q.material ?? '', (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','), (q.board ?? []).join(','),
+    q.page ?? 0, q.sort ?? '', q.recipes ? `r:${q.recipes.join(',')}` : '', q.quality ?? 0].join('|');   // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality
   const pending = new Map();
   /** AUDIT 30 C6: the acts answered so far - a read begun before an act's answer is overtaken by it, and asked again. */
   let gen = 0;

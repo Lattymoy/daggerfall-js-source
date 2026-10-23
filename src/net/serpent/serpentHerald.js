@@ -40,7 +40,7 @@ export function serpentOmenPost({ day, place = null, role = null }) {
   const where = place ? `off ${heraldName(place)}` : 'on the packet lanes';
   const map = place ? '' : ' Its waters are ringed on your map.';
   return {
-    content: `${ping}**Bells ring in the harbours: a great serpent is sighted ${where}.** ${boss.name}, ${boss.nick}, rises ${heraldStamp(t.riseAt, 'R')} (${heraldStamp(t.riseAt, 't')}). It hunts until it dives at ${heraldStamp(t.soundAt, 't')} - every ship may join until then. One ship alone cannot bring it down: sail out together.${map}`,
+    content: `${ping}**Bells ring in the harbors: a great serpent is sighted ${where}.** ${boss.name}, ${boss.nick}, rises ${heraldStamp(t.riseAt, 'R')} (${heraldStamp(t.riseAt, 't')}). It hunts until it dives at ${heraldStamp(t.soundAt, 't')}, and every ship may join until then. One ship alone cannot bring it down: sail out together.${map}`,
     allowed_mentions: role ? { roles: [role] } : { parse: [] },
   };
 }

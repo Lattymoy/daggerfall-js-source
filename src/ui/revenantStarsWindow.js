@@ -70,7 +70,7 @@ export function rvnStarStatWords(key, v) {
     case 'health': return t('rvn.stars.stat.health', 'Health {n}', { n: `${sign}${pct(a)}` });
     case 'blows': return t('rvn.stars.stat.blows', 'Damage {n}', { n: `${sign}${pct(a)}` });
     case 'art': return t('rvn.stars.stat.art', 'Art strength {n}', { n: `${sign}${pct(a)}` });
-    case 'haste': return t('rvn.stars.stat.hasteShorter', 'Its art\'s cooldowns {n} shorter', { n: pct(a) });   // AUDIT RVN-STARS S26: a share of the time, not of the pace
+    case 'haste': return t('rvn.stars.stat.hasteShorter', 'Its art can be used again {n} sooner', { n: pct(a) });   // AUDIT RVN-STARS S26: a share of the time, not of the pace
     case 'awaken': return t('rvn.stars.stat.awaken', 'Learns an art of its kind, if it was born without one');
     case 'bold': return t('rvn.stars.stat.bold', 'Brings back nothing if it returns hurt');
     case 'odds': return t('rvn.stars.stat.odds', 'Mission odds {n}', { n: `${sign}${pct(a * ERRAND.ODDS.PER)}` });
@@ -94,7 +94,7 @@ export function rvnStarRefusal(held, id, points) {
   const h = rvnHeldStars(held);
   if (h.includes(id)) return null;
   const way = rvnWayTo(h, id);
-  if (!way?.length) return t('rvn.stars.no.way', 'This star isn\'t connected to any of its stars.');
+  if (!way?.length) return t('rvn.stars.no.way', 'This star isn\'t connected to any star it has taken.');
   const left = points - (h.length - 1);
   if (way.length > left) return t('rvn.stars.no.pointsAfter', 'Reaching this star costs {need} {need, plural, one {point} other {points}}. It has {left}. It gets one point per level after the first, and one per rank past the first.', { need: way.length, left: Math.max(0, left) });
   return null;
@@ -159,7 +159,7 @@ export function mountRevenantStarsWindow(host, { id, book = swornStarsBook(id), 
       const level = el('span', 'fmt-purse');
       level.replaceChildren(el('span', null, t('rvn.stars.level', 'Level')), el('b', null, String(c.level)),
         el('span', 'of', c.next == null ? t('rvn.stars.top', 'max') : t('rvn.stars.xp', '{xp} of {next} XP', { xp: formatNumber(c.xp), next: formatNumber(c.next) })));   // AUDIT RVN-STARS S25: the player's own grouping
-      level.title = t('rvn.stars.levelTip', 'It earns XP from fights won at your side (more for stronger enemies) and from missions it comes home from.');
+      level.title = t('rvn.stars.levelTip', 'It earns experience from fights won at your side (more for stronger enemies) and from missions it returns from.');
       const pts = el('span', 'fmt-purse life');
       pts.replaceChildren(el('span', null, '★'), el('b', null, String(Math.max(0, left))), el('span', 'of', t('rvn.stars.of', 'of {n}', { n: points })));
       pts.title = t('rvn.stars.pointsTip', 'One point per level after the first, and one per rank past the first.');
@@ -174,7 +174,7 @@ export function mountRevenantStarsWindow(host, { id, book = swornStarsBook(id), 
       for (const l of lines) ul.append(el('li', l.neg ? 'neg' : null, l.text));
       parts.push(ul);
       parts.push(el('h3', null, ASPECTS.blade()), el('p', 'fmt-sign', t('rvn.stars.bladeLore', 'Its body: health and damage.')));
-      parts.push(el('h3', null, ASPECTS.grave()), el('p', 'fmt-sign', t('rvn.stars.graveLore', 'Its art: how strong it is and how often it can use it - and an art for a revenant born without one.')));
+      parts.push(el('h3', null, ASPECTS.grave()), el('p', 'fmt-sign', t('rvn.stars.graveLore', 'Its art: how strong it is, how often it can use it, and an art for a revenant born without one.')));
       const art = rvnArtNote(r);
       if (art) parts.push(el('p', 'fmt-note', art));
       parts.push(el('h3', null, ASPECTS.road()), el('p', 'fmt-sign', t('rvn.stars.roadLore', 'Missions and loyalty: mission odds, loot, travel time, loyalty and rest.')));
@@ -192,7 +192,7 @@ export function mountRevenantStarsWindow(host, { id, book = swornStarsBook(id), 
     words: {
       forget: t('rvn.stars.forget', 'Discard changes'), forgot: t('rvn.stars.forgot', 'Changes discarded.'),
       accept: t('rvn.stars.accept', 'Accept'), acceptN: (n) => t('rvn.stars.acceptN', 'Accept ({n})', { n }),
-      summary: t('rvn.stars.summary', 'Summary'), home: t('rvn.stars.oathBtn', 'Oath'), homeAria: t('rvn.stars.oathAria', 'Centre on the Oath'),
+      summary: t('rvn.stars.summary', 'Summary'), home: t('rvn.stars.oathBtn', 'Oath'), homeAria: t('rvn.stars.oathAria', 'Center on the Oath'),
       close: t('rvn.stars.close', 'Close'),
       hint: t('rvn.stars.hint', 'Click a star to take it and the stars on the way to it · Right-click to remove · Drag to pan · Scroll to zoom · H: back to the Oath'),
       hintTouch: t('rvn.stars.hintTouch', 'Tap a star to see it, tap again to take it · Hold a star to remove it · Drag to pan · Pinch to zoom'),
@@ -203,7 +203,7 @@ export function mountRevenantStarsWindow(host, { id, book = swornStarsBook(id), 
       backMany: (n) => t('rvn.stars.tip.backAfter', 'Right-click to remove it and {n, plural, one {the star} other {the # stars}} after it.', { n }),   // AUDIT RVN-STARS S24: never "the 1 stars"
       back: t('rvn.stars.tip.back', 'Right-click to remove.'),
       take: (n) => t('rvn.stars.tip.take', 'Click to take: {n} {n, plural, one {point} other {points}}.', { n }),
-      noPoints: t('rvn.stars.noPointsAfter', 'It gets one point per level after the first. It earns XP from fights won at your side and from missions.'),
+      noPoints: t('rvn.stars.noPointsAfter', 'It gains one point for each level after the first. It earns experience from fights won at your side and from missions.'),
     },
   };
   return mountSkyWindow(host, sky, { changed, onExit, doc });

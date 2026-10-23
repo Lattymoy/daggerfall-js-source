@@ -210,7 +210,7 @@ happens:
 
 - **The ships' fire breaks it**: blows on a coil segment go to the coil's health. It lets go and lies **stunned** for
   `SERPENT_STUN_MS` (9 s), with no attack, its head thrown up and every blow `STUN_X` (1.5) heavier. The ball that
-  breaks it is named: *"Ama breaks the coil! Sethrakul reels, stunned - strike its head!"*
+  breaks it is named: *"Ama breaks the coil! Sethrakul reels, stunned. Strike its head!"*
 - **Left whole for `COIL_MS` (24 s), it CRUSHES her** (`crushHurt`: 25% + 15, a fifth of her canvas, four men).
 - **It dies or dives** with her held: it lets her go, and says so (`cx` - S4).
 
@@ -575,8 +575,8 @@ the gate's, marked in its ring's colour (`SERPENT_RING_MAP_CSS`). Its row follow
 | Phase | Row | Counts to |
 |---|---|---|
 | quiet | *Sethrakul rises* - "The harbour bells ring 15 minutes before" | the rising |
-| omen | *Sethrakul rises*, off its port - "The harbour bells are ringing - its waters are ringed on your map" | the rising |
-| rising, hunt, late | *Sethrakul hunts* (live), off its port - "It dives when this runs out - sail out to join" | the dive |
+| omen | *Sethrakul rises*, off its port - "The harbour bells are ringing. Its waters are circled on your map" | the rising |
+| rising, hunt, late | *Sethrakul hunts* (live), off its port - "It dives when this runs out. Sail out to join" | the dive |
 
 (SERPENT4: its waters open until it dives, the hunt counts to the dive and the storm's breaking is no row of its own;
 before it the hunt counted to the storm and *Sethrakul's waters are closed* counted to the dive.)
@@ -849,7 +849,7 @@ Mac: *"With the introduction of elite dungeons soon. I want to enhance the rewar
 weapon to the serpent + a rare chance of a title/aura drop."* Three rewards, each a ship that DEALT's alone - a ship that
 stood is paid its hoard and its Renown as before, and nothing here.
 
-**The Sunken Sovereign** (GILDED2, `06-Systems/Gilded.md` section 7): a Gilded Ebony Saber, its power Undertow - the
+**The Sunken Sovereign** (GILDED2, `06-Systems/Gilded.md` section 7): a Gilded Ebony Saber - a Gilded Ebony Dwarven Pistolet since PISTOLET (2026-10-21) - its power Undertow - the
 hoard's very last draw, one dealing ship's hoard in a hundred (`systems/serpent/serpentSpoils.js`, after the technique pass), so
 every hoard rolled before it is what it was for its seed.
 

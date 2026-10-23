@@ -374,7 +374,7 @@ test('GEM2 the world bosses: the Warden one gem, the Old Coil one to a ship that
     const strip = (h) => JSON.parse(JSON.stringify({ gold: h.gold, card: h.card, pieces: h.pieces.filter((p) => p.tier !== 'gilded').map((p) => { const { sockets, ...rest } = noTech(p.item); return { ...p, item: rest }; }) }));   // PIN MOVED (TECH1): and its technique; (GILDED2) and the Dragonfire Oath, the very last draw, set aside
     assert.deepEqual(strip(full), strip(bare), `seed ${k}`);
   }
-  assert.match(read('src/systems/gate/gateSpoils.js'), /const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const oath = rollDragonfireOath\(rolls\);\s*if \(oath\) pieces\.push\(\{ item: oath, tier: oath\.rarity \}\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card, gems \};/);   // PIN MOVED (TECH1): and a weapon's technique after the gems; (GILDED2) the Dragonfire Oath after it, the door's last draw
+  assert.match(read('src/systems/gate/gateSpoils.js'), /const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const oath = rollDragonfireOath\(rolls\);\s*if \(oath\) pieces\.push\(\{ item: oath, tier: oath\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const more = \[\];\s*for \(const bit of SPOILS_PORTENT_BITS\) if \(\(p & bit\) !== 0\) more\.push\(graded\(spoilsBase\(lv, rolls\), magicOrBetter\(rolls\), rolls\)\);[\s\S]{0,700}?return \{ gold, pieces, sigil: sigilStone\(\), card, gems, portent: more\.length \};/);   // PIN MOVED (TECH1): and a weapon's technique after the gems; (GILDED2) the Dragonfire Oath after it, the door's last draw   // PIN MOVED (WB14g): a portent night's pieces after the Oath, drawn only for a receipt's `p` (test/net/gate/wb14g_pays.test.js)   // PIN MOVED (AUDIT WB14 PLAY-7): and the passes over a portent's pieces alone, after them
   assert.match(read('src/systems/serpent/serpentSpoils.js'), /const card = dealt \? bossCardRoll\('serpent', rolls\) : null;\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = dealt \? bossGems\('serpent', rolls\) : \[\];/);
   assert.match(read('src/systems/superDungeon/sdSpoils.js'), /const card = bossCardRoll\('abyss', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*weaponSocketPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const gems = bossGems\('abyss', rolls\);/);
   // the hosts carry the rows: the world tick, every host's shared module and the headless law import them
@@ -392,7 +392,7 @@ test('GEM3 the wells, the chooser and the pips - and in the pack: an empty well 
     const ws = kids(wells, 'sock-well');
     assert.deepEqual(ws.map((w) => [w.className, w.dataset.socket, w.dataset.gem ?? null, w.dataset.gemGrade ?? null]), [
       ['sock-well empty press', '0', null, null], ['sock-well set press', '1', 'perfect-ruby', 'perfect'], ['sock-well empty press', '2', null, null]]);
-    assert.equal(ws[1].getAttribute('title'), 'Perfect Ruby: +6 Fire damage - press again to shatter it');
+    assert.equal(ws[1].getAttribute('title'), 'Perfect Ruby: +6 Fire damage. Click again to shatter it');
     assert.equal(ws[0].getAttribute('title'), 'Empty socket');
     assert.ok('asking' in ws[1].dataset && 'open' in ws[0].dataset && !('open' in ws[2].dataset));
     ws[2].onclick({ stopPropagation() {} });
@@ -445,7 +445,7 @@ test('GEM3 the wells, the chooser and the pips - and in the pack: an empty well 
         assert.deepEqual([bow.sockets[0], said()], ['flawless-ruby', UNSET_ASK('flawless-ruby')], 'asked first');
         wellsNow()[0].onclick({ stopPropagation() {} });
         assert.deepEqual(bow.sockets, Array(3).fill(LR.SOCKET_EMPTY), 'shattered');
-        assert.ok(said().startsWith('The Flawless Ruby in') && said().endsWith('shatters; the socket is empty.'), said());
+        assert.ok(said().startsWith('The Flawless Ruby in') && said().endsWith('shatters. The socket is empty.'), said());
         assert.equal(ruby.stackCount, 1, 'the gem gone, not back');
         // a loose gem's "Set in..."
         page('valuables');

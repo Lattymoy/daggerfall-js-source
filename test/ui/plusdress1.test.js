@@ -127,7 +127,7 @@ test('PLUS-DRESS the gate: the boss\'s bar and the countdown paint from CLASSES 
   drawGateBossBar(model, { doc });
   drawGateBossBar({ ...model, frac: 0.4 }, { doc });
   const root = doc.body.children[0];
-  assert.deepEqual(root.children.map((c) => c.className), ['wb-boss-name', 'wb-boss-sub', 'wb-boss-track', 'wb-boss-marks', 'wb-boss-callout', 'wb-boss-foot']);   // WB9a: the night's marks under his health (WB8b's trials line under his name, moved and drawn whole); WB13c: his epithet's line
+  assert.deepEqual(root.children.map((c) => c.className), ['wb-boss-name', 'wb-boss-sub', 'wb-boss-track', 'wb-boss-marks', 'wb-boss-callout', 'wb-boss-foot', 'wb-boss-halves']);   // PIN MOVED (WB14d): the halves' row, last; WB9a: the night's marks under his health (WB8b's trials line under his name, moved and drawn whole); WB13c: his epithet's line
   const track = root.children[2];
   assert.deepEqual(track.children.map((c) => c.className), ['wb-boss-ghost', 'wb-boss-fill', 'wb-boss-mark', 'wb-boss-mark', 'wb-boss-ward']);   // WB13c: the trailing segment under the fill
   assert.equal(track.children[1].style.width, '40.0%');

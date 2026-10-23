@@ -43,7 +43,7 @@ const XP = SIGIL_STAGES.map((s) => s.xp);           // 0, 5000, 12500, 22500, 37
 test('SET1 the registry: the sets in the record\'s own order - the four of the world, then the gate boss\'s own (Aetheric), then (RAID4b) the raiding parties\' three (Aetheric) - each with three tiers at 2, 4 and 6 pieces, every number a whole pair from Faint to Ascendant, every tier\'s words whole at both ends (mutants: a set out of the record\'s order; a tier at the wrong count)', () => {
   assert.deepEqual(Object.keys(SIGIL_SETS), [...SIGIL_SET_IDS], 'the registry and the record name the same sets, in one order');
   assert.deepEqual(WORLD_SET_IDS, ['malacath', 'dagon', 'nocturnal', 'mora']);
-  assert.deepEqual(Object.values(SIGIL_SETS).filter((s) => s.aetheric).map((s) => s.id), ['ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply'], 'RAID4b: the gate boss\'s own, then the raids\' three - SERPENT-SET: then the sea serpent\'s own - PIN MOVED (EG15): the Battlemage\'s Panoply last');
+  assert.deepEqual(Object.values(SIGIL_SETS).filter((s) => s.aetheric).map((s) => s.id), ['ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric'], 'PIN MOVED (SEA-SET): the Eltheric Tidemail last - RAID4b: the gate boss\'s own, then the raids\' three - SERPENT-SET: then the sea serpent\'s own - PIN MOVED (EG15): the Battlemage\'s Panoply - PIN MOVED (WITCH1): the Wyrd\'s Raiment - PIN MOVED (STAR7): the Starspun Weave last');
   assert.deepEqual(SET_TIERS, [2, 4, 6]);
   assert.equal(SET_PLACES.length, 9, 'seven body pieces, the shield, the weapon');
   for (const set of Object.values(SIGIL_SETS)) {
@@ -106,8 +106,8 @@ test('SET1 the record: a sigil carries a power, a set, or both - never neither -
     const v = sigilView(piece);
     assert.equal(v.blow, false); assert.equal(v.pct, 0); assert.equal(v.full, null); assert.equal(v.set, 'dagon');
     setSigilOnline(false);
-    assert.deepEqual(sigilLines(piece), ['Sigil (Dormant - wakes online, with your Renown)']);
-    assert.deepEqual(sigilLines(weapon(120, null)), ['Sigil (Dormant - wakes online, with your Renown): +5% at Ascendant'], 'a weapon\'s words are what they were');
+    assert.deepEqual(sigilLines(piece), ['Sigil (Dormant: works online only)']);
+    assert.deepEqual(sigilLines(weapon(120, null)), ['Sigil (Dormant: works online only): +5% at Ascendant'], 'a weapon\'s words are what they were');
   } finally { _resetSigilForTests(); }
   assert.deepEqual(validItemField('sigil', armourSigil), armourSigil);
   assert.equal(validItemField('sigil', { set: 'nobody', party: 1, xp: 0 }), undefined);
@@ -168,8 +168,8 @@ test('SET1 the stage: the lowest worn piece\'s rank capped by the Renown\'s stag
   assert.equal(st.heldRenown, false);
   assert.deepEqual(st.tiers.map((t) => t.awake), [true, true, false], 'four pieces: the 2 and the 4');
   assert.deepEqual(st.tiers[0].values, { strength: 3, critical: 6 }, 'Kindled\'s numbers');
-  assert.equal(st.tiers[1].text, 'Your weapon blows deal +6% damage, +12% below half health');
-  assert.equal(st.tiers[1].full, 'Your weapon blows deal +12% damage, +24% below half health', 'and what it is at Ascendant');
+  assert.equal(st.tiers[1].text, 'Your weapon deals 6% more damage, or 12% more while you are below half health');
+  assert.equal(st.tiers[1].full, 'Your weapon deals 12% more damage, or 24% more while you are below half health', 'and what it is at Ascendant');
   // Renown 9 opens only Faint: the Renown holds it
   st = setState('dagon', pieces, 9, true);
   assert.equal(st.stage, 0);

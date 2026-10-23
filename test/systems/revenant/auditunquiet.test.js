@@ -147,7 +147,7 @@ test('AUQ D4 THE TEAR-AWAY COUNTS: its will\'s tear-away ranks it every second t
   restoreModSaveRecords(modSaveRecords());
   const q = N.revenantsFor(p).find((x) => x.id === r.id);
   assert.equal(q.tears, 1, 'saved');
-  assert.equal(PG.tearLine(q), 'Once more its will holds at your killing blow, and it grows bolder.');
+  assert.equal(PG.tearLine(q), 'If its will holds at your killing blow once more, it grows bolder.');
   assert.deepEqual([PG.tearLine({ tears: 0, rank: 2 }), PG.tearLine({ tears: 1, rank: 5 })], ['', '']);
   again(p, q, 'fled', { unbroken: true, now: DAY * 12 });
   assert.deepEqual([q.rank, q.tears], [3, 0], 'the second: ranked, the count spent');
@@ -351,11 +351,11 @@ test('AUQ A5 EVERY GETTING-AWAY\'S CARD: a tear-away that makes it the Dread is 
   again(p, q, 'fled', { unbroken: true, last: 'blade', now: DAY * 12 });
   const ev = N.revenantUnbrokenEvent(q, 'Ayla', { rolls: () => 0 });
   assert.equal(ev.kind, 'unbroken');
-  assert.ok(ev.body.startsWith(`${q.given} staggers into the smoke, unbroken. It bears the wound you left: Bled. Its trail leads to Tomb of Vaness.`), ev.body);
+  assert.ok(ev.body.startsWith(`${q.given} staggers into the smoke, unbroken. It bears the wound you left: Bled. Its trail leads to Tomb of Vaness, where it has gone to ground to recover.`), ev.body);
   again(p, q, 'fled', { slip: true, last: 'axe', now: DAY * 13 });
   setWorldMinutes(DAY * 13);
   const sl = FT.slipEvent(p, q, { rolls: () => 0 });
-  assert.ok(sl.body.includes('It bears the wound you left: Maimed.') && sl.body.includes('Its trail leads to Tomb of Vaness.'), sl.body);
+  assert.ok(sl.body.includes('It bears the wound you left: Maimed.') && sl.body.includes('Its trail leads to Tomb of Vaness, where it has gone to ground to recover.'), sl.body);
 });
 
 // ── the omen (E10) ──────────────────────────────────────────────────
@@ -468,8 +468,8 @@ test('AUQ B5 B8 THE MARK\'S REACH: never on the zone\'s or the sand\'s - tagged 
 test('AUQ A4 THE PAGE HEALS ONLY WHERE THEY HEAL: no healing said of the Dread, one out in the world, or while held; a held Dread says held; the cap\'s count is of those that hunt (mutants: each said)', () => {
   const w = { wounds: ['lamed'], woundDay: 10 };
   assert.ok(PG.woundLine(w, DAY * 11, false).endsWith('unless you find it first.'));
-  for (const x of [{ ...w, dread: true }, { ...w, out: true }]) assert.equal(PG.woundLine(x, DAY * 11, false), 'Wounds you left: Lamed (a lamed leg - it runs slower).');
-  assert.equal(PG.woundLine(w, DAY * 11, true), 'Wounds you left: Lamed (a lamed leg - it runs slower).', 'held');
+  for (const x of [{ ...w, dread: true }, { ...w, out: true }]) assert.equal(PG.woundLine(x, DAY * 11, false), 'Wounds you left: Lamed (a lamed leg, so it runs slower).');
+  assert.equal(PG.woundLine(w, DAY * 11, true), 'Wounds you left: Lamed (a lamed leg, so it runs slower).', 'held');
   assert.equal(PG.comeWords({ dread: true, lair: LAIR, dueAt: 0 }, 0, true).tag, 'Held');
   assert.match(read('src/ui/revenant/revenantPage.js'), /divider\(`Revenants \(\$\{living\.filter\(\(r\) => !r\.dread\)\.length\} of \$\{REVENANT_MAX\}\)`\)/);
 });

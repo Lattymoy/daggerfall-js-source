@@ -218,7 +218,7 @@
   {
     "name": "SD20E-T14-the-tip-another-form",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "blades: 'Fell Gold and Silver within ten seconds of each other.',",
+    "old": "blades: 'Fell Gold and Silver within 10 seconds of each other.',",
     "new": "blades: 'Strike down both Echoes together.',",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"

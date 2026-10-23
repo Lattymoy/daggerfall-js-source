@@ -237,7 +237,7 @@ test('WEATHER3b: THE FRONT\'S PEAK IS THE PLACE\'S - the map\'s intensity placed
   assert.equal(g.state().episode.peak, h.state().episode.peak, 'no map: the seeded episode, as WX2 has it');
   // the hosts hand it over, and read the door indoors before the rain source does
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(rd(host), /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : currentWeatherIntensity\(\) \}\);/, host);
+    assert.match(rd(host), /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : (?:seaStormShown\(\) \? 1 : )?currentWeatherIntensity\(\) \}\);/, host);   // PIN MOVED (SEA-EVENTS, 2026-10-22): world.js's front peaks whole in the Aether Storm (scenes/seaVenturesHost.js seaStormShown)
   }
   assert.match(rd('src/scenes/worldModes.js'), /host\.weatherIndoors\?\.\(\);\n(?:\s*\/\/[^\n]*\n)*\s*betterAmbience\.frame\(dt, \{\n\s*entity: playerEntity, inside: true,/, 'the indoor frame asks the host, before the rain source reads the word');
   // PIN MOVED (AUDIT PRECIP FALL-10): and the air read at that place's own ground - a town's planed ground, else its middle

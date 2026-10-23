@@ -11,8 +11,8 @@
  {
   "name": "GRASS6-one-octave-only",
   "file": "src/render/labGrass.js",
-  "old": "export const grassClump = (x, z) => grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;",
-  "new": "export const grassClump = (x, z) => grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713);",
+  "old": "    sum = o === 0 ? v * 0.66 : sum + v * 0.34;",
+  "new": "    sum = o === 0 ? v : sum;",
   "tests": [
    "test/render/labGrass.test.js"
   ]
@@ -20,8 +20,8 @@
  {
   "name": "GRASS6-the-noise-is-not-smoothed-so-the-patch-edges-are-creases",
   "file": "src/render/labGrass.js",
-  "old": "  fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
-  "new": "",
+  "old": "  let fx = x - ix, fz = z - iz;\n  fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
+  "new": "  let fx = x - ix, fz = z - iz;",
   "tests": [
    "test/render/labGrass.test.js"
   ]
@@ -76,8 +76,8 @@
  {
   "name": "AUDIT-GRASS6-the-weights-are-swapped",
   "file": "src/render/labGrass.js",
-  "old": "grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;",
-  "new": "grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.34 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.66;",
+  "old": "    sum = o === 0 ? v * 0.66 : sum + v * 0.34;",
+  "new": "    sum = o === 0 ? v * 0.34 : sum + v * 0.66;",
   "tests": [
    "test/render/labGrass.test.js"
   ]
@@ -85,8 +85,8 @@
  {
   "name": "AUDIT-GRASS6-the-sample-sits-on-the-origin-corner",
   "file": "src/render/labGrass.js",
-  "old": "grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;",
-  "new": "grassVnoise(x * 0.055, z * 0.055) * 0.66 + grassVnoise(x * 0.017, z * 0.017) * 0.34;",
+  "old": "const vx = o === 0 ? x * 0.055 + 0.317 : x * 0.017 + 0.531, vz = o === 0 ? z * 0.055 + 0.713 : z * 0.017 + 0.279;",
+  "new": "const vx = o === 0 ? x * 0.055 : x * 0.017, vz = o === 0 ? z * 0.055 : z * 0.017;",
   "tests": [
    "test/render/labGrass.test.js"
   ]

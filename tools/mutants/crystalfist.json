@@ -92,8 +92,8 @@
   {
     "name": "CRYSTALFIST-the-resonances-button",
     "file": "src/ui/playerBadge.js",
-    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
-    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
+    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CRYSTALFIST-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren']);   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
-    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren']);   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
     "tests": [
       "test/net/crystalfist.test.js",
       "test/net/relayversion.test.js"

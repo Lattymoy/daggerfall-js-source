@@ -37,8 +37,8 @@ test('GUILD2a the law of a new name: 25,000 gold of the realm\'s from the treasu
   assert.equal(guildRenameAt(null), null, 'never renamed: now');
   assert.equal(guildRenameAt(1000), 1000 + GUILD_RENAME_COOLDOWN_S);
   assert.deepEqual([guildRenameOpen(null, 5), guildRenameOpen(1000, 1000 + GUILD_RENAME_COOLDOWN_S - 1), guildRenameOpen(1000, 1000 + GUILD_RENAME_COOLDOWN_S)], [true, false, true]);
-  assert.equal(guildRenameSoonText(86_400 * 3 + 10, 10), 'The guild took a new name lately: the next may come in 3 days.');
-  assert.equal(guildRenameSoonText(100, 10), 'The guild took a new name lately: the next may come in 1 day.');
+  assert.equal(guildRenameSoonText(86_400 * 3 + 10, 10), 'The guild was renamed recently. It can be renamed again in 3 days.');
+  assert.equal(guildRenameSoonText(100, 10), 'The guild was renamed recently. It can be renamed again in 1 day.');
   assert.match(GUILD_RENAME_COST_TEXT, /25,000 gold/);
 });
 
@@ -92,7 +92,7 @@ test('GUILD2c the arms\' law: arms with no division and no colour of the device\
   assert.equal(armsWhy({ ...WOLF, division: 'pale', field2: 'gold' }), 'a device that stands out from the field');
   assert.equal(armsWhy({ ...WOLF, field: 'ash' }), 'Ash only as the border');
   assert.equal(armsWhy({ ...WOLF, border: 'azure' }), 'a border unlike the field');
-  assert.equal(armsWhy({ ...WOLF, division: 'pale', field2: 'ash' }), 'two different field colours, never Ash');
+  assert.equal(armsWhy({ ...WOLF, division: 'pale', field2: 'ash' }), 'two different field colors, never Ash');
 });
 
 // ─── THE ART ────────────────────────────────────────────────────────
@@ -214,11 +214,11 @@ test('GUILD2 the book (AUDIT2 K1/K14/S2/S7): a vault take NEEDS its answer - the
   r3.answers.rename = { ok: false, error: 'guild-name-word', why: 'mod' };
   const word = await r3.book.rename('The Mods', null);
   assert.deepEqual(word, { ok: false, error: 'guild-name-word', why: 'mod' });
-  assert.equal(guildWordText(word.error, word), 'A guild\'s name and tag may not carry "mod" - a word the realm keeps out of names.');
+  assert.equal(guildWordText(word.error, word), 'A guild\'s name and tag may not contain "mod". That word is not allowed in names.');
   r3.answers.rename = { ok: false, error: 'guild-rename-soon', at: 1_000_000 + 3 * 86_400 };
   const soon = await r3.book.rename('The Open Hand', null);
   assert.equal(soon.at, 1_000_000 + 3 * 86_400);
-  assert.equal(guildWordText(soon.error, soon, 1_000_000), 'The guild took a new name lately: the next may come in 3 days.');
+  assert.equal(guildWordText(soon.error, soon, 1_000_000), 'The guild was renamed recently. It can be renamed again in 3 days.');
   assert.equal(guildWordText('guild-name-word'), REFUSALS['guild-name-word'], 'no reason named: the sentence');
   // a rename's treasury line is a payment out, said as one
   assert.equal(GUILD_LEDGER_WORDS.rename, 'renamed the guild for');
@@ -304,7 +304,7 @@ test('GUILD2 the tab in pages: the guild\'s header over every page - its banner,
   const all = texts(t.panel.root);
   assert.ok(all.includes('The Hand [HND]'));
   assert.ok(all.includes('You are Guildmaster - the treasury holds 30,000 gold'), 'GUILD1b\'s line, kept');
-  assert.ok(all.includes('1/50 members - the vault 1/50'));
+  assert.ok(all.includes('1/75 members - the vault 1/50'));
   strip[2].fire('click');
   t.panel.render();
   assert.equal(find(t.panel.root, 'dfsocial-subtab')[2].attrs['aria-selected'], 'true');
@@ -518,7 +518,7 @@ test('GUILD2c (AUDIT G11-G14): a hole shows the field beneath it - both colours 
   for (const f of ['src/ui/nameLayer.js', 'src/ui/travel/travelViewHud.js']) assert.match(src(f), /heraldryKey\((arms|h)\)/, f);
   // G13
   assert.equal(heraldryOf({ ...owl, field2: 'gold', charge: 'argent' }), null, 'a border of the second colour, the device its own');
-  assert.equal(armsWhy({ ...owl, field2: 'gold', charge: 'argent' }), 'a border unlike either field colour');
+  assert.equal(armsWhy({ ...owl, field2: 'gold', charge: 'argent' }), 'a border unlike either field color');
   assert.ok(heraldryOf({ ...owl, field2: 'sable', charge: 'argent' }), 'and one unlike both stands');
   // G14
   assert.equal(heraldryText({ field: 'azure', border: 'gold', device: 'swords' }), 'Azure bordered Gold, a Pair of Swords');
@@ -580,20 +580,20 @@ test('GUILD2c the Arms page: the guildmaster\'s choices are pictures - the divis
   const tiles = find(t.panel.root, 'dfsocial-tile');
   assert.equal(tiles.filter((x) => /^Field: /.test(x.attrs['aria-label'])).length, 8);
   assert.equal(tiles.filter((x) => /^Device: /.test(x.attrs['aria-label'])).length, 40);
-  const sw = (label) => find(t.panel.root, 'dfsocial-swatch').find((x) => x.attrs['aria-label'] === label || x.attrs['aria-label'].startsWith(`${label} - `));
-  assert.equal(sw('Field colour: Ash').disabled, true, 'Ash never the field');
+  const sw = (label) => find(t.panel.root, 'dfsocial-swatch').find((x) => x.attrs['aria-label'] === label || x.attrs['aria-label'].startsWith(`${label} (`));
+  assert.equal(sw('Field color: Ash').disabled, true, 'Ash never the field');
   assert.match(src('src/ui/socialPanel.js'), /\.dfsocial\.touch \.dfsocial-swatch \{ width: 44px; height: 44px; \}/, 'AUDIT2 D4: a finger\'s swatch');
-  assert.equal(sw('Field colour: Gold').disabled, true, 'nor the border\'s colour');
+  assert.equal(sw('Field color: Gold').disabled, true, 'nor the border\'s colour');
   // AUDIT2 U14: a shut swatch says why - on its label and title, and drawn under its row for a finger
-  assert.equal(sw('Field colour: Gold').attrs['aria-label'], 'Field colour: Gold - shut: the arms need a border unlike the field');
-  assert.equal(sw('Field colour: Gold').attrs.title, 'Gold - shut: the arms need a border unlike the field');
-  assert.ok(texts(t.panel.root).some((x) => /^Shut: the arms need .*a border unlike the field/.test(x)), 'drawn');
-  assert.equal(sw('Second colour: Crimson'), undefined, 'a plain field has no second colour');
+  assert.equal(sw('Field color: Gold').attrs['aria-label'], 'Field color: Gold (unavailable: the arms need a border unlike the field)');
+  assert.equal(sw('Field color: Gold').attrs.title, 'Gold (unavailable: the arms need a border unlike the field)');
+  assert.ok(texts(t.panel.root).some((x) => /^Unavailable: the arms need .*a border unlike the field/.test(x)), 'drawn');
+  assert.equal(sw('Second color: Crimson'), undefined, 'a plain field has no second colour');
   tiles.find((x) => x.attrs['aria-label'] === 'Field: Per pale').fire('click');
-  assert.ok(sw('Second colour: Crimson'), 'divided, it has');
-  assert.equal(sw('Second colour: Azure').disabled, true, 'never the field\'s');
-  sw('Second colour: Crimson').fire('click');
-  sw('Device colour (its border\'s, unless chosen): Argent').fire('click');
+  assert.ok(sw('Second color: Crimson'), 'divided, it has');
+  assert.equal(sw('Second color: Azure').disabled, true, 'never the field\'s');
+  sw('Second color: Crimson').fire('click');
+  sw('Device color (matches the border unless chosen): Argent').fire('click');
   const [banner] = find(t.panel.root, 'dfsocial-armspics')[0].children;
   assert.ok(decodeURIComponent(banner.src).includes('fill="#b3262e"'), 'the banner wears the draft');
   assert.ok(texts(t.panel.root).includes('Per pale Azure and Crimson, bordered Gold, a Wolf Argent'));
@@ -601,8 +601,8 @@ test('GUILD2c the Arms page: the guildmaster\'s choices are pictures - the divis
   assert.ok(find(t.panel.root, 'dfsocial-tagchip')[0].textContent.includes('HND'));
   // AUDIT GUILD2: every swatch asks the law itself - the device's colour against the second field colour was left open,
   // and a pick of it made arms the law refused (the border's too, while the device wears the border's)
-  assert.equal(sw('Device colour (its border\'s, unless chosen): Crimson').disabled, true, 'never the second colour');
-  sw('Device colour (its border\'s, unless chosen): Gold').fire('click');   // the border's again
+  assert.equal(sw('Device color (matches the border unless chosen): Crimson').disabled, true, 'never the second colour');
+  sw('Device color (matches the border unless chosen): Gold').fire('click');   // the border's again
   assert.equal(sw('Border: Crimson').disabled, true, 'a border the device would wear against the second colour');
   for (const label of find(t.panel.root, 'dfsocial-swatch').map((b) => b.attrs['aria-label'])) {
     const b = sw(label);   // drawn again at each pick: the swatch as it stands now

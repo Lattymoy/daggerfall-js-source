@@ -146,7 +146,11 @@ With every lens's fix in, the whole suite and a re-run of every committed mutant
   which the port has always read as a box; D1/D2's contact is for the models, which have triangles. [FLAT-RELAY, FIELD
   BUGS 2026-10-05c: kept for the effects and the moving flats, lost for the RELAYS - `addRelay` never carried the flat's
   mark, so a flat Teleport (Collision03) walked into asked triangles it has none of and never fired: the "red brick"
-  teleporters that only sometimes worked. It carries it now (`01-Overview/bugs/Field-Bugs-2026-10-05c.md`).]
+  teleporters that only sometimes worked. It carries it now (`01-Overview/bugs/Field-Bugs-2026-10-05c.md`). FLAT-WALK, FIELD BUGS
+  2026-10-21d: and the mark keeps a RELAY off the walk - DFU's box is a trigger the controller never hits, so a flat's action
+  fires on a click or a blow; the effects' walk stays, named a departure (Port-Ledger A, FLAT-WALK). AUDIT FB1021d FW-3: the
+  "red brick" teleporters are models' relays, which no change here touched - what made them "only sometimes" work is not
+  found (`Field-Bugs-2026-10-05c.md`, report 5, reopened).]
 - **The claws' clip keeps the IL's fixed tick.** S1 plays it once a blow; stretching it over the blow (a second departure
   from the IL) was left for Mac.
 - **The nine direction-dependent spots** (D2): a lip or an arm beside the body, where DFU's hit order decides too.

@@ -532,12 +532,14 @@ test('TWO-HANDS (AUDIT 2): THE OFF HAND\'S BLOW IS 0.8 OF A BLOW IN EVERYTHING I
   for (let i = 0; i < 600 && pw.machine.state !== 'Idle'; i++) pw.update(1 / 60);
   pw.applyWeapon(); pw.clickAttack(() => 0.5);
   assert.ok(pw.offStrike && pw.blowWeight === DUAL.OFF_DAMAGE, 'the off hand\'s, its share');
-  // every melee tally a host makes hands the swing's weight on (a bow's never strikes off: DFU's line); techniques are the lead's
-  for (const [file, rig, n] of [['worldModes', 'interiorWeapon.playerWeapon', 2], ['dungeonContext', 'playerWeapon', 2], ['world', 'weaponRig.playerWeapon', 3], ['exterior', 'weaponRig.playerWeapon', 2], ['cityGuards', 'playerWeapon', 1]]) {
+  // every tally a host makes hands the swing's weight on; techniques are the lead's. PIN MOVED (AUDIT PISTOLET A2): the
+  // ranged arm's too - a bow never strikes off (DFU's line), but a Pistolet pair's off-hand shot does, and world.js and
+  // exterior.js counted it whole where the other two hosts weighed it (THE FOUR HOSTS RULE)
+  for (const [file, rig, n] of [['worldModes', 'interiorWeapon.playerWeapon', 2], ['dungeonContext', 'playerWeapon', 2], ['world', 'weaponRig.playerWeapon', 4], ['exterior', 'weaponRig.playerWeapon', 3], ['cityGuards', 'playerWeapon', 1]]) {
     const text = rd(`src/scenes/${file}.js`);
     const weighed = text.split(`tallySwingSkills(playerEntity, ${rig}.weapon, ${rig}.blowWeight)`).length - 1;
     assert.equal(weighed, n, `${file}: every melee tally weighed (${weighed} of ${n})`);
-    assert.equal((text.match(/tallySwingSkills\(/g) ?? []).length - weighed, file === 'world' || file === 'exterior' ? 1 : 0, `${file}: and only the bow's unweighed`);
+    assert.equal((text.match(/tallySwingSkills\(/g) ?? []).length - weighed, 0, `${file}: none unweighed`);
   }
   // PCAAO AT THE SHIPPED DEFAULTS (its core rolls every blow): the off hand's share is laid ahead of its own wear, once
   _resetModSettings(); installPcaao();

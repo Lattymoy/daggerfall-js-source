@@ -109,7 +109,7 @@ test('WILD-ALERT-FIX a band\'s notice goes with its chase: a chase handed to a p
   const _bandChase = new Map([['b1', {}], ['b2', {}]]), _bandSpent = new Set(), _bandPeer = new Map();
   wildBands.alert('b1'); wildBands.alert('b2');
   const scope = {
-    performance: { now: () => 0 }, bandPixelOf: () => ({ x: 0, y: 0 }), playerTravelPixel: () => ({ x: 0, y: 0 }), bandNowMs: () => 0, BAND_LIFE_MS: 1,
+    performance: { now: () => 0 }, bandPixelOf: () => ({ x: 0, y: 0 }), playerTravelPixel: () => ({ x: 0, y: 0 }), bandNowMs: () => 0, BAND_LIFE_MS: 1, BAND_WORD_MS: 3000,   // OW-CHASE-RANGE: bandHear's default hold
     validBandWord: (raw) => raw, bandNearMe: () => true, _bandSpent, _bandChase, _bandPeer, chaseYields: (me, from) => from === 'low', online: { id: 'me' }, wildBands,
   };
   const names = Object.keys(scope);

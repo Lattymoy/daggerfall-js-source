@@ -65,9 +65,9 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
     // MWCROUCH: `keys.add(mc)` now sits in a block beside the key-edge
     // ring's own note of the same button - one feeder, two readers.
     assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) \{ keys\.add\(mc\);/s,
-      `${f} DECLARES the Set, so a mouse press must reach it - Mouse2 is AutoRun and Mouse0 the drawn bow's un-draw at the shipped bindings`);
+      `${f} DECLARES the Set, so a mouse press must reach it - Mouse2 is the party's ping and Mouse0 the drawn bow's un-draw at the shipped bindings`);
     assert.match(src, /const mc = mouseCode\(e\.button\);\s*\n?\s*if \(mc\) \{ keys\.delete\(mc\);/s,
-      `${f} must also let the button GO - a stuck Mouse2 is a stuck AutoRun`);
+      `${f} must also let the button GO - a stuck Mouse2 is a stuck ping`);
     // ...and the write must be UNGATED, which is what makes a borrower
     // safe: the lender records the press whatever mode is mounted.
     const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('keys.add(mc)'));

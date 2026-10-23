@@ -175,8 +175,8 @@
   {
     "name": "RENOWN-LOOT-healing-before",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_ENEMY_CHANCE_BEFORE = 6;",
-    "new": "export const HEALING_ENEMY_CHANCE_BEFORE = 10;",
+    "old": "export const HEALING_ENEMY_CHANCE_BEFORE = 2;",
+    "new": "export const HEALING_ENEMY_CHANCE_BEFORE = 4;",
     "why": "a foe's healing potion flat",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "RENOWN-LOOT-pile-before",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_PILE_CHANCE_BEFORE = 12;",
-    "new": "export const HEALING_PILE_CHANCE_BEFORE = 18;",
+    "old": "export const HEALING_PILE_CHANCE_BEFORE = 4;",
+    "new": "export const HEALING_PILE_CHANCE_BEFORE = 8;",
     "why": "a pile's healing potion flat",
     "tests": [
       "test/systems/renownloot.test.js"

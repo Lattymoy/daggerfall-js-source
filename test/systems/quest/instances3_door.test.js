@@ -278,9 +278,12 @@ test('INSTANCES every other way in (entryFor): NEVER a popup - a quest\'s place 
 
 test('QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c, MD-Geist: "the Objective just did not want to spawn (I tried the dungeon in \'Public\' mode) even after \'Quest Repair\'"): a quest\'s dungeon the world lays smaller in public says so in the popup, before Public is chosen; a repair in that room says where its things are, never "nothing was missing" (mutants: relaid never read; the line never laid; the repair\'s word dropped)', async () => {
   // the site: `relaid` exactly where the world lays the public room smaller (onlineDungeonSize), never the Hold's or a hollow's
+  // PIN MOVED (AUDIT FB1019f B1): where it BUILDS it smaller - a dungeon of no more blocks than its size's threshold is
+  // the dungeon whole (fb1019f_heirwhole.test.js) - so the ruin has thirteen blocks, which either smaller size lays anew
   const sizes = { full: null, medium: null, small: null };
   for (let id = CRYPT.mapId; Object.values(sizes).some((v) => v == null); id++) if (id !== PRIVATEERS_HOLD_MAP_ID) sizes[onlineDungeonSize({ mapTableData: { mapId: id } })] ??= id;
-  const at = (mapId) => ({ name: 'Ruins of The Hold of Coppering', hasDungeon: true, mapTableData: { mapId } });
+  const blocks = Array.from({ length: 13 }, (_, i) => ({ blockName: `${i < 9 ? 'N' : 'B'}${String(i).padStart(7, '0')}.RDB`, x: i, z: 0, isStartingBlock: i === 0 }));
+  const at = (mapId) => ({ name: 'Ruins of The Hold of Coppering', hasDungeon: true, mapTableData: { mapId }, dungeon: { blocks } });
   assert.deepEqual(Object.values(sizes).map((id) => dungeonSite(at(id)).relaid), [false, true, true]);
   assert.equal(dungeonSite(COPPERING).relaid, false, 'no dungeon named: laid as it is');
   assert.equal(dungeonSite({ ...at(sizes.medium), mapTableData: { mapId: PRIVATEERS_HOLD_MAP_ID } }).relaid, false, 'the main story\'s keeps are laid whole');
@@ -304,7 +307,7 @@ test('QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c, MD-Geist: "the Objective just did
   questAt(m, CRYPT);
   const there = repairActiveQuests(m, { mountCurrentSite: () => 'elsewhere' });
   assert.deepEqual([there.elsewhere, there.text], [true, questElsewhereLine()]);
-  assert.match(questElsewhereLine(), /in your instance/);
+  assert.match(questElsewhereLine(), /in your own instance/);   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
   const home = repairActiveQuests(m, { mountCurrentSite: () => undefined });
   assert.deepEqual([home.elsewhere, home.text], [false, 'Nothing was missing from your active quest.'], 'anywhere else: as before');
 });

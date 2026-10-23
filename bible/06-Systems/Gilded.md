@@ -13,7 +13,8 @@ from a DFU law, because no DFU law reaches it; its Port-Ledger row (section A) n
 ## 1. The rung
 
 `systems/loot/lootRarity.js` RARITIES gains a seventh rung, **Gilded** - rank 6, over the Artifact's 5 - in gold leaf
-(`#ffcf4d`), its tint `[1.00, 0.80, 0.26, 0.60]`. "The most rare ... in the entire game" puts it over the Artifact too:
+(`#ffcf4d`), its tint `[1.00, 0.80, 0.26, 0.60]`; since GILDED-RED (section 8) in crimson, `#ff3b4a`, its tint
+`[1.00, 0.23, 0.29, 0.60]`, its pieces' own art still gold leaf. "The most rare ... in the entire game" puts it over the Artifact too:
 an artifact is a Daedric Prince's gift for a quest done, there for anyone who asks the right Prince; a Gilded piece is
 one roll in fifty off the hardest fight the port has.
 
@@ -26,9 +27,9 @@ Every reader of the ladder carries it - each found by grepping the Aetheric's ow
 
 | Reader | What it does with the rung |
 |---|---|
-| `ui/enhanced/enhancedPlusStyle.js` RARITY_VARS | gold, gold-hi, gold-lo; two stars for pips (`\2726\2726`, the Artifact's one doubled) |
-| `ui/enhanced/enhancedPlusStyle.js` `gilded-glow` | the frame of a Gilded row, slot, hotbar cell and quick-diamond cell breathes - stepped (8 steps over 2.6 s); under reduced motion, a still glow at its brighter end |
-| `ui/enhanced/enhancedStyle.js` | the name in gold in a list, a card, a plaque |
+| `ui/enhanced/enhancedPlusStyle.js` RARITY_VARS | the rung's colour, its light and its shade; a gold crown for pips (`GILDED_CROWN_SVG`) - gold and two stars (`\2726\2726`) until GILDED-RED, section 8 |
+| `ui/enhanced/enhancedPlusStyle.js` `gilded-glow` | the frame of a Gilded row, slot, hotbar cell and quick-diamond cell breathes in the rung's colour - stepped (8 steps over 2.6 s); under reduced motion, a still glow at its brighter end |
+| `ui/enhanced/enhancedStyle.js` | the name in the rung's colour in a list, a card, a plaque |
 | `render/spoilsGlow.js` SPOILS_LINE_H | 2.5 m - the tallest line, at the line's own cap (WB5's "a line, not a beam") |
 | `systems/physicalItems.js` PI_RIM | 0.8 - the strongest rim |
 | `systems/reforge.js` salvageRefusal | `'gilded'` - "A Gilded piece will not break" (ui/reforgeWindow.js) |
@@ -113,7 +114,7 @@ its mutant (the Hourlock before the Brass) hold the order.
 ## 5. The look
 
 - **The card** (`rarityLines`): "Gilded", its four lines (no band - a static roll has none to show), "The Hour Tolls:
-  Every 3rd hit x2; kills refund", its lore. Its name in gold, its frame breathing.
+  Every 3rd hit x2; kills refund", its lore. Its name in the rung's colour (crimson, section 8), its frame breathing.
 - **The codex** (`systems/loot/lootCodex.js`): a kind of its own, `gilded`. The first find is said and heard as a
   Legendary's is - "The Hourlock - a Gilded piece! It joins your codex." - and the Codex page lists the rung at its
   HEAD, over the Legendaries, as it stands over them (`codexGilded`; unfound, "Said to lie in the brass of the Hour,
@@ -151,6 +152,22 @@ rows and the bake's two twins), SD9e (the spoils' order and the Hourlock's rate)
 
 ## 7. The world's two - the Dragonfire Oath and the Sunken Sovereign (GILDED2, 2026-10-15)
 
+**PISTOLET (2026-10-21, the owner: "replace the serpent boss gilded weapon with this new weapon").** The Sunken Sovereign
+is an Ebony **Dwarven Pistolet** now (`systems/gilded.js`, template 562 - `05-Combat/Dwarven-Pistolet.md`), its skill line
+Archery's where it was Long Blade's; its id, make, damage, Agility and leech lines, its power Undertow (which charges on a
+shot that lands as on a swing - `systems/loot/lootPowers.js`) and its drop are unchanged. Its gold is the Pistolet's own
+pictures through tools/gunIcons.mjs's ramp (`tools/pistoletArt.mjs`) and, in first person, the pistol's pixels and never
+the hand's, nor its muzzle flame (`combat/gun/pistoletArt.js` pistoletGildKeep and flashMask - AUDIT PISTOLET B3: the
+first cut gilded the flash). The tables below are GILDED2's, measured on the saber.
+
+**The saber era (AUDIT PISTOLET A7/C1/D8).** A Sovereign minted before PISTOLET is an Ebony Saber with a Long Blade line,
+and every save keeps what it holds. Against the re-pointed record it read as a forgery: the item law's Gilded marks
+compared its template to the Pistolet's, so the realm judge held its owner's trade at every checkpoint, the market
+refused it and the siege arms dropped it. The record now carries its era (`SOVEREIGN_SABER_ERA` in `systems/gilded.js`:
+the Saber, Long Blade, the saber's lore), and `gildedRecordOf(item)` answers the era's shape for a saber minted under the
+Sovereign's id - the item law (`validGildedMarks`) and the lore read through it. Nothing new mints a saber. The item law
+moved to 10 (`ITEM_LAW_VERSION`) and the account service to acct170 with it (acct168 on its branch, renumbered at the merge): deploy the account service.
+
 Mac: "With the introduction of elite dungeons soon. I want to enhance the rewards for each world activety. We need to add
 a rare gilded weapon to the oblivion gates. A gilded weapon to the serpent + a rare chance of a title/aura drop." The
 title and the aura are the serpent's own slice (`11-Multiplayer/Sea-Serpent.md` section 17, SERPENT5); this section is
@@ -161,7 +178,7 @@ Rewards.md`) read the slice cold and moved what this section says where it was w
 
 | | The Dragonfire Oath (the gate's) | The Sunken Sovereign (the serpent's) |
 |---|---|---|
-| Weapon, make | Dai-Katana (123), Daedric - two hands, Long Blade | Saber (119), Ebony - either hand, Long Blade, a shield beside it |
+| Weapon, make | Dai-Katana (123), Daedric - two hands, Long Blade | Saber (119), Ebony - either hand, Long Blade, a shield beside it. **A Dwarven Pistolet (562), Ebony, Archery since PISTOLET** (above) |
 | Lines | +40% damage, +15 Strength, +30 Long Blade, +15 Endurance (AUDIT B1: no longer a slayer of the Daedra) | +40% damage, +15 Agility, +30 Long Blade, 10% leech |
 | Power | DRAGONFIRE - a landed blow on a Daedra burns it again for a third of the blow, and every OTHER Daedra within 3 m for as much; no Daedra resists it | UNDERTOW - each landed blow on a foe adds +10% to its next blows on that foe, up to +50%, for 6 s from the last; a foe it fells heals 10% of your health |
 | Brief (the card's 32) | "Daedra burn +33%, and all in 3m" | "+10%/hit on a foe; kills heal" |
@@ -236,7 +253,7 @@ them (AUDIT CARDS-6 A8's law); it still leaves among the pieces, inside the glow
 **The look.** Named as an artifact is; its card the tier, its four lines, its power and its lore; its own codex row
 under the Hourlock's, unfound by its OWN hint (`hint` on the record, `lootCodex.js` `codexGilded`) - on the Reforge's
 Codex page and (AUDIT A5) on the Collections page too, which said its rows were the Reforge's and never showed the rung
-(GILDED1's gap, wider by two hints); the gold name, the breathing frame, the spoils' line, the banner and the rim, every
+(GILDED1's gap, wider by two hints); the rung's name, the breathing frame, the spoils' line, the banner and the rim, every
 one the rung's. The loot test character carries both, minted whole, after the Hourlock and its shot
 (`systems/testRoom.js`; LR1's count moved with it). Their words - names, powers, lore and hints - are English, as the
 Hourlock's are and as every record of the ladder's is (`lootRarity.js` 251 such, `aetheric.js` 97 on L10N4's ratchet):
@@ -267,3 +284,52 @@ relay body's burn owed, a warded blow nothing), Undertow (the window, a heal for
 the audit's own among them). GILDED1's own pins that read one record moved (`gilded1_gilded.test.js`'s record and codex,
 `loot10_codex.test.js`'s count), and GILDED1's mutant on the Hourlock's first line was re-aimed by content (its first
 three lines, which the Oath's and the Sovereign's first lines share in part).
+
+## 8. The crimson rung, and its crown (GILDED-RED, 2026-10-22)
+
+Mac: "Can we change the gilded rarity to red instead of gold (keep the gold skins) and give it a better indicator than
+2 stars". The rung's colour told it apart from nothing: in the pack its gold frame stood a shade from the Rare's yellow,
+and its pips were the Artifact's star doubled in that same gold. The owner chose from sheets rendered in the real
+Enhanced pack over ARENA2 (the grid, a close-up tile, the loot banner and the hover card; three reds, then three marks
+on the red chosen): **Crimson**, and **a gold crown set with red jewels**. The port's own, as section 1 is - no DFU law
+reaches the ladder's colours.
+
+**The colour.** RARITIES' `gilded` is `#ff3b4a`, its tint `[1.00, 0.23, 0.29, 0.60]` (the native scroller's cell). Its
+Plus vars (`ui/enhanced/enhancedPlusStyle.js` RARITY_VARS): the light `#ff7480`, 30% of the way to white - every other
+tier's light stands past 40%, and a red's at 50% is pink, which is how the first sheet's bevels read - the shade
+`#8e1622`, the rgb `255,59,74`. Every reader of the table moved with it (the native scroller's tint, the spoils' line,
+the dropped piece's rim, the Iliac card frame, the companion roster, the loot banner's stack); every hand copy moved
+to it: the name in a list, a card and a plaque and the post's win line (`enhancedStyle.js`), the breathing frame and
+its still form under reduced motion and the big picture's glow and glint (`gilded-glow`), the codex's found row
+(`REFORGE_CSS`), the quick loot's gem (`ui/lootTierMarks.js` TIER_MARKS - a crimson stone set in a rim of the crown's
+gold, where it was leaf with a pale rim so it never read as the Rare's).
+
+**The crown.** The rung's pips are a picture, `GILDED_CROWN_SVG` beside the padlock's glyph: an 11 px gold crown
+(`#f6c945`), its black outline drawn in, three jewels of the rung's crimson - so the leaf's gold still stands beside the
+rung's red wherever the tier is marked. `--rar-pips` holds it as a `url()`, so the three places that draw a tier's pips
+draw it unchanged: the pack's tile corner, the card's tier line and the loot banner's kicker. The other tiers keep their
+glyphs. The sheet's other marks were a red seal with a gold star (a dot at tile size) and a gold sunburst (busy at 11 px,
+and near the Artifact's star).
+
+**The page.** DFO Grimoire deepens each tier into an ink (`ui/grimoireDress.js` RARITY_INK): the rung's is `#a3122e`,
+5.8:1 on the cream and 4.9:1 on the page, red where the old amber (`#7a4a00`) was a brown beside the Rare's and the
+Legendary's. TEMP_INK's hot keeps the amber - it was the gilded tone's, and is the warmth's own now.
+
+**Stone's ground.** The crimson is darker than the gold was: on the Stone theme's window ground (`#51514c`,
+`PLUS_THEMES.stone.ground`) it reads 2.3:1 where the gold read 5.4:1. The post's win line, which AUDIT SERVER-POST lifted
+for the three darkest tiers on Stone alone, lifts it too - to its own light, `#ffb1b7`, 4.65:1. Measured and left as
+every tier stands: a tier's name in the pack on Stone's panel, drawn over its black outline and glow, reads 2.0:1 in
+crimson where the magic, the legendary and the artifact read 2.3-2.6:1 - Stone's tier names are every tier's question,
+not this slice's.
+
+**The gold kept.** Nothing the pieces wear changed: the Hourlock's gilded frames and its Morrowind twin, the
+Pistolet's gold, the list and doll pictures - `combat/thunderlockArt.js` GILD_RAMP and the baked textures. Looked at
+after the change, in the real pack with nothing laid over it: the grid, the card, the banner, and the quick loot's plaque on Plus's
+stone and on the Grimoire's page.
+
+**The pins.** `test/ui/gildedred.test.js` (6) - the rung in crimson and its light short of pink, the crown and every
+place that draws the pips, every hand copy held to the table and the old gold nowhere in the sheets, the Stone lift
+(past 4.5:1 on the theme's ground), the page's ink (contrast on both grounds, a red), the gold ramp kept.
+`tools/mutants/gildedred.json`: 26, all dead. PIN MOVED, each
+saying so: `gilded1_gilded.test.js` (the rung's colour), `lootmarks1.test.js` (the Gilded's gem: set in the crown's gold,
+not leaf).

@@ -72,6 +72,8 @@ import { egSpoilsSeed } from '../../src/net/eliteGates/egPay.js';   // AUDIT EG 
 /** The odds a recorded gate kill rolls a key, a fighter who broke the rite, an Hour; the kills in a row the pity waits. */
 export const EG_KEY_ODDS = 1 / 6;
 export const EG_KEY_ODDS_RITE = 1 / 4;
+/** WB14g (bible/11-Multiplayer/Breach-Portents.md section 11): a portent night's receipt (its `p`) rolls at the rite's odds. */
+export const EG_KEY_ODDS_PORTENT = 1 / 4;
 export const EG_KEY_ODDS_SD = 1 / 3;
 export const EG_KEY_PITY = 5;
 /** A live breach's bound past its open: the last word (36 game hours, three real ones - src/net/eliteGates/egLaw.js
@@ -461,7 +463,7 @@ export async function rollWeirKey({ db, rand }, player, { kind }) {
  *   them can no longer lose the roll (the account's certain first key among them), and a claim asked again rolls nothing;
  * - THE FIRST decided by that row: no recorded kill of the account's before it in the table's own order (its rowid, as
  *   mercyMay decides "before") - two receipts claimed at once each counted the other's row and neither was the first;
- * - one in six (one in four for a fighter who broke the rite, `r`), this service's die drawn before the batch; THE PITY
+ * - one in six (one in four for a fighter who broke the rite, `r`, and WB14g for a portent night's receipt, `p`), this service's die drawn before the batch; THE PITY
  *   after EG_KEY_PITY recorded kills in a row with none (`eg_key_miss`, reset by a key).
  * RETURNING the balance and the misses after it - a key found leaves none (egGateWeirAnswer).
  * @param {{ db: any, rand?: (b: Uint8Array) => Uint8Array }} ctx @param {{ id: string }} player
@@ -469,7 +471,7 @@ export async function rollWeirKey({ db, rand }, player, { kind }) {
 export function egGateWeir({ db, rand }, player) {
   const found = `(?3 = 1 OR eg_key_miss >= ?4 OR NOT EXISTS (SELECT 1 FROM gate_kills g WHERE g.account = ?1 AND g.earned != 'rite' AND g.rowid < (SELECT k.rowid FROM gate_kills k WHERE k.day = ?2 AND k.account = ?1)))`;
   return (/** @type {any} */ c) => db.prepare(`UPDATE players SET eg_keys = eg_keys + (CASE WHEN ${found} THEN 1 ELSE 0 END), eg_key_miss = CASE WHEN ${found} THEN 0 ELSE eg_key_miss + 1 END
-    WHERE id = ?1 AND changes() > 0 RETURNING eg_keys, eg_key_miss`).bind(player.id, c.d, drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS) ? 1 : 0, EG_KEY_PITY);
+    WHERE id = ?1 AND changes() > 0 RETURNING eg_keys, eg_key_miss`).bind(player.id, c.d, drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0, EG_KEY_PITY);   // WB14g: a portent night's at the rite's
 }
 /** AUDIT EG IV (lane3 #16): what egGateWeir's statement answered (its row - claimGate's `weirRow`), as the claim says it:
  *  `{ found, keys }` - a key found leaves no miss - or null where it rolled nothing. */

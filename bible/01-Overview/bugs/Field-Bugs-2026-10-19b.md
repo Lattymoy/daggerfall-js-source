@@ -148,9 +148,11 @@ below-average body to the average and nothing above it. `test/systems/fb1019b_le
 One class skill the character has not mastered is given up, and one miscellaneous skill takes its place in that same
 group - so the 2/2/1 masteries and every slot spent stand. A mastered skill never leaves (a mastery is permanent; a held
 path is two of them). Values do not move. The career becomes the character's own copy (the save keeps it whole); its
-name and every other term stay. **The level does not move**: the classic sum is the class's skills', so both stored sums
-move by what the swap moved it - a trained skill brought in pays no levels, an untrained one owes none, and the progress
-to the next level stands. Paid as SPEC-RESET is (coins, letters, online the Empire's account), at half its price; the
+name and every other term stay. **The level does not move**: the classic sum is the class's skills', and the stored one is
+the sum the level stands on - a trained skill brought in moves both sums by its rise above it and pays no levels, an
+untrained one moves neither, and its ground is the class's skills' to make up before the next level comes closer
+(SWAP-CYCLE, `Field-Bugs-2026-10-20g.md`: both sums had moved by a drop too, and a class cycled through every skill
+reached level 223). The progress to the next level stands. Paid as SPEC-RESET is (coins, letters, online the Empire's account), at half its price; the
 price is a first setting, one constant. On the Growth tab's Specialisations page, under the paths: the two picks and the
 swap, asked first. Brother Frank's class (Blunt mastered, no other weapon in it) gives up a minor skill for Long Blade and
 the Blunt-and-Long-Blade paths open. The never-headline's hint shows only where one swap opens a path (`swapOpens`, AUDIT

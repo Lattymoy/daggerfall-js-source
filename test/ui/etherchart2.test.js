@@ -123,7 +123,7 @@ test('ETHER-CHART2 the depths as waters: each band\'s across the canvas, edge to
   assert.equal(edge.depths.at(-1).x0, edge.edge[0], 'the Abyss\'s water stops at the world\'s edge');
   // the ruler: its words
   assert.equal(M.RULER_H, 22);
-  assert.deepEqual(JSON.parse(JSON.stringify(M.RULER_WORDS)), { shallows: ['THE SHALLOWS', 'SHALLOWS'], reaches: ['THE REACHES', 'REACHES'], deep: ['THE DEEP AETHER', 'DEEP AETHER'], abyss: ['THE ABYSS', 'ABYSS'], veil: ['THE VEIL - TO THE ILIAC BAY', 'THE VEIL', 'VEIL'], edge: ['THE WORLD\'S EDGE', 'EDGE'] });
+  assert.deepEqual(JSON.parse(JSON.stringify(M.RULER_WORDS)), { shallows: ['THE SHALLOWS', 'SHALLOWS'], reaches: ['THE REACHES', 'REACHES'], deep: ['THE DEEP AETHER', 'DEEP AETHER'], abyss: ['THE ABYSS', 'ABYSS'], veil: ['THE VEIL: TO THE ILIAC BAY', 'THE VEIL', 'VEIL'], edge: ['THE WORLD\'S EDGE', 'EDGE'] });
   const tile = (mm, w) => {
     assert.equal(mm.ruler[0].x0, 0, 'from the canvas\'s west edge');
     for (let n = 0; n + 1 < mm.ruler.length; n++) assert.equal(mm.ruler[n].x1, mm.ruler[n + 1].x0, 'edge to edge');
@@ -172,7 +172,7 @@ test('ETHER-CHART2 a haunt named in view: on a plate in a corner of her square\'
   const m = M.chartModel(word(), at(2), W, H);
   const wake = m.haunts.find((t) => t.name === 'Sorrow\'s Wake'), queen = m.haunts.find((t) => t.name === 'The Drowned Queen');
   assert.equal(wake.sub, 'Territory');
-  assert.equal(queen.sub, 'Sunk - it will rise again');
+  assert.equal(queen.sub, 'Sunk. It will rise again');
   for (const t of [wake, queen]) {
     assert.equal(t.inside, true);
     assert.ok(t.box[1] >= 0 && t.box[0] >= 0 && t.box[2] <= W && t.box[3] <= H, `${t.name}: in view`);
@@ -199,7 +199,7 @@ test('ETHER-CHART2 a haunt named in view: on a plate in a corner of her square\'
   }
   assert.ok(weighed >= 2, `corners weighed (${weighed})`);
   const night = M.chartModel(word({ legends: [{ id: 'lantern', name: 'The Lantern-Eater', trait: 'night', sails: true }] }), { cx: h.px - 300, cy: h.py, zoom: 0 }, W, H);
-  assert.equal(night.haunts[0]?.sub, 'Territory - by night');
+  assert.equal(night.haunts[0]?.sub, 'Territory by night');
   // x1: her name alone over her square - or none, where a port's name stands
   const far = M.chartModel(word(), at(0, -40), W, H);
   assert.ok(far.haunts.length >= 2 && far.haunts.every((t) => !t.inside));

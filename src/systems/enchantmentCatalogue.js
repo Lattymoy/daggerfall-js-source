@@ -432,7 +432,19 @@ export const ITEM_MAKER_FLAGS = Object.freeze({
  *  carry NONE - the two weight effects and the two armor effects -
  *  and IncreasedWeightAllowance sets no flags line at all, which is
  *  the same thing. Those five plus SoulBound are the six that can
- *  appear on an item only ONCE. */
+ *  appear on an item only ONCE.
+ *
+ *  SIDE-ONCE (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "One copy
+ *  per setting") - A DEPARTURE, Port-Ledger A. DFU gives UserTakesDamage
+ *  and ItemDeteriorates AllowMultipleSecondaryInstances beside the
+ *  primary flag (UserTakesDamage.cs:35, ItemDeteriorates.cs:37), so the
+ *  secondary picker never left a taken setting out
+ *  (DaggerfallItemMakerWindow.cs:849-855): the same setting could be
+ *  picked many times, each copy adding its negative cost to the budget.
+ *  Here neither carries it - a setting is picked once (primaryPick), two
+ *  settings of one effect (in sunlight AND in holy places) still both.
+ *  No effect carries the flag now. A piece made before keeps its copies:
+ *  the item law counts by effect (itemLaw.js makerFindings, `many`). */
 export const ITEM_MAKER_EFFECT_FLAGS = Object.freeze({
   AbsorbsSpells: 1,
   BadReactionsFrom: 1,
@@ -448,14 +460,14 @@ export const ITEM_MAKER_EFFECT_FLAGS = Object.freeze({
   HealthLeech: 1,
   ImprovesTalents: 1,
   IncreasedWeightAllowance: 0,
-  ItemDeteriorates: 1 | 2,
+  ItemDeteriorates: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once
   LowDamageVs: 1 | 8,
   PotentVs: 1 | 8,
   RegensHealth: 1,
   RepairsObjects: 1,
   SoulBound: 4,
   StrengthensArmor: 0,
-  UserTakesDamage: 1 | 2,
+  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once
   VampiricEffect: 1,
   WeakensArmor: 0,
 });
@@ -514,7 +526,8 @@ export function isExclusiveTo(type, list = [], param) {
  * PowersButton/SideEffectsButton_OnMouseClick's primary list
  * (:637-656). THREE filters, in DFU's order: an effect already on the
  * item unless it allows multiple primaries; a weapon-only effect on a
- * non-weapon; and anything the current lists are exclusive to.
+ * non-weapon; and anything the current lists are exclusive to. And a
+ * fourth of ours (SIDE-ONCE): an effect whose chooser would be empty.
  */
 export function primaryPickerList(selectingPowers, { item = null, powers = [], sideEffects = [], souls = null } = {}) {
   const own = selectingPowers ? powers : sideEffects;
@@ -533,7 +546,13 @@ export function primaryPickerList(selectingPowers, { item = null, powers = [], s
     if (!hasItemMakerFlag(type, ITEM_MAKER_FLAGS.AllowMultiplePrimaryInstances)
       && own.some((e) => e.type === type)) return false;
     if (hasItemMakerFlag(type, ITEM_MAKER_FLAGS.WeaponOnly) && item?.group !== 'Weapons') return false;
-    return !(isExclusiveTo(type, powers) || isExclusiveTo(type, sideEffects));
+    if (isExclusiveTo(type, powers) || isExclusiveTo(type, sideEffects)) return false;
+    // SIDE-ONCE (FIELD BUGS 2026-10-19f; the owner, 2026-10-19): an effect with no setting left to offer is not listed.
+    // DFU lists it and opens an empty chooser (DaggerfallItemMakerWindow.cs:644/:689 ask of the effect, never of its
+    // settings) - Health Leech with all three of its settings on (HealthLeech.cs:37 allows more than one, never one
+    // setting twice), User Takes Damage with both. A departure, Port-Ledger A, with the flags' above.
+    const pick = primaryPick(type, { powers, sideEffects, selectingPowers, souls });
+    return !(pick?.kind === 'choose' && pick.options.length === 0);
   });
 }
 

@@ -45,11 +45,11 @@ export const CHAMPION_DAMAGE = 1.25;
 /** @typedef {{ id: string, name: string, text: string, damage?: number, health?: number, speed?: number, drink?: number, thorns?: number }} ChampionTrait */
 /** The traits, in the wire's order (`cp` is the index). @type {ReadonlyArray<Readonly<ChampionTrait>>} */
 export const CHAMPION_TRAITS = Object.freeze([
-  Object.freeze({ id: 'mighty', name: 'Mighty', text: 'Its blows land half again as hard', damage: 1.5 }),
-  Object.freeze({ id: 'stalwart', name: 'Stalwart', text: 'Half again its health, on top of a champion\'s double', health: 1.5 }),
-  Object.freeze({ id: 'swift', name: 'Swift', text: 'Thirty more Speed: it closes, and it swings, sooner', speed: 30 }),
-  Object.freeze({ id: 'vampiric', name: 'Vampiric', text: 'Half of what its blows take from you heals it', drink: 50 }),
-  Object.freeze({ id: 'thorned', name: 'Thorned', text: 'Your blows that land on it hurt you back, a seventh of them', thorns: 7 }),
+  Object.freeze({ id: 'mighty', name: 'Mighty', text: 'Its blows hit 50% harder', damage: 1.5 }),
+  Object.freeze({ id: 'stalwart', name: 'Stalwart', text: 'It has 50% more health, on top of a champion\'s double', health: 1.5 }),
+  Object.freeze({ id: 'swift', name: 'Swift', text: 'It has 30 more Speed, so it closes in and attacks sooner', speed: 30 }),
+  Object.freeze({ id: 'vampiric', name: 'Vampiric', text: 'It heals for half the damage it deals you', drink: 50 }),
+  Object.freeze({ id: 'thorned', name: 'Thorned', text: 'Your hits on it hurt you for a seventh of their damage', thorns: 7 }),
 ]);
 export const championTrait = (id) => CHAMPION_TRAITS.find((t) => t.id === id) ?? null;
 export const championIndex = (id) => CHAMPION_TRAITS.findIndex((t) => t.id === id);

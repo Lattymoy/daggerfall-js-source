@@ -62,7 +62,7 @@ const NONE = 65535;
 /** The kind's family's own shapes (TACT4's one or two). */
 function familyShapes(mobileType) {
   if (BLOW_FAMILY.has(mobileType)) return BLOW_FAMILY.get(mobileType);
-  if (mobileType >= 128 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;   // the classes and the watch
+  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;   // the classes and the watch - DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js isClassEnemyId is the export); DEX1: so a mod's monster past 255 is no class (it throws no telegraphed blow, as an unnamed kind throws none)
   return [];
 }
 /** TELL5 (bible/12-Enhanced-AI/Feud-Arc.md 7): the kind's family - 'beast', 'brute' or 'blade' (null: none throws a

@@ -1,0 +1,126 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): A SEAT AT THE TABLE, step 1 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the card is the offer. The giver is unnamed (a tavern regular): a Resident of the player's own town, at
+-- its tavern. The act is the card tables' (qlActs.js cards-won - a hand won at Hold'em or the Iliac Hand, the main pot
+-- the player's, against the locals or other players: systems/card, systems/iliac). AUDIT QUESTLINES LINES-27: the next
+-- step begins an hour after this one ends (qlLineRunner.js STEP_GAP_S) with another regular, so the regular sends the
+-- player on to a friend - never "ask me tomorrow".
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIT01
+DisplayName: A Hand of Cards
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        _regular_ has found a new stranger to play.
+
+QuestComplete:  [1004]
+<ce>          "A stake for the next table. Lose it slowly."
+<ce>          _regular_ pushes _gold_ gold across to you.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _regular_, a regular at _inn_ in __inn_, sent
+ me a playing card with a challenge on the back. I
+ am to win a hand of cards at a tavern's table, any
+ game the locals deal, then go back to _inn_ and
+ say so.
+
+Message:  1011
+%pcn -
+
+     The locals at _inn_ have taken every coin I
+ own, and I have taken every coin they own, back and
+ forth, for eleven years. We need a stranger.
+
+     Sit down at any card table and win one hand. I
+ am not particular about the game. Then come and
+ tell me how you did it. Drinks on me.
+
+<ce>                       _regular_, at the corner table
+
+Message:  1012
+<ce>         A serving girl slips a playing card into
+<ce>         your hand. Something is scrawled across the
+<ce>         back. "From _regular_, at _inn_," she says.
+<ce>                  "Says you look lucky."
+
+Message:  1013
+<ce>        "You won a hand? A real one, money on it?"
+<ce>        _regular_ grins and pushes a cup across.
+<ce>
+<ce>       "Then you are a card player, and a card player
+<ce>        needs a stake. Cards are luck, mind. If you
+<ce>        want to see what you are really made of, there
+<ce>        is another game. A friend of mine plays it. I
+<ce>        will send you to them."
+
+Message:  1014
+_regular_? Sits at the corner table at _inn_. Has done for years.
+<--->
+That one at _inn_ plays cards with anyone. Loses to most of them.
+<--->
+Looking for _regular_? Try _inn_. Bring money.
+
+Message:  1015
+%qdt:
+ I have won a hand of cards. _regular_ is waiting
+ to hear of it at _inn_ in __inn_.
+
+Message:  1016
+<ce>        "Won a hand yet? No? Then sit down at a table
+<ce>         and win one. I will be here. I am always here."
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--              %pcn occurs 1 time.
+--         _regular_ occurs 9 times.
+--            _gold_ occurs 1 time.
+--             _inn_ occurs 8 times.
+--            __inn_ occurs 2 times.
+
+QBN:
+Item _card_ letter used 1011
+Item _gold_ gold range 100 to 200
+
+Person _regular_ group Resident1 local anyInfo 1014
+Place _inn_ local tavern
+
+Clock _courier_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _regular_ at _inn_
+	start timer _courier_
+
+_courier_ task:
+	give pc _card_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_won_ task:
+	ql act cards-won 1
+
+_told_ task:
+	when _courier_ and _won_
+	log 1015 step 1
+
+_clicked_ task:
+	clicked npc _regular_
+
+_early_ task:
+	when _clicked_ and not _won_
+	say 1016
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _won_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

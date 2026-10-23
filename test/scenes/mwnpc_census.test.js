@@ -27,6 +27,7 @@ const WIRED = Object.freeze([
   'src/scenes/exteriorFoes.js',    // MWNPC5c: the encounter pool (both instances)
   'src/scenes/gate/gateCourt.js',       // MWNPC10a: the gate's boss
   'src/scenes/gate/gateHost.js',        // MWNPC10a: his host
+  'src/scenes/gate/gateFlame.js',       // WB14d: his Flame, the Sundering's second body
   'src/scenes/merchantYardsHost.js', // AUDIT MW-NPC II P1: the yards' keepers (main's MERCHANT-YARDS)
   'src/scenes/naval/navalCrew.js',       // MWNPC10b: the crews
   'src/scenes/pixelBuild.js',      // HOST-SPLIT 2: the world's pixel build, moved out of world.js - a pixel's street people
@@ -44,6 +45,7 @@ const DECLARED = Object.freeze({
   'src/world/rmbFlats.js': 'mobileBillboardSize\'s own home - it draws nothing',
   'src/characters/residentWalker.js': 'the walker itself - its hosts draw it (world.js, travellerSprites.js)',
   'src/scenes/eliteGates/egFight.js': 'EG-PLAY\'s champion and Court lord - the Warden\'s sprite at 2.5, as the gate\'s court drew him before MWNPC10a; its legion stands in bodies through scenes/gate/gateHost.js, and the Spire\'s own lords are EG13\'s (bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY)',
+  'src/scenes/gate/gateCaptive.js': 'WB14f\'s captive knight of the Covenant - Daggerfall\'s Knight kneeling bowed in his chains, his hurt frame held, a pose no body lane stands (they walk, swing, flinch and fall), then standing free a minute in the ward\'s gold and gone; nobody strikes him',
   'src/scenes/wagon/wagonWardenShow.js': 'WARDEN1\'s thrower - a guard of the watch in the city guards\' picture with a wagon riding over its head (Mac: "lift the wagon/horse on top of their sprite"); a body has no lift to stand it in, and the watch\'s own guards stand in bodies (cityGuards.js)',
 });
 

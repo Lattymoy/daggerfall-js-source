@@ -46,6 +46,8 @@ import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from '../artifactEff
 import { isRestItem, restItemLines } from '../rest/restItems.js'; import { isPortalStone, portalStoneLines } from '../portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
 import { maskText } from '../../net/nameFilter.js';   // TEXT-F1: a name a player typed, its words starred
 import { isWalletItem, WALLET_CARD_LINES } from '../walletItem.js';   // WALLET1: the wallet's card
+import { isSoulCake, isHearthOffering, SOUL_CAKE_TEXT } from '../festival/soulCake.js';   // WITCH1: the festival's two items' cards
+import { isStarglass, STARGLASS_TEXT } from '../starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's card
 import { isWeirKey } from '../eliteGates/weirKey.js'; import { EG_TEXT } from '../../net/eliteGates/egLaw.js';   // AUDIT EG V (c, L8-6): the Weir Key's card and its line (Elite-Gates.md section 5)
 import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES, isCardPack, CARD_PACK_LINES } from '../iliac/iliacItems.js';   // CARDS8: a card's name and lines, the binder's
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from '../survival/items.js';   // SURV5: the survival items' own info box
@@ -630,14 +632,22 @@ export function itemLongName(item, opts) {
   // MAT-SHOW: the metal stays off the front of a name the ladder keeps bare — an unidentified drop, an
   // artifact, and a record's own name (Legendary, Aetheric, Gilded). The part still carries it, so the
   // pack's sub-line can say "Dwarven" under "Wyrmbane" in the same dim line a plain sword uses.
-  if (!material || withholdsMaterialPrefix(item)) return name;
+  if (!material || withholdsMaterialPrefix(item) || namesItsMetal(item, material)) return name;
   return formatText(item?.group === 'Armor'
     ? localizedText('longArmorNameFormatString', '{0} {1}')
     : localizedText('longWeaponNameFormatString', '{0} {1}'), material, name);
 }
+/** AUDIT PISTOLET C9: an item whose OWN name already says its metal takes no second one - the Dwarven Pistolet and the
+ *  Dwarven Thunderlock are minted Dwarven, and the pack read "Dwarven Dwarven Pistolet". PISTOLET-NAMES (2026-10-22): it
+ *  is the template's name asked (as shown, templateText), never the whole one - a Magic's or a Rare's carries it inside
+ *  its prefix and suffix ("Soldier's Dwarven Pistolet"), and asked whole it took the metal again in front. */
+const namesItsMetal = (item, material) => String(templateText(templateByIndex(item?.templateIndex)) ?? '').toLowerCase().startsWith(`${String(material).toLowerCase()} `);
 /** A name that does not take the material as a prefix (ItemHelper.cs:302's early return, plus the ladder's
- *  own names). The metal, when the pack should say it, rides `itemNameParts().material` instead. */
+ *  own names). The metal, when the pack should say it, rides `itemNameParts().material` instead. AUDIT QUESTLINES
+ *  REWARD-5: and a questline's named piece (`qlNamed`, systems/questlines/qlRewards.js rollRewardChoice) - its name is its
+ *  own, as a record's is ("Steel Corvane's Spire-Blade" was the pack's). */
 function withholdsMaterialPrefix(item) {
+  if (item?.qlNamed === true) return true;
   return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;
 }
 
@@ -830,8 +840,8 @@ export function survivalInfoTokens(item) {
   if (isFood(item)) {
     const s = foodStage(item);
     // AUDIT C&C I5: a putrid food cannot be eaten (food.js eatLaw), and its card said "Nourishes for 36 minutes (putrid)"
-    out.push({ text: s >= FOOD_STAGE.Putrid ? 'Putrid - too disgusting to force down.' : `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });
-    if (foodOf(item)?.raw) out.push({ text: 'Raw - cook it at a fire.', center: true });
+    out.push({ text: s >= FOOD_STAGE.Putrid ? 'Putrid. Too disgusting to force down.' : `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });
+    if (foodOf(item)?.raw) out.push({ text: 'Raw. Cook it at a fire.', center: true });
   } else if (isWaterskin(item)) out.push({ text: `Water: ${waterIn(item).toFixed(1)} of ${WATERSKIN_CAPACITY_KG.toFixed(1)} kg`, center: true });
   else if (isCampingEquipment(item)) out.push({ text: `${item.currentCondition ?? 0} use${item.currentCondition === 1 ? '' : 's'} left`, center: true });
   else if (isCampfireKit(item)) out.push({ text: `${item.currentCondition ?? 0} night${item.currentCondition === 1 ? '' : 's'} of fuel`, center: true });   // REST2: a night its owner sleeps at it spends one
@@ -839,12 +849,15 @@ export function survivalInfoTokens(item) {
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
   else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it
+  else if (isSoulCake(item)) for (const text of SOUL_CAKE_TEXT.cake()) out.push({ text, center: true });   // WITCH1
+  else if (isHearthOffering(item)) for (const text of SOUL_CAKE_TEXT.offering()) out.push({ text, center: true });   // WITCH1
+  else if (isStarglass(item)) for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true });   // AUDIT STAR I2
   else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8
   else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8
   else if (isCardPack(item)) for (const text of CARD_PACK_LINES) out.push({ text, center: true });   // CARDS9: the sealed pack
   else if (isOatsItem(item)) out.push({ text: 'A day\u2019s food for a horse. Use it to feed the horse you ride.', center: true });   // STEED1
-  else if (isWagonKitItem(item)) out.push({ text: `Mends ${Math.round(KIT_MEND * 100)}% of a wagon, to ${Math.round(WAGON_KIT_CEILING * 100)}% at most - an hour's work.`, center: true });   // WAGONS4
+  else if (isWagonKitItem(item)) out.push({ text: `Repairs ${Math.round(KIT_MEND * 100)}% of a wagon, up to ${Math.round(WAGON_KIT_CEILING * 100)}%. Takes an hour.`, center: true });   // WAGONS4
   return out;
 }
 
@@ -856,7 +869,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers

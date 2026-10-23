@@ -388,15 +388,15 @@ test('AUDIT C&C S6 (decision D4): AN UNIDENTIFIED PIECE\'S COMPARISON IS AS ITS 
 
 test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the credits and the Features comment say Boons\' neglect costs nothing (the drink still swings the attributes in Boons: "nothing taken" was false); the first-need page opens on the first need of any kind and says where the tiles stand (the left edge, not beside the bars), in TUT1\'s sixty words', () => {
   const cc = Object.values(CREDITS).flat().find((c) => c?.title === 'Climates & Calories');
-  assert.match(cc.what, /in four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and a body kept fed, watered and rested earns bonuses\), Casual/);
+  assert.match(cc.what, /There are four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and staying fed, watered and rested gives bonuses\), Casual/);
   assert.doesNotMatch(JSON.stringify(cc), /nothing taken/);
   const features = read('src/systems/features.js');
   assert.match(features, /\/\/ \(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus\),/);
   assert.doesNotMatch(features, /nothing taken, a need met/);
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.equal(page.trigger, 'When a need first shows on your screen.');
-  assert.equal(page.body[0], 'You need food, water, warmth and sleep. Icons at the screen\'s left edge show what you are short on, and on Boons what you have earned.');
-  assert.equal(page.body.join(' ').split(/\s+/).length, 58, 'TUT1\'s count: two paragraphs, under sixty');
+  assert.equal(page.body[0], 'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.');   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.equal(page.body.join(' ').split(/\s+/).length, 60, 'TUT1\'s count: two paragraphs, no more than sixty');   // VOICE1 (PIN MOVED)
 });
 
 // ═══ S9 - ONE READING ON THE HUD ════════════════════════════════════════
@@ -449,16 +449,16 @@ test('AUDIT C&C S11: THE STATUS PAGE READS THE LIVE TIER - turned from Boons to 
 // ═══ S14 - A COST SAID WITHOUT ITS COLOUR ═══════════════════════════════
 
 test('AUDIT C&C S14: A COST IS SAID WITHOUT ITS COLOUR - a need\'s tile and the HUD\'s plate say their level in words on their title and label and a costing one carries a mark (the sheets\' "!"), the pack\'s plaque says it too; the colour alone had told a costing reading from a felt one', async () => {
-  assert.deepEqual({ ...LEVEL_WORDS }, { danger: 'it costs you', warn: 'felt, it costs nothing' });
+  assert.deepEqual({ ...LEVEL_WORDS }, { danger: 'it costs you', warn: 'no cost to you yet' });
   assert.deepEqual([levelSaid('Freezing', 'danger'), levelSaid('Cold', 'warn'), levelSaid('Comfortable', 'ok'), levelSaid('Well fed', 'boon')],
-    ['Freezing - it costs you', 'Cold - felt, it costs nothing', 'Comfortable', 'Well fed']);
+    ['Freezing - it costs you', 'Cold - no cost to you yet', 'Comfortable', 'Well fed']);
   // the tiles, off the real strip: a Parched (costing in Casual) and a Wet (felt)
   const e = realPlayer('casual');
   e.survival = newSurvival(3000);
   Object.assign(e.survival, { thirst: 85, wet: 50 });
   minute(e, ROOM, 3001);
   const tiles = statusTiles({ needs: survivalHudChips(e, 3001, { rules: CASUAL }) });
-  assert.deepEqual(tiles.map((t) => [t.key, t.say, t.cost]), [['need:thirst', 'Parched - it costs you', true], ['need:wet', 'Wet - felt, it costs nothing', false]]);
+  assert.deepEqual(tiles.map((t) => [t.key, t.say, t.cost]), [['need:thirst', 'Parched - it costs you', true], ['need:wet', 'Wet - no cost to you yet', false]]);
   const b = realPlayer('boons');
   minute(b, ROOM, 3001);
   assert.deepEqual(statusTiles({ needs: survivalHudChips(b, 3001, { rules: BOONS }) }).map((t) => [t.key, t.say, t.cost]), [['need:boon:fed', null, false], ['need:boon:quenched', null, false]], 'a boon says its own name');
@@ -470,7 +470,9 @@ test('AUDIT C&C S14: A COST IS SAID WITHOUT ITS COLOUR - a need\'s tile and the 
     drawEnhancedHud(f, 0, 0, {});
     const tile = tempTile(doc);
     const reading = temperatureReadout(f, feltNow(f).felt);
-    assert.deepEqual([tile.word, tile.cell.classList.contains('hst-cost'), tile.cell.title, tile.cell.getAttribute('aria-label')], [reading.label, true, `${reading.label} - it costs you`, `${reading.label} - it costs you`]);
+    // STATUS-TIPS (2026-10-20): the tile's level is said on its label and in its hover card (ui/hud/statusTips.js) - the
+    // browser's own title stands down, as the pack's does under its card
+    assert.deepEqual([tile.word, tile.cell.classList.contains('hst-cost'), tile.cell.title, tile.cell.getAttribute('aria-label')], [reading.label, true, '', `${reading.label} - it costs you`]);
     const plate = doc.querySelector('.hud .hud-temp');
     assert.deepEqual([plate.title, plate.getAttribute('aria-label')], [`Felt temperature ${reading.text}: ${reading.label} - it costs you`, `Felt temperature ${reading.text}: ${reading.label} - it costs you`]);
     withDom(() => {

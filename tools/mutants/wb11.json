@@ -74,8 +74,8 @@
   {
     "name": "WB11-the-ward-never-waits-on-them",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (bearersStand(f) && now < f.waitUntil) return heldBeat(f, now, out);",
-    "new": "    if (false) return heldBeat(f, now, out);",
+    "old": "    if (bearersStand(f) && now < f.waitUntil) return;",
+    "new": "    if (false) return;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB11-their-cap-ignored",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (bearersStand(f) && now < f.waitUntil) return heldBeat(f, now, out);",
-    "new": "    if (bearersStand(f)) return heldBeat(f, now, out);",
+    "old": "    if (bearersStand(f) && now < f.waitUntil) return;",
+    "new": "    if (bearersStand(f)) return;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "WB11-host-outlives-its-phase",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    hostGone(f, now, out, HOST_GONE.crumbled);   // WB11b: his host crumbles at every turn - each kind is its phase's or its court's\n",
+    "old": "    hostGone(f, now, out, HOST_GONE.crumbled, notGaoler);   // WB11b: his host crumbles at every turn - each kind is its phase's or its court's (WB14f: the Captive's gaolers are the Pen's)\n",
     "new": "",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
@@ -137,7 +137,7 @@
   {
     "name": "WB11-a-blow-from-another-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out;\n  const [ax, az] = hostAt(a, now);",
+    "old": "  const [ax, az] = hostAt(a, now);\n  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out;",
     "new": "  const [ax, az] = hostAt(a, now);",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
@@ -272,10 +272,11 @@
   {
     "name": "WB11-targets-from-anywhere",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "!s.lg || !fromHisCourt(s, t) ? NONE : host.targets();",
-    "new": "!s.lg ? NONE : host.targets();",
+    "old": "if (k >= 0 && s.lg) for (const T of host.targets()) if (nearestCourt(T.feet[0] - COURT_CENTRE[0], T.feet[2] - COURT_CENTRE[2]) === k) _hostMine.push(T);",
+    "new": "if (k >= 0 && s.lg) for (const T of host.targets()) _hostMine.push(T);",
     "tests": [
-      "test/net/gate/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js",
+      "test/net/gate/wb14f_captive.test.js"
     ]
   },
   {
@@ -327,11 +328,11 @@
   {
     "name": "WB11-the-blow-judged-on-him",
     "file": "server/src/index.js",
-    "old": "else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q));",
+    "old": "else if (m.k === 'ahit') await this._gateFanKept(f, applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q, rand01), now);",
     "new": "else if (m.k === 'ahit') applyHit(f, a.sub, m.d, m.r, at, now, m.q);",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ],
-    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. AUDIT WB14 (WIRE-2): re-aimed at the fan kept before it is said."
   }
 ]

@@ -1,0 +1,142 @@
+[
+  {
+    "name": "TRUNK-FIT-foot-added",
+    "file": "src/world/road/roadVerge.js",
+    "old": "  for (const s of solids) room = Math.min(room, Math.hypot(s.c[0] - x, s.c[2] - z) - s.r);",
+    "new": "  for (const s of solids) room = Math.min(room, Math.hypot(s.c[0] - x, s.c[2] - z) + s.r);",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the body's foot counted as room rather than taken from it: Crossleigh's tree drawn at 0.506, its trunk over the fountain's foot"
+  },
+  {
+    "name": "TRUNK-FIT-room-over-the-widest",
+    "file": "src/world/road/roadVerge.js",
+    "old": "  return room >= trunk * widest ? Infinity : Math.max(LPT_FIT_FLOOR, room / trunk);",
+    "new": "  return room >= trunk * widest ? Infinity : Math.max(LPT_FIT_FLOOR, room / (trunk * widest));",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the cap read against the widest variety: a tree drawn smaller than its room allows"
+  },
+  {
+    "name": "TRUNK-FIT-boundary-taken",
+    "file": "src/world/road/roadVerge.js",
+    "old": "  return room >= trunk * widest ? Infinity : Math.max(LPT_FIT_FLOOR, room / trunk);",
+    "new": "  return room > trunk * widest ? Infinity : Math.max(LPT_FIT_FLOOR, room / trunk);",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "a trunk that exactly fits its room capped anyway"
+  },
+  {
+    "name": "TRUNK-FIT-floor-dropped",
+    "file": "src/world/road/roadVerge.js",
+    "old": "  return room >= trunk * widest ? Infinity : Math.max(LPT_FIT_FLOOR, room / trunk);",
+    "new": "  return room >= trunk * widest ? Infinity : room / trunk;",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "a root inside a body draws its tree at a negative scale - nothing, or inside out - where LPT-FIT's floor stands a sapling"
+  },
+  {
+    "name": "TRUNK-FIT-no-trunk-capped",
+    "file": "src/world/road/roadVerge.js",
+    "old": "  if (!(trunk > 0) || !solids?.length) return Infinity;",
+    "new": "  if (!solids?.length) return Infinity;",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "a prototype of cards alone (no trunk) capped to the floor where its root stands inside a body"
+  },
+  {
+    "name": "TRUNK-FIT-bake-cards-cut-too",
+    "file": "tools/bakeLptCrowns.mjs",
+    "old": "      if ((json.materials[mats[Math.min(i, mats.length - 1)]]?.cull ?? 0) === 0) return;   // a card: leaves, not a trunk\n",
+    "new": "",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "a bush's and a card tree's leaves read as a trunk where they meet the ground"
+  },
+  {
+    "name": "TRUNK-FIT-bake-cut-a-metre-up",
+    "file": "tools/bakeLptCrowns.mjs",
+    "old": "          const ya = f[a + 1] * sy, yb = f[b + 1] * sy;",
+    "new": "          const ya = f[a + 1] * sy - 1, yb = f[b + 1] * sy - 1;",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the trunk cut a metre up, where 504_12's flare has narrowed to 2.65 m - the fountain's foot still inside it"
+  },
+  {
+    "name": "TRUNK-FIT-bake-rounded-down",
+    "file": "tools/bakeLptCrowns.mjs",
+    "old": "    out[key] = Math.ceil(100 * reach) / 100;   // UP: a trunk the table holds is never short of the mesh",
+    "new": "    out[key] = Math.floor(100 * reach) / 100;   // UP: a trunk the table holds is never short of the mesh",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the table a centimetre short of the mesh"
+  },
+  {
+    "name": "TRUNK-FIT-bake-scale-unread",
+    "file": "tools/bakeLptCrowns.mjs",
+    "old": "          reach = Math.max(reach, Math.hypot((f[a] + (f[b] - f[a]) * k) * sx, (f[a + 2] + (f[b + 2] - f[a + 2]) * k) * sz));",
+    "new": "          reach = Math.max(reach, Math.hypot(f[a] + (f[b] - f[a]) * k, f[a + 2] + (f[b + 2] - f[a + 2]) * k));",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the trunk read off the mesh before the prefab's own scale (504_12's 0.7)"
+  },
+  {
+    "name": "TRUNK-FIT-host-pre-pass-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if (record < t.recordCount) solids.push(...flatBodies(t, archive, record, billboardSize(t, record), centers));",
+    "new": "      void record;",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "no solid thing measured: no tree fitted to the town's own things - the report as it stood"
+  },
+  {
+    "name": "TRUNK-FIT-host-nature-taken",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if (isNatureArchive(archive)) continue;\n      const t = await getTexture(archive);\n      if (record < t.recordCount) solids.push(",
+    "new": "      const t = await getTexture(archive);\n      if (record < t.recordCount) solids.push(",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "every tree and rock of the scenery a solid thing: each tree shrinks against its own neighbours"
+  },
+  {
+    "name": "TRUNK-FIT-host-wild-fitted",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          if (fit && !wild[i]) fit[i] = Math.min(fit[i], lptTrunkCap(solids, c[0], c[2], trunk, v));",
+    "new": "          if (fit) fit[i] = Math.min(fit[i], lptTrunkCap(solids, c[0], c[2], trunk, v));",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the wild's trees fitted too, against every site's thing their own placing already clears"
+  },
+  {
+    "name": "TRUNK-FIT-host-the-greater",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          if (fit && !wild[i]) fit[i] = Math.min(fit[i], lptTrunkCap(solids, c[0], c[2], trunk, v));",
+    "new": "          if (fit && !wild[i]) fit[i] = Math.max(fit[i], lptTrunkCap(solids, c[0], c[2], trunk, v));",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "the greater of the two fits: a trunk's cap thrown away wherever the crown fits"
+  },
+  {
+    "name": "TRUNK-FIT-host-no-fit-made",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        const fit = crown > 0 || (trunk > 0 && solids.length) ? new Float32Array(centers.length) : null;",
+    "new": "        const fit = crown > 0 ? new Float32Array(centers.length) : null;",
+    "tests": [
+      "test/world/road/fb1020c_trunkfit.test.js"
+    ],
+    "why": "with Clear roadsides off no fit is made, and the trunk's cap is never written"
+  }
+]

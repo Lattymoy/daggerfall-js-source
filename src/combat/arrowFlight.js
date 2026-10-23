@@ -25,6 +25,8 @@ import { trs } from '../world/mat4.js';
 import { SWING_MODS, foeUnaware } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
 import { bloodHit } from './blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { calculateAttackDamage } from './formulas.js';
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // AUDIT PISTOLET A1: a pair's off-hand shot, DUAL's terms as its swing's
+import { liveStat } from '../systems/statMods.js';
 import { segmentBoxEntry } from '../systems/naval/navalBallistics.js';   // SERPENT4: a shaft's step through a box - the guns' own test
 import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
@@ -39,6 +41,7 @@ import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
 import { blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
 import { takeOwed } from '../systems/playerDoor.js';   // AUDIT MARTIAL L2 F5: the follow-ups a shaft owes a body the relay runs
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -477,9 +480,14 @@ export function playerArrowHitFoe(m, foe, {
   if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0;   // RVN4: nor one roaring its last stand
   const swing = SWING_MODS[playerWeapon?.machine?.state] ?? { damage: 0, toHit: 0 };
   const back = foe.ai && playerFeet ? isBackFacing(foe.ai.yaw, foe.ai.feet, playerFeet) : false;
+  // AUDIT PISTOLET A1 (TWO-HANDS DUAL): a pair's OFF-HAND shot strikes less surely and less hard, as the off hand's swing
+  // does (playerWeapon.js resolveHit) - Agility's to-hit term and OFF_HAND_BLOW's share and weight. Read off the gun the
+  // shot left, since the strike that fired it is over by the time it lands.
+  const off = !!playerWeapon?.isOffHandItem?.(m.weapon);
   const rolled = calculateAttackDamage(playerEntity, foe.entity, {
     weapon: m.weapon ?? null,
-    damageMod: swing.damage, toHitMod: swing.toHit,
+    damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(liveStat(playerEntity, 'agility')) : 0),
+    ...(off ? OFF_HAND_BLOW : {}),
     backstabChance: backstabChanceOf(playerEntity, back, foe),
     weaponAnimTime: playerWeapon?.lastDrawMs ?? 0,   // PCO1: the draw's length, for Roleplay Realism's archery
     rolls, onInflictPoison, say,
@@ -502,7 +510,7 @@ export function playerArrowHitFoe(m, foe, {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
     hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
     const pain = enemyPainVoice(foe, dmg, rolls);
-    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
+    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], monsterVolume(), { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
   }
   // :627/:630's unconditional pair, whatever the fork above did - and

@@ -104,5 +104,5 @@ export function ownBackLines(items, packLine) {
 /** What is said when furniture is bought (or stolen) - it is delivered, not carried: the one piece by name, several by
  *  their count. */
 export const furnishingDeliveredLine = (names) => (names.length === 1
-  ? `The ${names[0]} will be delivered - set it down from the Decorate panel in any room you can decorate.`
-  : `${names.length} pieces of furniture will be delivered - set them down from the Decorate panel in any room you can decorate.`);
+  ? `The ${names[0]} will be delivered. Place it from the Decorate panel in any room you can decorate.`
+  : `${names.length} pieces of furniture will be delivered. Place them from the Decorate panel in any room you can decorate.`);

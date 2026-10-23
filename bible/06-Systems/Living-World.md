@@ -163,7 +163,12 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6 (TONE-TASTE: the
   +1 and the -6 are a tone taken kindly and one taken ill, by the resident's own taste - section TONE-TASTE); friend at 40, enemy
   at -40, hostile at -70; eased toward zero half a point a day unseen and never across; 600 kept; the save's record
-  `{ v: 1, people }`, a bad one nobody known.
+  `{ v: 1, people }`, a bad one nobody known. [REGARD-OWN, FIELD BUGS 2026-10-21d: its days are the character's own
+  (`regardClock.js` characterRelations, the one making), not the sky's living day - online the sky ran on while the
+  player was away and eased every regard to nought between evenings; the record says `clock: 'own'`, an older online
+  one rebased once (a friendship as last written, a grudge as the sky had eased it - AUDIT FB1021d RO-3; and offline too
+  where its stamps run ahead of the character's day, RO-5). A friend made - by a word, its tone or a deed - is said once
+  nothing covers the HUD, never under the talk window (RO-1, RO-4) - `01-Overview/bugs/Field-Bugs-2026-10-21d.md`.]
 
 ## LW2 - the town (2026-10-04)
 

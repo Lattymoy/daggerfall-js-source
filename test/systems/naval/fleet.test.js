@@ -460,14 +460,14 @@ test('FLEET Summon: brought round to the port\'s free berth (SummonBoat at it) -
   const { s, w, host } = fleetWorld();
   titleDeed(mintDeed(2, 0, 1, 1));
   let r = host.act(1, 'summon');
-  assert.deepEqual(r, { ok: true, text: "Small Ship 'I' is brought round to Sentinel's quay and made fast." });   // PIN MOVED (QUAYS)
+  assert.deepEqual(r, { ok: true, text: "Small Ship 'I' is brought to Sentinel's quay and moored." });   // PIN MOVED (QUAYS)
   assert.equal(w.berthHull, 2, 'the berth asked for her own hull - alongside its quay');
   const b = s.rt.GetPlacedBoatWithUID(1);
   assert.deepEqual([b.GameObject.position[0], b.GameObject.position[2]], [300, 300]);
   assert.equal(host.act(1, 'summon').text, 'This ship is already here.');
   b.GameObject.activeSelf = false; b.MapPixel = { X: 15, Y: 20 };
   w.nearPort = false;
-  assert.equal(host.act(1, 'summon').text, 'Your ships are brought round to a port - go to one.');
+  assert.equal(host.act(1, 'summon').text, 'Ships can only be summoned to a port. Go to one first.');
   w.nearPort = true; w.hostile = true;
   assert.equal(host.act(1, 'summon').text, 'Not while the ship is in combat.');
   w.hostile = false; w.inside = true;
@@ -578,7 +578,7 @@ test('REFIT-ORES at the Fleet: a metal tier refused under her captain\'s level, 
   row = host.offer(1).rows.find((r) => r.id === 'guns');
   assert.deepEqual(row.next.mats.map((m) => [m.kind, m.n, m.have, m.melt]), [['steel', 4, 4, 0], ['iron', 10, 10, 0]], 'the steel ingots counted as Iron too');
   assert.equal(row.afford, false);
-  assert.equal(host.act(1, 'refit', 'guns').text, 'Not enough materials - one item can\'t count for two requirements.');
+  assert.equal(host.act(1, 'refit', 'guns').text, 'Not enough materials. One item cannot count for two requirements.');
   assert.equal(materialCount([s.pack], 'steel'), 4, 'nothing taken');
   assert.deepEqual(w.paid, [], 'nothing paid');
   s.pack.length = 0;
@@ -661,11 +661,11 @@ test('FLEET the page: a card a ship - her name, hull, worth, the bank\'s claim, 
   assert.match(d.textContent, /Pay the 5000 gold owed to Alik'r first/);
   assert.match(d.textContent, /You hold 0 Timber, 0 Iron, 0 Pitch \(your pack and the ship's hold\), and 100,000 gold\./);
   assert.match(d.textContent, /Hull0 of 12Hull and sail strength: \+0% now, \+10% with the next refit\.Next: 600 gold, 3 Timber \(you have 0\), 3 Pitch \(you have 0\), 3 Iron \(you have 0\)\./);
-  assert.equal((d.textContent.match(/Timber: Wood Bundles - a Wood-Axe gathers them - or planks and logs\./g) ?? []).length, 1, 'each short material\'s hint once');
+  assert.equal((d.textContent.match(/Timber: Wood Bundles \(gathered with a Wood-Axe\), planks or logs\./g) ?? []).length, 1, 'each short material\'s hint once');
   assert.equal(buttons(d, 'Refit').every((b) => b.attrs['aria-disabled'] === 'true'), true, 'every refit refused while the loan stands');
   buttons(d, 'Summon')[0].onclick();
   d = draw();
-  assert.match(d.textContent, /brought round to Sentinel's quay/);
+  assert.match(d.textContent, /brought to Sentinel's quay/);
   assert.match(d.textContent, /Small Ship 'I'Afloat.*Lying 228 m away\./);
   buttons(d, 'Rename')[0].onclick();
   d = draw();

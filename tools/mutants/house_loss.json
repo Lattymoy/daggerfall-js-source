@@ -152,7 +152,7 @@
   {
     "name": "HOUSE-LOSS-never-saved-says-delete",
     "file": "src/systems/realmSaves.js",
-    "old": "  if (error === 'no-data') return 'That online character was never saved. One you brought in: press Bring online on it again, or undo it. One made online: delete it and make it again.';",
+    "old": "  if (error === 'no-data') return 'That online character was never saved. If you brought it in, press Bring online on it again or undo it. If you made it online, delete it and make it again.';",
     "new": "  if (error === 'no-data') return 'That online character was never saved. Delete it and make it again.';",
     "tests": [
       "test/systems/house_loss.test.js"

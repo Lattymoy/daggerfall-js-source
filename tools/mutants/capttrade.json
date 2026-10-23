@@ -362,7 +362,7 @@
   {
     "name": "TAB-trade-stand-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  const STAND = { makes: 'Made here - cheap', wants: 'Wanted here - dear', neither: '' };",
+    "old": "  const STAND = { makes: 'Made here: cheap', wants: 'Wanted here: dear', neither: '' };",
     "new": "  const STAND = { makes: '', wants: '', neither: '' };",
     "tests": [
       "test/systems/naval/capttrade.test.js"

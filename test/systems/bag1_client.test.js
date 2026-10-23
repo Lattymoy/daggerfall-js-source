@@ -563,7 +563,7 @@ test('BAG1 (AUDIT2 K5/K6/K8/K12): a station\'s put-in refused for a later input 
   await book.refresh({ force: true });
   const r = await book.craft('dagger:iron', {}, () => {});
   assert.deepEqual(r, { ok: false, error: 'stores-full', material: 'metal:tin', moved: 1 }, 'the iron in, the tin refused');
-  assert.equal(movedFirstText(r), ' 1 of the materials went into your Stores first - the next try spends them there.');
+  assert.equal(movedFirstText(r), ' 1 of the materials went into your Stores first. Your next try uses them from there.');
   assert.equal(movedFirstText({ moved: 0 }), '');
   assert.match(src('src/scenes/world.js'), /text: `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}` \};\n\s+\/\/ the fee for the smelt/);
   assert.equal(book.storesHeld('ingot:iron'), 1, 'the iron waits in the Stores for the next craft');
@@ -801,7 +801,9 @@ test('BAG1 (AUDIT): Put everything in says what went in and each material refuse
   assert.equal(BAG_PAGE_WORDS.allInDone(12, [{ name: 'Oak Log', text: 'Your Stores hold 5,000 of that already.' }]), '12 put in the Stores. Oak Log: Your Stores hold 5,000 of that already.');
   assert.equal(BAG_PAGE_WORDS.allInDone(3, [], 'slow'), '3 put in the Stores. slow');
   const page = src('src/ui/professions/profPages.js');
-  assert.match(page, /if \(res\?\.kept\) stop = res\.text \?\? null; else refused\.push\(\{ name: r\.name, text: res\?\.text \?\? null \}\); left = -1; break;/);   // PIN MOVED (LOOT-LOOSE, FIELD BUGS 2026-10-15c): the counted and the loose each a pass, a refusal ending this material's
+  // PIN MOVED (FB1020c ONE-SAVE): the batch's answers read in the plan's order - the first kept one the run's stop, a refusal
+  // named once a material and passed over (it pinned the loop's refusal ending that material's own passes)
+  assert.match(page, /else if \(res\?\.kept\) stop \?\?= res\.text \?\? null;\n\s+else if \(!said\.has\(plan\[i\]\.material\)\) \{ said\.add\(plan\[i\]\.material\); refused\.push\(\{ name: plan\[i\]\.name, text: res\?\.text \?\? null \}\); \}/);
   assert.match(page, /const carriedAny = \[\.\.\.all\.values\(\)\]\.some/);
   assert.match(src('src/ui/workTab.js'), /w\.carrying\?\.\(\) \? t\('prof\.work\.writ\.heldCarried', '\{n, number\} held', \{ n: Number\(held\) \}\) : t\('prof\.work\.writ\.held', '\{n, number\} in your Stores', \{ n: Number\(held\) \}\)/);
 });
@@ -842,7 +844,7 @@ test('BAG1 (AUDIT2 H1/U2/U1/U11/U14): the Stores page empties the bag into the p
       book, name: (k) => k, withdraw: async () => ({ ok: true, text: '' }), inTown: () => town, room: (k) => roomFor(store, k), carriedHeld: (k) => heldOf(store, k),
       bag: () => ({ has: true, kg: bagWeight(store), max: BAG_KG_LIMIT, count: store.bagItems.length }),
       emptyBag: () => { emptied++; return emptyBagIntoPack(store); },
-      deposit: async (k, n) => { deposits.push([k, n]); return { ok: true, text: '' }; },
+      deposit: async (plan) => { deposits.push(...plan.map((d) => [d.material, d.qty])); return plan.map(() => ({ ok: true, text: '' })); },   // PIN MOVED (FB1020c ONE-SAVE): a plan
     });
     let root = null;
     const draw = () => { root = dom.mk('div'); drawStoresPage(root, draw, kit); };
@@ -878,7 +880,7 @@ test('BAG1 (AUDIT2 H1/U2/U1/U11/U14): the Stores page empties the bag into the p
     setProfessionsPages({
       book, name: (k) => k, withdraw: async () => ({ ok: true, text: '' }), inTown: () => true, room: (k) => roomFor(store, k), carriedHeld: (k) => heldOf(store, k),
       bag: () => ({ has: true, kg: bagWeight(store), max: BAG_KG_LIMIT, count: store.bagItems.length }),
-      deposit: async (k, n) => { deposits.push([k, n]); return { ok: true, text: '' }; },
+      deposit: async (plan) => { deposits.push(...plan.map((d) => [d.material, d.qty])); return plan.map(() => ({ ok: true, text: '' })); },   // PIN MOVED (FB1020c ONE-SAVE): a plan
     });
     let root = null;
     let drawn = null;
@@ -889,7 +891,7 @@ test('BAG1 (AUDIT2 H1/U2/U1/U11/U14): the Stores page empties the bag into the p
     assert.match(root.querySelectorAll('p').map((n) => n.textContent).join(' '), new RegExp(`${OAK}: ${BAG_PAGE_WORDS.storesFull}`));
   });
   setProfessionsPages(null);
-  assert.match(BAG_PAGE_WORDS.takenNote, /into your Materials Bag, then your pack - and back into the Stores from your bag, pack or wagon/);
+  assert.match(BAG_PAGE_WORDS.takenNote, /into your Materials Bag, then your pack\. Put it back from your bag, pack or wagon in any town/);
 });
 
 test('BAG1 (AUDIT2 D3/D4): the bag\'s list in every door that reads a character\'s lists - the orphan sweep, the realm\'s customs, the four hosts\' inventories; an enchanted piece is no material; Put everything in passes a material the service refuses and puts the rest in (mutants: the bag unswept; an enchanted herb counted; a refusal ends the run)', async () => {
@@ -905,29 +907,36 @@ test('BAG1 (AUDIT2 D3/D4): the bag\'s list in every door that reads a character\
   assert.equal(materialKeyOfItem({ ...mintMaterialItem(HERB), enchantments: [{ type: 1, param: 0 }] }), null);
   assert.equal(materialKeyOfItem({ ...mintMaterialItem(HERB), customEnchantments: [{ id: 'x' }] }), null);
   // D3: Put everything in - the service refuses one material, the rest still go in, the refused one named
+  // PIN MOVED (FB1020c ONE-SAVE): through the batch - the page hands the provider ONE plan, which the real book takes
+  // whole (profBook.js depositMany) and the service is asked each put-in of; it asserted the provider's per-material calls
   const store = body();
   mintCarried(store, OAK, 3);
   mintCarried(store, HERB, 2);
-  const book = createProfBook({ door: { account: () => 'a', state: async () => ({ ok: true, data: { carried: [{ material: OAK, own: 3, bought: 0 }, { material: HERB, own: 2, bought: 0 }] } }) }, storage: memStorage(), character: () => 'c', sleep: noWait, carry: hands(store) });
+  const asked = [], batches = [];
+  // the FIRST material asked is refused, whichever the page's order puts first - the run must go on past it
+  const door = { account: () => 'a', state: async () => ({ ok: true, data: { carried: [{ material: OAK, own: 3, bought: 0 }, { material: HERB, own: 2, bought: 0 }] } }),
+    deposit: async (c, m, q) => { asked.push([m, q]); return asked.length === 1 ? { ok: false, error: 'stores-full' } : { ok: true, data: { store: { material: m, own: q, bought: 0 }, carried: { material: m, own: 0, bought: 0 } } }; } };
+  const book = createProfBook({ door, storage: memStorage(), character: () => 'c', sleep: noWait, carry: hands(store) });
   await book.refresh({ force: true });
-  const asked = [];
   await withDom(async (dom) => {
     resetProfPages();
     const kit = { el: (tag, cls, text) => { const n = dom.mk(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }, divider: (w) => { const n = dom.mk('h3'); n.textContent = w; return n; }, meter: () => dom.mk('div') };
     setProfessionsPages({
       book, name: (k) => (k === OAK ? 'Oak Log' : 'Red Rose'), withdraw: async () => ({ ok: true, text: '' }), inTown: () => true, room: (k) => roomFor(store, k), carriedHeld: (k) => heldOf(store, k),
       bag: () => ({ has: true, kg: bagWeight(store), max: BAG_KG_LIMIT, count: store.bagItems.length }),
-      // the FIRST material asked is refused, whichever the page's order puts first - the run must go on past it
-      deposit: async (k, n) => { asked.push([k, n]); return asked.length === 1 ? { ok: false, text: 'Refused.' } : { ok: true, text: '' }; },
+      deposit: async (plan) => { batches.push(plan.map((d) => d.material)); return (await book.depositMany(plan)).map((r) => (r.ok ? { ok: true, text: '' } : { ok: false, kept: r.kept === true, text: r.error === 'stores-full' ? 'Refused.' : r.error })); },
     });
     let root = null;
     const draw = () => { root = dom.mk('div'); drawStoresPage(root, draw, kit); };
     draw();
     await root.querySelectorAll('button').find((b) => b.textContent === BAG_PAGE_WORDS.allIn).onclick();
+    assert.equal(batches.length, 1, 'one batch');
+    assert.deepEqual([...batches[0]].sort(), [HERB, OAK].sort(), 'both in it');
     assert.deepEqual(asked.map((a) => a[0]).sort(), [HERB, OAK].sort(), 'both asked: a refusal passed over');
     const [first, second] = asked;
     const nameOf = (k) => (k === OAK ? 'Oak Log' : 'Red Rose');
     assert.ok(root.querySelectorAll('p').map((n) => n.textContent).join(' ').includes(BAG_PAGE_WORDS.allInDone(second[1], [{ name: nameOf(first[0]), text: 'Refused.' }])));
+    assert.deepEqual([heldOf(store, first[0]), heldOf(store, second[0])], [first[1], 0], 'the refused given back, the other gone in');
   });
   setProfessionsPages(null);
 });
@@ -947,7 +956,7 @@ test('BAG1 a station\'s shortfall goes into the Stores first - bought before own
   const short = await book.ensureInStores([{ key: OAK, n: 4 }, { key: HERB, n: 3 }]);
   assert.deepEqual([short.ok, short.error, short.material], [false, 'materials-short', HERB]);
   assert.equal(asked.length, 0, 'nothing moved for the input that could be covered');
-  assert.equal(accountRefusalText('materials-short'), 'You do not have that many - in your Stores, your Materials Bag and your pack together.');
+  assert.equal(accountRefusalText('materials-short'), 'You do not have that many in your Stores, Materials Bag and pack together.');
   const ok = await book.ensureInStores([{ key: OAK, n: 3 }, { key: OAK, n: 1 }]);
   assert.deepEqual(ok, { ok: true, moved: 4 });
   assert.deepEqual(asked, [[OAK, 4, 10, 'spend']], 'summed by material, bought first');

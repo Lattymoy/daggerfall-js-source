@@ -43,6 +43,7 @@ import { pageHas } from '../../systems/pageQuery.js';   // PERF-URL: the page's 
 import { paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's row in its violet
 import { TIER_MARKS, tierMarkCss } from '../lootTierMarks.js';   // LOOT-MARKS: the quick loot's tier gem and wash
 import { SUPPORT_MARKS_CSS } from '../supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
@@ -1011,7 +1012,7 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
 .itemrow[data-rarity="legendary"] .itemname > span:first-child, .packdetail .card[data-rarity="legendary"] h3, .wplaque-row[data-rarity="legendary"] > span:first-child { color: #e07a2e; }
 .itemrow[data-rarity="aetheric"] .itemname > span:first-child, .packdetail .card[data-rarity="aetheric"] h3, .wplaque-row[data-rarity="aetheric"] > span:first-child { color: #bfe8ff; }
 .itemrow[data-rarity="artifact"] .itemname > span:first-child, .packdetail .card[data-rarity="artifact"] h3, .wplaque-row[data-rarity="artifact"] > span:first-child { color: #b57bee; }
-.itemrow[data-rarity="gilded"] .itemname > span:first-child, .packdetail .card[data-rarity="gilded"] h3, .wplaque-row[data-rarity="gilded"] > span:first-child { color: #ffcf4d; }
+.itemrow[data-rarity="gilded"] .itemname > span:first-child, .packdetail .card[data-rarity="gilded"] h3, .wplaque-row[data-rarity="gilded"] > span:first-child { color: #ff3b4a; }
 .packdetail ul.rarity { list-style: none; margin: 4px 0 10px; padding: 0; font-family: var(--data); font-size: 13px; line-height: 1.5; }
 .packdetail ul.rarity li:first-child { text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; color: var(--dim); }
 .packdetail ul.rarity li.lore { color: var(--dim); font-style: italic; }   /* CARD-FIT: by its own class - the card's list carries no lore now, and its last AFFIX wore the lore's dim italic */
@@ -1242,6 +1243,9 @@ ${badgeCss()}
 .card .acctportrait canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%;
   image-rendering: pixelated; }
 .card .acctportrait.hasface { background: #0a0c11; }   /* the face fills the well - no night glow behind it */
+.card .acctportrait svg.accticon { position: absolute; inset: 0; width: 100%; height: 100%; }   /* WITCH1: a profile icon worn fills the well */
+.card .acticon { display: inline-flex; align-items: center; gap: 6px; }   /* WITCH1: an icon's button - its picture, then its word */
+.card .acticon svg.acticonart { flex: none; width: 22px; height: 22px; }
 .card .acctsilhouette { position: absolute; inset: 0; }
 .card .acctsilhouette::before { content: ''; position: absolute; left: 31%; top: 16%; width: 38%; height: 40%;
   border-radius: 48% 48% 44% 44%; background: #3a424d; }
@@ -2262,6 +2266,44 @@ ${badgeCss()}
 .px-qverdict { text-align: center; color: #9c937d; font-size: 14px; letter-spacing: 0.2em;
   text-transform: uppercase; margin: -6px 0 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .px-qverdict.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objectives, choices and outcome, and a reward
+   waiting (ui/questlines/qlJournal.js) - the journal's own type and ink, the loot ladder's colours */
+.px-qobj { margin: 0 0 6px; }
+.px-qobj-list { list-style: none; margin: 0 0 10px; padding: 0; }
+.px-qobj-row { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; font-size: 16px; line-height: 1.45;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qobj-mark { flex: none; color: var(--brass); font-size: 13px; }
+.px-qobj-row.done .px-qobj-text { text-decoration: line-through; color: var(--dim); }
+.px-qobj-row.failed .px-qobj-text { color: #d08a72; }
+.px-qobj-state, .px-qobj-tag { flex: none; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.px-qobj-or { list-style: none; margin: -2px 0 4px 23px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--dim); }
+.px-qobj-choice { display: flex; flex-direction: column; gap: 2px; margin: 0 0 8px; font-size: 15px; line-height: 1.4;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qobj-q { color: var(--dim); }
+.px-qobj-a { padding-left: 14px; }
+.px-qobj-outcome { margin: 0 0 10px; font-size: 16px; font-style: italic; text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qobj-outcome.failed { color: #d08a72; }
+.px-qobj-reward { margin: 4px 0 12px; font-size: 14px; text-align: center; color: var(--dim); }
+.px-qoffer-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.px-qpiece { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; }
+.px-qpiece-name { font-size: 17px; line-height: 1.3; }
+.px-qpiece[data-rarity="magic"] .px-qpiece-name { color: #6f9ee8; }
+.px-qpiece[data-rarity="rare"] .px-qpiece-name { color: #e4c34f; }
+.px-qpiece[data-rarity="legendary"] .px-qpiece-name { color: #e07a2e; }
+.px-qpiece-tier { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.px-qpiece-stat { font-size: 14px; line-height: 1.35; }   /* AUDIT QUESTLINES UI-11: what the piece is - damage or armour, hands, weight */
+.px-qpiece-lines { margin: 0; padding-left: 16px; font-size: 14px; line-height: 1.4; }
+.px-qpiece .act { margin-top: auto; }
+.px-qline-what { margin: 0 0 8px; font-size: 13px; color: var(--dim); text-align: center; }
+.px-qline-lead { margin: 0 0 8px; font-size: 16px; line-height: 1.45; font-style: italic; }
+.px-qline-giver { margin: 0 0 6px; font-size: 15px; }
+.px-qline-state { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+.px-qline-state.done, .px-qline-state.locked { color: var(--dim); }
+.px-qline-state.retry, .px-qobj-tag.failed { color: #d08a72; }   /* AUDIT QUESTLINES UI-7: a failed step offered again; a deed not yet seen */
+.px-qline-steps .px-qobj-row.next .px-qobj-text { color: var(--dim); }
+.px-qline-said { list-style: none; margin: -4px 0 8px 23px; font-size: 14px; font-style: italic; color: var(--dim); }
+.px-qline-said.failed { font-style: normal; color: #d08a72; }   /* AUDIT QUESTLINES UI-19: a claim the service refused */
 @media (max-width: 900px) {
   .px-tabs button { font-size: 18px; letter-spacing: 0.1em; text-indent: 0.1em; padding: 6px 10px; gap: 6px; }
 }
@@ -2417,6 +2459,7 @@ ${badgeCss()}
   box-shadow: 0 0 0 2px var(--iron), 0 3px 10px rgba(0,0,0,0.65);
   transition: border-color 120ms, box-shadow 120ms, transform 120ms;
 }
+.px-portrait svg.px-icon { position: absolute; inset: 0; width: 100%; height: 100%; }   /* WITCH1: a profile icon worn, in the face's place */
 .px-portrait canvas {
   position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%;
   object-fit: cover; object-position: 50% 20%;
@@ -2603,6 +2646,17 @@ ${SUPPORT_MARKS_CSS}
   background: rgba(192,138,62,0.12); }
 .card button.skintile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
 .card .skinart { height: 72px; width: auto; image-rendering: pixelated; pointer-events: none; }
+/* LAYERED-GEAR (the owner: "a proper toggle in the account profile for
+   players to either equip skins or use this integration"): Look, two
+   presses side by side over the panels - the chosen one in brass. */
+.card .skinmode { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0 0; flex-wrap: wrap; }
+.card .skinmode .fieldlabel { margin: 0; }
+.card .skinmodeset { display: flex; gap: 6px; }
+.card button.skinmodebtn { font: inherit; font-size: 13px; color: var(--dim); min-height: 36px; padding: 6px 12px;
+  background: rgba(0,0,0,0.25); border: 1px solid var(--iron); border-radius: 2px; cursor: pointer; }
+.card button.skinmodebtn:hover { color: var(--bone); border-color: var(--dim); }
+.card button.skinmodebtn.on { color: var(--bone); border-color: var(--brass); background: rgba(192,138,62,0.12); }
+.card button.skinmodebtn:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
 .px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
 .px-winclose {
   font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
@@ -2644,7 +2698,7 @@ ${SUPPORT_MARKS_CSS}
 .px-timerswin .tm-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 14px; position: relative;
   border-bottom: 1px solid rgba(125,116,96,0.25); }
 .px-timerswin .tm-row::before { content: '\\25c6'; position: absolute; left: 0; top: 12px; font-size: 9px; color: var(--tm-kind, #9c937d); }
-.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
+.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-star { --tm-kind: ${STAR_VIOLET_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
 .px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; }
 .px-timerswin .tm-row.live { background: rgba(192,138,62,0.08); }
 .px-timerswin .tm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -2714,14 +2768,16 @@ ${SUPPORT_MARKS_CSS}
   border: 1px solid rgba(192,138,62,0.55); background: rgba(192,138,62,0.08); }
 .px-postwin .pm-itemname { font-size: 16px; letter-spacing: 0.04em; }
 .px-postwin .pm-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.px-postwin .pm-claimrow { justify-content: flex-end; margin: 0 0 8px; }   /* LOST-SPOILS: Claim all, above the list */
 .px-postwin [data-rarity="magic"] { color: #6f9ee8; } .px-postwin [data-rarity="rare"] { color: #e4c34f; } .px-postwin [data-rarity="legendary"] { color: #e07a2e; }
-.px-postwin [data-rarity="aetheric"] { color: #bfe8ff; } .px-postwin [data-rarity="artifact"] { color: #b57bee; } .px-postwin [data-rarity="gilded"] { color: #ffcf4d; }
+.px-postwin [data-rarity="aetheric"] { color: #bfe8ff; } .px-postwin [data-rarity="artifact"] { color: #b57bee; } .px-postwin [data-rarity="gilded"] { color: #ff3b4a; }
 /* AUDIT SERVER-POST: the tiers above are LR1's own hexes (systems/loot/lootRarity.js RARITIES, pinned against it - a stylesheet
    never imports the loot ladder, which reaches the whole combat graph); on Stone's light panel the three darkest read
-   3.0-3.3:1 and are lifted past 4.5:1 there alone. */
+   3.0-3.3:1 and are lifted past 4.5:1 there alone - and GILDED-RED's crimson, 2.3:1 on Stone's ground, to its own light. */
 :root[data-plus-theme="stone"] .px-postwin [data-rarity="magic"] { color: #b4cdf7; }
 :root[data-plus-theme="stone"] .px-postwin [data-rarity="legendary"] { color: #f7b27a; }
 :root[data-plus-theme="stone"] .px-postwin [data-rarity="artifact"] { color: #dcbaf9; }
+:root[data-plus-theme="stone"] .px-postwin [data-rarity="gilded"] { color: #ffb1b7; }
 :root[data-plus-theme="stone"] .px-postwin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
 /* PRIVATE-REPORT (2026-10-17): the mailbox window's report form and the readers' inbox (ui/enhanced/enhancedReport.js) - the
    post's own rows, buttons and dim words, and the account card's field (label.field) for its title and its words. */
@@ -3147,6 +3203,7 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .tview-route-line { fill: none; stroke: #e8be6e; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 @media (prefers-reduced-motion: reduce) { .tview-ring::after { animation: none; } }
 .tview-trip { font-size: 11.5px; color: var(--brass); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tview-sky { font-size: 11.5px; color: var(--bone); opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* OW-FORECAST: the weather ahead, under the journey */
 /* OW-BLOCK (2026-09-29, the player: "the whole bar in the top is too much ... a light weight block menu ... as much free
    screen as possible", "put the overworld block to the right"): THE OVERWORLD'S BLOCK - one compact column in the bottom-right corner,
    top to bottom: where (the compass beside it), the journey or none, the path and the map, the filters, the way back.
@@ -3422,6 +3479,24 @@ ${paceControlsCss('tview')}
    width (1.6em of 13px, 5px of padding and a 2px frame a side), and the box stretches to it. */
 .hud-renown { display: none; align-items: center; gap: 8px; height: 22px; width: calc(3 * min(190px, 23vw) + 28px); }   /* RENOWN4b: 22px, the box's own height - the lift below counts it */
 .hud-renown.on { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; }
+/* SKILL-READY / FIRM-STARS (ui/hud/hudAdvance.js): the two tiles outside the row's two ends - the skills ready left of the
+   box, the Firmament's stars right of the bar's empty column, on the bar's line but never under the hotbar - each a buff's own tile and
+   frame (.hst-cell, .hst-tile), the level's gold for the skills and the night sky's silver-blue for the stars. They take
+   the pointer: a hover says what they are, a press on the stars opens the Firmament. The row stands for them alone where
+   it has no bar of its own (adv-only - offline). */
+.hud-renown { position: relative; }
+.hud-adv { display: none; position: absolute; top: 50%; transform: translateY(-50%); pointer-events: auto; }   /* transform, not translate: the movable HUD owns the translate property */
+.hud-adv.on { display: flex; }
+.hst-cell.hud-adv:not(.on) { display: none; }   /* nothing to say, nothing shown - over .hst-cell's own display, which comes later in this sheet */
+.hud-adv-skill { right: calc(100% + var(--adv-left, 10px)); cursor: pointer; }   /* CLEAR-HOTBAR: past the hotbar's end where it is wider (hudAdvance.js advanceReach) */
+.hud-adv-firm { left: calc(100% + var(--adv-right, 10px)); cursor: pointer; }
+.hst-cell.hud-adv-skill { --hst-hi: rgb(243,239,44); --hst-lo: rgb(93,77,12); }
+.hst-cell.hud-adv-firm { --hst-hi: #cfe0ff; --hst-lo: #2f4a8a; }
+.hud-adv .hst-tile { box-shadow: 0 0 0 1px #050608, 2px 2px 0 1px rgba(0,0,0,0.45), 0 0 8px rgba(243,239,44,0.28); }
+.hud-adv-firm .hst-tile { box-shadow: 0 0 0 1px #050608, 2px 2px 0 1px rgba(0,0,0,0.45), 0 0 8px rgba(160,190,255,0.35); }
+.hud-adv-firm:hover .hst-tile { border-color: #ffffff #4a6ab0 #4a6ab0 #ffffff; }
+.hud-renown.adv-only:not(.on) { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; visibility: hidden; }
+.hud-renown.adv-only:not(.on) .hud-adv.on { visibility: visible; }
 .hud-renownbox { flex: 0 0 auto; min-width: 1.6em; padding: 1px 5px; text-align: center;
   font-size: 13px; line-height: 1.2; font-variant-numeric: tabular-nums;
   color: #f2c46b; background: rgba(14,16,19,0.78); border: 2px solid rgba(242,196,107,0.8); }
@@ -3682,6 +3757,7 @@ ${paceControlsCss('tview')}
 .hst-cell.debuff { --hst-hi: #f2a597; --hst-lo: #8a2820; }
 /* BUFF-END: with the mouse freed a spell the player may end takes the pointer (the HUD stays pointer-transparent
    otherwise) - a right-click ends it; the hover lights its frame the way a pressed button lights */
+.hud-stat.ending .hst-cell { pointer-events: auto; }   /* STATUS-TIPS: with the mouse freed every tile says what it is on a hover */
 .hud-stat.ending .hst-cell.can-end { pointer-events: auto; cursor: pointer; }
 .hud-stat.ending .hst-cell.can-end:hover .hst-tile { border-color: rgb(243,239,44) rgb(93,77,12) rgb(93,77,12) rgb(243,239,44); }
 .hst-cell.warn { --hst-hi: #f3cf86; --hst-lo: #7a5424; }
@@ -5274,12 +5350,16 @@ ${paceControlsCss('tview')}
    fixed furniture (PX21e: the rows scroll, never the frame). AUDIT WAGON-FILTER C1: the first cut's wrapping chips and
    hint stood 202-236 px tall and left a phone on its side 1 px of list; one row is 44 px. The menu wears the search's
    dress, the brass on focus. */
-.storefilter { display: flex; align-items: center; gap: 6px; padding: 6px 10px; flex: 0 0 auto;
+.storefilter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; flex: 0 0 auto;
   border-bottom: 2px solid rgba(125,116,96,0.3); }
+/* FILTER-FIT (2026-10-17): the menus keep their whole words. Where they do not fit beside the search - a container
+   of a few rows draws one column, a narrow window - they move under it together and share that row; on one row the
+   search takes the room left over. */
+.storemenus { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; }
 .storesearch, .storecat, .storerarity, .storemat { font: inherit; font-size: 13px; min-height: 32px; box-sizing: border-box; color: #d8cfae;
   background: rgba(0,0,0,0.35); border: 1px solid rgba(125,116,96,0.45); border-radius: 0; }
-.storesearch { flex: 1 1 0; min-width: 0; padding: 0 8px; }
-.storecat, .storerarity, .storemat { flex: 0 1 auto; max-width: 28%; padding: 0 4px; }
+.storesearch { flex: 999 1 140px; min-width: 0; padding: 0 8px; }
+.storecat, .storerarity, .storemat { flex: 1 1 0; min-width: 0; padding: 0 4px; text-overflow: ellipsis; }
 .storecat option, .storerarity option, .storemat option { color: #d8cfae; background: #10141a; }
 .storesearch::placeholder { color: #9c937d; }
 .storesearch:focus, .storecat:focus, .storerarity:focus, .storemat:focus { outline: none; border-color: var(--brass); }

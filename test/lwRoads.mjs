@@ -7,7 +7,7 @@ import { placeAt, turnKey } from '../src/systems/livingWorld/lives.js';
 import { troubleOf, troubledTrip } from '../src/systems/livingWorld/trouble.js';
 import { rollGroupComposition } from '../src/systems/campEncounters.js';
 import { chooseRandomEnemy } from '../src/systems/encounters.js';
-import { ENEMY_BASICS } from '../src/characters/enemy/enemyBasics.js';
+import { enemyLevelOf } from '../src/characters/enemy/enemyBasics.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 
 /** Towns every `step` pixels on a `n` x `n` grid from (x0, y0); each town's blocks off its place - LW6: and, `dives`,
@@ -81,7 +81,7 @@ export function livingMap({ turns = null, climate = 230, dives = false, sea = fa
     foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
       ? Array.from({ length: size }, () => chooseRandomEnemy({ dungeonType, playerLevel: level }, rolls)).filter((x) => x >= 0)
       : rollGroupComposition({ climateIndex, skyMinutes: minute, inLocationRect: false, playerLevel: level, size }, rolls)?.mobileTypes ?? null),
-    foeLevel: (type, level) => (type >= 128 ? level : ENEMY_BASICS[type]?.level ?? level),
+    foeLevel: enemyLevelOf,   // the host's own law (enemyBasics.js) - this copy asked `>= 128` after DEX1 gave the host the bit
     dies: (res, trip) => { const roster = world.rosterOf(byId.get(res.town)); const place = roster.find((r) => r.slot === res.slot) ?? res; const g = placeOf(place, placeCycle(place, roster, Math.floor(trip.outT0 / DAY_MIN), 1)); return g.dies && g.hand == null; },   // LW7: a hand's dead the trouble never takes
     diced: (res, trip) => { const roster = world.rosterOf(byId.get(res.town)); const place = roster.find((r) => r.slot === res.slot) ?? res; return placeOf(place, placeCycle(place, roster, Math.floor(trip.outT0 / DAY_MIN), 1)).diced; },   // AUDIT-B1: the trouble's shape the dice's
     turnOf: (id) => (turns?.won?.has(id) ? 'won' : turns?.lost?.has(id) ? 'lost' : null),

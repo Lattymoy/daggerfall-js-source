@@ -78,8 +78,8 @@
   {
     "name": "WB12d-r-dropped",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), i: nowS",
-    "new": "...(m !== undefined ? { m } : {}), i: nowS",
+    "old": "...(r === 1 ? { r } : {}), ...(m !== undefined ? { m } : {}), ...(p > 0",
+    "new": "...(m !== undefined ? { m } : {}), ...(p > 0",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "WB12d-the-omen-without-the-rite",
     "file": "src/net/gate/gateHerald.js",
-    "old": "${map} ${RITE_OMEN_LINE}${marks}`,",
-    "new": "${map}${marks}`,",
+    "old": "${map} ${RITE_OMEN_LINE}${marks}${pt ? ` ${pt}` : ''}`,",
+    "new": "${map}${marks}${pt ? ` ${pt}` : ''}`,",
     "tests": [
       "test/net/gate/discordgates.test.js",
       "test/net/gate/wb8c_gate_detail.test.js",
@@ -2561,8 +2561,8 @@
   {
     "name": "AUDIT-WB12d-T-wod-rite-site-refused",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": "|hold|rite\\.\\d{1,9})$/;",
-    "new": "|hold)$/;",
+    "old": "|hold|rite\\.\\d{1,9}|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/;",
+    "new": "|hold|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/scenes/wod7_sharedcamps.test.js",
@@ -3078,8 +3078,8 @@
   {
     "name": "AUDIT-WB12d-the-post-s-rite-after-the-marks",
     "file": "src/net/gate/gateHerald.js",
-    "old": "${map} ${RITE_OMEN_LINE}${marks}`",
-    "new": "${map}${marks} ${RITE_OMEN_LINE}`",
+    "old": "${map} ${RITE_OMEN_LINE}${marks}${pt",
+    "new": "${map}${marks} ${RITE_OMEN_LINE}${pt",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/discordgates.test.js",

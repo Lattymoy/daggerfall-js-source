@@ -165,7 +165,7 @@ test('AUDIT L3-1: ready while the gate is shut says when a rest raises it, and t
   assert.equal(skillCheckWait(p, last + SKILL_RAISE_CHECK_INTERVAL + 1), 0);
   assert.equal(countReadyToImprove(p, { now: last + 60 }), 0, 'gated: no strip line');
   assert.equal(countReadyToImprove(p, { now: last + 361 }), 1);
-  assert.equal(skillTickText(skillAdvanceProgress(p, SKILLS.Axe, { now: last + 60 })), 'Ready - a rest or journey raises it once 6 more hours have passed');
+  assert.equal(skillTickText(skillAdvanceProgress(p, SKILLS.Axe, { now: last + 60 })), 'Ready - a rest or a trip raises it once 6 more hours have passed');
   assert.equal(skillTickText(skillAdvanceProgress(p, SKILLS.Axe, { now: last + 361 })), 'Ready - rest or travel to raise it');
   assert.deepEqual(raiseSkills(p, last + SKILL_RAISE_CHECK_INTERVAL, seq(0), () => {}), [], 'the pass agrees: shut at 360');
 });
@@ -273,7 +273,9 @@ test('AUDIT L6-3 and L2-2, by source (the hosts and the canvas sheet do not run 
   const { readFileSync } = await import('node:fs');
   const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
   const notice = src('src/ui/levelUp/levelNotice.js');
-  assert.match(notice, /const rows = hidden \? \[\] : levelNotices\.frame\(now, \{ owed, improvable: improvable \?\? skillsImprovable\(\) \}\);/);
+  // SKILL-READY (2026-10-20): the strip no longer counts them - the HUD's tile beside the Renown bar does (ui/hud/hudAdvance.js)
+  assert.match(notice, /const rows = hidden \? \[\] : levelNotices\.frame\(now, \{ owed, improvable: improvable \?\? 0 \}\);/);
+  assert.match(src('src/ui/hud/hudAdvance.js'), /skillsImprovable\(/, 'the tile counts the skills');
   assert.match(notice, /export const skillsImprovable = \(e = playerEntity\) => countReadyToImprove\(e, \{ now: ownMinutes\(\) \}\);/);
   assert.match(src('src/ui/hud/hud.js'), /drawLevelNotices\(\{ hidden: [^}]*\}\);/, 'the HUD hands no count of its own');
   assert.match(src('src/ui/charsheet.js'), /Object\.assign\(this\.entity\.stats, this\.working\);[^\n]*\n\s+refreshOnlineLayer\(this\.entity, \{ keepHealth: true \}\);/);

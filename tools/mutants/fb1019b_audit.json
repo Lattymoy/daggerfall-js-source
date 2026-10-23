@@ -150,16 +150,6 @@
     "why": "a 100 that can be mastered told it is at its limit"
   },
   {
-    "name": "AUDIT-1019-L6-3-strip-count-none",
-    "file": "src/ui/levelUp/levelNotice.js",
-    "old": "improvable: improvable ?? skillsImprovable() });",
-    "new": "improvable: improvable ?? 0 });",
-    "tests": [
-      "test/systems/fb1019b_audit.test.js"
-    ],
-    "why": "the strip's line never in the game"
-  },
-  {
     "name": "AUDIT-1019-L4-1-room-own-and-bought",
     "file": "src/ui/socialPanel.js",
     "old": "    const takeUnits = (k) => (unitsEmpty() ? Math.min(outMost(k), Math.max(0, STORES_MAX - roomHeld(k))) : unitsTyped());",

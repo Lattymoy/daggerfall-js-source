@@ -78,7 +78,7 @@ test('SPYGLASS the reach: her Lookout\'s worth carries the glass and his own eye
   assert.deepEqual(glassReach({ night: true, lit: false, lookout: true }), { far: NIGHT_DARK_SIGHT, near: NIGHT_DARK_SIGHT, eye: NAKED_EYE_DARK_M, lookout: NIGHT_DARK_SIGHT }, 'a dark ship: the glass and the Lookout close, the naked eye closer');
 });
 
-test('SPYGLASS false colours: DECEIT_SHARE of the wary pirates fly a crown\'s merchant colours, by their seed on their own stream - never a bold pirate, a flagship, a trader, a crown\'s ship, or one the host marks plain (mutants: the share, the temper, the flagship, the plain, the crown\'s draw)', () => {
+test('SPYGLASS false colours: DECEIT_SHARE of the wary pirates fly a crown\'s merchant colors, by their seed on their own stream - never a bold pirate, a flagship, a trader, a crown\'s ship, or one the host marks plain (mutants: the share, the temper, the flagship, the plain, the crown\'s draw)', () => {
   assert.equal(DECEIT_SHARE, 0.35);
   const sloop = classById('pirateSloop');
   const N = 4000;
@@ -113,13 +113,13 @@ test('SPYGLASS the card\'s words: a hull by her kind before her colours, her gun
   assert.deepEqual([aHull(1), aHull(4), unknownName(2)], ['a sloop', 'a carrack', 'Unknown two-master']);
   assert.deepEqual([0, 1, 2, 3].map(gunsWords), ['no guns', '6 swivels, a swivel gun forward', '10 long guns, 2 chain guns forward, fire barrels astern', '8 long guns, 3 great guns forward']);
   assert.deepEqual([0, 3, 12, 60].map(handsWords), ['no hands', 'about 5 hands', 'about 10 hands', 'about 60 hands']);
-  assert.deepEqual([1, 2, 3, 4, 9].map(cargoWords), ['riding high - a light hold', 'riding easy - some cargo', 'riding low - a full hold', 'riding deep - a rich hold', 'riding deep - a rich hold']);
+  assert.deepEqual([1, 2, 3, 4, 9].map(cargoWords), ['riding high, a light hold', 'riding easy - some cargo', 'riding low, a full hold', 'riding deep, a rich hold', 'riding deep, a rich hold']);
   assert.deepEqual([coloursWords('pirate', null), coloursWords('navy', 'Wayrest'), coloursWords('merchant', 'Sentinel'), coloursWords('merchant', null)],
-    ['the black flag', 'Wayrest\'s royal ensign', 'Sentinel\'s merchant colours', 'a trader\'s merchant colours']);
+    ['the black flag', 'Wayrest\'s royal ensign', 'Sentinel\'s merchant colors', 'a trader\'s merchant colors']);
   assert.equal(mindWords({ hostile: true, mode: 'board' }), 'Closing to board you!');
   assert.equal(mindWords({ hostile: true, mode: 'engage' }), 'Heading straight for you!');
-  assert.equal(mindWords({ faction: 'pirate', temper: 'bold' }), 'Bold - attacks any target');
-  assert.equal(mindWords({ faction: 'pirate', temper: 'wary' }), 'Wary - picks targets carefully');
+  assert.equal(mindWords({ faction: 'pirate', temper: 'bold' }), 'Bold. Attacks any target');
+  assert.equal(mindWords({ faction: 'pirate', temper: 'wary' }), 'Wary. Picks its targets carefully');
   assert.equal(mindWords({ faction: 'merchant', bound: 'bound for Wayrest' }), 'Bound for Wayrest');
   assert.equal(mindWords({ faction: 'navy' }), 'On the crown\'s business');
   assert.equal(KNOTS, 1.944);
@@ -129,15 +129,15 @@ test('SPYGLASS the glass\'s card: unknown - her hull and her way, nothing of her
   const f = { hull: 1, name: 'The Black Gull', classLine: 'Pirate Sloop', faction: 'pirate', flag: null, falseFlag: 'Wayrest', temper: 'wary', mode: 'cruise', hostile: false, friendly: false, bound: '',
     distance: 1234.4, speed: 5, crew: 12, hullShare: 0.5, sailShare: 0.75, fire: true, cargo: 2, bounty: '300 gold - posted at Wayrest', lore: null };
   const unknown = glassCard(f, KNOW.hull, { study: 0.3, within: 1800 });
-  assert.deepEqual(unknown, { title: 'Unknown sloop', sub: 'Colours not yet identified', rows: [['Range', '1234 m'], ['Way', 'making 10 knots']], tone: 'unknown', study: 0.3, hint: 'Close within 1800 m to make out its colours' });
+  assert.deepEqual(unknown, { title: 'Unknown sloop', sub: 'Colors not yet identified', rows: [['Range', '1234 m'], ['Way', 'making 10 knots']], tone: 'unknown', study: 0.3, hint: 'Close within 1800 m to make out its colours' });
   const told = glassCard(f, KNOW.colours, { study: 0.5 });
   assert.deepEqual([told.title, told.sub, told.tone, told.study, told.hint], ['A merchantman of Wayrest', 'Merchantman', 'friendly', 0.5, '']);
-  assert.deepEqual(told.rows, [['Colours', 'Wayrest\'s merchant colours'], ['Range', '1234 m - making 10 knots'], ['Bearing', 'Holding course']], 'a merchantman\'s colours and mind: the disguise holds');
+  assert.deepEqual(told.rows, [['Colours', 'Wayrest\'s merchant colors'], ['Range', '1234 m - making 10 knots'], ['Bearing', 'Holding course']], 'a merchantman\'s colours and mind: the disguise holds');
   assert.equal(glassCard(f, KNOW.colours, { within: 900 }).hint, 'Close within 900 m to make out its guns and hold');
   const seen = glassCard(f, KNOW.studied, { study: 0.2 });
   assert.deepEqual([seen.title, seen.sub, seen.tone, seen.study], ['The Black Gull', 'Pirate Sloop', 'pirate', 1]);
   assert.deepEqual(seen.rows, [
-    ['False colours', 'Too many gunports for a trader - this is a pirate'], ['Colours', 'the black flag'], ['Range', '1234 m - making 10 knots'], ['Bearing', 'Wary - picks targets carefully'],
+    ['False colors', 'Too many gunports for a trader. This is a pirate'], ['Colours', 'the black flag'], ['Range', '1234 m - making 10 knots'], ['Bearing', 'Wary. Picks its targets carefully'],
     ['Guns', '6 swivels, a swivel gun forward'], ['Hands', 'about 10 hands'], ['Hurts', 'hull 50%, canvas 75% - burning'], ['Hold', 'riding easy - some cargo'], ['Wanted', '300 gold - posted at Wayrest'],
   ]);
   assert.equal(glassCard({ ...f, hostile: true, mode: 'engage' }, KNOW.colours).title, 'The Black Gull', 'her guns on me: false colours hold for nobody');
@@ -213,7 +213,7 @@ test('SPYGLASS my Lookout calls her colours: a crewed deck with a Lookout reads 
   const e = spawn(s, 'merchantCoaster', 340);   // a Green Lookout: 320 m x 1.1 = 352 m
   s.run(0.5);
   assert.equal(e.known, KNOW.colours);
-  assert.ok(s.log.say.includes(`Lookout: A sloop flying ${e.ship.flag}'s merchant colours!`), s.log.say.join(' | '));
+  assert.ok(s.log.say.includes(`Lookout: A sloop flying ${e.ship.flag}'s merchant colors!`), s.log.say.join(' | '));
   const bare = await sea({ hull: 2 });
   const f = spawn(bare, 'merchantCoaster', 340);
   bare.run(0.5);
@@ -253,8 +253,8 @@ test('SPYGLASS false colours at sea: a wary pirate under a merchantman\'s colour
   assert.deepEqual([await hailed(false), await hailed(true)], [false, true]);
   const seen = hold(s, e, 1.5);
   assert.equal(e.known, KNOW.studied);
-  assert.ok(s.log.mid.includes(`False colours! ${e.ship.names.name} is a pirate.`), s.log.mid.join(' | '));
-  assert.equal(seen.rows[0][0], 'False colours');
+  assert.ok(s.log.mid.includes(`False colors! ${e.ship.names.name} is a pirate.`), s.log.mid.join(' | '));
+  assert.equal(seen.rows[0][0], 'False colors');
   assert.deepEqual([tagOf(s, e).name, tagOf(s, e).faction], [e.ship.names.name, 'pirate'], 'her tag her own now');
   // a weaker prey: she runs up the black flag and comes on
   const r = await sea({ hull: 0 });
@@ -263,7 +263,7 @@ test('SPYGLASS false colours at sea: a wary pirate under a merchantman\'s colour
   knowAll(r.host);
   for (let i = 0; i < 50 && !p.blackFlag; i++) r.run(0.1);
   assert.equal(p.blackFlag, true);
-  assert.ok(r.log.say.includes(`False colours! ${as} runs up the black flag!`), r.log.say.join(' | '));   // PIN MOVED (AUDIT CAPTAIN'S SEA S5): the trader she passed for
+  assert.ok(r.log.say.includes(`False colors! ${as} runs up the black flag!`), r.log.say.join(' | '));   // PIN MOVED (AUDIT CAPTAIN'S SEA S5): the trader she passed for
   r.run(0.5);
   assert.deepEqual(p.boat.flagColor, NAVAL_FACTIONS.pirate.flag, 'the black at her masthead');
   assert.equal(tagOf(r, p).faction, 'pirate');
@@ -286,7 +286,7 @@ test('SPYGLASS the crew\'s cries by what is known: a hostile sail\'s hail names 
 });
 
 test('SPYGLASS the world: the Spyglass action appended, a port row in Come Sail Away\'s group, shared onto K beside the road\'s follow; the touch corner\'s and the pad\'s to choose; the glass\'s frame - raised aboard alone, down under a window, the travel view, a laid broadside; the lens narrowed at the frame\'s three, the look slowed, the wheel its magnification; the road\'s follow never read aboard (mutants: each seam)', () => {
-  assert.equal(ACTIONS.at(-4), 'Spyglass');   // SHOT-KINDS: and the guns' load   // PIN MOVED (UI-CALM, CARGO-ANYWHERE): the saddle panel's key and the hold's appended after it
+  assert.equal(ACTIONS.at(-5), 'Spyglass');   // SHOT-KINDS: and the guns' load   // PIN MOVED (UI-CALM, CARGO-ANYWHERE, PARTY-PING): the saddle panel's key, the hold's and the ping's appended after it
   assert.ok(PORT_ACTIONS.includes('Spyglass'));
   assert.ok(DEFAULT_SHARES.some(([c, a, p]) => c === 'KeyK' && a === 'Spyglass' && p === 'FollowPaths'));
   assert.ok(!DEFAULT_BINDINGS.some(([, a]) => a === 'Spyglass'), 'it owns no key - a share');
@@ -301,7 +301,11 @@ test('SPYGLASS the world: the Spyglass action appended, a port row in Come Sail 
   // PIN MOVED (AUDIT CAPTAIN'S SEA S2/S3/S16): the host's own door and a finger's Lower press it too; a finger's Magnify turns it
   assert.match(w, /const pressedNow = hccActionPressed\('Spyglass'\) \|\| navalTouchGlass\(\) \|\| glassDoorPress \|\| \(taps\.lower && spyglass\.up\);\n\s+glassDoorPress = false;\n\s+if \(pressedNow && \(spyglass\.up \|\| spyglassAllowed\(\)\)\) spyglass\.up = !spyglass\.up;\n\s+if \(spyglass\.up && !spyglassAllowed\(\)\) spyglass\.up = false;\n[^\n]*\n\s+mwViewHoldFirst\(spyglass\.up\);\n\s+spyglass\.lens = easeLens\(spyglass\.lens, spyglass\.up \? spyglass\.zoom : 1, dt\);/);
   assert.match(w, /naval\.glass\(dt, \{ up: spyglass\.up, zoom: spyglass\.zoom, field, near: spyglass\.near \}\)/);   // PIN MOVED (AUDIT CAPTAIN'S SEA S19): and its field; PIN MOVED (GLASS-CLEAR): and its focus
-  assert.match(w, /spyglassStep\(dt\);[^\n]*\n\s+const proj = mirrorProjectionX\(perspective\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, 6000\)\);/, 'the step before the lens is taken');   // PIN MOVED (GLASS-CLEAR): its near the glass's focus
+  // PIN MOVED (GLASS-CLEAR): its near the glass's focus; PIN MOVED (OW-HORIZON, 2026-10-20): the lens through
+  // scenes/travelHorizon.js horizonProj, taken after the travel view's frame (its planes grow under the view) - still
+  // after the glass's step
+  const stepAt = w.indexOf('spyglassStep(dt);'), lensAt = w.indexOf('const proj = horizonProj(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, tvf);');
+  assert.ok(stepAt > 0 && lensAt > stepAt, 'the step before the lens is taken');
   assert.match(w, /sky\.draw\([^\n]*glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect,/, 'the sky through the glass');
   assert.match(w, /fovY: glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), aspect: worldAspect,/, 'the far ring through it');
   assert.equal((w.match(/lookScale\(\) \* glassLookScale\(spyglass\.lens\)/g) || []).length, 2, 'the mouse\'s look and the finger\'s and pad\'s');

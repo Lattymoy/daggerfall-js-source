@@ -57,7 +57,7 @@ const el = (tag, cls, text) => {
  *  death Project Legacy will raise rises on Enter - F11 still loads. */
 export function deathKeys(hint, online, rises = false) {
   if (online) return [{ key: 'Enter', word: t('death.key.rise', 'Rise now'), confirm: true }];
-  const keys = [{ key: 'Enter', word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End the journey'), confirm: true }];
+  const keys = [{ key: 'Enter', word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale'), confirm: true }];
   if (/F11/i.test(String(hint ?? ''))) keys.push({ key: 'F11', word: t('death.key.load', 'Load last save') });
   return keys;
 }

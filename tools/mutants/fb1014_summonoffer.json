@@ -29,7 +29,7 @@
   {
     "name": "SUMMON-OFFER-the-word-says-the-gold-went",
     "file": "src/systems/daedraSummoning.js",
-    "old": "'{prince} answers, but has no task for you in this region. You keep your gold - try the summoning in another region.'",
+    "old": "'{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.'",
     "new": "'{prince} answers, but has no task for you in this region.'",
     "tests": [
       "test/systems/fb1014_summonoffer.test.js"

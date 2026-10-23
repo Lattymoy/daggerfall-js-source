@@ -197,7 +197,8 @@ test('BOLT wired: both exterior hosts feed their distant strikes and the storm o
     assert.match(s, /const boltsGl = sky\.enhanced \? new LightningBoltsRenderer\(renderer\.gl\) : null;/);
     assert.match(s, /for \(const s of ds\.strikes\) \{ const h = [^;]+; struckFar\.push\(\{ x: h\[0\], z: h\[1\], seed: s\.seed, kind: s\.kind, strength: s\.strength \}\); \}/);
     assert.match(s, /boltFrame = isEnhanced\(\)[^\n]*\n\s*\? stormLights\.frame\(\{ seconds: now \/ 1000, eye[^,]*, distant: struckFar, player: lightning, shown: !!lightningShown, test: Number\(params\.get\('bolttest'\)\) \|\| 0 \}\)/);
-    assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\) \?\? boltFrame\.flash\);/);
+    // PIN MOVED (STAR4): the world host's channel takes a fallen star's landing last (scenes/starfall/starfallHost.js flash)
+    assert.ok(s.includes(`renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash${host === 'src/scenes/world.js' ? ' ?? starfall?.flash() ?? null' : ''});`));
     assert.match(s, /\{ distantStorms\.reset\(\); stormLights\.reset\(\); \}/);
     // RETRO1: with the world image's height, so a retro frame's minimum width is its own pixels
     assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length(?: && !_dwAirOff)?\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, new Float32Array\([^)]+\), undefined, renderer\.worldViewportPx\?\.\[3\]\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);

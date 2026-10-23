@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX, FOES_FRAME_MAX, CELL_FRAME_RECORDS_MAX } from '../../src/net/wire.js';
-import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { ENEMY_BASICS, enemyEntityType, isClassEnemyId } from '../../src/characters/enemy/enemyBasics.js';
 import { MobileUnit } from '../../src/characters/mobile/mobileUnit.js';
 import { enemyHierarchyOrder } from '../../src/characters/dungeonEnemies.js';
 import { createOceanHolesAbyss } from '../../src/scenes/oceanHolesAbyss.js';
@@ -33,6 +33,8 @@ import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   //
 import { partyOnlyQuestShare } from '../../src/scenes/quest/questFoeHost.js';   // QUEST-OWNER: the dungeon's quest seam, narrowed to the party (ownShare)
 import { adoptLight } from '../../src/render/lightId.js';   // LIGHT-ID: the dungeon's light copies adopt their lights
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
+import { setupFoeLook } from '../../src/characters/enemy/foeLook.js';   // DEX2: the arms' free name - SetupDemoEnemy's renderer
+import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
 
 function sliced(path) {
   const S = readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -106,8 +108,9 @@ function context({ authority, self }) {
   const state = {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
+    appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
     console: { error: () => {}, warn: () => {}, info: () => {} },
-    ENEMY_BASICS, MobileUnit, enemyHierarchyOrder, validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX, FOES_FRAME_MAX, CELL_FRAME_RECORDS_MAX,
+    ENEMY_BASICS, enemyEntityType, isClassEnemyId, setupFoeLook, MobileUnit, enemyHierarchyOrder, validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX, FOES_FRAME_MAX, CELL_FRAME_RECORDS_MAX,
     foes: [], _layoutFoes: 0, _layoutStood: true, _spawnUid: 0, _ctxDead: false, _authority: authority,
     _sharedSeq: 0, _sharedById: new Map(), _sharedPending: new Map(), _foesSeq: 0, _locationKey: 'dungeon:7',
     _ownSeq: 0, _ownFrameSeq: 0, _ownPups: new Map(), _ownPending: new Map(), _ownPendLoose: new Set(), _ownOwners: new Map(), _ownAdopted: new Map(),
@@ -117,13 +120,12 @@ function context({ authority, self }) {
     renderer: { createBillboardBatch: () => ({ id: ++batchN }), destroyBillboardBatch: () => {} },
     foeDeps: {
       floorLanding: (c, p) => [p[0], p[1] - 0.2, p[2]],
-      loadMonsterCareer: async () => ({}),
+      loadEnemyCareer: async () => ({}),
       makeEnemyEntity: (t, b) => ({ health: 30, maxHealth: 30, items: [], team: b.team ?? null, level: 1 }),
       playerEntity: { level: 1, reflexes: 2 },
       EnemyAI: class { constructor(c, pos, yaw) { this.feet = [...pos]; this.yaw = yaw; this.target = null; } },
       EnhancedEnemyAI: class {},
       EnemyAttack: class {},
-      ClassFile: class { load() {} get career() { return {}; } },
       fetchBytes: async () => new Uint8Array(0),
     },
     getTexture: async () => ({ getFrameCount: () => 1 }), idleSpriteHeight: () => 1.8, feetFromCentre: (p) => p,

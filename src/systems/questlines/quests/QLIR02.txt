@@ -1,0 +1,104 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE MERCHANT'S ROAD, step 2 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 1 ends: the stable master's word is in the journal at once. The giver is unnamed (a stable master): a
+-- Shopkeeper of the player's own town, at its tavern. NO ACT (qlActs.js: a wagon's load hauled is no kind): DFU's own
+-- haul - the load collected from a merchant in another town (`get item`, never pay) and carried all the way back to
+-- the stable master (`toting`), who pays. The player stands in the buyer's town when it begins, so its stable master
+-- is that town's, who has heard of the haul.
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+Quest: QLIR02
+DisplayName: The Long Haul
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         _master_ has given up waiting for the load.
+
+QuestComplete:  [1004]
+<ce>        "A carter's wage, for a carter's road."
+<ce>         _master_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Word of my haul has reached _master_, a stable
+ master at _inn_ in __inn_, who has a longer
+ road for me. A load of the stable's own is waiting
+ with _seller_ at _yard_ in __yard_. I am to
+ collect it and haul it all the way back to _inn_.
+
+Message:  1011
+%qdt:
+ I have the load from _yard_. _master_ is
+ waiting for it at _inn_ in __inn_.
+
+Message:  1012
+<ce>        _seller_ points you to a sack by the door.
+<ce>
+<ce>       "That is _master_'s. Paid for, and heavy.
+<ce>        Mind it on the road - the road minds nothing."
+
+Message:  1013
+<ce>        _master_ unties the sack, looks inside, and
+<ce>          ties it up again, satisfied.
+<ce>
+<ce>       "There and back again, and nothing lost on the
+<ce>        way. You have the makings of a carter. Buy a
+<ce>        wagon of your own one day, and the yards will
+<ce>        keep you busy for the rest of your life."
+
+Message:  1014
+The stable master at _inn_? Sent someone off to __yard_ for a load, I hear.
+<--->
+_master_ trusts a new hauler now. First one in years.
+<--->
+Looking for _master_? Try _inn_. Follow the smell of hay.
+
+Message:  1015
+The merchant at _yard_? Holding a load for a stable master in __inn_.
+<--->
+Looking for _seller_? Try _yard_.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--          _master_ occurs 8 times.
+--            _gold_ occurs 1 time.
+--             _inn_ occurs 5 times.
+--            __inn_ occurs 3 times.
+--          _seller_ occurs 3 times.
+--            _yard_ occurs 4 times.
+--           __yard_ occurs 2 times.
+
+QBN:
+Item _load_ large_sack
+Item _gold_ gold range 100 to 200
+
+Person _master_ group Shopkeeper local anyInfo 1014
+Person _seller_ group Shopkeeper anyInfo 1015
+Place _inn_ local tavern
+Place _yard_ remote generalstore
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _master_ at _inn_
+	place npc _seller_ at _yard_
+	log 1010 step 0
+	start timer _wait_
+
+_collected_ task:
+	clicked npc _seller_
+	say 1012
+	get item _load_
+	log 1011 step 1
+
+_paid_ task:
+	toting _load_ and _master_ clicked
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

@@ -167,7 +167,7 @@ test('SHIPYARDS WHAT IT TAKES BACK: a ship of the player\'s at this port, laid u
   assert.match(saleRefusal({ where: 'here', ashore: 2 }), /ashore/);
   assert.match(saleRefusal({ where: 'laidup', hold: 3 }), /hold/);
   assert.equal(SHIPYARD_TEXT.sold('The Kestrel', 12345.4), 'The shipmaster buys The Kestrel for 12,345 gold.');
-  assert.equal(SHIPYARD_TEXT.short(100000), 'The shipmaster asks 100,000 gold - your purse falls short.');
+  assert.equal(SHIPYARD_TEXT.short(100000), 'The shipmaster asks 100,000 gold. You don\'t have enough.');
 });
 
 test('SHIPYARDS THE SHELVES: no counter shelves or buys either of Come Sail Away\'s two - the shipyard is where a ship is had and let go (a DECLARED departure)', () => {

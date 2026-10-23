@@ -242,7 +242,7 @@ test('REST6 the Bedroll: laid where a camp could stand - in a dungeon too, never
 
 test('REST6 the cards: each item\'s lines under its name and weight', () => {
   const tok = (t, o) => survivalInfoTokens(createRestItem(t, o)).map((x) => x.text);
-  assert.deepEqual(tok(REST_ITEM.Bedroll).slice(2), ['10 nights left', 'A rough night anywhere a camp could stand.']);
+  assert.deepEqual(tok(REST_ITEM.Bedroll).slice(2), ['10 nights left', 'A rough night\'s sleep anywhere you could camp.']);
   assert.deepEqual(tok(REST_ITEM.Candle).slice(2), ['3 uses left', 'Meditate by it to restore 50% of your magicka.']);
   assert.equal(tok(REST_ITEM.Draught)[0], 'Sleeping Draught');
   assert.deepEqual(restItemLines(createRestItem(REST_ITEM.Firewood)), ['Adds 3 nights of fuel to a Campfire.']);   // AUDIT REST II H13 (PIN MOVED)

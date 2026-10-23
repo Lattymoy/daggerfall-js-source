@@ -119,13 +119,14 @@ export function parseSiegeCommand(text) {
  *   me?: () => (string|null), character?: () => (string|null), rid?: () => string,
  *   isSeatPixel?: (x: number, y: number) => boolean, relayNowS?: () => (number|null),
  *   onRed?: ((line: { text: string, at: number }) => boolean)|null,
- *   rand?: () => number,
+ *   rand?: () => number, turnMs?: number,
  * }} deps SEAT1b: `me` the signed-in account's id, `character` the character standing here, `rid` a fresh request id
  *   (the Marks' own shape), `isSeatPixel` whether this client's own derivation holds a seat at a map pixel, `relayNowS`
  *   the relay's clock (null unheard - a receipt's life is the relay's); CROWN2: `onRed` says a red line (false: not yet);
- *   STORM-SHED: `rand` Math.random's shape, a failed Watch claim's jitter
+ *   STORM-SHED: `rand` Math.random's shape, a failed Watch claim's jitter; DAY-TURN: `turnMs` this page's moment past
+ *   midnight (net/dayTurn.js)
  */
-export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null, rand = Math.random }) {
+export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null, rand = Math.random, turnMs = 0 }) {
   const turnSpreadMs = Math.floor(rand() * SEAT_TURN_READ_SPREAD_MS);   // D1-LOAD: this client's share of the Turning's read
   /** CROWN2: the red lines already said, by id - read from the device once */
   let redSeen = null;
@@ -173,7 +174,7 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     reported = Object.fromEntries(keep);
     try { storage?.setItem?.(SEAT_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
   };
-  const dayNow = () => Math.floor(nowMs() / 1000 / SEAT_REPORT_EVERY_S);
+  const dayNow = () => Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S);   // DAY-TURN: the report's day turned at this page's moment
   /** SEAT1b: each seat's standings as last read, `{ at, data }` by key (AUDIT-SEATS C9: cleared by generation); the
    *  Tribute asked and its one request id */
   const standingsAt = new StandingsCache();
@@ -497,7 +498,7 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       const name = fortWork(work)?.name ?? 'work';
       const forts = r.data?.forts ?? null;
       if (r.data?.repeat) return { ok: true, text: `Work on the ${name} at ${seat.name} was already begun.`, forts };
-      return { ok: true, text: `Work on the ${name} at ${seat.name} is begun toward tier ${r.data?.tier}: ${Number(r.data?.marks ?? 0).toLocaleString('en-US')} silver from the treasury. Seat writs deliver what they need.`, forts };
+      return { ok: true, text: `Work on the ${name} at ${seat.name} is begun toward grade ${r.data?.tier}: ${Number(r.data?.marks ?? 0).toLocaleString('en-US')} silver from the treasury. Seat writs deliver what they need.`, forts };
     },
     /** A pledge to `seat` for this week (an Officer's or the guildmaster's) - `{ ok, text }`, the standings read afresh after. */
     async pledge(seat) {
@@ -525,7 +526,7 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) { if (tributeAsk?.rid === id) tributeAsk = null; }
       standingsAt.clear();
       if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
-      return { ok: true, text: r.data?.repeat ? 'That Tribute was already paid.' : `Tribute paid to ${seat.name}: ${marks} silver burnt, ${r.data?.influence ?? marks / 10} influence.` };
+      return { ok: true, text: r.data?.repeat ? 'That Tribute was already paid.' : `Tribute paid to ${seat.name}: ${marks} silver burned, ${r.data?.influence ?? marks / 10} influence.` };
     },
     /**
      * THE WATCH'S TICK, KEPT (net/online.js `onWatch`): a signed receipt for the signed-in account, in a seat's own pixel as

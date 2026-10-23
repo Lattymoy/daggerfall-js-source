@@ -29,16 +29,16 @@ export const VENDOR_PAGE_SECTIONS = Object.freeze([Object.freeze(['vendor', 'Ven
 export const VENDOR_PAGE_FRESH_MS = 30_000;
 /** The page's words. */
 export const VENDOR_PAGE_TEXT = Object.freeze({
-  noTraders: 'You have no trader. Place one in a home you own (Decorate, Catalogue, Vendors), then make it the "Hired trader" station.',
-  noStock: 'Nothing is up for sale. Press your trader in its home to put a piece from your pack up.',
+  noTraders: 'You have no trader. Place one in a home you own (Decorate, Catalog, Vendors), then make it the "Hired trader" station.',
+  noStock: 'Nothing is up for sale. Click your trader in its home to put up a piece from your pack.',
   noSales: 'Your traders have sold nothing yet.',
   noneFound: 'No trader in that region has anything for sale.',
   noMatch: 'No trader\'s goods match that search.',
-  cold: 'The counting-house is not answering. Your traders cannot be read now.',
+  cold: 'The counting-house is not answering. Your traders can\'t be checked right now.',
   reading: 'Asking after your traders...',
   takings: (g) => (g > 0 ? `Takings waiting: ${goldText(g)}` : 'No takings waiting.'),
-  look: 'Press a piece to see its stats.',
-  stays: `A piece stands at a trader ${Math.round(VENDOR_LISTING_S / 86_400)} days, then comes back to you.`,
+  look: 'Click a piece to see its stats.',
+  stays: `A piece stays with a trader for ${Math.round(VENDOR_LISTING_S / 86_400)} days, then comes back to you.`,
 });
 
 let _provider = /** @type {any} */ (null);

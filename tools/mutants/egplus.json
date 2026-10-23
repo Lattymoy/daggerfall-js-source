@@ -1,0 +1,173 @@
+[
+  {
+    "name": "EGPLUS-role-forgotten",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    'body .eg-k-tile'],   // EG-PLUS",
+    "new": "    ],   // EG-PLUS",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-cut-whole",
+    "file": "src/ui/eliteGates/egKit.js",
+    "old": "export const egKitCss = () => scopeRules(frameCss(), isEgKitSelector);",
+    "new": "export const egKitCss = () => frameCss();",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-ground-on-press",
+    "file": "src/ui/eliteGates/egKit.js",
+    "old": ".eg-k-btn { margin: 0; padding: 4px 12px;",
+    "new": ".eg-k-btn { background: #333; margin: 0; padding: 4px 12px;",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-serif-back",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "${PIXEL_FONT_CSS} font-size: calc(14px * var(--hud-scale, 1));",
+    "new": "font-family: Georgia, serif; font-size: calc(14px * var(--hud-scale, 1));",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-cut-never",
+    "file": "src/ui/eliteGates/egKit.js",
+    "old": "  return lay(EG_KIT_STYLE_ID, egKitCss());",
+    "new": "  return false;",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-decree-lines-dropped",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": ", lines: o.map((id) => EG_DECREES[id]?.line ?? '') };",
+    "new": ", lines: o.map(() => '') };",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-vote-unmarked",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (a.mine === y) { b.className += ' on';",
+    "new": "if (false) { b.className += ' on';",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-reader-unmarked",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "const n = el('div', `eg-k-row${r.you ? ' on' : ''}`);",
+    "new": "const n = el('div', 'eg-k-row');",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-band-dropped",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "sub: [`Hall ${r.h} - ${EG_BAND_NAMES[egBandOfHall(r.h)]}`, r.pr || '']",
+    "new": "sub: [`Hall ${r.h}`, r.pr || '']",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-runs-oldest-first",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "typeof r.title === 'string').slice().reverse();\n    return { season: ''",
+    "new": "typeof r.title === 'string').slice();\n    return { season: ''",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-chosen-twice",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "const finish = (fn) => { if (done) return; done = true; leave(); fn(); };",
+    "new": "const finish = (fn) => { done = true; leave(); fn(); };",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-slot-told-after",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "const finish = (fn) => { if (done) return; done = true; leave(); fn(); };",
+    "new": "const finish = (fn) => { if (done) return; done = true; fn(); leave(); };",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-ask-skipped",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "    if (!s.missing.length) { choose(",
+    "new": "    if (true) { choose(",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-fold-stuck",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "fold.addEventListener?.('click', () => { folded = open; draw(); });",
+    "new": "fold.addEventListener?.('click', () => { folded = true; draw(); });",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-panel-never",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "  if (o.panel) { const p = o.panel.open(o); if (p) return p; }",
+    "new": "  if (false) { const p = o.panel.open(o); if (p) return p; }",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-hall1-dropped",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "const list = keys > 0 ? (mine.includes(0) ? mine : [...mine, 0]) : [];",
+    "new": "const list = keys > 0 ? mine.filter((ew) => ew > 0) : [];",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-mark-misread",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "egMayStart(/** @type {number[]} */ (starts[m.sub]), ew)",
+    "new": "egMayStart(/** @type {number[]} */ (starts[me]), ew)",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-family-missing",
+    "file": "src/ui/eliteGates/egStartPanel.js",
+    "old": "export const EG_WAGER_FAMILIES = Object.freeze(Object.keys(EG_WAGER_FAMILY_WORDS));",
+    "new": "export const EG_WAGER_FAMILIES = Object.freeze(Object.keys(EG_WAGER_FAMILY_WORDS).slice(1));",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  },
+  {
+    "name": "EGPLUS-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    panel: isEnhancedPlus() ? egStartPanelDoors({ slot: egWindowSlot }) : null,",
+    "new": "    panel: null,",
+    "tests": [
+      "test/ui/eliteGates/egplus_ui.test.js"
+    ]
+  }
+]

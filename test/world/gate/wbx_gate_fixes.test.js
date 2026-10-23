@@ -154,8 +154,9 @@ test('WBX2 the seams: the court is handed the portal\'s door, and (SS3) no way h
   const gc = read('src/scenes/gate/gateCourt.js');
   assert.doesNotMatch(gc, /wayHome/, 'SS3: the court has no way home to take');
   assert.match(gc, /_portalFire\.origin = portal\.origin; _portalFire\.fade = portal\.fade; _portalFire\.spin = spin;\n\s*_fires\.push\(_portalFire\);/);
-  assert.match(gc, /portalPass\.draw\(_fires, proj, view, eye, seconds, fog\);/);
-  assert.match(gc, /portalPass = new GatePassRenderer\(gl, profile\);/);
+  // PIN MOVED (SHADER-STALL, render/glProgram.js compiledPass): the portal's pass built through the door once its programs are done
+  assert.match(gc, /const fire = _fires\.length \? portalPass\(true\) : null;[^\n]*\n\s*if \(fire\) \{\n\s*fire\.draw\(_fires, proj, view, eye, seconds, fog\);/);
+  assert.match(gc, /const portalPass = compiledPass\(gl, GATE_PASS_PROGRAMS, \(\) => new GatePassRenderer\(gl, \(profile \?\?= gateArchProfile\(\)\)\),/);   // GATE-MIX: asked on arrival, its opening its own
 });
 
 test('AUDIT SS the court\'s way home is PRESSED where its fire stands - the ray, the court\'s real floor collider and its exit targets as worldModes builds them: looking at the portal from 0.6 to 3 m before it, the press takes it within the door\'s reach (GATE-FBX: the bridge\'s membrane, pressed the same, is gone); looking away it does not, and past the reach it says too far. The square a dungeon door pads to (4.9 m across) swallowed every press from 0.6 to 2.4 m before the portal - SS3 made the press its only way through (mutants: the court\'s exits in the padded square; the fire\'s box too deep)', () => {
@@ -502,9 +503,12 @@ test('WBX7 the soul trap on him: kept on the relay\'s clock for its rounds (a tr
 test('WBX7 the seams: a soul trap meets him (hostMagic), the dungeon context lays it through applySpell and hands its chance and rounds to the court (onBossTrap, through the mode machine), the host rolls it with the port\'s own attemptSoulTrap and says its words', () => {
   const hm = read('src/scenes/hostMagic.js');
   assert.match(hm, /!\(duelSpellOf\(sp\) \|\| \(sp\.effects \?\? \[\]\)\.some\(\(e\) => e && isSoulTrapEffect\(e\)\) \|\| spellSways\(sp\)\)/);   // WB8a: and a sway, which meets him to be refused
-  const dc = read('src/scenes/dungeonContext.js');
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): his spell door left the dungeon context for
+  // scenes/gate/standInSpell.js; the context hands it the court's door for the trap
+  assert.match(read('src/scenes/dungeonContext.js'), /onTrap: \(trap\) => !!opts\.onBossTrap\?\.\(trap\),/);
+  const dc = read('src/scenes/gate/standInSpell.js');
   assert.match(dc, /const trapFx = \(sp\.effects \?\? \[\]\)\.filter\(\(e\) => e && isSoulTrapEffect\(e\)\);/);
-  assert.match(dc, /if \(trap\) laid = !!opts\.onBossTrap\?\.\(\{ chance: trap\.chance, rounds: \(trap\.roundsRemaining \?\? 0\) \+ 1 \}\);/);
+  assert.match(dc, /if \(trap\) laid = !!host\.onTrap\(\{ chance: trap\.chance, rounds: \(trap\.roundsRemaining \?\? 0\) \+ 1 \}\);/);
   assert.match(dc, /if \(!harm\) return laid \|\| sways;/, 'a trap alone still reaches him (WB8a: and a sway alone is spent on him)');
   assert.match(read('src/scenes/worldModes.js'), /onBossTrap: \(trap\) => !!host\.onBossTrap\?\.\(trap\),/);
   const w = hostText('src/scenes/world.js');

@@ -428,13 +428,13 @@
   {
     "name": "EM4-20-a-plate-the-solver-gave-up-on-is-drawn-anyway",
     "file": "src/ui/town/townSheet.js",
-    "old": "        if (!s || s.replaced) return;   // the solver gave up on it",
-    "new": "        if (!s) return;",
+    "old": "          text: s.replaced ? STAR_PLATE : n.text, name: n.text,",
+    "new": "          text: n.text, name: n.text,",
     "tests": [
-      "test/ui/ink/townsheet.test.js"
+      "test/ui/ink/townsheet.test.js",
+      "test/ui/ink/fb1020c_starplate.test.js"
     ],
-    "equivalent": true,
-    "why": "The unit fixtures never overrun the collision solver's three iterations, so no plate comes back `replaced`. IT IS COVERED, by tools/enhancedMapProbe.mjs, which lays a nine-block town of twelve named buildings and counts the plates that survive at two zooms."
+    "why": "RE-AIMED BY CONTENT (FB1020c STAR-PLATE): the sheet no longer drops a plate the solver gave up on - it letters it DFU's \"*\" - so this record's mutant is now that plate drawn by its whole name over its neighbours. It was recorded equivalent while no unit fixture overran the solver; fb1020c_starplate's three names on one anchor do, and it dies there."
   },
   {
     "name": "EM4-21-the-travel-tag-is-asserted-rather-than-derived",

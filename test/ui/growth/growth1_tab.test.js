@@ -166,7 +166,7 @@ test('GROWTH2 CHOOSE: an open path\'s Choose asks in the law\'s own box and comm
   assert.deepEqual(warden.ask(), AP.pathChoiceRows(e, 'warden'));
   const ranger = family(m, 'martial').paths.find((p) => p.id === 'ranger');
   assert.deepEqual(ranger.ask(), MP.martialChoiceRows(e, 'ranger'));
-  assert.deepEqual(warden.choose(), { ok: true, text: 'Specialisation chosen: Warden.' });
+  assert.deepEqual(warden.choose(), { ok: true, text: 'Specialization chosen: Warden.' });
   assert.equal(e.arcanePath, 'warden');
   assert.equal(family(specGuideModel(e), 'arcane').paths.find((p) => p.id === 'trickster').choose().ok, false, 'the law refuses a second');
 });
@@ -232,17 +232,17 @@ test('AUDIT GROWTH LANE1-3 THE CHOSEN PATH ASLEEP: Master Skills off, mentoring,
   assert.equal(MP.chooseMartialPath(c, 'ranger').ok, true);
   assert.equal(AP.choosePath(c, 'warden').ok, true);
   const line = (id) => { const f = family(specGuideModel(c), id); return stateLine(f, f.paths.find((p) => p.state === 'chosen'), true); };
-  assert.equal(line('martial'), 'Your specialisation.');
+  assert.equal(line('martial'), 'Your specialization.');
   c._mentor = { level: 5 };
-  assert.equal(line('arcane'), 'Your specialisation. Its powers are off while you mentor a lower-level party.');
+  assert.equal(line('arcane'), 'Your specialization. Its powers are off while you mentor a lower-level party.');
   c._mentor = null;
   setSigilDueling(true);
-  try { assert.equal(line('martial'), 'Your specialisation. Its powers are off during a duel.'); } finally { setSigilDueling(false); }
+  try { assert.equal(line('martial'), 'Your specialization. Its powers are off during a duel.'); } finally { setSigilDueling(false); }
   c.isInBeastForm = true;
-  assert.deepEqual([line('martial'), line('arcane')], ['Your specialisation. Its powers are off in beast form.', 'Your specialisation.']);
+  assert.deepEqual([line('martial'), line('arcane')], ['Your specialization. Its powers are off in beast form.', 'Your specialization.']);
   c.isInBeastForm = false;
   c._online = false; c.masterSkills = false;
-  assert.equal(line('arcane'), 'Your specialisation. Its powers are off while Master Skills is off.');
+  assert.equal(line('arcane'), 'Your specialization. Its powers are off while Master Skills is off.');
 });
 
 test('AUDIT GROWTH LANE1-12 ONE SKILL LEFT: the state line names the skill that still needs it, and "both" only when both do (mutants: the one read as both)', () => {
@@ -447,7 +447,7 @@ test('AUDIT GROWTH LANE2/LANE3 THE STAGE\'S EDGES: a face left before its chunk 
   assert.match(menu, /if \(pauseTab === 'growth' && growthAsks\(\)\) \{ timersOpen = false; timersFocusBack = true; render\(\); return; \}/, 'the timers door asks');
   assert.match(menu, /\(\) => \{ if \(pauseTab === 'growth' && growthAsks\(\)\) return; onAction\('resume'\); \}\);/, 'the scrim asks');
   const tab = rd('src/ui/growth/growthTab.js');
-  assert.match(tab, /:root\[data-plus-dress="grimoire"\] \.px-journal\.gr-faced > \.px-qrail \{ width: auto;/);
+  assert.match(tab, /:root\[data-plus-dress="grimoire"\] \.px-journal\.gr-book > \.px-qrail \{ width: 25%;/);
   assert.match(tab, /const levelDoor = \(\) => \(globalThis\.innerHeight \?\? 720\) < LEVEL_PANE_MIN_H \|\| /);
   assert.match(tab, /door: levelDoor\(\),/);
   const stage = rd('src/ui/growth/growthStage.js');
@@ -511,8 +511,8 @@ test('GROWTH3 THE WINDOWS, EMBEDDED (by source; tools/growthProbe.mjs drives the
   assert.match(lv, /if \(embed \|\| overlayAction\(e\) !== 'back'\) return;/, 'Escape is the window\'s: a level left stays owed');
   // the window's back stack asks the face first, on the Growth tab with a face up
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /: mode === 'pause' && pauseTab === 'growth' && stageLive\(\) \? \(\) => \{ if \(!growthBack\(\)\) onAction\('resume'\); \}/);
-  // and a face up widens the window
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(pauseTab === 'growth' && stageLive\(\)\) win\.classList\.add\('px-win-wide'\);/);
+  // GROWTH-BOOK: one window size for every page of the tab, face or none
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(pauseTab === 'growth'\) win\.classList\.add\('px-win-growth'\);/);
 });
 
 // GROWTH5 (the merge of RVN-STARS found it: AUDIT RVN-STARS S8's law, for every face on the stage) - LEAVING ASKS FIRST
@@ -572,8 +572,8 @@ test('GROWTH4 THE CLASSIC SHEET: where a document stands, its S and W rows open 
 });
 
 test('GROWTH4 THE ONE ASK\'S WORDS: on the enhanced skin the No and the several-open box name the Growth tab; the classic skin\'s the skill screen, whose rows open the same guide (mutants: the skins\' words swapped)', () => {
-  assert.equal(AP.pathDeclinedGrowthText(), 'You can choose a specialisation later on the Growth tab of the pause menu.');
-  assert.equal(MP.martialDeclinedGrowthText(), 'You can choose a martial specialisation later on the Growth tab of the pause menu.');
+  assert.equal(AP.pathDeclinedGrowthText(), 'You can choose a specialization later on the Growth tab of the pause menu.');
+  assert.equal(MP.martialDeclinedGrowthText(), 'You can choose a martial specialization later on the Growth tab of the pause menu.');
   // PIN MOVED (SPEC-RESET, bible/10-UI/Growth.md section 10): the choice is undone only by the paid reset, and the box
   // names its price - on a row of its own (AUDIT SPEC-RESET L4-5)
   assert.equal(AP.pathsOpenRows([AP.PATH_BY_ID.warden], { growth: true }).at(-2), 'See them all and choose one on the Growth tab of the pause menu.');
@@ -609,7 +609,7 @@ test('GROWTH THE WINDOW, DRIVEN: the Stats page\'s Growth door (its count) lands
       assert.equal(btn('Growth')?.textContent, 'Growth (1)', 'the Growth door counts the path waiting');
       btn('Growth').onclick();
       assert.match(tabOn(), /Growth/);
-      rail('Specialisations').onclick();
+      rail('Specializations').onclick();
       const bar = host.querySelectorAll('button').find((b) => String(b.className).includes('gr-pathbar') && b.textContent.startsWith('Ranger'));
       bar.onclick();
       const detail = host.querySelectorAll('div').find((d) => String(d.className).includes('gr-detail'))?.textContent ?? '';
@@ -620,13 +620,13 @@ test('GROWTH THE WINDOW, DRIVEN: the Stats page\'s Growth door (its count) lands
       for (const part of ['Requirements', 'Long Blade: mastered', 'Passive: Hunter\'s Instinct', 'Signature technique: Mark of the Hunt', 'Bow: 12-second cooldown', 'Weapon Technique key']) assert.ok(detail.includes(part), part);
       btn('Choose Ranger').onclick();
       const ask = globalThis.document.body.querySelectorAll('div').find((d) => String(d.className).includes('px-master-ask'));
-      assert.match(ask.textContent, /Martial specialisation: Ranger\?/);
+      assert.match(ask.textContent, /Martial specialization: Ranger\?/);
       ask.querySelectorAll('button').find((b) => b.textContent === 'Yes').onclick();
       assert.equal(playerEntity.martialPath, 'ranger');
       // the Master Skills page's link into the guide
       host.querySelectorAll('button').find((b) => b.textContent.includes('Stats')).onclick();
       btn('Master Skills').onclick();
-      btn('Specialisations').onclick();
+      btn('Specializations').onclick();
       assert.match(tabOn(), /Growth/);
       assert.ok(host.querySelectorAll('div').some((d) => String(d.className).includes('gr-switch')), 'on the guide');
     } finally { menu.unmount(); }
@@ -691,12 +691,12 @@ test('AUDIT GROWTH LANE5-4 THE TAB WITH ITS REAL FACES, DRIVEN: the Firmament an
     assert.equal(host.querySelectorAll('div').some((d) => String(d.className).includes('fmt-embed')), true, 'drawn in the pane, embedded');
     firm.allocate(START_KEYS[1]);
     assert.equal(firm.model().changes.startChanged, true);
-    rail('Specialisations').onclick();
+    rail('Specializations').onclick();
     assert.match(page(), /Firmament/, 'the first press held');
     asked(/You have unaccepted changes\. Press Accept to keep them, or leave again to discard them\./);
     assert.equal(menu.asksFirst(), false, 'asked once: the window\'s own ask lets the second go');
-    rail('Specialisations').onclick();
-    assert.match(page(), /Specialisations/, 'the second press went');
+    rail('Specializations').onclick();
+    assert.match(page(), /Specializations/, 'the second press went');
     assert.equal(stageFace(), null, 'the face dropped');
     assert.deepEqual(commits, [], 'nothing accepted');
     // THE CAPTAIN'S SKY: a star taken - the window's asksFirst (the sheet's key, the dial's) holds once; another tab after it goes
@@ -748,7 +748,7 @@ test('AUDIT GROWTH LANE3-9 / LANE5-6 THE YES/NO CARD AND THE MASTER SKILLS LINE,
     };
     open();
     const line = () => host.querySelectorAll('div').find((d) => String(d.className).includes('px-master-about'))?.textContent ?? null;
-    assert.equal(line(), 'Master two schools of magic or two weapon skills to unlock a specialisation. See every path and what it needs on the Growth tab.');
+    assert.equal(line(), 'Master two schools of magic or two weapon skills to unlock a specialization. See every path and what it needs on the Growth tab.');
     host.querySelectorAll('button').find((b) => b.textContent === 'Master').onclick();
     assert.ok(card(), 'the card asks');
     dom.keydown('Escape', undefined, esc); dom.keyup('Escape', undefined, esc);
@@ -769,7 +769,7 @@ test('AUDIT GROWTH LANE3-9 / LANE5-6 THE YES/NO CARD AND THE MASTER SKILLS LINE,
     assert.equal(MP.chooseMartialPath(playerEntity, 'ranger').ok, true);
     assert.equal(AP.choosePath(playerEntity, 'warden').ok, true);
     open();
-    assert.equal(line(), 'Your specialisations are on the Growth tab.');
+    assert.equal(line(), 'Your specializations are on the Growth tab.');   // PIN MOVED (VOICE2): specialization (Voice.md rule 8)
   } finally { menu?.unmount(); restore(); }
 });
 

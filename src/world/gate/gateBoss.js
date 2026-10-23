@@ -15,7 +15,9 @@
 // The charge is run on the walk's frames at a run's pace, his body carried down the lane as the brain carries it.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, ATTACKS, BOSS_H, LEAP_AIR_MS, CROSS_AIR_MS, airOf, leapAt, profileOf, isDagons, HOST, HOST_KINDS, HOST_RISE_MS, hostAt } from '../../net/gate/gateBrain.js';
+import { ATTACK_BY_ID, ATTACKS, BOSS_H, LEAP_AIR_MS, CROSS_AIR_MS, airOf, leapAt, profileOf, isDagons, HOST, HOST_KINDS, HOST_RISE_MS, hostAt, HALF } from '../../net/gate/gateBrain.js';
+import { HIT_CAP_X, dpsRef, LV_MAX } from '../../net/gate/gateBrain.js';   // STAND-IN-WHOLE: the most one blow lands, the relay's own law
+import { EG_BUCKET_X_MAX } from '../../net/eliteGates/egVestige.js';   // STAND-IN-WHOLE: and the most an Elite Breach's bucket grows by
 import { bossAt } from '../../net/gate/gateLink.js';
 import { telegraphAt, chargeHead, hostTelegraphAt } from '../../net/gate/gateStrike.js';
 import {
@@ -25,6 +27,7 @@ import {
   stateAnims,   // AUDIT WB11 C1: his host's tables by the port's own law
 } from '../../characters/mobile/mobileUnit.js';
 import { ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
+import { t } from '../../systems/textManager.js';   // WB14c: the Vanguard's own names in the player's language (L10N4)
 import { makeEnemyEntity } from '../../characters/enemy/enemyEntity.js';
 import { courtToDungeon } from './gateArena.js';
 import { hitFlashStrength } from '../../systems/hitFlash.js';   // WB13d: his body struck flashes on the game's own curve
@@ -34,6 +37,25 @@ import { fxBurstOf } from '../../render/gate/gateFx.js';   // WB13d: a landing w
  *  size he stands (BOSS_H is the body the blows are measured against - three Daedra Lords tall). */
 export const BOSS_LOOKS = Object.freeze({ ruhn: Object.freeze({ mobile: 31, scale: 3 }) });
 export const bossLookOf = (id) => BOSS_LOOKS[id] ?? BOSS_LOOKS.ruhn;
+/** WB14d (bible/11-Multiplayer/Breach-Portents.md section 5): HIS FLAME, SEEN - his aspect's Atronach (the Fire, the Ice,
+ *  the Iron under the storm, the Flesh under the venom - the Sapper's own sprites, enemyBasics.js 35-38) at his own scale,
+ *  its profile's size three quarters of his: a second body across the fire, never his own sprite twice. */
+export const FLAME_LOOKS = Object.freeze({ burning: 35, rime: 38, storm: 36, venom: 37 });
+export const flameLookOf = (aspectId) => Object.freeze({ mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });
+/** WB14d: the halves' names (read through the text core - L10N4) - his Blade, and his aspect's fire made flesh (`boss` his
+ *  own name, the last word of it: "Ruhn's Blade", "Ruhn's Rime"). */
+export const HALF_NAMES = Object.freeze({
+  blade: (boss) => t('gate.sunder.blade', "{boss}'s Blade", { boss }),
+  burning: (boss) => t('gate.sunder.flame', "{boss}'s Flame", { boss }),
+  rime: (boss) => t('gate.sunder.rime', "{boss}'s Rime", { boss }),
+  storm: (boss) => t('gate.sunder.storm', "{boss}'s Storm", { boss }),
+  venom: (boss) => t('gate.sunder.venom', "{boss}'s Venom", { boss }),
+});
+/** WB14d: half `b`'s name under a profile, for a boss named `name`. */
+export const halfName = (b, P, name) => {
+  const boss = String(name ?? '').trim().split(/\s+/).pop() || 'Ruhn';
+  return (b === HALF.flame ? HALF_NAMES[P?.aspect?.id] ?? HALF_NAMES.burning : HALF_NAMES.blade)(boss);
+};
 
 /**
  * WB4b: THE ENTITY A BLOW ON HIM IS COMPUTED AGAINST - on the striker's machine, by the port's own formulas (a swing's
@@ -43,20 +65,53 @@ export const bossLookOf = (id) => BOSS_LOOKS[id] ?? BOSS_LOOKS.ruhn;
  * his armour a knight's in plate rather than a Daedra Lord's (BOSS_ARMOR: against his own dodging, a level-1 iron
  * longsword lands more than half its swings and a level-20 blade nearly all - bible section 5's numbers, measured in the
  * pins), and a health nothing here
- * can empty (the relay holds his real one). Named for the numbers and the lines a blow says.
+ * can empty (the relay holds his real one - STAND_IN_WHOLE, below). Named for the numbers and the lines a blow says.
  * FIELD BUGS 2026-10-18f RELAY-SHARE: `share` - its owner's reader of the relay's own word of this body's health (a share,
  * 0..1, or null where none is heard; combat/healthShare.js wordShare builds one): what every "under its health" power
  * reads of it (combat/healthShare.js healthShare). Without one the share is unknown, as before.
+ * FIELD BUGS 2026-10-19f STAND-IN-WHOLE: `blowX` - its owner's reader of the factor its relay grows my bucket by (an Elite
+ * Breach's: my Vestiges' declared factor, net/eliteGates/egVestige.js egDeclaredX); none, the gate's own 1. What one blow of
+ * mine can land on it reads it (standInBlowCap).
  */
 export const BOSS_ARMOR = 60;
-export function bossStandIn(look, name, share = null) {
+/**
+ * FIELD BUGS 2026-10-19f STAND-IN-WHOLE (a player's private report: Disintegrate on an online breach's boss popped a huge
+ * number, and his bar never moved): THE WHOLE A STAND-IN STANDS AT - a count, not a body. The relay holds every such
+ * body's health and nothing here takes from a stand-in (a swing's and a shaft's number is sent, never subtracted; a spell
+ * lands on it through counting sinks - scenes/gate/standInSpell.js), so one law alone reads its whole: a Disintegrate
+ * deals its target what health it has left (systems/effects.js - DFU's Disintegrate.MagicRound, SetHealth(0)). It stood
+ * at 1e9, and a claim of 1e9 is past every wire's ceiling - the gate's hit, ahit and xhit and the Abyss's
+ * (net/wire.js GATE_DMG_WIRE_MAX, 100,000), an Elite Breach's (validEgIn, 1e6) and a refereed bout's
+ * (net/arena/arenaLaw.js validArenaIn, 10,000) - so every relay refused the whole cast: the number rose, nothing landed.
+ * It stands at the most one blow lands at any relay - HIT_CAP_X times the reference at LV_MAX, grown by the most an Elite
+ * Breach's bucket grows (EG_BUCKET_X_MAX): 975, over the serpent's (net/serpent/serpentBrain.js, SERPENT_HIT_CAP_X of a
+ * galley's reference) and a bout's (arenaBlowCap) - so a Disintegrate counts whole and the relay's own caps clip it, as
+ * a duel's stand-in counts at the wire's vital ceiling (combat/duelCombat.js DUEL_STAND_IN); and under the least ceiling
+ * nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Pinned against the real constants and
+ * every validator (test/net/gate/fb1019f_standinwhole.test.js).
+ */
+export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;
+/**
+ * STAND-IN-WHOLE: WHAT ONE BLOW OF MINE AT LEVEL `lv` CAN LAND ON STAND-IN `e` - the relay's one-blow cap (net/gate/
+ * gateBrain.js applyHit and spendPurse: HIT_CAP_X times the reference at my level), grown by the factor its owner says my
+ * bucket grows by (`relayBlowX` - an Elite Breach's, at most EG_BUCKET_X_MAX; 1 where none is said or it says no number).
+ * Never past STAND_IN_WHOLE. The number a spell on it says (scenes/gate/standInSpell.js). Pure.
+ * @param {any} e @param {number} lv
+ */
+export function standInBlowCap(e, lv) {
+  let bx = 1;
+  try { bx = typeof e?.relayBlowX === 'function' ? Number(e.relayBlowX()) : 1; } catch { bx = 1; }
+  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1);
+}
+export function bossStandIn(look, name, share = null, blowX = null) {
   const e = makeEnemyEntity(look.mobile, ENEMY_BASICS[look.mobile], null, 1, () => 0.5);
   e.minMetalToHit = 0;
   e.armor = BOSS_ARMOR;
   e.armorValues = new Array(7).fill(BOSS_ARMOR);
-  e.maxHealth = e.health = 1e9;
-  e.relayHealth = true;   // AUDIT MARTIAL L3 F2: the relay's to know - a share of the 1e9 here is no word (systems/weaponMastery.js)
+  e.maxHealth = e.health = STAND_IN_WHOLE;   // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: a count the wire carries, never 1e9
+  e.relayHealth = true;   // AUDIT MARTIAL L3 F2: the relay's to know - a share of the whole here is no word (systems/weaponMastery.js), nor is a blow's share of it (combat/blood/bloodDecals.js bloodHit)
   e.relayShare = typeof share === 'function' ? share : null;   // FIELD BUGS 2026-10-18f RELAY-SHARE: the relay's word of it, its owner's reader
+  e.relayBlowX = typeof blowX === 'function' ? blowX : null;   // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: the factor its relay grows my bucket by, its owner's reader
   e.name = name;
   e.spareGear = true;   // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)
   e.mobileType ??= look.mobile;   // WBX7: a soul trap reads the target's mobile (systems/effects.js) - his is a Daedra Lord's, no humanoid
@@ -76,8 +131,8 @@ export function bossStandIn(look, name, share = null) {
  */
 export const CRYSTAL_ARMOR = 100;
 export const CRYSTAL_NAME = 'Crystal of Oblivion';
-export function crystalStandIn(look, c = null, share = null) {   // FIELD BUGS 2026-10-18f RELAY-SHARE: `share` its own word's reader (bossStandIn)
-  const e = bossStandIn(look, CRYSTAL_NAME, share);
+export function crystalStandIn(look, c = null, share = null, blowX = null) {   // FIELD BUGS 2026-10-18f RELAY-SHARE: `share` its own word's reader (bossStandIn); 2026-10-19f STAND-IN-WHOLE: `blowX` its relay's bucket's
+  const e = bossStandIn(look, CRYSTAL_NAME, share, blowX);
   e.armor = CRYSTAL_ARMOR;
   e.armorValues = new Array(7).fill(CRYSTAL_ARMOR);
   e.skills = 0;
@@ -161,6 +216,17 @@ export const ATTACK_COLORS = Object.freeze({
   // WB9b: the bound's landing, his weight's colour; WB9c: Dagon's Reckoning, the Wrath's blood-red deepened toward black
   cross: Object.freeze([1.0, 0.46, 0.12]),
   reckon: Object.freeze([0.95, 0.08, 0.16]),
+  // WB14a: the new arsenal - the chain's hot iron, Dagon's brand, the Torment's gold (render/gate/gateTelegraph.js
+  // TORMENT_COLOR draws its ring), the wheel's blades, the gaze's white, the Unmaking's void-violet
+  chains: Object.freeze([1.0, 0.34, 0.1]),
+  brand: Object.freeze([1.0, 0.24, 0.2]),
+  torment: Object.freeze([1.0, 0.8, 0.28]),
+  wheel: Object.freeze([1.0, 0.38, 0.16]),
+  gaze: Object.freeze([1.0, 0.97, 0.9]),
+  unmake: Object.freeze([0.78, 0.2, 0.62]),
+  // WB14d: the Sundering's tear (his ember torn toward Oblivion's crimson) and the Rejoining's gold where the halves meet
+  sunder: Object.freeze([1.0, 0.22, 0.4]),
+  rejoin: Object.freeze([1.0, 0.62, 0.22]),
 });
 /** WB9c: the crystals of Oblivion - their heart's glow (his aspect's colour where he wears one: CRYSTAL_ASPECT), and the
  *  stunned Warden's daze (a pale ember). */
@@ -178,9 +244,9 @@ export const POOL_COLOR = Object.freeze([1.0, 0.36, 0.05]);
  */
 const tint = (o) => Object.freeze(Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Object.freeze(v)])));
 export const ASPECT_COLORS = Object.freeze({
-  rime: tint({ hellfire: [0.5, 0.78, 1.0], nova: [0.72, 0.9, 1.0], meteor: [0.4, 0.68, 1.0], spokes: [0.46, 0.56, 1.0], pool: [0.28, 0.6, 1.0], ember: [0.34, 0.6, 0.95] }),
-  storm: tint({ hellfire: [0.66, 0.52, 1.0], nova: [0.84, 0.8, 1.0], meteor: [0.96, 0.92, 0.5], spokes: [0.74, 0.46, 1.0], pool: [0.56, 0.4, 1.0], ember: [0.6, 0.42, 0.95] }),
-  venom: tint({ hellfire: [0.5, 1.0, 0.26], nova: [0.68, 1.0, 0.38], meteor: [0.38, 0.92, 0.16], spokes: [0.28, 1.0, 0.52], pool: [0.3, 0.86, 0.12], ember: [0.36, 0.8, 0.16] }),
+  rime: tint({ hellfire: [0.5, 0.78, 1.0], nova: [0.72, 0.9, 1.0], meteor: [0.4, 0.68, 1.0], spokes: [0.46, 0.56, 1.0], pool: [0.28, 0.6, 1.0], ember: [0.34, 0.6, 0.95], brand: [0.42, 0.62, 1.0] }),   // WB14a: the Brand his element's (the Torment keeps its gold)
+  storm: tint({ hellfire: [0.66, 0.52, 1.0], nova: [0.84, 0.8, 1.0], meteor: [0.96, 0.92, 0.5], spokes: [0.74, 0.46, 1.0], pool: [0.56, 0.4, 1.0], ember: [0.6, 0.42, 0.95], brand: [0.7, 0.4, 1.0] }),
+  venom: tint({ hellfire: [0.5, 1.0, 0.26], nova: [0.68, 1.0, 0.38], meteor: [0.38, 0.92, 0.16], spokes: [0.28, 1.0, 0.52], pool: [0.3, 0.86, 0.12], ember: [0.36, 0.8, 0.16], brand: [0.4, 0.95, 0.2] }),
 });
 /** An attack's colour under a profile (net/gate/gateBrain.js fightProfile): his aspect's where it names one - his elemental
  *  blows alone, never Dagon's Wrath - else the attack's own. */
@@ -367,6 +433,20 @@ export const BOSS_CUES = Object.freeze({
     // the deepest roar and the fire's cast under it, heard from anywhere in the arena
     cross: Object.freeze({ clip: B.barkSound, pitch: 0.46, volume: 1.9, reach: 160, at: 'him' }),
     reckon: Object.freeze({ clip: B.barkSound, pitch: 0.38, volume: 2.1, reach: 160, at: 'him' }),
+    // WB14a: the new arsenal - the chain thrown (his stride's own sound, higher than the Charge's), Dagon's brand called on
+    // the fire's cast under the Meteor's and the Unmaking's under that, the Torment on his attack's own cry, the Wheel's
+    // bark and the Gaze's under the Spokes' - each pitched down for his size, four semitones and more from the rest of its
+    // clip (WB13d)
+    chains: voice(B.moveSound, 0.9, 1.4),
+    brand: Object.freeze({ id: FIRE_CAST_ID, pitch: 0.39, volume: 1.4, reach: 60, at: 'him' }),
+    torment: voice(B.attackSound, 0.85, 1.4),
+    wheel: voice(B.barkSound, 0.37, 1.6),
+    gaze: voice(B.barkSound, 0.29, 1.8),
+    unmake: Object.freeze({ id: FIRE_CAST_ID, pitch: 0.305, volume: 1.7, reach: 80, at: 'him' }),
+    // WB14d: the Sundering - his attack's cry torn low, heard in every court; the Rejoining's lower still (the Torment's
+    // clip, each four semitones and more below the last)
+    sunder: Object.freeze({ clip: B.attackSound, pitch: 0.62, volume: 1.9, reach: 160, at: 'him' }),
+    rejoin: Object.freeze({ clip: B.attackSound, pitch: 0.48, volume: 2.0, reach: 160, at: 'him' }),
   }),
   // WB13d: the release - his blade's swing, his weight gathered as it comes down, his fire loosed (Dagon's too)
   release: Object.freeze({
@@ -381,6 +461,14 @@ export const BOSS_CUES = Object.freeze({
     spokes: fireLoosed(1.3, 50),
     wrath: fireLoosed(1.8, 120),
     reckon: fireLoosed(1.8, 160),
+    chains: Object.freeze({ clip: SWING_LOW, pitch: 0.7, volume: 1.4, reach: 40, at: 'him' }),   // WB14a
+    brand: fireLoosed(1.1, 40, 'targets'),
+    torment: fireLoosed(1.1, 40, 'targets'),
+    wheel: Object.freeze({ clip: SWING_LOW, pitch: 0.55, volume: 1.6, reach: 45, at: 'him' }),
+    gaze: fireLoosed(1.4, 70),
+    unmake: fireLoosed(1.5, 60),
+    sunder: Object.freeze({ clip: BODY_FALL, pitch: 0.45, volume: 1.7, reach: 120, at: 'him' }),   // WB14d
+    rejoin: Object.freeze({ clip: BODY_FALL, pitch: 0.36, volume: 1.8, reach: 160, at: 'him' }),
   }),
   land: Object.freeze({
     cleave: voice(B.attackSound, 0.8),
@@ -394,6 +482,14 @@ export const BOSS_CUES = Object.freeze({
     spokes: Object.freeze({ clip: BURNING, pitch: 0.65, volume: 1.8, reach: 60, at: 'him' }),
     cross: Object.freeze({ clip: BODY_FALL, pitch: 0.24, volume: 2.2, reach: 160, at: 'him' }),
     reckon: Object.freeze({ clip: BURNING, pitch: 0.42, volume: 2.2, reach: 200, at: 'him' }),
+    chains: voice(B.attackSound, 0.9),   // WB14a
+    brand: Object.freeze({ clip: BURNING, pitch: 0.95, volume: 1.4, reach: 40, at: 'targets' }),
+    torment: Object.freeze({ clip: BURNING, pitch: 0.8, volume: 1.6, reach: 40, at: 'targets' }),
+    wheel: voice(B.attackSound, 0.66, 1.6),
+    gaze: Object.freeze({ clip: BURNING, pitch: 0.85, volume: 1.6, reach: 70, at: 'him' }),
+    unmake: Object.freeze({ clip: BURNING, pitch: 0.6, volume: 2, reach: 80, at: 'him' }),
+    sunder: voice(B.attackSound, 0.5, 2),   // WB14d
+    rejoin: Object.freeze({ clip: BODY_FALL, pitch: 0.22, volume: 2.2, reach: 160, at: 'him' }),
   }),
   roar: voice(B.barkSound, 0.5, 1.8),
   fall: voice(B.barkSound, 0.4, 1.8),
@@ -419,6 +515,28 @@ export const BOSS_CUES = Object.freeze({
   // WB13e: a Meteor or a Leap aimed where I stand, at its word - the parry's ring, high and sharp, at my feet
   sting: Object.freeze({ clip: CRYSTAL_CLIPS.hit, pitch: 2.2, volume: 1.3, reach: 20, at: 'point' }),
 });
+/** GATE-MIX (2026-10-20, the owner: "the game hitches, audio becomes super loud and even distorts"): A CUE AT ITS
+ *  TARGETS, THINNED. A cue `at: 'targets'` played one copy at every target - a Hellfire on five players was five of the
+ *  fire's full-scale cast in one frame, ten in his third phase (its second volley within 3 m of the first), and over a
+ *  reach of 40 to 80 m with a linear fall every copy near a group came in at nearly its whole level, so the copies
+ *  summed far past the clip. Now the target nearest my ear first, then the next that stands CUE_TARGET_APART_M or
+ *  more from every one kept, at most CUE_TARGET_COPIES: where it lands on me is still heard at my feet, a fall across
+ *  the court still from across it, and no two copies of one clip stand on top of each other. */
+export const CUE_TARGET_COPIES = 2;
+export const CUE_TARGET_APART_M = 10;
+/** The places a 'targets' cue sounds at, of `points` (each [x, y, z], the ear's frame) for an ear at `ear` - nearest
+ *  first, thinned as above; with no ear, the first. Pure. */
+export function cueTargetPlaces(points, ear) {
+  if (!Array.isArray(points) || !points.length) return [];
+  const d2 = (p, q) => (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
+  const order = Array.isArray(ear) ? points.slice().sort((p, q) => d2(p, ear) - d2(q, ear)) : points;
+  const kept = [], apart = CUE_TARGET_APART_M * CUE_TARGET_APART_M;
+  for (const p of order) {
+    if (kept.length >= CUE_TARGET_COPIES) break;
+    if (kept.every((k) => d2(k, p) >= apart)) kept.push(p);
+  }
+  return kept;
+}
 /**
  * WB8b: HIS ASPECT, HEARD - his elemental blows' wind-ups and landings under each aspect but his burning one: the
  * element's own cast (systems/enemySpells.js SPELL_CAST_SOUND - cold 353, shock 351, poison 350) as they are called,
@@ -453,15 +571,18 @@ export const BOSS_STRIDE_M = 2.8;
 export const GROWL_EVERY_MS = Object.freeze([7000, 13000]);
 export const HURT_GAP_MS = 1400;
 export const HURT_SHARE = 0.004;
-export const QUAKE_ON = Object.freeze(['slam', 'charge', 'nova', 'wrath', 'leap', 'meteor', 'cross', 'reckon']);   // WBX5: his leap's landing and a meteor's fall shake it too; WB9: the bound's and the Reckoning's
+export const QUAKE_ON = Object.freeze(['slam', 'charge', 'nova', 'wrath', 'leap', 'meteor', 'cross', 'reckon', 'sunder', 'rejoin']);   // WB14d: and the Sundering's and the Rejoining's   // WBX5: his leap's landing and a meteor's fall shake it too; WB9: the bound's and the Reckoning's
 /** WB13d: A LANDING FELT - the camera's shake (systems/betterAmbience.js weaponKick, under the player's own maxShake) at
  *  nought metres from where it lands and the reach it fades to nothing over; a reach of none: the whole arena feels it. */
 export const LAND_SHAKE = Object.freeze({
   slam: Object.freeze([2.5, 12]), leap: Object.freeze([2.5, 12]), cross: Object.freeze([4, 25]), meteor: Object.freeze([3.5, 15]),
   nova: Object.freeze([2, 24]), wrath: Object.freeze([6, 0]), reckon: Object.freeze([6, 0]),
 });
+/** AUDIT WB14 (SCREEN-12): his tearing and his making whole are felt as his bound is - they quake and burst as it does -
+ *  through the bound's own shake, not two kinds more (SD16 holds the Hour to more kinds of shake than his court). */
+export const SHAKE_AS = Object.freeze({ sunder: 'cross', rejoin: 'cross' });
 /** The shake a landing of `A` gives feet `d` metres from it (a reach of none: everywhere). Pure. */
-export const landShake = (A, d) => { const w = LAND_SHAKE[A?.key]; return !w ? 0 : !(w[1] > 0) ? w[0] : w[0] * Math.max(0, 1 - d / w[1]); };
+export const landShake = (A, d) => { const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 0 : !(w[1] > 0) ? w[0] : w[0] * Math.max(0, 1 - d / w[1]); };
 export const THUD_AT_MS = 1500;
 
 // ═══ WB11c: HIS HOST, SEEN AND HEARD ═══════════════════════════════════════════════════════════════════════════
@@ -478,11 +599,24 @@ export const HOST_LOOKS = Object.freeze({
   harrier: Object.freeze({ burning: 1, rime: 1, storm: 1, venom: 1 }),
   sapper: Object.freeze({ burning: 35, rime: 38, storm: 36, venom: 37 }),
   bearer: Object.freeze({ burning: 26, rime: 25, storm: 29, venom: 27 }),
+  // WB14c: the Vanguard's - a Daedroth's weight, a Daedra of his aspect's fire (a Lich under the venom), and his lieutenant a
+  // Daedra Lord, as he is
+  brute: Object.freeze({ burning: 27, rime: 27, storm: 27, venom: 27 }),
+  caster: Object.freeze({ burning: 26, rime: 25, storm: 29, venom: 32 }),
+  markynaz: Object.freeze({ burning: 31, rime: 31, storm: 31, venom: 31 }),
+  tithe: Object.freeze({ burning: 1, rime: 1, storm: 1, venom: 1 }),   // WB14e: an Imp, at TITHE_SCALE, burning gold
+  gaoler: Object.freeze({ burning: 26, rime: 25, storm: 29, venom: 27 }),   // WB14f: the Ward-Bearer's Daedra, by another name
 });
+/** WB14e: the Tithe-Imp drawn this much larger than an Imp, and its gold (its glow, its burst, its name's line). */
+export const TITHE_SCALE = 1.3;
+export const TITHE_GOLD = Object.freeze([1.0, 0.8, 0.3]);
 export const HOST_NAMES = Object.freeze({
   1: Object.freeze(['Imp', 'Imps']), 35: Object.freeze(['Fire Atronach', 'Fire Atronachs']), 38: Object.freeze(['Ice Atronach', 'Ice Atronachs']),
   36: Object.freeze(['Iron Atronach', 'Iron Atronachs']), 37: Object.freeze(['Flesh Atronach', 'Flesh Atronachs']),
   26: Object.freeze(['Fire Daedra', 'Fire Daedra']), 25: Object.freeze(['Frost Daedra', 'Frost Daedra']), 29: Object.freeze(['Daedra Seducer', 'Daedra Seducers']), 27: Object.freeze(['Daedroth', 'Daedroths']),
+  // WB14c: the Vanguard's Lich and its Markynaz (a Daedra Lord by his rank, read through the text core - L10N4)
+  32: Object.freeze({ get 0() { return t('gate.host.lich', 'Lich'); }, get 1() { return t('gate.host.liches', 'Liches'); } }),
+  31: Object.freeze({ get 0() { return t('gate.host.markynaz', 'Markynaz'); }, get 1() { return t('gate.host.markynazes', 'Markynazes'); } }),
 });
 export const HOST_HOVER_M = 0.9;
 /** A host body's look - its mobile, its names, how high it hovers, whether it is drawn winged - for kind `k` under the
@@ -490,15 +624,28 @@ export const HOST_HOVER_M = 0.9;
 export function hostLookOf(k, aspectId) {
   const key = HOST_KINDS[k]?.key ?? 'harrier', table = HOST_LOOKS[key];
   const mobile = table[aspectId] ?? table.burning;
-  const [name, plural] = HOST_NAMES[mobile] ?? ['Daedra', 'Daedra'];
-  return { mobile, name, plural, hover: ENEMY_BASICS[mobile]?.behaviour === 'Flying' ? HOST_HOVER_M : 0, winged: mobile === 29 };
+  const names = HOST_NAMES[mobile], name = names?.[0] ?? 'Daedra', plural = names?.[1] ?? 'Daedra';   // WB14c: a row of getters reads as a pair
+  const tithe = k === HOST.tithe;   // WB14e: an Imp by its sprite, the Tithe-Imp by its name and its size
+  if (k === HOST.gaoler) return { mobile, name: t('gate.host.gaoler', 'Gaoler'), plural: t('gate.host.gaolers', 'Gaolers'), hover: 0, winged: mobile === 29, scale: 1 };   // WB14f: a Ward-Bearer's body, the Pen's name
+  return { mobile, name: tithe ? t('gate.host.tithe', 'Tithe-Imp') : name, plural: tithe ? t('gate.host.tithes', 'Tithe-Imps') : plural, hover: ENEMY_BASICS[mobile]?.behaviour === 'Flying' ? HOST_HOVER_M : 0, winged: mobile === 29, scale: tithe ? TITHE_SCALE : 1 };
+}
+/** WB14f: THE CAPTIVE'S BODY - Daggerfall's Knight (mobile 145): his archive, or a Dame's her own (net/gate/gateMods.js
+ *  CAPTIVE_DAMES). Pure. */
+export const KNIGHT_MOBILE = 145;
+export const knightLookOf = (dame) => Object.freeze({ mobile: KNIGHT_MOBILE, archive: (dame ? ENEMY_BASICS[KNIGHT_MOBILE]?.femaleTexture : null) ?? ENEMY_BASICS[KNIGHT_MOBILE]?.maleTexture ?? null });
+/** WB14f: the hurt frame the captive is held bowed in while chained (bossFrame clamps it to the record's last). */
+export const KNIGHT_BOWED_FRAME = 9;
+/** WB14f: what the captive is doing at `now` - bowed in his chains, or standing free (his idle). Pure. */
+export function knightAct(freed, now) {
+  if (!freed) return { act: 'chained', anims: HURT_ANIMS, frame: KNIGHT_BOWED_FRAME, loop: false, sink: 0 };
+  return { act: 'idle', anims: IDLE_ANIMS, frame: Math.floor((Math.max(0, now) / 1000) * IDLE_ANIM_SPEED), loop: true, sink: 0 };
 }
 /** WB11c: THE ENTITY A BLOW ON ONE OF HIS HOST IS COMPUTED AGAINST - his stand-in's law over its own mobile (every metal
  *  bites, a knight's plate for armour, a health nothing here can empty - the relay holds its real one, never swayed),
  *  named for the lines a blow says. AUDIT WB11 W1: one a BODY, naming it (`hostI`) - a Cast When Strikes spell on it is
  *  that body's (scenes/hostEnchant.js asks the stand-in it met), where one shared by a look sent it to HIM. */
-export function hostStandIn(look, i = null, share = null) {   // FIELD BUGS 2026-10-18f RELAY-SHARE: `share` its own word's reader (bossStandIn)
-  const e = bossStandIn({ mobile: look.mobile }, look.name, share);
+export function hostStandIn(look, i = null, share = null, blowX = null) {   // FIELD BUGS 2026-10-18f RELAY-SHARE: `share` its own word's reader (bossStandIn); 2026-10-19f STAND-IN-WHOLE: `blowX` its relay's bucket's
+  const e = bossStandIn({ mobile: look.mobile }, look.name, share, blowX);
   if (i !== null) e.hostI = i;
   return e;
 }
@@ -543,7 +690,7 @@ export function hostAct(a, now, look, hurtAt = -Infinity) {
 export function hostFallAct(g, now, look) {
   const since = now - g.at, winged = !!look?.winged;
   if (g.w === 1 || since >= HOST_FALL_MS || since < 0) return { act: 'gone', anims: HURT_ANIMS, frame: 0, loop: false, sink: 0 };
-  return { act: 'fall', anims: winged ? SEDUCER_IDLE_MOVE_ANIMS : HURT_ANIMS, frame: Math.floor((since / HOST_FALL_MS) * 4), loop: winged, sink: g.w === 2 ? HOST_KINDS[g.k].h * (since / HOST_FALL_MS) : 0 };
+  return { act: 'fall', anims: winged ? SEDUCER_IDLE_MOVE_ANIMS : HURT_ANIMS, frame: Math.floor((since / HOST_FALL_MS) * 4), loop: winged, sink: g.w === 2 || g.w === 3 ? HOST_KINDS[g.k].h * (since / HOST_FALL_MS) : 0 };   // WB14e: one that fled sinks into the fire, as one that crumbled
 }
 /** WB11c: HIS HOST, HEARD - each one's own clips (enemyBasics.js: its bark and its attack; its fall the body's thud) at its own place: rising
  *  out of the fire, winding a blow, landing it, hurt, falling; and a Sapper drunk - his growl over the fire's roar. */

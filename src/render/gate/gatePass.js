@@ -227,6 +227,9 @@ export const BEACON_FS = beaconFs('', ((BEACON_BELOW_M + BEACON_START_M) / BEACO
 /** EG-F: where the light starts along the column, per draw (the gate's (BELOW + START) / HEIGHT, its four places). */
 export const BEACON_FOOT_DECL = 'uniform float uFoot;    // EG-F: per draw\n';
 export const BEACON_DRAW_FS = beaconFs(BEACON_FOOT_DECL, 'uFoot');
+/** SHADER-STALL: the pass's two programs, the membrane's and the beacon's, as its constructor builds them - what a host
+ *  starts ahead of the build (render/glProgram.js startPrograms). */
+export const GATE_PASS_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[MEMBRANE_DRAW_VS, MEMBRANE_DRAW_FS], [BEACON_DRAW_VS, BEACON_DRAW_FS]]));
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
@@ -269,8 +272,9 @@ export class GatePassRenderer {
   /** @param {WebGL2RenderingContext} gl @param {Float32Array} profile the arch's opening (gateArchProfile) */
   constructor(gl, profile) {
     this.gl = gl;
-    this.membrane = buildProgram(gl, MEMBRANE_DRAW_VS, MEMBRANE_DRAW_FS, 'gate membrane');   // EG-F: the gate's sources with their per-draw places
-    this.beacon = buildProgram(gl, BEACON_DRAW_VS, BEACON_DRAW_FS, 'gate beacon');
+    const [membrane, beacon] = GATE_PASS_PROGRAMS;
+    this.membrane = buildProgram(gl, membrane[0], membrane[1], 'gate membrane');   // EG-F: the gate's sources with their per-draw places
+    this.beacon = buildProgram(gl, beacon[0], beacon[1], 'gate beacon');
     const names = ['uVP', 'uOrigin', 'uEye', 'uYaw', 'uRadius', 'uProfile', 'uTime', 'uOpen', 'uFade', 'uSpin', 'uFogColor', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze',
       'uScale', 'uTint', 'uBelow', 'uHeight', 'uFoot'];   // EG-F: the per-draw five
     this.mu = {}; this.bu = {};

@@ -1094,6 +1094,7 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
     ['dest = { ...dest, kind: \'exterior\', pos: [c.x, caravanOut.position[1] - state.compensation[1], c.z], yaw: caravanOut.yaw };', 'a staff teleport\'s live destination - behind a caravan\'s rear door (WAGONS2 FINAL AUDIT)'],
     ['toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },', 'the wire'],
     ['const partyFeetOf = (pos) => { const wc = state.worldCoords(pos); return { wx: wc.x, wy: pos[1] - state.compensation[1], wz: wc.z }; };', 'the party\'s live feet'],
+    ['worldOf: (p) => { const wc = state.worldCoords(p); return { x: wc.x, y: p[1] - state.compensation[1], z: wc.z }; },', 'the party\'s ping: the look\'s point in the world frame, shed as the party\'s feet are'],
     ['? { x: wc.x, y: player.pos[1] - state.compensation[1], z: wc.z, yaw: cam.yaw, pitch: cam.pitch, mv: 0 }', 'the online pose'],
     [': { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 };', 'the online pose'],
     ['sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1', 'the online pose'],

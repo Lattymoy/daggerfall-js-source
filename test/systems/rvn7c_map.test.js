@@ -114,10 +114,10 @@ test('RVN7c THE HUNT IN THE JOURNAL: each lair heard of a side quest - "Hunt: <n
   assert.equal(row.name, `Hunt: ${r.name}`);
   assert.equal(row.hunt, true);
   assert.equal(row.clockSeconds, null, 'no clock');
-  assert.deepEqual(row.messages[0].map((l) => l.text), ['Orc, rank I.', 'Its lair: Tomb of Vaness, a long walk to the east - marked on your map with a red circle.', 'Find it there before it finds you.']);
+  assert.deepEqual(row.messages[0].map((l) => l.text), ['Orc, rank I.', 'Its lair: Tomb of Vaness, a long walk to the east, marked on your map with a red circle.', 'Find it there before it finds you.']);
   assert.ok(row.messages[0].every((l) => l.formatting === 'text'));
-  assert.equal(N.revenantHuntEntries({ px: 106, py: 100 })[0].messages[0][1].text, 'Its lair: Tomb of Vaness - marked on your map with a red circle.', 'standing on it');
-  assert.equal(N.revenantHuntEntries(null)[0].messages[0][1].text, 'Its lair: Tomb of Vaness - marked on your map with a red circle.', 'nowhere known');
+  assert.equal(N.revenantHuntEntries({ px: 106, py: 100 })[0].messages[0][1].text, 'Its lair: Tomb of Vaness, marked on your map with a red circle.', 'standing on it');
+  assert.equal(N.revenantHuntEntries(null)[0].messages[0][1].text, 'Its lair: Tomb of Vaness, marked on your map with a red circle.', 'nowhere known');
   r.lairKnown = false;
   assert.deepEqual(N.revenantHuntEntries({ px: 100, py: 100 }), [], 'unheard of');
   r.lairKnown = true;
@@ -160,5 +160,5 @@ test('RVN7c THE FACES AND THE HOST: the pause window\'s Quests tab and the chron
 });
 
 test('RVN7c the page: a lair heard of is on the map (mutants: unsaid)', () => {
-  assert.equal(lairWords({ lair: { ...LAIR }, lairKnown: true }), 'Lair: Tomb of Vaness - on your map.');
+  assert.equal(lairWords({ lair: { ...LAIR }, lairKnown: true }), 'Lair: Tomb of Vaness, marked on your map.');
 });

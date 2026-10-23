@@ -156,7 +156,7 @@ test('WEATHER3c: the sim\'s cells - every kind of sky, and a winter storm a snow
 test('WEATHER3c: the hosts hand the clouds the base, the wind the approach, and the cells their importance and rank', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = rd(host);
-    assert.match(h, /cells: fieldCellsHere\(\), cloudBase: weatherOverride \? null : currentCloudBase\(\), approach: weatherOverride \? 0 : currentWindApproach\(\) \}\);/, host);
+    assert.match(h, /cells: fieldCellsHere\(\), cloudBase: weatherOverride (?:\|\| seaStormShown\(\) )?\? null : currentCloudBase\(\), approach: weatherOverride \? 0 : currentWindApproach\(\) \}\);/, host);   // PIN MOVED (SEA-EVENTS, 2026-10-22): world.js's clouds stand on the Aether Storm's thunder in it (scenes/seaVenturesHost.js seaStormShown)
     assert.match(h, /currentFieldCells\(\)\.map\(\(c\) => cellOfField\(c, \(x, z\) => /, `${host}: the cells carry the pick (WEATHER3g: through the one conversion)`);
   }
   assert.match(rd('src/scenes/shared.js'), /windModel\.tick\(extra\?\.classicMinutes \?\? 0, systemWordOf\(weatherName\), extra\?\.violence \?\? weatherName, extra\?\.approach \?\? 0\);/);

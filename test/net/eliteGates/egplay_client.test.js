@@ -148,7 +148,7 @@ test('EG-PLAY THE CLIENT ON THE RELAY: the Weir Key turned stakes it and hands t
     assert.ok(rec(), 'the hub opened the breach\'s room');
     const call = client.state().call;
     assert.ok(call && call.b === B && call.os === ME, 'the call heard');
-    assert.match(said.at(-1), /Your Elite Breach rises\. It opens in 5:00/);
+    assert.match(said.at(-1), /Your Elite Breach rises and opens in 5:00\./);
     assert.equal(client.useKey(), EG_TEXT.held, 'a second key turned while the breach stands opens nothing');
     // sealed: told when
     said.length = 0;
@@ -327,7 +327,8 @@ test('EG-PLAY THE REHEARSAL, AND THE REFUSALS: /breach rehearse opens with no ke
   });
   assert.equal(egRefusalText('short'), EG_TEXT.noKeys);
   assert.equal(egRefusalText('live'), EG_TEXT.held);
-  assert.match(egRefusalText('unproven'), /Dagon's Breach first/);
+  assert.match(egRefusalText('unproven'), /^The Spire opens only to those who have closed a Dagon's Breach\.$/);
+  assert.match(egRefusalText('unproven'), /closed a Dagon's Breach\./);   // PIN MOVED (VOICE2): the sentence whole, no dash aside (Voice.md rule 5)
   assert.equal(egRefusalText('anything-else'), EG_TEXT.shut);
   assert.equal(egClaimDone({ ok: true, data: { recorded: false, why: 'claimed' } }), true);
   assert.equal(egClaimDone({ ok: false, error: 'receipt' }), true);

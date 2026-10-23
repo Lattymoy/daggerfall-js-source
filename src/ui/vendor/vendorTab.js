@@ -87,7 +87,7 @@ export const VENDOR_TEXT = Object.freeze({
   ownEmpty: 'Your trader has nothing for sale yet. Put up a piece from your pack below.',
   reading: 'Reading the traders...',
   cold: 'The traders did not load.',
-  boardTip: 'Bought only at the trader\'s stall, in the owner\'s house. Pick a row for its stats and a waypoint.',
+  boardTip: 'Buy at the trader\'s stall in the owner\'s house. Pick a row to see its stats and set a waypoint.',
   noGold: 'Only a character whose gold is kept online can trade here.',
   packEmpty: 'Nothing in your pack can be put up for sale.',
   stockTip: `Each piece stays up ${Math.round(VENDOR_LISTING_S / 86_400)} days, then comes back to you. Collect your takings on the Vendor page (pause menu, Professions).`,

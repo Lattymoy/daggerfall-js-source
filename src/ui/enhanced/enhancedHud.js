@@ -62,6 +62,7 @@ import { retroScreenRect } from '../../systems/retroMode.js';   // RETRO-UI: the
 import { stepGhost, chunkFrame, GHOST_HOLD } from '../barLoss.js';   // VB2 / FRAME1: a bar's loss (AUDIT NAV1: shared with the sea fight's card)
 import { mountHitNumbers, healNumberFor, showNumber } from '../hitNumbers.js';   // HN1; PARTY-BUFFS: the heal a frame shows
 import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';
+import { hudHealth } from '../hud/hudVitals.js';   // DUEL-BAR: the health the bar reads, drawHud's or the entity's own
 import { liveBundles, canEndBundle, endBundle, endedSpellText } from '../../systems/mysticism.js'; import { shownSpellName } from '../../systems/loot/loot.js';   // PX30: the ONE bundle walk the HUD already uses; BUFF-END: and which of them the player may end; L10N3e: a spell's name as the book shows it
 import { hudText } from '../../systems/notify.js';   // BUFF-END: the ended spell's one line
 import { cursorActive } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse ends a spell
@@ -111,7 +112,10 @@ import { foeTarget, foeTargetRef, tickFoeTarget } from '../hud/hudFoeTarget.js';
 // styles show a corner word - imported rather than restated.
 import { crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL } from '../hud/hudCrosshair.js';
 import { getInteractionMode } from '../../player/interactionMode.js';
-import { tickHudLayout, hudArranging } from '../hud/hudLayout.js';   // HUD-MOVE: the movable pieces, the lock and the reset
+import { tickHudLayout, hudArranging } from '../hud/hudLayout.js';
+import { bindHudTips, showHudTip, hideHudTip, hudTipShowing } from '../hud/hudTip.js';   // HUD-TIP: the status tiles' hover cards, the pack's own card
+import { statusTip } from '../hud/statusTips.js';
+import { bindAdvanceTiles, drawAdvanceTiles } from '../hud/hudAdvance.js';   // SKILL-READY / FIRM-STARS: the two tiles beside the Renown bar   // STATUS-TIPS: what a tile says under the pointer   // HUD-MOVE: the movable pieces, the lock and the reset
 import { mountHotbarDock, drawEnhancedHotbar, detachHotbarDock, hotbarMode } from './enhancedHotbar.js';   // HB1: the hotbar, the diamond's alternative (one or the other)
 import { setEnhancedMidTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the mid-screen label is a layer beside this one, not inside it (the popup column it once scaled too is a toast in the notice stack since ENH-NOTICE3)
 import { QUEST_MARK_CSS } from '../quest/questMarks.js'; import { nodeMarkCss } from '../nodeMarks.js';   // GUIDE5: the tracker's quest on the compass, in the marks' one gold; NODE-MARKS: a profession's nodes in its own colour
@@ -120,6 +124,7 @@ import { BOAT_GLYPH_URL } from '../boatMarks.js';   // BOAT-MARK: my boats on th
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT1: the sea serpent on the strip, in its ring's green
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon on the strip, in its ring's brass
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet, its compass mark's
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -334,6 +339,27 @@ function drawSdMark(sd, playerXZ, heading01) {
   if (node.style.left !== l) node.style.left = l;
 }
 
+// STAR6: A FALLEN STAR'S MARK - the nearest of the night's stars in the player's region, from its omen until it is gone
+// (scenes/starfall/starfallHost.js compassMark): a four-pointed star in its violet, never the gate's diamond nor the
+// Hollow's ring; the gate's bearing law, hidden never removed.
+const starMarkCss = () => 'position:absolute;top:50%;width:11px;height:11px;margin:-6px 0 0 -6px;pointer-events:none;'
+  + `background:${STAR_VIOLET_CSS};clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);`
+  + 'filter:drop-shadow(0 0 4px rgba(185,162,255,0.9))';
+function drawStarMark(st, playerXZ, heading01) {
+  if (!parts.starMark) {
+    const node = el('i', 'hud-star');
+    node.style.cssText = starMarkCss();
+    parts.compass.append(node);
+    parts.starMark = node;
+  }
+  const node = parts.starMark;
+  if (!st || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(st, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
 // GUIDE5: THE QUEST'S MARK - the place the tracker's quest points, one diamond in the journal's gold (ui/quest/questMarks.js
 // QUEST_MARK_CSS), HOLLOW and edged dark so it never reads as the gate's burning one, riding the same bearing law
 // (compassMarkerLerp, clamp and all): a place behind the player stands at the strip's end on the side to turn toward.
@@ -500,6 +526,28 @@ export function effectRows(entity) {
 let host = null;
 let parts = null;
 const last = {};
+
+/** SKILL-READY / FIRM-STARS: one tile beside the Renown bar - a buff's own cell, tile, picture and foot, a 16px glyph
+ *  (hudStatus.js STATUS_GLYPHS); its count at its foot (ui/hud/hudAdvance.js says what and when). */
+function advTile(cls, glyph, label) {
+  const cell = el('div', `hst-cell hud-adv ${cls}`);
+  cell.setAttribute('aria-label', label);
+  cell.setAttribute('role', 'button');   // a press sounds the game's click, as every button does (ui/uiClickSound.js CLICKABLE)
+  const tile = el('span', 'hst-tile');
+  const pic = el('img', 'hst-pic');
+  pic.alt = '';
+  pic.draggable = false;
+  pic.src = statusGlyphSrc(glyph) ?? '';
+  const foot = el('span', 'hst-foot');
+  tile.append(pic, foot);
+  cell.append(tile);
+  return { cell, foot, n: -1, on: false };
+}
+function showAdvTile(t, n) {
+  const on = n > 0;
+  if (t.on !== on) { t.on = on; t.cell.classList.toggle('on', on); }
+  if (t.n !== n) { t.n = n; t.foot.textContent = on ? String(n) : ''; }
+}
 
 /** Write only when it changed - the whole reason this is cheap. */
 const put = (node, key, value) => {
@@ -753,6 +801,10 @@ function build(doc) {
   const renownNum = el('span', 'hud-renownnum');   // UI3: the numbers, over the fill and the ghost
   renownTrack.append(renownFill, renownGhost, renownNum);
   renown.append(renownBox, renownTrack);
+  // SKILL-READY / FIRM-STARS (Dudey: the skills ready "left of the renown bar", the Firmament's stars "on the right"): two
+  // status tiles in the row, outside its two ends (ui/hud/hudAdvance.js) - each its own piece of the movable HUD
+  const adv = bindAdvanceTiles({ skill: advTile('hud-adv-skill', 'skillup', 'Skills ready'), firm: advTile('hud-adv-firm', 'firmstar', 'Firmament stars') });
+  renown.append(adv.skill.cell, adv.firm.cell);
   bottom.append(renown);
   // UI3: the foot ends at the Renown row - the effects and the needs (PLUS1b's one status row under it) are the status
   // widget's tiles now, at the left edge (built with the quickslot block below, which it stands on)
@@ -861,8 +913,13 @@ function build(doc) {
   // and grows up from the caption (the block is anchored by its bottom), never down into the diamond
   const stat = el('div', 'hud-stat');
   bindStatEnding(stat);   // BUFF-END
+  bindStatTips(stat);   // STATUS-TIPS
+  // DIAMOND-HB: where the hotbar goes when Quick slots is set to Diamond (ui/enhanced/enhancedHotbar.js mountHotbarDock).
+  // `display: contents`, like the hotDock.
+  const gemDock = el('div', 'hud-gemdock');
   quick.append(stat, cap, diamond);
   root.append(quick);
+  quick.append(gemDock);
   // DEPARTURE 2 (see the header): the only listeners this readout owns.
   // Bound once, reading the LIVE options bag - a frame binds nothing.
   // AUDIT QS F8: a FINGER, not a mouse that happens to live on a
@@ -932,12 +989,12 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, archMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
+  return { root, bottom, bars, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, archMark: null, serpentMark: null, sdMark: null, starMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
     temp: { el: temp, glyph: tempGlyph, num: tempNum, word: tempWord, mark: tempMark },   // TEMP-UI: the temperature plate
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
-    renown, renownBox, renownFill, renownGhost, renownNum,
+    renown, renownBox, renownFill, renownGhost, renownNum, adv,
     breath, breathFill, grip, gripFill, gripLabel, readied, reticle, cross, centreWord, cornerWord,
-    quick, quickCells: cells, quickTags: tags, hotDock,
+    quick, quickCells: cells, quickTags: tags, hotDock, gemDock,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName, icon: spellIcon } };
 }
 
@@ -1050,7 +1107,7 @@ export function hideEnhancedHud() {
 export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   const { hidden = false } = opts;
   if (typeof document === 'undefined') return;
-  if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock); }
+  if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock, parts.gemDock); }   // DIAMOND-HB: and the diamond's corner
   tickHudLayout(document);   // HUD-MOVE: starts once - the player's layout and the lock; its sweeps are its own interval's (PERF-HUD1)
   wearUiPillar(document, host);   // RETRO-UI: inside retro mode's pillarbox, as the held map stands (DISC25-B)
   tickFoeTarget(dt);
@@ -1059,6 +1116,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   drawEnhancedHotbar(vitals, opts);
   if (hidden) {
     if (last.hidden !== true) { last.hidden = true; host.style.display = 'none'; stowAllChunks(parts); }   // FRAME1c
+    if (hudTipShowing()) hideHudTip();   // HUD-TIP: a hidden HUD keeps no card up
     last.hpSeen = null;   // PARTY-BUFFS: what a window restored (a rest, a level-up, a load, a rise) is no heal to float
     return;
   }
@@ -1105,6 +1163,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   drawArchMark(opts.arch ?? null, opts.playerXZ ?? null, heading01);   // EG-F
   drawSerpentMark(opts.serpent ?? null, opts.playerXZ ?? null, heading01);   // SERPENT1
   drawSdMark(opts.sd ?? null, opts.playerXZ ?? null, heading01);   // SD2c
+  drawStarMark(opts.star ?? null, opts.playerXZ ?? null, heading01);   // STAR6
   drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5
   drawWayOutMark(opts.wayOut ?? null, opts.playerXZ ?? null, heading01);   // WAYOUT1
   drawPartyMarks(opts.party ?? null, opts.playerXZ ?? null, heading01);   // COMPASS-PARTY
@@ -1176,9 +1235,18 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   // and my branch returns BEFORE that snapshot is built, so it was
   // reading the raw entity while the classic read the law. The same
   // law, from the same module, is the fix.
+  // DUEL-BAR (FIELD BUGS 2026-10-19f; the owner: "Bar shows duel vitality"): the health is drawHud's (`opts.health`,
+  // ui/hud/hudVitals.js hudHealth) - a duel's referee's vitality while one is live, else the save's. Turned to the other
+  // source, the bar's held loss and its last reading start afresh: the turn is no wound to break off and no heal to float
+  // (the save's heal under a duel is the save's, never shown as the duel's).
+  const hp = opts.health ?? hudHealth(vitals);
+  if (last.hpFrom !== hp.from) {
+    if (last.hpFrom !== undefined) { delete ghosts.health; for (const c of parts.health.chunks ?? []) stowChunk(c); last.hpSeen = null; }
+    last.hpFrom = hp.from;
+  }
   const rows = [
     ['magicka', parts.magicka, vitals.magicka ?? 0, vitals.maxMagicka || 1],
-    ['health', parts.health, vitals.health ?? 0, vitals.maxHealth || 1],
+    ['health', parts.health, hp.health ?? 0, hp.maxHealth || 1],
     ['fatigue', parts.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || vitals.maxFatigue || 1],
   ];
   for (const [key, part, now, max] of rows) {
@@ -1213,7 +1281,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
 
   // PARTY-BUFFS: a heal I took - mine, a potion's, a friend's - rises as "+N" off the reticle (hitNumbers.js); one
   // taken under a window is not measured (AUDIT B10: the hidden frame forgets - a rest's restoring is no heal)
-  const hpNow = Number(vitals.health ?? 0);
+  const hpNow = Number(hp.health ?? 0);   // DUEL-BAR: the bar's own health
   const heal = healNumberFor(last.hpSeen, hpNow);
   if (heal) showNumber(heal);
   last.hpSeen = hpNow;
@@ -1230,6 +1298,12 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     width(parts.renownGhost, 'renownGW', rv.ghost * 100);
     put(parts.renownNum, 'renownT', rv.text);   // UI3: the XP in the bar
   }
+  // SKILL-READY / FIRM-STARS: the two tiles - and the row stands for them where it has no bar of its own (offline)
+  const advN = drawAdvanceTiles(parts.adv, { row: parts.renown });
+  showAdvTile(parts.adv.skill, advN.skills);
+  showAdvTile(parts.adv.firm, advN.stars);
+  const advOn = advN.skills > 0 || advN.stars > 0;
+  if (last.advOnly !== (advOn && !rv)) { last.advOnly = advOn && !rv; parts.renown.classList.toggle('adv-only', last.advOnly); }
 
   // THE BREATH. DFU's own two laws: drawn only while holding breath,
   // and short below (endurance >> 3) + 4.
@@ -1381,7 +1455,7 @@ function drawStatus(vitals, opts, live = null) {
   // BUFF-END: the freed mouse (Enter, or FreeMouse) with no window up and no pad in hand - the hotbar's own mouse mode -
   // lets a spell the player may end take the pointer; the rest of the HUD stays pointer-transparent
   const ending = cursorActive() && !overlayOpen() && !controllerLook();
-  if (last.statEnding !== ending) { last.statEnding = ending; parts.stat.classList.toggle('ending', ending); }
+  if (last.statEnding !== ending) { last.statEnding = ending; parts.stat.classList.toggle('ending', ending); if (!ending && String(hudTipShowing() ?? '').startsWith('stat:')) hideHudTip(); }   // STATUS-TIPS: no pointer, no card
   const spells = effectRows(vitals);
   const powers = setPowerChips(vitals);   // SET5: the set powers (the host's - setHudSetChips)
   powers.push(...techniqueChips(vitals));   // TECH1: and the weapon's technique beside them (the host's - setHudTechniqueChips)
@@ -1413,6 +1487,7 @@ function drawStatus(vitals, opts, live = null) {
   if (last.stat === key) return;
   last.stat = key;
   parts.stat.replaceChildren(...tiles.map((t) => statTile(t, dpr, metrics.pic)));
+  refreshStatTip();   // STATUS-TIPS: a card up over a tile that was just redrawn says the new tile
 }
 
 /** BUFF-END: a spell tile's hover, where it can be ended. */
@@ -1461,15 +1536,59 @@ function bindStatEnding(stat) {
   stat.addEventListener('contextmenu', g.menu);
 }
 
+let _setPowers = null;   // STATUS-TIPS: systems/sigil/sigilSetPowers.js, once a card has asked
+/** AUDIT STAR S2: a set power's tile's set and tier - the tier its chip carries (systems/sigil/sigilSetPowers.js
+ *  setHudChips), never found by the chip's name: 'Veil' and 'Reprieve' begin no tier's name, nor does any name
+ *  in the player's language. Null for a tile of no set (a technique's, a Legendary power's) or no tier. */
+export function setTileTier(tile) {
+  const set = setById(tile?.set);
+  const i = tile?.tier;
+  return set && Number.isInteger(i) && i >= 0 && i < set.tiers.length ? { set, i } : null;
+}
+/** STATUS-TIPS: a set power's tier in its worn numbers ("Each kill adds 6% weapon damage..."), by the tier its chip carries. */
+function setPowerLine(tile) {
+  const at = setTileTier(tile);
+  if (!at) return null;
+  const { set, i } = at;
+  // the set powers' module is read when a card first asks (a static edge from the HUD into it closes a ring through the
+  // world clock at load - sigilSetPowers registers a round hook as it loads)
+  if (!_setPowers) { import('../../systems/sigil/sigilSetPowers.js').then((m) => { _setPowers = m; }).catch(() => {}); return null; }
+  const v = (() => { try { return _setPowers.awakeTiersOf(last.statEntity)?.get(set.id)?.[i] ?? null; } catch { return null; } })();
+  try { return v ? `${set.tiers[i].text(v)}.` : null; } catch { return null; }
+}
+/** STATUS-TIPS: the card a tile's cell asks for. */
+const statTipOf = (cell) => statusTip(cell._tip, last.statEntity, { endHint: END_SPELL_HINT, setLine: setPowerLine });
+/** STATUS-TIPS (Dudey: "make every other icon of debuffs, buffs, hunger etc hoverable"): every tile takes the pointer
+ *  while the mouse is freed (the widget's `ending` state, BUFF-END's) and says what it is in the pack's hover card. */
+function bindStatTips(stat) {
+  const off = bindHudTips(stat, (target) => {
+    if (!stat.classList.contains('ending')) return null;
+    const cell = target?.closest?.('.hst-cell');
+    if (!cell?._tip) return null;
+    return { node: cell, tip: statTipOf(cell), key: `stat:${cell._tip.key}` };
+  });
+  holds.push({ off });   // the HUD's teardown takes it
+}
+/** STATUS-TIPS: after a redraw, the card that was up is said again over the new cell of the same tile (a countdown's
+ *  round, a need's stage), or taken down when its tile is gone. */
+function refreshStatTip() {
+  const up = hudTipShowing();
+  if (typeof up !== 'string' || !up.startsWith('stat:')) return;
+  const cell = [...parts.stat.children].find((c) => c._tip && `stat:${c._tip.key}` === up);
+  hideHudTip();
+  if (cell && parts.stat.classList.contains('ending')) showHudTip(cell, statTipOf(cell), up);
+}
+
 /** UI3: one tile - its frame's kind, its picture (a spell's icon, a set's rune, a glyph), its foot and its name. */
 function statTile(t, dpr, box) {
   const cell = el('div', `hst-cell ${t.kind}${t.blink ? ' blink' : ''}${t.item ? ' item' : ''}${t.recovering ? ' recovering' : ''}${t.cost ? ' hst-cost' : ''}`);   // AUDIT C&C S14: a costing need marked (the sheet's `!`)
   if (t.endable && t.bundle != null) {   // BUFF-END: a spell the player may end, by a right-click with the mouse freed
     cell.classList.add('can-end');
     cell.dataset.bundle = String(t.bundle);
-    cell.title = END_SPELL_HINT;
+    cell.setAttribute('aria-description', END_SPELL_HINT);   // STATUS-TIPS: the card says it on a hover - no browser title over it
   }
-  if (t.say) { cell.title = t.say; cell.setAttribute('aria-label', t.say); }   // AUDIT C&C S14: a need's level in words
+  if (t.say) cell.setAttribute('aria-label', t.say);   // AUDIT C&C S14: a need's level in words (STATUS-TIPS: the card says it on a hover)
+  cell._tip = t;   // STATUS-TIPS: the tile this cell draws, for its hover card
   const tile = el('span', 'hst-tile');
   const pic = el('img', 'hst-pic');
   pic.alt = '';

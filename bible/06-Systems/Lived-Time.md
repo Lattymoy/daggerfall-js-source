@@ -185,7 +185,7 @@ stands.
 The sun is everyone's. A rest moves the character's clock, not the sky, so a bare-headed vampire
 still cannot set out by day. The sunlight refusals (the career's, the curse's, and PARTY-TRAVEL's) now
 add, online, when the world's night falls, in real minutes: *"You cannot initiate fast travel during
-the day. The sun is the world's - night falls in about 23 minutes."* (`worldNightfallText`). [MERGE
+the day. Online, resting does not move the sun. Night falls in about 23 minutes."* (`worldNightfallText`). [MERGE
 with main's VAMP-HOOD (`01-Overview/bugs/Field-Bugs-2026-09-29.md`): a raised hood opens the map by day,
 online and offline; bare-headed, the map door says DFU's line, the nightfall, then the hood's hint.]
 
@@ -203,7 +203,9 @@ journeys make them hungry, as DFU has it. A vampire must still be fed within the
 ## The numbers, and what a rest can buy
 
 The character's clock opens no faucet the world pays for. Everything the world owns reads the world's
-clock: stock, prices, respawns, events, the day's shelf.
+clock: stock, prices, respawns, events, the day's shelf - and a sworn revenant abroad (OFFLINE-ROAD, FIELD BUGS
+2026-10-21, `Revenants.md` section 42): out in the world, it keeps the world's time, so its errand goes on while the
+player is away, and no rest moves it.
 
 What a player can speed by resting is their own waits, each exactly as DFU lets a single player, and
 every cost comes with it:

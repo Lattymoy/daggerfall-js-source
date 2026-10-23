@@ -357,7 +357,7 @@ test('MARKET-ANY client: the pack side offers what may go and says why the rest 
   const eve = await playing(s, 'Eve', { items: [plain(weapon), sigilStone(), arrows, locked, { templateIndex: 9999, name: 'no row' }] });
   const words = eve.goods.goods().map((g) => [g.item.templateIndex, g.why]);
   assert.deepEqual(words, [[weapon.templateIndex, null], [570, 'bound to you'], [ARROW_TEMPLATE, 'arrows go in a quiver'], [armour.templateIndex, 'locked - unlock it first'],
-    [9999, 'not a piece the market knows']]);
+    [9999, 'not an item the market knows']]);
   // INT1 (PIN MOVED): a piece of no template is one no honest client holds - the judge holds the trade of a character whose
   // checkpoint carries one (server-account/src/judge.js) - so it says its word above and leaves the pack before the act
   eve.entity.items.splice(4, 1);
@@ -470,13 +470,13 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   // a crafted piece: Eve's own alone, the other named
   what.value = 'piece'; what.onchange();
   assert.deepEqual(opts(selects().find((x) => x.getAttribute('aria-label') === 'Crafted piece')).map((o) => o.value), [own.provenance]);
-  assert.match(text(), /1 crafted piece you hold is another player's by its maker's record - only they sell it as crafted\. List it from your pack for gold instead\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
+  assert.match(text(), /1 crafted piece you hold is made by another player, and only the maker can sell it as crafted\. List it from your pack for gold instead\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
   // a piece from the pack: the looted pieces and Mac's make; the stone and Eve's own make said
   selects().find((x) => x.getAttribute('aria-label') === 'What to list').value = 'item';
   selects().find((x) => x.getAttribute('aria-label') === 'What to list').onchange();
   const pick = selects().find((x) => x.getAttribute('aria-label') === 'Piece from your pack');
   assert.deepEqual(opts(pick).map((o) => o.textContent), [eve.goods.goodName(weapon), eve.goods.goodName(armour), eve.goods.goodName(theirs)]);
-  assert.match(text(), new RegExp(`Not for the market: Deadlands Ember \\(bound to you\\); ${eve.goods.goodName(own)} \\(your own make - list it as a crafted piece\\)\\.`));
+  assert.match(text(), new RegExp(`Not for the market: Deadlands Ember \\(bound to you\\); ${eve.goods.goodName(own)} \\(made by you\\. List it as a crafted piece\\)\\.`));
   assert.match(text(), /No fee to list\. Up for 72 hours on every board\. If it sells you get \d+ gold \(after a 1% fee and 5% tax\), collected at a bank\. It leaves your pack now and comes back if it does not sell\./);   // AUDIT 657 B9 (PIN MOVED): the 1% the sale's fee; BOARD-UI (PIN MOVED): its form says gold, its terms one line
   assert.equal(selects().some((x) => x.getAttribute('aria-label') === 'Currency'), false, 'no Drakes to choose');
   const price = [...root.querySelectorAll('input')].find((i) => i.getAttribute('data-focus') === 'list-price');

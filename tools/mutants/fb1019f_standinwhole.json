@@ -1,0 +1,162 @@
+[
+  {
+    "name": "STAND-IN-WHOLE-1e9-back",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  e.maxHealth = e.health = STAND_IN_WHOLE;",
+    "new": "  e.maxHealth = e.health = 1e9;",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the bug: a Disintegrate claims 1e9, past every wire's ceiling - refused whole"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-breach-factor-dropped",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;",
+    "new": "export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX);",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the whole under an Elite Breach's one-blow cap: a Disintegrate there lands less than a blow can"
+  },
+  {
+    "name": "STAND-IN-WHOLE-past-the-bouts-ceiling",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;",
+    "new": "export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * 11;",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "a whole past a refereed bout's 10,000: the arena's wire refuses the Disintegrate again"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-factor-unread",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  try { bx = typeof e?.relayBlowX === 'function' ? Number(e.relayBlowX()) : 1; } catch { bx = 1; }",
+    "new": "  try { bx = 1; } catch { bx = 1; }",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "an Elite Breach's number never grown by my Vestiges' declared factor"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-factor-unclamped",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "(Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1)",
+    "new": "(Number.isFinite(bx) ? Math.max(1, bx) : 1)",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "a factor past THE TRUST LAW's cap says more than the relay lands"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-factor-unfloored",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "(Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1)",
+    "new": "(Number.isFinite(bx) ? Math.min(EG_BUCKET_X_MAX, bx) : 1)",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "a factor under 1 says less than the relay lands"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-reader-unkept",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  e.relayBlowX = typeof blowX === 'function' ? blowX : null;",
+    "new": "  e.relayBlowX = null;",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the stand-in forgets its owner's reader: a breach's number never grown"
+  },
+  {
+    "name": "STAND-IN-WHOLE-a-host-body-unhanded",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  const e = bossStandIn({ mobile: look.mobile }, look.name, share, blowX);",
+    "new": "  const e = bossStandIn({ mobile: look.mobile }, look.name, share);",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "hostStandIn drops the reader - every lord and add of a breach"
+  },
+  {
+    "name": "STAND-IN-WHOLE-an-object-unhanded",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  const e = bossStandIn(look, CRYSTAL_NAME, share, blowX);",
+    "new": "  const e = bossStandIn(look, CRYSTAL_NAME, share);",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "crystalStandIn drops the reader - a breach's struck objects"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-number-uncapped",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));",
+    "new": "    const shown = dealt;",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the bug's other half: the number pops the claim, not what can land"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-shown-law-uncapped",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "export const standInShown = (dealt, cap) => Math.min(Math.max(0, dealt), cap);",
+    "new": "export const standInShown = (dealt, cap) => Math.max(0, dealt);",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the law of the number past the cap"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-claim-clipped",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    const went = land(body, dealt, HIT_KINDS.Spell);",
+    "new": "    const went = land(body, shown, HIT_KINDS.Spell);",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the claim clipped on this machine - the relay's stun and ward weigh the claim before its cap"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-riders-told-the-claim",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    tellStandIn(sp, body.entity, r, shown, caster);",
+    "new": "    tellStandIn(sp, body.entity, r, dealt, caster);",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the paths' riders told a claim no relay lands (AUDIT SCHOOLS L1 M6's took)"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-rival-at-the-gates-cap",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "standInShown(dealt, arenaBlowCap({ r: ARENA_HIT.Spell }))",
+    "new": "standInShown(dealt, standInBlowCap(rb.entity, player.level))",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "a bout's number at the gate's cap - the referee lands its own spell cap"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-count-takes",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    r = applySpell(harm, level, entity, counting(got), rolls, { entity: caster });",
+    "new": "    r = applySpell(harm, level, entity, { ...counting(got), hurt: (n) => { got.n += Math.max(0, n); entity.health -= n; } }, rolls, { entity: caster });",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "a count that takes from the stand-in: its finite whole emptied locally, the next Disintegrate nothing"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-ladder-reads-the-whole",
+    "file": "src/combat/blood/bloodDecals.js",
+    "old": "    maxHealth: Number.isFinite(entity?.maxHealth) && !entity?.relayHealth ? entity.maxHealth : 0,",
+    "new": "    maxHealth: Number.isFinite(entity?.maxHealth) ? entity.maxHealth : 0,",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the blood ladder measures a blow against the stand-in's count: the Warden bleeds a body of 975's rungs"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-breach-reader-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX)",
+    "new": "b.i, () => wordShare(d.target?.hp, d.target?.m))",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "an Elite Breach's bodies never read my Vestiges' factor"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-breach-objects-reader-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)",
+    "new": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp)",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "an Elite Breach's struck objects never read my Vestiges' factor"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-breach-reader-answers-one",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1; };",
+    "new": "return 1; };",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the reader blind to my run's Vestiges"
+  },
+  {
+    "name": "STAND-IN-WHOLE-the-host-keeps-a-door",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    boss: gateBossBody, crystals: gateCrystalBodies, host: gateHostBodies, rival: arenaRivalBody,",
+    "new": "    boss: gateBossBody, crystals: gateHostBodies, host: gateCrystalBodies, rival: arenaRivalBody,",
+    "tests": ["test/net/gate/fb1019f_standinwhole.test.js"],
+    "why": "the wiring crossed: a spell on a crystal sought among his host"
+  }
+]

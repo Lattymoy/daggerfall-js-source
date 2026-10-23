@@ -36,7 +36,7 @@ import { playGambitWord } from './gambitTableWords.js';   // KG3: the third game
 export const TEMPER_WORDS = Object.freeze({ tight: 'careful', loose: 'reckless', bluffer: 'sly' });
 /** A deck's refusal (the binder page's words: ui/card/cardBinderPage.js DECK_REFUSAL_WORDS) as the setup's row says it. */
 export const ILIAC_REFUSAL_WORDS = Object.freeze({
-  over: 'The game is over.', committed: 'You have committed this turn.', shape: 'That is no play.', hand: 'That card is not in your hand.',
+  over: 'The game is over.', committed: 'You have committed this turn.', shape: 'That is not a valid play.', hand: 'That card is not in your hand.',
   holding: 'No such holding.', spell: 'Spells cannot be played there.', magicka: 'Not enough magicka.', room: 'No room on your side there.',
 });
 
@@ -100,11 +100,11 @@ export function resultLine(view, end) {
   const r = view?.result;
   const me = view?.viewer ?? 0;
   if (end === 'left') return 'You concede the game.';
-  if (end === 'won-left') return 'Your opponent stands up and concedes - the game is yours.';   // CARDS10: the relay's concession
-  if (end === 'void') return 'No contest - the game is let go.';   // AUDIT CARDS-6 C7/E13: nobody's
+  if (end === 'won-left') return 'Your opponent concedes. You win.';   // CARDS10: the relay's concession
+  if (end === 'void') return 'No contest. The game is called off.';   // AUDIT CARDS-6 C7/E13: nobody's
   if (!r) return '';
   const held = r.held.filter((x) => x === me).length, theirs = r.held.filter((x) => x === 1 - me).length;
-  if (r.winner === null) return `A draw - ${held} holdings each way and ${r.total[me]} power to ${r.total[1 - me]}.`;
+  if (r.winner === null) return `A draw: ${held} holdings each, and ${r.total[me]} power to ${r.total[1 - me]}.`;
   const won = r.winner === me;
   return r.by === 'holdings'
     ? `${won ? 'You win' : 'You lose'} - ${won ? held : theirs} of three holdings ${won ? 'held' : 'lost'}.`
@@ -151,9 +151,9 @@ export const VERDICT_WORDS = Object.freeze({
  * @param {{phase: 'setup'|'playing'|'over', view?: any, staged?: {card: number, holding: number}[], pick?: number|null, setup?: any, end?: string|null, prize?: any, log?: string[], packPrice?: number|null, online?: any, friendly?: boolean, why?: string|null, gambit?: boolean}} p
  */
 export function iliacHudModel({ phase, view = null, staged = [], pick = null, setup = null, end = null, prize = null, log = [], packPrice = null, online = null, friendly = false, why = null, gambit = false }) {
-  const title = 'Card table - Iliac Hand';
-  const note = online ? (online.ranked ? 'A ranked game with the room: the relay deals, and the result counts on the season\'s board.' : 'A game with the room: the relay deals and keeps the clock.')
-    : friendly ? 'A friendly game: online, no card changes hands at a regulars\' table.' : null;
+  const title = 'Card table: Iliac Hand';
+  const note = online ? (online.ranked ? 'A ranked game against another player. The result counts on the season board.' : 'A game against another player in the room.')
+    : friendly ? 'A friendly game. Online, no cards change hands at a regulars\' table.' : null;
   const pack = packPrice ? [{ id: 'pack', label: `Buy a card pack (${packPrice} gold)`, enabled: true }] : [];
   if (phase === 'setup') {
     const s = setup ?? { decks: [], foes: [] };
@@ -167,7 +167,7 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
       // CARDS10: online, the season's board - a deck the service vouches the realm character holds (the relay seats it ranked)
       ranked: online ? { on: !!online.rankedOn && !!online.rankedOk, enabled: !!online.rankedOk, why: online.rankedWhy ?? null } : null,
       board: online?.board ? boardLines(online.board) : null,
-      message: why ?? (!s.decks.length ? 'Your binder holds no deck - build one under Holdings, Collections.' : !deckOk ? 'Choose a lawful deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Asking the realm to vouch for your deck...'
+      message: why ?? (!s.decks.length ? 'Your binder has no deck. Build one under Holdings, Collections.' : !deckOk ? 'Choose a valid deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Checking your deck with the realm...'
         : online ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ') : 'Ready to deal.'),   // AUDIT CARDS-6 E10: a watched game's end said as its chair frees
       // CARDS-PLUS: what the line is - a refusal, or no deck to play, a warning; the realm vouching a wait
       tone: why || !deckOk ? 'warn' : online?.busy ? 'wait' : null,
@@ -226,16 +226,16 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
   }
   const other = view?.names?.[them] ?? (online ? 'Your opponent' : 'The regular');
   // AUDIT CARDS-6 E10: the next game deals only while both chairs are filled - a winner left alone waits for a player
-  const next = !online ? '' : online.full ? 'The next game deals in a moment.' : 'Waiting for another player to sit down.';
+  const next = !online ? '' : online.full ? 'The next game starts in a moment.' : 'Waiting for another player to sit down.';
   const message = phase === 'over'
     ? [online?.watching === false && online?.lastLine ? online.lastLine : resultLine(view, end), prizeLine(prize, other), online?.rankedLine ?? '', next].filter(Boolean).join(' ')
     // AUDIT CARDS-6 E19: no game on the cloth yet - the wait said, never "Turn 1 of 6 - your magicka 0 of 0"
     : online?.seating ? 'Sitting down at the table...'
       : online?.waiting ? 'Waiting for another player to sit down.'
-      : online && !view ? 'Both chairs are filled - the game deals in a moment.'
+      : online && !view ? 'Both seats are taken. The game starts in a moment.'
       : online?.watching ? `You watch ${view?.names?.[0] ?? 'a player'} and ${view?.names?.[1] ?? 'a player'} play.`
       : view?.revealing ? 'The cards turn over...'
-      : committed ? (view?.players?.[them]?.committed ? 'Both committed - the turn turns over.' : `${other} is thinking...`)
+      : committed ? (view?.players?.[them]?.committed ? 'Both players have committed. The cards turn over.' : `${other} is thinking...`)
       : `Turn ${view?.turn ?? 1} of ${view?.turns ?? 6} - your magicka ${Math.max(0, (mine?.magicka ?? 0) - spend)} of ${mine?.magicka ?? 0}.${online?.clock ? ` ${online.clock} s.` : ''}`;
   const outcome = phase === 'over' ? iliacOutcome(view, end) : null;
   // CARDS-PLUS: what the line is, as the Hold'em panel says it - a refusal a warning; the table's time (a sit on its way,
@@ -270,7 +270,7 @@ export function boardLines(b) {
   if (!b.rows?.length) out.push('No ranked game has been played this season.');
   for (const r of b.rows ?? []) out.push(row(r));
   if (b.pinned) out.push('...', row(b.pinned));
-  out.push(b.champion ? `Iliac Champion: ${b.champion.name}.` : `No Iliac Champion yet - the top needs ${b.titleNeeds?.games ?? 10} games against ${b.titleNeeds?.foes ?? 5} different players.`);
+  out.push(b.champion ? `Iliac Champion: ${b.champion.name}.` : `No Iliac Champion yet. The top player needs ${b.titleNeeds?.games ?? 10} games against ${b.titleNeeds?.foes ?? 5} different players.`);
   if (b.me) out.push(`Your rating ${b.me.rating}, ${b.me.games} ${b.me.games === 1 ? 'game' : 'games'} this season.`);
   return out;
 }
@@ -553,7 +553,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
         }
         const boxes = el('div', 'opts');
         // the boxes a game is dealt with - ticked brass (the kit's tile pressed); one that cannot be ticked says why
-        if (m.ranked) boxes.append(opt('ranked', m.ranked.on, m.ranked.enabled, () => onPress('ranked'), [el('span', 'optname', t('cards.iliac.setup.ranked', 'Ranked')), el('span', 'optword', m.ranked.why ?? t('cards.iliac.setup.rankedWhy', 'The season\'s board - your realm character\'s own cards'))], ' box'));
+        if (m.ranked) boxes.append(opt('ranked', m.ranked.on, m.ranked.enabled, () => onPress('ranked'), [el('span', 'optname', t('cards.iliac.setup.ranked', 'Ranked')), el('span', 'optword', m.ranked.why ?? t('cards.iliac.setup.rankedWhy', 'Counts on the season board. Uses your realm character\'s cards.'))], ' box'));
         if (m.keeps) boxes.append(opt('keeps', m.keeps.on, m.keeps.enabled, () => onPress('keeps'), [el('span', 'optname', t('cards.iliac.setup.keeps', 'Play for a card')), el('span', 'optword', m.keeps.why ?? t('cards.iliac.setup.keepsWhy', 'The loser pays one from their deck'))], ' box'));
         if (m.ranked || m.keeps) body.append(boxes);
       } else {

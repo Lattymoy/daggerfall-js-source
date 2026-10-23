@@ -379,7 +379,7 @@ test('BAL4 a real cost for dying offline: a death Project Legacy will raise stat
   stateDeathLoss(null);
   // the enhanced face's plates
   assert.deepEqual(deathKeys('ENTER end   F11 load', false, true).map((k) => k.word), ['Rise', 'Load last save']);
-  assert.deepEqual(deathKeys('ENTER end   F11 load', false, false).map((k) => k.word), ['End the journey', 'Load last save']);
+  assert.deepEqual(deathKeys('ENTER end   F11 load', false, false).map((k) => k.word), ['End your tale', 'Load last save']);
   assert.deepEqual(deathKeys('ENTER end', false, true).map((k) => k.word), ['Rise'], 'no F11 where there is no quickload');
   assert.deepEqual(deathKeys('ENTER end   F11 load', true, true).map((k) => k.word), ['Rise now']);
   assert.match(rd('src/ui/enhanced/enhancedDeath.js'), /lossLine \|\| \(online \|\| screen\.rises\n\s*\? t\('death\.lineOnline', 'Your body falls\. The Bay is not done with you yet\.'\)/, 'and the line is the rise\'s, not "your tale ends here"');
@@ -472,6 +472,7 @@ test('AUDIT BAL the saved dungeon\'s elites: the save writes each foe\'s word, a
       foes, _layoutFoes: 2, _eliteOnline: online, renderer: { destroyBillboardBatch() {} }, freeCorpse() {}, dropCandidate() {}, _sharedById: new Map(),
       lootPiles: [], settleLootFlat() {}, droppedLoot: { restorePiles() {} }, droppedTorches: { restore() {} }, camps: { dropOwn() {}, restore() {} },
       actions: { restoreSaveData() {} }, playerEntity: {}, clearOwnPuppets() {}, questPoolOps: { removeFoe() {} }, respawnDue: () => false, _wallNow: () => null,
+      corpsePrefabs: { clearAsh() {}, settle() {}, forget() {} },   // AUDIT DEX D1/D3: the load's prefab doors (scenes/corpsePrefabHost.js)
       applyLoot() {}, bodyRecords: () => [], respawnFoe() {},
       retypeFoe: async (i) => { retyped.push({ i, elite: !!foes[i].src.eliteFoe }); return true; },
       patchFoe: (f, sf) => { patched.push(f.i); },
@@ -539,6 +540,6 @@ test('AUDIT BAL the enhanced death screen, drawn: a rise offline wears Rise and 
   const paying = face(true, 345);
   assert.match(paying.line, /34/, 'the loss in the line\'s place');
   const ends = face(false, 345);
-  assert.deepEqual(ends.words, ['End the journey', 'Load last save']);
+  assert.deepEqual(ends.words, ['End your tale', 'Load last save']);
   assert.equal(ends.line, 'Your tale in the Iliac Bay ends here.');
 });

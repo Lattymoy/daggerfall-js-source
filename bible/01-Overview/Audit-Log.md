@@ -8,6 +8,60 @@
 
 Newest first.
 
+**2026-10-22 - AUDIT FB1021d (pull request #1118, FIELD BUGS 2026-10-21d: FLAT-WALK, RAVEN-CLOSE, SENTENCE-MENDS, REGARD-OWN,
+PASSAGE).** The owner: *"Audit this"*. Five cold lanes, one a report, read-only over the pull request's own diff at
+`cff651e83` against Daggerfall Unity's C# and the freeware's data, given the reports and the files and never the
+record's conclusions. The worst: a sentence's mend landed before a day was served, so a save under the prison screen
+kept it for nothing (SM-1); the friend line lumin asked for was said under the talk window and ran out unseen (RO-1); a
+booked ship whose master's hand was off - a foe near, aground - was steered by nobody (PS-2), and 25 sailed legs were
+still aimed at land, hidden by the test's own filter (PS-1). The rest: two FLAT-WALK pins too weak to tell a Teleport
+from every flat relay, its count (27, not 41) and FLAT-RELAY's refuted diagnosis left standing on four pages (2026-10-05c
+report 5 reopened); the Raven close's price (a map read after the knight's word) named and pinned; the mend wearing a
+crime's own mark, a petty crime's cheap step, and a Curfew doubling charges laid anywhere in its town; grudges given back
+whole by the rebase and an offline copy frozen; a deed's friend never said; the town rings lost on the land a party
+embarks from; a passenger's autorun outliving the helm; the plate hidden under a bar that never covered it; a passenger's
+card with no dial or Leave. Every finding is in the record's own section with what became of it
+(`01-Overview/bugs/Field-Bugs-2026-10-21d.md`, AUDIT FB1021d): fixed and pinned, or taken under the owner's standing
+word (FW-6, RC-1, SM-3, SM-4, RO-3, PS-2), or found and left with its reason (LW-II's open item 6 on the road's sword;
+the unsaved charge; a realm-era build reading the record; my own boat's embark legs). The campaign, 1,291 mutants on
+the merged tree: 1,275 dead, 2 equivalent, 14 survived - the seven of this change's own answered (four pinned, PS-3's
+reading cut to the half that is the whole of it, SM-4's prison-arm read recorded equivalent with its reason pinned), the
+seven others surviving on main as here (four of them equivalent since PLEA-LOOP), named in the record.
+
+**2026-10-21 - AUDIT STAR-TUNE (pull request #1090, the Starfall from its first run).** The owner: *"Audit this"*. One
+cold lane over the pull request's own diff, read-only, at the head that renumbered it world238 past main's world236 and
+world237. Four findings, each fixed and pinned (`bible/11-Multiplayer/Starfall.md` sections 4, 10 and 13; `Spawn-Grants.md`
+section 4): F1, the site goes live before the relay's deploy is through (the account service, which STAR-TUNE does not
+move, is all `deploy.yml` waits on), and a new client asked world237 a `star` grant it refuses - under `enforce` no wave
+stood, under `grantStrip` the coven was its owner's alone; the kind is now asked only of world238 and later
+(`STAR_GRANT_RELAY_MIN`), the stand's own kind of an older relay. F2, the wave's clearing floor stayed a foe's 2.5 s while
+a party's wave grew to twenty-one - an empty crater waited out to 52.5 s after a 25 s fight; it is shared by the
+defenders now (`starClearFloorMs`). F3, an older tab's `st` dropped a wave past nine whole, so an older owner stood a
+party's third wave and master for nobody; the cell says nine in `wz` and the wave in `wx`. An older reader removing a
+toughened coven foe past its old bound is recorded, not fixable from here. F4, a crater built again under a standing
+player skipped the late-solid gate's body check. Sound: the wave law, the grant's size and ceiling, toughening across
+handovers, the frame's 64 records, the stand height, the renumber. Mutants: 7 new and 3 re-aimed (`star1`, `star3`,
+`star5`), all dead.
+
+**2026-10-20 - AUDIT PERF-PASS (the performance pass, pull request #1078: TRIP-PICKS, the BOOT-FREEZE slices,
+TRADE-VIRT, SHADER-STALL, SNOW-BUDGET and the GATE-MIX merge).** The owner: *"I need you to audit this and ensure this is
+perfect and fidelity isnt lost"*. Four cold lanes on a frozen head (7e5cdfcb80), read-only, each against the code before
+its slice and over the freeware ARENA2 where it reads the game's files - the trading windows in Chromium beside the
+parent's, the doors over a fake context with and without the extension, the snowpack lock-step through whole snow years,
+the boot's slices over every region, location, town file and trip on the real map. The worst three, fidelity: a trade
+list whose rows are not one height scrolled into blank stretches and moved rows under the pointer (ui/virtualRows.js now
+measures every row and holds the one under the eye); the Elite Breach's telegraphs and crystals could be missing for a
+whole compile while a lord's blow wound up (a pass the game is played by is now built the frame it is needed, and started
+at the boot's idle so that build waits on nothing); a budgeted snowpack kept a melted point's old pack (a cut step is now
+stepped whole). The rest: a landed tile's tooltip, a resize that repainted the trade windows (a lost key, a stack count
+reset), a second compile from a warm a draw had beaten, a failed pass's programs kept, the veil's warm doing less, the
+court's warm spending a frame on a built pass, the snow's blink across a lattice cell (and the Snowfall mod's winter the
+calendar's meanwhile), an unbounded memory of road choices (200 MB at the map's whole). The boot's lane found no loss:
+every region and location, both packs' town files, every rect walk and fit window, 674,856 road orders and 224,560 trips,
+the same. Every finding fixed and pinned, or recorded with its reason, in `07-Rendering/Performance-Priority.md` (the
+AUDIT paragraphs under TRIP-PICKS, TRADE-VIRT, SHADER-STALL and SNOW-BUDGET). Mutants: `audit_perfpass.json` 27, all dead;
+13 older records re-aimed at the new code, dead.
+
 **2026-10-19 - AUDIT PLAN-1000 lanes E-H (SESSION-SIGN; lanes B-D's fixes; COURT-WATCH and CHECKPOINT-5; lane A's
 fixes and the branch whole).** Mac: *"Lets do a comprehensive audit and ensure perfection"*. Four more cold lanes on
 frozen worktrees - two of the slices had had no cold read at all (COURT-WATCH, CHECKPOINT-5, and lane A's own fixes) -

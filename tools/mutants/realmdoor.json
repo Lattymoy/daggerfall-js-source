@@ -76,7 +76,7 @@
   {
     "name": "REALM-DOOR-words-past-a-close-reason",
     "file": "src/net/wire.js",
-    "old": "export const REALM_DOOR_WORD = 'this game is out of date - update it to play online (restart the app, or reload the page)';",
+    "old": "export const REALM_DOOR_WORD = 'this game is out of date. Update it to play online (restart the app, or reload the page)';",
     "new": "export const REALM_DOOR_WORD = 'this game is out of date - update it to play online (restart the app, or reload the page, or download the newest build from the website and install it again)';",
     "tests": [
       "test/net/realmdoor.test.js"

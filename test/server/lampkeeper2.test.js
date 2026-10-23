@@ -140,7 +140,7 @@ test('LAMP-KEEPER II THE ACCOUNT SERVICE: the first word lays I Love Lamp on the
   assert.equal(titlesHeld({ handle: 'Mac', lamp_title: 1 }, {}).includes('ilovelamp'), true);
   assert.equal(titlesHeld({ handle: 'Mac', lamp_title: 0 }, {}).includes('ilovelamp'), false);
   assert.equal(titlesHeld({ handle: null, lamp_title: 1 }, {}).includes('ilovelamp'), false, 'a guest row holds none');
-  assert.equal(TITLES.at(-17), 'ilovelamp', 'the vocabulary, last when it came');   // PIN MOVED (KG6): The King's Gambit's Grandmaster joined after it, last; PIN MOVED (SERPENT5): and Coilbreaker after that; PIN MOVED (EG-E2, the merges of main): the Spire's thirteen after it; PIN MOVED (WIKIMAID): the WikiMaid joined the list last
+  assert.equal(TITLES.at(-25) /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */ /* PIN MOVED (STAR8): the Starwarden joined the list after the questlines' five, before the festival's two */, 'ilovelamp', 'the vocabulary, last when it came');   // PIN MOVED (QL12): the questlines' five joined the list last, after the WikiMaid; PIN MOVED (KG6): The King's Gambit's Grandmaster joined after it, last; PIN MOVED (SERPENT5): and Coilbreaker after that; PIN MOVED (EG-E2, the merges of main): the Spire's thirteen after it; PIN MOVED (WIKIMAID): the WikiMaid joined the list last
   assert.equal(TITLE_TEXT.ilovelamp, 'I Love Lamp');
   assert.deepEqual([...TITLE_RGBA.ilovelamp], [1, 0.698, 0.376, 1], 'lamplight');
   const e = honourEntry({ kind: 'title', key: 'ilovelamp' });
@@ -158,7 +158,7 @@ test('LAMP-KEEPER II THE WIRING: the interior stands the classic lamp under its 
   assert.match(ctx, /pn\.standBatch = renderer\.createBillboardBatch\(LAMP_ARCHIVE, 0, size, \[\[pn\.x, pn\.y, pn\.z\]\]\);/);
   assert.match(modes, /lampPerson: \(pn\) => isLampKeeper\(pn, \{\n\s*buildingType: building\?\.buildingType \?\? -1, buildingFactionId: building\?\.factionId \?\? 0, buildingKey: building\?\.buildingKey \?\? 0,[^\n]*\n\s*mapId: hit\.dfLocation\?\.mapTableData\?\.mapId \?\? 0, day: Math\.floor\(worldMinutes\(\) \/ MINUTES_PER_DAY\),/);
   assert.match(modes, /if \(!info && pn\?\.lamp\) \{ lampChoice\(pn\); return; \}/);
-  assert.match(modes, /const officeName = \(pn\) => arenaGatePersonName\(pn\) \?\? [^\n]* \?\? \(pn\?\.lamp \? LAMP_TEXT\.name\(\) : null\);/);
+  assert.match(modes, /const officeName = \(pn\) => arenaGatePersonName\(pn\) \?\? [^\n]* \?\? \(pn\?\.lamp \? LAMP_TEXT\.name\(\) : null\)(?: \?\? \(pn\?\.witch \? vendorOffice\(\) : null\))?;/   /* PIN MOVED (WITCH1): a Wyrd Sister's office after the Lamp's */);
   assert.match(modes, /\{ code: 'KeyT', label: `T - \$\{LAMP_TEXT\.trade\(\)\}`, action: \(\) => \{ Promise\.resolve\(townTalk\?\.ensureFactions\?\.\(\)\)\.then\(\(\) => openStaticNpc\(pn\)\)/, 'Trade opens the keeper\'s own shop');
   assert.match(modes, /function lampChoice\(pn\) \{\n\s*const lines = lampLines\(Math\.floor\(worldMinutes\(\) \/ MINUTES_PER_DAY\)\);/, 'its own words, the day\'s');
   assert.match(modes, /townTalk\?\.showOverlay\?\.\(new ChoiceWindow\(\{ lines, options \}\)\);\n\s*void lampTitle\.speak\(\);/);

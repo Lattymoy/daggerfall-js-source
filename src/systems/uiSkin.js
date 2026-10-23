@@ -73,7 +73,10 @@ export const isEnhancedPlus = (search) => isEnhanced(search);
  *  and its hold machine stand down, so nothing reaches slots the player cannot see. On the classic skin the pref is
  *  inert and the diamond is the quickbar, as ever. Here, beside the skin, so the input ladder can read it without
  *  the quickslot model's import ring. */
-export const hotbarInForce = () => isEnhanced() && getPref('quickbarStyle') === 'hotbar';
+export const hotbarInForce = () => isEnhanced() && HOTBAR_STYLES.includes(getPref('quickbarStyle'));
+/** DIAMOND-HB (2026-10-18): the styles that use the hotbar - 'hotbar' (ten slots in a row) and 'diamond' (slots 1-4
+ *  drawn as a diamond, ui/enhanced/enhancedHotbar.js). 'quickbar' is the old QS diamond, now only used by Off. */
+export const HOTBAR_STYLES = Object.freeze(['hotbar', 'diamond']);
 
 /** Store a choice. Ignores anything not a skin, for the same reason
  *  the override does: a bad value is a typo. Returns what is now

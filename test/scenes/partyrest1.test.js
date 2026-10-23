@@ -153,7 +153,7 @@ test('PARTY-REST2 (extended, per-request: "can this also initiate a rest vote...
   // same line as the tally and the waiting-on list, rather than a separate message.
   // PARTY-REST17: no names in the popup either, per the same "dont name names" instruction Update 14 already
   // applied to the chat broadcast - this was the one spot that instruction missed.
-  assert.match(gate, /const line = `You are ready to rest\. \(\$\{readyCount\}\/\$\{totalCount\} ready\)\. Everyone can \/ready or press Rest\.`;/);
+  assert.match(gate, /const line = `You are ready to rest \(\$\{readyCount\}\/\$\{totalCount\} ready\)\. Everyone can \/ready or press Rest\.`;/);
   // PARTY-REST18: the shared-clock computation moved earlier (before the ready-tally branch, so both that
   // branch and this one can read the SAME owner/`voteActive` result) and gained tracking of WHOSE voteAt won,
   // not only the timestamp - matched by the ownership loop and social.now() itself, and separately, that

@@ -383,8 +383,9 @@ test('AUDIT CLIMB-HANDS A16: by source - the hands are stepped on the classic la
   const rig = rd('src/combat/weapon/weaponRig.js');
   assert.match(rig, /const handsLane = !fpArm\.active\(\) && !fpArm\.thirdActive\(\) && !eotbHidesWeapon\(\);/);
   assert.match(rig, /_climbLower = climbLowerStep\(_climbLower, climbing \|\| \(handsLane && climbHands\.showing\(\)\), dt\);/);
-  // PIN MOVED (CLIMB-HANDS II): the lane's climb named first, then handed on with the look and the frame's lens
-  assert.match(rig, /const handsClimb = handsLane && _climbLower >= CLIMB_HANDS_AFTER \? \(camNow\?\.climb \?\? null\) : null;[\s\S]{0,400}?climbHands\.update\(dt, handsClimb, \{ yaw: camNow\?\.yaw, pitch: camNow\?\.pitch, lens: handsLens \}\);/);
+  // PIN MOVED (CLIMB-HANDS II): the lane's climb named first, then handed on with the look and the frame's lens.
+  // PIN MOVED (FIELD BUGS 2026-10-22c SPELL-CLIMB): none while a cast's hands play
+  assert.match(rig, /const handsClimb = handsLane && _climbLower >= CLIMB_HANDS_AFTER && !castTakesHands \? \(camNow\?\.climb \?\? null\) : null;[\s\S]{0,400}?climbHands\.update\(dt, handsClimb, \{ yaw: camNow\?\.yaw, pitch: camNow\?\.pitch, lens: handsLens \}\);/);
   const pose = rd('src/player/climb/climbPose.js');
   assert.doesNotMatch(pose, /m\.way \? Math\.sign\(m\.way\[0\]/, 'the corner reads its own path, not a field the motor never sets');
 });

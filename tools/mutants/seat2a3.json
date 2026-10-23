@@ -262,7 +262,7 @@
  {
   "name": "SEAT2a3-law-why",
   "file": "src/net/townSeatLaw.js",
-  "old": "  'field-unsettled': 'Waiting for the other side\\'s scouts to agree on the field - try again in a moment.',",
+  "old": "  'field-unsettled': 'Waiting for the other side\\'s scouts to agree on the field. Try again in a moment.',",
   "new": "  'field-unsettled': 'Waiting.',",
   "tests": [
    "test/net/seat2a_siege_service.test.js",

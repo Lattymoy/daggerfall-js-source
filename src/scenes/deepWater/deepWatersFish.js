@@ -25,6 +25,7 @@
 import { PassiveFish, rangeFloat, fishBillboardSize, PASSIVE_FISH_SPECIES } from '../../world/passiveFish.js';
 import { createFishSpawner, createEncounterPulse, FISH_ATTEMPTS_PER_PIXEL_PER_TICK } from './deepWatersEncounters.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../../player/activate.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The mod's cut-out for a fish (SpawnPassiveFish's `_Cutoff` 0.1, which ConfigureUnderwaterDecorationMaterial copies). */
 export const FISH_CUTOFF = 0.1;
@@ -51,7 +52,7 @@ export const FISH_KEY_PREFIX = 'dwFish:';
  * @param {?{spawner: any, canPopulate: () => boolean, attempts: number}} [deps.enemies] - DW-E4: the pulse's other lane, the deep's foes
  */
 export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, climateIndexOf, pictures, makeItem, updateInventoryState = () => {}, roll = Math.random, enemies = null }) {
-  /** @type {Array<{id: number, key: string, fish: PassiveFish, species: object, size: {w: number, h: number}, active: boolean, gone: boolean}>} */
+  /** @type {Array<{id: number, key: string, fish: PassiveFish, species: object, size: {w: number, h: number}, loot: {items: any[]}, active: boolean, gone: boolean}>} */
   const fishes = [];
   const byKey = new Map();
   let nextId = 0;
@@ -59,6 +60,7 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
   let frame = { time: 0, roll };
 
   function remove(o) {
+    if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught');   // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once
     o.gone = true;
     byKey.delete(o.key);
     const i = fishes.indexOf(o);

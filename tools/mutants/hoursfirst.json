@@ -32,8 +32,8 @@
   {
     "name": "HOURSFIRST-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
-    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });",
+    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],

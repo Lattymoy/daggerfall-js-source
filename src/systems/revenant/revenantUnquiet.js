@@ -42,6 +42,7 @@ import { DISSOLVE_ARCANE } from '../dissolve.js';
 import { playerDoor } from '../playerDoor.js';
 import { t } from '../textManager.js';   // L10N4: UNQUIET's words through the text core
 import { lessonOf, ADAPT_MAX, ADAPT } from './revenantFeud.js';   // UNQUIET III: what a revenant of mastery trains against
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ── born of flight, ranked by surviving ─────────────────────────────
 /** A revenant's kill of the player (or a companion it fells) ranks it up only every this many times - an escape ranks
@@ -95,7 +96,7 @@ export function fleeCraftOf(mobileType) {
   if (!Number.isInteger(mobileType)) return 'bolt';
   if (BLINKERS.has(mobileType)) return 'blink';
   if (SINKERS.has(mobileType)) return 'sink';
-  if (mobileType >= 128 && mobileType !== M.None) return 'smoke';
+  if (isClassEnemyId(mobileType) && mobileType !== M.None) return 'smoke';
   return 'bolt';
 }
 /** A live revenant's craft as it breaks - its kind's, from CRAFT.RANK (`rank` its record's); null under it (it runs). */
@@ -343,10 +344,10 @@ export const sanitizeTrail = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v)
 /** A craft's name and what it does, as the page says them. */
 export function craftWords(craft) {
   switch (craft) {
-    case 'smoke': return { name: t('rvn.unq.craft.smoke', 'Smoke'), effect: t('rvn.unq.craft.smokeDo', 'it throws down smoke and is lost to sight as it runs - a blow still finds it') };
-    case 'blink': return { name: t('rvn.unq.craft.blink', 'Blink'), effect: t('rvn.unq.craft.blinkDo', 'it tears open a rift and is gone - silence it, hold it, or strike it as it fades') };
-    case 'sink': return { name: t('rvn.unq.craft.sink', 'Sink'), effect: t('rvn.unq.craft.sinkDo', 'it sinks into the earth - strike it before it is under, and it rises, cornered, and runs no more') };
-    case 'bolt': return { name: t('rvn.unq.craft.bolt', 'Bolt'), effect: t('rvn.unq.craft.boltDo', 'it runs faster than anything you have chased - bring it down from range, and break its will before the killing blow') };
+    case 'smoke': return { name: t('rvn.unq.craft.smoke', 'Smoke'), effect: t('rvn.unq.craft.smokeDo', 'it throws down smoke and vanishes as it runs, but a blow can still find it') };
+    case 'blink': return { name: t('rvn.unq.craft.blink', 'Blink'), effect: t('rvn.unq.craft.blinkDo', 'it tears open a rift and is gone. Silence it, hold it, or strike it as it fades') };
+    case 'sink': return { name: t('rvn.unq.craft.sink', 'Sink'), effect: t('rvn.unq.craft.sinkDo', 'it sinks into the earth. Strike it before it is under, and it rises, cornered, and runs no more') };
+    case 'bolt': return { name: t('rvn.unq.craft.bolt', 'Bolt'), effect: t('rvn.unq.craft.boltDo', 'it runs faster than anything you have chased. Bring it down from range, and break its will before the killing blow') };
     default: return null;
   }
 }
@@ -354,8 +355,8 @@ export function craftWords(craft) {
 export function craftFleeWords(craft, given) {
   switch (craft) {
     case 'smoke': return t('rvn.unq.flee.smoke', '{given} throws down smoke and is lost to sight!', { given });
-    case 'blink': return t('rvn.unq.flee.blink', '{given} tears open a rift - strike it before it is through!', { given });
-    case 'sink': return t('rvn.unq.flee.sink', '{given} sinks into the earth - strike it before it is under!', { given });
+    case 'blink': return t('rvn.unq.flee.blink', '{given} tears open a rift. Strike it before it is through!', { given });
+    case 'sink': return t('rvn.unq.flee.sink', '{given} sinks into the earth. Strike it before it is under!', { given });
     case 'bolt': return t('rvn.unq.flee.bolt', '{given} bolts!', { given });
     default: return null;
   }
@@ -363,10 +364,10 @@ export function craftFleeWords(craft, given) {
 /** A wound's name and what it does to it. */
 export function woundWords(w) {
   switch (w) {
-    case 'bled': return { name: t('rvn.unq.wound.bled', 'Bled'), effect: t('rvn.unq.wound.bledDo', 'a wound that will not close - less health') };
-    case 'cracked': return { name: t('rvn.unq.wound.cracked', 'Cracked'), effect: t('rvn.unq.wound.crackedDo', 'cracked bones - it staggers more easily') };
-    case 'maimed': return { name: t('rvn.unq.wound.maimed', 'Maimed'), effect: t('rvn.unq.wound.maimedDo', 'a maimed hand - its blows are lighter') };
-    case 'lamed': return { name: t('rvn.unq.wound.lamed', 'Lamed'), effect: t('rvn.unq.wound.lamedDo', 'a lamed leg - it runs slower') };
+    case 'bled': return { name: t('rvn.unq.wound.bled', 'Bled'), effect: t('rvn.unq.wound.bledDo', 'a wound that will not close, so it has less health') };
+    case 'cracked': return { name: t('rvn.unq.wound.cracked', 'Cracked'), effect: t('rvn.unq.wound.crackedDo', 'cracked bones, so it staggers more easily') };
+    case 'maimed': return { name: t('rvn.unq.wound.maimed', 'Maimed'), effect: t('rvn.unq.wound.maimedDo', 'a maimed hand, so its blows are lighter') };
+    case 'lamed': return { name: t('rvn.unq.wound.lamed', 'Lamed'), effect: t('rvn.unq.wound.lamedDo', 'a lamed leg, so it runs slower') };
     case 'burned': return { name: t('rvn.unq.wound.burned', 'Burned'), effect: t('rvn.unq.wound.burnedDo', 'fire bites it deeper') };
     case 'frostbitten': return { name: t('rvn.unq.wound.frostbitten', 'Frostbitten'), effect: t('rvn.unq.wound.frostbittenDo', 'frost bites it deeper') };
     case 'stormstruck': return { name: t('rvn.unq.wound.stormstruck', 'Stormstruck'), effect: t('rvn.unq.wound.stormstruckDo', 'shock bites it deeper') };
@@ -379,22 +380,22 @@ export function woundWords(w) {
 export function ambitionWords(a) {
   switch (a) {
     case 'vengeance': return { name: t('rvn.unq.amb.vengeance', 'Vengeance'), effect: t('rvn.unq.amb.vengeanceDo', 'it comes for you sooner, and more often') };
-    case 'mastery': return { name: t('rvn.unq.amb.mastery', 'Mastery'), effect: t('rvn.unq.amb.masteryDo', 'it trains while it waits, and grows bolder every two days, not three') };
-    case 'plunder': return { name: t('rvn.unq.amb.plunder', 'Plunder'), effect: t('rvn.unq.amb.plunderDo', 'it raids the roads while it waits - the longer you leave it, the richer it is') };
+    case 'mastery': return { name: t('rvn.unq.amb.mastery', 'Mastery'), effect: t('rvn.unq.amb.masteryDo', 'it trains while it waits, and grows bolder every 2 days instead of 3') };
+    case 'plunder': return { name: t('rvn.unq.amb.plunder', 'Plunder'), effect: t('rvn.unq.amb.plunderDo', 'it raids the roads while it waits, and grows richer the longer you leave it') };
     default: return null;
   }
 }
 /** UNQUIET III (section 48): a revenant of mastery's training, told - its card's body. */
-export const trainedWords = (given, how) => t('rvn.unq.trained', '{given} has been training - it has learned to answer your {how}.', { given, how });
+export const trainedWords = (given, how) => t('rvn.unq.trained', '{given} has been training. It has learned to answer your {how}.', { given, how });
 /** UNQUIET III: when its oldest wound heals, as the page says it. */
 export const healWords = (days) => t('rvn.unq.page.heals', 'The oldest heals in {days, plural, one {# day} other {# days}} unless you find it first.', { days });
 /** THE TRAIL, as its escape's card ends: where it went to ground. */
-export const trailWords = (lair) => t('rvn.unq.trail', 'Its trail leads to {lair}. It has gone to ground there to recover - catch it before it is whole again.', { lair });
+export const trailWords = (lair) => t('rvn.unq.trail', 'Its trail leads to {lair}, where it has gone to ground to recover. Catch it before it is whole again.', { lair });
 /** AN OMEN - the day it is due, in its ambition's words (its card's body). */
 export function omenWords(a, given) {
   switch (a) {
     case 'mastery': return t('rvn.unq.omen.mastery', 'Word reaches you that {given} is ready to face you again.', { given });
-    case 'plunder': return t('rvn.unq.omen.plunder', 'Travellers speak of {given} on the roads again. It is coming for you.', { given });
+    case 'plunder': return t('rvn.unq.omen.plunder', 'Travelers speak of {given} on the roads again. It is coming for you.', { given });
     default: return t('rvn.unq.omen.vengeance', 'You feel eyes on your back. {given} is hunting you again.', { given });
   }
 }

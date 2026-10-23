@@ -61,13 +61,21 @@ test('RR1 the record: the manifest, the switches (27 keys - 26 on the pane, figh
   assert.equal(vendored.GUID, RR_MOD.guid); assert.equal(vendored.ModVersion, '1.8');
   const settings = JSON.parse(rd('vendor/roleplay-realism/modsettings.json'));
   const keys = MOD_SETTINGS[V].keys;
+  // PLAIN-TEXT (2026-10-19): five of the mod's lines (a typo, "DPS", "DFU") said plainly for a player - their words, exactly
+  const PLAIN = {
+    'underworldExpulsion': 'Enables underworld guilds to expel members for poor performance... with prejudice.',
+    'weaponSpeed': 'Lowers weapon damage per second for characters with high Speed.',
+    'classicStrengthDamageBonus': 'Shows the strength damage bonus at half, as the classic game did.',
+    'variantResidents': 'Fills 80% of houses with the townsfolk you see walking around, instead of random adventurers',
+    'EnhancedRiding.followTerrainSoftenFactor': 'How much the ride smooths out slopes, from 0 (none) to 32 (most).',
+  };
   let n = 0;
   for (const sec of settings.Sections) {
     for (const k of sec.Keys) {
       const name = sec.Name === 'Modules' ? k.Name : `${sec.Name}.${k.Name}`;
       if (name === 'fightersTeachHandToHand') { assert.equal(keys[name], undefined, 'FGH2H-R: the ONE retired switch - the base guild counts HandToHand beside Giantish'); n++; continue; }
       assert.ok(keys[name], `${name} is on the pane`);
-      assert.equal(keys[name].description, k.Description, `${name}: the mod's own words`);
+      assert.equal(keys[name].description, PLAIN[name] ?? k.Description, `${name}: the mod's own words, or their plain rewording`);
       const expected = typeof k.Value === 'string' ? (k.Value === 'True' ? true : k.Value === 'False' ? false : Number(k.Value)) : k.Value;
       if (name === 'shipPorts') { assert.equal(expected, true); assert.equal(keys[name].default, false, 'SHIP-PORTS: a recorded departure from the mod\'s defaults - the boat stays reachable from anywhere until a player asks for the port rule'); n++; continue; }
       if (name === 'equipDamage') { assert.equal(expected, true); assert.equal(keys[name].default, false, 'WEAR-VANILLA: the second recorded departure - armour wears at DFU\'s rate, not x5'); n++; continue; }

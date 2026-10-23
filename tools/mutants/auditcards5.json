@@ -892,7 +892,7 @@
   {
     "name": "AC5-C-M4",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "if (!c) return ['A card this build does not know.'];",
+    "old": "if (!c) return ['An unknown card.'];",
     "new": "if (!c) return [];",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
@@ -1379,8 +1379,8 @@
   {
     "name": "AC5-D-C01-shown-and",
     "file": "src/ui/collectionsPage.js",
-    "old": "lootRarityOn() || cardsPartShown(player);",
-    "new": "lootRarityOn() && cardsPartShown(player);",
+    "old": "export const collectionsPageShown = (_player = null) => true;",
+    "new": "export const collectionsPageShown = (_player = null) => false;",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1391,8 +1391,8 @@
   {
     "name": "AC5-D-C02-codex-part-always",
     "file": "src/ui/collectionsPage.js",
-    "old": "(id === 'codex' ? lootRarityOn() : cardsPartShown(player))",
-    "new": "(id === 'codex' ? true : cardsPartShown(player))",
+    "old": "(id === 'codex' ? lootRarityOn() : id === 'cards'",
+    "new": "(id === 'codex' ? true : id === 'cards'",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1403,20 +1403,8 @@
   {
     "name": "AC5-D-C04-reset-keeps-part",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'codex'; _picked = null; resetCardsPart(); }",
-    "new": "{ _picked = null; resetCardsPart(); }",
-    "tests": [
-      "test/systems/auditcards5_ui.test.js",
-      "test/systems/item/cards8_binder.test.js",
-      "test/systems/horse/holdings.test.js",
-      "test/systems/item/packPages.test.js"
-    ]
-  },
-  {
-    "name": "AC5-D-C07-switch-never",
-    "file": "src/ui/collectionsPage.js",
-    "old": "if (parts.length > 1) {",
-    "new": "if (parts.length > 2) {",
+    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }",
+    "new": "{ _picked = null; resetCardsPart(); resetWardrobePart(); }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1439,8 +1427,8 @@
   {
     "name": "AC5-D-C10-leg-count-swap",
     "file": "src/ui/collectionsPage.js",
-    "old": "`Legendaries - ${n.legendary} of ${n.legendaries} found`",
-    "new": "`Legendaries - ${n.legendaries} of ${n.legendary} found`",
+    "old": "{ n: n.legendary, total: n.legendaries }",
+    "new": "{ n: n.legendaries, total: n.legendary }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1451,7 +1439,7 @@
   {
     "name": "AC5-D-C11-unfound-name-leak",
     "file": "src/ui/collectionsPage.js",
-    "old": "r.found ? r.name : 'Unfound'",
+    "old": "r.found ? r.name : t('coll.codex.unfound', 'Unfound')",
     "new": "r.found ? r.name : r.id",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
@@ -1463,7 +1451,7 @@
   {
     "name": "AC5-D-C13-no-day",
     "file": "src/ui/collectionsPage.js",
-    "old": "`${r.group} · found on day ${r.day}`",
+    "old": "t('coll.codex.foundOn', '{group} · found on day {day}', { group: r.group, day: r.day })",
     "new": "`${r.group}`",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
@@ -1499,7 +1487,7 @@
   {
     "name": "AC5-D-C16-whole-no-day",
     "file": "src/ui/collectionsPage.js",
-    "old": "ul.append(el('li', null, `First found on day ${r.day}`));",
+    "old": "ul.append(el('li', null, t('coll.codex.firstFound', 'First found on day {day}', { day: r.day })));",
     "new": "",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
@@ -1523,8 +1511,8 @@
   {
     "name": "AC5-D-C20-aeth-count-swap",
     "file": "src/ui/collectionsPage.js",
-    "old": "`Aetheric - ${n.aetheric} of ${n.aetherics} found`",
-    "new": "`Aetheric - ${n.aetherics} found`",
+    "old": "{ n: n.aetheric, total: n.aetherics }",
+    "new": "{ n: n.aetherics, total: n.aetherics }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1667,8 +1655,8 @@
   {
     "name": "AC5-D-B30-kept-stays-open",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "kept in your binder.`; _editing = null; }",
-    "new": "kept in your binder.`; }",
+    "old": "saved to your binder.`; _editing = null; }",
+    "new": "saved to your binder.`; }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1703,8 +1691,8 @@
   {
     "name": "AC5-D-E01-no-player",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity }),",
-    "new": "collections: (d) => drawCollectionsPage(d, render, { ...kit }),",
+    "old": "collections: (d) => drawCollectionsPage(d, render, { ...kit, player: playerEntity, account: newAccountFlow }),",
+    "new": "collections: (d) => drawCollectionsPage(d, render, { ...kit, account: newAccountFlow }),",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3704,8 +3692,8 @@
   {
     "name": "AC5-C-M29",
     "file": "src/systems/item/itemInfo.js",
-    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);",
-    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isWeirKey(item)) record = survivalInfoTokens(item);",
+    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
+    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3780,8 +3768,8 @@
   {
     "name": "AC5-D-C03-reset-keeps-cards",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'codex'; _picked = null; resetCardsPart(); }",
-    "new": "{ _part = 'codex'; _picked = null; }",
+    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }",
+    "new": "{ _part = 'titles'; _picked = null; resetWardrobePart(); }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3792,8 +3780,8 @@
   {
     "name": "AC5-D-C05-reset-keeps-picked",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'codex'; _picked = null; resetCardsPart(); }",
-    "new": "{ _part = 'codex'; resetCardsPart(); }",
+    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }",
+    "new": "{ _part = 'titles'; resetCardsPart(); resetWardrobePart(); }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",

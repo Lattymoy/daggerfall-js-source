@@ -737,8 +737,8 @@
   {
     "name": "SURVBOONS-tutorial-names-three",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "'Survival can be Off, Boons (the default), Casual or Hard.",
-    "new": "'Survival can be Off, Casual or Hard.",
+    "old": "'Survival can be Off, Boons (the default), Casual or Hard, set",
+    "new": "'Survival can be Off, Casual or Hard, set",
     "why": "the page names no Boons",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the page names Boons the default.",
     "tests": [
@@ -790,8 +790,8 @@
   {
     "name": "BOONS-DEFAULT-the-page-says-casual",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "'Survival can be Off, Boons (the default), Casual or Hard.",
-    "new": "'Survival can be Off, Boons, Casual (the default) or Hard.",
+    "old": "'Survival can be Off, Boons (the default), Casual or Hard, set",
+    "new": "'Survival can be Off, Boons, Casual (the default) or Hard, set",
     "why": "BOONS-DEFAULT: the first-need page names Casual the default",
     "tests": [
       "test/systems/survival/survboons.test.js"

@@ -1,0 +1,776 @@
+[
+  {
+    "name": "SEA-EVENTS-wire-period",
+    "file": "src/net/wire.js",
+    "old": "export const SEA_FLEET_PERIOD_MS = 3 * 3_600_000;",
+    "new": "export const SEA_FLEET_PERIOD_MS = 2 * 3_600_000;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wire-no-fk",
+    "file": "src/net/wire.js",
+    "old": "const WDUN_IN = new Set(['hi', 'in', 'out', 'here', 'die', 'gk', 'fk']);",
+    "new": "const WDUN_IN = new Set(['hi', 'in', 'out', 'here', 'die', 'gk']);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wire-n-any",
+    "file": "src/net/wire.js",
+    "old": "const fleetN = (n) => Number.isSafeInteger(n) && n >= 0 && n < 1e8;",
+    "new": "const fleetN = (n) => Number.isSafeInteger(n) && n < 1e8;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wire-list-long",
+    "file": "src/net/wire.js",
+    "old": "list.slice(0, 4).filter(fleetN)",
+    "new": "list.slice(0, 6).filter(fleetN)",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wire-hello-no-fleets",
+    "file": "src/net/wire.js",
+    "old": ", giants: giantPairs(m.giants), fleets: fleetList(m.fleets) };",
+    "new": ", giants: giantPairs(m.giants) };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wire-no-fd",
+    "file": "src/net/wire.js",
+    "old": "  if (m.k === 'fd') return { k: 'fd', fleets: fleetList(m.fleets) };",
+    "new": "  if (false) return { k: 'fd', fleets: fleetList(m.fleets) };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-any-sailing",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (!(now >= start && now <= start + SEA_FLEET_SAIL_MS + SEA_FLEET_LATE_MS)) return false;",
+    "new": "  if (!(now <= start + SEA_FLEET_SAIL_MS + SEA_FLEET_LATE_MS)) return false;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-this-alone",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (!(now >= start && now <= start + SEA_FLEET_SAIL_MS + SEA_FLEET_LATE_MS)) return false;",
+    "new": "  if (!(now >= start && now <= start + SEA_FLEET_SAIL_MS)) return false;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-twice",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (st.fleets[n] > now) return false;\n  st.fleets[n] = (n + 2) * SEA_FLEET_PERIOD_MS;",
+    "new": "  st.fleets[n] = (n + 2) * SEA_FLEET_PERIOD_MS;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-keep-short",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  st.fleets[n] = (n + 2) * SEA_FLEET_PERIOD_MS;",
+    "new": "  st.fleets[n] = (n + 1) * SEA_FLEET_PERIOD_MS;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-never-pruned",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  for (const [n, until] of Object.entries(st.fleets ?? {})) if (!(until > now)) { delete st.fleets[n]; moved = true; }",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-hello-none",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "    fleets: wdunFleets(st, now),\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-not-stored",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "eps: {}, giants: {}, fleets: {} });",
+    "new": "eps: {}, giants: {} });",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-hub-arm-silent",
+    "file": "server/src/index.js",
+    "old": "      if (wdunFleetSunk(st, m.n, now)) { await this._wdunSave(now, true); this._wildFan({ t: 'wdun', k: 'fd', fleets: wdunFleets(st, now) }); }",
+    "new": "      if (wdunFleetSunk(st, m.n, now)) { await this._wdunSave(now, true); }",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-period",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const STORM_PERIOD_MS = 2 * 3_600_000;",
+    "new": "export const STORM_PERIOD_MS = 3 * 3_600_000;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-life",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const STORM_LIFE_MS = 50 * 60_000;",
+    "new": "export const STORM_LIFE_MS = 60 * 60_000;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-reach",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const STORM_R_PX = 40;",
+    "new": "export const STORM_R_PX = 30;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-shallow",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  const [cx0, cx1] = columns(band('deep').from, band('abyss').from + STORM_ABYSS_LEAGUES);",
+    "new": "  const [cx0, cx1] = columns(band('deep').from, band('abyss').from);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-still",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "x1: x0 + Math.cos(a) * STORM_DRIFT_PX, y1: y0 + Math.sin(a) * STORM_DRIFT_PX,",
+    "new": "x1: x0, y1: y0,",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-lingers",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  return nowMs >= s.start && nowMs < s.end ? s : null;\n}\n/** The next storm",
+    "new": "  return nowMs >= s.start && nowMs <= s.end ? s : null;\n}\n/** The next storm",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-unclamped",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  const k = Math.max(0, Math.min(1, (nowMs - s.start) / STORM_LIFE_MS));",
+    "new": "  const k = (nowMs - s.start) / STORM_LIFE_MS;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-storm-reach-short",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  return Math.hypot(x - e.x, y - e.y) <= s.r ? s : null;",
+    "new": "  return Math.hypot(x - e.x, y - e.y) <= s.r * 0.9 ? s : null;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wrack-slot",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const stormWrackSlot = (s, nowMs) => Math.max(0, Math.floor((nowMs - s.start) / STORM_WRACK_MS));",
+    "new": "export const stormWrackSlot = (s, nowMs) => Math.max(0, Math.round((nowMs - s.start) / STORM_WRACK_MS));",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-wrack-yield",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  return { good, n: yields[i] ?? yields[0], rolls: r };",
+    "new": "  return { good, n: yields[0], rolls: r };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-strike-always",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  if (!(r() < STORM_STRIKE_CHANCE)) return null;",
+    "new": "  if (!(r() <= STORM_STRIKE_CHANCE)) return null;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-strike-fire",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  return { hull: STORM_STRIKE.hull, sail: STORM_STRIKE.sail, fire: r() < STORM_STRIKE.fire };",
+    "new": "  return { hull: STORM_STRIKE.hull, sail: STORM_STRIKE.sail, fire: false };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-strike-no-floor",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  damage.apply(stormHurt(damage, strike), now, { floor: 1 });",
+    "new": "  damage.apply(stormHurt(damage, strike), now);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-strike-a-wreck",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  if (!damage || !strike || damage.state !== SHIP_STATES.afloat) return false;",
+    "new": "  if (!damage || !strike) return false;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-strike-whole",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  hull: Math.max(1, Math.round(damage.maxHull * strike.hull)),",
+    "new": "  hull: Math.round(damage.maxHull * strike.hull),",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-offset",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const FLEET_OFFSET_MS = 60 * 60_000;",
+    "new": "export const FLEET_OFFSET_MS = 0;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-abyss-shallow",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "columns(band('abyss').from, band('abyss').from + FLEET_ABYSS_LEAGUES);",
+    "new": "columns(band('deep').from, band('abyss').from + FLEET_ABYSS_LEAGUES);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-any-way",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  const a = (r() - 0.5) * 0.6,",
+    "new": "  const a = (r() - 0.5) * 1.6,",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-fast",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const FLEET_MPS = 5;",
+    "new": "export const FLEET_MPS = 8;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-no-escort",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "[FLEET_FLAGSHIP, ...FLEET_ESCORTS[id]].map(",
+    "new": "[FLEET_FLAGSHIP].map(",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-purse",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "export const FLEET_PURSE = Object.freeze({ deep: 6000, abyss: 12000 });",
+    "new": "export const FLEET_PURSE = Object.freeze({ deep: 6000, abyss: 6000 });",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-lingers",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  return nowMs >= f.start && nowMs < f.end ? f : null;",
+    "new": "  return nowMs >= f.start && nowMs <= f.end ? f : null;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-next-now",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  return nowMs < f.start ? f : fleetOf(f.n + 1);",
+    "new": "  return fleetOf(f.n + 1);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-overshoots",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "  const k = Math.max(0, Math.min(1, (nowMs - f.start) / FLEET_SAIL_MS));",
+    "new": "  const k = Math.max(0, (nowMs - f.start) / FLEET_SAIL_MS);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-fleet-heading-north",
+    "file": "src/systems/sea/seaEvents.js",
+    "old": "yaw: Math.atan2(f.to.x - f.from.x, -(f.to.y - f.from.y)) };",
+    "new": "yaw: Math.atan2(f.to.x - f.from.x, f.to.y - f.from.y) };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-reach",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;",
+    "new": "if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_DROP_M) continue;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-respent",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;",
+    "new": "if (dist2d(s.pos, me) > FLEET_STAND_M) continue;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-never-forgot",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (list?.n !== sailing) { sailing = list?.n ?? null; spent.clear(); }",
+    "new": "    if (list?.n !== sailing) { sailing = list?.n ?? null; }",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-untagged",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "      e.fleet ??= tagOf(list, e.ship.seed);",
+    "new": "      void tagOf;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-twice",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "        if ([...deps.sea.values()].some((x) => x.ship.seed === s.seed && x.ship.damage.state !== SHIP_STATES.sunk)) continue;",
+    "new": "        void 0;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-anyone",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (list && !sunk && deps.launches()) {",
+    "new": "    if (list && !sunk) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-scattered-stand",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (list && !sunk && deps.launches()) {",
+    "new": "    if (list && deps.launches()) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-on-land",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue;",
+    "new": "        void 0;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-drop-fighting",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "      if (!deps.busy(e) && !e.retiring) deps.retire(e);",
+    "new": "      if (!e.retiring) deps.retire(e);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-gone-on-return",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) { e.retiring = false; continue; }",
+    "new": "      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) continue;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-ships-no-steer",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "      e.ship.course = s ? [s.ahead[0], s.ahead[2]] : null;",
+    "new": "      void s;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-spoils-escort",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (!entry?.fleet?.flag || (act !== 'sink' && act !== 'board')) return null;",
+    "new": "    if (!entry?.fleet || (act !== 'sink' && act !== 'board')) return null;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-spoils-struck",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (!entry?.fleet?.flag || (act !== 'sink' && act !== 'board')) return null;",
+    "new": "    if (!entry?.fleet?.flag) return null;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-spoils-kept",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "      deps.give([piece]);",
+    "new": "      void piece;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-spoils-untold",
+    "file": "src/scenes/naval/treasureFleet.js",
+    "old": "    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null;",
+    "new": "    void act;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-never-turns",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "  const stormTurned = () => { const w = stormWord(); if (w === _stormShown) return false; _stormShown = w; return true; };",
+    "new": "  const stormTurned = () => { const w = stormWord(); _stormShown = w; return true; };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-word-anywhere",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "  const stormWord = () => (stormOver(deps.pixel?.(), clock()) ? 'thunder' : null);",
+    "new": "  const stormWord = () => (stormAt(clock()) ? 'thunder' : null);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-wrack-again",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (hauled(id)) return [];\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-haul-again",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (hauled(id)) return { items: [], text: '' };\n",
+    "new": "\n",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-wrack-no-tidemail",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (piece) items.push(piece);",
+    "new": "    void piece;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-feed-often",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "if (now - fedAt >= FLEET_FEED_MS) {",
+    "new": "if (now - fedAt > FLEET_FEED_MS) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-feed-unscattered",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "deps.naval?.()?.fleet?.(list, { sunk: !!list && down(list.n) });",
+    "new": "deps.naval?.()?.fleet?.(list, { sunk: false });",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-stations-flat",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    const at = (x, z, st) => [x + dz * st[0] - dx * st[1], 0, z - dx * st[0] - dz * st[1]];",
+    "new": "    const at = (x, z) => [x, 0, z];",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-no-lead",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "b = a && fleetPlace(f, now + FLEET_LEAD_MS);",
+    "new": "b = a && fleetPlace(f, now + 1);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-storm-said-always",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (s && heardStorm !== s.n) {",
+    "new": "    if (s) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-fleet-said-always",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (f && heardFleet !== f.n && !down(f.n)) {",
+    "new": "    if (f && !down(f.n)) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-strike-every-frame",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (here && strikesSeen != null && n > strikesSeen) {",
+    "new": "    if (here && strikesSeen != null && n >= strikesSeen) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-strike-outside",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (here && strikesSeen != null && n > strikesSeen) {",
+    "new": "    if (strikesSeen != null && n > strikesSeen) {",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-purse-unpaid",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    deps.ether?.credit?.(f.purse);",
+    "new": "    void f.purse;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-hub-any-relay",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "return !!link?.wdunSeaOk && link.status === 'open' && link.sendWdun({ k: 'fk', n }) === true; };",
+    "new": "return link?.status === 'open' && link.sendWdun({ k: 'fk', n }) === true; };",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-hub-kept",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    sunk.clear();   // the hub's word alone - mine kept (AUDIT SEA VENTURES D5: its hello put my own sinking out)\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-scatter-unsaid",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (w.k === 'fd' && cur && !was && sunk.has(cur.n) && atSea()) mid(",
+    "new": "    if (false) mid(",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-host-chart-plain",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "chartWord: (now) => ({ ...chartWord(now), ...eventsWord() }),",
+    "new": "chartWord,",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-chart-storm-anywhere",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  const storm = sw && on(sw[0], sw[1], word.storm.r * k) ?",
+    "new": "  const storm = sw ?",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-chart-storm-unnamed",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "named: word.storm.r * k >= STORM_NAME_R } : null;",
+    "new": "named: false } : null;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-chart-no-storm",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (m.storm) paintStorm(g, m.storm);",
+    "new": "  void paintStorm;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-chart-no-fleet",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (m.fleet) paintFleet(g, m.fleet);",
+    "new": "  void paintFleet;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-chart-fleet-grey",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  g.fillStyle = f.sunk ? '#8c8c98' : FLEET_INK; g.fill();",
+    "new": "  g.fillStyle = '#8c8c98'; g.fill();",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-chart-keys-always",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    stormItem.hidden = !word.storm; fleetItem.hidden = !word.fleet;",
+    "new": "    stormItem.hidden = false; fleetItem.hidden = false;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-world-no-thunder",
+    "file": "src/scenes/world.js",
+    "old": "(sunbaby.on ? SUNBABY_WEATHER : seaStormShown() ?? currentWeather());",
+    "new": "(sunbaby.on ? SUNBABY_WEATHER : currentWeather());",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-world-no-front",
+    "file": "src/scenes/world.js",
+    "old": "const crossing = weatherCrossingStamp() !== seenCrossing || seaVentures.stormTurned();",
+    "new": "const crossing = weatherCrossingStamp() !== seenCrossing;",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-world-no-step",
+    "file": "src/scenes/world.js",
+    "old": "{ laneShips(); seaVentures.step(lightning?.strikes ?? 0); }",
+    "new": "{ laneShips(); }",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-world-no-hub",
+    "file": "src/scenes/world.js",
+    "old": "    seaVentures.hubWord(w);   // SEA-EVENTS: the treasure fleets scattered\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-world-no-wrack",
+    "file": "src/scenes/world.js",
+    "old": ", ...etherHost.sites(p.x, p.y), ...seaVentures.wrackSites(p.x, p.y)]",
+    "new": ", ...etherHost.sites(p.x, p.y)]",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-world-no-rumours",
+    "file": "src/scenes/world.js",
+    "old": "rumours: [...o.rumours, ...seaVentures.rumours(port)], ",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-naval-no-spoils",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    treasureFleet.ended(entry, act);   // SEA-EVENTS: the treasure fleet's flagship - her Tidemail piece, her purse\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  },
+  {
+    "name": "SEA-EVENTS-naval-no-wrack-word",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deps.say?.(site.word ?? SITE_WORDS[site.kind], 4);",
+    "new": "deps.say?.(SITE_WORDS[site.kind], 4);",
+    "tests": [
+      "test/systems/sea/seaevents.test.js"
+    ]
+  }
+]

@@ -571,7 +571,7 @@
   {
     "name": "NAV1H-the-wreck-sails",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled - no sail will set.';\n",
+    "old": "    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled. No sail will set.';\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -580,7 +580,7 @@
   {
     "name": "NAV1H-the-rig-refusal-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away - no sail will set.';\n",
+    "old": "    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away. No sail will set.';\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -725,7 +725,7 @@
   {
     "name": "NAV1H-the-port-unread",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!enabled || !boat || !where().nearPort) return false;",
+    "old": "    if (!enabled || !boat || !inPortWaters()) return false;",
     "new": "    if (!enabled || !boat) return false;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -846,7 +846,7 @@
   {
     "name": "NAV1H-the-wreck-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled - crew repairing' : ship.repairOrdered ? 'Crippled - repairs ordered' : ship.stores > 0 ? 'Crippled - order repairs, or make port' : 'Crippled - make port for a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
+    "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled, crew repairing' : ship.repairOrdered ? 'Crippled, repairs ordered' : ship.stores > 0 ? 'Crippled. Order repairs, or make for port' : 'Crippled. Make for port and a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -992,7 +992,7 @@
   {
     "name": "NAV1H-the-heaving-card-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colours struck - heaving to' : `Colours struck - ${key}: heave to`, kind: 'board' };\n",
+    "old": "    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colors struck, heaving to' : `Colors struck - ${key}: heave to`, kind: 'board' };\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"

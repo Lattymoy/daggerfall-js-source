@@ -235,9 +235,9 @@ test('LIVED1 words: a deadline on the character\'s clock is said in their time a
   setOwnMinutes(100 * D);
   assert.equal(ownTimeLeftText(100 * D + 7 * D), '7 days of your time (14h of play)', 'a week\'s room: fourteen hours of play at the most');
   assert.equal(ownTimeLeftText(100 * D + 3 * D + 5 * H), '3 days 5 hours of your time (6h 25m of play)');
-  assert.equal(worldNightfallText(), 'The sun is the world\'s - night falls in about 30 minutes.', 'six game hours to dusk are thirty real minutes');
+  assert.equal(worldNightfallText(), 'Online, resting does not move the sun. Night falls in about 30 minutes.', 'six game hours to dusk are thirty real minutes');
   setSharedClock(() => 700 * D + 17 * H + 59);
-  assert.equal(worldNightfallText(), 'The sun is the world\'s - night falls in about 1 minute.');
+  assert.equal(worldNightfallText(), 'Online, resting does not move the sun. Night falls in about 1 minute.');
   setSharedClock(() => 700 * D + 20 * H);
   assert.equal(worldNightfallText(), null, 'at night there is nothing to wait for');
   const w = rd('src/scenes/world.js');

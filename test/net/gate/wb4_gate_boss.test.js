@@ -409,11 +409,11 @@ test('WB4 the court\'s driver, the voice and the body: the wind-up cued at the w
   await tick(h, 11000, state({ atk: null, x: 4, z: -2, phase: 3, shieldUntil: 14000 }));
   await tick(h, 11000 + ROAR_AFTER_MS);   // WB13e: a moment after the bound's bark
   assert.equal(h.sounds.at(-1)[1], BOSS_CUES.roar.clip, 'the roar of a phase crossed');
-  const hf = W('hellfire', { i: 8, at: 21000, tg: [[1, 1], [-5, 6]] });
+  const hf = W('hellfire', { i: 8, at: 21000, tg: [[1, 1], [-9, 8]] });   // GATE-MIX: two marks standing apart (world/gate/gateBoss.js cueTargetPlaces)
   await tick(h, 20000, state({ atk: hf, phase: 3 }));
   await tick(h, 21001);
   assert.deepEqual(h.sounds.filter((s) => s[0] === 'id').map((s) => s[1]), [FIRE_CAST_ID], 'the fire\'s cast by its ID');
-  assert.deepEqual(h.sounds.slice(-2).map((s) => [s[1], s[2]]), [[BURNING, courtToDungeon(1, 0.5, 1)], [BURNING, courtToDungeon(-5, 0.5, 6)]], 'the burning under each target');
+  assert.deepEqual(h.sounds.slice(-2).map((s) => [s[1], s[2]]), [[BURNING, courtToDungeon(1, 0.5, 1)], [BURNING, courtToDungeon(-9, 0.5, 8)]], 'the burning under each target standing apart');
   await tick(h, 26000);
   const heard = h.sounds.length;
   await tick(h, 27000, state({ atk: W('slam', { i: 9, at: 26000 }), phase: 3 }));
@@ -462,7 +462,7 @@ test('WB4 the seams, by source: the world host makes the court on the link, fram
   // WB6b: the telegraph's pass and the air's life share the hook - either drawn marks the seam, once
   assert.match(w, /const told = gateCourt\?\.drawPass\(proj, view, eye, [^\n]*\);\n[^\n]*\n[^\n]*\n\s+if \(told \|\| lived\) renderer\.markForeignPass\(\);/);
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /withCourtLights\(_dgLit, \[\.\.\.\(host\.gateCourtLights\?\.\(\) \?\? \[\]\), \.\.\.courtLightsNear\(cam\.pos\)\]\)/);   // WB9b: the fight's lights first - the renderer's cap drops a far brazier, never him
+  assert.match(wm, /withCourtLights\(_dgLit, \[\.\.\.\(host\.gateCourtLights\?\.\(\) \?\? \[\]\), \.\.\.courtLightsNear\(cam\.pos, planOfDay\(dungeonLoc\.gate\)\)\]\)/);   // WB14b: the night's braziers; WB9b: the fight's lights first - the renderer's cap drops a far brazier, never him
   const bb = wm.indexOf('renderer.drawBillboards([...dungeonCtx.billboardBatches'), tg = wm.indexOf('if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });'), foes = wm.indexOf('dungeonCtx.drawFoes(dt, canvas');
   assert.ok(bb > 0 && tg > bb && tg < foes, 'the telegraph after the court and its billboards, before drawFoes\' screen quads end the world pass');
   const dc = read('src/scenes/dungeonContext.js');

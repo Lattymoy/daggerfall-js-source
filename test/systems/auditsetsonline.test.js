@@ -100,7 +100,7 @@ test('AUDIT SETS L5: "READY AGAIN" ONLY FOR A POWER WORN AND AWAKE - never with 
   door([], e);
   at(100);
   reportPlayerKill(RAT);
-  assert.deepEqual(v.said, ['Iron Hide - the next 10 damage is turned aside.']);
+  assert.deepEqual(v.said, ['Iron Hide! The next 10 damage is blocked.']);   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
   at(200);
   setRound(e);
   assert.equal(v.said.length, 1, 'the ward still stands: nothing to be ready for');

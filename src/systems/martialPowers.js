@@ -124,7 +124,7 @@ function again(entity, amount, word) {
   const n = Math.max(1, Math.round(amount));
   const door = playerDoor();
   const f = door?.foes?.().find((x) => x.entity === entity) ?? null;
-  if (!f?.dead) showFollowUp(n, word);   // AUDIT MARTIAL L1 N1: the owed one's number too (the loot's again - ROSE-SEEN)
+  if (!f?.dead) showFollowUp(n, word, entity);   // AUDIT MARTIAL L1 N1: the owed one's number too (the loot's again - ROSE-SEEN); FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands
   if (f) { if (!f.dead) door.hurtFoe(f, n); return; }
   oweFoe(entity, n);
 }

@@ -64,11 +64,11 @@ export const MASTER_SKILLS_OFFER_ROWS = Object.freeze([
 
 /** The skill screen's description (enhanced pane; the classic box shows it as rows). */
 export const MASTER_SKILLS_ABOUT = Object.freeze([
-  'Every skill can reach 100. You can MASTER 2 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',
-  'Each point past 100 is much slower to earn and gives a quarter of the boost of a point below it, with milestone bonuses at 125, 150, 175 and 200.',
-  'Past 100 a skill only learns from foes that are tough for it; weak foes and repeating it will not help. Below 100, skills rise as before - and the lock that stops other skills at 95 once you master a primary skill is lifted.',
+  'Every skill can reach 100. You can master 2 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',
+  'Each point past 100 is much slower to earn and gives 25% of the boost of a point below 100, with milestone bonuses at 125, 150, 175 and 200.',
+  'Past 100 a skill only improves against enemies that are tough for it. Weak enemies and repetition do not help. Below 100, skills rise as before, and mastering a primary skill no longer holds your other skills at 95.',
   'Dangerous dungeons send stronger enemies as your skills pass 100. Easy dungeons, towns and the wilds stay as they are.',
-  'Online it is always on. Offline you choose: turning it off keeps your progress - skills above 100 read as 100 until you turn it back on - and it cannot be changed inside a dungeon. Values may change during development.',
+  'It is always on when playing online. Offline you can turn it off and keep your progress: skills above 100 count as 100 until you turn it back on. It cannot be changed inside a dungeon. Values may change during development.',
 ]);
 
 export const MASTER_SKILLS_ONLINE_TEXT = 'Master Skills is always on when playing online.';

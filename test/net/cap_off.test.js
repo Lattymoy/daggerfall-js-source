@@ -239,12 +239,12 @@ test('CAP-OFF the Professions page: a gathering profession\'s day is its count -
     assert.doesNotMatch(mining, /of 60/);
     assert.match(page('Herbalism'), /Today: 1 harvest(?!s)/);
     const fishing = page('Fishing');
-    assert.match(fishing, /Today: 1 haul - your account's, across your characters/);
+    assert.match(fishing, /Today: 1 haul \(shared by all your characters\)/);
     assert.doesNotMatch(fishing, /of 40/);
     book.state.hauls = 41;
-    assert.match(page('Fishing'), /Today: 41 hauls - your account's/);
+    assert.match(page('Fishing'), /Today: 41 hauls \(shared by all your characters\)/);
     const hunting = page('Hunting');
-    assert.match(hunting, /Today: 31 hides, 3 of 3 of tiers 5-6 - your account's, across your characters/);
+    assert.match(hunting, /Today: 31 hides, 3 of 3 of grades 5 and 6 \(shared by all your characters\)/);
     assert.doesNotMatch(hunting, /of 30/);
   } finally { root.remove(); }
 });
@@ -257,6 +257,6 @@ test('CAP-OFF the words: the four refusals the service says no more keep their w
   assert.equal(accountRefusalText('prof-hunt-high'), `Your account has taken all the rare hides a day allows (${HIGH_HIDES_PER_DAY}, across your characters).`);
   const daily = eventTimerRows({ now: Date.UTC(2026, 9, 7, 12) }).find((r) => r.id === 'daily');
   // PIN MOVED: GUILD3a (bible/11-Multiplayer/Guilds-Made-Plain.md) - silver, never Marks; marked by AUDIT GUILD3 R4
-  assert.equal(daily.detail, 'The day\'s nodes stand anew; rare hides, silver and Court writs: their daily limits start again');
-  assert.match(eventTimerRows({ now: Date.UTC(2026, 9, 7, 12), seatsOpen: true }).find((r) => r.id === 'daily').detail, /Court writs, and the Watch: their daily limits/);
+  assert.equal(daily.detail, 'Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs');
+  assert.match(eventTimerRows({ now: Date.UTC(2026, 9, 7, 12), seatsOpen: true }).find((r) => r.id === 'daily').detail, /Court writs, and the Watch$/);
 });

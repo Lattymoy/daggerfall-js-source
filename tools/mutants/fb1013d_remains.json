@@ -173,8 +173,8 @@
   {
     "name": "FB1013d-REMAINS-STAND-the-list-not-made-ready",
     "file": "src/scenes/legacyHost.js",
-    "old": "    return openRemains().filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });",
-    "new": "    return openRemains().filter((r) => r.state === 'lying' && r.place);",
+    "old": "    return remainsLying().map((r) => { readyList(r); return r; });",
+    "new": "    return remainsLying();",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "FB1013d-AUDIT-C3-every-row-stood",
     "file": "src/scenes/legacyHost.js",
-    "old": "    return openRemains().filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });",
-    "new": "    return (family.remains ?? []).filter((r) => r.state === 'lying' && r.place).map((r) => { readyList(r); return r; });",
+    "old": "    return openRemains().filter((r) => r.state === 'lying' && r.place);",
+    "new": "    return (family.remains ?? []).filter((r) => r.state === 'lying' && r.place);",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]

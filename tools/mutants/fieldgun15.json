@@ -38,8 +38,8 @@
   {
     "name": "FIELD-GUN15-5-the-gain-goes-back-down",
     "file": "src/combat/gun/gunFeel.js",
-    "old": "  sfxVolume: 1, sfxVary: 0.19,",
-    "new": "  sfxVolume: 0.7, sfxVary: 0.19,",
+    "old": "  sfxVolume: 1, sfxVary: 0.19,\n  // how far the weapon drops",
+    "new": "  sfxVolume: 0.7, sfxVary: 0.19,\n  // how far the weapon drops",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FIELD-GUN15-6-the-pitch-jitter-goes-back-down",
     "file": "src/combat/gun/gunFeel.js",
-    "old": "  sfxVolume: 1, sfxVary: 0.19,",
-    "new": "  sfxVolume: 1, sfxVary: 0.06,",
+    "old": "  sfxVolume: 1, sfxVary: 0.19,\n  // how far the weapon drops",
+    "new": "  sfxVolume: 1, sfxVary: 0.06,\n  // how far the weapon drops",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

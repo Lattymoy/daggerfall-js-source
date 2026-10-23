@@ -147,8 +147,9 @@
 //                                                 helm, at StartSailing (AUDIT NAV2 F14)
 // }
 
-import { Boat, setLights, HULL_NAMES, HULL_PRICES, packedHullWeight, CARGO_CONTAINER_IMAGE, TRIGGER_MODEL, goModelName, meshLocalBounds, colliderBounds, animatorOf, boatAnimators, boatParticleSystems, nodeOf, AUDIO_CLIPS, SAIL_ANIMATION_SPEED } from './comeSailAwayBoat.js';
-import { hullFromMessage } from './comeSailAwayHulls.js';   // PARTS-WEIGHT: GetHullFromMessage, the leaf's
+import { Boat, setLights, HULL_NAMES, HULL_PRICES, packedHullWeight, CARGO_CONTAINER_IMAGE, TRIGGER_MODEL, goModelName, meshLocalBounds, colliderBounds, animatorOf, nodeOf, AUDIO_CLIPS, SAIL_ANIMATION_SPEED } from './comeSailAwayBoat.js';
+import { hullFromMessage } from './comeSailAwayHulls.js';
+import { seaHoldShut, seaHoldShutText } from '../naval/seaHoldGuard.js';   // AUDIT SEA VENTURES B3: a wrecked ship's hold, shut while she may be boarded   // PARTS-WEIGHT: GetHullFromMessage, the leaf's
 import { firmStat } from '../firmamentLive.js';   // FIRM1: the Firmament's helmsman (sailSpeed)
 import { constantCurve, twoConstantsCurve, SPACE } from '../../world/unityParticles.js';
 import { quatEuler } from '../../world/unityAnimator.js';
@@ -164,6 +165,8 @@ import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContai
 import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
 import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
+import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOAT-OWN: her Animators and particle systems by her range, the far law
+import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
 /**
@@ -287,7 +290,7 @@ export const NICE_BOAT_TEXT = 'Nice Boat!';
 /** CSA-K (DECLARED): the pack's refusal while another player stands on the deck, in the driver's words' shape. */
 export const PASSENGERS_ABOARD_TEXT = 'You cannot pack a boat with passengers aboard!';
 /** AUDIT HOLDINGS F1 (the port's own): parts whose boat already stands are refused - never a second boat of one number. */
-export const PARTS_STANDING_TEXT = 'This ship is already afloat - these are its parts.';
+export const PARTS_STANDING_TEXT = 'This ship is already afloat. These are its parts.';
 /** SHIP-PACK (the port's own): the pack's refusal of a deed ship whose deed is not in the pack - her parts take its place,
  *  and a deed left elsewhere would call a second ship of hers to a port. */
 export const DEED_NOT_HELD_TEXT = 'You need the ship\'s deed in your pack to pick it up.';
@@ -316,7 +319,7 @@ export const IRONS_TELL_WAY = 0.4;
  *  heave-to asked up to 47 in a storm, and its ship ran past the one she hove to beside. */
 export const CSA_BRAKE_MAX = 20;
 export const IRONS_TELL_S = 2;
-export const IRONS_TEXT = 'In irons - the wind is dead ahead. Strike sail and row to turn.';
+export const IRONS_TEXT = 'In irons: the wind is dead ahead. Strike sail and row to turn.';
 /**
  * HELM-LADDER (2026-10-04, from the field: "WASD and Arrow keys should function the same when controlling. Allowing you
  * to lower and raise sails" - the throttle ladder chosen; DECLARED, the Port-Ledger's Come Sail Away row): THE HELM'S
@@ -489,7 +492,7 @@ export const WEATHER_TYPE = Object.freeze({ Sunny: 0, Cloudy: 1, Overcast: 2, Fo
 export const TIME_SCALES = Object.freeze([1, 5, 10, 15, 30]);
 /** HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online"): what a time key says at the helm while
  *  the dial is retired (online) - the step is the player's offline alone. */
-export const HELM_TIME_LOCKED_TEXT = 'Online, time at sea keeps the world\'s pace.';
+export const HELM_TIME_LOCKED_TEXT = 'Online, time at sea runs at normal speed.';
 /** A point through a column-major matrix, and back through its inverse. */
 const applyMatrix = (m, p) => [
   m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14],
@@ -680,6 +683,9 @@ export function createComeSailAwayRuntime(deps) {
   const has = (action) => !!deps.input?.has(action);   // InputManager.HasAction
   const dt = () => f(deps.dt?.() ?? 0);                 // Time.deltaTime
   const cur = () => state.CurrentBoat;
+  /** BOAT-OWN (scenes/comeSailAway/farLife.js createBoatLives): each boat's Animators and particle systems by her range
+   *  from the pool's last eye (comeSailAwayPool.js lifeEye; a pool with none: every boat near, every frame). */
+  const lives = createBoatLives({ eye: () => deps.pool?.lifeEye?.() ?? null });
 
   /** moveSpeed (525-536). NAV-H x AUDIT NAV1 (the helm): times the sea fight's share of her way (`deps.wayScale`, the
    *  port's seam - the mod has no hurt): the canvas a shot-up rig still sets under sail, a wreck's oars under oars. */
@@ -1519,6 +1525,13 @@ export function createComeSailAwayRuntime(deps) {
       // for one). FIELD BUGS 2026-10-02 ASTERN (a departure): back asks the STERN's, the water she backs into - asking the
       // bow's, a bow run onto a shoal or a rock's foot refused the one way off it, and the centre's water let her row on in
       // HELM-LADDER: the oars pull at their rung (a journey's as the autorun does), not while a key is held
+      // FB1020c OAR-RUNG (the field: "ships drift off if you fast travel without full sails"): THE AUTORUN TAKES THE OARS
+      // FROM THE KEPT RUNG. The Overworld's crossing rows through the autorun (world.js tvSeaSail, seaHelm.js `row`) and
+      // never knew the rung HELM-LADDER keeps: a helm left on her oars kept them pulling past the journey's end (a Large
+      // Galley rowed on unsteered at 7.8 m/s), and one left backing water turned the hand's rudder about (backing, the
+      // helm answers the other way, below) so no journey arrived. While the autorun pulls she has no rung of her own;
+      // let go, she rests, as the mod's MoveForwards let go left her.
+      if (deps.input?.toggleAutorun) state.oarThrottle = 0;
       if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 0)) num3 = 1;
       else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 2)) num3 = -1;
       if (has('Run')) {
@@ -1641,10 +1654,11 @@ export function createComeSailAwayRuntime(deps) {
    *  tree was walked here every frame to find its Animators - a fleet moored in three ports, on every frame of a town
    *  far inland. The list is kept (boatAnimators). A boat standing nowhere is still asked: an Animator asked while its
    *  object is inactive notes it (world/unityAnimator.js animatorUpdate - its first test, and all it costs), so it
-   *  starts over from its default state when she stands again (Port-Ledger, Come Sail Away row, (18)). */
+   *  starts over from its default state when she stands again (Port-Ledger, Come Sail Away row, (18)).
+   *  BOAT-OWN (bible/07-Rendering/Performance-Priority.md): and past NEAR_LIFE_M of the pool's eye, one frame in
+   *  FAR_LIFE_EVERY on the time she missed (`lives`, scenes/comeSailAway/farLife.js) - the peers' boats' law. */
   function animate() {
-    const d = dt();
-    for (const boat of state.AllBoats) for (const a of boatAnimators(boat)) a.update(d);
+    lives.animate(state.AllBoats, dt());
   }
   /** Update (4186-4800): the pause gate, then the helm, then the waves' frame; the coroutines' WaitForSeconds after
    *  it, as Unity resumes them once every Update has run. */
@@ -1736,10 +1750,10 @@ export function createComeSailAwayRuntime(deps) {
     }
     lateUpdateBoats();
   }
-  /** CSA-F: every boat's particle systems, one step on Time.deltaTime (an inactive one stands still, as Unity's). */
+  /** CSA-F: every boat's particle systems, one step on Time.deltaTime (an inactive one stands still, as Unity's).
+   *  BOAT-OWN: on the time each boat lived by this frame's animate - none for one it held. */
   function simulateParticles() {
-    const d = dt();
-    for (const boat of state.AllBoats) for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(d);
+    lives.particles(state.AllBoats);
   }
   /** LateUpdate's boats (4958-5042): each active one's bob - rolled into its turn at the helm, rocked by the wind, the
    *  roll not scaled by modifierAnimation (the C#'s precedence, kept) - and its flag streaming down the wind less the
@@ -1952,6 +1966,7 @@ export function createComeSailAwayRuntime(deps) {
    */
   function PackBoat(boat, item = false, lost = false) {
     if (item && boat?.charter) return false;   // PASSAGE (the port's own): a booked ship is her master's, never parts in my pack
+    if (!lost && seaHoldShut(boat?.uid)) { deps.messageBox?.(seaHoldShutText()); return false; }   // AUDIT SEA VENTURES B3: never packed while her wreck may be boarded
     if (item) {
       const deed = boat.crewed && boat.uid ? deedInPack(boat.uid) : null;
       if (boat.crewed && boat.uid && deed == null) return false;
@@ -2011,7 +2026,7 @@ export function createComeSailAwayRuntime(deps) {
     return canHoldAmount(1, packedHullWeight(boat.hull), most, 0) <= 0;
   }
   /** OpenCargo (6521-6525): the inventory over the boat's cargo, as a loot target. */
-  function OpenCargo(boat) { deps.openCargo?.(boat.Cargo); }
+  function OpenCargo(boat) { if (seaHoldShut(boat?.uid)) { deps.messageBox?.(seaHoldShutText()); return; } deps.openCargo?.(boat.Cargo); }   // AUDIT SEA VENTURES B3: shut while she may be boarded
   /** OpenBoatCargo (5575-5587): the boat the box hangs under, its cargo opened - OpenCargo(null) throws there when
    *  none is (kept: the box is always a boat's). */
   function OpenBoatCargo(hit) { OpenCargo(boatOfHit(hit)); }
@@ -2429,6 +2444,7 @@ export function createComeSailAwayRuntime(deps) {
    */
   function LayUpBoat(boat) {
     if (!boat?.uid || boat === state.CurrentBoat || (deps.passengersAboard?.(boat) ?? 0) > 0) return false;
+    if (seaHoldShut(boat.uid)) { deps.messageBox?.(seaHoldShutText()); return false; }   // AUDIT SEA VENTURES B3: nor laid up
     if (boat.Cargo.Items.length > 0) {
       const key = cargoKey(boat.uid);
       const kept = state.PackedCargoes.get(key) ?? [];
@@ -2781,10 +2797,12 @@ export function createComeSailAwayRuntime(deps) {
     if (boat.OarParticles.length > 0) for (const oarParticle of boat.OarParticles) shift(oarParticle.subEmitters[0].system);   // GetSubEmitterSystem(0)
   }
 
-  /** OnLoad (1943-1950). */
+  /** OnLoad (1943-1950). SAIL-WIND (FIELD BUGS 2026-10-21b): and a load that lands outdoors under the indoors' none asks
+   *  the door's wind (csaLoadWind.js says why). */
   function OnLoad() {
     UpdateBoatVisibility();
     UpdateWaveMesh();   // `if (waveObject != null)` - Start built it
+    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);
   }
   /** OnTransition (1978-1985): into or out of a building or a dungeon. */
   function OnTransition() {

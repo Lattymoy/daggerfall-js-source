@@ -77,8 +77,8 @@ export const YARD_MARK_LIFT = 4;
 /** What a wagon on show says it carries (its hover's line). */
 export const WAGON_SHOW_LINE = Object.freeze({
   cart: 'Carries 750 kg',
-  openWagon: 'Carries 1,500 kg - seats four in its back',
-  caravan: 'Carries 2,000 kg - a room to live in',
+  openWagon: 'Carries 1,500 kg and seats four in the back',
+  caravan: 'Carries 2,000 kg, with a room to live in',
 });
 const NONE = Object.freeze([]);
 
@@ -294,6 +294,22 @@ export function createMerchantYards({
     }
   }
 
+  /** A standing yard's boxes for the eye - its keeper, its signboard, a joinery's workbench, its horses and its wagons on
+   *  show - each its reach a static NPC's beside the ray's; made once a placing (`y.targets`, dropped as the yard moves).
+   *  FB1020c BENCH-DOORS: the press's boxes and the street's workbench question's (workbenchNear) are these same ones. */
+  function targetsOf(y) {
+    y.targets ??= (() => {
+      const out = [], P = yardPoints(y.site.kind), k = P.keeper;
+      const add = (what, b) => out.push({ key: `yard:${y.key}|${what}`, aabb: yardBoxToScene(y.at, y.site.yaw, b), distance: RAY_DISTANCE, reach: YARD_REACH });
+      add('keeper', [k[0] - KEEPER_HALF, 0, k[1] - KEEPER_HALF, k[0] + KEEPER_HALF, KEEPER_HEIGHT, k[1] + KEEPER_HALF]);
+      add('sign', signBoxOf(y.site.kind));
+      if (P.bench) add('bench', P.bench);   // CARP-YARD: the joinery's workbench
+      P.horses.forEach((h, i) => { const r = Math.max(HORSE_BOX_SIZE[0], HORSE_BOX_SIZE[2]) / 2; add(`horse.${i}`, [h[0] - r, 0, h[1] - r, h[0] + r, HORSE_BOX_SIZE[1], h[1] + r]); });
+      y.wagons.forEach((w, i) => { if (w.box) add(`wagon.${i}`, w.box); });
+      return out;
+    })();
+    return y.targets;
+  }
   /** The key's yard and what of it the key names: 'keeper', 'sign', 'horse' or 'wagon' (with its index). */
   function partOf(key) {
     if (typeof key !== 'string' || !key.startsWith('yard:')) return null;
@@ -402,17 +418,7 @@ export function createMerchantYards({
       _targets.length = 0;
       for (const y of yards.values()) {
         if (!y.at) continue;
-        y.targets ??= (() => {
-          const out = [], P = yardPoints(y.site.kind), k = P.keeper;
-          const add = (what, b) => out.push({ key: `yard:${y.key}|${what}`, aabb: yardBoxToScene(y.at, y.site.yaw, b), distance: RAY_DISTANCE, reach: YARD_REACH });
-          add('keeper', [k[0] - KEEPER_HALF, 0, k[1] - KEEPER_HALF, k[0] + KEEPER_HALF, KEEPER_HEIGHT, k[1] + KEEPER_HALF]);
-          add('sign', signBoxOf(y.site.kind));
-          if (P.bench) add('bench', P.bench);   // CARP-YARD: the joinery's workbench
-          P.horses.forEach((h, i) => { const r = Math.max(HORSE_BOX_SIZE[0], HORSE_BOX_SIZE[2]) / 2; add(`horse.${i}`, [h[0] - r, 0, h[1] - r, h[0] + r, HORSE_BOX_SIZE[1], h[1] + r]); });
-          y.wagons.forEach((w, i) => { if (w.box) add(`wagon.${i}`, w.box); });
-          return out;
-        })();
-        for (const tg of y.targets) _targets.push(tg);
+        for (const tg of targetsOf(y)) _targets.push(tg);
       }
       return _targets;
     },
@@ -464,19 +470,26 @@ export function createMerchantYards({
       return out;
     },
     /**
-     * CARP-YARD: THE JOINERY WHOSE WORKBENCH THE FEET `f` (the scene's) STAND AT - its bench's middle within YARD_REACH
-     * across the ground and the feet no more than YARD_BENCH_RISE over or under its floor - or null. The station the
+     * CARP-YARD: THE JOINERY WHOSE WORKBENCH THE FEET `f` (the scene's) STAND AT - the feet within YARD_REACH across the
+     * ground of one of its doors and no more than YARD_BENCH_RISE over or under its floor - or null. The station the
      * Stores page asks after in the street (scenes/world.js workbenchHere).
+     * FB1020c BENCH-DOORS: THE STATION IS WHERE ITS DOORS ANSWER. A press on any box of a joinery opens the Stores page
+     * on its workbench (activate's carpenter arm reads no part, and a joinery stands no horse and no wagon - yardPoints:
+     * its boxes are its carpenter, its board and its bench), so every one of them is a door. This was measured from the
+     * bench's middle alone, which the carpenter stands 8.55 m from and the board 9.55 m - past YARD_REACH (6.4 m) - so a
+     * press on either opened a page whose workbench was Away: no saw, no craft, only the Stores' own Put in and Take out.
+     * The nearest point of each box is measured, as the press's ray meets the box: a press answered from where the feet
+     * stand (its ray within YARD_REACH from an eye over them) is a station answered there.
      * @param {number[]|null} f
      */
     workbenchNear(f) {
       if (!f) return null;
       for (const y of yards.values()) {
-        const b = y.at ? yardPoints(y.site.kind).bench : null;
-        if (!b) continue;
-        const m = yardToScene(y.at, y.site.yaw, (b[0] + b[3]) / 2, 0, (b[2] + b[5]) / 2);
-        const dx = f[0] - m[0], dz = f[2] - m[2];
-        if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH && Math.abs(f[1] - y.at[1]) <= YARD_BENCH_RISE) return y.site;
+        if (!y.at || !yardPoints(y.site.kind).bench || Math.abs(f[1] - y.at[1]) > YARD_BENCH_RISE) continue;
+        for (const { aabb: b } of targetsOf(y)) {
+          const dx = Math.max(b.min[0] - f[0], 0, f[0] - b.max[0]), dz = Math.max(b.min[2] - f[2], 0, f[2] - b.max[2]);
+          if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH) return y.site;
+        }
       }
       return null;
     },

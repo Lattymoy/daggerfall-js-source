@@ -1,0 +1,227 @@
+[
+ {
+  "name": "STAR6-the-more-uncounted",
+  "file": "src/systems/starfall/starWords.js",
+  "old": "const more = Math.max(0, (c | 0) - names.length);",
+  "new": "const more = c | 0;",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-one-name-listed",
+  "file": "src/systems/starfall/starWords.js",
+  "old": "  if (names.length === 1) return names[0];\n",
+  "new": "",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-low-late",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "low: !over && lt <= STAR_LOW_LIGHT,",
+  "new": "low: !over && lt < STAR_LOW_LIGHT,",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-hub-unheard",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "const over = held || led?.p === P_HELD ? P_HELD",
+  "new": "const over = led?.p === P_HELD ? P_HELD",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-dark-before-the-cell",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "const lt = led ? led.lt : STAR_LIGHT;",
+  "new": "const lt = led ? led.lt : 0;",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-no-omen-card",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "    if (phase === 'none' || phase === 'gone') continue;\n    const key = starHeldKey(s.n, s.k, s.px, s.py), h = held.get(key)",
+  "new": "    if (phase === 'none' || phase === 'omen' || phase === 'gone') continue;\n    const key = starHeldKey(s.n, s.k, s.px, s.py), h = held.get(key)",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-never-lost-on-the-map",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": ": l?.p === P_LOST || phase === 'after' ? STAR_CARD_TEXT.lost()",
+  "new": ": l?.p === P_LOST ? STAR_CARD_TEXT.lost()",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-decided-counted-on",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "if (T.fallAt <= t && t < T.endAt && !decided(starHeldKey(s.n, s.k, s.px, s.py))) {",
+  "new": "if (T.fallAt <= t && t < T.endAt) {",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-town-before-its-omen",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "where: next.omen ? STAR_CARD_TEXT.near(next.s.near) : null",
+  "new": "where: STAR_CARD_TEXT.near(next.s.near)",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-not-the-soonest",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "(!next || T.fallAt < next.at)",
+  "new": "!next",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-any-row-taken",
+  "file": "src/systems/eventTimers.js",
+  "old": "if (r?.kind === 'star' && typeof r.id === 'string' && Number.isFinite(r.at)) rows.push(r);",
+  "new": "if (r) rows.push(r);",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-no-star-kind",
+  "file": "src/ui/enhanced/enhancedTimers.js",
+  "old": "['gate', 'serpent', 'super', 'star', 'raid',",
+  "new": "['gate', 'serpent', 'super', 'raid',",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-marks-never-spent",
+  "file": "src/ui/starfall/starBar.js",
+  "old": "spent: STAR_CIRCLE_AT.map((at) => frac < at),",
+  "new": "spent: STAR_CIRCLE_AT.map(() => false),",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-never-warded-bar",
+  "file": "src/ui/starfall/starBar.js",
+  "old": "warded: circle > 0, fallen: fell,",
+  "new": "warded: false, fallen: fell,",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-no-fade",
+  "file": "src/ui/starfall/starBar.js",
+  "old": "const alpha = fell ? Math.max(0, Math.min(1, 1 - (since - STAR_BAR_FELL_HOLD_MS) / STAR_BAR_FELL_FADE_MS)) : 1;",
+  "new": "const alpha = 1;",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-written-every-frame",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "if (v !== shown[k]) { shown[k] = v; parts[k].textContent = v; moved = true; }",
+  "new": "{ shown[k] = v; parts[k].textContent = v; moved = true; }",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-held-unclassed",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "model.low && 'low', model.held && 'held'].filter(Boolean).join(' ');",
+  "new": "model.low && 'low'].filter(Boolean).join(' ');",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-fill-full",
+  "file": "src/ui/starfall/starTracker.js",
+  "old": "const pct = Math.round(Math.max(0, Math.min(1, Number(model.light) || 0)) * 100);",
+  "new": "const pct = 100;",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-serpent-dropped",
+  "file": "src/ui/hud/hud.js",
+  "old": "serpent: serpent ?? null, sd: sd ?? null, star: star ?? null,",
+  "new": "sd: sd ?? null, star: star ?? null,",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-hollow-dropped",
+  "file": "src/ui/hud/hud.js",
+  "old": "serpent: serpent ?? null, sd: sd ?? null, star: star ?? null,",
+  "new": "serpent: serpent ?? null, star: star ?? null,",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-star-dropped",
+  "file": "src/ui/hud/hud.js",
+  "old": "serpent: serpent ?? null, sd: sd ?? null, star: star ?? null,",
+  "new": "serpent: serpent ?? null, sd: sd ?? null,",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-mark-left-shown",
+  "file": "src/ui/enhanced/enhancedHud.js",
+  "old": "if (!st || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }",
+  "new": "if (!st || !playerXZ) return;",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-ink-pen",
+  "file": "src/ui/ink/inkMap.js",
+  "old": "  ctx.fillStyle = STAR_VIOLET_CSS;\n  ctx.fill();",
+  "new": "  ctx.fillStyle = PEN.line;\n  ctx.fill();",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-stars-unpainted",
+  "file": "src/ui/ink/inkMap.js",
+  "old": "  for (const m of opts.stars ?? []) if (visible(m.x, m.y)) paintStarMark(ctx, view, m, pulse);\n",
+  "new": "",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ },
+ {
+  "name": "STAR6-the-ring-still",
+  "file": "src/ui/ink/inkMap.js",
+  "old": "ctx.strokeStyle = STAR_VIOLET_CSS;\n  ctx.lineWidth = 1.5;\n  ctx.beginPath(); ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2); ctx.stroke();",
+  "new": "ctx.strokeStyle = STAR_VIOLET_CSS;\n  ctx.lineWidth = 1.5;\n  ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.stroke();",
+  "tests": [
+   "test/ui/starfall/star6_compass.test.js"
+  ]
+ }
+]

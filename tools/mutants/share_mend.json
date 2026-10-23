@@ -65,8 +65,8 @@
   {
     "name": "SHARE-MEND-receiver-reads-slim",
     "file": "src/systems/quest/questShare.js",
-    "old": "takeLocalActions(local, fullShareMarkers(data))",
-    "new": "takeLocalActions(local, data)",
+    "old": "takeLocalActions(local, fullShareMarkers(data), live)",
+    "new": "takeLocalActions(local, data, live)",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SHARE-MEND-skew-when-builds-agree",
     "file": "src/systems/quest/questShare.js",
-    "old": "  return theirBuild === mine ? '' : ' You are on different versions of the game - both of you should reload the page.';",
-    "new": "  return ' You are on different versions of the game - both of you should reload the page.';",
+    "old": "  return theirBuild === mine ? '' : ' You are on different versions of the game. Both of you should reload the page.';",
+    "new": "  return ' You are on different versions of the game. Both of you should reload the page.';",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]

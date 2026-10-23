@@ -8,7 +8,8 @@
 // online tab holds) keeps ONE record of it - `sdev` - and its director (server/src/index.js) moves it on: it RISES
 // where the census finds the most players (pickSdRegion), is FOUND by the first player at its door, FALLS when its
 // boss does, and is GONE three minutes later - or fades unbeaten when its time runs out - and the next rises after a
-// rest. Every change is fanned to every tab, which places the Hollow from its own map files (systems/superDungeon/sdSite.js): the
+// rest (SD-THROUGH: between the find and the fall it is ENTERED, once, when its first soul steps through the Rift -
+// sdEnter). Every change is fanned to every tab, which places the Hollow from its own map files (systems/superDungeon/sdSite.js): the
 // relay never knows the pixel, and needs not.
 //
 // PURE, and the relay's too: it imports wire.js and gateLaw.js (the port's one mix, gateHash, and a pixel's side), both
@@ -37,6 +38,15 @@ export const SD_FIRST_RISE_MS = 10 * 60 * 1000;
 export const SD_FADE_GRACE_MS = 15_000;
 /** A region needs this many distinct verified accounts in it for the census to choose it. */
 export const SD_CENSUS_MIN = 2;
+/** SD-SEA (FIELD BUGS 2026-10-20b, bible/01-Overview/bugs/Field-Bugs-2026-10-20b.md): THE REGIONS NO HOLLOW CAN RISE IN -
+ *  those MAPS.BSA gives no city, town or village to rise by (systems/superDungeon/sdSite.js sdCities finds none), by index,
+ *  which the census never chooses. 31 is the sea's: formats/mapsFile.js getRegionIndexAt reads politic 64 - every water
+ *  pixel of the Bay and the ocean, PlayerGPS.cs's own law - as High Rock sea coast, so every player aboard a ship stands
+ *  in its channel, and a crowd at sea raised a Hollow that stood by no city on any client. Cybiades (61) has one place
+ *  and no town; the rest have no place at all. The relay holds no map files, so the list is written here and pinned
+ *  against them (test/net/superDungeon/fb1020b_sdsea.test.js). */
+export const SD_TOWNLESS_REGIONS = Object.freeze([2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31, 61]);
+const TOWNLESS = new Set(SD_TOWNLESS_REGIONS);
 /** The one salt every client and the relay roll a Hollow's choices with. */
 export const SD_SALT = 0x5d01;
 /** How near its pixel's centre a finder must stand for the relay to believe the find, metres (a spawned dungeon stands
@@ -93,6 +103,16 @@ export function sdFind(rec, now, name) {
   return /** @type {SdRecord} */ ({ ...rec, ph: 'found', foundAt: now, fb: sanitizeName(name) });
 }
 
+/** SD-THROUGH (2026-10-21, the owner: "When someone finds and enters the portal. I want a portal to show up for anyone in
+ *  the dungeon and anyone entering that automatically leads them there."): the first soul through its Rift - stamped
+ *  once, at `now`, while it is found and its boss stands (its realm's first admission, told to the hub). From then on
+ *  every client in its Hollow, and every one entering it, stands the Way Through beside them
+ *  (world/superDungeon/sdDungeon.js sdThroughStands). */
+export function sdEnter(rec, now) {
+  if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;
+  return /** @type {SdRecord} */ ({ ...rec, inAt: now });
+}
+
 /** The boss fell: kept with the top fighter's name and how many fought it (`n` - every seat its fight took, the realm's
  *  `fell.n`: the gone and the cast-out with the rest); the collapse, then the rest, from now. */
 export function sdFell(rec, now, { top = '', n = 0 } = {}) {
@@ -133,14 +153,15 @@ export const sdRoll = (s, k) => gateHash(SD_SALT, s, k);
 /**
  * THE CENSUS'S REGION: of the regions holding at least SD_CENSUS_MIN distinct verified accounts (`counts[r]`), the
  * fullest - ties broken by the slot's roll, and the last Hollow's region (`last`) resting while another qualifies, so
- * one crowd does not keep every Hollow. -1 when none qualifies: the Bay's great cities.
+ * one crowd does not keep every Hollow. SD-SEA: never a region with no town to rise by (SD_TOWNLESS_REGIONS - the
+ * sea's most of all). -1 when none qualifies: the Bay's great cities.
  * @param {number} s the slot about to rise
  * @param {ArrayLike<number>} counts by region index
  * @param {number} [last]
  */
 export function pickSdRegion(s, counts, last = -1) {
   const qual = [];
-  for (let r = 0; r < SD_REGION_COUNT; r++) if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN) qual.push(r);
+  for (let r = 0; r < SD_REGION_COUNT; r++) if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);
   const pool = qual.length > 1 ? qual.filter((r) => r !== last) : qual;
   if (!pool.length) return -1;
   const top = Math.max(...pool.map((r) => Number(counts[r])));

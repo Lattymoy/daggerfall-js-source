@@ -1,0 +1,227 @@
+[
+  {
+    "name": "OW-HITCH-clear-zeros-back",
+    "file": "src/render/labGrass.js",
+    "old": "    if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2\n  }",
+    "new": "    if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2\n    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bufs[0]); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, slot * this.perCell * 8, new Uint16Array(this.perCell * 4));\n  }",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-write-whole-slot",
+    "file": "src/render/labGrass.js",
+    "old": "this._packs[k], 0, n * 4);",
+    "new": "this._packs[k]);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-write-empty-uploaded",
+    "file": "src/render/labGrass.js",
+    "old": "    if (n > 0) {\n      for (let k = 0; k < this._lanes.length; k++) {",
+    "new": "    if (n >= 0) {\n      for (let k = 0; k < this._lanes.length; k++) {",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-field-no-reuse",
+    "file": "src/render/labGrass.js",
+    "old": "originX: gx, originZ: gz, reuse: wholeSpare });   // PERF-EXT21",
+    "new": "originX: gx, originZ: gz, reuse: null });   // PERF-EXT21",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-reuse-not-zeroed",
+    "file": "src/render/labGrass.js",
+    "old": "  if (again) { reuse.inst.fill(0); reuse.inst2.fill(0); reuse.rootY.fill(0); reuse.ground.fill(0); reuse.slope.fill(0); }\n",
+    "new": "",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-rim-on-whole-arrays",
+    "file": "src/render/labGrass.js",
+    "old": "originX: gx, originZ: gz, reuse: rimSpare });",
+    "new": "originX: gx, originZ: gz, reuse: wholeSpare });",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-blood-no-wait",
+    "file": "src/combat/blood/bloodArt.js",
+    "old": "    idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });\n  };\n  idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });",
+    "new": "    idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });\n  };\n  idle(slice);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-blood-whole-on-timeout",
+    "file": "src/combat/blood/bloodArt.js",
+    "old": "    while ((deadline?.timeRemaining?.() ?? 0) > 6);",
+    "new": "    while ((deadline?.timeRemaining?.() ?? 0) > 6 || deadline?.didTimeout);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-fall-word",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "    const word = s.bands[k][1];\n    if (WET.has(word)) {",
+    "new": "    const word = s.bands[0][1];\n    if (WET.has(word)) {",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-fall-intensity",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "      const intensity = bandIntensityAt(s, rad);\n      if (intensity > wet) wet = intensity;",
+    "new": "      const intensity = bandIntensityAt(s, rad) * 0.999;\n      if (intensity > wet) wet = intensity;",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-fall-cover",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "    if (k < 0) continue;\n    const c = coverAtRadial(s, rad);\n    if (c > cover) cover = c;",
+    "new": "    if (k < 0) continue;\n    const c = coverAtRadial(s, rad);\n    if (c > cover && WET.has(s.bands[k][1])) cover = c;",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-fall-reach",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "    if (dx * dx + dz * dz >= reach * reach || !insideClip(s, x, z)) continue;\n    const rad = radialOf(s, x, z), k = bandIndexAt(s, rad);",
+    "new": "    if (dx * dx + dz * dz >= reach * reach) continue;\n    const rad = radialOf(s, x, z), k = bandIndexAt(s, rad);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-clean-edge-dropped",
+    "file": "src/world/puddleMask.js",
+    "old": "        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) edge = true;\n        if (x > 0 && !seen[i - 1]",
+    "new": "        if (x === 0 || y === 0 || x === w - 1) edge = true;\n        if (x > 0 && !seen[i - 1]",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-clean-neighbour-missed",
+    "file": "src/world/puddleMask.js",
+    "old": "        if (y < h - 1 && !seen[i + w] && wet[i + w] === want) { seen[i + w] = 1; stack[top++] = i + w; }\n",
+    "new": "",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-mark-no-yield",
+    "file": "src/world/puddleMask.js",
+    "old": "    out[rec] = { ...layer, colors: b };\n    yield;\n  }\n  return yield* markShoreWaterSteps(out);",
+    "new": "    out[rec] = { ...layer, colors: b };\n  }\n  return yield* markShoreWaterSteps(out);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-sets-second-make",
+    "file": "src/scenes/groundSets.js",
+    "old": "        _loading.set(key, loading);\n",
+    "new": "",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-array-registered-early",
+    "file": "src/render/renderer.js",
+    "old": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);\n    for (let i = 0; i < layers.length; i++) {\n      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));\n      if ((i + 1) % TILE_LAYERS_A_STEP",
+    "new": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);\n    this.tileArrays.set(archive, tex);\n    for (let i = 0; i < layers.length; i++) {\n      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));\n      if ((i + 1) % TILE_LAYERS_A_STEP",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-upload-no-yield",
+    "file": "src/render/renderer.js",
+    "old": "      if ((i + 1) % TILE_LAYERS_A_STEP === 0 && i + 1 < layers.length) { yield; gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex); }\n",
+    "new": "",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-near-key-folds-reach",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const livingNearKey = (px, py, r) => (r * 1024 + (py + 256)) * 2048 + (px + 512);",
+    "new": "export const livingNearKey = (px, py, r) => (r * 2 + (py + 256)) * 2048 + (px + 512);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-near-old-bound",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const LIVING_NEAR_KEPT = 8192;",
+    "new": "export const LIVING_NEAR_KEPT = 512;",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-window-closed-start",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "if (events[mid].tick < fromTick) lo = mid + 1; else hi = mid;",
+    "new": "if (events[mid].tick <= fromTick) lo = mid + 1; else hi = mid;",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-window-open-end",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    if (e.tick >= toTick) break;          // events are tick-ordered\n    out.push(e);",
+    "new": "    if (e.tick > toTick) break;          // events are tick-ordered\n    out.push(e);",
+    "tests": [
+      "test/render/owhitch.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-clump-unsmoothed",
+    "file": "src/render/labGrass.js",
+    "old": "    let fx = vx - ix, fz = vz - iz;\n    fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
+    "new": "    let fx = vx - ix, fz = vz - iz;",
+    "tests": [
+      "test/render/labGrass.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-clump-corner-swapped",
+    "file": "src/render/labGrass.js",
+    "old": "      let px = (ix + (k & 1)) * 123.34, pz = (iz + (k >> 1)) * 456.21;",
+    "new": "      let px = (ix + (k >> 1)) * 123.34, pz = (iz + (k & 1)) * 456.21;",
+    "tests": [
+      "test/render/labGrass.test.js"
+    ]
+  },
+  {
+    "name": "OW-HITCH-xorshift-word-not-loaded",
+    "file": "src/render/labGrass.js",
+    "old": "  _xs[0] = st.s;\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/grassshift.test.js"
+    ]
+  }
+]

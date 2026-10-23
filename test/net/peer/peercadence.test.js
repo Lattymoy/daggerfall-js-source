@@ -262,7 +262,9 @@ test('PEER-CADENCE: by source - the clips advance ABOVE the pose gate, the parti
   const pb = rd('src/net/peer/peerBodies.js');
   assert.match(pb, /export const POSE_CADENCE = \[\[10, 1\], \[25, 2\], \[Infinity, 3\]\];/);
   assert.match(pb, /const must = !b\.posed \|\| !\(b\.rig\.thirdActive\?\.\(\) \?\? true\);/, 'a body with no skin to keep poses (AUDIT PEER-CADENCE F3)');
-  assert.match(pb, /\(this\._frame \+ b\.phase\) % poseCadenceFor\(b\.d2\) === 0 \? 1 : 0;/, 'otherwise the phase-staggered cadence on the MODULE\'s frame at this frame\'s distance (AUDIT PEER-CADENCE F1) - WB9h: ranked for the skin budget, a body out of the view skinning nothing');
+  // PIN MOVED (HORSE-VIEW's audit, 2026-10-21): the distance is the last pass's camera's, through its lens (cadenceD2 -
+  // test/systems/horse/fb1021_horses.test.js drives it); before any pass, `near`'s, as every test above measures it
+  assert.match(pb, /\(this\._frame \+ b\.phase\) % poseCadenceFor\(eye && b\.feet \? cadenceD2\(b\.feet, eye, lens\) : b\.d2\) === 0 \? 1 : 0;/, 'otherwise the phase-staggered cadence on the MODULE\'s frame at this frame\'s distance (AUDIT PEER-CADENCE F1) - WB9h: ranked for the skin budget, a body out of the view skinning nothing');
   assert.match(pb, /\n    this\._frame\+\+;\n/, 'the module counts frames in sync');
   assert.match(pb, /phase: this\._phase\+\+, bank: 0,/, 'a new body takes the next phase');
 });

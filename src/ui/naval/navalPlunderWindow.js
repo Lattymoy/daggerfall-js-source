@@ -105,9 +105,9 @@ export const NAVAL_PLUNDER_CSS = `
 export const thingsText = (n) => `${n} ${n === 1 ? 'thing' : 'things'}`;
 /** What a Take All did, in a line: where the goods went, and what would not go. */
 export function takenText(r, shipName = null) {
-  if (!r || r.taken <= 0) return r?.left > 0 ? `You cannot carry any of it - ${thingsText(r.left)} stay in the hold.` : 'The hold is empty.';
+  if (!r || r.taken <= 0) return r?.left > 0 ? `You cannot carry any of it. ${thingsText(r.left)} stay in the hold.` : 'The hold is empty.';
   const to = r.where === 'hold' ? `to your ${shipName ?? 'ship'}'s hold` : 'into your pack';
-  return r.left > 0 ? `${thingsText(r.taken)} ${to} - ${thingsText(r.left)} will not fit and stay in the hold.` : `${thingsText(r.taken)} ${to}.`;
+  return r.left > 0 ? `${thingsText(r.taken)} moved ${to}. ${thingsText(r.left)} will not fit and stay in the hold.` : `${thingsText(r.taken)} moved ${to}.`;
 }
 /** The window's standing words for a model - pure, the pins' reading. */
 export function plunderText(model, nameOf = (it) => String(it?.name ?? '')) {

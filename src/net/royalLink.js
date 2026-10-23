@@ -70,7 +70,7 @@ export function royalHudModel(s, t, me, now, { watching = false, name = () => ''
   const who = (id) => (id === me ? 'You' : name(id) || 'a contender');
   const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;
   const b = s.bout;
-  const ring = !b ? 'The ring is empty - challenge a contender from their card.'
+  const ring = !b ? 'The ring is empty. Challenge a contender from their card.'
     : now < b.s ? `BOUT ${b.n}: ${who(b.a)} against ${who(b.b)} - begins in ${Math.max(1, Math.ceil((b.s - now) / 1000))}`
       : `BOUT ${b.n}: ${who(b.a)} against ${who(b.b)}   ${clock(b.e - now)}`;
   const ladder = s.ladder.slice(0, ROYAL_HUD_ROWS).map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`).join('   ');
@@ -84,9 +84,9 @@ export function royalHudModel(s, t, me, now, { watching = false, name = () => ''
     }
     const mine = s.ladder.find((r) => r[0] === me);
     self.push(mine ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}` : 'You have no bout won yet.');
-    for (const id of Object.keys(s.asks)) if (royalAskStands(s, id, now)) self.push(`${who(id)} challenges you - challenge them back from their card to accept.`);
+    for (const id of Object.keys(s.asks)) if (royalAskStands(s, id, now)) self.push(`${who(id)} challenges you. Challenge them back from their card to accept.`);
     if (s.last && (s.last.w === me || s.last.l === me) && now - s.last.at < ROYAL_LAST_SHOWN_MS) {
-      self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' : 'You won the bout - but you two have met three times today; the ladder did not count it.') : 'You lost the bout.');
+      self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' : 'You won the bout, but you two have met 3 times today, so it does not count on the ladder.') : 'You lost the bout.');
     }
   }
   return { bar: [title, ring], sides: ladder || 'No bout has been won yet.', self, card: null };

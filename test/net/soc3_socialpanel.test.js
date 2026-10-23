@@ -303,7 +303,7 @@ test('SOC3: an empty friends list SAYS SO and says where to go (mutants: a blank
   assert.equal(one(root, 'dfsocial-empty').textContent, NO_FRIENDS_TEXT);
   // AUDIT SOC D10: the ROSTER leads and the key is named by what it does. "press F" was a lie on two machines out
   // of three - F is rebindable (and unbound outright for a player who had already spent it), and a phone has none.
-  assert.equal(NO_FRIENDS_TEXT, 'No friends yet - click a name in the chat roster, or press the interact key on a player.');
+  assert.equal(NO_FRIENDS_TEXT, 'No friends yet. Click a name in the chat roster, or press the interact key on a player.');
   assert.doesNotMatch(NO_FRIENDS_TEXT, /\bF\b/, 'no literal key on a line about a rebindable action');
   assert.ok(NO_FRIENDS_TEXT.indexOf('roster') < NO_FRIENDS_TEXT.indexOf('interact key'), 'the door that is always there is named first');
   social.apply(stateFrame({ friends: [row('Ann')] }));

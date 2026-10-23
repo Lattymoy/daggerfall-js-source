@@ -533,7 +533,7 @@
  {
   "name": "AUDIT529-V5-words",
   "file": "src/net/townSeatLaw.js",
-  "old": "  'battle-settled': 'That battle\\'s week is settled - its Turning has reckoned it, and it can no longer be voided.',\n",
+  "old": "  'battle-settled': 'That battle\\'s week is settled and can no longer be voided.',\n",
   "new": "",
   "tests": [
    "test/net/siege_void.test.js"

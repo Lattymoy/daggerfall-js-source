@@ -77,7 +77,7 @@ import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: Player
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare, staffFly, levitateWarded, freeFlight } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
-import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
+import { standardSpellsByIndex } from '../systems/spell/standardSpells.js';   // G4: the two magic registries, one home; DEX4a: a mod's SpellRecords.json merged, as RebuildClassicSpellsDict merges it
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot/loot.js';
 import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
@@ -96,11 +96,12 @@ import { installSmithing } from '../systems/smithItems.js';   // PROF3: the Repa
 import { installCooking, dishStaminaFactor } from '../systems/cookItems.js';   // PROF9: a dish eaten, and the Tart's stamina
 import { installHealingSupply } from '../systems/healingSupply.js';   // POTION-COMMON: Potions of Healing in the loot
 import { installRaidingParties } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties' save slot
-import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js'; import '../systems/eliteGates/weirKey.js';   // EG-PLAY: and the Weir Key's (575) - its Use the world host's opener, every other host's 'cold'
+import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js'; import '../systems/eliteGates/weirKey.js'; import '../systems/festival/soulCake.js';   // WITCH1: and the Witches' Festival's two (2000, 2001); EG-PLAY: and the Weir Key's (575) - its Use the world host's opener, every other host's 'cold'
    // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
 import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
 import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
+import { installEnemyExpansion } from '../systems/enemyExpansion/dexInstall.js';   // DEX1: Daggerfall Enemy Expansion's fifty enemies, their careers and the classic edits, once at boot
 import { getBool, getInt } from '../systems/settings/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/song/songManager.js';
 import { festivalEnvironment } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival town's streets hear the tavern
@@ -151,7 +152,7 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   let spellsByIndex = null;
   let magicItemTemplates = null;
   try {
-    const byIndex = spellsByIndexMap(readSpellsStd(await fetch('SPELLS.STD')));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold
+    const byIndex = standardSpellsByIndex(await fetch('SPELLS.STD'));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold (DEX4a: after the mods' merge)
     spellsByIndex = byIndex;
     setSpellRecordsByIndex(byIndex);
   } catch { /* data absent: casts no-op, and a CastWhen* slot prices at 0 - DFU's own answer */ }
@@ -314,6 +315,9 @@ export function createSkyController(gl, params) {
   let dynamicMoons = null;   // DS1: the moons' places for the world's moonlight, from the mod's own orbits
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  /** VC4: the sun past the clouds' shadow map - the row's cover on the slab's own coverage law (cover^1.6: a sunny 0.32
+   *  loses a tenth of its sun, an overcast 0.94 two thirds). The far ring's dim, and (OW-HORIZON) the deck's `far`. */
+  const farCoverSun = () => 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
   const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
   const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds (CLK1: game minutes x WIND_SECONDS_PER_MINUTE)
   let weatherAt = null;     // the mod's real-second clock (DS1, 1:1 - BLBSkybox reads Time.deltaTime)
@@ -542,7 +546,7 @@ export function createSkyController(gl, params) {
      *  the dome's own occlusion when the clouds are off. */
     farSunFactor() {
       if (!clouds) return this.sunFactor();
-      return 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
+      return farCoverSun();
     },
     offsetOrigin(offset) { clouds?.offsetOrigin(offset); },
     /** WEATHER3d: a distant storm's strike lights its own cloud - `{ x, z, r, strength }` in the host's world metres,
@@ -713,8 +717,9 @@ export function createSkyController(gl, params) {
           const cloudSky = cb.row === weatherRowNow ? enhancedSky.state : { ...skyState({ minuteOfDay, weather: cb.word, classicMinutes: extra?.classicMinutes ?? 0, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb.row }), horizon: enhancedSky.state.horizon };
           clouds.setState(cloudSky, cb.row, cb.word, easeDt, driftXZ, (extra?.flash ?? 0) + dreadGlow, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells; EVENT1: the red strikes' glow
         }
-        // VC4: the ground's deck carries the slab's own shadow map and its square
-        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
+        // VC4: the ground's deck carries the slab's own shadow map and its square; OW-HORIZON: and the ground past the
+        // square, the far ring's own dim (farCoverSun), so the streamed ground beyond the map is lit as the ring is
+        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow, { far: farCoverSun() });
         return;
       }
       let frame = params.has('window')
@@ -1217,18 +1222,6 @@ export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null, sw
   player.slowFalling = hasActiveEffect(entity, 'slowfall');
 }
 
-/** Platform riding (DFU's MoveWithMovingPlatform shape): standing on a
- *  mover applies its frame delta through the resolver BEFORE the
- *  player's own move. Was wired only into the standalone ?dungeon
- *  scene, so a world/exterior-hosted dungeon dropped the delta and the
- *  lift penetrated the capsule (the out-of-bounds ejection report). */
-export function ridePlatform(player, actions) {
-  const gk = player.groundKey;
-  if (!gk || gk === 'dungeon') return;
-  const d = actions?.objects?.get(gk)?.frameDelta;
-  if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2], player.height);   // PH1: the rider's own stance, not the standing default
-}
-
 /** AcrobatMotor.AdjustFallStart (:231-237), called by
  *  FloatingOrigin.OffsetPlayerController (:176-181) in the same breath
  *  as the position shift: "Call this when floating origin ticks on Y
@@ -1407,6 +1400,7 @@ export function ensureAudio(fetch = fetchBytes) {
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
   installRoleplayRealismItems();
   installRoleplayRealism();   // RR1: the formula overrides, the guild classes, the hooks - once, in InitMod's order   // RRI1: the fourteen rows and the twenty patches before anything mints, the 280 sprites on the door
+  installEnemyExpansion();   // DEX1: BestiaryMod.Start - after every Init above (RR's enemy appearance among them), as DFU runs a MonoBehaviour's Start
   // AUDIT VE R2: the texture store's ONE registration (dataSource.js registerTextureStore) - the loose pack, Seasons of
   // the Iliac Bay (SIB1), Weapon Widget (WW1), Diverse Weapons (DW1) and every attached .dfmod from its stored index
   // (DFMOD1/DFMOD2), the shipped mods first (VE4), before the first archive loads (the hosts await it), warmed. This
@@ -1802,6 +1796,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
   return ticker.subscribe((from, to, dt) => {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
+        if (f?.dead && !f.puppet) f.corpsePrefab?.rounds?.(from, to);   // DEX5: a prefab's body has an effect manager of its own (scenes/corpseMarker.js)
         if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
         const sinks = sinksFor(f, false);   // AUDIT 68 review (R-scenes-round-tick-provenance-three-hosts): a round is nobody's blow unless its tick says so - the dungeon's law (foeSinks(f, false)), all four hosts
         runMagicRoundsFor(f.entity, from, to, { sinks });

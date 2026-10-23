@@ -24,7 +24,9 @@
 //   where() -> { px, py, region, day, nearPort, capitals, cityLights }  the waters: the map pixel, its region, the day
 //                                number (the seeds and notoriety's decay), a port within reach, the three capitals'
 //                                pixels (navalShips.js crownOf), the lanterns' hour (SHIP-WATCH: the night's too - a
-//                                lit ship seen far, a dark one close, shipWatch.js)
+//                                lit ship seen far, a dark one close, shipWatch.js); `port` the board's port lain at
+//                                (CAPT-BOARD) - FB1020c BERTH-RING: within SEA_RING, the berth's ring, where `nearPort`
+//                                is a place the port's data flags within a pixel (inPortWaters reads the two)
 //   say(text, seconds), mid(text, seconds)     the HUD's line and the mid-screen word
 //   audio: { play3d(key, pos, vol, opts), loop3d(key, pos, vol, opts) -> handle }
 //   flame(pos) -> { move(pos), retire() }       a deck fire - Daggerfall's own fire flat (scenes/naval/navalFlames.js)
@@ -86,7 +88,7 @@ import { mintStores } from '../../systems/naval/navalStores.js';   // SALVAGE: a
 import { mintDeed } from '../../systems/comeSailAway/comeSailAwayItems.js';   // SHIP-CLAIM: a claimed prize's deed, the shelf's own mint
 import { createPassageBerths } from './passageBerths.js';   // PASSAGE: a berth's ship to book, and her boat made the voyage's
 import { yardOffer, yardAll, fieldMend, FIELD_QUIET_S, FIELD_REFLOAT, YARD_PRICE, provisionOffer, seaRepair, wantsRepair, paidDamage, STORE_POINTS, STORES_STOCK, storesToWhole, SEA_REPAIR_UNDER_FIRE, FIELD_MEND_CAP } from '../../systems/naval/navalYard.js';
-import { createCompanions, companionRows } from '../../systems/naval/crewCompanions.js';   // CREW-COMPANIONS
+import { createCompanions, companionRows, heldAtSide, packStaysAshore } from '../../systems/naval/crewCompanions.js';   // CREW-COMPANIONS - COMPANION-DROP: the zone keeps him at my side
 import { createShipCrew, reloadScaleOf, mendScaleOf, handsBonusOf, crewCard, CREW_ORDERS, ORDER_TEXT, spiritsOf, LOOKOUT_ROLE, FIRST_MATE, crewWorth, NO_WORTH, SEASONED_HIRE } from '../../systems/naval/shipCrew.js';   // SHIP-CREW; CAPT-CREW: what her posts are worth
 import { crewRoster, playerCrewCount } from '../../systems/naval/crewLife.js';   // AUDIT NAV1: the shipwright, the mending at sea
 import { enlistPlan, releasePlan, CREW_HALL_TEXT } from '../../systems/crewHall.js';   // SHIPYARDS: the crew hall's recruits signed on to her deck by name, and paid off
@@ -103,6 +105,7 @@ import { NAVAL_SFX, NAVAL_CLASSIC, NAVAL_FIRE_LOOP, NAVAL_SINK_LOOP, navalSoundR
 import { raiderPlan, raiderClassOf, RAIDER_DROP_M } from '../../systems/naval/navalRaiders.js';
 import { pursue } from '../../systems/naval/seaLanes.js';   // AUDIT BAY A6: a packet steered along her leg
 import { FADE_FLATS } from '../comeSailAway/comeSailAwayPool.js';   // AUDIT BAY A13/A14: what of a fading ship goes at half
+import { NEAR_LIFE_M, FAR_LIFE_EVERY, farLifeStep } from '../comeSailAway/farLife.js';   // BOAT-FAR: her rigging's life by her range, the pool's law too
 import { segmentOfTarget } from '../serpentHost.js';   // SERPENT1: a sea serpent's segment among the shots' targets
 import { intoDeck, outOfDeck, mainLevel, DECK_STEP } from '../../systems/naval/navalDeck.js';   // AUDIT NAV2 F36: the feet in her deck's frame (aboardShip); QUAYS: her rail where the gangway lands
 import { CAPSULE_RADIUS } from '../../player/motor.js';   // AUDIT GN-D3: aboard under her main deck, a body's own reach (standsOn)
@@ -119,6 +122,13 @@ import { createNavalLoads } from './navalLoads.js';   // SHOT-KINDS: the captain
 import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my volley's tally - CARD-CREW: and her men it took
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
 import { liveryCode } from '../../systems/naval/shipLivery.js';
+import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { captainsDue } from '../../systems/sigil/sigilSetPowers.js';
+import { dueOnHull, legendTidemail } from './navalSeaSet.js';   // SEA-SET: the Captain's Due on my ship's hull, a legend's Tidemail piece (AUDIT SEA VENTURES D12: out of this host)
+import { createTreasureFleet } from './treasureFleet.js';   // SEA-EVENTS: the treasure fleet's ships, stood and steered
+import { createNavalPvp } from './navalPvp.js';   // SHIP-PVP: the open sea's guns' seams
+import { strikeShip } from '../../systems/sea/seaEvents.js';   // SEA-EVENTS: the Aether Storm's lightning on my ship
+import { createBerthWatch } from './navalBerth.js';   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the berth, still or not, and the helm let go in port
 
 /** The record's name in the save's per-mod slot (systems/modSaveData.js) - the port's own, as the Sigil Broker's is. */
 export const NAVAL_SAVE_VENDOR = 'NavalCombat';
@@ -234,12 +244,10 @@ export const HIT_BURST_MAX = 3;
  *  1.6, under a holed ball's 2.5). */
 export const GUN_KICK = Object.freeze({ long: 1.1, heavy: 1.6, swivel: 0.45, chain: 0.9 });
 export const BLAST_SHAKE = 3.2;
-/** AUDIT NAV1 (the presentation, #17): HER RIGGING'S LIFE BY HER RANGE - past NEAR_LIFE_M of the eye a ship's animators
- *  and particle systems step every FAR_LIFE_EVERY frames with the time they missed: her sails' billow and her flag's
- *  wisps are too small to see there, and the traffic sits 650-1900 m out (five far war galleys cost 5.7 ms a frame on
- *  the CPU, their rigging stepped as a near one's). */
-export const NEAR_LIFE_M = 600;
-export const FAR_LIFE_EVERY = 4;
+/** AUDIT NAV1 (the presentation, #17): HER RIGGING'S LIFE BY HER RANGE - NEAR_LIFE_M and FAR_LIFE_EVERY, born here and
+ *  re-exported: BOAT-FAR moved them and the law's step (farLifeStep) to scenes/comeSailAway/farLife.js, which the Come
+ *  Sail Away pool and the peers' boats read as poseShip does. */
+export { NEAR_LIFE_M, FAR_LIFE_EVERY };
 /** NAV-FAR-AI (2026-10-12, a player's live client walking the coast: the captains of the sea's ships were 12% of the
  *  main thread and some 29% of what it allocated - every ship of mine, every frame, the adopted ones hundreds of km off
  *  among them): A FAR CAPTAIN KEEPS HER WATCH EVERY FAR_LIFE_EVERY FRAMES, on the time she missed (never more than
@@ -473,7 +481,7 @@ export const heaveToDecel = (v) => Math.min(CSA_BRAKE_MAX, Math.max(HEAVE_TO_DEC
  *  asks more than CSA_BRAKE_MAX (a storm's: a Carrack on her quarter at 38.9 m/s runs 37.7 m). The heave-to is offered by
  *  where it leaves her (heaveFor): offered beside a struck ship at that way, she ran past BOARD_RANGE of her. */
 export const heaveToRun = (v) => Math.max(0, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * heaveToDecel(v)));
-/** AUDIT NAV1 (the helm): THE SHIPWRIGHT stands at a port - a port town's waters (`where().nearPort`), her way under
+/** AUDIT NAV1 (the helm): THE SHIPWRIGHT stands at a port - a port town's waters (`inPortWaters` - FB1020c BERTH-RING), her way under
  *  YARD_SPEED (she lies to his quay) and no hostile ship near (systems/naval/navalYard.js). */
 export const YARD_SPEED = 2.5;
 export const RAM_MEMORY_S = 0.6;
@@ -831,7 +839,9 @@ export function createNavalHost(deps) {
   function boatPose(boat) {
     const r = csa();
     const rot = boat.GameObject.rotation;
-    const local = boat === r?.state?.CurrentBoat && sailing() ? (r.state.velocityCurrent ?? [0, 0, 0]) : [0, 0, 0];
+    // FIELD BUGS 2026-10-21b VOYAGE-HOLD: a boat aground lies still - the runtime keeps her last way (Come Sail Away moves
+    // a beached boat by none of it), and a Small Ship run ashore at the helm read 9.86 m/s: never a berth, and leagues logged
+    const local = boat === r?.state?.CurrentBoat && sailing() && !r.IsBeached?.(boat) ? (r.state.velocityCurrent ?? [0, 0, 0]) : [0, 0, 0];
     return { position: boat.GameObject.position, rotation: rot, velocity: quatRotate(rot, local), hull: boat.hull };
   }
   const yawOfRot = (rot) => { const f = quatRotate(rot, [0, 0, 1]); return Math.atan2(f[0], f[2]); };
@@ -858,10 +868,12 @@ export function createNavalHost(deps) {
     }
     // AUDIT NAV1 (online): another player's boat at her helm - a sea ship's ball or barrel that meets her bursts here too
     // (her own client alone judges it, the victim's law), never passing through her on my screen; a player's shot - mine
-    // or any peer's, her own among them - never meets her (`hitBy`: no fight between players at sea)
+    // or any peer's, her own among them - never meets her (`hitBy`: no fight between players at sea) - SHIP-PVP: but in the
+    // open sea (scenes/naval/seaBroadsides.js `open`), where my balls meet a stranger captain's ship and the referee judges
+    // them, and a peer's are seen to meet her too
     for (const p of deps.peerBoats?.() ?? []) {
       const box = p.boat ? hullBox(p.boat) : null;
-      if (box) out.push({ id: `peer:${p.id}`, box, rig: rigBoxesOf(p.boat), hitBy: shipShot });
+      if (box) out.push({ id: `peer:${p.id}`, box, rig: rigBoxesOf(p.boat), hitBy: (s) => shipShot(s) || pvp.open(p.id, s, isMine(s)) });
     }
     for (const b of myBoats()) {
       const box = hullBox(b);
@@ -1079,7 +1091,7 @@ export function createNavalHost(deps) {
       const st = myBoatState(boat);
       if (!st) return;
       // CREW-HOLD: her men as a player's crew stands them; GALLEON-WEIGHT: the ball's weight of metal, its battery's
-      const hurt = shotDamage(gun, zone, { braced: st.guns.braced, roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight });
+      const hurt = dueOnHull(shotDamage(gun, zone, { braced: st.guns.braced, roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight }));   // SEA-SET: the Captain's Due
       if (fire) hurt.fire = fire;
       const change = st.damage.apply(hurt, clock);
       if (boat === boatInPlay()) deps.shake?.(e.type === 'blast' ? BLAST_SHAKE : zone === 'holed' ? 2.5 : 1.6);   // AUDIT 2: the boat I stand on's - one moored across the water struck jarred my eye
@@ -1096,6 +1108,16 @@ export function createNavalHost(deps) {
       const hurt = { hull: gun.hull * (e.weight ?? 1) * (0.85 + 0.3 * random()), sail: 0, crew: 0 };   // GALLEON-WEIGHT: her battery's weight of metal
       if (e.type !== 'blast') gunsRefit(hurt, e.shooter);
       deps.serpent?.struck?.(seg, hurt.hull);
+      return;
+    }
+    // SHIP-PVP: a ball of MINE on a stranger captain's ship in the open sea - its harm as it would strike a sea ship, my Guns
+    // refit's with it, gathered for the referee (seaBroadsides.js `shot`); her own game lays what the referee says landed
+    if (typeof e.target === 'string' && e.target.startsWith('peer:')) {
+      if (!isMine(e.shooter)) return;
+      const hurt = shotDamage(gun, zone, { roll: random(), weight: e.weight });
+      if (e.type !== 'blast') gunsRefit(hurt, e.shooter);
+      if (fire) hurt.fire = fire;
+      pvp.shot(e.target.slice(5), hurt);
       return;
     }
     const target = sea.get(e.target);
@@ -1124,8 +1146,9 @@ export function createNavalHost(deps) {
    *  harm; the men it takes as the gun takes them. AUDIT 2: and worsened by a keystone's price (Merchant Prince's harm). */
   function gunsRefit(hurt, shooter) {
     const uid = Number(String(shooter).slice(MY_BOAT.length + 1));
-    const k = Number(uid > 0 ? deps.refit?.({ uid })?.guns : 1);
-    if (!(Number.isFinite(k) && k > 0 && k !== 1)) return;
+    const refit = Number(uid > 0 ? deps.refit?.({ uid })?.guns : 1);
+    const k = (Number.isFinite(refit) && refit > 0 ? refit : 1) * captainsDue().guns;   // SEA-SET: the Captain's Due - her balls' harm, over her refit's
+    if (k === 1) return;
     if (Number.isFinite(hurt.hull)) hurt.hull *= k;
     if (Number.isFinite(hurt.sail)) hurt.sail *= k;
   }
@@ -1181,7 +1204,9 @@ export function createNavalHost(deps) {
     const news = by === myId() || newsworthy(entry);   // SEA-PEACE: a fight between ships a bay away is no news of mine
     if (change === SHIP_STATES.struck) {
       entry.struck = { by, at: clock };
-      if (by === myId()) crewEvent(boatInPlay() ?? myBoat(), 'win');   // SHIP-CREW: she struck to us
+      // SHIP-CREW: she struck to us; QL11: a ship made to strike her colours - by my guns (a peer's are theirs). AUDIT
+      // QUESTLINES ACTS-8: the act in the crew's own arm, no line of its own (HOST-SPLIT)
+      if (by === myId()) struckToMe();   // SHIP-CREW: she struck to us; QL11: the act
       if (news) deps.say?.(`${s.names?.name ?? 'It'} surrenders!`, 4);
       sound(NAVAL_CLASSIC.bell, s.pos, 0.8);   // her bell as the colours come down
     } else if (change === SHIP_STATES.sinking) {
@@ -1312,7 +1337,7 @@ export function createNavalHost(deps) {
         e.blackFlag = true;
         // AUDIT CAPTAIN'S SEA S21: the trader she passed for named only while her colours held for me; seen through, she is
         // the pirate she is
-        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.say?.(was === KNOW.colours ? `False colours! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` : was >= KNOW.studied ? `${s.names?.name ?? 'It'} runs up the black flag!` : `${withArticle(hullWord(s.hull))} runs up the black flag!`, 4);
+        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.say?.(was === KNOW.colours ? `False colors! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` : was >= KNOW.studied ? `${s.names?.name ?? 'It'} runs up the black flag!` : `${withArticle(hullWord(s.hull))} runs up the black flag!`, 4);
       }
       if (was >= e.known) continue;
       if (was < KNOW.colours && !held && lookout && dist > reach.eye && dist <= reach.lookout) {
@@ -1324,7 +1349,7 @@ export function createNavalHost(deps) {
       if (e.known >= KNOW.studied && !e.blackFlag && !e.seenThrough && falseFlagFor(e)) {
         e.seenThrough = true;   // seen through: her colours are a lie - a pirate to me from now, whatever she flies
         // AUDIT CAPTAIN'S SEA S21: said only where she is seen - the glass on her, the eye, my Lookout (one struck far off is not)
-        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.mid?.(`False colours! ${s.names?.name ?? 'It'} is a pirate.`, 4);
+        if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.mid?.(`False colors! ${s.names?.name ?? 'It'} is a pirate.`, 4);
       }
     }
   }
@@ -1461,16 +1486,16 @@ export function createNavalHost(deps) {
   }
   /** What a site's casks are said as when they float out. */
   const SITE_WORDS = Object.freeze({
-    cache: 'Your lookout spies a chest bobbing where the chart said - the cache!',
-    salvage: 'Wreckage and floating casks - the wreck the harbourmaster wants raised.',
-    strand: 'Your boat pulls in to the strand and back out with its haul - casks afloat alongside.',   // ETHER-SEA: a wild isle's good
+    cache: 'Your lookout spots a chest bobbing where the chart said. The cache!',
+    salvage: 'Wreckage and floating casks. This is the wreck the harbormaster wants raised.',
+    strand: 'Your boat goes ashore and comes back with its haul. The casks float alongside.',   // ETHER-SEA: a wild isle's good
   });
   /** THE SITES' STEP, SITE_CHECK_S apart: the berth said, then each held site within reach stood if it is not. */
   function siteStep(boat) {
     if (clock - lastSiteCheck < SITE_CHECK_S) return;
     lastSiteCheck = clock;
     const w = where();
-    if (boat && w.port && yardHere(boat)) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });   // a delivery's port
+    berths.step(boat, w.port);   // a delivery's port, a voyage's end (navalBerth.js: still or not, and the helm let go there)
     const sites = deps.captain?.sites?.() ?? [];
     const live = new Set(sites.map((x) => x.id));
     for (const id of [...siteStood.keys()]) if (!live.has(id)) siteStood.delete(id);
@@ -1486,7 +1511,7 @@ export function createNavalHost(deps) {
         // AUDIT CAPTAIN'S SEA D1: never while her casks float - a strand leaves the list out of reach (the stood mark with
         // it), and each return floated three more until the first was hauled
         if (shots.floaters().some((x) => x.lot === SITE_LOT + site.id)) continue;
-        if (dropSiteCasks(site)) { siteStood.set(site.id, 'casks'); deps.say?.(SITE_WORDS[site.kind], 4); }
+        if (dropSiteCasks(site)) { siteStood.set(site.id, 'casks'); deps.say?.(site.word ?? SITE_WORDS[site.kind], 4); }   // SEA-EVENTS: a storm's wrack says its own
       }
     }
   }
@@ -1663,7 +1688,7 @@ export function createNavalHost(deps) {
     const under = held && s.flag && s.flag !== held.crown ? held.crown : null;   // a rival's ship, under the letter
     if (held && s.flag === held.crown) {
       deps.captain?.tearMarque?.();
-      deps.mid?.(`You struck a ship of ${held.crown} - your letter of marque is torn up.`, 4);
+      deps.mid?.(`You attacked a ship of ${held.crown}. Your letter of marque is revoked.`, 4);
     }
     const crown = under ? s.flag : crownOfShip(s);
     const law = lawOf(act, s.cls, { crown, firstStrike: act === 'fire' });
@@ -1699,8 +1724,9 @@ export function createNavalHost(deps) {
     cap.deed?.(act, s.cls, { trade: legend ? 'legend' : 'ether', legend: legend?.name ?? null });
     if (act !== 'sink' && act !== 'board') return;
     cap.event?.({ type: 'end', act, faction: s.cls.faction, crown: null, bounty: entry.bounty ?? null });
-    if (legend) deps.ether?.legendEnded?.(legend.id, act);
+    if (legend) legendTidemail(legend, s.seed, deps.ether?.legendEnded?.(legend.id, act), { give: (items) => deps.board?.giveItems?.(items, boatInPlay() ?? null, { force: true }), say: (text, n) => deps.say?.(text, n) });   // SEA-SET (navalSeaSet.js): her piece - AUDIT SEA VENTURES D1: only with her purse
     else if (s.cls.faction === 'pirate') { const w = where(); deps.ether?.papers?.(s.cls, s.seed, w.px, w.py); }   // a corsair's papers
+    treasureFleet.ended(entry, act);   // SEA-EVENTS: the treasure fleet's flagship - her Tidemail piece, her purse
   }
   /** The crown whose law a ship answers to: a navy's her own, else the crown of the waters she sails. */
   function crownOfShip(s) {
@@ -1763,7 +1789,7 @@ export function createNavalHost(deps) {
     const r = items.length ? deps.board?.giveItems?.(items, boat ?? null, { force: true }) ?? null : null;
     if (items.length) notePlunder(items);
     const gold = deps.captain?.raiseCache?.(e.lot.slice(SITE_LOT.length)) ?? 0;
-    deps.say?.(`You ${swim ? 'drag' : 'haul'} up the cache: ${gold ? `${gold} gold and ` : ''}${items.length} ${items.length === 1 ? 'thing' : 'things'}${r?.over ? ' - more than you can carry' : ''}.`, 5);
+    deps.say?.(`You ${swim ? 'drag' : 'haul'} up the cache: ${gold ? `${gold} gold and ` : ''}${items.length} ${items.length === 1 ? 'thing' : 'things'}${r?.over ? ' (more than you can carry)' : ''}.`, 5);
     if (e.point) sound(NAVAL_CLASSIC.splashSmall, e.point, 0.6);
   }
   /** SALVAGE: a sunk ship's wreckage hauled in - her stores and powder to the boat that sailed through it (a swimmer's to
@@ -2191,12 +2217,12 @@ export function createNavalHost(deps) {
     if (b.LightOn !== lit && (b.Lights?.length ?? 0) > 0) setLights(b, lit);
     // AUDIT NAV1 (the presentation, #17): her animators found once, as her particle systems are (her whole tree was
     // walked for them every frame: 0.44 ms of a far galley's, for her three); past NEAR_LIFE_M both step every
-    // FAR_LIFE_EVERY frames, with the time they missed - each ship on her own frame of the stride (her number's)
-    e.lifeDt += dt;
-    if (!eye || dist2d(s.pos, eye) <= NEAR_LIFE_M || (e.lifeN = (e.lifeN + 1) % FAR_LIFE_EVERY) === 0) {
-      for (const a of (b.animators ??= boatAnimators(b))) a.update(e.lifeDt);
-      for (const ps of (b.particleSystems ??= boatParticleSystems(b))) ps.step(e.lifeDt);
-      e.lifeDt = 0;
+    // FAR_LIFE_EVERY frames, with the time they missed - each ship on her own frame of the stride (her number's).
+    // BOAT-FAR: the law read from scenes/comeSailAway/farLife.js, the one the pool and the peers' boats read
+    const lived = farLifeStep(e, dt, s.pos, eye);
+    if (lived !== null) {
+      for (const a of (b.animators ??= boatAnimators(b))) a.update(lived);
+      for (const ps of (b.particleSystems ??= boatParticleSystems(b))) ps.step(lived);
     }
     // her fires follow her deck as she heels, lists and trims; the burn breathes embers and smoke. AUDIT NAV1 (the
     // presentation): she burns on as she goes down, each fire out as the sea reaches its place on her (FLAME_AWASH) -
@@ -2455,6 +2481,20 @@ export function createNavalHost(deps) {
     if (berth >= 0) { s.errand = { kind: 'arrive', harbour: h.key, berth, path: null, i: 0 }; return; }
     if (r?.kind !== 'lurk') s.errand = { kind: 'lurk', harbour: null, at: [end[0], end[1]], path: null, i: 0, spin: (s.seed % 1000) / 1000 };
   }
+
+  // SEA-EVENTS (scenes/naval/treasureFleet.js): the treasure fleet's sailing about the captain - stood, steered, let go, its
+  // flagship's spoils
+  const treasureFleet = createTreasureFleet({
+    sea, launch: (spec) => (enabled ? launch(spec) : null), retire: (e) => retire(e), busy: (e) => raiderBusy(e), feet: () => deps.feet(),
+    isWater: (x, z, hull) => deps.isWater(x, z, hull), seaY: () => deps.seaY(), launches: () => launchesTraffic(),
+    give: (items) => deps.board?.giveItems?.(items, boatInPlay() ?? null, { force: true }), say: (text, n) => deps.say?.(text, n),
+    fleetEnded: (n, act) => deps.ether?.fleetEnded?.(n, act),
+  });
+  // ── SHIP-PVP: the open sea's guns between captains - their seams (scenes/naval/navalPvp.js) over the ships stood here ──
+  const pvp = createNavalPvp({
+    enabled: () => enabled, boat: () => boatInPlay(), stateOf: (b) => myBoatState(b), build: (b) => refitBuild(b), pose: (b) => boatPose(b),
+    boats: () => csa()?.state?.AllBoats ?? [], peers: () => deps.peerBoats?.() ?? [], clock: () => clock, shake: (k) => deps.shake?.(k),
+  });
 
   // ── NAV-R: Warm Ashes' raiders, stood as ships (systems/naval/navalRaiders.js) ─────────────────────────────────────
   /** A raider of mine busy at sea - fighting, running, boarded or going down: never let go of while it is. */
@@ -2758,9 +2798,17 @@ export function createNavalHost(deps) {
 
   // ── the shipwright, and the mending at sea (AUDIT NAV1, the helm) ────────────────────────────────────────────────
   let mending = false;   // my helm's boat mended this frame
+  /** FB1020c BERTH-RING: whether she lies in a port's waters - a place the port's data flags within a pixel of hers
+   *  (`nearPort`, Come Sail Away's own reading, kept) or a board port within SEA_RING (`port`, the world's navalPortHere -
+   *  the ring the port law reads: at twelve board ports no Small Ship finds water within a pixel). The berth, the shipwright and the
+   *  crew's port ask this one question; the sea's traffic and its waters (`nearPort` alone) ask another. */
+  const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };
+  /** VOYAGE-HOLD: the berth said to the captain (navalBerth.js) - still under her own way alone, the current's none of it. */
+  const berths = createBerthWatch({ lies: (b) => yardHere(b), clear: () => !hostileNearMe(), event: (ev) => deps.captain?.event?.(ev),
+    ownWay: (b) => { const r = csa(); return b === r?.state?.CurrentBoat && !r.IsBeached?.(b) ? Math.hypot(...(r.state.MoveVectorCurrent ?? r.state.velocityCurrent ?? [0, 0, 0])) : 0; } });
   /** Whether the shipwright stands for my boat: a port's waters, her way under YARD_SPEED, no hostile ship near. */
   function yardHere(boat) {
-    if (!enabled || !boat || !where().nearPort) return false;
+    if (!enabled || !boat || !inPortWaters()) return false;
     const v = boatPose(boat).velocity;
     return Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostileNearMe();
   }
@@ -2789,7 +2837,7 @@ export function createNavalHost(deps) {
     s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());   // CAPT-CREW: her posts aboard, by their holders' service - CAPTAIN-TREE: and her captain's drill
     if (b === boatInPlay()) {
       const v = boatPose(b).velocity;
-      c.tick(d, { inPort: !!where().nearPort && Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostile, atSea: !where().nearPort, wear: s.worth.wear });
+      c.tick(d, { inPort: inPortWaters() && Math.hypot(v[0], v[2]) <= YARD_SPEED && !hostile, atSea: !inPortWaters(), wear: s.worth.wear });   // FB1020c BERTH-RING: the berth's own port
     }
   }
   /** SEA-REPAIR: her hands at the repairs she was ordered to make - her carpenter's stores spent as the work is done
@@ -2812,7 +2860,7 @@ export function createNavalHost(deps) {
    *  work is done or the stores give out under it); `underFire` - DAMAGE CONTROL, the order's work with a hostile ship
    *  near at SEA_REPAIR_UNDER_FIRE of the pace, her fires left burning and a wreck a wreck until the fight is over. */
   function repairStep(b, s, d, { auto = false, underFire = false, inPlay = null } = {}) {
-    if (where().nearPort) return;   // AUDIT CC-D1: in port the shipwright is the repairs (the order stands for the open sea)
+    if (inPortWaters()) return;   // AUDIT CC-D1: in port the shipwright is the repairs (the order stands for the open sea) - FB1020c BERTH-RING: the shipwright's own port
     if (auto && !wantsRepair(s.damage)) return;
     const stores = deps.stores?.count?.(b) ?? 0;
     if (auto && s.credit <= 1e-9 && stores <= 0) return;   // nothing to work with: the free mending stands, unsaid
@@ -2850,7 +2898,7 @@ export function createNavalHost(deps) {
     let said = null;
     if (order === CREW_ORDERS.repair) {
       if (!wantsRepair(st.damage)) said = `${who}No repairs needed, Captain.`;
-      else if (where().nearPort) said = `${who}We're in port, Captain - the shipwright can do the repairs.`;   // AUDIT CC-D1
+      else if (inPortWaters()) said = `${who}We're in port, Captain. The shipwright can do the repairs.`;   // AUDIT CC-D1 (FB1020c BERTH-RING: the shipwright's own port)
       else if (st.credit <= 1e-9 && (deps.stores?.count?.(boat) ?? 0) <= 0) said = `${who}We've no carpenter's stores aboard, Captain.`;
       if (said) { deps.say?.(said, 4); return { ok: false, said }; }
     }
@@ -3233,8 +3281,8 @@ export function createNavalHost(deps) {
     const boat = myBoat();
     if (!enabled || !boat) return null;
     const d = myBoatState(boat).damage;
-    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled - no sail will set.';
-    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away - no sail will set.';
+    if (d.state === SHIP_STATES.wrecked) return 'The ship is crippled. No sail will set.';
+    if (d.maxSail > 0 && d.sailShare() <= 0) return 'The rigging is shot away. No sail will set.';
     return null;
   }
 
@@ -3291,8 +3339,8 @@ export function createNavalHost(deps) {
     aiming = false;
     const side = lookSide(boat);
     if (!side) { deps.say?.('No guns bear there.', 1.5); return true; }
-    if (st.damage.state === SHIP_STATES.wrecked) { deps.say?.('Your guns are silent - the ship is crippled.', 2); return true; }
-    if (st.guns.braced) { deps.say?.('Braced - let go of the brace to fire.', 1.5); return true; }
+    if (st.damage.state === SHIP_STATES.wrecked) { deps.say?.('Your guns are silent. The ship is crippled.', 2); return true; }
+    if (st.guns.braced) { deps.say?.('You are braced. Let go of the brace to fire.', 1.5); return true; }
     if (!st.guns.ready(side)) {
       const bat = batteryOf(boat.hull, side);
       deps.say?.(bat?.gun === 'barrel' && st.guns.barrels <= 0 ? 'No fire barrels left.' : `The ${side} guns are reloading (${st.guns.left(side).toFixed(1)} s).`, 1.5);
@@ -3477,7 +3525,7 @@ export function createNavalHost(deps) {
     entry.ship.damage.douse();   // AUDIT NAV1 (B4): grappled, her fires are fought - never a fight on a deck burning under it
     douse(entry);
     sound(NAVAL_SFX.grapple, entry.ship.pos, 0.9);
-    deps.say?.(kind === 'board' ? `Grapples away! Hauling ${entry.ship.names?.name ?? 'it'} alongside...` : `Grappling hooks! ${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside - repel boarders!`, 3);
+    deps.say?.(kind === 'board' ? `Grapples away! Hauling ${entry.ship.names?.name ?? 'it'} alongside...` : `Grappling hooks! ${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside. Repel boarders!`, 3);
   }
 
   /** The boarding's frame: the haul, then the fight's tally, then the prize. */
@@ -3630,7 +3678,7 @@ export function createNavalHost(deps) {
         entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew / 2 }, clock);
         endBoarding();
         wonRaid(b.quest);   // RAID-WON: her first wave's raid won - its crew home before the second comes over
-        deps.mid?.(`The boarders are thrown back - and ${entry.ship.names?.name ?? 'it'} sends more over the rail!`, 3);
+        deps.mid?.(`The boarders are thrown back, but ${entry.ship.names?.name ?? 'it'} sends more over the rail!`, 3);
         startBoarding('repel', entry, again);
         return;
       }
@@ -3762,6 +3810,9 @@ export function createNavalHost(deps) {
     const st = myBoatState(boat);
     if (st?.crew && boat.crewed) st.crew.event(kind);
   }
+  /** A ship struck to my guns - in a sea I stand (stateChanged) or in her stander's word (applyWord, AUDIT CC-E4): my
+   *  crew's win, and QL11's act - one say for both arms (AUDIT QUESTLINES ACTS-8, ACTS-11; HOST-SPLIT). */
+  const struckToMe = () => { crewEvent(boatInPlay() ?? myBoat(), 'win'); noteAct('ship-struck'); };
   /** The boat of mine nearest a place, within COLLIDE_RANGE - the one a prize taken on foot answers to. */
   function nearestBoat(pos) {
     let best = null, bestD = COLLIDE_RANGE;
@@ -4327,7 +4378,7 @@ export function createNavalHost(deps) {
       if (!warping.fast) deps.say?.(`Your crew brings the ship in alongside ${portWords(dock.name)}.`, 3);
     } else if (!warping.fast && madeFast({ pos: pose.position, yaw }, dock)) {
       warping.fast = true;
-      deps.say?.(`Made fast at ${portWords(dock.name)}.`, 3);
+      deps.say?.(`Moored at ${portWords(dock.name)}.`, 3);
     }
     const step = warpStep([pose.position[0], pose.position[2]], yaw, dock, dt);
     return { pos: step.pos, rotation: quatOfYaw(step.yaw) };
@@ -4398,7 +4449,7 @@ export function createNavalHost(deps) {
   function gangwayHint() {
     const g = gangwayInReach(false);
     const k = g ? `${g.way}:${g.boat.uid ?? ''}` : null;
-    if (k && k !== gangwaySaid) deps.say?.(g.way === 'aboard' ? `The gangway${g.name ? ` to the ${g.name}` : ''} - Activate to go aboard.` : 'The gangway - Activate to step ashore.', 3);
+    if (k && k !== gangwaySaid) deps.say?.(g.way === 'aboard' ? `The gangway${g.name ? ` to the ${g.name}` : ''} - Activate to go aboard.` : 'The gangway. Activate to step ashore.', 3);
     gangwaySaid = k;
   }
   // ── PASSAGE (2026-10-19; bible/03-World/Passage.md): a harbour's own friendly ship, booked from her quay - the sea's half
@@ -4750,7 +4801,7 @@ export function createNavalHost(deps) {
         e.rammedAt = clock;
         const st = myBoatState(b);
         const dealt = Math.round(closing * RAM_DAMAGE * GALLEY_RAM * (st.guns.braced ? BRACE_TAKEN : 1));
-        st.damage.apply({ hull: dealt, sail: 0, crew: ramMen(dealt, random(), PLAYER_CREW_TOUGHNESS) }, clock);   // CREW-HOLD: my boat's crew
+        st.damage.apply({ hull: Math.round(dealt * captainsDue().hull), sail: 0, crew: ramMen(dealt, random(), PLAYER_CREW_TOUGHNESS) }, clock);   // CREW-HOLD: my boat's crew; SEA-SET: the Captain's Due on her hull
         effects.hit(bow, f, true);
         sound(NAVAL_SFX.hit, bow, 1);
         deps.shake?.(3.5);
@@ -4861,8 +4912,9 @@ export function createNavalHost(deps) {
       const down = (st) => st === SHIP_STATES.sinking || st === SHIP_STATES.sunk;
       if (!down(was) && down(dmg.state) && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) chargePlayer('sink', e);
       // AUDIT CC-E4: a ship another stands struck to MY guns - her stander's strike is the one that runs, and it pays the
-      // win to nobody's crew but the shooter's, so my crew heard of it never
-      if (was === SHIP_STATES.afloat && dmg.state === SHIP_STATES.struck && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) crewEvent(boatInPlay() ?? myBoat(), 'win');
+      // win to nobody's crew but the shooter's, so my crew heard of it never. AUDIT QUESTLINES ACTS-11: nor my quests -
+      // online every ship but the stander's own is stood by another, so a group's other captains struck none
+      if (was === SHIP_STATES.afloat && dmg.state === SHIP_STATES.struck && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) struckToMe();
       if (!fresh && was !== SHIP_STATES.sinking && dmg.state === SHIP_STATES.sinking) { sound(NAVAL_CLASSIC.bubbles, e.ship.pos, 1); feel.sinking(e, w.seed, w.fire); }   // COMBAT-FEEL (AUDIT 2026-10-17): her going down as her stander's - her magazine by her seed on every screen; AUDIT 2: never a copy first seen already going down (a player sailing into sight of her heard her go, and her powder went up again)
       // AUDIT NAV2 F1/F3/F5: her captain as her stander sails her - an older build's word says none, and she keeps her
       // seed's temper and a puppet's 'cruise'
@@ -5330,11 +5382,11 @@ export function createNavalHost(deps) {
    *  his gold into my purse - and said as it went: the HUD said "stowed in your pack" over six claymores gone. */
   function stowPack(uid, items, name) {
     if (!items?.length) return;
-    const boat = (csa()?.state?.AllBoats ?? []).find((b) => b?.uid === uid) ?? null;
+    const boat = packStaysAshore() ? null : (csa()?.state?.AllBoats ?? []).find((b) => b?.uid === uid) ?? null;   // COMPANION-DROP: in the open zone, mine - it drops with my pack there
     const rest = boat ? deps.board?.giveItems?.(items, boat)?.left ?? [] : items;
     const mine = rest.length ? deps.board?.giveItems?.(rest, null, { force: true }) ?? null : null;
     const where = !rest.length ? 'in the hold' : rest.length === items.length ? 'in your pack' : 'in the hold and your pack';
-    deps.say?.(`${name ?? 'Your companion'}'s pack is stowed ${where}${mine?.over ? ' - more than you can carry' : ''}.`, 3);
+    deps.say?.(`${name ?? 'Your companion'}'s pack is stowed ${where}${mine?.over ? ' (more than you can carry)' : ''}.`, 3);
   }
   /** Take a hand of a boat of mine ashore, or send one back: the picker's row pressed. Answers what was said. */
   function companionPress(boat, name, now) {
@@ -5343,6 +5395,7 @@ export function createNavalHost(deps) {
     const hand = st.crew.hands.find((h) => h.name === name);
     if (!hand) return null;
     if (companions.isAshore(boat.uid, name)) {
+      if (heldAtSide(name, deps.say)) return null;   // COMPANION-DROP (crewCompanions.js): never sent back from inside the open zone
       const pack = companions.takePack(boat.uid, name);   // COMPANION-KIT: his pack stowed in her hold
       companions.sendBack(boat.uid, name);
       deps.say?.(`${name} goes back aboard.`, 3);
@@ -5350,7 +5403,7 @@ export function createNavalHost(deps) {
       return 'back';
     }
     const why = companions.why(boat.uid, hand, now, !!boat.crewed);
-    if (why) { deps.say?.(`${name} cannot come ashore - ${why}.`, 3); return null; }
+    if (why) { deps.say?.(`${name} cannot come ashore: ${why}.`, 3); return null; }
     if (!companions.take(boat.uid, hand, now)) return null;
     deps.say?.(`${name}, ${hand.role}, comes ashore with you.`, 3);
     return 'take';
@@ -5395,6 +5448,14 @@ export function createNavalHost(deps) {
     get glassUp() { return glassUp; },
     /** GALLEON: a galleon's gun deck as this frame stood it (her sides laid, her guns' places, her shutters) - a probe's reading. */
     gunDeckOf: (boat) => galleonGuns.read(boat, clock),
+    /** SEA-EVENTS: the treasure fleet's sailing about the captain (scenes/naval/treasureFleet.js step), stepped by the world's
+     *  feed; and the Aether Storm's lightning finding the ship I stand aboard (`strike` - systems/sea/seaEvents.js
+     *  stormStrikeOf): hurt by its shares, never under her last timber by it alone. Answers whether it struck her. */
+    fleet: (list, o) => { if (enabled) treasureFleet.step(list, o); },
+    stormStrike: (strike) => strikeShip(enabled && aboardShip() ? myBoatState(boatInPlay())?.damage : null, strike, clock),
+    /** SHIP-PVP: the open sea's guns' seams (scenes/naval/navalPvp.js) - the guns attached, my ship as the referee is told of
+     *  her, its word laid on her, her wreck, a peer's boat where she lies, a prize out of her hold. */
+    pvp,
     fleetStatus, repairAway, refitBoat, openYard, freeBerth, crewHands, assignRole,   // HOLDINGS: the Fleet page's (scenes/fleetHost.js) - with giveOrder and hostileNear, below
     passageShip, charter, charterSailed,   // PASSAGE: a berth's ship to book, and her boat made the voyage's (scenes/naval/passageHost.js)
     enlistHand, swapHand, releaseHand, forgetBoat, handsAshore,   // SHIPYARDS: the crew hall's recruits signed on (in a hand's place, AUDIT SHIPYARDS) and paid off, a ship sold, her hands ashore
@@ -5431,7 +5492,7 @@ export function createNavalHost(deps) {
         const rec = pendingBoats.get(c.boat);
         if (rec?.mates) { const crew = createShipCrew({ seed: c.boat >>> 0, record: rec.mates }); crew.event('knocked'); rec.mates = crew.snapshot(); }
       }
-      deps.say?.(`${c.name} is knocked senseless - your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);
+      deps.say?.(`${c.name} is knocked out. Your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);
       if (c.items?.length) stowPack(c.boat, c.items.splice(0), c.name);   // COMPANION-KIT: and his pack with him
     },
     /** CREW-COMPANIONS: the party's hands no longer anyone's (fallen, the boat gone) out of it - answers them. */

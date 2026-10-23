@@ -217,7 +217,7 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
   // PIN MOVED (CRAFT2): the anvil lists its patterns, the metal chosen in the box from what is held - none made now, so the
   // open one holding most of its inputs (the three Mithril Ingots)
   const row = buttons().find((b) => b.textContent.startsWith('Longsword'));
-  assert.match(row.textContent, /wants its inputs/, 'no Cured Leather yet');
+  assert.match(row.textContent, /needs materials/, 'no Cured Leather yet');
   row.onclick();
   assert.match(text(), /Mithril Longsword - rank 55/);
   assert.match(text(), /Cured Leather|leather:cured/);

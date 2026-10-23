@@ -53,8 +53,10 @@ export const OW_RAIDER_CELL_PX = 6;
 /** The one salt every client rolls spawned dungeons with (world/spawnedDungeons.js WORLD_SALT - pinned equal). */
 export const OW_WORLD_SALT = 1;
 /** A pixel's chance of a spawned dungeon of either kind (spawnedDungeons.js ANY_SPAWN_CHANCE: SPAWN_CHANCE + ELITE_CHANCE,
- *  the same sum - pinned equal, and the roll pinned pixel for pixel over the whole map). */
+ *  the same sum - pinned equal, and the roll pinned pixel for pixel over the whole map). SPAWN-THIN: the keep, the
+ *  world's own share, on the world's own second lane. */
 export const OW_SPAWN_CHANCE = 0.30 + 0.10;
+export const OW_SPAWN_KEEP = 0.75;
 /** How far past its cell's square an id's or a row's pixel may lie, map pixels - a band met at the seam (its cell is
  *  two pixels, its walk a pixel more), a raider's cell origin (six pixels, and a chase), a dungeon over the edge. */
 export const OW_CELL_MARGIN_PX = 8;
@@ -138,8 +140,11 @@ export const owRowInCell = (row, roomKey) => Array.isArray(row) && inSquare(owCe
 // ═══ THE ROWS ════════════════════════════════════════════════════════════════════════════════════
 
 /** Does a map pixel hold a spawned dungeon - spawnedDungeons.js spawnsDungeon(WORLD_SALT, px, py), on the relay's copy
- *  of its hash? @param {number} px @param {number} py */
-export const owSpawnsDungeon = (px, py) => gateHash(OW_WORLD_SALT, px, py, 1) / 4294967296 < OW_SPAWN_CHANCE;
+ *  of its hash, and SPAWN-THIN's keep on the same second lane? @param {number} px @param {number} py */
+export const owSpawnsDungeon = (px, py) => {
+  if (!(gateHash(OW_WORLD_SALT, px, py, 1) / 4294967296 < OW_SPAWN_CHANCE)) return false;
+  return gateHash(OW_WORLD_SALT, px, py, 3) / 4294967296 < OW_SPAWN_KEEP;
+};
 /** A row's key in a ledger: its pixel, as the spawn ledger keys it ("px,py"). */
 export const owRowKey = (px, py) => `${px},${py}`;
 /**

@@ -1010,8 +1010,8 @@
   {
     "name": "EGZS-offer-undrawn",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (c.accord) { const a = doc.createElement('small');",
-    "new": "if (false) { const a = doc.createElement('small');",
+    "old": "      if (c.accord) b.append(",
+    "new": "      if (false) b.append(",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],

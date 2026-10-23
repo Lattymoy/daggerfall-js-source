@@ -439,8 +439,8 @@
   {
     "name": "GUILD1c-the-tab-shown-to-everyone",
     "file": "src/net/chat.js",
-    "old": "hint: 'Your guild alone', hidden: true, peekAll: true }),",
-    "new": "hint: 'Your guild alone', peekAll: true }),",
+    "old": "hint: 'Only your guild', hidden: true, peekAll: true }),",
+    "new": "hint: 'Only your guild', peekAll: true }),",
     "tests": [
       "test/net/guild1c.test.js"
     ]

@@ -152,14 +152,14 @@ test('LOAD1 the key: the PNG goes to the gallery AND the download, the download 
     assert.match(name, /^dfo-\d{8}-\d{6}\.png$/);   // PIN MOVED: BR5, the product's name
     assert.equal(clicks.length, 1);
     assert.deepEqual(kept, [png], 'the very PNG the download saved');
-    assert.deepEqual(said, ['Screenshot kept - see Screenshots in the menu.']);
+    assert.deepEqual(said, ['Screenshot added to Screenshots in the menu.']);
     clicks.length = 0; said.length = 0;
     const none = await takeScreenshot({ toBlob: (cb) => cb(png) }, { afterDraw: null, doc, later() {}, download: false, keep: async () => 'full', said: (l) => said.push(l) });
     await flush();
     assert.equal(none, null);
     assert.equal(clicks.length, 0, 'the download switched off saves no file');
-    assert.deepEqual(said, ['The gallery is full - delete some under Screenshots.']);
-    assert.equal(keptLine('full', true), 'Screenshot saved. The gallery is full - delete some under Screenshots.');
+    assert.deepEqual(said, ['The gallery is full. Delete some under Screenshots.']);
+    assert.equal(keptLine('full', true), 'Screenshot saved. The gallery is full. Delete some under Screenshots.');
     assert.equal(keptLine(null, true), 'Screenshot saved.');
     assert.equal(keptLine(null, false), 'The screenshot could not be kept.');
   } finally { globalThis.URL = prevURL; }
@@ -656,7 +656,7 @@ test('LOAD1 the pane, a visit at a time: a new pane forgets the last one\'s arme
   try {
     setPref('skin', 'classic');
     assert.equal(loadingWordsKey(), 'classic');
-    assert.match(LOADING_WORDS[loadingWordsKey()], /drawn under the enhanced UI/);
+    assert.match(LOADING_WORDS[loadingWordsKey()], /only appear with the enhanced UI/);
     setPref('skin', 'enhanced');
     assert.equal(loadingWordsKey(), 'shots');
   } finally { setPref('skin', skin); }

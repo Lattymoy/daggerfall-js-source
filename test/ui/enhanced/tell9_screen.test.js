@@ -353,7 +353,7 @@ test('TELL9: the bleed\'s own icon - two drops of blood on the kit\'s 16px grid,
 
 test('TELL9: the Enhanced AI note gains its line - wound-up blows, the stagger, the punish, iron that cannot be stopped - and stays inside its budget', () => {
   const row = FEATURES.find((x) => x.id === 'enhanced-ai');
-  assert.match(row.note, /Wound-up blows are marked on the ground: hit hard to stagger, dodge to punish; red, hatched iron cannot be stopped\./);
+  assert.match(row.note, /Big attacks are marked on the ground: hit hard to stagger them or dodge\. Red, hatched attacks can’t be stopped\./);   // PIN MOVED (PLAIN TEXT SWEEP)
   assert.ok(row.note.length <= 450, `${row.note.length}`);
 });
 

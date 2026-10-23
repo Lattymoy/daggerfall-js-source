@@ -64,7 +64,10 @@ const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
  *  against what it touches. */
 export const SIDE_CONTACT = 1e-4;
 const TAN_SLOPE_LIMIT = Math.tan((SLOPE_LIMIT_DEG * Math.PI) / 180);   // AUDIT LANDFORMS II I3: the terrain floor snap's reach
-const SKIN = 0.02;
+/** The resolve's contact skin: a face within a sphere's radius + SKIN is met (it grounds, it is leaned on), and pushed
+ *  out only to the radius (_resolveSphere). DECOR-CLEAR (player/lateSolid.js): a face deeper in than the skin is one a
+ *  body is IN, not one it rests on. */
+export const SKIN = 0.02;
 
 /** The slack on the broad-phase box, in world units: the triangles' own arithmetic is float, so the box is grown by
  *  a hair rather than trusted to the last bit. Far below CELL, so it costs nothing in rejects. */
@@ -612,6 +615,9 @@ export class Collider {
     this._broad = null;   // FB0930-FRAME: the buckets filed by broad cell (buildBroad), dropped by every addMesh and removeBucket
     /** @type {any} TACT1: the billboards' cover (ai/cover.js createCoverIndex) - beside the meshes, never in them; null for none */
     this.cover = null;
+    /** @type {any} ROCK-CLEAR: the gate its late solids go through (player/lateSolid.js lateSolidsOf, which sets it) - the
+     *  parts it holds back from the body are a bucket's not yet stood, and leave with the bucket; null for none */
+    this.late = null;
   }
 
   /** FB0930-FRAME: the buckets a query whose WORLD box is [x0, x1] x [z0, z1] (y unbounded) can reach, in the walk's
@@ -813,6 +819,7 @@ export class Collider {
   removeBucket(bucketKey) {
     if (this._buckets.delete(bucketKey)) this._broad = null;   // FB0930-FRAME: the filing is dropped with it
     this.cover?.remove(bucketKey);   // TACT1: a bucket's cover leaves with it
+    this.late?.forget(bucketKey);   // ROCK-CLEAR: and its parts held back from the body - a pixel streamed out stands none of them later
   }
 
   /** AUDIT CLIMB1 F5: where a bucket stands now - `{ t, r }`, its translation and its turn (r null for an unturned

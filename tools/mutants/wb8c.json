@@ -149,8 +149,8 @@
   {
     "name": "WB8c-the-turn-s-card-the-first-turn-s",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "const c = courtPhaseCard(s.phase); if (c) beat = { kind: 'phase'",
-    "new": "const c = courtPhaseCard(2); if (c) beat = { kind: 'phase'",
+    "old": "const c = courtPhaseCard(s.phase, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase'",
+    "new": "const c = courtPhaseCard(2, s.pt); if (c && !(s.phase === 3 && rjCarded)) beat = { kind: 'phase'",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js",
       "test/net/gate/wb13e_beats.test.js"
@@ -250,8 +250,8 @@
   {
     "name": "WB8c-the-telegraph-the-old-reach",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "r: A.shape === 'spokes' ? A.len : P.atk[A.key].r ?? 0,",
-    "new": "r: A.shape === 'spokes' ? A.len : A.r ?? 0,",
+    "old": "r: A.shape === 'spokes' || wheel ? A.len : P.atk[A.key].r ?? 0,",
+    "new": "r: A.shape === 'spokes' || wheel ? A.len : A.r ?? 0,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "WB8c-the-telegraph-the-old-body",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "halfArc: ((A.arc ?? 0) / 2) * DEG, body: P.bossR,",
-    "new": "halfArc: ((A.arc ?? 0) / 2) * DEG, body: BOSS_R,",
+    "old": "body: wedges ? 0 : P.bossR,",
+    "new": "body: wedges ? 0 : BOSS_R,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "WB8c-the-telegraph-fire-s-colour",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "alpha: Math.max(0, fadeOut), color: attackColor(A, P),",
-    "new": "alpha: Math.max(0, fadeOut), color: attackColor(A, BASE_PROFILE),",
+    "old": ": torment ? TORMENT_COLOR : attackColor(A, P), edge:",
+    "new": ": torment ? TORMENT_COLOR : attackColor(A, BASE_PROFILE), edge:",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "WB8c-the-callout-the-table-s-name",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "{ text: P.atk[A.key].name, color: css(attackColor(A, P)), t:",
-    "new": "{ text: A.name, color: css(attackColor(A, P)), t:",
+    "old": "{ text: PC.atk[A.key].name, color: css(attackColor(A, PC)), t:",
+    "new": "{ text: A.name, color: css(attackColor(A, PC)), t:",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "WB8c-the-card-without-marks",
     "file": "src/systems/gate/gateOmen.js",
-    "old": ": [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])] };",
-    "new": ": [`${boss.name}, ${boss.title}`])] };",
+    "old": ": [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])] };",
+    "new": ": [`${boss.name}, ${boss.title}`, ...(pt ? [pt] : [])])] };",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "WB8c-the-marks-said-every-line",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "&& marksDay !== t.day) { marksDay = t.day;",
-    "new": "&& true) { marksDay = t.day;",
+    "old": "&& marksDay !== t.day) {\n          marksDay = t.day;",
+    "new": "&& true) {\n          marksDay = t.day;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "WB8c-the-herald-mute-on-marks",
     "file": "src/net/gate/gateHerald.js",
-    "old": ".${map} ${RITE_OMEN_LINE}${marks}`,",
-    "new": ".${map} ${RITE_OMEN_LINE}`,",
+    "old": ".${map} ${RITE_OMEN_LINE}${marks}${pt",
+    "new": ".${map} ${RITE_OMEN_LINE}${pt",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js",
       "test/net/gate/discordgates.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "WB8c-the-feeding-forgotten",
     "file": "src/net/gate/gateLink.js",
-    "old": "md: g.md ?? null, fed: same ? s.fed ?? null : null,",
-    "new": "md: g.md ?? null, fed: null,",
+    "old": "vgw: same ? s.vgw ?? null : null, fed: same ? s.fed ?? null : null,",
+    "new": "vgw: same ? s.vgw ?? null : null, fed: null,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "WB8c-the-state-forgets-the-marks",
     "file": "src/net/gate/gateLink.js",
-    "old": "md: g.md ?? null, fed: same ? s.fed ?? null : null,",
-    "new": "md: null, fed: same ? s.fed ?? null : null,",
+    "old": "md: g.md ?? null, vg: g.vg ?? null,",
+    "new": "md: null, vg: g.vg ?? null,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]

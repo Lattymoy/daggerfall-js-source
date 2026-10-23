@@ -58,8 +58,8 @@
   {
     "name": "LOOT-LOOSE-the-loose-by-all",
     "file": "src/ui/professions/profPages.js",
-    "old": "        const loose = await p.deposit?.(pick.material, q - counted, 'work');",
-    "new": "        const loose = await p.deposit?.(pick.material, q - counted, 'all');",
+    "old": "{ material: pick.material, qty: q - counted, order: 'work' }",
+    "new": "{ material: pick.material, qty: q - counted, order: 'all' }",
     "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
@@ -72,8 +72,8 @@
   {
     "name": "LOOT-LOOSE-the-host-drops-the-order",
     "file": "src/scenes/world.js",
-    "old": "          const r = await profBook.deposit(k, n, { order });",
-    "new": "          const r = await profBook.deposit(k, n);",
+    "old": "deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => ",
+    "new": "deposit: async (plan) => (await profBook.depositMany(plan.map((d) => ({ ...d, order: 'all' })))).map((r, i) => ",
     "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   }
 ]

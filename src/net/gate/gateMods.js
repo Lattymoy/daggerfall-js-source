@@ -12,8 +12,10 @@
 // marks in its state (`md`), so a screen reads the fight it is in, whatever the day's draw would say.
 //
 // PURE and a LEAF: no imports - the relay's bundle (net/gate/gateBrain.js, net/gate/gateLaw.js, net/wire.js) reads it.
+// WB14b: but the text core (systems/textManager.js - itself importless), which the portents' words are read through.
 //
 // Not a DFU member. Ledger A (WB8).
+import { t } from '../../systems/textManager.js';
 
 /**
  * @typedef {{id: string, name: string, epithet: string, el: string, ground: string, names: Readonly<Record<string, string>>,
@@ -107,3 +109,72 @@ export function gateModsWords(md) {
   const { aspect, trials } = readGateMods(md);
   return trials.length ? `${aspect.epithet} - ${trials.map((t) => t.name).join(', ')}` : aspect.epithet;
 }
+
+// ═══ WB14b: THE PORTENTS ═══════════════════════════════════════════════════════════════════════════════════════════
+//
+// (2026-10-19, Mac: "adding the chance of a gate to spawn with platforms of wave based adds that need to be defeated
+// before encountering the boss ... the boss splitting and players having to split and navigate to beat both sides and
+// then merging at the end for its final stand (chance based encounter modifer)", then "This is all yours to take on"):
+// THE THIRD KIND OF MARK - beside his aspect and his trials, what else a night's breach holds. Drawn by the day
+// (net/gate/gateLaw.js gatePortentsOf - a shuffle bag over the nights that are not the Legion-Lord's), kept on the fight
+// (net/gate/gateBrain.js newFight's `pt`) and said in its every state. Names and numbers here; the law is the brain's.
+// bible/11-Multiplayer/Breach-Portents.md.
+
+/**
+ * @typedef {{id: string, name: string, line: string, tip: string, bit: number}} GatePortent
+ */
+/** A portent's row: its words read through the text core where they are read (L10N4 - a player reads them in the
+ *  language they chose; the relay's herald, which sets none, in English).
+ * @param {string} id @param {number} bit @param {() => string} name @param {() => string} line @param {() => string} tip */
+const portentRow = (id, bit, name, line, tip) => /** @type {Readonly<GatePortent>} */ (Object.freeze(Object.defineProperties({ id, bit }, {
+  name: { enumerable: true, get: name }, line: { enumerable: true, get: line }, tip: { enumerable: true, get: tip },
+})));
+/** THE PORTENTS: each its name, the one line the omen and the card say it in, how to meet it (the card's tip), and its bit
+ *  on the receipt (net/gate/gateReceipt.js `p` - what it pays, section 11).
+ *  @type {ReadonlyArray<Readonly<GatePortent>>} */
+export const GATE_PORTENTS = Object.freeze([
+  portentRow('vanguard', 1, () => t('gate.portent.vanguard.name', 'The Vanguard'), () => t('gate.portent.vanguard.line', 'His vanguard holds the approach.'),
+    () => t('gate.portent.vanguard.tip', 'Clear both platforms to open the way to him.')),
+  portentRow('sunder', 2, () => t('gate.portent.sunder.name', 'The Sundering'), () => t('gate.portent.sunder.line', 'He tears in two at the second phase.'),
+    () => t('gate.portent.sunder.tip', 'Bring both halves down within 20 seconds of each other.')),
+  portentRow('captive', 4, () => t('gate.portent.captive.name', 'The Captive'), () => t('gate.portent.captive.line', 'A knight of the Covenant lies chained in the Pen.'),
+    () => t('gate.portent.captive.tip', 'Free the knight to ward off one Reckoning.')),
+]);
+/** THE DIRE BREACH - no row of its own: the Vanguard and the Sundering on one night, said before their two lines. */
+export const GATE_DIRE = Object.freeze(['vanguard', 'sunder']);
+export const gateDireLine = () => t('gate.portent.dire.line', 'Dagon\'s Breach runs deep.');   // AUDIT WB14 (TEXT-13): "tonight" once - the marks' line says it
+/** The portents a night may hold together: one, or the Dire Breach's two. */
+export const GATE_PORTENTS_MAX = 2;
+const PORTENT_BY_ID = new Map(GATE_PORTENTS.map((p) => [p.id, p]));
+export const portentOf = (id) => PORTENT_BY_ID.get(id) ?? null;
+/** The bits a receipt says for a set of portents (an unknown id none). */
+export const portentBits = (pt) => (Array.isArray(pt) ? pt.reduce((m, id) => m | (PORTENT_BY_ID.get(id)?.bit ?? 0), 0) : 0);
+
+/**
+ * WB14b: A NIGHT'S PORTENTS ON THE WIRE (the relay's state `pt`, the fight's own, the day's draw): null for none, else
+ * the ids in GATE_PORTENTS' order - one, or the Dire Breach's pair - each known; anything else is undefined (refused).
+ * @param {unknown} pt
+ * @returns {ReadonlyArray<string>|null|undefined}
+ */
+export function validGatePortents(pt) {
+  if (pt == null) return null;
+  if (!Array.isArray(pt) || pt.length < 1 || pt.length > GATE_PORTENTS_MAX) return undefined;
+  if (!pt.every((id) => typeof id === 'string' && PORTENT_BY_ID.has(id)) || new Set(pt).size !== pt.length) return undefined;
+  const ordered = GATE_PORTENTS.map((p) => p.id).filter((id) => pt.includes(id));
+  if (ordered.length === 2 && !(ordered[0] === GATE_DIRE[0] && ordered[1] === GATE_DIRE[1])) return undefined;
+  return Object.freeze(ordered);
+}
+/** Does a night's portents (the state's `pt`, validated or not) hold `id`? */
+export const hasPortent = (pt, id) => Array.isArray(pt) && pt.includes(id);
+/** The portents in words, for a card, a banner or a herald: "The Vanguard", "The Vanguard · The Sundering" - '' for none
+ *  (AUDIT WB14 TEXT-16: each a name of its own - a comma read a capital "The" mid-list). */
+export const gatePortentsWords = (pt) => (validGatePortents(pt) ?? []).map((id) => PORTENT_BY_ID.get(id).name).join(' · ');
+/** WB14f: THE CAPTIVE'S NAME, by the day (net/gate/gateLaw.js captiveNameOf) - a knight of the Covenant, Daggerfall's Bay in
+ *  its names: each a reader of it. */
+export const CAPTIVE_NAMES = Object.freeze([
+  () => t('gate.captive.evrard', 'Sir Evrard'), () => t('gate.captive.lysandre', 'Dame Lysandre'), () => t('gate.captive.gaelan', 'Sir Gaelan'),
+  () => t('gate.captive.tavia', 'Dame Tavia'), () => t('gate.captive.aldric', 'Sir Aldric'), () => t('gate.captive.ysolde', 'Dame Ysolde'),
+  () => t('gate.captive.corvin', 'Sir Corvin'), () => t('gate.captive.marisse', 'Dame Marisse'),
+]);   // each read through the text core where it is said (L10N4)
+/** WB14f: which of CAPTIVE_NAMES is a Dame's (drawn as Daggerfall's woman knight - world/gate/gateBoss.js knightLookOf). */
+export const CAPTIVE_DAMES = Object.freeze([false, true, false, true, false, true, false, true]);

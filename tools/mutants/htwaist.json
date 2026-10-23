@@ -57,7 +57,7 @@
   {
     "name": "HT-WAIST-no-waist-press",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (w.s.lanternsAtWaist && !hasFreeHand() && waistPress()) return true;\n",
+    "old": "    if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;\n",
     "new": "",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"

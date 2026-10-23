@@ -38,4 +38,4 @@ export const lockRefuses = (/** @type {any} */ item, /** @type {string} */ way) 
 export const lockedText = (/** @type {string} */ name) => `${name || 'That'} is locked. Unlock it first.`;
 
 /** The card's line for a locked piece. */
-export const LOCKED_LINE = 'Locked - it will not be dropped, sold or traded.';
+export const LOCKED_LINE = 'Locked. It will not be dropped, sold or traded.';

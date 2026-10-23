@@ -66,8 +66,11 @@ export function createLoadGovernor({ max = 100 } = {}) {
      * One frame: `dt` REAL seconds (the clock the player waits on, not the accelerated one), `unbuilt` the pixels in
      * the view's reach not yet built, `requested` the spinner's rate. Returns the rate the clock may run at.
      */
-    step(dt, { unbuilt = 0, requested = 1 } = {}) {
+    step(dt, { unbuilt = 0, requested = 1, owed = null, feet = null, speedMps = 0 } = {}) {
       const want = Math.max(TV_GOV_FLOOR, requested);
+      // OW-LEAD: handed the pixels owed and where the traveller stands, the cap is how NEAR the nearest of them is - the
+      // halving below is what it replaces on the host (and still answers a bare count)
+      if (owed) { ceiling = max; dirty = 0; clear = 0; settling = false; return Math.min(want, leadCap(owedMetres(feet, owed), speedMps)); }
       if (unbuilt > 0) {
         clear = 0;
         dirty += dt;
@@ -100,13 +103,61 @@ export function viewReach({ height, pitch, fovY, back = 0, far = Infinity }) {
   return Math.min(far, height / Math.tan(-top) - back);
 }
 
+/** PERF-TV: the host's record of its last count - what it counted (`gen`, the pixel `x`/`y`, the `radius`), the count
+ *  `n`, and OW-LEAD's `owed`, the pixels themselves (unbuiltAround's `out`). Made here, beside the count it keeps, so the
+ *  host holds one line of it (HOST-SPLIT, at the merge of LAYERED-GEAR). */
+export const unbuiltCount = () => ({ gen: -1, x: NaN, y: NaN, r: -1, n: 0, owed: [] });
+
 /** The pixels whose squares lie within `radius` (Chebyshev) of `center` that `isBuilt` says are not - the count the
  *  governor reads. LOAD-OWED: the host's `isBuilt` answers true for a pixel nothing is building, so the count is what the
- *  stream still owes (scenes/world.js travelViewGovern). */
-export function unbuiltAround(center, radius, isBuilt) {
+ *  stream still owes (scenes/world.js travelViewGovern). OW-LEAD: `out`, when handed, is emptied and then gets each of
+ *  them as [x, y] - the host's list of the owed pixels themselves (`uc.owed`; the cap is how near the nearest is). */
+export function unbuiltAround(center, radius, isBuilt, out = null) {
+  if (out) out.length = 0;
   let n = 0;
   for (let y = center.y - radius; y <= center.y + radius; y++) {
-    for (let x = center.x - radius; x <= center.x + radius; x++) if (!isBuilt(x, y)) n++;
+    for (let x = center.x - radius; x <= center.x + radius; x++) if (!isBuilt(x, y)) { n++; out?.push([x, y]); }
   }
   return n;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// OW-LEAD (2026-10-17, the player: "the overworld travel randomly slows down from speed multiplier even without enemies
+// nearby ... it almost always [goes] down to 1x and after a while it goes up again"). THE LAND'S HOLD IS HOW NEAR THE
+// HOLE IS, NOT HOW LONG IT HAS STOOD. The halving above cut the clock again every TV_GOV_SETTLE_S while ANY pixel of the
+// counted grid was still building - and a slower clock builds nothing faster, so a crossing's row that took the pump
+// eight seconds (a town or two in it: a second or more each) took every journey from x100 to x1 (50, 25, 10, 5, 1), and
+// the climb back is a step every TV_GOV_CLEAR_S - eighty seconds to x100, and the next crossing's row did it again.
+// What slowing buys is the traveller NOT REACHING a pixel before it stands: so the clock is held to the rate at which
+// the traveller, at their own pace, takes TV_GOV_LEAD_S of real time or more to reach the nearest owed pixel's square
+// (OW6's law for an enemy's reach, travelThreat.js threatCap, with the stream's books for the enemies). A row two pixels
+// out holds a rider to x25, never to a crawl; the nearer the hole, the slower, down to walking pace at its edge; and
+// the hold is gone the frame the last build stands.
+// ═══════════════════════════════════════════════════════════════════
+/** Real seconds the traveller always has before the nearest pixel the stream still owes. 4: run on the host's own code
+ *  (test/systems/travel/ow_lead.test.js) over builds of 0.3 - 3 s each, a rider and a walker, it kept nearly every bit of 2's pace where
+ *  the builds are quick and, where they are slow (a slow machine), held a deep queue off the traveller - no hole met, a
+ *  few seconds at walking pace where 2 had most of a minute. */
+export const TV_GOV_LEAD_S = 4;
+const PIXEL_N = 32768;   // native units a map pixel (streamingWorld.js NATIVE_PIXEL)
+const N_PER_M = PIXEL_N / 819.2;   // native units a metre
+/** Metres from `feet` (native world {x, z}, StreamingWorldState.worldCoords) to the nearest square of `owed` ([x, y] map
+ *  pixels; y counts north from 499, streamingWorld.js worldCoordToMapPixel): 0 inside one, Infinity with none. */
+export function owedMetres(feet, owed) {
+  if (!owed?.length) return Infinity;
+  if (!feet) return 0;
+  let best = Infinity;
+  for (const [x, y] of owed) {
+    const x0 = x * PIXEL_N, z0 = (499 - y) * PIXEL_N;
+    const dx = Math.max(x0 - feet.x, 0, feet.x - (x0 + PIXEL_N)), dz = Math.max(z0 - feet.z, 0, feet.z - (z0 + PIXEL_N));
+    best = Math.min(best, Math.hypot(dx, dz));
+  }
+  return best / N_PER_M;
+}
+/** The highest rate at which `metres` takes `leadS` real seconds or more at `speedMps` (the motor's own pace) - on the
+ *  spinner's ladder (1, 2, 3, 4, 5, then fives), never under walking pace; Infinity with no owed pixel or no pace. */
+export function leadCap(metres, speedMps, leadS = TV_GOV_LEAD_S) {
+  if (!Number.isFinite(metres) || !(speedMps > 0)) return Infinity;
+  const n = metres / (speedMps * leadS);
+  return n >= TV_GOV_STEP ? Math.floor(n / TV_GOV_STEP) * TV_GOV_STEP : Math.max(TV_GOV_FLOOR, Math.floor(n));
 }

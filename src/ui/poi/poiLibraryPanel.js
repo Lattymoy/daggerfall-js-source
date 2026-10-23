@@ -126,7 +126,7 @@ export function createPoiLibrary({ doc = document, host, io, feed, me, act, say,
     only.addEventListener('change', () => { mineOnly = !!only.checked; shown = SHELF_PAGE; drawList(list); });
     const top = el('div', 'dfpoi-row');
     top.append(find, only, el('span', '', t('poi.library.mine', 'Mine')), btn(t('poi.editor.refresh', 'Refresh the list'), () => refresh()), btn(t('poi.editor.cancel', 'Cancel'), () => close()));
-    dialog.replaceChildren(el('div', 'dfpoi-h', t('poi.library.title', 'Library')), el('div', 'dfpoi-sub', t('poi.library.hint', 'Models every builder keeps. Place one, then click where it stands.')), top, list);
+    dialog.replaceChildren(el('div', 'dfpoi-h', t('poi.library.title', 'Library')), el('div', 'dfpoi-sub', t('poi.library.hint', 'Models shared by every builder. Place one, then click where it should stand.')), top, list);
     drawList(list);
   }
   function drawList(list) {

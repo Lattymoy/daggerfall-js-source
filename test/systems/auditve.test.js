@@ -385,7 +385,7 @@ test('AUDIT VE R5: a copy shadows the shipped mod only once it is registered - o
   assert.deepEqual(states()[0], [BASE, true, true], 'the shipped Base still registered (the review: shadowed by a copy that never registered)');
   assert.equal(typeof DM.unregisteredDfmods, 'function');
   assert.deepEqual(DM.unregisteredDfmods().map((u) => [u.key, u.state]), [[BASE, 'error']]);
-  assert.match(DM.unregisteredDfmods()[0].error, /could not read the stored file - remove it and add it again/);
+  assert.match(DM.unregisteredDfmods()[0].error, /could not read the stored file; remove it and add it again/);
   assert.match(src('ui/enhanced/enhancedMenu.js'), /for \(const u of unregisteredDfmods\(\)\) \{/, 'the packs card lists them');
 });
 

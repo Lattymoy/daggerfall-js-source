@@ -17,8 +17,8 @@
 // silent rather than naming nowhere.
 //
 // Not a DFU member. Ledger A (WB).
-import { gateAt, gatePhase, gateCountdown, countdownText, countdownWords, gateMarked, gateStands, gateBossOf, gateModsOf, riseLine, wrathLine, marksLine, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_WRATH_MINUTE, GATE_DAY_MINUTES, GATE_COLLAPSE_MS, PIXEL_M } from '../../net/gate/gateLaw.js';
-import { gateModsWords } from '../../net/gate/gateMods.js';   // WB8c: tonight's marks on the card
+import { gateAt, gatePhase, gateCountdown, countdownText, countdownWords, gateMarked, gateStands, gateBossOf, gateModsOf, riseLine, wrathLine, marksLine, gatePortentsOf, portentsLine, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_WRATH_MINUTE, GATE_DAY_MINUTES, GATE_COLLAPSE_MS, PIXEL_M } from '../../net/gate/gateLaw.js';
+import { gateModsWords, gatePortentsWords } from '../../net/gate/gateMods.js';   // WB8c: tonight's marks on the card
 import { GATE_TOWN_MAX_PX } from './gateSite.js';
 import { RITE_OMEN_LINE, cageStands } from '../../net/gate/gateRite.js';   // BROKER-CAGE: the Broker's cage, omen to midnight
 
@@ -114,9 +114,10 @@ export const fellLine = ({ near, boss, top }) => `${boss} has fallen at Dagon's 
  */
 export function gateTip(c, cd, fell = null, boss = gateBossOf(c.t.day)) {
   const when = cd
-    ? (cd.to === 'open' ? `Opens in ${countdownText(cd.ms)}` : cd.to === 'seal' ? `Open - seals in ${countdownText(cd.ms)}` : `Sealed - collapses in ${countdownText(cd.ms)}`)
+    ? (cd.to === 'open' ? `Opens in ${countdownText(cd.ms)}` : cd.to === 'seal' ? `Open. Seals in ${countdownText(cd.ms)}` : `Sealed. Collapses in ${countdownText(cd.ms)}`)
     : (c.phase === 'collapsing' ? 'Collapsing' : null);
-  return { title: 'Dagon\'s Breach', lines: [`Near ${c.site.place}`, ...(when ? [when] : []), ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])] };
+  const pt = gatePortentsWords(gatePortentsOf(c.t.day));   // WB14b: the night's portents, named
+  return { title: 'Dagon\'s Breach', lines: [`Near ${c.site.place}`, ...(when ? [when] : []), ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])] };
 }
 /** AUDIT PRE-MERGE 0929 W2-2: a day's marks as the card says them, worded once a day - the card is asked every frame a
  *  gate stands on the map, and the marks were read and joined anew each time. */
@@ -195,7 +196,12 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
         // where the relay cannot keep it
         if ((line === 'omen' || line === 'rise') && riteDay !== t.day) { riteDay = t.day; if (riteReady() && !riteBroken(t.day, s)) say(riteOmenLine()); }
         // WB8c: tonight's marks, beside the first line of a gate still to be fought (never after it has sealed)
-        if ((line === 'omen' || line === 'rise' || line === 'open') && marksDay !== t.day) { marksDay = t.day; say(marksLine({ boss: words.boss, md: gateModsOf(t.day) })); }
+        if ((line === 'omen' || line === 'rise' || line === 'open') && marksDay !== t.day) {
+          marksDay = t.day;
+          say(marksLine({ boss: words.boss, md: gateModsOf(t.day) }));
+          const pt = portentsLine(gatePortentsOf(t.day));   // WB14b: and the night's portents, after them - announced, always
+          if (pt) say(pt);
+        }
         else if (line === 'seal') say(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) }));   // GATE-COLLAPSE: and when it goes
         else if (line === 'wrath') say(wrathLine(words));
       }

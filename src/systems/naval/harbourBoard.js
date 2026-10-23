@@ -14,8 +14,8 @@
 //   hunt      CONTRACT_NEED.hunt pirate ships ended - sunk or taken - in the crown's waters
 //   delivery  a cargo carried to another port's harbourmaster by her term (a day for every DELIVERY_PX_DAY map pixels
 //             and DELIVERY_DAYS_BASE more), in the hold of the boat that took it on: she lies to that port's quay and
-//             it is delivered; she is wrecked and it is lost. A port with the sea beside it (`deliveryPort` - FIELD
-//             BUGS 2026-10-13c PORT-TOWNS: a cargo went to a capital in the mountains)
+//             it is delivered; she is wrecked and it is lost. A port the sea bears on (`deliveryPort` - FIELD BUGS
+//             2026-10-13c PORT-TOWNS: a cargo went to a capital in the mountains; FB1020c BERTH-RING: within SEA_RING)
 //   salvage   a merchantman gone down off the port: CONTRACT_NEED.salvage casks of her cargo hauled out of the sea where she
 //             went down (her casks float there once the captain is near)
 //   survey    the Admiralty's measure of the shipping in the crown's waters: CONTRACT_NEED.survey ships studied through the
@@ -37,7 +37,7 @@ import { classById, shipNames, SHIP_CLASSES } from './navalShips.js';
 import { HULL_PRICES } from '../comeSailAway/comeSailAwayHulls.js';
 import { MINUTES_PER_DAY } from '../gameDate.js';   // a day of the captain's clock (minutes)
 import { hashKey } from '../../net/wire.js';   // FNV-1a over a string: a port's key on the board's stream (SLAM10's one home)
-import { coastalAt } from '../../net/fortLaw.js';   // FIELD BUGS 2026-10-13c PORT-TOWNS: the coast's one law - the sea beside a town
+import { seaBears } from '../../net/fortLaw.js';   // FB1020c BERTH-RING: the sea within the port law's ring (SEA_RING) - where the berth names a port; the coast law's home, never the world's placement code (the account Worker bundles this file)
 export { hashKey };
 
 export const HARBOUR_CONTRACT_KINDS = Object.freeze(['bounty', 'hunt', 'delivery', 'salvage', 'survey']);
@@ -133,16 +133,17 @@ export function siteFor(port, r, seaAt, band = SITE_PX) {
 }
 
 /**
- * A PORT A CARGO GOES TO (FIELD BUGS 2026-10-13c PORT-TOWNS): one of the board's ports with the sea beside it - its own
- * map pixel or one of the eight about it (`seaAt`; net/fortLaw.js coastalAt, the coast's one law) - where a ship lies
- * within the berth's reach, a map pixel (scenes/world.js navalPortHere). Travel Options lists the region capitals among
+ * A PORT A CARGO GOES TO (FIELD BUGS 2026-10-13c PORT-TOWNS): one of the board's ports the sea bears on (`seaAt`), where
+ * a ship lies within the berth's reach (scenes/world.js navalPortHere). Travel Options lists the region capitals among
  * its harbours (MAPS.BSA's 0x10 mark - the coast's own bits, the low four, name sides of a place the sea lies on, every
- * one of the 304 that carry one, and no capital carries one), and 31 of them stand with no sea within six pixels;
- * Daggerfall, Sentinel and Wayrest stand two off it.
+ * one of the 304 that carry one, and no capital carries one), and 31 of them stand with no sea within six pixels.
+ * FB1020c BERTH-RING: the reach is the port law's own ring, SEA_RING (net/fortLaw.js seaBears, which world/portSites.js re-exports) - it was a map pixel
+ * (net/fortLaw.js coastalAt), the berth's then, and Daggerfall, Sentinel and Wayrest, two pixels off the sea, took no
+ * cargo; the berth names a port within SEA_RING now, and every board port has water a hull floats in within it.
  * No sea law, no port. Pure.
  * @param {{ px: number, py: number } | null | undefined} p @param {((px: number, py: number) => boolean) | null | undefined} seaAt
  */
-export const deliveryPort = (p, seaAt) => !!p && coastalAt(p.px, p.py, seaAt);
+export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);
 
 /** A bounty's quarry: the strongest pirate within two levels of the captain's (never the flagship before level 12). */
 export function bountyClass(level, r) {
@@ -201,7 +202,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
   }
   if (kind === 'hunt') {
     const need = between(CONTRACT_NEED.hunt, r);
-    return { ...base, title: `Clear ${crown}'s waters`, words: `End ${need} pirate ships in ${crown}'s waters - sunk or taken - within ${TERM_DAYS.hunt} days.`,
+    return { ...base, title: `Clear ${crown}'s waters`, words: `Sink or capture ${need} pirate ships in ${crown}'s waters within ${TERM_DAYS.hunt} days.`,
       pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt * need, days: TERM_DAYS.hunt, need };
   }
   if (kind === 'delivery') {
@@ -211,7 +212,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
     const d = cheb(to, port);
     const days = DELIVERY_DAYS_BASE + Math.ceil(d / DELIVERY_PX_DAY);
     const cargo = CARGOES[Math.floor(r() * CARGOES.length) % CARGOES.length];
-    return { ...base, title: `Cargo for ${to.name}`, words: `${cargo.charAt(0).toUpperCase()}${cargo.slice(1)}, to ${to.name}'s harbourmaster within ${days} days. It goes in your hold - lose your ship and it is lost.`,
+    return { ...base, title: `Cargo for ${to.name}`, words: `${cargo.charAt(0).toUpperCase()}${cargo.slice(1)}, to ${to.name}'s harbormaster within ${days} days. It goes in your hold. If you lose your ship, you lose the cargo.`,
       pay: payOf('delivery', { level, px: d, pay }), standing: STANDING_DONE.delivery, days, to: { key: to.key, name: to.name, px: to.px, py: to.py }, cargo };
   }
   if (kind === 'salvage') {
@@ -225,7 +226,7 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
   }
   if (kind === 'survey') {
     const need = between(CONTRACT_NEED.survey, r);
-    return { ...base, title: 'The Admiralty\'s survey', words: `Take the measure of ${need} ships in ${crown}'s waters through your glass - their guns, hands and holds - within ${TERM_DAYS.survey} days.`,
+    return { ...base, title: 'The Admiralty\'s survey', words: `Study ${need} ships in ${crown}'s waters through your spyglass (their guns, crew and holds) within ${TERM_DAYS.survey} days.`,
       pay: payOf('survey', { level, need, pay }), standing: STANDING_DONE.survey * need, days: TERM_DAYS.survey, need };
   }
   return null;
@@ -330,7 +331,7 @@ export function restoreContract(c) {
  */
 export function marqueOffer({ crown, perks, gold: purse, held = null }) {
   const price = MARQUE_PRICE;
-  if (held) return { can: false, price, days: MARQUE_DAYS, why: held.crown === crown ? `You hold ${crown}'s letter already.` : `You hold ${held.crown}'s letter - one crown's at a time.` };
+  if (held) return { can: false, price, days: MARQUE_DAYS, why: held.crown === crown ? `You hold ${crown}'s letter already.` : `You already hold ${held.crown}'s letter. You can only hold one at a time.` };
   if (!perks?.marque) return { can: false, price, days: MARQUE_DAYS, why: `${crown} grants letters of marque to its Privateers.` };
   if ((Number(purse) || 0) < price) return { can: false, price, days: MARQUE_DAYS, why: `A letter costs ${gold(price)}.` };
   return { can: true, price, days: MARQUE_DAYS, why: '' };

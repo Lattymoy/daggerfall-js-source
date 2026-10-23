@@ -43,9 +43,10 @@ import {
   snapshotDiscovery, restoreDiscovery,
 } from '../../src/systems/discovery.js';
 import { setValue, _resetForTests } from '../../src/systems/settings/settings.js';
+import { hostText } from '../hostText.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const src = (p) => readFileSync(join(ROOT, p), 'utf8');
+const src = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the M-outside dispatch lives in scenes/exteriorAutomapToggle.js
 
 const COLOURS = { temple: 0xffc37d45, shop: 0xff1855be, tavern: 0xff307555, house: 0xff283c45 };
 const at = (bmp, x, yTop) => bmp.colors[yTop * bmp.width + x];
@@ -621,7 +622,7 @@ test('c2/S10 REVIEW: the rename push must not LATCH the panel drag - the uncover
   } finally { _resetForTests(); _resetZoomForTests(); restoreDiscovery(null); }
 });
 
-test('c2/S10 REVIEW: ONE compass drawer (hud.js) at COMPBOX\'s own 69x17, and the plate tooltip is toolTip.js\'s box in DFU\'s two GUI colours', () => {
+test('c2/S10 REVIEW: ONE compass drawer (hud.js) at COMPBOX\'s own 69x17, and the plate tooltip is toolTip.js\'s box in DFU\'s two GUI colors', () => {
   _resetForTests(); _resetZoomForTests();
   restoreDiscovery(null);
   try {
@@ -716,7 +717,9 @@ test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a 
     assert.ok(arm > g, `${host}: and M-outside sits inside that gate`);
   }
   const w = src('src/scenes/world.js');
-  assert.match(w, /if \(!dfLoc \|\| !b\?\.locBlocks \|\| !b\.locOrigin\) return;/, 'empty wilderness opens nothing');
+  // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): `townHere` answers null off a location, and the M key opens nothing without one
+  assert.match(w, /if \(!dfLoc \|\| !b\?\.locBlocks \|\| !b\.locOrigin\) return null;/, 'empty wilderness builds nothing');
+  assert.match(w, /const here = townHere\(\);\n\s+if \(!here\) return;/, 'empty wilderness opens nothing');
   // EM4: the town map is behind a SKIN DOOR now - the classic skin
   // still gets `new ExteriorAutomapWindow(...)`, from inside
   // ui/town/townMapDoor.js, and the host opens whichever the skin wears.
@@ -1243,10 +1246,11 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
     // the M-outside door of the host that HAS a quest machine, between
     // the summaries walk and the window, on DFU's own three inputs.
     const wsrc = src('src/scenes/world.js');
-    const door = wsrc.slice(wsrc.indexOf('const toggleExteriorAutomap'), wsrc.indexOf('SetCustomBuildingName (ExteriorAutomap.cs:867-899)'));
+    // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the plates are built in `townHere`
+    const at = wsrc.indexOf('const townHere'), door = wsrc.slice(at, wsrc.indexOf('\n  };\n', at));   // HOST-SPLIT 2: the toggle, wherever it lives (scenes/exteriorAutomapToggle.js)
     assert.match(door, /\n {4}stampResidenceQuestNames\(summaries, discoveredBuildings\(locId\), \{/);
-    assert.match(door, /getAllActiveQuestIds: activeQuestIds,/, 'QuestMachine.GetAllActiveQuests, the tree\'s own definition');
-    assert.match(door, /isBuildingQuestResource: \(mapID, key\) => topicTree\.isBuildingQuestResource\(mapID, key\),/);
+    assert.match(door, /getAllActiveQuestIds: host\.activeQuestIds,/, 'QuestMachine.GetAllActiveQuests, the tree\'s own definition');   // HOST-SPLIT 2: a live name, read through the handle
+    assert.match(door, /isBuildingQuestResource: \(mapID, key\) => host\.topicTree\.isBuildingQuestResource\(mapID, key\),/);
     assert.match(door, /\}, dfLoc\.mapTableData\?\.mapId \?\? 0\);/, 'PlayerGPS.CurrentMapID');
     // ...and QX1 gave the OTHER host a machine, so it stamps too - the
     // same call between the summaries walk and the window, off its own

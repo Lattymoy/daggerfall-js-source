@@ -86,15 +86,15 @@ export function levelingOptions(s = null, { online = false } = {}) {
       title: 'Oblivion Remastered',
       ...gate(LEVELING_VIRTUE),
       lines: Object.freeze([
-        'Level with a bar, as Oblivion Remastered.',
+        'Level with a bar, as in Oblivion Remastered.',
         'Every skill you raise fills it, your best',
-        `fastest. At ${LEVELUP_TOTAL} you level; the rest rolls`,
+        `skills fastest. At ${LEVELUP_TOTAL} you level; the rest`,
         purse > 0
-          ? `over. Each level hands you ${virtues},`
-          : 'over. You have set the purse to nothing,',
+          ? `rolls over. Each level gives you ${virtues},`
+          : 'rolls over. Attribute points are set to 0,',
         purse > 0
-          ? `to spend on at most ${set.maxUpdatableAttribute} attributes.`
-          : 'so levelling raises only your health.',
+          ? `to spend on up to ${set.maxUpdatableAttribute} attributes.`
+          : 'so leveling raises only your health.',
       ]),
     }),
   ]);

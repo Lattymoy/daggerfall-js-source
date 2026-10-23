@@ -42,6 +42,7 @@ import { SKINNING_KNIFE } from '../../net/professionLaw.js';   // TOUCH-HOLD: th
 import { registerContainerLootHandler } from '../containerLoot.js';
 import { registerTabledLootHandler } from '../loot/loot.js';
 import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
+import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 registerCustomTemplates(FORAGING_TEMPLATES);
 
@@ -162,10 +163,10 @@ export const PROFESSION_TOOL_HOW = Object.freeze({
   [FT.PickAxe]: (k) => `Mining is done at an ore vein or a boulder in the wilderness, or a vein in a dungeon: walk up to one until its acts show, then press ${k} (or use the Pick-Axe).`,
   [FT.Sickle]: (k) => `Herbalism is done at an herb patch in the wilderness: walk up to one until its acts show, then press ${k} (or use the Sickle).`,
   [FT.Basket]: (k) => `The Basket searches an herb patch in the wilderness for food: walk up to one until its list shows, then use the Basket (or choose Search with the Basket on the list and press ${k}).`,   // PROF-MENU: the node's list, not the act choice key
-  [FT.FishingNet]: (k) => `Fishing is done in water: stand in it, swim, or stand at sea until its acts show, then press ${k} (or use the Fishing-Net).`,   // ANY-HOUR: at any hour
+  [FT.FishingNet]: (k) => `Fishing is done in water: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`,   // ANY-HOUR: at any hour
   // TOUCH-HOLD (2026-10-01 part four - Mac: "Interact button + knife Use"): the knife's Use at a body is E there, and it
   // holds the knife for the line as the Sickle's holds the steady hand (scenes/huntHost.js)
-  [SKINNING_KNIFE.templateIndex]: (k) => `Hunting is done at a body your own blow felled: walk up to it until its acts show, then press ${k} (or use the Skinning Knife).`,
+  [SKINNING_KNIFE.templateIndex]: (k) => `Hunting is done at a body you killed: walk up to it until its acts show, then press ${k} (or use the Skinning Knife).`,
 });
 /** TOOL-SAID: the line a Use of this tool says where no node takes it - online, with the professions open, for the
  *  five profession tools (TOUCH-HOLD: and the Skinning Knife); null otherwise (offline, a guest, the Spade: the Use is
@@ -205,6 +206,7 @@ export function useForagingTool(item, collection, { entity } = {}) {
     case FT.WoodAxe: {
       const n = woodAxeBundles({ ...s, climate: w.climate }, _random);
       give(entity, FT.WoodBundle, n);
+      if (n > 0) noteAct('wood-chopped');   // QL11: wood chopped - the bundles in the pack
       text = woodAxeMessage(n);
       started = startQuest(TOOL_QUESTS[FT.WoodAxe]);
       break;
@@ -214,6 +216,7 @@ export function useForagingTool(item, collection, { entity } = {}) {
     case FT.FishingNet: {
       const n = fishingCount(s, _random);
       give(entity, fishTemplate(cc), n);
+      if (n > 0) noteAct('fish-caught');   // QL11: a fish caught - the net's catch in the pack
       text = fishingMessage(n);
       started = startQuest(TOOL_QUESTS[FT.FishingNet]);
       break;
@@ -222,6 +225,7 @@ export function useForagingTool(item, collection, { entity } = {}) {
     case FT.Basket: {
       const find = basketFind(basketDraw({ intelligence: s.intelligence, climate: w.climate, monthValue: _host?.monthValue?.() ?? 0 }, _random), cc);
       give(entity, find.templateIndex, find.count);
+      if (find.count > 0 && find.templateIndex !== FT.Egg) noteAct('herb-gathered');   // QL11: a plant gathered - the Basket's find in the pack; AUDIT QUESTLINES ACTS-10: an egg is no plant (QLIP01: "Gather three plants")
       text = find.message;
       started = startQuest(TOOL_QUESTS[FT.Basket]);
       break;

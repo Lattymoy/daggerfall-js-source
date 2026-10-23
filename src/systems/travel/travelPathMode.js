@@ -28,9 +28,9 @@ export const TRAVEL_PATH_TEXT = Object.freeze({
   roads: 'Roads',
   free: 'Free',
   label: 'Path',
-  tipRoads: 'Prefer roads - towns are reached by the roads. Shift-click to walk to an exact spot.',
-  tipFree: 'Free walk - straight across country. Clicks near a town go to the exact spot.',   // MOUNTAINS WALKABLE: no longer round them
-  fellBack: 'There is no free way there - taking the roads.',
+  tipRoads: 'Follow roads to reach towns. Shift-click to walk to an exact spot.',
+  tipFree: 'Walk straight across country. Clicks near a town go to the exact spot.',   // MOUNTAINS WALKABLE: no longer round them
+  fellBack: 'There is no open way there, so you take the roads.',
 });
 
 let mode = null;

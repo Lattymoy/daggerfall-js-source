@@ -157,7 +157,7 @@ test('OT1: a zipped Daggerfall folder reaches the collector as the same file-lik
 test('OT1: the picker offers the zip door beside the directory one, and a dropped .zip takes the same arm', () => {
   const menu = src('src/scenes/menu.js');
   // the ARENA2 door's own shape: a second file input, accept-gated, with the phone line above it
-  assert.match(menu, /<input type="file" id="picksaves" webkitdirectory multiple[^>]*>\s*<p[^>]*>\$\{t\('menu\.classicLoad\.phone', 'on a phone: pick a \{zip\} instead[^']*', \{ zip: '<b>\.zip<\/b>' \}\)\}/, 'the phone line sits under the directory input');
+  assert.match(menu, /<input type="file" id="picksaves" webkitdirectory multiple[^>]*>\s*<p[^>]*>\$\{t\('menu\.classicLoad\.phone', 'on a phone: pick a \{zip\} of your Daggerfall folder or a SAVE# folder instead', \{ zip: '<b>\.zip<\/b>' \}\)\}/, 'the phone line sits under the directory input');
   assert.match(menu, /<input type="file" id="picksaveszip" accept="\.zip,application\/zip"/, 'the zip input is accept-gated');
   assert.match(menu, /querySelector\('#picksaveszip'\)\.addEventListener\('change'[\s\S]{0,400}await ingest\(await classicSaveFilesFromZip\(f\)\)/, 'the zip input feeds the SAME ingest as the directory pick');
   assert.match(menu, /if \(\/\\\.zip\$\/i\.test\(f\.name\)\) \{ files\.push\(\.\.\.await classicSaveFilesFromZip\(f\)\); return; \}/, 'a dropped .zip expands in the directory walk');   // AUDIT 68: the walk is dataSource's walkDroppedEntries now, which hands the File

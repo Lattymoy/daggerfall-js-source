@@ -569,8 +569,8 @@
   {
     "name": "PROF9-svc-market-crafted-no-hand",
     "file": "server-account/src/market.js",
-    "old": "p.marked, p.dye, p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
-    "new": "p.marked, p.dye, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
+    "old": "p.marked, p.dye, p.hand, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "new": "p.marked, p.dye, p.record, p.template, p.material AS dfu_material\n      ${from}",
     "tests": [
       "test/net/prof9_service.test.js"
     ]
@@ -1254,7 +1254,7 @@
   {
     "name": "AUDIT-PROF12-P1-apothecary-old-words",
     "file": "src/net/fortLaw.js",
-    "old": "`members' jewellery here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
+    "old": "`members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
     "new": "`members' alchemy, cooking and jewelcrafting here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
     "tests": [
       "test/systems/prof12_client.test.js",

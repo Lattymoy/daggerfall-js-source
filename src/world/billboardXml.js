@@ -22,28 +22,39 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const _registry = [];   // [{ vendor, table: { [archive]: { [record]: [x, y] } }, isOn: () => bool }]
+let _gen = 0;   // AUDIT DEX B7: bumps with every registration and every one let go
 
 /** Register (or replace) a vendor's xml scale table. */
 export function registerBillboardXml(vendor, table, isOn = () => true) {
   const i = _registry.findIndex((r) => r.vendor === vendor);
   const entry = { vendor, table, isOn };
   if (i >= 0) _registry[i] = entry; else _registry.push(entry);
+  _gen++;
 }
 export function unregisterBillboardXml(vendor) {
   const i = _registry.findIndex((r) => r.vendor === vendor);
-  if (i >= 0) _registry.splice(i, 1);
+  if (i >= 0) { _registry.splice(i, 1); _gen++; }
 }
+/** AUDIT DEX B7: what a size cached with the xml applied is current with - the registrations (a live registrant's switch
+ *  is read at every ask, billboardXmlScaleOf). */
+export const billboardXmlGeneration = () => _gen;
 
-/** The xml's `scaleX`/`scaleY` for a record (frame 0), or null - the
- *  last live registrant that names the record answers. */
-export function billboardXmlScale(archive, record) {
+/** The last live registrant's own `[scaleX, scaleY]` for a record (frame 0) - the table's array, never a copy (AUDIT DEX
+ *  B7: what a per-frame reader compares, allocating nothing) - or null. */
+export function billboardXmlScaleOf(archive, record) {
   if (archive == null || record == null) return null;
   for (let i = _registry.length - 1; i >= 0; i--) {
     const r = _registry[i];
     const s = r.table?.[archive]?.[record];
-    if (s && r.isOn()) return { x: s[0], y: s[1] };
+    if (s && r.isOn()) return s;
   }
   return null;
+}
+/** The xml's `scaleX`/`scaleY` for a record (frame 0), or null - the
+ *  last live registrant that names the record answers. */
+export function billboardXmlScale(archive, record) {
+  const s = billboardXmlScaleOf(archive, record);
+  return s ? { x: s[0], y: s[1] } : null;
 }
 
 /** `size.x *= scale.x; size.y *= scale.y` over a {w, h}. */

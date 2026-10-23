@@ -38,7 +38,7 @@
   {
     "name": "CUSTOMS-ELSEWHERE-the-refusal-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "  'customs-other-account': () => t('account.refusal.customsOtherAccount', 'The realm knows this character from another account - the one you played it online with. Sign in with that account to bring it in.'),\n",
+    "old": "  'customs-other-account': () => t('account.refusal.customsOtherAccount', 'This character belongs to another account, the one you played it online with. Sign in with that account to bring it in.'),\n",
     "new": "",
     "tests": [
       "test/net/fb0930_customselsewhere.test.js"

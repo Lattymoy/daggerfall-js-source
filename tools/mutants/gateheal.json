@@ -38,7 +38,7 @@
   {
     "name": "GATE-HEAL-the-floor-unchecked",
     "file": "src/net/gate/gateBrain.js",
-    "old": "!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK)) return 0;\n  const ref = healRef(p.lv)",
+    "old": "!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0;\n  const ref = healRef(p.lv)",
     "new": "!Number.isFinite(pose.z)) return 0;\n  const ref = healRef(p.lv)",
     "tests": [
       "test/net/gate/gateheal.test.js"

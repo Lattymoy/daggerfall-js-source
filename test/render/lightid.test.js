@@ -77,7 +77,7 @@ test('LIGHT-ID: THE POOLS THAT REFILL IN ORDER NAME EACH ENTRY BY THE LIGHT IT S
   const court = rd('src/scenes/gate/gateCourt.js');
   assert.match(court, /bossGlow\(s, t, _glow\)/, 'his glow, one kept record');
   assert.match(court, /else if \(b\.light\) relight\(b\.light\);/, 'a burst slot reused: its flash another light');
-  assert.match(court, /const L = \(b\.light \?\?= \{ x: 0, y: 0, z: 0, range: 0, color: \[0, 0, 0\] \}\)/, 'each burst its own flash');
+  assert.match(court, /const L = \(b\.light \?\?= \{ x: 0, y: 0, z: 0, range: 0, color: \[0, 0, 0\], carried: true \}\)/, 'each burst its own flash (GATE-MIX: a flash, casting no shadow)');
   for (const [file, src] of [['src/scenes/droppedTorches.js', 'd'], ['src/scenes/droppedTorches.js', 'p'], ['src/scenes/droppedTorches.js', 'fl'], ['src/scenes/camps.js', 'c.rec'], ['src/scenes/gate/gatePool.js', 'place'], ['src/scenes/spoilsPool.js', 'f']]) {
     assert.ok(new RegExp(`adoptLight\\(\\{ x: [^\\n]*\\}, ${src.replace('.', '\\.')}\\)`).test(rd(file)), `${file}: a frame's record named by ${src}`);
   }

@@ -49,7 +49,7 @@ test('EG-E1 THE LAW AS THE SERVICE READS IT: a Redoubt strikes 20 silver (MARKS_
   assert.deepEqual(MARKS_FAUCETS.eg, { amount: EG_PAY_MARKS });
   assert.equal(EG_PAY_MARKS, 20);
   assert.equal(MARKS_KINDS.eg, 'mint');
-  assert.deepEqual(MARKS_COMBAT, { kinds: ['gate', 'raid', 'serpent', 'eg'], perDay: 150 });
+  assert.deepEqual(MARKS_COMBAT, { kinds: ['gate', 'raid', 'serpent', 'eg', 'star'], perDay: 150 });   // PIN MOVED (STAR7): a fallen star held after it
   assert.equal(egStrikeRid(25, 3), 'eg:25:3');
   assert.deepEqual([E, E + WK, NOW0, E + 15 * WK + 6 * DAY, E + 16 * WK].map(egSeasonWeek0), [0, 0, 8, 8, 16]);
 });

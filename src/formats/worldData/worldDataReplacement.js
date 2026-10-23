@@ -204,7 +204,7 @@ export const boundWorldDataBlocks = () => _blocksFile;
 /** Once: the readers' door. Tests reset with `_resetWorldDataReplacement`. */
 export function installWorldDataReplacement() {
   setNewLocationIndexResolver(getNewDFLocationIndex);   // AUDIT-RR F33: SetNewLocationVariant -> GetNewDFLocationIndex (WorldDataVariants.cs:101) - RR3a's seam, wired
-  setWorldDataDoor({ getDFRegionAdditionalLocationData, getDFLocationReplacementData, getDFBlockReplacementData, getBuildingReplacementData, getNewDFBlockName, getNewDFBlockIndex, applyBuildingReplacementAutoMapData, noteReadingLocation, editLocation });   // WD3: MapsFile.getRmbBlockName names the town whose blocks come next; ARENA1: the port's own edits of a location read
+  setWorldDataDoor({ getDFRegionAdditionalLocationData, getDFLocationReplacementData, getDFBlockReplacementData, getBuildingReplacementData, getNewDFBlockName, getNewDFBlockIndex, applyBuildingReplacementAutoMapData, noteReadingLocation, editLocation, locationPinned });   // WD3: MapsFile.getRmbBlockName names the town whose blocks come next; ARENA1: the port's own edits of a location read; BOOT-RECTS: a walk's pinned towns
 }
 export function _resetWorldDataReplacement({ assets = true } = {}) {
   regions = new Map(); locations = new Map(); blocks = new Map(); buildings = new Map();
@@ -373,6 +373,12 @@ function pinnedHere(locationKey, fileName) {
   const pin = _pinAt(locationKey);
   if (!pin || (!pin.out?.size && !pin.in?.size)) return false;
   return (_assets.get(fileName) ?? []).some((a) => a.vendor && (pin.out?.has(a.vendor) || pin.in?.has(a.vendor)));
+}
+/** BOOT-RECTS (world/terrain/terrainTiles.js locationRectReader): whether a pin stands at a location at all - one that
+ *  could read any of its files apart (pinnedHere); none, and its blocks read as at every other unpinned location. */
+function locationPinned(regionIndex, locationIndex) {
+  const pin = _pinAt(makeLocationKey(regionIndex, locationIndex));
+  return !!pin && !!(pin.out?.size || pin.in?.size);
 }
 function withPinKey(key, fn) {
   const was = _pinKey;

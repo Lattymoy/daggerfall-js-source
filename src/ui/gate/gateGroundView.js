@@ -14,6 +14,10 @@
 //     my feet stand in a blow still to land (his, or his host's), the rim rises in the danger edge's colour as it winds
 //     up, the blow's name and the order stand under the crosshair - "Cleave - move!" - and an arrow points the nearest
 //     way out of it.
+//   - WB14a (2026-10-19, bible/11-Multiplayer/Breach-Portents.md section 6): A MARKED BLOW'S ORDER - the Chains, the Brand,
+//     the Torment and the Gaze say the one thing to do in its own words ("Chained! Run from him!", "Look away!") in the
+//     warning's place (`peril.order`); and THE GAZE'S BLINDING - the screen washed white as it lands on me, fading over
+//     GAZE_BLIND_MS.
 //
 // A READOUT, NOT A WINDOW (ui/gate/gateBossBar.js's law): no click, two nodes made on the first need and UPDATED, NOT REBUILT,
 // each written only when it changes, hidden (never removed) with nothing to show and with the HUD. `groundViewModel` is
@@ -21,6 +25,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // WB13c: the classic face, loaded by the gate's own screens
+import { GAZE_BLIND_MS } from '../../net/gate/gateBrain.js';   // WB14a: the Gaze's blinding
 
 /** A bite's flare fades over this (ms); the rim breathes this fast while I stand in it (cycles a second). */
 export const GROUND_BITE_MS = 650;
@@ -40,6 +45,9 @@ export const PERIL_ARROW_R = 72;
  *  plate. */
 export const PERIL_ARROW_R_LOW = 36;
 export const PERIL_ARROW_STEP = 3;
+/** WB14a: the Gaze's white at its landing, and the step its fade is written in. */
+export const BLIND_PEAK = 0.92;
+export const BLIND_STEP = 0.04;
 /** The words. */
 export const GROUND_VIEW_TEXT = Object.freeze({
   warn: (ground) => `${ground || 'Burning ground'} - step out!`,
@@ -57,24 +65,28 @@ const rgbOf = (c) => `${Math.round(clamp01(c[0]) * 255)}, ${Math.round(clamp01(c
  * last moment `now`, its line's colour, the way out's bearing on the screen `arrow` in degrees, 0 ahead): it takes the
  * rim's colour and the warning over the ground's. Pure.
  * @param {{ inside?: boolean, ground?: string, color?: ReadonlyArray<number>|null, biteAt?: number, biteColor?: ReadonlyArray<number>|null, now: number,
- *   peril?: { name: string, t: number, now?: boolean, color: ReadonlyArray<number>, arrow?: number|null }|null }} m
+ *   peril?: { name: string, t: number, now?: boolean, color: ReadonlyArray<number>, arrow?: number|null, order?: string }|null, blindAt?: number }} m
+ *   WB14a: `peril.order` a marked blow's own order (scenes/gate/gateArsenal.js), `blindAt` when the Gaze last blinded me
  */
-export function groundViewModel({ inside = false, ground = '', color = null, biteAt = -Infinity, biteColor = null, now, peril = null }) {
+export function groundViewModel({ inside = false, ground = '', color = null, biteAt = -Infinity, biteColor = null, now, peril = null, blindAt = -Infinity }) {
   const since = now - biteAt;
   const bite = since >= 0 && since < GROUND_BITE_MS ? 1 - since / GROUND_BITE_MS : 0;
-  if (!inside && !(bite > 0) && !peril) return null;
+  const dazzle = now - blindAt, blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 - dazzle / GAZE_BLIND_MS : 0;   // WB14a
+  const blind = Math.round((BLIND_PEAK * Math.sqrt(blindK)) / BLIND_STEP) * BLIND_STEP;
+  if (!inside && !(bite > 0) && !peril && !(blind > 0)) return null;
   const breath = inside ? GROUND_EDGE_IN[0] + (GROUND_EDGE_IN[1] - GROUND_EDGE_IN[0]) * (0.5 + 0.5 * Math.sin((now / 1000) * GROUND_BREATH_HZ * Math.PI * 2)) : 0;
   const t = peril ? clamp01(peril.t) : 0;
   const rise = peril ? (peril.now ? PERIL_EDGE_NOW : PERIL_EDGE[0] + (PERIL_EDGE[1] - PERIL_EDGE[0]) * t * t) : 0;
   const edge = clamp01(Math.max(breath, rise, breath + bite * bite * GROUND_EDGE_BITE));
   const c = (bite > 0 && biteColor) || (peril && peril.color) || color || biteColor || [1, 0.4, 0.1];
   const arrow = peril && Number.isFinite(peril.arrow) ? Math.round(peril.arrow / PERIL_ARROW_STEP) * PERIL_ARROW_STEP : null;
-  return { edge: Math.round(edge / GROUND_EDGE_STEP) * GROUND_EDGE_STEP, rgb: rgbOf(c), warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null, arrow };
+  return { edge: Math.round(edge / GROUND_EDGE_STEP) * GROUND_EDGE_STEP, rgb: rgbOf(c), warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null, arrow, blind };   // WB14a: a marked blow's own order; the Gaze's white
 }
 
 export const GROUND_VIEW_STYLE_ID = 'dagger-gate-ground-style';
 export const GROUND_VIEW_CSS = `
 .wb-ground-edge { position: fixed; inset: 0; pointer-events: none; z-index: 28; opacity: 0; }
+.wb-ground-blind { position: fixed; inset: 0; pointer-events: none; z-index: 31; opacity: 0; background: radial-gradient(ellipse at 50% 45%, #fffef6 0%, #fff4dc 60%, #ffe9c0 100%); }
 .wb-ground-warn { position: fixed; left: 50%; top: 60%; transform: translateX(-50%); pointer-events: none; z-index: 30;
   font: 700 17px 'Cormorant', Georgia, serif; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap;
   text-shadow: 0 0 3px #000, 0 0 12px rgba(0,0,0,0.95); animation: wb-ground-warn 0.62s ease-in-out infinite alternate; }
@@ -87,8 +99,8 @@ export const GROUND_VIEW_CSS = `
 /** WB13a: the way out, a chevron - drawn pointing up (ahead) and turned about the crosshair. */
 const ARROW_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 22 16h-6v6H8v-6H2z"/></svg>';
 
-let edgeNode = null, warnNode = null, arrowNode = null;
-let shown = { edge: -1, rgb: '', warn: null, vis: '', arrow: null };
+let edgeNode = null, warnNode = null, arrowNode = null, blindNode = null;
+let shown = { edge: -1, rgb: '', warn: null, vis: '', arrow: null, blind: 0 };
 
 function build(doc) {
   if (doc.getElementById && !doc.getElementById(GROUND_VIEW_STYLE_ID)) {
@@ -107,16 +119,21 @@ function build(doc) {
   arrowNode.className = 'wb-ground-arrow';
   arrowNode.style.display = 'none';
   arrowNode.innerHTML = ARROW_SVG;
-  (doc.body ?? doc.documentElement)?.append(edgeNode, warnNode, arrowNode);
+  blindNode = doc.createElement('div');   // WB14a: the Gaze's white
+  blindNode.className = 'wb-ground-blind';
+  (doc.body ?? doc.documentElement)?.append(edgeNode, warnNode, arrowNode, blindNode);
 }
 
-/** Draw the rim and the warning for a model (null hides them); `hidden` is the HUD's own hide. */
+/** Draw the rim and the warning for a model (null hides them); `hidden` is the HUD's own hide (never the Gaze's white). */
 export function drawGateGround(model, { hidden = false, doc = globalThis.document } = {}) {
   const want = !hidden && !!model;
+  // AUDIT WB14 (SCREEN-14): the Gaze's white is the eye's, never the HUD's - it washes the screen through the HUD's hide
+  const blind = model?.blind ?? 0;
   if (!edgeNode) {
-    if (!want || !doc?.createElement) return;
+    if ((!want && !(blind > 0)) || !doc?.createElement) return;
     build(doc);
   }
+  if (blind !== shown.blind) { shown.blind = blind; blindNode.style.opacity = String(blind); }   // WB14a
   const vis = want ? 'on' : 'off';
   if (vis !== shown.vis) {
     shown.vis = vis;
@@ -145,7 +162,7 @@ export function drawGateGround(model, { hidden = false, doc = globalThis.documen
 
 /** The page is going (a test's reset): the nodes leave with it. */
 export function destroyGateGround() {
-  edgeNode?.remove?.(); warnNode?.remove?.(); arrowNode?.remove?.();
-  edgeNode = null; warnNode = null; arrowNode = null;
-  shown = { edge: -1, rgb: '', warn: null, vis: '', arrow: null };
+  edgeNode?.remove?.(); warnNode?.remove?.(); arrowNode?.remove?.(); blindNode?.remove?.();
+  edgeNode = null; warnNode = null; arrowNode = null; blindNode = null;
+  shown = { edge: -1, rgb: '', warn: null, vis: '', arrow: null, blind: 0 };
 }

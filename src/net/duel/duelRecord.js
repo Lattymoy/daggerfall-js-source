@@ -34,7 +34,7 @@ export function duelUncountedText(why) {
   switch (why) {
     case 'draw': return null;
     case 'guest': return 'This duel did not count toward your record: only duels between registered accounts count.';
-    case 'gap': return 'This duel did not count toward your record (too soon after your last).';
+    case 'gap': return 'This duel did not count toward your record: it came too soon after your last.';
     case 'pair': return 'This duel did not count toward your record: you have fought them enough times today.';
     case 'winner': return 'This duel did not count toward your record: they have won enough duels today.';
     default: return 'This duel did not count toward your record.';

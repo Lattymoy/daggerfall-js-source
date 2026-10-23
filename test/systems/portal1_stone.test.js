@@ -100,7 +100,7 @@ test('PORTAL1 the stone: its own row beside the shard (572, the Diamond\'s art, 
   assert.equal(pack.length, 1); assert.equal(pack[0].stackCount, 3, 'stones stack');
   addItem(pack, welkyndShards(2));
   assert.equal(pack.length, 2, '...with their own kind alone');
-  const lines = ['Opens a portal to any place on the map.', 'It stands 30 seconds, for anyone to step through.'];
+  const lines = ['Opens a portal to any place on the map.', 'It stays open for 30 seconds, and anyone can step through.'];
   assert.deepEqual(PS.portalStoneLines(), lines);
   assert.deepEqual(survivalInfoTokens(s).map((t) => t.text).slice(2), lines, 'the classic popup\'s card');
   assert.deepEqual(itemStatRows(s).filter((r) => r.label === '').map((r) => r.text), lines, 'the stat rows');
@@ -421,7 +421,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
   door({ player: { isPlayerSwimming: true, feetAt: () => [0, 0, 0] }, boat: {} }, PS.PORTAL_TEXT.water);
   door({ boat: {} }, PS.PORTAL_TEXT.aboard);
   door({ isOnShip: () => true }, PS.PORTAL_TEXT.aboard);
-  door({ here: { x: veilhaven().px, y: veilhaven().py }, travelMapDoorReady: () => false }, 'Nothing of the Bay\'s magic reaches across the Veil - only the crossing does.');   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - before the map's own
+  door({ here: { x: veilhaven().px, y: veilhaven().py }, travelMapDoorReady: () => false }, 'The Bay\'s magic does not reach across the Veil. Only the crossing does.');   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - before the map's own
   door({ travelMapDoorReady: () => false }, PS.PORTAL_TEXT.noMap);
   playerEntity.health = 0; door({}, PS.PORTAL_HOLD_TEXT.busy); playerEntity.health = 10;
   assert.equal(built.length, 0, 'no map for a refusal');

@@ -587,8 +587,8 @@
   {
     "name": "AUDIT-SERPENT-words-stun-seconds",
     "file": "src/ui/serpentBar.js",
-    "old": "stunned: (s) => `Stunned - strike its head! ${s}s`,",
-    "new": "stunned: (s) => `Stunned - strike its head! ${s}`,",
+    "old": "stunned: (s) => `Stunned. Strike its head! ${s}s`,",
+    "new": "stunned: (s) => `Stunned. Strike its head! ${s}`,",
     "tests": [
       "test/systems/serpent1_client.test.js",
       "test/net/serpent/serpent1_auditclient.test.js"
@@ -597,8 +597,8 @@
   {
     "name": "AUDIT-SERPENT-B10-hoard-pack",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "granted: (boss) => `${boss.name}'s hoard is yours - it is in your pack.`,",
-    "new": "granted: (boss) => `${boss.name}'s hoard is in your hold - and your pack.`,",
+    "old": "granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,",
+    "new": "granted: (boss) => `${boss.name}'s hoard is in your hold. And your pack.`,",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

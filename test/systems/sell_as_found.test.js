@@ -4,6 +4,8 @@
 // cost less than the sale it added, and mending worn loot to sell it paid every player online: +102 gold on a
 // value-1000 piece found at 20% (Mercantile 30, Personality 40, a quality-10 counter), +2,592 on a Daedric longsword.
 // Each roll now leaves the condition it set as `foundCondition`, and online the Sell arm reads a piece no higher.
+// A smith's repair still adds nothing; MEND-THIRD (2026-10-19, mend_third.test.js) credits a third of what its owner's OWN
+// mends - a kit, Repairs Objects, the Varla Stone - put past the mark, which nothing here makes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 

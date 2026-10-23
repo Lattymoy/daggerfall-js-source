@@ -270,7 +270,7 @@ test('SHIP-CREW, SEA-REPAIR: THE WORLD\'S WIRING - the stores are her hold\'s (C
   assert.match(WORLD, /const name = csa\.boats\.includes\(l\.key\) \? naval\?\.crewName\?\.\(l\.key, l\.member\.i\) : null;/);
   assert.match(WORLD, /_crewCtx\.order = ship\.mine\?\.order \?\? null; _crewCtx\.sings = ship\.mine\?\.sings \?\? true; _crewCtx\.line = ship\.mine\?\.line \?\? null;/);
   assert.match(WORLD, /orders: \(\) => \{ const b = csaRuntime\?\.state\?\.CurrentBoat; if \(b\) navalOrders\(b\); \},/);
-  assert.match(WORLD, /if \(helm\) helm = \{ \.\.\.helm, orders: navalOn\(\), cargo: holdsCargo\(helm\.hull\), shot: navalOn\(\) \? naval\?\.shotLabel\?\.\(\) \?\? null : null \};/);   // PIN MOVED (CARGO-ANYWHERE: and her Hold)
+  assert.match(WORLD, /if \(helm\) helm = card \? null : \{ \.\.\.helm, orders: navalOn\(\), cargo: holdsCargo\(helm\.hull\), shot: navalOn\(\) \? naval\?\.shotLabel\?\.\(\) \?\? null : null \};/);   // PIN MOVED (CARGO-ANYWHERE: and her Hold; FIELD BUGS 2026-10-21d PASSAGE-HANDS: no buttons for a passenger)
   assert.ok(helmButtons({ hasSails: true, orders: true }).some((b) => b.act === 'orders' && b.kind === 'hook'), 'the panel\'s Orders');
   assert.ok(!helmButtons({ hasSails: true }).some((b) => b.act === 'orders'), 'none with the naval arc off');
   const rows = boatMenuRows({ boxes: new Set(['drive']), packable: true, naval: true, crewed: true }).map((r) => r.id);

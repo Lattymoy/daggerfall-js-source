@@ -216,7 +216,7 @@ function holdMarks(k, rc) {
       return st.kind === 'trace'
         ? (byUse ? t('prof.reticle.hold.skinning', 'skinning...') : t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() }))
         : st.kind === 'steady'
-          ? (st.bruised ? (label ? t('prof.reticle.steady.bruisedKey', 'bruised - keep {key} held to keep what is left', { key: label }) : t('prof.reticle.steady.bruised', 'bruised - hold on to keep what is left'))
+          ? (st.bruised ? (label ? t('prof.reticle.steady.bruisedKey', 'bruised. Keep {key} held to save what is left', { key: label }) : t('prof.reticle.steady.bruised', 'bruised. Hold on to save what is left'))
             : label ? t('prof.reticle.steady.stillKey', 'hold {key} and keep still ({deg} degrees)', { key: label, deg }) : t('prof.reticle.steady.still', 'keep still ({deg} degrees)', { deg }))
           : (label || t('prof.reticle.hold.kneeling', 'kneeling...'));
     },
@@ -298,7 +298,7 @@ function traceMarks(k, rc, under, act) {
     hint: (s, label, byUse) => {
       const key = label || useKey();
       return s.tracing ? t('prof.reticle.trace.draw', 'draw the knife along the line') : byUse ? t('prof.reticle.trace.aim', 'aim the knife at the first point')
-        : s.slips > 0 ? t('prof.reticle.trace.again', 'let go - hold {key} on the first point again', { key }) : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });
+        : s.slips > 0 ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key }) : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });
     },
   };
 }
@@ -342,12 +342,12 @@ function fishMarks(k, rc) {
     hint: (st, label) => {
       const key = label || 'E';   // a key's own name, as the keyboard prints it
       if (st.phase === 'haul') {
-        return st.slip > 0 ? t('prof.reticle.fish.haulSlipping', 'hold {key} to raise the band, let go to lower it - keep the weight inside (slipping, {pct}%)', { key, pct: Math.round(st.slip * 100) })
-          : t('prof.reticle.fish.haul', 'hold {key} to raise the band, let go to lower it - keep the weight inside', { key });
+        return st.slip > 0 ? t('prof.reticle.fish.haulSlipping', 'hold {key} to raise the band and let go to lower it. Keep the weight inside (slipping, {pct}%)', { key, pct: Math.round(st.slip * 100) })
+          : t('prof.reticle.fish.haul', 'hold {key} to raise the band and let go to lower it. Keep the weight inside', { key });
       }
       return st.phase === 'wind' ? t('prof.reticle.fish.wind', 'hold {key} to wind the net, let go to throw it ({m} m)', { key, m: Math.round(throwM(st.windS)) })
         : st.phase === 'fly' ? t('prof.reticle.fish.fly', 'the net flies...')
-          : st.phase === 'wait' ? (st.school !== null ? t('prof.reticle.fish.waitSchool', 'waiting for a bite - over a school...') : t('prof.reticle.fish.wait', 'waiting for a bite...'))
+          : st.phase === 'wait' ? (st.school !== null ? t('prof.reticle.fish.waitSchool', 'waiting for a bite, over a school...') : t('prof.reticle.fish.wait', 'waiting for a bite...'))
             : t('prof.reticle.fish.tug', 'a tug! press {key} now', { key });
     },
   };

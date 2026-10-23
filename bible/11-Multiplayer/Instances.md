@@ -7,7 +7,8 @@ that lets them select public or instanced (if applicable)."* Asked, Mac chose:
 
 - **Who:** "You and your party". The relay admits an instance's owner, staff, and anyone in the owner's party.
 - **Where:** "Dungeons with your quest", "Privateer's Hold", "Building interiors". A building's door asks as a dungeon's
-  does, where a quest of yours names the building.
+  does, where a quest of yours names the building. The death quest is a quest of yours (HEIR-WHOLE, section 4): a
+  dungeon the line's remains lie in whole, where the world lays its public room smaller.
 - **What it remembers:** "Kept per owner, 30-min respawn" and "Kept until quest ends". The room keeps its memory as a
   public room does, under RESPAWN-30's half-hour, and a quest that ends never keys its room again.
 - **The size hotfix:** "Fold into instancing". There is no interim fix. A quest's dungeon is the dungeon whole inside its
@@ -55,6 +56,9 @@ An instance is its place's public world room with an owner and an epoch after it
     NO_INSTANCE); a resync keeps the copy's; a quest set aside and reclaimed keeps its own. When several quests name a
     place, the oldest running one (the lowest uid) opens it.
   - **the Hold's**, four bytes over `instance:epoch:<character>:hold` (holdEpochOf): the character's, for good.
+  - **the remains'** (HEIR-WHOLE), four bytes over `instance:epoch:<line>:<remains>:remains` (systems/instancePlaces.js
+    remainsInstanceEpoch - the line's id and its row's, `r<person>`): one room a death, the same on every device the line
+    is played on, opened while no quest of mine names the place.
 - **A world room** (net/wire.js WORLD_ROOM composes INSTANCE_TAG_SOURCE, the tag's one home): its host's simulation, its
   acts, its loot, its memory and RESPAWN-30 exactly as its public twin's. Its memory is forgotten INSTANCE_TTL_MS (seven
   days) after it last drained (worldTtlMsFor), where a public room's is WORLD_TTL_MS: the public world is a bounded set
@@ -98,9 +102,25 @@ THE LAW is pure (instancePlaces.js):
   dungeon by its map id, a building by its map id and key. A Place names its site before anything stands there:
   S0000018 reveals its crypt thirty days before its mummy is placed. A site unseated from its key (RESEAT-GAPS) names
   none.
+- **remainsWholeAt** (HEIR-WHOLE, FIELD BUGS 2026-10-19f, `01-Overview/bugs/Field-Bugs-2026-10-19f.md`; a player's
+  ancestor died in another player's instance, and the inheritance never appeared at the spot): the line's remains still
+  lying (`scenes/legacyHost.js` remainsWhere) whose dungeon was built whole, at a dungeon the world builds smaller in
+  public (`dungeonSite`'s `relaid`), by its map id. `relaid` is the size BUILT (AUDIT FB1019f B1,
+  `smallerDungeons.js:"export function builtSizeFor(dfLocation, deps = {}) {"`): it read the size the world draws, and a
+  dungeon at or under its size's threshold - the five-block plus, the eight-block shape - is never laid anew, so its
+  public room is the dungeon whole. Online the world draws 3,133 of MAPS.BSA's 4,232 dungeons smaller and builds 2,005
+  of them smaller; at the other 1,128 a death in the public room was offered an instance, under a line that said the
+  shared dungeon had none of it. A death records the size its dungeon was built at and its remains stand only
+  in a build of that size (`06-Systems/Legacy-Arc.md` section 7, AUDIT FB1013d B1), so a death in an instance lies in
+  the dungeon whole, which that public room never is - and the instance it fell in admits only its owner's party. The
+  door counts the death quest's place as a quest's (the instance door's `questHere`): its popup, its line before the
+  choice and every other way in, as a quest's. A whole build of a dungeon is the location's own blocks, drawn from
+  nothing, so the heir's instance stands them on the floor under where they fell. Remains laid in the public room's own
+  size (smaller or whole), or in a row from before the size was kept, are the public room's, as they always were.
 - **instanceOffer**: offline or at an older relay, nothing. Otherwise the rows:
   - Public - never Privateer's Hold online (HOLD-ONCE).
-  - Your instance - where a quest of mine names the place, and at the Hold.
+  - Your instance - where a quest of mine names the place (the death quest's whole dungeon among them, HEIR-WHOLE: the
+    quest's room where a quest names it too - the dungeon whole as well, so it stands the remains), and at the Hold.
   - `<owner>`'s instance - for each room a party member stands in at THIS place (partnerInstances: the pose's `ins`, its
     public room this place's - never a pixel, which Castle Daggerfall and the arena share) whose owner is in the party,
     the relay's own law, so nothing is offered that the relay would refuse. Named by its owner; one row a room.
@@ -122,7 +142,8 @@ THE PAGE (instanceDoor.js, HOST-SPLIT's shape - built once in world.js, asked by
   the Abyss, the arena - asks `entryFor`, which never shows anything:
   - what a save, an anchor or a staff landing RECORDED of the place (`{ ins, whole, staff }`) where it may still be had
     (stillHeld: a staff landing's always; mine while what opened it runs - the Hold's for good, a quest's while a running
-    quest that names the place holds its epoch; a partner's while its owner is in my party), else the public room laid as
+    quest that names the place holds its epoch, the remains' while they lie there whole; a partner's while its owner is in
+    my party), else the public room laid as
     it was - an instance's place whole, so the position stands in the blocks it was taken in;
   - nothing recorded: a quest's place its instance - a partner's standing there first, the party together, else mine -
     and where none can be had (an older relay, no account yet) its public room whole; the Hold mine; anywhere else the
@@ -141,8 +162,8 @@ THE PAGE (instanceDoor.js, HOST-SPLIT's shape - built once in world.js, asked by
 - **A re-laid public room** stands none of a quest's things. `questElsewhere` says once a build: "Your quest's business
   here waits in your instance."
 - **The relay's refusal** (`refused`, the realm's door's own shape - systems/realmSaves.js realmDoorShut): an instance's
-  door shut on this page is said once a room ("That instance is closed to you - only its owner and their party may stand
-  in it.") and the player is taken out (world.js onlineFrame, forceExitToExterior) - never left inside an unconnected
+  door shut on this page is said once a room ("That instance is closed to you. Only its owner and their party can
+  enter.") and the player is taken out (world.js onlineFrame, forceExitToExterior) - never left inside an unconnected
   build.
 - **The party pose's word** (`poseWord`): inside, the instance room the relay JOINED me to, never the one I meant to enter -
   a private room wins the key, a refused one is none.
@@ -179,7 +200,8 @@ stands in.
   (setMode) - and roomIdentity reads it. The interior's identity (save and anchor), the dungeon's anchor context (kept on
   the anchor: systems/teleportAnchor.js makeAnchor `dungeon`) and the dungeon save (`placeRecord`, dungeonContext.js dungeonHome) record it; restoreInterior and startInDungeon hand it back.
   dungeonTransition builds by the entry's `whole`; mountQuestResources asks questMountsHere.
-- **scenes/world.js** - WIRED. It constructs the door, keys the room by the identity's instance, sends the party pose's
+- **scenes/world.js** - WIRED. It constructs the door (HEIR-WHOLE: one dep more, `remains` - where the line's remains
+  lie, the Legacy host's remainsWhere), keys the room by the identity's instance, sends the party pose's
   `ins` (the door's poseWord), takes the player out on the relay's refusal, hands a Recall, a load and a staff landing
   what they recorded, and its quest world asks for the dungeon whole online.
 - **scenes/exterior.js** - NAMED, not wired: the offline fixed city keeps no relay room and offers no instance.
@@ -201,6 +223,10 @@ stands in.
   home; entryFor's rule and what was recorded; atDoor, refused, poseWord, questElsewhere; the funnel and the doors
   executed from their source; the hosts by source; the Recall anchor's dungeon record.
 - `test/net/staffTeleport.test.js`: a staff landing in the player's instance.
+- `test/systems/legacy/fb1019f_heirwhole.test.js` (4, HEIR-WHOLE): a death in another player's instance of a ruin the
+  world lays medium, and the heir's door - its popup, their own instance, its build standing the remains under where
+  they fell; the room kept while they lie, a quest's room first, the older relay's whole public room; public-room
+  remains as they were; one whole layout whoever builds it. `tools/mutants/fb1019f_heirwhole.json` (13), all dead.
 - `tools/mutants/instances.json` (51), all dead; the lists re-aimed by content where this arc moved their lines.
 - PIN MOVED: RELAY_VERSION world208 in every file that names it, and `test/net/relayversion.test.js`'s row and graph; the
   quest stamp and the re-lay; the funnels', the doors' and the identity's shapes; the relay's hello gate; the account
@@ -217,12 +243,13 @@ stands in.
 - **Two members choosing at once.** Each member's instance is its owner's: two who both choose "Your instance" in the
   same second stand in two rooms (a join row appears once a partner's pose says its room, within PARTY_SEND_MS). The one
   who leaves and comes back is offered the other's.
-- **Every dungeon.** Mac chose quests', the Hold's and buildings'. A door at any dungeon is one row of instanceOffer
-  away.
+- **Every dungeon.** Mac chose quests', the Hold's and buildings' (the death quest's whole dungeon is a quest's -
+  HEIR-WHOLE). A door at any dungeon is one row of instanceOffer away.
 - **A re-laid public room's own quests.** A player who chooses Public at a quest's dungeon finds its things in the
   instance only. The choice is theirs; QUEST-ELSEWHERE (2026-10-16, `01-Overview/bugs/Field-Bugs-2026-10-16c.md` - MD-Geist:
   "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest Repair'") says it
-  BEFORE the choice, in the popup, where the world lays the public room smaller (`dungeonSite`'s `relaid`), and Quest
+  BEFORE the choice, in the popup, where the world builds the public room smaller (`dungeonSite`'s `relaid` - the size
+  built, which the mount reads too; AUDIT FB1019f B1), and Quest
   Repair in that room says where the things are instead of "Nothing was missing". The automap keeps each layout's map
   (LAYOUT-KEEP): exploring one room no longer wipes the other's.
 - **Reachability.** The public world's re-laid dungeons can still seal an area from their entrance - the Hold of

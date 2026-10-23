@@ -105,7 +105,7 @@ test('QUEST-SHELF-MAIN the chronicle\'s Abandon in the player\'s language (L10N4
   } finally {
     tm.setLocale('en');
   }
-  const title = 'Give up this quest for now - reclaim it from the pause menu\'s Quests tab';
+  const title = 'Give up this quest for now. You can reclaim it from the pause menu\'s Quests tab';
   assert.deepEqual(words(), [['Abandon', title, 'Abandon this quest'], ['Click again', title, 'Click again to abandon this quest']], 'English again, byte for byte');
 });
 

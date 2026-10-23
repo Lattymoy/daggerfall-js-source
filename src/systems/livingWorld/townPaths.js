@@ -40,10 +40,11 @@ function scratch(nav) {
  * since its last step begins again (the answer the same, only later).
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number, grid?: Uint8Array }} nav
  * @param {number[]} a - [gx, gy] @param {number[]} b - [gx, gy]
- * @param {{ maxExpansions?: number }} [opts]
+ * @param {{ maxExpansions?: number, hWeight?: number }} [opts] - OW-TOWN-WALK: `hWeight` the heuristic's weight (1, the
+ *   residents' own: the cheapest way; a journey's search weighs it more - systems/travel/townWalk.js TOWN_WAY_H_WEIGHT)
  * @returns {{ step: (n: number) => (number[][]|null|undefined), spent: number }}
  */
-export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS } = {}) {
+export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS, hWeight = 1 } = {}) {
   const W = nav.width, H = nav.height;
   const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
   if (!a || !b || !inb(a[0], a[1]) || !inb(b[0], b[1]) || !(nav.weightAt(a[0], a[1]) > 0) || !(nav.weightAt(b[0], b[1]) > 0)) {
@@ -62,7 +63,7 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS 
   const begin = () => {
     id = ++s.search;
     size = 0; opened = 0; expansions = 0;
-    stamp[start] = id; g[start] = 0; from[start] = -1; f[start] = Math.abs(a[0] - bx) + Math.abs(a[1] - by); order[start] = opened++;
+    stamp[start] = id; g[start] = 0; from[start] = -1; f[start] = hWeight * (Math.abs(a[0] - bx) + Math.abs(a[1] - by)); order[start] = opened++;
     heap[size++] = start;
   };
   begin();
@@ -116,7 +117,7 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS 
           const ng = gc + (grid ? STEP_COST[w] : stepCost(w));
           if (stamp[ni] === id && ng >= g[ni]) continue;
           stamp[ni] = id; g[ni] = ng; from[ni] = cur;
-          f[ni] = ng + Math.abs(nx - bx) + Math.abs(ny - by); order[ni] = opened++;
+          f[ni] = ng + hWeight * (Math.abs(nx - bx) + Math.abs(ny - by)); order[ni] = opened++;
           const fi = f[ni];   // as kept (the scratch's own precision): the order the whole search keeps
           // push: up while less than its parent - the cell pushed is the last opened, so a tie never lifts it
           let k = size++;
@@ -143,7 +144,7 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS 
  * cells were opened, so the answer is one answer. LW-PERF: the whole search at once (`townPathSearch`, unsliced).
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number, grid?: Uint8Array }} nav
  * @param {number[]} a - [gx, gy] @param {number[]} b - [gx, gy]
- * @param {{ maxExpansions?: number }} [opts]
+ * @param {{ maxExpansions?: number, hWeight?: number }} [opts]
  * @returns {number[][]|null}
  */
 export function findTownPath(nav, a, b, opts = {}) {

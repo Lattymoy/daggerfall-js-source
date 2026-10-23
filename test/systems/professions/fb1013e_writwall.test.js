@@ -46,7 +46,7 @@ const HUBS = { [DF]: [207, 212] };
 const tick = () => new Promise((r) => setImmediate(r));
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 /** THE REPORT'S WORDS, written out - the helper's English pinned apart from the helper. */
-const SAID = (n) => `${n} Iron you hold cannot fill a writ: only what you gathered, or bought with silver, counts - not what was looted, bought at a shop or with gold, or given by another player.`;
+const SAID = (n) => `${n} Iron you hold can't fill a writ. Only what you gathered or bought with silver counts.`;
 
 async function stand() {
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on', CHAPTERS_OPEN: 'on' });
@@ -98,6 +98,12 @@ function shopIron(n) {
   return { ...structuredClone(iron), stackCount: n };
 }
 
+/** CRAFT-WRITS: a wait on the real Worker's read by the clock, not a count of turns - the list's read does more since the
+ *  crafting writs ride it, and 400 turns ran out under a loaded suite. */
+async function until(done, ms = 20_000) {
+  const end = performance.now() + ms;   // never Date.now: this file holds it still
+  while (!done() && performance.now() < end) await tick();
+}
 /** The real board's Work tab, read off the real books - the Court's and the chapters' writs, and the guild writs beside them. */
 async function workTab(book, writs = null) {
   const notices = { seenAt: () => null, read: async () => ({ board: { notes: [], notices: [], me: {} } }), markSeen() {}, cached: () => null, draft: () => ({ subject: '', body: '', days: 7, button: '' }), noticeDraft: () => ({ subject: '', body: '', days: 3 }) };
@@ -106,7 +112,7 @@ async function workTab(book, writs = null) {
     ...(writs ? { writs, regionNameOf: () => 'another region', pieces: () => [] } : {}) } });
   await tick();
   byClass(host, 'notice-tab').find((t) => t.textContent.startsWith('Work')).click();
-  for (let i = 0; i < 400 && !byClass(host, 'notice-writ').some((c) => byClass(c, 'writ-kind')[0]?.textContent === 'Chapter writ'); i++) await tick();
+  await until(() => byClass(host, 'notice-writ').some((c) => byClass(c, 'writ-kind')[0]?.textContent === 'Chapter writ'));
   const card = (kind) => byClass(host, 'notice-writ').find((c) => byClass(c, 'writ-kind')[0]?.textContent === kind);
   return { host, v, card };
 }
@@ -145,7 +151,7 @@ test('WRIT-WALL the report: Iron off an Alchemist\'s shelf in the bag, then Iron
   assert.equal(takeOf(card).disabled, true, 'nothing a writ may spend: Take shut, as it was');
   assert.deepEqual(walledOf(card), [SAID(100)], 'ON THE CARD - a phone has no hover');
   assert.equal(walledOf(card)[0], writWalledText(100, 'Iron'));
-  assert.equal(takeOf(card).title, SAID(100), 'and Take\'s title the same - never "Not enough - your Stores, Materials Bag and pack together"');
+  assert.equal(takeOf(card).title, SAID(100), 'and Take\'s title the same - never "Not enough, even counting your Stores, Materials Bag and pack together"');
   let guild = b.card('Guild writ');
   assert.ok(guild, 'the guild writ beside it');
   assert.deepEqual(walledOf(guild), [SAID(100)], 'a guild writ\'s card names them too');
@@ -202,7 +208,7 @@ test('WRIT-WALL mined Iron, counted: no walled line, Take open and delivering fr
   assert.ok(!takeOf(card).title, 'and no title');
   assert.deepEqual(walledOf(card), [], 'nothing walled: no line');
   takeOf(card).click();
-  for (let i = 0; i < 400 && !/Taken by you/.test(b.card('Chapter writ')?.textContent ?? ''); i++) await tick();
+  await until(() => /Taken by you/.test(b.card('Chapter writ')?.textContent ?? ''));
   assert.match(b.card('Chapter writ').textContent, /Taken by you/, 'delivered: the writ is the reader\'s');
   assert.deepEqual([s.stores(ann), s.carried(ann), heldOf(e, IRON)], [[], [['own', 20]], 20], 'its 40 put in from the bag and spent');
   b.v.unmount();
@@ -242,7 +248,7 @@ test('WRIT-WALL mined Iron, counted: no walled line, Take open and delivering fr
   card = b.card('Chapter writ');
   assert.equal(takeOf(card).disabled, true);
   assert.deepEqual(walledOf(card), []);
-  assert.equal(takeOf(card).title, 'Not enough - your Stores, Materials Bag and pack together');
+  assert.equal(takeOf(card).title, 'Not enough in your Stores, Materials Bag and pack together');
   b.v.unmount();
 });
 

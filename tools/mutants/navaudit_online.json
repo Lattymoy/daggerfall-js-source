@@ -482,7 +482,7 @@
   {
     "name": "NAV1O-peer-boat-untargeted",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "if (box) out.push({ id: `peer:${p.id}`, box, rig: rigBoxesOf(p.boat), hitBy: shipShot });",
+    "old": "if (box) out.push({ id: `peer:${p.id}`, box, rig: rigBoxesOf(p.boat), hitBy: (s) => shipShot(s) || pvp.open(p.id, s, isMine(s)) });",
     "new": "void box;",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"
@@ -491,7 +491,7 @@
   {
     "name": "NAV1O-peer-boat-struck-by-all",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "rig: rigBoxesOf(p.boat), hitBy: shipShot });",
+    "old": "rig: rigBoxesOf(p.boat), hitBy: (s) => shipShot(s) || pvp.open(p.id, s, isMine(s)) });",
     "new": "rig: rigBoxesOf(p.boat) });",
     "tests": [
       "test/systems/naval/navaudit_online.test.js"

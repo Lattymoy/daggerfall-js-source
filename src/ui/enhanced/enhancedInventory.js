@@ -71,11 +71,12 @@ import { useItem, isLightSource, usableItem, isPotionRecipe, toggleHood, HOOD_TE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
 // tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
 // all a slot ever holds.
-import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot, hotbarSlotOf } from '../../systems/quickslots.js';
+import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot } from '../../systems/quickslots.js';
 // HB1: the hotbar - one more drop target for the drag this pane already
 // owns, and the click path beside it. The bar is up under this window
 // only while the player has chosen it over the diamond.
-import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf, setHotbarDragging } from './enhancedHotbar.js';
+import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf, setHotbarDragging,
+  hotbarShownSlotOf, setHotbarPick } from './enhancedHotbar.js';   // DIAMOND-HB: the slot among the ones shown; point and press
 import { registerQuickAct } from '../plus/plusPad.js';   // PADPLUS5: the pad's X on a row
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // PX25
@@ -133,6 +134,8 @@ import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: 
 import { liveStat } from '../../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../../systems/item/itemInfo.js'; import { isPortalStone } from '../../systems/gate/gateSpoils.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
+import { isStarglass } from '../../systems/starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's lines on this skin's card
+import { isFestivalFace } from '../../systems/festival/soulCake.js';   // AUDIT STAR: and the festival's two items'
 import { isSurvivalItem } from '../../systems/survival/items.js';
 import { hoodCapable, hoodUp } from '../../systems/survival/temperature.js';   // HOOD-SAID: the one hood law, on the card and the panel
 import { heirloomLine } from '../../systems/legacy/heirloom.js';   // LEGACY4: Project Legacy's heirlooms, named on the card
@@ -155,6 +158,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from '../domRepaint.js';
 import { virtualRows } from '../virtualRows.js';   // VIRT: a long list draws the rows on screen
+import { landingTiles } from './landingTiles.js';   // VIRT: a picture into its tile, not a repaint
 import { overlayAction, eventActions } from '../input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
@@ -170,6 +174,7 @@ import { SOUND } from '../../systems/soundClips.js';
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { isLanternItem, waistLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf (BELT-WAIST: whatever hangs at the waist)
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -199,7 +204,7 @@ export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.Cloak1]: { x: 72, y: 76, label: 'Cloak' },
   [EQUIP_SLOTS.Cloak2]: { x: 148, y: 76, label: 'Cloak' },
   [EQUIP_SLOTS.ChestClothes]: { x: 110, y: 92, label: 'Chest, clothes' },
-  [EQUIP_SLOTS.ChestArmor]: { x: 110, y: 116, label: 'Chest, armour' },
+  [EQUIP_SLOTS.ChestArmor]: { x: 110, y: 116, label: 'Chest, armor' },
   [EQUIP_SLOTS.RightArm]: { x: 64, y: 106, label: 'Right arm' },
   [EQUIP_SLOTS.LeftArm]: { x: 156, y: 106, label: 'Left arm' },
   [EQUIP_SLOTS.Bracer0]: { x: 56, y: 134, label: 'Bracer' },
@@ -211,7 +216,7 @@ export const SLOT_MAP = Object.freeze({
   [EQUIP_SLOTS.RightHand]: { x: 42, y: 190, label: 'Right hand' },
   [EQUIP_SLOTS.LeftHand]: { x: 178, y: 190, label: 'Left hand' },
   [EQUIP_SLOTS.Gloves]: { x: 110, y: 172, label: 'Gloves' },
-  [EQUIP_SLOTS.LegsArmor]: { x: 110, y: 200, label: 'Legs, armour' },
+  [EQUIP_SLOTS.LegsArmor]: { x: 110, y: 200, label: 'Legs, armor' },
   [EQUIP_SLOTS.LegsClothes]: { x: 110, y: 224, label: 'Legs, clothes' },
   [EQUIP_SLOTS.Feet]: { x: 110, y: 258, label: 'Feet' },
   [EQUIP_SLOTS.Mark0]: { x: 44, y: 296, label: 'Mark', off: true },
@@ -330,7 +335,9 @@ export function equippedModel(entity = {}) {
   // made-up EQUIP_SLOTS value, and the counts below still walk the
   // REAL table, so "27 slots" stays DFU's 27 and nothing that counts
   // slots learns about this one.
-  const light = entity?.lightSource ?? null;
+  // BELT-LANTERN: a lit lantern on the belt is the shelf's (its own slot), not the hand's. BELT-WAIST: and so is one the
+  // switch hangs at the waist - the world draws it at the hip, so the hand's row never holds it (systems/beltLantern.js)
+  const light = entity?.lightSource && waistLanternOf(entity) !== entity.lightSource ? entity.lightSource : null;
   const visible = rows.filter((r) => r.item || !r.hidden);
   return {
     rows: light
@@ -454,7 +461,7 @@ export function itemLine(item, identity = undefined) {
     // AUDIT SURV C: a food's worth and stage, a skin's water, the gear's uses - the classic popup's tokens (systems/item/itemInfo.js
     // survivalInfoTokens, less the name and the weight this card already carries), so a Waterskin says its water here too
     survival: isSurvivalItem(item) || isRestItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,   // REST6: the seven's lines too
-    ...(isPortalStone(item) ? { survival: survivalInfoTokens(item).slice(2).map((r) => r.text) } : {}),   // PORTAL1: and the Portal Stone's
+    ...(isPortalStone(item) || isStarglass(item) || isFestivalFace(item) ? { survival: survivalInfoTokens(item).slice(2).map((r) => r.text) } : {}),   // PORTAL1: and the Portal Stone's; AUDIT STAR I2: and Starfall Glass's (this skin's card is its info); AUDIT STAR: and the Soul Cake's and the Hearth Offering's (WITCH1's lines, the classic box's alone before)
     // MAPLOOT1 (Discord: "Potion recipe's can't be read at all"): a recipe is READ, not used - DFU's use arm
     // is cannotUseThis (DaggerfallInventoryWindow.cs:1732-1740) and the knowledge is ShowInfoPopup's
     // (:1602-1609): "Recipe for Potion of %po" and the chained PotionRecipeIngredients box. This skin has no
@@ -710,7 +717,6 @@ const packFitSig = () => `${gridBox()}|${wornBox(false)}|${wornBox(true)}|${scre
 // `painted`): a pass that set off another without end would never stop
 // counting, and a tile is painted once.
 let repaints = 0;
-let landings = 0, painted = 0;
 
 /** "1 item", not "1 items". A count printed by a template literal is
  *  right eleven times out of twelve and wrong on the twelfth, which is
@@ -788,6 +794,10 @@ function lineOf(item) {
  *  lets go of them before it builds and aims the new ones once they are in the document; a resize measures them again. */
 let _lists = [];
 const keepList = (v) => { _lists.push(v); return v; };
+/** AUDIT TRADE-VIRT: each long list's rows' heights by item, kept across the pane's repaints (ui/virtualRows.js `sizes`) -
+ *  one set a list; let go when the pane's fit changes (another layout's heights). */
+const rowSizes = new Map();
+const sizesOf = (key) => { let m = rowSizes.get(key); if (!m) rowSizes.set(key, (m = new WeakMap())); return m; };
 /** Let go of the lists drawn into `container`, or of every list. */
 function dropLists(container = null) {
   _lists = _lists.filter((v) => {
@@ -1001,6 +1011,13 @@ function dropOnHand(item, to) {
   picked = null;
   render();
 }
+/** BELT-LANTERN: off the belt there is one way, into the pack; onto the lantern's socket only a lantern goes. Null where
+ *  the belt has no say (dropIntent's own law). */
+function beltIntent(item, over, source) {
+  if (source === 'belt') return over?.closest?.('.pack-dock') ? { kind: 'unbelt', label: 'Take off belt' } : { kind: 'none', label: '' };
+  if (!over?.closest?.('.shelfgrp-lantern')) return null;
+  return isLanternItem(item) && item.beltLantern !== true ? { kind: 'belt', label: 'Hang at belt' } : { kind: 'nope', label: null };
+}
 function dropIntent(item, over, fromItem, source = 'local') {
   // MAC-M2 (2026-09-16, Mac: "Hold to drag enhanced functionality
   // doesn't work when trying to take items off your character"): A DRAG
@@ -1021,6 +1038,8 @@ function dropIntent(item, over, fromItem, source = 'local') {
   if (hot) return hot;
   const hand = handIntent(item, over, source);   // HAND-DRAG: a weapon onto a hand's own panel
   if (hand) return hand;
+  const belt = beltIntent(item, over, source);   // BELT-LANTERN: the lantern's own socket
+  if (belt) return belt;
   if (source === 'worn') {
     const act = localPrimaryAct(item, deps.entity);
     return over?.closest?.('.pack-dock') && act
@@ -1080,6 +1099,8 @@ function dragTo(x, y) {
   // MAC-M2: the other direction lights the DOCK - the pack is one
   // target the way the map is one, not a grid of twelve tiles.
   else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
+  else if (want?.kind === 'belt') document.elementFromPoint?.(x, y)?.closest?.('.shelfgrp-lantern')?.querySelector?.('.wornsock')?.classList.add('dragover');   // BELT-LANTERN
+  else if (want?.kind === 'unbelt') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
   else if (want?.kind === 'reorder') { for (const n of document.querySelectorAll('.itemrow')) if (rowItems.get(n) === want.item) n.classList.add('dragover'); }
   else if (want?.kind === 'hotbar') hotbarSlotNode(document.elementFromPoint?.(x, y))?.classList.add('dragover');   // HB1
 }
@@ -1137,6 +1158,8 @@ function dragStop(commit) {
   const want = dropIntent(d.item, overAtRelease, d.item, d.source);
   if (want?.kind === 'hand') dropOnHand(d.item, want.to);   // HAND-DRAG
   else if (want?.kind === 'body') dropOnBody(d.item);
+  else if (want?.kind === 'belt') hangLantern(d.item);   // BELT-LANTERN
+  else if (want?.kind === 'unbelt') unhangLantern(d.item);
   // MAC-M2: THE SAME DOOR. A piece carried OFF the body performs the
   // act its own card offers, exactly as one carried onto it does, so
   // the two directions cannot answer differently - and the closed act
@@ -2086,8 +2109,8 @@ function dollPanel(url) {
 const WORN_FAMILIES = Object.freeze([
   { id: 'head', label: 'Head', area: '1 / 1', slots: ['Head'] },
   { id: 'cloaks', label: 'Cloaks', area: '2 / 1', slots: ['Cloak'] },
-  { id: 'chest', label: 'Chest', area: '3 / 1', slots: ['Chest, armour', 'Chest, clothes'],
-    pair: [{ id: 'chestarmor', label: 'Chest armor', slots: ['Chest, armour'] },
+  { id: 'chest', label: 'Chest', area: '3 / 1', slots: ['Chest, armor', 'Chest, clothes'],
+    pair: [{ id: 'chestarmor', label: 'Chest armor', slots: ['Chest, armor'] },
       { id: 'shirt', label: 'Shirt', slots: ['Chest, clothes'] }] },
   { id: 'arms', label: 'Arms', area: '4 / 1', slots: ['Left arm', 'Right arm'],
     pair: [{ id: 'larm', label: 'Left arm', slots: ['Left arm'] },
@@ -2095,8 +2118,8 @@ const WORN_FAMILIES = Object.freeze([
   { id: 'hands', label: 'Hands', area: '5 / 1', slots: ['Gloves'] },
   { id: 'rhand', label: 'R\u00b7Weapon', area: '1 / 3', slots: ['Right hand'] },
   { id: 'lhand', label: 'L\u00b7Hand', area: '2 / 3', slots: ['Light', 'Left hand'] },
-  { id: 'legs', label: 'Legs', area: '3 / 3', slots: ['Legs, armour', 'Legs, clothes'],
-    pair: [{ id: 'legarmor', label: 'Leg armor', slots: ['Legs, armour'] },
+  { id: 'legs', label: 'Legs', area: '3 / 3', slots: ['Legs, armor', 'Legs, clothes'],
+    pair: [{ id: 'legarmor', label: 'Leg armor', slots: ['Legs, armor'] },
       { id: 'pants', label: 'Pants / skirt', slots: ['Legs, clothes'] }] },
   { id: 'feet', label: 'Feet', area: '4 / 3', slots: ['Feet'] },
   { id: 'transport', label: 'Travel', area: '5 / 3', slots: [], transport: true },
@@ -2106,6 +2129,10 @@ const WORN_FAMILIES = Object.freeze([
 const SHELF_GROUPS = Object.freeze([
   { label: 'Amulets', slot: 'Amulet' }, { label: 'Rings', slot: 'Ring' }, { label: 'Bracelets', slot: 'Bracelet' },
   { label: 'Bracers', slot: 'Bracer' }, { label: 'Marks', slot: 'Mark' }, { label: 'Crystals', slot: 'Crystal' },
+  // BELT-LANTERN (Dudey: "an lantern only slot ... in the row for enhanced plus and ... in dfo grimoire in the middle under
+  // crystals"): one socket, a lantern hung at the belt (systems/beltLantern.js) - after the Crystals in Plus's row, under
+  // them in the Grimoire's column (the same shelf, each dress's own flow)
+  { label: 'Lantern', lantern: true },
   { label: 'Other', slot: 'Unnamed', hiddenEmpty: true },
 ]);
 const DOLL_AREA = '1 / 2 / span 5 / auto';
@@ -2303,6 +2330,7 @@ function wornPanel(fam, byLabel, area) {
   const hover = () => getPref('plusItemHover') !== false;
   if (hover()) b.removeAttribute?.('title');
   b.onmouseenter = () => { if (hover()) showTip(top.item, 'local', b); };
+  b._hotbarItem = top.item;   // DIAMOND-HB: point at it and press a hotbar key
   b.onmouseleave = hideTip;
   b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(top.item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
   return b;
@@ -2362,6 +2390,7 @@ function accessoryShelf() {
     bySlot.get(row.label).push(row);
   }
   for (const g of SHELF_GROUPS) {
+    if (g.lantern) { shelf.append(lanternGroup(g)); continue; }   // BELT-LANTERN
     const rows = bySlot.get(g.slot) ?? [];
     if (g.hiddenEmpty && !rows.some((r) => r.item)) continue;
     const grp = el('div', 'shelfgrp');
@@ -2372,9 +2401,10 @@ function accessoryShelf() {
     grp.append(pair, el('span', 'shelflabel', g.label));
     shelf.append(grp);
   }
+  shelf.style.setProperty('--shelf-n', String(shelf.children.length));   // BELT-LANTERN: how many groups a column's sockets share its height by (the Grimoire's)
   return shelf;
 }
-function shelfSocket(r, g) {
+function shelfSocket(r, g, source = 'worn') {
   if (!r.item) {
     const d = el('div', 'wornsock wornempty');
     d.title = g.label;
@@ -2387,10 +2417,10 @@ function shelfSocket(r, g) {
   markItemFrame(b, item);   // RARITY-UI / SIGIL-UI: a socket is the icon's frame
   b.title = `${r.label}: ${line.name}${itemStatSuffix(line)}`;
   b.append(tileWithWear(line, b, SLOT_BOX.socket, false));   // WEAR-UI
-  dragFrom(b, item, 'worn');   // MAC-M2's hold: off the body and into the pack
+  dragFrom(b, item, source);   // MAC-M2's hold: off the body and into the pack (BELT-LANTERN: off the belt)
   b.onclick = (e) => {
     if (takeDragClick()) return;
-    if (equipByDoubleClick(secondClick(item, item, e))) return;   // DBLEQUIP: the socket's second click takes it off
+    if (equipByDoubleClick(secondClick(item, item, e))) return;   // DBLEQUIP: the socket's second click takes it off (BELT-LANTERN: lights or douses the lantern)
     picked = picked === item ? null : item;
     if (picked) goldEntry = null;   // AUDIT2 GOLD-DROP 2
     pickedAt = 'worn';
@@ -2400,9 +2430,49 @@ function shelfSocket(r, g) {
   const hover = () => getPref('plusItemHover') !== false;
   if (hover()) b.removeAttribute?.('title');
   b.onmouseenter = () => { if (hover()) showTip(item, 'local', b); };
+  b._hotbarItem = item;   // DIAMOND-HB: point at it and press a hotbar key
   b.onmouseleave = hideTip;
   b.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, 'local', e.clientX, e.clientY); };   // DROPS-AUDIT F10
   return b;
+}
+
+/** BELT-LANTERN: the shelf's lantern socket - the lantern on the belt (lit or not; unlit it stands dimmed), or the open
+ *  diamond. A lantern dropped on it hangs there and is lit; dragged off it to the pack it comes off and goes out. A
+ *  click reads it (its card: Light or Douse, Take off belt), a second click lights or douses it, as a worn piece's
+ *  second click puts it on or takes it off. */
+function lanternGroup(g) {
+  const grp = el('div', 'shelfgrp shelfgrp-lantern');
+  const pair = el('div', 'shelfpair shelfone');
+  const item = waistLanternOf(deps.entity);   // BELT-WAIST: the lantern at the waist, hung or lit there by the switch
+  if (!item) {
+    const d = el('div', 'wornsock wornempty');
+    d.dataset.lantern = '';
+    d.title = 'Lantern: drop a lantern here to hang it at your belt';
+    d.append(el('span', 'worntile', '\u25c7'));
+    pair.append(d);
+  } else {
+    const lit = deps.entity?.lightSource === item;
+    const b = shelfSocket({ label: g.label, item }, g, 'belt');
+    b.dataset.lantern = '';
+    if (!lit) b.classList.add('unlit');
+    pair.append(b);
+  }
+  grp.append(pair, el('span', 'shelflabel', g.label));
+  return grp;
+}
+/** BELT-LANTERN: hang a lantern at the belt and light it (one act, the light's own door - useItem - after the mark, so
+ *  the hand law sees the belt and asks no hand). */
+function hangLantern(item) {
+  if (!hangBeltLantern(deps.entity, item)) return;
+  if (deps.entity?.lightSource !== item) use(item, null);
+  else { refresh(); refreshFigure(); render(); }
+}
+/** BELT-LANTERN: take it off the belt; a lit one goes out. */
+function unhangLantern(item) {
+  const lit = deps.entity?.lightSource === item;
+  unhangBeltLantern(item);
+  if (lit) use(item, null);
+  else { refresh(); refreshFigure(); render(); }
 }
 
 function characterCol() {
@@ -2669,38 +2739,17 @@ export function wearBar(item) {
   bar.append(fill);
   return bar;
 }
-/** VIRT: THE TILES STILL WAITING ON THEIR PICTURE, and what each was drawn from. A cold picture repainted the whole
- *  pack when it landed - every row, every panel, the scroll kept and given back - and a long store of cold pictures was
- *  one full repaint a picture. A landing now asks for one pass on the next frame, and that pass gives each waiting tile
- *  its picture in place: the tile `itemTile` draws for the same line and box, with the wear bar the old one carried.
- *  The pictures that land together are one pass. A tile a repaint has thrown away is dropped, never drawn into. */
-const _waitingTiles = new Map();   // the initials tile -> { line, box, snap }
-let _tilesQueued = false;
-function tileLanded() {
-  if (_tilesQueued) return;
-  _tilesQueued = true;
-  (globalThis.requestAnimationFrame ?? ((f) => setTimeout(f, 16)))(paintLandedTiles);
-}
-function paintLandedTiles() {
-  _tilesQueued = false;
-  landings++;
-  for (const [tile, t] of _waitingTiles) {
-    if (!host || tile.isConnected === false) { _waitingTiles.delete(tile); continue; }
-    const fresh = itemTile(t.line, t.box, tileLanded, t.snap);
-    if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it
-    _waitingTiles.delete(tile);
-    const bar = tile.querySelector('.wear');
-    if (bar) fresh.append(bar);
-    tile.replaceWith(fresh);
-    painted++;
-  }
-}
+/** VIRT: THE TILES STILL WAITING ON THEIR PICTURE, and what each was drawn from (ui/enhanced/landingTiles.js - the law's
+ *  one home since TRADE-VIRT: the trade windows keep theirs by it too). A cold picture repainted the whole pack when it
+ *  landed - every row, every panel, the scroll kept and given back - and a long store of cold pictures was one full
+ *  repaint a picture. A landing now asks for one pass on the next frame, and that pass gives each waiting tile its
+ *  picture in place: the tile `itemTile` draws for the same line and box, with the wear bar the old one carried. The
+ *  pictures that land together are one pass. A tile a repaint has thrown away is dropped, never drawn into. */
+const _tiles = landingTiles((t, landed) => itemTile(t.line, t.box, landed, t.snap), { alive: () => !!host });
 /** A row's or a panel's picture, as `itemTile` draws it - and when it is not made yet, its initials now and the picture
  *  put in their place when it lands (above), not a repaint of the pack. */
 function liveTile(line, box, snap = true) {
-  const tile = itemTile(line, box, tileLanded, snap);
-  if (!tile.classList.contains('has-icon')) _waitingTiles.set(tile, { line, box, snap });
-  return tile;
+  return _tiles.tile({ line, box, snap });
 }
 /** An item's picture with its wear bar in it; `holder` (the row or socket that frames it) is marked `hasbar`, so the
  *  sheet can lift what shares the tile's foot. */
@@ -2737,7 +2786,7 @@ function itemRow(item, from = 'local') {
   if (from === 'local') {
     if (hotbarMode()) {
       // HB1: the row on the hotbar says which key, the diamond's chip's law
-      const at = hotbarSlotOf(item);
+      const at = hotbarShownSlotOf(item);   // DIAMOND-HB: a kind on a slot the diamond does not show is on no key
       if (at >= 0) row.append(el('span', 'qs-mark', hotbarKeyOf(at) ?? String(at + 1)));
     } else {
       const slot = quickslotOf(item);
@@ -2803,6 +2852,7 @@ function itemRow(item, from = 'local') {
     side = from; notice = null; render();
   };
   row._padItem = item; row._padFrom = from;   // PADPLUS5: the row's item, for the pad's quick act
+  if (from === 'local') row._hotbarItem = item;   // DIAMOND-HB: hover + hotbar key slots it (pack rows only, not loot)
   // PLUS7: hover for the card, right click for the actions
   row.onmouseenter = () => { if (getPref('plusItemHover') !== false) showTip(item, from, row); };
   row.onmouseleave = hideTip;
@@ -3002,7 +3052,7 @@ function fillRemoteList(list, filtering = STORE_FILTER_KINDS.has(remote.kind) &&
   // it is in the document. AUDIT VIRT: measured, and its spacers stood, BEFORE the scroll is given back - aimed at once,
   // the first rows were the list's whole height when the browser laid it out, and a search typed deep in a store threw
   // the scroll to their foot
-  const v = keepList(virtualRows(list, shown, (it) => itemRow(it, 'remote'), { onAim: rowsMoved }));
+  const v = keepList(virtualRows(list, shown, (it) => itemRow(it, 'remote'), { onAim: rowsMoved, sizes: sizesOf('remote') }));   // AUDIT TRADE-VIRT: its rows' heights kept across repaints
   v.sync({ draw: false });
   if (kept) list.scrollTop = kept;
   v.sync();
@@ -3030,6 +3080,9 @@ function storeFilterBar(list) {
     if (search.value) { search.value = ''; storeFilter.query = ''; fillRemoteList(list, true); } else search.blur?.();
   };
   bar.append(search);
+  // FILTER-FIT: the menus are one group, so a narrow window moves them under the search together.
+  const menus = el('div', 'storemenus');
+  bar.append(menus);
   const menu = el('select', 'storecat');
   menu.setAttribute('aria-label', `Show in the ${String(remote.title).toLowerCase()}`);
   for (const c of storeFilterOptions(remote.items, storeFilter.cat)) {
@@ -3040,33 +3093,33 @@ function storeFilterBar(list) {
   }
   menu.value = storeFilter.cat;
   menu.onchange = () => { storeFilter.cat = menu.value; fillRemoteList(list, true); };
-  bar.append(menu);
+  menus.append(menu);
   // LOOT-BULK: the tiers this container holds, and how many. Absent while the ladder is off - there is nothing to pick.
   if (lootRarityOn()) {
     const rarity = el('select', 'storerarity');
     rarity.setAttribute('aria-label', t('inventory.store.rarityIn', 'Rarity in the {list}', { list: String(remote.title).toLowerCase() }));
     for (const c of storeRarityOptions(remote.items, storeFilter.rarity)) {
-      const o = el('option', null, `${c.label} (${c.count})`);
+      const o = el('option', null, c.id === 'all' ? c.label : `${c.label} (${c.count})`);   // FILTER-FIT: the menu's name; its count is All's
       o.value = c.id;
       if (c.id === storeFilter.rarity) o.selected = true;
       rarity.append(o);
     }
     rarity.value = storeFilter.rarity;
     rarity.onchange = () => { storeFilter.rarity = rarity.value; fillRemoteList(list, true); };
-    bar.append(rarity);
+    menus.append(rarity);
   }
   // MAT-FILTER: the metals this list's armour and weapons are made of, beside the tiers, in the same shape.
   const material = el('select', 'storemat');
   material.setAttribute('aria-label', t('inventory.store.materialIn', 'Material in the {list}', { list: String(remote.title).toLowerCase() }));
   for (const c of storeMaterialOptions(remote.items, storeFilter.material)) {
-    const o = el('option', null, `${c.label} (${c.count})`);
+    const o = el('option', null, c.id === 'all' ? c.label : `${c.label} (${c.count})`);
     o.value = c.id;
     if (c.id === storeFilter.material) o.selected = true;
     material.append(o);
   }
   material.value = storeFilter.material;
   material.onchange = () => { storeFilter.material = material.value; fillRemoteList(list, true); };
-  bar.append(material);
+  menus.append(material);
   return bar;
 }
 
@@ -3122,9 +3175,9 @@ function listCol() {
   const col = el('section', 'packcol');
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
-    col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
+    col.append(el('p', 'packempty', 'Nothing in your pack fits this page.'));
   }
-  keepList(virtualRows(col, rows, (it) => itemRow(it), { onAim: rowsMoved }));   // VIRT: a long page draws the tiles on screen
+  keepList(virtualRows(col, rows, (it) => itemRow(it), { onAim: rowsMoved, sizes: sizesOf(`pack:${tab}`) }));   // VIRT: a long page draws the tiles on screen; AUDIT TRADE-VIRT: their heights kept across repaints
   return col;
 }
 
@@ -3172,7 +3225,7 @@ function quickslotActs(item) {
   // The drag is the main path; this is the click beside it.
   if (hotbarMode()) {
     if (!hotbarTakesItem(item)) return [];
-    const at = hotbarSlotOf(item);
+    const at = hotbarShownSlotOf(item);   // DIAMOND-HB
     const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
     b.onclick = () => { notice = toggleHotbarItem(item); refresh(); render(); };
     return [b];
@@ -3413,6 +3466,13 @@ function itemActs(picked, side, { qty = true } = {}) {
         : () => use(picked, null);
       acts.append(b);
     }
+    // BELT-LANTERN: a lantern hangs at the belt from its card, and comes off it there
+    if (isLanternItem(picked)) {
+      const onBelt = picked.beltLantern === true;
+      const lb = el('button', 'act', onBelt ? 'Take off belt' : 'Hang at belt');
+      lb.onclick = onBelt ? () => unhangLantern(picked) : () => hangLantern(picked);
+      acts.append(lb);
+    }
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move
     // something or say something (`canStow`).
@@ -3635,9 +3695,9 @@ function askDismantle(item) {
 export const SALVAGE_ASK = (name, n) => [`Salvage ${name}?`, `It is gone for good, and you get ${shardsText(n)}.`];
 export const SALVAGED_LINE = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 /** AUDIT GEM: a piece holding a set gem is never salvaged with it (systems/reforge.js salvageRefusal 'gems'). */
-export const SALVAGE_GEMS = (name) => `${name} holds a gem - extract it at the Reforge, or unset it, first.`;
+export const SALVAGE_GEMS = (name) => `${name} holds a gem. Extract it at the Reforge or unset it first.`;
 /** FB1012d SALVAGE-CLASSIC: a piece that wears Magic the ladder never graded (systems/reforge.js salvageRefusal 'classic'). */
-export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is classic, the kind the guilds sell and make. Welkynd Shards come only from a piece the loot ladder graded.`;
+export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is the classic kind the guilds sell and make. Welkynd Shards come only from loot with a rarity grade.`;
 function askSalvage(item) {
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
@@ -4020,7 +4080,7 @@ function detailCol() {
   // reads as an explanation rather than as clutter.
   if (line.image && !big) {
     col.append(el('p', 'iconnote',
-      `No picture for this one yet — TEXTURE.${line.image.archive} record ${line.image.record}.`));
+      `No picture for this one yet (TEXTURE.${line.image.archive} record ${line.image.record}).`));
   }
   return col;
 }
@@ -4097,7 +4157,7 @@ function render() {
     const prevList = host.querySelector('.packlists');
     if (prevList && _renderedTab) _scrollMemo.set(_renderedTab, prevList.scrollTop);
     dropLists();   // VIRT: the old DOM's windows and waiting tiles go with it
-    _waitingTiles.clear();
+    _tiles.clear();
     host.innerHTML = '';
     // PX16b (Mac: "really study the reference"): the reference's
     // ground is THE GAME - two translucent columns on the left third,
@@ -4518,7 +4578,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   notice = null;
   goldEntry = null;
   repaints = 0;
-  landings = 0; painted = 0;   // AUDIT VIRT
+  _tiles.reset();   // AUDIT VIRT
   // U57: the three things opening the window already decided -
   // selectedActionMode, CheckWagonAccess and SetChooseOne - read once,
   // from the module the classic window reads them from. The pack has
@@ -4544,6 +4604,12 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   // HB1: the hotbar comes up under the pack as a drop target (a no-op
   // while the player wears the diamond instead).
   setHotbarDropMode('pack', true, d.entity ?? null);
+  // DIAMOND-HB: a hotbar key pressed while hovering a pack item (or with one selected) puts it on that slot, then the
+  // pack redraws so the row chips and the card button update
+  setHotbarPick('pack', {
+    selected: () => (picked && side === 'local' ? { kind: 'item', item: picked } : null),
+    changed: () => { if (host) { refresh(); render(); } },
+  });
   // The classic window composes on construction; so does this. Without
   // it the panel shows the schematic until the first equip.
   refreshFigure();
@@ -4554,10 +4620,10 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
   fitSig = packFitSig();
   // VIRT: a resize that leaves the boxes as they were still moves a long list's columns and band - measured again
-  resizeHandler = () => { const sig = packFitSig(); if (sig !== fitSig) { fitSig = sig; if (host) render(); } else syncLists({ remeasure: true }); };
+  resizeHandler = () => { const sig = packFitSig(); if (sig !== fitSig) { fitSig = sig; rowSizes.clear(); if (host) render(); } else syncLists({ remeasure: true }); };   // AUDIT TRADE-VIRT: a new fit's rows measured afresh
   globalThis.addEventListener?.('resize', resizeHandler);
   globalThis.__pack = () => JSON.stringify({
-    tab, repaints, landings, painted, count: model.count, worn: model.worn.size,
+    tab, repaints, landings: _tiles.counts.landings, painted: _tiles.counts.painted, count: model.count, worn: model.worn.size,
     side, remoteKind: remote.kind, remoteCount: remote.count,
     figure: hostEl.querySelector('.figure-doll img') ? 'doll' : 'schematic',
     wornRows: [...hostEl.querySelectorAll('.wornrow')].length,
@@ -4605,7 +4671,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // door's close law, a scene change), and a refusal left on
       // screen would then outlive the pack that said it.
       dropLists();   // VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
-      _waitingTiles.clear();
+      _tiles.clear();
       noticeRelease(noticeOwner);
       hostEl.innerHTML = '';
       host = null;

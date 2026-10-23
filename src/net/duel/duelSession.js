@@ -105,20 +105,20 @@ export const worldGroundMetres = (a, b) => groundDistance(a, b) / NATIVES_PER_M;
 export const DUEL_REF_LATE_MS = 10_000;
 /** INT8: the referee's words this law says. */
 export const DUEL_REF_TEXT = Object.freeze({
-  refused: 'The duel could not be refereed - it is off.',
+  refused: 'The duel could not be refereed and is called off.',
   old: 'The server cannot referee a duel yet.',
 });
 /** INT8: a duel I lost, and why - the referee's word (a fall, a yield, my leaving it). */
 export function duelLostText(why, name = 'They') {
-  if (why === 'yield') return `You yield - ${name} wins the duel.`;
-  if (why === 'fell') return `You have fallen - ${name} wins the duel.`;
-  return `You left the duel - ${name} wins it.`;
+  if (why === 'yield') return `You yield. ${name} wins the duel.`;
+  if (why === 'fell') return `You have fallen. ${name} wins the duel.`;
+  return `You left the duel. ${name} wins it.`;
 }
 /** INT8: a duel I won, and why. */
 export function duelWonText(why, name = 'They') {
-  if (why === 'fell') return `${name} has fallen - you won the duel!`;
-  if (why === 'yield') return `${name} yields - you won the duel!`;
-  return `${name} left the duel - you won!`;
+  if (why === 'fell') return `${name} has fallen. You won the duel!`;
+  if (why === 'yield') return `${name} yields. You won the duel!`;
+  return `${name} left the duel. You won!`;
 }
 
 /** The words for why a duel (or an ask for one) ended, from the wire's DUEL_WHY codes. */
@@ -127,13 +127,13 @@ export function duelWhyText(why, name = 'They') {
     case 'declined': return `${name} declined the duel.`;
     case 'busy': return `${name} cannot duel right now.`;
     case 'timeout': return 'The duel challenge lapsed.';
-    case 'range': return `You are more than ${DUEL_RANGE_M} m apart - the duel is off.`;
-    case 'outdoors': return 'A duel is fought outdoors - the duel is off.';
-    case 'left': return 'The duel is off - a duellist left the ring.';
-    case 'dead': return 'The duel is off - a duellist has fallen to something else.';
-    case 'draw': return 'Time is up - the duel is a draw.';
-    case 'fell': return `${name} has fallen - you won the duel!`;
-    case 'yield': return `${name} yields - you won the duel!`;
+    case 'range': return `You are more than ${DUEL_RANGE_M} m apart. The duel is called off.`;
+    case 'outdoors': return 'A duel must be fought outdoors. The duel is called off.';
+    case 'left': return 'The duel is called off. A duelist left the ring.';
+    case 'dead': return 'The duel is called off. A duelist was killed by something else.';
+    case 'draw': return 'Time is up. The duel is a draw.';
+    case 'fell': return `${name} has fallen. You won the duel!`;
+    case 'yield': return `${name} yields. You won the duel!`;
     default: return `${name} called off the duel.`;
   }
 }
@@ -244,7 +244,7 @@ export function createDuelManager({
     if (outgoing && outgoing.peer !== peer) once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'busy' });
     outgoing = null; waiting = null; starting = null;
     duel = { peer, s, c: [c[0], c[1], c[2]], sub: sub ?? null, startedAt: now(), n: 0, phase: 'live', overAt: 0, end: null, goneSince: null, outSince: null, fightSaid: false, h: null };   // INT8: `h` the referee's vitality, both fighters'
-    say(`The duel with ${nameOf(peer)} begins - fight in ${DUEL_COUNTDOWN_MS / 1000} seconds!`);
+    say(`The duel with ${nameOf(peer)} begins. Fight in ${DUEL_COUNTDOWN_MS / 1000} seconds!`);
     onStart(duel);
     mgr.onChange?.();
   };
@@ -375,7 +375,7 @@ export function createDuelManager({
           if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= DUEL_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub });
-          if (fresh) { say(`${nameOf(from)} challenges you to a duel - answer on the prompt, or press F on them.`); onPrompt(from); }
+          if (fresh) { say(`${nameOf(from)} challenges you to a duel. Answer on the prompt, or press F on them.`); onPrompt(from); }
           mgr.onChange?.();
           return;
         }
@@ -475,7 +475,7 @@ export function createDuelManager({
       if (waiting && t - waiting.at > DUEL_START_WAIT_MS) {
         const w = waiting; waiting = null;
         once({ k: 'cancel', to: w.peer, s: w.s, why: 'timeout' });
-        say(`${nameOf(w.peer)} never started the duel - it is off.`);
+        say(`${nameOf(w.peer)} never started the duel. It is called off.`);
         mgr.onChange?.();
       }
       if (starting) {

@@ -29,9 +29,9 @@
 // players arriving at +z (the bridge) and facing -z, at the boss.
 //
 // Not a DFU member. Ledger A (WB).
-import { COURT_CENTRE, COURT_R, BOSS_REACH_R, COURTS, WALKS, WALK_HALF_W, WALK_LEAD_MS, WALK_FORM_MS, clampToFloor } from '../../net/gate/gateBrain.js';
+import { COURT_CENTRE, COURT_R, BOSS_REACH_R, COURTS, COURTS_HIS, WALKS, WALK_HALF_W, WALK_LEAD_MS, WALK_FORM_MS, clampToFloor, nightPlan, PLAN_PLAIN } from '../../net/gate/gateBrain.js';
 import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD, ARCH_Y0 } from './gateModel.js';
-import { gateYaw } from '../../net/gate/gateLaw.js';
+import { gateYaw, gatePortentsOf } from '../../net/gate/gateLaw.js';
 import { lightList, packLight, copyLights } from '../../render/lightId.js';   // LIGHT-ID: the court's lights into the frame's list through the one seam
 
 /** The court's own textures (world/gate/gateArt.js courtArt) - the gate's pseudo-archive's neighbour. */
@@ -55,6 +55,16 @@ const UNITS_PER_M = 40;
 export const ARRIVE_Z = COURT_R - 4;
 /** GATE-FBX: THE WAY IN - the gate's fire at the floor's edge by the bridge, where WB3b's membrane stood: its place. */
 export const WAY_IN_Z = COURT_R - 0.6;
+/** WB14b: A NIGHT'S PLAN BY ITS DAY - the floors its portents stand (net/gate/gateBrain.js nightPlan of net/gate/gateLaw.js
+ *  gatePortentsOf - the relay draws the fight's with the same law): what the screen builds, where it arrives and where
+ *  the motor holds it before the fight has said a word. Pure. */
+export const planOfDay = (day) => (Number.isSafeInteger(day) ? nightPlan(gatePortentsOf(day)) : PLAN_PLAIN);
+/** WB14b: WHERE A NIGHT'S FIGHTERS ARRIVE, the court's frame - its root floor's south edge by ARRIVE_Z (the first court's
+ *  bridge; the Vanguard's Bridgehead), facing north across it - and where its way in burns (WAY_IN_Z). Pure. */
+export function arrivalOf(plan = PLAN_PLAIN) {
+  const [x, z] = COURTS[plan.root] ?? COURTS[0];
+  return { at: [x, z + ARRIVE_Z], wayIn: [x, z + WAY_IN_Z] };
+}
 /** The way home's door (portalDoor): its half-width and height - a body tall and wide enough to be pressed from before
  *  the fire (the opening is 2.6 m across at its foot, 7.1 at its widest - the press box need hold neither). */
 export const EXIT_HALF_W = 2.2;
@@ -128,8 +138,9 @@ export const isGateArena = (loc) => Number.isSafeInteger(loc?.gate) && loc?.dung
  * marker's flat resource names no water (soundIndex 0) and no castle (magnitude 0) - world/rdbLayout.js reads both off
  * the first start marker - and it stands where the players arrive.
  */
-export function gateArenaBlock() {
-  const [x, , z] = courtToDungeon(0, 0, ARRIVE_Z);
+export function gateArenaBlock(day = null) {
+  const a = arrivalOf(planOfDay(day)).at;   // WB14b: on the night's root floor
+  const [x, , z] = courtToDungeon(a[0], 0, a[1]);
   const marker = {
     type: 0x03, position: 1, index: 0,
     xPos: Math.round(x * UNITS_PER_M), yPos: 0, zPos: Math.round(z * UNITS_PER_M),
@@ -144,8 +155,8 @@ export function gateArenaBlock() {
  * context).
  * @param {{getBlockIndex(name: string): number, getBlock(i: number): any}|null} real
  */
-export function gateArenaBlocks(real) {
-  const block = gateArenaBlock();
+export function gateArenaBlocks(real, day = null) {
+  const block = gateArenaBlock(day);   // WB14b: the start marker on the night's root floor
   return {
     getBlockIndex: (name) => (name === GATE_ARENA_BLOCK ? GATE_ARENA_BLOCK_INDEX : real ? real.getBlockIndex(name) : -1),
     getBlock: (i) => (i === GATE_ARENA_BLOCK_INDEX ? block : real ? real.getBlock(i) : null),
@@ -156,20 +167,21 @@ export function gateArenaBlocks(real) {
  * WB9b: WHAT STANDS CLEAR ROUND COURT `k`'s RIM - the directions (the builder's angle: x = cos a, z = sin a) its walkways
  * leave it by, and the first court's bridge (+z): no spire leans over a walkway's mouth and no brazier stands in one.
  */
-export function courtOpenings(k) {
+export function courtOpenings(k, plan = PLAN_PLAIN) {
   const out = [];
-  for (const w of WALKS) {
-    if (w.k === k) out.push(Math.atan2(w.uz, w.ux));
-    if (w.k + 1 === k) out.push(Math.atan2(-w.uz, -w.ux));
+  for (const i of plan.walks) {   // WB14b: the night's walkways, each by its two floors
+    const w = WALKS[i];
+    if (w.a === k) out.push(Math.atan2(w.uz, w.ux));
+    if (w.b === k) out.push(Math.atan2(-w.uz, -w.ux));
   }
-  if (k === 0) out.push(Math.PI / 2);   // the bridge the players came by
+  if (k === 0 || k === plan.root) out.push(Math.PI / 2);   // the bridge the players came by - AUDIT WB14 (SCREEN-11): and the night's arrival (the Vanguard's Bridgehead: no brazier behind its way in)
   return out;
 }
 const angleOff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 /** How wide a clearing each keeps about an opening, radians: a leaning spire the more (it leans out 3.5 m), a brazier's
  *  bowl the less (the walkway's half-width at the rim is 0.13). The bridge's own clearing is WB3b's 0.35. */
 const SPIRE_CLEAR = 0.3, BRAZIER_CLEAR = 0.16, BRIDGE_CLEAR = 0.35;
-const clearOf = (k, a, w) => courtOpenings(k).every((o, i, all) => angleOff(a, o) > (k === 0 && i === all.length - 1 ? BRIDGE_CLEAR : w));
+const clearOf = (k, a, w, plan = PLAN_PLAIN) => courtOpenings(k, plan).every((o, i, all) => angleOff(a, o) > ((k === 0 || k === plan.root) && i === all.length - 1 ? BRIDGE_CLEAR : w));
 /** The spires' square base's half-width, metres (a spike's own - world/gate/gateModel.js spike). */
 export const SPIRE_BASE_W = 1.6;
 /**
@@ -177,18 +189,21 @@ export const SPIRE_BASE_W = 1.6;
  * the court frame: SPIRES about the rim, those over an opening left out (courtOpenings). The model stands exactly these
  * (standCourtPiece), and the land keeps its hanging stone clear of them (world/deadlandsLand.js). Pure, made once a court.
  */
-export function courtSpireAxes(k) {
-  if (_spireAxes[k]) return _spireAxes[k];
+export function courtSpireAxes(k, plan = PLAN_PLAIN) {
+  const key = `${k}|${plan.key}`;   // WB14b: a floor's spires by the night's walkways out of it
+  if (_spireAxes.has(key)) return _spireAxes.get(key);
   const [ox, oz] = COURTS[k] ?? COURTS[0], out = [];
   for (let i = 0; i < SPIRES; i++) {
     const a = ((i + 0.5) / SPIRES) * Math.PI * 2;
-    if (!clearOf(k, a, SPIRE_CLEAR)) continue;
+    if (!clearOf(k, a, SPIRE_CLEAR, plan)) continue;
     const r = RIM_OUT + 1.5 + (i % 3) * 0.8;
     out.push(Object.freeze({ i, b: Object.freeze([ox + Math.cos(a) * r, -14, oz + Math.sin(a) * r]), t: Object.freeze([ox + Math.cos(a) * (r + 3.5), 11 + (i % 4) * 2.5, oz + Math.sin(a) * (r + 3.5)]) }));
   }
-  return (_spireAxes[k] = Object.freeze(out));
+  const axes = Object.freeze(out);
+  _spireAxes.set(key, axes);
+  return axes;
 }
-const _spireAxes = [];
+const _spireAxes = new Map();
 
 /**
  * ONE COURT of the model (WB9b: the three stand alike): its floor of flagstones over a skirt of basalt, the rock tapering
@@ -196,7 +211,7 @@ const _spireAxes = [];
  * walkways' mouths and (the first court's) the bridge. The flagstones' tiles run on in the court frame, so the three
  * floors and the walkways between them read as one pavement.
  */
-function standCourtPiece(f, k, STONE) {
+function standCourtPiece(f, k, STONE, plan = PLAN_PLAIN) {
   const [ox, oz] = COURTS[k];
   const C = (x, y, z) => courtToDungeon(ox + x, y, oz + z);
   const uvFloor = (p) => [(p[0] - COURT_CENTRE[0]) / FLOOR_TILE_M, (p[2] - COURT_CENTRE[2]) / FLOOR_TILE_M];
@@ -216,8 +231,9 @@ function standCourtPiece(f, k, STONE) {
     f.quad(STONE, b0, t0, t1, b1, [0, 0], [0, 8], [2, 8], [2, 0]);
     f.tri(STONE, t0, C(0, -FLOOR_SKIRT, 0), t1, [0, 0], [1, 1], [2, 0]);   // its underside's lid, so the rim never shows sky through it
   }
-  // the rune ring, a hair over the floor, its u round the circle
-  const RING_SIDES = 96, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;
+  // the rune ring, a hair over the floor, its u round the circle - WB14b: his courts' alone (it is the ring HE keeps to; a
+  // portent's platform he never stands on)
+  const RING_SIDES = k < COURTS_HIS ? 96 : 0, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;
   for (let i = 0; i < RING_SIDES; i++) {
     const a0 = (i / RING_SIDES) * Math.PI * 2, a1 = ((i + 1) / RING_SIDES) * Math.PI * 2;
     const u0 = (i / RING_SIDES) * 24, u1 = ((i + 1) / RING_SIDES) * 24;
@@ -227,8 +243,8 @@ function standCourtPiece(f, k, STONE) {
   }
   // WB6a: the sea of fire and the sky are not the court's mesh - render/deadlands.js draws both, first in the pass
   // the spires round the edge, rising out of the fire and leaning out; the braziers between them; the openings clear
-  for (const sp of courtSpireAxes(k)) spike(f, courtToDungeon(sp.b[0], sp.b[1], sp.b[2]), SPIRE_BASE_W, courtToDungeon(sp.t[0], sp.t[1], sp.t[2]));
-  for (const [, p] of courtBraziers(k)) {
+  for (const sp of courtSpireAxes(k, plan)) spike(f, courtToDungeon(sp.b[0], sp.b[1], sp.b[2]), SPIRE_BASE_W, courtToDungeon(sp.t[0], sp.t[1], sp.t[2]));
+  for (const [, p] of courtBraziers(k, plan)) {
     const top = courtToDungeon(p[0], 1.1, p[2]), foot = courtToDungeon(p[0], -10, p[2]);
     const R = 0.55, sides = 6;
     for (let j = 0; j < sides; j++) {
@@ -247,14 +263,15 @@ function standCourtPiece(f, k, STONE) {
  * the gate's fire, scenes/gate/gateCourt.js). Sub-meshes by (archive, record): the court's own three and the gate's stone. The
  * walkways between the courts are not this mesh - their slabs rise on their own (buildWalkSlabModel, walkSlabs).
  */
-export function buildCourtModel() {
+export function buildCourtModel(pt = null) {
+  const plan = nightPlan(pt);   // WB14b: the night's floors and walkways
   const f = faces();
   const byArchive = new Map();   // record key -> archive
   const C = (x, y, z) => courtToDungeon(x, y, z);
   const STONE = GATE_STONE_RECORD + 1000;   // the gate's basalt, told apart from the court's own records below
   byArchive.set(STONE, [GATE_ARCHIVE, GATE_STONE_RECORD]);
   for (const rec of [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD]) byArchive.set(rec, [COURT_ARCHIVE, rec]);
-  for (let k = 0; k < COURTS.length; k++) standCourtPiece(f, k, STONE);
+  for (const k of plan.floors) standCourtPiece(f, k, STONE, plan);
   // the broken bridge: a slab from the first floor's edge out over the fire, its far end snapped off
   {
     const w = 3, z0 = COURT_R - 0.5, z1 = COURT_R + 9, t = 1.2;
@@ -293,25 +310,34 @@ function packFaces(f, byArchive) {
 
 /** The braziers of court `k` (the first by default - WB3b's five): `[index, [x, y, z] in the court's frame]`, spaced
  *  round its rim between the spires, clear of its openings (courtOpenings - the bridge, the walkways' mouths). */
-export function courtBraziers(k = 0) {
+export function courtBraziers(k = 0, plan = PLAN_PLAIN) {
   const out = [];
   const [ox, oz] = COURTS[k] ?? COURTS[0];
   for (let i = 0; i < BRAZIERS; i++) {
     const a = (i / BRAZIERS) * Math.PI * 2 - Math.PI / 2;   // the first due -z, behind the boss
-    if (!clearOf(k, a, BRAZIER_CLEAR)) continue;
+    if (!clearOf(k, a, BRAZIER_CLEAR, plan)) continue;
     out.push([k * BRAZIERS + i, [ox + Math.cos(a) * (COURT_R + 1.2), 0, oz + Math.sin(a) * (COURT_R + 1.2)]]);
   }
   return out;
 }
-/** WB9b: every court's braziers, the first court's first. */
-export const allCourtBraziers = () => (_allBraziers ??= Object.freeze(COURTS.flatMap((_, k) => courtBraziers(k))));
-let _allBraziers = null;
+/** WB9b: every court's braziers, the first court's first. WB14b: every floor of the night's plan. */
+export function allCourtBraziers(plan = PLAN_PLAIN) {
+  let b = _allBraziers.get(plan.key);
+  if (!b) { b = Object.freeze(plan.floors.flatMap((k) => courtBraziers(k, plan))); _allBraziers.set(plan.key, b); }
+  return b;
+}
+const _allBraziers = new Map();
 
 /** The braziers' lights, in the dungeon's frame: `{ x, y, z, range, color }` over each fire bed, their colour their own -
  *  WB9b: every court's (allCourtBraziers). */
-export const courtLights = () => (_courtLights ??= Object.freeze(allCourtBraziers().map(([, p]) => { const [x, y, z] = courtToDungeon(p[0], 2.2, p[2]); return Object.freeze({ x, y, z, range: BRAZIER_RANGE, color: BRAZIER_COLOR }); })));
-/** AUDIT WB D10: the braziers' lights, made once - they stand where they stand, and the court asks every frame. */
-let _courtLights = null;
+export function courtLights(plan = PLAN_PLAIN) {
+  let L = _courtLights.get(plan.key);
+  if (!L) { L = Object.freeze(allCourtBraziers(plan).map(([, p]) => { const [x, y, z] = courtToDungeon(p[0], 2.2, p[2]); return Object.freeze({ x, y, z, range: BRAZIER_RANGE, color: BRAZIER_COLOR }); })); _courtLights.set(plan.key, L); }
+  return L;
+}
+/** AUDIT WB D10: the braziers' lights, made once - they stand where they stand, and the court asks every frame. WB14b: once
+ *  a plan. */
+const _courtLights = new Map();
 /**
  * WB9b: THE BRAZIERS' LIGHTS, THE NEAREST FIRST - three courts' fires are more than the classic renderer's sixteen slots
  * hold beside the player's own lights and the fight's (his glow, the crystals, the spoils), and its cap drops from the
@@ -319,20 +345,23 @@ let _courtLights = null;
  * WB D10's law).
  * @param {ArrayLike<number>|null} eye the camera, in the dungeon's frame
  */
-export function courtLightsNear(eye) {
-  const L = (_courtLightsNear ??= [...courtLights()]);
+export function courtLightsNear(eye, plan = PLAN_PLAIN) {
+  let L = _courtLightsNear.get(plan.key);
+  if (!L) { L = [...courtLights(plan)]; _courtLightsNear.set(plan.key, L); }
   if (eye) L.sort((a, b) => ((a.x - eye[0]) ** 2 + (a.z - eye[2]) ** 2) - ((b.x - eye[0]) ** 2 + (b.z - eye[2]) ** 2));
   return L;
 }
-let _courtLightsNear = null;
+const _courtLightsNear = new Map();
 
 /**
  * The braziers joined to the frame's lights. The paired shape the dungeon host hands the renderer in (`{ data, colors }`,
  * scenes/magicCandle.js withPlayerLights - the carried mask on `data`), the same shape out, the braziers AFTER all it
  * held: the player's own lights keep their slots and their mask (the torch is still the hand's, and casts no shadow),
- * and the renderer's cap drops a brazier before any of them. Not a player-light composer - nothing here is carried.
+ * and the renderer's cap drops a brazier before any of them. Not a player-light composer: a light here is masked only
+ * when it says `carried` (GATE-MIX - a flash, or a light that runs, takes no shadow caster's slot, as a spell's impact
+ * light does).
  * @param {{ data: Float32Array & { carried?: Uint8Array }, colors: Float32Array }} lit
- * @param {Array<{ x: number, y: number, z: number, range: number, color: readonly number[] }>} lights
+ * @param {Array<{ x: number, y: number, z: number, range: number, color: readonly number[], carried?: boolean }>} lights
  */
 export function withCourtLights(lit, lights) {
   const n = lit.data.length / 4, k = lights.length;
@@ -341,7 +370,7 @@ export function withCourtLights(lit, lights) {
   copyLights(data, 0, lit.data, 0, n);
   colors.set(lit.colors.subarray(0, n * 3));
   if (lit.data.carried) carried.set(lit.data.carried.subarray(0, n));
-  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); });
+  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); if (l.carried) carried[n + i] = 1; });   // GATE-MIX: a flash's mask - no shadow caster
   data.carried = carried;
   return { data, colors, carried };
 }
@@ -349,16 +378,16 @@ export function withCourtLights(lit, lights) {
 /** The collider's floor: the discs' tops (WB9b: all three courts) and the walkways' decks, as unindexed triangles in the
  *  dungeon's frame (the motor keeps a player on the floor as far as it is laid - courtArena; the rest is there so a step
  *  onto a lip never falls through). */
-export function courtFloorTris() {
-  const out = [];
+export function courtFloorTris(pt = null) {
+  const out = [], plan = nightPlan(pt);   // WB14b: the night's floors and walkways
   const C = (x, z) => courtToDungeon(x, 0, z);
-  for (const [ox, oz] of COURTS) {
+  for (const [ox, oz] of plan.floors.map((k) => COURTS[k])) {
     for (let k = 0; k < FLOOR_SIDES; k++) {
       const a0 = (k / FLOOR_SIDES) * Math.PI * 2, a1 = ((k + 1) / FLOOR_SIDES) * Math.PI * 2;
       out.push(...C(ox, oz), ...C(ox + Math.cos(a1) * COURT_R, oz + Math.sin(a1) * COURT_R), ...C(ox + Math.cos(a0) * COURT_R, oz + Math.sin(a0) * COURT_R));
     }
   }
-  for (const w of WALKS) {
+  for (const w of plan.walks.map((i) => WALKS[i])) {
     const nx = w.uz, nz = -w.ux, h = WALK_HALF_W;
     const a0 = C(w.ax + nx * h, w.az + nz * h), a1 = C(w.ax - nx * h, w.az - nz * h), b0 = C(w.bx + nx * h, w.bz + nz * h), b1 = C(w.bx - nx * h, w.bz - nz * h);
     out.push(...a0, ...b0, ...b1, ...a0, ...b1, ...a1);   // wound as the discs are (both faces are one to the collider)
@@ -394,13 +423,19 @@ export const courtRing = () => ({ centre: [...COURT_CENTRE], radius: COURT_R });
  * crossings `xa`, the relay's own law of it) to a body at `pos` (the dungeon's frame), or null where it already stands on it.
  * @param {ReadonlyArray<number>} xa @param {number} now
  */
-export function courtArena(xa, now) {
+export function courtArena(xa, now, day = null) {
   const [cx, , cz] = COURT_CENTRE;
-  // `xa` and `now` are the arena's own fields - the host keeps one and refills them each frame (AUDIT WB D10's law)
+  // `xa` and `now` are the arena's own fields - the host keeps one and refills them each frame (AUDIT WB D10's law);
+  // WB14b: and `day`, the night whose plan holds the body (planOfDay - the relay's draw by the same law)
   const a = {
-    centre: [...COURT_CENTRE], radius: COURT_R, xa, now,
-    clamp: (pos, inset = 0) => { const to = clampToFloor(pos[0] - cx, pos[2] - cz, a.xa, a.now, inset); return to ? [to[0] + cx, to[1] + cz] : null; },
+    centre: [...COURT_CENTRE], radius: COURT_R, xa, now, day,
+    clamp: (pos, inset = 0) => { const to = clampToFloor(pos[0] - cx, pos[2] - cz, a.xa, a.now, inset, planOfDay(a.day)); return to ? [to[0] + cx, to[1] + cz] : null; },
   };
+  return a;
+}
+/** WB14b: the host's one arena (courtArena) refilled for this frame - the fight's crossings, the relay's clock, the night - and handed back. */
+export function courtArenaAt(a, xa, now, day) {
+  a.xa = xa; a.now = now; a.day = day;
   return a;
 }
 
@@ -416,19 +451,22 @@ export const SLAB_RISE_MS = 1500;
  * The walkways' slabs: `[{ walk, j, n, x, z, yaw, len }]` in the court frame - walkway `walk`'s `j`th of `n`, its middle,
  * its turn (the walkway's direction) and its length - from the court the bound leaves toward the one it reaches.
  */
-export function walkSlabs() {
-  if (_slabs) return _slabs;
+export function walkSlabs(pt = null) {
+  const plan = nightPlan(pt);   // WB14b: the night's walkways
+  if (_slabs.has(plan.key)) return _slabs.get(plan.key);
   const out = [];
-  for (const w of WALKS) {
+  for (const w of plan.walks.map((i) => WALKS[i])) {
     const n = Math.max(1, Math.ceil(w.len / SLAB_LEN_M)), len = w.len / n;
     for (let j = 0; j < n; j++) {
       const t = (j + 0.5) * len;
       out.push(Object.freeze({ walk: w.k, j, n, x: w.ax + w.ux * t, z: w.az + w.uz * t, yaw: Math.atan2(w.ux, w.uz), len }));
     }
   }
-  return (_slabs = Object.freeze(out));
+  const slabs = Object.freeze(out);
+  _slabs.set(plan.key, slabs);
+  return slabs;
 }
-let _slabs = null;
+const _slabs = new Map();
 /**
  * WHERE A SLAB STANDS at `now` - how far it has risen (0 under the fire, 1 laid): walkway k's front reaches the slab's near
  * edge WALK_LEAD_MS + (j / n) of WALK_FORM_MS after the bound's word (net/gate/gateBrain.js walkFormed - the floor as far as it

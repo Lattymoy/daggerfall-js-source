@@ -71,7 +71,7 @@ const find = (n, cls, out = []) => { if (String(n.className).split(/\s+/).includ
 // ── #4 RESONANCE ON THE CARD, IN A BEAT, ON THE RECAP ─────────────────────────────────────────────────────────────────
 test('AUDIT EG III RESONANCE SEEN (section 15: "Three different Vestiges of one family ... grant that family\'s capstone"): a card that would be my third different Vestige of a family says so in the Vestiges\' blue - *Completes Stone: Rooted.* and what Rooted does - never for a rank, a Mastery, a family one short or already whole; the beat watch says a capstone as my run first holds it, once a breach; the recap lists the capstones held (mutants: the third miscounted; a rank or a held family counted; the line undrawn; the beat unsaid or said again; the recap blind)', () => {
   const vs = [[vId('stoneskin'), 1], [vId('ironfooting'), 2], [vId('searing'), 1]];
-  assert.equal(egCardCompletes(vId('bastion'), vs), "Completes Stone: Rooted. Immune to push, and your threat doubles.");
+  assert.equal(egCardCompletes(vId('bastion'), vs), "Completes Stone: Rooted. You cannot be pushed, and your threat doubles.");
   assert.equal(egCardCompletes(vId('stoneskin'), vs), '', 'a rank of one held');
   assert.equal(egCardCompletes(vId('momentum'), vs), '', 'Blade: one held, one short of three');
   assert.equal(egCardCompletes(100, vs), '', 'a Mastery');
@@ -80,7 +80,7 @@ test('AUDIT EG III RESONANCE SEEN (section 15: "Three different Vestiges of one 
   // on the offer's card, drawn under its line
   const { E } = offered({ [ME]: vs }, [vId('bastion'), vId('momentum'), vId('echo')]);
   const P = egPanelModel(E, ME, T0);
-  assert.deepEqual(P.offer.cards.map((c) => c.completes), ["Completes Stone: Rooted. Immune to push, and your threat doubles.", '', '']);
+  assert.deepEqual(P.offer.cards.map((c) => c.completes), ["Completes Stone: Rooted. You cannot be pushed, and your threat doubles.", '', '']);
   const doc = fakeDocument();
   destroyEgHud();
   drawEgPanel(P, { doc });
@@ -99,17 +99,17 @@ test('AUDIT EG III RESONANCE SEEN (section 15: "Three different Vestiges of one 
   const rdoc = fakeDocument();
   destroyEgHud();
   drawEgPanel(null, { doc: rdoc, recap: { ...R, members: [], strip: [] }, words: EG_PRES_TEXT });
-  assert.ok(find(rdoc.body, 'eg-note').some((n) => n.textContent === 'Capstones: Rooted, Spellweave'), 'listed on the recap');
+  assert.ok(find(rdoc.body, 'eg-k-line').some((n) => n.textContent === 'Capstones: Rooted, Spellweave'), 'listed on the recap');
   destroyEgHud();
 });
 
 // ── #15 WHAT THE ACCORD DOES ──────────────────────────────────────────────────────────────────────────────────────────
 test('AUDIT EG III THE OFFER\'S CARD SAYS WHAT ITS ACCORD DOES (section 15\'s Accords): each Accord a card would take is named with what it does, in its own words, once a card however many companions hold its other half (mutants: the Accord\'s words unsaid; said for every companion)', () => {
-  assert.equal(egAccordDoes('hammer'), "Hammer and Anvil: A foe the mark's holder marked takes +8% from the oath's holder.");
+  assert.equal(egAccordDoes('hammer'), "Hammer and Anvil: A foe under Hunter's Mark takes +8% damage from the Challenger's Oath holder.");
   assert.equal(egAccordDoes('none'), '');
   const { E } = offered({ 'acct-1': [[vId('huntersmark'), 1]], 'acct-2': [[vId('huntersmark'), 2]] }, [vId('oath')]);
   assert.equal(egPanelModel(E, ME, T0).offer.cards[0].accord,
-    "Takes an Accord with M1's Hunter's Mark. Hammer and Anvil: A foe the mark's holder marked takes +8% from the oath's holder. Takes an Accord with M2's Hunter's Mark.");
+    "Takes an Accord with M1's Hunter's Mark. Hammer and Anvil: A foe under Hunter's Mark takes +8% damage from the Challenger's Oath holder. Takes an Accord with M2's Hunter's Mark.");
 });
 
 // ── #6 THE BOARDS' PANEL, A WINDOW TO THE PAD ─────────────────────────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ test('AUDIT EG III THE SEASON\'S ROW AND THE SHELF\'S WORDS (sections 20 and 11.
     const j = f.s.engines.findIndex((e) => e.kind === kind);
     return sp.hoverName(`egengine:${f.s.h}:${j}`);
   };
-  assert.deepEqual(words('shelf'), { title: 'The Shelf', subs: ['topples once onto the adds', 'Work it'] });
-  assert.deepEqual(words('sluice').subs[1], 'Work it - once in 30 seconds');
-  assert.match(rd('src/scenes/eliteGates/egSpan.js'), /E\.once \? 'Work it' : 'Work it - once in 30 seconds'/);
+  assert.deepEqual(words('shelf'), { title: 'The Shelf', subs: ['topples once onto the lesser foes', 'Work it'] });
+  assert.deepEqual(words('sluice').subs[1], 'Work it once every 30 seconds');
+  assert.match(rd('src/scenes/eliteGates/egSpan.js'), /E\.once \? 'Work it' : 'Work it once every 30 seconds'/);
 });

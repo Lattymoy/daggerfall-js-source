@@ -95,7 +95,11 @@ test('AUDIT SD V (P1): THE RIFT\'S LOOK IS A FRAME\'S, NEVER MADE - the open Rif
   assert.equal(a.state, 'open'); assert.equal(a, b, 'the same record, call after call'); assert.ok(Object.isFrozen(a));
   assert.deepEqual({ ...a, studs: 0 }, { ...SD_RIFT_OPEN_LOOK, studs: 0 }); assert.equal(a.studs, 5, 'five hours left, five studs');
   const D = read('src/scenes/dungeonContext.js'), W = read('src/scenes/world.js');
-  assert.match(D, /look: \(\) => \(opts\.superRiftLook \? opts\.superRiftLook\(dfLocation\?\.sdSlot\) : sdEndWord\(\)\?\.look\) \?\? null/);
+  assert.match(D, /riftCount: \(\) => sdEndWord\(\)\?\.count \?\? null, look: sdRiftLookNow, /);   // AUDIT SD-THROUGH (PIN MOVED, C13): one named closure, the Rift's and the Way Through's
+  assert.match(D, /const sdRiftLookNow = \(\) => \(opts\.superRiftLook \? opts\.superRiftLook\(dfLocation\?\.sdSlot\) : sdEndWord\(\)\?\.look\) \?\? null;/);
+  // AUDIT SD-THROUGH (B4): and the mode machine forwards the door - it never did, and every look the dungeon host asked fell
+  // back to the whole word (world.js sdRiftOf: a record, a seen, a closure and the count's text, four times a frame)
+  assert.match(read('src/scenes/worldModes.js'), /superRiftLook: \(s\) => host\.superRiftLook\?\.\(s\) \?\? null,/);
   assert.match(W, /superRiftLook: \(s\) => sdRiftLookOf\(s\),/);
 });
 

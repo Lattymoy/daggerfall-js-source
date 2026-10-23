@@ -516,6 +516,10 @@ test('AUDIT 21 F8: a sentence moves the world clock, and every release costs fou
     assert.equal(repDuringSkip, ordered.playerEntity.legalRep[17],
       'the sentence is CREDITED BEFORE the days elapse, not after');
     assert.notEqual(repDuringSkip, 0, 'and the credit is non-zero, so the check is not vacuous');
+    // FIELD BUGS 2026-10-21d: the non-zero read let ARENA2-TRIAGE-4 (the credit cut) live, on main too - Murder's 20
+    // charged reads -20 with no credit, and -15 with SENTENCE-MENDS' step alone. REP2's 10 back reads -10, the watch's
+    // line, where that step moves nothing: a literal, so it is the credit that is read and not the step.
+    assert.equal(repDuringSkip, -10, 'Murder\'s 20 charged and REP2\'s 10 credited before the skip, not SENTENCE-MENDS\' step alone');
 
     // (e) an EXPLICIT host hook is still honoured over the default
     setWorldMinutes(0);

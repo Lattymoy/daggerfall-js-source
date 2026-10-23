@@ -58,8 +58,8 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
   const unit = friendly ? 'chips' : 'gold';
   const title = `Card table - ${stakes.sb}/${stakes.bb} ${unit}`;
   // CARDS6: online, a realm character's table plays for gold - the realm holds the stake, the relay deals
-  const note = gold ? 'A gold table: the realm holds your stake, the relay deals, and what you stand up with comes home.'
-    : online ? 'A friendly game with the room: the relay deals, and no gold changes hands.' : friendly ? 'A friendly game: online, no gold changes hands at a patrons\' table.' : null;
+  const note = gold ? 'A gold table. The realm holds your stake, and you keep what you have when you stand up.'
+    : online ? 'A friendly game with the room. No gold changes hands.' : friendly ? 'A friendly game. Online, no gold changes hands at a patrons\' table.' : null;
   if (phase === 'buyin') {
     return {
       phase, title, note, unit,
@@ -123,7 +123,7 @@ export function cardHudModel({ phase, view = null, legal = null, buyIn = null, s
   }
   actions.push({ id: 'stand', label: phase === 'over' ? 'Leave the table' : 'Stand up', enabled: true });
   const message = phase === 'over'
-    ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied - every patron is broke.' : why === 'stood' ? 'The table stood you up.' : why === 'other game' ? HOLDEM_REFUSALS['other game'] : 'You leave the table.')
+    ? (why === 'broke' ? 'You are out of chips.' : why === 'empty' ? 'The table has emptied. Every patron is broke.' : why === 'stood' ? 'You were removed from the table.' : why === 'other game' ? HOLDEM_REFUSALS['other game'] : 'You leave the table.')
     : sd ? showdownLine(sd, view.seats.map((x) => x.name), you)
       : online?.waiting ? 'Waiting for another player to sit down.'
       : !hand ? 'The next hand is being dealt...' : legal ? (online?.clock ? `Your turn - ${online.clock} s.` : 'Your turn.') : `Waiting on ${seats.find((s) => s.state === 'to act')?.name ?? 'the table'}...`;
@@ -171,7 +171,7 @@ export function showdownLine(sd, names, you = -1) {
 /** CARDS5: the relay's refusals as the panel says them. AUDIT CARDS-6 E8: and 'other game' - the cloth plays another
  *  game (the relay's own word; iliacTableGame.js says its mirror) - KG5: Iliac Hand or The King's Gambit, so the words
  *  name neither - said on a panel of its own that offers the other games. */
-export const HOLDEM_REFUSALS = Object.freeze({ 'other game': 'Another game is being played at this table.', taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is laid for other chairs or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy - try again.', 'gold table': 'That table plays for gold - a realm character\'s stake sits at it.', 'friendly table': 'That table plays for chips.', 'bad stake': 'That stake is outside the table\'s buy-in.', 'stake spent': 'That stake has been spent - buy in again to sit.', 'stake refused': 'The table will not take that stake.', 'stake elsewhere': 'That stake was for another table - it comes back to you.', 'stakes closed': 'The table cannot take stakes right now.', 'stake too old': 'That stake is too old to give back here.', 'cashed out': 'Your stake there has gone home - buy in again to sit.', 'in hand': 'Top up between hands.', 'not seated': 'You are not seated at that table.' });
+export const HOLDEM_REFUSALS = Object.freeze({ 'other game': 'Another game is being played at this table.', taken: 'That chair is taken.', seated: 'You already sit at this table.', 'not your turn': 'It is not your turn.', refused: 'The table refused that.', 'no table': 'The table has closed.', 'bad table': 'The table cannot open.', 'no such chair': 'No such chair.', 'no hand': 'No hand is being played.', 'table differs': 'That table is set up for different seats or stakes.', 'account seated': 'You already sit at a table here.', busy: 'The table is busy. Try again.', 'gold table': 'That table plays for gold. Only a realm character can stake there.', 'friendly table': 'That table plays for chips.', 'bad stake': 'That stake is outside the table\'s buy-in.', 'stake spent': 'That stake has been spent. Buy in again to sit.', 'stake refused': 'The table will not take that stake.', 'stake elsewhere': 'That stake was for another table. It has been returned to you.', 'stakes closed': 'The table cannot take stakes right now.', 'stake too old': 'That stake is too old to return here.', 'cashed out': 'Your stake there has been returned. Buy in again to sit.', 'in hand': 'Top up between hands.', 'not seated': 'You are not seated at that table.' });
 
 /** A one-line account of a session event for the panel's log (`names` this.seats' names; `you` the player's index, said in
  *  the second person - AUDIT CARDS-2 L10). */

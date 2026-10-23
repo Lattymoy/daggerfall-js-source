@@ -12,10 +12,21 @@
 // THE GOLD COMES BACK AS THE GAME'S OWN LETTER OF CREDIT (net/realm/realmGoldLaw.js creditSave's `letter`, GUILD-LETTER's way):
 // a summoning's price is paid as deductGold pays it - in letters when the coins do not cover it - and 100,000 gold in
 // coin is 250 kg in the pack. A letter weighs nothing and spends as gold.
+//
+// PURSE-MEND (FIELD BUGS 2026-10-19f; a player's private report - a purse read -8,000,000 after a sale of a lot worth
+// over 18 million, the carry weight -19,995 kg): A PURSE A WRAPPED SALE LEFT BELOW NOTHING, MENDED. TRADE-WRAP (FIELD BUGS
+// 2026-10-18b) stopped CalculateTradePrice wrapping int32, so no sale pays below nothing again - but a record it already
+// paid that way carries the purse as it is, the judge holds its trade on it (server-account/src/judge.js, the `gold`
+// finding), and every payment after it spends the letters first (court.js deductGold: the coins never cover a price).
+// No load can tell what the purse should have been, so staff reckon it from the lot and mend the one character: the
+// purse set to nothing, and what it is owed given as ONE LETTER OF CREDIT - the trade window's own payment for a sum the
+// pack cannot carry (systems/tradeModes.js sellProceeds; DaggerfallTradeWindow's sell arm), which is how the honest sale of
+// a lot that big pays. Never a purse of coin: a million coins weigh 2,500 kg (inventory.js GOLD_PIECE_WEIGHT_KG).
 
 import { FACTION_FLAGS } from '../formats/factionFile.js';
 import { POST_BATCH_RE } from './postLaw.js';
 import { creditSave } from './realm/realmGoldLaw.js';
+import { GOLD_INT_MAX } from '../systems/item/itemLaw.js';   // PURSE-MEND: one letter's worth is one int, as the law reads it
 
 /** The bits a repair may clear: FactionFile.Flags, every one, and nothing else. @type {readonly number[]} */
 export const REPAIR_FLAGS = Object.freeze(Object.values(FACTION_FLAGS));
@@ -64,6 +75,42 @@ export function applyRepair(save, { faction, flag, gold }) {
   store.flags[at] = was & ~flag;
   if (gold > 0) creditSave(save, gold, { letter: true });
   return { was };
+}
+
+/**
+ * PURSE-MEND: A MEND AS ASKED, checked - `{ ticket, was, gold }`, or null: a ticket of the repair's shape, `was` the purse
+ * the staff reckoned from - a whole number below nothing, the only purse there is to mend - and `gold`, what the character
+ * is owed, 0 to GOLD_INT_MAX (one letter's worth; 0: the purse set to nothing, no letter). Whether the record's purse is
+ * still that one is the record's to say (applyPurseMend).
+ * @param {any} v
+ * @returns {{ ticket: string, was: number, gold: number } | null}
+ */
+export function purseMendOf(v) {
+  if (!v || typeof v !== 'object') return null;
+  const { ticket, was, gold } = v;
+  if (typeof ticket !== 'string' || !REPAIR_TICKET_RE.test(ticket)) return null;
+  if (!Number.isSafeInteger(was) || was >= 0) return null;
+  if (!Number.isSafeInteger(gold) || gold < 0 || gold > GOLD_INT_MAX) return null;
+  return { ticket, was, gold };
+}
+
+/**
+ * PURSE-MEND ON A SAVE, in place (a realm record, applyRepair's way): the purse below nothing set to nothing, and the gold
+ * owed given as one letter of credit at the front of the pack - SET, never added to what the purse holds (a purse of
+ * -8,000,000 given 8,000,000 is nothing, and the letters it spent stay spent). Answers `{ was }` - the purse before - or
+ * the refusal's word, nothing changed: 'mend-not-negative', the record's purse is not below nothing (mended already, or
+ * the wrong character); 'mend-moved', it is below nothing but not the purse the mend was reckoned from (played since, or
+ * the wrong character - read it again).
+ * @param {any} save @param {{ was: number, gold: number }} mend
+ * @returns {{ was: number } | 'mend-not-negative' | 'mend-moved'}
+ */
+export function applyPurseMend(save, { was, gold }) {
+  const purse = save?.goldPieces;
+  if (!Number.isSafeInteger(purse) || purse >= 0) return 'mend-not-negative';
+  if (purse !== was) return 'mend-moved';
+  save.goldPieces = 0;
+  if (gold > 0) creditSave(save, gold, { letter: true });
+  return { was: purse };
 }
 
 /**

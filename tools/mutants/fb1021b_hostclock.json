@@ -1,0 +1,267 @@
+[
+  {
+    "name": "HC-priced-at-one-pool",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "    for (const k of before) cost += price.get(k);",
+    "new": "    for (const k of before) cost = price.get(k);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-brain-carried-per-pool",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      stepped.add(key);\n      mark(at);",
+    "new": "      stepped.add(key); ticked = foeFrameDt(dt);\n      mark(at);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-answer-dropped",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      return out;\n    },",
+    "new": "      return undefined;\n    },",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-new-pool-follows-the-plan",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax)",
+    "new": "const plan = caught && mine ? catchUpPlan(dt, extraMax)",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-frame-unheard",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "    frame() { open = false; },",
+    "new": "    frame() {},",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-repeat-opens-nothing",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      if (!open || stepped.has(key)) opens(at, dt);",
+    "new": "      if (!open) opens(at, dt);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js",
+      "test/scenes/fb1021_ownerclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-stepped-unkept",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      stepped.add(key);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-spent-alone",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      if (extrasFrom !== null) spent += clock() - extrasFrom;",
+    "new": "      if (extrasFrom !== null) spent = 0;",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-share-per-pool",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "i > 2 && spent + clock() - extrasFrom >= shareMs",
+    "new": "i > 2 && clock() - extrasFrom >= shareMs",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-carry-at-the-host-call",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "if (i > 1 && want > ticked)",
+    "new": "if (want > ticked)",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js",
+      "test/scenes/fb1021_ownerclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-price-unread",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      price.set(key, cost);",
+    "new": "      price.set(key, 0);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js",
+      "test/scenes/fb1021_ownerclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-before-not-kept",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "    before = stepped; stepped = new Set();",
+    "new": "    before = new Set(); stepped = new Set();",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js",
+      "test/scenes/fb1021_ownerclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-page-never-shared",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "export const ownerFoes = createOwnerCatchUp({ shared: () => _pageShared() });",
+    "new": "export const ownerFoes = createOwnerCatchUp({ shared: () => false });",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-wiring-frame-dropped",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "  markModalSteps(modes, { frame: () => ownerFoes.frame() });",
+    "new": "  markModalSteps(modes);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-modal-frame-unheard",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "    frame();\n    const ran = inner(dt, now);",
+    "new": "    const ran = inner(dt, now);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-street-watch-left-out",
+    "file": "src/scenes/world.js",
+    "old": "  wireOwnerClock([exteriorFoes, cityGuards], modes,",
+    "new": "  wireOwnerClock([exteriorFoes], modes,",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-building-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ownerFoes.pools(interiorFoes, interiorGuards);",
+    "new": "      void ownerFoes;",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-building-watch-left-out",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ownerFoes.pools(interiorFoes, interiorGuards);",
+    "new": "      ownerFoes.pools(interiorFoes);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-dungeon-loop-by-itself",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    ownerFoes.step(foes, frameDt, stepFoes, foes.some((f, i) => !f.dead && !isPuppetFoe(f, i)));",
+    "new": "    stepFoes(frameDt);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-dungeon-batches-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    dt = stepDt;   // the call's time in the frame's own name - the loop's text as it stood, and no binding shadowing the frame's (MAC-L1b's no-shadow)\n    _mobileBatches.length = 0;\n",
+    "new": "    dt = stepDt;   // the call's time in the frame's own name - the loop's text as it stood, and no binding shadowing the frame's (MAC-L1b's no-shadow)\n",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-dungeon-stood-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _mobileBatches.length = 0;\n    _npcStood.length = 0;\n",
+    "new": "    _mobileBatches.length = 0;\n",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-dungeon-lane-unbegun",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _npcStood.length = 0;\n    npcLane?.begin();\n    let _fi = -1;",
+    "new": "    _npcStood.length = 0;\n    let _fi = -1;",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HOST-CLOCK-the-frame-keeps-the-last-call",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    dt = frameDt;   // HOST-CLOCK: the rest of the frame",
+    "new": "    void frameDt;   // HOST-CLOCK: the rest of the frame",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HOST-CLOCK-the-call-on-the-frame",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    dt = stepDt;   // the call's time",
+    "new": "    void stepDt;   // the call's time",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-joiner-caught-up",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };",
+    "new": "const plan = caught && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-joiner-gate-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "ownerFoes.step(foes, frameDt, stepFoes, foes.some((f, i) => !f.dead && !isPuppetFoe(f, i)));",
+    "new": "ownerFoes.step(foes, frameDt, stepFoes, true);",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-dead-foe-mine",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "foes.some((f, i) => !f.dead && !isPuppetFoe(f, i))",
+    "new": "foes.some((f, i) => !isPuppetFoe(f, i))",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-later-pool-past-the-share",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "      if (i === 2) { if (spent >= shareMs) break; extrasFrom = clock(); }",
+    "new": "      if (i === 2) { extrasFrom = clock(); }",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  },
+  {
+    "name": "HC-pool-method-loses-this",
+    "file": "src/scenes/ownerCatchUp.js",
+    "old": "update.call(p, d, ...rest)",
+    "new": "update.call(undefined, d, ...rest)",
+    "tests": [
+      "test/scenes/fb1021b_hostclock.test.js"
+    ]
+  }
+]

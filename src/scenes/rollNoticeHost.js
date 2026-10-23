@@ -126,13 +126,13 @@ export function rollNoticeDoors({ entityOf, say }) {
     // port's names carry no article to bend in a sentence
     onCeiling: (/** @type {number[]} */ factions) => {
       for (const f of factions) {
-        say(t('chapters.standing.ceiling', '{name}: quests raise your standing no further today. {owed} more is owed, and follows in the days to come.',
+        say(t('chapters.standing.ceiling', '{name}: quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.',
           { name: standingName(f), owed: standingOwedOf(f) }));
       }
     },
     onFull: (/** @type {number[]} */ factions) => {
       for (const f of factions) {
-        say(t('chapters.standing.full', '{name}: your standing and what is owed already reach {max} - the rest of that reward is lost.',
+        say(t('chapters.standing.full', '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',
           { name: standingName(f), max: MAX_REPUTATION }));
       }
     },

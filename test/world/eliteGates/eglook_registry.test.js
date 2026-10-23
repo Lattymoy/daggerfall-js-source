@@ -56,7 +56,7 @@ test('EG-G2 THE REGISTRY (section 11.6): no two numbered pseudo-archives overlap
   assert.equal(pseudoArchiveFree(38150), 38150, 'a free number is its own pick');
   assert.equal(pseudoArchiveFree(38151), 38152, 'past the Hour\'s');
   assert.equal(pseudoArchiveFree(38231, 8), 38233, 'eight free after the harbour\'s and the lamp\'s');   // PIN MOVED (AUDIT EG V, the merge of main): LAMP-KEEPER II's lamp took 38232 - nine were free after the harbour's
-  assert.equal(pseudoArchiveFree(38241, 9), 38290, 'past the Spire\'s');
+  assert.equal(pseudoArchiveFree(38241, 9), 38303, 'past the Spire\'s - PIN MOVED (WITCH1): and the Witches\' Festival\'s pictures (38291) - PIN MOVED (STAR4, STAR7): and the Starfall\'s crater and Starglass (38301, 38302)');
   assert.equal(pseudoArchiveOwner(pseudoArchiveFree(1)), null);
 });
 
@@ -103,9 +103,9 @@ test('EG-G2 THE GATE\'S TIERS (section 2): Regular, Elite, Abyss as the dungeons
   assert.equal(gateTierText({ b: 'ab' }), 'Elite Breach'); assert.equal(gateTierText({ day: 3 }), "Dagon's Breach"); assert.equal(gateTierText({}), null);
   assert.deepEqual(eliteBreachPlaque({ opener: 'Mac', mine: true }), { title: 'Elite Breach', subs: [GATE_TIER_SUB.elite] });
   assert.deepEqual(eliteBreachPlaque({ opener: 'Mac', mine: false }), { title: 'Elite Breach', subs: ['The Battlespire', "Mac's company"] });
-  assert.equal(gateSightLine(137, 'North'), 'You see an Elite Breach 140 metres to the North!');
+  assert.equal(gateSightLine(137, 'North'), 'You see an Elite Breach 140 meters to the North!');
   for (const m of [3, 14, 15, 137, 1004]) assert.equal(gateSightLine(m, 'East').replace('an Elite Breach', 'X'), dungeonSightLine(m, 'East', 'elite').replace('an Elite Dungeon', 'X'), `${m} m rounds as the dungeon's`);
-  assert.equal(gateSightLine(50, 'West', 'regular'), "You see Dagon's Breach 50 metres to the West!");
+  assert.equal(gateSightLine(50, 'West', 'regular'), "You see Dagon's Breach 50 meters to the West!");
   assert.equal(eliteTimerText({ clock: '4:12' }), 'Elite Breach opens 4:12');
   assert.equal(eliteTimerText({ h: 17, clock: '24:10' }), 'Hall 17 - 24:10 left');
 });

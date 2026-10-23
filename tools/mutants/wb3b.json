@@ -29,7 +29,7 @@
   {
     "name": "WB3b-the-marker-off-the-arrival",
     "file": "src/world/gate/gateArena.js",
-    "old": "  const [x, , z] = courtToDungeon(0, 0, ARRIVE_Z);",
+    "old": "  const [x, , z] = courtToDungeon(a[0], 0, a[1]);",
     "new": "  const [x, , z] = courtToDungeon(0, 0, 0);",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "WB3b-the-ring-off-his-reach",
     "file": "src/world/gate/gateArena.js",
-    "old": "  const RING_SIDES = 96, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;",
-    "new": "  const RING_SIDES = 96, rr0 = COURT_R - 3 - RUNE_HALF_W, rr1 = COURT_R - 3 + RUNE_HALF_W, y = 0.02;",
+    "old": "const RING_SIDES = k < COURTS_HIS ? 96 : 0, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;",
+    "new": "const RING_SIDES = k < COURTS_HIS ? 96 : 0, rr0 = COURT_R - 3 - RUNE_HALF_W, rr1 = COURT_R - 3 + RUNE_HALF_W, y = 0.02;",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "WB3b-a-brazier-in-the-bridge",
     "file": "src/world/gate/gateArena.js",
-    "old": "    if (!clearOf(k, a, BRAZIER_CLEAR)) continue;\n    out.push(",
+    "old": "    if (!clearOf(k, a, BRAZIER_CLEAR, plan)) continue;\n    out.push(",
     "new": "    out.push(",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
@@ -164,7 +164,7 @@
   {
     "name": "WB3b-the-court-stood-after-the-marker",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (hit.gateArena) standCourt(ctx);   // WB3b: the court, before the start marker is read and before any namer\n",
+    "old": "      if (hit.gateArena) gateStand.standCourt(ctx, hit.gateArena.day);   // WB3b: the court, before the start marker is read and before any namer - WB14b: its night's (scenes/gate/gateStand.js)\n",
     "new": "\n",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "WB3b-no-ring-in-the-court",
     "file": "src/scenes/world.js",
-    "old": "    if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa",
-    "new": "    if (!player.arena && false) { _courtArena.xa",
+    "old": "    if (!player.arena && modes?.gateArenaDay?.() != null) player.arena = courtArenaAt(",
+    "new": "    if (!player.arena && false) player.arena = courtArenaAt(",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -291,7 +291,7 @@
   {
     "name": "WB3b-the-braziers-carried",
     "file": "src/world/gate/gateArena.js",
-    "old": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); });",
+    "old": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); if (l.carried) carried[n + i] = 1; });   // GATE-MIX: a flash's mask - no shadow caster",
     "new": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); carried[n + i] = 1; });",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"

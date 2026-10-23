@@ -12,11 +12,18 @@
 // held path is two of them). The skills' values do not move. The career is the character's own copy from here (the save
 // keeps the career whole - save.js), its name and every other term unchanged.
 //
-// THE LEVEL DOES NOT MOVE. The level is the classic sum's (advancement.js calculatePlayerLevel over the stored starting
-// and current sums, skills.js levelUpSkillSum - the class's skills alone), so a swap that moved the sum would hand levels
-// out (a trained miscellaneous skill brought into the class) or owe them: both sums move by what the swap moved the sum,
-// so the level, the progress to the next and the level-up bar stand. What the class's skills earn from here is the new
-// list's.
+// THE LEVEL DOES NOT MOVE, AND A SKILL'S TRAINING LEAVES WITH IT (SWAP-CYCLE, 2026-10-20). The level is the classic
+// sum's (advancement.js calculatePlayerLevel over the stored starting and current sums, skills.js levelUpSkillSum - the
+// class's skills alone), and the stored current sum is the sum the level stands on: the highest the class's sum has
+// reached, which no swap lowers (advancement.js raiseSkills keeps it there too). A swap that lowers the class's sum (a
+// trained skill out, a less trained one in) leaves both stored sums where they stand - the level and its progress stand,
+// and the class's skills make the ground up before the next level comes any closer. A swap that takes the class's sum
+// above the one the level stands on (a trained miscellaneous skill brought in) moves both sums by the rise above it, so it
+// pays no levels; the ground an earlier swap gave up is won back first, so a swap undone is no swap at all. The swap had
+// moved both sums by whatever it moved the class's sum, a drop as well as a rise: each trained skill given up for an
+// untrained one kept its training on the level and freed its place to earn the same levels again, and one class cycled
+// through every one of the 35 skills reached level 223 where its own lists top out at 31. Now no sequence of swaps takes
+// the level past what the class's lists could hold - DFU's ceiling.
 //
 // THE PRICE is one flat SKILL_SWAP_GOLD a swap, paid as SPEC-RESET's is (specReset.js resetGold and court.js
 // payUndoable: the coins, else the letters of credit, and online the Empire's account) - the save's own, so the purse
@@ -76,17 +83,29 @@ export function swappedCareer(entity, out, inn) {
  *  martialPossible, arcanePaths.js pathPossible) answer yes, the masteries and their slots as they stand. */
 export const swapOpens = (entity, out, inn, possible) => !!entity?.career && possible({ ...entity, career: swappedCareer(entity, out, inn) });
 
+/** SWAP-CYCLE: the sum the level stands on - the stored current sum, caught up with the class's own where a raise has not
+ *  stored it yet (a point trained by other means is the level's; the next raise's SetCurrentLevelUpSkillSum stores it). */
+function heldSum(entity) {
+  const sum = levelUpSkillSum(entity), held = entity.currentLevelUpSkillSum;
+  return held >= sum ? held : sum;
+}
+/** SWAP-CYCLE: the points the class's sum would sit under the sum the level stands on once `out` is given up for `inn` -
+ *  what its skills make up before the next level comes any closer; 0 when it would sit under none. */
+export const swapShortfall = (entity, out, inn) => (entity?.career
+  ? Math.max(0, heldSum(entity) - levelUpSkillSum({ ...entity, career: swappedCareer(entity, out, inn) })) : 0);
+
 /** Swap them: pay SKILL_SWAP_GOLD, put `inn` in `out`'s place in its group on the character's own copy of the career,
- *  and move both level sums by what the swap moved the sum. Returns { ok, text }. */
+ *  and move both level sums by what the swap takes the class's sum above the one the level stands on - nothing for a
+ *  swap that lowers it (SWAP-CYCLE). Returns { ok, text }. */
 export function swapSkill(entity, out, inn) {
   const why = skillSwapRefusal(entity, out, inn);
   if (why) return { ok: false, text: why };
   const group = careerGroupOf(entity, out);
-  const before = levelUpSkillSum(entity);
+  const held = heldSum(entity);
   payUndoable(entity, SKILL_SWAP_GOLD, entity._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);
   entity.career = swappedCareer(entity, out, inn);
-  const moved = levelUpSkillSum(entity) - before;
-  entity.startingLevelUpSkillSum = (entity.startingLevelUpSkillSum ?? 0) + moved;
-  entity.currentLevelUpSkillSum = (entity.currentLevelUpSkillSum ?? 0) + moved;
+  const rise = Math.max(0, levelUpSkillSum(entity) - held);
+  entity.startingLevelUpSkillSum = (entity.startingLevelUpSkillSum ?? 0) + rise;
+  entity.currentLevelUpSkillSum = held + rise;
   return { ok: true, text: t('skillswap.done', '{inn} is now one of your {group} skills, in place of {out}.', { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: groupWord(group) }) };
 }

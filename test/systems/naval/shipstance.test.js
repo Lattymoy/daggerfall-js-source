@@ -91,7 +91,7 @@ test('SHIP-STANCE THE GREEN BAR: a friendly ship\'s tag is marked `friendly` and
   assert.equal(navalHudText(helm(target({ hostile: true, friendly: true }))).card.friendly, false, 'never friendly while hostile');
   const pirate = navalHudText(helm(target({ faction: 'pirate', friendly: false, bound: '' }))).card;
   assert.deepEqual([pirate.state, pirate.stateKind], ['', ''], 'a pirate not after me: neither');
-  assert.equal(navalHudText(helm(target({ state: 'struck', friendly: false }))).card.state, 'Colours struck', 'struck: her colours, as before');
+  assert.equal(navalHudText(helm(target({ state: 'struck', friendly: false }))).card.state, 'Colors struck', 'struck: her colours, as before');
   drawNavalHud(helm(target()), { keys: {} });
   const [root] = byClass(globalThis.document.body, 'dfnaval-hud');
   assert.equal(byClass(root, 'dfnaval-card')[0].className, 'dfnaval-card merchant friendly');

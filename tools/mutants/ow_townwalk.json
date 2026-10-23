@@ -1,0 +1,416 @@
+[
+  {
+    "name": "OTW-snap-past-reach",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "export function snapCell(nav, cell, radius = TOWN_SNAP_CELLS, ok = null) {",
+    "new": "export function snapCell(nav, cell, radius = 64, ok = null) {",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-snap-farthest-in-ring",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "        if (d < bd) { bd = d; best = [cx + dx, cy + dy]; }",
+    "new": "        if (d >= bd || !best) { bd = d; best = [cx + dx, cy + dy]; }",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-edge-unsorted",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  out.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-corner-shaved",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "      if (!open(nav, x + sx, y) || !open(nav, x, y + sy)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-line-start-unread",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  if (!open(nav, x, y)) return false;\n  const walked",
+    "new": "  const walked",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-no-string-pull",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    while (j > i + 1 && !clearLine(nav, cells[i], cells[j], margin)) j--;",
+    "new": "    j = i + 1;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-ends-dropped",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  const out = [[cells[0][0], cells[0][1]]];",
+    "new": "  const out = [];",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-first-edge-always",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    if (path) return { cells: simplifyWay(nav, path), inside: false, reached: true };",
+    "new": "    return path ? { cells: simplifyWay(nav, path), inside: false, reached: true } : null;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-pace-max",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "export const TOWN_PACE_MAX = 5;",
+    "new": "export const TOWN_PACE_MAX = 60;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-run-never-moves-on",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    if (k < last && (t >= 1 || segDistance(x, z, bx, bz, path[k + 2][0], path[k + 2][1]) < segDistance(x, z, ax, az, bx, bz))) { k++; continue; }",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-aim-stops-at-corner",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    if (left <= rest || i === last) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-street-look-a-roads",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  const STREET_LOOK = 96;",
+    "new": "  const STREET_LOOK = 512;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-streets-skipped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    r.street ??= streetRun(r);",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-pace-unheld",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true)) : st.walk",
+    "new": "    const rate = street ? travelRateOf(true) : st.walk",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-asked-again-at-the-end",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "|| deps.atSea?.() || r.streetFor === key) return null;",
+    "new": "|| deps.atSea?.()) return null;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-resume-way-kept",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    r.street = null; r.streetFor = null;   // OW-TOWN-WALK: a resume",
+    "new": "    r.streetFor = null;   // OW-TOWN-WALK: a resume",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-town-walked-into-unheard",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-ring-walked-through",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "if (!r.townAt || !deps.townWay || leg?.ring ||",
+    "new": "if (!r.townAt || !deps.townWay ||",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-place-walked-across",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-host-origin-unread",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "    const cell = nav.worldToNav(sx - o[0] - t[0], sz - o[2] - t[2]);",
+    "new": "    const cell = nav.worldToNav(sx - t[0], sz - t[2]);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-host-translation-unread",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "    const w = state.worldCoords([lx + town.o[0] + town.t[0], 0, lz + town.o[2] + town.t[2]]);",
+    "new": "    const w = state.worldCoords([lx + town.o[0], 0, lz + town.o[2]]);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-host-own-cell-dropped",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "      return { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false };",
+    "new": "      return { pts: way.cells.slice(1).map((c) => nativeOf(town, c)), inside: way.inside, shut: false };",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-steer-pathed-overridden",
+    "file": "src/systems/travel/travelSteer.js",
+    "old": "    if (!inp.pathed && (s.episode || Math.abs(f.lat) > P.onLine)) {",
+    "new": "    if (s.episode || Math.abs(f.lat) > P.onLine) {",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-steer-run-end-unread",
+    "file": "src/systems/travel/travelSteer.js",
+    "old": "  const to = autopilot.steerTarget ?? autopilot.destinationCentre;",
+    "new": "  const to = autopilot.destinationCentre;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-cap-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const rate = Math.min(load, foeCap, town);",
+    "new": "    const rate = Math.min(load, foeCap);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-reason-not-the-towns",
+    "file": "src/scenes/world.js",
+    "old": "town < Math.min(load, foeCap) ? 'town' : foeCap",
+    "new": "town < Math.min(load, foeCap) ? 'load' : foeCap",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-streets-undrawn",
+    "file": "src/scenes/world.js",
+    "old": "    for (const q of j ? [...sw, j] : sw) { leg(at.x, at.z, q.x, q.z, pts); at = q; }",
+    "new": "    for (const q of j ? [j] : []) { leg(at.x, at.z, q.x, q.z, pts); at = q; }",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-pieces-unread",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  const mine = (x, y) => label[y * W + x] === id;",
+    "new": "  const mine = () => true;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-piece-four-unread",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "      if (y + 1 < H && !label[c + W] && open(nav, x, y + 1)) { label[c + W] = next; stack[top++] = c + W; }",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-gate-axis-longer",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    if (best && a + b >= best.span) continue;",
+    "new": "    if (best && a + b <= best.span) continue;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-gate-reach-unbounded",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "export function gatePassage(nav, gate, reach = GATE_REACH_CELLS) {",
+    "new": "export function gatePassage(nav, gate, reach = 64) {",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-gate-one-side",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    if (a == null || b == null || (a === 0 && b === 0)) continue;",
+    "new": "    if ((a == null && b == null) || (a === 0 && b === 0)) continue;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-gate-ends-carved",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    for (let k = -b + 1; k < a; k++) cells.push([gate[0] + dx * k, gate[1] + dy * k]);",
+    "new": "    for (let k = -b; k <= a; k++) cells.push([gate[0] + dx * k, gate[1] + dy * k]);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-town-grid-written",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  const grid = new Uint8Array(W * H);\n  if (nav.grid instanceof Uint8Array && nav.grid.length === W * H) grid.set(nav.grid);",
+    "new": "  const grid = nav.grid instanceof Uint8Array && nav.grid.length === W * H ? nav.grid : new Uint8Array(W * H);\n  if (false) grid.set(nav.grid);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-walker-flags-carried",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  for (let i = 0; i < W * H; i++) grid[i] &= 0xf0;   // the walkers' occupancy flags are the town's, never the journey's",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-nothing-carved-copied",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "  if (!cells.length) return nav;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-reach-unsaid",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "reached: !!own && mine(own[0], own[1]) }",
+    "new": "reached: true }",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-reach-own-piece-snapped",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    const own = snapCell(nav, to) ?? nearestIn(nav, label, 0, to);",
+    "new": "    const own = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, 0, to);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-other-piece-unmet",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, id, to);",
+    "new": "    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine);",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTW-heuristic-unweighted",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "export function townWayCells(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT } = {}) {",
+    "new": "export function townWayCells(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = 1 } = {}) {",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTWH-shut-gate-carved",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "    const passages = gates.filter((g) => g.open && g.local)",
+    "new": "    const passages = gates.filter((g) => g.local)",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTWH-swing-unseen",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "    const key = `${town.key}|${sig}`;",
+    "new": "    const key = town.key;",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTWH-shut-unsaid",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "shut: gates.some((g) => !g.open) };",
+    "new": "shut: false };",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTWH-gate-origin-unread",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "town.nav.worldToNav(g.local[12] - town.o[0], g.local[14] - town.o[2])",
+    "new": "town.nav.worldToNav(g.local[12], g.local[14])",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTO-shut-unmarked",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (way?.shut) st.shutStop = true;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  },
+  {
+    "name": "OTO-shut-stop-unmade",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.autopilot && st.shutStop) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/travel/ow_townwalk.test.js"
+    ]
+  }
+]

@@ -114,7 +114,7 @@ test('RVN-ERRAND THE ERRAND: back the place\'s days later, a city of its provinc
   assert.equal(E.sanitizeErrand({ ...e, until: e.at - 1 }), null);
   assert.equal(E.errandUntil(e, T0 + 60), T0 + 2 * DAY);
   assert.equal(E.errandUntil(e, T0 - 10 * DAY), T0 - 8 * DAY, 'an older clock: its days from now, never more');
-  assert.equal(E.errandWords(e, T0 + 60), `In ${e.city}, Skyrim (Forage) - back in about 47 hours`);
+  assert.equal(E.errandWords(e, T0 + 60), `In ${e.city}, Skyrim (Forage), back in about 47 hours`);
   assert.equal(E.errandLeftWords(T0 + 3 * DAY, T0), 'back in about 3 days');
 });
 
@@ -165,13 +165,13 @@ test('RVN-ERRAND SENT, AND BACK: it leaves the party (its portal - the layer rea
   party().wake(T0);
   assert.equal(said.length, 1);
   assert.deepEqual([said[0].kind, said[0].kicker], ['errand', 'Mission']);
-  assert.match(said[0].line, /It sets out for .+, in High Rock - back in about 24 hours\./);
-  assert.equal(RC.callRefusal(rec(r), T0 + 60), 'Abroad - back in about 23 hours.');
+  assert.match(said[0].line, /It sets out for .+, in High Rock, back in about 24 hours\./);
+  assert.equal(RC.callRefusal(rec(r), T0 + 60), 'Abroad, back in about 23 hours.');
   assert.equal(RC.releaseRevenant(r.id), null, 'no release while abroad');
   assert.equal(RC.sendOnErrand(r.id, 'Skyrim', 'forage', { now: T0 }), 'It is already abroad.');
   const b = sworn({ state: 'away' }), c = sworn({ state: 'away' }), d = sworn({ state: 'away' });
   assert.equal(RC.sendOnErrand(b.id, 'Skyrim', 'forage', { now: T0 }), null);
-  assert.equal(RC.sendOnErrand(c.id, 'Skyrim', 'forage', { now: T0 }), '2 of your sworn are abroad already - the most at once.');
+  assert.equal(RC.sendOnErrand(c.id, 'Skyrim', 'forage', { now: T0 }), '2 of your sworn are abroad already, the most allowed at once.');
   N.revenantCompanionUpdate(me, d.id, (x) => { x.state = 'resting'; x.until = T0 + 60; });
   assert.equal(RC.errandRefusal(rec(d), T0), 'Still recovering.');
   const loyal = rec(r).companion.loyalty;
@@ -278,7 +278,7 @@ test('RVN-ERRAND AUDIT RVN F5, F7, F9, F10 THE RECORD: an errand an older clock 
   assert.equal(RC.takeSwornGear(k.id, 'weapon').length, 0, 'not taken abroad');
   const helm = { group: 'Armor', templateIndex: 102, material: 0, currentCondition: 100, maxCondition: 100 };
   me.items.push(helm);
-  assert.equal(RC.giveSwornGear(k.id, helm), 'It is abroad - its kit goes with it.');
+  assert.equal(RC.giveSwornGear(k.id, helm), 'It is abroad with its kit.');
 });
 
 test('RVN-ERRAND AN ERRAND IS THE SAVE\'S: abroad in the save, abroad again after a reload - back on its minute with the same haul; begun since the save, never begun (where the save had it); an errand day moves no loyalty (mutants: the mirror\'s errand kept; the save\'s lost; the days counted)', () => {
@@ -322,8 +322,8 @@ test('RVN-ERRAND THE PAGE: Mission opens the sheet - the three ventures, the nin
   assert.equal(dests.length, 9);
   assert.match(dests[0].textContent, /^High Rock - a day, danger IFair odds 55%Send$/);
   assert.match(dests[8].textContent, /^Black Marsh - 4 days, danger VGrim odds 30%Send$/);
-  assert.doesNotMatch(d.textContent, /Online its days pass only while you play/, 'offline: the one clock, no word of the lived step');
-  assert.match(d.textContent, /A hard road brings back 50% of it/);
+  assert.doesNotMatch(d.textContent, /Online, a mission keeps real time/, 'offline: the one clock, no word of the world\'s');   // PIN MOVED (OFFLINE-ROAD): the online word is the world's time now
+  assert.match(d.textContent, /A hard-won mission brings back 50% of the haul/);
   byClass(d, 'cmp-vent')[1].onclick();
   d = draw();
   assert.ok(byClass(d, 'cmp-vent')[1].classList.contains('on'), 'Forage chosen');
@@ -331,13 +331,13 @@ test('RVN-ERRAND THE PAGE: Mission opens the sheet - the three ventures, the nin
   assert.deepEqual([rec(r).companion.state, rec(r).companion.errand.place, rec(r).companion.errand.venture], ['errand', 'Skyrim', 'forage']);
   d = draw();
   assert.match(d.textContent, /Abroad/);
-  assert.match(d.textContent, /In .+, Skyrim \(Forage\) - back in about 2 days/);
+  assert.match(d.textContent, /In .+, Skyrim \(Forage\), back in about 2 days/);
   assert.equal(buttons(d, 'Recall').length, 1);
   assert.deepEqual([buttons(d, 'Release').length, buttons(d, 'Gear').length, buttons(d, 'Mission').length, buttons(d, 'Call').length], [0, 0, 0, 0]);
   buttons(d, 'Recall')[0].onclick();
   assert.equal(rec(r).companion.state, 'errand', 'AUDIT RVN D9: asked first - a recall forfeits its haul');
   d = draw();
-  assert.match(d.textContent, /Recall .+\? It comes back at once with nothing, and must rest from the road\./);
+  assert.match(d.textContent, /Recall .+\? It returns now with nothing and must rest\./);
   buttons(d, 'Let it go on')[0].onclick();
   d = draw();
   assert.equal(buttons(d, 'Let it go on').length, 0);

@@ -39,9 +39,11 @@ export const MISS_VFX_AT = Object.freeze({ Target: 0, Crosshair: 1 });
 /** The clone's settings fields from the store, exactly as LoadSettings
  *  derives them (Offset.Speed x10, Bob.Length /100, SizeX/Y x2,
  *  SpeedMove x4, SpeedState x500, Shape x0.5, Inertia.Scale/Speed x500,
- *  ForwardDepth/ForwardSpeed x0.2, Recoil.Chance /100). */
-export function readWidgetSettings(read = () => modSettingsOf(WEAPON_WIDGET_VENDOR)) {
-  const s = withDiverseWeaponsPreset(read());   // DW1: the mod's preset over the player's values while its switch is on
+ *  ForwardDepth/ForwardSpeed x0.2, Recoil.Chance /100). `preset` false reads the values as handed, with Diverse
+ *  Weapons' preset NOT laid over them (PISTOLET: a weapon's own tuning, parsed with the mod's multipliers -
+ *  combat/gun/gunViewmodel.js gunWidgetSettings). */
+export function readWidgetSettings(read = () => modSettingsOf(WEAPON_WIDGET_VENDOR), { preset = true } = {}) {
+  const s = preset ? withDiverseWeaponsPreset(read()) : read();   // DW1: the mod's preset over the player's values while its switch is on
   return {
     enabled: !!s.Enabled,
     swing: !!s['Modules.Swings'], ambidexterity: !!s['Modules.Ambidexterity'], bob: !!s['Modules.Bob'], offset: !!s['Modules.Offset'],

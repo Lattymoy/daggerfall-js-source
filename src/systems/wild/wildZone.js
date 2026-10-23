@@ -121,12 +121,36 @@ export const isWildRegion = (regionIndex) => regionIndex === WILD_REGION;
 // ── the live flag: where the player stands now ───────────────────────────────────────────────────────────────────────
 let _here = false;
 let _ring = 0;
-/** The world host's word each frame: the player stands in the zone, online (scenes/world.js) - and in which ring. */
-export function setWildHere(on, ring = 0) { _here = !!on; _ring = _here ? Math.max(1, Math.min(WILD_RINGS, ring | 0 || WILD_RINGS)) : 0; }
+let _kind = null;
+/** The world host's word each frame: the player stands in the zone, online (scenes/world.js) - and in which ring, and on
+ *  which ground (ETHER-WILD, 2026-10-21: `kind` - 'wroth' the Wrothgarian Mountains, 'ether' the Eltheric Ocean past
+ *  Veilhaven's peace, systems/wild/etherWild.js). Every law of the zone reads the flag alike; only its words read the kind. */
+export function setWildHere(on, ring = 0, kind = WILD_KIND) {
+  _here = !!on; _ring = _here ? Math.max(1, Math.min(WILD_RINGS, ring | 0 || WILD_RINGS)) : 0; _kind = _here ? (kind || WILD_KIND) : null;
+}
 /** Does the player stand in the zone now? (The foe pools ask at a spawn, the loot rolls at a death.) */
 export const wildHere = () => _here;
 /** The ring the player stands in (1 the outer, 4 the heart), 0 outside. */
 export const wildRing = () => _ring;
+/** ETHER-WILD: the ground of the zone the player stands in - 'wroth' or 'ether' - or null outside every zone. */
+export const wildZoneKind = () => _kind;
+
+// ── ETHER-WILD: THE ZONE'S WORDS BY ITS GROUND ───────────────────────────────────────────────────────────────────────
+// The mountains' words are WILD_TEXT's. Another ground registers its own (systems/wild/etherWild.js, the Eltheric Ocean's)
+// so this leaf imports nothing of it, and a word it does not name is the mountains'.
+/** The Wrothgarian Mountains' kind (setWildHere's default). */
+export const WILD_KIND = 'wroth';
+/** @type {Map<string, Record<string, any>>} */
+const _kindWords = new Map();
+/** A ground's own words: `name` (the zone's name in a sentence), `ringName(ring)`, and any WILD_TEXT key it says its own
+ *  way. */
+export function registerZoneWords(kind, words) { _kindWords.set(kind, words); }   // kept as given: a getter reads its words in the language of the moment
+/** A word of the zone - its ground's own, else the mountains' (WILD_TEXT's). `kind` defaults to where the player stands. */
+export const zoneWord = (key, kind = _kind) => (kind ? _kindWords.get(kind)?.[key] : undefined) ?? WILD_TEXT[key];
+/** The zone's name in a sentence ("the Wrothgarian Mountains" is WILD_NAME's own, as WILD_TEXT says it). */
+export const zoneName = (kind = _kind) => (kind ? _kindWords.get(kind)?.name : undefined) ?? WILD_NAME;
+/** A ring's name on the zone's ground (the mountains': wildRingName). */
+export const zoneRingName = (ring, kind = _kind) => ((kind ? _kindWords.get(kind)?.ringName : undefined) ?? wildRingName)(ring);
 /** WILD2: the mask the world host registered (the maps' own) - so a host with no map of its own (a dungeon's build)
  *  reads a place's ring by its map pixel. */
 let _mask = null;
@@ -444,28 +468,28 @@ export function createPartyTruce(ms = WILD_PARTY_TRUCE_MS) {
 
 // ── the words ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 export const WILD_TEXT = Object.freeze({
-  enter: `You enter the ${WILD_NAME} - an open PvP zone. Foes here are four times as strong; what you carry is at stake.`,
+  enter: `You enter the ${WILD_NAME}, an open PvP zone. Foes here are four times as strong, and you can lose what you carry.`,
   leave: `You leave the ${WILD_NAME}.`,
   chip: 'Open PvP',
-  chipTip: `${WILD_NAME}: other players may attack you, foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart), and a death drops what you carry.`,
+  chipTip: `${WILD_NAME}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If you die, you drop what you carry.`,
   mapKey: 'Open PvP zone',
   deathPvp: (name) => `${name || 'Another player'} may claim one piece of your worn gear.`,
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop is taken and laid nowhere (Integrity-Arc, Lane 1's freeze) -
   // said, where it was said as nothing at all; and the letters of credit among what a death took, by their worth - through
   // the text core (L10N4), read when they are said
-  deathBurnt: (n) => (n > 0 ? t('wild.death.burnt', '{n, plural, one {# thing you carried was} other {# things you carried were}} lost where you fell - this character\'s trading is frozen, so nothing is left for anyone to take.', { n }) : ''),
+  deathBurnt: (n) => (n > 0 ? t('wild.death.burnt', '{n, plural, one {# thing you carried was} other {# things you carried were}} lost where you fell. This character\'s trading is frozen, so nothing is left for anyone to take.', { n }) : ''),
   deathLetters: (n, gold) => (n > 0 ? t('wild.death.letters', '{n, plural, one {A letter} other {# letters}} of credit worth {gold} gold left your wallet.', { n, gold: Number(gold).toLocaleString('en-US') }) : ''),
   deathClaim: (name, item) => `${name || 'Another player'} took your ${item || 'gear'}.`,
   // MAC (2026-10-14, the two-phase handoff): the piece claimed is held in escrow until its killer collects it - its words
   // through the text core (L10N4), read when they are said
   deathHeld: (name, item) => (name
-    ? t('wild.escrow.deathHeld', '{name} claimed your {item} - it is held until they collect it, and comes back to you if they do not.', { name, item: item || t('wild.escrow.gear', 'gear') })
-    : t('wild.escrow.deathHeldAnon', 'Another player claimed your {item} - it is held until they collect it, and comes back to you if they do not.', { item: item || t('wild.escrow.gear', 'gear') })),
+    ? t('wild.escrow.deathHeld', '{name} claimed your {item}. It is held until they collect it, and comes back to you if they do not.', { name, item: item || t('wild.escrow.gear', 'gear') })
+    : t('wild.escrow.deathHeldAnon', 'Another player claimed your {item}. It is held until they collect it, and comes back to you if they do not.', { item: item || t('wild.escrow.gear', 'gear') })),
   heldNote: (name, item, min) => (name
-    ? t('wild.escrow.heldNote', 'Your {item} is held for {name} - if they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { name, item: item || t('wild.escrow.gear', 'gear'), min })
-    : t('wild.escrow.heldNoteAnon', 'Your {item} is held for your killer - if they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { item: item || t('wild.escrow.gear', 'gear'), min })),
-  heldBack: (item) => t('wild.escrow.heldBack', 'Your {item} has come back to you - it was never collected.', { item: item || t('wild.escrow.gear', 'gear') }),
+    ? t('wild.escrow.heldNote', 'Your {item} is held for {name}. If they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { name, item: item || t('wild.escrow.gear', 'gear'), min })
+    : t('wild.escrow.heldNoteAnon', 'Your {item} is held for your killer. If they do not collect it within {min, plural, one {# minute} other {# minutes}}, it comes back to you.', { item: item || t('wild.escrow.gear', 'gear'), min })),
+  heldBack: (item) => t('wild.escrow.heldBack', 'Your {item} has come back to you. It was never collected.', { item: item || t('wild.escrow.gear', 'gear') }),
   heldTaken: (name, item) => (name
     ? t('wild.escrow.heldTaken', '{name} collected your {item}.', { name, item: item || t('wild.escrow.gear', 'gear') })
     : t('wild.escrow.heldTakenAnon', 'Your killer collected your {item}.', { item: item || t('wild.escrow.gear', 'gear') })),
@@ -477,23 +501,34 @@ export const WILD_TEXT = Object.freeze({
   taken: 'Someone took that first.',
   gone: 'The body gives nothing up.',
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
-  chosen: (name, item) => `You choose ${item} from ${name || 'the body'} - it comes to you from their remains.`,   // INT9: the pick is the relay's to sign
+  chosen: (name, item) => `You choose ${item} from ${name || 'the body'}. It comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
-  dropLate: 'What you dropped at your death in the mountains has left your pack - it lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
-  burntLate: () => t('wild.death.burntLate', 'What you dropped at your death in the mountains has left your pack - this character\'s trading is frozen, so it was lost, not left.'),   // BURNT-SAID: the same, for a held record
+  dropLate: 'What you dropped when you died in the mountains has left your pack. It lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
+  burntLate: () => t('wild.death.burntLate', 'What you dropped when you died in the mountains has left your pack. This character\'s trading is frozen, so it was lost.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
-  truce: `No longer of your party - in the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
-  walkInto: `It leads into the ${WILD_NAME} - an open PvP zone: other players may kill you there and take what you carry.`,
+  truce: `No longer in your party. In the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
+  walkInto: `It leads into the ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
+  // AUDIT SEA VENTURES C6, C7: two more of the zone's own, so a ground of its own says them its way (zoneWord) - through
+  // the text core (L10N4), read when they are said (a getter: a string where the callers read one)
+  get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in the mountains.'); },
+  get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in the Wrothgarian Mountains.'); },
   // WILD3: the strangers
   stranger: 'Stranger',
   strangerNear: (m) => `A stranger is near - ${Math.max(10, Math.round(m / 10) * 10)} m.`,
   // WILD3: the journeys
-  travelIn: `No fast travel into the ${WILD_NAME} - its edge is crossed on foot or in the saddle (the Overworld map).`,
-  travelOut: `No fast travel out of the ${WILD_NAME} - walk or ride out (the Overworld map).`,
-  travelWait: (min) => `The mountain carriages run once every ten minutes - ${min} more minute${min === 1 ? '' : 's'}.`,
+  travelIn: `No fast travel into the ${WILD_NAME}. Cross its edge on foot or on horseback (the Overworld map).`,
+  travelOut: `No fast travel out of the ${WILD_NAME}. Walk or ride out (the Overworld map).`,
+  travelWait: (min) => `The mountain carriages run every ten minutes. The next leaves in ${min} minute${min === 1 ? '' : 's'}.`,
   travelPoor: (fee) => `A journey inside the ${WILD_NAME} costs ${fee.toLocaleString('en-US')} gold here.`,
   travelPaid: (fee) => `You pay ${fee.toLocaleString('en-US')} gold for the mountain road.`,
+  // COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner: "Bag drops; no send-off in zone"): a companion at my side drops his
+  // pack with mine, so none is sent off from inside the zone (the teleport's own refusal, said of a companion), nothing of
+  // mine reaches one waiting outside it, and one carried off knocked out leaves what it carries with me - through the
+  // text core (L10N4), read when they are said
+  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave the {zone}.', { zone: zoneName(), name: name || t('wild.companion.yours', 'your companion') }),
+  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside the {zone}. Come out to hand over gear.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion') }),
+  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
   ringCross: (r, deeper) => `${deeper ? 'Deeper' : 'Back out'} - ${wildRingName(r)}: ${wildRingBonus(r)}.`,
@@ -557,7 +592,7 @@ let _death = null;
  *  goes. The screen holds WILD_DEATH_HOLD_S and takes no Enter while it stands (ui/deathScreen.js). */
 export function setWildDeath(d) {
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
-    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters) } : null;
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. */
 export function wildLettersOf(/** @type {any} */ items) {
@@ -569,5 +604,5 @@ export const wildDeath = () => _death;
 export function wildDeathLines(d = _death) {
   if (!d) return [];
   return [d.killer ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : '', WILD_TEXT.deathDrop(d.dropped),
-    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), WILD_TEXT.deathHold].filter(Boolean);
+    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);
 }

@@ -196,7 +196,7 @@ export function madeWhere(p) {
  *  `moved`) - said, so the player knows where they are: the next press spends them there. '' for none. */
 export const movedFirstText = (r) => {
   const n = Number(r?.moved) || 0;
-  return n > 0 ? ` ${n} of the materials went into your Stores first - the next try spends them there.` : '';
+  return n > 0 ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';
 };
 
 /** The bag's words, said where it is bought, where a harvest lands, and where it is refused. */
@@ -214,7 +214,7 @@ export const BAG_WORDS = Object.freeze({
   none: 'You have no Materials Bag. Every General Store sells one.',
   notEmpty: 'Empty your Materials Bag first.',
   /** AUDIT BAG1 H1: a reward tray is up - a piece taken from the bag beside it was taken as the reward */
-  reward: 'Choose your reward first - your Materials Bag opens after.',
+  reward: 'Choose your reward first, then open your Materials Bag.',
   /** a node's prompt when neither the bag nor the pack has room for one more unit */
   noRoom: 'No room in your bag or pack',
   /** PACK-OVER (FIELD BUGS 2026-10-04): a harvest's goods minted into the pack past its weight - said beside the haul card,

@@ -291,10 +291,17 @@ export function cureDiseaseOffer(entity, guild, membership, {
  *  they are written as SHIFTS rather than fractions - `>> 1` is half
  *  and `- (>> 2)` is three quarters, both truncating. Offset 0 is the
  *  cheerful one (the player bargained the price below half), 1 the
- *  middle, 2 the grudging one. */
+ *  middle, 2 the grudging one.
+ *  PURSE-MEND (FIELD BUGS 2026-10-19f): halved and quartered by
+ *  division - the shifts' band for every cost an int holds, and the
+ *  right one for a trade lot past 2^31 (tradeModes.js
+ *  tradeMessageOffset), whose `>> 1` wrapped int32 and named the
+ *  wrong haggle. DFU's `cost` is C#'s int (DaggerfallTradeWindow
+ *  ShowTradePopup), so its lot wrapped before it reached the bands -
+ *  TRADE-WRAP's departure (FIELD BUGS 2026-10-18b). */
 export function cureOfferMessageOffset(costBeforeBargaining, cost) {
-  if ((costBeforeBargaining >> 1) <= cost) {
-    return (costBeforeBargaining - (costBeforeBargaining >> 2)) <= cost ? 2 : 1;
+  if (Math.floor(costBeforeBargaining / 2) <= cost) {
+    return (costBeforeBargaining - Math.floor(costBeforeBargaining / 4)) <= cost ? 2 : 1;
   }
   return 0;
 }

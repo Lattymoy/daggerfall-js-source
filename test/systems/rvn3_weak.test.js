@@ -225,7 +225,7 @@ test('RVN3 THE REVEAL: my first blow of its weakness - the real strike - counts 
   assert.deepEqual(sfx, [[SOUND.Burning, [1, 0, 2]]], 'the hiss where it stands');
   const cards = shown.filter((e) => e.kind === 'weakness');
   assert.equal(cards.length, 1);
-  assert.match(cards[0].body, /^Blades - its weakness, laid bare\.$/);
+  assert.match(cards[0].body, /^Its weakness laid bare: Blades\.$/);
   assert.equal(cards[0].kicker, 'Weakness');
   calculateAttackDamage(p, o, { weapon: createWeapon(W.Longsword, 1, () => 0.5), rolls: () => 0.2 });
   assert.equal(shown.filter((e) => e.kind === 'weakness').length, 1, 'no second card');
@@ -401,5 +401,5 @@ test('RVN3 the page: its weakness as I know it - unknown, its kind, what it is; 
   assert.equal(weaknessWords({ weak: 'daylight', weakKnown: 1 }), 'Weakness: The sun.');
   assert.equal(weaknessWords({ weak: 'axe', weakKnown: 2 }), 'Weakness: Axes.');
   assert.equal(willWords({ rank: 1 }), '');   // PIN MOVED (UNQUIET, Revenants.md section 46): from rank 2
-  assert.equal(willWords({ rank: 2 }), 'Its will must be broken - strike its weakness, stagger it, or dodge its blow perfectly.');   // PIN MOVED (FEUD BALANCE, OPEN 22)
+  assert.equal(willWords({ rank: 2 }), 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.');   // PIN MOVED (FEUD BALANCE, OPEN 22)
 });

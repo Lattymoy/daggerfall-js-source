@@ -277,7 +277,7 @@ test('LW7b a company\'s regard in the deep: one who counts the player HOSTILE dr
   assert.equal(f.entity.name, 'Bo Reed');
   assert.equal(f.living.id, MATE.id);
   assert.ok(f.feet[2] > 0, 'before the player');
-  assert.deepEqual(h.said, ['Ada Lark\'s company - and Bo draws on you!']);
+  assert.deepEqual(h.said, ['Ada Lark\'s company, and Bo draws on you!']);
   f.dead = true;
   h.divers.frame([c], 1001);
   assert.deepEqual(h.slays, [{ res: MATE, t: 1001, seen: true }]);

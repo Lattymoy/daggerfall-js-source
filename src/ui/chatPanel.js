@@ -151,7 +151,7 @@
 // bar under the list (`N new - jump to newest`) that takes them there.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
-import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
+import { isTextEntryTarget, swallowBrowserKey, bindings, neverTheFocus } from './input.js';   // FB1020h HUD-FOCUS: the controls over the world keep no focus
 import { actionForCode, codeMeans } from '../systems/inputActions.js';
 import { overlayOpen } from './enhanced/enhancedOverlays.js';
 import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the panel stands, ActivateCursor's key is its open key and not the cursor toggle
@@ -598,7 +598,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   grip.tabIndex = 0;
   grip.setAttribute('role', 'button');
   grip.setAttribute('aria-label', 'Resize chat');
-  grip.setAttribute('title', 'Drag to resize - wider is larger text, taller is more lines. Double-click for the usual size.');
+  grip.setAttribute('title', 'Drag to resize. Wider gives larger text, taller shows more lines. Double-click to reset.');
   const hide = el('button', 'dfchat-hide', 'Hide'); hide.type = 'button';
   hide.setAttribute('aria-label', 'Hide chat');
   const show = el('button', 'dfchat-show', 'Chat'); show.type = 'button';
@@ -607,7 +607,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   // listener is the element's own (the panel keeps its one window listener, AUDIT CHAT D5): a pick lands at the caret
   // and closes the grid, the button toggles it, and Escape in the field and the panel's close take it down.
   const emojiBtn = el('button', 'dfchat-emoji', '\u{1F642}'); emojiBtn.type = 'button';
-  emojiBtn.setAttribute('aria-label', 'Emoji'); emojiBtn.title = 'Emoji - or type a shortcode like :smile:';
+  emojiBtn.setAttribute('aria-label', 'Emoji'); emojiBtn.title = 'Emoji, or type a shortcode like :smile:';
   const emojiGrid = el('div', 'dfchat-emojis');
   emojiGrid.setAttribute('role', 'group'); emojiGrid.setAttribute('aria-label', 'Emoji');   // a set of buttons - a listbox's children would have to be options
   const picked = new Set();
@@ -734,6 +734,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // "Friends and party" and nothing else. The word stays a title for the mouse; the badge names ITSELF, and the
     // button's accessible name becomes "Social 3" the moment there is a 3.
     b.setAttribute('title', 'Friends and party');
+    neverTheFocus(b);   // FB1020h HUD-FOCUS: a Tab walked onto it and the next Space (the game's Jump) pressed it
     const badge = el('span', 'dfchat-badge');
     b.append(badge); socialBadges.push(badge);
     b.addEventListener('click', () => social.onToggle?.());
@@ -751,7 +752,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   search.type = 'text'; search.maxLength = CHAT_FIND_MAX; search.placeholder = 'Find a player'; search.autocomplete = 'off'; search.spellcheck = false;
   search.setAttribute('role', 'searchbox');
   search.setAttribute('aria-label', 'Find a player in the chat');
-  search.title = 'A name, or part of one - every tab\'s lines from or about them, and who is online by that name. #tag finds one player of a shared name.';
+  search.title = 'Type a name or part of one to find lines from or about them on every tab, and who is online. Add a #tag for one player of a shared name.';
   const findCount = el('span', 'dfchat-find-count');
   findCount.setAttribute('aria-live', 'polite');   // the one live word in the box: how many lines the search found
   const findClear = el('button', 'dfchat-find-clear', '✕'); findClear.type = 'button';
@@ -771,6 +772,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   };
   box.append(tabs, cols, grip);   // CHAT-SIZE: the grip stands at the BOX's corner, over both columns
   // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
+  // FB1020h HUD-FOCUS: what stands over the world while the chat is shut is never the keyboard's focus (ui/input.js
+  // neverTheFocus) - Play online here, the touch skin's Chat, the Social button (above) and Show
+  for (const b of [here, openBtn, show]) neverTheFocus(b);
   root.append(peek, hint, status, here, openBtn, ...(socialOut ? [socialOut] : []), show, box);
   doc.body.append(root);
 
@@ -803,7 +807,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   /** CHAT-SCROLL: the bar under the list - drawn only while there is something below the reader. */
   const paintJump = () => {
     const on = log.open && unseen > 0;
-    const text = on ? `${unseen} new - jump to newest` : '';
+    const text = on ? `${unseen} new. Jump to newest` : '';
     if (jump.textContent !== text) jump.textContent = text;
     const cls = on ? 'dfchat-jump on' : 'dfchat-jump';
     if (jump.className !== cls) jump.className = cls;

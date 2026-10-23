@@ -44,7 +44,7 @@ test('CAPT-LOG what a rank brings in its crown\'s harbours: the table - the ship
   assert.equal(perksOf(4, 25), RANK_PERKS[0], 'hunted: no favours');
   assert.equal(perksOf(9), RANK_PERKS[4], 'past the top, the top');
   // PIN MOVED (AUDIT CAPTAIN'S SEA B15): the discount the shipwright's repairs and powder - his stores and grog are what they cost
-  assert.equal(perkWords(RANK_PERKS[3]), 'the shipwright\'s repairs and powder 15% off - the harbour board pays 30% more, 2 more offers a day - a letter of marque - the Admiralty\'s Carrack - seasoned hands hired');
+  assert.equal(perkWords(RANK_PERKS[3]), 'the shipwright\'s repairs and powder 15% off - the harbor board pays 30% more, 2 more offers a day - a letter of marque - the Admiralty\'s Carrack - seasoned hands hired');
   assert.equal(perkWords(RANK_PERKS[0]), '');
 });
 
@@ -125,7 +125,7 @@ test('CAPT-LOG the save: its own slot (Captain, v1) - the log, the crowns\' rega
   const b = createCaptainLedger();
   b.restoreSaveData(JSON.parse(JSON.stringify(a.getSaveData())));
   assert.deepEqual(b.getSaveData(), a.getSaveData());
-  assert.deepEqual(b.newSaveData(), { v: 1, log: newLog(), standing: { Daggerfall: 0, Wayrest: 0, Sentinel: 0 }, marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: { charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [] }, tree: ['helm'] });   // CAPTAIN-TREE: and the captain's sky, the Helm alone (PIN MOVED); CAPT-BOARD: and the contracts held, the board's taken; CAPT-TRADE: the day's dealing; ETHER-SEA: the captain's Eltheric Ocean - PIN MOVED (AUDIT CAPTAIN'S SEA B8): and the caches raised
+  assert.deepEqual(b.newSaveData(), { v: 1, log: newLog(), standing: { Daggerfall: 0, Wayrest: 0, Sentinel: 0 }, marque: null, contracts: [], taken: [], dealt: null, charts: [], raised: [], ether: { charted: [], legends: {}, harvested: {}, from: null, crossings: 0, heard: [], season: null, fleets: [], wrack: [] }, tree: ['helm'] });   // PIN MOVED (SEA-SEASON): and no season's figures; (AUDIT SEA VENTURES D2, D4, D6): no fleet ended, no wrack hauled   // CAPTAIN-TREE: and the captain's sky, the Helm alone (PIN MOVED); CAPT-BOARD: and the contracts held, the board's taken; CAPT-TRADE: the day's dealing; ETHER-SEA: the captain's Eltheric Ocean - PIN MOVED (AUDIT CAPTAIN'S SEA B8): and the caches raised
   const c = createCaptainLedger();
   c.restoreSaveData({ log: { sunk: { pirate: -4, merchant: 'x' }, plunder: 1e20, legends: [5, 'Ok'], best: { name: 3 } }, standing: { Wayrest: 5000, Daggerfall: 'q', Morrowind: 9 }, marque: { crown: 'Morrowind', until: 10 } });
   assert.deepEqual([c.log.sunk.pirate, c.log.sunk.merchant, c.log.legends, c.log.best], [0, 0, ['Ok'], null]);
@@ -225,7 +225,7 @@ test('CAPT-MARQUE at sea: under a letter a RIVAL\'s lawful ship struck is the ri
   s.host._sea.get(own).ship.flag = 'Wayrest';
   s.host._charge('fire', own);
   assert.equal(s.held(), null, 'torn up');
-  assert.ok(s.log.mid.some((t) => /letter of marque is torn up/.test(t)));
+  assert.ok(s.log.mid.some((t) => /letter of marque is revoked/.test(t)));
   assert.deepEqual(s.law.crimes.at(-1), [crownRegion('Wayrest'), CRIMES.Piracy]);
   const host = rd('src/scenes/naval/navalHost.js');
   assert.match(host, /for \(const w of sea\.values\(\)\) if \(w\.ship\.cls\.faction === 'navy' && w\.ship\.flag !== signed && dist2d\(w\.ship\.pos, s\.pos\) < WITNESS_RANGE\) provoke\(w\.ship, by, clock\);/, 'the signing crown\'s navy looks on');

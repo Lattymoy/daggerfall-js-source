@@ -29,7 +29,7 @@ export const LEGACY_MODEL_FACE = Object.freeze({
 export const LEGACY_CHOICE_FACE = Object.freeze({
   eyebrow: 'A new character',
   title: 'Will your line endure?',
-  lead: 'Found a house and choose its way with death - or play without one. It cannot be changed later.',
+  lead: 'Found a house and choose how it meets death, or play without one. It cannot be changed later.',
   pick: 'Choose',
   hint: 'Click one · up/down and Enter · 1, 2 or 3',
 });
@@ -40,7 +40,7 @@ export const LEGACY_CHOICE_TEXT = Object.freeze({ title: 'WILL YOUR LINE ENDURE?
 export const LEGACY_MODEL_TAGS = Object.freeze({ [MODELS.enduring]: 'Not permadeath', [MODELS.bloodline]: 'Permadeath', [NO_LINEAGE]: 'Classic' });
 
 /** LEGACY7: Bloodline's word online - the realm holds the line, so the death is final on every device. */
-export const BLOODLINE_ONLINE_LINE = 'Online, the realm holds the line: on every device.';
+export const BLOODLINE_ONLINE_LINE = 'Online, a death is final on every device.';
 
 /** The two answers, Enduring first. AUDIT LEGACY U7: the toll said is the one a death will charge - its Features tile's
  *  Legacy.Toll as it stands. AUDIT LEGACY B4/F1 shut Bloodline online while a permadeath had no authority there;
@@ -49,15 +49,15 @@ export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacy
   const pct = Math.round(tollShare * 100);
   return Object.freeze([
     Object.freeze({ id: MODELS.enduring, title: 'Enduring', locked: false, lockNote: null, lines: Object.freeze([
-      'A death is not the end - but it costs years.',
+      'A death is not the end, but it costs years.',
       `Arkay takes ${pct}% of a lifespan for every road back,`,
       'and when the span is spent the mantle passes on',
       'to an heir. Elders may pass it on at any time.',
     ]) }),
     Object.freeze({ id: MODELS.bloodline, title: 'Bloodline', locked: false, lockNote: null, lines: Object.freeze([
-      'A death is final. Your heir takes your place -',
-      'a sibling, a child, or a newborn of your blood -',
-      'and may recover what you lost from your remains.',
+      'A death is final. An heir takes your place:',
+      'a sibling, a child or a newborn of your blood.',
+      'They may recover what you lost from your remains.',
       'With no one left, the line ends.',
       // AUDIT LEGACY III U8: online says where the line is kept BESIDE that - it replaced it, and the end went unsaid
       ...(online ? [BLOODLINE_ONLINE_LINE] : []),

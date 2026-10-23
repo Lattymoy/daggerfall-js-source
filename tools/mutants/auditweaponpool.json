@@ -1,8 +1,8 @@
 [
   {
     "name": "AUDIT-WEAPON-POOL-P1-found-mark-left-behind",
-    "file": "src/systems/conditionRepair.js",
-    "old": "  if (Number.isInteger(it.foundCondition)) it.foundCondition = share(it.foundCondition);",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (isFoundMarked(item)) item.foundCondition = share(item.foundCondition);\n",
     "new": "",
     "tests": [
       "test/systems/auditweaponpool.test.js"

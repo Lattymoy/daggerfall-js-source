@@ -39,8 +39,8 @@ const MARK = Object.freeze({ px: 207, py: 213, fx: 12, fy: 250, h: 64, m: 1, tv:
 
 // ── THE WIRE ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('TV3 wire: a mark is seven keys and no eighth, each in its range - refused WHOLE otherwise; `tv` absent reads 0', () => {
-  assert.deepEqual(TRAV_KEYS, ['px', 'py', 'fx', 'fy', 'h', 'm', 'tv']);
+test('TV3 wire: a mark is seven keys and no eighth, each in its range - refused WHOLE otherwise; `tv` absent reads 0 (OW-CHASE-RANGE, world230: its chase words ride BESIDE the mark, never as an eighth key - AUDIT OW-REVISITED L4-1, test/systems/travel/ow_chaserange.test.js)', () => {
+  assert.deepEqual(TRAV_KEYS, ['px', 'py', 'fx', 'fy', 'h', 'm', 'tv']);   // PIN MOVED BACK (AUDIT OW-REVISITED L4-1): an eighth key dropped the traveller from every older client's book - the chase words ride beside the mark
   assert.deepEqual(validTravellerMark(MARK), MARK);
   assert.deepEqual(validTravellerMark({ ...MARK, tv: undefined }), { ...MARK, tv: 0 });
   assert.deepEqual(TRAV_MODES, ['foot', 'horse', 'cart', 'ship']);
@@ -103,7 +103,7 @@ test('TV3 relay: a mark in a region\'s channel is KEPT on the attachment (stampe
   const { r, ws: [a, b, c] } = await regionRoom(['peer-0001', 'peer-0002', 'peer-0003']);
   for (const s of [a, b, c]) s.sent.length = 0;
   await r.raw(a, JSON.stringify({ t: 'trav', p: MARK }));
-  assert.deepEqual(Object.keys(a.att.tm).sort(), [...TRAV_KEYS, 'at'].sort(), 'kept, stamped');
+  assert.deepEqual(Object.keys(a.att.tm).sort(), [...TRAV_KEYS, 'at'].sort(), 'kept, stamped');   // a mark with no chase keeps no words beside it
   for (const s of [b, c]) {
     const t = ofType(s, 'trav');
     assert.equal(t.length, 1);
@@ -450,33 +450,33 @@ test('TV3 map: the travellers are marks placed to their 256th (the fraction turn
 
 // ── THE SWITCH AND THE HOST ─────────────────────────────────────────────────────────────────────────────────────────
 
-test('TV3 switch: "Show me to travellers in my region" - on by default, the player\'s own say online, on the Other players card', () => {
+test('TV3 switch: "Show me to travelers in my region" - on by default, the player\'s own say online, on the Other players card', () => {
   assert.equal(PREF_DEFAULTS.showToTravellers, true);
   assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes('showToTravellers'), 'the room never forces it');
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /prefRow\('showToTravellers', t\('menu\.peers\.show', 'Show me to travellers in my region'\),/);
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /prefRow\('showToTravellers', t\('menu\.peers\.show', 'Show me to travelers in my region'\),/);
 });
 
 test('TV3 host wiring: the book hoisted above its readers, filled by the Region tab\'s own link; my mark sent when due, on that link, from the open air alone and with the switch on; the view and the map draw the book', () => {
   const w = rd('src/scenes/world.js');
   assert.ok(((i, j) => i >= 0 && j >= 0 && i < j)(w.indexOf('const travellerBook = createTravellerBook();'), w.indexOf('travellers: () => travellerBook.live(Date.now())')), 'BOOT-TDZ: above the map that reads it');
-  assert.match(w, /if \(tab\.id === 'region'\) \{   \/\/ TV3[^\n]*\n\s*link\.onTraveller = \(f\) => travellerBook\.put\(f, Date\.now\(\)\);/);
+  assert.match(w, /if \(tab\.id === 'region'\) \{   \/\/ TV3[^\n]*\n\s*link\.onTraveller = \(f\) => \{ travellerBook\.put\(f, Date\.now\(\)\); regionChase\.hear\(f\); \};/);   // PIN MOVED (OW-CHASE-RANGE): and a far traveller's chases heard (AUDIT OW-REVISITED: scenes/regionChaseHost.js)
   // AUDIT TV C1: a welcome is a fresh socket - the room holds nothing of mine, so the next frame sends my mark again
-  assert.match(w, /link\.onTravellerRoom = \(list\) => \{ travellerBook\.reset\(list, Date\.now\(\)\); travellerSent\.last = null; travellerSent\.at = 0; \};/);
-  assert.match(w, /link\.onTravellerLeft = \(id\) => travellerBook\.drop\(id\);/);
+  assert.match(w, /link\.onTravellerRoom = \(list\) => \{ travellerBook\.reset\(list, Date\.now\(\)\); travellerSent\.last = null; travellerSent\.at = 0; regionChase\.room\(list\); \};/);   // PIN MOVED (AUDIT OW-REVISITED L4-2): the welcome's chases heard, the unlisted withdrawn
+  assert.match(w, /link\.onTravellerLeft = \(id\) => \{ travellerBook\.drop\(id\); regionChase\.hear\(\{ id, p: null \}\); \};/);   // PIN MOVED (AUDIT OW-REVISITED L4-2): a leave withdraws their chases
   // AUDIT TV C5: offline (another tab has the seat), nobody is seen travelling
   assert.match(w, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.supersede\(\);\n(?:\s*\/\/[^\n]*\n)*\s*try \{ arenaOnline\?\.leaveAll\(\); \}[^\n]*\n\s*travellerBook\.clear\(\); travellerSent\.last = null;/);
   assert.match(w, /chatRegionFrame\(performance\.now\(\)\);[^\n]*\n\s*travellerFrame\(performance\.now\(\)\);/, 'after the region link has moved');
   assert.match(w, /if \(link\.room !== travellerSent\.room\) \{ travellerSent\.room = link\.room; travellerSent\.last = null; travellerSent\.at = 0;/, 'a new room holds nothing of mine');
   assert.match(w, /const outdoors = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && walkMode && playerSpawned && \(playerEntity\.health \?\? 0\) > 0;/, 'nothing from indoors');
   assert.match(w, /const shown = outdoors && isEnhanced\(\) && getPref\('showToTravellers'\) !== false && channelOf\(link\.room\) === chatRegionRoom\(_questRegionIndex\(\)\)( && !concealBits\(playerEntity\))?;/, 'AUDIT TV C4: never into the region just left (PIN MOVED, SCALE5c part two: the region\'s channel, on whichever of its shards)');
-  assert.match(w, /travellerDue\(travellerSent, \{ now, mark, alone: link\.othersHere === 0, shown \}\)/);
+  assert.match(w, /travellerDue\(travellerSent, \{ now, mark, alone: link\.othersHere === 0, shown(?:, chasing: [^}]*)? \}\)/);
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
   const tvm = rd('src/scenes/travelViewMarks.js');
   assert.match(tvm, /if \(near\.has\(t\.id\) \|\| Math\.max\(Math\.abs\(t\.p\.px - me\.x\), Math\.abs\(t\.p\.py - me\.y\)\) <= TV_BODY_RANGE\) continue;/, 'inside the pose range a traveller is their body - marked as a player drawn here (OVERWORLD NAMES), never twice');
   assert.match(tvm, /const kind = host\.social\?\.isPartyPeer\(t\.id\) \? 'party' : 'traveller';/, 'AUDIT TV C3: the peer\'s id asked of the party\'s seats; AUDIT NAMES N1-10: as play\'s names ask it');
   assert.match(tvm, /marks\.push\(\{ key: `trav:\$\{t\.id\}`, at: tvSceneKept\(t, w\.x, w\.z, 2, ship\), label: t\.name, kind: `\$\{kind\}\$\{ship \? ' ship' : ''\}\$\{t\.p\.tv \? ' journey' : ''\}`, edge: true, badge: tvBadgeOf\(t\),\n\s*kin: travellerKin\(\{ friend: !!host\.social\?\.isFriendPeer\(t\.id\), gt: t\.gt \}, myGt\), lv: t\.lv \?\? null \}\);/);   // OWS1: at sea, a ship; PIN MOVED (FIELD BUGS 2026-10-04e OW-KIN / OW-WHO): and their kin and Renown
   assert.match(w, /return \[x, ringHeight\(byte, !!landform, fade\) \+ state\.pixelTranslation\(px\.x, px\.y\)\[1\] \+ lift, z\];/, 'past the grid, the far ring\'s own height (LANDFORM1: with the lift the row puts on the streamed ground; AUDIT LANDFORMS II I1: faded beside the sea)');   // PIN MOVED (AUDIT LANDFORMS II I1)
-  assert.match(rd('src/ui/heldMap.js'), /travellers: this\._trav\.filter\(\(t\) => playerShown\(t\)\)\.map\(\(t\) => \(\{ x: t\.x, y: t\.y, name: t\.name, color: TV_KIN_COLORS\[t\.kin\] \?\? TRAVELLER_MARK_CSS, journey: t\.journey, ship: t\.ship \}\)\),/);   // OWS1; PIN MOVED (FIELD BUGS 2026-10-04e OW-WHO / OW-KIN): the players' filters, and a friend's and a guild-mate's colour
+  assert.match(rd('src/ui/heldMap.js'), /travellers: this\._trav\.filter\(\(t\) => playersOnMaps\(\) && playerShown\(t\)\)\.map\(\(t\) => \(\{ x: t\.x, y: t\.y, name: t\.name, color: TV_KIN_COLORS\[t\.kin\] \?\? TRAVELLER_MARK_CSS, journey: t\.journey, ship: t\.ship \}\)\),/);   // OWS1; PIN MOVED (FIELD BUGS 2026-10-04e OW-WHO / OW-KIN): the players' filters, and a friend's and a guild-mate's colour; PIN MOVED (MAP-PLAYERS): and the Players switch first
   // the relay: one arm, the region's channel alone, the attachment, the room's budget, the welcome
   const idx = rd('server/src/index.js');
   assert.match(idx, /if \(m\.t === 'trav'\) \{/);

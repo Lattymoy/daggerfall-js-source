@@ -34,7 +34,7 @@ import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
 import { worldCoordToMapPixel } from '../../../src/formats/mapsFile.js';
 import { TRAVEL_VIEW_TEXT, travelTripLine, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
-import { createLoadGovernor, unbuiltAround } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelPathUsesRoads, TRAVEL_PATH_TEXT, setTravelPathMode } from '../../../src/systems/travel/travelPathMode.js';
 import { freePull } from '../../../src/systems/travel/freePull.js';
@@ -52,10 +52,10 @@ test('TO-ROADS THE SWITCH: the port\'s own key beside First-Person Travel - OFF 
   assert.ok(def, 'declared on Travel Options\' pane');
   assert.equal(def.default, false, 'OFF - First-Person Travel keeps "the original travel option" (Mac, OW-TOGGLE)');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  assert.match(def.description, /^With First Person Travel on, a journey picked on the travel map follows the roads and tracks as the Overworld’s journeys do - planned by land, and refused where no way by land reaches - and is walked in first person, the Overworld view not raised\./);
-  assert.match(def.description, / Off, it walks straight to its destination, as Travel Options does\./);
-  assert.match(def.description, / Takes effect at once\. /, 'read live, as First-Person Travel is (AUDIT OW5 T1) - the tile\'s "when the world next loads" is the mod\'s other keys\'');
-  assert.match(def.description, /\(This port’s own switch - the mod has none\.\)$/);
+  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - what it does on and off, and that it takes effect at once
+  // (read live, as First-Person Travel is - AUDIT OW5 T1; the tile's "when the world next loads" is the mod's other keys');
+  // the note that the switch is the port's own is gone from the pane
+  assert.equal(def.description, 'With First Person Travel on, journeys follow the roads and tracks as Overworld journeys do, and a place with no way there by land can\u2019t be picked. Off, you head straight for your destination. Takes effect at once.');
   const shipped = JSON.parse(read('vendor/travel-options/modsettings.json'));
   assert.ok(!shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`)).includes(KEY), 'the author\'s file is untouched');
   const tile = MOD_CURATED['travel-options'];
@@ -98,7 +98,7 @@ function constBlock(name) {
 /** A piece the host hands the view or the map, by its own shape. */
 function grab(re, what) { const m = re.exec(WORLD); assert.ok(m, `world.js: ${what}`); return m[1]; }
 const ON_LOWER = grab(/\n\s*onLower: (\(why\) => \{[^\n]*\}),\n/, 'the view\'s onLower');
-const ON_TRAVEL = grab(/buildTravelMapWindow\(\{ onTravel: (\(pick, opts, computed\) => \{\n[\s\S]*?\n {4}\}) \}\);/, 'the map\'s onTravel');
+const ON_TRAVEL = grab(/buildTravelMapWindow\(\{ \.\.\.travelTown\(\), onTravel: (\(pick, opts, computed\) => \{\n[\s\S]*?\n {4}\}) \}\);/, 'the map\'s onTravel');   // PIN MOVED (FB1020c STREETS-TAB): the travel key's bag takes the town's streets first - `travelTown` the automap toggle's (scenes/exteriorAutomapToggle.js), as the merge of main rebuilt it
 const ON_COORDS = grab(/\n\s*onTravelToCoords: (\(pick, opts\) => \{ [^\n]*? \}),/, 'the map\'s onTravelToCoords');
 const HOST = [
   lineSource('const TV_SEA_EPS_M = '), lineSource('const tvQuiet = '), lineSource('const tvTrip = '), lineSource('const tvWater = '),
@@ -190,7 +190,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     tvOfferPassage: (place) => { h.offered.push(place.name); return false; },
     tvCautious: () => false, partyWalkBegin: (dest) => h.party.push(dest), travelGovernor: { reset() {} },
     dungeonApproach: refuse('dungeonApproach'), lastLegStart: refuse('lastLegStart'), pixelBox: refuse('pixelBox'),
-    gamePaused: () => false, duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], navalHostileNear: () => false,   // TIME-DILATION: no hostile ship
+    gamePaused: () => false, duelEnemyNear: () => false, areEnemiesNearby: () => false, exteriorFoePool: () => [], wildSeen: (foes) => foes, navalHostileNear: () => false,   // TIME-DILATION: no hostile ship; OW-RISE: the rise counts the foes the view's danger does
     partyTravel: { propose: () => false }, hudFade: { clearFade() {} }, fastTravelTo: (p) => h.fast.push(p.name),
     TEST_GODMODE: false, staffPowers: () => ({ god: false }), teleportTo: refuse('teleportTo'),   // TESTBUILD: the shipped build's god mode is off
     wildMapMask: () => null, wildInside: () => false,   // WILD1: no open zone on this map
@@ -276,7 +276,7 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, foeRate, travellerOnRoad: () => false,
+      foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // the view left down
@@ -285,7 +285,7 @@ test('TO-ROADS, the journey\'s life (the host\'s own code): a foe stops it as th
       setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
       travelAsked: 20, csaHoldsTimeScale: () => false, travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
       state: { terrainDistance: 3 }, playerTravelPixel: () => ({ x: 505, y: 245 }), tvGroundGenNow: () => 0,
-      unbuiltAround, built: { has: () => true },
+      unbuiltAround, unbuiltCount, built: { has: () => true },
       tvOwnsJourneys: () => owns, tvRoutesJourneys: () => true,   // both journeys are routes; only the Overworld's is OWNED
       journeyThreatCap: () => ({ cap: Infinity }), journeySlowSaid: () => {},   // OW6: no enemy about
     });

@@ -175,15 +175,26 @@
     ]
   },
   {
-    "name": "PROF12-count-novice-two",
+    "name": "PROF12-count-novice-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
-    "new": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
+    "old": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
+    "new": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
+    "note": "CRAFT-PAYS (2026-10-21, PIN MOVED): re-aimed by content - a Novice brews two now, and this mutant is the one it was.",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
     ]
+  },
+  {
+    "name": "CRAFT-PAYS-a-fourth-past-the-table",
+    "file": "src/net/alchemyLaw.js",
+    "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
+    "new": "  if (rank >= PROF_RANK_MAX) return 4;\n",
+    "tests": [
+      "test/systems/prof12_law.test.js"
+    ],
+    "why": "prof_brews.count is CHECKed 1 to 3 (migration 0070): a fourth would be refused by the INSERT OR IGNORE and answered as short Stores"
   },
   {
     "name": "PROF12-potent-expert-15",
@@ -614,8 +625,8 @@
   {
     "name": "PROF12-alchemy-fee",
     "file": "src/net/professionLaw.js",
-    "old": "export const ALCHEMY_FEE = 50;",
-    "new": "export const ALCHEMY_FEE = 40;",
+    "old": "export const ALCHEMY_FEE = 25;",
+    "new": "export const ALCHEMY_FEE = 50;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -949,11 +960,12 @@
   {
     "name": "PROF12-svc-dis-origin-gold",
     "file": "server-account/src/alchemy.js",
-    "old": "const origin = p.bought_with === 'gold' ? 'gold' :",
-    "new": "const origin = p.bought_with === 'gold!' ? 'gold' :",
+    "old": "const origin = p.bought_with === 'gold' ? (Number(p.loose)",
+    "new": "const origin = p.bought_with === 'gold!' ? (Number(p.loose)",
     "tests": [
       "test/net/prof12_service.test.js"
-    ]
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): a gold wall's Essence loose where the piece's goods walled it."
   },
   {
     "name": "PROF12-svc-dis-bad-id",
@@ -1446,7 +1458,7 @@
   {
     "name": "PROF12-E1-refusal-words",
     "file": "src/net/accountClient.js",
-    "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores - it never goes to the pack.'),",
+    "old": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays in the Stores and cannot go in your pack.'),",
     "new": "  'prof-no-pack-form': () => t('account.refusal.profNoPackForm', 'That stays at the bench until its own craft is practised.'),",
     "tests": [
       "test/systems/prof12_client.test.js"
@@ -1503,12 +1515,14 @@
   },
   {
     "name": "PROF12-E2-world-no-recipe",
-    "file": "src/scenes/world.js",
-    "old": ", recipe: it.recipe };   // AUDIT PROF12 E2: its recipe, the XP's tier",
-    "new": " };",
+    "file": "src/ui/professions/profPages.js",
+    "old": ", essence: essenceOf(points, disenchanter), recipe: it.recipe };",
+    "new": ", essence: essenceOf(points, disenchanter) };",
     "tests": [
-      "test/systems/prof12_client.test.js"
-    ]
+      "test/systems/prof12_client.test.js",
+      "test/systems/fb1019f_disenchantsaid.test.js"
+    ],
+    "note": "Re-aimed by content (FIELD BUGS 2026-10-19f DISENCHANT-SAID): the station's list left world.js for profPages.js disenchantableOf."
   },
   {
     "name": "PROF12-A1-spend-no-clamp",
@@ -1668,8 +1682,8 @@
   {
     "name": "PROF12-E3-card-three",
     "file": "src/net/professionLaw.js",
-    "old": "spec('transmuter', 'Transmuter', 'Two of a DFU metal and a Mercury make one of the next up.')",
-    "new": "spec('transmuter', 'Transmuter', 'Three of a DFU metal make one of the next up.')",
+    "old": "spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.')",
+    "new": "spec('transmuter', 'Transmuter', 'Three of a metal make one of the next metal up.')",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1975,8 +1989,8 @@
   {
     "name": "PROF541-R2-S1-page-note",
     "file": "src/ui/professions/profPages.js",
-    "old": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 1 ? ` ${t('prof.page.alchemy.counterOne', 'A potion wholly of the Apothecaries\\' goods brews one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
-    "new": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 9 ? ` ${t('prof.page.alchemy.counterOne', 'A potion wholly of the Apothecaries\\' goods brews one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
+    "old": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 1 ? ` ${t('prof.page.alchemy.counterOne', 'A potion made only from the Apothecaries\\' goods brews just one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
+    "new": "  detail.append(el('p', 'px-note', `${station.kind === 'shop' ? t('prof.page.alchemy.shop', 'The alchemist\\'s station - {fee} gold a brew.', { fee: station.fee }) : t('prof.page.alchemy.home', 'Your alchemy station.')} ${brewLine}${n > 9 ? ` ${t('prof.page.alchemy.counterOne', 'A potion made only from the Apothecaries\\' goods brews just one.')}` : ''}`));   // AUDIT PROF-541 R2-S1",
     "tests": [
       "test/systems/prof12_client.test.js"
     ],

@@ -425,8 +425,8 @@
   {
     "name": "SEAT-WORDS-the-tutorials-pace-not-the-laws",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "the rest following later.', { max: ROLL_GAIN_DAY_MAX }),",
-    "new": "the rest following later.', { max: 10 }),",
+    "old": "Any more is added on later days.', { max: ROLL_GAIN_DAY_MAX }),",
+    "new": "Any more is added on later days.', { max: 10 }),",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1291,8 +1291,8 @@
   {
     "name": "WORDS-II-C8-the-utc-day",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "a real day each (days turn at midnight UTC), the rest",
-    "new": "a real day each, the rest",
+    "old": "a real day (days start at midnight UTC). Any more",
+    "new": "a real day. Any more",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

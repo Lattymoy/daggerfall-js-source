@@ -19,6 +19,26 @@ billboards), so for this layer it is no reference: the reference is the clips. T
 fixed or decided, and pinned: `01-Overview/audits/Audit-Body-Motion.md`. The sections below are the layer as it now
 stands; where the audit changed a law or a claim, the change is marked AUDIT with its finding.
 
+**THE RUN (2026-10-19, Mac after the merge: "Uhh the greatsword running doesnt use both hands. The running animation
+with the legs needs to be stiffer. The hands are way too close together when running both in third and first
+person.")** - three changes, each measured on the retail biped against the merged layer and pinned
+(`test/characters/bodyMotion/bodymotion_run.test.js`, the two-hander's in `bodymotion_carry.test.js`, the first
+person's in `test/combat/twohands_mw.test.js`; `tools/mutants/bodymotion_run.json`, 17, all dead), marked TWO-RUN,
+RUN-STIFF and RUN-WIDE where they changed a row below. Then, on the same pull request, Mac on the two-hander: "The 2
+hander should be held lower at the hio, but not attached to the hip" (TWO-RUN's row again); and the Discord through
+Mac, a player: "sprinting with my mace and shield out just makes me look incredibly stupid lol" (SHIELD-RUN).
+
+**STEADY AND LOOSER (2026-10-20, Mac: "When wielding 2 daggers and running, the character is super stiff and wobbles
+side to side. Might as well check the other animations also. I think we went way too stiff")** - every class's gait
+measured on the retail biped against the merged layer (each hand's sway, each blade's tips, the elbows, the wrists and
+the forearms, the knees and the hips), and three changes, each pinned (`test/characters/bodyMotion/
+bodymotion_steady.test.js`, RUN-EASE in `bodymotion_run.test.js`; `tools/mutants/held_steady.json`), marked where they
+changed a row below: HELD-STEADY (the wobble - every held weapon's tips swung side to side with the chest's stride
+counter-turn, the pair's 50 units together, the staff's 45, the two-hander's 44, the spear's 40, the one-hander's 29);
+DUAL-RUN (the pair's run - both arms locked straight behind, swinging a tenth of the gait's swing, each forearm turned
+128 degrees off its elbow's hinge, past the 85 to 90 AUDIT CARRY-7 holds every run's to); and RUN-EASE (RUN-STIFF's legs
+halfway back). The lantern at the waist, on the same report, is Handheld-Torches.md HT-WAIST-SIZE.
+
 ## What the clips did - the reference, and why it was not enough
 
 - **One clip per frame, every bone.** The rig's winner ladder (`src/combat/fpArm.js` update: death, the weapon action,
@@ -57,7 +77,11 @@ a pin) walks the keys' pace instead.
 **What the clip still owns.** The clip machine runs every group as before and decides everything a group decides; the
 layer steps aside for each, easing out and back in (`MOTION_EASE`): the whole body for a death, a recoil, a climb, a
 seat or a saddle, the air (the jump), the water and levitation; the arms for a draw or a sheathe, a readied spell or a
-cast, a bow, a crossbow, a thrown weapon and the long gun's hold; the left arm for a lit torch. **The upper body is
+cast, a bow, a crossbow, a thrown weapon and the long gun's hold; the left arm for a lit torch, and for a shield on it
+while a one-hander is drawn or the weapon sheathed (SHIELD-RUN: the layer's free arm pumped at a run, and its forearm -
+the Shield Bone's - rose to 104 units, ten under the head's bone, the shield over the head from behind; Morrowind's own
+groups carry a shield, and drawn fists or a two-hander hide it, so those keep the layer's arms - the word reads the
+shield off the pieces the body wears, the composer's `shield (<record>)` slot). **The upper body is
 whoever has the arms** (AUDIT RIG-4, DOC-3, CARRY-10): while the clip has both arms the chest, the neck and the
 collarbones are the clip's too (the layer had turned them under the clip's arms - a bow's hand 18.6 units off, the long
 gun's barrel 27 degrees), and a torch's left collarbone is the clip's. **The fingers are always the clip's**: the
@@ -117,6 +141,24 @@ in metres while the rig's own leg caps the stride: a race 1.2 times as tall stri
 from a stand, to a stop, strafing and on a diagonal. What is left is named in the audit (a walk broken into a run the
 other way, about 10 units in its worst frame).
 
+**RUN-STIFF** (2026-10-19, Mac: "The running animation with the legs needs to be stiffer"): the run rides higher on a
+straighter standing leg (`height` 0.95 of the leg, 0.93 at its fast end - it was 0.9 and 0.87), lifts its foot less
+behind it (`lift` 0.12 of the leg, 0.18 fast - 0.24 and 0.4: the heel kicked up to the seat), springs less (`bob`
+0.028 - 0.042), turns, drops and tilts its pelvis less (`hipYaw` 8, `hipList` 4, `hipTilt` 8 degrees and its wave
+2 - 11, 6, 10 and 3), and swings its arms a little less (42 degrees, the elbow 96 at the front - 44 and 98). On the retail biped the knee folds at most 58.6 degrees past the standing leg's at 8.1 m/s and
+49.9 at 5.5 (it folded 97.7 and 86.8), and the hips ride no lower than 0.935 and 0.945 of their standing height (0.866
+and 0.881). Riding higher, the leg has less give: a back run turned fast into a strafe (2 to 4 radians a second, then
+2 back) dropped the hips 12 to 13.5 units in a frame (the merged layer's 7.9 to 9.5), so a landing foot now takes the
+hips in over the last fifth of a leg before its reach, not a tenth (AUDIT GAIT-21's fade): 5.5 to 8. The measures
+above, after THE RUN: the random sessions 4.99, 6.75 and 9.01; every key change 3.61, 5.92 and 10.31.
+
+**RUN-EASE** (2026-10-20, Mac: "I think we went way too stiff"): RUN-STIFF's knee, folding 58.6 degrees at a run, was a
+stiff-legged lope, and the first run's 97.7 kicked the heel to the seat - so each term RUN-STIFF moved stands halfway
+between the two: the run rides at 0.925 of the leg (0.9 at its fast end), lifts its foot 0.18 (0.29), springs 0.035, and
+turns, drops and tilts its pelvis 9.5, 5 and 9 degrees (its wave 2.5). On the retail biped the knee now folds 79.9
+degrees past the standing leg's at 8.1 m/s and 70.3 at 5.5, and the hips ride no lower than 0.902 and 0.913 of their
+standing height; the pin holds both between the two runs before (`bodymotion_run.test.js`).
+
 ## The carry - `src/characters/bodyMotion/carry.js`
 
 `carryClassOf` maps the hand's state to a class, and `CARRY[class][gait]` holds each arm's row for idle, walk, run and
@@ -129,18 +171,53 @@ CARRY-1/2/3/7/8/9/12: every row was searched again against the arm's own ranges 
 degrees, its extension under 60, the forearm's supination under 85), the ground (a 110-unit blade over it) and the
 thighs and trunk (the weapon out of them), and a two-handed class's left hand on its haft - the two-hander's guard had
 run the hilt up the forearm (the wrist 78 to 88 degrees ulnar), the spear's left hand never reached its haft, a
-two-hander's sneak put its blade in the ground, and every run asked the forearm to turn 120 to 145 degrees.
+two-hander's sneak put its blade in the ground, and every run asked the forearm to turn 120 to 145 degrees. (DUAL-RUN,
+2026-10-20: the pair's run row was not among them - measured against the elbow's hinge, its forearms stood turned 128
+degrees; searched again, with the shoulder turned out to carry its share.)
 
 | Class | When | At rest | At a run |
 |---|---|---|---|
-| free | nothing in the hand, or sheathed | arms hanging, palms in | the gait's pump: elbows near 90, the swing |
-| one | a one-hander (short or long blade, blunt, axe) | Mac's: held down and away from the side, the blade forward, down and out | "the same format": the arm low and out, the blade trailing behind and down; the free arm pumps |
-| two | a two-hander (long blade, warhammer, war axe) | a low guard in both hands, the blade forward and down, the left hand toward the pommel; the stance's feet split, the hips turned | Mac's: at the hip in the right hand, the blade trailing behind and down; the left lets go and pumps |
+| free | nothing in the hand, or sheathed | arms hanging, palms in | the gait's pump: elbows near 90, the swing; each hand on its own side of the body, as far apart at their nearest as the walk's (RUN-WIDE: the forearm turned in 22 degrees and the arm held out 10 - the hands crossed the middle, 4.3 units apart against the walk's 22.1; turned out 4 and held out 18, they stand 22.8 apart) |
+| one | a one-hander (short or long blade, blunt, axe) | Mac's: held down and away from the side, the blade forward, down and out | "the same format": the arm low and out, the blade trailing behind and down; the free arm pumps - with a shield on it, the clip's arm carries the shield (SHIELD-RUN) |
+| two | a two-hander (long blade, warhammer, war axe) | a low guard in both hands, the blade forward and down, the left hand toward the pommel; the stance's feet split, the hips turned | Mac's: at the hip, in BOTH hands (TWO-RUN - the left let go and pumped: "the greatsword running doesnt use both hands"; then "held lower at the hio, but not attached to the hip"): the grip low before the right hip and clear of it, the arms hanging nearly straight, the left hand on the hilt toward the pommel, the blade trailing behind, down and out past the right leg; the chest turned 32 degrees toward it and leaning 10 more (`runTurn`, `runLean`), and the arms not swinging - a hand on each end of one weapon |
 | wide | a staff | both hands, the staff across the body, its head up and left | at the hip, trailing; the left pumps |
 | spear | a spear | both hands on the haft (AUDIT CARRY-2), the point forward and up | at the hip, the point forward and down; the left pumps |
-| dual | a pair (TWO-HANDS) | Mac's: both held down and away from the sides, mirror images | Mac's: both swept behind the body, the blades trailing; the trunk leans in (`runLean`) |
-| fists | bare hands drawn - a weapon type of none in the hand (AUDIT MELEE-3) - or both fists up (TWO-HANDS) | a guard, both fists up before the chest, the left leading; the feet split | the gait's pump |
+| dual | a pair (TWO-HANDS) | Mac's: both held down and away from the sides, mirror images | Mac's: both swept behind the body, the blades trailing; the trunk leans in (`runLean`); pumping (DUAL-RUN: 0.4 of the gait's swing and a fifth of its elbow - the elbows 21 to 26 degrees - each hand 18.7 units fore and aft behind the hips, the shoulder turned out 60 so the forearm turns 52 to 66 off its hinge; it stood locked straight, swinging a tenth - 8.5 units - the forearm turned 128) |
+| fists | bare hands drawn - a weapon type of none in the hand (AUDIT MELEE-3) - or both fists up (TWO-HANDS) | a guard, both fists up before the chest, the left leading; the feet split | the gait's pump, as wide as the free run's (RUN-WIDE: 3.5 units apart, now 22.5) |
 | clip | a bow, a crossbow, a thrown weapon, a readied spell | the clip's own arms | the clip's own arms |
+
+**The two-hander's run in both hands** (TWO-RUN): the retail biped's arm is 35 units from the shoulder to the wrist,
+and a grip at the right hip stands 40 to 44 from the left shoulder - the left arm reached its full length and fell
+short. So the class turns the chest toward the weapon at a run (`CARRY.two.runTurn`, by the run's share, laid as
+`runLean` is - a body carrying a long blade low on its right turns its shoulders to it), and the row was searched again
+within the arm's ranges with the left hand on the hilt, the blade's tip clear of the ground and out of the right thigh.
+The row takes none of the gait's arm swing: with 0.12 of it, the right hand ran past what its arm reaches at one end of
+the stride and the left, closed on the right's request, stood 2 units off the hilt.
+
+The first row held the grip by the hip, the elbows bent (turned 25 degrees): 0.02 to 0.06 of a leg under the hip joint,
+5 units off the thigh, and beside the hip as the chest turned with the stride - "attached". Searched again for a grip
+lower, clear of the thigh and ahead of the hip: the arms hang nearly straight, held forward, and the chest turns 32
+degrees and leans 10 more (`runLean`) - the grip 0.07 to 0.10 of a leg under the hip joint, 8.4 units off the thigh and
+6.6 to 18 ahead of the hip. It goes no lower with both hands on it: with the arms straight, the deepest of every search
+(the chest leaning 18 degrees more) stood 0.12 under, and a lower grip held forward of the hip is a straight arm's
+height lost to its angle.
+
+**HELD-STEADY** (2026-10-20, "wobbles side to side"): the gait turns the chest against the hips once a stride and
+drops it the other way (`GAIT_STYLES` `chestYaw`, `chestRoll` - 14 and 3 degrees at a run), and the carry built every arm
+on the chest as it stood - so every weapon held still in the hand swung with it: the pair's two blades together, their
+tips 50 units side to side at a run. A runner's chest turns against the hips because the swinging arms ride it; a hand
+that holds a blade holds the blade's way still against it. So the gait hands the stride's own share of the chest's turn
+apart (`gaitPose`'s `chest.wave`), and the carry lays each arm on the chest as far as that arm rides it (`carry.js`
+`rideOf`): an empty arm by its row's swing share (all of a run's pump, a little of a guard's), a hand that holds a blade
+none - it pumps by its row's swing about the steadied frame. Each arm's request is turned back about its shoulder by
+what the chest carries past its share (`carryHands`, `turnAbout`, the turn `bodyMotion.js` makes from the chest as laid
+to the chest without the wave). A weapon in both hands binds the chest: as far as the left hand closes on the right's
+haft, the chest takes none of the stride's turn (`strideRide` - held steady while its shoulder rode the chest, the
+two-hander's left hand fell 3.2 units off its hilt at a run and the staff's 2.4 off its haft at a walk). Measured at a
+run, the held tips' side to side, then and now: the pair 50.5 and 5.5 (pumping, DUAL-RUN), the staff 45.1 and 2.7, the
+two-hander 43.5 and 5.3, the spear 39.6 and 2.6, the one-hander 28.9 and 3.4; the empty arms' and the fists' pump
+unchanged (their hands carried 14 to 15 units across with the chest, the chest turning 27 degrees across a stride). The
+two-hander's chest, and a staff's and a spear's at a walk, now turn with the hips alone.
 
 **Between gaits and classes** (AUDIT CARRY-4/5/6/13): the blade turns along a great circle through its class's own way
 round the outside of the body (`via` - summed and normalised, it swung 20 to 41 degrees a frame and a claymore's tip 28
@@ -278,7 +355,20 @@ female's or the beast's own rest, never under a skinned body, and never against 
 for the hands' shapes. The layer measures each skeleton it is handed, so the families take the same requests; but how a
 request reads on Morrowind's own bodies is for Mac's eye on his own data, and every table (`GAIT_STYLES`,
 `BODY_STYLES`, `STAND`, `STEER`, `TURN`, `CARRY`, `TWO_HAND_GRIP`, `TWO_HAND_HAFT`, `MELEE`, `BLOW_TRUNK`, `ANKLE`,
-`SLOPE`) is one frozen row to move there.
+`SLOPE`) is one frozen row to move there. THE RUN's first-person change (RUN-WIDE, `handsLaw.js` `RUN_3D`) moved the
+law's own place on the picture: no retail first-person skeleton is vendored, and the test's fixture arm reaches neither
+the old place nor the new (its right wrist stood 0.54 of the half-frame out at the top of the stroke with 0.36 asked,
+0.73 with 0.6).
+
+**Found by STEADY AND LOOSER, not fixed here, said plainly.** The solve (`bodySolve.js` reachLimb) turns each arm bone by
+the least rotation from where the clip held it, so the roll a forearm carries is the clip's and the hand alone takes the
+turn its request asks - a skinned wrist shows all of it. Measured against the elbow's hinge (CARRY-7's measure), the
+two-hander's left hand on its hilt at a run (TWO-RUN) turns its forearm 119 degrees, past the 85 to 90 range; the
+pair's run did too, and its row now stands inside it. Turning the haft hand's elbow way would move the measure, not the
+wrist (the arm stands almost straight, and the bones' roll is still the least rotation's) - the fix is the solve's:
+sharing the forearm's turn between the forearm and the hand, as a body does along its forearm. That moves every arm
+the layer poses and can be judged only on a skinned body, so it waits for Mac's eye on his own data. The one-hander's,
+the staff's and the spear's runs stand inside the range (64 to 74, 68 to 70, 30 to 42).
 
 ## Pins
 
@@ -290,11 +380,31 @@ request reads on Morrowind's own bodies is for Mac's eye on his own data, and ev
   writes kept a rotation; the solve's ease.
 - `test/characters/bodyMotion/bodymotion_carry.test.js` (14): every weapon type and hands mode to its class and the haft's
   grip; the arm by its angles; the one-hander held down and away and its run; the two-hander's guard with both hands and
-  its hip carry at a run; the pair mirrored at rest and swept behind at a run; the clip keeping the bow, the draw and
+  its hip carry in both hands at a run, low, clear of the hip and the chest turned to it (TWO-RUN); the clip keeping a
+  shield's arm, and the rig's word reading a shield off the body's pieces (SHIELD-RUN); the pair mirrored at rest and swept behind at a run; the clip keeping the bow, the draw and
   the torch's arm; the blow's clock; the slash with the whole body and its edge leading; the chop, the thrust and the
   backhand; a pair's left blade's blow the right's mirror and a two-hander's left hand on the haft through a blow; the
   legs walking under a blow; switched back on with the heading moved (no step, no bank); the rig's word; the wiring by
   source.
+- `test/characters/bodyMotion/bodymotion_run.test.js` (2): the run's legs - the knee's fold and the hips' height
+  (RUN-STIFF, then RUN-EASE: between the two) - and the running hands on their own sides, as far apart as the walk's (RUN-WIDE); the first person's
+  running fists before their own shoulders in `test/combat/twohands_mw.test.js` (RUN-WIDE THE FIRST PERSON'S RUNNING
+  FISTS); `tools/mutants/bodymotion_run.json` (17, all dead). The earlier sets, re-run on THE RUN, found two survivors -
+  AUDIT-BODY-MOTION-reach-taken-at-once (the stiffer run flung no foot out of reach where GAIT-21 looked) and
+  AUDIT-BODY-MOTION-strike-sets-the-clock (its hips no longer showed a clock set at a strike) - each killed by a pin
+  added to the audit's: a back run turned fast into a strafe (GAIT-21), and the clock after a reversal (GAIT-22).
+- `test/characters/bodyMotion/bodymotion_steady.test.js` (3, STEADY AND LOOSER): every held weapon's tips steady at a
+  run and a jog while the empty arms and the fists still ride the chest (HELD-STEADY); a weapon in both hands binding
+  the chest, its left hand on the haft; the pair's run behind the hips, pumping, its elbows bent and bending, its
+  forearms under 75 degrees off their hinges (DUAL-RUN); RUN-EASE's legs in `bodymotion_run.test.js`, between RUN-STIFF's
+  and the first run's. `tools/mutants/held_steady.json` (20, with HT-WAIST-SIZE's - Handheld-Torches.md). Re-aimed by
+  content, the records this change moved: `tools/mutants/bodymotion_run.json` RUN-STIFF-the-swing-kicks,
+  RUN-STIFF-the-run-sinks and TWO-RUN-the-turn-never-laid; `tools/mutants/bodymotion.json`
+  BODY-MOTION-pair-left-unmirrored, BODY-MOTION-pair-run-forward and BODY-MOTION-blow-chest-unturned. PIN MOVED, the
+  earlier sets re-run on this change: RUN-WIDE THE RUNNING HANDS APART held the run's hands no nearer each other than
+  the walk's less a tenth, and with RUN-EASE's lower hips RUN-WIDE-the-arm-held-in (the arm held in 8 degrees) came
+  through by 0.008 units - the tolerance is a twentieth now (the run's hands stand 22.6 to 22.9 apart at their nearest,
+  the walk's 22.1, the mutant's 19.9 to 20.1).
 - `test/characters/bodyMotion/bodymotion_audit.test.js` (17) and `test/characters/bodyMotion/bodymotion_claims.test.js`
   (9): the audit's - every finding fixed, as its lane measured it, and every claim this page makes that no other pin
   could fail (`01-Overview/audits/Audit-Body-Motion.md`).
@@ -307,7 +417,10 @@ request reads on Morrowind's own bodies is for Mac's eye on his own data, and ev
   `poseAssembly` order: the `motion` slot between the neck and the run); `test/player/ww2_idlebob.test.js` (the bag's
   travel and drawn yaw, AUDIT GAIT-9/GAIT-17/RIG-6). Mutant records whose anchors this slice moved, re-aimed by content:
   `tools/mutants/htwaist.json` HT-WAIST-the-body-never-swings-it and HT-WAIST-the-portrait-swings;
-  `tools/mutants/wb9h.json` WB9h-the-pose-copied-for-its-yaw (the peer's camera now carries its travel).
+  `tools/mutants/wb9h.json` WB9h-the-pose-copied-for-its-yaw (the peer's camera now carries its travel); and THE RUN's,
+  `tools/mutants/bodymotion.json` BODY-MOTION-two-run-at-the-chest (the two-hander's run row searched again, TWO-RUN)
+  and BODY-MOTION-blow-chest-unturned (the chest's yaw now carries the class's `runTurn`); SHIELD-RUN's,
+  BODY-MOTION-torch-arm-taken (the left arm's line now gives it to the clip for a shield too).
 - The row's own (CI found them on the pull request): the registry's counts and order (`test/systems/features.test.js`
   FT0 and FT15's note budget, +208; `test/systems/ft18_features.test.js` 106; `test/systems/ft8_combatvisuals.test.js`
   56) and, PIN MOVED, the Morrowind section's items (`test/formats/morrowind/mwnpc_mainmerge.test.js`), with

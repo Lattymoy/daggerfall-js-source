@@ -136,6 +136,13 @@ MOD_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/feed"
 # GRANT-DOOR (section 20): `grantDoor` (GRANT_DOOR, off unset) turns away
 # a foes room's hello that says no spawn grants - off until the site
 # serves the build that says them, since the relay deploys first.
+# LEASE1 (src/net/roomLease.js): `leaseDoor` (LEASE_DOOR, off unset) -
+# a lease room turns away a hello that hands on no lease, and hears a
+# bound socket in nothing but its ping while it holds no live lease.
+# Off until the site serves the build that hands leases on, for the same
+# reason; once it does, set it here as well as at the hub, so a room just
+# woken (or one whose hub did not answer) never reads it off. Leases are
+# signed with a key derived from GATE_SIGNING_KEY; no new secret.
 GRANT_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/grant-feed"
 # ═══ INT11-INT14: THE LINE THE BOSS FIGHTS' COUNT RUNS BY ════════════
 #

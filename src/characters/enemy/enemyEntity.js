@@ -19,6 +19,8 @@ import { effectiveSkill, rawSkillForEffective } from '../../systems/skillSoftcap
 import { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js';
 import { meanerMonstersRow as pcaaoMeanerMonstersRow } from '../../combat/pcaaoMeanerMonsters.js';   // PCO1: Kirk.O's Meaner Monsters edit, when both mods are on
 import { applyMeanerMonsters } from '../meanerMonsters.js';   // MM1: Ralzar's Meaner Monsters, when its switch is on
+import { enemyEntityType, enemyCareerIndex } from './enemyBasics.js';   // DEX1: SetupDemoEnemy's entity type and SetEnemyCareer's careerIndex, one home
+import { customCareerTemplate } from './customEnemies.js';   // DEX1: DaggerfallEntity.CustomCareerTemplates
 
 export { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 
@@ -45,6 +47,47 @@ export async function loadMonsterCareer(careerIndex, fetchBytes) {
   _monsterCareers.set(careerIndex, cf.career);
   return cf.career;
 }
+
+/** DEX1: DaggerfallEntity.GetClassCareerTemplate (:907-915) - CLASS{nn}.CFG, null when the file is not there. Cached by
+ *  index as monster careers are (DFU reads the file each time; nothing writes a career it hands out). */
+const _classCareers = new Map();
+export async function loadClassCareer(careerIndex, fetchBytes) {
+  if (_classCareers.has(careerIndex)) return _classCareers.get(careerIndex);
+  const { ClassFile } = await import('../../formats/classFile.js');
+  const cf = new ClassFile();
+  let bytes;
+  try { bytes = await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`); } catch { bytes = null; }
+  const career = bytes && cf.load(bytes) !== false ? cf.career : null;
+  _classCareers.set(careerIndex, career);
+  return career;
+}
+
+/** DEX1: EnemyEntity.SetEnemyCareer's career, in its order (:251-296) - a mod's registered template first, then a
+ *  monster's ENEMY{nnn}.CFG, then a class's CLASS{id-128}.CFG; null for an id that is no enemy. THE ONE DOOR every
+ *  spawn arm asks (AUDIT 17i, THE ONE CONSTRUCTION SEAM): the dungeon's two arms and the pool's each read the file for
+ *  themselves before, and none of them could have read a mod's. */
+export async function loadEnemyCareer(mobileType, fetchBytes) {
+  const custom = customCareerTemplate(mobileType);
+  if (custom) return custom.load(fetchBytes);
+  const kind = enemyEntityType(mobileType);
+  if (kind === 'monster') return loadMonsterCareer(mobileType, fetchBytes);
+  if (kind === 'class') return loadClassCareer(mobileType - 128, fetchBytes);
+  return null;
+}
+
+/** DEX1: A MOD'S EDIT OF A ROW, AT THE MINT. DFU runs every mod's Init before any MonoBehaviour's Start, so a mod that
+ *  edits EnemyBasics.Enemies in its Start (Daggerfall Enemy Expansion's BestiaryMod.Start) edits the rows the Inits left -
+ *  Meaner Monsters' and the overhaul's among them, which the port lays over a row here, at the mint. So a Start-time
+ *  editor registers here and runs after them: `fn(mobileType, row)` answers the row as it leaves it (a copy, never the
+ *  table's own), or the row unchanged. */
+const _mintRowEditors = [];
+export function registerMintRowEditor(fn) {
+  if (typeof fn !== 'function') throw new Error('registerMintRowEditor: a function of (mobileType, row)');
+  _mintRowEditors.push(fn);
+}
+/** The test seam. */
+export function _resetMintRowEditors() { _mintRowEditors.length = 0; }
+const editAtMint = (mobileType, row) => { let r = row; for (const fn of _mintRowEditors) r = fn(mobileType, r) ?? r; return r; };
 
 export function rollEnemyClassMaxHealth(level, hitPointsPerLevel, rollFn = Math.random) {
   const baseHealth = 10;
@@ -99,13 +142,17 @@ export function applyProgressionScaling(entity, scaling) {
  * @param playerLevel
  */
 export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollFn = Math.random, { exactLevel = false } = {}) {
-  const isClass = mobileType >= 128;
+  // DEX1: SetupDemoEnemy's entity type, not `>= 128` - a mod's monster (Enemy Expansion's 256-290) has the 128 bit clear
+  // and is levelled by its row, a mod's class (384-398) by the player; a custom one of either takes DFU's same arm
+  // (EnemyEntity.cs:251-274: "Default like a monster" / "like a class enemy" - and no watchman's bonus, its id not 146)
+  const isClass = enemyEntityType(mobileType) === 'class';
   // MM1 + PCO1: EnemyBasics.Enemies[i] as the two Awakes left it -
   // Ralzar's Meaner Monsters row over the base row when that mod is on,
   // then Kirk.O's edit over THAT when the overhaul is on too (PCAAO
   // lists Meaner Monsters as a dependency, so it Awakes after it and
   // its values win where both write); the base row when neither.
-  const basics = pcaaoMeanerMonstersRow(mobileType, applyMeanerMonsters(mobileType, basicsIn));
+  // DEX1: and a mod's Start-time edit over both (registerMintRowEditor) - Enemy Expansion's classic lines, DFU's order
+  const basics = editAtMint(mobileType, pcaaoMeanerMonstersRow(mobileType, applyMeanerMonsters(mobileType, basicsIn)));
   const stats = career
     ? {
         strength: career.strength, intelligence: career.intelligence,
@@ -140,7 +187,7 @@ export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollF
     mobileType,
     isClass,
     isPlayer: false,
-    careerIndex: isClass ? mobileType - 128 : mobileType,
+    careerIndex: enemyCareerIndex(mobileType),   // DEX1: a custom enemy's is its own id (EnemyEntity.cs:256)
     level,
     maxHealth,
     health: maxHealth,

@@ -1,0 +1,210 @@
+[
+  {
+    "name": "BOSS-DOT-the-rounds-wiped",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    kept = (entity.activeEffects ?? []).filter(carriedOnStandIn);",
+    "new": "    kept = NO_ROUNDS;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the bug: the stand-in's lasting harm forgotten with the count - a Burn its first round alone"
+  },
+  {
+    "name": "BOSS-DOT-the-fatigue-drain-carried",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "export const carriedOnStandIn = (a) => a?.kind === 'continuousDamage' && !a.ended && a.roundsRemaining > 0;",
+    "new": "export const carriedOnStandIn = (a) => /^continuousDamage/.test(a?.kind ?? '') && !a.ended && a.roundsRemaining > 0;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a drain of fatigue or magicka carried on a body that has neither"
+  },
+  {
+    "name": "BOSS-DOT-the-incumbent-unfed",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "  entity.activeEffects = carried.map((a) => ({ ...a }));",
+    "new": "  entity.activeEffects = [];",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a recast meets no incumbent: a fresh first round claimed, never DFU's renewal"
+  },
+  {
+    "name": "BOSS-DOT-the-kept-renewed-in-place",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "  entity.activeEffects = carried.map((a) => ({ ...a }));",
+    "new": "  entity.activeEffects = carried.slice();",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a recast the ward turns renews the running rounds anyway"
+  },
+  {
+    "name": "BOSS-DOT-a-stall-lost",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++)",
+    "new": "for (let k = 0; k < 1 && e.activeEffects.some(carriedOnStandIn); k++)",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a frame that stalled runs one round of the several it missed"
+  },
+  {
+    "name": "BOSS-DOT-never-ticked",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "k++) tickActiveEffects(e, counting(got), rolls);",
+    "new": "k++) void tickActiveEffects;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the rounds kept and never run"
+  },
+  {
+    "name": "BOSS-DOT-the-clock-old-at-the-first",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "      if (!kept.size) round = Math.floor(now() / COURT_ROUND_MS);",
+    "new": "",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a keeper idle without frames ticks the rounds before its first was laid"
+  },
+  {
+    "name": "BOSS-DOT-a-gone-body-kept",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "        if (!body?.entity) { kept.delete(key); continue; }",
+    "new": "        if (!body?.entity) continue;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a body gone and back resumes rounds its fall should have ended"
+  },
+  {
+    "name": "BOSS-DOT-death-ignored",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "      if (!alive) kept.clear();",
+    "new": "",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "my rounds run on past my death"
+  },
+  {
+    "name": "BOSS-DOT-death-unasked",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "  const standInRound = () => rounds.frame(bodyOf, player.health > 0);",
+    "new": "  const standInRound = () => rounds.frame(bodyOf, true);",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the doors never tell the keeper I died"
+  },
+  {
+    "name": "BOSS-DOT-the-wards-round-sent",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };",
+    "new": "land: (d) => !!land(body, d, HIT_KINDS.Spell, true) };",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a round into his ward sent (and rung) as a blow the relay refuses"
+  },
+  {
+    "name": "BOSS-DOT-a-round-unmarked",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };",
+    "new": "land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell) };",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a round's claim unmarked: an Elite Breach's Vestiges weigh it as a blow"
+  },
+  {
+    "name": "BOSS-DOT-the-doors-crossed",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnHost : host.landOnCrystal;",
+    "new": "const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnCrystal : host.landOnHost;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a host body's round out through a crystal's door"
+  },
+  {
+    "name": "BOSS-DOT-turned-and-laid",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "      const laid = kept.length > 0 && !turned(body);",
+    "new": "      const laid = kept.length > 0;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a spell the ward turns renews the rounds running"
+  },
+  {
+    "name": "BOSS-DOT-refused-and-laid",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    if (went) rounds.keep(key, kept);",
+    "new": "    rounds.keep(key, kept);",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a spell whose claim was refused lays its rounds anyway"
+  },
+  {
+    "name": "BOSS-DOT-the-serpent-unkept",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "      if (kept.length) met = box;",
+    "new": "      if (false) met = box;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the serpent's rounds with no segment to land on"
+  },
+  {
+    "name": "BOSS-DOT-the-serpent-past-its-fight",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "!!alive && player.health > 0); },",
+    "new": "player.health > 0); },",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the serpent's rounds run on past its fight"
+  },
+  {
+    "name": "BOSS-DOT-the-serpents-riders-told-the-claim",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "took: standInShown(dealt, SERPENT_HIT_CAP_X * SERPENT_HAND_REF),",
+    "new": "took: dealt,",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the serpent's riders told a claim no hand's purse lands"
+  },
+  {
+    "name": "BOSS-DOT-a-breach-round-takes-the-stacks",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "stacks: !tick && mom.i === i ? mom.n : 0,",
+    "new": "stacks: mom.i === i ? mom.n : 0,",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a round of my lasting harm weighed by Momentum's stacks"
+  },
+  {
+    "name": "BOSS-DOT-a-breach-round-is-a-blow",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (tick) return true;",
+    "new": "",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a round builds Momentum and rolls Arcane Echo"
+  },
+  {
+    "name": "BOSS-DOT-the-round-never-asked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    standInRound();   // FIELD BUGS 2026-10-19f BOSS-DOT",
+    "new": "    // FIELD BUGS 2026-10-19f BOSS-DOT",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the dungeon context never runs the relay bodies' rounds"
+  },
+  {
+    "name": "BOSS-DOT-the-host-door-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "!!opts.onHostHit?.({ i: hb.host, d: damage, r, tick });",
+    "new": "!!opts.onHostHit?.({ i: hb.host, d: damage, r });",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the host door drops a round's mark on its way to an Elite Breach"
+  },
+  {
+    "name": "BOSS-DOT-the-serpents-fight-untold",
+    "file": "src/scenes/world.js",
+    "old": "    serpentSpell.frame(fight);",
+    "new": "",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "the serpent's rounds never run"
+  },
+  {
+    "name": "AUDIT-FB1019f-C4-turned-reads-the-record-alone",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "const turned = (body) => !!(body.warded || body.entity?.warded);",
+    "new": "const turned = (body) => !!body.warded;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "an Elite Breach body's ward (and the Flame's) rides on its stand-in alone - read off the record, a recast from no footing renews its rounds"
+  },
+  {
+    "name": "AUDIT-FB1019f-G7-a-round-of-one-dropped",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "        if (got.n >= 1) body.land(got.n);",
+    "new": "        if (got.n > 1) body.land(got.n);",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "a round that deals exactly 1 is never claimed"
+  },
+  {
+    "name": "AUDIT-FB1019f-C3-the-burns-figure-moved",
+    "file": "src/systems/spellcast.js",
+    "old": "    percent = saving - 20 <= roll ? 100 - 5 * (saving - roll) : 0;",
+    "new": "    percent = saving - 20 <= roll ? 100 - 6 * (saving - roll) : 0;",
+    "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
+    "why": "his save prorated otherwise: the level-20 Burn's figure the pages quote (8 a round, 200 in all) is no longer the producers'"
+  }
+]

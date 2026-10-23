@@ -19,15 +19,15 @@
 
 /** The ten, with the card's word for each, a line for the page, and a beast's manner. */
 export const PERSONALITIES = Object.freeze({
-  brutal: Object.freeze({ label: 'Brutal', blurb: 'Savage, blunt, and hungry for blood.', manner: 'with a savage snarl' }),
-  witty: Object.freeze({ label: 'Witty', blurb: 'Sharp-tongued, sardonic, never short of a barb.', manner: 'with an almost knowing glint' }),
-  humorous: Object.freeze({ label: 'Humorous', blurb: 'Laughs at everything - your death included.', manner: 'with a playful yip' }),
-  arrogant: Object.freeze({ label: 'Arrogant', blurb: 'Proud, haughty, and certain it is your better.', manner: 'with its head held high' }),
-  cold: Object.freeze({ label: 'Cold', blurb: 'Quiet, patient, and utterly without mercy.', manner: 'in eerie silence' }),
-  zealous: Object.freeze({ label: 'Zealous', blurb: 'Fervent - sees the hand of the gods in every blow.', manner: 'with wild, burning eyes' }),
-  unhinged: Object.freeze({ label: 'Unhinged', blurb: 'Manic, giggling, and impossible to predict.', manner: 'with a frenzied howl' }),
-  honourable: Object.freeze({ label: 'Honourable', blurb: 'A duellist with a code - fights fair, and expects the same.', manner: 'with a steady, measured gaze' }),
-  craven: Object.freeze({ label: 'Craven', blurb: 'All bluster and nerves - brave only from behind.', manner: 'with a nervous whine' }),
+  brutal: Object.freeze({ label: 'Brutal', blurb: 'Savage and hungry for blood.', manner: 'with a savage snarl' }),
+  witty: Object.freeze({ label: 'Witty', blurb: 'Sharp-tongued and never short of a barb.', manner: 'with an almost knowing glint' }),
+  humorous: Object.freeze({ label: 'Humorous', blurb: 'Laughs at everything, your death included.', manner: 'with a playful yip' }),
+  arrogant: Object.freeze({ label: 'Arrogant', blurb: 'Proud and certain it is your better.', manner: 'with its head held high' }),
+  cold: Object.freeze({ label: 'Cold', blurb: 'Quiet, patient and without mercy.', manner: 'in eerie silence' }),
+  zealous: Object.freeze({ label: 'Zealous', blurb: 'Sees the hand of the gods in every blow.', manner: 'with wild, burning eyes' }),
+  unhinged: Object.freeze({ label: 'Unhinged', blurb: 'Manic and impossible to predict.', manner: 'with a frenzied howl' }),
+  honourable: Object.freeze({ label: 'Honorable', blurb: 'A duelist who fights fair and expects the same.', manner: 'with a steady, measured gaze' }),
+  craven: Object.freeze({ label: 'Craven', blurb: 'All bluster, and brave only from behind.', manner: 'with a nervous whine' }),
   weary: Object.freeze({ label: 'Weary', blurb: 'Tired of the killing, and of you most of all.', manner: 'with a tired, rumbling sigh' }),
 });
 /** @type {readonly PersonalityId[]} */
@@ -85,7 +85,7 @@ const LINES = deepFreeze({
     taunt_risen: ['We really must stop meeting like this, {p}. You keep losing.', 'Your persistence is touching. Futile, but touching.', "I'd say you look well, {p}, but we both know how this ends."],
     flee: ['A strategic withdrawal! Write it down!', 'Lovely chat. Must dash!'],
     cornered: ["Ah. Well, that's inconvenient.", "Fine. I'll do this the tedious way."],
-    escape: ['Do keep the scar I gave you, {p}. A keepsake.', 'Until next time. Do practise.'],
+    escape: ['Do keep the scar I gave you, {p}. A keepsake.', 'Until next time. Do practice.'],
     slain: ['Well... that was... unexpected...', "At least... I had the last word... didn't I?"],
     rise: ['Dying suits you, {p}. Do it again sometime.', "I've been telling everyone about you. They laugh."],
     yield: ['Well. This is awkward. Perhaps we can be civil?', 'I concede, {p}. Graciously, mind you.', "You win. Don't let it go to your head - it's large enough."],
@@ -111,8 +111,8 @@ const LINES = deepFreeze({
     devoted_warn: ['Do glance behind you, {p}!', 'Your back, {p} - it has company!'],
   },
   humorous: {
-    taunt_slew: ['{p}! My favourite corpse! Ha!', "Back again? You're like a bad penny - you keep turning up!", 'Last time you fell so hard, I think you dented the road!'],
-    taunt_fled: ["Ha! You're the one who chased me! I'm faster now - I've been practising!", "Remember me? I'm the one who got away! Best day of my life!", 'I ran so fast last time I lost a boot. Want to see where?'],
+    taunt_slew: ['{p}! My favorite corpse! Ha!', "Back again? You're like a bad penny - you keep turning up!", 'Last time you fell so hard, I think you dented the road!'],
+    taunt_fled: ["Ha! You're the one who chased me! I'm faster now - I've been practicing!", "Remember me? I'm the one who got away! Best day of my life!", 'I ran so fast last time I lost a boot. Want to see where?'],
     taunt_risen: ["Round three! Or is it four? I've lost count - you haven't!", "I've killed you so often I've started a tally on my arm!", 'You again! Should I start charging you rent on my blade?'],
     flee: ["Look behind you! ...Hah, no, I'm leaving!", 'Time for my legs to do the fighting!'],
     cornered: ["Nowhere to run? Then I'll run at you!", 'Oh, bother. Fine, fine - fisticuffs!'],
@@ -147,12 +147,12 @@ const LINES = deepFreeze({
     taunt_risen: ['Each time I rise, you shrink.', 'You are a footnote in my legend, {p}.', 'Kneel now, {p}, and spare us both the tedium of your death.'],
     flee: ['You are not worth the effort!', 'This is beneath me!'],
     cornered: ['You dare corner me? Then witness true power!', 'Very well. I shall end you myself.'],
-    escape: ["Savour this, {p}. It is the last time you'll see my back.", 'I allow you to live. For now.'],
+    escape: ["Savor this, {p}. It is the last time you'll see my back.", 'I allow you to live. For now.'],
     slain: ['Impossible... I am... superior...', 'You... are nothing... to me...'],
     rise: ['Rise, {p}, and remember who put you down.', 'Your death was so very ordinary.'],
-    yield: ['I... yield. Do not mistake this for respect.', 'Fine. You have won. Savour it - it will not happen again.', 'Spare me and I may yet find you useful.'],
+    yield: ['I... yield. Do not mistake this for respect.', 'Fine. You have won. Savor it - it will not happen again.', 'Spare me and I may yet find you useful.'],
     executed: ['I was... meant for... greater...', 'History... will remember me... not you...', 'Do it, then. Without me, you are nothing.'],
-    spared: ['You recognise my worth. Wise. I shall serve - for now.', 'Very well. My blade is yours. Try to keep up.', 'Mercy from an inferior. How novel. I accept.'],
+    spared: ['You recognize my worth. Wise. I shall serve - for now.', 'Very well. My blade is yours. Try to keep up.', 'Mercy from an inferior. How novel. I accept.'],
     slip: ['You hesitated. Of course you did.', 'Too weak to choose, {p}? I shall choose for you.'],
     arrive: ['I have graced you with my return.', 'You summoned me? Naturally.'],
     dismiss: ['I shall await your inevitable need of me.', 'Finally, some peace from your bumbling.'],
@@ -227,7 +227,7 @@ const LINES = deepFreeze({
     signature: ['By the gods - {move}!', '{move}, by their will!'],
     laststand: ['The gods will not let me fall!', 'I am lifted up! I rise again!', 'Not by your hand, {p}!'],
     stole: ['I have consecrated your {item}.', 'The gods gave me your {item}, {p}.'],
-    festered: ['My fervour only grew, {p}.', 'The gods kept me waiting. Now they unleash me.'],
+    festered: ['My fervor only grew, {p}.', 'The gods kept me waiting. Now they unleash me.'],
     felled_return: ['{ally} was judged, {p}. So will you be.', 'The gods struck {ally} down by my hand.'],
     routed_return: ['You fled judgement, {p}. It caught up.', 'No one outruns the gods, {p}.'],
     deserted: ['The gods call me elsewhere.', 'My faith was never in you, {p}.'],
@@ -270,30 +270,30 @@ const LINES = deepFreeze({
     taunt_fled: ['I fled our duel, {p}. That shame ends today.', 'I owe you a fair fight. I have come to pay.', 'You gave me my scars honestly. I return them the same way.'],
     taunt_risen: ['Each time we cross blades, you grow stronger. So do I.', 'No tricks, no ambush. Just steel, {p}.', 'Once more, {p}. I take no joy in it, but I will not hold back.'],
     flee: ['Forgive me - I must withdraw!', 'Another day, {p}!'],
-    cornered: ['So be it. I face you with honour.', 'No more running. Have at you!'],
+    cornered: ['So be it. I face you with honor.', 'No more running. Have at you!'],
     escape: ['Live well until we meet again, {p}.', 'I will return when I am worthy.'],
     slain: ['A good death... thank you...', 'Well fought... {p}...'],
     rise: ['Rise, {p}. Heal, and find me.', "You fought bravely. I hope you'll do so again."],
-    yield: ['I yield, {p}. Your blade is the better.', 'The fight is yours. I accept your judgement.', 'I have lost fairly. Do what honour demands.'],
-    executed: ['An honourable end... I thank you.', 'Strike true.', 'I die... without regret.'],
-    spared: ['You show mercy to a beaten foe. I am in your debt for life.', 'My sword is yours, {p}, until my debt is paid.', 'Spared with honour. I will serve with honour.'],
+    yield: ['I yield, {p}. Your blade is the better.', 'The fight is yours. I accept your judgement.', 'I have lost fairly. Do what honor demands.'],
+    executed: ['An honorable end... I thank you.', 'Strike true.', 'I die... without regret.'],
+    spared: ['You show mercy to a beaten foe. I am in your debt for life.', 'My sword is yours, {p}, until my debt is paid.', 'Spared with honor. I will serve with honor.'],
     slip: ['Forgive me. I will not wait to die.', 'You hesitate. I will not take that for mercy.'],
     arrive: ['I stand ready, {p}.', 'At your side.'],
     dismiss: ['As you command.', 'I will keep watch until you call.'],
     downed: ['Forgive me... I faltered...', 'Fight on... without me...'],
     kill: ['A clean blow.', 'Rest now, foe.'],
     battle: ['Stand with me!', 'Face me, if you dare!'],
-    release: ['My debt is paid. Go with honour, {p}.', 'Farewell, friend. I will not forget your mercy.'],
+    release: ['My debt is paid. Go with honor, {p}.', 'Farewell, friend. I will not forget your mercy.'],
     // RVN12a (bible/12-Enhanced-AI/Feud-Arc.md 23): FEUD's moments
     learned: ['I have learned your {how}, {p}. Fight me fairly.', 'Your {how} will not serve you again.'],
     signature: ['Guard yourself - {move}!', 'I give you fair warning: {move}!'],
-    laststand: ['I am not yet beaten, {p}.', 'Again, then. On your guard.', 'My honour holds me up.'],
+    laststand: ['I am not yet beaten, {p}.', 'Again, then. On your guard.', 'My honor holds me up.'],
     stole: ['I earned your {item} as a trophy.', 'Win back your {item}, {p}, if you can.'],
     festered: ['You did not come. I grew impatient.', 'I waited for an honest fight, {p}.'],
     felled_return: ['{ally} fought well. Tell them so.', 'I bested {ally} fairly. Now you.'],
     routed_return: ['You fled the field, {p}. Stand this time.', 'There is no shame in retreat. Once.'],
     deserted: ['My oath is broken, {p}. I am sorry for it.', 'You have not kept faith with me. I go.'],
-    betrayed: ['You have no honour left to keep me, {p}.', 'Forgive me. I cannot follow you.', 'Face me, then. As enemies.'],
+    betrayed: ['You have no honor left to keep me, {p}.', 'Forgive me. I cannot follow you.', 'Face me, then. As enemies.'],
     devoted_warn: ['Have a care - behind you!', '{p}! Guard your back!'],
   },
   craven: {
@@ -328,7 +328,7 @@ const LINES = deepFreeze({
     devoted_warn: ['B-behind you, {p}!', 'Look out! Your back!'],
   },
   weary: {
-    taunt_slew: ['I took your life once, {p}. It brought me no peace.', 'Must we do this again? Yes... I suppose we must.', 'I have dreamt of your fall every night since.'],
+    taunt_slew: ['I took your life once, {p}. It brought me no peace.', 'Must we do this again? Yes... I suppose we must.', 'I have dreamed of your fall every night since.'],
     taunt_fled: ['I ran, and the running never ended. Let it end here.', 'My scars ache when you are near, {p}.', 'Old wounds, old grudges. Here we are.'],
     taunt_risen: ['So many deaths. So much blood. Let this be the last.', 'I am so tired of killing you, {p}.', 'Must we, {p}? I have buried you enough times already.'],
     flee: ['Not today... not today...', 'I have no more fight in me.'],
@@ -423,7 +423,9 @@ const LEANS = deepFreeze({
   other: ['brutal', 'witty', 'humorous', 'arrogant', 'unhinged', 'craven', 'honourable', 'weary', 'zealous'],
   person: PERSONALITY_IDS,
 });
-const leanOf = (mobileType) => (mobileType >= 128 ? 'person' : BEASTS.has(mobileType) || MUTE_KINDS.has(mobileType) ? 'beast' : UNDEAD.has(mobileType) ? 'undead'
+// DEX1: DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js
+// isClassEnemyId is the export) - so a mod's monster past 255 leans as a monster, a mod's class as a person
+const leanOf = (mobileType) => ((mobileType & 128) !== 0 ? 'person' : BEASTS.has(mobileType) || MUTE_KINDS.has(mobileType) ? 'beast' : UNDEAD.has(mobileType) ? 'undead'
   : DAEDRA.has(mobileType) ? 'daedra' : ORCISH.has(mobileType) ? 'orcish' : 'other');
 
 /** WHO IT IS: one personality per revenant id - the same on every read, every client and every load - leaning by kind.

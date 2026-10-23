@@ -1,0 +1,21 @@
+{
+    "ModTitle": "MUDEX",
+    "ModVersion": "1.0.1",
+    "ModAuthor": "Ralzar",
+    "ContactInfo": "",
+    "DFUnity_Version": "1.0.0",
+    "ModDescription": "Meaner Unleveled Daggerfall Enemy Expansion",
+    "GUID": "7241df16-730c-47c9-9afc-3e65d694706f",
+    "Files": [
+        "Assets/Game/Mods/MUDEX/MUDEX_Monsters.mdb.csv",
+        "Assets/Game/Mods/MUDEX/MUDEX_Tables.tdb.csv"
+    ],
+    "Dependencies": [
+        {
+            "Name": "daggerfall enemy expansion",
+            "IsOptional": false,
+            "IsPeer": false,
+            "Version": "1.3.4"
+        }
+    ]
+}

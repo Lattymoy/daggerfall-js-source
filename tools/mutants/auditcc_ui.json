@@ -402,8 +402,8 @@
   {
     "name": "AUDITCC-UI-S8-nothing-taken",
     "file": "src/ui/credits.js",
-    "old": "Boons (the default: neglect costs nothing, and a body",
-    "new": "Boons (the default: nothing taken, and a body",
+    "old": "Boons (the default: neglect costs nothing, and staying",
+    "new": "Boons (the default: nothing taken, and staying",
     "why": "the credits say Boons takes nothing: the drink swings the attributes there",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the credits name Boons the default.",
     "tests": [
@@ -433,8 +433,8 @@
   {
     "name": "AUDITCC-UI-S13-beside-the-bars",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "Icons at the screen\\'s left edge show",
-    "new": "Icons next to your bars show",
+    "old": "Signs at the left edge of the screen show",
+    "new": "Signs next to your bars show",
     "why": "the page puts the tiles beside the bars",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -503,7 +503,7 @@
   {
     "name": "AUDITCC-UI-S14-the-tile-untitled",
     "file": "src/ui/enhanced/enhancedHud.js",
-    "old": "  if (t.say) { cell.title = t.say; cell.setAttribute('aria-label', t.say); }",
+    "old": "  if (t.say) cell.setAttribute('aria-label', t.say);",
     "new": "",
     "why": "the HUD says no level on a tile",
     "tests": [

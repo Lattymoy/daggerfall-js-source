@@ -39,7 +39,7 @@
   },
   {
     "name": "AUDIT-WB11-W1-every-stand-in-to-him",
-    "file": "src/scenes/dungeonContext.js",
+    "file": "src/scenes/gate/standInSpell.js",
     "old": "    if (target?.hostI != null) return spellOnHost(record, target.hostI);\n",
     "new": "",
     "tests": [
@@ -140,7 +140,7 @@
   {
     "name": "AUDIT-WB11-W3-the-bucket-at-eight",
     "file": "src/net/wire.js",
-    "old": "export const GATE_HZ_MAX = 16;",
+    "old": "export const GATE_HZ_MAX = 28;",
     "new": "export const GATE_HZ_MAX = 8;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-WB11-B4-the-fallen-not-counted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const fighters = bodies.filter((b) => f.players[b.sub]);",
-    "new": "const fighters = bodies.filter((b) => !b.dead && f.players[b.sub]);",
+    "old": "const fighters = bodies.filter((b) => f.players[b.sub]);\n  const n = bearerCountFor(fighters.length), C = hisCourt(f)",
+    "new": "const fighters = bodies.filter((b) => !b.dead && f.players[b.sub]);\n  const n = bearerCountFor(fighters.length), C = hisCourt(f)",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "AUDIT-WB11-D7-the-bearers-rising-unsaid",
     "file": "src/scenes/gate/gateHost.js",
-    "old": ": COURT_HOST_TEXT.bearers());",
-    "new": ": '');",
+    "old": ": k === HOST.bearer ? COURT_HOST_TEXT.bearers()\n",
+    "new": ": k === HOST.bearer ? ''\n",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -504,11 +504,12 @@
   {
     "name": "AUDIT-WB11-D7-its-fall-to-the-striker-alone",
     "file": "server/src/index.js",
-    "old": "else if (m.k === 'ahit') this._gateFan(applyHostHit(",
-    "new": "else if (m.k === 'ahit') void (applyHostHit(",
+    "old": "else if (m.k === 'ahit') await this._gateFanKept(f, applyHostHit(",
+    "new": "else if (m.k === 'ahit') void (0, applyHostHit(",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "AUDIT-WB11-D7-a-stale-landing-struck",

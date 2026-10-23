@@ -176,7 +176,7 @@ test('RVN-STARS XP EARNED: a fight won at my side (swornFightStep\'s win) is 5 a
   N.revenantCompanionUpdate(me, r.id, (c) => { c.xp = 70; });
   heard.length = 0;
   RC.swornFightWon(r.id);
-  assert.deepEqual(heard, [`${r.given} reaches level 2 - a star to set on the Companions page.`]);
+  assert.deepEqual(heard, [`${r.given} reaches level 2. Set its new star on the Companions page.`]);
   RC.swornFightWon(r.id);
   assert.equal(heard.length, 1, 'said once a level');
   // an errand home
@@ -499,7 +499,7 @@ test('RVN-STARS THE WINDOW\'S WORDS: every star named, its aspect and kind; a st
   assert.equal(rvnStarKindWords(ST.rvnStarOf('r_bound')), 'The Road · notable');
   assert.equal(rvnStarKindWords(ST.rvnStarOf('oath')), 'Starting star');
   assert.deepEqual([['health', 0.05], ['blows', -0.1], ['art', 0.15], ['haste', 0.05], ['odds', 0.3], ['odds', -0.5], ['haul', 0.3], ['road', 0.15], ['road', -0.1], ['bold', 1], ['loyal', 0.2], ['rest', 0.3]].map(([k, v]) => rvnStarStatWords(k, v)),
-    ['Health +5%', 'Damage -10%', 'Art strength +15%', 'Its art\'s cooldowns 5% shorter', 'Mission odds +3%', 'Mission odds -5%', 'Mission gold and materials +30%', 'Missions 15% shorter', 'Missions 10% longer', 'Brings back nothing if it returns hurt', 'Loyalty losses 20% smaller', 'Rests 30% shorter']);
+    ['Health +5%', 'Damage -10%', 'Art strength +15%', 'Its art can be used again 5% sooner', 'Mission odds +3%', 'Mission odds -5%', 'Mission gold and materials +30%', 'Missions 15% shorter', 'Missions 10% longer', 'Brings back nothing if it returns hurt', 'Loyalty losses 20% smaller', 'Rests 30% shorter']);
   assert.deepEqual(rvnSkySummary(['oath', 'b_hp1', 'b_bl1', 'b_bl2', 'b_relent', 'b_bl3', 'b_rage']).map((l) => [l.key, l.neg]), [['health', true], ['blows', false]]);
   assert.deepEqual(rvnSkySummary(['oath', 'r_odd1', 'r_haul1', 'r_far', 'r_haul2', 'r_fortune']).filter((l) => l.key === 'bold').map((l) => l.neg), [true], 'Fortune\'s price marked');
   assert.equal(rvnStarRefusal(['oath'], 'g_wake', 2), 'Reaching this star costs 4 points. It has 2. It gets one point per level after the first, and one per rank past the first.');

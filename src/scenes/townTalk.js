@@ -92,6 +92,7 @@ export { MODES, nextInteractionMode } from '../player/interactionMode.js';
 import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, interactionModeText, askInteractionMode } from '../player/interactionMode.js';
 import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
+import { friendLine } from '../systems/livingWorld/friendWord.js';   // FIELD BUGS 2026-10-21d REGARD-OWN: a friend made, said
 // AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
 // (player/interactionMode.js), because PlayerActivate.cs:221-228 reads
@@ -300,15 +301,24 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // buildingNameOpts hook and the directory build cannot drift - a
   // second copy of "which bank, whose regent, what the palace is
   // called" is how %cbd and the talk directory come to disagree about
-  // the same building. Null while no topics/factions stand (the quest
+  // the same building. Null until FACTION.TXT is read (the quest
   // hook answers {} through it and generateBuildingName falls to its
-  // own defaults, DFU's own out-of-location posture).
+  // own defaults).
+  // FB1020h SITE-NAMED (FIELD BUGS 2026-10-20h): A TEMPLE'S AND A GUILD
+  // HALL'S NAME NEED NO TOWN. The bag answered null wherever no town's
+  // topics stood - on the road, at sea - and a quest that drew a remote
+  // temple or guild hall there named it '' for good: the Order of the
+  // Hour's letters read "at  in Wildertown". DFU names them from
+  // PlayerEntity.FactionData wherever the player stands
+  // (FormulaHelper.cs:3139-3162), and a shop's %ef bank and %rt regent
+  // by the player's region (FormulaHelper.cs:3225,
+  // MacroHelper.cs:644-650); only the town pair is the town's.
   function nameOpts() {
-    if (!topics || !factions) return null;
-    const region = topics.regionIndex ?? regionNow();
+    if (!factions) return null;
+    const region = topics?.regionIndex ?? regionNow();
     const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
     return {
-      locationName: topics.locationName, regionName: topics.regionName,   // the canonical pair: the key a palace is chosen by
+      locationName: topics?.locationName, regionName: topics?.regionName,   // the canonical pair: the key a palace is chosen by (none off a town)
       // L10N3e: ...and the pair AS SHOWN, for a shop's %cn and the bank's region (TalkManager.cs:2788-2789, :2857-2858)
       shownLocationName: shownLocationName(), shownRegionName: shownRegionName(),
       nameBank: getNameBankOfRegion(region),
@@ -1081,6 +1091,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  reaction reads it (a mobile's is a Commoner's, npcSession.js setTargetMobileNPC; with no engine, the same). */
   const _toneTaste = () => toneTaste(tone, engine()?.session?.npcData?.socialGroup ?? 0);
   const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, _toneTaste()); };
+  /** REGARD-OWN (FIELD BUGS 2026-10-21d): A FRIEND MADE IS SAID - a word, its tone or a deed that carries a resident's
+   *  regard into friendship (the relations' own count, regardClock.js friendsMade), with where their Courtship is when
+   *  the house can court them. AUDIT FB1021d RO-1: said once nothing covers the HUD. The talk window covers the toasts and
+   *  the classic column, and the HUD's lines run out on real seconds (`hud.tick` takes the frame's dt, a window open or
+   *  not), so a line said at the word was gone before the window closed; it waits for the window instead, and a friend
+   *  lost again inside it (a blunt question after the word) is not said at all. */
+  const sayFriends = () => {
+    if (overlay || toastsCovered()) return;
+    for (const f of livingTalk?.friendsMade?.() ?? []) hud.add(friendLine(f));
+  };
   // AUDIT 26 F043: the CURRENT partner's reaction seed. DFU seeds the
   // roll from whichever NPC is being spoken to - `DFRandom.Seed =
   // lastTargetMobileNPC.GetHashCode()` or `lastTargetStaticNPC`'s
@@ -1283,6 +1303,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   function frame(dt) {
     hud.tick(dt);
+    sayFriends();   // REGARD-OWN: a friend made, once the HUD is clear
     overlay?.tick?.(dt);   // D1: the death sequence's clock (any overlay may want one)
     // U41: a window may FINISH inside its own tick - the travel
     // popup's day countdown departs on a clock, not on a key - and
@@ -1542,6 +1563,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
+      sayFriends();   // REGARD-OWN: a friend made indoors, said where it was made
       hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2: the same report as the frame above, the interior slot this arm is drawn under included
       if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },

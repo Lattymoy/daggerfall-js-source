@@ -342,8 +342,8 @@
   {
     "name": "BAL4-the-plate-says-end-the-journey",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End the journey')",
-    "new": "word: t('death.key.end', 'End the journey')",
+    "old": "word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale')",
+    "new": "word: t('death.key.end', 'End your tale')",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "AUDIT-BAL-a-class-elite-at-level-one",
     "file": "src/systems/eliteFoes.js",
-    "old": "const kindLevel = (t) => (t >= 128 ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));",
-    "new": "const kindLevel = (t) => (t >= 128 ? Infinity : (ENEMY_BASICS[t]?.level ?? 0));",
+    "old": "const kindLevel = (t) => (isClassEnemyId(t) ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));",
+    "new": "const kindLevel = (t) => (isClassEnemyId(t) ? Infinity : (ENEMY_BASICS[t]?.level ?? 0));",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]

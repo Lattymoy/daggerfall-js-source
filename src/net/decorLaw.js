@@ -373,7 +373,7 @@ export const DECOR_YARD_HIGH = 4;
 export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1]) <= DECOR_YARD_HIGH;
 /** YARD-HEIGHT (AUDIT Y3): the refusal in its one sentence - the decorator's (scenes/homeYards.js YARD_TOO_HIGH) and the
  *  service's `yard-high` (net/accountClient.js), as townSeatLaw.js's rosters' words are the board's and the service's. */
-export const DECOR_YARD_HIGH_WHY = `Too high - a yard's piece stands at most ${DECOR_YARD_HIGH} m above the ground.`;
+export const DECOR_YARD_HIGH_WHY = `Too high. Yard decorations can be at most ${DECOR_YARD_HIGH} m above the ground.`;
 /** The most pieces one town's yards answer at once. */
 export const DECOR_YARDS_TOWN_MAX = 2_000;
 

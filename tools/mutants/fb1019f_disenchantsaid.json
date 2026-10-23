@@ -1,0 +1,132 @@
+[
+  {
+    "name": "DISENCHANT-SAID-the-essence-filter-back",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    }).filter((x) => x.points > 0);\n",
+    "new": "    }).filter((x) => x.essence > 0);\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-a-form-with-no-points-listed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    }).filter((x) => x.points > 0);\n",
+    "new": "    }).filter((x) => x.points >= 0);\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-disenchanter-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  const disenchanter = book?.track?.('enchanting')?.specs?.[50] === DISENCHANTER;\n",
+    "new": "  const disenchanter = false;\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-a-kept-piece-listed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "&& !isLocked(it) && !kept(it.provenance))\n",
+    "new": "&& !isLocked(it))\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-a-worn-piece-listed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "typeof it.recipe === 'string' && !tradeRefusal(it) && !isLocked(it) && !kept(",
+    "new": "typeof it.recipe === 'string' && !isLocked(it) && !kept(",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-one-essence-greyed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (!(pc.essence >= 1)) {\n",
+    "new": "    if (!(pc.essence >= 2)) {\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-greyed-row-drawn-as-any-other",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const row = el('div', 'prof-smelt prof-locked');\n",
+    "new": "      const row = el('div', 'prof-smelt');\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-its-button-live",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      b.disabled = true;\n      row.append(",
+    "new": "      b.disabled = false;\n      row.append(",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-reason-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      row.append(el('b', null, pc.name), el('span', 'prof-split', ENCHANT_UNDER_LINE(pc.points)), b);\n",
+    "new": "      row.append(el('b', null, pc.name), b);\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-greyed-row-falls-through",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      detail.append(row);\n      continue;\n",
+    "new": "      detail.append(row);\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-none-line-read-off-the-length",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (!pieces.some((pc) => pc.essence >= 1)) detail.append(",
+    "new": "  if (!pieces.length) detail.append(",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-reason-not-the-laws-hundred",
+    "file": "src/ui/professions/profPages.js",
+    "old": "{ points, per: ESSENCE_POINTS });",
+    "new": "{ points, per: 10 });",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "DISENCHANT-SAID-the-host-drops-the-kept",
+    "file": "src/scenes/world.js",
+    "old": "        disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),\n",
+    "new": "        disenchantable: () => disenchantableOf(playerEntity.items, { book: profBook }),\n",
+    "tests": [
+      "test/systems/fb1019f_disenchantsaid.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  }
+]

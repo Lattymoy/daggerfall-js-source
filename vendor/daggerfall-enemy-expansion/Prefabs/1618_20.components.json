@@ -1,0 +1,33 @@
+{
+ "GameObject": "1618_20",
+ "Components": [
+  {
+   "class": "Transform"
+  },
+  {
+   "class": "MeshFilter"
+  },
+  {
+   "class": "MeshRenderer"
+  },
+  {
+   "class": "MonoBehaviour",
+   "script": "DaggerfallEntityBehaviour",
+   "EntityType": 0
+  },
+  {
+   "class": "MonoBehaviour",
+   "script": "EntityEffectManager"
+  },
+  {
+   "class": "SphereCollider",
+   "m_IsTrigger": true,
+   "m_Radius": 1,
+   "m_Center": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   }
+  }
+ ]
+}

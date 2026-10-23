@@ -227,10 +227,10 @@ test('THE TWO-PHASE HANDOFF (Mac, 2026-10-14: "the fallen must lose the worn pie
   // until he collects it and comes back otherwise - never that it was taken - and a line says how long
   const held = d.wi === 0 && !!d.escrow?.r;
   const lines = wildDeathLines({ killer: 'Borin', dropped: 0, claimed: 'longsword', held });
-  assert.equal(lines[0], 'Borin claimed your longsword - it is held until they collect it, and comes back to you if they do not.');
+  assert.equal(lines[0], 'Borin claimed your longsword. It is held until they collect it, and comes back to you if they do not.');
   assert.notEqual(lines[0], WILD_TEXT.deathClaim('Borin', 'longsword'));
-  assert.equal(WILD_TEXT.heldNote('Borin', 'longsword', Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)), `Your longsword is held for Borin - if they do not collect it within ${Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)} minutes, it comes back to you.`);
-  assert.equal(WILD_TEXT.heldNote(null, 'longsword', 1), 'Your longsword is held for your killer - if they do not collect it within 1 minute, it comes back to you.');
+  assert.equal(WILD_TEXT.heldNote('Borin', 'longsword', Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)), `Your longsword is held for Borin. If they do not collect it within ${Math.ceil((escrowBackAt(d.escrow.until) - fellAt) / 60)} minutes, it comes back to you.`);
+  assert.equal(WILD_TEXT.heldNote(null, 'longsword', 1), 'Your longsword is held for your killer. If they do not collect it within 1 minute, it comes back to you.');
   // his game asks the room for it (the remains named it his) - and is answered a collect, not a record
   const his = hisBook(z);
   await his.run();
@@ -281,7 +281,7 @@ test('UNCOLLECTED, IT COMES BACK: nobody collecting by the time the remains coul
   assert.deepEqual(piece(swords(z.fallen.items, uid)[0]), piece(wildRecord(z.minted)), 'as it was minted');
   assert.equal(swords(recordOf(z.svc, z.ria.character).items, uid).length, 1, 'back in her record');
   assert.equal(escrowRow(z.svc, d.r).state, 'returned');
-  assert.equal(WILD_TEXT.heldBack('longsword'), 'Your longsword has come back to you - it was never collected.', 'and she is told');
+  assert.equal(WILD_TEXT.heldBack('longsword'), 'Your longsword has come back to you. It was never collected.', 'and she is told');
   assert.equal(z.svc.env.DB._raw.prepare('SELECT char_id FROM item_uids WHERE uid = ?').get(uid)?.char_id, z.ria.character, 'the ledger: hers again');
   // the collect he held, carried now: refused
   const late = await z.svc.call('/v1/wild/collect', { receipt: cr, realm: realmAt(z.svc.env, z.BO.id) }, z.bo.secret);
@@ -392,7 +392,7 @@ test('THE HANDOFF\'S DOORS: a tab asks the escrow only for a room that signs col
   assert.equal(d.escrow, undefined, 'no collect asked: the room\'s old take');
   assert.equal(escrowRow(z.svc, d.r), undefined);
   const w = rd('src/scenes/world.js');
-  assert.ok(w.includes("realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildCartWord("), 'my drop asks it for my room alone');   // PIN MOVED (CART-AWAY, Mac, 2026-10-15): my wagon's word beside it (test/systems/fb1015_cartaway.test.js)
+  assert.ok(w.includes("realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords("), 'my drop asks it for my room alone');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js); PIN MOVED (CART-AWAY, Mac, 2026-10-15): my wagon's word beside it (test/systems/fb1015_cartaway.test.js)
   // PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-15c): the handoff's two sides live in scenes/wildEscrowHost.js, the host wiring them
   const eh = rd('src/scenes/wildEscrowHost.js');
   assert.ok(w.includes('const wildEscrow = createWildEscrowHost({ townTalk, session: realmSession, modes: () => modes, wildAccount, checkpoint: () => onlineCheckpoint() });'), 'the host wires the handoff');

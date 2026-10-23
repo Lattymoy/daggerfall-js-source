@@ -83,7 +83,7 @@
   {
     "name": "GUILD-LETTER-the-old-words",
     "file": "src/net/accountClient.js",
-    "old": "'guild-treasury-old': () => t('account.refusal.guildTreasuryOld', 'A realm character takes out only the gold realm characters put in, and not that much of theirs is left. The rest came in before the realm or from a character outside it - it stays in the treasury.'),",
+    "old": "'guild-treasury-old': () => t('account.refusal.guildTreasuryOld', 'Realm characters can only take out gold that realm characters put in, and there is not that much left. The rest came in before the realm or from a character outside it, so it stays in the treasury.'),",
     "new": "'guild-treasury-old': () => t('account.refusal.guildTreasuryOld', 'That much of the treasury came in before the realm - it stays in the treasury.'),",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"

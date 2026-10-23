@@ -399,7 +399,7 @@
   {
     "name": "UNQUIET-craft-no-smoke",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  if (mobileType >= 128 && mobileType !== M.None) return 'smoke';\n",
+    "old": "  if (isClassEnemyId(mobileType) && mobileType !== M.None) return 'smoke';\n",
     "new": "",
     "tests": [
       "test/systems/revenant/unquiet.test.js"

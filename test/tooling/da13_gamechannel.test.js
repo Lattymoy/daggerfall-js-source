@@ -431,7 +431,7 @@ test('DA13: the launcher - the game\'s download held before play like an install
   // and the game's HUD says what to do with one: it plays from the next start - true of the installer's update as well
   return import('../../src/systems/shellUpdates.js').then(({ updateReadyText }) => {
     assert.equal(updateReadyText({ version: '0.1.11', manual: false }),
-      'DFO Online 0.1.11 is ready. It plays the next time you start, or now from File > Restart to Update - save first.');
+      'DFO Online 0.1.11 is ready. It runs the next time you start, or now from File > Restart to Update. Save first.');
     assert.doesNotMatch(updateReadyText({ version: '0.1.11', manual: false }), /installs/, 'nothing installs when the channel brought it');
   });
 });
@@ -466,8 +466,10 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   assert.match(cw, /win\.webContents\.on\('did-start-navigation', \(d\) => \{ if \(d\?\.isMainFrame && !d\.isSameDocument\) playReadyGame\(\); \}\);/);
   assert.match(cw, /gameStore\?\.bootStarting\(\);\s*await win\.loadURL\('dagger:\/\/game\/play\/index\.html'\);/);
   assert.match(cw, /win\.webContents\.on\('did-fail-load', \(_e, code, _text, _url, isMainFrame\) => \{ if \(isMainFrame && code !== -3\) giveUp\('did not load'\); \}\);/);
-  assert.match(cw, /win\.webContents\.on\('render-process-gone', \(\) => giveUp\('stopped before it came up'\)\);/);
-  assert.match(cw, /const bad = gameStore\?\.rollback\(\);\s*if \(!bad\) return;/);
+  // PIN MOVED (FIELD BUGS 2026-10-21b RENDERER-GONE): the stop goes to the trial first, as ever - and a stop the trial does not
+  // take is said and restarted (test/tooling/fb1021b_renderergone.test.js), where it had been met by nothing
+  assert.match(cw, /win\.webContents\.on\('render-process-gone', async \(_e, details\) => \{[^]*?if \(giveUp\('stopped before it came up'\) \|\| /);
+  assert.match(cw, /const bad = gameStore\?\.rollback\(\);\s*if \(!bad\) return false;/);
   assert.match(main, /ipcMain\.on\('dagger:game-up', \(e\) => \{\s*if \(gameWindow && !gameWindow\.isDestroyed\(\) && e\.sender === gameWindow\.webContents\) gameStore\?\.bootDone\(\);\s*\}\);/, 'the game\'s window\'s word only');
   const preload = rd('app/preload.cjs');
   assert.match(preload, /onUpdateReady: \(cb\) => \{\s*updateListeners\.push\(cb\);\s*if \(updateHeard\) cb\(updateHeard\);[\s\S]*?ipcRenderer\.send\('dagger:game-up'\);\s*\},/, 'the game\'s boot subscribing is its word that it came up');

@@ -125,6 +125,18 @@ export const TITLE_TEXT = Object.freeze({
   spirechampion: 'Spire Champion',
   spirefirst: 'First of the Spire',
   wikimaid: 'WikiMaid',           // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title"): SylviaBun's own, spelled as she spelled it
+  // QL12 (2026-10-19, bible/06-Systems/Questlines-Arc.md section 5.3): THE QUESTLINES' FIVE, a title a line, in the lines'
+  // order (net/questlineClaims.js QL_TITLES) - paid by the account service on the line's last witnessed step, held for good
+  doorwarden: 'Doorwarden',                // the Burning Doors
+  covenbane: 'Covenbane',                  // the Covens' Hoard
+  weirwalker: 'Weirwalker',                // the Weir Road
+  hourwitness: 'Witness of the Hour',      // the Hour That Was Not
+  satakalwitness: "Satakal's Witness",     // the Old Coil
+  starwarden: 'Starwarden',                // STAR8: the Thirteenth of Frostfall
+  // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL'S TWO - bought from a Wyrd Sister, and
+  // earned by an account's Hearth Offerings giving 25 cakes; both held for good
+  witchwarden: 'Witchwarden',
+  hearthkeeper: 'Hearthkeeper',
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -143,6 +155,7 @@ export const AURA_TEXT = Object.freeze({
   burningstair: 'The Burning Stair',   // EG-E2: Wellhead-Walker's falling embers, granted with the title
   firstlight: 'Firstlight',   // EG-E2: First of the Spire's dawn-white ring, granted with the title by name
   lilacwarren: 'Lilac Warren',   // WIKIMAID: the WikiMaid's rabbits hopping round the feet on a ring of lilac light, granted with the title
+  witchfire: 'Witchfire',   // WITCH1: a coven's green fire round the feet, tallow candles in its ring, bought from a Wyrd Sister
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -231,7 +244,7 @@ export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
  *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
  *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
  *  motes), the Kyn's blood (Kynbane), the Wellhead's ember and its coal (Wellhead-Walker; The Burning Stair), and the
- *  dawn and its gold (First of the Spire; Firstlight, its ring). */
+ *  dawn and its gold (First of the Spire; Firstlight, its ring) - and, SPIRE-FIRST, its rose (Firstlight's spires and rays). */
 export const SPIRE_BEACON = Object.freeze([1, 0.902, 0.62, 1]);        // #ffe69e - paler and whiter than the Crowned's gold
 export const SPIRE_BEACON_WHITE = Object.freeze([1, 0.976, 0.902, 1]); // #fff9e6
 export const SPIRE_KYN = Object.freeze([0.69, 0.157, 0.118, 1]);       // #b0281e - darker and bloodier than the Developer's red
@@ -239,6 +252,7 @@ export const SPIRE_EMBER = Object.freeze([0.941, 0.416, 0.208, 1]);    // #f06a3
 export const SPIRE_COAL = Object.freeze([0.62, 0.122, 0.039, 1]);      // #9e1f0a
 export const SPIRE_DAWN = Object.freeze([0.992, 0.886, 0.816, 1]);     // #fde2d0 - a blush of dawn, paler than Hour's First's rose gold
 export const SPIRE_DAWN_GOLD = Object.freeze([1, 0.792, 0.522, 1]);    // #ffca85
+export const SPIRE_DAWN_ROSE = Object.freeze([1, 0.624, 0.502, 1]);    // #ff9f80 - SPIRE-FIRST: the sky low at sunrise, Firstlight's spires' feet and its rays' tips
 /** WIKIMAID (2026-10-17, for SylviaBun: "Honestly as dumb as this is gonna sound the WikiMaid title and a purple aura with
  *  bunnies would be dope as hell" - "Lets go all out for this"). No colour was named for the title; the aura was asked
  *  purple, and the title and its glyph are drawn in the same family so the three read as one grant: an AMETHYST, the
@@ -254,6 +268,14 @@ export const WARREN_FRILL = Object.freeze([1, 0.961, 0.984, 1]);      // #fff5fb
 /** WIKIMAID: a maid's headdress is white lace on a dark band - the band, and the rabbit's eyes and nose, in a deep plum,
  *  the darkest of the family, so they read on the lilac at a name's size. */
 export const WARREN_PLUM = Object.freeze([0.29, 0.122, 0.431, 1]);    // #4a1f6e
+/** WITCH1 (2026-10-20): THE WITCHES' FESTIVAL'S PAINT - Witchwarden out of the moor's moss into the coven's green fire
+ *  into its pale heart; Hearthkeeper the tallow's warm amber, a lantern's light at a door. */
+export const WITCH_MOSS = Object.freeze([0.18, 0.4, 0.157, 1]);       // #2e6628
+export const WITCH_FIRE = Object.freeze([0.49, 0.839, 0.329, 1]);     // #7dd654
+export const WITCH_GLOW = Object.freeze([0.835, 0.976, 0.69, 1]);     // #d5f9b0
+export const HEARTH_TALLOW = Object.freeze([1, 0.745, 0.431, 1]);     // #ffbe6e
+/** WITCH1: Witchfire's motes - the coven's violet, rising off the green (render/auraRing.js WITCH_RGB). */
+export const WITCH_VIOLET = Object.freeze([0.71, 0.42, 0.94, 1]);     // #b56bf0
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -342,6 +364,21 @@ export const TITLE_RGBA = Object.freeze({
   spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]),   // #46d68c
   spirefirst: SPIRE_DAWN,
   wikimaid: WARREN_LILAC,   // WIKIMAID: the rabbits' lilac - the colour a face that cannot draw a gradient uses, and the glyph's
+  // QL12 (no colour named): THE QUESTLINES' FIVE, each its line's place and each more than 40 from every title's - the
+  // Burning Doors' EMBER, redder than the Gatebreaker's fire and brighter than the Wellhead's Master's forge; the covens'
+  // hoarded GOLD, deeper than the Founder's and the Hour's; the Spire's own BLUE, bluer and deeper than the Herald's azure
+  // and brighter than the Battlemages'; Akatosh's BRASS, greener than the Warden's bronze; and the SEA's teal, bluer than
+  // the Coilbreaker's tide
+  doorwarden: Object.freeze([0.910, 0.251, 0.047, 1]),       // #e8400c
+  covenbane: Object.freeze([0.816, 0.667, 0.063, 1]),        // #d0aa10
+  weirwalker: Object.freeze([0.122, 0.373, 1, 1]),           // #1f5fff
+  hourwitness: Object.freeze([0.678, 0.647, 0.188, 1]),      // #ada530
+  satakalwitness: Object.freeze([0.071, 0.722, 0.722, 1]),   // #12b8b8
+  // STAR8: the STARWARDEN - a falling star's streak at its deepest violet (render/starfall/starfallPass.js's fall), redder
+  // than the Protector's blue and bluer than the Aegis's purple; the beacon's pale violet is the WikiMaid's lilac's
+  starwarden: Object.freeze([0.471, 0.314, 1, 1]),           // #7850ff
+  witchwarden: WITCH_FIRE,     // WITCH1: the coven's green - the colour a face that cannot draw a gradient uses
+  hearthkeeper: HEARTH_TALLOW,   // WITCH1: the tallow's amber
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -358,6 +395,7 @@ export const TITLE_GRADIENT = Object.freeze({
   aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light
   coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]),   // SERPENT5: the open sea into the tide into the foam
   wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),   // WIKIMAID: "Wiki" in the warren's amethyst, "Maid" into a rabbit's blush
+  witchwarden: Object.freeze([WITCH_MOSS, WITCH_FIRE, WITCH_GLOW]),   // WITCH1: the moor's moss into the coven's fire into its heart
 });
 
 /** PENITENT: THE EDGE A GRADIENT TITLE WEARS, where it is not the title's
@@ -374,6 +412,7 @@ export const TITLE_EDGE = Object.freeze({
   hoursfirst: Object.freeze([0, 0, 0, 1]),   // HOURS-FIRST: its dawn end is near white - edged in black, as Penitent's
   coilbreaker: Object.freeze([0, 0, 0, 1]),   // SERPENT5: its foam end is near white - edged in black, as Penitent's
   wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's
+  witchwarden: Object.freeze([0, 0, 0, 1]),   // WITCH1: its heart end is pale - edged in black, as the WikiMaid's
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -665,7 +704,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid' });   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

@@ -88,6 +88,15 @@ const namedByFaction = (fd) => (fd?.type === FACTION_TYPES.Individual || fd?.typ
 export const shownPersonName = (person) => (namedByFaction(person?.factionData)
   ? getLocalizedFactionName(person.factionData.id, person.displayName) : person?.displayName);
 
+/** QUEST-NAME-ONE (FIELD BUGS 2026-10-20, Harlander: "the name mentioned in the quest text doesn't match the name of
+ *  the NPC you talk to to progress it"): THE NAME A QUEST PERSON'S NPC ANSWERS TO - the Person's own, drawn or given
+ *  (`ql name`, systems/questlines/qlActions.js QlName), or null for one named after its faction record (an Individual
+ *  or a Daedra), whom the NPC's own faction path names. DFU re-draws a quest NPC's name from the Person's seed with the
+ *  bank of the region it stands in (StaticNPC.GetDisplayName), which is the Person's name only while nothing renamed
+ *  the Person and the two banks agree - the questlines' givers were renamed, so their NPCs answered to a stranger's
+ *  name. Read by characters/staticNpc.js staticNpcName, the departure named there. */
+export const personOwnName = (person) => (person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName) || null;
+
 /** KnightlyOrder.Orders in C# Enum.GetValues order - sorted by VALUE
  *  (KnightlyOrder.cs:49-61). */
 const KNIGHTLY_ORDER_IDS = Object.freeze([...Object.values(ORDERS)].sort((a, b) => a - b));

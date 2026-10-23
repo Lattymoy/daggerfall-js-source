@@ -2,7 +2,7 @@
   {
     "name": "REP2-DFU's-half-less-one",
     "file": "src/systems/court.js",
-    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal: loss, people };",
+    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };",
     "new": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal: Math.trunc(loss / 2) - 1, people: Math.trunc((Math.trunc(loss / 2) - 1) / 2) };",
     "tests": [
       "test/scenes/rep2_sentences.test.js"

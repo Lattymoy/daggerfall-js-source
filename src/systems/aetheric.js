@@ -97,6 +97,7 @@ import { SKILLS } from './skills.js';
 import { SIGIL_POWER_MAX, SIGIL_BANDS } from './sigil/sigil.js';
 import { setPieceKind, setById, raidSetOf } from './sigil/sigilSets.js';   // AUDIT SET D6: the kinds a set counts, for the wire's cross-check
 import { EG_PANOPLY_IDS } from '../net/eliteGates/egPay.js';   // EG15: the nine ids the account service's sink sells by (pure, no imports)
+import { WYRD_PIECE_IDS } from '../net/festivalLaw.js';   // WITCH1: the nine ids the Wyrd Sisters sell by
 
 /** The tier's id, as `item.rarity` wears it. */
 export const AETHERIC = 'aetheric';
@@ -300,9 +301,97 @@ export const PANOPLY_SET_PIECES = Object.freeze([
   mithril('saber', 'The Spire-Saber', 'Weapons', 119, [t('damage'), t('stat', 'intelligence'), t('skill', SKILLS.LongBlade)],
     'Every Battlemage carried one into the Spire in 3E 398. Few carried one out.'),
 ]);
+// ── WITCH1: THE WYRD'S RAIMENT ──────────────────────────────────────
+/** WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): what the Glenmoril Wyrd wear to the Witches' Festival - nine
+ *  in the places' order (the seven body pieces, a round shield and a ONE-HANDED dagger, the Witchmoon Athame, so all nine
+ *  are worn at once), LEATHER - a witch's, and a caster's: the Mage, the Sorcerer, the Nightblade and their kind wear eight
+ *  of the nine (never the shield), every one but the Burglar, the Monk and the Knight reaches Soul Harvest (AUDIT WITCH1
+ *  B4: as Elven plate, only the Ranger, the Warrior and the Knight did); the Athame Elven. Every affix at the Legendary band's FLOOR and the Athame's blow
+ *  the raid sets' (a festival's wares, a town's thanks' measure - never a boss's). No magic resistance on any piece:
+ *  Wyrd-Sight, the 2-piece tier, carries it; one other element on one piece alone (the Regalia's AUDIT FINAL lesson). No
+ *  drop rolls it: a Wyrd Sister sells each by its id (wyrdPieceById, the festival's WYRD_PIECE_IDS). */
+const wyrd = (key, name, group, templateIndex, affixes, lore) => record(`wyrd-${key}`, name, group, templateIndex, 'wyrd', group === 'Weapons' ? 'Elven' : 'Leather', RAID_SET_POWER, affixes, lore);
+export const WYRD_SET_PIECES = Object.freeze([
+  wyrd('hood', "The Wyrd Sister's Hood", 'Armor', 107, [a('armor'), a('stat', 'willpower'), a('skill', SKILLS.Mysticism)],
+    'Woven on the Glenumbra Moors, under both moons.'),
+  wyrd('right-mantle', 'Right Mantle of the Wyrd', 'Armor', 106, [a('armor'), a('stat', 'intelligence'), a('skill', SKILLS.Destruction)],
+    'Black feathers sewn to tanned hide. No bird of the Bay grew them.'),
+  wyrd('left-mantle', 'Left Mantle of the Wyrd', 'Armor', 105, [a('armor'), a('stat', 'willpower'), a('skill', SKILLS.Alteration)],
+    'Cut to lift a cauldron\'s lid, never to turn a blade. It turns both.'),
+  wyrd('robe', 'The Wyrdwoven Cuirass', 'Armor', 102, [a('armor'), a('stat', 'willpower'), a('stat', 'endurance')],
+    'Stitched with the names of every sister who wore it. The last line is blank.'),
+  wyrd('gloves', 'Gloves of the Gathering', 'Armor', 103, [a('armor'), a('stat', 'agility'), a('skill', SKILLS.Thaumaturgy)],
+    'They have dug roots by moonlight and come back clean.'),
+  wyrd('greaves', 'Greaves of the Moors', 'Armor', 104, [a('armor'), a('stat', 'speed'), a('resist', 'poison')],
+    'The bog lets go of nothing. It let go of these.'),
+  wyrd('boots', "Boots of the Witches' Road", 'Armor', 108, [a('armor'), a('stat', 'luck'), a('skill', SKILLS.Running)],
+    'They know the way to the gathering in the wilderness. Follow them.'),
+  wyrd('hearthward', 'The Hearth-Ward', 'Armor', 110, [a('armor'), a('stat', 'willpower'), a('resist', 'fire')],
+    'A ward of tallow is painted on its face. The dead do not walk past it.'),
+  wyrd('athame', 'The Witchmoon Athame', 'Weapons', 113, [a('damage'), a('stat', 'intelligence'), a('skill', SKILLS.ShortBlade)],
+    'Quenched in the light of both moons on the 13th of Frostfall.'),
+]);
+// ── STAR7: THE STARSPUN WEAVE ───────────────────────────────────────
+/** STAR7 (2026-10-20, bible/11-Multiplayer/Starfall.md section 6): the Witches' Festival's own - the thread Mephala's covens
+ *  wind about a fallen star, cut from the stars they lost and laid over pale plate - nine in the places' order (the seven
+ *  body pieces, a buckler and a ONE-HANDED Shortsword, so all nine are worn at once), Elven, light as the thread is. A
+ *  star is held three times an hour while the festival runs, so its numbers are the raiding parties' measure: every affix
+ *  at the Legendary band's floor, the blow the band's floor too. One resistance of an element at most, and never poison
+ *  (Spinner's Thread, the 2-piece tier, carries it): no two pieces stack an element toward the saving throw's immunity
+ *  (the Regalia's AUDIT FINAL lesson). */
+const spun = raidRec('starspun', 'Elven');
+export const STARSPUN_SET_PIECES = Object.freeze([
+  spun('cowl', 'The Starspun Cowl', 'Armor', 107, [a('armor'), a('stat', 'personality'), a('skill', SKILLS.Illusion)],
+    'The coven wound this thread about a fallen star. It still gives off a little of its light.'),
+  spun('right-pauldron', 'Right Pauldron of the Weave', 'Armor', 106, [a('armor'), a('stat', 'strength'), a('skill', SKILLS.ShortBlade)],
+    'Black thread laid over pale plate, eight strands to every knot.'),
+  spun('left-pauldron', 'Left Pauldron of the Weave', 'Armor', 105, [a('armor'), a('stat', 'endurance'), a('resist', 'shock')],
+    'The knots keep a count. No witch will tell you what it counts.'),
+  spun('cuirass', 'The Starspun Cuirass', 'Armor', 102, [a('armor'), a('stat', 'agility'), a('stat', 'endurance')],
+    'Over the heart the thread is bound with a shard of the star itself.'),
+  spun('hands', "The Spinner's Hands", 'Armor', 103, [a('armor'), a('stat', 'agility'), a('skill', SKILLS.Backstabbing)],
+    'Fine enough to feel one strand move at the far end of a web.'),
+  spun('greaves', 'Greaves of the Silent Strand', 'Armor', 104, [a('armor'), a('stat', 'speed'), a('skill', SKILLS.Stealth)],
+    'They make no sound at all, even on stone.'),
+  spun('boots', 'Boots of the Long Fall', 'Armor', 108, [a('armor'), a('stat', 'speed'), a('skill', SKILLS.Jumping)],
+    'The star came down from higher than anything should fall. The thread held.'),
+  spun('buckler', 'The Web-Buckler', 'Armor', 109, [a('armor'), a('stat', 'willpower'), a('resist', 'magic')],
+    'Strung across like a web. A blade that catches in it is slow to come free.'),
+  spun('blade', 'The Spindle-Blade', 'Weapons', 116, [a('damage'), a('stat', 'agility'), a('skill', SKILLS.ShortBlade)],
+    'Ground from the spindle a coven wound its thread on. It still turns in the hand.'),
+]);
+// ── SEA-SET: THE ELTHERIC TIDEMAIL ──────────────────────────────────
+/** SEA-SET (2026-10-22, bible/11-Multiplayer/Sigil-Sets.md section 6h): the deep sea's own - every piece taken off one of the
+ *  Eltheric Ocean's legends or out of the deep's vaults - nine in the places' order (the seven body pieces, a round shield
+ *  and a ONE-HANDED Saber, so all nine are worn at once), Adamantium, the one metal no other set wears: the sea's blue.
+ *  The deep is a world boss's ground (the Old Coil's measure): every affix at the Legendary band's MIDDLE, the blow the
+ *  band's middle too. One resistance of an element at most, and never shock (Stormwrack, the 2-piece tier, carries it): no
+ *  two pieces stack an element toward the saving throw's immunity (the Regalia's AUDIT FINAL lesson). */
+const tide = (key, name, group, templateIndex, affixes, lore) => record(`eltheric-${key}`, name, group, templateIndex, 'eltheric', 'Adamantium', SERPENT_SET_POWER, affixes, lore);
+export const ELTHERIC_SET_PIECES = Object.freeze([
+  tide('helm', "The Drowned Admiral's Helm", 'Armor', 107, [m('armor'), m('stat', 'willpower'), m('resist', 'frost')],
+    'Dredged up from the Abyss with the admiral still inside. The aether had kept him.'),
+  tide('right-pauldron', 'Right Pauldron of the Deep', 'Armor', 106, [m('armor'), m('stat', 'strength'), m('skill', SKILLS.Swimming)],
+    'Barnacles of violet glass grow on it, and on nothing else.'),
+  tide('left-pauldron', 'Left Pauldron of the Deep', 'Armor', 105, [m('armor'), m('stat', 'endurance'), m('resist', 'poison')],
+    'The salt has eaten every crest off it but the Veil\'s.'),
+  tide('cuirass', 'The Tidemail Cuirass', 'Armor', 102, [m('armor'), m('stat', 'endurance'), m('stat', 'strength')],
+    'It rises and falls with the tide, a breath behind the one who wears it.'),
+  tide('gauntlets', 'Gauntlets of the Wheel', 'Armor', 103, [m('armor'), m('stat', 'agility'), m('skill', SKILLS.CriticalStrike)],
+    'They held a ship\'s wheel through a storm that broke the mast above them.'),
+  tide('greaves', 'Greaves of the Sounding Line', 'Armor', 104, [m('armor'), m('stat', 'speed'), m('weight')],
+    'Marked in fathoms down each shin, and the marks go deeper than any line has.'),
+  tide('boots', "The Hooded Pilot's Boots", 'Armor', 108, [m('armor'), m('stat', 'speed'), m('resist', 'fire')],
+    'Taken off the Lantern-Eater\'s deck. Nothing had ever walked out of the dark in them before.'),
+  tide('shield', 'The Starless Shield', 'Armor', 110, [m('armor'), m('stat', 'willpower'), m('resist', 'magic')],
+    'Cut from a hull as black as the night it sailed. A ship that sees it coming sees nothing.'),
+  tide('saber', "Maraveth's Mercy", 'Weapons', 119, [m('damage'), m('stat', 'agility'), m('skill', SKILLS.LongBlade)],
+    'The Drowned Queen\'s own blade. She shows no mercy; it is named for the mercy she once begged for.'),
+]);
 /** EVERY AETHERIC RECORD - the Regalia, then the raiding parties', then (SERPENT-SET) the Old Coil's, then (SD9d) the
- *  Walking Brass's, then (EG15) the Battlemages' - and the one every reader asks. */
-export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES]);
+ *  Walking Brass's, then (EG15) the Battlemages', then (WITCH1) the Wyrd's, then (STAR7) the Starspun Weave, then (SEA-SET)
+ *  the Eltheric Tidemail - and the one every reader asks. */
+export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES, ...PANOPLY_SET_PIECES, ...WYRD_SET_PIECES, ...STARSPUN_SET_PIECES, ...ELTHERIC_SET_PIECES]);
 export const aethericById = (id) => AETHERIC_RECORDS.find((r) => r.id === id) ?? null;
 registerAethericLore((item) => aethericById(item?.aetheric)?.lore ?? null);   // the card's last line, as a Legendary's
 /** A record's make as the item wears it: its material's id in its group's table. */
@@ -420,12 +509,54 @@ export function rollNumidiumPiece(rolls = Math.random) {
   return mintAetheric(NUMIDIUM_SET_PIECES[Math.min(NUMIDIUM_SET_PIECES.length - 1, Math.floor(rolls() * NUMIDIUM_SET_PIECES.length))]);
 }
 
+/** STAR7: the share of a held star's spoils that carries a piece of the Starspun Weave - a town's thanks' own share
+ *  (RAID_SET_CHANCE); the Heart-Star's carry one every time. */
+export const STARSPUN_SET_CHANCE = RAID_SET_CHANCE;
+/** STAR7, THE SPOILS' LAST ROLL (systems/starfall/starSpoils.js, after everything they rolled before - every earlier spoils
+ *  stays what it was for its seed): null most times; else one Starspun piece, the same seed choosing which. `always` (the
+ *  Heart-Star's) takes no chance. One roll when nothing drops, two when a piece does (one with `always`). */
+export function rollStarspunPiece(rolls = Math.random, always = false) {
+  if (!always && !(rolls() < STARSPUN_SET_CHANCE)) return null;
+  return mintAetheric(STARSPUN_SET_PIECES[Math.min(STARSPUN_SET_PIECES.length - 1, Math.floor(rolls() * STARSPUN_SET_PIECES.length))]);
+}
+
+/** SEA-SET: THE DEEP'S SHARES - the chance a source in a band of the Eltheric Ocean carries a Tidemail piece: a legend taken
+ *  or sunk (the Deep Aether's two a quarter of the time, the Abyss's two every time), a vault of the deep's spoils (SEA
+ *  VAULTS - a quarter, half), a ruin's treasure pile (a twentieth, a tenth), the treasure fleet's flagship (every time), a
+ *  cask of the Aether Storm's wrack (SEA-EVENTS - a fortieth, a twentieth). The Shallows and the Reaches carry none: the set
+ *  is the deep's alone. */
+export const ELTHERIC_CHANCE = Object.freeze({
+  legend: Object.freeze({ deep: 1 / 4, abyss: 1 }),
+  vault: Object.freeze({ deep: 1 / 4, abyss: 1 / 2 }),
+  ruin: Object.freeze({ deep: 1 / 20, abyss: 1 / 10 }),
+  fleet: Object.freeze({ deep: 1, abyss: 1 }),
+  storm: Object.freeze({ deep: 1 / 40, abyss: 1 / 20 }),   // SEA-EVENTS: a cask of the Aether Storm's wrack
+});
+/** SEA-SET: the Tidemail roll's own stream, salted off a source's seed (a legend's ship, a vault's day) so it moves no other
+ *  roll of that seed. */
+export const TIDEMAIL_SALT = 0x71de;
+/** The share a source carries in a band (its id, world/ethericSea.js BANDS) - 0 for any other. */
+export const elthericChance = (source, band) => (Object.hasOwn(ELTHERIC_CHANCE, source) && Object.hasOwn(ELTHERIC_CHANCE[source], band) ? ELTHERIC_CHANCE[source][band] : 0);
+/** SEA-SET, THE SOURCE'S LAST ROLL (after everything it rolled before - every earlier roll stays what it was for its seed):
+ *  null most times; else one Tidemail piece, the same seed choosing which. A share of 1 takes no chance; none at all for a
+ *  share of 0. One roll when nothing drops, two when a piece does (one with a share of 1). */
+export function rollElthericPiece(rolls = Math.random, chance = 0) {
+  if (!(chance > 0) || (chance < 1 && !(rolls() < chance))) return null;
+  return mintAetheric(ELTHERIC_SET_PIECES[Math.min(ELTHERIC_SET_PIECES.length - 1, Math.floor(rolls() * ELTHERIC_SET_PIECES.length))]);
+}
+
 /** EG15, WHICH PANOPLY PIECE (systems/eliteGates/egSpoils.js rollEgSpoils, once its own draw - net/eliteGates/egPay.js egPanoplyHit, or the
  *  service's pity - has said one drops): one of the nine at even odds, off ONE draw of `rolls`. It decides nothing about
  *  WHETHER: no chance of its own, so the pay law's odds and the service's pity count stay the one word on a drop. */
 export function mintPanoplyPiece(rolls = Math.random) {
   const n = PANOPLY_SET_PIECES.length;
   return mintAetheric(PANOPLY_SET_PIECES[Math.max(0, Math.min(n - 1, Math.floor(rolls() * n) || 0))]);
+}
+/** WITCH1, A WYRD SISTER'S SALE: the piece the festival names by its id (net/festivalLaw.js WYRD_PIECE_IDS), freshly
+ *  minted at Faint - null for any other id. */
+export function wyrdPieceById(id) {
+  const r = WYRD_PIECE_IDS.includes(id) ? aethericById(id) : null;
+  return r ? mintAetheric(r) : null;
 }
 /** EG15, THE SINK'S PIECE (the Broker's weekly sale of the buyer's choosing, the account service's `eg_sink`): the piece
  *  the pay law names by its id (net/eliteGates/egPay.js EG_PANOPLY_IDS), freshly minted - null for any other id. */

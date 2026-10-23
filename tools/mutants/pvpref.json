@@ -351,8 +351,8 @@
  {
   "name": "PVPREF-thunderlock-no-bow",
   "file": "src/net/siege/siegeRef.js",
-  "old": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template;",
-  "new": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow;",
+  "old": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template || w === SIEGE_PISTOLET.template;",
+  "new": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_PISTOLET.template;",
   "tests": [
    "test/systems/pvpref_law.test.js"
   ]

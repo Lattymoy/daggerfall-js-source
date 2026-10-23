@@ -94,7 +94,7 @@ test('SD2c the Timers row: none while it has only risen, its fading once found, 
   const rows = (rec, now, more = {}) => eventTimerRows({ now, sd: { rec, name: 'The Stopped Bell', place: 'Copperham', ...more } }).filter((x) => x.kind === 'super');
   assert.deepEqual(rows(r, T0 + M), [], 'risen: a find');
   const f = sdFind(r, T0 + H, 'Mara');
-  assert.deepEqual(rows(f, T0 + 2 * H), [{ id: 'sd:1', kind: 'super', title: 'The Stopped Bell stands', where: 'Near Copperham', detail: 'Found - it fades unbroken when this runs out', live: true, at: f.until, until: f.until }]);
+  assert.deepEqual(rows(f, T0 + 2 * H), [{ id: 'sd:1', kind: 'super', title: 'The Stopped Bell stands', where: 'Near Copperham', detail: 'Found. It fades away unbeaten when this runs out', live: true, at: f.until, until: f.until }]);
   const k = sdFell(f, T0 + 3 * H, { top: 'Mara', n: 2 });
   const [c] = rows(k, T0 + 3 * H + M);
   assert.equal(c.title, 'The Stopped Bell collapses');
@@ -117,7 +117,7 @@ test('SD2c the taverns: "Any news?" in the city it stands by, while it has risen
   const s1 = ses();
   assert.equal(sdRumor(r, HOLLOW, T0 + M, here, s1, { rolls: () => 0 }), sdRumorLine('Copperham', sdMarksOf(1)[0]));
   assert.equal(s1.numAnswersGivenTellMeAboutOrRumors, 1, 'the person\'s answer spent');
-  assert.equal(sdRumorLine('Copperham'), 'They say the air goes brass-coloured past the walls of Copperham at dusk, and a bell rings where there is no bell.');   // SD18c: a Hollow with no Ending
+  assert.equal(sdRumorLine('Copperham'), 'They say the air goes brass-colored past the walls of Copperham at dusk, and a bell rings where there is no bell.');   // SD18c: a Hollow with no Ending
   assert.equal(sdRumor(r, HOLLOW, T0 + M, here, ses(), { rolls: () => SD_RUMOR_CHANCE }), null, 'the chance not met');
   assert.equal(sdRumor(r, HOLLOW, T0 + M, { px: 301, py: 200 }, ses(), { rolls: () => 0 }), null, 'not in its city');
   assert.equal(sdRumor(r, HOLLOW, T0 + M, { px: 300, py: 201 }, ses(), { rolls: () => 0 }), null);

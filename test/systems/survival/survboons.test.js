@@ -99,7 +99,7 @@ test('SURV-BOONS: the fourth tier - on the one key, stored by name between Off a
   assert.equal(SURVIVAL_DEFAULT, 'boons', 'BOONS-DEFAULT (2026-10-13, Mac: "make boons the default")');   // PIN MOVED: SURV-BOONS had it a choice, not the default
   const row = FEATURES.find((f) => f.id === 'mod-climates-calories');
   assert.deepEqual(row.control.tiers[1], ['boons', 'Boons'], 'the bar\'s second segment');
-  assert.match(row.note, /On Boons neglect costs nothing and a body kept fed and watered, and rested in a bed or by a fire, earns bonuses/);
+  assert.match(row.note, /On Boons neglect costs nothing, and staying fed, watered and rested in a bed or by a fire gives bonuses/);
   setPref(SURVIVAL_PREF, 'boons');
   assert.equal(survivalTier(), 'boons'); assert.equal(survivalOn(), true); assert.equal(survivalRules(), BOONS);
   assert.equal(survivalFeed(body(), INDOORS).deps.rules, BOONS, 'the feed hands the minute law the Boons rules');
@@ -400,7 +400,7 @@ test('SURV-BOONS: the strip and the page - the boons are green tiles on their ow
     'The fire\'s warmth restores your stamina.',
   ]);
   assert.ok(survivalStatusLines(e, 481, { endurance: 50 }).every((l) => /^[\x20-\x7e]*$/.test(l)), 'plain characters - the classic faces draw this box');
-  assert.equal(boonEffect('hearth'), 'stamina back beside a lit fire');
+  assert.equal(boonEffect('hearth'), 'regain stamina beside a lit fire');
   assert.equal(survivalStatusLines(hard, 1).some((l) => /^(Well|Quenched|Thriving)/.test(l)), false);
   const unbanked = { survival: { ...newSurvival(0), boons: ['fed', 'quenched'] } };
   assert.ok(survivalStatusLines(unbanked, 0).includes(STATUS_TEXT.notTired), 'Boons with no bank: not tired - "well rested" is the boon\'s word');
@@ -426,8 +426,8 @@ test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows i
   assert.match(read('src/ui/enhanced/enhancedHud.js'), /if \(needs\.some\(\(c\) => c\.level !== 'boon'\)\) noteFirstUse\('survival'\);/, 'a boon is no felt need');
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.deepEqual(page.body, [
-    'You need food, water, warmth and sleep. Icons at the screen\'s left edge show what you are short on, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand
-    'Survival can be Off, Boons (the default), Casual or Hard. On Boons, needs met give bonuses; on Hard, needs can hurt you and make you sick. Change it in Settings > Features.',   // PIN MOVED (BOONS-DEFAULT)
+    'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand; VOICE1: plain words
+    'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Features. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',   // PIN MOVED (BOONS-DEFAULT; VOICE1)
   ]);
-  assert.match(read('src/ui/credits.js'), /in four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and a body kept fed, watered and rested earns bonuses\), Casual/);   // PIN MOVED (AUDIT C&C S8): the drink's swing is taken in Boons too
+  assert.match(read('src/ui/credits.js'), /There are four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and staying fed, watered and rested gives bonuses\), Casual/);   // PIN MOVED (AUDIT C&C S8): the drink's swing is taken in Boons too
 });

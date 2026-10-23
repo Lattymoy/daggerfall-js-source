@@ -682,6 +682,14 @@ Nothing about the tilemap the painter writes changes; without the array
 the painter is byte-for-byte what it was, which `test/world/terrain/grasspath.test.js`
 pins directly.
 
+JUNGLE-TRAILS (2026-10-19) writes the same mask: the jungle's own trails
+(`world/jungle/jungleTrails.js`, `03-World/Bantha-Jungle.md` "The trails")
+mark every tile two of whose corners are dirt, after the painter and before the
+squares run, allocating the mask where a trail runs and no network did -
+so the grass, the forests and the jungle keep off a trail exactly as they
+keep off a track. They never enter the network's bits: the map, the
+landforms and fast travel read the roads they did.
+
 The water half of the same report - *"some textures not taking the water
 tile"* - is GRASS-WET1, in `07-Rendering/Rendering.md`: the water-grass
 shore records a stream writes over grass (20-22, 49) are mostly-grass by
@@ -863,3 +871,54 @@ the lookup, the room, the cap, the set, the host); `test/lpt1_lowpolytrees`'s
 host pin moved; mutants `tools/mutants/lptfit.json` (15, all dead) and
 `LPT1-flats-unscaled` re-aimed. Not verified here: no ARENA2, so no real
 town was walked.
+
+### FB1020c TRUNK-FIT - the trunk fits its room too (2026-10-20, a port departure)
+
+A player on the Discord: *"Fountain inside a tree in Crossleigh behind a house
+west of The Emperor's Gear Store"*. LPT-FIT measured a location's tree against
+the roads and streets by its crown; nothing measured its TRUNK against the
+town's own things. Crossleigh (Anticlere, the map pixel 401,175) is GENRAS01
+and RESIAS02, the scenery Daggerfall's own under Beautiful Villages. GENRAS01's
+ground-scenery cell [6][14] is TEXTURE.504's tree 12, stood by
+`RMBLayout.AddNatureFlats` at (38.40, 12.80) in the block, and its misc flat
+#23 is TEXTURE.212's record 2 - a fountain - at (39.95, 12.50): 1.58 m apart.
+AddNatureFlats reads no misc flat, so DFU stands both, as the port did; under
+the classic picture the fountain stands by the tree's foot. Low Poly Trees'
+504_12 meets the ground with a trunk 3.42 m about its root, and the fountain
+stood inside it. Of BLOCKS.BSA's 5,964 scenery trees with a Low Poly
+prototype, 46 had a trunk reaching one of their block's solid things.
+
+**The law** (`roadVerge.js:"export function lptTrunkCap(solids, x, z, trunk, widest) {"`):
+a location's Low Poly tree is drawn no wider than the room its root has to
+the nearest SOLID thing of its pixel over its trunk - LPT-FIT's own shape, a
+scale, never a move.
+
+- The solid things are PROP-BODIES' bodies (`world/propBodies.js` flatBody,
+  each foot measured off its own picture) of every flat of no nature
+  archive: a fountain, a well, a crate, a statue. The host measures them
+  before it stands any tree (`pixelBuild.js:"      if (record < t.recordCount) solids.push(...flatBodies(t, archive, record, billboardSize(t, record), centers));"`),
+  because the groups meet in the order the pixel's flats were stood.
+- The room is the root's distance to a body less that body's foot.
+- The trunk is the prototype's solid part (the sub-meshes the mod draws
+  one-sided, `cull` 2 - its two-sided cards are leaves) cut by the root's
+  plane: the farthest point of the cut, under the prefab's scale, rounded
+  up (`world/lptCrowns.js` LPT_TRUNKS, baked beside the crowns by
+  `tools/bakeLptCrowns.mjs` lptTrunks). 0 for cards alone, which are never
+  capped.
+- The tree is drawn at the lesser of LPT-FIT's fit and this, never under
+  `LPT_FIT_FLOOR`. A wild tree is not asked: FOREST1's clearings and VERGE1
+  already stand the wild's trees clear of the sites' things.
+- It takes no switch of its own: it is drawn wherever the mod draws a tree,
+  "Clear roadsides" on or off.
+
+Crossleigh's tree is drawn at 0.418 of its prototype, its trunk 1.43 m about
+its root at the ground, short of the fountain's foot (0.15 m about its own
+middle, 1.58 m off). DFU with Low Poly Trees stands the prefab whole
+(MeshReplacement.cs ImportCustomFlatGameobject, :136-166): a departure, Port-Ledger A.
+
+**The four hosts** are LPT-FIT's: `scenes/world.js` (its `pixelBuild.js`) wired;
+`scenes/exterior.js`, the bench, fits no tree; `scenes/worldModes.js` and
+`scenes/dungeonContext.js` stand no terrain trees. Pinned in
+`test/world/road/fb1020c_trunkfit.test.js` (4, the report on ARENA2); LPT-FIT's
+and VERGE1's pins stand as they were (the bake emits both tables, and the
+fit's own line is LPT-FIT's); mutants `tools/mutants/fb1020c_trunkfit.json`.

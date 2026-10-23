@@ -11,7 +11,7 @@
   {
     "name": "GATE-RELOAD-the-reload-never-said",
     "file": "src/net/gate/gateLink.js",
-    "old": "export const GATE_OUTDATED_TEXT = 'Your game is older than this gate - save, then reload (or update the app) to enter.';",
+    "old": "export const GATE_OUTDATED_TEXT = 'Your game is older than this gate. Save, then reload or update the app to enter.';",
     "new": "export const GATE_OUTDATED_TEXT = 'The gate is closed.';",
     "tests": [
       "test/net/gate/gatereload.test.js"

@@ -273,7 +273,7 @@
   {
     "name": "AUDIT-CC-D1-port-repairs",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (where().nearPort) return;   // AUDIT CC-D1",
+    "old": "    if (inPortWaters()) return;   // AUDIT CC-D1",
     "new": "    // AUDIT CC-D1",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
@@ -284,7 +284,7 @@
   {
     "name": "AUDIT-CC-D1-port-order",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      else if (where().nearPort) said =",
+    "old": "      else if (inPortWaters()) said =",
     "new": "      else if (false) said =",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
@@ -416,7 +416,7 @@
   {
     "name": "AUDIT-CC-D8-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.repairOrdered ? 'Crippled - repairs ordered' : ",
+    "old": "ship.repairOrdered ? 'Crippled, repairs ordered' : ",
     "new": "",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
@@ -597,7 +597,7 @@
   {
     "name": "AUDIT-CC-F-host-knock-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      deps.say?.(`${c.name} is knocked senseless - your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);",
+    "old": "      deps.say?.(`${c.name} is knocked out. Your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);",
     "new": "",
     "tests": [
       "test/systems/naval/auditcrew.test.js",

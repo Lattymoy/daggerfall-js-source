@@ -8,8 +8,10 @@
 //   - no diseases AND no poisons -> record 18, "You are healthy."
 //   - each disease whose INCUBATION IS OVER appends its classic
 //     contracted message (record 100 + diseaseType); one still
-//     incubating shows nothing, which is DFU's own tell-nothing
-//     window between the bite and the first symptom day.
+//     incubating showed nothing - DFU's own tell-nothing window between
+//     the bite and the first symptom day - and since DISEASE-UNWELL
+//     (FIELD BUGS 2026-10-19f, the owner's departure) says "You feel
+//     unwell." in its place, once, naming none.
 //   - "You have been poisoned." (record 117) appends when one or
 //     more poisons exist AND at least one has left the Waiting
 //     state - a poison still counting minutesToStart is as silent
@@ -28,9 +30,10 @@
 // rather than a second expander. DFU chains the two boxes with
 // AddNextMessageBox; the port's ActionTextBox.addNext is that chain.
 
-import { diseaseCount, contractedMessageRecord } from './diseases.js';
+import { diseaseCount, contractedMessageRecord, diseaseIncubating } from './diseases.js';
 import { poisonCount } from './poisons.js';
 import { expandQuestMessage } from './quest/questMacros.js';
+import { t } from './textManager.js';   // DISEASE-UNWELL: the unwell line in the player's language, read when the box is made
 
 export const STATUS_INFO_ID = 22;   // SetTextTokens(22) (DaggerfallUI.cs:1620)
 
@@ -56,13 +59,30 @@ export function statusInfoRows(rows, questLike = null) {
 
 export const YOU_ARE_HEALTHY_ID = 18;        // youAreHealthyID (:1632)
 export const YOU_HAVE_BEEN_POISONED_ID = 117;   // youHaveBeenPoisoned (:1633)
+/** DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Unnamed 'Unwell' tile"): the box's line for a disease
+ *  still incubating - the house's own, naming none. */
+export const UNWELL_LINE_TEXT = 'You feel unwell.';
 
 /** CreateHealthStatusBox's row decision. `rows(id)` is the host's
- *  TEXT.RSC reader; answers the box's row list. */
+ *  TEXT.RSC reader; answers the box's row list.
+ *  DISEASE-UNWELL - A DEPARTURE FROM DFU: where DFU's box says nothing of
+ *  a disease still incubating (its `if (disease.IncubationOver)`), and so
+ *  "You are healthy." when nothing else qualifies - while its travel
+ *  popup and the port's rest warning already say "diseased" - the box
+ *  says "You feel unwell." ONCE, however many incubate, where the first
+ *  of them stands, in the shape the host's own rows take (the healthy
+ *  line's: a `{ text, center }` record on the street, a plain string
+ *  underground). The named message once incubation is over, as DFU. */
 export function healthStatusRows(entity, rows) {
   if (diseaseCount(entity) === 0 && poisonCount(entity) === 0) return rows(YOU_ARE_HEALTHY_ID) ?? [];
-  let tokens = null;
+  let tokens = null, unwell = false;
   for (const a of (entity?.activeEffects ?? [])) {
+    if (!unwell && diseaseIncubating(a)) {
+      unwell = true;
+      const like = rows(YOU_ARE_HEALTHY_ID)?.[0];
+      const text = t('status.health.unwell', UNWELL_LINE_TEXT);
+      tokens = [...(tokens ?? []), like && typeof like === 'object' ? { ...like, text } : text];
+    }
     // MAC-ILL1 (2026-09-21, a player: "apparently i am ill (based on the
     // fast travel warning), but when I press 'I' it doesn't list any
     // illnesses"): the entry startDisease mints carries its type on

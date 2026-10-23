@@ -160,12 +160,15 @@ test('CW1: offerCovenQuest is the coven GetQuest verbatim - Witches pool, NONMEM
   // never assigns one - that line is the GUILD popup's OfferQuest).
   assert.equal(quest.externalMCP, undefined);
 
-  // The active-questor bail closes BEFORE the pool is consulted (:125-129).
+  // The active-questor bail closes BEFORE the pool is consulted (:125-129). PIN MOVED, QUESTOR-SAID (FIELD BUGS
+  // 2026-10-19f): the close says why, and names the quest open where the machine can say which
+  // (test/systems/quest/fb1019f_questorsaid.test.js drives the real machine)
   const calls2 = [];
+  const open = { questName: 'OPEN', displayName: 'The Open Errand' };
   const flow2 = new QuestOfferFlow(
-    { isLastNPCClickedAnActiveQuestor: () => true, deps: {} },
+    { isLastNPCClickedAnActiveQuestor: () => true, lastNPCClickedQuestorOf: () => ({ quest: open, person: {} }), deps: {} },
     { getGuildQuest: (...a) => { calls2.push(a); return null; } }, {});
-  assert.deepEqual(flow2.offerCovenQuest(510, 0), { kind: 'close' });
+  assert.deepEqual(flow2.offerCovenQuest(510, 0), { kind: 'close', reason: 'activeQuestor', quest: open });
   assert.equal(calls2.length, 0);
 });
 

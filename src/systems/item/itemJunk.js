@@ -39,4 +39,4 @@ export function lockLiftsJunk(/** @type {any} */ item) {
   if (isLocked(item)) setJunk(item, false);
 }
 /** The card's line for a junk piece. */
-export const JUNK_LINE = 'Junk - a shop\'s Sell junk puts it on the counter, and a take-all leaves it.';
+export const JUNK_LINE = 'Junk. Sell junk at a shop puts it on the counter, and Take all leaves it behind.';

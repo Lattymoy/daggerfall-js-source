@@ -38,12 +38,35 @@ import { mat4FromQuatPosScale, quatMultiply, quatRotate } from './quat.js';
 const IDENTITY = Object.freeze([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const ZERO3 = Object.freeze([0, 0, 0]), ONE3 = Object.freeze([1, 1, 1]);
 const _rotScratch = new Float32Array(16);   // lossyScaleOf's rotation, read at once (rs3 copies it out)
-/** AUDIT NAV1 (the frame's cost, #12): THE TREES' SHAPE, STAMPED - bumped by every change to which node hangs under
+/** AUDIT NAV1 (the frame's cost, #12): A TREE'S SHAPE, STAMPED - bumped by every change to which node hangs under
  *  which (setParent, and so setParentKeepWorld and every instance built) and to which components a node carries
  *  (addComponent); never by a move, a turn or a switch on or off. What is kept of a tree's shape (world/
- *  prefabColliders.js's index of its colliders) stands while the stamp does. */
-let _shapeStamp = 0;
-export const prefabShapeStamp = () => _shapeStamp;
+ *  prefabColliders.js's index of its colliders, a boat's plan and her Animators) stands while the stamp does.
+ *  BOAT-STAMP (2026-10-21, a player's profile: the boats' pool 11% of the frame, rendererModelKey 2.6% - every boat's
+ *  key made again most frames): EACH TREE ITS OWN. The stamp was ONE count for every tree in the game, so a boat built
+ *  anywhere - a sea hull streaming in, a peer's boat, a fitting stood - made every boat's plan, bones, still chains,
+ *  Animators and colliders again the next frame. It is kept on a tree's top node (`_treeStamp`) and bumped there: a node
+ *  hung elsewhere bumps the tree it left and the one it joined, a component added its own tree. Every bump is a fresh
+ *  draw of one count, so no bump repeats a value any stamp has had: a node whose tree changes reads a value it never
+ *  read. A tree never reshaped reads 0, as every such tree does - and no reader compares one tree's stamp with
+ *  another's: each keeps the stamp it read off its own node's tree, and its next read is that node's tree's again. */
+let _shapeCount = 0;
+/** The top node of `n`'s tree - the node it hangs under that hangs under nothing (itself, for a top node). The climb
+ *  ends: no node hangs under itself or a node of its own (setParent refuses it). */
+const topOf = (n) => { let r = n; while (r.parent) r = r.parent; return r; };
+/** The tree `n` stands in, reshaped: its top node stamped with a value no stamp has had. */
+const reshaped = (n) => { topOf(n)._treeStamp = ++_shapeCount; };
+/** The shape stamp of the tree `node` stands in (its top node's): another value once a node of that tree is hung
+ *  elsewhere, one is hung in it, or one of its nodes is given a component; the same while only other trees change.
+ *  @param {PrefabNode} node */
+export const prefabShapeStamp = (node) => topOf(node)._treeStamp;
+/** BOAT-FAR (its audit, 2026-10-21): A TREE'S SWITCHES, STAMPED - bumped on its top node (`_treeSwitch`) by every
+ *  setActive that turns a node of it on or off (one that sets what the node already reads bumps nothing), drawn from
+ *  the shape's count; never by a move, a turn, a node hung or a component added (the shape's). Which nodes a walk of
+ *  the tree reaches - its active children, down from an active top - stands while this and its shape's stamp do, and a
+ *  far boat's held walk (scenes/comeSailAway/comeSailAwayPool.js lifeOf) is kept only while both stand.
+ *  @param {PrefabNode} node */
+export const prefabSwitchStamp = (node) => topOf(node)._treeSwitch;
 
 export class PrefabNode {
   /**
@@ -64,6 +87,10 @@ export class PrefabNode {
     this.parent = null;
     /** @type {PrefabNode[]} */
     this.children = [];
+    /** BOAT-STAMP: on a top node, its tree's shape stamp (prefabShapeStamp) - read on no other */
+    this._treeStamp = 0;
+    /** BOAT-FAR (its audit): on a top node, its tree's switches' stamp (prefabSwitchStamp) - read on no other */
+    this._treeSwitch = 0;
     /** @type {PrefabNode|null} the root of the prefab instance this node came from (instantiatePrefab) */
     this.prefabRoot = null;
     /** @type {Map<string, PrefabNode>|null} on an instance's root: its nodes by prefab path */
@@ -83,12 +110,17 @@ export class PrefabNode {
   get childCount() { return this.children.length; }
   getChild(i) { return this.children[i]; }
 
-  /** Unity's SetParent(parent, false): the local transform is kept as it stands. */
+  /** Unity's SetParent(parent, false): the local transform is kept as it stands. A parent that is this node or one of
+   *  its own is refused, as Unity's SetParent refuses it - here by a throw, before anything moves, so the caller is
+   *  named where it asks (no caller does: a node under its own child would make every climb to its tree's top, topOf,
+   *  climb for ever). */
   setParent(parent) {
+    for (let p = parent; p; p = p.parent) if (p === this) throw new Error(`PrefabNode.setParent: '${this.name}' cannot hang under itself or a node of its own ('${parent.name}')`);
+    const left = topOf(this);   // BOAT-STAMP: the tree it leaves (itself, hung under nothing)
     if (this.parent) this.parent.children.splice(this.parent.children.indexOf(this), 1);
     this.parent = parent;
     if (parent) parent.children.push(this);
-    _shapeStamp++;
+    reshaped(left); reshaped(this);   // ...and the tree it joins (itself again, hung under nothing now)
     return this;
   }
 
@@ -158,7 +190,12 @@ export class PrefabNode {
   /** Transform.forward: the node's rotation of +Z. */
   get forward() { return quatRotate(this.rotation, [0, 0, 1]); }
 
-  setActive(v) { this.activeSelf = !!v; }
+  /** GameObject.SetActive. BOAT-FAR (its audit): a switch that changes what the node reads stamps its tree's switches
+   *  (prefabSwitchStamp); one that sets what it reads is no switch. */
+  setActive(v) {
+    const on = !!v;
+    if (this.activeSelf !== on) { this.activeSelf = on; topOf(this)._treeSwitch = ++_shapeCount; }
+  }
   get activeInHierarchy() {
     for (let n = /** @type {PrefabNode|null} */ (this); n; n = n.parent) if (!n.activeSelf) return false;
     return true;
@@ -198,7 +235,7 @@ export class PrefabNode {
 
   getComponent(type) { return this.components.find((c) => c.type === type) ?? null; }
   getComponents(type) { return this.components.filter((c) => c.type === type); }
-  addComponent(c) { this.components.push(c); _shapeStamp++; return c; }
+  addComponent(c) { this.components.push(c); reshaped(this); return c; }
 
   /** Depth first, this node first; only a component on an active node (Unity's default). */
   getComponentInChildren(type) {

@@ -34,6 +34,7 @@ import {
   JUNCTION_HERE_PT, junctionDirectionIndex, drawMapSection, DOT_SCALE, packRGBA,
 } from '../travel/travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as T } from '../../systems/travel/travelOptionsText.js';
+import { t } from '../../systems/textManager.js';
 import { buildPaceControls, paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIALS: the journey's own dials again
 
 export const ENHANCED_TRAVEL_ID = 'enhanced-travel';
@@ -59,8 +60,15 @@ let last = null;
  *  and why. AUDIT OW5 G1: the load (TV2's governor), or the ground (AUDIT OW4 J5: an Overworld journey walks at x1 on the
  *  ground until the view can rise), which the load's words called loading while nothing was; OW6: or an enemy near
  *  (systems/travel/travelThreat.js). */
-export const TRAVEL_HELD_WHY = Object.freeze({ load: 'while the land loads', ground: 'until the Overworld rises', foes: 'with enemies near' });
-export const TRAVEL_HELD_TEXT = (n, of, why = 'load') => `Held to ×${n} of ×${of} ${TRAVEL_HELD_WHY[why] ?? TRAVEL_HELD_WHY.load}`;
+export const TRAVEL_HELD_WHY = Object.freeze({   // OW-TOWN-WALK: a town's pace; AUDIT OW-REVISITED L1-8 / L3-13 / L6-8: every word the player's language's (L10N4)
+  get load() { return t('travel.held.load', 'while the land loads'); },
+  get ground() { return t('travel.held.ground', 'until the Overworld rises'); },
+  get foes() { return t('travel.held.foes', 'with enemies near'); },
+  get town() { return t('travel.held.town', 'in town'); },
+});
+/** The held line whole in the player's language - its reason was the one word translated, inside an English line
+ *  ("Held to ×5 of ×100 in der Stadt"). */
+export const TRAVEL_HELD_TEXT = (n, of, why = 'load') => t('travel.held.line', 'Held to ×{n} of ×{of} {why}', { n, of, why: TRAVEL_HELD_WHY[why] ?? TRAVEL_HELD_WHY.load });
 
 /** enhancedHud.js:"FRAME1: the smallest" - write only on a change. */
 function put(node, key, value) {
@@ -84,7 +92,7 @@ function build(doc, hooks) {
   root.innerHTML = `
     <div class="travelpanel-bar">
       <div class="travelpanel-dest">
-        <span class="travelpanel-label">Travelling to</span>
+        <span class="travelpanel-label">Traveling to</span>
         <span class="travelpanel-name"></span>
         <span class="travelpanel-sub"></span>
       </div>

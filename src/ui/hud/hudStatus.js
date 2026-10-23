@@ -37,7 +37,12 @@
 //     law (systems/healthStatus.js): a poison once it has left its
 //     waiting, a disease once its incubation is over and by the name
 //     its own message gives it (diseases.js DISEASE_NAMES), an
-//     infection never (DFU says nothing of one until the dream).
+//     infection never (DFU says nothing of one until the dream);
+//     DISEASE-UNWELL (FIELD BUGS 2026-10-19f, the owner: "Unnamed
+//     'Unwell' tile"): and while a disease incubates, one tile of no
+//     name, "Unwell", on the disease's own spore - where DFU says
+//     nothing, and the rest's and the journey's warnings already said
+//     "diseased".
 // The name stands beside each tile where there is room; on a phone, or
 // in a band too short for three rows, the tiles stand alone.
 //
@@ -49,8 +54,9 @@
 // the chat opened tall on a laptop - it stands BESIDE the diamond
 // instead, as tall as the diamond (statPlace).
 // ═══════════════════════════════════════════════════════════════════
-import { DISEASE_NAMES } from '../../systems/diseases.js';
+import { DISEASE_NAMES, diseaseIncubating } from '../../systems/diseases.js';   // DISEASE-UNWELL: and the one law of a disease still incubating
 import { HUD_NEED_WORDS, levelSaid } from '../../systems/survival/status.js';
+import { t } from '../../systems/textManager.js';   // DISEASE-UNWELL: the Unwell tile's word in the player's language, read when it is drawn
 
 /** A tile's side: a 16px picture at two to one inside a 2px frame. */
 export const STAT_TILE = 36;
@@ -190,6 +196,22 @@ export const STATUS_GLYPHS = Object.freeze({
     '.kbaaaaaaak.kkk.', '.kbaaaaaackkkakk', '.kaaaaaaackkaaak', '.kkaaaaacckkaaak',
     '..kkaaacckkkbaak', '...kkkkkkk.kacck', '...........kkkkk', '................',
   ] }),
+  // SKILL-READY (2026-10-20, Dudey: "a symbol ... left of the renown bar when skills are ready to level up"): an arrow
+  // up in the level's gold - the skills a rest or a journey would raise (ui/hud/hudAdvance.js)
+  skillup: Object.freeze({ pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' }, rows: [
+    '................', '......kkkk......', '.....kkbckk.....', '....kkbbackk....',
+    '...kkbbaacckk...', '..kkbbaaaacckk..', '.kkbbaaaaaacckk.', '.kbbaaaaaaaacck.',
+    '.kkkkbbaacckkkk.', '....kbbaacck....', '....kbbaacck....', '....kbbaacck....',
+    '....kbbaacck....', '....kcccccck....', '....kkkkkkkk....', '................',
+  ] }),
+  // FIRM-STARS (2026-10-20, Dudey: "a symbol ... on the right of the renown bar" while the Firmament has stars not yet
+  // placed): a five-point star in the night sky's silver-blue (ui/hud/hudAdvance.js)
+  firmstar: Object.freeze({ pal: { a: '#bcd4ff', b: '#ffffff', c: '#6f8fd0' }, rows: [
+    '......kkk.......', '.....kkbkk......', '.....kbbak......', '....kkbbakk.....',
+    'kkkkkbbbaakkkkk.', 'kbbbbbbbaaaaaak.', 'kkbbbbbbaaaaakk.', '.kkaaaabaccckk..',
+    '..kkaaabccckk...', '..kkaaabccckk...', '..kaaaaacccck...', '.kkaaaakcccckk..',
+    '.kaaaakkkcccck..', '.kaakkk.kkkcck..', '.kkkk.....kkkk..', '................',
+  ] }),
   // a spore
   disease: Object.freeze({ pal: { a: '#c8d24a', b: '#eef59a', c: '#6e7a18' }, rows: [
     '....kkkkkkkk....', '...kkaakkaakk...', '...kaaakkaaak...', '.kkkkaakkaakkkk.',
@@ -252,22 +274,33 @@ export function statusGlyphSrc(name) {
   return _srcs.get(name);
 }
 
+/** DISEASE-UNWELL: the unnamed tile's word - the English, and as the player reads it. */
+export const UNWELL_TILE_TEXT = 'Unwell';
+export const unwellTileText = () => t('hud.status.unwell', UNWELL_TILE_TEXT);
+
 /**
  * The poisons and diseases the widget shows - the Status box's law (systems/healthStatus.js healthStatusRows): ONE
  * tile for being poisoned, once any poison has left its waiting (the game names none: "You have been poisoned."); a
- * tile a disease whose incubation is over, by its name; nothing for an entry that has ended, one still waiting or
- * incubating, or an infection (no disease row: `disease` null). TELL9: and a blow's bleed, its ticks left at its foot.
+ * tile a disease whose incubation is over, by its name; nothing for an entry that has ended, a poison still waiting, or
+ * an infection (no disease row: `disease` null). DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19:
+ * "Unnamed 'Unwell' tile" - a departure from DFU, which shows nothing until the first symptom day): ONE tile of no name,
+ * "Unwell", on the disease tile's own spore, for every disease still incubating (diseases.js diseaseIncubating), where
+ * the first of them stands; the Status box says the same unnamed (systems/healthStatus.js). TELL9: and a blow's bleed,
+ * its ticks left at its foot.
  * @param {any} entity
  * @returns {{ key: string, name: string, glyph: string, foot?: string, blink?: boolean }[]}
  */
 export function afflictionRows(entity) {
   const out = [];
-  let poisoned = false;
+  let poisoned = false, unwell = false;
   for (const a of entity?.activeEffects ?? []) {
     if (!a || a.ended) continue;
     if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;
     else if (a.kind === 'disease' && a.incubationOver && a.disease != null && DISEASE_NAMES[a.disease]) {
       out.push({ key: `disease:${a.disease}`, name: DISEASE_NAMES[a.disease], glyph: 'disease' });
+    } else if (!unwell && diseaseIncubating(a)) {
+      unwell = true;
+      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });
     }
   }
   if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });
@@ -293,7 +326,7 @@ export function needGlyph(chip) {
 /**
  * @typedef {{ key: string, kind: 'buff'|'debuff'|'set'|'warn'|'danger'|'more', name: string, foot: string|null,
  *   blink: boolean, item: boolean, recovering: boolean, spell: number|null, glyph: string|null, set: string|null,
- *   bundle: number|null, endable: boolean, say: string|null, cost: boolean }} StatusTile
+ *   tier?: number|null, bundle: number|null, endable: boolean, say: string|null, cost: boolean }} StatusTile
  */
 /**
  * The widget's tiles, in the order the foot row read them: the spells (mine, then others'), the set powers, the
@@ -320,7 +353,7 @@ export function statusTiles({ spells = [], powers = [], afflictions = [], needs 
     item: !!e.item, spell: Number.isInteger(e.icon) && e.icon >= 0 ? e.icon : null,
     bundle: e.bundleId ?? null, endable: !!e.endable && e.bundleId != null,   // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)
   }));
-  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null });
+  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null, tier: Number.isInteger(c.tier) ? c.tier : null });   // AUDIT STAR S2: and its tier, which the card reads
   for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });   // TELL9: a bleed's ticks
   // NEED-TIER: and how bad, at its foot ("2/3" - Hungry of Peckish, Hungry, Starving), as a spell's rounds are: the glyph
   // is one picture for every stage and the name goes where there is no room, so the foot is what says it there

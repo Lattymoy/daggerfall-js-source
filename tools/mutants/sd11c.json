@@ -114,8 +114,8 @@
   },
   {
     "name": "SD11c-L6F17-never-kept",
-    "file": "src/scenes/world.js",
-    "old": "try { appStorage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "try { storage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
     "new": "void 0;",
     "tests": [
       "test/systems/sd11c_page.test.js"
@@ -123,8 +123,8 @@
   },
   {
     "name": "SD11c-L6F17-never-read",
-    "file": "src/scenes/world.js",
-    "old": "try { raw = appStorage()?.getItem?.(k) ?? null; } catch { raw = null; }",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "try { raw = storage()?.getItem?.(k) ?? null; } catch { raw = null; }",
     "new": "try { raw = null; } catch { raw = null; }",
     "tests": [
       "test/systems/sd11c_page.test.js"
@@ -132,7 +132,7 @@
   },
   {
     "name": "SD11c-L6F17-unbounded",
-    "file": "src/scenes/world.js",
+    "file": "src/systems/superDungeon/sdSlots.js",
     "old": "JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))",
     "new": "JSON.stringify([...now, s])",
     "tests": [

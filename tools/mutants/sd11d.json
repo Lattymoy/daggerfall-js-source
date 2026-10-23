@@ -625,11 +625,12 @@
   {
     "name": "SD11D-the-hall-around-the-voice",
     "file": "src/scenes/dungeonContext.js",
-    "old": "say: (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); }",
-    "new": "say: (t) => setMidScreenText(t)",
+    "old": "const sdSayHere = (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); };",
+    "new": "const sdSayHere = (t) => setMidScreenText(t);",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
-    ]
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the hall says through one named closure, the Way Through's too (C13). SD-THROUGH (re-aimed by content): the hall's own say - the Way Through's copy beside the Rift's is its own record's."
   },
   {
     "name": "SD11D-the-old-concord",

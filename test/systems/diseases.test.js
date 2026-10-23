@@ -297,19 +297,20 @@ test('diseases: permanent marker constants + the ids stay pinned', () => {
 test('diseases: S19 spider/scorpion rider - free-cast Spider Touch, incumbent-paralysis veto', async () => {
   const { SPIDER_TOUCH_SPELL_INDEX } = await import('../../src/systems/diseases.js');
   assert.equal(SPIDER_TOUCH_SPELL_INDEX, 66);
-  // An unparalyzed target: the rider fires the scene's castParalyze
-  // closure (SetReadySpell noSpellPointCost=true), consuming no rolls
-  let casts = 0;
+  // An unparalyzed target: the rider readies spell 66 through the scene's
+  // readySpell (SetReadySpell noSpellPointCost=true), consuming no rolls
+  // (PIN MOVED, DEX4b: castParalyze became readySpell(index) - SetReadySpell for any spell)
+  const casts = [];
   const p = P();
   onMonsterHit({ careerIndex: MOBILE_TYPES.Spider }, p, 3, {
-    rolls: () => { throw new Error('no roll'); }, castParalyze: () => casts++,
+    rolls: () => { throw new Error('no roll'); }, readySpell: (i) => casts.push(i),
   });
-  assert.equal(casts, 1);
+  assert.deepEqual(casts, [66]);
   // GiantScorpion shares the case row
-  onMonsterHit({ careerIndex: MOBILE_TYPES.GiantScorpion }, p, 3, { castParalyze: () => casts++ });
-  assert.equal(casts, 2);
+  onMonsterHit({ careerIndex: MOBILE_TYPES.GiantScorpion }, p, 3, { readySpell: (i) => casts.push(i) });
+  assert.deepEqual(casts, [66, 66]);
   // FindIncumbentEffect<Paralyze> != null vetoes the cast
   p.activeEffects = [{ kind: 'paralyze', roundsRemaining: 3 }];
-  onMonsterHit({ careerIndex: MOBILE_TYPES.Spider }, p, 3, { castParalyze: () => casts++ });
-  assert.equal(casts, 2);
+  onMonsterHit({ careerIndex: MOBILE_TYPES.Spider }, p, 3, { readySpell: (i) => casts.push(i) });
+  assert.deepEqual(casts, [66, 66]);
 });

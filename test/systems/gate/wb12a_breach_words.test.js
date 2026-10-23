@@ -91,7 +91,7 @@ test('WB12a the names on screen: the plaque, the banner and the map\'s legend sa
   assert.equal(MARKS_CARD_TEXT.gate('Valkynaz Ruhn', 'the Rime-Wrought'), 'Valkynaz Ruhn comes the Rime-Wrought tonight', 'WB13b: one subtitle near the gate and inside');
   assert.equal(GATE_CLAIM_TEXT.recorded(4), 'Breach recorded. Breaches closed: 4.');
   assert.equal(GATE_CLAIM_TEXT.guest, 'Breach not recorded. Add a username within a week to keep it.');
-  assert.equal(MARKS_TEXT.capped, 'No silver for this breach. The counting-houses strike 150 silver a day for breaches closed, towns defended, serpents slain and Redoubts taken.');   // SILVER: the currency's name; PIN MOVED (SILVER-WAYS): the day's cap the gates' and the raids'; PIN MOVED (EG-E1): and the Spire's Redoubts', under the same cap
+  assert.equal(MARKS_TEXT.capped, 'No silver for this breach. You can earn at most 150 silver a day from breaches, town defenses, serpents, Redoubts and fallen stars.');   // SILVER: the currency's name; PIN MOVED (SILVER-WAYS): the day's cap the gates' and the raids'; PIN MOVED (EG-E1): and the Spire's Redoubts', under the same cap; PIN MOVED (STAR7): and the held stars'
   assert.equal(profileGateLine({ gates: { closed: 3 } }), 'Breaches closed: 3');
   assert.match(read('src/ui/enhanced/enhancedAccount.js'), /if \(gates\) row\(t\('account\.card\.gates', 'Breaches closed'\), gates\);/);   // L10N4 (PIN MOVED): the row's word through t()
   assert.equal(accountRefusalText('short'), 'Your account has too few embers for that.');   // AUDIT WB12d (A4): a rite's ember counts

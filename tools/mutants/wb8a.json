@@ -75,17 +75,17 @@
   },
   {
     "name": "WB8a-his-refusal-unsaid",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "{ swayToldAt = Date.now(); hudText.add(BOSS_SWAY_TEXT(boss.entity.name)); }",
-    "new": "{ swayToldAt = Date.now(); }",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "{ swayToldAt = now(); say(BOSS_SWAY_TEXT(boss.entity.name)); }",
+    "new": "{ swayToldAt = now(); }",
     "tests": [
       "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
     "name": "WB8a-his-refusal-every-blow",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "    if (sways && Date.now() - swayToldAt >= BOSS_SWAY_TELL_MS) {",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    if (sways && now() - swayToldAt >= BOSS_SWAY_TELL_MS) {",
     "new": "    if (sways) {",
     "tests": [
       "test/systems/wb8a_never_swayed.test.js"
@@ -93,7 +93,7 @@
   },
   {
     "name": "WB8a-a-sway-alone-is-not-spent-at-him",
-    "file": "src/scenes/dungeonContext.js",
+    "file": "src/scenes/gate/standInSpell.js",
     "old": "    if (!harm) return laid || sways;",
     "new": "    if (!harm) return laid;",
     "tests": [

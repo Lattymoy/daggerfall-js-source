@@ -398,7 +398,7 @@ test('AUDIT EG IV THE PAGE SAYS WHAT IS BUILT (sections 12, 15, 17.1, 18 and 21;
   for (const gone of ['drawn\n   without repeat each season from six:', '**The Mingled Legion**: waves draw every band\'s kinds;', 'rise together as one Court, under the Twins\'', 'every court disc is magma', 'make a rank of a held Vestige, or a pick of two new ones', 'your arrows wake Lurkers at any range (as any blow', 'Before EG14 turns it on for `eg:` rooms', 'and only once the time law above is in', 'Spotter\'s wake reads', 'No\n   member\'s tally counts either.'])
     assert.ok(!page.includes(gone), `retired: ${gone}`);
   assert.ok(brain.includes('20 / 25 / 30% less by the healer\'s rank') && !brain.includes('20 / 30 / 40%'), 'the census\'s Lifeline');
-  assert.equal(EG_CAPSTONES.fellowship.line, "Rally's heal and every Second Wind in the company come again at each of a Court's phase turns, and when a hall's door opens.");
+  assert.equal(EG_CAPSTONES.fellowship.line, "Rally's heal and the company's Second Winds come again at each Court phase and when a hall's door opens.");
   assert.ok(!EG_MASTERIES.find((M) => M.key === 'spotter').line.includes('wake Lurkers'));
   // the Molten Rim a Court's alone: a Rift-Yard under it lays none
   const Y = hall({ seed: 1, h: 106, strata: ['moltenrim'] });

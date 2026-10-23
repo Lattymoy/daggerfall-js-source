@@ -116,7 +116,7 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   assert.equal(s.sendPose(pose(1)), false, 'nothing goes before the socket opens');
   sockets[0].open();
   assert.equal(s.status, 'open'); assert.equal(s.statusLine(), null);
-  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: { ...pose(1), ts: now % POSE_TS_MOD }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW }, 'PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: and the spawn grants it stands on, to a room whose foes ride): the hello carries the id, its secret and the latest pose - stamped with when it is said (SCALE2b) - and, to a cell, the ground this build stands on (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
+  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: { ...pose(1), ts: now % POSE_TS_MOD }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1 }, 'PIN MOVED (LEASE1, net/roomLease.js: and that it hands its hub\'s lease on, to a lease room); PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: and the spawn grants it stands on, to a room whose foes ride): the hello carries the id, its secret and the latest pose - stamped with when it is said (SCALE2b) - and, to a cell, the ground this build stands on (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
   assert.equal(s.sendPose(pose(2)), false, 'SD-HELLO (PIN MOVED): nothing past the hello until the room welcomes the socket');
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [] });   // SD-HELLO (PIN MOVED): welcomed - the pose's law below as it was
   assert.equal(s.sendPose(pose(2)), true); now += 20; assert.equal(s.sendPose(pose(3)), false, 'twenty ms later: throttled');
@@ -237,10 +237,10 @@ test('ONLINE1: the look and the stub - the equipped items\' doll fields off the 
   const entity = { race: 'Redguard', gender: 'female', faceIndex: 4, equip: createEquipTable() };
   entity.equip.slots[3] = { templateIndex: 102, group: 'Armor', material: 2, dye: 3, variant: 1, equipSlot: 3, currentCondition: 40, name: 'x' };
   entity.equip.slots[10] = { templateIndex: 20, group: 'MensClothing', equipSlot: 10, uid: 99 };
-  const look = composeLook(entity);
+  const look = composeLook(entity, { layered: null });   // PIN MOVED (LAYERED-GEAR-ON): the doll's fields; the layered body's `lg`, on by default, is pinned in worn_armour.test.js
   assert.deepEqual(look, { race: 'Redguard', gender: 'female', faceIndex: 4, items: [{ templateIndex: 102, group: 'Armor', material: 2, dye: 3, variant: 1, equipSlot: 3 }, { templateIndex: 20, group: 'MensClothing', equipSlot: 10 }] }, 'the doll\'s fields, nothing else');
   assert.deepEqual(LOOK_ITEM_FIELDS, ['templateIndex', 'group', 'material', 'dye', 'variant', 'equipSlot']);
-  assert.deepEqual(composeLook(null), { race: 'Breton', gender: 'male', faceIndex: 0, items: [] });
+  assert.deepEqual(composeLook(null, { layered: null }), { race: 'Breton', gender: 'male', faceIndex: 0, items: [] });
   assert.equal(lookKey(look), lookKey(JSON.parse(JSON.stringify(look)))); assert.notEqual(lookKey(look), lookKey({ ...look, faceIndex: 5 }));
   const stub = peerStubEntity(look);
   assert.equal(stub.race, 'Redguard'); assert.equal(stub.equip.slots[3].templateIndex, 102); assert.equal(stub.equip.slots[10].templateIndex, 20);

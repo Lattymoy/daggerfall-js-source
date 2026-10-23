@@ -33,7 +33,7 @@ import { signatureOffers } from '../systems/signatureSpells.js';   // SCHOOLS3: 
 import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1: the shelf's online arm
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
@@ -114,7 +114,7 @@ import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/f
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
-import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gate/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
+import { gateArenaLocation, gateArenaBlocks, isGateArena, slabMatrix, courtLightsNear, withCourtLights, courtDoorAabb, planOfDay, COURT_FOG } from '../world/gate/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
 import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsWith, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/superDungeon/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
 import { realmArt } from '../world/superDungeon/sdRealmArt.js';   // SD5a: its art, made in code
 import { isEgHall, egHallLocation, egHallBlocks, egLightsWith, egHallLighting, egHallFog, egHallGrade } from '../world/eliteGates/egHall.js';   // EG-PLAY: an Elite Breach's circle, a made level as the Hour is
@@ -130,8 +130,8 @@ import { sdRoomKey } from '../net/superDungeon/sdLaw.js';   // SD5a: its room, t
 import { isBound } from '../systems/item/itemBound.js';   // AUDIT SS: the keyed shelf sells no bound piece
 import { lockRefuses } from '../systems/item/itemLock.js';   // AUDIT SS: nor a locked one
 import { courtLighting, deadlandsFlash } from '../render/deadlands.js';   // WB6a: the court's own light - the Deadlands' red from above, the fire's from below, the vortex's from behind the boss   // WB6b: and a strike's, flaring over it
-import { buildDeadlandsLand, buildShardModel, deadlandsShards, shardMatrix } from '../world/deadlandsLand.js';   // WB6b: the land out in the fire round the court, and the floor's broken shards over it
-import { gateArt, courtArt, GATE_ARCHIVE } from '../world/gate/gateArt.js';   // WB3b: the court's own art, and the gate's stone it is cut from   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
+import { shardMatrix } from '../world/deadlandsLand.js';   // WB6b: the floor's broken shards over the fire round the court
+import { createGateStand, NO_XA } from './gate/gateStand.js';   // WB3b/WB6b: the court and its land stood into the context - WB14b: the night's (out of this host)   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { createWeaponRig, envAttack, sheetHolderOf } from '../combat/weapon/weaponRig.js';   // MW-MAP1: the held map's holder, off the interior arm
 import { fpArm } from '../combat/fpArm.js';   // MW-MOUNT: a displayed item's Morrowind picture, from the build that stands
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
@@ -141,6 +141,7 @@ import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): 
 import { tallySkill, skillValue, SKILLS, permanentSkillValue } from '../systems/skills.js';
 import { tallySwingSkills, SWING_FATIGUE_COST, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon, aimedBlowInfo, playerBlowFrame } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
 import { createPopulationLane } from '../characters/npcBodies.js'; import { personLook, personActor } from '../characters/peopleBodies.js';   // MWNPC8a: the building's standing people in Morrowind bodies
+import { createNpcMarks, staticNpcRouteIn } from './npcMarksHost.js';   // NPC-MARKS: the marks over the people who do something, and the click's route built in one place
 import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';
@@ -163,7 +164,7 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
-import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
+import { fetchBytes, applyMotorEffectFlags, applyFallLanding } from './shared.js';
 import { setDeathPresenter, setAvoidDeathHook, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY
@@ -194,7 +195,7 @@ import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldT
   houseContainerName, houseContainerHover, actionObjectName, lootPileName,
   BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands; QUEST-FOE-LINE: a quest's foe says whose it is   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES, REGION_NAMES, REGION_RACES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
-import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
+import { isShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE-BAG: one Materials Bag to a character, on the keyed shelf too
 import { identifySpellPass, identifiedTallyText, notEnoughSpellPointsText, tradeCost, getTradePrice, markCounterBought } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's; AUDIT LW-II-2 S1: the counter's mark
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
@@ -216,10 +217,10 @@ import { applyDeathPenalty, deathPenaltyText } from '../systems/deathPenalty.js'
 import { revenantTakes } from '../systems/revenant/revenant.js';   // AUDIT FEUD (RVN8): the in-place respawn's theft, as the world host's
 import { endPlayerFights } from '../systems/harmMark.js';   // AUDIT FEUD (RVN10): ...and its fights ended
 import { tokenRows } from '../ui/messageBox.js';
-import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, wayBackLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
+import { showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, wayBackLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
 import { isPotionRecipe, USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
-import { canAccessService , hasCustomMerchantService, getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guild/guildServices.js';   // G4: does THIS guild also sell soul gems?
+import { canAccessService , getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guild/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
   receiveHouseDecision, claimHouse, alreadyGivenHouseText,   // H1
@@ -386,7 +387,7 @@ import { VENDOR_STATION, VENDOR_COLD_LINE } from '../net/vendorLaw.js';   // HOM
 import { forgeOffered, PROF_STATIONS, stationColdLine, enchantGoldPct, STORES_ACT_STATIONS, focusStoresStation } from '../ui/professions/profPages.js';   // AUDIT 29 B2: a Forge worked only where the Stores page is; PROF4: a Workbench
 import { FORGE_FEE, WORKBENCH_FEE, LOOM_FEE, MASON_FEE, COOK_FIRE, JEWEL_FEE, ALCHEMY_FEE, ENCHANT_FEE } from '../net/professionLaw.js';   // PROF2: a smith's forge's use fee; PROF4: a furnisher's workbench's; PROF7: a tailor's loom's; PROF11: a General Store's mason's bench's; PROF10: a Pawn Shop's or a Gem Store's jeweller's bench's
 /** HOME-STATIONS: a station pressed whose maker's art has not landed yet. */
-const DECOR_STATION_NOT_READY = 'The station is not ready yet - try again in a moment.';
+const DECOR_STATION_NOT_READY = 'The station is not ready yet. Try again in a moment.';
 /** AUDIT HOME-STATIONS S7: a maker's refusal whose TEXT.RSC record did not answer. */
 const DECOR_STATION_REFUSED = 'You cannot use the station right now.';
 import { createDecorRoom, decorIdOfKey, askDecorList, offerDecorFigures } from './decor/decorRoom.js';   // MWNPC18: a placed figure in its body
@@ -441,7 +442,8 @@ import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/poti
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/item/itemMakerWindow.js';
 import { createPotion, getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
 import { SITE_TYPES } from '../systems/quest/place.js';
-import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop
+import { personOwnName } from '../systems/quest/person.js';   // QUEST-NAME-ONE: a quest stand answers to its Person's own name
+import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop; FB1020c CROWD-CLEAR: a Person clear of the room's people
 import { chestIdentity, matchChests } from './chestRecords.js';   // HOLD-KEPT: a house chest's record by which chest it is
 import { placeFoeEnv, placeRoomQuestFoe, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile, restandMendedQuestFoe } from './quest/questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
@@ -461,6 +463,7 @@ import { bedSleepingOn, rrDouseOnDungeonExit, rrRefinedTrainingOn, rrSetting } f
 import { rrVariantPerson } from '../systems/roleplayRealism/rrVariants.js';   // RR2: the variant keepers and residents
 import { chairSeatOf, chairProbeOver, CHAIR_KIND, CHAIR_FLOOR_STEP } from '../world/chairSeat.js';   // SIT1: where on a chair the sitter's body goes
 import { isLampKeeper, lampLines, LAMP_TEXT, createLampTitle } from '../systems/lampKeeper.js';   // LAMP-KEEPER II: a shop's keeper standing as the lamp, its words and its title
+import { vendorOffice } from '../systems/festival/festivalWords.js';   // WITCH1: a Wyrd Sister is named by her office
 import { announceHonour } from '../ui/lootBanner.js';   // LAMP-KEEPER II: I Love Lamp, as a loot banner
 import { setRrHostSeams } from '../systems/roleplayRealism/rrInstall.js';   // RR1: the host's foe-spawner seam for the underworld guilds' squad
 import { createSwimMovement } from './deepWater/deepWatersSwimMove.js';   // DW-D: Iliac Puddle No More's swim movement - the dungeon's water too (IsAnySwimming)
@@ -473,6 +476,8 @@ import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first tou
 import '../ui/tutorialPopup.js';   // TUT1: the popup's handler, registered by this host (the four hosts' rule)
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a tinted copy of a light is that light (the dungeon's flame tint, the abyss's candle)
 import { createYardCounter } from './yardCounter.js';   // HOST-SPLIT
+import { createQuestClickFirst, clickHeardByQuest } from './quest/questClickFirst.js';   // QUEST-WORDS-FIRST: a quest's words and reward before the NPC's door
+import { ownerFoes } from './ownerCatchUp.js';   // HOST-CLOCK: a building's two pools through the page's one catch-up (OWNER-CLOCK's parity)
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -565,7 +570,7 @@ export function createWorldModes(host) {
   /** TAVERN-TABLES: why this player may not sit at the gold table (a key of CARD_GOLD_BARRED), or null - online it seats
    *  a realm character's stake, at a relay that deals, and nobody else; offline it is a table like the other. */
   const cardGoldBarred = (i) => (!cardTableGold(i) || !isOnlinePage() ? null : !host.cardStakes?.goldOk?.() ? 'realm' : !host.cardOnline?.ok?.() ? 'relay' : null);
-  const CARD_GOLD_BARRED = Object.freeze({ realm: 'This table plays for gold - only a realm character may stake at it. The green table plays for chips.', relay: 'This table plays for gold, and the relay is not dealing right now - the green table plays for chips.' });
+  const CARD_GOLD_BARRED = Object.freeze({ realm: 'This table plays for gold, and only a realm character may stake at it. The green table plays for chips.', relay: 'This table plays for gold and is not dealing right now. The green table plays for chips.' });
   function sitAtCardTable(i) {
     // TAVERN-TABLES: told before he sits - the relay refuses a sit at the gold table with no stake, and the refusal
     // stood him up (the owner's report: one table, and "it doesnt let him use gold tables")
@@ -869,7 +874,7 @@ export function createWorldModes(host) {
   /** AUDIT CARDS-3 C4: the beat the settled cloth is left to be read before the next hand is dealt. */
   const CARD_CLOTH_REST_MS = 1200;
   /** CARDS6: the service's refusals of a stake, said. */
-  const CARD_STAKE_REFUSALS = Object.freeze({ 'realm-gold': 'Your purse cannot cover that stake.', 'bad-buy-in': 'That stake is outside the table\'s buy-in.', 'cards-closed': 'The realm is not holding stakes right now.', unknown: 'The realm did not answer - your stake will be settled when it does.', offline: 'The realm could not be reached - try again.', busy: 'The realm is settling something else - try again in a moment.', 'cards-kept-full': 'You have too many stakes waiting to be settled - visit the tables they were staked at first.' });   // AUDIT CARDS-4 C7: a lost answer (`unknown`) is not a stake never asked
+  const CARD_STAKE_REFUSALS = Object.freeze({ 'realm-gold': 'Your purse cannot cover that stake.', 'bad-buy-in': 'That stake is outside the table\'s buy-in.', 'cards-closed': 'The realm is not holding stakes right now.', unknown: 'The realm did not answer. Your stake will be settled when it does.', offline: 'The realm could not be reached. Try again.', busy: 'The realm is settling something else. Try again in a moment.', 'cards-kept-full': 'You have too many stakes waiting to be settled. Visit the tables where you placed them first.' });   // AUDIT CARDS-4 C7: a lost answer (`unknown`) is not a stake never asked
   /** CARDS-TIDY: a look asked for a table the client lost track of, at most this often. */
   const CARD_LOOK_AGAIN_MS = 2000;
   /** AUDIT CARDS-3 B1: a sit still pending is said again this often (a new socket, the client's gate, the relay's 'busy'). */
@@ -924,7 +929,7 @@ export function createWorldModes(host) {
     if (g !== cardGame || !cardSeat) return;
     // CARDS-SAID (Tavern-Cards section 31): and on the panel - said alone, the line was under the panel (a phone's covers
     // the screen's middle), and the panel came back as it was: "Deal me in" pressed, and nothing happened
-    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'; say(g.refused); paintCardGame(); return; }
+    if (!r.ok) { g.refused = (r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake. Try again.'; say(g.refused); paintCardGame(); return; }
     g.stakeWord = r.stake;
     g.stakeId = r.id;
     closeCardWatch(cardSeat.table);
@@ -970,7 +975,7 @@ export function createWorldModes(host) {
     const r = await host.cardStakes.stake({ room: host.cardOnline.room(), table: g.table, bb: g.stakes.bb, amount, topup: true, place: cardPlaceName() });
     g.staking = false;
     if (g !== cardGame || !g.remote) return;
-    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake - try again.'); paintCardGame(); return; }
+    if (!r.ok) { say((r.unknown ? CARD_STAKE_REFUSALS.unknown : CARD_STAKE_REFUSALS[r.error]) ?? 'The realm could not hold your stake. Try again.'); paintCardGame(); return; }
     g.topWord = r.stake;
     if (host.cardOnline?.send({ op: 'topup', table: g.table, stake: g.topWord })) g.topWord = null;
     paintCardGame();
@@ -990,7 +995,7 @@ export function createWorldModes(host) {
     if (id === 'stand') { standFromCardTable(); return; }
     if (id === 'iliac') { openIliacGame(); return; }   // CARDS10: the other game at this table
     if (id === 'gambit') { openGambitGame(); return; }   // KG3: and the third
-    if (id === 'pack') { const r = buyCardPackHere(); say(r.ok ? `You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.` : `A pack costs ${r.price} gold - your purse is short.`); paintCardGame(); return; }   // CARDS9: the house's packs
+    if (id === 'pack') { const r = buyCardPackHere(); say(r.ok ? `You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.` : `A pack costs ${r.price} gold. Your purse is short.`); paintCardGame(); return; }   // CARDS9: the house's packs
     if (game.remote) {
       // CARDS5: the relay's table - an action is a word to it, and the relay answers with the table; alone, the regulars
       if (id === 'regulars') {
@@ -1805,6 +1810,7 @@ export function createWorldModes(host) {
     collider: () => interiorCtx?.collider ?? null, origin: () => buildingOrigin(), roomLights: () => interiorCtx?.lights ?? null,
     mwPicture: decorMwPicture,
     doors: decorDoorHooks,   // HOME-DOORS: a placed door hangs as one of the room's own action doors
+    body: player,   // DECOR-CLEAR: a piece landing round the body - or the room's own put back - is solid once it is clear (player/lateSolid.js)
   });
   let _decorVisit = 0;   // a visit's token: an online home's pieces landing after the visit ended stand nowhere
   let _decorListed = -1;   // DECOR-SHELL: the visit whose online home's list has stood (AUDIT DECOR-SHELL 2) - no decorating before it
@@ -2031,6 +2037,11 @@ export function createWorldModes(host) {
   // 'people' lane under the switch's tier; a person's look read once (their StaticNPC data and their faction's row),
   // never while the faction table is still loading; let go with the room
   const peopleBodies = createPopulationLane({ laneName: 'people', renderer });
+  // NPC-MARKS (scenes/npcMarksHost.js): a bobbing mark over a body whose click is a quest's, a merchant's or a guild's - the
+  // room's people and the dungeon's; the route read in the place they stand (a building's, or none underground)
+  const npcMarks = createNpcMarks(renderer.gl);
+  const npcMarkCtx = { get dict() { return townTalk?.factionDict ?? null; }, get building() { return mode === 'interior' ? interiorBuilding : null; },
+    offersWork: (pn) => !!npcSession?.isNpcOfferingQuest(pn._mwSeed ??= staticNpcData(pn, staticNpcSceneCtx(pn)).nameSeed) };   // AUDIT NPC-MARKS L2: the work pool's questor - the click's own seed (questBridge.clickNpc's staticNpcData)
   // MWNPC18: what a placed figure is read by - FLATS.CFG and the region's race, asked only when a figure is first looked at.
   // AUDIT MWNPC16-18 D2: the race the room's building's region names (REGION_RACES, the yards' read in world.js) - the
   // quest scene's context is { mapId, locationIndex } and names none, so every room's figure stood a Breton
@@ -2065,6 +2076,7 @@ export function createWorldModes(host) {
       nameSeed: person.nameSeed ?? -1,
       buildingKey,
       mapID: 0,
+      personName: personOwnName(person),   // QUEST-NAME-ONE: the Person's own name - its words', its journal's (characters/staticNpc.js staticNpcName)
     });
   };
   const questStandLook = (s, buildingKey) => {
@@ -2569,7 +2581,7 @@ export function createWorldModes(host) {
   /** ARENA-FIX 2: A STOOD PERSON'S OFFICE - the arena gate's people (world/arena/arenaCity.js arenaGatePersonName: "The Herald
    *  of the Arena", "Red Banner Recruiter", ...) and the undercroft's (the Pit Master, the Keeper of the Hall), or null:
    *  the plaque, the Info click and the talk door ask it before StaticNPC.DisplayName, so the three never disagree. */
-  const officeName = (pn) => arenaGatePersonName(pn) ?? (pn?.arenaRole ? ARENA_TEXT.undercroft.names[pn.arenaRole] ?? null : null) ?? (pn?.lamp ? LAMP_TEXT.name() : null);   // ARENA-FIX 4: the undercroft's people with an office; LAMP-KEEPER II: a keeper standing as the lamp is the Lamp
+  const officeName = (pn) => arenaGatePersonName(pn) ?? (pn?.arenaRole ? ARENA_TEXT.undercroft.names[pn.arenaRole] ?? null : null) ?? (pn?.lamp ? LAMP_TEXT.name() : null) ?? (pn?.witch ? vendorOffice() : null);   // ARENA-FIX 4: the undercroft's people with an office; LAMP-KEEPER II: a keeper standing as the lamp is the Lamp; WITCH1: a Wyrd Sister
   /** FIELD BUGS 2026-10-11g QUEST-NAME ("Quest NPCs are inactive": "not being able to interact with the quest NPCs"): a
    *  quest PERSON stand named on World Tooltips' plaque as the room's own people are. The mod asks its StaticNPC arm
    *  (Modded_HUDTooltipWindow.cs:325-393, `ret = npc.DisplayName`) before its quest-resource arm, and AddQuestNPC gives a
@@ -2595,7 +2607,10 @@ export function createWorldModes(host) {
    *  untouched, and `interiorWindows.reconcile` reads the slot back
    *  once a frame and turns "the slot went empty" into PopWindow - so
    *  the window the box was laid over comes back. */
-  const interiorWindows = makeWindowStack({ onTop: (w) => { interiorOverlay = w; } });
+  // QUEST-WORDS-FIRST (scenes/quest/questClickFirst.js): a click a quest heard ticks the machine at once, and the NPC's door
+  // waits for the windows that tick raised in this slot
+  const questWordsFirst = createQuestClickFirst({ tick: () => questBridge?.tick(1), top: () => interiorOverlay, heard: () => clickHeardByQuest(questBridge?.machine) });
+  const interiorWindows = makeWindowStack({ onTop: (w) => { interiorOverlay = w; questWordsFirst.settled(w); } });
   /** THE PAUSE - ONE ANSWER, ASKED OF THE STACK.
    *
    *  DFU stops the world in exactly one place. AddWindow
@@ -2861,8 +2876,8 @@ export function createWorldModes(host) {
       // or thing at the site's nearest marker with one, else the room's nearest enter marker (sceneMount.js standSpot) -
       // the floor asked as each law below asks it: the person's ray from its centre, the item's from just over it
       if (fallback) {
-        const lift = isItem ? 0.2 : size.h / 2 + 0.2;
-        [x, y, z] = standSpot([x, y, z], fallback(ctx), (p) => Number.isFinite(ctx.collider?.raycast?.([p[0], p[1] + lift, p[2]], [0, -1, 0], MARKER_FLOOR_REACH)));
+        [x, y, z] = buildingStandSpot([x, y, z], fallback(ctx), ctx.collider, isItem ? 0.2 : size.h / 2 + 0.2,
+          isItem ? null : size.w, ctx.people);   // FB1020c CROWD-CLEAR: and a Person never in a standing person's pick box (sceneMount.js)
         stand.x = x; stand.z = z;
       }
       // AUDIT 26 F068: an ITEM and an NPC are stood by DIFFERENT laws.
@@ -3040,7 +3055,10 @@ export function createWorldModes(host) {
     const [ox, oy, oz] = ctx.parentPt(own.x, own.y, own.z);
     const d2 = (p) => (p[0] - ox) ** 2 + (p[1] - oy) ** 2 + (p[2] - oz) ** 2;
     const others = siteMarkerSpots(quest?.getPlace?.(marker.placeSymbol)?.siteDetails, marker).map((p) => ctx.parentPt(p.x, p.y, p.z));
-    return [...others, ...[...(ctx.enterMarkers ?? [])].sort((a, b) => d2(a) - d2(b))];
+    // FB1020c CROWD-CLEAR: and the site's other spawn markers apart - where a Person crowded on its own marker stands
+    return Object.assign([...others, ...[...(ctx.enterMarkers ?? [])].sort((a, b) => d2(a) - d2(b))], {
+      spawns: siteMarkerSpots(quest?.getPlace?.(marker.placeSymbol)?.siteDetails, marker, false).map((p) => ctx.parentPt(p.x, p.y, p.z)),
+    });
   };
   const questAdapter = {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
@@ -3741,7 +3759,9 @@ export function createWorldModes(host) {
    *  window's, by construction, and no drain has to remember it. */
   /** DISC10-E L3: what a service arm answers when the TRADE DOOR refused
    *  its counter (ui/tradeDoor.js - a transformed lycanthrope). The door
-   *  has already said the line; the popup reads this as a dispatch. */
+   *  has already said the line; the popup reads this as a dispatch.
+   *  QUESTOR-SAID: and the guild's quest door's silent close, C#'s
+   *  CloseWindow with nothing pushed - a dispatch of nothing. */
   const DOOR_REFUSED = Object.freeze({ refusedByDoor: true });
   function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}, road = null) {
     // AUDIT 63 F11: CalculateTradePrice's player reads are BOTH live on
@@ -4083,7 +4103,7 @@ export function createWorldModes(host) {
   // SELLING branch of CalculateTradePrice (DaggerfallTradeWindow's
   // GetTradePrice; DFU's condition parameter is declared-but-unused).
   // CRAFT-WORTH (2026-10-11, the exploit audit): THE COUNTER'S OWN LAW, as buyPrice's is - the trade window's Sell walk
-  // (a crafted piece at its plain worth, online the condition the world handed it over at) at the counter's own index
+  // (a crafted piece at its plain worth, online a found piece at its mark and a third of its owner's own mends - MEND-THIRD) at the counter's own index
   // (a yard's too). This keyed shelf priced the raw value at the region's index and read no condition, so the art's
   // absence was a door round every sale law the window keeps.
   function sellPrice(it) {
@@ -4311,6 +4331,7 @@ export function createWorldModes(host) {
     if (gateRole === 'bookmaker' && host.arenaBookmaker?.()) return;   // ARENA3: the bookmaker's stall (scenes/arena/arenaGate.js)
     // ARENA-FIX 4: THE FIGHTERS' HALL - the Pit Master offers the training pit, the Keeper of the Hall reads its wall
     if (!info && pn?.lamp) { lampChoice(pn); return; }   // LAMP-KEEPER II: the lamp's own words, its shop, and its title
+    if (!info && pn?.witch && host.witches?.shop()) return;   // WITCH1: a Wyrd Sister's window (scenes/witchesHost.js) - a host with none lets her talk
     if (!info && pn?.arenaRole === 'pitMaster') { pitMasterChoice(); return; }
     if (!info && pn?.arenaRole === 'hallKeeper' && host.arenaHall?.()) return;   // ARENA4b: online she reads the realm's wall (scenes/arena/arenaGate.js hall)
     if (!info && pn?.arenaRole === 'hallKeeper') { townTalk?.showOverlay?.(new ActionTextBox(hallOfChampions(playerEntity.arenaLadder, playerEntity.name || 'You', rosterGrandChampions(playerEntity.arenaLeague, Math.floor(worldMinutes()))))); return; }   // ARENA3: and the banners' Grand Champions this save has seen
@@ -4336,7 +4357,7 @@ export function createWorldModes(host) {
     townTalk?.say?.(presentNpcInfoText(displayName));
   }
 
-  function openStaticNpc(pn, { forceTalk = false } = {}) {
+  function openStaticNpc(pn, { forceTalk = false, clicked = null } = {}) {   // QUEST-WORDS-FIRST: `clicked` - the click already stamped, its quest's words read
     // Q4-v: PlayerActivate's questor half - EVERY static-NPC click
     // stamps LastNPCClicked before the routing decides what opens (the
     // Person questor sweep rides machine.setLastNPCClicked).
@@ -4354,7 +4375,7 @@ export function createWorldModes(host) {
     // exterior host stood carries its own context; a building person
     // has none and takes staticNpcData's Building default.
     const npcSceneCtx = staticNpcSceneCtx(pn);
-    const npcData = questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
+    const npcData = clicked ?? questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
     talkedTo.set(npcData, pn);   // PORTRAIT3D: whose face the talk window shows
     // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
     // port never had. A clicked NPC whose GameObject carries a
@@ -4363,27 +4384,20 @@ export function createWorldModes(host) {
     // talk window, no guild service popup. The port stamped
     // LastNPCClicked and walked straight on to the routing, so handing
     // a questor their letter also opened their shop.
-    if (pn.questBehaviour?.doClick()) return;
+    // QUEST-WORDS-FIRST (a departure, the owner's call): where the quest's click raised its words, the NPC's own door opens
+    // after them instead of never; a click that raised nothing ends the activation as DFU's does
+    const afterWords = () => { if (mode === 'interior' && (interiorCtx?.people ?? []).includes(pn)) openStaticNpc(pn, { forceTalk, clicked: npcData }); };   // a door left behind is never opened
+    if (!clicked && pn.questBehaviour?.doClick()) { questWordsFirst.hold(afterWords); return; }
     // PlayerActivate.cs:1530-1535: a quest actively LISTENING on this
     // NPC's faction (WhenNpcIsAvailable) shuts down all further
     // routing - no talk, no service popup, nothing (C#'s own TODO
     // about releasing listeners rides with it).
     if (questBridge?.machine.factionListeners.has(pn.factionID)) return;
-    const dict = townTalk?.factionDict ?? null;
-    const npcFaction = dict?.get(pn.factionID) ?? null;
-    const buildingFactionId = interiorBuilding?.factionId ?? 0;
-    const route = staticNpcRoute({
-      npcFactionId: pn.factionID,
-      npcFaction,
-      buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,
-      buildingType: interiorBuilding?.buildingType ?? -1,
-      insideBuilding: !!interiorBuilding,
-      isShop,
-      isRepairShop,
-      isBank: (t) => t === BUILDING_TYPES.Bank,
-      isTavern: (t) => t === BUILDING_TYPES.Tavern,
-      hasCustomMerchantService,   // RR3: Services.HasCustomMerchantService (PlayerActivate.cs:1574)
-    });
+    // QUEST-WORDS-FIRST: the quest's words and its reward first, then this door
+    if (!clicked && questWordsFirst.hold(afterWords)) return;
+    // NPC-MARKS: the route's arguments built in one place (scenes/npcMarksHost.js staticNpcRouteIn), so the mark over a
+    // head and this click read the same route - RR3's Services.HasCustomMerchantService (PlayerActivate.cs:1574) among them
+    const route = staticNpcRouteIn({ npcFactionId: pn.factionID, dict: townTalk?.factionDict ?? null, building: interiorBuilding });
     if (route.kind === 'guildService') { openGuildService(pn, route, npcData); return; }
     // CW1: the coven's own popup (StaticNPCClick's WitchesCoven arm).
     if (route.kind === 'witchesCoven') { openWitchesCoven(pn, npcData); return; }
@@ -4915,7 +4929,7 @@ export function createWorldModes(host) {
       if (target && kind === 'container') target.openedOn = c.openedOn ?? 0;   // UXB1-O: a record cached before it carries none - never searched
     }
     interiorLootAside(interiorCtx, _intShared);   // OUTDOOR-LOOT: the cache has laid a stranger's cupboard the list of an earlier visit - online that is no one's word, the room's is
-    if (setDown) say('What a chest here held, where no chest stands now, was set down at your feet.');   // HOLD-KEPT
+    if (setDown) say('A chest that stood here is gone. What it held was set down at your feet.');   // HOLD-KEPT
     interiorCtx.guildShelves = data.guildShelves ?? {};   // GUILD-SHELF: a stale day's shelf is left for guildShelf to replace at the next open
     // #32: through the system's own restore, which settles the matrix
     // and the collider bucket (syncRestored) - a door restored open
@@ -5376,7 +5390,7 @@ export function createWorldModes(host) {
       if (item) { decorPackGive(item); back.push(item); }
     }
     // DECOR2b: furniture back among "Your things"
-    if (back.length) say(ownBackLines(back, (n) => (n === 1 ? 'One of your things no longer stood here, and came back to your pack.' : `${n} of your things no longer stood here, and came back to your pack.`)));
+    if (back.length) say(ownBackLines(back, (n) => (n === 1 ? 'One of your things was no longer here and went back to your pack.' : `${n} of your things were no longer here and went back to your pack.`)));
     return back.length;
   }
   /** HOLD-KEPT (FIELD BUGS 2026-10-12g): WHAT A STORAGE PIECE HELD THAT THE SERVICE NO LONGER HAS - one taken away while
@@ -5387,7 +5401,7 @@ export function createWorldModes(host) {
     const items = interiorDecor.takeUnserved(served);
     if (!items.length) return 0;
     interiorDropped.dropPile(items, interiorDropFeet());
-    say(items.length === 1 ? 'A thing kept in a piece that no longer stands here was set down at your feet.' : `${items.length} things kept in pieces that no longer stand here were set down at your feet.`);
+    say(items.length === 1 ? 'Something stored in a piece that is gone was set down at your feet.' : `${items.length} things stored in pieces that are gone were set down at your feet.`);
     return items.length;
   }
   /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order);
@@ -6716,8 +6730,7 @@ export function createWorldModes(host) {
         entity: playerEntity,
         onClose: () => closeSpellWindow(potionWin),
       });  potionWin = enhancedWindow(potionWin, 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
-      mountServiceWindow(potionWin);
-      return null;
+      return mountServiceWindow(potionWin);   // QUESTOR-SAID: handed back, as the book's - a null read "not available yet" over it
     }
     // M4: the item maker, the Mages Guild's own enchanter. M4 wired
     // the destination immediately below - ItemMakerWindow into the
@@ -6734,8 +6747,7 @@ export function createWorldModes(host) {
         onEnchanted: () => surfacePlayer(),
         onClose: () => closeSpellWindow(itemWin),
       });  itemWin = enhancedWindow(itemWin, 'itemMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
-      mountServiceWindow(itemWin);
-      return null;
+      return mountServiceWindow(itemWin);   // QUESTOR-SAID: handed back, as the book's - a null read "not available yet" over it
     }
     // U42: BUY SPELLS. DFU pushes the spellbook itself in BUY MODE
     // from the service popup - one window, one `true` argument
@@ -6772,10 +6784,10 @@ export function createWorldModes(host) {
         onClose: () => closeSpellWindow(bookWin),
       }, { buyMode: true });
       bookWin = enhancedWindow(bookWin, 'spellShop');   // SHOP-PLUS: the Enhanced Plus face; the classic window unchanged
-      // Mount AND hand back, the repair arm's shape rather than the
-      // maker windows' `return null` - the popup's onService reads the
-      // return value, and a null makes it answer "not available yet"
-      // over a window that just opened.
+      // Mount AND hand back, the repair arm's shape (and since
+      // QUESTOR-SAID the potion and item makers' too) - the popup's
+      // onService reads the return value, and a null makes it answer
+      // "not available yet" over a window that just opened.
       return mountServiceWindow(bookWin);
     }
     // E8: the spell maker is a NATIVE window now (INFO01I0), so it
@@ -6872,9 +6884,11 @@ export function createWorldModes(host) {
         buildingFactionId: route.buildingFactionId,
       });
       const boxes = questBridge.offerBoxes(step, rows);
-      // A guild offer's first step is 'offer' or 'fail' - both box; an
-      // empty chain is the silent-close face and opens nothing.
-      if (boxes.length) flow = new ServiceFlowWindow(boxes, { onClose: () => closeSelf() });
+      // A guild offer's first step is 'offer' or 'fail' - both box - and a
+      // questor whose quest is open says so (QUESTOR-SAID). An empty chain
+      // is C#'s silent close (a drawn quest with no offer message): the
+      // popup closes on nothing, never "That service is not available yet."
+      flow = boxes.length ? new ServiceFlowWindow(boxes, { onClose: () => closeSelf() }) : DOOR_REFUSED;
     }
     return flow;
   }
@@ -7308,6 +7322,8 @@ export function createWorldModes(host) {
     // bench stands none): the shipmaster, the crewmaster, the sailors and shipwrights, the boards and the hull on the
     // stocks; the lightkeeper, the tower's door, its hatch and its lamp - each its own box
     for (const t of host.portTargets?.() ?? []) targets.push(t);
+    // WITCH1 (scenes/witchesHost.js): the Hearth Offerings at the homes' doors - the streaming host's (the bench stands none)
+    for (const t of host.witches?.targets() ?? []) targets.push(t);
     _extList = { entries, npcs, boards, graves, targets };
     _extMark = mark;
     return _extList;
@@ -7849,6 +7865,10 @@ export function createWorldModes(host) {
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activatePort?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }
+    if (typeof key === 'string' && key.startsWith('witch:')) {   // WITCH1: a Hearth Offering - too far speaks the refusal; the plaque's lit row (Take, Fill, Take in) is the verb
+      if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
+      return host.witches?.activate(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
+    }
     if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
     return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });   // HOME2: the verb the door's plaque lit, if it listed any
   }
@@ -8240,7 +8260,7 @@ export function createWorldModes(host) {
       options: [
         ...homeVoteChoices(home).map((c) => ({ code: c.code, label: c.label, action: () => pressHomeVote(bd, c.vote) })),   // AUDIT HOME-VOTE II B1
         ...list.map((r, i) => ({
-          code: `Digit${i + 1}`, label: `${i + 1} - Room ${r.room}: ${goldSum(r.price)} gold a day${r.yours ? ' (yours - renew it)' : ''}`,
+          code: `Digit${i + 1}`, label: `${i + 1} - Room ${r.room}: ${goldSum(r.price)} gold a day${r.yours ? ' (yours, renew it)' : ''}`,
           action: () => { const days = rentDayRows(r, nowS); if (days.length) openHomeRentDays(bd, r, days); else townTalk?.say?.(RENT_FULL_LINE); },   // RENT-RENEW: only the days the service takes - none left, said
         })),
         { code: 'Escape', label: 'Esc - close', action: () => {} },
@@ -8757,6 +8777,7 @@ export function createWorldModes(host) {
       }
       interiorFoes = makeInteriorFoes(ctx);   // IF: the pool lives exactly as long as the interior does
       interiorGuards = makeInteriorGuards(ctx);   // ROAD-B: ...and so does the watch that can be called into it
+      ownerFoes.pools(interiorFoes, interiorGuards);   // HOST-CLOCK (scenes/ownerCatchUp.js): online with anyone else in the building's room, both pools take my clamped frame in FOE-CATCHUP's steps on the page's one plan - my player's pace, never past it
       _intNetOn = false; ensureInteriorNet();   // QUEST-PARTY phase 3b: online, the building's foes ride the room's own lane
       // X1: an armed Open/Lock spell fires on this interior's doors
       // too - the same law the dungeon context wires for its own.
@@ -9282,7 +9303,7 @@ export function createWorldModes(host) {
       if (no) { setMidScreenText(no); return false; }
       const site = host.gateArenaSite?.(g) ?? null;
       const dfLocation = gateArenaLocation({ day: g.day, near: g.near ?? '', regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
-      const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
+      const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks, g.day), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
       return gatedTransition((live) => dungeonTransition(hit, [], true, live));
     });
   }
@@ -9466,16 +9487,11 @@ export function createWorldModes(host) {
       veil?.reveal();
     }
   }
-  /** WB3b: the court's mesh - made once a session, with its art and the gate stone's - and the collider's bucket for
-   *  its floor. */
-  let _courtMesh = null;
-  /** WB6b: the islands out in the fire and the one shard every floating piece of the floor is drawn from - made with
-   *  the court, once a session. WB9b: and the one slab every walkway between the courts is laid in. */
-  let _landMesh = null, _shardMesh = null, _slabMesh = null;
-  const NO_XA = Object.freeze([]);   // WB9b: no crossings heard - every walkway under the fire
+  /** WB14b: the court and the Deadlands' land stood into the court's context - the night's plan's (scenes/gate/gateStand.js,
+   *  out of this host: WB3b's standCourt and WB6b's standDeadlands, whole) */
+  const gateStand = createGateStand({ renderer, host });
   const NO_TARGETS = Object.freeze([]);   // WB9f: a court with no spoils on its floor stands no targets
   const NO_LIGHTS = Object.freeze([]);   // AUDIT SD II (L2 F9): an Hour with no spoils' light hands none, and makes nothing
-  const COURT_BUCKET = 'wb:court';
   /** AUDIT WB D10: the court's equator light, one array filled each frame (the renderer reads it that frame). */
   const _courtEquator = new Float32Array(3);
   const courtEquatorOf = (ct) => { _courtEquator.set(ct.equator); return _courtEquator; };
@@ -9485,39 +9501,6 @@ export function createWorldModes(host) {
   /** AUDIT SD IV (R5): the Hour's fog and trilight, filled each frame (the lane's scaled to the dark) - nothing made. */
   const _hourFog = { mode: '', density: 0, start: 0, end: 0, color: [0, 0, 0] }, _hourFogColor = new Float32Array(3);
   const _hourTri = { sky: [0, 0, 0], equator: [0, 0, 0], ground: [0, 0, 0] };
-  /** WB3b: the court stood into a built context, before the start marker is read: its mesh among the context's own
-   *  draws, its floor on the collider (the spawn lands on it), and the way home's name - GATE-FBX: on the portal that
-   *  rises where he fell, the court's one door (scenes/gate/gateCourt.js lays it into the exit doors; the exit family's ray,
-   *  ladder and wagon word take it - no family of its own). */
-  function standCourt(ctx) {
-    if (!_courtMesh && renderer?.createMesh) {
-      try {
-        for (const [rec, art] of courtArt()) { renderer.uploadTexture?.(COURT_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(COURT_ARCHIVE, rec, art.emission, { white: true }); }   // AUDIT GATE-FBX G4: the court's fire its own colour, never the dungeon arm's day tint (AUDIT SD II L2 F3's law)
-        for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); }
-        _courtMesh = renderer.createMesh(buildCourtModel());
-      } catch (e) { console.warn('[gate] the court would not build', e?.message ?? e); _courtMesh = null; }
-    }
-    if (_courtMesh) ctx.dynamicDraws.push({ gpu: _courtMesh, object: { matrix: identity() } });
-    standDeadlands(ctx);   // WB6b: and the land round it, cut from the same stone
-    // WB9b: THE WALKWAYS' SLABS - each a draw of the one slab with a matrix of its own, under the fire until a bound lays
-    // its walkway, then rising stone by stone toward the court he leapt to (moved every frame in the dungeon arm, on the
-    // relay's clock and the fight's crossings - host.gateFloor)
-    if (!_slabMesh && renderer?.createMesh) { try { _slabMesh = renderer.createMesh(buildWalkSlabModel()); } catch (e) { console.warn('[gate] the walkways would not build', e?.message ?? e); _slabMesh = null; } }
-    if (_slabMesh) { const fl = host.gateFloor?.() ?? null; for (const sl of walkSlabs()) ctx.dynamicDraws.push({ gpu: _slabMesh, object: { matrix: slabMatrix(sl, fl?.xa ?? NO_XA, fl?.now ?? 0) }, slab: sl }); }
-    const tris = courtFloorTris();
-    const n = tris.length / 3;
-    const idx = n > 65535 ? new Uint32Array(n) : new Uint16Array(n);
-    for (let i = 0; i < n; i++) idx[i] = i;
-    ctx.collider.addMesh(COURT_BUCKET, tris, idx, identity());
-    // GATE-FBX: and NO door of its own - the bridge's membrane is gone; until he falls the court is left by death or the Wrath
-    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? { title: COURT_TEXT.wayHome } : null));   // before the dungeon exit's own namer, so it answers first
-    // WB9f (Mac: "The player should be able to inspect and pick up the ground item, not just walk over it"): HIS SPOILS
-    // ON THE FLOOR, PRESSED - each resting piece a target the one ray can win (the outer host's pool - scenes/spoilsPool.js
-    // targets), named by its own word, its item listed on the plaque (the context's lootContents asks `spoilContents`)
-    // and taken by the press (the dungeon arm's `spoil` rung)
-    ctx.addActivationTargets(() => host.spoilTargets?.() ?? NO_TARGETS);
-    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null));
-  }
   /** SD5a: THE SHATTERED HOUR stood into its built context (world/superDungeon/sdRealm.js), the court's way - its art made once a
    *  session (world/superDungeon/sdRealmArt.js), its mesh among the context's draws, its floors on the collider (the spawn lands on
    *  them). Its way back is the context's own Rift (scenes/superDungeon/sdEnd.js, at the Threshold's back); its lamps ride the frame's
@@ -9591,21 +9574,6 @@ export function createWorldModes(host) {
     host[gate] = (...a) => (mode === 'dungeon' && isEgHall(dungeonLoc) ? host[eg]?.(...a) ?? null : own?.(...a) ?? null);
   }
   { const own = host.extraBillboards; host.extraBillboards = () => { const b = own?.() ?? []; return mode === 'dungeon' && isEgHall(dungeonLoc) ? [...b, ...(host.egBatches?.() ?? [])] : b; }; }
-  /** WB6b: THE DEADLANDS' LAND stood into the court's context, after the court (whose art it is cut from): the islands
-   *  among its draws, and each of the floor's shards with a matrix of its own - moved every frame on the sky's clock
-   *  (the dungeon arm, before its draws), so the drift is the same on every screen. Made once a session; a land that
-   *  will not build costs the court its land, never the court. */
-  function standDeadlands(ctx) {
-    if (!_landMesh && renderer?.createMesh) {
-      try {
-        const land = buildDeadlandsLand(), shard = buildShardModel();
-        _landMesh = renderer.createMesh(land);
-        _shardMesh = renderer.createMesh(shard);
-      } catch (e) { console.warn('[gate] the Deadlands\' land would not build', e?.message ?? e); _landMesh = null; _shardMesh = null; }
-    }
-    if (_landMesh) ctx.dynamicDraws.push({ gpu: _landMesh, object: { matrix: identity() } });
-    if (_shardMesh) for (const s of deadlandsShards()) ctx.dynamicDraws.push({ gpu: _shardMesh, object: { matrix: shardMatrix(s, host.deadlandsSeconds?.() ?? 0) }, shard: s });
-  }
   /** OH-E: SuppressAbyssLights' candle - the Light spell's light at half its intensity (the colour channel's white) and
    *  half its range while the abyss's presentation holds. */
   const abyssCandle = (l, abyss) => (l && abyss ? adoptLight({ ...l, range: l.range * abyss.magicLightScale, color: (l.color ?? [1, 1, 1]).map((c) => c * abyss.magicLightScale) }, l) : l);   // LIGHT-ID: the candle's copy is the candle's light
@@ -9809,6 +9777,7 @@ export function createWorldModes(host) {
           // had nothing to read and its Load pane never refused online.
           dungeonOnline: () => host.dungeonOnline?.() ?? false,
           superRift: (s) => host.superRift?.(s) ?? null,
+          superRiftLook: (s) => host.superRiftLook?.(s) ?? null,   // AUDIT SD-THROUGH (B4): the Rift's look alone, a frame's - forwarded at last (AUDIT SD V P1's door stood unreached here, and every look made the whole word)
           sdTurn: (i, a) => host.sdTurn?.(i, a) ?? false,   // SD6c: a turn of the Orrery's stones - sent by the outer host (scenes/world.js), judged by the realm
           sdSay: (t, rank) => host.sdSay?.(t, rank) ?? false,   // AUDIT SD II (SD11d): the Hour's voice - the outer host's
           sdHallWord: () => host.sdHallWord?.() ?? null,   // SD6c: the realm's latest word on the Orrery's hall
@@ -9963,7 +9932,7 @@ export function createWorldModes(host) {
       layingOutLoc = null;
       if (!live()) { abandonContext(ctx); return false; }   // AUDIT 68 X3-transition-build-race: the world moved under the build - it hands its seams back and publishes nothing
       dungeonCtx = ctx;
-      if (hit.gateArena) standCourt(ctx);   // WB3b: the court, before the start marker is read and before any namer
+      if (hit.gateArena) gateStand.standCourt(ctx, hit.gateArena.day);   // WB3b: the court, before the start marker is read and before any namer - WB14b: its night's (scenes/gate/gateStand.js)
       if (hit.sdRealm != null) standSdRealm(ctx);   // SD5a: the Hour, before the start marker is read
       if (hit.egHall) standEgHall(ctx, hit.egHall);   // EG-PLAY: an Elite Breach's circle, the same
       if (hit.arenaFloor) standArenaFloor(ctx);   // ARENA2: the floor's gates, before any namer
@@ -10607,11 +10576,6 @@ export function createWorldModes(host) {
     // DFU's own script-order indeterminacy between InputManager.Update
     // and PlayerMotor.Update.
     const axes = overlayHeld ? { forward: moveAxes.vertical, strafe: moveAxes.horizontal } : moveAxes.update(dt, { ...mv, autorun: player.toggleAutorun });
-    // Platform riding (the DFU MoveWithMovingPlatform shape) was wired
-    // ONLY into the standalone ?dungeon scene, so a world/exterior
-    // hosted dungeon dropped the mover delta and the lift penetrated
-    // the capsule. The delta applies BEFORE the player's own move.
-    if (!overlayHeld) ridePlatform(player, mode === 'dungeon' ? dungeonCtx?.actions : interiorCtx?.actions);
     // SD7b (Super-Dungeons.md section 9): THE UNMOORED STEPS ride before the motor too - each step stood where the realm's
     // clock has it and a body on one carried with it (under a window as well: the realm's clock runs on), and while the
     // motor runs the breath's push and the void's cast-back
@@ -10964,9 +10928,9 @@ export function createWorldModes(host) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
-      if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } }   // F-A5: outside any overlay dispatch; AUDIT WB B2: a death taken since is the death's to resolve (the court's casts out before its gate) - never a dead player walked out
+      if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } } else if (standFromVoid(dungeonCtx.voidRescue(), player)) dungeonCtx.hudSay(dungeonVoidText());   // F-A5: outside any overlay dispatch; AUDIT WB B2: a death taken since is the death's to resolve (the court's casts out before its gate) - never a dead player walked out; FIELD BUGS 2026-10-19f VOID-DUNGEON: VOID-ENTRY's failsafe underground - a body below everything the dungeon stands on stands again where the dungeon places one (dungeonContext.js voidRescue), and is told
       if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:"if (!overlayHeld) ctx.actions.update"'s `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt, player);   // dungeon.js:"if (!overlayHeld) ctx.actions.update"'s `if (!held)` - a paused game advances no movers; MOVER-BODY: and the movers carry the body they meet, or hold (world/actionSystem.js _standMover)
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       const _deadS = isGateArena(dungeonLoc) ? (host.deadlandsSeconds?.() ?? performance.now() / 1000) : 0;   // WB6b: the sky's clock, for the court's flash and its shards
@@ -11050,7 +11014,7 @@ export function createWorldModes(host) {
       // WB3b: the braziers, in their own fire's colour, after the player's lights; WB4: and the glow on the boss - WB9b: the
       // fight's own lights first (his glow, the crystals, the spoils), then the braziers nearest first, so the renderer's
       // cap drops a far court's fire, never him
-      if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)]); renderer.setPointLights(_court.data, null, _court.colors); }
+      if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos, planOfDay(dungeonLoc.gate))]); renderer.setPointLights(_court.data, null, _court.colors); }
       if (isSdRealm(dungeonLoc)) { const _hour = realmLightsWith(_dgLit, host.sdRealmLights?.() ?? NO_LIGHTS, cam.pos, host.sdLampDim?.() ?? null); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first; SD9e: the spoils' light before them, as the court's; AUDIT SD II (L2 F9): into the realm's own arrays, made once; SD-LOOK S7: the arena's dimmed through the Reset
       if (isEgHall(dungeonLoc)) { const _sp = egLightsWith(_dgLit, host.egLights?.() ?? NO_LIGHTS, egCircle.lamps(), cam.pos); renderer.setPointLights(_sp.data, null, _sp.colors); }   // EG-PLAY: the Spire's lamps after the player's own lights, the fight's glows before them
       renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below (no view cull) - every torch keeps a shadow map, none lights through the rock as the nearest eight change (DISC15's rooms)
@@ -11081,7 +11045,9 @@ export function createWorldModes(host) {
       dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1a: the dungeon's own marks, on this host's pass   // BLOOD1b: and its chunks, on this host's own basis
       dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt, offerDungeonQuestStands);   // MWNPC8b: the people in their bodies - before the level's billboards draw; MWNPC8c: and the quest's
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
+      npcMarks.gather(npcMarkCtx, dungeonCtx.people, dungeonQuestFlats);   // NPC-MARKS: who of the people drawPeople stood earns a mark
       host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => dungeonCtx.lootFinds?.() ?? [] });   // LOOT11: the lines of light over the dungeon's finds
+      if (npcMarks.draw(proj, view, mwv.eye, dungeonCtx.peopleLane, performance.now() / 1000)) renderer.markForeignPass();   // NPC-MARKS: the marks over its people, after the flats
       if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });
       if (dungeonCtx.sdEndLook) host.drawSdRift?.({ proj, view, eye: mwv.eye, end: dungeonCtx });   // SD-LOOK: the Rift's window into the Hour, its floor light and its heart; the Return's window home - after the flats (they composite over what stands behind them)
       // SD8d: the Brass Remnant's blows on the arena's floor, the court's way. AUDIT SD IV (R1): AFTER THE LAST FLAT - the
@@ -11183,9 +11149,9 @@ export function createWorldModes(host) {
     // A paused game advances no movers - DFU's door swing is an iTween
     // that never opts out of timeScale - so a swing begun before the
     // window opened used to complete under it and ring its close sound
-    // over a frozen world, while the frame's own ridePlatform (gated)
-    // declined to carry the player with it.
-    if (!overlayHeld) interiorCtx.actions.update(dt);
+    // over a frozen world. MOVER-BODY: the movers carry the body they
+    // meet, or hold (world/actionSystem.js _standMover).
+    if (!overlayHeld) interiorCtx.actions.update(dt, player);
     // ROAD-C c2/S9: the 5 Hz reveal probes, the dungeon arm's own gate.
     // CheckForNewlyDiscoveredMeshes runs on IsPlayerInsideBuilding
     // exactly as it runs in a dungeon (Automap.cs:1155).
@@ -11316,6 +11282,7 @@ export function createWorldModes(host) {
     offerQuestStands(questFlats, peopleBodies, _peopleOn, interiorBuilding?.buildingKey ?? 0, mwv.eye, dt);   // MWNPC8c: and the quest's
     offerDecorFigures(interiorDecor.figures(), peopleBodies, _peopleOn, figureCtx, mwv.eye, dt);   // MWNPC18: and the figures the home's owner placed
     peopleBodies.draw(canvas, proj, view, mwv.eye, dt);
+    npcMarks.gather(npcMarkCtx, interiorCtx.people, questFlats);   // NPC-MARKS: who of them earns a mark (drawn after the billboards)
     host.drawLivingBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10c: the residents the day has in here, in their bodies (their batches ride livingBillboards)
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
@@ -11408,6 +11375,7 @@ export function createWorldModes(host) {
     interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's
     host.drawLootLines?.({ proj, view, eye: mwv.eye, finds: () => [...interiorDropped.lootFinds(), ...(interiorFoes?.lootFinds?.() ?? [])] });   // LOOT11: the lines of light over a building's finds - additive, after the veiled bodies
+    if (npcMarks.draw(proj, view, mwv.eye, peopleBodies, performance.now() / 1000)) renderer.markForeignPass();   // NPC-MARKS: the marks over the people, after the veiled bodies
     // C9: the interior FP weapon - gesture/swing/sounds through the
     // rig; the strike frame runs the WeaponEnvDamage ray against the
     // interior's action objects (swing doors bash, verbatim). Bows
@@ -11791,7 +11759,8 @@ export function createWorldModes(host) {
       const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
       // The real caller assigns what openServiceFlow RETURNS - the
       // trade arms hand back a flow for the popup to mount, where the
-      // maker windows mount themselves and answer null. A probe that
+      // maker windows mount themselves and hand themselves back
+      // (QUESTOR-SAID: a null read "not available yet"). A probe that
       // dropped the return value would test only half of them.
       const flow = openServiceFlow(destination, { guild, memberships, store: null, rows: null, route: null });
       // the same contract the real caller keeps: a window mounts, a
@@ -13997,6 +13966,9 @@ export function createWorldModes(host) {
     get insideOpenShop() { return !!interiorBuilding?.insideOpenShop; },
     get interiorCtx() { return interiorCtx; },
     get dungeonCtx() { return dungeonCtx; },
+    /** PARTY-PING: the plaque's list and its words, so a coffin, a shelf and a door are named as the plaque names them. */
+    pingLook() { return mode === 'dungeon' ? { targets: dungeonCtx?.dungeonActivationTargets?.() ?? [], name: (k) => dungeonCtx?.hoverName?.(k)?.title ?? '' } : mode === 'interior' ? { targets: interiorActivationTargets(), name: (k) => interiorHoverName(k)?.title ?? '' } : mode === 'exterior' ? { targets: exteriorActivationTargets().targets, name: (k) => exteriorHoverName(k)?.title ?? '' } : null; },
+    buildingBoxes() { return buildingTargets?.() ?? []; },
     /** OH-E: the location being laid out, or null (see `layingOutLoc`). */
     get layingOutLocation() { return layingOutLoc; },
     /** PROF2 (bible/06-Systems/Professions-Arc.md 23): THE FORGE THE PLAYER STANDS AT - a Weaponsmith's or an Armorer's

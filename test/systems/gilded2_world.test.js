@@ -35,6 +35,7 @@ import { _resetSetPowersForTests } from '../../src/systems/sigil/sigilSetPowers.
 import { reportPlayerKill } from '../../src/systems/playerKills.js';
 import { equipItem } from '../../src/systems/equip.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
+import { createPistolet, PISTOLET_TEMPLATE } from '../../src/systems/pistolet.js';   // PISTOLET: the Sunken Sovereign's own mint
 import { rollSpoils } from '../../src/systems/gate/gateSpoils.js';
 import { rollSerpentSpoils } from '../../src/systems/serpent/serpentSpoils.js';
 import { spoilsList } from '../../src/scenes/spoilsPool.js';   // AUDIT WORLD-REWARDS A1: the floor's pictures
@@ -74,8 +75,10 @@ test('GILDED2 THE RECORDS: the Hourlock, then the gate\'s Dragonfire Oath (a Dae
   }
   assert.deepEqual([DRAGONFIRE_OATH.name, DRAGONFIRE_OATH.templateIndex, DRAGONFIRE_OATH.material], ['The Dragonfire Oath', WEAPONS.Dai_Katana, WEAPON_MATERIALS.Daedric]);
   assert.deepEqual(lines(DRAGONFIRE_OATH), [['damage', null, 40], ['stat', 'strength', 15], ['skill', SKILLS.LongBlade, 30], ['stat', 'endurance', 15]]);
-  assert.deepEqual([SUNKEN_SOVEREIGN.name, SUNKEN_SOVEREIGN.templateIndex, SUNKEN_SOVEREIGN.material], ['The Sunken Sovereign', WEAPONS.Saber, WEAPON_MATERIALS.Ebony]);
-  assert.deepEqual(lines(SUNKEN_SOVEREIGN), [['damage', null, 40], ['stat', 'agility', 15], ['skill', SKILLS.LongBlade, 30], ['leech', null, 10]]);
+  // PISTOLET (2026-10-21, the owner: "replace the serpent boss gilded weapon with this new weapon"): an Ebony Dwarven
+  // Pistolet (562) where it was an Ebony Saber, its skill line Archery's - the rest of the record as it was
+  assert.deepEqual([SUNKEN_SOVEREIGN.name, SUNKEN_SOVEREIGN.templateIndex, SUNKEN_SOVEREIGN.material], ['The Sunken Sovereign', 562, WEAPON_MATERIALS.Ebony]);
+  assert.deepEqual(lines(SUNKEN_SOVEREIGN), [['damage', null, 40], ['stat', 'agility', 15], ['skill', SKILLS.Archery, 30], ['leech', null, 10]]);
   assert.equal(DRAGONFIRE_OATH.power, DRAGONFIRE);
   assert.deepEqual({ kind: DRAGONFIRE.kind, group: DRAGONFIRE.group, share: DRAGONFIRE.share, metres: DRAGONFIRE.metres }, { kind: 'dragonfire', group: 'daedra', share: 33, metres: 3 });
   assert.equal(SUNKEN_SOVEREIGN.power, UNDERTOW);
@@ -87,7 +90,8 @@ test('GILDED2 THE RECORDS: the Hourlock, then the gate\'s Dragonfire Oath (a Dae
 test('GILDED2 THE MINT: a DFU weapon\'s own (CreateWeapon - its make, its span, its condition), named, Gilded, its lines a copy, KNOWN, priced over its make by its lines and GILDED_WORTH; the wire takes it exactly and refuses one number off, a line short, a material or template not its own and any mark another door lays; the Hourlock\'s mint stays the gun\'s (mutants: the Thunderlock for every record)', () => {
   on();
   for (const r of [DRAGONFIRE_OATH, SUNKEN_SOVEREIGN]) {
-    const it = mintGilded(r), plain = createWeapon(r.templateIndex, r.material);
+    // PISTOLET: the Sunken Sovereign is the Pistolet's own mint now, as the Hourlock is the Thunderlock's
+    const it = mintGilded(r), plain = r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material }) : createWeapon(r.templateIndex, r.material);
     assert.deepEqual([it.templateIndex, it.material, it.group, it.minDamage, it.maxDamage, it.maxCondition], [plain.templateIndex, plain.material, plain.group, plain.minDamage, plain.maxDamage, plain.maxCondition], `${r.id}: CreateWeapon's own`);
     assert.deepEqual([it.name, it.rarity, it.gilded, it.isIdentified], [r.name, GILDED, r.id, true]);
     assert.deepEqual(it.affixes, r.affixes.map((a) => ({ ...a })));
@@ -151,7 +155,7 @@ test('GILDED2 THE GATE\'S AND THE SERPENT\'S: the Oath the Warden\'s spoils\' LA
   assert.ok(oath > 0 && Math.abs(oath / N - GATE_GILDED_CHANCE) < 0.006, `the Oath ${oath} of ${N}`);
   assert.ok(sov > 0 && Math.abs(sov / N - SERPENT_GILDED_CHANCE) < 0.006, `the Sovereign ${sov} of ${N}`);
   // the very last draw of each - after the technique pass, so every spoils before it is what it was for its seed
-  assert.match(strip(read('src/systems/gate/gateSpoils.js')), /techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const oath = rollDragonfireOath\(rolls\);\s*if \(oath\) pieces\.push\(\{ item: oath, tier: oath\.rarity \}\);\s*return \{ gold, pieces, sigil: sigilStone\(\), card, gems \};/);
+  assert.match(strip(read('src/systems/gate/gateSpoils.js')), /techniquePass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*const oath = rollDragonfireOath\(rolls\);\s*if \(oath\) pieces\.push\(\{ item: oath, tier: oath\.rarity \}\);\s*const more = \[\];\s*for \(const bit of SPOILS_PORTENT_BITS\) if \(\(p & bit\) !== 0\) more\.push\(graded\(spoilsBase\(lv, rolls\), magicOrBetter\(rolls\), rolls\)\);[\s\S]{0,700}?return \{ gold, pieces, sigil: sigilStone\(\), card, gems, portent: more\.length \};/);   // PIN MOVED (WB14g): still the plain spoils' last draw - a portent night's pieces after it, drawn only for a receipt's `p` (test/net/gate/wb14g_pays.test.js)   // PIN MOVED (AUDIT WB14 PLAY-7): and the passes over a portent's pieces alone, after them
   for (const [f, fn] of [['src/systems/gate/gateSpoils.js', 'rollDragonfireOath'], ['src/systems/serpent/serpentSpoils.js', 'rollSunkenSovereign']]) {
     assert.equal(strip(read(f)).split(`${fn}(`).length - 1, 1, `${f}: ONE draw of it, and only there`);
   }

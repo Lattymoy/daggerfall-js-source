@@ -274,8 +274,10 @@ test('G5: UpdateRemoteTargetIcon\'s ladder (:865-890) - chosen flat, then the ta
     const arm = src('scenes/dungeonContext.js');
     const corpseArm = arm.slice(arm.indexOf("} else if (kind === 'corpse') {"),
       arm.indexOf("} else if (kind.startsWith('droppedLoot')) {"));
-    assert.match(corpseArm, /const ct = f\.mobile\?\.basics\?\.corpseTexture \?\? ENEMY_BASICS\[f\.mobileType\]\?\.corpseTexture;/,
-      'the corpse arm reads the STRUCT COPY first, as EnemyDeath.cs:86-92 does');
+    assert.match(corpseArm, /const ct = corpseTextureOf\(f\);/,
+      'the corpse arm reads the corpse as spawnCorpse does (PIN MOVED, AUDIT DEX A1: through corpseMarker.js corpseTextureOf, its female arm too)');
+    assert.match(src('scenes/corpseMarker.js'), /const row = f\?\.mobile\?\.basics \?\? ENEMY_BASICS\[f\?\.mobileType\];/,
+      'the STRUCT COPY first, as EnemyDeath.cs:86-92 does');
     assert.match(corpseArm, /if \(ct\) lootHooks = \{ textureArchive: ct\.archive, textureRecord: ct\.record \};/,
       'and hands the window DaggerfallLoot\'s flat identity');
     assert.equal(/playerOwned:/.test(corpseArm), false, 'and never sets playerOwned - a corpse is not the player\'s');

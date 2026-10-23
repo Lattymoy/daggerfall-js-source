@@ -13,6 +13,7 @@ import { egGive8 } from '../../egGive8.mjs';
 import { createEgSpan } from '../../../src/scenes/eliteGates/egSpan.js';
 import { egCircleColliderTris, egToDungeon } from '../../../src/world/eliteGates/egHall.js';
 import { pickActivatableHit, DEFAULT_ACTIVATION_DISTANCE } from '../../../src/player/activate.js';
+import { stoneFrame, SD_HANDLE, SD_STONE_SIZE } from '../../../src/world/superDungeon/sdHall.js';
 
 /** The first circle (seeds 1-80, circles 2-20) of law `law` whose Athenaeum `want` takes: `{ seed, c, s }`. */
 function findAthenaeum(law, want) {
@@ -24,7 +25,8 @@ function findAthenaeum(law, want) {
   }
   throw new Error('no such Athenaeum');
 }
-const stand = (span) => span.stand({ dynamicDraws: [], collider: { addMesh: () => {} } });
+/** The span stood; answers the stones' solids it added to the collider (FIELD BUGS 2026-10-20f ORRERY-STONES: they stand). */
+const stand = (span) => { const solids = []; span.stand({ dynamicDraws: [], collider: { addMesh: (key, p) => { if (key.startsWith('eg:orrery:')) solids.push(...p); } } }); return solids; };
 /** Does a level triangle of the collider lie under (x, z) at height y (the dungeon's frame)? */
 function floorUnder(tris, x, y, z) {
   for (let i = 0; i < tris.length; i += 9) {
@@ -53,26 +55,29 @@ const colliderOf = (tris) => ({
     return best;
   },
 });
-/** Every stone's two handles, each picked by the real ray over the circle's own collider from an eye 1.6 m over the stone's
- *  floor at its middle, aimed at a point a metre over that floor and 0.9 m to the handle's side: the handle's key, inside its
- *  reach. */
-function eachHandleReached(span, s, floorY, tris) {
+/** Every stone's two handles, each picked by the real ray over the circle's own collider (and the stones' solids) from an eye
+ *  1.6 m over the stone's floor, 1.55 m before its face, aimed at its handle - PIN MOVED (FIELD BUGS 2026-10-20f,
+ *  ORRERY-STONES): the handle is its stone's lever, SD_HANDLE.y over that floor (it was a box a metre up, 0.9 m beside the
+ *  stone's middle, with nothing drawn there; the eye stood at that middle, inside the stone it is now): the handle's key,
+ *  inside its reach. */
+function eachHandleReached(span, s, floorY, tris, solids) {
   const targets = span.targets();
   assert.equal(targets.filter((t) => t.key.startsWith(`egstone:${s.h}:`)).length, 2 * s.spots.stone.length, 'each stone\'s two handles');
   for (const [j, q] of s.spots.stone.entries()) for (const a of [1, -1]) {
-    const key = `egstone:${s.h}:${j}:${a > 0 ? 'f' : 'b'}`;
-    const eye = egToDungeon(s, q.x, floorY + 1.6, q.z), at = egToDungeon(s, q.x + a * 0.9, floorY + 1.0, q.z);
-    // its box about that point (a box with no number for a side is a slab the ray meets at any height - player/activate.js rayAabb)
-    const box = targets.find((t) => t.key === key).aabb;
-    for (let k = 0; k < 3; k++) assert.ok(Math.abs((box.min[k] + box.max[k]) / 2 - at[k]) < 1e-6, `${key}: its box about ${at.map((x) => x.toFixed(2))}`);
-    const v = [at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]], n = Math.hypot(...v);
-    const hit = pickActivatableHit(eye, v.map((x) => x / n), targets, colliderOf(tris));
+    const key = `egstone:${s.h}:${j}:${a > 0 ? 'f' : 'b'}`, { n } = stoneFrame(j), before = SD_STONE_SIZE.d / 2 + 1.2;
+    const eye = egToDungeon(s, q.x + n[0] * before, floorY + 1.6, q.z + n[2] * before), foot = egToDungeon(s, q.x, floorY, q.z);
+    // its box at its lever's height over its own floor (a box with no number for a side is a slab the ray meets at any height - player/activate.js rayAabb)
+    const box = targets.find((t) => t.key === key).aabb, at = box.min.map((v, k) => (v + box.max[k]) / 2);
+    assert.ok(Math.abs(at[1] - foot[1] - SD_HANDLE.y) < 1e-6, `${key}: its box ${SD_HANDLE.y} m over its own floor (${(at[1] - foot[1]).toFixed(2)})`);
+    assert.ok(Math.hypot(at[0] - foot[0], at[2] - foot[2]) < SD_STONE_SIZE.w / 2, `${key}: on its stone`);
+    const v = [at[0] - eye[0], at[1] - eye[1], at[2] - eye[2]], len = Math.hypot(...v);
+    const hit = pickActivatableHit(eye, v.map((x) => x / len), targets, colliderOf([...tris, ...solids]));
     assert.equal(hit?.key, key, `${key}: the ray from the stone's floor finds its handle (floor ${floorY} m)`);
     assert.ok(hit.distance <= DEFAULT_ACTIVATION_DISTANCE && hit.reach === DEFAULT_ACTIVATION_DISTANCE, `${key}: within reach (${hit.distance.toFixed(2)} m)`);
   }
 }
 
-test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): under THE ASCENT an Athenaeum\'s court stands off the 0 floor, and every Orrery stone\'s two handles stand a metre over its own floor - found by the real ray from a body on that floor, inside its reach, and named (mutants: the handles at 1 m over 0, as shipped; the spot\'s centimetres read as metres)', () => {
+test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): under THE ASCENT an Athenaeum\'s court stands off the 0 floor, and every Orrery stone\'s two handles stand over its own floor (a metre until ORRERY-STONES, its lever\'s height since) - found by the real ray from a body on that floor, inside its reach, and named (mutants: the handles at 1 m over 0, as shipped; the spot\'s centimetres read as metres)', () => {
   // PIN MOVED (EG-PERFECT, spec law 10 - 2026-10-18): over the build's law (the collider and the spans draw it) - law 9's found
   // Athenaeum stood beside law 10's circle
   const { seed, c, s } = findAthenaeum(EG_SPEC, (q) => Math.abs(q.spots.stone?.[0]?.y ?? 0) >= 400);
@@ -83,14 +88,13 @@ test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): under THE ASCENT an Athenaeum\'s c
   const tris = egCircleColliderTris(seed, c, 0);
   for (const q of s.spots.stone) { const p = egToDungeon(s, q.x, floorY, q.z); assert.ok(floorUnder(tris, p[0], p[1], p[2]), `a floor under the stone at ${q.x}, ${q.z}, ${floorY} m`); }
   const span = createEgSpan({ seed, c });
-  stand(span);
-  eachHandleReached(span, s, floorY, tris);
+  eachHandleReached(span, s, floorY, tris, stand(span));
   // and the plaque names it - PIN MOVED (FIELD BUGS 2026-10-17e, ORRERY-SIGHT): by the stone's own name and sign, as the
   // riddles name it, never "Orrery stone 1"
   assert.equal(span.hoverName(`egstone:${s.h}:0:f`).title, 'Daggerfall - the lion');
 });
 
-test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): the laws before THE ASCENT lay no spot height and stand the Athenaeum\'s court at 0 - its handles a metre over 0, as before (mutant: a spot with no height read as no number)', () => {
+test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): the laws before THE ASCENT lay no spot height and stand the Athenaeum\'s court at 0 - its handles over 0, as before (mutant: a spot with no height read as no number)', () => {
   const { seed, c, s } = findAthenaeum(8, () => true);
   assert.equal(s.spots.stone[0].y, undefined, 'law 8 lays no spot height');
   egGive8(seed, [c], 0);
@@ -98,7 +102,6 @@ test('ORRERY-HEIGHT (FIELD BUGS 2026-10-17c): the laws before THE ASCENT lay no 
     const given = egHallOf(seed, s.h, 0);
     assert.equal(given.law ?? 8, 8, 'the law 8 hall given');
     const span = createEgSpan({ seed, c });
-    stand(span);
-    eachHandleReached(span, given, 0, egCircleColliderTris(seed, c, 0));
+    eachHandleReached(span, given, 0, egCircleColliderTris(seed, c, 0), stand(span));
   } finally { egSpecForget(); }
 });

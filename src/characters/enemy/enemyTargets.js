@@ -120,6 +120,16 @@ export function huntsCivilians(self) {
   if (self.caster || (self.entity?.spells?.length ?? 0) > 0) return false;
   return !self.mobile?.basics?.hasRangedAttack1;
 }
+/**
+ * STAR5 (bible/11-Multiplayer/Starfall.md section 4): THE STAR'S HUNTERS. A fallen star stands in its owner's machine as
+ * a body of its own (scenes/starfall/starfallHost.js - `starWard`, the townsperson's shape): quarry for its own coven's
+ * monsters alone - those the townsperson's law hunts (huntsCivilians: hostile, no class, no spell, no bow), stood at that
+ * star (`starSite`, its site). No other foe, ally, companion or watchman takes it for a foe.
+ */
+export const huntsStar = (self, ward) => self?.starSite != null && self.starSite === ward?.site && huntsCivilians(self);
+/** A hunter no defender has turned (`starTurned` - struck, it turns on its striker as any foe does) goes for the star
+ *  before anyone beside it: this much over a target's own priority (distance, sight). */
+export const STAR_HUNT_PRIORITY = 40;
 export function targetPriority(targetHasNoTarget, seen, distance) {
   let p = 0;
   if (targetHasNoTarget) p += 5;
@@ -220,10 +230,13 @@ export function getTargets(self, candidates, playerFeet, {
     // below weighs foes and players
     const civilian = !isPlayer && c.civilian === true;
     if (civilian && !huntsCivilians(self)) continue;
+    // STAR5: a fallen star is quarry for its own coven's monsters alone (huntsStar), and no team's
+    const star = !isPlayer && c.starWard === true;
+    if (star && !huntsStar(self, c)) continue;
     // ARENA2: THE BOUT TEAM - a bout's pair skips the chain below; anyone else meets no fighter, and no fighter meets them
     const bout = boutGate(self, c, isPlayer, playerBout);
     if (bout === false) continue;
-    if (bout !== true && !civilian) {
+    if (bout !== true && !civilian && !star) {
     // NoTarget mode (:776-777): the BASICS team here
     if ((noTargetMode || !ai.isHostile || selfMobileTeam === 'PlayerAlly' || self.companion != null) && isPlayer) continue;   // AUDIT CC-B2: a companion never the player's foe, whatever his team reads
     if (dropLocal && isLocalPlayerTarget(c)) continue;   // AUDIT-F5: a wilderness foe unaware of a fast traveller (scenes/exteriorFoes.js) - them alone
@@ -280,7 +293,8 @@ export function getTargets(self, candidates, playerFeet, {
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
     // WATCH-PROTECTS: a townsperson has no foe of their own, and is no likelier quarry for it than the player beside them
-    let priority = targetPriority(targetAi && !civilian ? (targetAi.target ?? null) === null : false, see, distance);
+    let priority = targetPriority(targetAi && !civilian && !star ? (targetAi.target ?? null) === null : false, see, distance);
+    if (star && !self.starTurned) priority += STAR_HUNT_PRIORITY;   // STAR5: the star first, until a defender turns it
     if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;   // ASSIST (FIELD BUGS 2026-10-05c)
     if (priority > highestPriority) {
       secondHighestPriority = highestPriority;

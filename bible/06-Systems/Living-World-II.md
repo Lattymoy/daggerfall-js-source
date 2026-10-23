@@ -889,6 +889,14 @@ errand in `dayPlan.js`.
 - **A CRAFTED PIECE NO DEARER** (`patronWorth`): its worth is no more than the piece it was made as - the crafted
   marks off (`provenance`, `quality`, `hand`, `kitMetal`, `fieldKit`, `potent`), its value nothing. Shops are the
   floor, crafting the ceiling: a patron never pays a crafter more than a found piece fetches.
+- **AT THE CONDITION A COUNTER READS** (`patronWorth`; AUDIT MEND-THIRD L1-4, 2026-10-19, Mac: "Fix it here" -
+  `01-Overview/audits/Audit-Mend-Third.md`): the worth above, through Roleplay & Realism: Items' condition price
+  (`rriRealism.js conditionCostBase`: the share, never under a fifth) at the condition an online counter's Sell arm reads
+  (`systems/item/foundMark.js foundSalePercentage`: a found piece's mark, and a third of its owner's own mends past it).
+  The judge's floor reads no condition, so a found Daedric cuirass at 20% was worth its whole 153,600 to a patron - a
+  cap of 92,160 where the best counter paid 25,344 as found - and worn loot sold through a hired trader for several
+  times its counter price; it is worth 30,720 now (a cap of 18,432), and the same mended at a smith. The mod's condition
+  prices are the room's (`onlineLane.js`), and patrons are online alone. Deploy: the account service.
 - **NEVER** a quest's piece or a keepsake (`patronTakes`: `questItem`, `livingKeepsake`, the keepsake's template
   1800), nor a PIECE BOUGHT AT A COUNTER ONLINE (AUDIT LW-II-2 S1: `counterBought`, `PATRON_COUNTER_MARK`, stamped at
   both of worldModes.js's Buy doors - every shelf, the guilds', a street merchant's and the caravan's counter walk one -

@@ -83,6 +83,7 @@ import { rayDirFromScreen, projectToScreen } from '../player/tapRay.js';
 import { goldAmount, deductGold, addGold } from '../systems/court.js';
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { KINGS_GAMBIT_KEY } from '../systems/features.js';
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** THE FEATURES SWITCH (10.7): on by default; off, no card table offers the game. */
 export const gambitTableOn = () => !!getPref(KINGS_GAMBIT_KEY);
@@ -329,6 +330,7 @@ export function openGambitTableGame(d) {
     const s = g.session;
     if (!s?.over || g.settled) return;
     g.settled = true;
+    if (s.over.winner === 0 && !watching()) noteAct('gambit-won');   // QL11: a game won - side 0 is mine, a regular's game or the relay's (a watcher's board is the host's)
     const r = g.game;
     const gold = s.settlement() ?? { pay: 0, net: 0 };
     if (gold.pay > 0) addGold(d.entity, gold.pay);

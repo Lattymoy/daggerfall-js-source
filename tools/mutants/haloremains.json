@@ -11,8 +11,8 @@
   {
     "name": "HALOREM-take-to-primary",
     "file": "src/net/wild/wildRemains.js",
-    "old": "          if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {",
-    "new": "          if (!send({ k: 'take', r: rec.r, i: info.i, n: k })) {",
+    "old": "      if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {",
+    "new": "      if (!send({ k: 'take', r: rec.r, i: info.i, n: k })) {",
     "tests": [
       "test/net/haloremains.test.js"
     ]

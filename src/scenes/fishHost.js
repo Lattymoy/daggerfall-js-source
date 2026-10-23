@@ -43,6 +43,7 @@ import { isOutdoorWaterTile } from '../world/terrain/terrainSurface.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { sceneCompassWord } from '../systems/compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The cast stands this far ahead of the look (m), and is reached from this far. */
 export const CAST_AHEAD_M = 3;
@@ -89,7 +90,7 @@ export const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not
  *  the fatigue bar, and an act there ends when the bar falls into it: the prompt says why, with minutes left to swim out
  *  and rest. */
 export const NET_TIRED_SHARE = 0.25;
-export const NET_TIRED_WORDS = 'too tired to fish in the water - get out and rest';
+export const NET_TIRED_WORDS = 'too tired to fish in the water: get out and rest';
 /** Whether the angler swims (the collapse's own test, PlayerEnterExit.IsPlayerSwimming, as Foraging's world answers it)
  *  on the last quarter of the fatigue pool. */
 export function tooTiredForTheWater(entity) {
@@ -338,20 +339,22 @@ export function fishKind({ book, host }) {
     actNote: (rep) => {
       if (!rep) return '';
       if (rep.clean) return ' (a full net)';
-      if (rep.why === 'missed') return ' (the tug missed - a plain haul)';
-      if (rep.why === 'slipped') return ' (the net slipped - a plain haul)';
-      if (rep.why === 'slow') return ' (hauled in slowly - a plain haul)';
+      if (rep.why === 'missed') return ' (the tug missed: a plain haul)';
+      if (rep.why === 'slipped') return ' (the net slipped: a plain haul)';
+      if (rep.why === 'slow') return ' (hauled in slowly: a plain haul)';
       return '';
     },
     /** The goods, the species named. */
     storesLine: (d) => haulLine(d, speciesOfHaul(d.node, climateOf(d.node))),
     haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,   // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub
-    /** A trophy: the species' own item, into the pack once (every answer to the haul says it). */
+    /** A trophy: the species' own item, into the pack once (every answer to the haul says it). QL11: and every haul the
+     *  service answered is a catch. */
     answered(d, toast) {
+      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag
       if (!d?.trophy || trophied.has(d.node)) return;
       trophied.add(d.node);
       const species = speciesOfHaul(d.node, climateOf(d.node));
-      if (species && host.trophy(species)) toast(`A trophy ${species.itemName} - it is in your pack.`);
+      if (species && host.trophy(species)) toast(`A trophy ${species.itemName}. It is in your pack.`);
     },
     title: () => 'Angler',
   };

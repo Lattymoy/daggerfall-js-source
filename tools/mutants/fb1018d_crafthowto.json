@@ -2,7 +2,7 @@
   {
     "name": "CRAFT-HOWTO-smithing-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  smithing: () => t('prof.page.how.smithing', 'Smithing is done at a forge: a Weaponsmith\\'s, an Armorer\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The Forge smelts the ore you mine into ingots, and the Anvil makes weapons, armour and tools from them - or from raw ore, smelting it first. Jewellery is made at a jeweller\\'s bench: a Pawn Shop\\'s, a Gem Store\\'s or one in your own home. Smelting and every piece you make earn Smithing XP.'),\n",
+    "old": "  smithing: () => t('prof.page.how.smithing', 'Smithing is done at a forge: a Weaponsmith\\'s, an Armorer\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The Forge smelts the ore you mine into ingots, and the Anvil makes weapons, armor and tools from them, or from raw ore by smelting it first. Jewelry is made at a jeweler\\'s bench: a Pawn Shop\\'s, a Gem Store\\'s or one in your own home. Smelting and every piece you make earn Smithing experience.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "CRAFT-HOWTO-building-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  building: () => t('prof.page.how.building', 'Carpentry is done at a workbench: a Furniture Store\\'s, a joinery\\'s or one in your own home; Masonry at a mason\\'s bench: a General Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The workbench saws the logs you fell into planks and makes staves, bows, arrows and furniture; the mason\\'s bench cuts the stone you quarry and mixes Mortar. Every piece, cut and mix earns Building XP; sawing earns none.'),\n",
+    "old": "  building: () => t('prof.page.how.building', 'Carpentry is done at a workbench: a Furniture Store\\'s, a joinery\\'s or one in your own home; Masonry at a mason\\'s bench: a General Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The workbench saws the logs you fell into planks and makes staves, bows, arrows and furniture; the mason\\'s bench cuts the stone you quarry and mixes Mortar. Every piece, cut and mix earns Building experience; sawing earns none.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "CRAFT-HOWTO-outfitting-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, and the loom makes leather armour, clothing, rugs, tapestries and the Fishing-Net. Linen and Wool are bought from the Weavers, at a Clothing Store\\'s loom or a Notice Board\\'s Market. Every piece earns Outfitting XP; curing earns none.'),\n",
+    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, and the loom makes leather armor, clothing, rugs, tapestries and the Fishing-Net. Linen and Wool are bought from the Weavers, at a Clothing Store\\'s loom or a Notice Board\\'s Market. Every piece earns Outfitting experience; curing earns none.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "CRAFT-HOWTO-page-gem-store-unlisted",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "Jeweller\\'s bench: Pawn Shops, Gem Stores.",
-    "new": "Jeweller\\'s bench: Pawn Shops.",
+    "old": "Jeweler\\'s bench: Pawn Shops, Gem Stores.",
+    "new": "Jeweler\\'s bench: Pawn Shops.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "CRAFT-HOWTO-cooking-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "Brewing and cooking both earn Provisioning XP.",
-    "new": "Brewing earns Provisioning XP; cooking earns none.",
+    "old": "Brewing and cooking both earn Provisioning experience.",
+    "new": "Brewing earns Provisioning experience; cooking earns none.",
     "why": "AUDIT FB1018D L1-5: the page tells a cook a dish pays nothing - the XP clause unread by the pin",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "CRAFT-HOWTO-building-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "Every piece, cut and mix earns Building XP",
-    "new": "No piece, cut or mix earns Building XP",
+    "old": "Every piece, cut and mix earns Building experience",
+    "new": "No piece, cut or mix earns Building experience",
     "why": "AUDIT FB1018D L1-5: the workbench and the mason's bench said to pay nothing",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "CRAFT-HOWTO-outfitting-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "Every piece earns Outfitting XP",
-    "new": "No piece earns Outfitting XP",
+    "old": "Every piece earns Outfitting experience",
+    "new": "No piece earns Outfitting experience",
     "why": "AUDIT FB1018D L1-5: the loom said to pay nothing",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -262,7 +262,7 @@
   {
     "name": "CRAFT-HOWTO-raw-ore-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": " - or from raw ore, smelting it first.",
+    "old": ", or from raw ore by smelting it first.",
     "new": ".",
     "why": "AUDIT FB1018D L1-5: the anvil's smelt-first chain (CRAFT1) unsaid",
     "tests": [

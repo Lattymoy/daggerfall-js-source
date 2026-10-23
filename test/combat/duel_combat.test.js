@@ -172,7 +172,7 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   assert.match(w, /\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\), \.\.\.duelArrowTargets\(\)\]/);
   assert.match(w, /onFoeHit: \(m, t\) => \(t\?\.duel \? undefined : exteriorFoes\.arrowHitFoe\(m, t\)\)/);
   // PIN MOVED (AUDIT-SEATS): the shaft's target's id rides too - outside a duel, a battle's foe it struck (G5's shaft)
-  assert.match(w, /onPlayerArrowHitFoe: \(m, t\) => \(t\?\.duel \? duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id\) : playerArrowHitFoe\(m, t, \{/);
+  assert.match(w, /onPlayerArrowHitFoe: \(m, t\) => \(t\?\.duel \? duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id, \{ off: !!weaponRig\.playerWeapon\?\.isOffHandItem\?\.\(m\.weapon\) \}\) : playerArrowHitFoe\(m, t, \{/);
   assert.match(w, /castAtDuel: \(id, sp\) => duelSpellOut\(id, sp\),/);
   // PIN MOVED (INT8): the defender resolved the opponent's blow on its own sheet with the floor (`spare`), its spell
   // landing under `_duelScope` - the referee holds a duel's every blow now: the save's health is never a duel's, and my

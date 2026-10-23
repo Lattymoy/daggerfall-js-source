@@ -20,8 +20,8 @@
   {
     "name": "D23B-look-drops-set",
     "file": "src/net/remotePlayers.js",
-    "old": "...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), items };",
-    "new": "items };",
+    "old": "...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), ...(layered",
+    "new": "...(layered",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "D23B-relay-drops-set",
     "file": "src/net/wire.js",
-    "old": "...(eo != null ? { eo } : {}), items };",
-    "new": "items };",
+    "old": "...(eo != null ? { eo } : {}), ...(lg",
+    "new": "...(lg",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "D23B-null-on-wire",
     "file": "src/net/wire.js",
-    "old": "...(eo != null ? { eo } : {}), items };",
-    "new": "eo, items };",
+    "old": "...(eo != null ? { eo } : {}), ...(lg",
+    "new": "eo, ...(lg",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "D23B-walker-other-set",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: set });",
-    "new": "const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, { onFoot: 0 });",
+    "old": ": { onFoot: set });",
+    "new": ": { onFoot: 0 });",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D23B-walker-under-body",
     "file": "src/net/peer/peerRiders.js",
-    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D23B-walker-rides",
     "file": "src/net/peer/peerRiders.js",
-    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "if (!pose || !Number.isInteger(set) || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.wb || pose.dd || skip(peer.id)) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "D23B-walker-beast",
     "file": "src/net/peer/peerRiders.js",
-    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "if (!pose || !Number.isInteger(set) || pose.rd || pose.dd || skip(peer.id)) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.dd || skip(peer.id)) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "D23B-walker-dying",
     "file": "src/net/peer/peerRiders.js",
-    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || skip(peer.id)) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || skip(peer.id)) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "D23B2-not-on-profile",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  body.append(skinCard(document).root);",
+    "old": "  body.append(skinCard(document, { gender: () => playerEntity?.gender }).root);",
     "new": "  void skinCard;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"

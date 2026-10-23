@@ -13,7 +13,7 @@ import { Collider } from '../../src/player/collider.js';
 import { runTargetMachine } from '../../src/characters/enemy/enemyTargets.js';
 import { createCompanions } from '../../src/systems/naval/crewCompanions.js';
 import { createCrewAshore, TRAIL_STEP_M, TRAIL_MAX, TRAIL_JUMP_M } from '../../src/scenes/crewAshore.js';
-import { EnemySoundSource, COMPANION_ATTRACT_SCALE, MIN_ATTRACT_DELAY } from '../../src/characters/enemy/enemySounds.js';
+import { EnemySoundSource, COMPANION_ATTRACT_SCALE, MIN_ATTRACT_DELAY, FOE_ATTRACT_SCALE } from '../../src/characters/enemy/enemySounds.js';
 import { tickEnemySound } from '../../src/scenes/hostCombat.js';
 import { createPortalSet, PORTAL_SOUND, PORTAL_SOUND_GAP_MS } from '../../src/scenes/portalFx.js';
 import { QuestAudioSource, QUIET_QUEST_SOUNDS } from '../../src/systems/audio.js';
@@ -197,8 +197,10 @@ test('QUIET-COMPANIONS the bark: a companion waits COMPANION_ATTRACT_SCALE times
   };
   const foe = barks(false), mate = barks(true);
   const near = (t, w) => t > w - 1e-9 && t <= w + 0.1 + 1e-9;   // the first tick past the wait (0.1 s ticks)
-  assert.ok(near(foe.at[0], MIN_ATTRACT_DELAY), `a foe at its roll (${foe.at[0]})`);
-  assert.equal(foe.at.length, 20, 'twenty in a minute');
+  // MONSTER-QUIET (2026-10-20, Dudey: "decrease the monster scream frequenzy by 60%"): a monster foe at 2.5 times its roll
+  // (the seam's attractStep), eight in a minute where it was twenty; the companion's own six times stays as it was
+  assert.ok(near(foe.at[0], MIN_ATTRACT_DELAY * FOE_ATTRACT_SCALE), `a foe at 2.5 times its roll (${foe.at[0]})`);
+  assert.equal(foe.at.length, 8, 'eight in a minute');
   assert.ok(near(mate.at[0], MIN_ATTRACT_DELAY * COMPANION_ATTRACT_SCALE), `a companion at six times it (${mate.at[0]})`);
   assert.equal(mate.at.length, 3, 'three in a minute');
   assert.ok(mate.played.length === 3, 'and played');
@@ -208,7 +210,7 @@ test('QUIET-COMPANIONS the bark: a companion waits COMPANION_ATTRACT_SCALE times
     assert.equal(calls.length, 2, `${p}: its two bark sites`);
     for (const c of calls) assert.match(c, /companion: f\.companion != null \}/, `${p}: passes the companion`);
   }
-  assert.match(rd('src/scenes/hostCombat.js'), /source\.tick\(dt, dist, \(\) => enemySoundOccluded\(collider, feet, playerFeet\), \{ companion \}\)/, 'the seam hands it on');
+  assert.match(rd('src/scenes/hostCombat.js'), /source\.tick\(attractStep\(source, dt, companion\), dist, \(\) => enemySoundOccluded\(collider, feet, playerFeet\), \{ companion \}\)/, 'the seam hands it on');
 });
 
 test('QUIET-COMPANIONS the portals: one sound in PORTAL_SOUND_GAP_MS a set - the party arriving at a door rings once, every portal still opening (mutants: no gap)', () => {

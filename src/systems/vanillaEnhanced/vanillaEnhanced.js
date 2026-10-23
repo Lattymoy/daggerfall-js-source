@@ -59,11 +59,11 @@ const keptAddons = () => { const v = getPref(VE_ADDONS_PREF); return Array.isArr
 export const looseTexturesWorn = () => textureReplacementEnabled() && textureReplacementCount() > 0;
 /** AUDIT VE R10: why Classic cannot be worn by a switch now - a loose texture pack is attached - or null. */
 export const classicBlocked = () => (looseTexturesWorn()
-  ? `A loose texture pack is attached (a folder of pictures, not a mod). Remove it on the Replacement packs card (${optionPath('card:packs')}) to wear Classic.`
+  ? `A loose texture pack (a folder of pictures) is attached. Remove it on the Replacement packs card (${optionPath('card:packs')}) to use Classic.`
   : null);
 /** AUDIT VE R10: the Custom note's words - a loose pack alone is not a mix of texture mods. */
 export const customTextureNote = () => (looseTexturesWorn() && !textureMods().some((m) => m.enabled)
-  ? `Custom: a loose texture pack is attached (a folder of pictures, not a mod). The Replacement packs card (${optionPath('card:packs')}) removes it.`
+  ? `Custom: a loose texture pack (a folder of pictures) is attached. Remove it on the Replacement packs card (${optionPath('card:packs')}).`
   : `Custom: a mix of texture mods is switched on. The Replacement packs card (${optionPath('card:packs')}) lists them.`);
 
 /** Wear Vanilla Enhanced: the Base switched on with the add-ons it was last worn with, and Replace Game Artwork with

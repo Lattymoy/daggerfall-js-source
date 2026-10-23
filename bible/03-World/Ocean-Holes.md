@@ -223,7 +223,11 @@ quest behind it, SetupDemoEnemy's, not one of the deep's roster, not the
 Seducer, General (a class may be Guard), with a shadow and no glow is
 replaced by the enemy hash (the pit's pixel XORed with the LoadID's two
 words): a class (128-146) always, from the roster's undead, and marked
-WasHumanoid; a monster one hash in three, by the third of it.
+WasHumanoid; a monster one hash in three, by the third of it. (AUDIT DEX
+C4: the class is the mod's own range, `EntityType == EnemyClass` AND an ID
+of 128-146 - DEX1 had widened it to DFU's 128 bit, and the abyss took every
+one of Daggerfall Enemy Expansion's classes, always; its classes, 384-398,
+are monsters to this mod, as its IL reads.)
 EnsureAquaticEnemyQuota wants `CeilToInt(living x 0.3f)` aquatic - in
 floats: ten living want three, fifty want sixteen (50 x 0.3f is
 15.000000953674316 as a float) - taken first from the enemies never humanoid, then from those

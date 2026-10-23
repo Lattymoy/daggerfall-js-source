@@ -123,7 +123,7 @@ export function createPoiUvPanel({ doc = document, mesh, sub = 0, materials, tit
         say(t('poi.uv.unwrapped', 'Unwrapped {n, plural, one {# island} other {# islands}}.', { n }));
         draw();
       });
-    }, t('poi.uv.unwrapHint', 'Lay the selection flat, keeping its angles - its seams cut it open.')),
+    }, t('poi.uv.unwrapHint', 'Lays the selection flat, keeping its angles. Marked seams are cut open.')),
     undoBtn, redoBtn,
   );
   const proj = el('div', 'dfpoi-uv-row');
@@ -131,15 +131,15 @@ export function createPoiUvPanel({ doc = document, mesh, sub = 0, materials, tit
     btn(t('poi.uv.planarX', 'along X'), () => ed.project('x')), btn(t('poi.uv.planarY', 'along Y'), () => ed.project('y')), btn(t('poi.uv.planarZ', 'along Z'), () => ed.project('z')),
     btn(t('poi.uv.box', 'Box'), () => ed.project('box')), btn(t('poi.uv.cylinder', 'Cylinder'), () => ed.project('cylinder', 'y')), btn(t('poi.uv.sphere', 'Sphere'), () => ed.project('sphere')));
   const pack = el('div', 'dfpoi-uv-row');
-  const marginIn = el('input'); marginIn.type = 'number'; marginIn.step = '0.005'; marginIn.min = '0'; marginIn.max = '0.2'; marginIn.value = String(margin); marginIn.title = t('poi.uv.margin', 'Margin round each island (a share of the square)');
+  const marginIn = el('input'); marginIn.type = 'number'; marginIn.step = '0.005'; marginIn.min = '0'; marginIn.max = '0.2'; marginIn.value = String(margin); marginIn.title = t('poi.uv.margin', 'Margin around each island (a fraction of the square)');
   marginIn.addEventListener('change', () => { const v = Number(marginIn.value); if (v >= 0 && v <= 0.2) margin = v; });
   const rot = el('input'); rot.type = 'checkbox'; rot.checked = rotate; rot.addEventListener('change', () => { rotate = !!rot.checked; });
   const densityOut = el('span', '');
   const densityIn = el('input'); densityIn.type = 'number'; densityIn.step = '1'; densityIn.min = '1'; densityIn.value = '256';
   // AUDIT POI M9: a pack that cannot fit moves nothing and is no step (poi/uv/uvMesh.js packIslands) - and says so
-  pack.append(btn(t('poi.uv.pack', 'Pack'), () => { if (!ed.pack({ margin, rotate })) say(t('poi.uv.packNoRoom', 'The islands do not fit in the square at that margin - nothing was moved. Try a smaller margin.')); }), marginIn, el('label', '', t('poi.uv.packTurn', 'turn islands')), rot,
+  pack.append(btn(t('poi.uv.pack', 'Pack'), () => { if (!ed.pack({ margin, rotate })) say(t('poi.uv.packNoRoom', 'The islands do not fit in the square at that margin. Nothing was moved. Try a smaller margin.')); }), marginIn, el('label', '', t('poi.uv.packTurn', 'turn islands')), rot,
     el('span', 'dfpoi-sep'), densityOut, densityIn,
-    btn(t('poi.uv.setDensity', 'Set density'), () => { if (picW) ed.setDensity(Number(densityIn.value) || 256, picW, picH); else say(t('poi.uv.noPicture', 'This material has no picture: its density has no pixels to count.')); }));
+    btn(t('poi.uv.setDensity', 'Set density'), () => { if (picW) ed.setDensity(Number(densityIn.value) || 256, picW, picH); else say(t('poi.uv.noPicture', 'This material has no picture, so there are no pixels to set a density by.')); }));
   const acts = el('div', 'dfpoi-uv-row');
   let applying = false;
   const apply = btn(t('poi.uv.apply', 'Apply to the part'), async () => {

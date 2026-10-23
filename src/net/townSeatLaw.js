@@ -393,7 +393,7 @@ export const SEAT_PLEDGE_WORDS = Object.freeze({
 /** Tribute's line for the guildmaster: its room in silver. BOARD-UI: in plain words. */
 export const seatTributeLine = (room) => (room > 0
   ? `Tribute: up to ${room.toLocaleString('en-US')} silver more this week, 1 influence per ${TRIBUTE_MARKS_PER_INFLUENCE} silver (the silver is spent).`
-  : 'Tribute: no room left this week - it is at most a fifth of your guild\'s influence here.');
+  : 'Tribute: no room left this week. It may be no more than a fifth of your guild\'s influence here.');
 
 // ═══ SEAT1c: THE TURNING (SEAT0 5.2, Appendix B) ════════════════════
 // The week settles the first time anything asks about any seat after its boundary - never a job that runs - in one
@@ -701,7 +701,7 @@ export const seatHolderLine = (holder) => (holder
 /** This week's battle at a seat, in words - a Contested seat's Tourney, or a Right of Siege - or null. */
 export function seatBattleLine(battle) {
   if (!battle) return null;
-  if (battle.kind === 'revolt') return `The town rises against ${guildWords(battle.against)} this week - a Rebel Captain holds the palace door.`;   // SEAT2b part two (c)
+  if (battle.kind === 'revolt') return `The town rises against ${guildWords(battle.against)} this week. A Rebel Captain holds the palace door.`;   // SEAT2b part two (c)
   if (battle.kind === 'tourney') return `${GuildWords(battle.guild)} and ${guildWords(battle.against)} meet in a Tourney for the Charter this week.`;
   return `${GuildWords(battle.guild)} has won a Right of Siege against ${guildWords(battle.against)} this week.`;
 }
@@ -730,7 +730,7 @@ export const SEAT_RELINQUISH_WORDS = Object.freeze({ arm: 'Give up the Charter',
 /** The claim line under the standings: the threshold an unheld seat's claimant must pass, or the holder's defence. */
 export const seatClaimLine = (seat, defence = null) => (defence == null
   ? `To claim it at the Turning: ${CLAIM_THRESHOLD[seat.tier].toLocaleString('en-US')} influence, and ${CLAIM_FEE[seat.tier].toLocaleString('en-US')} silver from the guild's treasury.`
-  : `To win a Right of Siege: more than the holder's defence of ${defence.toLocaleString('en-US')}, and at least ${CLAIM_THRESHOLD[seat.tier].toLocaleString('en-US')} influence.`);
+  : `To win a Right of Siege: more than the holder's defense of ${defence.toLocaleString('en-US')}, and at least ${CLAIM_THRESHOLD[seat.tier].toLocaleString('en-US')} influence.`);
 
 // ─── SEAT1c: THE TITLES AND GLYPHS A CHARTER GIVES (SEAT0 7.4) ─────
 // Derived, as every title is: held while the Charter is, gone from the next token when it is not. The token carries a
@@ -925,8 +925,8 @@ export const seatHallOf = (seat, guildId) => !!seat && !!guildId && seat.holder?
 /** The Charter Room's words. */
 export const SEAT_HALL_TEXT = Object.freeze({
   where: 'The Charter Room',
-  clear: 'Too near someone of the court - keep two metres from every person and every quest mark.',
-  room: 'The Charter Room is the palace\'s largest room - set the piece down there.',
+  clear: 'Too close to someone of the court. Keep two meters from every person and every quest mark.',
+  room: 'The Charter Room is the palace\'s largest room. Set the piece down there.',
 });
 
 /**
@@ -1243,15 +1243,15 @@ export function siegeAftermath(kind, result, raised, { forfeitPaid = false, thro
 export const SIEGE_WHY = Object.freeze({
   'pass-early': 'The field opens ten minutes before the battle.',
   'pass-late': 'The battle\'s window has closed.',
-  'field-bad': 'Your game could not work out this town\'s field.',
-  'field-unsettled': 'Waiting for the other side\'s scouts to agree on the field - try again in a moment.',
-  'honours-character': 'Honours go to the character who signed for this battle - play them to claim it.',   // AUDIT SEATS-3 A3
-  'honours-twice': 'Your Honours from this battle are claimed already.',
+  'field-bad': 'Your game could not load this town\'s battlefield.',
+  'field-unsettled': 'Waiting for the other side\'s scouts to agree on the field. Try again in a moment.',
+  'honours-character': 'Honors go to the character who signed for this battle. Play that character to claim them.',   // AUDIT SEATS-3 A3
+  'honours-twice': 'Your Honors from this battle are claimed already.',
   // AUDIT-SEATS S3 (17: a void siege): a receipt that reached the service after its week's Turning, which voided the battle;
   // VOID (18): or after the Moderators voided it (`/siege void`)
-  'battle-void': 'That battle is void - at its Turning, or by the Moderators - and its result does not count.',   // VOID: a moderator's too
+  'battle-void': 'That battle is void, at its Turning or by the Moderators, and its result does not count.',   // VOID: a moderator's too
   // AUDIT 529 V5: a moderator's `/siege void` that reached the service after the battle's week was reckoned
-  'battle-settled': 'That battle\'s week is settled - its Turning has reckoned it, and it can no longer be voided.',
+  'battle-settled': 'That battle\'s week is settled and can no longer be voided.',
   // AUDIT-SEATS S10 (8.1: "changing either ... is refused in a siege week")
   'heraldry-siege': 'Your guild fights a battle for a seat this week. Its heraldry may change after the Turning.',
 });
@@ -1317,7 +1317,7 @@ export const ROYAL_LADDER_ROWS = 10;
 export const ROYAL_WHY = Object.freeze({
   'royal-none': 'No Royal Tourney is proclaimed here this week.',
   'royal-over': 'That week\'s Royal Tourney has its champion already.',
-  'ring-unsettled': 'Waiting for another contender\'s scouts to agree on the ring - try again in a moment.',
+  'ring-unsettled': 'Waiting for another contender\'s scouts to agree on the ring. Try again in a moment.',
 });
 /**
  * THE RING SETTLED - DECIDED (CROWN1 part two): a Royal Tourney has no sides, so where a siege's field waits on an

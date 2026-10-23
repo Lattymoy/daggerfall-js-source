@@ -15,6 +15,7 @@ import { requestFittedPicture, requestFittedIcon, _fittedKeys, FIT_CACHE_MAX, FI
 import { setDfmodSources, clearDfmodSources } from '../../src/systems/dfmodTextures.js';
 import { mountEnhancedInventory, itemLine } from '../../src/ui/enhanced/enhancedInventory.js';
 import { fakeDom, withDom } from '../invdrag.mjs';
+import { makeCanvas, FakeImage, settle, canvases } from '../virtFakes.mjs';   // TRADE-VIRT: the picture fakes, the trade windows' pins' too
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { inventoryItemImage } from '../../src/systems/item/itemTemplates.js';
 import { textureKey, setTextureReplacements, clearTextureReplacements, preloadTextureRecord } from '../../src/systems/textureReplacement.js';
@@ -329,31 +330,6 @@ test('VIRT cache: a fitted picture asked for again goes to the back of the line 
   assert.ok(FIT_CACHE_MAX >= 2000, 'a long store\'s pictures, at two boxes, fit');
 });
 
-/** A canvas that carries a picture's opacity and says its size in its data URL - `pad()` characters longer, for a
- *  picture's weight; an Image that reads the size back. Enough for requestIcon's whole chain and the fitted door's. */
-const makeCanvas = (pad = () => 0) => {
-  const c = { width: 0, height: 0, alpha: null };
-  const ctx = {
-    imageSmoothingEnabled: true, imageSmoothingQuality: 'low',
-    createImageData: (w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }),
-    putImageData(img) { c.alpha = (x, y) => img.data[(y * img.width + x) * 4 + 3]; },
-    getImageData(x0, y0, w, h) {
-      const data = new Uint8ClampedArray(w * h * 4);
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) data[(y * w + x) * 4 + 3] = c.alpha?.(x0 + x, y0 + y) ?? 0;
-      return { data };
-    },
-    drawImage(from) { if (from.alpha) c.alpha = from.alpha; },
-  };
-  c.getContext = () => ctx;
-  c.toDataURL = () => `data:image/png;src-${c.width}x${c.height}${'x'.repeat(pad())}`;
-  return c;
-};
-class FakeImage {
-  set src(u) { this.u = u; const m = /src-(\d+)x(\d+)/.exec(u); this.naturalWidth = Number(m?.[1] ?? 0); this.naturalHeight = Number(m?.[2] ?? 0); this.alpha = () => 255; }
-  get src() { return this.u; }
-  decode() { return Promise.resolve(); }
-}
-const settle = async () => { for (let i = 0; i < 30; i++) await new Promise((r) => setTimeout(r, 0)); };
 /** The fitted door's whole chain over the fakes above, for the length of `fn`. */
 async function withPictures(fn, { pad = 0, Image = FakeImage } = {}) {
   const saved = { doc: globalThis.document, img: globalThis.Image };
@@ -506,11 +482,6 @@ test('VIRT cache: a picture still being fitted when the attached mods change is 
 // ── A PICTURE LANDS INTO ITS TILE ────────────────────────────────
 
 /** The fakes above, in a fake document: its canvases ours, its other nodes its own. */
-function canvases(dom) {
-  const mk0 = dom.doc.createElement;
-  dom.doc.createElement = (t) => (t === 'canvas' ? makeCanvas() : mk0(t));
-  return FakeImage;
-}
 
 test('VIRT tiles: a cold picture landing goes into the tile that waited on it - the same row, its wear bar kept, exactly the fitted door\'s picture - and the pack is not repainted; a picture landing alone leaves the others waiting, each to take its own as it lands; pictures that land together are one frame\'s pass (mutants: a landing repaints the pack; the tile left on its initials; the wear bar lost; the still-waiting tiles thrown away; a frame a landing)', async () => {
   _resetForTests();

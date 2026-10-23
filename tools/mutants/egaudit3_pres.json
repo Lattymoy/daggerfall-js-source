@@ -22,8 +22,8 @@
   {
     "name": "EGA3P-completes-undrawn",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "      if (c.completes) { const k",
-    "new": "      if (false) { const k",
+    "old": "      if (c.completes) b.append(",
+    "new": "      if (false) b.append(",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -265,8 +265,8 @@
   {
     "name": "EGA3P-shelf-thirty",
     "file": "src/scenes/eliteGates/egSpan.js",
-    "old": "E.once ? 'Work it' : 'Work it - once in 30 seconds'",
-    "new": "'Work it - once in 30 seconds'",
+    "old": "E.once ? 'Work it' : 'Work it once every 30 seconds'",
+    "new": "'Work it once every 30 seconds'",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],

@@ -161,5 +161,100 @@
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-DEX-E1-rri-wears-the-sidearm",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "  equipsSecondary: false,",
+    "new": "  equipsSecondary: true,",
+    "why": "RRI's own arm puts its second weapon on - AddOrEquipWornItem with no `equip` (:573/:626) carries it",
+    "tests": [
+      "test/systems/rri2_realism.test.js",
+      "test/systems/enemyExpansion/dex6_equipment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E2-nothing-comes-off",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "      for (const s of wearLeavers(table, item, slot)) slots[s] = null;\n",
+    "new": "",
+    "why": "EquipItem takes nothing off - the Barbarian swings its Claymore beside the Buckler that took it off (ItemEquipTable.cs:125-132)",
+    "tests": [
+      "test/systems/rri2_realism.test.js",
+      "test/systems/enemyExpansion/dex6_equipment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E2-everything-put-on",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "    const slot = equip ? getEquipSlot(table, item) : EQUIP_SLOTS.None;",
+    "new": "    const slot = getEquipSlot(table, item);",
+    "why": "every AddItem an EquipItem too - the carried sidearms worn",
+    "tests": [
+      "test/systems/rri2_realism.test.js",
+      "test/systems/enemyExpansion/dex6_equipment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E2-left-hand-unread",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "leftHand: slots[EQUIP_SLOTS.LeftHand]",
+    "new": "leftHand: null",
+    "why": "the answer's left hand empty whatever the table holds",
+    "tests": [
+      "test/systems/rri2_realism.test.js",
+      "test/systems/enemyExpansion/dex6_equipment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E2-off-stays-worn",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "  const worn = items.filter((it) => slots.includes(it));",
+    "new": "  const worn = items.filter((it) => slots.includes(it) || it === items[0]);",
+    "why": "the main weapon a shield took off stays worn - equipEnemy would slot it again",
+    "tests": [
+      "test/systems/rri2_realism.test.js",
+      "test/systems/enemyExpansion/dex6_equipment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E2-bare-hand-poisoned",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (entity.weapon && !eq.poisonRolled) {",
+    "new": "  if (!eq.poisonRolled) {",
+    "why": "a foe with an empty right hand rolls the poison - DFU's `mainWeapon != null` (RoleplayRealismItemsMod.cs:668) draws none",
+    "tests": [
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E3-poison-after-orcish",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "    const poison = eq.rightHand ? rollEnemyWeaponPoison(entity.mobileType, playerLevel, rolls) : null;\n    if (poison != null) eq.rightHand.poisonType = poison;\n    convertOrcish(entity, eq, rolls);\n",
+    "new": "    convertOrcish(entity, eq, rolls);\n    const poison = eq.rightHand ? rollEnemyWeaponPoison(entity.mobileType, playerLevel, rolls) : null;\n    if (poison != null) eq.rightHand.poisonType = poison;\n",
+    "why": "ConvertOrcish's Dice100(80) drawn before ItemHelper's poison - the finding's order (ItemHelper.cs:1460-1474 runs inside the arm, :528-529)",
+    "tests": [
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E3-poison-rolled-twice",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "enemyArmorValues(entity, eq.armorPieces), poisonRolled: true };",
+    "new": "enemyArmorValues(entity, eq.armorPieces) };",
+    "why": "the monster arm's answer does not say it rolled the poison - equipEnemy rolls it again",
+    "tests": [
+      "test/systems/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DEX-E3-spawn-rolls-again",
+    "file": "src/scenes/hostCombat.js",
+    "old": "  if (entity.weapon && !eq.poisonRolled) {",
+    "new": "  if (entity.weapon) {",
+    "why": "the spawn rolls the poison over an arm that rolled it - two Dice100s for one",
+    "tests": [
+      "test/systems/rri2_realism.test.js"
+    ]
   }
 ]

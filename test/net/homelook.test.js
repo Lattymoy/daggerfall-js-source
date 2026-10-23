@@ -152,7 +152,7 @@ test('HOME-LOOK the painter, in the yard\'s panel: "Exterior" lists the four par
   for (let i = 0; i < 6; i++) { r2.frame({ overlayUp: true }); await settle(); }
   const root = () => r2.doc.body.children.find((c) => c.className === 'dfdecor');
   const chips = () => all(root(), 'dfdecor-chip');
-  assert.deepEqual(chips().slice(0, 3).map((c) => c.textContent), ['Catalogue', 'In this yard (0)', 'Exterior'], 'a yard\'s tabs');
+  assert.deepEqual(chips().slice(0, 3).map((c) => c.textContent), ['Catalog', 'In this yard (0)', 'Exterior'], 'a yard\'s tabs');   // PIN MOVED (VOICE2): American spelling (Voice.md rule 8)
   chips().find((c) => c.textContent === 'Exterior').fire('click');
   r2.frame({ overlayUp: true });
   const rows = all(root(), 'dfdecor-row');

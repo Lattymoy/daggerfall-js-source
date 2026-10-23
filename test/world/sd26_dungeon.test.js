@@ -345,7 +345,7 @@ test('SD26 A HOLLOW STANDS ON DRY GROUND (AUDIT SD IV F37): every spawned dungeo
   assert.equal(findSdSite({ s: 3, r: 0 }, scan2, [city], () => false), null, 'none dry: no site');
   // the world host hands the spawns' own test through
   assert.match(W, /\n {4}ground: \(px, py\) => _spawnGround\(px, py\),/);
-  assert.match(read('src/scenes/superDungeon/sdHost.js'), /findSdSite\(r, sc, cities\(r\.r\), ground\)/);
+  assert.match(read('src/scenes/superDungeon/sdHost.js'), /findSdSite\(at, sc, near, ground\)/);   // PIN MOVED (SD-SEA): the record's region, or the great cities for one with no town (fb1020b_sdsea.test.js)
 });
 
 // ── F38: the end out of the water ─────────────────────────────────────

@@ -205,6 +205,11 @@ test('SCALE4b C: the market\'s read, the Work tab\'s and a guild\'s write nothin
   const market = () => s.call('/v1/market/read', { character: a.character, region: DF, view: 'materials', hubs: HUBS }, a.secret);
   const work = () => s.call('/v1/writs/list', { character: a.character, region: DF }, a.secret);
   const mine = () => s.call('/v1/guilds/mine', { character: a.character }, a.secret);
+  // PIN MOVED (CRAFT-WRITS, Professions-Arc.md section 49): the Work tab's first read of a UTC day writes the character's
+  // crafting writs down - due, as the Court's posting is on a region's first read - and the read after writes nothing
+  w.asked.length = 0;
+  assert.equal((await work()).status, 200);
+  assert.deepEqual(w.writes().map((sql) => sql.split('(')[0].trim()), ['INSERT OR IGNORE INTO craft_writs', 'INSERT OR IGNORE INTO craft_writs', 'INSERT OR IGNORE INTO craft_writs'], 'the day\'s three, once');
   for (const [what, read] of [['market', market], ['work', work], ['guild', mine]]) {
     w.asked.length = 0;
     const r = await read();

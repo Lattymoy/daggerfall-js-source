@@ -83,7 +83,7 @@ export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = 
       if (verb === 'summon') return runtime.summonTransport();
       if (verb === 'away') return runtime.sendTransportAway();
       // AUDIT HOLDINGS C5: a horse never named answers '' - his own, not none
-      if (verb === 'rename') { const n = runtime.renameHorse(arg); return n == null ? { ok: false, text: 'You do not own a horse.' } : n ? { ok: true, text: `Your horse is called ${n}.` } : { ok: false, text: 'Your horse keeps no name - give him one.' }; }
+      if (verb === 'rename') { const n = runtime.renameHorse(arg); return n == null ? { ok: false, text: 'You do not own a horse.' } : n ? { ok: true, text: `Your horse is called ${n}.` } : { ok: false, text: 'Your horse has no name. Give him one.' }; }
       return { ok: false, text: 'Not here.' };
     },
   };
@@ -199,13 +199,13 @@ export const hungerTone = (h, care) => (care?.hungerCosts === false && h.hungerK
  *  each tier's own words - Hard's what hunger takes, Boons' only the gallop a starving horse has not earned. */
 const HUNGER_LINE = Object.freeze({
   fed: 'Fed.',
-  hungry: 'Hungry - every stat ten lower, and its breath slower back.',
-  starving: 'Starving - every stat twenty-five lower, no gallop, and your bond fading. Feed it.',
+  hungry: 'Hungry: every attribute 10 lower, and slower to catch its breath.',
+  starving: 'Starving: every attribute 25 lower, no gallop, and your bond is fading. Feed it.',
 });
 const HUNGER_LINE_BOONS = Object.freeze({   // HORSE-TIERS: in the player's language (L10N4's ratchet), read as it is shown
   fed: 'Fed.',
-  get hungry() { return t('holdings.horse.boons.hungry', 'Hungry - it costs nothing yet.'); },
-  get starving() { return t('holdings.horse.boons.starving', 'Starving - no gallop until it eats. Feed it.'); },
+  get hungry() { return t('holdings.horse.boons.hungry', 'Hungry, but no penalty yet.'); },
+  get starving() { return t('holdings.horse.boons.starving', 'Starving. It will not gallop until it eats. Feed it.'); },
 });
 /** STEED-UI: the bond's row - the kit's bar of the way from its word to the next, and the points still to go (whole at
  *  Kindred). */
@@ -215,12 +215,12 @@ function bondMeter(el, meter, h) {
   const span = h.next ? h.next.at - (h.tierAt ?? 0) : 1, got = h.next ? h.bond - (h.tierAt ?? 0) : 1;
   r.append(typeof meter === 'function' ? meter(Math.max(0, got), span, 'thin') : el('span', null, ''));
   r.append(el('span', 'hld-mn', h.next ? `${h.next.at - Math.floor(h.bond)} to ${h.next.name}` : 'Whole'));
-  r.title = h.next ? `Fed by your hand, ${h.tier} grows to ${h.next.name} at ${h.next.at}` : 'Kindred - the bond is whole';
+  r.title = h.next ? `Fed by your hand, ${h.tier} grows to ${h.next.name} at ${h.next.at}` : 'Kindred: the bond is complete';
   return r;
 }
 /** STEED-UI: hours of food as a card says them. */
 const foodHours = (hours) => (hours >= 2 ? `${Math.floor(hours)} hours` : hours * 60 >= 2 ? `${Math.round(hours * 60)} minutes` : 'a minute');
-export const hungerLine = (h, care = null) => (h.hungerKey === 'fed' && h.fedHours > 0 ? `Fed - food in it for ${foodHours(h.fedHours)}.` : (care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');
+export const hungerLine = (h, care = null) => (h.hungerKey === 'fed' && h.fedHours > 0 ? `Fed, with food enough for ${foodHours(h.fedHours)}.` : (care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');
 /** STEED1: the choice to ride horse `h` (`chooseRiddenHorse` - made the pack's first). FIELD BUGS 2026-10-16b
  *  HORSE-CARE-OFF: on every other horse's card in every tier - with its care, or (Off, any skin but the enhanced one)
  *  in a row of its own. */
@@ -241,15 +241,15 @@ function steedLines(el, meter, h, care, act) {
   out.push(bondMeter(el, meter, h));
   if (h.ridden) {
     out.push(holdingMeter(el, meter, 'Breath', h.breath * 100, 100, h.breath < 0.25 || h.winded ? 'blood' : 'verdigris'));
-    if (h.winded) out.push(el('span', 'hld-sub hld-why', 'Winded - it will not gallop until its breath is back.'));
+    if (h.winded) out.push(el('span', 'hld-sub hld-why', 'Winded. It will not gallop until it has caught its breath.'));
   }
   const row = el('div', 'hld-acts');
   const feed = el('button', h.full ? 'act' : 'act primary', `Feed oats (${care.oats})`);
-  feed.title = h.full ? 'It is not hungry' : 'A sack of oats - a day’s food';
+  feed.title = h.full ? 'It is not hungry' : 'A sack of oats, a day’s food';
   if (!care.oats || h.full || !care.near) feed.setAttribute('aria-disabled', 'true');
   feed.onclick = () => act('feed', h.i);
   const treat = el('button', 'act', `Give an apple (${care.apples})`);
-  treat.title = 'A treat it loves - a little food, and the bond grows faster';
+  treat.title = 'A treat it loves: a little food, and the bond grows faster';
   if (!care.apples || h.full || !care.near) treat.setAttribute('aria-disabled', 'true');
   treat.onclick = () => act('treat', h.i);
   row.append(feed, treat);
@@ -271,20 +271,20 @@ export const wagonMeterTone = (w) => (w.wearSlows === false && w.stateKey === 'f
 /** WAGON-TIERS: Boons' words - a worn-down wagon rolls at its pace (the yard's price follows, mendLine), and a Sound one
  *  rolls faster for it. */
 const WAGON_ADVICE_BOONS = Object.freeze({   // in the player's language (L10N4's ratchet), read as it is shown
-  get rickety() { return t('holdings.wagon.boons.rickety', 'Rickety - it still rolls at its pace.'); },
-  get failing() { return t('holdings.wagon.boons.failing', 'Failing - it still rolls at its pace.'); },
-  get sound() { return t('holdings.wagon.boons.sound', 'Sound - it rolls faster for it.'); },   // Mac: "Sound wagon rolls faster"
+  get rickety() { return t('holdings.wagon.boons.rickety', 'Rickety, but it still rolls at full pace.'); },
+  get failing() { return t('holdings.wagon.boons.failing', 'Failing, but it still rolls at full pace.'); },
+  get sound() { return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.'); },   // Mac: "Sound wagon rolls faster"
 });
 /** STEED-UI: what a Wagon Yard asks to make it whole - at the yard, and with its wright going out to it. */
-export const mendLine = (w) => (w.mend > 0 ? `A Wagon Yard makes it whole for ${w.mend} gold - ${w.mendAway} if its wright must go out to it.` : 'A town’s Wagon Yard mends it.');
+export const mendLine = (w) => (w.mend > 0 ? `A Wagon Yard repairs it fully for ${w.mend} gold, or ${w.mendAway} if its wright must travel to it.` : 'A town’s Wagon Yard mends it.');
 /** WAGONS4: the wagon's soundness on its card - its condition, its state's word, and a kit's act. STEED-UI: its bar in
  *  its state's tone, and the yard's price. */
 function wagonLines(el, meter, w, care, act) {
   const out = [];
   out.push(holdingMeter(el, meter, 'Repair', w.share * 100, 100, wagonMeterTone(w)));
   const advice = w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey) ? WAGON_ADVICE_BOONS[w.stateKey]   // WAGON-TIERS: Boons says no slowness, and the boon
-    : w.stateKey === 'failing' ? 'Failing - its team pulls it at its slowest.'
-    : w.stateKey === 'rickety' ? 'Rickety - its team pulls it slower.' : w.stateKey === 'worn' ? 'Worn - a Wagon Yard can make it whole.' : 'Sound.';
+    : w.stateKey === 'failing' ? 'Failing. Its team pulls it at its slowest.'
+    : w.stateKey === 'rickety' ? 'Rickety. Its team pulls it more slowly.' : w.stateKey === 'worn' ? 'Worn. A Wagon Yard can repair it.' : 'Sound.';
   out.push(el('span', `hld-sub${w.tone ? ' hld-why' : ''}`, `${advice} ${mendLine(w)}`));
   if (w.kitWorks) {
     const row = el('div', 'hld-acts');
@@ -323,7 +323,7 @@ export function stableWords(m) {
   }
   const riding = v.transport === TRANSPORT.Horse, driving = v.transport === TRANSPORT.Cart;
   const teamFollowing = v.wagonMode === WAGON_MODE.FollowingPlayer && v.horseMode === HORSE_MODE.HitchedToWagon;
-  const beside = { state: WITH_YOU, tone: '', line: 'At your side - left outside the next door you go through.' };   // WAGON-STABLED
+  const beside = { state: WITH_YOU, tone: '', line: 'At your side. It waits outside the next door you go through.' };   // WAGON-STABLED
   let horse = null, wagon = null;
   if (v.hasHorse) {
     if (riding) horse = { state: 'Riding', tone: '', line: 'You are in the saddle.' };
@@ -334,14 +334,14 @@ export function stableWords(m) {
     // WAGON-STABLED: Stabled is sent away (the runtime's word); the mod's WithPlayer never sent is beside the player, and
     // the next door stands it outside
     else if (!v.horseStabled) horse = beside;
-    else horse = { state: 'Stabled', tone: 'is-away', line: 'Out of the world - mount it from the Transport window, or summon it to your side.' };
+    else horse = { state: 'Stabled', tone: 'is-away', line: 'Stabled. Mount it from the Transport window, or summon it to your side.' };
   }
   if (v.hasCart) {
     if (driving) wagon = { state: 'Driving', tone: '', line: 'You are on the box.' };
     else if (teamFollowing) wagon = { state: 'Following', tone: '', line: 'Following you behind your horse.' };
     else if (v.wagonMode === WAGON_MODE.Deployed) wagon = { state: 'Parked', tone: 'is-away', line: `Parked ${farWords(v.wagonAt)}.` };
     else if (!v.wagonStabled) wagon = beside;
-    else wagon = { state: 'Stabled', tone: 'is-away', line: v.hasHorse ? 'Out of the world - drive it from the Transport window, or summon it.' : 'Out of the world - you need a horse to pull it.' };
+    else wagon = { state: 'Stabled', tone: 'is-away', line: v.hasHorse ? 'Stored. Drive it from the Transport window, or summon it.' : 'Stored. You need a horse to pull it.' };
   }
   return { horse, wagon };
 }
@@ -432,7 +432,7 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   const words = stableWords(m);
   detail.append(divider('Stable'));
   if (!words.horse && !words.wagon) {
-    detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry what your back cannot.'));
+    detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.'));
     return;
   }
   const v = m.hcc ? m.view : null;
@@ -499,7 +499,7 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
     acts.append(sum);
     if (v.out) {
       const away = el('button', 'act', 'Send away');
-      away.title = 'Back to the stable, out of the world - mounted from the Transport window, or summoned again';
+      away.title = 'Back to the stable. Mount it from the Transport window, or summon it again';
       away.onclick = () => act('away');
       acts.append(away);
     }

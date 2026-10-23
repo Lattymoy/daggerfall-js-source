@@ -116,7 +116,7 @@ export function saddleMeters(s) {
     // the bond: its word, and the way to the next (whole at Kindred)
     const span = h.next ? h.next.at - (h.tierAt ?? 0) : 0;
     const share = h.next ? (span > 0 ? (h.bond - (h.tierAt ?? 0)) / span : 0) : 1;
-    out.push({ key: 'bond', label: 'Bond', share: Math.max(0, Math.min(1, share)), text: h.tier, tone: 'bond', title: h.next ? `${Math.floor(h.bond)} of ${h.next.at} to ${h.next.name}` : `${h.tier} - the bond is whole` });
+    out.push({ key: 'bond', label: 'Bond', share: Math.max(0, Math.min(1, share)), text: h.tier, tone: 'bond', title: h.next ? `${Math.floor(h.bond)} of ${h.next.at} to ${h.next.name}` : `${h.tier}: the bond is complete` });
   }
   const w = s.wagon;
   if (w) out.push({ key: 'wagon', label: w.name, share: w.share, text: `${w.state} ${pct(w.share)}`, tone: wagonTone(w) });
@@ -141,12 +141,12 @@ export function saddleButtons(s) {
   const out = [];
   const h = s.horse;
   if (h) {
-    const why = !s.near ? 'Your horse is not here' : h.full ? 'Full - it will not eat yet' : '';
-    out.push({ act: 'feed', label: `Feed oats (${s.oats | 0})`, disabled: !(s.oats > 0) || !!why, why: why || (s.oats > 0 ? '' : 'No oats - a Stable sells them') });
+    const why = !s.near ? 'Your horse is not here' : h.full ? 'Full. It will not eat yet' : '';
+    out.push({ act: 'feed', label: `Feed oats (${s.oats | 0})`, disabled: !(s.oats > 0) || !!why, why: why || (s.oats > 0 ? '' : 'No oats. Stables sell them') });
     if (s.apples > 0) out.push({ act: 'treat', label: `Apple (${s.apples | 0})`, disabled: !!why, why });
   }
   if (s.wagon && s.wagon.kitWorks) {
-    const why = !(s.kits > 0) ? 'No repair kit - a Wagon Yard sells them' : !s.wagonNear ? 'The wagon is out of reach' : '';
+    const why = !(s.kits > 0) ? 'No repair kit. Wagon Yards sell them' : !s.wagonNear ? 'The wagon is out of reach' : '';
     out.push({ act: 'kit', label: `Repair kit (${s.kits | 0})`, disabled: !!why, why });
   }
   if (s.cargo != null) out.push({ act: 'cargo', label: 'Cargo', disabled: !s.cargo, why: s.cargo ? '' : 'The wagon is out of reach' });
@@ -163,9 +163,9 @@ export function saddleButtons(s) {
  */
 export function saddleHint(s, state = {}) {
   const h = s.horse, w = s.wagon;
-  if (h?.winded) return 'Winded - ease off and let it breathe';
-  if (h?.hungerKey === 'starving') return s.mode === 'Horse' ? 'Starving - it will not gallop until it eats' : 'Starving - feed your horse';
-  if (failingSlows(w)) return `The ${w.name.toLowerCase()} is failing - mend it to get its pace back`;   // WAGON-TIERS: on Boons it has its pace
+  if (h?.winded) return 'Winded. Ease off and let it breathe';
+  if (h?.hungerKey === 'starving') return s.mode === 'Horse' ? 'Starving. It will not gallop until it eats' : 'Starving. Feed your horse';
+  if (failingSlows(w)) return `The ${w.name.toLowerCase()} is failing. Mend it to restore its pace`;   // WAGON-TIERS: on Boons it has its pace
   if (state.touch) return '';
   const parts = [];
   const run = state.keyOf?.(SADDLE_ACTIONS.run) ?? '';
@@ -202,14 +202,14 @@ export function saddleAlert(s) {
 export function saddleNote(s) {
   const h = s?.horse, w = s?.wagon;
   switch (saddleAlert(s)) {
-    case 'breath': return h.winded ? t('saddle.note.winded', 'Winded - ease off and let it breathe') : t('saddle.note.breath', 'Short of breath - ease off');
+    case 'breath': return h.winded ? t('saddle.note.winded', 'Winded. Ease off and let it breathe') : t('saddle.note.breath', 'Short of breath. Ease off');
     case 'hunger': return h.hungerKey === 'starving'
-      ? (s.mode === 'Horse' ? t('saddle.note.starvingGallop', 'Starving - it will not gallop until it eats') : t('saddle.note.starving', 'Starving - feed your horse'))
-      : t('saddle.note.hungry', 'Hungry - feed it oats');
+      ? (s.mode === 'Horse' ? t('saddle.note.starvingGallop', 'Starving. It will not gallop until it eats') : t('saddle.note.starving', 'Starving. Feed your horse'))
+      : t('saddle.note.hungry', 'Hungry. Feed it oats');
     case 'wagon': return w.stateKey === 'failing'
-      ? t('saddle.note.failing', 'The {wagon} is failing - mend it to get its pace back', { wagon: w.name.toLowerCase() })
-      : t('saddle.note.rickety', 'The {wagon} is rickety - a kit or a Wagon Yard mends it', { wagon: w.name.toLowerCase() });
-    case 'load': return t('saddle.note.load', 'Overloaded - your team pulls it slower');
+      ? t('saddle.note.failing', 'The {wagon} is failing. Mend it to restore its pace', { wagon: w.name.toLowerCase() })
+      : t('saddle.note.rickety', 'The {wagon} is rickety. A repair kit or a Wagon Yard will mend it', { wagon: w.name.toLowerCase() });
+    case 'load': return t('saddle.note.load', 'Overloaded. Your team pulls it more slowly');
     default: return '';
   }
 }

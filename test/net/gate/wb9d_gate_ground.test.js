@@ -161,7 +161,7 @@ test('WB9d the ground drawn in its own grain: each court\'s pools on their own q
   assert.match(TELEGRAPH_FS, /if \(uPool == 1\) \{/);
   assert.match(TELEGRAPH_FS, /float seethe = 0\.85 \+ 0\.15 \* sin\(uSince \* 6\.283185307179586 \* 0\.6\);/, 'it seethes on its own clock (WB13a: slow - terrain, never a blow to come)');
   const gc = read('src/scenes/gate/gateCourt.js');
-  assert.match(gc, /drawGateGround\(groundViewModel\(\{ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril \}\), \{ hidden: hudHidden\(\) \}\);/);   // WB13a: and a blow to come on my feet
+  assert.match(gc, /drawGateGround\(groundViewModel\(\{ inside: inFire, ground: groundName, color: groundColor, biteAt, biteColor, now: t, peril: order \?\? onMe, blindAt: arsenal\.blindAt\(\) \}\), \{ hidden: hudHidden\(\) \}\);/);   // WB13a: and a blow to come on my feet; PIN MOVED (WB14d): his or his Flame's (onMe)
   assert.match(gc, /drawGateGround\(null\);   \/\/ WB9d/, 'put away with the court');
   assert.match(read('src/scenes/world.js'), /drawGateBanner\(null\); drawGateMarksCard\(null\);( drawGateDamageChart\(null\);)? drawGateGround\(null\);/, 'and with a held frame');   // GATE-UX: the damage chart between them
   assert.match(read('src/scenes/dungeonContext.js'), /if \(!el\) flashPlayerDamage\(dmg\);/, 'DFU\'s red flash still a blow\'s alone');

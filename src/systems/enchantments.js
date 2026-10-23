@@ -46,7 +46,7 @@
 // spawner), isResting(), allowMagicRepairs (a DFU setting, default
 // false), say(msg).
 
-import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';
 import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
 import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
@@ -66,6 +66,7 @@ import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keep
 import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
 import { WEAPONS } from '../characters/weapons.js';   // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
+import { creditOwnMend } from './item/foundMark.js';   // MEND-THIRD: the ring's mend credited past a found piece's mark
 export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
@@ -350,7 +351,7 @@ function enchantLowerCondition(item, amount, entity, ctx, collection = null) {
 // (128+) are Human in DFU's table.
 const AFFINITY_PARAM = Object.freeze({ Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
 export function mobileAffinityMatches(mobileType, paramType) {
-  const affinity = mobileType >= 128 ? 'Human' : (ENEMY_BASICS[mobileType]?.affinity ?? 'None');
+  const affinity = isClassEnemyId(mobileType) ? 'Human' : (ENEMY_BASICS[mobileType]?.affinity ?? 'None');
   return (paramType === AFFINITY_PARAM.Undead && affinity === 'Undead')
     || (paramType === AFFINITY_PARAM.Daedra && affinity === 'Daedra')
     || (paramType === AFFINITY_PARAM.Humanoid && affinity === 'Human')
@@ -590,7 +591,9 @@ const REGISTRY = new Map([
       const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });
       if (!it) return;
       repoolWeapon(it);
+      const was = it.currentCondition;
       it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));
+      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells
     },
   }],
   /** AbsorbsSpells.cs - Held constant: IsAbsorbingSpells. */
@@ -989,6 +992,9 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
   // payload if the item is still equipped, restamping the clock).
   // ENCHANT-LOAD: the strip is the ITEM's, once, before every row
   // recasts (:2012-2021) - not each row's, which kept only the last.
+  // HELD-CONCEAL: a pin a blow ENDED still counts - DFU keeps the bundle
+  // while its item is worn (:1739-1742) and schedules it all the same, so
+  // a broken Invisibility comes back here (concealment.js).
   if (entity.isPlayer && entity.activeEffects?.length) {
     for (const item of items) {
       if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;

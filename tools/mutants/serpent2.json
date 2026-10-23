@@ -381,8 +381,8 @@
   {
     "name": "SERPENT2-timers-place-before-bells",
     "file": "src/systems/eventTimers.js",
-    "old": "`${sName} rises`, s.riseAt, null, 'The harbour bells ring",
-    "new": "`${sName} rises`, s.riseAt, off, 'The harbour bells ring",
+    "old": "`${sName} rises`, s.riseAt, null, 'The harbor bells ring",
+    "new": "`${sName} rises`, s.riseAt, off, 'The harbor bells ring",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'super', 'raid', 'battle', 'seat', 'reset']",
-    "new": "['gate', 'super', 'raid', 'battle', 'seat', 'reset']",
+    "old": "['gate', 'serpent', 'super', 'star', 'raid', 'battle', 'seat', 'reset']",
+    "new": "['gate', 'super', 'star', 'raid', 'battle', 'seat', 'reset']",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ],

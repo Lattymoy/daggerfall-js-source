@@ -38,6 +38,12 @@ export const BUDGET_DEFAULT = Object.freeze({
  *  pieces (Realm-Arc: about 27k at level 10, 33k at 30), with room past the mean - a Regalia piece one time in six. */
 export const SPOILS_GRANT_BASE = 60_000;
 export const SPOILS_GRANT_PER_LEVEL = 2_000;
+/** AUDIT WB14 (WIRE-6): a portent night's receipt pays a piece of Magic or better more for each of its portents
+ *  (src/systems/gate/gateSpoils.js SPOILS_PORTENT_BITS) - the fill grows by a piece's room for each (a Magic piece is
+ *  the dearer half of the mean's; a guess the measure replaces, as the rest). */
+export const SPOILS_GRANT_PIECE = 10_000;
+/** How many pieces a receipt's portents (`p`, its bits - net/gate/gateReceipt.js) pay: one a bit, three at most. */
+export const portentPieces = (/** @type {unknown} */ p) => (Number.isSafeInteger(p) && /** @type {number} */ (p) > 0 ? [1, 2, 4].filter((b) => (/** @type {number} */ (p) & b) !== 0).length : 0);
 export const spoilsGrant = (/** @type {number} */ level) => SPOILS_GRANT_BASE + SPOILS_GRANT_PER_LEVEL * Math.max(1, Math.trunc(Number(level) || 1));
 
 /** A band's shape - whole, positive numbers, rising levels. */
@@ -108,13 +114,23 @@ export function stepBudget({ allowance, played, gain, band, enforce = true }) {
  * account) gains spoilsGrant at the level the realm TRUSTS (verdict.js trustedLevel - never the level its tile claims:
  * AUDIT INT, a level of 1000 written in one save made a win worth two million), once a receipt is RECORDED (a claim
  * answered again grants nothing). A character not yet judged has no bucket to fill; its first judgement starts it full.
- * @param {any} db @param {string} playerId
+ * AUDIT WB14 (WIRE-6): `pieces`, a gate receipt's portents' (portentPieces) - SPOILS_GRANT_PIECE more for each.
+ * @param {any} db @param {string} playerId @param {number} [pieces]
  */
-export async function grantSpoils(db, playerId) {
-  await db.prepare(
-    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1))'
-    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL',
-  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL).run();
+export async function grantSpoils(db, playerId, pieces = 0) {
+  await spoilsGrantStatement(db, playerId, pieces).run();
+}
+/**
+ * THE FILL AS ONE STATEMENT (AUDIT STARFALL B3): a claim whose own batch writes its receipt's row runs it IN that batch,
+ * held to the row by `guard` (an SQL condition of the batch's, its parameters `binds` from ?5 on) - run after the batch,
+ * a failure between the two (a 5xx, an isolate gone) lost the fill for good, the retry answered `claimed`.
+ * @param {any} db @param {string} playerId @param {number} [pieces] @param {string|null} [guard] @param {...unknown} binds
+ */
+export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...binds) {
+  return db.prepare(
+    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'
+    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL' + (guard ? ` AND (${guard})` : ''),
+  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))), ...binds);   // AUDIT WB14 (WIRE-6): and a portent's pieces
 }
 
 /** LW15 (bible/06-Systems/Living-World-II.md "LW15"): THE SERVICE'S OWN FAUCETS - gold it pays that no player paid (a

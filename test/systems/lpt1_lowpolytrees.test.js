@@ -957,7 +957,7 @@ test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s
   // PIN MOVED (AUDIT PRECIP HOST-7): logged wild, and marked by the log's grouping (scenes/pixelBuild.js groupFlats) - the build's and a re-skin's
   assert.match(w, /addFlat\(archive, f\.record, f\.x, f\.y, f\.z, \{ wild: base, tree \}\);/, 'the terrain layout\'s flats logged wild');
   assert.match(w, /if \(log\[j\]\.wild != null\) wild\.add\(`\$\{k\}#\$\{g\.length\}`\);/, '...and marked');
-  assert.match(w, /wild\[i\] = g\.wild\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+const v = lptVariety\(g\.px, g\.py, c\[0\], c\[2\], !wild\[i\]\)\.scale;\n[^\n]*\n\s+scales\[i\] = \(fit \? Math\.min\(v, fit\[i\]\) : v\) \/ LPT_SCALE_MAX;/);   // PIN MOVED (LPT-FIT): the variety read into `v`, the far picture the lesser of it and the tree's fit
+  assert.match(w, /wild\[i\] = g\.wild\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+const v = lptVariety\(g\.px, g\.py, c\[0\], c\[2\], !wild\[i\]\)\.scale;\n[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(fit && !wild\[i\]\) fit\[i\] = Math\.min\(fit\[i\], lptTrunkCap\([^\n]*\n\s+scales\[i\] = \(fit \? Math\.min\(v, fit\[i\]\) : v\) \/ LPT_SCALE_MAX;/);   // PIN MOVED (LPT-FIT): the variety read into `v`, the far picture the lesser of it and the tree's fit; PIN MOVED (FB1020c TRUNK-FIT): that fit the lesser of the crown's and, for a location's tree, the trunk's
   assert.match(x, /buildTreeSet\(0, 0, lptGroups\)/, 'the location host: one set, none of it wild');
   assert.match(x, /lptGroups\.push\(\{ h: lptHandles\.length - 1, centers, wild: null \}\);/);
   assert.match(w, /lowPolyTrees: lptGroups\.length \? \{ px, py, ox: 0, oy: 0, oz: 0, handles: lptHandles, groups: lptGroups, trees: null, centers: null \} : null/);

@@ -64,12 +64,12 @@
 import { QuestMachine, TICKS_PER_SECOND } from '../../systems/quest/machine.js';
 import { clockCounts } from '../../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests, relayOnlineDungeons, relayMovedLayouts, relayBuiltDungeon } from '../../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
-import { t } from '../../systems/textManager.js';   // QUEST-RESET: the restart's words in the player's language (L10N4)
+import { t, getLocalizedFactionName, textRevision } from '../../systems/textManager.js';   // QUEST-RESET: the restart's words in the player's language (L10N4); QL12: a guild's name in it, its quests' titles kept while the text stands
 import { isOnlinePage } from '../../systems/online/onlineLane.js';   // AUDIT DELVE E1: online, every dungeon is whole
 import { isShelved } from '../../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
 import { WA_RAID_QUESTS } from '../../systems/warmAshesShips.js';   // QUEST-SHELF: a raid the world runs is never set aside
 import { QuestListsManager } from '../../systems/quest/questLists.js';
-import { QuestOfferFlow } from '../../systems/quest/offerFlow.js';
+import { QuestOfferFlow, ACTIVE_QUESTOR } from '../../systems/quest/offerFlow.js';   // QUESTOR-SAID: a close that says why
 import { localizedQuestDisplayName } from '../../systems/quest/localizedQuest.js';   // L10N3c: the pickers' localized labels
 import { PlayerNotebook } from '../../systems/notebook.js';
 import { GENDERS } from '../../characters/nameHelper.js';
@@ -85,6 +85,19 @@ import { SITE_TYPES } from '../../systems/quest/place.js';   // QUEST-HOME: a bu
 import { QuestLens } from '../../ui/quest/questLens.js';   // GUIDE1: the modern faces' one read-only picture of this machine
 import { questHerald, heraldOn } from '../../ui/quest/questHerald.js';   // GUIDE3: the news the lens sees, told
 import { questTracker, followOn } from '../../ui/quest/questTracker.js';   // GUIDE4: the quest the HUD follows (GUIDE5: the card's or the marks')
+import { createQuestlines } from '../../systems/questlines/qlLayer.js';   // QL1: the questlines' layer over this machine (bible/06-Systems/Questlines-Arc.md)
+import { questlineActionTemplates } from '../../systems/questlines/qlActions.js';   // QL4: ask, outcome, ql act, ql paid, ql name - registered here, every host's machine
+import { setActSink } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by this bridge's layer
+import { questlineService, serviceReady } from './questlineHost.js';   // QL12: the endgame lines' claims - the account service's door, online alone
+import { TITLE_TEXT } from '../../ui/playerBadge.js';   // QL12: a line's title, in the badge's own words
+import { announceHonour } from '../../ui/lootBanner.js';   // AUDIT QUESTLINES SERVICE-7: a line's title, the house's HONOUR-BANNER
+import { restackWeirKeys } from '../../systems/eliteGates/weirKey.js';   // AUDIT QUESTLINES SERVICE-7: the key's balance, the pack's face at once
+import { questlinesOn } from '../../systems/questlines/qlLaw.js';   // QL12: the lines are the window's only while the questlines are on
+import { ladders as guildLadders } from '../../systems/questlines/qlLadders.js';   // QL12: the guilds' ladders (section 4.4)
+import { activeMemberships } from '../../systems/guild/guilds.js';   // QL12: the player's own book, for the ladders
+import { factionsTable } from '../../systems/quest/tables.js';   // QL12: a guild's name, by its faction
+import { quietText } from '../../ui/quest/questLens.js';   // QL1: a sheet's line read quietly, as the journal's entries are
+import { offerWaitingWords } from '../../ui/questlines/qlJournal.js';   // AUDIT QUESTLINES UI-6: a reward waiting, and the way to it on either skin
 
 // AUDIT 24 (wave 24): SetLayoutData's three overloads and
 // GetPositionHash now live in characters/staticNpc.js, next to the
@@ -95,6 +108,7 @@ import { questTracker, followOn } from '../../ui/quest/questTracker.js';   // GU
 // Genders enum the way C# does. Re-exported so the bridge's callers
 // are unchanged.
 import { positionHash, staticNpcData, layoutNpcData } from '../../characters/staticNpc.js';
+import { festivalQuestEnded } from '../../systems/festival/festivalClient.js';   // WITCH1: a quest done asks a find
 
 export { positionHash, staticNpcData, layoutNpcData };
 
@@ -149,6 +163,31 @@ export function tokensToRows(tokens) {
   if (sawText) rows.push(line);
   return rows;
 }
+
+/** QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): THE QUESTLINES' `ask` AS A BOX CHAIN, one home for every
+ *  host's quest box (THE ONE CONSTRUCTION SEAM - world.js and exterior.js each hand it to their own showQuestBox): the
+ *  question's message, then a pick among the choices' own words. The pick cannot be dismissed without an answer -
+ *  Escape shows the question again - as PromptMulti's box cannot (PromptMulti.cs:87-88, AllowCancel false). The
+ *  answer is the choice's index, given once.
+ *  AUDIT QUESTLINES BRANCH-7: the chain waits BEHIND the boxes already up (`behind` - ui/guildServiceWindows.js
+ *  ServiceFlowWindow.push): pushed in front, newest first, the question came before the words that set it up (A0C41Y18's
+ *  coward's way over the sage's curse). AUDIT QUESTLINES BRANCH-3: a pick the window cannot show (its onCancel told
+ *  'unshown', guildServiceWindows.js PICK_UNSHOWN - no list art yet) settles the chain with null, and the ask asks again later (qlActions.js ASK_AGAIN_TICKS);
+ *  dropped unanswered it held the question up for the session, and re-shown it would loop the question for ever. A
+ *  question with no words of its own (BRANCH-9: a message the quest lacks) is the pick alone. */
+export function choiceBoxes(q, message, choices, respond) {
+  const labels = choices.map((c) => tokensToRows(c.getTextTokens(-1, q.rolls)).join(' ').replace(/\s+/g, ' ').trim());
+  let answered = false;
+  const answer = (i) => { if (!answered) { answered = true; respond(i); } return []; };
+  const question = () => (message ? { rows: tokensToRows(message.getTextTokens(-1, q.rolls)), onClick: () => [pick()] } : pick());
+  const pick = () => ({ picker: labels, onPick: (i) => answer(i), onCancel: (why) => (why === 'unshown' ? answer(null) : [question()]) });
+  return { ...question(), behind: true };
+}
+
+/** The host's door for the questlines' `ask`: the chain above, handed to that host's own quest box. HOST-SPLIT
+ *  (bible/01-Overview/Host-Split.md): built here, so world.js's bootWorld and exterior.js's bootExterior each wire it in one
+ *  entry - `showChoice: choiceDoor(showQuestBox)` - never an arrow of their own (bootWorld met its ceiling at the merge). */
+export const choiceDoor = (showQuestBox) => (q, message, choices, respond) => showQuestBox(choiceBoxes(q, message, choices, respond));
 
 /** StartGameBehaviour.cs:445-447 - the two quests a new character
  *  always starts, in this order. _BRISIEN is the main quest's first.
@@ -230,13 +269,14 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
   'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
   'noteMinutes', 'notePlace',   // L10N5: a notebook header's render data
-  'offerReward', 'onQuestEnded', 'onQuestStarted', 'ownMinutes', 'partySize', 'playSong',
+  'offerReward', 'onQuestEnded', 'onQuestStarted', 'onQuestlineOffer', 'ownMinutes', 'partySize', 'playSong',   // QL3: a quest's choice of gear, rolled - the host's window
   'playSound', 'playVideo', 'playerEntity', 'playerHasItem',
   'playerRaceName', 'questClockStepMax', 'questFoeInstances', 'questFoeKilled', 'questWhere',   // GUIDE4: the host's two questions for the lens's look
+  'questlineService',   // QL12: the account service's door for the questlines' claims - optional, the page's own by default
   'raiseTime', 'raisedSeconds', 'regionPriceAdjustment', 'releaseQuestItem',
   'relinkQuestTopics', 'removeItemFromPlayer', 'removeNpcQuestor',
   'removeProgressRumors', 'removeQuestInfoTopics', 'removeQuestRumors',
-  'removeQuestorPostMessage', 'setPlayerCrime', 'sharedClock', 'showPopup',
+  'removeQuestorPostMessage', 'setPlayerCrime', 'sharedClock', 'showChoice', 'showPopup',   // QL4: `ask`'s box and pick
   'showPrompt', 'showPromptMulti', 'skySeconds', 'spawnCityGuards',
   'undiscoverBuilding', 'waitOnline', 'world', 'worldSeconds',
 ]);
@@ -246,7 +286,7 @@ export const QUEST_CTX_REQUIRED = Object.freeze(['data']);
 /** Members a host may decline on purpose. `onQuestStarted` is an EXTRA
  *  listener beside the bridge's own one-time recording, and the shipping
  *  host declines it - so its absence is not worth a word. */
-export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted', 'hasQuestTopics']);   // QREPAIR: only a host with a topic tree can say whether a quest has its topics
+export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted', 'hasQuestTopics', 'onQuestlineOffer', 'questlineService']);   // QREPAIR: only a host with a topic tree can say whether a quest has its topics; QL3: a reward waiting is said in the host's HUD line whether or not a host listens; QL12: the service's door is the page's own (questlineHost.js) - a host hands one only to replace it (a test's fake)
 
 /** QUEST-SHELF: the bridge's own refusal beside the machine's ladder (machine.js shelveRefusal) - a raid the world runs
  *  (WA_RAID_QUESTS - the sea's own, ended by its fight). One word for the press and the button alike. */
@@ -260,19 +300,27 @@ export function shelfRefusalText(reason) {
     case 'ending': return 'That quest is ending.';
     case 'protected': return 'That quest cannot be abandoned.';
     case 'raid': return 'Not while the raid is on.';
-    case 'twin': return 'You have taken that quest up again - finish or abandon it first.';
+    case 'twin': return 'You have taken that quest up again. Finish or abandon it first.';
     default: return 'That cannot be done now.';
   }
+}
+/** QUESTOR-SAID (FIELD BUGS 2026-10-19f): a questor's close in words - the quest still open, by the name the journal
+ *  gives it (its DisplayName, a translation's -LOC one where it has one); with none, the work alone. The player's
+ *  language (L10N4). */
+export function questorBusyRows(quest) {
+  const name = quest?.displayName || '';
+  return [{ text: name ? t('quest.offer.questorBusy', 'You have not finished the work you were given here: {quest}.', { quest: name })
+    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true }];
 }
 /** QUEST-RESET: why a quest could not be restarted, in words (machine.js restartRefusal) - the player's language (L10N4). */
 export function restartRefusalText(reason) {
   switch (reason) {
     case 'gone': return t('pause.journal.restartGone', 'That quest is over.');
-    case 'shelved': return t('pause.journal.restartShelved', 'That quest is abandoned - reclaim it first.');
+    case 'shelved': return t('pause.journal.restartShelved', 'That quest is abandoned. Reclaim it first.');
     case 'ending': return t('pause.journal.restartEnding', 'That quest is ending.');
     case 'protected': return t('pause.journal.restartProtected', 'That quest cannot be restarted.');
-    case 'questor': return t('pause.journal.restartQuestor', 'That quest was given by someone - abandon it and ask them again.');
-    case 'child': return t('pause.journal.restartChild', 'Another quest is waiting on that one - it cannot be restarted.');
+    case 'questor': return t('pause.journal.restartQuestor', 'Someone gave you that quest. Abandon it and ask them for it again.');
+    case 'child': return t('pause.journal.restartChild', 'Another quest depends on that one, so it cannot be restarted.');
     case 'raid': return t('pause.journal.restartRaid', 'Not while the raid is on.');
     case 'unparsed': return t('pause.journal.restartUnparsed', 'That quest could not be started again here.');
     case 'failed': return t('pause.journal.restartFailed', 'That quest could not be started again.');
@@ -309,6 +357,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
   });
 
   let questLists = null;
+  /** QL1: the questlines' layer, made below over this machine - declared first, so a dep the machine calls before it is
+   *  made reads null, never the temporal dead zone (AUDIT QUESTLINES LAW-15). */
+  /** @type {any} */ let questlines = null;
   const machine = new QuestMachine({
     world: ctx.world ?? null,
     nowSeconds: () => ctx.classicSeconds?.() ?? 0,
@@ -324,7 +375,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     ownMinutes: () => ctx.ownMinutes?.() ?? null,
     questClockStepMax: () => ctx.questClockStepMax?.() ?? Infinity,   // WORLD7: online, a quest clock bounds the LIVED part of a gap to the host's step, a raise charged nothing (QCLOCK-WORLD; TIME3 charged it whole); a host that says nothing charges every clock, DFU's own
     sharedClock: () => !!ctx.sharedClock?.(),   // GUARD-ONLINE: online, a guarded quest's window is the player's arrival's (quest/onlineGuard.js)
-    getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
+    getQuestSourceLines: (name, questlines) => ctx.data.getQuestSourceLines(name, questlines),   // AUDIT QUESTLINES BRANCH-12: a copy's script as its stamp read it (machine.js parseQuestShape)
     playerLevel: () => ctx.playerEntity?.level ?? 0,
     playerGender: () => ctx.playerEntity?.gender ?? 'male',
     playerName: () => ctx.playerEntity?.name ?? null,
@@ -351,6 +402,8 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // QG1: PromptMulti's box - 2-4 BUTTONS.RCI records, the click
     // answering the record number back (the action routes by value)
     showPromptMulti: (q, message, buttons, respond) => ctx.showPromptMulti?.(q, message, buttons, respond),
+    // QL4: the questlines' `ask` - the question's message, then a pick among 2-4 choices' messages, the index back
+    showChoice: (q, message, choices, respond) => ctx.showChoice?.(q, message, choices, respond),
     playVideo: (name) => ctx.playVideo?.(name),
     playSound: (id) => ctx.playSound?.(id),
     playSong: (name) => ctx.playSong?.(name),
@@ -361,6 +414,11 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     releaseQuestItem: (uid, item) => ctx.releaseQuestItem?.(uid, item),
     makeHeldQuestItemsPermanent: (uid, sym) => ctx.makeHeldQuestItemsPermanent?.(uid, sym),
     offerReward: (q, item) => ctx.offerReward?.(q, item),
+    // QL1/QL3 (bible/06-Systems/Questlines-Arc.md): the layer's two answers to the machine - a starting quest's stamp and
+    // a paying quest's reward. Late-bound: the layer is made below, over this machine and its lists.
+    questlinesStamp: (q) => questlines?.stamp(q) ?? null,
+    questReward: (q, item, resource) => questlines?.reward(q, item, resource) ?? null,
+    questEnding: (q) => questlines?.ending(q) ?? null,
     isPlayerInTown: () => ctx.isPlayerInTown?.() ?? false,
     partySize: () => ctx.partySize?.() ?? 1,   // REALM P0.4: a shared quest's gold, split
     // AUDIT 58: DaggerfallUI.Awake's one subscription to GivePc's
@@ -396,13 +454,27 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     addFace: (r) => ctx.addFace?.(r),
     dropFace: (r) => ctx.dropFace?.(r),
     // Q4-iv: the tombstone filing lands in the notebook here
-    addFinishedQuest: (messages) => notebook.addFinishedQuest(messages),
+    // QL3: and a stamped quest's outcome filed with it - the archive says how it ended (the layer settled it a moment
+    // before, at the same `end quest`). AUDIT QUESTLINES UI-5: as the entry's side record (notebook.js
+    // fileFinishedOutcome), never a line of DFU's classic logbook - the enhanced archive draws it
+    addFinishedQuest: (messages) => {
+      notebook.addFinishedQuest(messages);
+      const line = questlines?.outcomeLine(messages?.[0]?.parentQuest, quietText);
+      if (line) notebook.fileFinishedOutcome?.(line);
+    },
     // the one-time recording IS the OnQuestStarted subscription
     onQuestStarted: (q) => { questLists.noteQuestStarted(q); ctx.onQuestStarted?.(q); },
     // FE1: the tombstone's OnQuestEnded (QuestMachine.cs:1047) - the
     // HUD escort faces' quest-end sweep rides the world ctx
-    onQuestEnded: (q) => ctx.onQuestEnded?.(q),
+    // AUDIT QUESTLINES LINES-7: and a questline's step gone without its end (an error terminated it) is offered again a day
+    // later, never parsed again every tick
+    // WITCH1: and a quest done is a Witches' Festival find (systems/festival/festivalClient.js - nothing while it is not live)
+    onQuestEnded: (q) => { questlines?.runner?.dropped?.(q); festivalQuestEnded(q); ctx.onQuestEnded?.(q); },
   });
+  // QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): the questlines' six actions, after DFU's 82 - here, so every
+  // host's machine has them before a save or a script that says them is read (a first-match scan; none of DFU's claims
+  // these lines - test/systems/questlines/ql4_actions.test.js).
+  for (const template of questlineActionTemplates()) machine.registerAction(template);
   // MACRO-ONE: this machine's hooks are the page's GameManager for every
   // macro walk that is not handed a context of its own (questMacros.js
   // setMacroWorld) - one registration, every window, every host.
@@ -437,6 +509,75 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     sharedClock: () => !!ctx.sharedClock?.(),   // REPUTE-GATE: online, two Mages Guild quests wait for their headers' standing
   });
 
+  // QL1 (bible/06-Systems/Questlines-Arc.md decision 2): THE QUESTLINES' LAYER, made here once over this machine and its
+  // lists (THE ONE CONSTRUCTION SEAM - every host with quests holds this bridge). It never runs a quest; it reads them.
+  // Its host doors are closures over ctx, so this file stays the one place the bridge's contract is read from.
+  // QL12: the account service's door for the endgame lines (questlineHost.js) - a host's own (a test's fake, or null
+  // to have none) where it hands one, else the page's: online, the stored session's
+  const qlService = ctx.questlineService !== undefined ? ctx.questlineService : questlineService();
+  questlines = createQuestlines({
+    machine, questLists, service: qlService,
+    ctx: {
+      carriesQuestItem: (r) => ctx.carriesQuestItem?.(r) ?? false,
+      get playerEntity() { return ctx.playerEntity ?? null; },
+      changeReputation: (fid, amount, propagate) => ctx.changeReputation?.(fid, amount, propagate),
+      changeLegalRep: (amount) => ctx.changeLegalRep?.(amount),
+      // AUDIT QUESTLINES REWARD-13: the door a taken piece goes through, only where the host has one (the ?exterior host
+      // has none: its offers wait, untaken, for a host that does)
+      get offerReward() { return typeof ctx.offerReward === 'function' ? (q, item) => ctx.offerReward(q, item) : undefined; },
+      // a choice of gear waits: told in the host's own HUD line (every host has one), and to the host's own listener.
+      // AUDIT QUESTLINES UI-6 (REWARD-8): the line names the way to the Quests tab on the skin worn (qlJournal.js)
+      onQuestlineOffer: (offer) => {
+        ctx.addHUDText?.(offerWaitingWords(offer));
+        ctx.onQuestlineOffer?.(offer);
+      },
+      // AUDIT QUESTLINES REWARD-8: an offer the cap cut (qlLayer.js OFFERS_MAX) is said, never lost unsaid
+      onOfferDropped: (offer) => ctx.addHUDText?.(t('ql.reward.dropped', 'Too many rewards wait: the one for {title} is gone.', { title: offer.title })),
+      // QL12: the lines - the character's clock, whether there is an account to claim for, and what the service paid
+      nowSeconds: () => ctx.classicSeconds?.() ?? 0,
+      online: () => serviceReady(qlService),
+      expand: (q, text, key) => quietText(q, text, key),
+      // AUDIT QUESTLINES SERVICE-7: a title is the house's HONOUR-BANNER as every title grant is (the line, the record, either
+      // way); the key's balance restacks the pack's keys at once (weirKey.js: the item is the balance's face)
+      // AUDIT QUESTLINES LINES-4: a key kept that the account had already taken is said, never silent
+      onHonour: ({ title, key, keys, keyHeld }) => {
+        if (title) { announceHonour('title', title); ctx.addHUDText?.(t('ql.line.honourTitle', 'You have earned the title {title}.', { title: TITLE_TEXT[title] ?? title })); }
+        if (key) ctx.addHUDText?.(t('ql.line.honourKey', 'A Weir Key is yours: it waits with your keys.'));
+        if (keyHeld && !key) ctx.addHUDText?.(t('ql.line.honourKeyHeld', 'The Covens\u2019 Hoard gives one Weir Key to an account, and yours was given already.'));
+        if (key && Number.isSafeInteger(keys) && ctx.playerEntity?.items) restackWeirKeys(ctx.playerEntity.items, keys);
+      },
+    },
+  });
+
+  // QL12 (Questlines-Arc.md section 4.4): THE GUILDS' LADDERS, read for the window - each guild the player is a member of,
+  // its list's quests by rank, named as the journal names them (the pack's DisplayName, a translation's where one is)
+  // AUDIT QUESTLINES UI-19: kept while the text stands - a locale switched, or its documents loaded, reads them again
+  const ladderTitles = new Map();
+  let ladderTitlesAt = -1;
+  const questTitle = (name) => {
+    if (ladderTitlesAt !== textRevision()) { ladderTitles.clear(); ladderTitlesAt = textRevision(); }
+    if (!ladderTitles.has(name)) {
+      const lines = ctx.data?.getQuestSourceLines?.(name) ?? [];
+      const shipped = (lines.find((l) => /^\s*DisplayName:/i.test(l)) ?? '').replace(/^\s*DisplayName:\s*/i, '').trim();
+      ladderTitles.set(name, localizedQuestDisplayName(name) || shipped || name);
+    }
+    return ladderTitles.get(name);
+  };
+  const factionWords = (fid) => {
+    let name = '';
+    try { name = String(factionsTable().getKeyForValue('p3', String(fid)) ?? '').replace(/_/g, ' '); } catch { /* the tables not loaded: the id stands */ }
+    return getLocalizedFactionName(fid, name || String(fid));
+  };
+  function ladderRows() {
+    // AUDIT QUESTLINES LINES-5, LINES-16: the level (two guilds offer by it) and the adult setting, as the list reads them
+    return guildLadders({ memberships: activeMemberships(ctx.playerEntity ?? null), pools: questLists.guilds, history: questlines.history(), level: ctx.playerEntity?.level ?? 1, adult: getBool('ChildGuard', 'PlayerNudity') })
+      .map((l) => ({ ...l, name: factionWords(l.factionId), rungs: l.rungs.map((r) => ({ ...r, quests: r.quests.map((q) => ({ ...q, title: questTitle(q.name) })) })) }));
+  }
+
+  // QL11: the features' acts (systems/questlines/qlActs.js noteAct) reach this layer - the page's one bridge, as the
+  // macro world is (setMacroWorld above)
+  setActSink((kind, n) => questlines.act(kind, n));
+
   // QuestMachine.Update's pacing (QuestMachine.cs:305-320): tick at
   // ticksPerSecond of REAL time; the timer resets to ZERO on fire,
   // dropping the excess, verbatim.
@@ -446,6 +587,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     if (updateTimer < 1 / TICKS_PER_SECOND) return false;
     machine.tick();
     updateTimer = 0;
+    questlines.look();   // QL1: what each stamped quest's state has shown, latched
     news();
     return true;
   }
@@ -518,10 +660,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
   // walk - THE ONE CONSTRUCTION SEAM: every host that has quests holds
   // the bridge, so no host builds a lens of its own - and a load resets
   // it (restore, below), so the loaded game's quests are its baseline.
-  const lens = new QuestLens({ questLog: () => bridge.questLog() });
+  const lens = new QuestLens({ questLog: () => bridge.questLog({ windows: false }) });   // AUDIT QUESTLINES LAW-11: a look a tick reads no line or ladder
 
   const bridge = {
-    machine, questLists, offerFlow, notebook, lens,
+    machine, questLists, offerFlow, notebook, lens, questlines,
     tick,
 
     /**
@@ -544,8 +686,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      * reader (the chronicle's Quests section, which is what the L key
      * opens), so the walk moved here instead - the bridge is the one
      * thing every host that has quests already holds.
+     * AUDIT QUESTLINES LAW-11: `windows: false` (the lens's look, a tick at 10 Hz) leaves out the questlines' and the
+     * guilds' ladders' rows - the windows' alone, each a walk of its own.
      */
-    questLog() {
+    questLog({ windows = true } = {}) {
       const active = [];
       // GUIDE1: a quest that has COMPLETED - its log is gone
       // (Quest.getLogMessages answers null) but it lingers a week as a
@@ -557,14 +701,20 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // QUEST-SHELF (2026-10-08): the quests set aside - walked as the running ones are, their clocks as they stopped
       // (frozen: no time counts while one is away), for the journal's Abandoned list and its Reclaim
       const shelved = [];
+      const unlogged = [];   // QL2: stamped quests whose objectives stand before their first journal entry
       for (const q of machine.quests.values()) {
         if (q.questComplete) {
           notebook?.unhideQuest?.(q.uid);   // JOURNAL-CLEAN: an ended quest is no longer hidden (one that filed no entry never reached addFinishedQuest's drop)
-          ended.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', success: !!q.questSuccess });
+          ended.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', success: !!q.questSuccess, ql: questlines.rowOf(q, quietText) });   // QL1: its outcome
           continue;
         }
         const les = q.getLogMessages();
-        if (!les?.length) continue;
+        if (!les?.length) {
+          // QL2: a stamped quest with no journal entry yet, whose objectives the machine has opened - the pause tab's
+          const ql = isShelved(q) ? null : questlines.rowOf(q, quietText);
+          if (ql?.objectives?.length) unlogged.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', ql });
+          continue;
+        }
         // GUIDE1: each message beside the step it was written at -
         // `steps[i]` is `messages[i]`'s - so a face can order the
         // entries by when they were written (ui/quest/questRail.js
@@ -591,14 +741,14 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
             clocks.push({ name: r.symbol?.name ?? '', seconds: left });
           }
         }
-        (isShelved(q) ? shelved : active).push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, clocks, messages, steps });
+        (isShelved(q) ? shelved : active).push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, clocks, messages, steps, ql: questlines.rowOf(q, quietText) });   // QL1: its objectives, choices and outcome - null for DFU's quest
       }
       // JOURNAL-CLEAN: `hidden` is the uids the player hid from the journal. The rows stay in `active` - the lens,
       // the tracker and the marks read this walk and a hidden quest still runs - and the journal's rail
       // (ui/quest/questRail.js) is what leaves them out.
       // AUDIT JOURNAL-CLEAN F3: an id hidden for a quest no longer running is dropped - whatever ended it
       notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
-      return { active, finished: notebook?.getFinishedQuests() ?? [], ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved };
+      return { active, finished: notebook?.getFinishedQuests() ?? [], ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved, unlogged, lines: windows && questlinesOn() ? questlines.lineRows() : [], ladders: windows && questlinesOn() ? ladderRows() : [] };   // QL12: the questlines and the guilds' ladders - none while they are off
     },
 
     /**
@@ -633,7 +783,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       abandon(id) {
         const r = machine.shelveQuest(Number(id), { refuse: refuseRaid });
         if (r.ok && questTracker.pinned != null && Number(questTracker.pinned) === Number(id)) questTracker.pinned = null;
-        return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.${r.quest.shelvedItems?.length ? ` ${t('pause.journal.shelfItemsFree', 'Its items may be thrown away now - reclaimed, they come back.')}` : ''}` : shelfRefusalText(r.reason) };
+        return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.${r.quest.shelvedItems?.length ? ` ${t('pause.journal.shelfItemsFree', 'You can throw its items away now. They come back if you reclaim it.')}` : ''}` : shelfRefusalText(r.reason) };
       },
       /** QUEST-SHELF: RECLAIM - the quest back as it was (machine.js reclaimQuest), on the journal's page: one the player
        *  had hidden is shown again (its audit - taken up again, it was put where no row showed it). Answers
@@ -655,6 +805,13 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       },
       /** QUEST-RESET: whether the quest may be restarted now - the journal draws the button only where it is. */
       canRestart: (id) => machine.restartRefusal(Number(id), { refuse: refuseRaid }) === null,
+      /** QL3 (bible/06-Systems/Questlines-Arc.md section 5.2): the rewards waiting to be chosen, and the take - beside the
+       *  journal's tidy-ups, so every host that hands its pause window `journalClean` hands these too (the four hosts,
+       *  through the one door). */
+      // AUDIT QUESTLINES UI-19: a waiting reward is named in the language of the page that draws it - the quest's title as
+      // the ladders name it (questTitle: a translation's, else the pack's DisplayName), never the words it was rolled in
+      offers: () => questlines.offers().map((o) => ({ ...o, title: questTitle(o.questName) || o.title })),
+      takeOffer: (id, index) => questlines.take(id, index),
     },
 
     /** SetLayoutData's direct overload for a host that has a quest
@@ -706,12 +863,15 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     },
 
     /** An offer-flow step as a ServiceFlowWindow box chain. C#'s
-     *  silent faces ('close', a null step) show nothing. rows(id) is
-     *  the host's TEXT.RSC record reader (townTalk.lines). */
+     *  silent faces ('close', a null step) show nothing - but a popup's
+     *  close on a questor whose quest is still open SAYS so (QUESTOR-SAID,
+     *  offerFlow.js questorBusy: the guild's popup read the empty chain as
+     *  no service and printed "That service is not available yet."). rows(id)
+     *  is the host's TEXT.RSC record reader (townTalk.lines). */
     offerBoxes(step, rows) {
       if (!step) return [];
       switch (step.kind) {
-        case 'close': return [];
+        case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];
         case 'fail': return [{ rows: rows?.(step.textId) ?? [] }];
         case 'offer': return [{
           rows: tokensToRows(step.prompt.tokens),
@@ -805,6 +965,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         machine: machine.getSaveData(),
         notebook: notebook.getSaveData(),
         oneTimeQuestsAccepted: questLists.oneTimeQuestsAccepted ? [...questLists.oneTimeQuestsAccepted] : null,
+        questlines: questlines.snapshot(),   // QL3: the rewards waiting to be chosen - the character's, outliving their quests
       };
     },
     restore(data) {
@@ -829,6 +990,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // AUDIT JOURNAL-CLEAN F3: ...and at the load, before any new quest can take a uid a stale id names
       notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
       questLists.oneTimeQuestsAccepted = data.oneTimeQuestsAccepted ? [...data.oneTimeQuestsAccepted] : null;
+      questlines.restore(data.questlines);   // QL3: an older envelope carries none - nothing waits
       lens.reset();   // GUIDE1: a loaded game is not news
       questTracker.forget();   // GUIDE4: ...nor what the last game's card followed (the tracked quest is the save's own record)
       questHerald.clear();   // AUDIT GUIDE O2: ...nor the last game's news - a notice standing over the loaded game could merge a same-uid quest's news under its verdict

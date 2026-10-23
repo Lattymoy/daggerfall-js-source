@@ -1,0 +1,20 @@
+[
+  { "name": "FLAT-WALK-host-pass-hears-flat-relays", "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!walkHears(o)) continue;", "new": "      if (!hasActionCollision(o)) continue;",
+    "tests": ["test/scenes/fb1021d_flatwalk.test.js", "test/scenes/audit63_world_actions.test.js"], "why": "the reported law: the pass hears a hanging root walked under and sends the body to the entrance" },
+  { "name": "FLAT-WALK-walk-blind-to-flats", "file": "src/world/actionSystem.js",
+    "old": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');", "new": "export const walkHears = (o) => hasActionCollision(o);",
+    "tests": ["test/scenes/fb1021d_flatwalk.test.js", "test/player/audit0929_actions.test.js"], "why": "FLAT-RELAY's walk back: every flat relay a walk-in" },
+  { "name": "FLAT-WALK-walk-refuses-every-flat", "file": "src/world/actionSystem.js",
+    "old": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');", "new": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true);",
+    "tests": ["test/player/audit0929_actions.test.js"], "why": "an effect flat (a brazier's burn) taken off the walk AUDIT PRE-MERGE 0929 kept it on" },
+  { "name": "FLAT-WALK-walk-refuses-model-relays", "file": "src/world/actionSystem.js",
+    "old": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');", "new": "export const walkHears = (o) => hasActionCollision(o) && !(o.kind === 'relay');",
+    "tests": ["test/player/audit0929_actions.test.js"], "why": "the red brick teleporters (model relays) no longer walked into" },
+  { "name": "FLAT-WALK-teleport-alone", "file": "src/world/actionSystem.js",
+    "old": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');", "new": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.actionFlag === ACTION_FLAGS.Teleport);",
+    "tests": ["test/player/audit0929_actions.test.js"], "why": "AUDIT FB1021d FW-1: a flat's Activate (W0000020's seven doors locked) still a walk's" },
+  { "name": "FLAT-WALK-multitrigger-alone", "file": "src/world/actionSystem.js",
+    "old": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');", "new": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay' && o.triggerFlag === TRIGGER_FLAGS.MultiTrigger);",
+    "tests": ["test/player/audit0929_actions.test.js"], "why": "AUDIT FB1021d FW-1: a flat relay on Collision09 or Collision03 still a walk's" }
+]

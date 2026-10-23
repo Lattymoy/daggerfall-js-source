@@ -46,6 +46,45 @@ PERF-HIDE (2026-10-12, a capture of a player's client standing still for four mi
 frame rate climbs for some twenty seconds) dyes a horse look's pictures in under half the CPU, byte for byte the same
 pictures. Its section is after PERF-DYE.
 
+BOOT-FREEZE (2026-10-20, the owner: "Just do #854 and do your own performance pass in the same PR. You need to install
+the freeware and go deep") is the first pass of this page measured IN THE REAL GAME - the freeware ARENA2 booted in
+Chromium under a CPU profile (`tools/bootFreezeProbe.mjs`) - and it carries #854's TRIP-PICKS with it. Four changes, none
+of them a change to what a player sees, every answer the old one: BOOT-RECTS (the boot's two rect walks read each block
+once), WD-OWNED (a town file's edits laid on its own base, and a kept base copied by a walk), REGION-VIEWS (a MAPS
+region's records read where MAPS.BSA holds them) and FIT-BITS (the Bay's fit on the picture counted 32 cells a word).
+Their sections are after TRIP-PICKS'. The same pass took two reports the owner handed on: TRADE-VIRT (a player's audit of
+the trading windows: the rows on screen drawn, a picture into its tile) and SHADER-STALL (a player's capture: a pass
+built in play never waits on its compile), and SNOW-BUDGET (its second word: the snow the ground keeps holds to its
+frame budget). Their sections are after FIT-BITS'.
+
+HORSE-VIEW (2026-10-21, a player's CPU profile: "Horse Cart pool (peers' horses and carts) 11% (3% with peers' teams
+not loaded)") poses a 3D horse where it is seen: its gait's clock every frame, its pose in the view on the peers' bodies'
+cadence, and a rider's horse with its rider's body. It moves the picture as PEER-CADENCE did the bodies': past 10 m a
+horse's stride is shown every second or third frame. Its audit the same day measures that cadence, the bodies' with it,
+from the camera that draws, through its lens (the zoomed-out camera's, the spyglass's). Its section is after
+SNOW-BUDGET's.
+
+BOAT-STAMP and BOAT-FAR (2026-10-21, a player's CPU profile online: the Come Sail Away pool's frame 11% of the frame,
+6% with the peers' boats not loaded, and `rendererModelKey` 2.6%, the key made again most frames) are one pass over the
+boats. Every boat's caches stood on one shape stamp shared by every tree in the game, and every boat drawn was walked,
+baked and lit every frame wherever she sailed. BOAT-STAMP gives the same answers. BOAT-FAR moves what a boat past 600 m
+does: her sails, her lanterns and a peer's boat's Animators step every fourth frame, as the sea's ships' rigging already
+did, and every part of her stays drawn where she is. Their sections are after SNOW-BUDGET's.
+
+HORSE-VIEW II, BOAT-OWN, HELD-DRAW and HELD-FLATS (2026-10-21, the record's Left: "my own boats' Animators, the road's
+stranger teams and the standing horses, still stepped every frame", and BOAT-FAR's What it still pays) give the laws
+just shipped to what they had not reached: the road's strangers' 3D horses and the standing horses are posed as the
+pool's are (the law its own module now, `world/horseView.js`, read by all three), my own boats' Animators and particle
+systems live by the far law, and a held boat is drawn from what her walk's draw found, her flats keeping the scale her
+walk found. They move the picture as HORSE-VIEW and BOAT-FAR did, no further. Their sections are after BOAT-FAR's, each
+closed by the same day's cold audit (a horse that moves into the view posed as it comes in, and the lines no pin held).
+
+OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld. Can you please fix this properly") is
+the second pass measured IN THE REAL GAME: an Overworld journey over the freeware ARENA2 under one CPU profile, every
+frame's script read off it. Nine changes, each taking out a frame's spike or the garbage the collector stopped frames
+for, and none of them a change to what a player sees but one: the snow under a grass blade reads the slope the ground is
+drawn with. Its section is after SNOW-BUDGET's.
+
 ## How the pass was run
 
 NOT IN THE REAL GAME. The frame probe (`tools/frameProbe.mjs`, PERF-NEXT's recipe) needs the freeware ARENA2, and its
@@ -100,9 +139,14 @@ the 3/4 line, and the standing horses' and the crews' calls took it over. Their 
 (`standingHorsesFrame`, `offerCrews`), and the look's step before the motor - `if (!gamePaused()) {`, the look filter,
 the keyboard look, the lock-on - runs as a closure of its own, `frameLook`: 44,976 bytes.
 
+**At the merge of main into SEA VENTURES (2026-10-22, `03-World/Eltheric-Ocean.md`).** The frame had grown to 46,111
+bytes, 31 over the 3/4 line - main's growth and the Aether Storm's words in the weather's front, sky and crossing
+(SEA-EVENTS). The snow ground's line (PRECIP4: its tick about the player, its frame handed to the renderer) runs as a
+closure of its own, `frameSnowCover`, its line as it was: 45,950 bytes.
+
 Pins: `test/scenes/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
-the parse, the 21 closures by name in order, each made in the frame and called once - a plain call, the statement after
+the parse, the closures by name in order (26 since `frameSnowCover`), each made in the frame and called once - a plain call, the statement after
 its close - holding one statement, no `return`, no `var`. Mutants: `tools/mutants/perfv8.json`, 8, all dead.
 
 ## PERF-YARD — a yard's pieces are culled as the town's own models are
@@ -1058,9 +1102,1105 @@ the build's (one ask); the boot's wiring by source. Mutants: `tools/mutants/boot
 `housing.json`'s HOME-RENT-the-character-unsent re-aimed (killed by the new pins too); `home1`, `legacy7_online` and
 `wd3_online`'s source pins moved with the code.
 
+## TRIP-PICKS — a traveller's road choices, the same answer for less
+
+*A player (2026-10-12): "vamos checar se da para melhorar o loading, eu vou abrir o jogo e voce mede o tempo que
+demorou e por que" - the installed client (0.1.8217, an online character) captured from the process's launch into the
+world through the debugging port: browser Tracing on one connection, the page's CPU profile, network and console on
+another.*
+
+**Found.** From the character's click to the first world frame took 11.5 s (most of it the boot's network, its own
+change); the first world frame then froze 2.7 s, and after two seconds of play the frames froze 2.8 s more - the Living
+World planning its roads' day (`livingTown.js _roadsOf` -> the host's `tripsOf` -> `trips.js visitorsOf` -> `memoTrip`
+-> `ownTrip`), what HOLY-DAYS left standing. Of those 5.5 s, ~3.7 s were one part of `ownTrip`, made again for every trip
+of every traveller of every town the roads asked: the towns near filtered by the job's ring and `roadBound`, each one
+weighed, `seed.js pickWeighted` walking the `{ mapId: weight }` object's keys (1.5 s of it by itself), and the towns
+nearer than the pick sorted by distance with a `Math.hypot` at each comparison. None of it is the traveller's: the ring,
+the weights and the order are the town's, the job's and the trip world's.
+
+**The fix.** `trips.js roadChoices` keeps them by the trip world (a WeakMap, as `templesNear`), the town and the job:
+the towns in reach, each one's weight in the order `pickWeighted` reads the object's keys, their total summed in that
+order, and the towns by distance (the farther first, then the lower map id). `roadOrder` draws off them: `pickChoice` is
+`pickWeighted`'s draw over the kept list (no draw taken when no weight is above zero), and the nearer towns are the kept
+order filtered, which is the old sort's - the sort is stable, and the kept order filtered keeps it. `ownTrip` asks
+`roadOrder`. The Living World's trips are every client's alike, so nothing may move: every answer is the old one.
+
+**Measured.** In node 22 over the suite's synthetic map (`test/lwRoads.mjs` synthMap, 14 x 14 towns three pixels apart
+and a far haven, their regions spread over 62, with dives and the sea; `townsNear` kept as the host keeps it), every
+town's trips for 90 days and every town's visitors for 20, cold, five runs: the same 133,851 trips and 17,067 visits to
+the byte on both (a digest of every trip's id, kind, goal, times and party, and every visit's times); the whole
+2,008 -> 1,344 ms best; `ownTrip`, `pickWeighted` and the distance sort 3.9 s -> 0.95 s of the five runs' profile
+(`roadChoices` 0.24 s of it). In the client, a live A/B: two local builds of the same main (f5a7f183d), one with
+this change, each launched fresh and booted into the world with the same online character on the same machine, the
+same capture on both (main-thread tasks over 100 ms from the trace, `tripsOf`'s share of each from the CPU profile, the
+20 s after the boot's last step):
+
+| | main | TRIP-PICKS |
+|---|---|---|
+| click -> the boot's last step | 12.24 s | 12.54 s (the network's; this change is after it) |
+| the first world frame | 2,765 ms (trips 1,944) | 1,105 ms (trips 304) |
+| the frozen frames after it | 920 + 924 + 176 + 125 ms | 202 + 202 ms |
+| frozen in all after the boot | 5,011 ms | 1,617 ms |
+| of it the trips | 3,966 ms | 624 ms |
+
+One run each: the trips are the same answers on both, so the work is the same work, and the rest of the frames
+(the first frame's ~800 ms beside the trips, the boot's 1.3 s reading the map) stand alike on both.
+
+Pins: `test/systems/livingWorld/trippicks.test.js` (2) - `roadOrder` against the old law restated, for every town of a mixed map (gaps,
+jitter, ties of distance, three regions, courts and temples, ids out of the grid's order), every job and an unlisted
+one, 12 draws each, the dice left where the old law left them; `roadChoices` asked of the world once a town and a job,
+another job and another world asking for themselves. Mutants: `tools/mutants/trippicks.json`, 7, all dead.
+
+**AUDIT TRIP-PICKS (2026-10-20, the owner: "ensure this is perfect and fidelity isnt lost").** A cold lane compared the
+whole `ownTrip` of every traveller of every town on the real map (9,373 towns, 224,560 trips over four cycles) and
+674,856 `roadOrder` calls against main's law: byte for byte the same, the dice left where they were. Its one finding was
+memory: the choices were kept for the session, never let go - 21.6 KB a town and job, 200 MB had every town been asked.
+Now a trip world keeps `ROAD_CHOICES_KEPT` (2,048) towns' worth, the longest unasked quarter let go past it (a town's
+choices are pure: asked again, made again the same), and an entry is leaner (a town's distance asked of the town, not a
+map beside it). Re-run over the whole map with the bound evicting throughout: 674,856 orders and 224,560 trips, none
+different. Its nits (one map id one place, as `templesNear` already reads; FIT-BITS and WD-COPY on inputs the game never
+passes) recorded. Pin: `trippicks.test.js` (+1, the bound and its order). Mutants: `audit_perfpass.json`'s ATP, dead;
+`trippicks.json`'s wrong-town record re-aimed, dead.
+
+## BOOT-FREEZE — the boot's freezes, measured in the real game
+
+*The owner (2026-10-20): "Just do #854 and do your own performance pass in the same PR. You need to install the freeware
+and go deep."*
+
+**How it was run - in the real game.** `sh tools/fetch-data.sh` put the freeware ARENA2 at `/home/claude/dfdata/arena2`
+(the zip's host answers this container now; PERF-PRIORITY's pass could not reach it). `tools/bootFreezeProbe.mjs` boots a
+scene over it in Chromium (SwiftShader) under ONE CPU profile, from the page's first byte until the stream has stood
+idle twenty frames past the first world frame (or `MAX_S`), and reads the main thread's long tasks off the profile itself:
+a run of samples that are not `(idle)`, closed by an idle gap past 4 ms, each attributed by its samples' stacks
+(inclusive, a function once a sample). The first world frame is marked IN the profile - `__frame` turning from 0 calls
+`__bootFreezeFirstFrame`, whose samples give its time on the profile's own clock - because that frame is the one #854's
+player froze on, and the world's own `__shotReady` waits for the whole stream, which at the real build slice under
+SwiftShader is hours. Knightstale at 15:00, a new character, the town packs on as the game ships them. The figures are
+this machine's CPU, and the frames are SwiftShader's: GPU-process work (a shader's compile, a texture's upload) lands in
+whichever task first waits on it - the sea's wave program's 9-10 s compile was `buildProgram`'s in one run and a
+canvas's `toDataURL` in the next - so the A/B below reads the script's own functions, never the frozen totals after the
+first frame.
+
+**Found** (main, the first profile; and counted, through a probe-only transform of the readers):
+- one 11.6 s task in the boot: `bootWorld`'s two rect walks - the Eltheric isles' 7,538 templates (2.7 s) and Deep
+  Waters' coastal towns (2.2 s), 23,676 blocks asked of BlocksFile (BOOT-RECTS) - and the world-data door rebuilding
+  every town a pack edits as the index reads the world's 15,260 locations: 8,349 rebuilds, each laid on a deep copy, 2.6 s
+  of copying (WD-OWNED);
+- 283 MB slice-copied out of the BSAs before the first frame; MAPS.BSA's regions read 257 times by then and 364 by the
+  40th frame (REGION-VIEWS);
+- the first world frame's `fitBayToPicture`, 772 ms of its own (FIT-BITS), and the roads' day (TRIP-PICKS, #854, above).
+
+**Measured: A/B in the real game** - the same probe on main (016dba12d) and on this branch, one arm after the other with
+nothing else running; inclusive ms of the script's own functions, before the first world frame and (+) after it:
+
+| | main | this branch |
+|---|---|---|
+| the boot: the main thread busy | 40,448 | 32,192 |
+| its largest task | 12,570 | 7,159 |
+| `bootWorld` | 8,883 | 5,567 |
+| the isles' rects (`etherPlaceRects`) | 3,036 | 1,218 |
+| Deep Waters' rects (`deepWatersLocationRects`) | 2,209 | 1,557 |
+| `patchJson` (the door's copies) | 2,782 | 1,135 |
+| the BSAs' copies (`getRecordBytes`) | 442 + 205 | 43 + 0 |
+| MAPS regions read (`loadRegion`) | 249 + 238 | 107 + 37 |
+| the Bay's fit (`fitBayToPicture`, the first frame) | 569 | 293 |
+| the roads' day (`townTrips`) | 457 + 30 | 394 + 0 |
+| the spot check's hashes (`packFileSha256`) | 1,223 | 834 |
+
+One run each, and a second A/B before WD-COPY and FIT-BITS landed agreed: the boot busy 45,780 -> 34,757 ms, its largest
+task 19,100 -> 7,130 ms. In node over the real data, each change below has its own figures and its own proof that every
+answer is the old one.
+
+Pins: `test/tooling/bootfreeze_probe.test.js` (2) - the probe's reading of a profile; mutants `tools/mutants/bootfreeze.json`, 4, all dead.
+The probe judges its own runs (`test/tooling/probehygiene.test.js` T3): no first world frame in the profile, or a page that threw, is no
+measurement.
+
+## BOOT-RECTS — the boot's two rect walks read each block once
+
+**Found.** Two walks of the boot ask SetLocationTiles' rect of thousands of locations: the Eltheric isles' templates
+(`etherWatersBake.js etherPlaceRects`, 7,538 of them) and the Bay's coastal towns for Deep Waters
+(`deepWatersClient.js deepWatersLocationRects`). BlocksFile keeps ONE parsed block (autoDiscard, as `BlocksFile.cs:32`),
+so a walk parsed a block again - and dried its puddles again (PUDDLE-DRY) - every time its name came round: the isles'
+templates name 384 blocks.
+
+**The fix.** `terrainTiles.js locationRectReader` keeps each block's ground tiles - the one thing SetLocationTiles reads of
+it - for the walk, and lets them go with it. A block reads alike at every location the world-data door reads it at,
+save where a layout pin stands (`worldDataReplacement.js pinnedHere`): a town a pin stands at (the door's new
+`locationPinned`), one the door cannot place (no integer indices) and a door that cannot say all read through, as before.
+BlocksFile keeps its one slot - `rmbLayout.js attachWindmillRecord` and others rely on a fresh parse. The isles' walk is
+read as a clone of each template is (`as`), and the host's own tilemap for it went with the walk.
+
+**Measured.** In node over the real data, every rect the same: the 7,538 templates 2,675 -> 1,178 ms with the town packs on
+(3,905 -> 178 ms off), every town of the Bay 49.4 -> 4.2 s; with 3,367 towns pinned, the same in order and shuffled,
+throws included.
+
+Pins: `test/world/terrain/bootrects.test.js` (5); mutants `tools/mutants/bootrects.json`, 7, all dead; `ether_deep`'s source pin and
+ED-world-unsaid re-aimed.
+
+## WD-OWNED — a town file's edits laid on its own base, and a kept base copied by a walk
+
+**Found.** The index reads every location of the world, and each town a pack edits is rebuilt then
+(`worldDataPack.js rebuild`): its classic location read afresh, made DFU's JSON (`locationToDfuJson`) and the author's edits
+laid on it through `patchJson` - which deep-copied its base first. A location's base is made for that one file and held
+nowhere else: 7,727 copies of 40 MB of JSON nothing shared, 513 ms in node. And a block's base is the classic block's JSON
+kept for the next file, so its copy is owed - but it was a JSON round trip, 63% of a replaced block's build (509 of 813
+ms over the isles' walk).
+
+**The fix.** `patchJson` takes `owned`: the caller's own plain tree is laid on in place; `rebuild` passes it for a
+location's base alone (a block's and a file's bases are kept, and copied). Measured first: not one location base of
+either pack holds a value a JSON round trip changes, and its helpers make every node fresh. WD-COPY: the copy a kept base
+is laid on is walked, ~4x the round trip's speed (637 -> 164 ms over the packs' 387 block bases), writing exactly what the
+round trip writes - a number JSON cannot write null and -0 as 0, an undefined left out of an object and null in an array,
+keys in the round trip's order; whatever it cannot vouch for (a boxed value, a toJSON, a `__proto__` key, a bigint, a tree
+past `COPY_DEPTH`) is the round trip's own, throws and all.
+
+**Measured.** Every file of both packs still rebuilds the author's file sha256 for sha256
+(`test/formats/worldData/wd3_pack.test.js` with ARENA2_PATH: 7,526 and 1,021 files).
+
+Pins: `test/formats/worldData/wdowned.test.js` (4); mutants `tools/mutants/wdowned.json`, 12, all dead (a kept block and a kept file
+laid on among them, killed by `wd3_pack`'s own pins).
+
+## REGION-VIEWS — a MAPS region's records read where MAPS.BSA holds them
+
+**Found.** MapsFile keeps one region resident (autoDiscard, as `MapsFile.cs`), so every walk over the regions read every
+region again - the boot's map dictionary and index, a quest's places (`findQuestLocation`), the ports (`navalPortList`),
+the sea lanes, the raids - and each read COPIED its four records: 357 KB a region on the mean (2.3 MB the Wrothgarian
+Mountains', 2.1 MB Daggerfall's), 22 MB a walk. ~0.5 s of the copies' own time in the profile, beside their collection.
+
+**The fix.** The readers only ever read a region's records (every DataView over them takes its offset), so
+`BsaFile.getRecordView` hands a record over as a view of the archive's bytes, held whole for its life anyway;
+`getRecordBytes` stays the copy (DFU's ReadBytes) every other reader takes - a block's automap is edited in place.
+
+**Measured.** In node, every region and every classic location of MAPS.BSA - 30,564 reads - the same off views as off
+copies; a walk of every region 29.0 -> 14.4 ms.
+
+Pins: `test/formats/regionviews.test.js` (2); mutants `tools/mutants/regionviews.json`, 4, all dead.
+
+## FIT-BITS — the Bay's fit on the picture counted 32 cells a word
+
+**Found.** The boot fits the Bay's land on the player's own picture of Tamriel (`tamrielLand.js fitBayToPicture`,
+TAMRIEL4) as its first world frame stands: 25 scales, 49 x 49 offsets, up to 2,178 cells each, compared a cell at a time -
+772 ms of pure self time in that frame.
+
+**The fix.** The inside's score is counted a word at a time: the picture's rows as two bitsets (the pixels that ARE 1 and
+that ARE 0 - a cell agrees only with its own value, so a picture holding anything else counts as it did), each window's
+32 pixels joined across a word boundary, the last word's tail cleared, a popcount. The same counts, so the same fit, ties
+to the same first offset in the same walk.
+
+**Measured.** Over the real data: (38, 57) x15.5, 1,537 of 2,048 inside, 190 of 192 along the seam (`tamriel4`'s ARENA2
+pin) in 157-205 ms against 707-717 ms; 300 random fits the same, 19.8 -> 3.8 s.
+
+Pins: `test/world/fitbits.test.js` (2, the old law restated); mutants `tools/mutants/fitbits.json`, 6, all dead.
+
+### What the boot still pays, ranked
+
+None of these moves the picture; each needs its own pass.
+1. **The snow's settle** - 2.4-2.7 s of the boot here: a year of the snowpack at the arrival's window
+   (`snowCoverHost.js settle` -> `snowpack.js advance` -> the weather's systems, `weatherMap.js drawCells` and its draws). A
+   seeded simulation AUDIT PRECIP already thinned; an exact cut must keep every draw, so it is its own pass.
+2. **The door's first build of each replaced block** - ~1.8 s of the two walks after BOOT-RECTS, beside the stream's:
+   the expand and `blockFromJson` past WD-COPY's copy. The walks need a block's ground alone, which the ops that reach it
+   could rebuild without the rest.
+3. **The GPU's** - the sea's programs compiled at idle (taken by SHADER-STALL, below), the ground's tile array uploaded
+   (`uploadTileArray`), and the classic dial's art read back off a canvas (`dialClassicArt.js wearClassicDial`'s
+   `toDataURL`: 7.3-8.3 s of the first task after the first world frame here, a round trip that pays the GPU process's
+   queue; a 2D canvas kept in memory, `willReadFrequently`, would read back without one).
+4. **A ground set's puddle masks** - taken by OW-HITCH (below): a record a breath, and half the work.
+5. **The world-data spot check** - `packFileSha256`'s canonical JSON of one block in eight, ~0.8 s across the boot.
+
+## TRADE-VIRT — the trading windows draw the rows on screen, and a picture lands in its tile
+
+*A player's audit of the NPC and player-to-player trading windows, handed on by the owner (2026-10-20: "Someone also
+sent this"): "full UI rebuilds on every click, missing list virtualization, and repeated rendering when item icons
+load", with a synthetic prototype's 28.7x/14.4x. Its claims were read against the code and measured in the windows
+themselves before anything was taken.*
+
+**Found.** All three claims held, and the third was worse than reported. The shop counter (`ui/enhanced/enhancedTrade.js`)
+and the trade between players (`ui/enhanced/enhancedPlayerTrade.js`) rebuild their DOM on every state change (the shape
+`ui/domRepaint.js` says why), and both drew every row of every list. Both handed a cold picture's `onReady` the
+window's whole repaint, so a pack whose pictures come in one by one repainted itself once a picture. The counter's
+`onReady` was `render` itself, which the fitted-picture door (`ui/textureCanvas.js`) dedupes. The trade between players
+gave each row a fresh closure, and the door wakes up to WAKE_MAX (8) waiters a picture, each a whole repaint that signed
+the rows up again: 2,160 repaints of a 300-piece pack, 193 s before its last picture stood. A verb of mine in the trade
+between players also painted twice: the session's `onChange` is the host's repaint, and it fired inside the verb before
+the verb's own repaint.
+
+**The fix.** VIRT's law (`10-UI/UI-Arc.md`, the pack's) carried to both windows, and its landing given one home:
+- `ui/enhanced/landingTiles.js` - a tile drawn on its initials waits with what it was drawn from; a landing asks for ONE
+  pass on the next frame, which swaps each waiting tile for the one `draw` makes now, its wear bar carried. The pack's
+  `liveTile` asks it too (its `_waitingTiles`/`tileLanded`/`paintLandedTiles` are the module's `waiting`/`landed`/`pass`).
+- `ui/virtualRows.js` over every list of both windows (past VIRTUAL_MIN, 120): the rows in the visible band and a
+  margin. A repaint lets go of the lists it replaces (their scroll listeners), measures the new ones before it gives a
+  scroll back (`sync({ draw: false })`) and aims them after; a resize repaints; the unmount lets go of every one.
+- The trade between players paints once a verb of mine: `acting` quiets the session's call inside the verb, and a
+  change the host asks for of its own (the peer's) paints at once.
+- The counter's pack filter asks one Set a paint for what the counter holds, not a walk of the lot each piece.
+Nothing a player sees changed: the same rows in the same places, the same pictures, the same moves.
+
+**Measured** in Chromium over the freeware ARENA2's pictures (`tools/tradePerfProbe.mjs`: the windows mounted as the game
+mounts them over N real pieces, every weapon in every metal and armour piece in every material; a shelf of 0.65 N at the
+counter that sells; the real TradeSession for the trade between players). Settled is every row's picture in, a click is
+a preview to the frame, a move is a double click to the frame (a sale staged, a piece bought, an offer made). Main
+(fc2a29e0c7, #1068's merge) and this branch, one after the other, nothing else running:
+
+| window, pieces | settled (repaints) | a click | a move |
+|---|---|---|---|
+| sell 300 | 26.5 s (273) -> 0.30 s (1) | 106 -> 43 ms | 224 -> 95 ms |
+| sell 1,000 | 106 s (292) -> 0.43 s (1) | 348 -> 57 ms | 550 -> 70 ms |
+| buy 300 | 43.7 s (292) -> 0.50 s (1) | 156 -> 55 ms | 391 -> 84 ms |
+| buy 700 | 107 s (292) -> 0.55 s (1) | 809 -> 50 ms | 2,881 -> 101 ms |
+| buy 1,000 | 120 s (292) -> 0.41 s (1) | 421 -> 52 ms | 858 -> 103 ms |
+| players 100 | 19.6 s (760) -> 0.37 s (1) | 60 -> 43 ms | 135 -> 75 ms |
+| players 300 | 193 s (2,160; a 4.3 s task) -> 0.30 s (1) | 92 -> 37 ms | 148 -> 97 ms |
+| players 700 | 498 s (2,323; a 7.6 s task) -> 0.29 s (1) | 234 -> 29 ms | 459 -> 57 ms |
+| players 1,000 | not settled in 28 min (stopped) -> 0.30 s (1) | - -> 26 ms | - -> 61 ms |
+
+At 1,000 pieces the buy window's DOM is 953 nodes where it was 15,445 (96 rows drawn of 1,650). Below the threshold a
+list is drawn whole by the same code it was, and the first read of a 100-piece click looked 10-15 ms slower here. That
+was the JIT: main's repaint storm while its pictures came in (156 repaints) had warmed `render` before the clicks were
+timed. Warmed alike (150 repaints first), five runs a tree, the sell window at 100: a click's render 34.3 ms on main and
+33.6 here (35 clicks each), a repaint 29.2 and 28.0 (300 each).
+
+**Not taken.** The audit's incremental mount (rows kept across a selection) and its per-row caches: the repaint stays the
+codebase's shape (`ui/domRepaint.js`), and with the lists windowed a repaint costs the rows on screen, not the lot. The
+classic counter (`ui/native/nativeTrade.js`, its P2) draws a few slots on a canvas and was not measured.
+
+Pins: `test/ui/enhanced/tradevirt.test.js` (7), and the pack's `test/systems/virt_pack.test.js` over the shared fakes
+(`test/virtFakes.mjs`). Mutants: `tools/mutants/tradevirt.json`, 14, all dead; `virt.json`'s
+VIRT-a-landing-repaints-the-pack and AUDIT-VIRT-a-frame-a-landing re-aimed at the module, dead. `fb1011_tradeloc`'s pin
+on the player trade's rows moved with them.
+
+**AUDIT TRADE-VIRT (2026-10-20, the owner: "I need you to audit this and ensure this is perfect and fidelity isnt lost").**
+A cold lane ran the windows of this commit and of its parent side by side in Chromium over the freeware ARENA2's pictures.
+What it found, and what was done:
+- **A list whose rows are not one height scrolled wrongly** (the worst: fidelity). `ui/virtualRows.js` took ONE pitch off
+  the first two lines drawn, and a trade's rows are not one height - a book's title wraps to a second line (68 px against
+  52), a phone's weapons run 52, 64 and 82. With a two-line title first, 23 of 60 wheel stops of a 300-row shelf showed
+  blank rows (the whole list at the worst), rows jumped up to 36 px as lines came and went, a click's repaint moved the
+  rows under a still pointer so a double click took the next piece ("Plain Robes" for the book clicked), and the
+  scrollbar was 336 px short. Now every row's height is measured as it is drawn and kept by its item (`sizes` - each
+  window keeps one a list, and a view, across its repaints, so a repaint's spacers are the ones it replaces); a line is
+  its tallest row and the gap; a line never drawn is taken at the mean of those that were; each aim reads the lines it
+  drew, holds still the row the eye is on (the scroll moves with the spacer above it), and asks the band again until it
+  is covered. A list of one height is laid as before. The pack's lists (VIRT) take the same law and keep their own heights.
+- **A landed picture's tile kept the browser's tooltip** over the hover card: the row's hover took the title off the
+  tile it was built with, and a landing swaps the tile in place. It takes it off the tile the row shows now.
+- **A resize repainted the shop**, taking the focus out of the How-many field (the next key lost), **and the trade
+  between players**, putting a typed stack count back to the whole stack. Both now measure their long lists again, as
+  the pack does, and repaint nothing - the old windows never listened.
+- Checked and faithful: Tab and Shift+Tab through 400 rows (better than before - the old window lost the focus to the
+  pictures' repaints), the pad's spatial steps, lists of 0, 119, 120 and 121, a buy from a 200-piece shelf, the grid view
+  of one height, selection, wear bars, figures, `held` as a Set, landings after a close, during a scroll and mid-pass,
+  the `acting` flag's try/finally, the gold field. The stacked layout (1,100 px wide or less) still jumps its lists to the
+  top at a click - in the old tree too (`.packlists` scrolls them and the repaint gives back each `.packcol`'s): recorded,
+  not this slice's.
+Pins: `test/ui/virtheights.test.js` (7: a list of three heights, its first the tallest, covered at every stop, down and up
+and in one or three columns; a sync never moves what is on the screen; rows reached from the top at the whole list's place
+and the whole list's height; a repaint over the kept heights; one height as before; a resize lets the heights go; a jump
+past tall first rows covered in one sync), `test/ui/enhanced/tradevirt.test.js` (+2: the landed tile's title, the resize).
+Mutants: `tools/mutants/audit_perfpass.json`'s ATV records, all dead; `virt.json`'s four and `tradevirt.json`'s two
+re-aimed at the new code, dead.
+
+## SHADER-STALL — a pass built in play never waits on its compile
+
+*A player's capture, handed on by the owner (2026-10-20: "told there are shader conflicts"): "the load problem is a
+bunch if fucking shaders ive stripped out like 5 diffrent shader and i dont lag oon load up" - "Gate shader
+initialization: 11.43-second stall", "Node-outline shader initialization: 5.65-second stall".*
+
+**Found.** No conflict: no two passes fight over a program. Every pass built its programs through `render/glProgram.js
+buildProgram`, whose LINK_STATUS read (PERF-COMPILE1's one sync point) is a round trip. It holds the page's thread until
+the GPU process has compiled and linked the program, and everything queued ahead of it. A pass built in play froze the
+game for its compile:
+- the world's gate fire the first frame a gate stands (online: the first frames after the load);
+- the gate court's telegraph, built with the court (online: the boot), and its portal, his blows and the crystals
+  (and the Elite Gates' telegraphs and crystals) at their first frame, mid-fight;
+- the veil, built whole at idle the first frame a gate stands;
+- the nodes' outline at idle, the first node ringed (the nodes' glint since NODE-GLINT, the first node lit);
+- PERF-COMPILE1's idle warms: the sea's four programs and the spells' impact pass;
+- the snow's terrain program, the moment its masks land.
+
+PERF-WARM's idle moved a compile off the frame that needed it onto one that did not, and the main thread still waited the
+whole compile. D3D11's compiler takes seconds over a pass's shaders where SwiftShader takes milliseconds. A player who
+strips the passes strips the waits, which is the report's own test.
+
+**The fix.** `KHR_parallel_shader_compile` (every Chromium on a GPU, the desktop app's Electron included: ANGLE compiles
+on threads of its own) lets the page ask whether a program is done without waiting (COMPLETION_STATUS_KHR).
+`glProgram.js startPrograms` starts a pass's programs and answers that question; `buildProgram` takes the started
+program for the same sources instead of compiling its own, so a pass's constructor (unchanged) reads a link already
+made. `compiledPass` is the host's door: the pass built the first time it is wanted AND its programs are done.
+`warmPrograms` takes named steps (`{ start, run }`): it runs a step once its programs are done, asking again at each
+idle. Each pass lists its programs beside its constructor (GATE_PASS_PROGRAMS, telegraphPrograms, GATE_FX_PROGRAMS,
+GATE_VEIL_PROGRAMS, CRYSTAL_PROGRAMS, NODE_GLINT_PROGRAMS - NODE_OUTLINE_PROGRAMS until main's NODE-GLINT moved the nodes' outline to `render/nodeGlint.js`, 2026-10-20, the same two-program pass and the same door - CSA_PART/WAVE_PROGRAMS, SPELL_IMPACT_PROGRAMS), and the
+constructor builds from that list, so the list can't drift from what the constructor compiles. Each of the builds above
+goes through the door; the veil's warm makes its context and starts its program, and the step's build takes it. A pass
+waiting on its compile draws nothing for those frames: the gate's fire, a blow's sparks, the snow's surface stand a
+frame or two late. A browser that cannot say (no extension) is answered "done" at once and waits as it always did.
+
+**Measured.** SwiftShader is not D3D11, so the claim is in two parts: what the door does to a wait, and what the real
+game waited on here.
+- A compile alone (a 340 ms fragment program, a page with nothing else): read at once, the main thread froze 341 ms.
+  Through the door, a poll took 0.1-0.4 ms, the read after it 0.1 ms, and a 4 ms timer ticked through the compile with an
+  8 ms worst gap.
+- Behind the GPU process's queue (six 64 MB texture uploads; a getError round trip 650-685 ms): a poll took 0 ms, a fence
+  0 ms. The poll waits on neither the compile nor the queue.
+- The real game (`tools/compileStallProbe.mjs knight`: Knightstale booted over the freeware ARENA2 with ANGLE's parallel
+  compile on, as a GPU's Chromium has it, every program read timed and named; main and this branch one after the
+  other). After the first world frame the main thread waited on programs 9,033, 8,797 and 114 ms on main (the sea's warm
+  7,127 ms in one run, the spells' 7,558 ms in another); on this branch 14 and 477 ms. The 477 is one uniform lookup of
+  the snow's program, built after its compile: the lookup is a round trip, and it paid the queue's work.
+- The passes no scene here stands (`compileStallProbe.mjs passes`, each in a context of its own): built at once, the
+  gate's fire waited 19 ms, the telegraphs 12-14, his blows 9, the veil 5, the outline 15; through the door 2-3 ms each.
+  These are SwiftShader's milliseconds; the player's driver took 11.4 and 5.7 seconds over the same reads.
+
+**Not changed.** The renderer's own programs, built in its constructor behind the loading screen (2.6-3.1 s here, the
+same on both), and the passes the other scenes build in play (the Spire's, the Hour's, the arenas') keep their builds.
+Each can take the door by listing its programs; `compileStallProbe.mjs` names what still waits.
+
+GATE-MIX (#1082, merged into this branch beside it) had moved the court's sparks, crystals and portal to the arrival,
+one build a frame: its warm now asks each through its door - where the driver compiles beside the frames the three
+start together and block none, and where it cannot, one a frame as it had it (`gatemix_targets`' pin moved to hold both).
+
+Pins: `test/render/shaderstall.test.js` (11), the snow's in `test/systems/audit_environs.test.js`, the court's warm in
+`test/net/gate/gatemix_targets.test.js`. Mutants: `tools/mutants/shaderstall.json`, 17, all dead; `gatemix.json`'s three
+warm records re-aimed at the doors, dead. Source pins moved with the code: `wbx_gate_fixes` (the court's portal),
+`eglook_lines` (the Spire's telegraph).
+
+**AUDIT SHADER-STALL (2026-10-20, the owner: "ensure this is perfect and fidelity isnt lost").** A cold lane read the
+doors against the code before them, over a fake context with and without the extension. What it found, and what was done:
+- **The Elite Breach's telegraphs and crystals could be missing for the whole compile** (the worst: a gameplay loss). Their
+  programs started in the hall's first drawn frame, and a door answers null until the driver is done - seconds on D3D11,
+  while a lord's first blow (`EG_LORD_WAKE_MS`, 2.5 s after he wakes) wound up and landed with no telegraph drawn. Where
+  before the screen had frozen and every drawn frame showed them. Now **a pass the game is played by is never skipped
+  for a compile**: `compiledPass`'s `get(true)` builds it the frame it is needed whatever the driver says (the wait every
+  build had before the slice), and the fights ask so - the Spire's telegraph when a shape is to be drawn and its crystals,
+  the court's telegraph in a fight, his blows' sparks, its crystals and the way in and home. And none of them should
+  have to wait: `render/playPrograms.js` STARTS them - with a gate's fire and the nodes' glint, and the snow's surface -
+  at the renderer's idle warm, where the driver compiles beside the frames, minutes before a player meets them; where it
+  cannot, nothing is started early (a compile queued on its thread holds the frames after it) and each is built the
+  first time it is asked for, as before the slice. So the later appearances the lane listed (a gate's fire, the court's
+  way in, the nodes' ring, the snow's surface) are started long before they are wanted.
+- **A warm whose pass a draw built first started a second compile** of the programs the build had taken (the spells'
+  impact pass, the sea's): a warm step may say whether it is still `need`ed, and stands down when its pass stands.
+- **A pass whose build threw kept its other programs** started for good: its door lets them go (`releasePrograms`).
+- **The veil's warm only started its program**, and the step's frame read its link, found its uniforms and made its
+  buffers - the work AUDIT WB D5's warm had taken off that frame. The warm builds it at an idle once the driver says its
+  program is done (where it cannot say, at the next idle, as WB D5 had it), and never once the veil is gone.
+- **The court's warm (the merge with GATE-MIX)** spent a frame on a pass the draw had already built: it skips a settled door.
+- Checked and faithful: the no-extension path builds every pass in the frame it did, by the same reads; the failure
+  words; a lost context; the program lists against their constructors; one start shared across doors and breaches;
+  both sides of the GATE-MIX merge.
+Pins: `test/render/auditshaderstall.test.js` (8), `shaderstall`'s spells' warm pin moved (its `need`), `wbx_gate_fixes`' on
+the portal's door. Mutants: `tools/mutants/audit_perfpass.json`'s ASS records, all dead; `shaderstall.json`'s four and
+`gatemix.json`'s one re-aimed, dead.
+
+## SNOW-BUDGET — the snow the ground keeps holds to its frame budget
+
+*The same capture, handed on by the owner (2026-10-20): "something about our weather system affecting fps".*
+
+**Found.** The real game's frames after the arrival (the profile of `compileStallProbe.mjs knight` with PROFILE) were led
+by the snowpack (PRECIP3/PRECIP4, `bible/07-Rendering/Biome-Precipitation.md`, two days old). In one run, over 43 s:
+- `snowCoverHost.js at` -> `snowpack.js advance` -> `_step`: 525 ms;
+- the feet's `winterAt`: 273 ms;
+- the grass's `buries`: 175 ms;
+
+of a world frame of 1,353 ms. `SNOW_COVER.budgetMs` is 3 ms a frame, but it was not kept, for three reasons:
+- `advance` read its deadline only after a whole step of the window (121 points), so a frame ran a step at the least.
+- Every reader in a frame ran a budget of its own: the tick, the feet three times (`winterAt`, called before the tick),
+  and the Snowfall mod's `winterNear`.
+- The drawn cover read the ground's slope (`normalY`, four of the stream's heights) for every grass blade and every
+  footstep, before asking whether the snowline laid any snow there at all.
+
+**The fix.** Three changes, and no pack moved:
+- `snowpack.js _step` stops at the deadline between points. The rest carry on in the next call, and each point's
+  history is its own, so every pack is the one one call makes. A call still moves at least one point, so a build's wait
+  with no slice left goes on.
+- `snowCoverHost.js budgetFor` gives the asks within `SNOW_COVER.frameMs` (12) one budget between them; a build's
+  `settle` keeps the breather's own.
+- `drawnCover` reads the slope only where the cover is above nothing. `snowCoverAt` answers 0 for no cover whatever the
+  slope. (Since SNOW-FACE, FIELD BUGS 2026-10-21, it reads no slope at all - AUDIT FB1021 L4-3.)
+
+**Measured.** In node, over the real law (`snowCoverHost.js` and `snowpack.js` from this branch and from its base,
+Woodlands in late winter, an 11 x 11 window caught up while a frame asks as the world frame does - the feet three
+times, the tick, the mod's winter; two runs each):
+
+| | base | SNOW-BUDGET |
+|---|---|---|
+| the snow a frame, median | 18.3 / 18.9 ms | 0.24 / 0.27 ms |
+| p99 | 61 / 66 ms | 5.9 / 6.2 ms |
+| frames over 8 ms | 120 of 121 / 142 of 142 | 6 / 5 |
+
+The window stands in more frames: the year's integration is the same work, spread at the budget the law always named.
+In the real game's minute after the arrival (`compileStallProbe.mjs knight` with PROFILE, two runs a tree) the
+catch-up had finished inside the boot (`settle`, the arrival's budget), so the two trees spent the same there. The
+snow's share of that minute was the grass's `buries`: 394-457 ms. Of its 410 ms on this branch, 231 are still the
+slope's heights, because snow lay in that run. Settled (`frameProbe.mjs knight`, 930 s in), the snow is 0.08 ms of a
+25 ms world frame.
+
+**What it still pays, ranked.**
+1. The weather map's births (`weatherMap.js systemsSpanWalk` -> `birthsIn`): one node of the walk took 65 ms in node,
+   paid once (memoized), and the walk reads its deadline only between nodes. These are the 5-6 frames still over 8 ms.
+2. ~~The grass's slope under snow: `buries` asks the world's `heightAt` four times a blade, a pixel found by a string key
+   each time.~~ Paid off by SNOW-FACE (FIELD BUGS 2026-10-21, `01-Overview/bugs/Field-Bugs-2026-10-21.md`): the snow
+   has no slope, so `buries` asks no height (AUDIT FB1021 L1-3).
+3. A ground set's winter twin (`snowCoverHost.js twinLayers` -> `fit`): 88-173 ms of the minute.
+
+Pins: `test/systems/weather/snowbudget.test.js` (5). Mutants: `tools/mutants/snowbudget.json`, 3 now, all dead (it held 4: SNOW-FACE retired SB-the-slope-read-first with the slope - AUDIT FB1021 L1-3). Tooling:
+`tools/frameAb.mjs` reads the snow's and the falling weather's share of a frame.
+
+**AUDIT SNOW-BUDGET (2026-10-20, the owner: "ensure this is perfect and fidelity isnt lost").** A cold lane ran the
+lattice lock-step against one unbudgeted, and the old code beside the new, a step at a time through whole snow years.
+What it found, and what was done:
+- **The packs were not the ones one call makes** (F1). A step the deadline cut part-way judged its REST quiet on its own -
+  the snowy points in the part already stepped - and skipped it, keeping the `prev` of a point whose snow had melted out
+  the step before (2.7 mm against 0 on a ramp of Woodlands ground, at the 541st step of its year; 33 of 62 windows the
+  lane tried). Seen only above the cell's highest ground, but a pack that hung on the machine's speed. Now a step cut
+  part-way is stepped whole: its rest is never judged again (`_partial` carries the verdict), and a step finished on the
+  quiet path leaves none part-way. Lock-step, the three windows that diverged meet at every step, the counts with them.
+- **The snow blinked longer as the window moved** (F2). Every lattice cell walked (two map pixels) the window let the
+  frame draw no snow at all until it stood at the clock's minute again - an old blink, made longer by the budget (0.4 s
+  became 1.1 s at 60 Hz where no build was waiting), and the Snowfall mod's winter took the calendar's meanwhile (a turn
+  resets its tracks). Now the lines the window kept across the move are drawn, and answer the mod, while it catches up;
+  a window with nothing kept (the first, a jump) draws none, as ever.
+- The shared budget's frame detection (F3): a 144 Hz frame inside the 12 ms window integrates a point, and a slow frame
+  can open a second budget - never more than the old code spent. Recorded.
+- The test's reader stood in another lattice cell than the tick's (F4): moved to the tick's own pixel.
+- Checked and faithful: `drawnCover`'s early return (1,152,072 comparisons, old against new: none differ); unbudgeted
+  packs; a moving window and a clock set back; `settle` and `force`; steady play.
+Pins: `test/systems/weather/snowbudget.test.js` (+2: lock-step to the 560th step of the lane's own window, and the kept
+lines across a move). Mutants: `tools/mutants/audit_perfpass.json`'s ASB records, all dead.
+
+## HORSE-VIEW — a 3D horse is posed where it is seen
+
+*A player's CPU profile (2026-10-21): "Horse Cart pool (peers' horses and carts) 11% (3% with peers' teams not loaded) -
+scenes/horseCartPool.js frame -> poseTeam / pose3dTeam / horseRig.step, writeHorsePalette".*
+
+**Found.** PERF-TEAMS cuts another player's team past `PEER_TEAM_DRAW_M` (400 m); inside it nothing asked the view or
+the distance before a pose. `horseCartPool.js:"function pose3dTeam"` stepped every horse the pool stands - mine, and
+every peer's alone, following, parked in harness or pulling - through `horseRig.js:"function step(h,"`, which stepped
+the gait, wrote the palette (`writeHorsePalette`, 33 bones composed) and sent it (`renderer.updateSkinPalette`, 1,632
+bytes) every frame. Only the draw asked the view (AUDIT COATS3D A12), so a horse behind the eye or a parked pair a
+hundred metres off cost what one in the street did. A riding peer's horse was the same:
+`peerBodies.js:"_saddle(b, shown, f, dt)"` stepped and sent it every frame from `_place`, whatever its rider's body did -
+and that body is posed on PEER-CADENCE's cadence, and not at all out of the view (WB9h). The gait is nothing (20 horses:
+0.005 ms a frame); the pose and its upload are the cost (0.175 ms a frame for 20 - `horsePalProbe`, node 22, this
+container).
+
+**The fix.** The gait's clock steps every frame; the pose waits for the view.
+- `step` takes `pose` (true when left out - the horse I ride (`player/mwView.js`) steps as before; my own Horse Cart
+  and Cargo horse or team is the pool's, and is posed as the pool's are, below; the road's teams and the standing horses
+  since HORSE-VIEW II, its own section). False steps the clock and places the horse, and neither writes nor sends its
+  pose: it stands in the last one sent (`stale`). The palette is the clock's alone, so `horseRig.js:"function pose(h)"`
+  catches a horse up to the very palette an every-frame horse shows on that frame. A horse never posed is posed
+  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"function draw(h, canvas,"` takes `fresh`:
+  a pose behind its clock is caught up before the picture is queued.
+- The pool's horses - every one it stands, mine and every peer's, alone, following, parked in harness or pulling - are
+  posed only in the last body pass's view (`_cam3d`, draw3d's camera - one frame behind; before the first pass, every
+  one), and there on the peers' bodies' cadence
+  (`horseView.js:"export function horsePoseDue(frame, phase, at, cam, eye) {"` - the pool's own `h3dPoseDue` until
+  HORSE-VIEW II moved the law to a module of its own - over `peerBodies.js:"export function poseCadenceFor"`: every
+  frame within 10 m, every second to 25 m, every third past it, by the horizontal distance from the eye - since the
+  audit below the camera's that draws, through its lens - each horse its own phase). A horse skipped out of the last
+  view is `out`, and `draw3d` and `drawVeiled3d` hand that on as `fresh`: one the view swings onto is posed in the draw,
+  never drawn in the pose it had when last seen.
+- A riding peer's horse steps its gait every frame and is posed with its rider (`peerBodies.js:"_poseHorse(b) {"`): on
+  the frames the body's skin is - `_step`, and the draw's catch-up as the view swings onto a body - with the saddle the
+  body is posed to taken off the pose just sent. Out of the view neither is posed - unless the body must be (WB9h's rank
+  3 in `_stepDue`: its first step, its first back from far or from a linger, the step after a rebuild let its mesh go -
+  posed whatever the view says): then its horse is posed with it, out of the view, and the body to that pose's seat (the
+  audit below pins it).
+
+What it changes on screen: a horse within 10 m and in view, nothing. Past it, its stride moves every second or third
+frame (30 or 20 times a second at 60 FPS), as a peer's body's has since PEER-CADENCE; where it stands and how it faces
+move every frame. A rider and their horse move together, as before.
+
+**Measured** (node 22, this container; the real pool over the real rig and bake, GL stubbed and every palette sent
+counted; probes in this record's session scratch, the base tree and this one interleaved ABBA, six runs each,
+medians):
+
+| | base | HORSE-VIEW |
+|---|---|---|
+| 20 peers' horses, half behind the eye, 8-200 m: palettes sent a frame | 20 (32,640 B) | 3.74 (6,106 B) |
+| the pool's frame | 0.236 ms | 0.093 ms |
+| the same 20, all in view: palettes sent a frame | 20 (32,640 B) | 7.74 (12,634 B) |
+| the pool's frame | 0.258 ms | 0.138 ms |
+| 8 riding peers, half behind the eye, 5-115 m: horse palettes a frame | 8 | 2 (the bodies' own poses: 2) |
+| the bodies' sync and draw | 0.145 ms | 0.100 ms |
+
+A second run, the container busier, read 0.339 -> 0.142, 0.310 -> 0.185 and 0.325 -> 0.218 ms: the same shares off,
+some 60, 40 and 33%. The horses drawn are the same in every case (9.86 and 19.86 a frame). Not measured in the real
+game: the online frame probe's bots (`tools/onlineFrameProbe.mjs`) neither ride nor stand teams, so the profile's own
+11% is the player's to read again; it grows with the horses inside the 400 m, and so does what this takes off it.
+
+Pins: `test/systems/horse/fb1021_horses.test.js` (5) - the rig's pose word bit for bit against an every-frame horse;
+its view test and `fresh`; the pool's horse out of the view and swung onto, against an always-seen pool's, and the
+veiled pass; the cadence by distance and phase; a riding peer's horse with its body, its seat, and the draw's
+catch-up. PIN MOVED: `coats3d_horse3d.test.js` (the pool's step) and `horsewalk.test.js` (the saddle's step). Mutants:
+`tools/mutants/fb1021_horses.json`, 22, all dead; `horsewalk.json`'s HORSEWALK-peer-horse-ungated re-aimed at the
+saddle's step as it now reads. The eleven existing records of seven lists within three lines of a changed line, and
+`horsewalk.json`'s 40, were run again: all dead.
+
+**AUDIT HORSE-VIEW (the same day) - the cadence is the picture's.** Three findings, each paid.
+
+1. *The cadence measured from the head, blind to the lens.* The pool's `h3dPoseDue` measured a horse from the eye the
+   frame was handed (world.js gives `hcc.frame` its `cam.pos`, the head), and a body's `_stepDue` from `sync`'s `near`
+   (`player.pos`); neither asked the lens. The camera that draws is `mwv.eye` - `draw3d`'s and the bodies' `draw`'s
+   `eye` - and zoomed all the way out it stands 11.4 m behind the head (`player/mwCamera.js` MAX_DISTANCE, 800
+   units): a horse 2.3 m from the lens, at the screen's side, was 10.03 m from the head and posed every second frame.
+   Through the spyglass (x2 to x8, world.js `glassFov`) a horse 80 m off is drawn as large as one 10 m off, and was
+   posed every third. Now both read the last body pass's camera, as they already read its view:
+   `peerBodies.js:"export const cadenceD2"` is the distance along the ground (PEER-CADENCE's: a height is no
+   distance) from that camera's eye over the magnification of its lens, `peerBodies.js:"export function lensOf"` -
+   the projection's fy over the fy of the frame's own field of view (`ui/viewSettings.js` `fieldOfView`, the lens every
+   host's projection is built on, the glass narrowing it), never under 1, so a lens a frame widens (CLIMB4's kick)
+   poses as the frame's own does. The pool keeps the lens with `_cam3d` (`draw3d`), the bodies with their pass's
+   camera (`draw`); before any pass the pool measures from the frame's own eye and the bodies from `near`, as before
+   (and so does a body never placed, ONE-BAD-BODY's: it has no feet to measure from the camera).
+   One function for both, so a rider and the pool's horse beside them keep one cadence - the NPC lanes' bodies
+   (`characters/npcBodies.js`, the same PeerBodies) with them. world.js is not touched: the modules read the camera
+   they kept. What stays measured from the head is who stands, not how large it is drawn: the bodies' range and
+   nearest-first order, the turn's lead margin, and PERF-TEAMS' reach.
+2. *A body that must pose out of the view, and its horse.* The record above said "out of the view neither is posed"; a
+   body WB9h must pose (rank 3) is posed out of the view, and `_step` poses its horse first whatever the view says - but
+   no pin held it: the horse posed only in the view (`if (pose && b.inView)`) survived, and would have left the horse in
+   its old pose, and the body posed to its old seat, until the next pose on the cadence. Pinned now through all three
+   ways in. The other survivor, the pool's horses held out of the view before any body pass (`e.out = !cam || ...`), was
+   near-equivalent (that pass's `fresh` catches each up before it is drawn); it is pinned by the law the second bullet
+   above states - before any pass every horse is held seen, posed on its cadence from the frame's own eye, and with no
+   eye at all every frame - rather than recorded as equivalent.
+3. *The record's words*, corrected above: a body that must pose is posed out of the view, its horse with it; and
+   "the player's own horse steps as before" is true of the horse I ride (`player/mwView.js`), not of my own Horse
+   Cart and Cargo horse or team, which is the pool's.
+
+What it changes on screen: a horse or a body near the zoomed-out camera, or brought near by the glass, has its stride
+every frame, as one near the head does; first person is as it was.
+
+Measured (the audit's `boomProbe.mjs` and this fix's `lensProbe.mjs`, in its session scratch: the real pool, rig and
+bake and the real PeerBodies, GL stubbed; frames posed of 12; pool horse / riding peer's body / its horse):
+
+| | base | AUDIT |
+|---|---|---|
+| zoomed out, a horse 2.3 m from the lens and 10.03 m from the head (the audit's probe) | 6 | 12 |
+| the same place, a pool horse and a riding peer side by side | 6 / 6 / 6 | 12 / 12 / 12 |
+| the spyglass at x8, 76 m (drawn as at 9.5 m) | 4 / 4 / 4 | 12 / 12 / 12 |
+| the spyglass at x8, 110 m (as at 13.75 m) | 4 / 4 / 4 | 6 / 6 / 6 |
+| the spyglass at x4, 60 m (as at 15 m) | 4 / 4 / 4 | 6 / 6 / 6 |
+| first person, the frame's own lens, 5 / 20 / 40 m | 12 / 6 / 4 | 12 / 6 / 4 |
+
+Pins: `fb1021_horses.test.js` (8): the lens and the distance; zoomed out, the glass at x8 and x4, and first person,
+the pool's horse and a riding peer side by side through world.js's own projection (glassFov) and a lookAt view; the
+three ways a body must pose behind the eye, its horse posed with it each time; the pool before any pass; and a body
+never placed, measured from `near` with a camera up and never throwing on its missing feet. Its
+`proj` is the frame's own lens now (fieldOfView, lensOf 1), so its distances are the ones posed by. PIN MOVED:
+`peercadence.test.js`'s source pin of the cadence's line. Mutants: `fb1021_horses.json`, 36 (14 new, five re-aimed
+where the distance moved into `cadenceD2`), all dead; `peercadence.json`'s
+PEERCADENCE-the-cadence-is-read-off-the-body-when-it-stood re-aimed, its 20 all dead. The lists with records on the
+lines round the change, run again: `horsewalk.json` 40, `wb9h.json` 24, `fb1001_mwcrowd.json` 8, `perf_teams.json`
+12, `invislook.json` 31 and `mwnpc5.json` 18, all dead.
+
+## BOAT-STAMP — each tree its own shape stamp
+
+*A player's CPU profile online (2026-10-21): the Come Sail Away pool's frame 11% of the main thread
+(`scenes/comeSailAway/comeSailAwayPool.js` `frame` -> `walkBoat`, `lateUpdateHolder`, `syncFlats`) and
+`rendererModelKey`, through `partKey`, 2.6% - the key made again most frames.*
+
+**Found.** PERF-SAILS3 keeps a boat's plan (her holders, her flats, her parts, and each part's model key and still
+chain) while her walk's nodes and her tree's shape stand. But the shape was `world/prefabNode.js` `prefabShapeStamp`,
+ONE count for every tree in the game, moved by every `setParent` and `addComponent`. Five caches stood on it for every
+boat:
+- the pool's plan, and with it every part's key (`partKey` reads the plan's entry, made with no key);
+- the pool's still chains;
+- `lateUpdateHolder`'s bones;
+- `boatAnimators` (a walk of her whole tree);
+- `world/prefabColliders.js` `colliderIndex`.
+
+A tree built anywhere moved it: a peer's boat (`comeSailAwayPeers.js` `buildOne`), a sea hull streaming in within
+5 km (`navalHost.js` `buildOne`, one a frame), a re-dress (`setVariant`), a fitting stood (`deckFittingsHost.js`
+`standFittings`), a flag grafted (`graftColours`). The next frame, every boat's plan, keys, chains, bones, Animators and
+colliders were made again.
+
+**The fix** (`world/prefabNode.js` `prefabShapeStamp`, `setParent`, `addComponent`). Each tree keeps its own stamp, on
+its top node (`_treeStamp`). A node hung elsewhere stamps the tree it left and the tree it joined; a component added
+stamps its own tree. Every bump is a fresh draw of one count, so no bump repeats a value any stamp has had, and a node
+whose tree changes never reads a value it read before. A tree never reshaped reads 0, as every such tree does - and no
+reader compares one tree's stamp with another's: each keeps the stamp it read off its own node's tree, and reads that
+node's tree's again. The five readers ask the stamp of their own node's tree (`prefabShapeStamp(node)`).
+No reader needed every tree's changes, so no stamp for all of them is kept. The answers are the same: PERF-SAILS3's
+digest of everything the pool draws, bakes and stands is unchanged, to the bit.
+
+**Its audit** (the same day). The field was `_shape` - and `test/render/perfextb.test.js` PERF-EXT10, which holds every
+field src/ writes after birth on a billboard batch to the factory's own (the renderer's `_sh*` among the names it reads
+by), failed the suite on `src/world/prefabNode.js: ._shape`. It is `_treeStamp` now, outside every name the sweep reads.
+And `topOf`, the climb to a tree's top, would never end for a node hung under itself or a node of its own: no caller does
+it, and `setParent` now refuses it, as Unity's SetParent refuses it - by a throw, before anything moves, so the caller is
+named where it asks. The refusal climbs the new parent's chain once a hanging - a build's, a graft's, a fitting stood
+when her list changes - and no frame of a boat standing as she stood hangs anything.
+
+**Measured.** In node, over the vendored hulls and a stand-in renderer, with two probes kept out of the tree (the
+slice's scratch): `csaKeyProbe` stands eight sea ships, six peers' boats and two of mine, all within 600 m; `farProbe`
+stands four near and twenty far peers' boats, their words at 10 Hz and under way. A tree built every frame elsewhere,
+before and after, three runs each:
+
+| | base | BOAT-STAMP |
+|---|---|---|
+| `csaKeyProbe`: `rendererModelKey` calls a frame | 747 | 0 |
+| `csaKeyProbe`: the frame (the pool's frame and draw, the probe's Animators), ms | 8.92 (7.47-9.81) | 2.13 (2.09-2.52) |
+| `farProbe`: the peers' frame + the pool's frame + its draw, ms | 14.83 (13.67-17.05) | 2.39 (2.30-3.01) |
+
+Medians, with the runs' spread. In the base's `farProbe` run, 7.9 of the 14.8 ms was the peers' frame - `boatAnimators`
+walking all 24 trees again - and `rendererModelKey` was called 1,589 times a frame. With nothing built, `csaKeyProbe`
+spends the same either side (2.45 and 2.11 ms, inside the spread): BOAT-STAMP is what a build elsewhere stops costing.
+
+Pins: `test/systems/comeSailAway/fb1021_boats.test.js` (the BOAT-STAMP test: a sea ship built elsewhere, a tree built
+anywhere, a peer's boat re-dressed, a node hung under one boat, taken out of her, hung from one boat to another, a
+component added - each boat's plan, Animators, bones and collider index made again only where her own tree changed);
+`test/world/navaudit_frame.test.js` THE INDEX FOLLOWS THE TREE'S SHAPE (the per-tree meaning, a node read under a new
+top node); and its audit's refusal (a node under itself, its child, its grandchild: each refused, the tree as it stood -
+in a child process, so the mutant hangs the child, not the suite). Mutants: `tools/mutants/fb1021_boats.json`'s
+BOAT-STAMP records, all dead.
+
+## BOAT-FAR — a far boat lives by the sea's ships' law
+
+*The same profile: the pool's frame was still 6% of the main thread with the peers' boats not loaded.*
+
+**Found.** The pool's `frame` walked, baked and lit every boat it draws - mine, the peers', the sea's - every frame
+wherever she was. The peers' `pose` stepped every peer's boat's Animators every frame at any range: up to eight boats
+a player, anywhere in some 3 km. The sea's ships already had a law for their rigging (AUDIT NAV1 #17, `navalHost.js`
+poseShip): past NEAR_LIFE_M (600 m) of the eye, every FAR_LIFE_EVERY (4) frames, on the time it missed. The pool and the
+peers had none. And holding a far boat's walk in `frame` alone saves nothing: `syncFlats` and `draw` walked her again
+for themselves (`walkOf`).
+
+**The fix** (`scenes/comeSailAway/farLife.js`; `comeSailAwayPool.js` `frame`, `lifeOf`, `heldShift`, `walkOf`;
+`comeSailAwayPeers.js` `pose`):
+- **One law, each reader's eye.** NEAR_LIFE_M, FAR_LIFE_EVERY and the step (`farLifeStep`) live in `farLife.js`.
+  `navalHost.js` re-exports the constants and poseShip reads the step. The eye the range is read from is not shared:
+  poseShip's is the frame's view (`deps.look().origin`, the camera with Eye of the Beholder's over-the-shoulder offset,
+  or the feet with no look), the pool's the playerPosition its frame is handed (`world.js`: `player.pos`), the peers'
+  the pool's last. Where the camera stands apart from the player - over the shoulder, a free camera - a sea ship and a
+  boat at the one range are judged from eyes as far apart. One eye for all three is `world.js`'s change (the host hands
+  the pool its world), left to a slice that touches it.
+- **The pool.** `frame` reads the law from its playerPosition. Past 600 m a boat is walked, her holders baked and her
+  lanterns decided one frame in four, each boat on her own frame of the stride, on the time she missed. A boat with no
+  frame's walk to hold (new, re-dressed, moved by the origin, or walked since by a draw), whose tree was reshaped since
+  her walk, or (its audit) one of whose nodes was switched on or off since is walked whatever her range.
+- **The held walk.** On the frames between, her last walk is held: `walkOf` answers it, so the flats and the draw never
+  walk her again. It is carried to where she stands by her hull's move since it (`heldShift`: her hull's matrix now times
+  the inverse of her walk's). Her still batch is drawn at her hull's matrix as it stands, to the bit, and every other
+  part and flat of hers by the same move, so nothing of hers falls behind her hull as she sails and rolls.
+- **The peers.** `pose` steps a peer's boat's Animators by the same law, from the pool's last frame's eye
+  (`pool.lifeEye`).
+
+**Its audit** (the same day). A held walk was kept while her tree's shape stood, but a switch is not a shape's change:
+a far Carrack switched off (a peer's look 'hidden', `UpdateBoatVisibility`) drew her 18 meshes up to three frames more,
+and switched on drew nothing for as many; her helm taken (`IdleObject` off, `ActiveObject` on) and a sea ship's sails set
+(poseShip's `setActive`) were as late. Which nodes a walk reaches is a function of the tree's shape and its switches, so
+each tree keeps a second stamp (`world/prefabNode.js` `prefabSwitchStamp`, on its top node, `_treeSwitch`): bumped by a
+`setActive` that changes what a node reads - one that sets what it reads bumps nothing - and `lifeOf` keeps a held walk
+only while both stamps stand. Recording her root's `activeSelf` alone would have missed the helm and the sails. A held
+boat is now drawn as switched the next frame, as a near one is.
+
+Departs from Come Sail Away's FixDeformations.LateUpdate and DFU's DaggerfallLight.Update and DungeonLightHandler.Update,
+which Unity runs on every boat every frame: past 600 m they run every fourth frame on the seconds she missed, so their
+timers count the same time and a change of the city lights reaches her up to three frames late. Within 600 m nothing
+changes - PERF-SAILS3's golden run stands its ships within 330 m of its player and its digest is unchanged. Its row is in
+`01-Overview/Port-Ledger.md` (Ledger A, continued).
+
+**Measured.** `farProbe`, four near and twenty far peers' boats, nothing built elsewhere, before and after:
+
+| ms a frame | base | BOAT-FAR |
+|---|---|---|
+| the peers' frame (their poses, their Animators) | 0.97 | 0.44 |
+| the pool's frame | 2.71 | 1.25 |
+| the pool's draw | 0.81 | 0.76 |
+| all three | 4.49 (4.25-4.70) | 2.45 (2.32-2.67) |
+
+Medians of three runs. Eight sea ships 1.2-1.9 km off with four near peers' boats: the pool's frame 0.88 -> 0.60 ms.
+Four near boats alone: the same either side within the runs' spread (0.52 and 0.62 ms, the runs 0.51-0.73) - within
+600 m the law holds nothing back.
+
+**What it still pays.** The still batch's chain reads (`stillBatch`), every frame, held or not: what else the draw read
+of a held boat is HELD-DRAW's, below.
+
+Pins: `test/systems/comeSailAway/fb1021_boats.test.js` - a near boat walked every frame, two far ones one frame in four
+on strides of their own, their lanterns' and sails' timers on the time they missed and still between; a held boat's
+batch at her hull's matrix to the bit, every other part and flat where its node stands now as she sails and rolls - each
+drawn mesh matched to a part of its own, by the mesh the draw drew it with (its plan entry's `gpu`) and its node's
+matrix, a part turned out of her batch among them - and so again when she moves between a frame and its draw; a far
+boat reshaped, new, moved by the origin with a draw between, or re-dressed, walked; switched off, nothing of her drawn
+the next frame, and switched on, all of her, on every frame of her stride, her helm taken and let go the same, and a
+switch that sets what a node reads holding her as before; a part hung on her root, outside her hull's frame, never
+batched and drawn where it stands, and with her hull switched off carried by her root's move; a peer's boat's Animators
+past 600 m one frame in four from the pool's eye, every frame with none; the law's own cases (the ground plane, the
+stride's frame, the missed time kept across coming near). `test/systems/naval/navaudit_presentation.test.js` keeps the
+sea's ships' stride. Mutants: `tools/mutants/fb1021_boats.json`, 37 - 36 dead and one equivalent as recorded: the
+bones `lateUpdateHolder` keeps by its tree's stamp are `resolveNodePointer`'s, read off the instance's own `prefabPaths`,
+which no reshape changes (a holder hung elsewhere reads another node, a new bone list is another list), so the stamp
+read as 0 resolves the same nodes. `stillChain`'s stamp is pinned by the part hung outside her hull's frame.
+
+## HORSE-VIEW II — the road's and the standing horses are posed as the pool's are
+
+*The record's Left (FIELD BUGS 2026-10-21c): "the road's stranger teams and the standing horses, still stepped every
+frame" - HORSE-VIEW's own Left.*
+
+**Found.** HORSE-VIEW left two lanes of 3D horses as they were. The road's strangers (`roadTeams.js`: the nearest
+`WAGONS_DRAWN` (6) wagons' horses and every pack horse of the parties within the roads' reach) stepped every 3D horse
+with its pose every frame - behind the eye and at any range. The standing horses (`world/standingHorses.js`: the nearest
+eight within 60 m) were posed every frame in the view at any range, and one out of the view was not stepped at all: its
+idle's clock stood, so turned back into the view it took up its idle where it had left it, not where an every-frame
+horse would stand.
+
+**The fix** (`world/horseView.js`; `roadTeams.js`, `standingHorses.js`, `horseCartPool.js` `pose3dTeam`).
+- **One law.** HORSE-VIEW's law lived in the pool (`pose3dTeam` and its `h3dPoseDue`); it is its own module now,
+  `horseView.js:"export function poseWhereSeen(rig, horse, at, cam, eye, frame, phase, wasOut = false) {"` over
+  `horseView.js:"export function horsePoseDue(frame, phase, at, cam, eye) {"`, and the pool, the road and the standing
+  horses read it: no pose out of the camera's view; in it, the peers' bodies' cadence (`poseCadenceFor`) by how far
+  the horse looks from that camera, over its lens (`cadenceD2`, `lensOf`), each horse its own phase - and one come into
+  the view since it was last judged out of it posed then, whatever its cadence says (`wasOut`, the audit below); its
+  answer, `out`, handed to the draw as `fresh` and back to the law the next frame. The pool's pins stand as they were,
+  and its mutants, re-aimed into the module, die there.
+- **The road's strangers.** Every 3D horse's gait steps every frame (`pose: false`) and its pose is judged by the last
+  body pass's camera, as the pool's are: `draw3d` keeps it with its eye and lens (one frame behind), and catches up a
+  horse skipped out of that view as the view swings onto it; one that moved into the view is posed as the sync judges
+  it in (`roadTeams.js:"s.out = poseWhereSeen(rig, s.h3, h.feet, cam3d, eye, frameNo, s.phase, s.out);"`). Before any
+  pass, from the frame's own eye (the roads' `cam.pos`).
+- **The standing horses.** Every horse that stands steps its idle's clock every frame. `end` judges the view by the
+  camera the frame draws through - both hosts hand it the `{ proj, view }` they hand the draw - and the cadence by the
+  distance from `begin`'s eye (world.js `mwv.eye`, exterior.js `eye`) over that camera's lens
+  (`standingHorses.js:"e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);"`); `draw`
+  draws the ones in the view and catches up one come into it since its last pose (`fresh`) - judged by the camera it
+  is drawn through, however it came into the view, so it hands the law no `wasOut`. The view test is the rig's
+  own (`seen`, the draw's box), where it was a ball at the feet of its own (`VIEW_LIFT`, `VIEW_REACH`, gone): a horse
+  whose ball was out and whose box was in is drawn now, where it was dropped at the screen's edge.
+
+THE FOUR HOSTS: the standing horses stand in `scenes/world.js` (the streamed world) and `scenes/exterior.js` (the fixed
+city), both through the module and neither changed; the road's teams in world.js alone (the living roads stand
+nowhere else); `scenes/worldModes.js` and `scenes/dungeonContext.js` stand neither.
+
+What it changes on screen: within 10 m of the camera, nothing. Past it a stranger's stride and a standing horse's idle
+move every second or third frame, as the pool's horses' and the peers' bodies' have since HORSE-VIEW; where they stand
+and how they face move every frame. A standing horse turned back into the view shows the idle an every-frame horse
+shows (it took up where it had left it before).
+
+**Measured** (node 22, this container; the real road's teams and standing horses over the real rig and bake, GL stubbed
+and every palette sent counted; probes in this record's session scratch, the base tree and this one interleaved ABBA,
+six runs each, medians - the container under a load average near 28 on its four cores, so the times are some twice a
+quiet run's):
+
+| | base | HORSE-VIEW II |
+|---|---|---|
+| the road: twelve strangers' horses (six wagons' and six pack horses), 8-200 m, half behind the eye: palettes sent a frame | 12 (19,584 B) | 1.85 (3,016 B) |
+| the teams' sync and 3D draw | 0.665 ms | 0.469 ms |
+| the same twelve, every one ahead of the eye: palettes a frame | 12 | 3.81 |
+| the teams' sync and 3D draw | 0.773 ms | 0.620 ms |
+| the standing horses: eight in the view, 5-55 m: palettes a frame | 8 | 4.33 |
+| `end` and `draw` | 0.508 ms | 0.459 ms |
+| the same eight, half behind the eye: palettes a frame | 4 | 2.17 |
+| `end` and `draw` | 0.348 ms | 0.378 ms |
+
+The horses drawn are the same in every case (4.77, 10.36, 8 and 4 a frame). A first run, the container quieter, single
+runs: the road 0.295 -> 0.107 and 0.330 -> 0.210 ms; the standing horses in view (ABBA, six runs) 0.181 -> 0.136 ms.
+The standing horses half behind the eye cost a little more CPU in the stub (inside its spread, 0.20-0.49 against
+0.35-0.43 ms): the four behind it are stepped now - their clocks, so they show an every-frame horse's idle as they come
+back - where they were not stepped at all; what they save is the palettes, and a palette sent is a texture upload the
+stub prices at nothing.
+
+Pins: `test/systems/horse/fb1021b_strangers.test.js` (4) - the road's horse out of the last pass's view not posed
+frame after frame, and swung onto, posed in the draw before it is drawn, bit for bit an always-seen horse's pose; the
+road's cadence by distance, along the ground, by phase, through the glass at x8, and before any pass from the frame's
+eye; the standing horse out of the view neither posed nor drawn and no bind opened for it, and swung onto - within 10 m,
+and at 30 m on every frame of its cadence - posed before it is drawn in the pose an every-frame horse shows; the
+standing cadence by distance, phase and the glass, and with no camera from `begin`'s eye. PIN MOVED: `standflats.test.js`
+STAND-HORSE let go (one out of the view is stepped now, its clock, and neither posed nor drawn - its recording rig took
+the rig's `seen` and `pose`), `coats3d_horse3d.test.js` (the road's step, `pose: false`). Mutants:
+`tools/mutants/fb1021b_strangers.json`, 20 (the road's, the standing horses', the pool's three arguments to the law, and
+the law's pose), all dead - the standing horses' two `fresh` records only once the catch-up was pinned past 10 m (within
+it the cadence poses a horse the frame it comes into the view, so `fresh` had nothing to do); `fb1021_horses.json`'s eight records of the pool's cadence and view re-aimed into
+`horseView.js`, and `standflats.json`'s STAND-HORSE-unseen-stepped onto the standing horses' view.
+
+**AUDIT HORSE-VIEW II (the same day) - a horse that moves into the view is posed as it comes in.** Two findings, each
+paid.
+
+1. *The entry into the view.* The law judged `out` by the last pass's camera at the horse's new place, and the draw's
+   `fresh` caught up only a horse that camera judged out. One out of the view where it stood that moved, between two
+   syncs, into that camera's view - a jump past the pool's ease (`easeToward`'s 20 m snap: a peer's teleport), a team
+   come round the eye - was judged in by the very camera that had judged it out; on a frame its cadence skipped, it was
+   drawn in the pose it had when last seen, however long ago. The audit's probe - the road's stranger 40 m behind the
+   eye, jumped 40 m ahead of it - found it so on four of six frames of entry (every third frame is posed at 40 m). Now
+   the caller hands the law its last answer: a horse judged in that was out when last judged is posed then
+   (`horseView.js:"if (!out && (wasOut || horsePoseDue(frame, phase, at, cam, eye))) rig.pose(horse);"`) - the road's
+   `s.out`, the pool's `e.out`. The standing horses hand none: `end` judges them by the camera they are drawn through,
+   so the draw's `fresh` - the judgement before - catches up one come into the view however it came. The probe again:
+   none of six.
+2. *The road's cadence from the pass's eye, unpinned.* `draw3d` keeps its camera's eye for the next sync's cadence;
+   dropping it (the cadence read from the roads' `cam.pos`) survived every road pin, which put the sync's eye and the
+   pass's at one place along the ground. Pinned now with the boom drawn out 8 m behind the head: a horse 5 m from the
+   head and 13 from the lens is posed every second frame.
+
+What it changes on screen: a horse that comes into the view by moving into it shows the pose an every-frame horse shows
+that frame, as one the view swings onto always did. It costs one pose, the frame it comes in.
+
+Pins: `fb1021b_strangers.test.js` (5) - the road's stranger jumped from behind the eye 40 m into the view on each of
+the three frames of its cadence, posed before it is drawn, in an always-seen horse's pose; the road's cadence from the
+boom. `fb1021_horses.test.js` (9) - the pool's peer's horse the same, past the ease's snap. Mutants:
+`fb1021b_strangers.json`, 25 (five new: the law's last answer unread, the standing horses' default, the road's and the
+pool's last answer not handed, the pass's eye never kept; five re-aimed onto the lines as they read now), all dead.
+Run again round the change: `fb1021_horses.json` 36, `standflats.json` 18, and the road's records of `lw10`,
+`auditlwii2_road` and `perfwagon` (20) - all dead.
+
+## BOAT-OWN — my own boats live by the far law
+
+*The record's Left: "my own boats' Animators ... still stepped every frame"; BOAT-FAR's What it still pays, 2.*
+
+**Found.** Come Sail Away's runtime steps every boat the player owns - wherever it lies: a fleet moored in three ports -
+at the head of its LateUpdate: every Animator (`animate`) and every particle system (`simulateParticles`), every frame,
+at any range. BOAT-FAR gave the peers' boats and the pool's walk the sea's ships' far law; mine had none, and their
+step sits inside `createComeSailAwayRuntime`, a host under its ceiling (`test/scenes/hostceiling.test.js`).
+
+**The fix** (`scenes/comeSailAway/farLife.js` `createBoatLives`, `farTreeStep`; `systems/comeSailAway/comeSailAway.js`
+`animate`, `simulateParticles`; `comeSailAwayPool.js` `lifeOf`; `comeSailAwayPeers.js` `pose`).
+- **A module the runtime wires.** `comeSailAway.js:"const lives = createBoatLives({ eye: () => deps.pool?.lifeEye?.() ?? null });"`,
+  and the runtime's two steps call it (`farLife.js:"export function createBoatLives({ eye = () => null } = {}) {"`):
+  past NEAR_LIFE_M of the pool's last eye (`lifeEye`, the one the peers' boats read) a boat's Animators step one frame
+  in FAR_LIFE_EVERY on the time she missed, each boat on her own frame of the stride, and her particle systems on the
+  same frame and time, none between. With no eye (a pool that keeps none), every boat every frame, as before. The
+  runtime is three logical lines shorter, and its ceiling came down with it, 2,783 -> 2,780.
+- **A ship's tree** (`farLife.js:"export function farTreeStep(life, dt, root, pos, eye) {"`). One whose tree was
+  switched on or off or reshaped since she last lived lives that frame, whatever her range. BOAT-FAR's audit gave the
+  pool's held walk this rule (its two stamps, inline in `lifeOf`); an Animator needs it as much - switched off it does
+  nothing, switched on it starts over from its default state - so a far boat of mine stood again as I come out of a
+  building would otherwise wear her old pose up to three frames before starting over. The pool's `lifeOf` reads the
+  same function now (the same answers: its pins are unchanged), and so does a peer's boat's Animators' step - hidden or
+  shown, her helm taken or let go, she lives that frame (a new boat lives her first frame too).
+
+Departs from Come Sail Away's LateUpdate as Unity runs it (every Animator and particle system of every boat every frame):
+past 600 m her Animators and particle systems step every fourth frame on the seconds she missed - their clocks count the
+same time; a CrossFade asked of her (a sail set, her helm) is taken up to three frames late, and a particle system
+steps up to four frames' time at once, as the sea's ships' have since AUDIT NAV1 #17. Within 600 m, and with no eye,
+nothing changes. The Port-Ledger's BOAT-FAR row and the Come Sail Away row's (19) say so.
+
+**Measured** (the real runtime and SpawnBoat over the vendored hulls, `test/csaScene.mjs`; the runtime's LateUpdate
+paused, so its Animators and particle systems alone; ABBA, six runs each, medians, the container under the same load):
+
+| ms a frame, ten boats of mine (118 Animators, 498 particle systems) | base | BOAT-OWN |
+|---|---|---|
+| two by the player, eight moored 1-3 km off | 1.66 (1.33-1.90) | 0.87 (0.53-1.29) |
+| all ten by the player | 1.58 (1.24-1.94) | 1.51 (1.37-1.83) |
+
+A first run, quieter (ABBA, two runs each): 0.96 -> 0.39 ms and 0.90 -> 0.90 ms.
+
+Pins: `test/systems/comeSailAway/fb1021b_ownboats.test.js` - my boats past 600 m of the pool's eye stepping their
+Animators and particle systems one frame in four on the time they missed, each on her own frame, a near one every
+frame, every boat every frame with no eye; a far boat of mine switched off and on, and an Animator hung on her, living
+that frame on every frame of her stride, her rudder started over then; a peer's far boat hidden and shown the same,
+her door started over the frame her owner is shown. Mutants: `tools/mutants/fb1021b_ownboats.json`'s BO records, 11,
+all dead; `fb1021_boats.json`'s FB1021-reshaped-far-boat-held and FB1021-switches-unread re-aimed into `farTreeStep`,
+FB1021-draws-walk-held and FB1021-peer-range-unread onto their lines as they read; `fb1011c_seatown.json`'s
+ST-away-passed-over and `csa_waves.json`'s CSA-F-particles-step-paused onto `createBoatLives`, `hostsplit.json`'s
+runtime ceiling onto 2,780.
+
+**AUDIT BOAT-OWN (the same day).** Two lines of `farLife.js` read more than they decided; each says what it does now,
+and no answer moves.
+1. *Her stamps kept only as she lived.* `farTreeStep` wrote her tree's stamps on a frame she lived alone. A frame that
+   holds her is one whose stamps read as kept - a changed one hands `farLifeStep` no place, and she lives - so there
+   they were written with what they held: the guard is gone (`farLife.js:"life.shape = shape; life.on = on;"`), its
+   mutant (the stamps kept every frame) was the same answer, and BO-tree-stamps-never-kept is re-aimed onto the line.
+2. *A parent no root of mine has.* `createBoatLives` read a boat's place as `root.parent ? root.position :
+   root.localPosition`, the pool's `lifeOf`'s shape; a boat of mine is SpawnBoat's
+   (`comeSailAwayBoat.js:"newBoat.GameObject = new PrefabNode('Boat');"`) and nothing in the tree hangs that root under
+   another node, so the first branch was never taken and its mutant survived every pin. It reads `root.localPosition`,
+   and says why; BO-lives-eye-unread and BO-lives-range-unread are re-aimed onto it. The pool's `lifeOf` has the same
+   branch over roots built the same way, and keeps it: it is not this record's line.
+
+## HELD-DRAW and HELD-FLATS — a held boat is drawn from what her walk found
+
+*BOAT-FAR's What it still pays, 1 and 3: the draw read a held boat's plan every frame, and her flats were written whole
+every frame.*
+
+**Found.** On the real pool with four near boats and twenty far ones, lit (their lanterns and crews: 456 flats), rolling
+in the swell, a profile put the draw's own loop and `stillBatch` at a fifth of the time, and the flats' world rotation
+(`lossyScaleOf` climbing `rotation` up a tree her roll moved every frame) and product beside them - for boats whose walk
+the frame held, where nothing those reads answer had moved.
+
+**HELD-DRAW** (`comeSailAwayPool.js` `draw`, the walk's `draws`). On a frame that holds her, her parts are drawn from the
+list the draw over this walk made (`comeSailAwayPool.js:"if (walk.heldAt === walkStamp && list.at === walk.stamp) {"`):
+which parts draw, with which mesh, alone or in her hull's frame. Nothing a part is read for there moves between her
+lives: her switches and her shape end a hold (`lifeOf`), her bakes step as she lives, a part's meshes and materials are
+her build's (`applyRuntimeMaterials`, `applyGameTextures`; a re-dress drops her walk). Where each stands is made every
+frame, carried by her move (`placed`), and her still batch is still asked every frame - its chains read, so it counts
+her frames still and is made when it was. A list made over an older walk is not drawn from (the frame that walked her
+drew nothing), nor one a draw made outside a frame. The departure, past 600 m only: a mesh still loading when she was
+walked (a part's first sight, `meshFor`; the pipeline's classic models) is drawn from her next life, up to three frames
+later; a part's renderer switched on or off while she is held likewise. Once she is built, only her crew's flats are
+switched in this tree - `navalCrew.js:"for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }"`
+as a crew stands in their places, and `standDown` puts each back - and the draw passes a flat by, switched or not:
+`syncFlats` reads a flat's `m_Enabled` every frame, held or walked.
+
+**HELD-FLATS** (`comeSailAwayPool.js` `syncFlats`, `placedAt`). A flat she stood on the frame that walked her keeps the
+scale that frame found (`comeSailAwayPool.js:"const kept = e.at === walk.stamp;"`), and only its place is made:
+`comeSailAwayPool.js:"function placedAt(r) {"` is `placed()`'s translation alone - the same products summed in the same
+order, rounded as mat4.js `multiply`'s scratch rounds them - so a held flat stands where it stood, to the bit. Its size
+is her walk's frame's own, as its place is: both come from her held walk. Not because nothing moves her nodes between
+her lives - since BOAT-OWN an Animator of hers steps on a stride of its own (mine on `createBoatLives`' `seq`, a peer's
+on `comeSailAwayPeers.js`'s `lifeSeq`, where the pool walks her on its `_lifeSeq`), so it can move or scale a node on a
+frame the pool holds her - but because a held flat is drawn from her walk whole: it takes such a move at her next life,
+its size with its place. The size a held frame found before came off her held walk's matrix too, through the node's
+live rotation - her walk's own to a float's last places, unless an Animator had turned the node since. A flat scaled while
+she is held takes its size from her next life, as before. What a held frame does read live is her still batch's chains
+(`stillBatch`, every frame, held or walked): a part an Animator moves while she is held leaves the batch that frame and
+is drawn on its own, where her walk stood it.
+
+**Measured** (the real pool over the vendored hulls, fb1021_boats.test.js's stand-in renderer, its pictures sized so
+the flats stand; four near and twenty far boats, lit, rolling; ABBA, six runs each, medians, the container under the
+same load):
+
+| ms a frame | base | HELD-DRAW, HELD-FLATS |
+|---|---|---|
+| four near and twenty far: the pool's frame (its walks, bakes, lanterns and flats) | 10.23 | 8.41 |
+| the pool's draw | 5.34 | 3.93 |
+| both | 15.59 (13.62-16.02) | 12.26 (10.70-13.02) |
+| four near alone: both | 2.75 (2.57-3.28) | 2.70 (1.71-3.25) |
+
+A first run, quieter (ABBA, two runs each): 5.67 -> 4.66 ms (the frame 3.71 -> 3.20, the draw 1.96 -> 1.46) with the
+twenty far, and the four near alone the same within the runs' spread (0.85 and 0.97, the runs 0.77-1.09). The base is
+the BOAT-FAR tree's; `lifeOf` reading `farTreeStep` gives the same walks and the same holds.
+
+Pins: `fb1021b_ownboats.test.js` - HELD-DRAW: on a frame that holds her none of her renderers read and the very meshes
+her walk's draw drew drawn, a near boat's read every frame and her parts drawn where they stand as she sails; a part
+switched off read as she lives, a list made over an older walk made again, and every draw before any frame reading her; HELD-FLATS: on a frame that holds her no flat's
+world rotation climbed and every flat where `placed()` stands it, to the bit, a flat scaled while she is held its walk's
+size until her next life and its own after it. `fb1021_boats.test.js`'s BOAT-FAR pins stand unchanged over both (each
+held part where its node stands, her batch at her hull's matrix to the bit, switched and reshaped boats). Mutants:
+`fb1021b_ownboats.json`'s HD and HF records, 13, all dead; FB1021-held-parts-at-the-hull and FB1021-flats-unshifted
+re-aimed onto the held list's draw and the flats' place, and `audit0928_online.json`'s A0928-R5-flat-scale-walks-again
+onto the scale's line as it reads. `perfsails1.json`'s PERF-SAILS2-the-draw-reads-unmade survived the change: its one
+killer had been a far galley's held frames (`audit0928_online.test.js` O4), which draw from the held list now (its own
+record, HD-held-alone-unmade); the near boat sailing above kills it on the walked path. A0928-R5-flat-scale-walks-again
+survives - as it does on the base (`9a46fc23a`): `lossyScale` reads the node's own worldMatrix, the walk's matrix to the
+bit, so it is the same answer, and it is not this slice's to record. The lists with records on the lines round the
+change, run again (`fb1021_horses` 36, `fb1021_boats` 37, `fb1011c_seatown` 8, `standflats` 18, `hostsplit` 8,
+`perfsails1` 8, `perfsails3` 11, `lw10`, `perf_teams` and `auditlwii2_road`'s road records, and the draw's and the
+flats' records of `audit0928_online`, `csa_boats`, `csa_waves`, `navaudit_frame`, `shipfade`, `shiplivery`,
+`shipplaque`, `auditrefit2`, `dflook`): 205 dead, FB1021-bones-stamp-unread equivalent as recorded, and the two above.
+
+**AUDIT HELD-DRAW and HELD-FLATS (the same day).** Three lines no pin held, and the record's two reasons.
+1. *Her livery on a held frame.* A held boat's lone parts are drawn in her paint
+   (`comeSailAwayPool.js:"for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint);"`); a mutant that dropped
+   `paint` there - a painted far boat drawn as built on every frame the pool held her - survived every pin: the stand-in
+   renderer recorded no remap, and no boat wore a livery. The HELD-DRAW pin's far galley wears one now (her planks
+   stained and her sails tinted, over the stand-in's planks), her paint is on a part of hers drawn on its own, and on a
+   held frame each of her parts is drawn by the very remap her walk's draw drew it by.
+2. *A flat's height.* `e.sy` stood on no pin: every fixture scaled a flat alike on each axis. The HELD-FLATS pin's flat
+   is stretched now (`[2, 3, 2]`), and takes three times its height at her next life.
+3. *`placedAt`'s `0 +`*, recorded as equivalent: it is `multiply`'s `let sum = 0`, and dropping it could change only a
+   -0's sign, where every product before the last is -0 - and the last, the held shift's translation times her walk's
+   homogeneous one, never is (the shift is `multiply`'s own answer, whose sums start at +0). Every place is the same
+   float, its sign too.
+4. *The record's words*, corrected above: her renderers are switched once she is built - her crew's flats, which the
+   draw passes by; and a held flat keeps her walk's size because it keeps her walk's place, not because nothing scales
+   her nodes between her lives.
+
+Mutants: `fb1021b_ownboats.json`, 27 - HD-AUDIT-held-paint-dropped and HF-AUDIT-height-off-the-width new and dead,
+HF-AUDIT-place-zero-dropped equivalent as recorded, and the BOAT-OWN audit's three re-aimed; 26 dead. Run again round
+the change: `fb1021_boats.json` 37 (36 dead, FB1021-bones-stamp-unread equivalent as recorded), `fb1011c_seatown.json`
+8 and `csa_waves.json`'s CSA-F-particles-step-paused - all dead.
+
+## OW-HITCH — the Overworld's hitches, measured in the real game
+
+*The owner (2026-10-21): "Theres still a lot of hitching in the overworld. Can you please fix this properly".*
+
+**How it was measured.** The freeware ARENA2 (`tools/fetch-data.sh`), Knightstale at 15:00, a new character, `&nofoes`
+not yet set (a foe found the player in the first run - which is how the blood sheet below was met). Chromium on
+SwiftShader in this container, 160 x 90, one page kept open by a driver in the session's scratch (not in the tree - the
+owner stopped the probe there): the world booted with the stream's build slice served at 250 ms by a probe-only edit
+(frameProbe's, made switchable), the opening windows closed, the slice put back to the game's own, then the Overworld
+raised (`__overworld`) and W held - the Travel Options speed, x60 (TV-WASD) - under one CPU profile at 250 us, every
+frame's `performance.now()` pinned to the profile's clock by a marker function in the first frame. 152 frames, 41.2 s of
+script. SwiftShader takes three of the four cores, so the main thread is starved and every figure below is several times
+a player's - they rank the costs; they are not a player's milliseconds. The fixes were then measured in node over the
+real modules (and the real data where a module reads it), each base tree against this one.
+
+**Found - the frames that froze, by what held them:**
+- the grass, the frame the Overworld came down: 4,746 ms of script in `labGrass.js clearSlot`'s `bufferSubData` - the
+  field frees every cell the journey left behind at once, and each free wrote 49 KB of zeros into the buffer the last
+  frame drew from - and 2,394 ms the next frame in `writeSlot`'s uploads;
+- the collector: 15.8 s of the 41.2 - the largest single pauses 0.5-1.8 s;
+- the blood sheet: 966 ms in one HUD draw (`bloodArt.js bloodAtlas`, the first blow), its idle-time prewarm never run;
+- every frame: the snow (`snowCoverHost` - `windowAbout`, the year's catch-up of each lattice edge at x60 - and, under
+  the grass's refill, four of the stream's heights a blade in `drawnCover`), the Living World's trips (`townTrips`, a
+  way's inns asking `livingTownsNear` at every pixel of it), the music's pump (`eventsInWindow`).
+Read beside them, not seen in this run: a ground set met at a new climate (What the boot still pays, 4) - 0.5-1.1 s in
+BOOT-FREEZE's runs, and a journey crosses climates.
+
+**The fixes, each the same answer for less:**
+- **The grass's uploads** (`labGrass.js`). `clearSlot` uploads nothing: a slot draws only with a box and a count
+  (GRASS2), so its zeros were never read. `writeSlot` uploads the `count` blades that stood, each lane from its start (a
+  road's or a shore's cell is mostly pad; an empty one uploads nothing). The lanes the draw reads are the bytes they were.
+- **The grass's garbage** (`labGrass.js`). The field places into two cells' arrays (`beginGrassCell`'s `reuse`, zeroed
+  first: the bytes a new cell holds) where it made five typed arrays a cell, 343 KB, 123 MB a refill; the xorshift word
+  lives in a `Uint32Array` (a closure's `let` past a small integer was an object at every one of a draw's four writes);
+  `grassClump` writes its two octaves' noise out in itself (the same operations in the same order). In node, three
+  refills of the 360-cell field: 193 -> 70 scavenges and 2.0 -> 1.4 s; a fill and a ride: 791 -> 251 MB allocated on the
+  heap, 2.5 -> 1.5 s.
+- **The blood sheet** (`bloodArt.js prewarmBloodAtlas`). Each idle request names a wait (BLOOD_PREWARM_WAIT_MS, 250 ms);
+  one run because the wait ran out takes one cell of the forty and asks again. The HUD's lens asks the prewarm too
+  (`hud.js`: the marks asked it only with the marks on). The same sheet to the byte.
+- **The snow under a blade** (`snowCoverHost.js`, the host's `normalOf`). The ground's fragment sheds its snow by its
+  own vertex normal (`snowCover(..., normalize(vNormal), ...)`); `buries` and the feet read a standing pixel's normal
+  there - the grid's, one triangle - where they read four of the stream's heights a metre either way, another surface's
+  slope and four pixel lookups a blade. THE ONE CHANGE TO THE PICTURE: a blade at a snowline's slope edge stands or is
+  buried by the slope the ground is drawn with; a host that hands no normal reads the heights as before. SUPERSEDED at
+  SNOW-FACE's merge (FIELD BUGS 2026-10-21, `01-Overview/bugs/Field-Bugs-2026-10-21.md`): the snow has no slope, so
+  `buries` and the feet ask neither a normal nor a height - the lookups this item took out are gone whole, and
+  `normalOf` with them (`owhitch.test.js` PIN MOVED; `owhitch.json`'s two snow records retired with the law).
+- **The snowpack's year and the weather's systems** (`snowpack.js`, `weatherMap.js`, `airTemperature.js`). A step asks
+  `fallAmong` - wornAmong's fall alone, no band, winner or answer object a system; a standing system carries its `d` in
+  place of a copy of itself made to carry it (`takeNear`: the snowpack keeps a year of steps' systems, so every copy
+  outlived the young generation); one list of a step's due points; no pair a step for its day (`dayOfSky`), no object for
+  its fall's terms (`airFallInto`); a step's name made only where one stands part-way. In node, a window moving one
+  lattice cell (the edge's year integrated in 3 ms calls): 965 -> 756 ms, 53.5 -> 48.3 MB a move; every pack, every
+  step count and every worn answer the same (a digest over three seasons' windows, moves and 480 places).
+- **A ground set's water** (`puddleMask.js`). `cleanMask` walks with typed stacks (an array of four neighbours a texel
+  was the walk's cost); `shoreWaterColours` counts in open-addressed typed arrays (a Map's get and set a texel);
+  `markShoreWater` reads a run of one colour once. Each mark is a generator over its records (`...Steps`; `stepsDone`
+  the old functions, `stepsBreathing` through a breather). On the real data, a set's classic mark and a 256-texel set's
+  carry: TEXTURE.002 60 + 282 -> 34 + 109 ms, TEXTURE.302 28 + 212 -> 10 + 70 ms; its longest step 3.1 ms. The masks
+  the same bytes.
+- **The set itself** (`scenes/groundSets.js` createGroundSets, out of bootWorld - HOST-SPLIT, `01-Overview/Host-Split.md`).
+  The marks a record a breath through the stream's breather; the upload a few layers a breath (`renderer.js
+  uploadTileArraySteps`, TILE_LAYERS_A_STEP 8, the array registered only whole); one load a key (`_loading`: a second
+  build waits for a set on its way); the grass's puddle mask is the one the layers were marked with (it was marked a
+  second time).
+- **The Living World's towns near** (`trips.js livingNearKey`, LIVING_NEAR_KEPT). A number a reach and a pixel where a
+  template string was made a call, and 8,192 kept where 512 was fewer than one long way's pixels (the book was cleared
+  inside a single trip's inns).
+- **The music's window** (`songPlayer.js eventsInWindow`). The window's first event found by halving; every pump walked
+  the song from its first event. The same events.
+
+**Not measured:** the frames after the fixes in the real game (the owner stopped the probe); a GPU's cost of the uploads
+the grass and the ground sets no longer make in one frame. On a machine with the data, the same journey on the base
+and on this tree is the A/B this pass owes (For the owner).
+
+**What is left.** The pixel builds' own allocations (a streamed pixel's grids, colliders and batches - megabytes of
+typed arrays a pixel, at x60 a pixel every second or two) are the collector's largest remaining food; pooling them is
+its own pass. The snow's catch-up keeps its 3 ms a frame (SNOW-BUDGET) through most of a fast journey: a lattice edge's
+year is 150-200 ms of work, and at x60 the window moves every five seconds.
+
+Pins: `test/render/owhitch.test.js` (9) - the grass's uploads and its two cells' arrays (every slot handed the bytes the
+cell placed alone holds, a walk with near cells re-read while a rim cell stands part-way), the blood sheet on a page
+that never idles, the snow's slope, fallAmong against wornAmong over the real map's systems, cleanMask against its old
+walk restated, the marks a record at a time, the ground sets (one make, the upload's steps, registered whole), the towns'
+key, the music's window against its old walk. Mutants: `tools/mutants/owhitch.json`, 27, all dead. Pins moved with the
+code they read (the ground sets' home: `audit68_worldjs`, `bantha2_floor`, `dfmod1`, `ecotone1`, `fb1004d_placelru`,
+`grain1_terrainmip`, `grasslit2`, `iil1`, `labGrass`, `precip4_snowground`, `ve1_vanillaEnhanced`, `waterpuddle`; the clump held to its
+composition; `grasslit2`'s recorders keep a cell as handed), and 28 mutant records of fourteen lists re-aimed by content, every one dead where it now stands.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
   with `TREE=` the base, then this branch (`node tools/frameAb.mjs` reads the two) - the frame's own script time
   is what PERF-V8 moves, and a crowded town with yards is where PERF-YARD, PERF-INST and PERF-COL2 show.
+- **BOOT-FREEZE's A/B on a GPU**: `ARENA2_PATH=... node tools/bootFreezeProbe.mjs knight` with `TREE=` the base, then this
+  branch - SwiftShader cannot say what a driver pays for the sea's compile and the ground's upload (What the boot still
+  pays, 3), and a real GPU's frames are the ones a player waits through.
+- **OW-HITCH's A/B**: the same Overworld journey (W held at x60 from Knightstale) on the base and on this branch, on a
+  machine with a GPU - the frame after the view comes down, the first blow, a climate's edge.
 - **The picture's levers** above (1, 4, 6b, 7) are yours - and 5's distance is the Other players card's now (PEER-RANGE): each trades a little of what is seen for frame time.

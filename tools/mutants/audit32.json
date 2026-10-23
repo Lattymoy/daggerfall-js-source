@@ -306,8 +306,8 @@
   {
     "name": "AUDIT32-R1-label-herbs-alone",
     "file": "src/systems/inputActions.js",
-    "old": "'At a profession node: the next of its acts on the list'",
-    "new": "'At a profession node'",
+    "old": "'Next action at a profession node'",
+    "new": "'Next action'",
     "tests": [
       "test/scenes/audit32_client.test.js"
     ]
@@ -343,7 +343,7 @@
   {
     "name": "AUDIT32-P10-trace-end-unsaid",
     "file": "src/scenes/huntHost.js",
-    "old": "      if (rep.torn) return ' (a torn pelt - its part lost)';\n",
+    "old": "      if (rep.torn) return ' (a torn pelt, its part lost)';\n",
     "new": "",
     "tests": [
       "test/scenes/audit32_client.test.js"
@@ -496,7 +496,7 @@
   {
     "name": "AUDIT32-P10-slip-unsaid",
     "file": "src/ui/professions/profReticle.js",
-    "old": " : s.slips > 0 ? t('prof.reticle.trace.again', 'let go - hold {key} on the first point again', { key }) : t('prof.reticle.trace.hold',",
+    "old": " : s.slips > 0 ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key }) : t('prof.reticle.trace.hold',",
     "new": " : t('prof.reticle.trace.hold',",
     "tests": [
       "test/ui/audit32_pages.test.js"

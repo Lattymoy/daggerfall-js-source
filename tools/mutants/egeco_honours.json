@@ -397,6 +397,224 @@
     ]
   },
   {
+    "name": "SPIRE-FIRST-serveride-not-granted",
+    "file": "server-account/wrangler.toml",
+    "old": "EG_FIRST_HANDLES = \"Serveride\"",
+    "new": "EG_FIRST_HANDLES = \"\"",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "SPIRE-FIRST (the owner: \"Since hes world first. He should get this title plus a custom aura\"): Serveride left off the list holds neither First of the Spire nor Firstlight."
+  },
+  {
+    "name": "SPIRE-FIRST-NAME-the-character-listed",
+    "file": "server-account/wrangler.toml",
+    "old": "EG_FIRST_HANDLES = \"Serveride\"",
+    "new": "EG_FIRST_HANDLES = \"Severide\"",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "SPIRE-FIRST-NAME (the owner: \"Its Serveride. You did the wrong name\"): the list naming his character's name, as the herald read it, grants the account nothing."
+  },
+  {
+    "name": "SPIRE-FIRST-law-taken-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "const c = (((t * DAWN_HZ.climb) % 1) + 1) % 1, at = DAWN_CLIMB.at + k * DAWN_CLIMB.step;",
+    "new": "const c = (((t * DAWN_HZ.climb) % 1) + 1) % 1, at = DAWN_CLIMB.at;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-law-never-down",
+    "file": "src/render/auraRing.js",
+    "old": "  const down = 1 - ss(DAWN_CLIMB.hold, DAWN_CLIMB.down, c);",
+    "new": "  const down = 1;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-law-flare-held",
+    "file": "src/render/auraRing.js",
+    "old": "flare: c >= at ? Math.exp(-(c - at) * DAWN_CLIMB.flare) * down : 0",
+    "new": "flare: c >= at ? down : 0",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-law-a-whole-spire-before",
+    "file": "src/render/auraRing.js",
+    "old": "* (0.3 + 0.7 * dawnClimb(k, t).taken);",
+    "new": "* (1 + 0 * dawnClimb(k, t).taken);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-taken-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "float dawnAt(float k) { return ${g3(DAWN_CLIMB.at)} + k * ${g3(DAWN_CLIMB.step)}; }",
+    "new": "float dawnAt(float k) { return ${g3(DAWN_CLIMB.at)}; }",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-order-reversed",
+    "file": "src/render/auraRing.js",
+    "old": "float dawnRound(float turn) { return fract(turn + ${g3(DAWN_START)}); }",
+    "new": "float dawnRound(float turn) { return fract(-turn - ${g3(DAWN_START)}); }",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-never-down",
+    "file": "src/render/auraRing.js",
+    "old": "float dawnDown(float c) { return 1.0 - smoothstep(",
+    "new": "float dawnDown(float c) { return 1.0 + 0.0 * smoothstep(",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-lane-unlit",
+    "file": "src/render/auraRing.js",
+    "old": "col += (SP_DAWN_GOLD * 0.26 * smoothstep(-0.006, 0.006, behind)",
+    "new": "col += (SP_DAWN_GOLD * 0.0 * smoothstep(-0.006, 0.006, behind)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-lane-lit-whole",
+    "file": "src/render/auraRing.js",
+    "old": "SP_DAWN_GOLD * 0.26 * smoothstep(-0.006, 0.006, behind)",
+    "new": "SP_DAWN_GOLD * 0.26 * 1.0",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-faces-never-filled",
+    "file": "src/render/auraRing.js",
+    "old": "* face * tk * 0.9",
+    "new": "* face * 0.0 * 0.9",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-star-always",
+    "file": "src/render/auraRing.js",
+    "old": "col += SP_WHITE * star * dawn * step(",
+    "new": "col += SP_WHITE * star * 1.0 * step(",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-rays-flat",
+    "file": "src/render/auraRing.js",
+    "old": "((0.12 + 0.3 * dawn) * breath + wave * 1.2)",
+    "new": "((0.42) * breath + wave * 1.2)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-rays-all-long",
+    "file": "src/render/auraRing.js",
+    "old": "1.0 - mod(j, 2.0));",
+    "new": "1.0);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-wave-gone",
+    "file": "src/render/auraRing.js",
+    "old": "float wave = since >= 0.0 ? exp(",
+    "new": "float wave = since >= 9.0 ? exp(",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-spires-one-height",
+    "file": "src/render/auraRing.js",
+    "old": "* k / ${g1(DAWN_REDOUBTS - 1)}) * (0.3 + 0.7 * tk), yt = y / h;",
+    "new": "* 0.0) * (0.3 + 0.7 * tk), yt = y / h;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-spires-never-rise",
+    "file": "src/render/auraRing.js",
+    "old": "* (0.3 + 0.7 * tk), yt = y / h;",
+    "new": "* (1.0), yt = y / h;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-shaft-from-inside",
+    "file": "src/render/auraRing.js",
+    "old": "float outside = smoothstep(0.5 * uRingR, 0.8 * uRingR, length(uCamPos.xz - uAt.xz));",
+    "new": "float outside = 1.0;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-shaft-never",
+    "file": "src/render/auraRing.js",
+    "old": "float shaft = since >= 0.0 && k >",
+    "new": "float shaft = since >= 9.0 && k >",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-veil-past-the-shin",
+    "file": "src/render/auraRing.js",
+    "old": "float yv = y / ${g3(DAWN_VEIL_H)}, fv = max(1.0 - yv, 0.0);",
+    "new": "float yv = y / ${g3(DAWN_VEIL_H)}, fv = abs(1.0 - yv);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-wall-kindled-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "  // kindled UP: the light rising from the feet\n  return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;\n}\n`;",
+    "new": "  // kindled UP: the light rising from the feet\n  return col * uKindle;\n}\n`;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-rays-seam",
+    "file": "src/render/auraRing.js",
+    "old": "fract(a / TAU + uTime ${hzGlsl(DAWN_HZ.rays)}) * ${g1(DAWN_RAYS)}",
+    "new": "fract(a / TAU + uTime ${hzGlsl(DAWN_HZ.rays)}) * ${g1(DAWN_RAYS + 0.5)}",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-wall-seam",
+    "file": "src/render/auraRing.js",
+    "old": "float sk = dawnRound(u) * ",
+    "new": "float sk = dawnRound(u * 0.98) * ",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
     "name": "EGECO2-spire-champion-ignored",
     "file": "server-account/src/titles.js",
     "old": "  if (player?.eg?.champion === true) held.push(EG_CHAMPION_TITLE);",
@@ -408,12 +626,12 @@
   {
     "name": "EGECO2-title-dropped",
     "file": "src/net/identityToken.js",
-    "old": "'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid']);   // WIKIMAID (2026-10-17, for SylviaBun: \"the WikiMaid title and a purple aura with bunnies\"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID): WIKIMAID last - SylviaBun's own, granted by name with its glyph and the Lilac Warren (server-account/src/titles.js WIKIMAID_HANDLES);",
-    "new": "'masterwellhead', 'spirefirst', 'wikimaid']);   // WIKIMAID (2026-10-17, for SylviaBun: \"the WikiMaid title and a purple aura with bunnies\"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID): WIKIMAID last - SylviaBun's own, granted by name with its glyph and the Lilac Warren (server-account/src/titles.js WIKIMAID_HANDLES);",
+    "old": "'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "new": "'masterwellhead', 'spirefirst', 'wikimaid', 'doorwarden',",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ],
-    "note": "WIKIMAID (re-aimed by content)."
+    "note": "QL12 (re-aimed by content: the questlines' five after the WikiMaid). WIKIMAID (re-aimed by content)."
   },
   {
     "name": "EGECO2-colour-shared",

@@ -103,11 +103,11 @@ before it, on every client and on the worker, so Logging's trees stand where the
 
 | Storey | Law | Numbers (`JUNGLE`) |
 |---|---|---|
-| Canopy | a cell of 2 x 2 tiles (12.8 m) stands one tree somewhere in its middle 60%, unless a glade or a place's clearing opens it | 90% of whole cells; scale 0.80-1.18 |
+| Canopy | every other cell of 2 x 2 tiles (12.8 m) is a **site** - a quincunx on the world's lattice (`canopySite`, SPREAD) - and a site stands one tree somewhere in its middle half, unless a glade or a place's clearing opens it: the trunks about 16 m apart, never nearer than 9 m, and the crowns (16-19 m across) still meet | 90% of whole sites; scale 0.80-1.18 |
 | Emergents | of the canopy, the kapok's parasols and the mahogany's dome alone stand above the rest | 8%; scale 1.28-1.55 |
-| Understorey | young trees on a tile's own dice, thicker in a light gap (a cell with no canopy tree) than under a crown; never within 4.5 m (at the trunk's scale) of a canopy trunk in its cell or a neighbour's - a neighbour PIXEL's too, where its tile hashes stand it (LAY-7); none in a place's fields (LAY-3) | 10% a tile, 38% in a gap; scale 0.36-0.62; flame 50%, fig 25%, banyan 15%, mahogany 10% |
-| Mid storey | one of the rainforest's own Trees - World of Daggerfall's Tree records of archive 500, its palms (Low Poly Trees' 3D palms where that mod is on); none in a place's fields | 2.5% a tile |
-| Floor | the rainforest's own cover - archive 500's other records, its ferns, shrubs and flowers (and under them the floor's carpet, The floor below) - denser in a glade's light (the glade's alone, never a place's pull); never within 2.2 m of a canopy trunk at that trunk's scale (1.8-3.4 m) | 50% a tile, 68% in a glade - one roll a tile under the young trees' and the palms', so a glade (always a gap) stands about 60% (LAY-11) |
+| Understorey | a cell's: one young tree at most, at its own place in the cell's middle 60% (SPREAD - so two never stand nearer than 5 m), thicker in a light gap (a place no canopy crown reaches: 9 m at the trunk's scale) than under a crown; never within 4.5 m (at the trunk's scale) of a canopy trunk in its cell or a neighbour's - a neighbour PIXEL's too, where its site's tile hashes would stand it, grown or not (LAY-7); none in a place's fields (LAY-3) | 16% a cell, 42% in a gap; scale 0.36-0.62; flame 50%, fig 25%, banyan 15%, mahogany 10% |
+| Mid storey | one of the rainforest's own Trees - World of Daggerfall's Tree records of archive 500, its palms (Low Poly Trees' 3D palms where that mod is on) - on the young trees' roll, in their place: a cell stands one of the two at most; none in a place's fields | 5% a cell |
+| Floor | the rainforest's own cover - archive 500's other records, its ferns, shrubs and flowers (and under them the floor's carpet, The floor below) - denser in a glade's light (the glade's alone, never a place's pull); never within 2.2 m of a canopy trunk at that trunk's scale (1.8-3.4 m), nor on the tile a young tree or a palm stands on | 50% a tile, 68% in a glade (LAY-11) |
 
 **Species.** A canopy tree's species is drawn from weights (`canopySpecies`): a base (`JUNGLE.base`), a **grove** - each
 species' own value noise over 32-tile cells (a cell dividing 128, so the world's lattice - AUDIT BANTHA1 LAY-1: at 24
@@ -123,7 +123,8 @@ sapling thicket); the location's rect and every place's footprint, widened by DF
 forests off as on (LAY-4: World of Daggerfall's site footprint and its rock pieces were Real forests' alone, and jungle
 trees stood in the rocks).
 
-**What it never stands on.** A track or a river the road painter laid (its `paths`), a slope over DFU's 50 degrees -
+**What it never stands on.** A track or a river the road painter laid (its `paths`), or a trail of its own (The
+trails), a slope over DFU's 50 degrees -
 and no TREE, canopy or young, over 34 (a 20 m tree on a cliff reads wrong; the palms and the floor stand to 50 - LAY-2:
 a hillside between 34 and 50 was bare), any ground but dirt, grass or stone (their shares 0.7, 1 and 0.2), under the
 beach line. Beside a road (VERGE1's clear roadsides) a jungle tree keeps its **foot** off it - its roots, buttresses and
@@ -132,12 +133,63 @@ lean over its sides (0.4 m for the banyan to 3.1 m for the mahogany at scale 1 -
 is the measure whether or not the owner's files loaded (LAY-5/HOST-6: a client on Tree records cleared by the record's
 reach, and its Logging trees stood elsewhere than its room's).
 
-**Cost.** A pixel of whole grass wholly jungle stands about 3,000 canopy trees (240 of them emergents), 2,400 young
-trees and 8,300 palms and plants - about 13,700 flats, against Real forests' mean of about 6,200 (and DFU's scatter's
-9,200) on the same ground - laid on the terrain worker in about 11 ms warm (AUDIT BANTHA1 LAY-10, PERF-6: it was 16;
-the ordinary layout is about 3), never on the frame's thread. The list crosses to the main thread BY COLUMN
+**SPREAD (2026-10-19, the owner: "Lets spread out on the distance between trees").** The canopy stood a tree in every
+cell (12.8 m apart, as near as 5 m), and the young trees and palms each rolled a tile's dice (two as near as 1.3 m):
+5,700 trees a pixel, one to 118 m², the nearest neighbour 7 m at the median. The canopy now stands on every other cell
+in its middle half and the understorey one a cell at most: 2,600 trees a pixel, one to 250 m², the canopy's nearest
+trunk 16 m at the median (11 m at the hundredth) and any tree's 11 m (`test/world/junglespread.test.js`). The crowns
+still close overhead - a site's crown reaches 7-11 m and the next site's trunk stands about 16 m off - so the jungle
+stays a jungle overhead and opens at the eye.
+
+**Cost.** A pixel of whole grass wholly jungle stands about 1,350 canopy trees (100 of them emergents), 1,080 young
+trees and 8,200 palms and plants - about 10,600 flats, against Real forests' mean of about 6,200 (and DFU's scatter's
+9,200) on the same ground - laid on the terrain worker in about 8 ms warm (SPREAD: it was 13,900 flats and 11 ms;
+AUDIT BANTHA1 LAY-10, PERF-6: 16 before that; the ordinary layout is about 3), never on the frame's thread. The list crosses to the main thread BY COLUMN
 (`world/terrain/natureWire.js`: a float64 column a field, the buffers transferred, the objects made again - 2 ms
 against the 10 ms structured clone it was, PERF-2).
+
+## The trails
+
+**JUNGLE-TRAILS (2026-10-19, the owner: "Implement procedural dirt pathways that cut through the forest").** Dirt
+trails wind through the jungle, meet, cross and loop - about one through every pixel (1.2 km of trail to the km²) - its
+own, never the road painter's tracks: a track runs straight from a pixel's middle to its edge and is the map's (the
+travel map, the ink map, the landforms and fast travel read the network), so the jungle's trails stay off it.
+
+**The law** (`world/jungle/jungleTrails.js`). A trail is where a field on the WORLD's lattice crosses its middle value:
+two families (`JUNGLE_TRAILS.families` - lattices of 176 and 240 tiles), each a value noise (`ecotone.js` `ecoHash`)
+seen through a warp of its own, so a trail bends as a path walked round trees bends, and the two cross at junctions.
+Each family's lattice is turned off the world's axes by a Pythagorean triple (36.9° and -22.6°: a cosine and a sine
+exact in every engine, where `Math.cos` is not - the room agrees on its trails), so no trail runs along a lattice line
+(14% of their headings lie within 10° of an axis, against 22% for a line at random and 35% unturned). A lattice point's
+value is held 0.1 off the middle either side, so no island of the field - no ring of trail round it - is smaller than
+about half a cell; each warp stretches a step at most 1 + 6 x its amplitude over its cell (`warpStretch`, under 2), so
+it never folds a trail back over itself. A point's distance from a trail is the field's distance from its middle over its gradient (the
+warp carried through by the chain rule). The field is a pure function of the world tile: a trail runs on unbroken across
+every pixel's edge, on the worker and the main thread, every client alike, with no graph of neighbours to agree on.
+
+**Painted** (`paintJungleTrails`, by the terrain kernel `world/terrain/terrainGen.js` after the road painter and before
+the marching squares): a corner within 0.75 tile of a trail's line - past a corner's diagonal half, so the dirt runs
+unbroken at every heading - on land, out of the location's rect, where the jungle is whole (`JUNGLE_EDGE.in` deep; at
+its edge the ground is the pixel's own layout's too, and DFU's scatter reads no mask), is dirt, and DFU's own
+dirt-to-grass tiles blend its edges. Every tile two of whose corners are the trail's - half dirt by its marching
+square's art and more - that no painter wrote goes into the pixel's `paths` (a tile with one is the trail's edge, a
+corner of dirt the floor grows over: marked by any corner, a trail cleared a band three tiles wide, 19 m, in the
+game's first photograph) - the mask the road painter keeps (GRASS-PATH1, `03-World/Roads.md`), which every layer that keeps off a track
+already reads: the jungle's palms and floor, Real forests, the meadow's grass and the jungle floor's carpet, the home
+yards. The heights are never moved - a trail is worn into the ground, not cut - so the room's ground is the ground it
+was.
+
+**Beside a trail.** A jungle tree - the canopy and the young - keeps its **foot** off a trail's dirt, as VERGE1 keeps it
+off a road (`jungleModels.js` `JUNGLE_MEASURES`, at its own scale; `trailClear`, `vergeClear`'s shape), where the trails
+run; the crowns lean over it.
+
+**Cost.** A pixel's blocks of 4 tiles square are read once (`trailBlocks`): for each family, a floor under how near its
+line comes to any point of the block - the field's distance from the middle at the block's middle over its steepest
+(the noise's steepest through the warp's stretch), less the block's half diagonal. The painter reads the corners of a
+block only where a family's floor is under the half width, and a tree asks its own distance only where its block's floor
+is under its foot: exactly the answer of reading every corner and every tree (`test/world/jungletrails.test.js`), about
+2.5 ms a whole jungle pixel on the terrain worker, against the kernel's 23.5 on the same machine - never on the frame's
+thread.
 
 ## The trees in the game
 
@@ -157,9 +209,10 @@ at that slot's radius and band; both are spent in the call.
 
 **What the flat is** (`scenes/pixelBuild.js`). A jungle tree is a flat of the rainforest's archive with one of its Tree
 records, in a group of its own (`J<species>`, and `J<species>y` for the young): it is **Logging's** (the pixel's forest -
-`scenes/treeHost.js standTrees` stands the day's trees at it; felled, it sinks and falls as its far picture; its node's
-glow stands out of its trunk or its hung curtains toward the eye, `jungleTreeMark` - AUDIT BANTHA1 TREE-3: the 0.6 m
-pull of an ordinary tree left it inside the banyan), **cover** at its own trunk and crown (`jungleCover`, TACT1's
+`scenes/treeHost.js standTrees` stands the day's trees at it; felled, it sinks and falls as its far picture; its node
+glints on its own picture - NODE-GLINT, Professions-Arc 47 - where its mark, `jungleTreeMark`, stood the glow's card out
+of its trunk or its hung curtains toward the eye until NODE-OUTLINE - AUDIT BANTHA1 TREE-3: the 0.6 m pull of an
+ordinary tree left it inside the banyan), **cover** at its own trunk and crown (`jungleCover`, TACT1's
 trunk-and-crown shape, the crown at TACT1's 0.7 of its reach - LAY-6), **flora** that sways, and the far rings (MAC1)
 stand a canopy tree by its own height - a young tree's group stands no far ring (PERF-5: 41% of the trees, under the
 canopy, drew to the horizon). **Its cover's cost** (TREE-1, PERF-1): a crown 7-15 m across was filed in every 4 m cell it
@@ -171,6 +224,15 @@ stands as the Tree record it carries - never an empty jungle, never a Logging no
 asks again on BUILD-RETRY's backoff (`BUILD_RETRY_MS`; TREE-6: one failed fetch was the session's). A 3D tree takes its
 sun at its crown (`uSunLift`, `JUNGLE_SUN_LIFT` 0.6 of its height - TREE-2: one shadow tap at the root lit or darkened a
 whole 22 m tree by its foot's shade), and the door uploads nothing on a frame with no tree near (TREE-9).
+
+**A large tree gathering spot** (JUNGLE-WOODS, 2026-10-19, the owner: "The forest region we recently implemented should
+be a large tree gathering spot. Moreso than other places within daggerfall"): a map pixel of the area stands **48 of
+Logging's trees a day** (`net/nodeLaw.js` `JUNGLE_TREE_SLOTS`, `treeSlots`) - four times the Woodlands' and the
+Rainforest's 12, the most anywhere else - every slot a tree (on ground nobody has vouched for, a slot whose Teak or
+Mahogany waits on the witnesses stands Pine, where an ordinary Rainforest pixel stands nothing), each at a jungle tree
+of the day's law point (`scenes/treeHost.js` `standTrees`). The area's law, the service's as the client's (acct161):
+`06-Systems/Professions-Arc.md` JUNGLE-WOODS. Each glints on its own 3D tree near the eye
+(NODE-GLINT, Professions-Arc 47 - NODE-OUTLINE's ring in Logging's green before it, 46).
 
 ## The floor
 
@@ -185,16 +247,16 @@ on the meadow's crossed cards (MEADOW1, `render/grassMeadow.js`), its own densit
 (`src/assets/grass/source/tuft-tall.png`, the meadow's first sprite) for the grass, and archive 500's own low cover - the
 pictures the floor storey's flats wear, the classic record's or a pack's (`floorPictures`), never a Tree record:
 
-| Plant | Record | Height (m) | Stiff / sway | Share, poor patch / lush |
-|---|---|---|---|---|
-| grass (the owner's tall tuft) | - | 0.5 | 1 / 1 | 42% / 30% |
-| sedge | 7 | 0.5 | 1 / 1 | 16% / 10% |
-| fern | 9 | 1.2 | 0.6 / 0.8 | 12% / 20% |
-| frond | 10 | 0.95 | 0.6 / 0.8 | 10% / 16% |
-| broad-leaved bush | 1 | 0.9 | 0.3 / 0.6 | 5% / 8% |
-| palmlet | 27 | 1.0 | 0.5 / 0.7 | 6% / 7% |
-| flowering stem | 21 | 0.9 | 0.5 / 0.7 | 4% / 5% |
-| spike | 6 | 1.1 | 0.4 / 0.7 | 4% / 4% (the rest) |
+| Plant | Record | Height (m) | Stiff / sway | Judged share, poor / lush (at 1.8) | Share, poor / lush (JUNGLE-GRASS) | A square metre, poor / lush |
+|---|---|---|---|---|---|---|
+| grass (the owner's tall tuft) | - | 0.5 | 1 / 1 | 42% / 30% | 55.2% / 49.6% | 1.76 / 1.58 |
+| sedge | 7 | 0.5 | 1 / 1 | 16% / 10% | 21.0% / 16.5% | 0.67 / 0.53 |
+| fern | 9 | 1.2 | 0.6 / 0.8 | 12% / 20% | 6.8% / 11.3% | 0.22 / 0.36 |
+| frond | 10 | 0.95 | 0.6 / 0.8 | 10% / 16% | 5.6% / 9.0% | 0.18 / 0.29 |
+| broad-leaved bush | 1 | 0.9 | 0.3 / 0.6 | 5% / 8% | 2.8% / 4.5% | 0.09 / 0.14 |
+| palmlet | 27 | 1.0 | 0.5 / 0.7 | 6% / 7% | 3.4% / 4.0% | 0.11 / 0.13 |
+| flowering stem | 21 | 0.9 | 0.5 / 0.7 | 4% / 5% | 2.3% / 2.8% | 0.07 / 0.09 |
+| spike | 6 | 1.1 | 0.4 / 0.7 | 5% / 4% (the rest) | 2.8% / 2.3% (the rest) | 0.09 / 0.07 |
 
 Each picture is laid in the meadow's 64-texel cell beside the tuft (`fitSprite`: whole texels a pixel where it fits,
 shrunk at the texel's centre where it does not, its foot on the cell's floor, a pack's soft alpha cut at a half), so the
@@ -208,11 +270,20 @@ agree at every byte.
 the ground's **light** and never its **hue** (`uArtHue`: the meadow's set 1, the floor's 0): a fern on the jungle's red
 earth stays a fern's green. With the hue (2026-10-19's photographs) the tufts took the earth's hue and stood pale pink.
 
-**How thick.** `JUNGLE_FLOOR.plants`: 1.8 plants a square metre where the floor is whole, at the grass row's Full (the
-row's tiers thin it as they thin the meadow - the pref's share, `floorDensity`). At 1 a square metre the red earth still
-showed between the ferns (2026-10-19's photographs); at 2.5 it was a wall of leaves, and the owner: "Reduce the amount
-of ground flora. Its a little too much" (2026-10-19). Its seed is its own (`JUNGLE_FLOOR.seed`; a field of the meadow's
-seed at a lower density stands on a prefix of its spots).
+**How thick.** `JUNGLE_FLOOR.plants` where the floor is whole, at the grass row's Full (the row's tiers thin it as they
+thin the meadow - the pref's share, `floorDensity`). At 1 a square metre the red earth still showed between the ferns
+(2026-10-19's photographs); at 2.5 it was a wall of leaves, and the owner: "Reduce the amount of ground flora. Its a
+little too much" (2026-10-19) - thinned to 1.8 (`JUNGLE_FLOOR_JUDGED`, the table's judged shares). There its tufts and
+sedge stood 0.88 a square metre, two fifths of the 2.27 the meadow stands everywhere else, and the meadow's own grass
+keeps out of the floor (Where, below) - so the jungle read as leaves on bare mud, and the owner: **"Grass isnt showing
+within the new jungle region"** (JUNGLE-GRASS, 2026-10-19). Now the floor is two rates (`render/jungleFloorArt.js`):
+its **flora** - fern, frond, bush, palmlet, bloom, spike - at the rate the owner judged, plant for plant (a fern stands
+as often a square metre as at 1.8), and its **grass** - the tuft and the sedge, in their judged proportion - at the
+meadow's own (`JUNGLE_FLOOR_GRASS`: the meadow's blades over the lab's span, three a tuft), more on a poor patch than a
+lush one as before: **3.19 plants a square metre** (`JUNGLE_FLOOR_PLANTS_M2`), every share derived from those two. The
+meadow's grass stays out: its colour law would take the earth's hue (Its colours, above) and its one hue share is a
+uniform its set holds - the floor wears the same tuft at its own hue. Its seed is its own (`JUNGLE_FLOOR.seed`; a field
+of the meadow's seed at a lower density stands on a prefix of its spots).
 
 **Where.** A plant stands where the jungle's floor **claims** the point (`jungleHost.floorClaims`): the point's own draw
 (`jungleFloorDraw`, an integer hash of its world place at an eighth of a metre - the same on every client and at every
@@ -236,9 +307,9 @@ floating origin's shift - reaches the floor's too, by the one handle (`pair`); a
 is a new floor field. Its draw is the meadow's program under the meadow's frame - its view, light, wind and range
 (`drawBeside`, the renderer's stored `frame`).
 
-**Cost.** The field holds the meadow's 394 cells about the eye, each 4,860 blades (1.8 plants a square metre, three
-blades a tuft, over a 30 m cell) at 16 bytes: **31 MB of GPU buffers**, beside the meadow's 39 MB - allocated only once the
-jungle comes near. Its cells are placed a slice a frame as the meadow's are. **Open:** its frame time on a GPU (beside the
+**Cost.** The field holds the meadow's 394 cells about the eye, each 8,601 blades (3.19 plants a square metre, three
+blades a tuft, over a 30 m cell) at 16 bytes: **54 MB of GPU buffers** at the grass row's Full (31 MB at BANTHA2's 1.8 -
+JUNGLE-GRASS's grass the difference), beside the meadow's 39 MB - allocated only once the jungle comes near. Its cells are placed a slice a frame as the meadow's are. **Open:** its frame time on a GPU (beside the
 jungle's, below).
 
 ## The haze
@@ -333,8 +404,12 @@ the jungle under clear air. Read once, as the world loads.
   paints no pixel of it, and BANTHA1 stood the jungle on Glenpoint (region 18); the jungle is now the area the owner
   painted on Hammerfell's shore - map pixels of seven regions, no region whole.
 - **The floor's carpet** (BANTHA2): DFU stands the rainforest's cover as scattered billboards; here a second field of the
-  port's grass carpets the ground with the same pictures on crossed cards, 1.8 plants a square metre, and the meadow's
-  grass keeps out of it.
+  port's grass carpets the ground with the same pictures on crossed cards and the owner's tuft - the flora at the rate the
+  owner judged, the grass at the meadow's own (JUNGLE-GRASS: 3.19 plants a square metre) - and the meadow's grass keeps
+  out of it.
+- **The trails** (JUNGLE-TRAILS): DFU's ground has no paths but the network's roads and tracks; here the jungle wears
+  its own trails into its tiles (`world/jungle/jungleTrails.js`), never the network's - the map, the landforms and fast
+  travel read only the roads they did.
 - DFU's fog is one `RenderSettings.fog` for the world; here a regional height haze multiplies it (and the sky takes it).
 - DFU draws every streamed terrain the camera sees; here the haze culls what it hides whole.
 - **Winter, as DFU's rainforest** (AUDIT BANTHA1 TREE-4, NAMED): the Rainforest climate is Swamp-based, so in winter its
@@ -373,6 +448,17 @@ summer at 10:00 - at eye level a carpet of ferns, fronds, broad leaves, palmlets
 under the canopy, thinning to single plants on the mud at a great trunk's foot; looking down, the earth between them. At
 2.5 a square metre (the first photographs) a wall of leaves - the owner: "a little too much" - and the floor stood on
 the swamp's dirt alone (the ground law above, "Where"): by place, about six times as many tufts stood in the same view.
+
+**JUNGLE-GRASS.** `test/world/junglegrass.test.js` (3): the floor's grass the meadow's own rate, its flora the judged
+rate plant for plant, the tuft and the sedge in proportion, the shares whole and the pick agreeing with them;
+`tools/mutants/junglegrass.json` (6, all dead), and BANTHA2's density mutant re-aimed at the judged rate (`bantha2.json`,
+48 dead with ARENA2). **Seen in the running game** (2026-10-19, the freeware's data, headless Chromium on SwiftShader, the
+land view at 1, `tools/grassLookProbe.mjs` with four views from one spot 200-420 m out of Ceradbu, Mournoth, deep in the
+area - a new game's Morning Star, the jungle's ground snowless): before, ferns, fronds and bushes over red earth with a
+pale tuft here and there; after, the tufts and sedge filling the ground between the same ferns - 153,062 of the floor's
+blades in view against 82,253 (a new game's winter takes the meadow's grass under the snow elsewhere; the floor stood
+through it). The ground there: 87% DFU's grass record by place, 1.4% its green stone, which the floor stands nothing on
+(`__findTiles` over the nine pixels about the village).
 
 **Recorded.** The five pictures are the owner's own (2026-10-18, at AUDIT BANTHA1's opening: "These textures are ours") -
 no pixel of them is ARENA2's; the doctrine's SUPPLIED rows say so (`test/tooling/doctrine.test.js`). **Where it stands.** On the freeware's own data (`tools/fetch-data.sh`, `tools/jungleExtent.mjs`, 2026-10-18) region

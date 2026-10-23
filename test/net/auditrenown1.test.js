@@ -446,8 +446,8 @@ test('AUDIT RENOWN1 GAME-1/GAME-7/GAME-10: the city watch never pays, whoever\'s
   assert.equal(renownFoeLevel({ streamedLevel: 3, entity: { level: 30 } }), 3, 'the host\'s level, not the joiner\'s copy\'s');
   assert.equal(renownFoeLevel({ entity: { level: 30 } }), 30);
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /if \(f\.mobileType >= 128 && Number\.isInteger\(f\.entity\?\.level\) && f\.entity\.level >= 0 && f\.entity\.level <= FOE_LEVEL_MAX\) r\.l = f\.entity\.level;/, 'GAME-3: the host streams a class foe\'s level');
-  assert.match(d, /if \(r\.l !== undefined && f\.mobileType >= 128\) f\.streamedLevel = r\.l;/, 'and the joiner keeps it');
+  assert.match(d, /if \(isClassEnemyId\(f\.mobileType\) && Number\.isInteger\(f\.entity\?\.level\) && f\.entity\.level >= 0 && f\.entity\.level <= FOE_LEVEL_MAX\) r\.l = f\.entity\.level;/, 'GAME-3: the host streams a class foe\'s level');
+  assert.match(d, /if \(r\.l !== undefined && isClassEnemyId\(f\.mobileType\)\) f\.streamedLevel = r\.l;/, 'and the joiner keeps it');
   assert.match(d, /if \(landed && !f\.dead\) renownFoeCarry\(f, rec\);/, 'a live foe rebuilt keeps my blows; a dead one\'s rebuild does not');
   assert.match(d, /_lootAt\.delete\(`corpse:\$\{pi\}`\);(?: forgetRoomContainer\(`corpse:\$\{pi\}`\);)? \}[^\n]*\n(?:\s*if \(f\._encId != null\) \{[^\n]*\n)?\s*renownFoeRevived\(f\);/, 'un-death forgets them');   // PIN MOVED (PARTY-LOOT): the room's base and takes for the body go with it too   // REST-SYNC re-aim: a shared body's loot record forgotten between
   assert.match(d, /nf\.entity\.health -= missing;[^\n]*\n\s*renownFoeCarry\(f, nf\);/, 'the dungeon\'s Wabbajack carries them');

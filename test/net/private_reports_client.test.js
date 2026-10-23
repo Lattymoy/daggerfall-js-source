@@ -108,7 +108,7 @@ test('PRIVATE-REPORT A READER\'S BOX: the service\'s count rides the box and the
   assert.deepEqual(said, [{ kind: 'reports', unread: 1 }]);
   const line = postNoticeText(said[0]);
   // AUDIT PRIVATE-REPORT CLI-6 DOC-3 UI-9: `/bug` is the form - the inbox is the mailbox's door
-  assert.equal(line, '1 private report is waiting to be read. Type /mail, or open the mailbox beside the hourglass, and press Private reports.');
+  assert.equal(line, '1 private report is waiting to be read. Type /mail, or open the mailbox beside the hourglass, then click Private reports.');
   assert.ok(!line.includes('secret dupe'), 'never its words');
   await box.refresh();
   assert.equal(said.length, 1, 'a count that did not rise says nothing');
@@ -144,7 +144,7 @@ test('PRIVATE-REPORT A READER\'S BOX: the service\'s count rides the box and the
   const annBox = new PostBox({ ioOf: ioFor(svc, ann), onPost: (e) => said.push(e) });
   await annBox.refresh();
   assert.equal(annBox.reports, null, 'a reporter is no reader');
-  assert.equal(postNoticeText({ kind: 'reports', unread: 3 }), '3 private reports are waiting to be read. Type /mail, or open the mailbox beside the hourglass, and press Private reports.');
+  assert.equal(postNoticeText({ kind: 'reports', unread: 3 }), '3 private reports are waiting to be read. Type /mail, or open the mailbox beside the hourglass, then click Private reports.');
 });
 
 // ── the window ───────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ test('PRIVATE-REPORT THE FORM IN THE MAILBOX: a door under the post; the form - 
   assert.equal(all(w.root, 'pm-title')[0].textContent, 'Report privately');
   assert.equal(doc.activeElement, byKey(w.root, 'kind-exploit'), 'the focus on the first choice');
   assert.deepEqual(all(w.root, 'pr-kindname').map((n) => n.textContent), ['An exploit', 'A bug', 'Account or server security']);
-  assert.match(text(all(w.root, 'pr-sends')[0]), /^Sent with it: your username, and this game's build - DFO Online/);
+  assert.match(text(all(w.root, 'pr-sends')[0]), /^Sent with it: your username and this game's build \(DFO Online/);
 
   const subject = byKey(w.root, 'subject'), body = byKey(w.root, 'body');
   assert.equal(body.attrs['aria-describedby'], 'pr-count', 'the count describes the field, never names it (AUDIT PRIVATE-REPORT UI-11)');
@@ -227,7 +227,7 @@ test('PRIVATE-REPORT THE FORM IN THE MAILBOX: a door under the post; the form - 
   await click(byKey(w.root, 'send'));
   await until(() => box.desk.mine?.length === 1 && !box.desk.sending);
   w.draw();
-  assert.equal(all(w.root, 'pm-say')[0].textContent, 'Sent. Thank you - only the developers can read it.');
+  assert.equal(all(w.root, 'pm-say')[0].textContent, 'Sent. Thank you. Only the developers can read it.');
   assert.deepEqual([subject.value, body.value, exploit.checked], ['', '', false], 'the form empty for the next');
   // AUDIT PRIVATE-REPORT UI-3: the fields given back first, then the focus - never left on the page's body
   assert.equal(doc.activeElement, subject, 'the focus on the title, for the next');
@@ -248,7 +248,7 @@ test('PRIVATE-REPORT THE FORM IN THE MAILBOX: a door under the post; the form - 
   w2.stop();
   await until(() => !box.desk.sending && box.desk.mine?.length === 2);
   w2.draw();
-  assert.equal(all(w2.root, 'pm-say')[0].textContent, 'Sent. Thank you - only the developers can read it.', 'said where the player is');
+  assert.equal(all(w2.root, 'pm-say')[0].textContent, 'Sent. Thank you. Only the developers can read it.', 'said where the player is');
   assert.equal(doc2.activeElement, byKey(w2.root, 'subject'), 'and the focus given there - never left on the page\'s body');
   assert.equal(all(w.root, 'pm-say')[0].textContent, '', 'never to the window gone');
   assert.equal(box.desk.lastSend, null, 'said once');

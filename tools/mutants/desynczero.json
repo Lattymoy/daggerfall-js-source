@@ -37,7 +37,7 @@
   {
     "name": "DZ-lead-unbounded",
     "file": "src/scenes/puppetLead.js",
-    "old": "  const age = Math.min(Math.max(0, nowS - L.at), LEAD_MAX_S);",
+    "old": "  const age = Math.min(Math.max(0, nowS - L.at), L.cap);",
     "new": "  const age = Math.max(0, nowS - L.at);",
     "tests": ["test/scenes/desynczero.test.js"]
   },

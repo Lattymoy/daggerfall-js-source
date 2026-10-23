@@ -1,0 +1,137 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE MERCHANT'S ROAD, step 1 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the note is the offer. The giver is unnamed (a stable master): a Shopkeeper of the player's own town,
+-- doing business at its tavern (the yards are no quest place - systems/merchantYards.js). NO ACT: section 4.5's "a
+-- wagon's load hauled" is no act kind (qlActs.js says why: nothing in the game finishes one), so the haul is DFU's own
+-- delivery - a load handed over (`get item`, never pay) and carried to a merchant in another town (`toting`), who pays
+-- the haulage. A wagon carries it if the player has one; the script cannot tell, and its words do not pretend to.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIR01
+DisplayName: A Wagon’s Load
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       _master_ has sent the load with someone else.
+
+QuestComplete:  [1004]
+<ce>          "The haulage, as agreed with _master_."
+<ce>          _buyer_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _master_, a stable master who does business at
+ _inn_ in __inn_, sent me a note. A merchant
+ pays well for a load hauled, and the stable master
+ has one to send and no wagoner free to drive it. I
+ am to collect it at _inn_.
+
+Message:  1011
+%pcn,
+
+     A merchant at _yard_ in __yard_ has paid
+ for a load of oats and harness, and every wagoner
+ I know is out on the road. You look like someone
+ who can sit a horse and mind a load.
+
+     Come to _inn_ in __inn_ and I will hand it
+ over. Haul it how you like - on a wagon if you
+ have one, on your own back if you must. The
+ merchant pays the haulage, and pays it well.
+
+<ce>                           _master_, stable master
+
+Message:  1012
+<ce>          A stable lad smelling of hay and horse
+<ce>          tugs your sleeve and hands you a note.
+<ce>          "From _master_, at _inn_," he says.
+<ce>               "There is a load waiting."
+
+Message:  1013
+<ce>        "Here it is - oats and harness, sewn up tight."
+<ce>        _master_ heaves a heavy sack into your arms.
+<ce>
+<ce>       "_buyer_, at _yard_ in __yard_. And do not
+<ce>        stop on the way to feed it to your own horse."
+
+Message:  1014
+The stable master at _inn_? Knows every horse and every wagon in __inn_.
+<--->
+_master_ is always short of wagoners. The roads eat them.
+<--->
+Looking for _master_? Try _inn_. Follow the smell of hay.
+
+Message:  1015
+%qdt:
+ _master_ gave me the load. I am to haul it to
+ _buyer_ at _yard_ in __yard_, who pays the
+ haulage when it arrives.
+
+Message:  1016
+<ce>        _buyer_ cuts the sack open, counts the
+<ce>          harness and runs a hand through the oats.
+<ce>
+<ce>       "All there, and dry. _master_ chose well. If
+<ce>        you ever haul for the yards again, come here."
+
+Message:  1017
+The merchant at _yard_? Buys oats and harness by the wagon, they say.
+<--->
+_buyer_ is waiting on a load from __inn_. Has been for days.
+<--->
+Looking for _buyer_? Try _yard_.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--              %pcn occurs 1 time.
+--          _master_ occurs 10 times.
+--           _buyer_ occurs 6 times.
+--            _gold_ occurs 1 time.
+--             _inn_ occurs 6 times.
+--            __inn_ occurs 4 times.
+--            _yard_ occurs 5 times.
+--           __yard_ occurs 3 times.
+
+QBN:
+Item _note_ letter used 1011
+Item _load_ large_sack
+Item _gold_ gold range 100 to 200
+
+Person _master_ group Shopkeeper local anyInfo 1014
+Person _buyer_ group Shopkeeper anyInfo 1017
+Place _inn_ local tavern
+Place _yard_ remote generalstore
+
+Clock _courier_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _master_ at _inn_
+	place npc _buyer_ at _yard_
+	start timer _courier_
+
+_courier_ task:
+	give pc _note_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_loaded_ task:
+	clicked npc _master_
+	say 1013
+	get item _load_
+
+_told_ task:
+	when _courier_ and _loaded_
+	log 1015 step 1
+
+_hauled_ task:
+	toting _load_ and _buyer_ clicked
+	say 1016
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

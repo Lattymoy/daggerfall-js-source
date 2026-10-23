@@ -23,6 +23,7 @@
 // draws them). Every builder answers [] for an answer it cannot read, and
 // the host then says its lines as it always did.
 // ═══════════════════════════════════════════════════════════════════
+import { t } from '../systems/textManager.js';   // STAR7: a held star's source
 import { xpForRank, rankOfXp, professionName, PROF_RANK_MAX } from '../net/professionLaw.js';
 import { material } from '../net/nodeLaw.js';
 import { materialCountLabel, mintMaterialItem } from '../systems/professions/profItems.js';
@@ -31,8 +32,9 @@ import { lootRarityOn } from '../systems/loot/lootRarity.js';
 import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
 
 /** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it.
- *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts. */
-export const HAUL_CAPPED_TEXT = `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`;
+ *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts; STAR7: and the held stars.
+ *  AUDIT STAR (W2): a label, through the text core, read when the card is made - the chat's line names the cap. */
+export const haulCappedText = () => t('haul.capped', 'Daily silver cap reached');
 /** A gather card holds a little longer than a pickup's (ui/pickupFeed.js PICKUP_FEED_HOLD_MS) - it says more. */
 export const HAUL_HOLD_MS = 3200;
 /** A Motherlode's card stands longer still - the day's one. */
@@ -171,22 +173,22 @@ export function findHaul(found, kind) {
 }
 
 /** A combat claim's source, as its silver card says it. SERPENT-SET: a serpent slain. EG-E1: a Redoubt of the Elite Breach. */
-export const CLAIM_SOURCE = Object.freeze({ gate: 'Breach closed', raid: 'Town defended', serpent: 'Serpent slain', eg: 'Redoubt taken' });
+export const CLAIM_SOURCE = Object.freeze({ gate: 'Breach closed', raid: 'Town defended', serpent: 'Serpent slain', eg: 'Redoubt taken', get star() { return t('starfall.haul.source', 'Star held'); } });   // STAR7: a held star's, read through the text core where it is shown
 /**
  * A COUNTED CLAIM'S SILVER AS ITS CARDS (a raid's, a gate's or - SERPENT-SET - a serpent's answer; EG-E1: a Redoubt's:
  * net/marksBook.js claimLines' own data): its strike (the day's combat bar on it, or the cap's muted card), the guild
  * deed it completed (into the treasury - brass, never the account's coin) and each contract that paid it. The chat keeps
  * its lines; these are what the eye catches.
- * @param {any} data @param {'raid'|'gate'|'serpent'|'eg'} kind
+ * @param {any} data @param {'raid'|'gate'|'serpent'|'eg'|'star'} kind
  */
 export function claimHauls(data, kind = 'gate') {
   if (!data || typeof data !== 'object') return [];
   const out = [];
-  const strike = silverHaul(data.marks, { source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: true, cappedText: HAUL_CAPPED_TEXT });
+  const strike = silverHaul(data.marks, { source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: true, cappedText: haulCappedText() });
   if (strike) out.push(strike);
   const deed = data.deed;
   if (deed && Number.isSafeInteger(deed.struck) && deed.struck > 0) {
-    out.push({ key: `deed\u0002${deed.guild?.name ?? ''}`, haul: 'silver', tone: 'treasury', count: deed.struck, source: `Guild deed - to ${deed.guild?.name ?? 'your guild'}`, hold: HAUL_HOLD_MS, adds: ['count'] });
+    out.push({ key: `deed\u0002${deed.guild?.name ?? ''}`, haul: 'silver', tone: 'treasury', count: deed.struck, source: `Guild deed: to ${deed.guild?.name ?? 'your guild'}`, hold: HAUL_HOLD_MS, adds: ['count'] });
   }
   for (const c of Array.isArray(data.contracts) ? data.contracts : []) {
     if (!c || !Number.isSafeInteger(c.pay) || c.pay <= 0) continue;

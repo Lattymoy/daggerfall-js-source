@@ -23,10 +23,12 @@ const NAMED = {
   'src/scenes/corpseMarker.js': 2,
   'src/scenes/dungeonContext.js': 2,
   'src/scenes/exterior.js': 4,
+  'src/scenes/exteriorAutomapToggle.js': 2,   // STAR0: the town map's door, moved out of bootWorld with its two (world.js 8 -> 6)
   'src/scenes/hostCombat.js': 1,
   'src/scenes/instanceDoor.js': 1,   // INSTANCES (the audit): the door's popup names its dungeon in the player's language
+  'src/scenes/quest/questBridge.js': 1,   // QL12: a guild's ladder named by its faction, in the player's language
   'src/scenes/townTalk.js': 2,
-  'src/scenes/world.js': 8,
+  'src/scenes/world.js': 6,
   'src/scenes/worldModes.js': 5,   // SUMMON-OFFER: the summoning's no-offer line moved to the law module (daedraSummoning.js noQuestText)
   'src/systems/affiliations.js': 1,
   'src/systems/answerPipeline.js': 3,
@@ -34,6 +36,7 @@ const NAMED = {
   'src/systems/daedraSummoning.js': 2,   // SUMMON-OFFER: noQuestText's prince
   'src/systems/decor/decorItems.js': 1,
   'src/systems/enchantmentCatalogue.js': 2,
+  'src/systems/enemyExpansion/dexTroll.js': 1,   // DEX5: the troll's recovery line names its kind in the player's language
   'src/systems/item/itemInfo.js': 4,
   'src/systems/loot/loot.js': 1,
   'src/systems/notebook.js': 2,   // L10N5: a header's place drawn again in the language of the load
@@ -42,6 +45,8 @@ const NAMED = {
   'src/systems/quest/person.js': 5,
   'src/systems/quest/place.js': 4,
   'src/systems/quest/questMacros.js': 8,
+  'src/systems/starfall/starCoven.js': 4,   // STAR5: a master's name, in the player's language
+  'src/systems/starfall/starfallCovens.js': 1,   // STAR2: a coven's witches by their faction, in the player's language
   'src/systems/talk/talk.js': 1,
   'src/systems/topicTree.js': 1,
   'src/systems/worldTick.js': 1,

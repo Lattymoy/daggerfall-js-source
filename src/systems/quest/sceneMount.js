@@ -291,12 +291,13 @@ export function questStandBox(s) {
 export const MARKER_FLOOR_REACH = 4;
 
 /** The site's other quest markers where markerScenePosition puts them (the building's own frame), nearest `marker`
- *  first: every spawn and item marker of the site but those standing where it stands. */
-export function siteMarkerSpots(siteDetails, marker) {
+ *  first: every spawn and item marker of the site but those standing where it stands - `items` false, the spawn markers
+ *  alone, where DFU stands people (GetSiteMarker's QuestSpawn; FB1020c CROWD-CLEAR). */
+export function siteMarkerSpots(siteDetails, marker, items = true) {
   const own = marker?.flatPosition ? markerScenePosition(marker) : null;
   if (!own) return [];
   const d2 = (p) => (p.x - own.x) ** 2 + (p.y - own.y) ** 2 + (p.z - own.z) ** 2;
-  return [...(siteDetails?.questSpawnMarkers ?? []), ...(siteDetails?.questItemMarkers ?? [])]
+  return [...(siteDetails?.questSpawnMarkers ?? []), ...(items ? siteDetails?.questItemMarkers ?? [] : [])]
     .filter((m) => m?.flatPosition)
     .map(markerScenePosition)
     .filter((p) => d2(p) > 1e-9)
@@ -310,6 +311,43 @@ export function standSpot(own, spots, hasFloor) {
   if (hasFloor(own)) return own;
   for (const p of spots ?? []) if (hasFloor(p)) return p;
   return own;
+}
+
+// ---- FB1020c CROWD-CLEAR: a quest Person never stands in a standing person's pick box ----
+//
+// Daggerfall's own Mages Guild hall of MAGEAA11 #0 and MAGEAA12 #18 (Beautiful Cities' the same) lays one of its two
+// spawn markers 0.20 m from the guild's questor (182.15, faction 63). DFU draws a Person's marker at random
+// (Place.cs GetSiteMarker) and stands it there (GameObjectHelper.AddQuestNPC) whoever stands beside it
+// (DaggerfallInterior.AddPeople), so half the Persons a quest places there stood inside him: "had to be precise to get to
+// interact with her". A departure: such a Person stands at the site's nearest other spawn marker clear of everyone.
+
+/** How far apart in height two people are on different storeys, metres. */
+export const CROWD_STOREY_M = 2;
+
+/** The standing person of the room (interiorContext.js `people`: stood, not hidden, its billboard's `width` - U23's pick
+ *  box, square in x/z) whose box a box `w` wide standing at `p` would share, on its storey; else null. */
+export function crowdingPerson(p, w, people) {
+  for (const pn of people ?? []) {
+    if (!pn?.stood || pn.active === false) continue;
+    const reach = (w + (pn.width || w)) / 2;
+    if (Math.abs(pn.x - p[0]) < reach && Math.abs(pn.z - p[2]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M) return pn;
+  }
+  return null;
+}
+
+/** THE BACKSTOP'S LAW (standSpot) and CROWD-CLEAR's: where a building's quest resource stands. `spots` the host's (the
+ *  site's other markers nearest first, then the room's enter markers), `spots.spawns` the site's other spawn markers
+ *  nearest first; a spot has a floor when the room's `collider` meets one within MARKER_FLOOR_REACH under it, rayed from
+ *  `lift` over it (a person's from its centre, an item's from just over it); `w` a Person's billboard width, null for
+ *  an item (no one). A Person whose spot shares a standing person's pick box stands at the first of those spawn markers
+ *  with a floor that shares none - never on an item's marker nor at the room's door - else where the backstop stood it,
+ *  as DFU does. */
+export function buildingStandSpot(own, spots, collider, lift, w = null, people = null) {
+  const hasFloor = (p) => Number.isFinite(collider?.raycast?.([p[0], p[1] + lift, p[2]], [0, -1, 0], MARKER_FLOOR_REACH));
+  const at = standSpot(own, spots, hasFloor);
+  if (w == null || !crowdingPerson(at, w, people)) return at;
+  for (const p of spots?.spawns ?? []) if (hasFloor(p) && !crowdingPerson(p, w, people)) return p;
+  return at;
 }
 
 // ---- PlaceFoeFreely (CreateFoe.cs:260-345) - the raycast ring ----

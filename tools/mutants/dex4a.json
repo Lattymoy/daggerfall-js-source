@@ -1,0 +1,152 @@
+[
+ {
+  "name": "DEX4a-the-merge-never-matches",
+  "file": "src/systems/spell/standardSpells.js",
+  "old": "      const at = records.findIndex((r) => r.index === item.index);   // isItemData: record.index == data[\"index\"]",
+  "new": "      const at = -1;",
+  "why": "every item a new record - a mod's edit of a SPELLS.STD spell appended behind it and never read",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-base-forgotten",
+  "file": "src/systems/spell/standardSpells.js",
+  "old": "  const r = base ? structuredClone(base) : { effects:",
+  "new": "  const r = false ? structuredClone(base) : { effects:",
+  "why": "a matched record loses every field the item does not name",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-default-cost-nought",
+  "file": "src/systems/spell/standardSpells.js",
+  "old": "element: -1, rangeType: -1, cost: -1, name: '', icon: -1, index: -1 };",
+  "new": "element: -1, rangeType: -1, cost: 0, name: '', icon: -1, index: -1 };",
+  "why": "SpellRecordData's cost defaults -1",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-effects-ignored",
+  "file": "src/systems/spell/standardSpells.js",
+  "old": "  if (Array.isArray(item.effects)) r.effects = item.effects.map(effectOf);",
+  "new": "  if (false) r.effects = item.effects.map(effectOf);",
+  "why": "a mod's spell keeps the blank effects - it does nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-name-unmapped",
+  "file": "src/systems/spell/standardSpells.js",
+  "old": "const RECORD_FIELDS = Object.freeze({ spellName: 'name',",
+  "new": "const RECORD_FIELDS = Object.freeze({ spellName: 'spellName',",
+  "why": "DFU's spellName lands beside the record's name, never in it",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-rebuild-skips-the-merge",
+  "file": "src/systems/spell/standardSpells.js",
+  "old": "export const standardSpellsByIndex = (bytes) => spellsByIndexMap(mergeSpellRecords(readSpellsStd(bytes)));",
+  "new": "export const standardSpellsByIndex = (bytes) => spellsByIndexMap(readSpellsStd(bytes));",
+  "why": "the standard list without the mods' records",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-an-empty-book-DFUs",
+  "file": "src/systems/enemySpells.js",
+  "old": "    if (book) return book;",
+  "new": "    if (book?.length) return book;",
+  "why": "a mod's empty book falls back to DFU's list, where the C# deletes it",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-door-unasked",
+  "file": "src/systems/enemySpells.js",
+  "old": "  for (const fn of _spellbooks) {",
+  "new": "  for (const fn of []) {",
+  "why": "a mod's spellbook never cast",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-first-book",
+  "file": "src/systems/enemyExpansion/dexSpells.js",
+  "old": "  for (const b of table) if (level >= b.minLevel) out = b;",
+  "new": "  for (const b of table) if (level >= b.minLevel && !out) out = b;",
+  "why": "FirstOrDefault where the C# takes LastOrDefault - every class casts the ladder's first",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-a-name-by-its-case",
+  "file": "src/systems/enemyExpansion/dexSpells.js",
+  "old": "    return name ? tables.get(name.toLowerCase()) ?? null : null;",
+  "new": "    return name ? tables.get(name) ?? null : null;",
+  "why": "a table named in another case is no one's (OrdinalIgnoreCase)",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-an-unknown-table-unsaid",
+  "file": "src/systems/enemyExpansion/dexSpells.js",
+  "old": "  for (const id of ids) if (propsOf(id)?.spellbookTable && !tableOf(id)) log(",
+  "new": "  for (const id of ids) if (false) log(",
+  "why": "a row naming no table says nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-ladder-moved",
+  "file": "src/systems/enemyExpansion/dexSpells.js",
+  "old": "book(MONSTER_SPELL_LISTS[27], 3)",
+  "new": "book(MONSTER_SPELL_LISTS[27], 4)",
+  "why": "the Class ladder's second book a level late",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-install-merges-nothing",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "    registerSpellRecordsAsset(DEX_VENDOR, JSON.parse(DEX_TABLE_TEXT['SpellRecords.json']));\n",
+  "new": "",
+  "why": "loaded, the mod's four spells are in no list - Lysandus casts nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-install-casts-DFUs",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "    registerEnemySpellbook(createDexSpellbooks(",
+  "new": "    void (createDexSpellbooks(",
+  "why": "loaded, every foe casts DFU's list",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ },
+ {
+  "name": "DEX4a-the-wire-a-byte",
+  "file": "src/net/wire.js",
+  "old": "  if (r.s !== undefined) { if (!Number.isInteger(r.s) || r.s < 0 || r.s > SPELL_INDEX_MAX) return null; out.s = r.s; }",
+  "new": "  if (r.s !== undefined) { if (!Number.isInteger(r.s) || r.s < 0 || r.s > 255) return null; out.s = r.s; }",
+  "why": "a foe casting a mod's spell refused whole on the wire",
+  "tests": [
+   "test/systems/enemyExpansion/dex4a_spells.test.js"
+  ]
+ }
+]

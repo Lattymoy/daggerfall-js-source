@@ -101,14 +101,14 @@ test('RAID4b the law: three sets after the gate boss\'s own - the Broken Oath (t
   }
   assert.equal(SIGIL_SETS.ruhn.raid, undefined, 'the gate boss\'s own names no party');
   const words = (id, i, st) => { const t = SIGIL_SETS[id].tiers[i]; return t.text(tierValues(t, st)); };
-  assert.equal(words('oath', 0, 0), '+1 armour on every part, +2 Willpower');
-  assert.equal(words('oath', 1, SET_STAGE_MAX), `When a foe's blow lands on you, your next weapon blow within ${RIPOSTE_SECONDS} s deals +40% damage`);
-  assert.equal(words('oath', 2, 0), 'While you are under half health, you take 10% less damage');
-  assert.equal(words('thieftaker', 1, 0), 'Your weapon blows deal +8% damage to a foe under half health, arrows too');
-  assert.equal(words('thieftaker', 2, SET_STAGE_MAX), `A kill marks the nearest other foe within ${MARK_METRES} m for ${MARK_SECONDS} s: your weapon blows deal it +40% damage`);
-  assert.equal(words('orcsbane', 1, 0), `Each foe's blow that lands on you grants a stack for ${BLOOD_SECONDS} s, up to ${BLOOD_STACKS}: +3% weapon damage a stack`);
-  assert.equal(words('orcsbane', 2, 0), 'A kill wards you: the next 10 damage you take is turned aside. Recovers in 60 s');
-  assert.equal(words('orcsbane', 2, SET_STAGE_MAX), 'A kill wards you: the next 40 damage you take is turned aside. Recovers in 30 s');
+  assert.equal(words('oath', 0, 0), '+1 armor on every part, +2 Willpower');
+  assert.equal(words('oath', 1, SET_STAGE_MAX), `When an enemy hits you, your next weapon hit within ${RIPOSTE_SECONDS} s deals 40% more damage`);
+  assert.equal(words('oath', 2, 0), 'While you are below half health, you take 10% less damage');
+  assert.equal(words('thieftaker', 1, 0), 'Your weapon and arrows deal 8% more damage to enemies below half health');
+  assert.equal(words('thieftaker', 2, SET_STAGE_MAX), `A kill marks the nearest other enemy within ${MARK_METRES} m for ${MARK_SECONDS} s. Your weapon deals 40% more damage to it`);
+  assert.equal(words('orcsbane', 1, 0), `Each enemy hit on you adds 3% weapon damage for ${BLOOD_SECONDS} s, up to ${BLOOD_STACKS} times`);
+  assert.equal(words('orcsbane', 2, 0), 'A kill gives you a ward that blocks the next 10 damage you take. Recovers in 60 s');
+  assert.equal(words('orcsbane', 2, SET_STAGE_MAX), 'A kill gives you a ward that blocks the next 40 damage you take. Recovers in 30 s');
   // the world's rolls: a win's set sigil, a weapon's join, the Broker's shelf - the four alone
   const seen = new Set();
   for (let i = 0; i < 400; i++) { seen.add(rollWorldSet(() => i / 400)); const s = rollSetSigil('rare', 1, seq(0, i / 400)); if (s) seen.add(s.set); }
@@ -205,7 +205,7 @@ test('RAID4b No Escape (the Thief-Taker\'s Garb, 6): a kill marks the NEAREST ot
   at(50);
   reportPlayerKill(killed.entity);
   assert.equal(markedFoe(), near.entity, 'the nearest, not the last in reach: never the one killed, the ally, the calmed foe, or one a storey up');
-  assert.deepEqual(v.said, ['No Escape - the nearest of them is marked.']);
+  assert.deepEqual(v.said, ['No Escape! The nearest enemy is marked.']);
   assert.deepEqual(v.sounds, ['mark']);
   assert.equal(weaponBlowMods(s, 100, e, near.entity), 115, '+15% at Faint on the marked foe');
   assert.equal(weaponBlowMods(s, 100, e, far.entity), 100, 'no other');
@@ -281,7 +281,7 @@ test('RAID4b Iron Hide (Orcsbane Harness, 6): a kill when it is ready wards me -
   at(100);
   assert.equal(setDamageMod(e, 5), 5, 'no ward yet');
   reportPlayerKill(RAT);
-  assert.deepEqual(v.said, ['Iron Hide - the next 10 damage is turned aside.']);
+  assert.deepEqual(v.said, ['Iron Hide! The next 10 damage is blocked.']);
   assert.deepEqual(v.sounds, ['ward']);
   assert.equal(setPowerStates().ward, 10);
   assert.equal(setDamageMod(e, 4), 0, 'four of the ten');
@@ -318,16 +318,16 @@ test('RAID4b the HUD\'s chips: No Escape\'s mark while it stands, Iron Hide\'s w
   at(0);
   assert.deepEqual(setHudChips(t), []);
   reportPlayerKill(RAT);
-  assert.deepEqual(setHudChips(t), [{ key: 'mark', set: 'thieftaker', name: 'No Escape', text: '10s', state: 'active' }]);
+  assert.deepEqual(setHudChips(t), [{ key: 'mark', set: 'thieftaker', name: 'No Escape', text: '10s', state: 'active', tier: 2 }]);   // PIN MOVED (AUDIT STAR S2): a chip carries its tier, which the HUD's card reads
   fresh(); online(1);
   const o = wearSet(player(), 'orcsbane', 6);
   door([], { me: o });
   at(0);
   reportPlayerKill(RAT);
-  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '10', state: 'active' }]);
+  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '10', state: 'active', tier: 2 }]);
   setDamageMod(o, 10);
   at(0.5);
-  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '1:00', state: 'recovering' }]);
+  assert.deepEqual(setHudChips(o), [{ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: '1:00', state: 'recovering', tier: 2 }]);
   reportPlayerKill(RAT);
   at(61);
   reportPlayerKill(RAT);

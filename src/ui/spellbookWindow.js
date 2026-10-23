@@ -128,6 +128,7 @@
 
 import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // SPELLSHOP-SAID: the window's own click-anywhere box, as the enhanced panel (ENH-NOTICE2)
 import { drawText } from './text.js';
 import { bindings } from './input.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM6: the rename is a pushed DaggerfallInputMessageBox
@@ -229,6 +230,13 @@ export const DESATURATION = 0.75;
  *  row (ListBox.cs:71, :73, applied by DecideTextColor :358-390). */
 const HIGHLIGHT_TEXT_COLOR = Object.freeze([255 / 255, 130 / 255, 40 / 255, 1]);
 const HIGHLIGHT_SELECTED_TEXT_COLOR = Object.freeze([254 / 255, 56 / 255, 18 / 255, 1]);
+
+/** SPELLSHOP-SAID: the boxes that ASK - DFU's YesNo boxes, the delete (:835), the sort (:902) and the trade
+ *  (:1001-1005) - and the boxes a click or a key puts away (ClickAnywhereToClose): the no-book and no-gold refusals
+ *  (DaggerfallUI.MessageBox, :985, :989) and the notes - the curse refusals (:823, :828) and an effect's description
+ *  (ShowEffectPopup, :656-657). The rename box (:933) and the icon picker are windows of their own. */
+const ASKS = Object.freeze(['delete', 'sort', 'trade']);
+const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 /** A window rect hit-tested in NATIVE coords (the panel offset out). */
@@ -765,6 +773,7 @@ export class SpellbookWindow {
   }
 
   _close() {
+    noticeRelease(this);   // SPELLSHOP-SAID: a host drops a closed window and never draws it again
     // OnPop (:178-183): the book turns a page shut, the shop clicks.
     audio.playOneShot(this.buyMode ? SOUND.ButtonClick : SOUND.PageTurn, 1);
     this.done = true;
@@ -844,7 +853,7 @@ export class SpellbookWindow {
    *  the book worked from the character sheet and nowhere else.) */
   click(vx, vy, right = false, middle = false) {
     if (this.top === 'iconPicker') return this._iconPicker?.click(vx, vy) ?? true;   // MC1
-    if (this.top === 'delete' || this.top === 'sort' || this.top === 'trade') {
+    if (ASKS.includes(this.top)) {
       const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
       if (hit === MB_BUTTONS.Yes) this.input('KeyY');
       else if (hit === MB_BUTTONS.No) this.input('KeyN');
@@ -1103,16 +1112,20 @@ export class SpellbookWindow {
       }
     }
 
-    if (this.top === 'iconPicker') {
+    // SPELLSHOP-SAID (FIELD BUGS 2026-10-19f): a box that does not ask - the no-book and no-gold refusals
+    // (BuyButton_OnMouseClick's DaggerfallUI.MessageBox, ClickAnywhereToClose) and a note - is the enhanced notice
+    // panel, ENH-NOTICE2's seam. Under Enhanced Plus the spell shop is this window inside the port (SHOP-PLUS), whose
+    // quiet renderer paints no parchment: the refusal was drawn onto nothing, and Buy did nothing a player could see
+    if (noticeFrame(this, NOTES.includes(this.top) ? this._boxRows() : null)) {
+      this._box = null;
+    } else if (this.top === 'iconPicker') {
       this._box = null;
       this._iconPicker?.draw(renderer, canvas, font);   // MC1: the picker rides over the book
     } else if (this.top === 'rename') {
       this._box = null;
       this.renameBox?.draw(renderer, canvas, font);   // CM6: the pushed box rides over the book
     } else if (this.top) {
-      const buttons = (this.top === 'delete' || this.top === 'sort' || this.top === 'trade')
-        ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
-      this._box = layoutMessageBox(font, this._boxRows(), buttons);
+      this._box = layoutMessageBox(font, this._boxRows(), ASKS.includes(this.top) ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : []);
       this._drawBox(renderer, m, font);
     } else this._box = null;
 

@@ -200,7 +200,7 @@ test('PROF2b the kind: a pixel\'s nodes take the Motherlodes standing on it; its
   } finally { setForagingHost(null); }
   const toasts = [];
   k.answered({ motherlode: true, node: n.key, marks: { struck: 10, balance: 60 } }, (t) => toasts.push(t));
-  assert.deepEqual(toasts, ['10 silver struck to your account. You hold 60 silver.']);
+  assert.deepEqual(toasts, ['10 silver added to your account. You now hold 60 silver.']);
   assert.equal(heard.length, 1);
   k.answered({ node: 'vein:1:2:3:4' }, (t) => toasts.push(t));
   assert.equal(toasts.length, 1, 'a vein\'s answer says nothing of silver');

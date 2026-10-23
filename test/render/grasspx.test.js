@@ -195,7 +195,7 @@ test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits
   // the pixel terms, by their exact lines: with the switch at zero every one of them is the lab's arithmetic
   for (const line of [
     'float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',
-    'vec2 lean = aInst2.xy + wdir * push * 0.055;',
+    'vec2 lean = aInst2.xy + wdir * push * 0.032;',
     'p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel);',
     'vUV = aCorner;',
     'vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);',   // PIN MOVED (AUDIT MEADOW1): the root's place in its cell, which no floating-origin shift moves

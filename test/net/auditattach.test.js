@@ -39,11 +39,13 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   assert.equal(me.meters.cin.length, CAST_DEST_SENDERS_MAX, 'the funnel full, of forty-character ids');
   assert.ok(me.meters.cin.every((c) => c.id.length === 40));
   const bytes = JSON.stringify(me.att).length;
+  // PIN MOVED (LEASE1): 1080, from 1056 - the hub's word on the socket: when the room's last word on its mute was said
+  // (`lt`), when its lease lapses (`ld`) and a freeze (`fz`), three numbers of ten digits; still about half the runtime's 2048.
   // PIN MOVED (WIKIMAID): 1056, from 1024 - the WikiMaid's glyph word took the widest, every glyph at once, to 1030 bytes
   // (the glyph list 185 of them, as words); still 1018 under the runtime's 2048. The next field is measured against
   // this; storing the glyphs as their places in GLYPHS rather than their words would buy back some 170 bytes if the
   // half is to be held again.
-  assert.ok(bytes <= 1056, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
+  assert.ok(bytes <= 1080, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
   assert.ok(bytes > 500, `and it is the wide one: ${bytes} bytes`);
 }));
 
@@ -55,8 +57,8 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   assert.deepEqual(fields.filter((k) => !want.includes(k)), [], 'a field on a dungeon attachment this test never measured');
   const bytes = JSON.stringify(me.att).length;
   // SEAT-LIVE's stamps (two thirteen-digit times) and the instance's longer key: 1086 at its widest, past the building's
-  // 1056 - a dungeon instance's ceiling of its own, still about half
-  assert.ok(bytes <= 1100, `the widest dungeon instance attachment is ${bytes} bytes`);
+  // 1056 - a dungeon instance's ceiling of its own, still about half. PIN MOVED (LEASE1): 1135, from 1100 - the lease's three numbers
+  assert.ok(bytes <= 1135, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 
 // Each arm's flood, at one instant: `passes` frames through the bucket, then a strike a frame (`key`), closed past `max`.

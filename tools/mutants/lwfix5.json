@@ -89,9 +89,9 @@
   },
   {
     "name": "LW-FIX5-host-seed",
-    "file": "src/scenes/world.js",
-    "old": "    const rolls = lwRng(textSeed(key), 0x676f6f64);",
-    "new": "    const rolls = lwRng(textSeed(String(Math.random())), 0x676f6f64);",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
+    "old": "  const rolls = lwRng(textSeed(key), 0x676f6f64);",
+    "new": "  const rolls = lwRng(textSeed(String(Math.random())), 0x676f6f64);",
     "tests": [
       "test/systems/livingWorld/lwfix5_deep.test.js",
       "test/systems/livingWorld/lwfix2_watch.test.js",
@@ -100,7 +100,7 @@
   },
   {
     "name": "LW-FIX5-host-mint",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
     "old": "if (raw && !isAmmunition(raw)) items.push(mintCondition(setItemFields(raw)));",
     "new": "if (raw && !isAmmunition(raw)) items.push(raw);",
     "tests": [
@@ -111,7 +111,7 @@
   },
   {
     "name": "LW-FIX5-host-arrow",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
     "old": "if (raw && !isAmmunition(raw)) items.push(mintCondition(setItemFields(raw)));",
     "new": "if (raw) items.push(mintCondition(setItemFields(raw)));",
     "tests": [

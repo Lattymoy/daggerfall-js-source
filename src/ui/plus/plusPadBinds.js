@@ -76,7 +76,7 @@ export function rowCode(store, row) {
 export function bindRefusal(code, { crossbar = crossbarInForce() } = {}) {
   if (typeof code !== 'string') return 'not a controller button';
   if (code === 'JoystickAxis9Button0' || code === 'JoystickAxis10Button0') return null;   // LT, RT
-  if (Object.values(DPAD_CODES).includes(code)) return 'the d-pad is set below, under D-pad';
+  if (Object.values(DPAD_CODES).includes(code)) return 'set the d-pad below, under D-pad';
   if (/^JoystickAxis\d+Button[01]$/.test(code)) return 'a stick is not a button';
   if (!/^JoystickButton\d+$/.test(code)) return 'not a controller button';
   if (crossbar && CROSSBAR_HOLD.includes(code)) return 'LB and RB hold the crossbar (turn it off on the Plus card to use them)';
@@ -101,7 +101,7 @@ export function bindPlusRow(store, rowId, code, { save = saveKeyBinds } = {}) {
   const old = rowCode(store, row);
   if (old === code) return { ok: true };
   const other = PLUS_BIND_ROWS.find((r) => r !== row && rowCode(store, r) === code) ?? null;
-  if (other && !old && other.keep) return { ok: false, reason: `${other.label} needs that button - give it another first` };
+  if (other && !old && other.keep) return { ok: false, reason: `${other.label} needs that button. Give it another first` };
   if (other) writeRow(store, other, old);
   // an action outside these rows on that button (the player's own grid binding) gives it up, as a grid bind would
   writeRow(store, row, code);

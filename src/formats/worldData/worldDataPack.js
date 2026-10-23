@@ -263,7 +263,9 @@ export function openWorldDataPack(pack, env) {
     if (kept) return kept;
     if (!Object.hasOwn(rawFiles, name)) throw new Error(`world-data pack: ${pack.vendor} has no ${name}`);
     const [sha, base, ops] = fileEntry(name);
-    const json = patchJson(baseOf(name, base, maps), expandOps(ops));
+    // WD-OWNED: a location's base is made here for this file alone (locationToDfuJson over a fresh read of the town), so
+    // the edits are laid on it; a block's (classicJson) and a file's (keptFiles) are kept for the next, so laid on a copy
+    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, { owned: base?.[0] === 'l' });
     if (baseTargets.has(name)) keptFiles.set(name, json);
     onRebuilt?.(name, json, sha);
     return json;

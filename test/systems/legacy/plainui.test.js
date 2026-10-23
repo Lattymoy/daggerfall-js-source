@@ -54,14 +54,14 @@ test('PLAIN-UI the Seat tab says what a seat is and the reader\'s next step befo
   const mine = (o) => ({ guild: 'g1', rank: 2, seasoned: true, bound: 'g1', pledges: [], influence: 0, ...o });
   const here = { region: 21, key: 3021 };
   const rows = [
-    [week(null), 'You need a guild to take part: open Social, beside the chat, then its Guild page to join one or found one (a guild needs an account with a username and a password).'],   // PIN MOVED: AUDIT PLAIN-UI W12, U2
+    [week(null), 'You need a guild to take part. Open Social (beside the chat), then its Guild page to join or found one. A guild needs an account with a username and a password.'],   // PIN MOVED: AUDIT PLAIN-UI W12, U2
     [week(mine({ rank: 1 })), 'Pledge your guild to Anticlere before Friday 18:00 UTC.'],   // PIN MOVED: AUDIT PLAIN-UI U2 - the lever beside it
     [week(mine({ rank: 2 })), 'Ask an Officer or your Guildmaster to pledge your guild to Anticlere before Friday 18:00 UTC.'],
     [{ ...week(mine({ rank: 1 })), phase: 'reckoning' }, 'Pledges are locked until the Turning, Sunday 18:00 UTC. Your guild can pledge here in next week\'s Muster.'],
     [week(mine({ pledges: [{ region: 21, key: 3099 }] })), 'Your guild fights for another seat of this region this week, and what you earn counts there.'],
     [week(mine({ pledges: [here], seasoned: false })), `You count for your guild once you have been in it ${SEAT_MEMBER_WAIT_S / 86400} days.`],
     [week(mine({ pledges: [here], bound: 'g9' })), 'Your account fights for another guild this week, and what you earn counts there.'],
-    [week(mine({ pledges: [{ ...here, held: true }] })), /^Your guild holds this Charter\. Earn influence here to keep its defence above every challenger: /],
+    [week(mine({ pledges: [{ ...here, held: true }] })), /^Your guild holds this Charter\. Earn influence here to keep its defense above every challenger: /],
     [week(mine({ pledges: [{ region: 4, key: 400 }, here] })), /^Earn influence for your guild here: walk the town, close Dagon's Breaches/],
   ];
   for (const [data, want] of rows) {
@@ -135,7 +135,7 @@ test('PLAIN-UI How chapters work stands over the chapters\' cards - open for a r
   assert.deepEqual(guide.map(([w]) => w), ['What a chapter is', 'Your rank', 'Standing', 'Merit', 'Strength', 'Band', 'The chairs', 'Season', 'Patron']);   // PIN MOVED (SEAT-WORDS / STANDING-WORDS, Field-Bugs-2026-10-15g.md): the rank and the standing
   const said = (w) => guide.find(([k]) => k === w)[1];
   assert.match(said('Merit'), new RegExp(`${n(MERIT_WRIT)} for filling your own chapter writ.* a share of ${n(MERIT_RECEIPT)} for each .*at most ${n(MERIT_CAP_WEEK)} an account a week in each chapter`));
-  assert.match(said('Strength'), new RegExp(`from ${STRENGTH_START}\\. .*up to ${STRENGTH_STEP_MAX}\\. .*a week with no Merit at all costs ${STRENGTH_IDLE};`));   // PIN MOVED: AUDIT PLAIN-UI W1
+  assert.match(said('Strength'), new RegExp(`starting at ${STRENGTH_START}\\. .*up to ${STRENGTH_STEP_MAX}\\. .*A week with no Merit costs ${STRENGTH_IDLE}\\.`));   // PIN MOVED: AUDIT PLAIN-UI W1
   assert.match(said('Band'), /^Strength's name: Failing under 20, Steady from 20, Thriving from 70, Ascendant from 90\. /);
   assert.match(said('The chairs'), new RegExp(`^Rank 9 \\(the Master\\) and rank 8 \\(3 council chairs\\) .*the last ${SEAT_MERIT_WEEKS} weeks`));
   assert.match(said('Season'), new RegExp(`one event: ${CHAPTER_EVENTS.slice(0, -1).map((e) => e.name).join(', ')} or ${CHAPTER_EVENTS.at(-1).name}\\.`));
@@ -162,15 +162,15 @@ test('PLAIN-UI the Family tab\'s How it works - the house\'s own model (both bef
   assert.deepEqual(FAMILY_PAGE_SECTIONS.at(-1), ['guide', 'How it works']);
   assert.match(src('src/ui/enhanced/enhancedMenu.js'), /\{ tree: drawTreePage, house: drawHousePage, hall: drawHallPage, guide: drawGuidePage \}\)\[famSec\]\(detail, render, kit\);/);
   const death = (model, toll) => familyGuide(model, toll).find(([k]) => k === 'Death')[1];
-  assert.match(death(MODELS.enduring, 0.06), /^In an Enduring house a death is not the end, but it costs years: Arkay's toll takes 6% of your race's lifespan each time \(a vampire or a werebeast pays none\)\. From 75% of the span you are an Elder;/);
+  assert.match(death(MODELS.enduring, 0.06), /^In an Enduring house a death is not the end, but it costs years: Arkay's toll takes 6% of your race's lifespan each time \(vampires and werebeasts pay none\)\. From 75% of your lifespan you are an Elder,/);
   assert.match(death(MODELS.enduring, 0.1), /takes 10% of your race's lifespan/);
   assert.equal(death(MODELS.bloodline, 0.06), 'In a Bloodline house every death is final.');
-  assert.match(death(null, 0.04), /takes 4% .* In a Bloodline house every death is final\. Which a house is, is chosen once, when its founder is made\.$/);
+  assert.match(death(null, 0.04), /takes 4% .* In a Bloodline house every death is final\. A house's model is chosen once, when its founder is made\.$/);
   const said = (w) => familyGuide(MODELS.enduring, 0.06).find(([k]) => k === w)[1];
   // PIN MOVED (AUDIT PLAIN-UI W2): the estate is whoever carries on; the blood and the hearth a newborn's
   assert.match(said('What carries on'), new RegExp(`^Whoever carries the line on receives the estate: a quarter of the gold the fallen carried, at most ${n(ESTATE_MAX)}\\. A newborn is also born with the blood \\(up to \\+${BLOOD_MAX} on each stat, from the better parent's\\) and the hearth \\(up to \\+${HEARTH_MAX} on each of a parent's primary and major skills\\)\\.$`));
   assert.match(said('Heirlooms and remains'), new RegExp(`\\+${HEIRLOOM_DAMAGE_PER_GEN}% damage.* gives \\+${BLESSING_POINTS} to the fallen's best skill`));
-  assert.match(said('Marriage and children'), new RegExp(`a regard of \\+${FRIEND_AT}\\).* every ${CHILD_DAYS} days you play as the married one brings a one in four chance of a child, up to ${CHILDREN_MAX}\\.`));   // PIN MOVED: AUDIT PLAIN-UI W11
+  assert.match(said('Marriage and children'), new RegExp(`a regard of \\+${FRIEND_AT}\\).* there is a 1 in 4 chance of a child every ${CHILD_DAYS} days you play as the married one, up to ${CHILDREN_MAX} children\\.`));   // PIN MOVED: AUDIT PLAIN-UI W11
   // drawn: the page's steps, the model played
   setFamilyProvider({ on: () => true, family: () => ({ model: MODELS.bloodline, people: [] }), lived: () => 0, switchRefusal: () => null, switchTo: () => ({ ok: true }) });
   const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };

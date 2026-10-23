@@ -32,6 +32,7 @@ import { FT } from '../../src/systems/foraging/foragingLaw.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { createMarketBook } from '../../src/net/marketBook.js';
 import { createMarketTab } from '../../src/ui/marketTab.js';
+import { SEAT_ROWS_SQL, SEAT_JUDGED_SQL } from '../../server-account/src/townSeats.js';   // LEAN-WITNESS
 
 const DAY = 86_400;
 const WOODS = 231, ANTICLERE = 21;
@@ -143,7 +144,7 @@ test('GATHER-SPEED: the professions\' state is one round trip, and a pixels-and-
 // ═══ THE SERVICE: THE SEATS' PLACES ══════════════════════════════════════════════════════════════════════════════════
 
 const SEAT = { key: 3021, name: 'Anticlere', region: ANTICLERE, tier: 'palace', pixel: [402, 151] };
-const SEAT_SQL = "SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'";
+const seatRead = (sql) => sql === SEAT_ROWS_SQL || sql === SEAT_JUDGED_SQL;   // LEAN-WITNESS (PIN MOVED): the rows the law judges by are a read of them
 test('GATHER-SPEED / MARKET-SPEED: a Levy\'s seat, a Tithe\'s and a board\'s Market Hall read the seats\' witness rows off the isolate\'s kept minute - once for all six asks, where each read them whole (mutants: the Levy unkept; the Tithe unkept; the Market Hall unkept)', async () => {
   const s = await stand({ SEATS_OPEN: 'on' });
   const raw = s.raw;
@@ -156,7 +157,7 @@ test('GATHER-SPEED / MARKET-SPEED: a Levy\'s seat, a Tithe\'s and a board\'s Mar
   const base = s.env.DB;
   const c = { n: 0 };
   const db = Object.create(base);
-  db.prepare = (sql) => { if (sql === SEAT_SQL) c.n++; return base.prepare(sql); };
+  db.prepare = (sql) => { if (seatRead(sql)) c.n++; return base.prepare(sql); };
   for (let i = 0; i < 2; i++) {
     assert.equal(await levyAt(db, NOW + i, SEAT.region, SEAT.pixel), SEAT.key, 'the Levy\'s seat');
     assert.deepEqual(await titheAt(db, NOW + i, SEAT.region, SEAT.pixel), { key: SEAT.key, guild: 'g1', pct: 5 }, 'the Tithe\'s');

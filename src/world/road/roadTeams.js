@@ -14,6 +14,13 @@
 // EVERY ALLOCATION HAS AN OWNER: each horse's billboard batch is made with it and destroyed as it leaves the list, and
 // `clear()` destroys every one and takes down every box (the roads' own clear: indoors, a mode's change, the teardown).
 // The meshes are the pool's, held for the session (the pool's own law).
+//
+// HORSE-VIEW II (2026-10-21, bible/07-Rendering/Performance-Priority.md): on the Morrowind lane a stranger's 3D horse
+// steps its gait every frame and is posed as the Horse Cart pool's are (world/horseView.js poseWhereSeen) - in the last
+// body pass's view (draw3d's camera, one frame behind), on the peers' bodies' cadence by how far it looks from that
+// camera; one skipped out of the view is caught up by the draw as the view swings onto it (`fresh`), and one that moves
+// into it by the next sync (its last `out` handed back to the law - the audit's). Every one of them, out of the view and
+// at any range, was posed and its palette sent every frame.
 import { mat4FromQuatPos, quatLookRotation } from '../quat.js';
 import { usableBounds } from '../../systems/wagon/wagon41214.js';
 import { boxTriangles, HORSE_ARCHIVE, horseStillRecord, HORSE_BILLBOARD_WIDTH, HORSE_BILLBOARD_HEIGHT } from '../../scenes/horseCartPool.js';
@@ -21,6 +28,8 @@ import { strangerHorseLook } from '../../systems/horse/horseCoats.js';   // COAT
 import { stepHorseWalk, freshHorseWalk, NORMAL_GROUND_OFFSET } from '../../systems/horse/horseCartLaw.js';
 import { wheelAngleAt, HITCH_N } from '../../systems/livingWorld/wagons.js';
 import { NATIVE_PER_M } from '../../systems/travel/travelDungeons.js';
+import { lensOf } from '../../net/peer/peerBodies.js';   // HORSE-VIEW II: the lens the body pass draws through - the cadence's
+import { poseWhereSeen } from '../horseView.js';   // HORSE-VIEW II: posed where it is seen, the pool's law
 
 /** WAGONS1 x LW10: THE LIVING WORLD'S WAGON is the Small Cart - the classic transport's kind (Mac's wagon of it where
  *  his are drawn, Daggerfall's 41214 where they are not), whatever the player drives: the pool's draw and parts default
@@ -45,11 +54,17 @@ export const wagonBucket = (key) => `lwWagon:${key}`;
  *   for the billboards, null otherwise
  */
 export function createRoadTeams({ renderer, presentation, collider = () => null, horses3d = () => null }) {
-  /** @type {Map<string, { batch: any, walk: any, look: number, h3?: any, h3rig?: any }>} */
+  /** @type {Map<string, { batch: any, walk: any, look: number, h3?: any, h3rig?: any, phase: number, out: boolean }>} */
   const horses = new Map();
-  /** COATS3D: this frame's 3D horses (the Morrowind lane's - `horses3d` the rig, world/horseRig.js), for draw3d. */
+  /** COATS3D: this frame's 3D horses (the Morrowind lane's - `horses3d` the rig, world/horseRig.js), for draw3d - each
+   *  stranger's record (HORSE-VIEW II: its horse, and whether its pose was skipped out of the last view). */
   /** @type {any[]} */
   const drawn3d = [];
+  /** HORSE-VIEW II: the last body pass's camera (draw3d's - its view, eye and lens), the next frame's poses' view; the
+   *  frames counted, and the next new horse's phase (horses on one cadence pose on different frames). */
+  /** @type {{ proj: any, view: any, eye: any, lens: number } | null} */
+  let cam3d = null;
+  let frameNo = 0, phases = 0;
   /** @type {Map<string, Float64Array>} the boxes standing, by wagon key */
   const boxes = new Map();
   /** @type {any[]} */
@@ -77,6 +92,7 @@ export function createRoadTeams({ renderer, presentation, collider = () => null,
   function sync(horseList, wagonList, { dt = 0, eye = [0, 0, 0], grow = 1, ground = true } = {}) {
     drawn.length = 0;
     drawn3d.length = 0;
+    frameNo++;
     const rig = horses3d();
     const in3d = !!rig?.ready();   // COATS3D: the Morrowind lane's 3D horse stands for every billboard
     const pres = presentation();
@@ -97,16 +113,17 @@ export function createRoadTeams({ renderer, presentation, collider = () => null,
       if (!s) {
         const batch = renderer?.createBillboardBatch?.(HORSE_ARCHIVE, horseStillRecord(0), { w: HORSE_BILLBOARD_WIDTH, h: HORSE_BILLBOARD_HEIGHT }, [[0, 0, 0]]) ?? null;
         if (batch) batch.origin = [0, 0, 0];
-        s = { batch, walk: freshHorseWalk(), look: strangerHorseLook(h.key) };   // COATS1: a stranger's horse, its own look off its key
+        s = { batch, walk: freshHorseWalk(), look: strangerHorseLook(h.key), phase: phases++, out: false };   // COATS1: a stranger's horse, its own look off its key
         horses.set(h.key, s);
       }
       s.walk = stepHorseWalk(s.walk, h.moving ? h.speed : 0, dt, !!art?.hasWalk?.());
       if (in3d) {   // COATS3D: the stranger's horse in 3D, in its own look, at its team's pace
         if (!s.h3) { s.h3 = rig.horse(s.look % 65536 || 1); s.h3rig = rig; }
         if (!s.h3) continue;
-        rig.step(s.h3, { feet: h.feet, yaw: h.yaw, speed: h.moving ? h.speed : 0, dt, look: s.look });
+        rig.step(s.h3, { feet: h.feet, yaw: h.yaw, speed: h.moving ? h.speed : 0, dt, look: s.look, pose: false });   // HORSE-VIEW II: its gait every frame, its pose where it is seen
         if (grow > 1) rig.place(s.h3, h.feet, h.yaw, grow);
-        drawn3d.push(s.h3);
+        s.out = poseWhereSeen(rig, s.h3, h.feet, cam3d, eye, frameNo, s.phase, s.out);   // out when last judged: posed as it comes in
+        drawn3d.push(s);
         continue;
       }
       if (s.h3) { s.h3rig?.release(s.h3); s.h3 = null; s.h3rig = null; }   // AUDIT COATS3D A7: the gate down (a beast's stand-in) - the rig itself lives on
@@ -156,11 +173,14 @@ export function createRoadTeams({ renderer, presentation, collider = () => null,
     },
     /** This frame's horse billboards (the exterior's billboard pass). */
     batches: () => drawn,
-    /** COATS3D: this frame's 3D horses, in the host's body pass (its sprite batch open). Answers how many drew. */
+    /** COATS3D: this frame's 3D horses, in the host's body pass (its sprite batch open). Answers how many drew.
+     *  HORSE-VIEW II: its camera kept for the next frame's poses (their view, and their cadence's eye and lens), and a
+     *  horse whose pose was skipped out of the last view caught up as it comes into this one (`fresh`). */
     draw3d(canvas, { proj, view, eye, up = null }) {
       const rig = horses3d();
+      cam3d = rig ? { proj, view, eye, lens: lensOf(proj) } : null;
       let n = 0;
-      if (rig) for (const h of drawn3d) if (rig.draw(h, canvas, { proj, view, eye, up })) n++;
+      if (rig) for (const s of drawn3d) if (rig.draw(s.h3, canvas, { proj, view, eye, up, fresh: s.out })) n++;
       return n;
     },
     /** The wagons, in the host's world mesh pass. PERF-WAGON: `cull` the host's view test (scenes/world.js yardCull) -

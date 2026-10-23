@@ -99,7 +99,7 @@ const swing = (e, weapon, target, n = 100) => { const d = setBlow(weapon, n, e, 
 // ─── THE LAW ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('SERPENT-SET the law: Sethrakul\'s Coilscale after the raids\' three - Aetheric, Satakal its patron, no raiding party\'s, never a world set; Sea-Scale, Constrict and Shed Skin at 2, 4 and 6 pieces, each a whole pair from Faint to Ascendant, every brief inside BRIEF_MAX at every stage (mutants: the set out of the record; a world set; a raid\'s; a tier\'s number)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-3), ['coilscale', 'numidium', 'panoply'], 'the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED), EG15\'s Battlemage\'s Panoply after that (PIN MOVED)');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-6), ['coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric'], 'PIN MOVED (SEA-SET): the Eltheric Tidemail last - the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED), EG15\'s Battlemage\'s Panoply after that (PIN MOVED), WITCH1\'s Wyrd\'s Raiment (PIN MOVED), STAR7\'s Starspun Weave last (PIN MOVED)');
   const s = setById('coilscale');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['coilscale', "Sethrakul's Coilscale", 'Satakal', '#3a9ad9', true, false, 'The Old Coil, shed and worn']);
@@ -118,7 +118,7 @@ test('SERPENT-SET the law: Sethrakul\'s Coilscale after the raids\' three - Aeth
     }
   }
   assert.equal(s.tiers[2].brief(tierValues(s.tiers[2], 0)), 'Under 35%: shed skin, heal 10%');
-  assert.equal(s.tiers[1].brief(tierValues(s.tiers[1], SET_STAGE_MAX)), '+8% a blow on each foe, to 5');   // PIN MOVED (AUDIT 625 P3): each foe its own coil
+  assert.equal(s.tiers[1].brief(tierValues(s.tiers[1], SET_STAGE_MAX)), '+8% per hit on a foe, up to 5');   // PIN MOVED (AUDIT 625 P3): each foe its own coil
 });
 
 test('SERPENT-SET the records: nine in the places\' order - the seven body pieces, a kite shield and a ONE-HANDED Katana (so all nine are worn at once) - Ebony, the set\'s own; every affix at the Legendary band\'s middle (over a town\'s thanks, under the Warden), the blow the band\'s middle too; never a frost resistance and one resistance of an element at most; AETHERIC_RECORDS the Regalia, the raids\' and then these (mutants: a number off the middle; a frost piece; the make; the order)', () => {

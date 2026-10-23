@@ -40,9 +40,9 @@ import { trs, multiply } from '../../../src/world/mat4.js';
 import { RDB_RESOURCE_TYPES, BlocksFile, BLOCK_TYPES } from '../../../src/formats/blocksFile.js';
 import { MapsFile } from '../../../src/formats/mapsFile.js';
 import { Arch3dFile } from '../../../src/formats/arch3dFile.js';
-import { ClassFile } from '../../../src/formats/classFile.js';
+import { loadEnemyCareer } from '../../../src/characters/enemy/enemyEntity.js';
 import { collectDungeonEnemies } from '../../../src/characters/dungeonEnemies.js';
-import { ENEMY_BASICS } from '../../../src/characters/enemy/enemyBasics.js';
+import { ENEMY_BASICS, enemyEntityType, isClassEnemyId } from '../../../src/characters/enemy/enemyBasics.js';
 import { setPref } from '../../../src/systems/uiPrefs.js';   // BAL4: the switch this file's pins assumed
 import { tickTactics, resetTactics } from '../../../src/ai/tactics.js';   // AUDIT BAL: the brain's clock, ticked as the hosts tick it
 
@@ -58,6 +58,7 @@ import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpo
 import { createExteriorFoes } from '../../../src/scenes/exteriorFoes.js';
 import { effectiveLevel } from '../../../src/systems/mentorMode.js';
 import { ROOM_LOOT_OFF } from '../../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
+import { setupFoeLook } from '../../../src/characters/enemy/foeLook.js';   // DEX2: the arms' free name - SetupDemoEnemy's renderer
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8').replace(/^﻿/, '');
@@ -205,14 +206,15 @@ function context(collider, { idleH = 3.2, batH = 1, playerFeet = [25.6, 0, 22.4]
   const foes = [], bound = [];
   const state = {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
-    ENEMY_BASICS, collider, foes, flyerStandFeet, enemyControllerHeight, keepRebuiltSpawn, freeLodgedFeet, clearPast, floorLanding,
+    ENEMY_BASICS, enemyEntityType, isClassEnemyId, setupFoeLook, collider, foes, flyerStandFeet, enemyControllerHeight, keepRebuiltSpawn,   // DEX1: DFU's entity type and class test, the arms' free names
+    freeLodgedFeet, clearPast, floorLanding,
     SEARCH_FOE_SPACING, SEARCH_DOOR_REACH_M, lastPlayerFeet: playerFeet, actions: { objects: new Map() }, objectAabb: () => null,
     MobileUnit: class { static resolveGender(g) { return g === 'female' ? 'female' : 'male'; } },
     idleSpriteHeight: (t) => t.idleH,
     getTexture: async (archive) => ({ idleH: archive === ENEMY_BASICS[GIANT_BAT].maleTexture ? batH : idleH, getFrameCount: () => 1 }),
     foeDeps: {
-      EnemyAI, EnhancedEnemyAI: EnemyAI, EnemyAttack: class {}, floorLanding, ClassFile,
-      loadMonsterCareer: async () => ({}), fetchBytes: async (n) => { if (/^CLASS\d\d\.CFG$/.test(n)) return classCfg(); throw new Error(`no ${n}`); },
+      EnemyAI, EnhancedEnemyAI: EnemyAI, EnemyAttack: class {}, floorLanding,
+      loadEnemyCareer: (t, fb) => (enemyEntityType(t) === 'class' ? loadEnemyCareer(t, fb) : Promise.resolve({})), fetchBytes: async (n) => { if (/^CLASS\d\d\.CFG$/.test(n)) return classCfg(); throw new Error(`no ${n}`); },
       makeEnemyEntity: () => ({ items: [], health: 10, maxHealth: 10 }),
       playerEntity: { level: 1, reflexes: 2 }, hasMagickaToCast: () => false,
     },

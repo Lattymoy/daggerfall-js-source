@@ -195,8 +195,8 @@
   {
     "name": "INT9-RELAY-THE-RECEIPT-TO-THE-KILLER-ALONE",
     "file": "server/src/index.js",
-    "old": "    for (const sub of [fall.fallen, fall.killer]) {",
-    "new": "    for (const sub of [fall.killer]) {",
+    "old": "    this._wildHand([fall.fallen, fall.killer], { t: 'wref', k: 'rc', r: fall.r, rc });",
+    "new": "    this._wildHand([fall.killer], { t: 'wref', k: 'rc', r: fall.r, rc });",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -738,8 +738,8 @@
   {
     "name": "INT9-AUDIT-RELAY-THE-GONE-STILL-A-FIGHTER",
     "file": "server/src/index.js",
-    "old": "    if (a.sub && this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub)) wildGone(this._wildRef, a.sub, Date.now());",
-    "new": "",
+    "old": "{ wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP",
+    "new": "{ seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -921,8 +921,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-ZONES-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid }",
-    "new": "{ d: d.d, r, held, wa: null, kin, rid }",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }",
+    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key }",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/int9_wild_ref.test.js"

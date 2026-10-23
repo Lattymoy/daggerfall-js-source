@@ -18,6 +18,7 @@ import { sdRiftArt } from '../../../src/world/superDungeon/sdRiftArt.js';
 import { Collider } from '../../../src/player/collider.js';
 import { ActionSystem } from '../../../src/world/actionSystem.js';
 import { sdRiftPlace, sdReturnPlace, sdLandingPlace } from '../../../src/world/superDungeon/sdDungeon.js';
+import { sdProbeOf } from '../../../src/scenes/superDungeon/sdEnd.js';   // SD-THROUGH (PIN MOVED): the end's one probe over the collider
 import { floorLanding } from '../../../src/player/enterExit.js';
 import { trs } from '../../../src/world/mat4.js';
 import { glslFunctions } from '../../glsl.mjs';
@@ -62,8 +63,11 @@ function box(x0, y0, z0, x1, y1, z1) {
 test('AUDIT SD IV (S1): THE END IS STOOD WITH THE LEVEL - the Rift, the Return and the landing back are placed by the host\'s own probe as the context is built, its doors shut, before a save or the room can open one; a door opened first moves all three (mutants: the stand left to the first unpaused frame)', () => {
   const D = read('src/scenes/dungeonContext.js');
   const at = D.indexOf('function standSdEnd()');
-  const p0 = D.indexOf('const probe = {', at), p1 = D.indexOf('};', p0) + 2;
-  const makeProbe = new Function('collider', `${D.slice(p0, p1)}; return probe;`);
+  // PIN MOVED (SD-THROUGH): the host's probe is the end's one over its collider (scenes/superDungeon/sdEnd.js sdProbeOf - the
+  // Way Through's too), asked in standSdEnd before the Rift is placed
+  const p0 = D.indexOf('const probe = sdProbeOf(collider);', at);
+  assert.ok(p0 > at && p0 < D.indexOf('const rift = sdRiftPlace(', at), 'the stand asks the end\'s probe');
+  const makeProbe = sdProbeOf;
   const I = trs(0, 0, 0, 0, 0, 0);
   // a closet 3 m across round the end, its east doorway shut by an action door onto a wider hall
   const level = () => {

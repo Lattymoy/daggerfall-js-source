@@ -161,7 +161,7 @@ test('AUDIT REP F5: a raid\'s defence says its thanks - the one legal change a c
   const off = installLegalNotices({ playerEntity: me, say: (l) => said.push(l), regionName: () => 'Wayrest' });
   try {
     assert.equal(grantRaidReputation({ player: me, store }, 17), true);
-    assert.deepEqual([me.legalRep[17], said], [100, ['Wayrest thanks you for its defence (+2). You are revered.']]);
+    assert.deepEqual([me.legalRep[17], said], [100, ['Wayrest thanks you for its defense (+2). You are revered.']]);
     grantRaidReputation({ player: me, store }, 17);
     assert.equal(said.length, 1, 'at the top: nothing moved, nothing said');
   } finally { off(); }

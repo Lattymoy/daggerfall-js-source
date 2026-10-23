@@ -187,13 +187,13 @@ test('DECOR2a the panel\'s "Your things": a third tab with its count; each thing
   assert.deepEqual([panel.mode(), pick(root)[0]], ['own', 'Small Statue']);
   // in the room
   panel.showRoom('o9');
-  assert.deepEqual(line(rows(root)[0]), ['Small Statue', 'yours - back to your pack when taken down', 'yours']);
-  assert.deepEqual(pick(root).slice(0, 3), ['Small Statue', 'yours - back to your pack when taken down', 'Take down: back to your pack']);
+  assert.deepEqual(line(rows(root)[0]), ['Small Statue', 'yours, back to your pack when taken down', 'yours']);
+  assert.deepEqual(pick(root).slice(0, 3), ['Small Statue', 'yours, back to your pack when taken down', 'Take down: back to your pack']);
   assert.deepEqual([btn(root, /^Take down$/)?.disabled, btn(root, /^Holds things/).disabled, btn(root, 'Move').disabled], [false, true, false]);
   calls.length = 0;
   btn(root, 'Take down').fire('click');
   assert.deepEqual(calls, [['remove', 'o9']], 'the tool\'s taking-down, through the one door');
-  assert.equal(decorPlacedSub({ piece: { ...mine, light: { color: [1, 1, 1], range: 5, intensity: 1 } }, holds: false }), 'yours - back to your pack when taken down - gives light');
+  assert.equal(decorPlacedSub({ piece: { ...mine, light: { color: [1, 1, 1], range: 5, intensity: 1 } }, holds: false }), 'yours, back to your pack when taken down - gives light');
   panel.destroy();
 });
 

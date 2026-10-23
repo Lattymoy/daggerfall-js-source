@@ -48,9 +48,9 @@ const SPELL_DRAG_BOX = 38;
 // HB1: the hotbar. With it chosen over the diamond, the book is where a
 // spell goes onto it - dragged off the rail, or by the button that stood
 // for the diamond's spell slot.
-import { hotbarSlotOf } from '../../systems/quickslots.js';
 import { setHotbarDropMode, hotbarAcceptsDrops, beginHotbarDrag, takeHotbarDragClick, hotbarMode, toggleHotbarSpell,
-  spellSigil, spellInitials } from './enhancedHotbar.js';   // PX23b: the classic's OWN words for the two icons
+  spellSigil, spellInitials,   // PX23b: the classic's OWN words for the two icons
+  hotbarShownSlotOf, setHotbarPick } from './enhancedHotbar.js';   // DIAMOND-HB: shown-slot lookup; hover + key to slot
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -219,6 +219,7 @@ function paint() {
     const b = el('button', `px-qrow sb-row${r.i === picked ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(r.name));
     b.append(el('span', 'sb-cost', String(r.cost)));
+    b._hotbarSpell = r.spell;   // DIAMOND-HB: point at it and press a hotbar key
     // HB1: a rail row DRAGS onto the hotbar under the window. A mouse
     // crosses at 4px, a finger on a hold, so a click is still a pick.
     b.onpointerdown = (e) => {
@@ -251,7 +252,7 @@ function paint() {
   // with. The classic answers it only by failing at the cast.
   const short = Number.isFinite(magicka) && sel.cost > magicka;
   meta.append(el('span', `px-qtimer${short ? ' urgent' : ''}`,
-    short ? `${sel.cost} spell points - not enough magicka` : `${sel.cost} spell points`));
+    short ? `${sel.cost} spell points. Not enough magicka` : `${sel.cost} spell points`));
   detail.append(meta);
   // THE TWO ICONS THE CLASSIC DRAWS, as the words they mean. This
   // window reads no ARENA2, and the classic only tells you these on
@@ -302,7 +303,7 @@ function paint() {
   if (hotbarMode()) {
     // HB1: the hotbar's button in the diamond's place - on the bar comes
     // off, else it goes on the first free slot. Dragging picks the slot.
-    const at = hotbarSlotOf(sel.spell, { spell: true });
+    const at = hotbarShownSlotOf(sel.spell, { spell: true });   // DIAMOND-HB
     const hb = el('button', `act sb-slot${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
     hb.onclick = () => { notice = toggleHotbarSpell(sel.spell); render(); };
     acts.append(hb);
@@ -311,7 +312,7 @@ function paint() {
     const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? 'Unslot' : 'Quickslot');
     slot.onclick = () => {
       if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);
-      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';
+      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot. Press its key to ready it, or hold the key to cycle through your spells.';
       render();
     };
     acts.append(slot);
@@ -518,6 +519,11 @@ export function mountEnhancedSpellbook(hostEl, d = {}) {
   render();
   window.addEventListener('keydown', onKey, true);
   setHotbarDropMode('book', true, d.entity ?? null);   // HB1: the bar comes up under the book as a drop target
+  // DIAMOND-HB: a hotbar key pressed while hovering a spell (or else the selected spell) puts it on that slot
+  setHotbarPick('book', {
+    selected: () => { const sp = host && deleting === null ? bookModel(deps.spells?.() ?? [], deps.castCost)[picked]?.spell : null; return sp ? { kind: 'spell', spell: sp } : null; },
+    changed: () => { if (host) render(); },
+  });
   return {
     render,
     destroy() {

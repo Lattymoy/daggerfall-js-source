@@ -341,7 +341,7 @@ const FOE_GRAVE = Object.freeze({
     ['Old wards crumble beneath your hands.', 'Whatever they kept in has been', 'waiting a long time for this.', '', 'A %s claws its way out!'],
   ],
   shelf: [
-    ['Behind the mouldering tomes your hand', 'finds a skull - and the skull turns', 'to look at you.', '', 'A %s answers the disturbance!'],
+    ['Behind the moldering tomes your hand', 'finds a skull - and the skull turns', 'to look at you.', '', 'A %s answers the disturbance!'],
     ['A brittle scroll crumbles at your touch.', 'The words upon it were a binding,', 'and you have just broken it.', '', 'A %s is loosed upon you!'],
   ],
   tombstone: [

@@ -1,0 +1,102 @@
+[
+  {
+    "name": "HELD-CONCEAL-the-worn-one-left-live",
+    "file": "src/systems/concealment.js",
+    "old": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }\n",
+    "new": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = false; }\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/audit24_wave31.test.js",
+      "test/systems/concealment.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-its-rounds-not-zeroed",
+    "file": "src/systems/concealment.js",
+    "old": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }\n",
+    "new": "    if (a.heldItem) { a.roundsRemaining = 1; a.ended = true; }\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/audit24_wave31.test.js",
+      "test/systems/concealment.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-the-pin-deleted-as-before",
+    "file": "src/systems/concealment.js",
+    "old": "  entity.activeEffects = list.filter((a) => a.heldItem || !broken.includes(a));\n",
+    "new": "  entity.activeEffects = list.filter((a) => !broken.includes(a));\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/audit24_wave31.test.js",
+      "test/systems/concealment.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-the-spell-kept",
+    "file": "src/systems/concealment.js",
+    "old": "  entity.activeEffects = list.filter((a) => a.heldItem || !broken.includes(a));\n",
+    "new": "  entity.activeEffects = list.filter((a) => a.kind || !broken.includes(a));\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/audit24_wave31.test.js",
+      "test/systems/concealment.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-an-ended-one-broken-again",
+    "file": "src/systems/concealment.js",
+    "old": "  const broken = list.filter((a) => NORMAL_POWER_CONCEALMENTS.includes(a.kind) && !a.ended);\n",
+    "new": "  const broken = list.filter((a) => NORMAL_POWER_CONCEALMENTS.includes(a.kind));\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/audit24_wave31.test.js",
+      "test/systems/concealment.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-the-TRUE-shadow-broken",
+    "file": "src/systems/concealment.js",
+    "old": "export const NORMAL_POWER_CONCEALMENTS = Object.freeze(['chameleonNormal', 'invisNormal', 'shadeNormal']);",
+    "new": "export const NORMAL_POWER_CONCEALMENTS = Object.freeze(['chameleonNormal', 'invisNormal', 'shadeTrue']);",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-an-ended-entry-read-live",
+    "file": "src/systems/effects.js",
+    "old": "  !!entity?.activeEffects?.some((a) => a.kind === kind && !a.ended);\n",
+    "new": "  !!entity?.activeEffects?.some((a) => a.kind === kind);\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/audit24_wave31.test.js",
+      "test/systems/concealment.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-the-HUD-shows-the-ended-one",
+    "file": "src/systems/mysticism.js",
+    "old": "    if (a.ended || a.bundleId == null) continue;\n",
+    "new": "    if (a.bundleId == null) continue;\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js"
+    ]
+  },
+  {
+    "name": "HELD-CONCEAL-the-reroll-passes-the-broken-item",
+    "file": "src/systems/enchantments.js",
+    "old": "      if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;\n",
+    "new": "      if (!entity.activeEffects.some((a) => a.heldItem === item && !a.ended)) continue;\n",
+    "tests": [
+      "test/systems/fb1019f_heldconceal.test.js",
+      "test/systems/enchantload.test.js"
+    ]
+  }
+]

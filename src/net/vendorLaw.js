@@ -33,7 +33,7 @@ export const VENDOR_BOARD_SHOWN = 300;
 export const VENDOR_QUERY_MAX = 60;
 /** What a trader says where it cannot trade - offline, or the market not this account's: pressed (worldModes.js
  *  openHomeVendor), or made (scenes/decor/decorTool.js setStation - never sold where it cannot work, AUDIT 29 B2's law). */
-export const VENDOR_COLD_LINE = 'The trader only deals with travellers online.';
+export const VENDOR_COLD_LINE = 'The trader only deals with travelers online.';
 
 /** A town's map id, unsigned, as the homes registry keys it (homeLaw.js homeMapIdOk's bound). */
 const mapOk = (v) => Number.isSafeInteger(v) && v > 0 && v <= 0xffffffff;
@@ -73,12 +73,12 @@ export function vendorSearch(rows, q, { nameOf = () => '', townOf = () => '' } =
 
 /** The words a refusal of the vendor routes says (accountClient's accountRefusalText reads these). */
 export const VENDOR_REFUSAL_WORDS = Object.freeze({
-  'vendor-only': 'That piece is sold by a trader in a house - buy it there.',
-  'vendor-not-here': 'That piece is not this trader\'s.',
+  'vendor-only': 'That item is sold by a trader in a house. Buy it there.',
+  'vendor-not-here': 'That item is not this trader\'s.',
   'vendor-gone': 'That trader is no longer standing.',
   'vendor-not-yours': 'Only the house\'s owner stocks its trader.',
-  'vendor-stocked': 'The trader still has goods for sale - take them back first.',
-  'home-vendor-stocked': 'A trader in this house still has goods for sale - take them back first.',
-  'bad-vendor': 'That is no trader.',
-  'vendor-full': `Your traders stand ${VENDOR_STOCK_MAX} pieces already - take one back, or wait for one to sell.`,   // MARKET-AUDIT
+  'vendor-stocked': 'The trader still has goods for sale. Take them back first.',
+  'home-vendor-stocked': 'A trader in this house still has goods for sale. Take them back first.',
+  'bad-vendor': 'That is not a trader.',
+  'vendor-full': `Your traders already hold ${VENDOR_STOCK_MAX} items. Take one back, or wait for one to sell.`,   // MARKET-AUDIT
 });

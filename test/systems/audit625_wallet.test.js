@@ -114,9 +114,9 @@ test('AUDIT 625 W5: the silver line says WHY it shows no figure - offline the ac
   _resetWalletForTests();
   try {
     const empty = (opts) => walletLines(walletContents([], { goldPieces: 0 }, opts))[2];
-    assert.equal(empty(), 'Silver: kept by your account online', 'offline: no host');
+    assert.equal(empty(), 'Silver: held in your online account', 'offline: no host');
     setWalletSilver(() => null, () => {});
-    assert.equal(empty(), 'Silver: asking your account', 'online, not known yet');
+    assert.equal(empty(), 'Silver: checking your account', 'online, not known yet');
     setWalletSilver(() => false, () => {});
     assert.equal(empty(), 'Silver: none', 'online, an account that holds none');
     setWalletSilver(() => 35, () => {});
@@ -133,7 +133,7 @@ test('AUDIT 625 W5: the silver line says WHY it shows no figure - offline the ac
     const said = [];
     const doors = { quickUse: (n) => { qs.useQuickslot(n === 1 ? 'c1' : 'c2', { entity: e, items: e.items, hooks: {}, say: (l) => said.push(l) }); return true; } };
     assert.equal(qs.hotbarPress(0, { entity: e, doors, say: (l) => said.push(l) }).kind, 'used');
-    assert.match(said[0], /Silver: asking your account/);
+    assert.match(said[0], /Silver: checking your account/);
     assert.equal(asked, 1, 'the hotbar asked');
     qs.hotbarPress(0, { entity: e, doors, say: (l) => said.push(l) });
     assert.equal(asked, 1, 'one ask in flight - a second press waits on it');

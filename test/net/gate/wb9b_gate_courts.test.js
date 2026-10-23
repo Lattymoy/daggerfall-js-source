@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  COURTS, COURT_R, COURT_CENTRE, WALKS, WALK_HALF_W, WALK_LEAD_MS, WALK_FORM_MS, WALK_SINK_M, BOSS_REACH_R, POSE_SLACK, SHIELD_MS,
+  COURTS, COURTS_HIS, PLAN_PLAIN, COURT_R, COURT_CENTRE, WALKS, WALK_HALF_W, WALK_LEAD_MS, WALK_FORM_MS, WALK_SINK_M, BOSS_REACH_R, POSE_SLACK, SHIELD_MS,
   ATTACKS, PHASE_AT, PHASE_TURN, TURN_BREATH_MS, CROSS_AIR_MS, CROSS_WAIT_MAX_MS, CROSS_WARD_MAX_MS, HIT_KINDS,
   courtOfPhase, nearestCourt, inCourt, walkwayOf, walkFormed, onFloor, clampToFloor, keepInCourt, leapAt, airOf, windupOf,
   newFight, joinFight, applyHit, stepBrain, stateOf,
@@ -25,7 +25,7 @@ import {
 import { validGateOut, GATE_COURT_BOUND } from '../../../src/net/wire.js';
 import { foldGate, crossLaid, GATE_STATE_EMPTY } from '../../../src/net/gate/gateLink.js';
 import {
-  courtArena, courtToDungeon, walkSlabs, slabRise, slabMatrix, buildWalkSlabModel, courtLights, courtLightsNear, courtOpenings,
+  courtArena, courtArenaAt, courtToDungeon, walkSlabs, slabRise, slabMatrix, buildWalkSlabModel, courtLights, courtLightsNear, courtOpenings,
   courtSpireAxes, courtBraziers, SLAB_LEN_M, SLAB_RISE_MS, LAVA_Y,
 } from '../../../src/world/gate/gateArena.js';
 import { bossPlace, bossHop, bossAct, CROSS_HEIGHT, BOSS_CUES, QUAKE_ON, ATTACK_COLORS } from '../../../src/world/gate/gateBoss.js';
@@ -50,34 +50,35 @@ const at = (k, dx = 0, dz = 0) => [COURTS[k][0] + dx, COURTS[k][1] + dz];
 // ═══ THE FLOOR ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
 test('WB9b the courts: three of the first court\'s size, never meeting, each rim a walkway\'s length from the next; west then north, clear of the great tower\'s window; each phase fought in its own (mutants: a court moved onto another)', () => {
-  assert.equal(COURTS.length, 3);
+  assert.equal(COURTS_HIS, 3, 'his three - WB14b: the portents\' floors follow them in the one table (wb14b_portents.test.js)');
   assert.deepEqual(COURTS[0], [0, 0], 'the first where the players arrive - the court frame\'s origin');
-  for (let k = 1; k < COURTS.length; k++) {
+  for (let k = 1; k < COURTS_HIS; k++) {
     const gap = Math.hypot(COURTS[k][0] - COURTS[k - 1][0], COURTS[k][1] - COURTS[k - 1][1]) - 2 * COURT_R;
     assert.ok(gap >= 18 && gap <= 30, `court ${k} stands ${gap.toFixed(1)} m past the last one's rim`);
   }
   assert.ok(COURTS[1][0] < -40 && COURTS[2][1] < -60, 'west, then north (-z is toward the boss from the arrival)');
-  for (let a = 0; a < COURTS.length; a++) for (let b = a + 1; b < COURTS.length; b++) assert.ok(Math.hypot(COURTS[a][0] - COURTS[b][0], COURTS[a][1] - COURTS[b][1]) > 2 * COURT_R + 10);
+  for (let a = 0; a < COURTS_HIS; a++) for (let b = a + 1; b < COURTS_HIS; b++) assert.ok(Math.hypot(COURTS[a][0] - COURTS[b][0], COURTS[a][1] - COURTS[b][1]) > 2 * COURT_R + 10);
   assert.deepEqual([1, 2, 3].map(courtOfPhase), [0, 1, 2]);
   assert.equal(courtOfPhase(9), 2); assert.equal(courtOfPhase(0), 0);
   for (let k = 0; k < 3; k++) {
     assert.equal(nearestCourt(...at(k, 5, -7)), k);
     assert.ok(inCourt(...at(k, COURT_R - 0.1, 0), k) && !inCourt(...at(k, COURT_R + 0.5, 0), k) && inCourt(...at(k, COURT_R + 0.5, 0), k, POSE_SLACK));
   }
-  assert.ok(GATE_COURT_BOUND >= Math.max(...COURTS.map(([x, z]) => Math.hypot(x, z) + COURT_R)) + 10, 'the wire\'s bound holds the third court\'s far rim');
+  assert.ok(GATE_COURT_BOUND >= Math.max(...COURTS.slice(0, COURTS_HIS).map(([x, z]) => Math.hypot(x, z) + COURT_R)) + 10, 'the wire\'s bound holds the third court\'s far rim');
 });
 
 test('WB9b the walkways: walkway k joins court k to court k+1 along the line between their hearts, WALK_SINK_M into each floor (no seam at a rim), WALK_HALF_W either side; laid from WALK_LEAD_MS after its bound\'s word over WALK_FORM_MS, and nothing before a word (mutants: laid at the word; a walkway never ending)', () => {
-  assert.equal(WALKS.length, COURTS.length - 1);
+  assert.equal(PLAN_PLAIN.walks.length, COURTS_HIS - 1, 'a plain night\'s two');
   for (const w of WALKS) {
     assert.deepEqual(w, walkwayOf(w.k));
-    const A = COURTS[w.k], B = COURTS[w.k + 1];
+    const A = COURTS[w.a], B = COURTS[w.b];   // WB14b: walkway k joins floor a to floor b (the plain night's two: court k to court k+1)
+    if (w.k < 2) assert.deepEqual([w.a, w.b], [w.k, w.k + 1]);
     assert.ok(Math.abs(Math.hypot(w.ax - A[0], w.az - A[1]) - (COURT_R - WALK_SINK_M)) < 1e-9, 'it begins inside the court it leaves');
     assert.ok(Math.abs(Math.hypot(w.bx - B[0], w.bz - B[1]) - (COURT_R - WALK_SINK_M)) < 1e-9, 'and ends inside the one it reaches');
     assert.ok(Math.abs(w.len - (Math.hypot(B[0] - A[0], B[1] - A[1]) - 2 * (COURT_R - WALK_SINK_M))) < 1e-9);
     assert.ok(Math.abs(Math.hypot(w.ux, w.uz) - 1) < 1e-12);
   }
-  assert.equal(walkwayOf(2), null, 'no walkway past the last court');
+  assert.equal(walkwayOf(WALKS.length), null, 'no walkway past the last');
   const xa = [T0];
   assert.equal(walkFormed([], 0, T0 + 99999), 0, 'no word, no walkway');
   assert.equal(walkFormed(xa, 0, T0 + WALK_LEAD_MS), 0, 'the lead first - the stones still under the fire');
@@ -220,8 +221,10 @@ test('WB9b the wire and the link: the state says his court (0..2) and the crossi
   f.court = 1; f.xa = [T0 + 5];
   const st = stateOf(f);
   assert.deepEqual([validGateOut(st).ct, validGateOut(st).xa], [1, [T0 + 5]]);
-  assert.equal(validGateOut({ ...st, ct: 3 }), null);
-  assert.equal(validGateOut({ ...st, xa: [1, 2, 3] }), null);
+  assert.equal(validGateOut({ ...st, ct: COURTS.length }), null, 'WB14b: any floor of the table, none past it');
+  assert.equal(validGateOut({ ...st, xa: [1, 2, 3, 4, 5, 6, 7] }), null, 'WB14b: a walkway the table holds, none past it');
+  assert.equal(validGateOut({ ...st, xa: [1, null] }), null, 'nor a hole at the end');
+  assert.deepEqual(validGateOut({ ...st, xa: [1, null, 3] }).xa, [1, null, 3], 'a hole in the middle: a walkway not laid');
   assert.equal(validGateOut({ ...st, xa: ['x'] }), null);
   assert.deepEqual(validGateOut({ ...st, xa: undefined }).xa, [], 'an older relay\'s state: nothing crossed');
   let s = foldGate(GATE_STATE_EMPTY, st, T0);
@@ -259,7 +262,7 @@ test('WB9b the motor\'s floor: the court\'s arena answers the nearest point of t
 test('WB9b the walkway\'s stones: slabs of about SLAB_LEN_M the walkway\'s whole length, each risen out of the fire WHOLE before the laid floor reaches its near edge, none before the bound\'s word; under the sea until then, at the floor once laid (mutants: a slab still rising under a foot; a slab up before the word)', () => {
   const S = walkSlabs();
   assert.equal(S, walkSlabs(), 'made once');
-  for (const w of WALKS) {
+  for (const w of PLAN_PLAIN.walks.map((k) => WALKS[k])) {   // WB14b: a plain night's walkways
     const own = S.filter((s) => s.walk === w.k);
     assert.equal(own.length, Math.ceil(w.len / SLAB_LEN_M));
     assert.ok(Math.abs(own.reduce((a, s) => a + s.len, 0) - w.len) < 1e-9, 'the whole walkway');
@@ -310,9 +313,9 @@ test('WB9b the court as it is drawn: his flight over the fire CROSS_HEIGHT at it
   assert.equal(pass.drawn, 1);
   assert.deepEqual(calls.filter((c) => c[0] === 'uniform2f' && c[1] === 'uCourt').at(-1).slice(2), [...COURTS[1]]);
   // what stands round each rim keeps each opening clear
-  for (let k = 0; k < COURTS.length; k++) {
+  for (let k = 0; k < COURTS_HIS; k++) {
     const opens = courtOpenings(k);
-    assert.equal(opens.length, (k === 0 ? 1 : 0) + WALKS.filter((w) => w.k === k || w.k + 1 === k).length);
+    assert.equal(opens.length, (k === 0 ? 1 : 0) + PLAN_PLAIN.walks.map((i) => WALKS[i]).filter((w) => w.a === k || w.b === k).length);
     const angleOff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
     for (const [, p] of courtBraziers(k)) for (const o of opens) assert.ok(angleOff(Math.atan2(p[2] - COURTS[k][1], p[0] - COURTS[k][0]), o) > 0.15, 'no brazier in a walkway\'s mouth');
     for (const sp of courtSpireAxes(k)) for (const o of opens) assert.ok(angleOff(Math.atan2(sp.t[2] - COURTS[k][1], sp.t[0] - COURTS[k][0]), o) > 0.25, 'no spire leaning over one');
@@ -336,16 +339,20 @@ test('WB9b the Deadlands keep clear of the floor: no island within LAND_CLEAR_M 
 test('WB9b the seams, by source: the world host refills one arena a frame from the link\'s crossings on the relay\'s clock; the dungeon arm stands the slabs and moves them before the frame\'s draws; the court draws his mark over the court he stands in; the relay carries the brain\'s floor (mutants: each seam removed)', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /const _courtArena = courtArena\(_gateFloor\.none, 0\);/);
-  assert.match(w, /\{ _courtArena\.xa = gateLink\?\.state\(\)\?\.xa \?\? _gateFloor\.none; _courtArena\.now = Date\.now\(\) \+ _sharedOffsetMs; player\.arena = _courtArena; \}/);
+  assert.match(w, /player\.arena = courtArenaAt\(_courtArena, gateLink\?\.state\(\)\?\.xa \?\? _gateFloor\.none, Date\.now\(\) \+ _sharedOffsetMs, modes\?\.gateArenaDay\?\.\(\)\);/);   // WB14b: and the night whose plan holds me; PIN MOVED (WB14e): guarded, as every read of modes above its making (audit24_wave37); PIN MOVED (WB14, the merge of LAYERED-GEAR): refilled by courtArenaAt - the host's ceiling
+  const A = courtArena([], 0), xs = [1, 2];
+  assert.equal(courtArenaAt(A, xs, 77, 9), A, 'the one arena, never a new one a frame');
+  assert.deepEqual([A.xa, A.now, A.day], [xs, 77, 9]);
   assert.match(w, /gateFloor: \(\) => \{ _gateFloor\.xa = gateLink\?\.state\(\)\?\.xa \?\? _gateFloor\.none; _gateFloor\.now = Date\.now\(\) \+ _sharedOffsetMs; return _gateFloor; \},/);
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /for \(const sl of walkSlabs\(\)\) ctx\.dynamicDraws\.push\(\{ gpu: _slabMesh, object: \{ matrix: slabMatrix\(sl, fl\?\.xa \?\? NO_XA, fl\?\.now \?\? 0\) \}, slab: sl \}\);/);
+  // WB14b (PIN MOVED): the court is stood by scenes/gate/gateStand.js, out of the host - the night's walkways
+  assert.match(read('src/scenes/gate/gateStand.js'), /for \(const sl of walkSlabs\(plan\.pt\)\) ctx\.dynamicDraws\.push\(\{ gpu: slabMesh, object: \{ matrix: slabMatrix\(sl, fl\?\.xa \?\? NO_XA, fl\?\.now \?\? 0\) \}, slab: sl \}\);/);
   const moved = wm.indexOf('if (d.slab) slabMatrix(d.slab, _floor?.xa ?? NO_XA, _floor?.now ?? 0, d.object.matrix);'), begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
   assert.ok(moved > 0 && moved < begin, 'the stones moved before the frame\'s draws');
   const gc = read('src/scenes/gate/gateCourt.js');
   assert.match(gc, /_mark\.court = nearestCourt\(mx, mz\); mark = _mark;/);
   const brain = read('src/net/gate/gateBrain.js');
-  assert.match(brain, /if \(!onFloor\(pose\.x, pose\.z, f\.xa, now, POSE_SLACK\)\) return 0;/);
+  assert.match(brain, /if \(!onFloor\(pose\.x, pose\.z, f\.xa, now, POSE_SLACK, planOf\(f\)\)\) return 0;/);   // WB14b: the night's plan's floor
   assert.match(read('src/player/motor.js'), /if \(typeof a\.clamp === 'function'\) \{ this\._putBack\(a\.clamp\(this\.pos, CAPSULE_RADIUS\)\); return; \}/);
   assert.equal(PHASE_TURN[2][0].a, 'cross');
 });

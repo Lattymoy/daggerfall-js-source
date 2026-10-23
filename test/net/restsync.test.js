@@ -14,6 +14,7 @@ import { blowClassOf } from '../../src/ai/puppetBlows.js';   // AUDIT FEUD: the 
 import { feudWeakBlow } from '../../src/systems/feudLedger.js';   // AUDIT FEUD: ...asked of the real test (none registered here)
 import { ARENA_PUPPET_OWNER } from '../../src/net/arena/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
+import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 
 const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
@@ -153,7 +154,7 @@ function side({ authority, layout = [], shared = [], over = {} }) {
     _authority: authority, _layoutFoes: layout.length, foes, _sharedById: new Map(shared.map((f) => [f._encId, f])),
     _sharedSeq: Math.max(0, ...shared.map((f) => f._encId)), _sharedPending: new Map(), _ctxDead: false,
     _foesSeq: 0, _foesSeqIn: -1, _foesFrom: null, _locationKey: 'dungeon:7', _keyMismatchSaid: false, _retypeFails: new Map(), RETYPE_TRIES: 3,
-    FOE_HEALTH_MAX, FOE_LEVEL_MAX, validFoeRecord, GENDER_BIT: ['male', 'female'],
+    isClassEnemyId, enemyEntityType, FOE_HEALTH_MAX, FOE_LEVEL_MAX, validFoeRecord, GENDER_BIT: ['male', 'female'],
     fightN: () => 1, canStandFoe: () => true, retypeFoe: () => assert.fail('the layout agrees'),
     applyFoeRecord: (f, r) => { applied.push([f, r]); f.ai.feet = [...(r.f ?? f.ai.feet)]; if (r.d === 1) f.dead = true; },
     buildFoeAt: async (e) => { const f = foe({ mobileType: e.mobileType, gender: e.gender, ai: { feet: [e.x, e.y, e.z], yaw: 0 } }); built.push(f); foes.push(f); return f; },

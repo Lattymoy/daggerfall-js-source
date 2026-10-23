@@ -15,7 +15,7 @@ import { builtDungeonSize } from '../../src/world/smallerDungeons.js';
 import { mapPixelToLongitudeLatitude } from '../../src/formats/mapsFile.js';
 import { setValue } from '../../src/systems/settings/settings.js';
 import { roomKeyFor } from '../../src/net/online.js';
-import { isWorldRoom } from '../../src/net/wire.js';
+import { isWorldRoom, seaVaultRoomId } from '../../src/net/wire.js';
 import * as chat from '../../src/net/chat.js';
 import { withMe } from '../../src/ui/partyPanel.js';
 import { privateInteriorOf } from '../../src/net/privateInterior.js';
@@ -69,6 +69,7 @@ function keyIn(ident) {
     state: { compensation: [0, 0, 0], localFromWorld: (x, z) => [x, z], worldCoords: (p) => ({ x: p[0], z: p[2] }) },
     player: { pos: [1, 2, 3] }, cam: { yaw: 0, pitch: 0 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf,
     _questLoc: () => null, privateRoomHere: () => assert.fail('a dungeon is never a private room'), siegeSession: null, royalSession: null, campToWire: (p) => p,
+    seaVaultRoomId, _wdunInside: null, seaVentures: { vaultHere: () => null },   // PIN MOVED (AUDIT SEA VENTURES D7, D8): a vault of the deep's room its own lane - a dungeon of the Bay its own map id, as before
   };
   return new Function(...Object.keys(args), `let onlineToScene, sceneToOnline; ${W.slice(KEY_FROM, KEY_TO)} return key;`)(...Object.values(args));
 }

@@ -24,7 +24,9 @@ import { TITLE_TEXT, TITLE_RGBA, AURA_TEXT, AURA_PAINT, SPIRE_BEACON, SPIRE_EMBE
 import {
   AURA_LOOK, AURA_FS, AURA_GROUND_R, BEACONLIGHT_R, BEACON_H, BEACON_LIGHTS, BEACON_HZ, STAIR_R, STAIR_W, STAIR_H, STAIR_STEPS, STAIR_HZ,
   DAWN_R, DAWN_H, SPIRE_RGB, spireRatesWhole, beaconLit,
-} from '../../../src/render/auraRing.js';
+  DAWN_RING_M, DAWN_INNER_M, DAWN_REDOUBTS, DAWN_START, DAWN_SPIRE_H, DAWN_RAYS, DAWN_RAY_M, DAWN_VEIL_H, DAWN_HZ, DAWN_CLIMB, DAWN_MOTES,
+  dawnClimb, dawnMarkAngle, dawnSpireH, AURA_CLOCK_PERIOD,
+} from '../../../src/render/auraRing.js';   // SPIRE-FIRST: Firstlight rebuilt - its climb's law and its measures
 import { glslFunctions } from '../../glsl.mjs';
 
 const { subtle } = globalThis.crypto;
@@ -161,10 +163,13 @@ test('EG-E2 SPIRE CHAMPION: each Descent bracket\'s top ten companies at a seaso
   assert.deepEqual(titlesHeld({ handle: null, eg_honours: 4 }, {}).includes('kynbane'), false, 'a guest row holds no Spire honour');
 });
 
-test('EG-E2 FIRST OF THE SPIRE: granted as Hour\'s First is - a list in config (EG_FIRST_HANDLES, in wrangler.toml and empty until the first company takes Redoubt 10), the title and Firstlight while listed, any case, never a guest (mutants: the list not read; the aura without the list; a guest by name)', () => {
+test('EG-E2 FIRST OF THE SPIRE: granted as Hour\'s First is - a list in config (EG_FIRST_HANDLES, in wrangler.toml; SPIRE-FIRST: the account Serveride, who took Redoubt 10 first, alone), the title and Firstlight while listed, any case, never a guest or a near name - nor his character\'s name, which the herald read (SPIRE-FIRST-NAME) (mutants: the list not read; the aura without the list; a guest by name; Serveride left off; the character\'s name listed)', () => {
   const m = /^EG_FIRST_HANDLES = "([^"]*)"$/m.exec(readFileSync(new URL('../../../server-account/wrangler.toml', import.meta.url), 'utf8'));
   assert.ok(m, 'a var beside Hour\'s First\'s');
-  assert.equal(m[1], '', 'empty until that company comes');
+  assert.equal(m[1], 'Serveride', 'SPIRE-FIRST: the first company\'s account, and nobody else (PIN MOVED: it read empty until that company came; SPIRE-FIRST-NAME: then Severide, his character\'s name off the herald, which no account\'s handle is)');
+  const named = { EG_FIRST_HANDLES: m[1] }, acct = (handle) => ({ handle, created_at: 1_900_000_000, registered_at: 1_900_000_000 });
+  for (const h of ['Serveride', 'serveride', 'SERVERIDE']) assert.ok(titlesHeld(acct(h), named).includes('spirefirst') && aurasHeld(acct(h), named).includes('firstlight'), `${h}: the title and Firstlight, as the deployed list names him`);
+  for (const h of ['Severide', 'Serverid', 'Serveride2', 'Server ide']) assert.ok(!isSpireFirst(acct(h), named), `${h}: another account - Severide his character\'s name, never a handle the list grants`);
   const env = { EG_FIRST_HANDLES: ' Vanguard , Rook' };
   assert.deepEqual([...egFirstHandles(env)].sort(), ['rook', 'vanguard']);
   const row = (handle) => ({ handle, created_at: 1_900_000_000, registered_at: 1_900_000_000 });
@@ -174,8 +179,8 @@ test('EG-E2 FIRST OF THE SPIRE: granted as Hour\'s First is - a list in config (
 });
 
 test('EG-E2 THE VOCABULARY AND THE BADGE: the thirteen titles and three auras join the closed lists last (CSS-safe ids, none longer than the token was sized for); each title its words and a colour no other title wears, its button\'s rule; each aura its words, its title\'s paint and a look of its own kind; the row\'s bits are the titles; signed into the token and kept by the wire (mutants: a colour shared; an aura in another\'s paint; a kind shared; a title dropped)', async () => {
-  assert.deepEqual(TITLES.slice(-14, -1), SPIRE_TITLES);   // PIN MOVED (WIKIMAID): the WikiMaid joined the list last
-  assert.deepEqual(AURAS.slice(-4, -1), SPIRE_AURAS);   // PIN MOVED (WIKIMAID): the Lilac Warren joined the list last
+  assert.deepEqual(TITLES.slice(-22, -9) /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */ /* PIN MOVED (STAR8): the Starwarden joined the list after the questlines' five, before the festival's two */, SPIRE_TITLES);   // PIN MOVED (QL12): the questlines' five joined the list last, after the WikiMaid; PIN MOVED (WIKIMAID): the WikiMaid joined the list last
+  assert.deepEqual(AURAS.slice(-5, -2) /* PIN MOVED (WITCH1): Witchfire joined the list last */, SPIRE_AURAS);   // PIN MOVED (WIKIMAID): the Lilac Warren joined the list last
   assert.deepEqual([...EG_HONOUR_TITLES], SPIRE_TITLES.slice(0, 11), 'the row\'s bits in the table\'s order');
   assert.deepEqual({ ...EG_HONOUR_AURA }, { kynbane: 'beaconlight', wellheadwalker: 'burningstair' });
   for (const id of SPIRE_TITLES) assert.ok(/^[a-z]{1,14}$/.test(id), `title id ${id}`);
@@ -262,10 +267,118 @@ test('EG-E2 THE SPIRE\'S THREE LOOKS, RUN: Beaconlight - its beacons lit one aft
   assert.ok(lum(part.stairWall([eu(ev(te)), ev(te)])) > 0.1, 'its falling ember lit');
   assert.ok(lum(bpart.beaconWall([0.37, 0.05])) > 0, 'Beaconlight\'s foot lit while it kindles from below');
   assert.equal(lum(bpart.beaconWall([0.37, 0.95])), 0, 'its top dark');
-  // FIRSTLIGHT: the ring crisp and near white, darker a hand inside and out
-  const F = AURA_LOOK.firstlight, fg = fns(F, { t: 7 });
-  const ring = fg.dawnGround(polar(DAWN_R, 1.2)), inside = fg.dawnGround(polar(DAWN_R - 0.08, 1.2)), out = fg.dawnGround(polar(DAWN_R + 0.08, 1.2));
-  assert.ok(lum(ring) > 1.5 * lum(inside) && lum(ring) > 1.5 * lum(out), 'one crisp line');
+  // FIRSTLIGHT: the ring crisp and near white, darker just past its line inside and out - read between two Redoubts (PIN
+  // MOVED, SPIRE-FIRST: the dial's lit lane lies inside it now and the ring's glow reached a hand, so a hand no longer
+  // told the line from its glow - EGECO2-dawn-ring-gone survived it; two centimetres, past the line's half-width, do)
+  const F = AURA_LOOK.firstlight, fg = fns(F, { t: 7 }), apart = dawnMarkAngle(4) + Math.PI / DAWN_REDOUBTS;
+  const ring = fg.dawnGround(polar(DAWN_R, apart)), inside = fg.dawnGround(polar(DAWN_R - 0.02, apart)), out = fg.dawnGround(polar(DAWN_R + 0.02, apart));
+  assert.ok(lum(ring) > 1.5 * lum(inside) && lum(ring) > 1.5 * lum(out), `one crisp line (${[ring, inside, out].map((c) => lum(c).toFixed(2))})`);
   assert.ok(Math.min(...ring) / Math.max(...ring) > 0.7, `the dawn's white, not a colour (${ring.map((x) => x.toFixed(2))})`);
-  assert.ok(lum(fg.dawnWall([0.3, 0.02])) > lum(fg.dawnWall([0.3, 0.9])), 'its veil gone by the shin');
+});
+
+// ── SPIRE-FIRST: Firstlight, rebuilt as Serveride's own ─────────────────
+
+/** Firstlight's functions at `t`, the eye at `eye` (the look's own uniforms otherwise). */
+const dawnAt = (t, { kindle = 1, eye = [0, 1.2, 5] } = {}) => { const g = fns(AURA_LOOK.firstlight, { t, kindle }); g.globals.uCamPos = eye; return g; };
+/** The clock at climb share `c`. */
+const climbT = (c) => c / DAWN_HZ.climb;
+/** Redoubt k's place on the wall: its share round the strip. */
+const wallU = (k) => fract(dawnMarkAngle(k) / (Math.PI * 2));
+const fullH = (k) => DAWN_SPIRE_H[0] + (DAWN_SPIRE_H[1] - DAWN_SPIRE_H[0]) * k / (DAWN_REDOUBTS - 1);
+
+test('SPIRE-FIRST THE CLIMB\'S LAW: the ten Redoubts taken one after another, I first and X last, each at its moment; none before the climb, all down again before it starts over; a taking flares and fades; I at the climb\'s start round the ring and X last; every rate whole over the clock (mutants: taken at once; the order reversed; never down; the flare held)', () => {
+  assert.ok(spireRatesWhole() && [1, 2].every((n) => Number.isInteger(Math.round(DAWN_HZ.mote * n * AURA_CLOCK_PERIOD * 1e6) / 1e6)), 'the motes\' two paces too');
+  assert.deepEqual([DAWN_REDOUBTS, DAWN_START, DAWN_MOTES], [10, 0.25, 12]);
+  const at = (k) => DAWN_CLIMB.at + k * DAWN_CLIMB.step;
+  for (let k = 0; k < DAWN_REDOUBTS; k++) {
+    const t = climbT(at(k) + DAWN_CLIMB.rise + 0.001);
+    assert.ok(dawnClimb(k, t).taken > 0.99, `Redoubt ${k} up once risen`);
+    if (k < DAWN_REDOUBTS - 1) assert.equal(dawnClimb(k + 1, t).taken, 0, `Redoubt ${k + 1} not yet`);
+    if (k > 0) assert.ok(dawnClimb(k - 1, t).taken > 0.99, `Redoubt ${k - 1} still up`);
+    assert.ok(dawnClimb(k, climbT(at(k) + 1e-6)).flare > 0.99 && dawnClimb(k, climbT(at(k) - 1e-6)).flare === 0 && dawnClimb(k, climbT(at(k) + 0.1)).flare < 0.06, 'a flare at its taking, none before, gone after');
+  }
+  assert.ok(at(DAWN_REDOUBTS - 1) + DAWN_CLIMB.rise < DAWN_CLIMB.hold && DAWN_CLIMB.hold < DAWN_CLIMB.down && DAWN_CLIMB.down < 1, 'X stands, then all goes down, before the next climb');
+  for (let k = 0; k < DAWN_REDOUBTS; k++) {
+    assert.equal(dawnClimb(k, climbT(0.02)).taken, 0, 'nothing before the climb');
+    assert.equal(dawnClimb(k, climbT(0.98)).taken, 0, 'all down at its end');
+    assert.ok(dawnClimb(k, climbT(DAWN_CLIMB.hold - 0.01)).taken > 0.99, 'all up while the dawn holds');
+    assert.ok(Math.abs(dawnSpireH(k, climbT(0.7)) - fullH(k)) < 1e-9 && Math.abs(dawnSpireH(k, climbT(0.02)) - 0.3 * fullH(k)) < 1e-9, 'a third, and whole');
+  }
+  assert.ok(dawnClimb(3, climbT(0.28) + 2 / DAWN_HZ.climb).taken === dawnClimb(3, climbT(0.28)).taken, 'again each climb');
+  // round the ring: I a twentieth past the start, X nineteen twentieths, the start a quarter turn back from atan's zero
+  const share = (a) => fract(a / (Math.PI * 2) + DAWN_START);
+  assert.ok(Math.abs(share(dawnMarkAngle(0)) - 0.05) < 1e-12 && Math.abs(share(dawnMarkAngle(9)) - 0.95) < 1e-12);
+});
+
+test('SPIRE-FIRST FIRSTLIGHT\'S GROUND, RUN: the climb\'s lane lit round from I to where the climb has come, dark ahead of it, its head bright; a Redoubt taken filled with the dawn, one not yet an outline; X\'s star only once the dawn breaks; the sunburst\'s rays brightening as it does, long and short by turns, gold at the ring; the dawn\'s light running out across the ground at X\'s taking; no NaN at the middle; nothing before it kindles (mutants: the lane unlit; the lane lit whole; the faces never filled; the star always; the rays flat; the wave gone; the law\'s moments not the shader\'s)', () => {
+  const lane = DAWN_R - DAWN_INNER_M / 2, ang = (s) => (s - DAWN_START) * Math.PI * 2;
+  // mid-climb: I to V taken, VI not yet; the climb's head between them
+  const mid = dawnAt(climbT(0.28)), reach = 0.05 + (0.28 - DAWN_CLIMB.at) / (DAWN_CLIMB.step * DAWN_REDOUBTS);
+  const behind = lum(mid.dawnGround(polar(lane, ang(reach - 0.12)))), ahead = lum(mid.dawnGround(polar(lane, ang(reach + 0.12)))), head = lum(mid.dawnGround(polar(lane, ang(reach))));
+  assert.ok(behind > ahead + 0.15, `the lane lit behind the climb (${behind.toFixed(3)}) and dark ahead (${ahead.toFixed(3)})`);
+  assert.ok(head > behind + 0.3, `its head bright (${head.toFixed(3)})`);
+  // a Redoubt's face, inside its lozenge off the ring's line: taken, filled; not yet, its outline alone
+  const face = (g, k) => lum(g.dawnGround(polar(DAWN_R - 0.03, dawnMarkAngle(k))));
+  assert.ok(face(mid, 4) > face(mid, 5) + 0.5, `V taken (${face(mid, 4).toFixed(3)}), VI not yet (${face(mid, 5).toFixed(3)})`);
+  assert.ok(face(dawnAt(climbT(0.985)), 4) < face(mid, 4) - 2, 'and down again at the climb\'s end');
+  // and long after its flare, off the lane (outside the ring's line): V taken, X not yet - the face's own light
+  const late = dawnAt(climbT(0.45)), faceOut = (k) => lum(late.dawnGround(polar(DAWN_R + 0.03, dawnMarkAngle(k))));
+  assert.ok(faceOut(4) > faceOut(9) + 2, `V filled (${faceOut(4).toFixed(3)}) long after its flare, X not yet (${faceOut(9).toFixed(3)})`);
+  // X's star: its arm inward across the dial, past the lane, lit once the dawn breaks and dark before
+  const held = dawnAt(climbT(0.7)), arm = (g) => lum(g.dawnGround(polar(DAWN_R - 0.2, dawnMarkAngle(9))));
+  assert.ok(arm(held) > arm(mid) + 0.2, `X's star (${arm(held).toFixed(3)} against ${arm(mid).toFixed(3)})`);
+  // THE SUNBURST at a ray's middle against between two rays, before the dawn and after; long and short by turns
+  const rayAt = (g, t, j) => g.dawnGround(polar(DAWN_R + DAWN_RING_M + 0.08, ((j + 0.5) / DAWN_RAYS - t * DAWN_HZ.rays) * Math.PI * 2));
+  const tm = climbT(0.28), th = climbT(0.7);
+  assert.ok(lum(rayAt(held, th, 0)) > 1.8 * lum(rayAt(mid, tm, 0)), 'the rays brighten as the dawn breaks');
+  assert.ok(lum(rayAt(held, th, 0)) > 2 * lum(held.dawnGround(polar(DAWN_R + DAWN_RING_M + 0.08, (1 / DAWN_RAYS - th * DAWN_HZ.rays) * Math.PI * 2))), 'a ray, and dark between');
+  const tip = (j) => lum(held.dawnGround(polar(DAWN_R + DAWN_RING_M + DAWN_RAY_M[1] + 0.03, ((j + 0.5) / DAWN_RAYS - th * DAWN_HZ.rays) * Math.PI * 2)));
+  assert.ok(tip(0) > 0.05 && tip(1) < tip(0) / 4, `a long ray reaches past a short one's tip (${tip(0).toFixed(3)}, ${tip(1).toFixed(3)})`);
+  const g0 = rayAt(held, th, 0);
+  assert.ok(g0[0] > g0[2] * 1.3, 'gold at the ring');
+  // THE DAWN'S LIGHT running out across the ground at X's taking: between two rays, at its front, against a moment later
+  const xAt = DAWN_CLIMB.at + 9 * DAWN_CLIMB.step, since = 0.03, front = DAWN_R + since * DAWN_CLIMB.wave;
+  const gap = (g, t) => lum(g.dawnGround(polar(front, (1 / DAWN_RAYS - t * DAWN_HZ.rays) * Math.PI * 2)));
+  assert.ok(gap(dawnAt(climbT(xAt + since)), climbT(xAt + since)) > gap(held, th) + 0.1, 'the wave at its front');
+  // NO SEAM where the ring closes behind the wearer (atan's wrap, -x): a hair either side of it the same, on the ground -
+  // the lane, a lozenge, the sunburst's rays - and on the wall, at four moments of the climb
+  const eps = 1e-7;
+  for (const c of [0.1, 0.28, 0.53, 0.7]) {
+    const g = dawnAt(climbT(c) + 7);
+    for (const r of [DAWN_R - 0.1, DAWN_R - 0.03, DAWN_R, DAWN_R + 0.06, DAWN_R + 0.2]) {
+      const a = g.dawnGround(polar(r, Math.PI - eps)), b = g.dawnGround(polar(r, -Math.PI + eps));
+      assert.ok(Math.abs(lum(a) - lum(b)) < 1e-3, `no seam at ${r} (climb ${c}): ${lum(a)} / ${lum(b)}`);
+    }
+    for (const y of [0.05, 0.3, 0.9, 1.6]) assert.ok(Math.abs(lum(g.dawnWall([1 - eps, y / DAWN_H])) - lum(g.dawnWall([eps, y / DAWN_H]))) < 1e-3, `no seam up the wall at ${y}`);
+    // and where the sunburst's own round closes as it turns (its share's wrap) - a whole number of rays meets itself there
+    const t = climbT(c) + 7, a0 = -fract(t * DAWN_HZ.rays) * Math.PI * 2;
+    for (const r of [DAWN_R + 0.06, DAWN_R + 0.2]) assert.ok(Math.abs(lum(g.dawnGround(polar(r, a0 - 1e-6))) - lum(g.dawnGround(polar(r, a0 + 1e-6)))) < 1e-3, `the rays whole round at ${r}`);
+  }
+  // the middle, and unkindled
+  assert.ok(held.dawnGround([0, 0]).every(Number.isFinite) && held.dawnGround([0.01, -0.02]).every(Number.isFinite), 'no NaN at the middle');
+  assert.equal(lum(dawnAt(climbT(0.7), { kindle: 0 }).dawnGround(polar(DAWN_R, 1))), 0, 'nothing before it kindles');
+});
+
+test('SPIRE-FIRST FIRSTLIGHT\'S WALL, RUN: a spire off each Redoubt, lit at its foot and dark beside it, a third of itself until taken and whole after, I the lowest and X the tallest, white at its point; the veil gone by the shin; X\'s shaft of first light up past the head as it is taken, never from inside the ring; kindled up (mutants: the spires all one height; never rising; the shaft from inside; the shaft never; the veil past the shin)', () => {
+  const held = dawnAt(climbT(0.7)), before = dawnAt(climbT(0.02));
+  const at = (g, k, y, dx = 0) => lum(g.dawnWall([fract(wallU(k) + dx / (2 * Math.PI * DAWN_R)), y / DAWN_H]));
+  const own = (g, k, y) => at(g, k, y) - at(g, k, y, 0.12);   // the spire's own light, the veil beside it taken off
+  for (const k of [0, 4, 9]) {
+    assert.ok(own(held, k, fullH(k) * 0.5) > 0.3, `spire ${k} lit, dark beside it`);
+    assert.ok(at(held, k, fullH(k) * 0.6) > at(before, k, fullH(k) * 0.6) + 1.5, `spire ${k} whole once taken, a third before (the third is node's law, dawnSpireH)`);
+  }
+  for (const k of [4, 9]) assert.ok(own(before, k, fullH(k) * 0.15) > 0.2 && own(before, k, fullH(k) * 0.6) < 0.05, `spire ${k} before its taking: its third standing, nothing over it`);
+  assert.ok(at(held, 0, fullH(4) * 0.8) < 0.1 && at(held, 9, fullH(4) * 0.8) > 0.3, 'I the lowest, X the tallest');
+  const pt = held.dawnWall([wallU(4), fullH(4) * 0.97 / DAWN_H]);
+  assert.ok(Math.min(...pt) / Math.max(...pt) > 0.75, `white at its point (${pt.map((x) => x.toFixed(2))})`);
+  // the veil, off the spires: at the foot, and gone past the shin
+  assert.ok(at(before, 2, 0.02, 0.2) > at(before, 2, DAWN_VEIL_H + 0.15, 0.2) + 0.05, 'its veil gone by the shin');
+  // X's shaft: a moment after its taking, past the head over X; not before; not from inside the ring
+  const xAt = DAWN_CLIMB.at + 9 * DAWN_CLIMB.step, shot = climbT(xAt + 0.06);
+  assert.ok(at(dawnAt(shot), 9, 1.6) > 0.3, 'the shaft past the head');
+  assert.ok(at(dawnAt(climbT(xAt - 0.01)), 9, 1.6) < 0.05, 'none before X is taken');
+  assert.ok(at(dawnAt(shot, { eye: [0.1, 1.6, 0.2] }), 9, 1.6) < 0.05, 'none from inside the ring');
+  // kindled up: part kindled, the foot lit and the top dark
+  const part = dawnAt(climbT(0.7), { kindle: 0.6 });
+  assert.ok(at(part, 9, 0.05) > 0.1 && at(part, 9, 1.6) === 0, 'kindled up');
 });

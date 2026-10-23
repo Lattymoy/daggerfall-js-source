@@ -277,6 +277,8 @@ export function enemyArmorValues(entity, armorPieces) {
  *  arm run. */
 let _assigner = null;
 export function setEnemyEquipmentAssigner(fn) { _assigner = typeof fn === 'function' ? fn : null; }
+/** The assigner on the delegate now (null: ItemHelper's) - what a mod that takes the delegate over replaced (DEX6). */
+export const enemyEquipmentAssigner = () => _assigner;
 export function assignEnemyStartingEquipment(entity, variant, playerLevel, { player = null, rolls = Math.random } = {}) {
   const custom = _assigner?.(entity, variant, playerLevel, { player, rolls });
   return custom ?? assignEnemyEquipment(entity, variant, playerLevel, rolls);

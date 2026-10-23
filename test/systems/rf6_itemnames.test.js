@@ -133,7 +133,9 @@ test('RF6: the enhanced line and the plaque read the parts - the same name and m
 
 test('RF6: no second derivation - the enhanced modules read the resolver, never materialName, resolveItemName or the raw record name for a label', () => {
   const info = read('src/systems/item/itemInfo.js');
-  assert.match(info, /export function itemLongName\(item, opts\) \{\s*const \{ name, material \} = itemNameParts\(item, opts\);[\s\S]*?if \(!material \|\| withholdsMaterialPrefix\(item\)\) return name;\s*return formatText\(item\?\.group === 'Armor'\s*\? localizedText\('longArmorNameFormatString', '\{0\} \{1\}'\)\s*: localizedText\('longWeaponNameFormatString', '\{0\} \{1\}'\), material, name\);\s*\}/, 'the long name IS the join, unless the name keeps the metal off its front');
+  // PIN MOVED (AUDIT PISTOLET C9): and a name that already says its metal (the Dwarven Pistolet, minted Dwarven) takes no
+  // second one; PIN MOVED (PISTOLET-NAMES): asked of the item's own template name, a Rare's prefix and all
+  assert.match(info, /export function itemLongName\(item, opts\) \{\s*const \{ name, material \} = itemNameParts\(item, opts\);[\s\S]*?if \(!material \|\| withholdsMaterialPrefix\(item\) \|\| namesItsMetal\(item, material\)\) return name;\s*return formatText\(item\?\.group === 'Armor'\s*\? localizedText\('longArmorNameFormatString', '\{0\} \{1\}'\)\s*: localizedText\('longWeaponNameFormatString', '\{0\} \{1\}'\), material, name\);\s*\}/, 'the long name IS the join, unless the name keeps the metal off its front');
   const inv = read('src/ui/enhanced/enhancedInventory.js');
   assert.match(inv, /const parts = itemNameParts\(item, \{ getQuest: deps\.getQuest \?\? null \}\);/, 'the line reads the parts, the quest machine through');
   assert.match(inv, /name: parts\.name \|\| t\?\.name \|\| 'Unknown',/);

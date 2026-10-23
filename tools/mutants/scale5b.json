@@ -506,7 +506,7 @@
   {
     "name": "SCALE5b-foes-walk-first",
     "file": "server/src/index.js",
-    "old": "    if (!ahead.pass) { this._metrics.c.drops++; return ahead.bucket; }   // SCALE5b: not one listener's worth - no walk\n",
+    "old": "    if (!ahead.pass) return { bucket: ahead.bucket, pass: false, fan: per };   // SCALE5b: not one listener's worth - no walk\n",
     "new": "",
     "tests": [
       "test/net/scale5b.test.js"
@@ -536,8 +536,8 @@
   {
     "name": "SCALE5b-foes-drop-uncounted",
     "file": "server/src/index.js",
-    "old": "    if (!ahead.pass) { this._metrics.c.drops++; return ahead.bucket; }",
-    "new": "    if (!ahead.pass) { return ahead.bucket; }",
+    "old": "    this._metrics.c.held++;\n",
+    "new": "",
     "tests": [
       "test/net/scale5b.test.js"
     ],

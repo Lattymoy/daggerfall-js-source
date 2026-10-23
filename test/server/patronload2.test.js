@@ -34,7 +34,10 @@ test('PATRON-LOAD II A: the region\'s traders read walks its own region\'s trade
   assert.equal(reads.length, 2, 'the newest pieces and each house\'s newest');
   for (const { sql, plan } of reads) {
     const at = sql.includes('v_rank') ? 'each house\'s newest' : 'the newest';
-    assert.ok(plan.some((p) => /SEARCH l USING INDEX idx_market_vendor_region \(region=\?\)/.test(p)), `${at}: by the region's trader listings - ${plan.join(' | ')}`);
+    // PIN MOVED (AUDIT LEAN-READS B8, 2026-10-20): the region's open trader listings by their age or, for each house's
+    // newest, by their end (idx_market_vendor_expiry, the board's next-to-run-out index - its range never wider)
+    const byRegion = sql.includes('v_rank') ? /SEARCH l USING INDEX idx_market_vendor_(region \(region=\?\)|expiry \(region=\? AND expires_at>\?\))/ : /SEARCH l USING INDEX idx_market_vendor_region \(region=\?\)/;
+    assert.ok(plan.some((p) => byRegion.test(p)), `${at}: by the region's trader listings - ${plan.join(' | ')}`);
     assert.ok(plan.some((p) => /SEARCH d USING INDEX idx_home_decor_piece \(map_id=\? AND id=\? AND yard=\?\)/.test(p)), `${at}: a piece by its town and id - ${plan.join(' | ')}`);
     assert.ok(!plan.some((p) => /idx_market_open|idx_home_decor_yard|SCAN l\b|SCAN d\b/.test(p)), `${at}: no walk of the market or a town - ${plan.join(' | ')}`);
   }

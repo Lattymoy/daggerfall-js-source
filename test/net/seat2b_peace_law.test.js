@@ -51,8 +51,8 @@ test('SEAT2b part two WHAT THE WATCHTOWERS SEE: every challenger at or past half
   assert.deepEqual(towersSee(standings, { holder: 'gh', defence: null, t: 2 }), []);
   assert.deepEqual(towersSee(null, { holder: 'gh', defence: 10, t: 1 }), []);
   assert.equal(towersSee(standings, { holder: 'gc', defence: 1000, t: 1 }).some((w) => w.guild === 'gc'), false, 'the holder is never its own danger');
-  assert.equal(towersText('Anticlere', guildWords({ name: 'The Iron Circle', tag: 'IC' }), 0.5), 'The Watchtowers of Anticlere see the Iron Circle <IC> past half of our defence.');
-  assert.equal(towersText('Anticlere', guildWords({ name: 'Ebon Oath', tag: 'EO' }), 0.25), 'The Watchtowers of Anticlere see Ebon Oath <EO> past a quarter of our defence.');
+  assert.equal(towersText('Anticlere', guildWords({ name: 'The Iron Circle', tag: 'IC' }), 0.5), 'The Watchtowers of Anticlere see the Iron Circle <IC> past half of our defense.');
+  assert.equal(towersText('Anticlere', guildWords({ name: 'Ebon Oath', tag: 'EO' }), 0.25), 'The Watchtowers of Anticlere see Ebon Oath <EO> past a quarter of our defense.');
 });
 
 test('SEAT2b part two A COAST AND A HARBOUR: a town is coastal where its own pixel or one of the eight about it is sea, or a harbour stands there already; a Harbour at tier 1 is a port for its holder\'s members alone - Travel Options\' list kept, the host\'s word added and a bad word none (mutants: the eight; the port; the holder; the tier; the seam)', () => {

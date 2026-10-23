@@ -42,12 +42,14 @@ import { isNight } from '../world/worldClock.js';
 import { isCellRoom, mapPixelOfWire } from '../net/wire.js';
 import { foeStatsRefusal } from '../net/foeBounds.js';   // FOE-BOUNDS: the most health a streamed foe can legally have
 import { wildHere, wildMask, wildRingAt, WILD_NEAR_PX } from '../systems/wild/wildZone.js';
+import { inEther } from '../world/ethericSea.js';   // ETHER-WILD: the open sea's foes, read from Veilhaven's peace
 import { KNIGHT_CITYWATCH_ID } from '../characters/enemy/enemyEntity.js';
 import { importPublicKeyB64 } from '../net/identityToken.js';
 import { serviceBase } from '../net/accountClient.js';
 import { appStorage } from '../systems/appStorage.js';
 import { resolveEncounterTableIndex, chooseRandomEnemy } from '../systems/encounters.js';
-import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
+import { encounterTableChoices, encounterTableGeneration } from '../characters/encounterTableDoor.js';   // DEX3: every table a mod may pick, on any machine
+import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 /** The reader's bounds: the verdicts it keeps (owner and grant), the members it has seen stand, the puppets it knows the
  *  grant of. */
@@ -82,7 +84,9 @@ const LEVELLED_KINDS = new Set(['enc', 'camp', 'band', 'encr']);
  *  RandomEncounters.ChooseRandomEnemy) over climate `climate` (a map pixel's - every machine's own CLIMATE.PAK, the
  *  relay's never), in a location's rect or out of one, the grant's world minute's day or night and its owner's signed
  *  level (1 where it signs none), drawn from the member's own species die (net/grantLaw.js grantDice). -1 where the place
- *  rolls none. Pure. @param {{ s: number, m: number, l: number }} gr @param {number} i @param {number} climate @param {boolean} inRect */
+ *  rolls none. DEX3: a roll every machine agrees on, so where a mod offers more than one table for the place the die picks
+ *  one of them first (characters/encounterTableDoor.js) - never a table a machine's own events picked. Pure.
+ *  @param {{ s: number, m: number, l: number }} gr @param {number} i @param {number} climate @param {boolean} inRect */
 export function grantSpecies(gr, i, climate, inRect) {
   return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 }, grantDice(gr.s, i).species);
 }
@@ -93,11 +97,12 @@ const _speciesOf = new Map();
  *  seed's faction-mates out of the same table. Null for a climate with no band. Pure. @param {unknown} c */
 export function grantSpeciesOf(c) {
   if (!Number.isInteger(c)) return null;
-  if (_speciesOf.has(c)) return _speciesOf.get(c);
+  const key = `${c}:${encounterTableGeneration()}`;   // DEX3: kept per climate while the tables' selectors stand
+  if (_speciesOf.has(key)) return _speciesOf.get(key);
   const tables = [{ inLocationRect: true, isDay: false }, { inLocationRect: false, isDay: true }, { inLocationRect: false, isDay: false }]
     .map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o })).filter((i) => i != null);
-  const set = tables.length ? new Set(tables.flatMap((i) => ENCOUNTER_TABLES[/** @type {number} */ (i)] ?? [])) : null;
-  _speciesOf.set(c, set);
+  const set = tables.length ? new Set(tables.flatMap((i) => encounterTableChoices(/** @type {number} */ (i)).flat())) : null;   // DEX3: every table any machine's mod may have picked
+  _speciesOf.set(key, set);
   return set;
 }
 
@@ -388,7 +393,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
       const c = climateAt(gr.p[0], gr.p[1]), i = r.gr[1];
       if (r.t !== grantSpecies(gr, i, c, false) && r.t !== grantSpecies(gr, i, c, true)) return 'dice';
     }
-    if (LEVELLED_KINDS.has(gr.k) && r.t >= 128 && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
+    if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
     if (ROLLED_KINDS.has(gr.k) && climateAt) {
       const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]));
       if (set && !set.has(r.t)) return 'dice';
@@ -409,6 +414,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     if (!mask || wildHere()) return true;
     if (lane !== 'street' || !isCellRoom(session()?.room) || !Array.isArray(r?.f)) return false;
     const [px, py] = mapPixelOfWire(r.f[0], r.f[2]);
+    if (inEther(px, py)) return true;   // ETHER-WILD: past the Veil the zone is everywhere but Veilhaven's peace - a foe stood by an owner a stride over its edge is the zone's (a wider bound only allows)
     for (let dy = -WILD_NEAR_PX; dy <= WILD_NEAR_PX; dy++) for (let dx = -WILD_NEAR_PX; dx <= WILD_NEAR_PX; dx++) if (wildRingAt(px + dx, py + dy, mask) > 0) return true;
     return false;
   }

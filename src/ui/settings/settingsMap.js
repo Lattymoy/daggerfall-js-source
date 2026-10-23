@@ -69,7 +69,7 @@ export const CATEGORIES = Object.freeze([
     sec("general", "General", [
       "Enhancements/LoiterLimitInHours", "Controls/InstantRepairs", "Controls/AllowMagicRepairs", "ChildGuard/PlayerNudity"]),
     sec("quests", "Quests", [
-      "port:questRepair", "feat:nearby-quests", "feat:choose-guild-jobs", "Enhancements/GuildQuestListBox", "GUI/CanDropQuestItems",
+      "port:questRepair", "feat:questlines", "feat:nearby-quests", "feat:choose-guild-jobs", "Enhancements/GuildQuestListBox", "GUI/CanDropQuestItems",
       "GUI/QuestRumorWeight", "GUI/EnableQuestDebugger"]),
     sec("dungeons", "Dungeons", [
       "feat:smaller-dungeons", "Experimental/SmallerDungeons", "feat:medium-dungeons", "feat:world-dungeon-sizes", "feat:varied-dungeon-monsters",
@@ -93,13 +93,13 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("combat", "Combat", [
     sec("enemies", "Enemies", [
-      "feat:enhanced-ai", "Enhancements/EnhancedCombatAI", "feat:mod-meanermonsters", "feat:enemy-infighting", "Enhancements/EnemyInfighting"]),
+      "feat:enhanced-ai", "Enhancements/EnhancedCombatAI", "feat:mod-meanermonsters", "feat:mod-daggerfall-enemy-expansion", "feat:enemy-infighting", "Enhancements/EnemyInfighting"]),
     sec("rules", "Rules & armour", [
       "feat:mod-pcaao", "MeleeAttacks/MeleeAttackFriendlyProtection", "MeleeAttacks/MeleeAttackDetection"]),
     sec("weapons", "Weapons in hand", [
       "feat:weapon-glow", "feat:mod-weapon-widget", "feat:mod-shield-widget", "feat:mod-readied-spellcasting-hands", "feat:mod-diverse-weapons", "feat:bows-left-hand", "Enhancements/BowLeftHandWithSwitching"]),
     sec("morrowind", "With Morrowind data", [
-      "feat:mod-weapon-sheathing", "feat:steel-helm", "feat:mw-spell-effects", "feat:mw-body-motion", "feat:mw-npc-bodies", "feat:mw-billboard-look"]),
+      "feat:mod-weapon-sheathing", "feat:steel-helm", "feat:mw-spell-effects", "feat:mw-body-motion", "feat:mw-npc-bodies", "feat:mw-billboard-look", "feat:npc-marks"]),
     sec("aftermath", "Seeing & bleeding", [
       "feat:enhanced-combat-visuals", "feat:blood"]),
     sec("sea", "At sea", [
@@ -153,7 +153,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("audio", "Audio", [
     sec("volume", "Volume", [
-      "Controls/SoundVolume", "Controls/MusicVolume"]),
+      "Controls/SoundVolume", "Controls/MusicVolume", "port:monsterVolume"]),
     sec("music", "Music", [
       "Audio/AlternateMusic", "Audio/SoundFont", "port:midiOut"]),
     sec("sounds", "Sounds", [

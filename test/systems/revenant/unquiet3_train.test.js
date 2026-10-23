@@ -88,9 +88,9 @@ test('UNQUIET III A WOUND HEALS: left alone, its oldest wound heals every five d
 });
 
 test('UNQUIET III THE PAGE: its wounds and when the oldest heals - "unless you find it first"; with no day known, the wounds alone (mutants: unsaid; the days wrong)', () => {
-  assert.equal(PG.woundLine({ wounds: ['lamed'], woundDay: 10 }, DAY * 11 + 60), 'Wounds you left: Lamed (a lamed leg - it runs slower). The oldest heals in 4 days unless you find it first.');
+  assert.equal(PG.woundLine({ wounds: ['lamed'], woundDay: 10 }, DAY * 11 + 60), 'Wounds you left: Lamed (a lamed leg, so it runs slower). The oldest heals in 4 days unless you find it first.');
   assert.ok(PG.woundLine({ wounds: ['lamed'], woundDay: 10 }, DAY * 14).endsWith('heals in 1 day unless you find it first.'));
-  assert.equal(PG.woundLine({ wounds: ['lamed'] }), 'Wounds you left: Lamed (a lamed leg - it runs slower).');
+  assert.equal(PG.woundLine({ wounds: ['lamed'] }), 'Wounds you left: Lamed (a lamed leg, so it runs slower).');
   assert.equal(PG.woundLine({ wounds: [], woundDay: 10 }, DAY * 11), '');
 });
 
@@ -117,7 +117,7 @@ test('UNQUIET III TRAINING: a revenant of mastery, on its days of training, lear
   const ev = N.takeRevenantNotice(p, at(12));
   assert.equal(ev.kind, 'trained');
   assert.equal(ev.kicker, 'Trained');
-  assert.equal(ev.body, `${r.given} has been training - it has learned to answer your blade.`);
+  assert.equal(ev.body, `${r.given} has been training. It has learned to answer your blade.`);
   N.revenantFester(p, at(14));
   assert.deepEqual(r.learned, ['mailed', 'arrowWise'], 'day 14: the next habit, its second room');
   N.takeRevenantNotice(p, at(14));

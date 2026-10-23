@@ -86,7 +86,8 @@ test('MAC-F: the head is the handle, and the body goes with the fold', () => {
   assert.match(cr, /fold\.append\(el\('span', 'cr-when', head \?\? ''\)\);/);
   assert.match(cr, /fold\.setAttribute\('aria-expanded', String\(!shut\)\);/);
   // THE BODY IS WHAT FOLDS. The head, the date and the remove all stay.
-  assert.match(cr, /if \(!isFolded\(folded, section, i\)\) \{\s*for \(const line of e\.body\)/);
+  // PIN MOVED (QL2): a quest's card draws its objectives above its body - inside the same fold, so they go with it too
+  assert.match(cr, /if \(!isFolded\(folded, section, i\)\) \{\s*(?:\/\/[^\n]*\n\s*if \(section === 'quests'\)[^\n]*\n\s*)?for \(const line of e\.body\)/);
   // and the remove is a SIBLING of that button, not inside it: a button
   // in a button is not HTML, and the click would toggle as well as remove
   assert.doesNotMatch(cr, /fold\.append\(rm\)/);

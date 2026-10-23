@@ -107,7 +107,7 @@ test('RETRO-UI the viewmodel and the horse: a right-aligned weapon\'s edge is th
   assert.match(rig, /const cv = \(\) => uiCanvas\(typeof canvas === 'function' \? canvas\(\) : canvas\);/);
   assert.match(rig, /return onUiScreen\(renderer, cv\(\), \(\) => drawInner\(\{ paralyzed \}\)\);/);
   assert.match(rig, /const \[rx, ry\] = fromUiPoint\(canvas, rect\.x, rect\.y\), real = canvas\.canvas \?\? canvas;/);
-  assert.match(rig, /_tlDrawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \}, canvasW: real\.width, canvasH: real\.height,/, 'the muzzle on the real canvas');
+  assert.match(rig, /const drawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \}, canvasW: real\.width, canvasH: real\.height,/, 'the muzzle on the real canvas');
   // what that buys, through the real muzzleRay: a muzzle at the picture's middle column, measured on the real canvas,
   // leaves straight ahead; the same rect left in the layer's pixels (240 short) would leave off to the left
   const drawn = (x) => ({ rect: { x, y: 600, w: 200, h: 200 }, canvasW: 1920, canvasH: 1080, muzzle: { x: 0.5, y: 0.5 }, flip: false, viewport: null, aspect: 1920 / 1080 });

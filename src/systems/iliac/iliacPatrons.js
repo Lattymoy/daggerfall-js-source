@@ -27,7 +27,8 @@ import { ILIAC_CARDS, cardById, ILIAC_TIERS, STARTER_DECK } from '../../net/ilia
 import { ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX, ILIAC_TURNS, ILIAC_HOLDINGS, deckValid, commit, reveal, iliacView, legalPlays, playsRefusal } from '../../net/iliac/iliacHand.js';
 import { TEMPER_NAMES } from '../card/cardPatrons.js';
 import { BOSS_CARD_IDS } from '../bossCards.js';   // CARDS9: a boss's own card is found, never dealt
-const BOSS_IDS = new Set(BOSS_CARD_IDS);
+import { FESTIVAL_CARD_IDS } from '../../net/festivalLaw.js';   // WITCH1: the Witches' Festival's are the Wyrd Sisters' alone - never a regular's
+const BOSS_IDS = new Set([...BOSS_CARD_IDS, ...FESTIVAL_CARD_IDS]);
 
 /** The tavern's grade by its building's quality (1..20): the Hold'em stakes' own bands (cardTableSession.js
  *  TABLE_STAKES - to 7, to 13, above). 0 a village's, 1 a town's, 2 a city's. */

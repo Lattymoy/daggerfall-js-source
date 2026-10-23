@@ -128,7 +128,7 @@ export const cannotBeRepairedText = () => localizedText('cannotBeRepaired', CANN
 export const interruptRepairText = () => localizedText('interruptRepair', INTERRUPT_REPAIR_TEXT);
 /** WAGONS4: a smith's word on a horse or a wagon - the port's own (a wagon left at a smith's counter left the pack for
  *  days, and the horse and wagon the mod stood in the world with it): a Wagon Yard mends wagons (systems/wagon/wagonUpkeep.js). */
-export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT = 'A smith mends no horse and no wagon. A town\u2019s Wagon Yard mends wagons.';
+export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT = 'A smith does not repair horses or wagons. A town\u2019s Wagon Yard repairs wagons.';
 export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
   if (item?.templateIndex === TRANSPORT_HORSE || item?.templateIndex === TRANSPORT_SMALL_CART) return 'transport';   // WAGONS4: never left at a smith
   if (isEnchantedItem(item) && !allowMagicRepairs) return 'magic';

@@ -105,7 +105,8 @@ test('A8: the hosts poll the ACTION, which is Mouse0 at the shipped bindings', (
   assert.equal(held(new Set(['Mouse0']), 'ActivateCenterObject'), true);
   assert.equal(held(new Set(['Mouse1']), 'ActivateCenterObject'), false);
   assert.equal(held(new Set(['Mouse1']), 'SwingWeapon'), true);
-  assert.equal(held(new Set(['Mouse2']), 'AutoRun'), true);
+  assert.equal(held(new Set(['Mouse2']), 'PartyPing'), true);
+  assert.equal(held(new Set(['F3']), 'AutoRun'), true);
   // so a REBIND moves the activate button, which is the point of
   // routing it through the registry rather than spelling 'Mouse0'
   assert.equal(held(new Set(['KeyG']), 'ActivateCenterObject'), false);

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
 import {
   telegraphShape, telegraphField, telegraphBounds, telegraphQuadOver, poolShapes, telegraphEdge, telegraphLineW, rimDist,
-  GateTelegraphRenderer, TELEGRAPH_FS, TELEGRAPH_KIND, TELEGRAPH_POINTS_MAX, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_EDGE_SAFE,
+  GateTelegraphRenderer, TELEGRAPH_FS, TELEGRAPH_KIND, TELEGRAPH_POINTS_MAX, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_EDGE_SAFE, TORMENT_EDGE, TORMENT_COLOR,
   TELEGRAPH_POOL, TELEGRAPH_REACH, TELEGRAPH_MARGIN, TELEGRAPH_THROB_MAX_HZ, TELEGRAPH_LINE_W_MAX,
 } from '../../src/render/gate/gateTelegraph.js';
 import { ATTACKS, ATTACK_BY_ID, COURT_R, COURTS, BOSS_REACH_R, HOST, HOST_BLOWS, BASE_PROFILE, fightProfile, windupOf, isDagons } from '../../src/net/gate/gateBrain.js';
@@ -138,6 +138,8 @@ test('WB13a T8: every pending outline wears ONE danger edge whatever it carries 
     const P = fightProfile(md);
     for (const A of Object.values(ATTACKS)) {
       const sh = telegraphShape(W(A.key, { tg: [[3, 3]] }), 2, 9500, P);
+      if (A === ATTACKS.gaze) { assert.equal(sh, null, 'WB14a: the Gaze lands on a view, never on the ground'); continue; }
+      if (A === ATTACKS.torment) { assert.deepEqual([sh.edge, sh.color], [TORMENT_EDGE, TORMENT_COLOR], 'WB14a: a ring to gather in, in gold'); continue; }
       assert.deepEqual(sh.edge, isDagons(A) ? TELEGRAPH_EDGE_DAGON : TELEGRAPH_EDGE, `${A.key} under ${md}`);
       assert.deepEqual(sh.color, attackColor(A, P), `${A.key}: its element in the fill`);
     }
@@ -306,5 +308,5 @@ test('WB13a: the court feeds the warning every frame from my feet and the camera
   const gc = readFileSync(new URL('../../src/scenes/gate/gateCourt.js', import.meta.url), 'utf8');
   assert.match(gc, /const peril = alive \? perilAt\(s, t, P, fp\[0\] - COURT_CENTRE\[0\], fp\[2\] - COURT_CENTRE\[2\], yaw\(\)\) : null;/);
   assert.match(readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8'), /yaw: \(\) => cam\.yaw,   \/\/ WB13a/);
-  assert.ok(COURTS.length === 3);
+  assert.ok(COURTS.length === 6, 'WB14b: his three courts and the portents\' three floors');
 });

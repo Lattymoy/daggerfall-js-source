@@ -271,7 +271,7 @@ test('LW14 hurt and the rival: one under RETREAT_HP falls back RETREAT_BACK_M; t
   st.spawned[0].dead = true; st.spawned[1].dead = true;
   host.frame([{ trip, members }], 22);
   assert.equal(host.size, 0);
-  assert.match(st.said.at(-1), /have had enough - they make for the way out/);
+  assert.match(st.said.at(-1), /have had enough and make for the way out/);
   // let go past DEEP_KEEP_M (not joined)
   const k = diversOver({ player: [10, 0, 5], route });
   k.host.frame([{ trip: k.trip, members: k.members }], 20);

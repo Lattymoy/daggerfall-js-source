@@ -321,13 +321,15 @@ test('AUDIT EG IV lane1 #2 THE EXAMINATION HOLDS ITS LINE STRICTLY ABOVE THE THI
     strike(C, L, L.max * 0.5, here);
     for (let k = 0; k < 4; k++) C.step(here);
     assert.deepEqual([L.ph, C.F.mem.exam?.kind, L.hp], [2, 'runes', L.hpFloor], `n ${n}: burst past it - held at the line, the second phase, the runes`);
+    // PIN MOVED (FIELD BUGS 2026-10-19e LORD-SHARES, bible/01-Overview/bugs/Field-Bugs-2026-10-19e.md): an awake lord keeps a
+    // fallen member's share, so the share that moves mid-Examination is one BROUGHT - a member recalled into the hall
     if (n >= 2) {
       const max0 = L.max;
-      egLordsShare(C.F, 'acct-1', 40, false);
-      assert.ok(L.max < max0 && L.hpFloor === egHoldHp(L.max, PHASE_AT[1]) && L.hp / L.max > PHASE_AT[1], `n ${n}: a share retired - the line strictly above at the new max`);
+      assert.equal(egLordsShare(C.F, 'acct-1', 40, false), false, `n ${n}: a fall keeps its share`);
+      egLordsShare(C.F, 'acct-new', 40, true);
+      assert.ok(L.max > max0 && L.hpFloor === egHoldHp(L.max, PHASE_AT[1]) && L.hp / L.max > PHASE_AT[1], `n ${n}: a share brought - the line strictly above at the new max`);
       C.step(here);
       assert.equal(L.ph, 2, `n ${n}: still the second phase`);
-      egLordsShare(C.F, 'acct-1', 40, true);
     }
     // the runes stood in their order: passed, the line freed
     for (let k = 0; k < 4 * 20 && C.F.mem.exam?.kind === 'runes'; k++) { const cur = egObjsOf(C.F, 'rune').find((r) => r.pt === C.F.mem.exam.next); if (cur) { here[0].x = cur.x; here[0].z = cur.z; } C.step(here); }

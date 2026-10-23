@@ -29,7 +29,7 @@
   {
     "name": "GUIDE3-time-left-words",
     "file": "src/ui/quest/questRail.js",
-    "old": "export const timeLeftWords = (s) => `${remainWords(s)} left`;",
+    "old": "export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });",
     "new": "export const timeLeftWords = (s) => `${Math.round(s / 3600)} hours left`;",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "GUIDE3-rank-ending-routine",
     "file": "src/ui/quest/questHerald.js",
-    "old": "const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 3, ended: 3 });",
-    "new": "const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 0, ended: 3 });",
+    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });",
+    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 0, ended: 3 });",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GUIDE3-rank-deadline-over-new",
     "file": "src/ui/quest/questHerald.js",
-    "old": "const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 3, ended: 3 });",
-    "new": "const RANK = Object.freeze({ updated: 0, urgent: 2, started: 1, completed: 3, ended: 3 });",
+    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });",
+    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 2, started: 1, completed: 3, ended: 3 });",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "GUIDE3-news-before-the-tick",
     "file": "src/scenes/quest/questBridge.js",
-    "old": "    machine.tick();\n    updateTimer = 0;\n    news();",
-    "new": "    news();\n    machine.tick();\n    updateTimer = 0;",
+    "old": "    machine.tick();\n    updateTimer = 0;\n    questlines.look();   // QL1: what each stamped quest's state has shown, latched\n    news();",
+    "new": "    news();\n    machine.tick();\n    updateTimer = 0;\n    questlines.look();   // QL1: what each stamped quest's state has shown, latched",
     "tests": [
       "test/ui/quest/guide3_herald.test.js"
     ]

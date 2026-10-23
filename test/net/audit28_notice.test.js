@@ -50,8 +50,8 @@ test('AUDIT 28 N1/N16: a note\'s button is answered by ONE plan, the same shape 
   const answer = w.slice(w.indexOf('const answerNote = (note) => {'), w.indexOf('\n  };', w.indexOf('const answerNote = (note) => {')));
   assert.match(answer, /_letterPending = \{ draft: plan\.draft, at: performance\.now\(\), lost: NOTE_LETTER_LOST \}; closeNoticeDoor\(\);/);
   assert.doesNotMatch(answer, /openLetters/, 'never opened directly: the board still holds the slot this frame');
-  assert.match(w, /tradeSay\(_letterPending\.lost \?\? 'Your letters could not open - the page is still in your journal\.'\)/, 'a note\'s letter that cannot open says the note\'s words');
-  assert.equal(NOTE_LETTER_LOST, 'Your letters could not open. The note is still on the board.');
+  assert.match(w, /tradeSay\(_letterPending\.lost \?\? 'Your letters could not be opened\. The page is still in your journal\.'\)/, 'a note\'s letter that cannot open says the note\'s words');
+  assert.equal(NOTE_LETTER_LOST, 'Your letters could not be opened. The note is still on the board.');
 });
 
 test('AUDIT 28 N15: a reply\'s subject is never cut - "Re: " only where it fits, and never twice', () => {
@@ -240,7 +240,7 @@ test('AUDIT 28 N12: the count over a board reads storage once, not every frame',
 });
 
 test('AUDIT 28 N14: a take-down\'s and a report\'s hour spent say so in their own words', () => {
-  assert.equal(REFUSALS['board-ops-rate'], 'You have done a great deal at the boards this hour. Try again later.');
+  assert.equal(REFUSALS['board-ops-rate'], 'You have done too much at the boards this hour. Try again later.');
   const x = src('server-account/src/board.js');
   assert.equal((x.match(/return \{ error: 'board-ops-rate' \}/g) ?? []).length, 2);
   assert.equal((x.match(/return \{ error: 'board-rate' \}/g) ?? []).length, 1, 'the pin\'s own');

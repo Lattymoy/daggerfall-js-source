@@ -27,7 +27,7 @@ import { rollCorpseKit } from '../../src/systems/foeLootCap.js';   // KIT-ROLL: 
 import { registerFoeDoor } from '../../src/systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: `stand` registers the foe's door   // PSCALE1: the kill door's weight - who fights it - in the harness's scope
 import { validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX } from '../../src/net/wire.js';   // AUDIT SET P-M3: the stream's door, and the record's bounds
 import { FOES_FULL_MS } from '../../src/net/online.js';   // AUDIT FINAL F7: the full frame the name must outlive
-import { sayEnemyDied } from '../../src/scenes/corpseMarker.js';   // LOOT7-CHECK DUNGEON-DIED: the kill door's notice, the real one
+import { sayEnemyDied, createCorpsePrefabs, corpseTextureOf } from '../../src/scenes/corpseMarker.js';   // LOOT7-CHECK DUNGEON-DIED: the kill door's notice, the real one
 import { eliteCorpseSize, isEliteCorpse, markEliteCorpseBatch } from '../../src/systems/eliteFoes.js';   // ELITE FOES: the corpse chain's own imports, the real ones (no elite here: the size and batch as they were)
 import { effectiveLevel } from '../../src/systems/mentorMode.js';   // SOFTCAP2: the mentor's level the spawn sites read (a free name there, the module's own import)
 import { blowClassOf } from '../../src/ai/puppetBlows.js';   // AUDIT FEUD: the hit door builds a blow's class whenever its weakness rides (the real one - no wind-up here, no weakness: none)
@@ -35,6 +35,8 @@ import { feudWeakBlow } from '../../src/systems/feudLedger.js';   // AUDIT FEUD:
 import { ARENA_PUPPET_OWNER } from '../../src/net/arena/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 import { markOutCold } from '../../src/systems/survival/needs.js';   // AUDIT C&C N2: the dungeon's collapse marks its hour
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
+import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
+import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
 
 const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const AST = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -109,10 +111,12 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     damageShieldPool: (e, n) => n, attemptSoulTrap, peerSoulTrapOf, fillEmptyTrap, isAzurasStarEquipped: () => false,
     hudText: { add: (l) => log.hud.push(l) }, sayEnemyDied, SOUL_TRAP_TEXT: { trapSuccess: 'ok', trapFail: 'fail', trapNoneEmpty: 'none' },   // LOOT7-CHECK DUNGEON-DIED: the notice, onto the harness's line
     setEnemyAlert, playRareDrop: () => { log.chimes++; }, raiseEnemyDeath: () => { log.deaths++; }, liveStat: () => 50, stampWonWeapons, rollCorpseKit,
-    audio: {}, ENEMY_BASICS, weaponKnockbackApplies: () => false, maxFatigue: () => 100, q2: (x) => x, q3: (x) => x,
+    isClassEnemyId, enemyEntityType, audio: {}, ENEMY_BASICS, corpseTextureOf,   // AUDIT DEX A1: the corpse mints read it
+    weaponKnockbackApplies: () => false, maxFatigue: () => 100, q2: (x) => x, q3: (x) => x,
     _wallNow: () => null, floorLanding: (c, p) => p, collider: null, getTexture,
     uploadRecord: () => {}, billboardSize: () => ({ w: 1, h: 1 }), armFlatAnim: () => {}, flatAnims: { remove: () => {} }, uploadRecordFrame: () => {},
     eliteCorpseSize, isEliteCorpse, markEliteCorpseBatch,   // ELITE FOES: spawnCorpseNow's
+    corpsePrefabs: createCorpsePrefabs({ runs: () => true, key: () => null }),   // DEX5: the real runner - no prefab registered here, so none attaches
     billboardBatches: [], corpses: [], _lootSeen: new Set(), _lootAt: new Map(),   // corpses: the base's second owner list (AUDIT 68 S19-corpses-array-dead retired it)
     renderer: {
       createBillboardBatch: (archive, record) => { log.minted++; return { archive, record, id: log.minted }; },
@@ -380,7 +384,9 @@ function roundHarness(foes) {
   const aggro = [];
   for (const f of foes) f.ai.makeEnemyHostileToAttacker = (t) => aggro.push({ foe: f, t });
   const h = killHarness({ foes, foeDeps: { PLAYER_TARGET, resetAllyTeamOnPlayerAttack, isLocalPlayerTarget, withinYaw: () => true } });
-  Object.assign(h.state, { runMagicRoundsFor, killIfAnyLiveStatZero, dt: 1 / 60, foeSinks: h.foeSinks });
+  // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the block now also calls the relay's bodies' rounds (scenes/gate/standInSpell.js
+  // standInRound) between the foes' rounds and the kill - none here, so its door answers nothing
+  Object.assign(h.state, { runMagicRoundsFor, killIfAnyLiveStatZero, standInRound: () => {}, dt: 1 / 60, foeSinks: h.foeSinks });
   const block = foeRoundBlock();
   const frame = mount(`const run = (from, to) => { const _tick = { magicRoundWindow: { from, to } };\n${block}\n}; return { run };`, h.state);
   // the call site's own statements; only the dice are fixed - every round's saving throw rolls Math.random
@@ -471,7 +477,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
   await tick();
   assert.equal(bat._killedBy, null, 'my own blow: nobody to tell');
   // the record: `v` on the dead foe's, and on its key
-  const rec = mount(`${declSrc('foeMaxOf')} ${fnSrc('roomRecord')} return { roomRecord };`, { q2: (x) => x, q3: (x) => x, FOE_HEALTH_MAX, FOE_LEVEL_MAX, KILLED_BY_MS, _sharedFoe: () => false, fightN: () => 1 });
+  const rec = mount(`${declSrc('foeMaxOf')} ${fnSrc('roomRecord')} return { roomRecord };`, { q2: (x) => x, q3: (x) => x, FOE_HEALTH_MAX, FOE_LEVEL_MAX, KILLED_BY_MS, _sharedFoe: () => false, fightN: () => 1, isClassEnemyId });
   const r = rec.roomRecord(rat, 0, true);
   assert.equal(r.v, 'peer-7');
   assert.ok(rat._sentKey.split(',').includes('peer-7'), 'the name rides the key');   // PIN MOVED (RVN13, Feud-Arc.md 25: a revenant's own ride the key after it)
@@ -500,6 +506,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
     const state = {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
       foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
+      appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
       renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), egFindStruck: async () => false,   // PIN MOVED (EG-E3): the joiner's door asks the dungeon's find beside the kill report (systems/eliteGates/egFind.js)
       rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [],
       dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam

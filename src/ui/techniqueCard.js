@@ -35,7 +35,7 @@ export const TECH_HOW = Object.freeze({ aims: 'hold to aim', press: 'press' });
 /** The foot's word where no key is bound. */
 export const TECH_UNBOUND = 'no key bound';
 /** The note a block wears in a duel or a bout between players - law 3: never at a player (combat/techniques.js). */
-export const TECH_DUEL_NOTE = 'Sleeps in a duel: never at a player.';
+export const TECH_DUEL_NOTE = "Doesn't work in a duel or against players.";
 
 /**
  * The technique's block for an item's card, or null for an item whose tier list would say nothing of one
@@ -78,10 +78,10 @@ export function techniqueCard(item, { full = false, keyWord = '' } = {}) {
   box.append(foot);
   if (full) {
     // the two numbers the card shows, tied together: the roll is on the technique's own blow
-    box.append(el('p', 'tech-power', `+${v.value}% rolled${v.band ? ` (${v.band[0]}-${v.band[1]})` : ''} on its ${pct(v.base)} blow: ${pct(v.mult)} of a plain blow.`));
+    box.append(el('p', 'tech-power', `+${v.value}% rolled${v.band ? ` (${v.band[0]}-${v.band[1]})` : ''} on its ${pct(v.base)} base hit: ${pct(v.mult)} of a normal hit.`));
     box.append(el('p', 'tech-press', !keyWord
       ? 'Bind Weapon technique in Controls to use it.'
-      : v.aims ? `Hold ${keyWord} to aim its mark, and let go to strike; a tap strikes where you look.` : `Press ${keyWord} to strike.`));
+      : v.aims ? `Hold ${keyWord} to aim and release to strike. Tap it to strike where you're looking.` : `Press ${keyWord} to strike.`));
   }
   if (asleep) box.append(el('p', 'tech-note', TECH_DUEL_NOTE));
   return box;

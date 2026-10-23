@@ -45,6 +45,7 @@ import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { MOTHERLODE_TIER, MOTHERLODE_RANK } from '../net/motherlodeLaw.js';   // PROF2b
 import { MOTHERLODE_TEXT } from '../net/motherlodeBook.js';
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The item flats' archive; a picture a new ore has none of its own borrows Lodestone's (PROF0 4.8). */
 export const ORE_FLAT_ARCHIVE = 254;
@@ -400,7 +401,7 @@ export function minePlan({ node, taken, counting, rank, pick, storesFull, fullWo
 export function motherlodePlan({ node, taken, counting, found, rank, pick, storesFull, fullWords = 'Stores full' }) {   // BAG1
   const name = materialLabel(node.material);
   const verb = `Strike the Motherlode of ${name}`;
-  if (taken) return { harvest: 'ore', verb: 'The Motherlode - struck today', rest: '', ready: false };
+  if (taken) return { harvest: 'ore', verb: 'The Motherlode: struck today', rest: '', ready: false };
   if (counting) return { harvest: 'ore', verb, rest: 'being counted', ready: false };
   if (found) return { harvest: 'ore', verb, rest: 'your Motherlode today is found', ready: false };
   if (rank < MOTHERLODE_RANK) return { harvest: 'ore', verb, rest: `needs Mining ${MOTHERLODE_RANK}`, ready: false, needsRank: MOTHERLODE_RANK };
@@ -514,8 +515,10 @@ export function mineKind({ book, lodes = null, marks = null }) {
     refused(key, error) {
       if (typeof key === 'string' && key.startsWith('mlode:')) lodes?.refused?.(key, error);
     },
-    /** PROF2b: a Motherlode's answer - the find and its count told to the Motherlodes' book, its silver said. */
+    /** PROF2b: a Motherlode's answer - the find and its count told to the Motherlodes' book, its silver said. QL11: and
+     *  every harvest the service answered - a vein's ore, a boulder's stone, a dungeon vein's - is Mining's act. */
     answered(d, toast, o = {}) {
+      noteAct('ore-mined');   // QL11: ore or gems mined
       if (!d?.motherlode) return;
       lodes?.heard?.(d);
       const line = d.marks ? marks?.strikeLine?.(d.marks) ?? null : null;   // the balance kept either way

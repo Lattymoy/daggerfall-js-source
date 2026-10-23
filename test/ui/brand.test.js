@@ -355,7 +355,7 @@ test('BR5: the original game is named only where it must be - in what a player r
   // kingdom, the bank). Everywhere else the reader is told "the original game"
   // or "classic". Read off the PRODUCERS, not the files, so a new row that
   // says "as Daggerfall does" reddens here wherever it is written.
-  const OTHERS = /Daggerfall Unity|(World|Windmills|Villages|Cities) of Daggerfall/g;
+  const OTHERS = /Daggerfall Unity|Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;   // DEX0: a mod by its own name
   const named = (v) => /Daggerfall/.test(String(v).replace(OTHERS, ''));
   const strings = (v, out = [], at = '') => {
     if (typeof v === 'string') out.push([at, v]);
@@ -442,7 +442,7 @@ test('AUDIT BR5: the drawn words no producer exports - the profession pages, the
   assert.equal(owed.size, OWED.length, 'and every owed line is still where it was read - the walk still sees the files');
   // A-2, A-4 and A-5 as they read now: the potion maker is the classic one, the map joins the BAY's own coast (not
   // "the classic coast", which said nothing), and the cries are the ORIGINAL game's (not "the game", which is this one)
-  assert.ok(read('src/ui/professions/profPages.js').includes("The classic potion maker still works but gives no Provisioning XP.';"), 'A-2');
+  assert.ok(read('src/ui/professions/profPages.js').includes("The classic potion maker still works, but it earns no Provisioning experience.';"), 'A-2');
   const { FEATURES } = await import('../../src/systems/features.js');
   const note = (id) => FEATURES.find((f) => f.id === id)?.note ?? '';
   assert.match(note('tamriel-map'), /joined to the Bay’s own coast\./, 'A-4');

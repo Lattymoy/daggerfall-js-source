@@ -28,6 +28,7 @@ import { createEgOccluders } from '../../../src/scenes/eliteGates/egOcclude.js';
 import { buildEgLookModel } from '../../../src/world/eliteGates/egLook.js';
 import { Collider } from '../../../src/player/collider.js';
 import { createEgGroundLook } from '../../../src/scenes/eliteGates/egGroundLook.js';
+import { ensureSdHallArt } from '../../../src/scenes/superDungeon/sdHall.js';   // FIELD BUGS 2026-10-20f ORRERY-STONES: the Hour's hall pictures an Athenaeum's stones wear
 import { EG_BEAT_STONE_RECORDS, EG_CRUMBLE_TELL_RECORDS } from '../../../src/world/eliteGates/egPlatformArt.js';   // EG-LOOK: the spans' pieces' own pictures   // EG-LOOK: the circle's ruin and its band's wreck, stood with it
 
 const SEED = 0x5eed1234;
@@ -230,7 +231,15 @@ test('EG10 THE SWAP IN PLACE, EXECUTED - THE FREE PINS (scenes/worldModes.js egS
   // law 8's did, so its band's went up with the stand)
   const b1 = egBandOfCircle(1), in1 = (kinds) => egCircleSpecs(SEED, 1).some((s) => s.steps.some((q) => kinds.includes(q.kind)));
   const later1 = (lays(b1, ['beat']) && !in1(['beat']) ? tellTex(b1) + EG_BEAT_STONE_RECORDS.reduce((n, q) => n + q.warn.length + q.back.length, 0) * 2 : 0) + (lays(b1, ['crumble', 'bone']) && !in1(['crumble', 'bone']) ? EG_CRUMBLE_TELL_RECORDS.length * 2 : 0);
-  assert.equal(R.textures, tex + later1 + [...bands].filter((b) => b !== b1).reduce((n, b) => n + bandTex(b) + tellTex(b) + pieceTex(b), 0), 'each band\'s dress (and its Beats\' and its pieces\' pictures) uploaded once a session, never by a swap');
+  // PIN MOVED (FIELD BUGS 2026-10-20f ORRERY-STONES, scenes/eliteGates/egOrrery.js): an Athenaeum's stones wear the Hour's hall pictures
+  // (scenes/superDungeon/sdHall.js ensureSdHallArt - counted off the producer), which go up with the first circle that lays one, once
+  // a session as a band's Beats' do
+  let hallUp = 0;
+  ensureSdHallArt({ uploadTexture: () => { hallUp++; }, uploadEmissionTexture: () => { hallUp++; } });
+  const ath = (c) => egCircleSpecs(SEED, c).some((s) => s.kind === 'athenaeum');
+  const hallTex = !ath(1) && Array.from({ length: 20 }, (_, i) => i + 2).some(ath) ? hallUp : 0;
+  assert.ok(hallUp > 0, 'the Hour\'s hall pictures counted');
+  assert.equal(R.textures, tex + later1 + hallTex + [...bands].filter((b) => b !== b1).reduce((n, b) => n + bandTex(b) + tellTex(b) + pieceTex(b), 0), 'each band\'s dress (and its Beats\' and its pieces\' pictures) uploaded once a session, never by a swap');
   assert.equal(R.made - R.freed, base.live);
   assert.equal(R.wm.meshKey, egCircleKey(SEED, 1));
 });

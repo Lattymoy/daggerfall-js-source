@@ -75,6 +75,9 @@ import { BUILD_TAG } from '../../buildTag.js';   // SHARE-MEND: the sender's bui
 import { relayQuestOnline, relayQuestMovedLayout } from './questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
 import { isOnlinePage } from '../online/onlineLane.js';
 import { isShelved } from './quest.js';   // QUEST-SHELF: a copy set aside
+import { lineStepOf } from '../questlines/qlLines.js';   // AUDIT QUESTLINES REWARD-2: a questline's step is never shared
+import { QL_STAMP } from '../questlines/qlState.js';   // AUDIT QUESTLINES BRANCH-12: the script a copy was read with
+import { t } from '../textManager.js';   // AUDIT QUESTLINES REWARD-2: the refusal's words
 
 /** The relay's own frame cap for a quest-share envelope (net/wire.js's
  *  QUEST_FRAME_MAX - its own oversized-frame arm, the same scale
@@ -101,6 +104,10 @@ export function prepareShareData(data) {
   // side or guild quest's own copy to hand off - so it is never
   // shareable, whatever a stale or hand-built UI call might ask for.
   if (isMainQuestName(data.questName)) return { ok: false, reason: 'mainQuest' };
+  // AUDIT QUESTLINES REWARD-2: NOR A QUESTLINE'S STEP (qlLines.js) - a line is the player's own road, walked step by step
+  // and paid at its end with its named piece (qlLayer.js ending). Shared, the last step paid that piece and the line's
+  // gear to every member who never began the line; refused at both ends, as the main quest is.
+  if (lineStepOf(data.questName)) return { ok: false, reason: 'questline' };
   // SHARE-MEND: the markers travel slim (slimShareMarkers) and the envelope says which build made it
   const slim = slimShareMarkers({ ...data, build: BUILD_TAG });
   const text = JSON.stringify(slim);
@@ -216,6 +223,7 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   // GivePc/TrainPc a second time. (The tombstone only lives a week; the memory of having been paid outlives it.)
   // DISC22-F: by the COPY (the envelope's shareId), not the name - a new share of a repeatable quest is a new copy
   if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };
+  if (lineStepOf(questName)) return { ok: false, reason: 'questline' };   // AUDIT QUESTLINES REWARD-2: a line's step, on receipt too (prepareShareData)
   // AUDIT DROPS A1: the main quest is refused on RECEIPT as well as on send - the sender's own gate is the sender's
   // client, and a hand-built envelope is not bound by it.
   if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
@@ -263,13 +271,19 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   // machine. The receiver's parse also supplies the ITEM resources' items (`takeLocalItems`): a reward is the
   // receiver's own roll, never a `daggerfallUnityItem` somebody typed.
   if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };
-  const local = machine.parseQuestShape?.(questName, data.factionId) ?? null;
+  const local = machine.parseQuestShape?.(questName, data.factionId, { questlines: data.ql?.stamp === QL_STAMP }) ?? null;
+  // AUDIT QUESTLINES BRANCH-12 (above): the receiver's parse reads the script the copy was read with - its branch while
+  // the copy is stamped, DFU's while it is not (a quest begun before the deploy, or offline with the switch off): the read
+  // followed the receiver's switch, forced on online, and every share and resync of such a copy was refused as a forgery
   if (!local) return { ok: false, reason: 'unknown' };
   const why = shapeMismatch(local, data);
   if (why) return { ok: false, reason: 'mismatch' };
   // SHARE-MEND: the markers travel slim - made whole AFTER the shape check (AUDIT D3): it holds every resource's symbol
   // to a string, and a forged Place's number there threw out of the receipt instead of being refused in words
-  const safe = takeLocalItems(local, takeLocalActions(local, fullShareMarkers(data)));
+  // AUDIT QUESTLINES BRANCH-2: a resync keeps the progress that is this holder's own (shareActions.js `holders`) off the
+  // copy it holds; a fresh copy takes it from its own parse
+  const live = check.resync ? machine.sharedCandidateNamed?.(questName) ?? null : null;
+  const safe = takeLocalItems(local, takeLocalActions(local, fullShareMarkers(data), live));
   // AUDIT SD III (D5): online, the copy's dungeons laid on the world's own sizes, as a load lays a saved quest's
   // (questRepair.js relayQuestOnline) - an older page's copy was laid whole, and pointed into blocks this build has not
   // MEDIUM-DISTINCT's audit: and a copy whose medium dungeon the older page laid with one block twice, laid on this
@@ -379,6 +393,8 @@ export const SHARE_REFUSAL_TEXT = Object.freeze({
   gone: 'That quest is no longer active.',
   tooLarge: 'This quest is too complex to share.',
   mainQuest: 'The main quest cannot be shared.',
+  // AUDIT QUESTLINES REWARD-2: the sender's word for a questline's step (world.js reads this table by the reason)
+  get questline() { return t('quest.share.questline', 'A questline is your own road. Its steps cannot be shared.'); },   // AUDIT QUESTLINES VOICE-QL: two sentences, no dash aside (bible/10-UI/Voice.md rule 5)
   // DISC22-F: the fragments below are said to the RECEIVER, after "... but you" (scenes/world.js) - second person
   active: 'already have this quest.',
   done: 'have already done this quest.',
@@ -414,8 +430,9 @@ export const RECEIVER_REFUSAL_TEXT = Object.freeze({
   gone: 'no longer have a copy of it to bring up to date.',
   tooLarge: 'were sent a quest too large to read.',
   mainQuest: 'cannot be given the main quest.',
+  get questline() { return t('quest.share.questline.receiver', 'cannot be given a step of a questline. Each player walks their own.'); },   // AUDIT QUESTLINES REWARD-2; VOICE-QL: still a fragment after "... but you", its aside a second sentence (Voice.md rule 5)
   restore: 'could not rebuild it in your world.',
-  shelved: 'have abandoned it - reclaim it from your journal to take it up again.',   // QUEST-SHELF's audit: a deliberate share is answered
+  shelved: 'have abandoned it. Reclaim it from your journal to take it up again.',   // QUEST-SHELF's audit: a deliberate share is answered
 });
 
 /** SHARE-MEND: the refusals that say the two copies disagree - most often two BUILDS of the game: before SHARE-COPY
@@ -425,8 +442,8 @@ const SKEW_REASONS = new Set(['mismatch', 'unknown', 'restore']);
 /** SHARE-MEND: what such a refusal adds, read off the envelope's `build` (BUILD_TAG at the sender): nothing when it is
  *  mine; when it is another, both should reload; when there is none, theirs predates this build. */
 export function shareSkewText(theirBuild, mine = BUILD_TAG) {
-  if (!theirBuild) return ' Their game is out of date - they should reload the page.';
-  return theirBuild === mine ? '' : ' You are on different versions of the game - both of you should reload the page.';
+  if (!theirBuild) return ' Their game is out of date. They should reload the page.';
+  return theirBuild === mine ? '' : ' You are on different versions of the game. Both of you should reload the page.';
 }
 
 /** SHARE-MEND: whether a refusal is to be SAID. A quest kept in step with the party is re-shared on every change

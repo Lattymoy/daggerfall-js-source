@@ -117,7 +117,9 @@ test('RSH1: the rig reads the readied hands under the cast hands\' own two lane 
   const block = rig.slice(at, end);
   assert.ok(at > 0 && end > at);
   assert.ok(block.indexOf('drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element)') < block.indexOf('readiedHandsFrame('), 'the cast first, then the readied hands');
-  assert.match(block, /if \(readiedHandsOn\(\) && !fpsSpellCasting\.isPlayingAnim\) \{/);
+  // PIN MOVED (FIELD BUGS 2026-10-22c SPELL-CLIMB): and they yield to the fists on the wall
+  // (test/combat/weapon/fb1022c_spellclimb.test.js drives it)
+  assert.match(block, /if \(readiedHandsOn\(\) && !fpsSpellCasting\.isPlayingAnim && !climbHands\.showing\(\)\) \{/);
   assert.match(rig, /const readiedHandsOn = \(\) => modSetting\('readied-spellcasting-hands', 'Enabled'\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
     assert.match(read(host).toString(), /readiedSpell: \(\) => magic\??\.readied\?\.\(\) \?\? null,/, `${host} hands the rig the readied record`);

@@ -46,12 +46,12 @@
 // hands that law its own reader and adds the target, the said law and
 // the diff. It never walks the machine itself.
 
-import { getMessageResources, getMacro, MACRO_TYPES } from '../../systems/quest/questMacros.js';
+import { getMessageResources, getMacro, MACRO_TYPES, expandQuestMessage } from '../../systems/quest/questMacros.js';   // QL1: a sheet's line, expanded as a message's tokens are
 import { SITE_TYPES } from '../../systems/quest/place.js';
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { REGION_NAMES, patchRegionIndex } from '../../formats/mapsFile.js';
 import { questRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS } from './questRail.js';
-import { localizedText, formatText } from '../../systems/textManager.js';   // L10N3d: locationInRegionProvince, read in the player's language
+import { localizedText, formatText, tryGetLocalizedText, TextCollections } from '../../systems/textManager.js';   // L10N3d: locationInRegionProvince, read in the player's language; QL1: a sheet's line in a pack's words
 
 /** GetLastPlaceMentionedInMessage (DaggerfallQuestJournalWindow.cs:
  *  470-485): the LAST Place resource any macro in the message names.
@@ -104,6 +104,17 @@ function warnOnce(key, text) {
 export function quietTokens(message) {
   if (!message) return null;
   const quest = message.parentQuest ?? null;
+  try {
+    return quietly(quest, () => message.getTextTokens(-1, QUIET_ROLL, true, false));
+  } catch (e) {
+    warnOnce(`${quest?.uid}:${message.id}`, `[quest lens] message ${message.id} of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as nothing`);
+    return null;
+  }
+}
+
+/** The quiet read's whole law, one home: `fn` run with the quest's latches, rolls and reveal hooks kept, the engine's
+ *  roll and the DFRandom seed quiet - every one put back however `fn` leaves, a throw included. */
+function quietly(quest, fn) {
   const seed = getSeed();
   const kept = quest ? {
     resource: quest.lastResourceReferenced,
@@ -124,10 +135,7 @@ export function quietTokens(message) {
   const engineRoll = Math.random;
   Math.random = QUIET_ROLL;
   try {
-    return message.getTextTokens(-1, QUIET_ROLL, true, false);
-  } catch (e) {
-    warnOnce(`${quest?.uid}:${message.id}`, `[quest lens] message ${message.id} of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as nothing`);
-    return null;
+    return fn();
   } finally {
     Math.random = engineRoll;
     setSeed(seed);
@@ -138,6 +146,32 @@ export function quietTokens(message) {
       quest.rolls = kept.rolls;
       quest.hooks = kept.hooks;
     }
+  }
+}
+
+/**
+ * QL1 (bible/06-Systems/Questlines-Arc.md section 2.2): A SHEET'S LINE, READ QUIETLY - an objective's, a branch's or an
+ * outcome's words in DFU's own macros (`_house_` a resource's name, `__house_` its building, `___house_` its town), expanded
+ * over the quest's resources exactly as a message's tokens are (questMacros.js expandQuestMessage) and with nothing moved
+ * (the quiet read's law above). `key` (`<QUEST>.<kind>.<id>` - qlLayer.js sheetTextKey, AUDIT QUESTLINES LAW-10) finds a
+ * translation's words in the quest text's own table
+ * (TextQuests, `QL.<key>` - the -LOC route a pack fills, as DFU's quest messages read theirs); none, the sheet's English.
+ * A line that does not expand reads as written.
+ */
+export function quietText(quest, text, key = null) {
+  const own = key ? tryGetLocalizedText(TextCollections.TextQuests, `QL.${key}`) : undefined;
+  const raw = typeof own === 'string' && own.trim() ? own : String(text ?? '');
+  if (!quest) return raw;
+  try {
+    return quietly(quest, () => {
+      const tokens = [{ text: raw, formatting: 'text' }];
+      expandQuestMessage(quest, tokens, false);
+      return String(tokens[0].text ?? raw).replace(/\s+/g, ' ').trim();
+    });
+  } catch (e) {
+    const once = `${quest?.uid}:ql:${key ?? raw}`;   // warnOnce's own guard, its words a console line
+    if (!_warned.has(once)) { _warned.add(once); console.warn(`[quest lens] the line "${raw}" of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as written`); }
+    return raw;
   }
 }
 
@@ -313,6 +347,14 @@ function entryKey(row, step, message) {
  *  (P0B10L07 re-logs its step on every click; a shared quest's resync writes the partner's times) are not news. */
 const newsKey = (id, e) => (e.stepID != null ? `${id}|${e.stepID}|${e.messageID}` : `${id}|m${e.messageID}`);
 
+/** QL2: the objective a stamped quest asks now - the first opened and not yet done or failed - in its words, or null.
+ *  AUDIT QUESTLINES UI-1: the first one the quest NEEDS - an optional one only while nothing it needs is open (23 sheets
+ *  list an optional objective before a required one: the card said "Destroy the lich" for as long as it was skipped). */
+export const currentObjective = (ql) => {
+  const open = (ql?.objectives ?? []).filter((o) => o.state === 'open');
+  return (open.find((o) => !o.optional) ?? open[0])?.text ?? null;
+};
+
 /**
  * THE LENS. One per quest bridge: scenes/quest/questBridge.js makes it over
  * its own walk and resets it when a save is loaded.
@@ -347,6 +389,7 @@ const newsKey = (id, e) => (e.stepID != null ? `${id}|${e.stepID}|${e.messageID}
  * line, so a face that shows text calls rereadText() when it opens -
  * the moment DFU's logbook reads - and the next look reads them again.
  */
+
 export class QuestLens {
   constructor({ questLog = null } = {}) {
     this._questLog = questLog;
@@ -424,6 +467,10 @@ export class QuestLens {
         // GUIDE4: the target's words, said here once a look, so a face the HUD draws (the tracker) reads them off
         // the view and never imports the lens - the HUD's import graph stays off the quest machine (GUIDE3).
         words: targetWords(latest.target),
+        // QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objective now - the first still to do -
+        // for the tracker's card, and the ones done, for the herald's news; null and none for DFU's quest
+        objective: currentObjective(walk.get(String(r.id))?.ql),
+        objectivesDone: (walk.get(String(r.id))?.ql?.objectives ?? []).filter((o) => o.state === 'done').map((o) => ({ id: o.id, text: o.text })),
       };
     });
 
@@ -434,7 +481,7 @@ export class QuestLens {
     const away = new Set((log.shelved ?? []).map((q) => q.id));
     const live = new Set(quests.map((q) => q.id));
     for (const id of this._namedBy.keys()) if (!live.has(id) && !away.has(id)) this._namedBy.delete(id);
-    const last = new Map(quests.map((q) => [q.id, { title: q.title, main: q.main, clockSeconds: q.clockSeconds, newsKeys: q.entries.map((e) => newsKey(q.id, e)) }]));
+    const last = new Map(quests.map((q) => [q.id, { title: q.title, main: q.main, clockSeconds: q.clockSeconds, newsKeys: q.entries.map((e) => newsKey(q.id, e)), done: q.objectivesDone.map((o) => o.id) }]));
     for (const [id, was] of this._last ?? []) if (away.has(id) && !last.has(id)) last.set(id, was);
     this._last = last;
     return { quests, events };
@@ -456,6 +503,9 @@ export class QuestLens {
       const had = new Set(was?.newsKeys ?? []);
       const fresh = q.entries.filter((e) => !had.has(newsKey(q.id, e))).map((e) => e.key);   // AUDIT GUIDE H4
       if (fresh.length) events.push({ type: 'updated', ...base, entries: fresh });
+      // QL2: an objective done since the last look - news of its own (the newest one, if a look finds several)
+      const doneNow = q.objectivesDone.filter((o) => !(was?.done ?? []).includes(o.id));
+      if (was && doneNow.length) events.push({ type: 'objective', ...base, text: doneNow[doneNow.length - 1].text });
       if (was?.clockSeconds != null && was.clockSeconds >= QUEST_URGENT_SECONDS && q.urgent) {
         events.push({ type: 'urgent', ...base, clockSeconds: q.clockSeconds });
       }

@@ -360,7 +360,10 @@ ROSE-SEEN (`01-Overview/bugs/Field-Bugs-2026-10-15e.md`): a follow-up blow -
 Open Hand's second, Many Endings' echo - runs no formula, so the seam
 never heard it and the Rose looked like nothing. It raises its own
 number through `showFollowUp`, tagged with the power's name, under the
-same enhanced-only gate.
+same enhanced-only gate. CHAIN-SEEN (FIELD BUGS 2026-10-19f,
+`06-Systems/Loot-Arc.md` LOOT5): a blow's reach on another foe -
+Chain Lightning's arc, Earthshaker's quake, Dragonfire's burst - ran
+no formula either, and said nothing; each raises its number so now.
 
 
 
@@ -696,6 +699,60 @@ the frame in draw and release in `_close`, and nobody else imports
 it. Eight mutants over the hooks (a hook dropped, a decision handed
 to the panel, `_close` and the field step not releasing, the seam's
 null and classic arms), each killed.
+
+#### SPELLSHOP-SAID - THE NINTH WINDOW, AND THE NOTICE TAKES ITS CLICK (FIELD BUGS 2026-10-19f)
+
+Two players' private reports: at the Mages Guild's spell shop, Buy did
+nothing - no confirmation, no gold spent. Buy refused: no spellbook in
+the pack, or not the gold (DFU's
+`DaggerfallSpellBookWindow.BuyButton_OnMouseClick`, a
+`DaggerfallUI.MessageBox` for each - ClickAnywhereToClose). The survey
+above counted the spellbook among the windows the enhanced skin
+replaces with a DOM twin, and for the cast book it still is; but
+SHOP-PLUS then put the BUY-mode book inside the Enhanced Plus port
+(`enhancedPorts.js` spellShop), whose classic draw runs onto a
+renderer that paints nothing. Only a box with buttons takes an
+enhanced face of its own (the dialog); the refusal was laid out as
+parchment onto that renderer and never seen. It also STAYED UP: the
+port's dismiss (DROPS-AUDIT F6) asked `win.box`, which the book does
+not keep - its box is `top` and `_box` - so the next press, Leave,
+went to putting away a box nobody could see. An effect's description
+(the chosen spell's "What it does") was the same box, the same way.
+
+The book is the ninth window on the seam:
+`spellbookWindow.js:"if (noticeFrame(this, NOTES.includes(this.top) ? this._boxRows() : null)) {"`,
+the click-anywhere tops named once beside the ones that ask
+(`spellbookWindow.js:"const NOTES = Object.freeze(['noSpellbook', 'notEnoughGold', 'note']);"`),
+BOX1's single read unchanged, and `_close` releasing as the others do.
+And the sweep found the same blindness in two windows the seam already
+drew: the guild's and the coven's box is their queue's head (`top`),
+so their notice never took a click on the window's ground, and a row
+that calls the window's own method (Heal Curse, the Reforge, the
+lifting) acted under it. So the port's dismiss asks the seam rather
+than a field: `enhancedPort.js:"if (noticeShown(win)) { win.click?.(-1, -1); return; }"`
+- the notice is the panel the window raised
+(`enhancedNotice.js:"export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);"`),
+whatever field holds its box, and it is up exactly while the player
+can read it. The bank, the potion maker, the item maker and the spell
+maker, which kept `box`, answer as before. The other ported windows
+(the house and ship lists, the transport picker, the daedra) raise no
+box.
+
+**Tests**: `test/ui/fb1019f_spellshopsaid.test.js` (7) - through the
+real port on the repo's DOM, the records through the real TEXT.RSC
+reader: a no-book Buy and a no-gold Buy put up the record as the
+notice (no parchment, BOX1's read once), the next click - Leave, or
+the window's ground - takes it down with nothing under it acting, a
+key too, and Leave then leaves; an effect's description is the notice;
+the haggle stays the enhanced dialog, is not dismissed by a click, and
+its Yes buys; `_close` releases; the classic skin keeps its parchment;
+the guild's and the coven's notices take the first click (a Heal Curse
+press under one heals nothing); `noticeShown` itself. PIN MOVED: the
+roster (`test/ui/enhancedNotice.test.js`, nine windows, the port the
+seam's one more importer) and DROPS-AUDIT F6
+(`test/ui/enhanced/dropsaudit.test.js`). `tools/mutants/spellshop_said.json`
+(12, all dead); `dropsaudit.json`'s DA-F6-notice-lets-tiles-act
+re-aimed by content.
 
 ### ENH-NOTICE3 - THE ONE DOOR, AND THE HUD LINE AS A TOAST (2026-09-21, Mac: "I do notice the new enhanced pop up system isn't working for everything. All mods, including climates and calories need to utilize the enhanced notification popup. This needs a proper detailed audit, maybe a refactor")
 
@@ -6775,6 +6832,56 @@ enchanted item is not offered again.
 
 Pins: 16 in `enchantmentcatalogue.test.js` (18 mutations, 16 dead,
 2 recorded equivalent) and 3 added to `enchanting.test.js`.
+
+**SIDE-ONCE - A SIDE EFFECT'S SETTING IS PICKED ONCE (FIELD BUGS
+2026-10-19f; the owner, 2026-10-19: "One copy per setting").** A
+DEPARTURE, Port-Ledger A. DFU gives User Takes Damage and Item
+Deteriorates `AllowMultipleSecondaryInstances` beside the primary flag
+(`UserTakesDamage.cs:35`, `ItemDeteriorates.cs:37`), and the secondary
+picker leaves a taken setting out only when that flag is absent
+(`DaggerfallItemMakerWindow.cs:849-855`). So the same setting could be
+picked again and again up to the ten-row guard, each copy adding its
+negative cost to the budget - the trade this section opens with, taken
+ten times over for one drawback. The port carried it verbatim; a
+player's private report found it. `ITEM_MAKER_EFFECT_FLAGS` now gives
+both effects the primary flag alone, so `primaryPick` hides a taken
+setting as it does every other effect's: in sunlight AND in holy
+places is still two rows, in holy places twice is not. No effect
+carries the secondary flag now.
+
+Its sibling ships with it: an effect whose every setting is taken -
+Health Leech with all three, Bad Reactions From with all three, User
+Takes Damage with both - stayed in the list and opened an empty
+chooser, because DFU's primary filter (`DaggerfallItemMakerWindow.cs:644`,
+`DaggerfallItemMakerWindow.cs:689`) asks whether the
+EFFECT may be taken again, never whether a setting is left
+(`HealthLeech.cs:37` allows more than one Health Leech, never one
+setting twice). `primaryPickerList` now drops an effect whose
+`primaryPick` would offer nothing. Both skins read the one list: the
+Enhanced skin's Add side effect presses the classic button and its
+list draws the classic picker's rows.
+
+A PIECE MADE BEFORE KEEPS ITS COPIES (the owner chose no refund and no
+fold). The item law still counts the maker's rows by EFFECT
+(`itemLaw.js` makerFindings, `many` reads the primary flag), so a piece
+enchanted under the old rule passes in the save and on the wire - the
+lesson of MAKER-KEPT (`01-Overview/bugs/Field-Bugs-2026-10-16c.md`),
+where a law tightened after the fact read honest pieces as forged and
+held their owners' trade. The account service judges with the same
+law (`server-account/src/judge.js`, the market's and the vault's
+`lawfulItem`), and nothing on a maker's row dates it, so the service
+does not yet tell a piece made after SIDE-ONCE from one made before;
+that waits on the owner.
+
+Pinned: `test/systems/fb1019f_sideonce.test.js` (4, on the real
+window, both skins: a taken setting gone from its chooser and the
+other settings still offered; "in holy places" asked for ten times
+landing once at -1000/1800; each of four effects gone from the list
+with every setting taken; the item maker's own write of a setting
+taken nine times passing the law). PIN MOVED:
+`enchantmentcatalogue.test.js` (no effect carries the secondary flag;
+Item Deteriorates' chooser without its taken setting).
+`tools/mutants/fb1019f_sideonce.json` (6, all dead).
 ## U41 - THE TRAVEL MAP (2026-08-24)
 
 The classic world map, at last: the province art on V, the region
@@ -13169,6 +13276,30 @@ DotGothic16, Press Start 2P, Silkscreen) before choosing; Press Start
 landing page's no-raster law (U60) now admits exactly one `url()`: the
 font data URI, which is typography, not a picture.
 
+## TWO: THE 2 AND THE Z (2026-10-18)
+
+Dudey: "the number 2 looks like a Z ... make it more readable", and then
+"change that as well to a readable Z". It is the glyph again: Pixelify's
+`two` and its `Z` are the same outline except one corner, so 12, 22 or
+2025 read as Z's and a Z reads as a 2. No pixel face drawn beside it fits
+better (Silkscreen's 2 is a Z too), so both are drawn for us on
+Pixelify's own grid at weight 500, the weight the skin reads in (columns
+60 to 531, base -12, top 633, advance 592): the 2 with a rounded top, the
+right side down one row and a diagonal stepping two cells wide to a full
+base, on the same lines Pixelify's own 4 and N step on; the Z with a flat
+top and base and one straight diagonal, 150 units across. The first cut
+drew the 2 on the weight-400 grid, whose lines sit a few units off the
+500 letters beside it, and at sizes where the grid falls between screen
+pixels its steps showed dark slits (Dudey: "theres a black line cutting
+through"); a straight 2 read worse ("the 2 looks worse now"), so the 2
+keeps its steps on the 500 grid and only the Z is straight. The small z is
+Pixelify's and was never confused. `tools/pixelifyGlyphs.py` builds both
+(416 bytes, `vendor/pixelify-glyphs/`); `ui/pixelifyFive.js` carries them
+as a second `@font-face` of the family `Pixelify Five` over U+0032 and
+U+005A, so every stack that already puts the five first takes them from
+it and nothing else moves. The landing page and the launcher carry the
+same rule, so the landing's no-raster law now admits two font data URIs.
+
 ## FIX-E: THE END OF A RUN NAVIGATES, WHATEVER THE VIDEO DOES (2026-09-08)
 
 Mac: "When dying and returning to the main menu, the game bugs and
@@ -19437,7 +19568,7 @@ from the scratchpad, the pack mounted over a wagon of thirteen):
 
 DFU's inventory window filters only the local list (AddLocalItem) and moves one row per click. The enhanced remote pane already filtered the player's own stores (WAGON-FILTER, above). A container — a chest, a corpse — now carries that same bar, and a rarity menu beside it.
 
-- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Any Rarity. The material menu is the same shape for armour and weapons: Any Material, then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial ="`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
+- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Rarity, every tier, with no count of its own - All already says it (FILTER-FIT, 2026-10-17: the menu names itself; it read Any Rarity, and the count made it too wide for a one-column window). The material menu is the same shape for armour and weapons: Material (every metal; it read Any Material), then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial ="`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
 - **Take all** walks those rows from the top, and its button stays on that list. **Stash all** walks the current pack page from the top, into the store beside it - the wagon, the player's own storage, the Materials Bag - and its button sits centred on the bottom edge of the pack's item list. A container's window never opens the pack (MAC-M2 B: a chest and a corpse are for taking), so Stash all is not on it; a fresh pack starts on Weapons. Each row goes through the one plan a click uses (`planTake`, `planStore`), and a take off someone else's keeping - a stranger's cupboard, a shut shop's shelf - is marked stolen exactly as a single take is (STOLEN-GOODS, `theftTarget`).
 - **Where it stops.** The first row the pack or the destination cannot hold stays, and so does everything under it. A row refused for another reason is left where it is and the walk continues. A stack that only partly fits is the last row moved. Stash all into a room container would stop at 64 rows (`LOOT_LIST_MAX`): a longer list is never told to the other players, who hear the container when its window closes, not row by row. No window offers that today (above); the stop stands for the layout that does.
 - **What does not change.** The ground and a reward tray have no bar and no buttons. The classic skin draws none of this.
@@ -19657,6 +19788,11 @@ hourglass is: `ui/enhanced/enhancedPost.js`.
   letterbox's own manner.
 - Pins: `test/net/serverpost_client.test.js`; PIN MOVED: `test/ui/enhanced/outsideTap.test.js` (five scrims, the envelope inside the
   pause face's; the face under the account window inert; the window's place reset on a tap outside).
+- **LOST-SPOILS (2026-10-22): Claim all.** A boss's floor's leftovers come a piece an item, from the Lost and Found
+  (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` LOST-SPOILS), so the list stands *Claim all (N)* above itself while two
+  or more items wait (`.pm-claimrow`, the window's own foot row set right), down while a claim or a Claim all runs, as
+  a piece's Claim is while one is out. Pressed, it claims each in turn (`net/serverPost.js` claimAll) and says what landed
+  (`post.claimedAll`), or that and where it stopped. One waiting item has only its own Claim.
 
 
 ## EVERY-STANDING - every organization's standing, a setting (FIELD BUGS 2026-10-09e)
@@ -19726,6 +19862,11 @@ mounted pack); mutants `tools/mutants/virt.json` (42: 41 dead, 1 equivalent as r
 `ui1.json`'s UI1-the-second-waiter-dropped and AUDIT-UI-A4-the-cache-unbounded, `shiftstow.json`'s
 AUDIT-WAGON-FILTER-S8.
 
+TRADE-VIRT (2026-10-20, `07-Rendering/Performance-Priority.md` TRADE-VIRT) carried this law to the shop counter and the
+trade between players, which had kept both causes, and gave the landing its one home: `ui/enhanced/landingTiles.js` -
+the pack's `liveTile` asks it (`_waitingTiles`, `tileLanded` and `paintLandedTiles` above are its `waiting`, `landed`
+and `pass` now), and each counter keeps its own by it. The tile pin's fakes moved to `test/virtFakes.mjs`.
+
 ### AUDIT VIRT (2026-10-16, "Please audit this")
 
 Four lenses read the slice cold, each against HEAD and the tree before it, in node and in Chromium: the windowing law
@@ -19787,3 +19928,61 @@ The whole suite on the slice: 28,025 passed and one failed - `test/systems/profe
 (its "a mix" card not found). It fails the same way on the commit before VIRT, in the same 248-file batch at four at a
 time, and passes alone and under a loaded CPU on both: older than this slice, and left for its own.
 
+
+## SKILL-READY, FIRM-STARS, STATUS-TIPS, BELT-LANTERN, MONSTER-VOL (2026-10-20, Dudey)
+
+The owner's words: "add a symbol that tells you when you hover over it that you have stars not applied for the
+firmament ... on the right of the renown bar and when skills are ready to level up left of the renown bar (dont use this
+annoying message bar for this anymore) and when you click the firmament symbol it can bring you to firmament"; "make every
+other icon of debuffs, buffs, hunger etc hoverable ... so it tells you in a toolbox like in the inventory what it does";
+"can we add an lantern only slot in the inventroy"; "decrease the monster scream frequenzy by 60% please and also add an
+option under audio for it called Monster Volume with 0 - 100%".
+
+- **The two tiles beside the Renown bar** (`ui/hud/hudAdvance.js`, built by `ui/enhanced/enhancedHud.js` advTile). Left:
+  the skills a rest or a journey would raise (`levelNotice.js` skillsImprovable), their count at the foot. Right: the
+  Firmament's stars and craft points not yet placed (the book's purses less the tree in force, `firmamentLaw.js`
+  pointsLeft); a press opens the Growth tab's Firmament page (`setHudPauseAt`, wired by `scenes/world.js`). Each is a
+  buff's own tile with a 16px glyph (`hudStatus.js` STATUS_GLYPHS `skillup`, `firmstar`), on the bar's line and past the
+  hotbar's ends where the hotbar is wider (CLEAR-HOTBAR, `advanceReach`). Each is its own piece of the movable HUD
+  (Alt+U: `skillsReady`, `starsUnspent`). The book is read once, again when the Renown rises, and again after
+  `BOOK_RETRY_MS` when a read found no sky. The level strip no longer draws the skills' standing line; the level's own row
+  stays, and under DFO Grimoire its words are in the page's full ink (LEVEL-INK).
+- **The status tiles' hover card** (`ui/hud/statusTips.js`, `ui/hud/hudTip.js`): with the mouse freed every tile shows
+  the pack's hover card - a spell's effects from its live entries, a disease's daily losses, a need's meaning and what
+  the needs take now, a boon's gains, a set power's tier, the open zone's rules. The browser's own title stands down.
+- **The lantern's slot** (`systems/beltLantern.js`): one socket after the Crystals (Plus's row, the Grimoire's column -
+  there each socket is the column's height shared out, so it fits without scrolling). A lantern there carries
+  `beltLantern: true`, hangs at the waist when lit whatever Handheld Torches' waist switch says (`playerTorch.js`
+  lanternAtWaist, `handheldTorches.js` atWaist), and is lit when hung and put out when taken off.
+  BELT-WAIST (`01-Overview/bugs/Field-Bugs-2026-10-21b.md`): the socket holds the lantern AT THE WAIST - the one hung, or
+  a lit one the waist switch hangs there (`beltLantern.js` waistLanternOf) - and the hand's row never does, so a lantern
+  lit by O, Use or the hotbar is drawn where the world hangs it, not on the shield's panel. O lights the hung lantern
+  first, a hung one takes no hand with the switch off, and the hotbar's lantern leaves a shield on.
+- **Monsters** (`characters/enemy/enemySounds.js` attractStep, `scenes/hostCombat.js` tickEnemySound): a monster's attract
+  clock runs at 1/2.5 of the game's, so it calls 40% as often; the city watch and a companion keep theirs. The Audio
+  tab's **Monster Volume** (`systems/monsterVolume.js`, uiPrefs `monsterVolume`, 0-100%) scales a monster's call, its
+  attack sound and its pain cry.
+
+- **A quest's words before the NPC's door** (QUEST-WORDS-FIRST, `scenes/quest/questClickFirst.js`, wired in
+  `scenes/worldModes.js` openStaticNpc; Dudey: "you get the complete quest message plus reward when you press exit in
+  the dialog options which is weird and wrong"). A click on a building's NPC that a live quest's Person heard ticks the
+  quest machine at once; if that raised a window in the building's slot (the quest's box, then its reward), the talk
+  window or the guild's or shop's popup opens once the slot is clear. Before, the talk window paused the world and drew
+  over the building's slot, so the quest's tick, its words and its reward came only after Exit. A departure from
+  PlayerActivate.cs:1523-1528 (the owner's call): a DoClick that raised words opens the NPC's door after them; one that
+  raised nothing still ends the activation.
+
+`test/ui/hud/hud_advance_tips.test.js`.
+
+## TAB-WALK, HUD-FOCUS - Tab is never the browser's walk, and the chat's buttons never keep the focus (FIELD BUGS 2026-10-20h)
+
+A player's report, as the coordinator summed it up: "TAB focusing the Socials button". PX15 kept Tab's browser default
+wherever the QuickDial did not answer it: on the classic skin, before the boot's last await, and with the dial
+rebound. That default is the browser's walk of the page's focus, not DFU's behaviour (DFU binds
+nothing to Tab). With the chat shut online, the walk stopped on the Social button, the first control the sheet draws
+over the world, and the next Space (Jump) pressed it. The hosts' one swallow now takes a Tab aimed at the page itself
+(`ui/input.js` isPageFocusWalk, in swallowBrowserKey), so an unanswered Tab does nothing. A field's Tab, a window's own
+walk and Ctrl+Tab are left alone. The chat's controls over the world (Play online here, the touch skin's Chat, both
+Social buttons, Show) are never the keyboard's focus (`ui/input.js` neverTheFocus): they are out of the walk, a mouse
+press gives them no focus, and a focus they get another way is given back. The record:
+`01-Overview/bugs/Field-Bugs-2026-10-20h.md`; the pins `test/ui/fb1020h_tabwalk.test.js`.

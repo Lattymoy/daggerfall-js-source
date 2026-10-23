@@ -164,6 +164,9 @@ export const closeNavalYard = () => shut(YARD);
 /** The shipwright's window (ui/naval/navalYardWindow.js), as an overlay for the host's slot; `deps` as that window's, plus
  *  `onClose(reason)`. */
 export const createNavalYardOverlay = (deps) => openNavalWindow(YARD, deps);
+/** SEA-BOUNTY: the shipwright's window painted again, if it is up - an answer the harbourmaster's tab waited on came in
+ *  (scenes/seaBountyHost.js). */
+export const repaintNavalYard = () => { YARD.open?.repaint?.(); };
 
 /** ETHER-CHART: is the chart of the Eltheric Ocean up. */
 export const etherChartOpen = () => isOpen(ETHER_CHART);

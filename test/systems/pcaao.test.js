@@ -506,11 +506,21 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   const manifest = JSON.parse(rd('vendor/pcaao/physicalcombatandarmoroverhaul.dfmod.json'));
   assert.equal(m.author, manifest.ModAuthor); assert.equal(manifest.ModVersion, '1.44');
   const shipped = JSON.parse(rd('vendor/pcaao/modsettings.json')).Sections[0].Keys;
+  // PLAIN-TEXT (2026-10-19): the seven module lines (Title Case, "!!!!", a DFU version number) said plainly for a player - their words, exactly
+  const PLAIN = {
+    'equipmentDamageEnhanced': 'Your equipment wears out much faster, depending on its material, what hit it and more.',
+    'fadingEnchantedItems': 'Enchanted weapons and armor are destroyed when they break in combat. Needs Equipment Damage Enhanced.',
+    'fixedStrengthDamageModifier': 'Strength adds 1 damage per 10 points, as in the classic game, instead of 2.',
+    'armorHitFormulaRedone': 'Armor reduces the damage you take instead of making you harder to hit.',
+    'criticalStrikesIncreaseDamage': 'Critical strikes raise your damage as well as your chance to hit. Needs Armor Hit Formula Redone.',
+    'conditionBasedEffectiveness': 'Worn weapons and armor work less well. Needs Armor Hit Formula Redone.',
+    'softMaterialRequirements': 'Weapons below the material an enemy needs can still hurt it, at a large damage penalty. Needs Armor Hit Formula Redone.',
+  };
   for (const k of shipped) {
     assert.ok(m.keys[k.Name], `the shipped key ${k.Name} is on the pane`);
     if (k.Name === 'equipmentDamageEnhanced' || k.Name === 'fadingEnchantedItems') { assert.equal(k.Value, true); assert.equal(m.keys[k.Name].default, false, `WEAR-VANILLA: ${k.Name} ships on, the port's default is off`); }
     else assert.equal(m.keys[k.Name].default, k.Value, `${k.Name} defaults as shipped`);
-    assert.equal(m.keys[k.Name].description, k.Description, `${k.Name}'s description is the mod's own`);
+    assert.equal(m.keys[k.Name].description, PLAIN[k.Name] ?? k.Description, `${k.Name}'s description is the mod's own, or its plain rewording`);
   }
   assert.equal(m.keys.Enabled.default, true, 'MO1 (Mac, 2026-09-12): every mod is on by default; the Mods pane is where it is turned off');
   assert.equal(m.keys.rolePlayRealismArchery, undefined, 'MM1: no compatibility switches between mods (Mac)'); assert.equal(m.keys.meanerMonsters, undefined);
@@ -525,7 +535,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   assert.match(rd('src/combat/arrowFlight.js'), /weaponAnimTime: playerWeapon\?\.lastDrawMs \?\? 0,/, 'the arrow hands it to the formula');
   assert.match(rd('src/combat/formulas.js'), /const core = _overrides\.get\('calculateAttackDamage'\);/, 'the core is the registry\'s');
   assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{ const i = removeFrom\.indexOf\(item\); if \(i >= 0\) removeFrom\.splice\(i, 1\); \}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');
-  assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\);/, 'MM1: the overhaul\'s edit over Ralzar\'s row');
+  assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = editAtMint\(mobileType, pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\)\);/, 'MM1: the overhaul\'s edit over Ralzar\'s row (DEX1: a Start-time mod\'s over both)');
   const ws = rd('src/combat/pcaao.js');
   assert.equal((ws.match(/Mathf\.Clamp/g) || []).length >= 4, true, 'the four discarded clamps are named');
   assert.equal(pcaaoAdjustmentsToHit(mkPlayer()), -50);

@@ -81,6 +81,8 @@
 //        | realm-gains { days? } | realm-trades { id }   HACKED-GOLD: who gained past the bucket; a character's trades (review.js)
 //        | realm-characters { name } | realm-repair { id, ticket, faction, flag, gold, note? }   SUMMON-REPAIR: an account's
 //          realm characters by handle; one character mended by staff - a flag bit cleared, gold given back, once a ticket
+//        | realm-mend { id, ticket, was, gold, note? }   PURSE-MEND: a purse a wrapped sale left below nothing set to nothing, what
+//          the character is owed given as a letter of credit, once a ticket - and the law's hold lifted when the purse was all it held on
 // DUEL1, the duelling record. The caller of `loss` is the loser:
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
@@ -97,6 +99,7 @@
 //   POST /v1/eg/find     { tier } -> { found, keys, asks }   (EG-E3: a dungeon elite's find - 'super' | 'elite' | 'regular', the service's die, 6 asks a tier a day, 2 keys a week)
 //   POST /v1/eg/starts   { subs } -> { starts: { [sub]: [w, ..., 0] | null }, keys, rehearsal, rk }   (EG-F: the start window's preflight - which starts each member may make)
 //   POST /v1/lamp/claim  {} -> { granted, why? }   (LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp, laid once on the row; `why` 'held' | 'guest')
+//   POST /v1/ql/claim    { line, step, phase, choice? } -> { opened } | { witnessed, title?, key?, keys? } | { why }   (QL12: a questline's step - `open` writes its opening, a guest's too; `end` reads its endgame receipt, claimed in the line's window and order; a line's title once, the Covens' Hoard's Weir Key once an account; `why` 'unpaid' | 'guest'; behind QUESTLINES_OPEN - 403 ql-closed, 400 ql-body)
 //   POST /v1/gate/claim  { receipt, region?, character? } -> { recorded, stones, closed, seat? }   (WB12d: the row's embers, AUDIT WB12d A4; SEAT1b: `seat` the kill's influence)
 // MARKS1, Marks - an account's alone, behind MARKS_OPEN (marks.js); `rid` the act's own id:
 //   POST /v1/marks/balance {}                               -> { balance, today, bank }
@@ -131,8 +134,9 @@
 //   POST /v1/stores/withdraw { character, material, qty, rid }         -> { ok, material, qty, store } | { repeat, ... }
 //        BAG1: { carry: true, held, seen? } counts the units as carried -> { ..., carry, carried }
 //   POST /v1/stores/deposit { character, material, qty, held, order, rid, seen? } -> { ok, material, qty, own, bought, gold, loose?, store, carried } | { repeat, ... }   (BAG1: `order` 'all' or 'spend'; a deposit made is answered as made, for good - prof_deposits; BAG-CRAFT: 'work', a station's, moves `loose` units the count does not hold too)
-//   POST /v1/writs/list { character, region }                          -> { region, day, endsAt, writs, today }
+//   POST /v1/writs/list { character, region }                          -> { region, day, endsAt, writs, today, crafts: { writs, today } }   (CRAFT-WRITS: the character's crafting writs)
 //   POST /v1/writs/deliver { character, id, rid }                      -> { ok, writ, pay, balance, track, store, today, renown, order } | { repeat, ... }
+//   POST /v1/writs/craft { character, id, rid, realm, pieces? }        -> { ok, writ, pay, xp, balance, track, today, renown, realm, order } | { repeat, ... }   (CRAFT-WRITS: a crafting writ filled, its goods out of the realm record)
 // RENOWN1, Renown. The caller's own character, by the id its
 // save carries (RENOWN-CHAR: a track a character again - RENOWN-ACCOUNT
 // kept one an account for a day); the level rides the token when the
@@ -226,28 +230,33 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
-import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
+import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
 import { takeGrantMeasure, GRANT_FEED_PATH } from './grants.js';   // GRANT2: the spawn grants' measure, the relay's door in
 import { GRANT_MEASURE_SIG_HEADER, GRANT_MEASURE_MAX_BYTES } from '../../src/net/grantMeasure.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
+import { seaBountyBoard, seaBountyPost, seaBountyCollect } from './seaBounty.js';   // SEA-BOUNTY: a freeport's bounty board on the open sea's killers
+import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's season boards
+import { seaWreck, seaPrizeCollect, seaPrizeReclaim } from './seaWreck.js';   // SHIP-PVP: a wreck at sea, and its prize
 import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
 import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
-import { titleWorn, glyphsOf, glyphsHidden, auraWorn } from './titles.js';
+import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn } from './titles.js';
 import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
 import { BUSY_RETRY_AFTER_S } from '../../src/net/busyLaw.js';   // BUSY-GATE: how long an overload answer tells a client to stand back
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { postBoxOf, readPost, claimPost, deletePost } from './post.js';   // SERVER-POST: the server's post
+import { mailLostSpoils } from './lostSpoils.js';   // LOST-SPOILS: a boss's floor's leftovers into the post
+import { LOST_BODY_MAX } from '../../src/net/lostLaw.js';
 import { sendReport, myReports, reportInbox, readReport, closeReport } from './reports.js';   // PRIVATE-REPORT: a player's private report
 import { REPORT_BODY_BYTES } from '../../src/net/reportLaw.js';
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
@@ -260,12 +269,15 @@ import { chapterSheet, chapterSeatsOf, chapterTitlesOpenFor, chapterTitlesOfAcco
 import { contractRegionOfRaid } from '../../src/net/writLaw.js';   // CHAP2b: the region a raid's key names   // CHAP2a: a town's guild halls, witnessed; AUDIT CHAP2 E1: audited and struck
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
+import { claimStar, starRecordOf } from './stars.js';   // STAR7: the fallen stars held
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
 import { egKeysOf, openEg, admitEg, claimEg, rollWeirKey, findEg, egFirstSay, egGateWeir, egGateWeirAnswer } from './eg.js';   // EG-PLAY: the Elite Breach - the Weir Keys, the open, the admission, the claim; EG-E3: a dungeon elite's find
 import { egBoardOf, withEgHonours } from './egHonours.js';   // EG-E2: the Elite Breach's boards, and Spire Champion on the row
 import { egSink } from './egEconomy.js';   // EG-E1: the Broker's Panoply sink
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
-import { claimLamp } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { claimLamp } from './lamp.js';
+import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
 import { roomsOf, offerRoom, withdrawRoom, rentRoom, collectRent } from './rent.js';   // HOME-RENT: a home's rooms, rented
@@ -296,9 +308,10 @@ const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsO
 /** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). */
 const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => (chapterTitlesOpenFor(player, env)
   ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
-import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
-import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards, settleYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
+import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks, starStrikeStatement, starStrikeRid } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
+import { craftWritBoard, deliverCraftWrit } from './craftWrits.js';   // CRAFT-WRITS: the guilds' asks of a crafter
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, temperPiece, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
 import { brewAtStation, disenchantPiece, reforgeWithEssence } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
 import {
@@ -312,7 +325,7 @@ import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
   realmMintFacts, grantCustomsPass, REALM_CHARACTERS_MAX, REALM_MAX_BYTES, objectBytesOf,
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
-import { grantSpoils } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget
+import { grantSpoils, portentPieces } from './budget.js';   // INT5: a signed win's spoils fill the playing character's budget (AUDIT WB14 WIRE-6: a portent's pieces with them)
 import { reviewAct } from './review.js';   // INT6: the review of the judge's verdicts
 import { doorReads } from './door.js';   // PRIMARY-FOLD: the door's reads in one trip
 import { passRoute, passKey, mintPass, readPass, passMintable } from './sessionPass.js';   // SESSION-SIGN: the hot routes believe a pass
@@ -326,6 +339,7 @@ import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every re
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
 import { blocksOf, blockAccount, unblockAccount, fileReport, agreeConduct, conductAgreed, takeFeed, bannedAnswer, resolveCase, modCases, modCase, modDismiss, REPORT_BODY_MAX } from './safety.js';   // SAFE1-SAFE7: the chat's safety
 import { banAccount, unbanAccount, strikesLook, isBanned, actionStatement, lawOrder, pushLaw } from './sanctions.js';   // SAFE4: the record, the ladder and the ban
+import { staffRoute, STAFF_STATUS, STAFF_SESSION_HEADER } from './staff.js';   // STAFF-PANEL1: the staff panel's sign-in, sessions, roles and audit log
 import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';   // SAFE8: the moderators' queue in Discord
 import { FEED_MAX_BYTES, FEED_SIG_HEADER } from '../../src/net/safety/chatFeed.js';   // SAFE5: the relay's feed of public lines
 import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
@@ -404,7 +418,7 @@ const overloaded = (origin) => {
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
 /** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
  *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
-const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409 });   // MAC (2026-10-14): the escrow's
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -417,7 +431,8 @@ const CARDS_STATUS = Object.freeze({ 'cards-closed': 503, 'ranked-needs-account'
 /** PRIVATE-REPORT: a report's refusals that are not a bad request (400, the default). */
 const REPORT_STATUS = Object.freeze({ 'report-rate': 429, 'report-full': 409, 'no-report': 404, 'not-report-reader': 403 });
 /** SERVER-POST: the post's own refusals; a claim's realm words are REALM_STATUS's. */
-const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
+const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503,
+  'lost-pieces': 400, 'lost-item': 400, 'lost-no-kill': 409, 'lost-spent': 409, 'lost-full': 409 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
   ...JUDGE_STATUS,   // INT3/INT4
   'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409, 'too-many-characters': 409, auth: 401,   // SESSION-SIGN E3: a checkpoint's session gone
@@ -457,7 +472,7 @@ const ROLL_STATUS = Object.freeze({
   'no-season': 409, 'no-chapter': 404, 'patron-low': 409, 'guild-marks-short': 409,
 });
 /** INT6: the review's refusals - no developer 403, no such character 404, nothing clean to roll back to 409. */
-const REVIEW_STATUS = Object.freeze({ 'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409, 'service-moved': 409, 'dead': 409, 'no-player': 404, 'repair-no-faction': 409, 'repair-not-set': 409, seq: 409 });   // SUMMON-REPAIR: the last four
+const REVIEW_STATUS = Object.freeze({ 'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409, 'service-moved': 409, 'dead': 409, 'no-player': 404, 'repair-no-faction': 409, 'repair-not-set': 409, seq: 409, 'mend-not-negative': 409, 'mend-moved': 409, 'repair-ticket': 409 });   // SUMMON-REPAIR: from 'no-player' on; PURSE-MEND: the last three
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
 const GUILD_STATUS = Object.freeze({
@@ -582,6 +597,7 @@ const PROF_STATUS = Object.freeze({
   'prof-piece-gone': 409, 'realm-needed': 400, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
   'node-taken': 409, 'writ-taken': 409, 'writ-expired': 409, 'writ-cap': 409, 'marks-full': 409, 'marks-short': 409, 'prof-respec-pending': 409,
   'prof-rate': 429,
+  'craft-writ-cap': 409, 'craft-writ-filled': 409, 'craft-unbrewed': 409, 'craft-pieces': 409, 'craft-goods-gone': 409,   // CRAFT-WRITS: the day's three, the brews, the pieces, the record's goods
   'chapters-closed': 403,   // AUDIT CHAP2 S3: a hall writ while the Chapters are not this account's - 403, as every door says it
   // PROF6: guild writs, commissions and the guild Stores
   'writs-closed': 403, 'guild-rank': 403, 'guilds-need-account': 403, 'commission-not-yours': 403, 'market-not-yours': 403,
@@ -728,7 +744,7 @@ const service = {
         headers: {
           'access-control-allow-origin': origin,
           'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass',   // REALM P1: a checkpoint's lease, sequence and tile; SCALE4g: the tab's D1 bookmark; POI-1: the feed version a game holds; SESSION-SIGN: the session's pass
+          'access-control-allow-headers': 'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass, x-staff-session',   // REALM P1: a checkpoint's lease, sequence and tile; SCALE4g: the tab's D1 bookmark; POI-1: the feed version a game holds; SESSION-SIGN: the session's pass
           'access-control-max-age': '86400',
         },
       });
@@ -901,6 +917,17 @@ const service = {
         return json(await discordInteraction(ctx, env, interaction, typeof exec?.waitUntil === 'function' ? { later: (p) => exec.waitUntil(p) } : {}), 200, origin);
       }
 
+      // STAFF-PANEL1 (staff.js): THE STAFF PANEL'S DOORS. None takes a game session - a game secret opens no staff door and a
+      // staff token no game door - so they are answered here, before the ladder resolves one.
+      if (STAFF_ROUTES.has(path)) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const body = await readBody(request);
+        if (!body) return no('body', 400, origin);
+        const exec = /** @type {any} */ (held).exec;   // the refusal audit's write follows the answer (staff.js `refused`)
+        const r = await staffRoute(typeof exec?.waitUntil === 'function' ? { ...ctx, later: (/** @type {Promise<any>} */ p) => exec.waitUntil(p) } : ctx, env, path, body, { ip: request.headers.get('cf-connecting-ip') || 'unknown', token: request.headers.get(STAFF_SESSION_HEADER) });
+        return 'error' in r ? no(r.error, STAFF_STATUS[/** @type {keyof typeof STAFF_STATUS} */ (r.error)] ?? 400, origin) : json(r, 200, origin);
+      }
+
       if (OPEN_ROUTES.has(path)) {
         if (request.method !== 'POST') return no('method', 405, origin);
         const body = await readBody(request);
@@ -944,9 +971,10 @@ const service = {
       // REALM P2.1: a trade's half carries two offers of up to sixteen records each - a JSON route past 4 KiB. AUDIT LEGACY
       // III O2/P1: and a line's record, to its own bound (legacy.js LINEAGE_BODY_MAX) - read at 4 KiB, a played founder's
       // first save was refused, and the realm held the founding copy for good
-      // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES)
+      // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES). LOST-SPOILS: and a floor's leftovers,
+      // to theirs (lostLaw.js LOST_BODY_MAX - the largest spoils send past 4 KiB)
       const body = request.method === 'POST'
-        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : path === '/v1/post/lost' ? LOST_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines
       if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (!body) return no('body', 400, origin);
       // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
@@ -1123,6 +1151,7 @@ const service = {
           ...seatT,
           g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],
           au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
+          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
           ...(rb ? { rb } : {}),
         };
         // GLYPH-WEAR: the glyphs taken off ride BESIDE `g`, never out of it - `g` is what is true and what the relay's
@@ -1204,6 +1233,7 @@ const service = {
           xp: track ? track.xp : null,
           guild: guild ? guild.gt : null,   // GUILD1c: the tag my own name wears, beside the token as the level is
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
+          icon: wardrobe.pi ?? null,   // WITCH1: the profile icon in my own portrait well, beside the token as the aura is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
           house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
@@ -1228,7 +1258,7 @@ const service = {
           // RENOWN1: and Renown's tracks, the most recently earned first (the card's level and its row) - RENOWN-CHAR: a
           // list of the characters' tracks again (RENOWN-ACCOUNT sent the account's one, `{ xp, level }`)
           // MARKS1: and the Marks balance, where Marks are this account's (null where not - a guest, the switch)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), sds: await sdRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
+          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
           wardrobe: { ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS), purse: await insigniaPurse(ctx, who.player) },   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
           devices: await devicesOf(ctx, who.player.id),
           // PATREON-LINK: the card's Patreon row - whether linking is on, whether this account is linked, the titles its
@@ -1284,6 +1314,19 @@ const service = {
         return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(Number.isSafeInteger(r.wait) ? { wait: r.wait } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
       }
 
+      if ((path === '/v1/sea/wreck' || path === '/v1/sea/prize/collect' || path === '/v1/sea/prize/reclaim') && request.method === 'POST') {
+        // SHIP-PVP (2026-10-22, bible/03-World/Eltheric-Ocean.md SHIP-PVP): a ship wrecked at another captain's guns, against
+        // the wreck the relay signed (src/net/wild/wildReceipt.js `n1`, the gate's key: her captain's own tab with its
+        // record's `at`, her killer's after the grace) - boarded, her hold's share held for her killer; and the prizes
+        // collected by the killer's character, or reclaimed by her captain's once its killer left them (seaWreck.js)
+        const sctx = { ...ctx, bucket: env.SAVES };
+        const r = path === '/v1/sea/wreck' ? await seaWreck(sctx, who.player, body, { gateKey: await gatePublicKey(env, subtle) })
+          : path === '/v1/sea/prize/collect' ? await seaPrizeCollect(sctx, who.player, body) : await seaPrizeReclaim(sctx, who.player, body);
+        if (!('error' in r)) return json(r, 200, origin);
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);
+        return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
+      }
+
       if (path === '/v1/duel/record' && request.method === 'POST') {
         // DUEL1: ANY account's record, for the Inspect card - asked by
         // a signed-in player of the account the relay stamped on the
@@ -1294,7 +1337,7 @@ const service = {
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
         // WB5b: the gates closed ride the same answer - the Inspect card asks once and says both
-        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken
+        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held
       }
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {
@@ -1315,12 +1358,12 @@ const service = {
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
-        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id);   // INT5: a signed win's spoils, the budget's fill
+        if (r.recorded === true) await grantSpoils(ctx.db, who.player.id, portentPieces(r.portent));   // INT5: a signed win's spoils, the budget's fill - AUDIT WB14 (WIRE-6): and a portent night's pieces
         // MARKS1: THE FIRST FAUCET - a receipt that made its row strikes the gate's Marks, in the row's own batch
         // (marks.js gateStrikeStatement: 50 under SILVER-WAYS' day's combat cap with the raids', the gate's own day its
         // line's id); `marks` null where Marks are not this account's
         const answer = { ...r };
-        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.weirRow;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row)
+        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.weirRow; delete answer.portent;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row; AUDIT WB14: the receipt's portents, the fill's)
         if (r.recorded && !r.rite && r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('gate', r.day), r.deedStruck);   // SILVER-WAYS: where a deed was this claim's to try
         // SEAT1b (Seats-Arc 4.2): a kill recorded now is influence for the account's war-guild where it pledged in the
         // region the claim named (`seat` the answer: counted, or why not - the kill stands either way). WB12d: the rite
@@ -1367,6 +1410,35 @@ const service = {
           if (paid.length) answer.contracts = paid;
           // CHAP2b: the town defended, remembered by the character's guilds that keep a chapter in its region (the key's)
           answer.chapters = await creditReceipt(ctx, who.player, env, { character: body.character ?? null, kind: 'raid', id: r.key, region: contractRegionOfRaid(r.key) });
+        }
+        return json({ ...answer, order }, 200, origin);
+      }
+
+      if (path === '/v1/star/claim' && request.method === 'POST') {
+        // STAR7: A FALLEN STAR'S RECEIPT, CARRIED HERE BY THE ACCOUNT IT NAMES, with the character that fought it. The relay
+        // signed it at the master's fall (src/net/starfall/starReceipt.js); the session says who is asking, never the body,
+        // and stars.js `claimStar` holds the rest - the signature, the account, one row a (star, account), the day's bound,
+        // the Renown, the device's spoils, and its silver under the day's combat cap (marks.js starStrikeStatement). A
+        // level that ROSE comes back with a signed order, as a raid's does.
+        // AUDIT STARFALL B3: INT5's fill rides the claim's own batch (stars.js - budget.js spoilsGrantStatement), never after
+        // it: an answer lost past the batch is retried as `claimed`, and the fill was lost with it. What runs below is no
+        // credit: INT17's measure (a debit a lost answer only spares), the order (signed again for a `claimed` that is the
+        // device's own - stars.js `own`), the silver's answer (struck in the batch)
+        const r = await claimStar(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null }, await gatePublicKey(env, subtle), {
+          strike: (key, nonce) => starStrikeStatement(ctx, who.player, env, key, nonce),
+        });
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        await progressSpent(ctx, who.player.id, path, r);   // INT17: the Renown it paid
+        let order = null;
+        if (r.renown?.rose) {
+          const key = await signingKey(env, subtle);
+          if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS });
+        }
+        const answer = { ...r };
+        delete answer.key; delete answer.struck;   // the service's own
+        if (r.recorded) {
+          const marks = await combatStrikeAnswer(ctx, who.player, env, !!r.struck, starStrikeRid(r.key));
+          if (marks) answer.marks = marks;
         }
         return json({ ...answer, order }, 200, origin);
       }
@@ -1431,6 +1503,14 @@ const service = {
       if (path === '/v1/lamp/claim' && request.method === 'POST') {
         // LAMP-KEEPER II: A LAMP KEEPER SPOKEN TO - the session says who, lamp.js lays I Love Lamp on the row once
         return json(await claimLamp(ctx, who.player), 200, origin);
+      }
+
+      if (path === '/v1/ql/claim' && request.method === 'POST') {
+        // QL12: A QUESTLINE'S STEP CLAIMED - the session says who, questlines.js opens the step (`open`) or reads its witness
+        // (`end`: the endgame place's own receipt row, in the line's window and order) and pays the line's title and the key
+        const r = await claimQl({ ...ctx, env }, who.player, body, nowS);
+        if ('error' in r) return no(r.error, QL_STATUS[/** @type {keyof typeof QL_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
       }
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
@@ -1610,6 +1690,7 @@ const service = {
               : path === '/v1/homes/decor/hidden' ? await hideDecorBase(hctx, who.player, body)   // BASE-HIDE
                 : await removeDecor(hctx, who.player, body);
           forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
+          await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)
           if (!('error' in r)) return json(r, 200, origin);
           const said = realmNo(r);
           if (said) return said;
@@ -1877,9 +1958,10 @@ const service = {
           // PROF6: the Court's writs, and beside them this board's guild writs and commissions (writs.js writBoard)
           '/v1/writs/list': async () => {
             const r = await listWrits(ctx, who.player, env, body);
-            return 'error' in r ? r : { ...r, ...(await writBoard(ctx, who.player, env, body)), ...(await contractBoard(ctx, who.player, env, body)) };   // SILVER-WAYS: and its guild contracts
+            return 'error' in r ? r : { ...r, ...(await writBoard(ctx, who.player, env, body)), ...(await contractBoard(ctx, who.player, env, body)), ...(await craftWritBoard(ctx, who.player, env, body)) };   // SILVER-WAYS: and its guild contracts; CRAFT-WRITS: and the character's crafting writs
           },
           '/v1/writs/deliver': () => deliverWrit(ctx, who.player, env, body),
+          '/v1/writs/craft': () => deliverCraftWrit({ ...ctx, bucket: env.SAVES }, who.player, env, body),   // CRAFT-WRITS: the goods out of the realm record, in R2
           '/v1/writs/post': () => postGuildWrit(ctx, who.player, env, body),   // PROF6: a guild writ
           '/v1/writs/supply': () => supplyGuildWrit(ctx, who.player, env, body),
           '/v1/writs/withdraw': () => withdrawGuildWrit(ctx, who.player, env, body),
@@ -1904,6 +1986,33 @@ const service = {
           return json({ ...r, order: key ? await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS }) : null }, 200, origin);
         }
         return json(r, 200, origin);
+      }
+
+      // ═══ SEA-BOUNTY: A FREEPORT'S BOUNTY BOARD ══════════════════════════
+      //
+      // bible/03-World/Eltheric-Ocean.md SEA-BOUNTY: the wanted captains of the open sea and the gold on their heads; a post
+      // off the poster's record, a collect into the killer's - each act its own batch, the gold and the row together
+      // (seaBounty.js). The kills are written with their falls (wild.js wildFall).
+      if (path.startsWith('/v1/sea/bounty/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const sctx = { ...ctx, bucket: env.SAVES };
+        const act = {
+          '/v1/sea/bounty/board': async () => seaBountyBoard(sctx, who.player, body),
+          '/v1/sea/bounty/post': async () => seaBountyPost(sctx, who.player, body),
+          '/v1/sea/bounty/collect': async () => seaBountyCollect(sctx, who.player, body),
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
+        if ('error' in r) return json({ error: r.error }, REALM_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      // SEA-SEASON (2026-10-22, bible/03-World/Eltheric-Ocean.md SEA-SEASON): the season's deepest voyages and legends
+      // ended - read here; the figures come with each clean checkpoint (seaSeason.js, realm.js checkpointRealm)
+      if (path === '/v1/sea/season/board') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        return json(await seaSeasonBoard(ctx, who.player, body), 200, origin);
       }
 
       // ═══ CARDS6: A CARD TABLE'S STAKES ══════════════════════════════════
@@ -1978,9 +2087,37 @@ const service = {
         return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
+      if (path === '/v1/account/icon' && request.method === 'POST') {
+        // WITCH1: WEAR ONE PROFILE ICON, OR NONE - the aura's door, in the portrait well. 403 for `not-held`, as the aura's.
+        const r = await equipIcon(ctx, await withSeatTitles(ctx, who.player, env), env, body.icon ?? null);
+        return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
+      // ═══ WITCH1: THE WITCHES' FESTIVAL ════════════════════════════════
+      //
+      // bible/06-Systems/Witches-Festival.md: an account's Soul Cakes and what they bought, a find the service's die decides,
+      // a sale by its request id, and the Hearth Offerings at homes' doors (festival.js).
+      if (path.startsWith('/v1/festival/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const act = {
+          '/v1/festival/mine': async () => festivalOf(ctx, who.player, env),
+          '/v1/festival/find': async () => findFestival(ctx, who.player, body, env),
+          '/v1/festival/buy': async () => buyFestival(ctx, who.player, body, env),
+          '/v1/festival/town': async () => festivalTown(ctx, who.player, body, env),
+          '/v1/festival/offering/set': async () => setOffering(ctx, who.player, body, env),
+          '/v1/festival/offering/fill': async () => fillOffering(ctx, who.player, body, env),
+          '/v1/festival/offering/take-in': async () => takeInOffering(ctx, who.player, body),
+          '/v1/festival/offering/take': async () => takeFromOffering(ctx, who.player, body, env),
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.cakes) ? { cakes: r.cakes } : {}), ...(Number.isSafeInteger(r.bowls) ? { bowls: r.bowls } : {}) }, FEST_STATUS[r.error] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
       if (path === '/v1/account/glyph' && request.method === 'POST') {
         // GLYPH-WEAR: SHOW ONE GLYPH, OR HIDE IT - `{ glyph, on }`. 403 for `not-held`, as the title's.
-        const r = await equipGlyph(ctx, who.player, env, body.glyph, body.on !== false);
+        const r = await equipGlyph(ctx, await withSeatTitles(ctx, who.player, env), env, body.glyph, body.on !== false);   // AUDIT COLLECTIONS-II: the wardrobe it answers keeps a Charter's and a chapter's titles, as the title's door does
         return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
@@ -2180,6 +2317,7 @@ const service = {
           '/v1/post/read': () => readPost(ctx, who.player, body.id),
           '/v1/post/claim': () => claimPost({ ...ctx, bucket: env.SAVES }, who.player, { id: body.id, character: body.character, realm: body.realm }),   // the realm record is in R2
           '/v1/post/delete': () => deletePost(ctx, who.player, body.id),
+          '/v1/post/lost': () => mailLostSpoils(ctx, who.player, { day: body.day, pieces: body.pieces }),   // LOST-SPOILS: the Lost and Found's (lostSpoils.js)
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();

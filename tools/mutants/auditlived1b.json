@@ -244,8 +244,8 @@
   {
     "name": "AUDITLIVED1B-P4-heard-forgotten",
     "file": "src/systems/worldTick.js",
-    "old": "  _sharedClockHeard = true;\n  settleAbsence();",
-    "new": "  settleAbsence();",
+    "old": "  _sharedClockHeard = true;\n  _heardMark = Object.freeze(",
+    "new": "  _heardMark = Object.freeze(",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -624,8 +624,8 @@
   {
     "name": "AUDITLIVED1B-U8-time-away",
     "file": "src/ui/tavernWindow.js",
-    "old": "export const OWN_TIME_ROOM_NOTE = ' - a rest spends it, logging off does not.';",
-    "new": "export const OWN_TIME_ROOM_NOTE = ' - resting spends it, time away does not.';",
+    "old": "export const OWN_TIME_ROOM_NOTE = '. Resting uses it; logging off does not.';",
+    "new": "export const OWN_TIME_ROOM_NOTE = '. Resting uses it; time away does not.';",
     "tests": [
       "test/systems/auditlived1b.test.js",
       "test/systems/ol3.test.js"

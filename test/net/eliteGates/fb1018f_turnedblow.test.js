@@ -26,7 +26,11 @@ import { validEgOut } from '../../../src/net/wire.js';
 import { createEgFight, egNoFooting } from '../../../src/scenes/eliteGates/egFight.js';
 import { egHallCentre } from '../../../src/world/eliteGates/egHall.js';
 import { HIT_KINDS } from '../../../src/net/gate/gateBrain.js';
-import { calculateAttackDamage } from '../../../src/combat/formulas.js';
+import { calculateAttackDamage, setPlayerAttackHook } from '../../../src/combat/formulas.js';
+import { createStandInSpell } from '../../../src/scenes/gate/standInSpell.js';   // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: the spell doors, one
+import { bossStandIn, crystalStandIn, hostStandIn, bossLookOf } from '../../../src/world/gate/gateBoss.js';
+import { buildCustomSpell } from '../../../src/systems/spell/spellMaker.js';
+import { playerEntity } from '../../../src/characters/playerEntity.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
 import { ENCHANTMENT_TYPES } from '../../../src/systems/enchantments.js';
 import { numberFor } from '../../../src/ui/hitNumbers.js';
@@ -120,7 +124,7 @@ test('TURNED-BLOW THE IMPS (Elite-Gates.md sections 8.2 and 11.7): on a span the
   assert.ok(S.relayBlow(by.i) > 0, 'and the relay lands it');
   assert.equal(egStruckOff(view, by, isle.x, isle.y ?? 0, isle.z), false);
   // the one law: the relay's egBlow asks it, and no second copy of the rule stands in src/
-  assert.match(rd('src/net/eliteGates/egBrain.js'), /if \(egStruckOff\(view, body, p\.x, p\.y, p\.z\)\) return out;/, 'the relay asks the law');
+  assert.match(rd('src/net/eliteGates/egBrain.js'), /if \(egStruckOff\(view, body, p\.x, p\.y, p\.z\)\) return land\(0\);/, 'the relay asks the law');   // PIN MOVED (FIELD BUGS 2026-10-20f LANDED-WORD): a blow it refuses lands 0 and says so to its striker
   assert.equal((rd('src/net/eliteGates/egBrain.js').match(/egGroundAt\(view, body\.x, egFeetY\(view, body\.y\)/g) ?? []).length, 0, 'no second copy of the rule');
 });
 
@@ -331,10 +335,29 @@ test('TURNED-BLOW AN OBJECT TURNED IS NEVER SENT (AUDIT FB1018f lane L3\'s survi
 
 test('TURNED-BLOW THE TURNED BLOW SAYS ITS WORD AT EVERY DOOR (AUDIT FB1018f L3-2, L3-7; scenes/dungeonContext.js by its text - buildDungeonContext does not run in Node): a spell on a body of the court\'s or the Spire\'s pops its number by the stand-in it met, so a turned one says "No footing" or "Warded" (ui/hitNumbers.js numberFor), never the claim; a shaft a ward or the ground turns says its word beside the ring, as a swing\'s formula does on the same stand-in - one of his host\'s and the Warden\'s (mutants: each spell door\'s number blind to its body; each turned shaft silent)', () => {
   const dc = rd('src/scenes/dungeonContext.js');
-  const door = (fn, next) => dc.slice(dc.indexOf(`  function ${fn}(`), dc.indexOf(next));
-  for (const [fn, next, body] of [['spellOnCrystal', '  function gateHostBodies(', 'cr'], ['spellOnHost', '  function arenaRivalBody(', 'hb'], ['spellOnBoss', '  function spellOnStandIn(', 'boss']]) {
-    assert.match(door(fn, next), new RegExp(`\\n {4}tellStandIn\\(sp, ${body}\\.entity, r, dealt, caster\\);\\n {4}reportPlayerAttack\\(\\{ hit: true, damage: Math\\.round\\(dealt\\), target: ${body}\\.entity \\}\\);`), `${fn}: its number by the body it met`);
-  }
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the three spell doors are one door now
+  // (scenes/gate/standInSpell.js), driven here on the real stand-ins - each number by the body it met, turned or not
+  const heard = [], was = playerEntity.level;
+  const bolt = buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 } }], rangeType: 1, element: 4, name: 'Bolt' });
+  const cr = { crystal: 0, entity: crystalStandIn(bossLookOf('ruhn'), 0) }, hb = { host: 3, entity: hostStandIn({ mobile: 1, name: 'Imp' }, 3) }, boss = { boss: true, entity: bossStandIn(bossLookOf('ruhn'), 'The Warden') };
+  const doors = createStandInSpell({
+    player: playerEntity, say: NOOP, boss: () => boss, crystals: () => [cr], host: () => [hb], rival: () => null,
+    landOnBoss: () => true, landOnCrystal: () => true, landOnHost: () => true, landOnRival: () => true, nextArenaQ: NOOP,
+    trapNow: () => null, onTrap: () => false, rolls: () => 0.999,
+  });
+  setPlayerAttackHook((r) => heard.push(r));
+  try {
+    playerEntity.level = 20;
+    for (const [cast, body, word] of [[() => doors.spellOnCrystal(bolt, 0), cr, egNoFooting()], [() => doors.spellOnHost(bolt, 3), hb, null], [() => doors.spellOnBoss(bolt), boss, null]]) {
+      body.entity.warded = false; body.entity.wardText = null;
+      cast();
+      assert.equal(heard.at(-1).target, body.entity, 'its number by the body it met');
+      assert.equal(numberFor(heard.at(-1)).text, '10', 'whole, its number');
+      body.entity.warded = true; body.entity.wardText = word;
+      cast();
+      assert.equal(numberFor(heard.at(-1)).text, word ?? 'Warded', 'turned, its word - never the claim');
+    }
+  } finally { setPlayerAttackHook(null); playerEntity.level = was; }
   assert.match(dc, /\n {12}if \(hb\.entity\.warded\) \{ wardTurns\(hb\); reportPlayerAttack\(\{ hit: true, damage: 0, target: hb\.entity \}\); \}/, 'a shaft on one of the host, turned: its word');
   assert.match(dc, /\n {12}if \(boss\.warded\) \{ wardTurns\(boss\); reportPlayerAttack\(\{ hit: true, damage: 0, target: boss\.entity \}\); \}/, 'a shaft into his ward: its word');
   assert.match(dc, /b\.entity\.warded = !!b\.warded;/, 'his stand-in carries his ward, the word\'s source');

@@ -272,8 +272,8 @@
   {
     "name": "CL-deepest-keep",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "deepest(d) { if (Number.isFinite(d) && d > log.deepest) log.deepest = Math.floor(d); },",
-    "new": "deepest(d) { if (Number.isFinite(d)) log.deepest = Math.floor(d); },",
+    "old": "      if (d > log.deepest) log.deepest = Math.floor(d);",
+    "new": "      log.deepest = Math.floor(d);",
     "tests": [
       "test/systems/naval/captlog.test.js"
     ]

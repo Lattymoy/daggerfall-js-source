@@ -78,10 +78,14 @@ import { unequipItem, equipTableOf, EQUIP_SLOTS } from '../equip.js';   // RVN8:
 import { isLocked } from '../item/itemLock.js';   // RVN8: LOCK1's promise - a locked piece stays yours
 import { isBagItem } from '../../net/bagLaw.js';   // RVN8: never the Materials Bag
 import { isPackOnly } from '../item/itemBound.js';   // AUDIT 625 W2: nor a pack-only piece (the Wallet)
+import { WILD_NEVER_GROUPS } from '../wild/wildLeaf.js';   // STEED-KEPT: nor what never changes hands - a vehicle, a deed (the zone's own leaf - never the drop law's graph)
+import { BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js';   // STEED-KEPT: nor a ship's deed or parts
+import { DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';   // STEED-KEPT: nor a deed as Daggerfall files one, nor the spellbook
+import { hudTextWhenShown } from '../notify.js';   // STEED-KEPT: a piece home again, said once the world can say it
 import { isLetterOfCredit } from '../peerWord.js';   // LETTERS-HOME: nor a letter of credit - its worth is gold
 import { itemLongName } from '../item/itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from '../item/itemTemplates.js';   // RVN8: the most valuable
-import { enemyDisplayName, ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
+import { enemyDisplayName, ENEMY_BASICS, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { firstName, monsterName, BANK_TYPES, GENDERS } from '../../characters/nameHelper.js';
 import { getSeed, setSeed, srand } from '../../formats/dfRandom.js';
@@ -290,7 +294,7 @@ export function revenantGivenName(id, mobileType, gender = 'male') {
     srand(h);
     const g = gender === 'female' ? GENDERS.Female : GENDERS.Male;
     let name = '';
-    if (mobileType >= 128) {
+    if (isClassEnemyId(mobileType)) {
       const banks = [BANK_TYPES.Breton, BANK_TYPES.Redguard, BANK_TYPES.Nord, BANK_TYPES.DarkElf, BANK_TYPES.HighElf, BANK_TYPES.WoodElf, BANK_TYPES.Khajiit, BANK_TYPES.Imperial];
       name = firstName(banks[h % banks.length], g);
     } else {
@@ -448,7 +452,11 @@ function ensureMirror(player) {
     r.took = s?.took ? s.took.slice() : [];   // RVN8 (Feud-Arc.md 19): what it took is inventory too - the save's copy wins (the mirror never brings back a piece the save holds)
     // LETTERS-HOME (FIELD BUGS 2026-10-18b): a letter of credit one took before revenantMayTake refused it is mine again -
     // living, fallen with a body that never carried it, or kept by a deserter. The save's copy, so never one its pack holds.
-    if (r.took.some(isLetterOfCredit)) { player.items ??= []; for (const it of r.took.filter(isLetterOfCredit)) addItem(player.items, it); r.took = r.took.filter((it) => !isLetterOfCredit(it)); }
+    // STEED-KEPT (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Exclude, and return taken ones"): and EVERY piece it may
+    // no longer take - a horse, a cart, a deed, a ship's deed or parts, the spellbook - into my pack, where the game keeps
+    // owned transport (DFU's Items.Contains(Transportation, Horse)), each said once the world can say it
+    const home = r.took.filter((it) => !revenantMayTake(it));
+    if (home.length) { player.items ??= []; for (const it of home) { addItem(player.items, it); hudTextWhenShown(tookHomeLine(r, it)); } r.took = r.took.filter((it) => revenantMayTake(it)); }
   }
   _state.mirrorId = id;
 }
@@ -928,12 +936,24 @@ export function forgetLastSlew() { _lastSlew = null; }
  *  Wallet's row): what it takes leaves the pack for its record, one that escapes keeps it, and a character is given its
  *  wallet once. LETTERS-HOME (FIELD BUGS 2026-10-18b): nor a LETTER OF CREDIT - a letter is gold (its `value` is the
  *  gold it stands for), and "gold" was the coin alone, so a 500,000-gold letter was the pack's most valuable piece and
- *  the likeliest drawn. */
+ *  the likeliest drawn. STEED-KEPT (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Exclude, and return taken ones"):
+ *  nor what never changes hands, as the open zone's death reads it (wildDropLaw.js wildCanLose) - A VEHICLE (the zone's
+ *  own groups, WILD_NEVER_GROUPS: a horse, a cart), A DEED (those groups' Deeds, and the decor's kept-back list,
+ *  decorLaw.js DECOR_OWN_KEPT_BACK - a house's or a ship's deed as Daggerfall files them, and the spellbook with them:
+ *  "Your spellbook never leaves you", KEEP-SPELLBOOK), or A SHIP'S DEED OR PARTS (Come Sail Away's own two,
+ *  realmTradeLaw.js BOAT_TEMPLATES - a deed handed on is a second boat): a stable's horse beside a worn longsword was drawn
+ *  one death in six. A BOUND piece stays its own (AUDIT 625 W2, "RVN8 names its own exclusions"), decided again: the zone
+ *  keeps one because a death's remains are anyone's, and what a revenant takes never rides to another player - its body
+ *  hands what it carried to its owner alone (net/bodyLoot.js shareableRecord, peerWord.js neverPeerHanded). */
 export const revenantMayTake = (item) => !!item && typeof item === 'object' && Number.isInteger(item.templateIndex) && !isLetterOfCredit(item)
+  && !WILD_NEVER_GROUPS.has(item.group) && !DECOR_OWN_KEPT_BACK.has(item.templateIndex) && !BOAT_TEMPLATES.includes(item.templateIndex)   // STEED-KEPT
   && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);
 /** AUDIT FEUD: a piece it took, named after "your", "my" or "lovely" - the name the pack shows, its own article gone
  *  (a legendary's "The Glenmoril Bow": "your Glenmoril Bow", never "your The ..."). */
 export const takenName = (item) => String(itemLongName(item) ?? '').replace(/^the\s+/i, '');
+/** STEED-KEPT (FIELD BUGS 2026-10-19f): a piece it took and may no longer keep, home in my pack at the load - the
+ *  words (ensureMirror says each once, through the text core). */
+export const tookHomeLine = (r, item) => t('rvn.took.home', '{name} could not keep your {item}. It is back in your pack.', { name: r?.name ?? '', item: takenName(item) });
 /** RVN8 (19): the piece it takes - drawn on its id and its kill count from my equipped weapon and my pack's five most
  *  valuable pieces (each takeable). Null with none. */
 export function pickTaken(id, kills, weapon, items) {
@@ -1008,7 +1028,7 @@ export function releaseRevenantStand(r) {
 /** The spawn options a returning revenant stands with (scenes/exteriorFoes.js spawnFoe): its record, its gender, and a
  *  class foe's level over the player's. */
 export function revenantSpawnOptions(r, playerLevel) {
-  return { revenant: r, gender: r.mobileType >= 128 ? r.gender : null, level: r.mobileType >= 128 ? Math.max(1, (playerLevel | 0) + r.rank * REVENANT_LEVEL_PER_RANK) : null };   // a monster's sprite is its kind's, whatever its gender
+  return { revenant: r, gender: isClassEnemyId(r.mobileType) ? r.gender : null, level: isClassEnemyId(r.mobileType) ? Math.max(1, (playerLevel | 0) + r.rank * REVENANT_LEVEL_PER_RANK) : null };   // a monster's sprite is its kind's, whatever its gender
 }
 /** Stand the record on a freshly built entity (before its loot): its name, its rank's health and blows. The record is
  *  OUT from here until the foe dies, escapes or leaves the world. RVN11c: `turned` - a betrayer standing where it
@@ -1278,7 +1298,7 @@ export function revenantCorneredEvent(entity, base, { gender = 'male', archive =
   const src = liveSource(entity, base, gender);
   const v = voiceParts(src, 'cornered', src.id ? playerName : '', rolls);
   return revenantEvent('cornered', src, {
-    speech: v.speech, body: v.speech ? 'Cornered - it turns to fight.' : v.body,
+    speech: v.speech, body: v.speech ? 'Cornered, it turns to fight.' : v.body,
     line: v.speech ? `${src.name} is cornered and turns to fight! "${v.speech}"` : v.line, archive,
   });
 }
@@ -1298,21 +1318,21 @@ export function revenantEscapeEvent(r, playerName, { rolls = Math.random, archiv
   const speech = voiceParts(r, 'escape', playerName, rolls).speech;
   // UNQUIET (section 46): ascended - the Dread, gone to ground for good
   if (revenantAscended(r)) {
-    const body = t('rvn.unq.ascended', '{given} will run no more. It has gone to ground in {lair} - the Dread now - and waits for you there.', { given: r.given, lair: r.lair?.name ?? '' });
+    const body = t('rvn.unq.ascended', '{given} will run no more. It is the Dread now, and waits for you in {lair}.', { given: r.given, lair: r.lair?.name ?? '' });
     _newWounds.delete(r.id);
     return revenantEvent('ascended', r, { speech, body, line: body, archive });
   }
   const tail = revenantEscapeTail(r);
   return revenantEvent('escape', r, {
     speech,
-    body: `${r.rank > 1 ? t('rvn.unq.escapeRank', 'Got away. Now rank {rank} - it will remember this.', { rank: revenantRankNumeral(r.rank) }) : t('rvn.unq.escape', 'Got away. It will remember this.')}${tail}`,
+    body: `${r.rank > 1 ? t('rvn.unq.escapeRank', 'Got away and rose to rank {rank}. It will remember this.', { rank: revenantRankNumeral(r.rank) }) : t('rvn.unq.escape', 'Got away. It will remember this.')}${tail}`,
     line: `${revenantEscapeLine(r)}${tail}`, archive,
   });
 }
 /** RVN3 (14.1): its weakness - found (my blow of it: what it is) or hinted (its flinch: the narrator's line). */
 export function revenantWeaknessEvent(r, { found = false, archive = null } = {}) {
   const name = WEAK_NAMES[r?.weak] ?? 'Something';
-  const body = found ? `${name} - its weakness, laid bare.` : (FLINCH_LINES[r?.weak] ?? 'It shies from something.');
+  const body = found ? `Its weakness laid bare: ${name}.` : (FLINCH_LINES[r?.weak] ?? 'It shies from something.');
   return revenantEvent('weakness', r, { body, line: `${r.name}: ${body}`, archive });
 }
 /** RVN3 (14.2): its will unbroken - at the killing blow it tears away into the smoke (an escape: it learns, and every
@@ -1382,10 +1402,10 @@ export function revenantHuntEntries(here = null, { now = nowMinutes() } = {}) {
     const dx = Number.isInteger(here?.px) ? r.lair.px - here.px : 0, dy = Number.isInteger(here?.py) ? r.lair.py - here.py : 0;
     const way = dx || dy ? `, ${distanceWord(Math.max(Math.abs(dx), Math.abs(dy)))} to the ${compassWord(dx, dy)}` : '';
     const kind = enemyDisplayName(r.mobileType) ?? 'Revenant';
-    const lines = [`${kind}, rank ${revenantRankNumeral(r.rank)}.`, `Its lair: ${r.lair.name}${way} - marked on your map with a red circle.`,
+    const lines = [`${kind}, rank ${revenantRankNumeral(r.rank)}.`, `Its lair: ${r.lair.name}${way}, marked on your map with a red circle.`,
       r.dread ? t('rvn.unq.hunt.dread', 'The Dread will not come to you again. Go to it.') : 'Find it there before it finds you.'];   // UNQUIET: the Dread waits
     // UNQUIET II (section 47): its trail warm - wounded in its den, for a while
-    if (trailWarm(r, now)) lines.push(t('rvn.unq.hunt.trail', 'Weakened - it went to ground here to recover. {hours, plural, one {# hour} other {# hours}} before it is whole again.', { hours: trailHours(r, now) }));
+    if (trailWarm(r, now)) lines.push(t('rvn.unq.hunt.trail', 'Weakened, it went to ground here to recover. It will be whole again in {hours, plural, one {# hour} other {# hours}}.', { hours: trailHours(r, now) }));
     return { id: `${HUNT_QUEST_PREFIX}${r.id}`, name: `Hunt: ${r.name}`, questName: 'HUNT', hunt: true, clockSeconds: null, messages: [lines.map(line)] };
   });
 }
@@ -1554,7 +1574,7 @@ export function revenantDesertEvent(r, { archive = null, playerName = '' } = {})
 }
 /** RVN9 (20): its rank-up, told - "Grushnak grows bolder - it has waited too long." */
 export function revenantFesterEvent(r, { archive = null } = {}) {
-  const body = ambitionOf(r.personality) === 'mastery' ? t('rvn.unq.fester.mastery', '{given} grows bolder - it has been training.', { given: r.given }) : `${r.given} grows bolder - it has waited too long.`;   // UNQUIET: a revenant of mastery trained
+  const body = ambitionOf(r.personality) === 'mastery' ? t('rvn.unq.fester.mastery', '{given} grows bolder. It has been training.', { given: r.given }) : `${r.given} grows bolder. It has waited too long.`;   // UNQUIET: a revenant of mastery trained
   return revenantEvent('festered', r, { body, line: body, archive });
 }
 /** UNQUIET III (section 48): ITS TRAINING, told - "Grushnak has been training - it has learned to answer your blade." (its
@@ -1597,7 +1617,7 @@ export function revenantFelled(player, striker, ally, { now = nowMinutes(), roll
 /** RVN10 (21.1): the felling, told - "Grushnak felled Borgakh. It will remember this." */
 export function revenantFelledEvent(r, ally, { archive = null } = {}) {
   const who = allyName(ally) ?? 'your companion';
-  const body = `${r.given} felled ${who}. ${r.rank > 1 ? `Now rank ${revenantRankNumeral(r.rank)} - it` : 'It'} will remember this.`;
+  const body = `${r.given} felled ${who}. ${r.rank > 1 ? `It is rank ${revenantRankNumeral(r.rank)} now, and` : 'It'} will remember this.`;
   return revenantEvent('felled', r, { body, line: `${r.name} felled ${who}.`, archive });
 }
 /** RVN10 (21.2): may this foe ROUT me - a special foe, alive, hostile and on me (detecting me), neither kneeling nor
@@ -1633,7 +1653,7 @@ export function revenantRoutSweep(player, foes = playerDoor()?.foes?.() ?? [], {
 }
 /** RVN10 (21.2): the rout, told - "You ran from Grushnak. It will remember this." */
 export function revenantRoutedEvent(r, { archive = null } = {}) {
-  const body = `You ran from ${r.given}. ${r.rank > 1 ? `Now rank ${revenantRankNumeral(r.rank)} - it` : 'It'} will remember this.`;
+  const body = `You ran from ${r.given}. ${r.rank > 1 ? `It is rank ${revenantRankNumeral(r.rank)} now, and` : 'It'} will remember this.`;
   return revenantEvent('routed', r, { body, line: `You ran from ${r.name}. It will remember this.`, archive });
 }
 /** RVN4 (section 15): ITS LAST STAND, written on its record - the deed (`laststand`) at the character's minute. Answers
@@ -1648,7 +1668,7 @@ export function revenantLastStand(player, entity, { now = nowMinutes() } = {}) {
 }
 /** RVN4: its last stand, as the card says it - it rises again, its words the cornered's. */
 export function revenantLastStandEvent(r, playerName, { rolls = Math.random, archive = null } = {}) {
-  const body = `${r.given} rises again - its last stand.`;
+  const body = `${r.given} rises again for its last stand.`;
   return revenantEvent('laststand', r, { speech: voiceParts(r, 'laststand', playerName, rolls).speech, body, line: body, archive });   // RVN12a (23): its own words
 }
 /** RVN3 (14.1): ITS FLINCH - a revenant of mine under FLINCH_HEALTH of its health, its weakness unknown, shies from it:

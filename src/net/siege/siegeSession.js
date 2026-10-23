@@ -38,13 +38,13 @@ export const isBattleLeaveCommand = (text) => /^\/leave$/i.test(String(text ?? '
 export const BATTLE_NONE_TEXT = 'You are in no battle and no Royal Tourney.';
 /** The words. */
 export const SIEGE_SESSION_TEXT = Object.freeze({
-  notHere: (town) => `Go to ${town} to fight for it - the battle is fought in the town itself.`,
+  notHere: (town) => `Go to ${town} to fight for it. The battle is fought in the town itself.`,
   old: 'The server does not fight sieges yet.',
-  entered: (side) => (side === 'watch' ? 'You are watching the battle. Nothing you do reaches it.' : `You fight for the ${side === 'attack' ? 'attackers' : 'defenders'}. Make for your camp's banner.`),
+  entered: (side) => (side === 'watch' ? 'You are watching the battle as a spectator.' : `You fight for the ${side === 'attack' ? 'attackers' : 'defenders'}. Make for your camp's banner.`),
   left: 'You have left the battle.',
   refused: (why) => `The battle would not have you: ${why}`,
   away: (town) => `You have left ${town}, and the battle with it.`,   // AUDIT-SEATS C1
-  closed: 'The battle\'s door has closed on you - you have left it.',   // AUDIT-SEATS C1: its socket closed for good
+  closed: 'The connection to the battle closed. You have left it.',   // AUDIT-SEATS C1: its socket closed for good
   breach: (town) => `The Gatehouse of ${town} is breached.`,   // SEAT2b part two (b)
   ramDown: 'A Ram is destroyed at the gate.',   // SEAT2b part two (b)
   captainDown: 'The Rebel Captain falls at the palace door!',   // SEAT2b part two (c)

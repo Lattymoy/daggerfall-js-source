@@ -178,7 +178,7 @@ test('WAGONS4 THE KIT: a Wagon Repair Kit spent on the wagon where its load is r
   assert.deepEqual([load.length, items[1].stackCount, passed], [0, 1, [60, 60]], 'the wagon\'s kit spent, the pack\'s kept');
   w.currentCondition = 900;
   assert.equal(u.act('kit').ok, false, 'over 60%: a kit does no more');
-  assert.match(itemStatRows(items[1]).map((x) => x.text).join(' '), /Mends 25% of a wagon, to 60% at most - an hour's work\./);
+  assert.match(itemStatRows(items[1]).map((x) => x.text).join(' '), /Repairs 25% of a wagon, up to 60%\. Takes an hour\./);
 });
 
 test('WAGONS4 THE WAGON YARD MENDS: its keeper\'s third row, the Stable\'s two; the press asks the host\'s wright (mutants: the row on the Stable, the press unread)', async () => {
@@ -198,7 +198,7 @@ test('WAGONS4 A SMITH MENDS NO HORSE AND NO WAGON: a wagon left at a smith\'s co
   assert.equal(repairRefusal({ templateIndex: 93, currentCondition: 10, maxCondition: 1400 }), 'transport');
   assert.equal(repairRefusal({ templateIndex: 94, currentCondition: 10, maxCondition: 100 }), 'transport');
   assert.equal(repairRefusal({ templateIndex: 113, group: 'Weapons', currentCondition: 10, maxCondition: 100 }), null);
-  assert.match(TRANSPORT_CANNOT_BE_REPAIRED_TEXT, /Wagon Yard mends wagons/);
+  assert.match(TRANSPORT_CANNOT_BE_REPAIRED_TEXT, /Wagon Yard repairs wagons/);
   for (const f of ['src/ui/enhanced/enhancedTrade.js', 'src/ui/native/nativeTrade.js']) assert.match(rd(f), /transport: \[\{ text: TRANSPORT_CANNOT_BE_REPAIRED_TEXT, center: true \}\],/, f);
   assert.match(rd('src/scenes/worldModes.js'), /: refusal === 'transport' \? \[TRANSPORT_CANNOT_BE_REPAIRED_TEXT\]/);
 });

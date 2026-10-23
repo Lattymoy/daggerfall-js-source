@@ -38,6 +38,7 @@
 
 import { cargoLootTarget } from '../systems/comeSailAway/comeSailAwayItems.js';
 import { CARGO_CONTAINER_IMAGE } from '../systems/comeSailAway/comeSailAwayBoat.js';
+import { seaHoldShut, seaHoldShutText } from '../systems/naval/seaHoldGuard.js';   // AUDIT SEA VENTURES B3: a wrecked ship's hold shut while she may be boarded
 import { t } from '../systems/textManager.js';
 import { fleetShips, titleOf as titleDeedOf } from '../systems/fleet.js';
 
@@ -76,6 +77,7 @@ export function createHoldDoor(deps) {
   function openBoat(boat) {
     if (!boat?.Cargo) return said(false, t('naval.hold.none', 'There\'s no hold here.'));
     if (!opens(boat.hull, boat.Cargo.Items)) return said(false, t('naval.hold.rowboat', 'Rowboats have no hold.'));
+    if (seaHoldShut(boat.uid)) return said(false, seaHoldShutText());
     return !!deps.openHold?.({ ...cargoLootTarget(boat.Cargo), title: titleOf(boat.uid) });
   }
 

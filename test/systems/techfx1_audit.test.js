@@ -244,5 +244,5 @@ test('AUDIT TECH-FX THE OFFSET IN PLACE AND THE ONE SPEED: the renderer\'s scree
   assert.match(tq, /import \{ MISSILE_SPEED \} from '\.\.\/systems\/spellcast\.js';/);
   assert.doesNotMatch(tq, /\/ 25\b|TECH_ARROW_MPS/, 'no second literal of the shaft\'s speed');
   assert.doesNotMatch(code('src/combat/technique/techniqueFx.js'), /= 25;/);
-  assert.match(code('src/combat/weapon/weaponRig.js'), /_tlDrawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \},[^\n]*\n\s*if \(_dipPx\) _tlDrawn\.rect\.y \+= _dipPx;/, 'the muzzle where the dip drew the gun');
+  assert.match(code('src/combat/weapon/weaponRig.js'), /const drawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \},[^\n]*\n\s*if \(_dipPx\) drawn\.rect\.y \+= _dipPx;/, 'the muzzle where the dip drew the gun');
 });

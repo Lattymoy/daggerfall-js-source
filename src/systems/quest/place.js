@@ -117,7 +117,13 @@ export const VALID_SHOP_TYPES = Object.freeze([0, 2, 5, 6, 7, 8, 9, 12, 13]);   
 
 // DFLocation.BuildingTypes sentinels (DFLocation.cs:138-140) and the
 // members the laws name (values shared with DFRegion.BuildingTypes).
-const BT_GUILDHALL = 11, BT_HOUSE1 = 17, BT_HOUSE4 = 20, BT_HOUSE6 = 22;
+const BT_GUILDHALL = 11, BT_TEMPLE = 14, BT_HOUSE1 = 17, BT_HOUSE4 = 20, BT_HOUSE6 = 22;
+/** AUDIT STAR8 S4: the building types a Quests-Places row's p3 holds to a faction - DFU's guild hall (Place.cs
+ *  CollectQuestSitesOfBuildingType's IsGuildFactionMatch, IsPlayerAtBuildingType's guild-hall arm) and, a DEPARTURE, the
+ *  temple: DFU reads no faction of a temple, and its own `temple` row names none (p3 0, any temple), so no DFU quest
+ *  moves; a row that names a god's faction (the questlines' `templeArkay`, systems/questlines/qlActions.js) is that
+ *  god's temple alone. */
+const FACTION_HELD = Object.freeze([BT_GUILDHALL, BT_TEMPLE]);
 export const BT_ANY_SHOP = 0xfffd, BT_ANY_HOUSE = 0xfffe, BT_ALL_VALID = 0xffff;
 
 // FactionFile.FactionIDs (API/FactionFile.cs:91,135) - random quests
@@ -1030,6 +1036,28 @@ export class Place extends QuestResource {
     return null;
   }
 
+  /**
+   * FB1020h SITE-NAMED (FIELD BUGS 2026-10-20h): A BUILDING SITE A SAVE CARRIES WITH NO NAME is named again, from its
+   * building as its town stands - its seed, kind and faction through the one name bag (_getBuildingName). Before the
+   * bag answered off a town (scenes/townTalk.js nameOpts), a temple or a guild hall a quest drew on the road was named
+   * '' and kept so: its journal, its talk and its map read "at  in Wildertown" until the quest ended. A residence is
+   * never nameless (its surname is drawn), a site with no building here (key 0, unseated, another layout) names none,
+   * and a kind DFU names '' itself (GenerateBuildingName's default) stays ''. GetName seeds DFRandom; the state is put
+   * back, as a shared re-seat's residence puts it back. Answers whether the name changed.
+   */
+  nameSiteAgain(world) {
+    const sd = this.siteDetails;
+    if (sd?.siteType !== SITE_TYPES.Building || sd.buildingName !== '' || !recordStands(sd)) return false;
+    const b = this.siteBuilding(world);
+    if (!b || isResidence(b.buildingType)) return false;
+    const was = getSeed();
+    let name;
+    try { name = this._getBuildingName(world, b.buildingType, this.siteTown(world), b, sd.buildingKey); } finally { setSeed(was); }
+    if (!name) return false;
+    sd.buildingName = name;
+    return true;
+  }
+
   /** CollectQuestSitesOfBuildingType (:1131-1250): the full block walk
    *  with the wildcard sets, the owned-house / guild-faction / TG+DB /
    *  already-assigned exclusions, the marker requirement, and the
@@ -1066,9 +1094,10 @@ export class Place extends QuestResource {
   }
 
   /** CollectQuestSitesOfBuildingType's walk (Place.cs:1335-1392) over a town's `blocks` (townBlockGrid's shape): each
-   *  building of the kind asked that the law no quest or owner changes admits - the guild hall's faction, never the Dark
-   *  Brotherhood's or the Thieves Guild's - as { b, i, summary, buildingKey }. The search asks the rest (the owners, the
-   *  quests, the markers); AUDIT QA2's supply the markers alone. */
+   *  building of the kind asked that the law no quest or owner changes admits - the guild hall's faction (and, AUDIT
+   *  STAR8 S4, the temple's: FACTION_HELD), never the Dark Brotherhood's or the Thieves Guild's - as { b, i, summary,
+   *  buildingKey }. The search asks the rest (the owners, the quests, the markers); AUDIT QA2's supply the markers
+   *  alone. */
   *_townBuildingsOfType(location, blocks, buildingType, guildHallFaction) {
     const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock), { locationIndex: location.locationIndex ?? 0 });   // AUDIT-RR F34: the replacement seed is NameSeed + LocationIndex here too (RMBLayout.cs:669)
     for (const b of blocks) {
@@ -1082,7 +1111,7 @@ export class Place extends QuestResource {
         else if (buildingType === BT_ANY_HOUSE) wildcardFound = VALID_HOUSE_TYPES.includes(summary.buildingType);
         else if (buildingType === BT_ANY_SHOP) wildcardFound = VALID_SHOP_TYPES.includes(summary.buildingType);
         if (summary.buildingType !== buildingType && !wildcardFound) continue;
-        if (summary.buildingType === BT_GUILDHALL
+        if (FACTION_HELD.includes(summary.buildingType)
           && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) continue;
         if (summary.factionId === DARK_BROTHERHOOD_FACTION || summary.factionId === THIEVES_GUILD_FACTION) continue;
         yield { b, i, summary, buildingKey: makeBuildingKey(b.x, b.y, i) };
@@ -1526,7 +1555,7 @@ export function isPlayerAtBuildingType(world, p2, p3) {
         console.warn(`[quest] Unhandled building type: p1=0, p2=${p2}, p3=${p3}`);
         return false;
     }
-  } else if (p2 === BT_GUILDHALL) {
+  } else if (FACTION_HELD.includes(p2)) {   // AUDIT STAR8 S4: a temple's row as a guild hall's
     if (buildingType !== p2) return false;
     if (p3 === 0) return true;
     return inside.building.factionId === p3;

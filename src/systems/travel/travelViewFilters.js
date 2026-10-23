@@ -93,6 +93,10 @@ export function toggleTravelViewFilter(group) {
   return next[group];
 }
 
+/** MAP-PLAYERS (2026-10-20, Dudey: "add a filter button on the Worldmap not overworld map ... to show and not show
+ *  players"): are other players drawn at all - the Overworld's Travellers switch, one store, so both maps answer alike. */
+export const playersOnMaps = (f = travelViewFilters()) => f.travellers !== false;
+
 /** Hear a change; returns the way to stop hearing it. */
 export function onTravelViewFilters(fn) {
   listeners.add(fn);
@@ -114,8 +118,10 @@ export const TV_WHO_TEXT = Object.freeze({
   renown: (n) => (n > 0 ? `Renown ${n}+` : 'Any renown'),
   nodeKm: (km) => (km == null ? 'Nodes: any km' : `Nodes: ${km} km`),
   tip: (label, on) => `${on ? 'Hide' : 'Show'} ${label.toLowerCase()} on the maps`,
-  renownTip: 'The least Renown a player shows at - press for the next',
-  nodeTip: 'How far off a gathering group still shows - press for the next',
+  renownTip: 'Shows players with at least this Renown. Click for the next',
+  all: (on) => (on ? 'Shown' : 'Hidden'),   // MAP-PLAYERS: the world map's one switch for every player
+  allTip: (on) => `${on ? 'Hide' : 'Show'} other players on the maps`,
+  nodeTip: 'Shows gathering groups up to this distance. Click for the next',
 });
 /** OW-KIN: a player's names are coloured by who they are to me - my party's green stays the party's (net/social.js). */
 export const TV_KIN_COLORS = Object.freeze({

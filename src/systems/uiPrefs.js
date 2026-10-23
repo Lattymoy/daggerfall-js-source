@@ -166,6 +166,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // assets are - only a look a player might prefer to opt OUT of.
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
+  monsterVolume: 1,   // MONSTER-VOL: a monster's calls, attack sounds and pain cries, 0..1 (systems/monsterVolume.js)
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players an
   // Oblivion Gate's court draws at once - the nearest, the party always (net/gate/gateCrowd.js GATE_CROWD_TIERS; 0 everyone,
@@ -274,6 +275,9 @@ export function loadPrefs() {
         // diamond's style, and so stays Off. Diamond was the old default and left no trace: it moves to the hotbar
         // with everyone who never chose.
         if ((p[SHELF_STAMP] ?? 0) < 2 && p.quickbarStyle === undefined && p.quickslots === false) _prefs.quickbarStyle = 'quickbar';
+        // DIAMOND-HB (2026-10-18): Diamond is now its own style ('diamond'). An old save with 'quickbar' and the switch on
+        // had chosen Diamond, so it moves to 'diamond'. Off ('quickbar' with the switch off) stays as it was.
+        if (_prefs.quickbarStyle === 'quickbar' && _prefs.quickslots !== false) _prefs.quickbarStyle = 'diamond';
         // AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): ALL OFF STAYS ALL OFF. The Enhanced AI's default turned
         // On (BAL4), and a shelf that pressed the Features page's All off while it shipped Off stored nothing for it - Off
         // was its default, and this shelf writes no default - so the flip would stand the AI up over "everything off".

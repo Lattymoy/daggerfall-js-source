@@ -338,7 +338,7 @@ test('AUDIT IT1 W4/G3: the mod is loaded for the game - off at the start, no fac
   assert.match(w, /const immersiveSettingsIfOn = \(\) => \(immersiveTravelLoaded\(\) \? readImmersiveTravelSettings\(\) : null\);/);
   assert.match(w, /if \(!immersiveTravelLoaded\(\) \|\| \(kind !== IT_POPUP\.carriage && kind !== IT_POPUP\.seafarer\)\) return null;/);
   assert.match(read('src/scenes/modWorldData.js'), /const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR \? immersiveTravelLoaded : \(\) => modSetting\(vendor, 'Enabled'\) === true;/);
-  assert.match(read('src/systems/features.js'), /modFeature\('immersive-travel', \(\) => t\('features\.mod\.immersiveTravel\.effect', 'Takes effect when the game is next started \(an in-game Load keeps what it started with\); its fares and rules at the next map\.'/);
+  assert.match(read('src/systems/features.js'), /modFeature\('immersive-travel', \(\) => t\('features\.mod\.immersiveTravel\.effect', 'Takes effect the next time you start the game; loading a save is not enough\. Fares and rules change at the next map\.'/);
 });
 
 test('AUDIT IT1 L3: Init registers its services only once BOTH factions went in (IL_047a-050b) - a faction id already taken leaves the drivers with no service, and says so', () => {

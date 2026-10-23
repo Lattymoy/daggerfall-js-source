@@ -82,7 +82,10 @@
     "old": "const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
     "new": "const punishmentType = (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) && failed2 ? 2 : 0;",
     "why": "killed by audit18 social F2 against the player's own data (ARENA2_PATH): the banishment's second roll is drawn and the defense reads the wrong number (AUDIT 21 F5's short-circuit)",
-    "tests": ["test/systems/audit18_systems_social.test.js", "test/systems/rep3_banishment.test.js"]
+    "tests": [
+      "test/systems/audit18_systems_social.test.js",
+      "test/systems/rep3_banishment.test.js"
+    ]
   },
   {
     "name": "ARENA2-TRIAGE-4-the-plea-pays-the-whole-fine",
@@ -107,8 +110,8 @@
   {
     "name": "ARENA2-TRIAGE-4-a-zero-day-release-shows-a-verdict",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    // releasing in this case, so player is left with 1 health\").\n    fillVitalSigns(playerEntity);\n    release();",
-    "new": "    // releasing in this case, so player is left with 1 health\").\n    fillVitalSigns(playerEntity);\n    release();\n    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }));",
+    "old": "    // releasing in this case, so player is left with 1 health\").\n    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);\n    release();",
+    "new": "    // releasing in this case, so player is left with 1 health\").\n    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too\n    fillVitalSigns(playerEntity);\n    release();\n    courtBox(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }));",
     "why": "killed by audit18 social F6 against the player's own data (ARENA2_PATH): the plea shows a verdict box, and state 2 shows 8055 twice",
     "tests": [
       "test/systems/audit18_systems_social.test.js"

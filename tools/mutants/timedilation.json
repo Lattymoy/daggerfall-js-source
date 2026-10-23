@@ -83,8 +83,8 @@
   {
     "name": "TD-rise-blind",
     "file": "src/scenes/world.js",
-    "old": "areEnemiesNearby(exteriorFoePool()) || navalHostileNear() || !travelViewAllowed().ok) return;",
-    "new": "areEnemiesNearby(exteriorFoePool()) || !travelViewAllowed().ok) return;",
+    "old": "areEnemiesNearby(wildSeen(exteriorFoePool())) || navalHostileNear() || !travelViewAllowed().ok) return;",
+    "new": "areEnemiesNearby(wildSeen(exteriorFoePool())) || !travelViewAllowed().ok) return;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]

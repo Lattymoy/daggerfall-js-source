@@ -32,12 +32,12 @@ export function postNoticeText(event) {
   const ps = Array.isArray(event?.post) ? event.post : [];
   // one piece, new or waiting: by name, and its gift by name (AUDIT SERVER-POST: the thirteen's Hourlock lands with the deploy,
   // so their first word of it is a sitting's first look - which said only "1 message waiting")
-  const one = (p) => `Post from ${p.from}: "${p.subject}"${p.item && !p.claimed ? ` - ${p.item.name} is waiting for you` : ''}. ${where}`;
+  const one = (p) => `Post from ${p.from}: "${p.subject}"${p.item && !p.claimed ? `, with ${p.item.name} to claim` : ''}. ${where}`;
   if (event?.kind === 'new') return ps.length === 1 ? one(ps[0]) : `${ps.length} new messages in your mailbox. ${where}`;
   // PRIVATE-REPORT: a reader's private reports - said apart from the post, and never what they say (the world tab is read
   // over a shoulder, on a stream)
   // AUDIT PRIVATE-REPORT CLI-6: `/mail`, never `/bug` - `/bug` lands on the send form, and the inbox is the mailbox's door
-  if (event?.kind === 'reports') return t('report.notice', '{n, plural, one {# private report is waiting to be read.} other {# private reports are waiting to be read.}} Type /mail, or open the mailbox beside the hourglass, and press Private reports.', { n: event.unread });
+  if (event?.kind === 'reports') return t('report.notice', '{n, plural, one {# private report is waiting to be read.} other {# private reports are waiting to be read.}} Type /mail, or open the mailbox beside the hourglass, then click Private reports.', { n: event.unread });
   const n = event?.count ?? 0;
   if (n === 1 && ps.length === 1) return one(ps[0]);
   return `You have ${n} message${n === 1 ? '' : 's'} waiting in your mailbox. ${where}`;
@@ -77,6 +77,8 @@ export class PostBox {
     this.version = 0;
     this.at = 0;
     this.busy = false;
+    /** LOST-SPOILS: a Claim all under way - one claim after another, the window's buttons down until it ends */
+    this.claimingAll = false;
     /** @type {Set<string>|null} */ this._known = null;
     /** @type {Promise<any>|null} */ this._looking = null;
     /** AUDIT SERVER-POST: this sitting's own changes to the box (a piece opened, claimed, thrown away), counted - a look
@@ -282,6 +284,31 @@ export class PostBox {
       return { ok: false, error: r?.error ?? 'server' };
     } finally {
       this.busy = false;
+      this._changed();
+    }
+  }
+
+  /**
+   * LOST-SPOILS: CLAIM EVERY ITEM WAITING - a boss's floor's leftovers come a piece an item (net/lostLaw.js) - one claim
+   * after another, each its own realm act as a press of Claim is, stopping at the first refusal the next would meet too
+   * (a piece claimed meanwhile, or gone, is passed over). Answers `{ ok, items }`, what landed, or `{ ok: false, error,
+   * items }`.
+   */
+  async claimAll() {
+    if (this.busy || this.claimingAll) return { ok: false, error: 'busy', items: [] };
+    this.claimingAll = true; this._changed();
+    /** @type {any[]} */
+    const items = [];
+    try {
+      for (const id of this.post.filter((p) => p.item && !p.claimed).map((p) => p.id)) {
+        const r = await this.claim(id);
+        if (r.ok) { items.push(r.item); continue; }
+        if (r.error === 'post-claimed' || r.error === 'no-post') continue;
+        return { ok: false, error: r.error, items };
+      }
+      return { ok: true, items };
+    } finally {
+      this.claimingAll = false;
       this._changed();
     }
   }

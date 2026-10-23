@@ -6,6 +6,7 @@
 // counted from the rows, and the arena's titles and laurel derived at the token's mint.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';   // AUDIT COLLECTIONS-II: the glyph's door's read, by source
 import { standService } from '../../accountDb.mjs';
 import { mintArenaReceipt, readArenaReceipt, verifyArenaReceipt, arenaReceiptValid, ARENA_RECEIPT_TTL_S } from '../../../src/net/arena/arenaReceipt.js';
 import { mintReceipt, readReceipt } from '../../../src/net/gate/gateReceipt.js';
@@ -260,4 +261,28 @@ test('ARENA4 the banners: join free, a second refused, quit at once, the other b
   board = (await S.call('/v1/arena/board', {}, A.secret)).body;
   assert.equal(board.team.laurel, null, 'the first season has no last season to give a laurel');
   assert.equal(board.season, arenaSeasonOf(nowS()));
+});
+
+test('AUDIT COLLECTIONS-II (lanes 1, 2): the glyph\'s and the icon\'s doors answer the whole wardrobe, honours and all - the season\'s #1 keeps arenachampion and the laurel through a glyph hidden and an icon taken off, and may hide the laurel itself (it was refused not-held: the door read the row without the arena\'s honours); the glyph\'s door reads a Charter\'s titles as the title\'s does (mutants: either door out of ARENA_HONOUR_PATHS; the glyph\'s door without withSeatTitles)', async () => {
+  _resetArenaCache();
+  const S = await standService();
+  const A = await S.registered('Gwyn');
+  for (const n of ['Hask', 'Ivo', 'Jorn', 'Kael', 'Lyra']) {
+    const f = await S.registered(n);
+    for (let i = 0; i < 2; i++) await claimOf(S, A, await pvpReceipt(S, A, f, 0));
+  }
+  _resetArenaCache();
+  assert.equal((await S.call('/v1/account/title', { title: 'arenachampion' }, A.secret)).status, 200, 'the #1, ten bouts against five');
+  let r = await S.call('/v1/account/glyph', { glyph: 'sprout', on: false }, A.secret);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.ok(r.body.titles.includes('arenachampion') && r.body.title === 'arenachampion', 'a glyph hidden keeps the champion\'s title, worn');
+  assert.ok(r.body.glyphs.includes('laurel'), 'and the laurel');
+  r = await S.call('/v1/account/glyph', { glyph: 'laurel', on: false }, A.secret);
+  assert.equal(r.status, 200, `the laurel may be hidden: ${JSON.stringify(r.body)}`);
+  assert.deepEqual(r.body.glyphsOff, ['sprout', 'laurel']);
+  r = await S.call('/v1/account/icon', { icon: null }, A.secret);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.ok(r.body.titles.includes('arenachampion') && r.body.glyphs.includes('laurel'), 'an icon taken off keeps them too');
+  const src = readFileSync(new URL('../../../server-account/src/index.js', import.meta.url), 'utf8');
+  assert.match(src, /const r = await equipGlyph\(ctx, await withSeatTitles\(ctx, who\.player, env\), env, body\.glyph, body\.on !== false\);/, 'the glyph\'s door reads a Charter\'s and a chapter\'s titles');
 });

@@ -303,7 +303,7 @@ structure ours.
   the board and its build, the hazards, the units and the roster, the deployment, the legal commands and their effect, a
   turn's end, the game's end, and each seat's view (KG1 found none to make - section 11). A refused command answers a
   refusal word and changes nothing (a relay keeps the last good state - `net/card/cardLaw.js`'s way).
-- THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const ENEMY_BASICS = Object.freeze({"` (ONE DFU
+- THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const VANILLA_ENEMY_BASICS = deepFreeze("` (DEX1, 2026-10-19: the table's vanilla rows by name, copied before any mod writes one - Daggerfall Enemy Expansion writes its classic lines into the live table, as DFU's EnemyBasics.Enemies is written, and a client reading this module after that would have built another roster; ONE DFU
   MEMBER, ONE EXPORT - never a second literal of the levels and the health), at float32 with RoundToInt's half to even,
   pinned deepEqual against section 2.2's table. DECIDED: the vanilla rows, never a mod's overlay. Meaner Monsters is
   applied at a foe's mint (`applyMeanerMonsters`, `characters/enemy/enemyEntity.js`), not to the table, and one roster for every
@@ -1034,8 +1034,8 @@ section (14.9).
 
 The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this order:
 
-- WHAT THIS IS (law 1): "The King's Gambit is a game of armies and kings on a board of {cols} by {rows} cells laid on
-  this table. Each side guards its king: fell the other king to win."
+- WHAT THIS IS (law 1): "The King's Gambit is a game of armies and kings, played on a board of {cols} by {rows} cells.
+  Each side protects its king. Defeat the other king to win."
 - THE NEXT STEP, one live sentence by the reader's state - no regular free; none chosen; a regular playing for fun
   tonight; a purse short of the least stake ("{name} will not sit down for less than {stake} gold. Come back with more,
   or choose another regular."); no stake chosen; choose your king, then your army; add a unit or Auto-fill; start the
@@ -1047,7 +1047,7 @@ The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this 
   take your turn; strike; mind the ground; win - every number read from the law. OPEN until the player (not the
   character) has finished one game; once they fold or open it, their choice holds (`ui/seatTab.js` boardFold's press,
   never the `toggle` event - AUDIT PLAIN-UI C1).
-- WHAT THE WORDS MEAN (law 2; "Words on this table" until KG3's English pass, 16.5), folded: Regular, Tier, Blunder, Least stake, Stake, For fun, Crown, King, Army, Points,
+- WHAT THE WORDS MEAN (law 2; "Words on this table" until KG3's English pass, 16.5), folded: Regular, Tier, Blunder, Minimum stake, Stake, For fun, Crown, King, Army, Points,
   Level, Health, Attack, Melee, Ranged, Auto-fill, Turn and action, Move, Potion, Round, Fire, Spikes and Poison,
   Warning, Wall, Pillar and Water, Layout, Reach, Range and Target, Fallen, Forfeit - each in brass over its meaning.
 - THE NUMBERS ARE THE LAW'S (law 3): every figure in a line, the guide or the words is interpolated from its export -
@@ -1071,7 +1071,7 @@ The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this 
 - THE STAKE AND THE KING: three tiles, "x{m} - {m x stake} gold", the chosen in brass; a pick past the purse or past the
   regular's night says why when pressed; under them, what the stake does before it is put down: "Win: you take back
   {pay} gold. Lose, forfeit or stand up mid-game: {name} keeps your {stake}." Then the four crowns, each the painted King
-  of its crown over its name; one line, "The crown changes only your king's face: every king plays alike - level {level},
+  of its crown over its name; one line, "The crown only changes how your king looks. Every king plays the same: level {level},
   {hp} health, attack {attack}." (16.5)
 - THE ARMY: the header's two chips, "Points left {left} of {budget}" and "Units {n} of {max}"; THE UNIT - the last unit
   pressed, shown large (the binder's law: "a tile's own words are too small to read") beside the grid on a desktop and
@@ -1080,7 +1080,7 @@ The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this 
   full: 12 units."). The grid: the 46 units in the law's order (a cost's ties by the names the player reads, 10.2),
   picture-only faces, the name in words, chips for level, health, attack, melee or ranged and "{cost} pts" - points,
   never gold, never in the purse's gold; a unit the points or the twelve refuse stays pressable and says why. Your army:
-  a row a unit, dearest first, a visible Remove in words. "Your king: {name}, King of {crown} - free. If your king falls,
+  a row a unit, dearest first, a visible Remove in words. "Your king: {name}, King of {crown} (free). If your king falls,
   you lose." Presses: Auto-fill, Clear, Back, Start the battle - stake {stake} gold (primary), Stand up.
 - THE TURN: the header "ROUND {r} - YOUR TURN" or "{NAME}'S TURN"; chips with pips AND words ("{n} of {actions} actions
   left"), both sides' potions, both sides' fallen; the next-step line; the information box; ARMIES (folded) - both
@@ -1091,17 +1091,17 @@ The four blocks of PLAIN-UI a (`10-UI/Plain-Words.md`), on every stage, in this 
   meter and "{hp} of {max}", how far it moves, whom it can strike now (`foesInRange`), its cell's hazard; a king: "If
   this king falls, you lose." or "If this king falls, {name} loses." A cell - open floor; a wall or a pillar ("no piece walks through it, and it blocks a
   ranged shot"); water ("cannot be crossed on foot, but ranged attacks pass over it" - the mod's); an active hazard ("a
-  piece that ends its own side's turn here loses {damage} health"); a warning ("becomes {kind} at the end of round {r};
-  it hurts nobody until then").
+  piece that ends its turn here loses {damage} health"); a warning ("this cell becomes {kind} at the end of round {r}.
+  It is harmless until then.").
 - THE LOG: the chrome's - four lines in view, the newest last and scrolled into view, folded with the panel - the last
   12 kept; a sentence a line, the player in the second person and the regular by name, one pattern an event of the law
   (move, attack, a shot, a kill, potion, hazard, armed, warning, turn, over), tabled in this record before KG3 builds it
   and each written to fit one line of the panel. The chrome cuts a line too long for it (`white-space: nowrap` and an
   ellipsis, so its scroll stands on whole lines), where FONT1 F8 asks a long line wrapped whole: recorded against the
   chrome - the three panels' one home - for the card tables' next change (D16).
-- THE RESULT, after the result's beat: the headline ("You win" / "You lose", "- by forfeit" when one); the king's fall
+- THE RESULT, after the result's beat: the headline ("You win" / "You lose", "by forfeit" when one); the king's fall
   ("{name}, King of {crown}, falls."); the gold in one sentence ("You collect the pot: your {stake} gold back, plus
-  {stake} gold from {name}." / "{name} keeps your {stake} gold." / "Played for fun - no gold changed hands."); when the
+  {stake} gold from {name}." / "{name} keeps your {stake} gold." / "Played for fun. No gold changed hands."); when the
   regular's night ran out, that the next game is for fun; the next step. Presses: Play again (primary), Change army,
   Choose another regular, Leave the table.
 - THE TUTORIAL: the page 'kings-gambit' in the catalogue (TUT1: at most sixty words; no number - the guide carries them;
@@ -1307,11 +1307,11 @@ characters).
 | move | Your {piece} moves. / {name}'s {piece} moves. |
 | a blow | Your {piece} strikes {target} for {damage}. / {name}'s {piece} strikes your {target} for {damage}. |
 | a shot | Your {piece} shoots {target} for {damage}. / {name}'s {piece} shoots your {target} for {damage}. |
-| a kill | ... for {damage} - it falls. |
+| a kill | ... for {damage}. It falls. |
 | potion | Your {piece} drinks a potion: +{healed}. / {name}'s {piece} drinks a potion: +{healed}. |
-| hazard | Fire bites your {piece} for {damage}. (Spikes, Poison; "takes ... - it falls." when it kills) |
-| armed | The warnings turn: {n} hazards are live now. |
-| warning | A warning: fire is coming to {n} cells. (spikes are, poison is) |
+| hazard | Fire bites your {piece} for {damage}. (Spikes, Poison; "hits ... It falls." when it kills) |
+| armed | The warnings turn into hazards: {n} hazards are now active. |
+| warning | Warning: fire is coming to {n} cells. (spikes are, poison is) |
 | turn | Round {round}: your turn. / Round {round}: {name}'s turn. |
 | end | You end your turn. / {name} ends the turn. |
 | forfeit | You forfeit the game. |
@@ -1321,7 +1321,7 @@ characters).
 ### 16.2 THE REGULAR'S VOICE (10.5's MEASURE, answered)
 
 The invitation is the mod's own line - "Care for a game of The King's Gambit?" - over the regular's head as the player
-chooses them; at the end one of three lines by a roll, the regular's win ("A fine game - and mine.", "Better luck next
+chooses them; at the end one of three lines by a roll, the regular's win ("A fine game, and mine.", "Better luck next
 time.", "The board is mine tonight.") or loss ("Well played.", "You have my measure tonight.", "Again, and I will have
 you."), each held `BARK_MS` (CARDS4b's layer, the regulars' own). The regulars stand in the chairs the setup lists them
 by (`cardRegularsNow`'s branch), a player sat in a regular's chair keeping it (AUDIT CARDS-3 E-N3's law).

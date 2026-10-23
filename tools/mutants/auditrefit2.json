@@ -38,8 +38,8 @@
   {
     "name": "A2-price-guns-ignored",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "if (!(Number.isFinite(k) && k > 0 && k !== 1)) return;\n    if (Number.isFinite(hurt.hull)) hurt.hull *= k;",
-    "new": "if (!(Number.isFinite(k) && k > 1)) return;\n    if (Number.isFinite(hurt.hull)) hurt.hull *= k;",
+    "old": "const k = (Number.isFinite(refit) && refit > 0 ? refit : 1) * captainsDue().guns;",
+    "new": "const k = (Number.isFinite(refit) && refit > 1 ? refit : 1) * captainsDue().guns;",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

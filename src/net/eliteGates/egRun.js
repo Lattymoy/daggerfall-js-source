@@ -38,11 +38,11 @@ export const EG_TONIC_MAX = 2;
 export const EG_SUTLER = Object.freeze({ cant: 20, tonic: 15, shard: 30 });
 /** THE CANTRIPS (section 17.2), by number. */
 export const EG_CANTRIPS = Object.freeze([
-  Object.freeze({ id: 0, key: 'sight', name: 'Sight', line: 'Caches, alcoves and Lurkers shown to the company for the hall.' }),
-  Object.freeze({ id: 1, key: 'stillness', name: 'Stillness', line: "The next hall's first wave and rift pour 10 s late." }),
+  Object.freeze({ id: 0, key: 'sight', name: 'Sight', line: 'Shows the company every cache, alcove and Lurker in the hall.' }),
+  Object.freeze({ id: 1, key: 'stillness', name: 'Stillness', line: "The next hall's first wave and rift come 10 s later." }),
   Object.freeze({ id: 2, key: 'mending', name: 'Mending', line: 'The company heals 15%.' }),
   Object.freeze({ id: 3, key: 'severance', name: 'Severance', line: "The next lord's Sappers do not rise in its first phase." }),
-  Object.freeze({ id: 4, key: 'longstep', name: 'Long Step', line: 'Your crumbles wait +0.5 s for one span.' }),
+  Object.freeze({ id: 4, key: 'longstep', name: 'Long Step', line: 'Crumbling ground holds 0.5 s longer under you for one span.' }),
 ]);
 /** A CACHE's kinds (section 17.1). */
 export const EG_CACHES = Object.freeze(['shard', 'tonic', 'cant', 'lumen']);

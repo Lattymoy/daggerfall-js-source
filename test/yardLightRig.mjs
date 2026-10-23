@@ -67,6 +67,7 @@ export function exteriorFrame({ lane, night, town, lamps, eye, ranges, tick = ()
     peerTorchLights: () => [], gatePool: null, riteHost: null, camps: { lights: () => [] }, droppedTorches: { lights: () => [] },
     naval: null, festivalStage: null, quays: null,
     poiHost: null,   // PIN MOVED (POI-2): a POI's own lights join the scene's - no POI in this rig
+    starfall: null,   // PIN MOVED (STAR4): a fallen star's beacon and its camp's braziers join the scene's - no star in this rig
     portHost: ports ? { lights: () => ports } : null,   // SHIPYARDS: the lighthouses' lamps and the shipyards' lanterns, beside the quays'
     yards: { lamps: () => lamps }, yardLampRows,
     CITY_LIGHT_COLOR_F32: lanternColor(lane, new Float32Array(CITY_LIGHT_COLOR)),

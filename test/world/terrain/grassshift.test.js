@@ -164,7 +164,10 @@ test('PERF-EXT21: a field that crossed grows the same world as one that never di
   const RA = new G.LabGrassRenderer(A.gl), RB = new G.LabGrassRenderer(B.gl);
   let compA = [0, 0, 0];
   const compB = [0, 0, 0];
-  const fa = G.createGrassField(RA, closures(compA)), fb = G.createGrassField(RB, closures(compB));
+  // PIN MOVED (FB1021B): on one clock that stands still - the field's frame is measured in time now, and two fields
+  // on the real clock fill as fast as the machine let each one that frame
+  const still = { clock: () => 0 };
+  const fa = G.createGrassField(RA, { ...closures(compA), ...still }), fb = G.createGrassField(RB, { ...closures(compB), ...still });
   let crossed = false;
   const path = (i) => [409.6 + 700 + i * 2, 0, 300];   // a world path east across x = 819.2
   for (let i = 0; i < 400; i++) {
@@ -175,6 +178,19 @@ test('PERF-EXT21: a field that crossed grows the same world as one that never di
     fb.update(e[0], e[2], cb.keep, cb.ground);
   }
   assert.ok(crossed);
+  // PIN MOVED (FB1021B): the cell under the eye re-read after the crossing (an invalidate) comes back whole on the next
+  // frame - the path's own cells now come by slices on the eye's pace, and the whole placer must stand at the field's
+  // origin as they do
+  {
+    const [x, , z] = path(399), key = G.cellKey(Math.floor(x / G.GRASS_CELL), Math.floor(z / G.GRASS_CELL));
+    fa.invalidate(x + compA[0] - 0.5, z - 0.5, x + compA[0] + 0.5, z + 0.5);
+    fb.invalidate(x - 0.5, z - 0.5, x + 0.5, z + 0.5);
+    assert.ok(!fa.live.has(key) && !fb.live.has(key), 'the eye\'s own cell let go in both');
+    const ca = closures(compA), cb = closures(compB);
+    fa.update(x + compA[0], z, ca.keep, ca.ground);
+    fb.update(x, z, cb.keep, cb.ground);
+    assert.ok(fa.live.has(key) && fb.live.has(key), 'and placed whole again on the next frame');
+  }
   assert.deepEqual([...fa.live.keys()].sort((x, y) => x - y), [...fb.live.keys()].sort((x, y) => x - y), 'the same cells, keyed the same');
   const e = path(399);
   const da = drawSlots(RA, A.rec, [e[0] + compA[0], 0, e[2]]), db = drawSlots(RB, B.rec, e);
@@ -207,7 +223,7 @@ test('PERF-EXT21: a field that crossed grows the same world as one that never di
 test('PERF-EXT21: invalidate after a shift drops exactly the cells whose squares, where they stand in the scene now, meet the rect', () => {
   const { closures } = ring(2);
   const r = { allocSlots() {}, writeSlot() {}, clearSlot() {}, shiftSlots() {} };
-  const field = G.createGrassField(r, { ...closures([0, 0, 0]), perFrame: 1e9 });
+  const field = G.createGrassField(r, { ...closures([0, 0, 0]), perFrame: 1e9, clock: () => 0 });   // PIN MOVED (FB1021B): the whole disc in the one update
   const off = [-TERRAIN_SIZE, 0, 0];   // 819.2 is 27 cells and 9.2 m: the grids no longer line up
   field.update(609.6, 309.6);
   field.shiftOrigin(off);
@@ -330,7 +346,7 @@ test('PERF-EXT22: on a walk no frame places more than one slice, every rim cell 
   assert.ok(extra.every((h) => nearest(h) > G.LAB_GRASS.range && nearest(h) <= G.LAB_GRASS.span), 'and the rest are the trailing rim the hysteresis keeps');
 });
 
-test('PERF-EXT22: inside the fade a cell still comes whole, a boot still fills two whole cells a frame, and a shift or an invalidate starts a half-placed cell again', () => {
+test('PERF-EXT22: inside the fade a cell still comes whole, a boot fills two whole cells a frame where its frame\'s time allows, and a shift or an invalidate starts a half-placed cell again', () => {
   // the fade's start is the SHADER's (the lab's text), not a second guess of it
   const m = /smoothstep\(uRange\*([0-9.]+), uRange, d\)/.exec(G.LAB_GRASS_VS);
   assert.ok(m, 'the lab shader fades from a fraction of the range');
@@ -340,15 +356,21 @@ test('PERF-EXT22: inside the fade a cell still comes whole, a boot still fills t
   let calls = 0;
   const keep = (x, z) => { calls++; return cl.keep(x, z); };
   const R = laneRecorder();
-  const field = G.createGrassField(R, { keep, ground: cl.ground });
-  // a boot is a catch-up: two whole cells on the first frame
+  // PIN MOVED (FB1021B): on a clock that stands still - a machine that does the work in no time, so the frame's time
+  // (GRASS_FRAME_MS, test/render/fb1021b_grass.test.js) never runs out and perFrame alone bounds the frame
+  const field = G.createGrassField(R, { keep, ground: cl.ground, clock: () => 0 });
+  // a boot: two whole cells on the first frame
   calls = 0;
   const missing = field.update(409.6, 409.6, keep, cl.ground);
-  assert.ok(missing > G.GRASS_CATCH_UP && R.writes.length === 2 && calls === 2 * field.perCell, `a boot: two whole cells (${R.writes.length}, ${calls} keeps)`);
-  // ...and it keeps that pace to the rim: only the last GRASS_CATCH_UP cells come a slice at a time
+  assert.ok(missing > 300 && R.writes.length === 2 && calls === 2 * field.perCell, `a boot: two whole cells (${R.writes.length}, ${calls} keeps)`);
+  // ...and it keeps that pace through every cell due now - inside GRASS_DUE_AT of the range; past it a standing eye
+  // brings nothing nearer, and that last band comes a slice a frame
   const frames = settle(field, [409.6, 0, 409.6], { keep, ground: cl.ground });
-  const whole = Math.ceil((field.live.size - G.GRASS_CATCH_UP) / 2), tail = G.GRASS_CATCH_UP * Math.ceil(field.perCell / G.GRASS_SLICE);
-  assert.ok(frames <= whole + tail + 2, `the boot fills at two cells a frame to the last few (${frames} frames for ${field.live.size} cells; the old pace ${Math.ceil(field.live.size / 2)})`);
+  const dueR = G.LAB_GRASS.range * G.GRASS_DUE_AT, cells = [...field.live.values()];
+  const nearest = (h) => Math.hypot(Math.max(h.cx * G.GRASS_CELL - 409.6, 0, 409.6 - (h.cx + 1) * G.GRASS_CELL), Math.max(h.cz * G.GRASS_CELL - 409.6, 0, 409.6 - (h.cz + 1) * G.GRASS_CELL));
+  const due = cells.filter((h) => nearest(h) <= dueR).length, band = cells.length - due;
+  assert.ok(band > 20, `the fixture has a band past GRASS_DUE_AT (${band})`);
+  assert.ok(frames <= Math.ceil(due / 2) + band * Math.ceil(field.perCell / G.GRASS_SLICE) + 2, `the boot fills at two cells a frame to GRASS_DUE_AT (${frames} frames for ${due} + ${band} cells)`);
   // two inner cells re-read (an invalidate under the eye): whole, both on the next frame
   R.writes.length = 0;
   field.invalidate(400, 400, 420, 420);   // the eye's own cell and a neighbour, well inside the fade start

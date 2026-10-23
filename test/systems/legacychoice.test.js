@@ -348,10 +348,10 @@ test('LEGACY-CHOICE the Family tab says why there is no house: no lineage chosen
   const prov = (over) => ({ on: () => true, ...over });
   assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => true })), /chose to live without a house\. Make a new character to found one\./);
   assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => false })), /chose to live without a house/);
-  assert.match(noFamilyLine(prov({ choice: () => null, online: () => true })), /online, a house is founded only when a character is made\. Make a new character to found one\./);
+  assert.match(noFamilyLine(prov({ choice: () => null, online: () => true })), /Online, a house is founded only when a character is made\. Make a new character to found one\./);
   assert.match(noFamilyLine(prov({ choice: () => null, online: () => false })), /founded when your character is made, or the first time an older character is loaded/);
   assert.match(noFamilyLine({ on: () => false }), /Turn on Project Legacy/);
-  assert.match(noFamilyLine(null), /open this from a game/);
+  assert.match(noFamilyLine(null), /Open this from a game to see your family\./);
   // the world hands the tab both
   const w = read('src/scenes/world.js');
   assert.match(w, /choice: \(\) => playerEntity\.legacyChoice \?\? null,   \/\/ LEGACY-CHOICE: why a character has no house\n\s*online: \(\) => isOnlinePage\(\),/);

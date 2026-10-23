@@ -59,7 +59,7 @@ test('FEUD BALANCE THE WILL, THROUGH THE LEDGER: a rank-3 one\'s will holds unti
 });
 
 test('FEUD BALANCE THE PAGE: its will\'s rule says all three ways; its last stand its new share (mutants: the old words)', () => {
-  assert.equal(PG.willWords({ rank: 3 }), 'Its will must be broken - strike its weakness, stagger it, or dodge its blow perfectly.');
+  assert.equal(PG.willWords({ rank: 3 }), 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.');
   assert.equal(PG.lastStandWords({ rank: 4 }), 'Last stand: once a fight it rises again, at 35% of its health.');
 });
 

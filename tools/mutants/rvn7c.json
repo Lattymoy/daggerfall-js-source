@@ -309,7 +309,7 @@
   {
     "name": "RVN7c-page-off-the-map",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  return r.lairKnown ? `Lair: ${r.lair.name} - on your map.` :",
+    "old": "  return r.lairKnown ? `Lair: ${r.lair.name}, marked on your map.` :",
     "new": "  return r.lairKnown ? `Lair: ${r.lair.name}.` :",
     "tests": [
       "test/systems/rvn7c_map.test.js"

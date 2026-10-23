@@ -41,6 +41,7 @@
 import { realmActFirst, prepareRealmRecord, mustChange, dropObjects, dropIfUnnamed, recordMovedOf, REALM_ID_RE } from './realm.js';
 import { giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';
 import { POST_ID_RE, POST_BOX_MAX, postItemHead } from '../../src/net/postLaw.js';
+import { isLostBatch } from '../../src/net/lostLaw.js';   // LOST-SPOILS: the Lost and Found's pieces, charged to the budget
 import { isReportReader, reportCountsOf } from './reports.js';   // PRIVATE-REPORT: a reader's box counts the reports waiting
 
 /** The record a row holds, or null. AUDIT SERVER-POST: ONE ANSWER to "does this piece hold an item" for the box, the
@@ -115,12 +116,14 @@ export async function claimPost(ctx, reader, { id, character, realm = null } = {
   if (side.error) return side;
   if (!side.at) return { error: 'realm-needed' };
   if (typeof id !== 'string' || !POST_ID_RE.test(id)) return { error: 'no-post' };
-  const row = await db.prepare('SELECT id, item, claimed_at FROM server_post WHERE id = ? AND to_id = ?').bind(id, reader.id).first();
+  const row = await db.prepare('SELECT id, batch, item, claimed_at FROM server_post WHERE id = ? AND to_id = ?').bind(id, reader.id).first();
   if (!row) return { error: 'no-post' };
   const rec = recordOf(row);
   if (!rec) return { error: 'post-no-item' };
   if (row.claimed_at != null) return { error: 'post-claimed' };
-  const prep = await prepareRealmRecord(ctx, reader.id, side.at, (save) => { giveTradeGoods(save, [rec], 0); return null; });
+  // LOST-SPOILS: a boss's leftover is the client's roll - charged to the budget as the floor's piece is, never witnessed
+  // (lostLaw.js); the developers' gifts the service minted are witnessed, as every act of its own is
+  const prep = await prepareRealmRecord(ctx, reader.id, side.at, (save) => { giveTradeGoods(save, [rec], 0); return null; }, { witness: !isLostBatch(row.batch) });
   if ('error' in prep) return prep;
   try {
     await db.batch([

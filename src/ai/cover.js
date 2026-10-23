@@ -9,7 +9,10 @@
 // and the foes', arrow and spell bolt) ask the index after the collider. With the switch off nothing reads it.
 //
 // The index rides its collider (`collider.cover`) and its sets are keyed like the collider's buckets, so a pixel, a
-// building or a dungeon that leaves takes its cover with it (Collider.removeBucket). A set's points are the flats'
+// building or a dungeon that leaves takes its cover with it (Collider.removeBucket). PROP-BODIES: a set holds a flat's
+// BODY beside its cover - a proxy marked `body` (world/propBodies.js), filed in a grid of its own that no sight ray or
+// missile reads and only the player's clamp asks (`near`, player/bodyClamp.js) - so a body rides every set's lifecycle
+// as its cover does, whatever the Enhanced AI switch. A set's points are the flats'
 // own [x, y, z] base arrays, by reference, in the set's own frame; `t()` is the frame's translation (a streaming
 // pixel's), so a recentre moves the cover as it moves the meshes, and a felled tree sunk in its batch sinks its
 // cover with it.
@@ -119,12 +122,12 @@ export const coverSwitchOn = () => getPref('enhancedAI') === true;
  * @param {{ enabled?: () => boolean }} [opts] `enabled` - is cover read at all (by default the Enhanced AI switch)
  */
 export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
-  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<number, any[]>, wide: Map<number, any[]>, wideR: number, min: number[], max: number[] }>} */
+  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<number, any[]>, wide: Map<number, any[]>, wideR: number, min: number[], max: number[], bodies: Map<number, any[]>, bodyN: number }>} */
   const sets = new Map();
   let stamp = 0;
 
   /** A set of no proxies yet, `t` its frame's translation - in the index once placed (add, place). */
-  const fresh = (t) => ({ items: [], t: t || (() => ZERO3), grid: new Map(), wide: new Map(), wideR: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] });
+  const fresh = (t) => ({ items: [], t: t || (() => ZERO3), grid: new Map(), wide: new Map(), wideR: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity], bodies: new Map(), bodyN: 0 });
   /** Add proxies to the set `key` (appended to what it holds); `t` its frame's translation. */
   function add(key, items, t = null) {
     let set = sets.get(key);
@@ -136,6 +139,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     for (const it of items) {
       if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover
       it._mark = 0;
+      if (it.body) { fileBody(set, it); continue; }   // PROP-BODIES: a body, never cover
       set.items.push(it);
       const [x, y, z] = it.c;
       set.min[0] = Math.min(set.min[0], x - it.r); set.max[0] = Math.max(set.max[0], x + it.r);
@@ -159,6 +163,45 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       }
     }
     return set.items.length;
+  }
+
+  /** PROP-BODIES: a body into its set's own grid - every cell its foot circle touches, so a query reaching the circle
+   *  meets one of them. */
+  function fileBody(set, it) {
+    const [x, , z] = it.c;
+    set.bodyN += 1;
+    for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
+      for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) {
+        const k = cellKey(gx, gz);
+        let cell = set.bodies.get(k);
+        if (!cell) set.bodies.set(k, cell = []);
+        cell.push(it);
+      }
+    }
+  }
+
+  /** PROP-BODIES: every body whose foot circle, widened by `reach`, holds the point `p` (x and z), handed to `visit`
+   *  with its foot in the world's frame (x, the bottom of its span, z) - once each; a felled tree's and a person's none. */
+  function near(p, reach, visit) {
+    for (const set of sets.values()) {
+      if (!set.bodyN) continue;
+      const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];
+      stamp += 1;
+      for (let gx = Math.floor((x - reach) / COVER_CELL); gx <= Math.floor((x + reach) / COVER_CELL); gx++) {
+        for (let gz = Math.floor((z - reach) / COVER_CELL); gz <= Math.floor((z + reach) / COVER_CELL); gz++) {
+          const cell = set.bodies.get(cellKey(gx, gz));
+          if (!cell) continue;
+          for (const it of cell) {
+            if (it._mark === stamp) continue;
+            it._mark = stamp;
+            const c = it.c;
+            if (FELLED.has(c) || c.noCover) continue;
+            const dx = x - c[0], dz = z - c[2], R = it.r + reach;
+            if (dx * dx + dz * dz < R * R) visit(it, c[0] + t[0], c[1] + t[1] + (it.lift ?? 0), c[2] + t[2]);
+          }
+        }
+      }
+    }
   }
 
   function remove(key) { sets.delete(key); }
@@ -216,7 +259,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   }
 
   return {
-    add, remove, hit, fill, place,
+    add, remove, hit, fill, place, near,
     /** AUDIT PRECIP HOST-7: a set of no proxies, outside the index until it is placed. */
     staged: (t = null) => fresh(t),
     /** Is cover read at all (the Enhanced AI switch). */
@@ -226,6 +269,8 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     /** AUDIT BANTHA1 TREE-1: how many references the grids hold, over every set (tests, probes) - a wide proxy is one. */
     refs: () => { let n = 0; for (const s of sets.values()) for (const g of [s.grid, s.wide]) for (const cell of g.values()) n += cell.length; return n; },
     has: (key) => sets.has(key),
+    /** PROP-BODIES: how many bodies, over every set (tests, probes). */
+    bodies: () => { let n = 0; for (const s of sets.values()) n += s.bodyN; return n; },
   };
 }
 

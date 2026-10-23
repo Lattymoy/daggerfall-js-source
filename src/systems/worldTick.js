@@ -110,12 +110,14 @@ installSurvivalLoot({ enabled: corpseFoodOn });   // SURV2: an animal's corpse c
 // import, the same wire SURV2's icons come in by - AFTER the survival
 // pair, whose adjacency that mod's own pin holds.
 installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the legendary register at its import; the icons here
+installPistoletIcons();   // PISTOLET: the second gun, the same wire - its row and its find register at its import
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES, RECOVERY_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4); REP4: the week's recovery
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './region/regionPower.js';
 import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
+import { installPistoletIcons } from './pistolet.js';   // PISTOLET: the same wire
 import './ayleidStones.js';   // LOOT21: the Ayleid stones - their rows, their late finds and their uses register at its import
 import './gems.js';   // GEM2: the graded gems - their rows and the world's gem find register at its import
 import { installSurvivalLoot } from './survival/loot.js';
@@ -1211,11 +1213,21 @@ function settleAbsence() {
   _absenceWaiting = null;
   if (waiting) waiting.pay(worldMinutes());
 }
+/** AUDIT FB1021 L3-1: THE RELAY'S CLOCK AS LAST HEARD - the world's minute at the welcome that heard it and this
+ *  machine's MONOTONIC clock then (`perf`, performance.now's ms; `n` the hearing's count this session), null before it. The
+ *  world's reading after it is the machine's wall clock run through the relay's offset (world.js's source), so a machine
+ *  clock set forward after the welcome moves it - an errand abroad reads it no further than the monotonic time since
+ *  (revenantErrands.js errandWorldMinute). */
+let _heardMark = null;
+export const sharedClockHeardMark = () => _heardMark;
+const monotonicMs = () => (typeof globalThis.performance?.now === 'function' ? globalThis.performance.now() : Date.now());
 /** AUDIT LIVED1b P4: the host has heard the relay's clock (its offset is in the source) - the waiting absence is paid on
- *  it. Answers whether a shared clock stands to hear. */
-export function hearSharedClock() {
+ *  it. Answers whether a shared clock stands to hear. AUDIT FB1021 L3-1: the hearing marked (`perf`, the monotonic clock
+ *  at it; tests hand their own). */
+export function hearSharedClock(perf = monotonicMs()) {
   if (!_sharedClock) return false;
   _sharedClockHeard = true;
+  _heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });
   settleAbsence();
   return true;
 }
@@ -1240,6 +1252,7 @@ export function setSharedClock(source, wallOf = null, { sky = null, skyWall = nu
   _sharedLastTick = null;
   _worldWalked = [];   // AUDIT LIVED1 I, LIVED1b P3: a new session's world arms start at its first reading
   _sharedClockHeard = false;   // AUDIT LIVED1b P4: and it has not heard the relay's clock yet
+  _heardMark = null;   // AUDIT FB1021 L3-1: nor marked it
   _absenceWaiting = null;
   _ownMinutes = null;   // LIVED1: a clock installed or removed is a new session - the character's own time comes from its load
   _raisedMinutes = 0;   // TIME3: ...and its raises are counted from nought
@@ -1337,7 +1350,7 @@ export function worldNightfallText() {
   const dusk = Math.floor(now / MINUTES_PER_DAY) * MINUTES_PER_DAY + DUSK_HOUR * 60;
   const ms = _skyWall ? _skyWall(dusk) - _skyWall(sky) : (dusk - sky) / ONLINE_MINUTES_PER_MS;
   const real = Math.max(1, Math.ceil(ms / 60000));
-  return `The sun is the world's - night falls in about ${real} minute${real === 1 ? '' : 's'}.`;
+  return `Online, resting does not move the sun. Night falls in about ${real} minute${real === 1 ? '' : 's'}.`;
 }
 /** LIVED1: a deadline on the CHARACTER's own clock (a room's end, a loan's due day, a repair's ready minute), said as
  *  what it is online - the time left on their clock, and what that is in play: their clock runs with the world's

@@ -77,8 +77,8 @@
   {
     "name": "CAP-OFF-pages-hauls-of-forty",
     "file": "src/ui/professions/profPages.js",
-    "old": "'Today: {hauls, plural, one {# haul} other {# hauls}} - your account\\'s",
-    "new": "'Today: {hauls} of 40 hauls - your account\\'s",
+    "old": "'Today: {hauls, plural, one {# haul} other {# hauls}} (shared by all your characters)'",
+    "new": "'Today: {hauls} of 40 hauls (shared by all your characters)'",
     "tests": [
       "test/net/cap_off.test.js",
       "test/world/terrain/prof8_client.test.js"
@@ -97,7 +97,7 @@
   {
     "name": "CAP-OFF-timers-the-old-limits",
     "file": "src/systems/eventTimers.js",
-    "old": "The day's nodes stand anew; rare hides, silver and Court writs",
+    "old": "Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs",
     "new": "Gathering, hides, hauls, silver and Court writs",
     "tests": [
       "test/net/cap_off.test.js"

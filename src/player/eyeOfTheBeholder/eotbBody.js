@@ -52,6 +52,9 @@ import {
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
+import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
+import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
+import { equipTableOf } from '../../systems/equip.js';   // WORN-ARMOUR: what they wear
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';   // [IL] GetMeleeAnimTickTime reads FormulaHelper's own
 import { setPlayerTorchOffsetOverride, setPlayerWaistLightOverride } from '../../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position; HT-WAIST: and the lantern at the waist lights from where it hangs
@@ -124,6 +127,9 @@ function look() {
     onHorse: s['Graphics.OnHorse'] ?? 0,
     readyStance: s['Graphics.ReadyStance'] ?? 2,
     graphic: s['Graphics.Enable'] !== false,                   // "Toggle the player graphic" - ToggleBillboard's argument
+    wornArmour: layeredGenderOf(s['Graphics.LayeredGear']) != null,   // LAYERED-GEAR: the skin chosen on the profile (player/eyeOfTheBeholder/layeredArmor.js)
+    layeredChoice: s['Graphics.LayeredGear'] ?? 0,                    // LAYERED-GEAR-ON: the choice, LAYERED_OWN (the default) the character's own body
+    layeredGender: layeredGenderOf(s['Graphics.LayeredGear'], playerEntity?.gender),   // LAYERED-GEAR: and its body, female or male
     turnToView: s['Graphics.TurnToView'] ?? 2,
     attackStrings: s['Graphics.AttackStrings'] ?? 3,
     mirrorTime: s['Graphics.MirrorTime'] ?? 3,
@@ -136,6 +142,15 @@ function look() {
     walkAnimSpeedMod: s['Animation.WalkCycleSpeed'] ?? 1,
     enabled: s.Enabled !== false,
   };
+}
+
+/** WORN-ARMOUR: what the player wears now - the helmet, chest and legs pieces (and a cloak's dye) as an outfit code
+ *  (layeredArmor.js outfitOfSlots) - in the body the skin chose (LAYERED-GEAR: Female or Male on the profile, not the
+ *  character's own). An equip table that cannot be read is plain leather. */
+function wornOutfit(gender) {
+  let slots = null;
+  try { slots = equipTableOf(playerEntity); } catch { slots = null; }
+  return { outfit: outfitOfSlots(slots), gender };
 }
 
 /**
@@ -197,6 +212,7 @@ export function bodyState(s = {}) {
  * that fails answers a rejection, as the Image's onerror did.
  */
 export async function decodeSprite(url) {
+  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng), { owned: true });   // WORN-ARMOUR: composed from its strip
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
@@ -218,7 +234,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     // InitializeTextures does. Before this the body fetched the new set frame by frame as each was first drawn, and
     // until each landed its slot drew the OLD set's frame - a skin chosen on the pause screen walked away as two
     // people for a second. `preload` is a no-op for what is already up.
-    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse)) preload();
+    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse || was.wornArmour !== cfg.wornArmour || was.layeredGender !== cfg.layeredGender)) preload();
     return cfg;
   }
   /** the frame's state, as bodyState shapes it */
@@ -399,7 +415,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  spriteFor here asked for the werewolf, and a wereboar saw the wolf
    *  on themselves while the others (net/peer/peerRiders.js, off the pose's
    *  `wb`) draw the boar. The look is the settings plus the live form. */
-  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0 });   // COATS1: and the horse's look, off the rig's record
+  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)) : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
   /** PR-WW1: the form the lycan tables were last fetched for */
   let preloadedForm = null;
   /** COATS1: the look the mounted tables were last fetched in */

@@ -1,0 +1,808 @@
+[
+  {
+    "name": "BOARD-SIFT-law-a-page-past-the-last-kept",
+    "file": "src/net/marketLaw.js",
+    "old": "n >= 0 && n < MARKET_PAGES_MAX ? n : 0",
+    "new": "n >= 0 && n <= MARKET_PAGES_MAX ? n : 0",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-the-pages-cap",
+    "file": "src/net/marketLaw.js",
+    "old": "export const MARKET_PAGES_MAX = 500;",
+    "new": "export const MARKET_PAGES_MAX = 50;",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-an-unknown-order-kept",
+    "file": "src/net/marketLaw.js",
+    "old": "return sorts ? (sorts.includes(sort) ? sort : sorts[0]) : null;",
+    "new": "return sorts ? (sort ?? sorts[0]) : null;",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-the-query-max",
+    "file": "src/net/marketLaw.js",
+    "old": "export const MARKET_QUERY_MAX = 40;",
+    "new": "export const MARKET_QUERY_MAX = 50;",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-the-least-quality-past-masterwork",
+    "file": "src/net/marketLaw.js",
+    "old": "n > 0 && n <= MASTERWORK ? n : 0",
+    "new": "n > 0 && n <= MASTERWORK + 1 ? n : 0",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-one-word-enough",
+    "file": "src/net/marketLaw.js",
+    "old": "return words.every((w) => hay.includes(w) || close.includes(tight(w)));",
+    "new": "return words.some((w) => hay.includes(w) || close.includes(tight(w)));",
+    "tests": [
+      "test/net/boardsift_market.test.js",
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-the-close-reading-gone",
+    "file": "src/net/marketLaw.js",
+    "old": "hay.includes(w) || close.includes(tight(w))",
+    "new": "hay.includes(w)",
+    "tests": [
+      "test/net/boardsift_market.test.js",
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-the-families-ignored",
+    "file": "src/net/marketLaw.js",
+    "old": "(!families || families.includes(r.family)) && wordsIn",
+    "new": "true && wordsIn",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-the-shown-name-ignored",
+    "file": "src/net/marketLaw.js",
+    "old": "wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name)",
+    "new": "wordsIn(words, r.name)",
+    "tests": [
+      "test/net/boardsift_market.test.js",
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-law-an-unknown-recipe-kept",
+    "file": "src/net/marketLaw.js",
+    "old": ".filter((id) => typeof id === 'string' && !!recipeById(id))",
+    "new": ".filter((id) => typeof id === 'string')",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-no-offset",
+    "file": "server-account/src/market.js",
+    "old": "OFFSET ${marketPageOf(page) * MARKET_SHOWN}",
+    "new": "OFFSET 0",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-count-without-the-quality",
+    "file": "server-account/src/market.js",
+    "old": "read([db.prepare(`SELECT COUNT(*) AS n ${from}`).bind(nowS, keys, quality),",
+    "new": "read([db.prepare(`SELECT COUNT(*) AS n ${from}`).bind(nowS, keys, 0),",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-dearest-order-ignored",
+    "file": "server-account/src/market.js",
+    "old": "dear: 'l.price DESC, l.at, l.id'",
+    "new": "dear: 'l.price, l.at, l.id'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-newest-order-ignored",
+    "file": "server-account/src/market.js",
+    "old": "new: 'l.at DESC, l.id'",
+    "new": "new: 'l.price, l.at, l.id'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-quality-order-ignored",
+    "file": "server-account/src/market.js",
+    "old": "quality: 'p.quality DESC, l.price, l.at, l.id'",
+    "new": "quality: 'l.price, l.at, l.id'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-an-auction-cheapest-the-ending",
+    "file": "server-account/src/market.js",
+    "old": "cheap: 'COALESCE(a.high, a.opening), a.ends_at, a.id'",
+    "new": "cheap: 'a.ends_at, a.at, a.id'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-an-auction-cheapest-the-opening-alone",
+    "file": "server-account/src/market.js",
+    "old": "cheap: 'COALESCE(a.high, a.opening), a.ends_at, a.id'",
+    "new": "cheap: 'a.opening, a.ends_at, a.id'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-an-auction-dearest-ignored",
+    "file": "server-account/src/market.js",
+    "old": "dear: 'COALESCE(a.high, a.opening) DESC, a.ends_at, a.id'",
+    "new": "dear: 'a.ends_at, a.at, a.id'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-an-auction-newest-ignored",
+    "file": "server-account/src/market.js",
+    "old": "new: 'a.at DESC, a.id' });",
+    "new": "new: 'a.ends_at, a.at, a.id' });",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-search-ignored",
+    "file": "server-account/src/market.js",
+    "old": "return JSON.stringify(recipes.filter((id) => !families || families.includes(recipeById(id)?.family ?? '')));",
+    "new": "return families ? JSON.stringify(recipesNamed('', families)) : null;",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-search-out-of-its-family",
+    "file": "server-account/src/market.js",
+    "old": "recipes.filter((id) => !families || families.includes(recipeById(id)?.family ?? ''))",
+    "new": "recipes",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-a-family-not-crafted-served",
+    "file": "server-account/src/market.js",
+    "old": "if (family && (typeof family !== 'string' || (listed && !listed.includes(family)))) return '[]';",
+    "new": "if (family && typeof family !== 'string') return '[]';",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-quality-ignored",
+    "file": "server-account/src/market.js",
+    "old": "AND (?3 = 0 OR p.quality >= ?3)",
+    "new": "AND (?3 = ?3 OR p.quality >= ?3)",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-goods-broken-record-counted",
+    "file": "server-account/src/market.js",
+    "old": "AND (CASE WHEN json_valid(item) THEN json_type(item) = 'object' ELSE 0 END) AND",
+    "new": "AND 1 AND",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-orders-unpaged",
+    "file": "server-account/src/market.js",
+    "old": "ORDER BY price DESC, at, id ${pageSql(page)}",
+    "new": "ORDER BY price DESC, at, id LIMIT ${MARKET_SHOWN}",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-orders-count-without-the-family",
+    "file": "server-account/src/market.js",
+    "old": "read([db.prepare(`SELECT COUNT(*) AS n ${from}`).bind(nowS, familyKeys),",
+    "new": "read([db.prepare(`SELECT COUNT(*) AS n ${from}`).bind(nowS, null),",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-book-the-key-without-them",
+    "file": "src/net/marketBook.js",
+    "old": "\n    q.page ?? 0, q.sort ?? '', q.recipes ? `r:${q.recipes.join(',')}` : '', q.quality ?? 0].join('|');",
+    "new": "].join('|');",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-book-the-empty-search-keyed-as-none",
+    "file": "src/net/marketBook.js",
+    "old": "q.recipes ? `r:${q.recipes.join(',')}` : ''",
+    "new": "(q.recipes ?? []).join(',')",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-the-kind-unsearched",
+    "file": "src/ui/workSift.js",
+    "old": "wordsIn(words, `${e.words} ${named.get(e.kind) ?? ''}`)",
+    "new": "wordsIn(words, e.words)",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-the-done-mixed-in",
+    "file": "src/ui/workSift.js",
+    "old": "(Number(b.open) - Number(a.open)) || by(a, b) || i - j",
+    "new": "by(a, b) || i - j",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-the-ties-reordered",
+    "file": "src/ui/workSift.js",
+    "old": "(Number(b.open) - Number(a.open)) || by(a, b) || i - j",
+    "new": "(Number(b.open) - Number(a.open)) || by(a, b) || j - i",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-no-end-first",
+    "file": "src/ui/workSift.js",
+    "old": "(Number.isFinite(e.ends) && e.ends > 0 ? e.ends : Infinity)",
+    "new": "(Number.isFinite(e.ends) && e.ends > 0 ? e.ends : 0)",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-the-page-uncut",
+    "file": "src/ui/workSift.js",
+    "old": "return { rows: rows.slice(0, shown), matched: rows.length };",
+    "new": "return { rows, matched: rows.length };",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-an-unknown-kind-kept",
+    "file": "src/ui/workSift.js",
+    "old": "const kind = WORK_KINDS.includes(sift?.kind) ? sift.kind : 'all';",
+    "new": "const kind = sift?.kind ?? 'all';",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-sift-the-counts-blind-to-the-search",
+    "file": "src/ui/workSift.js",
+    "old": "if (!n.has(e.kind) || !stands(e)) continue;",
+    "new": "if (!n.has(e.kind)) continue;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-bar-a-kind-with-none-offered",
+    "file": "src/ui/workSift.js",
+    "old": "WORK_KINDS.filter((k) => /** @type {number} */ (counts.get(k)) > 0 || sift.kind === k)",
+    "new": "WORK_KINDS.filter((k) => true || sift.kind === k)",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-bar-show-more-adds-nothing",
+    "file": "src/ui/workSift.js",
+    "old": "sift.shown = shown + WORK_SHOWN;",
+    "new": "sift.shown = shown;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-bar-a-change-keeps-the-page",
+    "file": "src/ui/workSift.js",
+    "old": "const changed = () => { sift.shown = WORK_SHOWN; refresh(); };",
+    "new": "const changed = () => { refresh(); };",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-bar-the-composition-unread",
+    "file": "src/ui/workSift.js",
+    "old": "input.addEventListener('compositionend', () => { whole(); rest(); });",
+    "new": "input.addEventListener('compositionend', () => { whole(); });",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-bar-read-mid-word",
+    "file": "src/ui/workSift.js",
+    "old": "return () => { if (!composing) rest(); };",
+    "new": "return () => { rest(); };",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-bar-the-focus-dropped",
+    "file": "src/ui/workSift.js",
+    "old": "      /** @type {any} */ (slot?.querySelector?.('.work-sift-more'))?.focus?.({ preventScroll: true });\n",
+    "new": "",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-bar-unwired",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const bar = entries.length ? workSiftBar(sift, entries, () => refresh()) : null;",
+    "new": "const bar = null;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-search-redraws-the-window",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const bar = entries.length ? workSiftBar(sift, entries, () => refresh()) : null;",
+    "new": "const bar = entries.length ? workSiftBar(sift, entries, () => render()) : null;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-every-card-drawn",
+    "file": "src/ui/noticeWindow.js",
+    "old": "grid.replaceChildren(...sifted.rows.map((e) => e.card()), ...gridWords());",
+    "new": "grid.replaceChildren(...entries.map((e) => e.card()), ...gridWords());",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-fill-law-not-the-takes",
+    "file": "src/ui/noticeWindow.js",
+    "old": "fill: open && work.book.held(w.material) >= w.qty && !writsFull(), pay",
+    "new": "fill: open, pay",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-days-allowance-unread",
+    "file": "src/ui/noticeWindow.js",
+    "old": ">= w.qty && !writsFull(), pay",
+    "new": ">= w.qty, pay",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-a-chapter-writ-as-the-courts",
+    "file": "src/ui/noticeWindow.js",
+    "old": "kind: chapter ? 'chapter' : 'court', open",
+    "new": "kind: 'court', open",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-singular-unindexed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "wordsOf(name, work.countName(w.material, 1), writKindText(w),",
+    "new": "wordsOf(name, writKindText(w),",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-cards-kind-unindexed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "wordsOf(name, work.countName(w.material, 1), writKindText(w), chapter",
+    "new": "wordsOf(name, work.countName(w.material, 1), chapter",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-sift-the-windows-own",
+    "file": "src/ui/noticeWindow.js",
+    "old": "const sift = work?.book?.state ? (work.book.state.workSift ??= freshSift()) : freshSift();",
+    "new": "const sift = freshSift();",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-chapters-head-gone",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (writs?.chapters?.length || (writs?.merit ?? []).some((m) => !carded.has(m.faction))) body.append(sectionHead(",
+    "new": "if (writs?.chapters?.length) body.append(sectionHead(",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-none-today-under-a-filter",
+    "file": "src/ui/noticeWindow.js",
+    "old": "return writs && !list.length && (!entries.length || !sifting) ?",
+    "new": "return writs && !list.length ?",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-paint-over-a-composed-word",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (composing()) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-window-the-pages-unkeyed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "'input, select, textarea, button'",
+    "new": "'input, select, textarea'",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-the-guild-fill-law-loose",
+    "file": "src/ui/workTab.js",
+    "old": "fill: open && mayDeliver(data, x) && guildWritMost(x) > 0,",
+    "new": "fill: open && mayDeliver(data, x),",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-the-readers-guild-deliverable",
+    "file": "src/ui/workTab.js",
+    "old": "fill: open && mayDeliver(data, x) && guildWritMost(x) > 0,",
+    "new": "fill: open && guildWritMost(x) > 0,",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-a-contract-fillable",
+    "file": "src/ui/workTab.js",
+    "old": "kind: 'contract', open: x.state === 'open', fill: false,",
+    "new": "kind: 'contract', open: x.state === 'open', fill: x.state === 'open',",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-the-contract-silver-its-pool",
+    "file": "src/ui/workTab.js",
+    "old": "fill: false, pay: Number(x.pay) || 0,",
+    "new": "fill: false, pay: Number(x.pay) * Number(x.left) || 0,",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-a-commissions-piece-unasked",
+    "file": "src/ui/workTab.js",
+    "old": "fill: open && !!c.forMe && w.pieces(c).length > 0,",
+    "new": "fill: open && !!c.forMe,",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-a-commission-as-a-guilds",
+    "file": "src/ui/workTab.js",
+    "old": "return { kind: 'commission', open, fill:",
+    "new": "return { kind: 'guild', open, fill:",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-the-seat-words-dropped",
+    "file": "src/ui/workTab.js",
+    "old": "const seat = x.seat != null ? [t('prof.work.writ.seatKind', 'Seat writ'), seatWritPlace({ name: x.seatName, camp: x.camp })] : [];",
+    "new": "const seat = [];",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-the-singular-unindexed",
+    "file": "src/ui/workTab.js",
+    "old": "wordsOf(name, w.countName(x.material, 1), guildName(x.guild), ...seat)",
+    "new": "wordsOf(name, guildName(x.guild), ...seat)",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-crafter-and-poster-dropped",
+    "file": "src/ui/workTab.js",
+    "old": "words: wordsOf(recipeName(c.recipe), c.crafter, c.poster)",
+    "new": "words: wordsOf(recipeName(c.recipe))",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-worktab-the-contract-region-dropped",
+    "file": "src/ui/workTab.js",
+    "old": "words: wordsOf(guildName(x.guild), w.regionNameOf(x.region))",
+    "new": "words: wordsOf(guildName(x.guild))",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-page-never-sent",
+    "file": "src/ui/marketTab.js",
+    "old": "MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}",
+    "new": "MARKET_PAGED_VIEWS.includes(st.view) && st.page < 0 ? { page: st.page } : {}",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-a-default-page-sent",
+    "file": "src/ui/marketTab.js",
+    "old": "MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}",
+    "new": "MARKET_PAGED_VIEWS.includes(st.view) && st.page >= 0 ? { page: st.page } : {}",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-a-default-order-sent",
+    "file": "src/ui/marketTab.js",
+    "old": "...(sorts && st.sort && st.sort !== sorts[0] ? { sort: st.sort } : {})",
+    "new": "...(sorts && st.sort ? { sort: st.sort } : {})",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-search-unsent",
+    "file": "src/ui/marketTab.js",
+    "old": "...(find ? { recipes: recipesNamed(find, families, recipeShownName) } : {}),",
+    "new": "",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-shown-names-unread",
+    "file": "src/ui/marketTab.js",
+    "old": "recipesNamed(find, families, recipeShownName)",
+    "new": "recipesNamed(find, families)",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-shown-name-unminted",
+    "file": "src/ui/marketTab.js",
+    "old": "name = it ? itemLongName(it) : null;",
+    "new": "name = null;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-query-field-unbounded",
+    "file": "src/ui/marketTab.js",
+    "old": "    find.maxLength = MARKET_QUERY_MAX;\n",
+    "new": "",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-next-past-the-last",
+    "file": "src/ui/marketTab.js",
+    "old": "next.disabled = page + 1 >= pages;",
+    "new": "next.disabled = false;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-pager-on-one-page",
+    "file": "src/ui/marketTab.js",
+    "old": "    if (pages <= 1) return null;\n",
+    "new": "",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-cap-unread",
+    "file": "src/ui/marketTab.js",
+    "old": "Math.min(MARKET_PAGES_MAX, Math.ceil(total / MARKET_SHOWN))",
+    "new": "Math.ceil(total / MARKET_SHOWN)",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-floor-lost",
+    "file": "src/ui/marketTab.js",
+    "old": "const pages = Math.max(page + 1, Math.min(",
+    "new": "const pages = Math.max(1, Math.min(",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-turn-twice",
+    "file": "src/ui/marketTab.js",
+    "old": "const turn = (to) => { if (st.loading) return; st.page = to;",
+    "new": "const turn = (to) => { st.page = to;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-list-left-where-it-was",
+    "file": "src/ui/marketTab.js",
+    "old": "st.picked = null; st.toTop = true; load(false); };",
+    "new": "st.picked = null; st.toTop = false; load(false); };",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-emptied-page-shown",
+    "file": "src/ui/marketTab.js",
+    "old": "&& !rows.length && st.page > last) { st.page = last;",
+    "new": "&& false) { st.page = last;",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-page-kept-through-a-search",
+    "file": "src/ui/marketTab.js",
+    "old": "const refilter = () => { st.page = 0; st.picked = null; load(false); };",
+    "new": "const refilter = () => { st.picked = null; load(false); };",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-page-kept-through-the-currency",
+    "file": "src/ui/marketTab.js",
+    "old": "st.currency = v === 'gold' ? 'gold' : 'marks'; refilter(); }",
+    "new": "st.currency = v === 'gold' ? 'gold' : 'marks'; st.picked = null; load(false); }",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-page-kept-through-the-order",
+    "file": "src/ui/marketTab.js",
+    "old": "(v) => { st.sort = v; refilter(); }",
+    "new": "(v) => { st.sort = v; load(false); }",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-page-kept-through-the-quality",
+    "file": "src/ui/marketTab.js",
+    "old": "Math.floor(Number(v)) || 0)); refilter(); }",
+    "new": "Math.floor(Number(v)) || 0)); load(false); }",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-page-kept-through-the-family",
+    "file": "src/ui/marketTab.js",
+    "old": "(v) => { st.family = v || null; refilter(); }",
+    "new": "(v) => { st.family = v || null; load(false); }",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-landed-sort-over-every-order",
+    "file": "src/ui/marketTab.js",
+    "old": "return sorts && st.sort && st.sort !== sorts[0] ? [...rows] :",
+    "new": "return false ? [...rows] :",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-landed-sort-lost-when-chosen",
+    "file": "src/ui/marketTab.js",
+    "old": "st.sort !== sorts[0] ? [...rows]",
+    "new": "true ? [...rows]",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-a-view-keeps-the-last-ones-filters",
+    "file": "src/ui/marketTab.js",
+    "old": "    st.page = 0; st.sort = null; st.find = ''; st.quality = 0;   // BOARD-SIFT: a view opens on its first page, its own order\n",
+    "new": "",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-the-chosen-list-held",
+    "file": "src/ui/marketTab.js",
+    "old": "s.onchange = () => { s.setAttribute('data-chosen', '1'); onChange(s.value); };",
+    "new": "s.onchange = () => { onChange(s.value); };",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-market-auctions-empty-wording-blind-to-a-search",
+    "file": "src/ui/marketTab.js",
+    "old": "st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind",
+    "new": "st.family ? 'No Masterwork of that kind",
+    "tests": [
+      "test/ui/boardsift.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-SIFT-service-the-id-tiebreak",
+    "file": "server-account/src/market.js",
+    "old": "cheap: 'l.price, l.at, l.id'",
+    "new": "cheap: 'l.price, l.at'",
+    "tests": [
+      "test/net/boardsift_market.test.js"
+    ],
+    "equivalent": true,
+    "why": "kept as belt and braces: no row on two pages rests on the database answering equal keys the same way in two reads, which SQLite does for one plan but does not promise; no fixture can make it fail"
+  }
+]

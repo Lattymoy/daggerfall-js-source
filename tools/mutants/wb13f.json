@@ -23,8 +23,8 @@
   {
     "name": "WB13f-the-run-never-passed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "attacksFor(f.phase, gap, near, f.lastA, P, f.runA);",
-    "new": "attacksFor(f.phase, gap, near, f.lastA, P);",
+    "old": "attacksFor(f.phase, gap, near, f.lastA, P, f.runA, {",
+    "new": "attacksFor(f.phase, gap, near, f.lastA, P, 1, {",
     "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {

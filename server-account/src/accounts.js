@@ -39,7 +39,7 @@ import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE-EMAIL: a username is never an address
 import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
 import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
-import { wardrobeOf, equipRefusal, canModerate, auraRefusal, glyphRefusal, glyphsHidden } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { wardrobeOf, equipRefusal, canModerate, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
 import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
@@ -512,6 +512,17 @@ export async function equipAura({ db, nowS }, player, env, aura) {
   if (why) return { error: why };
   await db.prepare('UPDATE players SET aura = ?, last_seen = ? WHERE id = ?').bind(aura, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, aura }, env, nowS) };
+}
+
+/**
+ * WITCH1 (bible/06-Systems/Witches-Festival.md) - WEAR ONE PROFILE ICON, OR NONE (the character's face): the aura's law,
+ * in the portrait well. Answers the wardrobe after the write; `not-held` for one the account does not hold.
+ */
+export async function equipIcon({ db, nowS }, player, env, icon) {
+  const why = iconRefusal(icon, player);
+  if (why) return { error: why };
+  await db.prepare('UPDATE players SET icon = ?, last_seen = ? WHERE id = ?').bind(icon, nowS, player.id).run();
+  return { ok: true, ...wardrobeOf({ ...player, icon }, env, nowS) };
 }
 
 /**
@@ -1113,7 +1124,7 @@ export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey
   const recorded = Number(r?.meta?.changes ?? 0) > 0;
   const struck = !!stmt && Number(m?.meta?.changes ?? 0) > 0;
   const deedStruck = !!deed && Number(d[1]?.meta?.changes ?? 0) > 0;
-  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
+  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
   // AUDIT WB12d (A1): A FIGHTER'S `r` COUNTED AT ONE EMBER - a service from before acct62 took the receipt as a plain one
   // and kept its row - is made good when the receipt is claimed again (the game keeps an `r` receipt until a service
   // that answers its embers has counted it). One row a (day, account), one receipt a kill: the row is this receipt's

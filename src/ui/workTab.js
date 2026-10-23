@@ -25,6 +25,10 @@
 // raid here, what is left of it, the time left; paid as the defender's raid is counted, never to its own Officers and
 // Guildmaster; Withdraw where the reader's rank may; and POST A CONTRACT (a Guildmaster's, or an Officer's within the one
 // writ budget). Offered while the service lists them (`contracts` on the list - silver's switch, not the professions').
+//
+// BOARD-SIFT (2026-10-21): each card handed to the board as an entry (`entries`) - its kind, whether it is open and
+// fillable now, its silver, its end, its name and words - so the Work tab's bar sifts and orders it (ui/workSift.js).
+import { wordsOf } from './workSift.js';   // BOARD-SIFT: a card's words, as the bar searches them
 import { accountRefusalText } from '../net/accountClient.js';
 import { CRAFTED_FAMILIES, marketCatalogue, saleTax, MARKET_PRICE_MAX, WEAR_WHOLE } from '../net/marketLaw.js';
 import { RECIPES, QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
@@ -135,7 +139,7 @@ export const paidText = (pay, tax) => (tax > 0 ? t('prof.work.paidTax', '{pay} s
  *  gold wall in UNCOUNTED's words, on the card and on its button's title alike: a Court or chapter writ's
  *  (ui/noticeWindow.js writNode) and a guild writ's (guildWritCard). `material` its name, counted. */
 export const writWalledText = (n, material) => t('prof.work.writ.walled',
-  '{n, number} {material} you hold cannot fill a writ: only what you gathered, or bought with silver, counts - not what was looted, bought at a shop or with gold, or given by another player.',
+  '{n, number} {material} you hold can\'t fill a writ. Only what you gathered or bought with silver counts.',
   { n: Number(n), material });
 
 /**
@@ -195,7 +199,7 @@ export function createWorkTab(w, ui) {
   /** AUDIT 31 U11: Decline pressed once arms it, twice declines - a stray tap never sends a crafter's work away. */
   const declineButton = (c) => {
     const armed = () => st.arm?.id === c.id && nowMs() - st.arm.at < WORK_ARM_MS;
-    const d = button(`work-decline${armed() ? ' armed' : ''}`, armed() ? t('prof.work.declineArmed', 'Decline - press again') : t('prof.work.decline', 'Decline'), () => {
+    const d = button(`work-decline${armed() ? ' armed' : ''}`, armed() ? t('prof.work.declineArmed', 'Decline? Press again') : t('prof.work.decline', 'Decline'), () => {
       if (!armed()) { st.arm = { id: c.id, at: nowMs() }; ui.rerender(); return; }
       st.arm = null;
       return act(() => w.writs.decline(c.id), t('prof.work.declined', 'Declined. Its pay goes back to its poster.'));
@@ -217,7 +221,7 @@ export function createWorkTab(w, ui) {
     const held = w.held(x.material);
     // AUDIT 31 U10: no more than the guild Stores can still take of it
     const room = Number.isSafeInteger(x.room) ? x.room : Infinity;
-    const most = Math.min(x.left, held, room);
+    const most = guildWritMost(x, held);
     // WRIT-WALL: what is held past `held` - looted, shop-bought, traded or gold-bought - named where it would fill more
     const walled = x.state === 'open' && mayDeliver(data, x) && held < Math.min(x.left, room) ? Number(w.walled?.(x.material)) || 0 : 0;
     const walledSaid = walled > 0 ? writWalledText(walled, w.countName(x.material, walled)) : null;
@@ -240,7 +244,7 @@ export function createWorkTab(w, ui) {
       // AUDIT BAG1: a carrying book's count is the Stores' and what is carried - said as such. WRIT-WALL: never "You have
       // none" beside units held and walled - the walled line under the bar says what they are
       const none = held > 0 ? t('prof.work.writ.guildFull', 'The guild\'s Stores can take no more of it.') : walledSaid ? null
-        : w.carrying?.() ? t('prof.work.writ.noneCarried', 'You have none - in your Stores, Materials Bag or pack.') : t('prof.work.writ.noneHeld', 'Your Stores hold none of it.');
+        : w.carrying?.() ? t('prof.work.writ.noneCarried', 'You have none in your Stores, Materials Bag or pack.') : t('prof.work.writ.noneHeld', 'Your Stores hold none of it.');
       if (none) bar.append(el('span', 'work-none', none));
     }
     bar.append(el('span', null, w.carrying?.() ? t('prof.work.writ.heldCarried', '{n, number} held', { n: Number(held) }) : t('prof.work.writ.held', '{n, number} in your Stores', { n: Number(held) })));
@@ -250,6 +254,9 @@ export function createWorkTab(w, ui) {
     li.append(el('span', 'notice-seal', ''));
     return li;
   }
+  /** AUDIT 31 U10: the units a delivery may bring a guild writ - what it still asks, what is held, what the guild Stores can
+   *  still take (BOARD-SIFT: the card's Deliver and the bar's "Only what I can fill" alike). */
+  const guildWritMost = (x, held = w.held(x.material)) => Math.min(x.left, held, Number.isSafeInteger(x.room) ? x.room : Infinity);
   const withdrawWrit = (x) => why(button('work-withdraw', t('prof.work.withdraw', 'Withdraw'), () => act(() => w.writs.withdraw(x.id), t('prof.work.withdrawnGuild', 'Withdrawn. The unpaid silver is back in the guild\'s treasury.'))),
     busyWhy());
 
@@ -265,7 +272,7 @@ export function createWorkTab(w, ui) {
     const bar = el('div', 'writ-take');
     const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);
     bar.append(el('span', 'work-none', own ? t('prof.work.contract.ownGuild', 'Officers and the Guildmaster are not paid by their own guild\'s contracts.')
-      : t('prof.work.contract.how', 'Strike a raider in a town here and stay until it is cleansed: paid when the raid is counted, less {tax} tax.', { tax: marksText(saleTax(x.pay)) })));   // AUDIT 657 B6: what earns it said (raidLaw.js - a blow struck, and the town stood in at the cleanse)
+      : t('prof.work.contract.how', 'Hit a raider in a town here and stay until the town is cleansed. You are paid when the raid is counted, less {tax} tax.', { tax: marksText(saleTax(x.pay)) })));   // AUDIT 657 B6: what earns it said (raidLaw.js - a blow struck, and the town stood in at the cleanse)
     if (x.may) bar.append(withdrawContract(x));
     li.append(bar, el('span', 'notice-seal', ''));
     return li;
@@ -295,8 +302,8 @@ export function createWorkTab(w, ui) {
     const pieces = w.pieces(c);
     if (!pieces.length) {
       // AUDIT 31 H8: one that answers it is in the pack but will not leave it - said, never "you carry none"
-      return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? t('prof.work.fill.blocked', 'Your piece for it is equipped, locked or bound - free it first.')
-        : t('prof.work.fill.none', 'You carry no unworn piece of your own make for it.'))];
+      return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? t('prof.work.fill.blocked', 'Your piece for it is equipped, locked or bound. Free it first.')
+        : t('prof.work.fill.none', 'You carry no unworn piece you made for it.'))];
     }
     const picked = () => pieces.find((p) => p.item.provenance === st.pick[c.id]) ?? pieces[0];
     const label = (p) => (p.quality != null ? t('prof.work.fill.pieceQuality', '{name} ({quality})', { name: p.name, quality: QUALITY_NAMES[p.quality] }) : p.name);
@@ -330,7 +337,7 @@ export function createWorkTab(w, ui) {
       const where = here ? t('prof.work.here', 'here') : w.regionNameOf(c.region);
       // AUDIT 31 H6: a filled one of yours comes by the market's deliveries - collected at the Market tab
       const said = c.state === 'open' ? writLeftText(c.expiresAt, ui.nowS())
-        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled - collect it at the Market tab')
+        : c.mine && c.state === 'filled' ? t('prof.work.yours.collect', 'filled. Collect it at the Market tab')
           : !c.mine ? commissionSaid(c.state)
             : c.returned ? t('prof.work.yours.silverBack', '{state} - silver back', { state: commissionSaid(c.state) }) : t('prof.work.yours.silverToCome', '{state} - silver to come back', { state: commissionSaid(c.state) });
       li.append(el('span', 'work-what', who), el('span', 'work-where', t('prof.work.yours.where', '{where} · {said}', { where, said })));
@@ -475,7 +482,7 @@ export function createWorkTab(w, ui) {
       // AUDIT 31 U10: every bound the service keeps, said before the press
       const reason = busyWhy()
         || (!name ? t('prof.work.comm.noName', 'Name the crafter.')
-          : !HANDLE_RE.test(name) ? t('prof.work.comm.badName', 'That is not a name a crafter could have.')
+          : !HANDLE_RE.test(name) ? t('prof.work.comm.badName', 'That isn\'t a valid username.')
             : data?.me && name.toLowerCase() === String(data.me).toLowerCase() ? t('prof.work.comm.self', 'You cannot commission yourself.')
               : !f.recipe ? t('prof.work.comm.noRecipe', 'Choose the piece.')
                 : mineOpen >= COMMISSIONS_MAX ? t('prof.work.comm.full', 'You have {n} commissions posted already.', { n: COMMISSIONS_MAX })
@@ -507,15 +514,41 @@ export function createWorkTab(w, ui) {
     });
   };
 
+  /**
+   * BOARD-SIFT: this region's guild writs, contracts and commissions, each as the Work tab's bar sifts it (ui/workSift.js
+   * WorkEntry) - a guild writ fillable while the reader may deliver to it and has a unit it takes; a contract never at the
+   * board (it is earned in a raid); a commission naming the reader while a piece of theirs answers it. Its card is made
+   * only when it is drawn. AUDIT BOARD-SIFT: a writ's words its material one and many, and a seat writ's what its card
+   * says (its kind, its stockpile or Siege Camp - lane B L1: "seat" and "camp" found none); a contract's silver what one
+   * defender is paid (SILVER-WAYS' contracts came best-paying first, `contracts.js` contractBoard - "Most silver" keeps it).
+   * @returns {import('./workSift.js').WorkEntry[]}
+   */
+  function entries(data) {
+    if (data?.writsOpen !== true) return [];
+    const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [], gcs = data?.contracts ?? [];   // SILVER-WAYS: and its contracts
+    return [
+      ...gws.map((x) => {
+        const name = w.countName(x.material, 2), open = x.state === 'open';
+        const seat = x.seat != null ? [t('prof.work.writ.seatKind', 'Seat writ'), seatWritPlace({ name: x.seatName, camp: x.camp })] : [];
+        return { kind: 'guild', open, fill: open && mayDeliver(data, x) && guildWritMost(x) > 0, pay: Number(x.pay) * Number(x.left) || 0,
+          ends: Number(x.expiresAt) || 0, name, words: wordsOf(name, w.countName(x.material, 1), guildName(x.guild), ...seat), card: () => guildWritCard(x, data) };
+      }),
+      ...gcs.map((x) => ({ kind: 'contract', open: x.state === 'open', fill: false, pay: Number(x.pay) || 0, ends: Number(x.expiresAt) || 0,
+        name: guildName(x.guild), words: wordsOf(guildName(x.guild), w.regionNameOf(x.region)), card: () => contractCard(x, data) })),
+      ...cs.map((c) => {
+        const open = c.state === 'open';
+        return { kind: 'commission', open, fill: open && !!c.forMe && w.pieces(c).length > 0, pay: Number(c.pay) || 0, ends: Number(c.expiresAt) || 0,
+          name: recipeName(c.recipe), words: wordsOf(recipeName(c.recipe), c.crafter, c.poster), card: () => commissionCard(c) };
+      }),
+    ];
+  }
+
   return {
     /** Whether guild writs and commissions are this account's - the service's word on the list (AUDIT 31 U5). */
     open: (data) => data?.writsOpen === true,
     /** This region's guild writs and commissions - cards for the Court's grid (AUDIT 31 U14: one grid). */
-    cards(data) {
-      if (data?.writsOpen !== true) return [];
-      const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [], gcs = data?.contracts ?? [];   // SILVER-WAYS: and its contracts
-      return [...gws.map((x) => guildWritCard(x, data)), ...gcs.map((x) => contractCard(x, data)), ...cs.map((c) => commissionCard(c))];
-    },
+    cards: (data) => entries(data).map((e) => e.card()),
+    entries,
     /** "Yours", and the forms, under the grid - none while they are not this account's. */
     node(data) {
       if (data?.writsOpen !== true) return null;

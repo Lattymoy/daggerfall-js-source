@@ -121,7 +121,7 @@ test('AUDIT GUILD3 S3: the silver the guildmaster\'s account has no room for is 
   assert.deepEqual(await keepsOf(s), [], 'room again: nothing');
   assert.equal((await s.call('/v1/guilds/disband', { character: s.gm.character }, s.gm.secret)).status, 200, 'and it goes');
   // the page says it in the going's own terms
-  assert.match(GUILD_KEEPS_WORDS['marks-full'], /comes to you when it goes/);
+  assert.match(GUILD_KEEPS_WORDS['marks-full'], /goes to you when it is disbanded, but your account cannot hold it/);
   assert.ok(GUILD_HOLD_CODES.includes('marks-full'), 'the view\'s word stands for it - a refusal\'s older word not repeated');
 });
 
@@ -324,10 +324,10 @@ test('AUDIT GUILD3 T6, T7: the client\'s hold codes are the service\'s, its gold
 
 test('AUDIT GUILD3 T9: the words, each a literal - the primer, the Overview\'s Elsewhere and its heading, every silver line\'s kind (mutants: each)', () => {
   assert.deepEqual([...GUILD_PRIMER_LINES], [
-    'A guild\'s members share two treasuries, one of gold and one of silver, a vault for their pieces and, once the guild buys one, a hall under its own arms.',
-    'Together they can hold the seats of the Iliac Bay - a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
+    'Guild members share a gold treasury, a silver treasury and a vault for items. A guild can also buy a hall under its own arms.',
+    'Together they can hold seats of the Iliac Bay: a palace\'s or a crown\'s Charter, contested from that town\'s Notice Board.',
   ]);
-  assert.equal(GUILD_ELSEWHERE_TEXT, 'Seats and sieges are run from a seat town\'s Notice Board, on its Seat tab, where its Chronicle is read; guild writs and contracts are posted from any Notice Board\'s Work tab.');
+  assert.equal(GUILD_ELSEWHERE_TEXT, 'Seats and sieges are run from the Seat tab of a seat town\'s Notice Board, where you can also read its Chronicle. Guild writs and contracts are posted from the Work tab of any Notice Board.');
   assert.match(src('src/ui/socialPanel.js'), /out\.push\(el\('div', 'dfsocial-sec', 'Elsewhere'\), el\('div', 'dfsocial-empty', GUILD_ELSEWHERE_TEXT\)\);/);
   assert.equal(GUILD_KEEPS_HEAD, 'Before the guild can be disbanded');
   assert.deepEqual(JSON.parse(JSON.stringify(GUILD_SILVER_LINE_WORDS)), {
@@ -411,7 +411,7 @@ test('AUDIT GUILD3 C8, C9/T8: the Settings page reads the guild again as it is t
   find(t.panel.root, 'dfsocial-subtab').find((b) => b.dataset.page === 'settings').fire('click');
   for (let i = 0; i < 4; i++) { await tick(); t.panel.render(); }
   assert.equal(looks, 1, 'read again at the turn to Settings');
-  assert.equal(btn(t.panel.root, 'Leave').attrs?.title ?? btn(t.panel.root, 'Leave').title, 'what is listed above first');
+  assert.equal(btn(t.panel.root, 'Leave').attrs?.title ?? btn(t.panel.root, 'Leave').title, 'clear the list above first');
   // the rank list folded
   await t.go('members');
   assert.equal(find(t.panel.root, 'dfsocial-ranks')[0].open, false);

@@ -1,0 +1,132 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE COURT CRAFTER, step 1 of 3.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the note is the offer. An introduction: the Tutorials explain, this gives a reason to go and pays for
+-- it. The giver is unnamed (a court crafter): a Smith of the player's own town, at its general store, where the
+-- Mason's bench stands (tutorialCatalogue.js, crafting). The acts are the features' (qlActs.js): a fish caught, a
+-- plant gathered - Professions or Foraging. Nothing is taken: the crafter hears what was found.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIP01
+DisplayName: Of Rod and Root
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          _crafter_ has found another apprentice.
+
+QuestComplete:  [1004]
+<ce>         "Fair pay for honest work. Buy a better rod."
+<ce>          _crafter_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _crafter_, who makes for the court, sent me a
+ note. The crafter wants an apprentice who finds
+ their own materials, and will pay to see that I
+ can: three fish caught and three plants gathered,
+ then back to _store_ in __store_ to say so.
+
+Message:  1011
+%pcn,
+
+     The court keeps my hands full, and I need
+ another pair. Not a pair that waits for the
+ carter - a pair that goes out and finds the stock.
+
+     Catch three fish. Gather three plants, any
+ that grow wild and are worth the picking. Then
+ come to _store_ in __store_ and we will
+ talk about wages.
+
+<ce>                       _crafter_, crafter to the court
+
+Message:  1012
+<ce>          A boy with sawdust in his hair pushes a
+<ce>          folded note into your hand. "From the
+<ce>          crafter at _store_," he says, and he
+<ce>                 is gone down the street.
+
+Message:  1013
+<ce>        _crafter_ asks where you fished and what you
+<ce>          picked, and listens to every word of it.
+<ce>
+<ce>       "Everything a crafter makes was gathered once,
+<ce>        by somebody. Now you know where it comes from.
+<ce>        Next, the heavy work: ore and timber. I will
+<ce>        send word where to take it."
+
+Message:  1014
+The court's crafter? Works out of _store_ these days. Always short of hands.
+<--->
+_crafter_ makes for the court. Good work, and slow, they say.
+<--->
+Looking for _crafter_? Try _store_. Follow the smell of glue.
+
+Message:  1015
+%qdt:
+ I have caught my three fish and gathered my
+ three plants. _crafter_ is waiting to hear of
+ it at _store_ in __store_.
+
+Message:  1016
+<ce>          "Three fish and three plants, apprentice.
+<ce>            Come back when you have found them."
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--              %pcn occurs 1 time.
+--         _crafter_ occurs 8 times.
+--            _gold_ occurs 1 time.
+--           _store_ occurs 6 times.
+--          __store_ occurs 3 times.
+
+QBN:
+Item _note_ letter used 1011
+Item _gold_ gold range 100 to 200
+
+Person _crafter_ group Smith local anyInfo 1014
+Place _store_ local generalstore
+
+Clock _courier_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _crafter_ at _store_
+	start timer _courier_
+
+_courier_ task:
+	give pc _note_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_fish_ task:
+	ql act fish-caught 3
+
+_herbs_ task:
+	ql act herb-gathered 3
+
+_ready_ task:
+	when _fish_ and _herbs_
+
+_told_ task:
+	when _courier_ and _ready_
+	log 1015 step 1
+
+_clicked_ task:
+	clicked npc _crafter_
+
+_early_ task:
+	when _clicked_ and not _ready_
+	say 1016
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _ready_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

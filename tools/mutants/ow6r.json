@@ -92,7 +92,7 @@
   {
     "name": "OW6-R-stale-kept",
     "file": "src/scenes/world.js",
-    "old": "    if (performance.now() - p.at > RAIDER_WORD_MS) { tvRaid.peer.delete(id); return null; }",
+    "old": "    if (performance.now() - p.at > p.hold) { tvRaid.peer.delete(id); return null; }",
     "new": "",
     "tests": [
       "test/systems/ows3_raiders.test.js"

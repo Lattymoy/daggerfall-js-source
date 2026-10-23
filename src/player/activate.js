@@ -90,6 +90,16 @@ export function boxContains(aabb, p, skin = 0) {
 
 const boxVolume = (b) => (b.max[0] - b.min[0]) * (b.max[1] - b.min[1]) * (b.max[2] - b.min[2]);
 
+/**
+ * FB1020e OFFERING-RAY: THE RAY'S BOX - world corners as `{ min, max }`, which rayAabb, boxContains and the pick read.
+ * Not the culling box's 6-array (render/frustum.js flatBatchAabb, a batch's `_box`): a producer holding one converts
+ * it, as the streaming host's boards and graves do. A Hearth Offering handed the ray its 6-array, and every press in
+ * the street it stood in threw out of rayAabb (bible/01-Overview/bugs/Field-Bugs-2026-10-20e.md).
+ * @typedef {{ min: number[], max: number[] }} RayBox
+ */
+/** ...and one entrant of the pick: its key, its box, the distance it wins at and the reach it answers within (MC-2).
+ *  @typedef {{ key: string | number, aabb: RayBox, distance?: number, reach?: number }} RayTarget */
+
 /** Slab ray-AABB; distance along unit dir or null. */
 export function rayAabb(origin, dir, aabb) {
   let tMin = 0;

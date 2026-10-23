@@ -20,8 +20,8 @@
   {
     "name": "SIGIL-UI-the-held-note-dropped",
     "file": "src/ui/sigilCard.js",
-    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Your Renown holds it at ",
-    "new": "  if (false) box.append(el('p', 'sigil-note', `Your Renown holds it at ",
+    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Your Renown limits it to ",
+    "new": "  if (false) box.append(el('p', 'sigil-note', `Your Renown limits it to ",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]

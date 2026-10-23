@@ -51,6 +51,10 @@ export const HUD_PIECES = Object.freeze([
   { id: 'health', sel: '.hud .hud-bars .hud-health', name: 'Health bar', edit: 'split', len: '--hml-b' },
   { id: 'fatigue', sel: '.hud .hud-bars .hud-fatigue', name: 'Fatigue bar', edit: 'split', len: '--hml-b' },
   { id: 'renown', sel: '.hud .hud-renown', name: 'Renown bar', len: true, dummy: true },
+  // SKILL-READY / FIRM-STARS (Dudey: "should also be movable with alt + u"): the two tiles beside the Renown bar
+  // (ui/hud/hudAdvance.js) - each its own piece, standing in the bar's row, so they ride it until moved on their own
+  { id: 'skillsReady', sel: '.hud .hud-adv-skill', get name() { return t('menu.hud.piece.skillsReady', 'Skills ready'); }, dummy: true },
+  { id: 'starsUnspent', sel: '.hud .hud-adv-firm', get name() { return t('menu.hud.piece.starsUnspent', 'Firmament stars'); }, dummy: true },
   { id: 'quick', sel: '.hud .hud-quick', name: 'Quick slots' },
   // `inside`: the status widget stands INSIDE the quick-slot block in the page, but is its own piece - the block's move
   // and size are undone on it (paintInside), so moving the quick slots leaves the buffs where they are
@@ -182,6 +186,10 @@ ${MOVED} { translate: var(--hmx, 0px) var(--hmy, 0px); scale: var(--hms, 1); }
 .hud .hud-breath[data-hm-dummy]:not(.on) { display: flex !important; opacity: 0.85; }
 .hud .hud-breath[data-hm-dummy]:not(.on) .hud-fill { width: 70% !important; }
 .hud .hud-renown[data-hm-dummy]:not(.on) { display: grid !important; grid-template-columns: 36px minmax(0, 1fr) 36px; opacity: 0.85; }
+.hud .hud-adv[data-hm-dummy]:not(.on) { display: flex !important; opacity: 0.85; }   /* SKILL-READY / FIRM-STARS: the tiles stand to be moved */
+.hud .hud-renown:has(.hud-adv[data-hm-dummy]):not(.on) { display: grid !important; grid-template-columns: 36px minmax(0, 1fr) 36px; }
+/* the Renown bar turned off leaves its two tiles (their own pieces) standing, unless they are off too */
+.hud-renown[data-hm-off]:not([data-hm-edit]) .hud-adv[data-hm]:not([data-hm-off]) { visibility: visible !important; }
 .hud .hud-stat[data-hm-dummy]:empty, .hud .hud-stat[data-hm-dummy].noroom { display: flex !important; align-items: center;
   justify-content: center; min-width: 200px; min-height: 36px; padding: 0 10px; box-sizing: border-box;
   background: rgba(10,12,17,0.6); border: 1px dashed rgba(224,176,112,0.6); opacity: 0.9; }
@@ -459,7 +467,7 @@ function syncBanner(doc, edit) {
   b = doc.createElement('div');
   b.id = BANNER_ID;
   const text = doc.createElement('span');
-  text.textContent = `HUD unlocked: free the mouse (${freeKey}) and drag any outlined piece (drag this text to move this box). Corner square: size. Edge bar: length. ✕: hide or show it again. Double-click: put it back. Alt+U: lock.`;
+  text.textContent = `HUD unlocked. Free the mouse (${freeKey}) and drag any outlined piece. Drag this text to move this box. Corner square: size. Edge bar: length. ✕: hide or show. Double-click: reset. Alt+U: lock.`;
   const reset = doc.createElement('button');
   reset.type = 'button'; reset.className = 'ghost'; reset.textContent = 'Reset';
   reset.addEventListener('click', (e) => { e.stopPropagation(); resetHudLayout(); });

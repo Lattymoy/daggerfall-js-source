@@ -297,5 +297,5 @@ export function attemptSummoning({
 /** SUMMON-OFFER: the summoner's word when the prince who answered has no quest that can be made in this region - the
  *  prince as %dae shows him (L10N3e, PersistentFactionData.cs:176). The port's own: DFU says nothing here. */
 export const noQuestText = (daedra) => t('summon.noQuest',
-  '{prince} answers, but has no task for you in this region. You keep your gold - try the summoning in another region.',
+  '{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.',
   { prince: getLocalizedFactionName(daedra.factionId, daedra.name) });

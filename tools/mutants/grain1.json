@@ -204,7 +204,7 @@
  },
  {
   "name": "AUDIT-GRAIN-the-world-host-forgets-to-apply-the-tier",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/groundSets.js",
   "old": "    renderer.applyGroundSharpness();   // GRAIN AUDIT 1",
   "new": "    // GRAIN AUDIT 1",
   "tests": [

@@ -26,6 +26,7 @@
 // drive this module through its seams rather than through the bundle.
 
 import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount } from './eotbBillboard.js';
+import { layeredSprite, isLayeredKey } from './layeredArmor.js';   // WORN-ARMOUR: the on-foot body in the armour it wears
 import { classSkinOf, classRecord, classFrame, classRecordScale } from '../classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
 import { toColor32, toColor32OrderInPlace } from '../../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../systems/horse/horseCoats.js';   // COATS1: the mount's look
@@ -50,7 +51,7 @@ const BY_KEY = Object.fromEntries(
 // duplicate-declaration ratchet caught the collision - ONE DFU
 // MEMBER, ONE EXPORT - and these two are genuinely different things,
 // so the answer is a distinct name rather than a shared home.
-export const eotbSpriteUrl = (key) => BY_KEY[key] ?? null;
+export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : BY_KEY[key] ?? null);   // WORN-ARMOUR: a worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
 /** How many sprites the build actually carries - for the probes, and
  *  so "the art is wired" is a number rather than a hope. AUDIT 68
  *  S15-eotb-spritecount-hot: counted once - the table never changes, and
@@ -115,6 +116,13 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
   const mirror = st.mirror !== !!flip;
   // SKIN2: an on-foot table of a CLASS skin reads the class sheet's own record and frame (player/classSkins.js); the
   // mounted and the beast tables are the mod's whatever is worn on foot
+  // WORN-ARMOUR (player/eyeOfTheBeholder/layeredArmor.js): with the option on, an on-foot table draws the armour the
+  // body wears - its helmet, chest and legs pieces in their families and metals - over whatever skin is chosen; an
+  // outfit with no art falls through to that skin
+  if (look.wornArmour && !table.endsWith('Horse') && !table.endsWith('Lycan')) {
+    const worn = layeredSprite(table, st.record - STATE_TABLES[table].base, frame, frameCount(table), look, mirror);
+    if (worn) return worn;
+  }
   const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;
   if (skin) {
     const record = classRecord(skin, table, st.record - STATE_TABLES[table].base);

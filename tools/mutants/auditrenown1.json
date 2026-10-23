@@ -368,7 +368,7 @@
   {
     "name": "AUDIT-RENOWN1-joiner-level-unkept",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (r.l !== undefined && f.mobileType >= 128) f.streamedLevel = r.l;",
+    "old": "    if (r.l !== undefined && isClassEnemyId(f.mobileType)) f.streamedLevel = r.l;",
     "new": "    void r.l;",
     "tests": [
       "test/net/auditrenown1.test.js"

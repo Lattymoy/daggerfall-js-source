@@ -195,8 +195,9 @@
   {
     "name": "AUDIT29-A6-the-service-s-slots-the-climate-s",
     "file": "server-account/src/professions.js",
-    "old": "(n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : nodeCount(climate, n.kind))",
-    "new": "nodeCount(climate, n.kind)",
+    "old": "n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : n.kind === 'tree'",
+    "new": "n.kind === 'vein' ? nodeCount(climate, n.kind) : n.kind === 'tree'",
+    "note": "JUNGLE-WOODS (PIN MOVED): the slots' line reads a tree's own (treeSlots) beside a vein's - the mutation is the vein's slots the climate's, as it was",
     "tests": [
       "test/net/audit29_service.test.js"
     ]
@@ -222,8 +223,8 @@
   {
     "name": "AUDIT29-C1-midnight-stale-every-draw",
     "file": "src/net/profBook.js",
-    "old": "      return state.day !== dayOf(now()) && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;",
-    "new": "      return state.day !== dayOf(now());",
+    "old": "      return state.day < heldDay() && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;",
+    "new": "      return state.day < heldDay();",
     "tests": [
       "test/net/audit29_client.test.js"
     ]

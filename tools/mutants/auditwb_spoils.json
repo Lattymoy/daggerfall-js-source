@@ -92,7 +92,7 @@
   {
     "name": "AUDWB-A7-one-slot",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    keep(STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-recordsMax));",
+    "old": "    keep(STORE_KEY, trimRecords([...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]));",
     "new": "    keep(STORE_KEY, [{ v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]);",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "AUDWB-A7-unbounded",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    keep(STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-recordsMax));",
+    "old": "    keep(STORE_KEY, trimRecords([...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]));",
     "new": "    keep(STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]);",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"

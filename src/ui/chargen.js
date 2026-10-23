@@ -2300,7 +2300,7 @@ export class ChargenFlow {
       line(`${raceDisplayName(this.race.key)} ${this.gender}`, 0, white);
       line(`face ${this.facePick + 1} of ${FACES_PER_RACE}`, 2, hot);
       line('up/down to cycle, ENTER to continue', 4, dim);
-      line('(the portrait draws with the chargen art slice)', 6, dim);
+      line('(the portrait shows once the art loads)', 6, dim);
     } else if (this.state === 'class') {
       title('CHOOSE YOUR CLASS');
       for (let i = 0; i < this.classRowCount(); i++) {
@@ -2329,7 +2329,7 @@ export class ChargenFlow {
         line(`HP/level: ${c.hp}  difficulty: ${this.customDifficulty()}`, 1, white);
         line(`Skills set: ${c.skills.filter((v) => v != null).length}/12`, 2, white);
         line(`Stat pool: ${c.statPool}`, 3, white);
-        line('ENTER exit (gated), ESC cancel', 5, dim);
+        line('ENTER when done, ESC cancel', 5, dim);
       }
     } else if (this.state === 'bioMethod') {
       title('CHOOSE YOUR HISTORY METHOD');

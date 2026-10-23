@@ -250,12 +250,29 @@ export const getLocalizedItemName = (id, fallback) => tryGetLocalizedText(TextCo
 export const getLocalizedMagicItemName = (id, fallback) => tryGetLocalizedText(TextCollections.TextMagicItems, id) ?? fallback;
 /** GetLocalizedFactionName (TextManager.cs:550-557): by faction id, else `fallback`. */
 export const getLocalizedFactionName = (id, fallback) => tryGetLocalizedText(TextCollections.Factions, id) ?? fallback;
+const _customEnemyNameText = [];
+/** A mod's enemy names in the player's language: `fn(id)` a translated name or null, the latest registered asked first.
+ *  The port's own door - DFU's GetCustomEnemyName answers the mod's English in every language (AUDIT DEX A6). Answers
+ *  the function that lets it go. */
+export function registerCustomEnemyNameText(fn) {
+  if (typeof fn !== 'function') throw new Error('registerCustomEnemyNameText: a function of the enemy id');
+  _customEnemyNameText.unshift(fn);
+  return () => { const i = _customEnemyNameText.indexOf(fn); if (i >= 0) _customEnemyNameText.splice(i, 1); };
+}
 /** GetLocalizedEnemyName (TextManager.cs:432-459): a MobileTypes id (0-42, and the classes 128-146) reads the
- *  `enemyNames` list - row `id`, or `43 + id - 128` for a class. A custom enemy, or a language whose list is missing or
- *  shorter, answers `fallback`: the port's own name for it (GetCustomEnemyName, then the career's Name). */
+ *  `enemyNames` list - row `id`, or `43 + id - 128` for a class. A custom enemy reads a mod's name in the player's
+ *  language (registerCustomEnemyNameText); one no mod translates, or a language whose list is missing or shorter,
+ *  answers `fallback`: the port's own name for it (GetCustomEnemyName, then the career's Name). */
 export function getLocalizedEnemyName(enemyId, fallback) {
   const id = Number(enemyId);
-  if (!Number.isInteger(id) || !((id >= 0 && id <= 42) || (id >= 128 && id <= 146))) return fallback;
+  if (!Number.isInteger(id)) return fallback;
+  if (!((id >= 0 && id <= 42) || (id >= 128 && id <= 146))) {
+    for (const fn of _customEnemyNameText) {
+      const name = fn(id);
+      if (typeof name === 'string' && name !== '') return name;
+    }
+    return fallback;
+  }
   const row = getLocalizedTextList('enemyNames', TextCollections.Internal, false)?.[id < 128 ? id : 43 + id - 128];
   return row ?? fallback;
 }

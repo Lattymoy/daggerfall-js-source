@@ -268,10 +268,11 @@ export function noticeRelease(owner) {
 }
 
 /**
- * A WINDOW'S OWN BOX, decided each frame (ENH-NOTICE2). Eight classic
+ * A WINDOW'S OWN BOX, decided each frame (ENH-NOTICE2). Nine classic
  * windows drawn on both skins - the potion maker, the item maker, the
  * spell maker, the bank, the rest window, the coven, the guild service
- * window and the service flow - raise DFU's click-anywhere box from
+ * window, the service flow and the spellbook (SPELLSHOP-SAID: the
+ * shop's notices and its notes) - raise DFU's click-anywhere box from
  * inside themselves (`DaggerfallUI.MessageBox` over the window) and
  * paint it as their own parchment rather than pushing an
  * ActionTextBox, because a host holds one overlay slot. They hand
@@ -287,6 +288,17 @@ export function noticeFrame(owner, rows, { hint = undefined } = {}) {
   owner._noticeKey ??= noticeKey();
   return drawEnhancedNotice({ rows, hint }, undefined, owner._noticeKey) != null;
 }
+
+/**
+ * SPELLSHOP-SAID (FIELD BUGS 2026-10-19f): IS THIS OWNER'S PANEL UP? The
+ * enhanced port's dismiss asks it (ui/enhanced/enhancedPort.js): the
+ * click-anywhere box a ported window holds takes the first click while
+ * the panel the player reads stands - whatever field the window keeps
+ * its box in. It asked `win.box`, which four of the ported windows keep;
+ * the guild's and the coven's box is `top`, the spell shop's `top` and
+ * `_box`, and their notices never took the click.
+ */
+export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);
 
 /**
  * A DOM-NATIVE WINDOW'S OWN BOX (ENH-NOTICE3). The tavern, the

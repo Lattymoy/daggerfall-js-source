@@ -25,11 +25,12 @@ export const stageFace = () => live?.face ?? null;
  * @param {HTMLElement} detail
  * @param {string} key
  * @param {(host: HTMLElement) => any} mount
- * @param {{ el: (t: string, c?: string|null, x?: string|null) => HTMLElement, full: string, leave: string, loading: string, failed: string, lead?: string, open?: string, door?: boolean }} o
+ * @param {{ el: (t: string, c?: string|null, x?: string|null) => HTMLElement, full: string, leave: string, loading: string, failed: string, lead?: string, open?: string, door?: boolean, badge?: string, heading?: string }} o
  *   `lead` the page's one line, on the stage's bar beside the toggle; `open` the narrow screen's door (below); `door`
- *   that door on any screen - a face the pane cannot hold (AUDIT GROWTH LANE2-8: the Ascension's column)
+ *   that door on any screen - a face the pane cannot hold (AUDIT GROWTH LANE2-8: the Ascension's column); `badge` and
+ *   `heading` the door's crest and its title (GROWTH-BOOK)
  */
-export function drawStage(detail, key, mount, { el, full, leave, loading, failed, lead = '', open = full, door = false }) {
+export function drawStage(detail, key, mount, { el, full, leave, loading, failed, lead = '', open = full, door = false, badge = '', heading = '' }) {
   if (live && live.key !== key) dropStage();
   if (!live) {
     const host = el('div', 'gr-stagehost');
@@ -62,6 +63,8 @@ export function drawStage(detail, key, mount, { el, full, leave, loading, failed
   // it was (its view, its pending stars) between two opens, until the page, the tab or the window is left.
   if (door || narrow()) {
     const card = el('div', 'gr-stagecard');
+    if (badge) card.append(el('div', 'gr-crest', badge));
+    if (heading) card.append(el('h3', 'gr-doorhead', heading));
     if (lead) card.append(el('p', 'gr-stagelead', lead));
     const b = el('button', 'act primary', open);
     b.onclick = () => setFull(true, el, { full, leave });
@@ -76,7 +79,11 @@ export function drawStage(detail, key, mount, { el, full, leave, loading, failed
   bar.append(b);
   const wrap = el('div', 'gr-stage');
   if (!me.full) wrap.append(me.host);
-  detail.append(bar, wrap);
+  // GROWTH-BOOK: the stage in a frame of its own - the window's double rule and its four gems
+  const frame = el('div', 'gr-frame');
+  frame.append(wrap);
+  for (const c of ['tl', 'tr', 'bl', 'br']) frame.append(el('span', `px-gem px-corner px-${c}`));
+  detail.append(bar, frame);
   fit(me);
   return wrap;
 }
@@ -180,7 +187,14 @@ export const STAGE_CSS = `
 .px-sys .gr-stagebar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 0 0 6px; }
 .px-sys .gr-stagelead { flex: 1; min-width: 0; font-size: 14px; line-height: 1.35; color: #cfc7b1; }
 .px-sys .gr-stagebar .act { flex: none; min-height: 38px; padding: 4px 14px; font-size: 15px; }
-.px-sys .gr-stage { position: relative; height: clamp(320px, 64vh, 760px); overflow: hidden; border: 2px solid rgba(125,116,96,0.55); background: #07080b; }
+.px-sys .gr-frame { position: relative; display: flex; box-sizing: border-box; padding: 4px; background: #0b0c10;
+  border: 2px solid #7d7460; box-shadow: 0 0 0 1px #050608, inset 0 0 0 1px #050608, 0 6px 18px rgba(0,0,0,0.45); }
+.px-sys .gr-frame > .px-corner { z-index: 3; }
+.px-sys .gr-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; border: 1px solid rgba(125,116,96,0.5); background: #07080b;
+  box-shadow: inset 0 0 0 1px #000; }
+:root[data-plus-dress="grimoire"] .px-sys .gr-frame { padding: 5px; background: #3a2414; border: 2px solid #1c0f06;
+  box-shadow: inset 0 0 0 1px #8a5a2b, inset 0 0 0 3px #4a2d16, 0 0 0 1px rgba(255,214,150,0.18), 0 4px 12px rgba(0,0,0,0.45); }
+:root[data-plus-dress="grimoire"] .px-sys .gr-stage { border: 1px solid #1c0f06; box-shadow: 0 0 0 1px rgba(255,214,150,0.25); }
 .gr-stagehost { position: absolute; inset: 0; overflow: hidden; }
 .gr-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; font-size: 14px; color: #9c937d; }
 .gr-fullbox { position: fixed; inset: 0; z-index: 15; background: #07080b; }
@@ -188,7 +202,16 @@ export const STAGE_CSS = `
    face it sat on the Ascension's Ascend and on the skies' summary panel */
 .gr-fullbox > .gr-stagehost { bottom: 48px; }
 .gr-fullbox .gr-fullleave { position: absolute; right: 12px; bottom: 6px; z-index: 2; min-height: 36px; padding: 4px 12px; font-size: 14px; }
-.px-sys .gr-stagecard { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 10px 0; }
-.px-sys .gr-stagecard .gr-stagelead { flex: none; }
+.px-sys .gr-stagecard { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; text-align: center; }
+.px-sys .gr-stagecard .gr-stagelead { flex: none; max-width: 520px; font-size: 15px; line-height: 1.45; }
+.px-sys .gr-stagecard .act { min-height: 40px; min-width: 180px; padding: 6px 22px; font-size: 16px; }
+.px-sys .gr-crest { position: relative; isolation: isolate; width: 96px; height: 96px; display: flex; align-items: center; justify-content: center;
+  font-size: 36px; line-height: 1; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-sys .gr-crest::before { content: ''; position: absolute; inset: 16px; z-index: -1; transform: rotate(45deg);
+  border: 2px solid #7d7460; outline: 2px solid rgba(125,116,96,0.35); outline-offset: 5px; background: rgba(224,195,106,0.08); }
+.px-sys .gr-doorhead { margin: 10px 0 0; font-size: 20px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+:root[data-plus-dress="grimoire"] .px-sys .gr-crest { color: #8e1a10; text-shadow: none; }
+:root[data-plus-dress="grimoire"] .px-sys .gr-crest::before { border-color: rgba(92,52,24,0.7); outline-color: rgba(92,52,24,0.3); background: rgba(142,26,16,0.06); }
+:root[data-plus-dress="grimoire"] .px-sys .gr-doorhead { color: #8e1a10; text-shadow: none; text-transform: none; letter-spacing: 0; font-size: 22px; }
 @media (max-width: 660px) { .gr-fullbox .gr-fullleave { right: 8px; } }
 `;

@@ -70,15 +70,15 @@ test('WB11 the trial and the tables: Legion-Lord is the ninth trial and the only
   assert.deepEqual(GATE_TRIALS.filter((t) => t.legion).map((t) => t.id), ['legion']);
   assert.equal(gateTrialOf('legion').name, 'Legion-Lord');
   assert.ok(MARK_TIPS.legion && MARK_ICONS.legion, 'a way to meet it and a sign');
-  assert.deepEqual(HOST_KINDS.map((k) => [k.id, k.key]), [[0, 'harrier'], [1, 'sapper'], [2, 'bearer']]);
-  assert.deepEqual(HOST, { harrier: 0, sapper: 1, bearer: 2 });
+  assert.deepEqual(HOST_KINDS.map((k) => [k.id, k.key]), [[0, 'harrier'], [1, 'sapper'], [2, 'bearer'], [3, 'brute'], [4, 'caster'], [5, 'markynaz'], [6, 'tithe'], [7, 'gaoler']]);   // PIN MOVED (WB14f): and the Captive's gaolers (test/net/gate/wb14f_captive.test.js); PIN MOVED (WB14e): and the Tithe-Imp (test/net/gate/wb14e_tithe.test.js); WB14c: and the Vanguard's three (test/net/gate/wb14c_vanguard.test.js)
+  assert.deepEqual(HOST, { harrier: 0, sapper: 1, bearer: 2, brute: 3, caster: 4, markynaz: 5, tithe: 6, gaoler: 7 });   // PIN MOVED (WB14f): and the gaolers; PIN MOVED (WB14e): and the Tithe-Imp
   for (const k of HOST_KINDS) assert.ok(k.speed < 7.6, `${k.key}: a runner outruns it`);
-  assert.deepEqual(HOST_BLOWS.map((b) => b?.key ?? null), ['bite', null, 'pulse'], 'a Sapper strikes nobody');
+  assert.deepEqual(HOST_BLOWS.map((b) => b?.key ?? null), ['bite', null, 'pulse', 'smash', 'bolt', 'rend', null, 'pulse'], 'a Sapper strikes nobody');   // PIN MOVED (WB14f): a gaoler's Pulse a Ward-Bearer's; PIN MOVED (WB14e): nor the Tithe-Imp; WB14c: the Vanguard's
   for (const B of HOST_BLOWS.filter(Boolean)) assert.ok((B.r / 7.6) * 1000 < B.windup / 2, `${B.key}: out of it from its own feet in under half its wind-up`);
   assert.deepEqual([0, 1, 2, 3, 4, 6, 7, 9, 10, 40].map(harrierCountFor), [2, 2, 2, 2, 3, 3, 4, 4, 5, 5]);
   assert.deepEqual([0, 1, 3, 4, 8, 12, 16, 40].map(sapperCountFor), [1, 1, 1, 2, 3, 4, 4, 4]);
   assert.deepEqual([0, 1, 5, 6, 12, 18, 40].map(bearerCountFor), [2, 2, 2, 3, 4, 4, 4]);
-  assert.equal(HOST_STANDING_MAX, Math.max(HARRIERS_MAX, SAPPERS_MAX, 4));
+  assert.equal(HOST_STANDING_MAX, Math.max(HARRIERS_MAX, SAPPERS_MAX, 4, 12));   // WB14c: the Vanguard stands twelve
   assert.ok(GATE_HOST_MAX >= HOST_STANDING_MAX && GATE_HOST_MAX >= harrierCountFor(1e9), 'the wire names every one that can stand');
   assert.equal(GATE_HOST_KINDS, HOST_KINDS.length); assert.equal(GATE_HOST_GONE, Object.keys(HOST_GONE).length);
   assert.equal(harrierHpFor([10, 20]), Math.round((HARRIER_S * (dpsRef(10) + dpsRef(20))) / 2), 'the court\'s MEAN reference');
@@ -407,13 +407,13 @@ test('WB11 the checkpoint and the state: the host is plain numbers - a fight tha
 // ═══ THE WIRE ════════════════════════════════════════════════════════════════════════════════════════════════════
 
 test('WB11 the wire: a blow on one of his host (`ahit` - its number, a sequence, a damage, a kind) projected field by field; the room\'s words of it - risen, walking, striking, its health, gone - and the state\'s host, each bounded; the chart row\'s `a`; the brain\'s law is 5 (mutants: a host body numbered nothing; a wave past the wire\'s most; a feeding\'s health past its whole)', () => {
-  assert.equal(GATE_BRAIN_V, 5);
+  assert.equal(GATE_BRAIN_V, 6);   // WB14 raised it to 6 (the portents, the new arsenal, the halves) - a game that knows the host and not those is refused
   assert.ok(GATE_KINDS.includes('ahit'));
   for (const k of HOST_WORDS) assert.ok(GATE_OUT_KINDS.includes(k), k);
   assert.deepEqual(validGateIn({ k: 'ahit', i: 4, q: 9, d: 12.5, r: 0, x: 1 }), { k: 'ahit', i: 4, q: 9, d: 12.5, r: 0 });
   for (const bad of [{ k: 'ahit', i: 0, q: 9, d: 12, r: 0 }, { k: 'ahit', i: 1.5, q: 9, d: 12, r: 0 }, { k: 'ahit', q: 9, d: 12, r: 0 }, { k: 'ahit', i: 2, q: 9, d: 0, r: 0 }, { k: 'ahit', i: 2, q: 9, d: 12, r: 3 }]) assert.equal(validGateIn(bad), null, JSON.stringify(bad));
   assert.deepEqual(validGateOut({ k: 'ad', w: 1, m: 90, a: [[3, 1, 2], [4, -5, 6]], at: 50, z: 1 }), { k: 'ad', w: 1, m: 90, a: [[3, 1, 2], [4, -5, 6]], at: 50 });
-  assert.equal(validGateOut({ k: 'ad', w: 3, m: 90, a: [[3, 1, 2]], at: 50 }), null, 'no fourth kind');
+  assert.equal(validGateOut({ k: 'ad', w: GATE_HOST_KINDS, m: 90, a: [[3, 1, 2]], at: 50 }), null, 'no kind past the table\'s (WB14c: the Vanguard\'s three after his host\'s)');
   assert.equal(validGateOut({ k: 'ad', w: 0, m: 0, a: [[3, 1, 2]], at: 50 }), null, 'a body of no health');
   assert.equal(validGateOut({ k: 'ad', w: 0, m: 9, a: Array.from({ length: GATE_HOST_MAX + 1 }, (_, i) => [i + 1, 0, 0]), at: 50 }), null, 'past the most');
   assert.equal(validGateOut({ k: 'ad', w: 0, m: 9, a: [[0, 0, 0]], at: 50 }), null, 'numbered nothing');
@@ -427,7 +427,7 @@ test('WB11 the wire: a blow on one of his host (`ahit` - its number, a sequence,
   assert.deepEqual(validGateOut({ k: 'adie', is: [3], w: 1, h: 50, m: 100, at: 9 }), { k: 'adie', is: [3], w: 1, h: 50, m: 100, at: 9 });
   assert.equal(validGateOut({ k: 'adie', is: [3], w: 1, h: 150, m: 100, at: 9 }), null, 'past his whole');
   assert.equal(validGateOut({ k: 'adie', is: [3], w: 1, h: 50, at: 9 }), null, 'a health without its whole');
-  assert.equal(validGateOut({ k: 'adie', is: [3], w: 3, at: 9 }), null);
+  assert.equal(validGateOut({ k: 'adie', is: [3], w: 4, at: 9 }), null);   // PIN MOVED (WB14e): 3 is fled (the Tithe-Imp), 4 none
   const st = { k: 'st', d: 5, b: 'ruhn', ph: 1, h: 50, m: 100, x: 0, z: 0, yw: 0, mv: null, atk: null, sh: 0, wr: 9e12, n: 2, fell: null, wrath: null, md: [...LEGION] };
   assert.ok(!('lg' in validGateOut(st)), 'none said, none projected');
   const lg = [[1, 0, 20, 45, 1, 2, 3, 4, 5, 100, 0, 0, 0], [2, 2, 30, 30, 5, 5, 5, 5, 0, 0, 900, 5, 5]];
@@ -664,11 +664,11 @@ test('WB11 the plumbing, read: the world host sends a blow on one of his host as
   assert.match(d, /if \(foe\.host != null\) \{ hitEnemy = true; swingOnHost\(foe, damage, lookDir\); continue; \}/);
   assert.match(d, /const hb = gateHostBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);/, 'the shaft');   // PIN MOVED (TECH1's follow-up, bible/05-Combat/Weapon-Techniques.md): a body a piercing shaft has struck is passed, so one overlapping it under the shaft is met
   assert.match(d, /castAtHost: opts\.gateHost \? \(sp, i, caster\) => spellOnHost\(sp, i, caster\) : null,/, 'the spell');   // PIN MOVED (AUDIT SCHOOLS L2 F4): and the cast's wrapper, for the paths' riders
-  assert.match(d, /const landOnHost = \(hb, damage, r\) => \{ damage \+= takeOwed\(hb\.entity\); return sdRemnant \? sdRemnant\.echoHit\(\{ i: hb\.host, d: damage, r \}\) : !!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r \}\); \};/);   // PIN MOVED (SD8c): an Echo's in the Hour; PIN MOVED (FIELD BUGS 2026-10-12g OPEN-HAND): and the follow-up the blow owes
+  assert.match(d, /const landOnHost = \(hb, damage, r, tick = false\) => \{ damage \+= takeOwed\(hb\.entity\); return sdRemnant \? sdRemnant\.echoHit\(\{ i: hb\.host, d: damage, r \}\) : !!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r, tick \}\); \};/);   // PIN MOVED (SD8c): an Echo's in the Hour; PIN MOVED (FIELD BUGS 2026-10-12g OPEN-HAND): and the follow-up the blow owes; PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and a round's mark, for an Elite Breach's Vestiges
   assert.match(g, /const crystals = \[\.\.\.crystalMarksFor\(sp\), \.\.\.hostMarksFor\(sp\)\];/);
   assert.match(g, /if \(mark\?\.host != null\) \{ try \{ return !!castAtHost\?\.\(sp, mark\.host, caster\); \} catch \{ return false; \} \}/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): and the cast's wrapper
   assert.match(r, /const at = a\.pose && !a\.pose\.dd && !bodyOut\(f\.players\[a\.sub\], line\.enforce\) \? this\._courtOf\(a\.pose\) : null;/, 'PIN MOVED (INT11): from where its pose stands, alive - by the pose\'s word and the count\'s');
-  assert.match(r, /else if \(m\.k === 'ahit'\) this\._gateFan\(applyHostHit\(f, a\.sub, m\.i, m\.d, m\.r, at, now, m\.q\)\);/, 'the relay judges it (AUDIT WB11 W3: by its blow\'s sequence)');
+  assert.match(r, /else if \(m\.k === 'ahit'\) await this\._gateFanKept\(f, applyHostHit\(f, a\.sub, m\.i, m\.d, m\.r, at, now, m\.q, rand01\), now\);/, 'the relay judges it (AUDIT WB11 W3: by its blow\'s sequence)');   // PIN MOVED (AUDIT WB14 WIRE-2): by the relay's dice (a Tithe-Imp's tithe paid at its catch), kept before it is said
 });
 
 test('WB11 a whole Legion-Lord fight, stepped: Harriers in the first court, crumbled at the turn; Ward-Bearers as he lands in the second; Sappers there once its turn is done; Ward-Bearers again in the third - every word of the host the wire takes, and never more standing than the wire can name (mutants: a kind out of its phase)', () => {
@@ -710,7 +710,11 @@ test('WB11 the bodies drawn: each one standing a billboard of its own mobile\'s 
   frame(1000, stOf({ lg: { ads: [ad({ i: 1, x: 20, z: 6, rose: -Infinity }), ad({ i: 2, k: HOST.sapper, x: -20, z: 6, rose: 900 })], gone: [] } }));
   await new Promise((r) => setTimeout(r, 0));
   frame(1016);
-  assert.deepEqual(loaded.filter((a) => a !== ENEMY_BASICS[31].maleTexture).sort(), [ENEMY_BASICS[1].maleTexture, ENEMY_BASICS[35].maleTexture].sort(), 'each mobile\'s sprite, loaded once (his own beside them)');
+  // GATE-MIX: the court's warm-up (scenes/gate/gateSpriteWarm.js) asks for every archive the night can show as well - the
+  // Ward-Bearers' among them, none of which has risen - so each is asked twice at most: the warm-up's once and the host's once
+  const asked = loaded.filter((a) => a !== ENEMY_BASICS[31].maleTexture), times = (a) => asked.filter((x) => x === a).length;
+  assert.deepEqual([...new Set(asked)].sort(), [ENEMY_BASICS[1].maleTexture, ENEMY_BASICS[35].maleTexture, ENEMY_BASICS[26].maleTexture].sort(), 'each mobile\'s sprite (his own beside them), and the night\'s by the warm-up');
+  assert.deepEqual([times(ENEMY_BASICS[1].maleTexture), times(ENEMY_BASICS[35].maleTexture), times(ENEMY_BASICS[26].maleTexture)], [2, 2, 1], 'the host asks each of its own once');
   const host = c.batches().filter((b) => b.archive === ENEMY_BASICS[1].maleTexture || b.archive === ENEMY_BASICS[35].maleTexture);
   assert.equal(host.length, 2, 'a billboard each, handed on with the court\'s');
   const imp = host.find((b) => b.archive === ENEMY_BASICS[1].maleTexture), sapper = host.find((b) => b.archive === ENEMY_BASICS[35].maleTexture);
@@ -718,9 +722,8 @@ test('WB11 the bodies drawn: each one standing a billboard of its own mobile\'s 
   assert.ok(Math.abs(imp.origin[0] - impAt[0]) < 1e-9 && Math.abs(imp.origin[2] - impAt[2]) < 1e-9, 'where it stands');
   assert.ok(imp.origin[1] > impAt[1] + 0.5, 'an Imp over the floor');
   assert.ok(sapper.origin[1] < courtToDungeon(-20, 0, 6)[1], 'one still rising: under the floor yet');
-  const n = uploads.length;
   frame(1032);
-  assert.equal(uploads.length, n, 'a frame uploaded once');
+  assert.equal(new Set(uploads).size, uploads.length, 'a frame uploaded once (GATE-MIX: the warm-up\'s and the bodies\' alike)');
   // one gone: its fall played, then put away
   frame(2000, stOf({ lg: { ads: [ad({ i: 2, k: HOST.sapper, x: -20, z: 6, rose: 900 })], gone: [{ i: 1, k: 0, x: 20, z: 6, w: 0, n: 'Ann', at: 1990 }] } }));
   assert.ok(c.batches().includes(imp), 'falling, still drawn');

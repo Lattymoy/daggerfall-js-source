@@ -187,9 +187,9 @@ went and why any stayed ("Into your bag - 2 stay in your Stores: no room in your
 was still being counted"; "4 on their way from your Stores: the counting-house has not answered yet"; a refusal's own
 words). Every unit the service hands over is minted - into the bag, the pack, then the pack past its weight
 (`giveCarried`), as a withdrawal always came: the service counted them carried. A station's refusal after some inputs
-went in says so ("1 of the materials went into your Stores first - the next try spends them there."); a press while a
+went in says so ("1 of the materials went into your Stores first. Your next try uses them from there."); a press while a
 put-in of an input is unanswered says `deposit-kept` at once, and no craft is kept (the second audit's K4-K10). DFU's own potion maker reads and spends the bag
-after the cart (`scenes/worldModes.js`). The guild Stores and Disenchanting read the Stores alone, as they did: a
+after the cart (`scenes/worldModes.js`), and the fire's Cook food reads it after the pack (BAG-COOK, section 16). The guild Stores and Disenchanting read the Stores alone, as they did: a
 material is given to the guild or sold back from the Stores, so it is put in first. The market's silver listing and its
 buy-order fill count what is carried and put the shortfall in first, as a station does (MARKET-BAG, 2026-10-04 -
 Professions-Arc 10.10: reading the Stores alone, a gatherer's List form offered nothing and every order said "0 in your
@@ -201,6 +201,7 @@ Stores"); a gold listing takes its Stores' own and gold's units alone.
   settle. The deposit is KEPT with the other acts (the audit's B17: it was memory alone), so a page closed before the
   answer still hears it. **Its take is STAMPED in the save** (the second audit's K3/K7/H2: `entity.bagTakes`, its id,
   material, units and order), and that save is the realm's - a checkpoint that LANDED - **before the deposit is asked**.
+  One save serves a whole batch (ONE-SAVE, section 16): every take of it stamped, then the one checkpoint, then the asks.
   So the save a later page boots says what happened: holding the stamp, it saw the items go, and a refusal gives back
   every unit (into the bag, the pack, past the pack's weight); without it, the deposit was never sent (its checkpoint
   never landed) and is let go, the save keeping its items. A checkpoint refused on a first ask undoes the take whole
@@ -384,3 +385,36 @@ What the wall costs an honest player: a piece made of looted goods lists for gol
 themselves would from the pack; and a Ram Kit of them stays a station's. Pinned by `test/net/auditbagcraft.test.js` (the
 wall at every door, through the real Worker - the gold wall's own test the pattern; the stations' spends and products;
 the brew's unbruised count; the Stores page over a real carrying book) and `test/systems/fb1009d_bagcraft.test.js`.
+
+## 16. From play - BAG-COOK and ONE-SAVE (FIELD BUGS 2026-10-20c)
+
+Two reports from the Discord, read to their roots in `01-Overview/bugs/Field-Bugs-2026-10-20c.md`.
+
+**BAG-COOK** ("raw fish cant be cooked over fires"). A haul's Raw Fish is minted as C&C's own (template 535,
+`UselessItems2` - `profItems.js:"  if (key === 'food:fish') return fishTemplate(cc);"`), the food the fire cooks, and it
+goes into the bag first (section 3). The fire's Cook food read the pack alone, so a bag's owner was told "You have
+nothing to cook." with the fish in the bag; on the classic skin, which draws no bag, only Empty your bag into your pack
+reached them. Now the list is the pack's raw food, then the bag's, while the pack holds a bag
+(`camps.js:"    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];"`) - as DFU's own potion maker reads the
+wagon after the pack (`DaggerfallPotionMakerWindow.cs` Refresh, and section 6's port of it) - and the cooked food goes
+into the pack (`camp.js:"    (Array.isArray(into) ? into : list).push(cooked);   // FB1020c BAG-COOK: into the pack, never the bag"`):
+a cooked food is no material, and the bag holds materials alone. A fish cooked out of the bag leaves it as one cooked
+out of the pack always did: the next carried request cuts the count to what is held (section 5). The fire's words on the
+Stores page say where gathered goods go and that a Raw Fish from the pack or the bag cooks there. Pinned by
+`test/systems/fb1020c_bagcook.test.js`; `tools/mutants/fb1020c_bagcook.json`.
+
+**ONE-SAVE** ("storing your goods makes the buttons get stuck for a long time"). Section 7's law - the take saved before
+the ask - was paid once a put-in: Put everything in asked a deposit a material in series, each waiting on a realm
+checkpoint of the whole game (the composed save packed and PUT, opened, judged and stored by the service), and each take
+and each answer asked another checkpoint of its own behind it, about 1.75 a material on the press's path; every button
+on the page read "Sending..." for all of it. A station's shortfalls did the same, one an input. The take and its save
+live once now: `profBook.js:"    async depositMany(list) {"` takes and stamps every put-in of a batch, lands ONE
+checkpoint, then asks each in turn; a refused checkpoint gives every take back whole (`deposit-unsaved`), and the first
+unanswered put-in leaves the rest unasked and kept for the next settle (`deposit-kept`) - their takes are in the save
+that landed. `deposit` is a batch of one, with every guard and word it answered before; `ensureInStores` puts a craft's
+shortfalls in as one batch; the Stores page's Put in (the counted units, then the loose) and Put everything in hand the
+host one plan (`world.js:"        deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) =>"`).
+A press now waits on one checkpoint and its asks, however many materials it moves. The words a slow counting-house says
+have one home, the page's `BAG_PAGE_WORDS.kept`. Pinned by `test/systems/professions/fb1020c_onesave.test.js`;
+`tools/mutants/fb1020c_onesave.json`. Pins moved: `bag1_client.test.js` (D3, the refusal's source line, the providers),
+`fb1009c_uncounted.test.js` (Put in and Put everything in, the host's wiring).

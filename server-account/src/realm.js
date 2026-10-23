@@ -58,6 +58,7 @@ import { linkFirstPlay } from './founderLink.js';   // FOUNDER5: a character bro
 import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
 import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
 import { wealthOf, ledgerPieces, classicCount, WEALTH_VERSION } from './judge.js';   // INT5: what the service's own writes move, witnessed; INT4: the pieces it moves
+import { seaSeasonSteps } from './seaSeason.js';   // SEA-SEASON: the sea's season figures, off a clean checkpoint
 import { piecesRefusal, ledgerMoves, releaseSteps, ledgerReads, leavingKeys } from './ledger.js';   // INT4: a piece the record may give, and the ledger moved with it; SAVE-BATCH: its reads in the checkpoint's first batch
 import { budgetKept, budgetRead, budgetFrom } from './budget.js';   // SAVE-BATCH: and the budget's config, where the isolate kept none
 import { verdictOn } from './verdict.js';   // INT2-INT5: the verdict on every checkpoint, in the checkpoint's own batch
@@ -616,6 +617,8 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
         .bind(seq, bytes, key, nowS, said, nowS, id, playerId, lease, /** @type {number} */ (seq) - 1),
       mustChange(db),
       ...v.steps,
+      // SEA-SEASON (seaSeason.js): a clean checkpoint's season figures - after the verdict's write, so a hold it lays counts
+      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),
     ]);
     if (res?.[2]?.meta?.changes === 1) stood = v.set;
   } catch {
@@ -701,11 +704,14 @@ export function realmAtOf(/** @type {any} */ v) {
  * 'piece-dupe', whatever the act: no route moves that piece again. INT5: the wealth the change moves is WITNESSED - the
  * row's `witnessed` takes it in the same step, so the budget never charges a gain the service itself made. INT6: the
  * last checkpoint judged clean is never `prev` to drop.
+ * LOST-SPOILS: `witness` false - a piece the CLIENT rolled, carried into the record by the service (a boss's floor's
+ * leftover, claimed from the Lost and Found - post.js claimPost): the budget charges it as it charges that piece taken
+ * off the floor, so the service's hand is no road past the budget for what the client said.
  * @param {any} ctx @param {string} playerId @param {{ id: string, lease: string, seq: number }} at
- * @param {(save: any) => string | null} change @param {{ outbound?: boolean, escrow?: boolean | Set<string>, seize?: boolean }} [opts]
+ * @param {(save: any) => string | null} change @param {{ outbound?: boolean, escrow?: boolean | Set<string>, seize?: boolean, witness?: boolean }} [opts]
  *   `escrow`: the pieces leaving in the service's hands (ledger.js ledgerMoves - true all, a Set those keys)
  */
-export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false, seize = false } = {}) {
+export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false, seize = false, witness = true } = {}) {
   if (!bucket) return { error: 'no-storage' };
   const row = await db.prepare('SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
@@ -748,7 +754,7 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   const steps = [
     db.prepare(`UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}
       WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8 AND dead_at IS NULL' : 'lease = ?8'} AND seq = ?9`)
-      .bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),
+      .bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),
     mustChange(db),
     ...moves.left,
     ...moves.entered,
@@ -880,6 +886,11 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
   if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };
   // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)
   if (await db.prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`).bind(playerId, id).first()) return { error: 'cards-held' };
+  // AUDIT SEA VENTURES B4: gold owed it at sea, a wreck's goods held for it, and its own hold's goods due back come home
+  // to it first (seaBounty.js, seaWreck.js) - deleted, they stood owed to no character for good
+  if (await db.prepare(`SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL
+    UNION ALL SELECT 1 FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3
+    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`).bind(playerId, id, nowS).first()) return { error: 'sea-held' };
   // HOME-RENT: a room another player is renting in its home waits for its days to run out, and rent held for it waits to
   // be collected - the delete takes the home with it. AUDIT: then no room of it is offered any more, and both are asked
   // again - a rent landing between the first asking and the delete's batch was deleted with the home (a rent needs its

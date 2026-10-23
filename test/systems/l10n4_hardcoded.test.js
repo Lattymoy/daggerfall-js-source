@@ -29,7 +29,7 @@ const HARDCODED = {
   'src/characters/orcBody.js': 3,
   'src/characters/ownModels/ownArmorModels.js': 14,
   'src/characters/ownModels/ownClothingModels.js': 2,
-  'src/characters/ownModels/ownWeaponModels.js': 3,
+  'src/characters/ownModels/ownWeaponModels.js': 6,   // PISTOLET: the Pistolet's and the Sunken Sovereign's rows - a bone name and two record names the Morrowind item map reports, as the Thunderlock's and the Hourlock's (AUDIT PISTOLET M2)
   'src/characters/paperdoll/paperdollPayload.js': 2,
   'src/characters/undeadBody.js': 8,
   'src/characters/villagerDesigns.js': 27,
@@ -98,7 +98,7 @@ const HARDCODED = {
   'src/net/firmament/firmamentLaw.js': 42,
   'src/net/firmament/firmamentTree.js': 113,
   'src/net/fortLaw.js': 21,
-  'src/net/gate/gateBrain.js': 9,
+  'src/net/gate/gateBrain.js': 7,   // AUDIT WB14 (TEXT-9): the phase names through the text core
   'src/net/gate/gateClaims.js': 5,
   'src/net/gate/gateHerald.js': 8,
   'src/net/gate/gateLaw.js': 4,
@@ -114,7 +114,7 @@ const HARDCODED = {
   'src/net/homeLaw.js': 3,
   'src/net/homeVoteLaw.js': 11,
   'src/net/houseLaw.js': 1,
-  'src/net/iliac/iliacCards.js': 65,   // KG-SET: the set's words moved to systems/iliac/iliacCardWords.js; EG-E: the Battlespire's thirteen lords' names (+13), their words there too since the merge of main
+  'src/net/iliac/iliacCards.js': 68,   // WITCH1: the Witches' Festival's six cards' names (+3, the three of two words - their rules and flavour are iliacCardWords.js's, routed); KG-SET: the set's words moved to systems/iliac/iliacCardWords.js; EG-E: the Battlespire's thirteen lords' names (+13), their words there too since the merge of main
   'src/net/iliac/iliacHand.js': 13,
   'src/net/journalPage.js': 16,
   'src/net/mail.js': 3,
@@ -129,7 +129,7 @@ const HARDCODED = {
   'src/net/oneSeat.js': 3,
   'src/net/peer/peerBodies.js': 5,
   'src/net/postLaw.js': 1,
-  'src/net/professionLaw.js': 109,
+  'src/net/professionLaw.js': 112,   // FIELD BUGS 2026-10-20h DEX-HIDES: the Wolf Pelt's, the Boar Hide's and the Mudcrab Chitin's names - an item's canonical name is its row's, as the ten hides' are
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
   'src/net/realm/realmTradeLaw.js': 21,
@@ -202,8 +202,12 @@ const HARDCODED = {
   'src/render/lightningBolts.js': 2,
   'src/render/navalRender.js': 2,
   'src/render/nodeGlow.js': 1,
+  'src/render/npcMarkPass.js': 1,   // NPC-MARKS: its vertex stage's source (GLSL, never a player's words)
+  'src/render/nodeGlint.js': 2,
   'src/render/oceanHolesRender.js': 4,
   'src/render/orderedDither.js': 1,
+  'src/render/partyPingDraw.js': 2,   // PARTY-PING: the route's two shaders - GLSL the scan reads as prose (`in vec3`), weaponGlowGlsl.js's same line
+  'src/render/partyPingLabels.js': 1,   // PARTY-PING: the pin's SVG, markup the scan reads as prose
   'src/render/precipitation.js': 6,
   'src/render/rainCurtains.js': 1,
   'src/render/realWindows.js': 11,
@@ -211,6 +215,7 @@ const HARDCODED = {
   'src/render/retroPass.js': 1,
   'src/render/riteSmoke.js': 1,
   'src/render/shipFlagPass.js': 1,
+  'src/render/starfall/starfallPass.js': 3,   // STAR4: its shaders' sources, as every pass's (AUDIT STARFALL R3: the ring's vertex stage reads its bearings' count, one fewer)
   'src/render/superDungeon/sdArenaGlow.js': 1,
   'src/render/superDungeon/sdBeam.js': 1,
   'src/render/superDungeon/sdHalo.js': 2,
@@ -259,7 +264,7 @@ const HARDCODED = {
   'src/scenes/fishHost.js': 14,
   'src/scenes/fleetHost.js': 52,
   'src/scenes/foragingWait.js': 1,
-  'src/scenes/gate/gateCourt.js': 12,
+  'src/scenes/gate/gateCourt.js': 10,   // AUDIT WB14 (TEXT-9): the phase card's orders through the text core
   'src/scenes/gate/gateHost.js': 7,
   'src/scenes/gate/gatePool.js': 4,
   'src/scenes/gatherHost.js': 10,
@@ -305,9 +310,9 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 349,
+  'src/scenes/world.js': 346,   // FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words
   'src/scenes/worldModes.js': 83,
-  'src/systems/aetheric.js': 115,
+  'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
   'src/systems/allyCast.js': 5,
   'src/systems/answerPipeline.js': 1,
@@ -361,19 +366,25 @@ const HARDCODED = {
   'src/systems/eliteGates/egSpoils.js': 8,
   'src/systems/enchanting.js': 7,
   'src/systems/enchantmentCatalogue.js': 65,
+  'src/systems/enemyExpansion/dexTableText.js': 5,   // DEX0: the mod's tables as text, verbatim (data, read by its own parser). AUDIT DEX A6: the fifty enemies' names among it are the game's own English (the Foes table's keys, the save); a player reads them through enemyExpansion/dexNames.js, in the player's language (getLocalizedEnemyName's custom arm), where DFU shows a custom enemy's English in every language
+  'src/systems/enemyExpansion/mudexTableText.js': 2,   // MUDEX1: MUDEX's two tables as text, verbatim (data, read by DEX's parser) - its classic lines' names ("Sabertooth Tiger") are a classic row's properties, never shown; its enemies' names are DEX's
+  'src/systems/enemyExpansion/dexBodies.js': 8,   // DEX7: the census's miss and sprite reasons (creatureBodies.js's eight are the classic table's) - read by the tests, never shown to a player: a miss keeps its sprite
+  'src/systems/enemyExpansion/dexSpells.js': 1,   // DEX4a: the mod's `[DEX] Unknown enemy spell table` Debug.LogError line, verbatim - through the install's `log` seam, never shown to a player
+  'src/systems/enemyExpansion/dexTables.js': 29,   // DEX1 (24) and DEX3 (5, ParseEncounterTables' and the first Update's): the mod's `[DEX]` Debug.LogError lines, verbatim - console diagnostics through the reading's `log` seam (a test silences it), never shown to a player
   'src/systems/equip.js': 3,
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
   'src/systems/features.js': 127,
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
+  'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
   'src/systems/foeTitle.js': 1,
   'src/systems/foraging/foragingInstall.js': 8,
   'src/systems/foraging/foragingLaw.js': 64,
   'src/systems/gate/gateOmen.js': 10,
   'src/systems/gate/gateSpoils.js': 3,
   'src/systems/gateTier.js': 4,
-  'src/systems/gilded.js': 15,   // GILDED2: the Dragonfire Oath's and the Sunken Sovereign's names, powers, lore and hints - written as the Hourlock's are
+  'src/systems/gilded.js': 16,   // GILDED2: the Dragonfire Oath's and the Sunken Sovereign's names, powers, lore and hints - written as the Hourlock's are   // AUDIT PISTOLET A7 C1 D8: +1, the Sunken Sovereign's saber-era lore - an item's own story, as the records' are
   'src/systems/gravestoneLore.js': 16,
   'src/systems/guild/guilds.js': 3,
   'src/systems/handheldTorches.js': 12,
@@ -411,7 +422,7 @@ const HARDCODED = {
   'src/systems/loot/loot.js': 2,
   'src/systems/loot/lootCodex.js': 12,
   'src/systems/loot/lootPowers.js': 7,
-  'src/systems/loot/lootRarity.js': 251,
+  'src/systems/loot/lootRarity.js': 250,
   'src/systems/loot/lootScry.js': 8,
   'src/systems/lowPolyTreesAssets.js': 1,
   'src/systems/lycanthropy.js': 3,
@@ -425,7 +436,7 @@ const HARDCODED = {
   'src/systems/naval/captainLedger.js': 15,
   'src/systems/naval/crewCompanions.js': 3,
   'src/systems/naval/crewLife.js': 124,
-  'src/systems/naval/etherCrossing.js': 14,
+  'src/systems/naval/etherCrossing.js': 13,
   'src/systems/naval/etherShips.js': 22,
   'src/systems/naval/harbourBoard.js': 24,
   'src/systems/naval/navalPlunder.js': 17,
@@ -447,7 +458,7 @@ const HARDCODED = {
   'src/systems/portPlaces.js': 8,
   'src/systems/portalStone.js': 23,
   'src/systems/potionRecipes.js': 15,
-  'src/systems/professions/profItems.js': 35,
+  'src/systems/professions/profItems.js': 36,   // AUDIT FB1021 (merged onto FB1020h's DEX-HIDES): 'Mudcrab Chitin' a mass, as the Scorpion's
   'src/systems/professions/profTemplates.js': 1,
   'src/systems/quest/actions.js': 11,
   'src/systems/quest/machine.js': 1,
@@ -471,7 +482,7 @@ const HARDCODED = {
   'src/systems/rest/restWarning.js': 5,
   'src/systems/resurrect.js': 6,
   'src/systems/revenant/revenant.js': 73,
-  'src/systems/revenant/revenantCompanions.js': 4,
+  'src/systems/revenant/revenantCompanions.js': 3,   // AUDIT SEA VENTURES C7: -1, the zone's one-revenant refusal read off the zone's words
   'src/systems/revenant/revenantFate.js': 14,
   'src/systems/revenant/revenantFeud.js': 27,
   'src/systems/revenant/revenantPersonality.js': 621,
@@ -490,7 +501,7 @@ const HARDCODED = {
   'src/systems/serpent/serpentOmen.js': 1,
   'src/systems/serpent/serpentSite.js': 1,
   'src/systems/serpent/serpentSpoils.js': 4,
-  'src/systems/settings/settings.js': 12,
+  'src/systems/settings/settings.js': 11,
   'src/systems/settings/settingsText.js': 156,
   'src/systems/shellUpdates.js': 4,
   'src/systems/shipyards.js': 21,
@@ -498,13 +509,14 @@ const HARDCODED = {
   'src/systems/sigil/sigil.js': 8,
   'src/systems/sigil/sigilBroker.js': 8,
   'src/systems/sigil/sigilSetPowers.js': 24,
-  'src/systems/sigil/sigilSets.js': 99,
+  'src/systems/sigil/sigilSets.js': 125,   // SEA-SET: +9, the Eltheric Tidemail's name, prince, role, tiers and their words, as every set's; WITCH1: the Wyrd's Raiment - its name, its prince, its three tiers' names and lines (+9), as every set's; STAR7: +8, the Starspun Weave's name, role, tiers and their words, as every set's
   'src/systems/smithItems.js': 26,
   'src/systems/snowfall.js': 12,
   'src/systems/snowfallRuntime.js': 10,
   'src/systems/spell/spellEffects.js': 29,
   'src/systems/eliteGates/spireKit.js': 1,
   'src/systems/staleChunk.js': 6,
+  'src/systems/starfall/starglass.js': 1,   // AUDIT STAR I1: Starfall Glass's name - an item's canonical name is its row's, as the Soul Cake's and the Weir Key's
   'src/systems/startDungeon.js': 1,
   'src/systems/statusReadout.js': 2,
   'src/systems/steedCare.js': 16,
@@ -518,8 +530,9 @@ const HARDCODED = {
   'src/systems/survival/tavernMenu.js': 129,
   'src/systems/survival/temperature.js': 13,
   'src/systems/talk/talk.js': 2,
-  'src/systems/testRoom.js': 57,
+  'src/systems/testRoom.js': 59,   // PISTOLET: +2, the test room's two Dwarven Pistolet rows (the Thunderlock's own were counted)
   'src/systems/thunderlock.js': 8,
+  'src/systems/pistolet.js': 1,   // PISTOLET: the template row's name, 'Dwarven Pistolet' - the Thunderlock's row's is counted the same way
   'src/systems/tradePack.js': 10,
   'src/systems/translationPacks.js': 1,
   'src/systems/travel/travelBands.js': 1,
@@ -528,8 +541,8 @@ const HARDCODED = {
   'src/systems/travel/travelOptionsText.js': 30,
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
-  'src/systems/travel/travelViewFilters.js': 6,
-  'src/systems/tutorialCatalogue.js': 216,
+  'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
+  'src/systems/tutorialCatalogue.js': 214,
   'src/systems/uiSkin.js': 1,
   'src/systems/upkeep/upkeepItemRows.js': 2,
   'src/systems/upkeep/upkeepRuntime.js': 8,
@@ -573,7 +586,7 @@ const HARDCODED = {
   'src/ui/brokerWindow.js': 42,
   'src/ui/captainPage.js': 13,
   'src/ui/card/cardBinderPage.js': 25,
-  'src/ui/card/cardTableHud.js': 80,
+  'src/ui/card/cardTableHud.js': 79,
   'src/ui/chapterRoll.js': 1,
   'src/ui/charSheetDoor.js': 2,
   'src/ui/chargen.js': 24,
@@ -581,7 +594,6 @@ const HARDCODED = {
   'src/ui/charsheet.js': 16,
   'src/ui/chatPanel.js': 18,
   'src/ui/classicLootPanel.js': 1,
-  'src/ui/collectionsPage.js': 4,
   'src/ui/companionRoster.js': 19,
   'src/ui/credits.js': 86,
   'src/ui/cursor.js': 1,
@@ -591,7 +603,7 @@ const HARDCODED = {
   'src/ui/eliteGates/egArchMapMark.js': 1,
   'src/ui/eliteGates/egBeats.js': 85,
   'src/ui/eliteGates/egBoardWindow.js': 15,
-  'src/ui/eliteGates/egHud.js': 39,   // AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest
+  'src/ui/eliteGates/egHud.js': 32,   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: -1, the Gauntlet's line routed (eg.progress.gauntlet). AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest; EG-PLUS: -6, the panel's heads, the asks' lines and its foot through the text core
   'src/ui/eliteGates/egSpireHud.js': 15,   // AUDIT EG IV (the lords' group): +1, an errand's numerals' markup (egSigilHtml's `given` - a template the scan counts; its words are the company's numerals and names)
   'src/ui/eliteGates/egStartWindow.js': 5,
   'src/ui/enhanced/enhancedAccount.js': 8,
@@ -605,10 +617,10 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedFrame.js': 2,
   'src/ui/enhanced/enhancedHelm.js': 16,
   'src/ui/enhanced/enhancedHotbar.js': 13,
-  'src/ui/enhanced/enhancedHud.js': 6,
-  'src/ui/enhanced/enhancedInventory.js': 84,
+  'src/ui/enhanced/enhancedHud.js': 9,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class)
+  'src/ui/enhanced/enhancedInventory.js': 89,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts)
   'src/ui/enhanced/enhancedLevelingChoice.js': 6,
-  'src/ui/enhanced/enhancedMenu.js': 62,   // AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
+  'src/ui/enhanced/enhancedMenu.js': 60,   // AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
   'src/ui/enhanced/enhancedMerchantPanel.js': 1,
   'src/ui/enhanced/enhancedNotice.js': 1,
   'src/ui/enhanced/enhancedPlayerTrade.js': 14,
@@ -623,12 +635,12 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedTavern.js': 9,
   'src/ui/enhanced/enhancedTimers.js': 6,
   'src/ui/enhanced/enhancedTrade.js': 19,
-  'src/ui/enhanced/enhancedTravelControl.js': 6,
+  'src/ui/enhanced/enhancedTravelControl.js': 3,
   'src/ui/eventMapMarks.js': 6,
   'src/ui/exteriorAutomapWindow.js': 6,
-  'src/ui/familyPages.js': 111,
+  'src/ui/familyPages.js': 110,
   'src/ui/flagArt.js': 1,
-  'src/ui/fleetPage.js': 30,
+  'src/ui/fleetPage.js': 28,
   'src/ui/fpsCounter.js': 3,
   'src/ui/gate/gateBossBar.js': 5,
   'src/ui/gate/gateDamageChart.js': 3,
@@ -636,17 +648,20 @@ const HARDCODED = {
   'src/ui/gate/gateMarksView.js': 18,
   'src/ui/gate/gateTitleCard.js': 1,
   'src/ui/grimoireDress.js': 13,
+  'src/ui/growth/growthStage.js': 1,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (GROWTH-BOOK)
   'src/ui/guildServiceWindow.js': 1,
   'src/ui/guildServiceWindows.js': 8,
   'src/ui/hallOfRecords.js': 4,
-  'src/ui/haulCards.js': 15,
+  'src/ui/haulCards.js': 14,   // AUDIT STAR W2: the cap's card through the text core
   'src/ui/heldMap.js': 42,
   'src/ui/heraldryArt.js': 4,
   'src/ui/hitNumbers.js': 1,
   'src/ui/holdingsPages.js': 59,
   'src/ui/howManyField.js': 1,
+  'src/ui/hud/hudAdvance.js': 8,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: ADV_WORDS, the tiles' hover card)
   'src/ui/hud/hudLayout.js': 28,
   'src/ui/hud/hudStatus.js': 1,
+  'src/ui/hud/statusTips.js': 53,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (STATUS-TIPS: what each status tile says under the pointer)
   'src/ui/iliacTableHud.js': 63,
   'src/ui/ink/inkDungeonGL.js': 1,
   'src/ui/ink/inkDungeonSolid.js': 6,
@@ -683,13 +698,14 @@ const HARDCODED = {
   'src/ui/pickupFeed.js': 1,
   'src/ui/pixelDial.js': 3,
   'src/ui/pixelifyFive.js': 2,
-  'src/ui/playerBadge.js': 35,   // SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
+  'src/ui/playerBadge.js': 36,   // QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 30,
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 30,
+  'src/ui/professions/profPages.js': 31,   // FB1020c ONE-SAVE: the kept words, moved here from the world host
   'src/ui/profileBadge.js': 4,
+  'src/ui/profileIcons.js': 4,   // WITCH1: the four profile icons' names (ICON_TEXT) - the badge's words, as playerBadge.js's titles and auras
   'src/ui/profileWindow.js': 14,
   'src/ui/provinceMap.js': 5,
   'src/ui/quest/questHerald.js': 6,
@@ -698,7 +714,7 @@ const HARDCODED = {
   'src/ui/quest/questMarks.js': 1,
   'src/ui/quest/questRail.js': 1,
   'src/ui/quest/questTracker.js': 5,
-  'src/ui/reforgeWindow.js': 93,
+  'src/ui/reforgeWindow.js': 92,
   'src/ui/restWindow.js': 7,
   'src/ui/revenant/revenantCard.js': 5,
   'src/ui/revenant/revenantFateView.js': 3,
@@ -715,7 +731,7 @@ const HARDCODED = {
   'src/ui/serpentMapMark.js': 1,
   'src/ui/setCard.js': 9,
   'src/ui/settings/settingsCopy.js': 185,
-  'src/ui/settings/settingsLaw.js': 19,
+  'src/ui/settings/settingsLaw.js': 18,
   'src/ui/settings/settingsMap.js': 24,
   'src/ui/shipyardWindow.js': 43,
   'src/ui/shotsPane.js': 21,
@@ -777,7 +793,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 43,   // NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's
+  'src/world/eliteGates/pseudoArchives.js': 47,   // PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

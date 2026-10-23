@@ -116,12 +116,17 @@ export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'mas
  *  Journeyman - DFU's own maker's one a mix. AUDIT PROF-541 R2-S1: `potion` the brew's - one made wholly of goods only a
  *  counter sells (!brewFirstPays: Water Breathing, Levitation) makes ONE whatever the rank or the Brewer, else the
  *  Apothecaries' silver (a fifth of DFU's price) brewed into three potions sold online at half the shop's would be gold
- *  past the Bank (11 silver to 165 gold). */
+ *  past the Bank (11 silver to 165 gold).
+ *  CRAFT-PAYS (2026-10-21, the Discord's #feature-feedback: "The profit margin is also extremely low or even a loss";
+ *  Professions-Arc.md section 48): TWO BELOW JOURNEYMAN, not one. A Novice's brew was one potion for the station's fee and
+ *  a cauldron of herbs - a loss against the drop it competed with, on the very rungs a brewer climbs by brewing. The rungs
+ *  above stand (two at Journeyman, a Brewer's three, three at Master): `prof_brews.count` is CHECKed 1 to 3
+ *  (migration 0070), so a fourth is a table's rebuild, not a number's change. The counter's goods still brew one. */
 export function brewCount(rank, spec50 = null, potion = null) {
   if (potion && !brewFirstPays(potion)) return 1;
   if (rank >= PROF_RANK_MAX) return 3;
   if (rank >= JOURNEYMAN_RANK) return spec50 === BREWER ? 3 : 2;
-  return 1;
+  return 2;
 }
 /** POTENT (9.3: "Potent (+25% magnitude, named so) at 10% at Expert and 20% at Master, +5% an unbruised herb"): the
  *  chances, percent. `apothecary` the Seats' hall's (Seats-Arc 7.5: "+1 step" a tier - DECIDED, a step is Expert's

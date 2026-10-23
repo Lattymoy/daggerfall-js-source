@@ -16,11 +16,12 @@ import {
   readJungleTrees, jungleCover, JUNGLE_ROOT_BAND, JUNGLE_CROWN_COVER, jungleMesh,
 } from '../../src/world/jungle/jungleModels.js';
 import { COVER_RADIUS_FRAC, createCoverIndex, rayCylinder } from '../../src/ai/cover.js';
+import { trailRoom } from '../../src/world/jungle/jungleTrails.js';
 import {
   JUNGLE_FIELD_REACH, JUNGLE_EDGE, JUNGLE_WANDER_MAX, jungleField, jungleNine, jungleSignedAt,
   jungleDepthAt, jungleShare,
 } from '../../src/world/jungle/jungleRegion.js';
-import { JUNGLE, JUNGLE_PALMS, JUNGLE_COVER, withJungle, canopySpecies, jungleWhole, jungleStandNoise, gladeField } from '../../src/world/terrain/jungleNature.js';
+import { JUNGLE, JUNGLE_PALMS, JUNGLE_COVER, withJungle, canopySpecies, jungleWhole, jungleStandNoise, gladeField, canopySite } from '../../src/world/terrain/jungleNature.js';
 import { layoutNature, TREE_RECORDS, isTreeRecord, tileDraw, groundAt, forestCover } from '../../src/world/terrain/terrainNature.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, SCALED_BEACH_ELEVATION, TERRAIN_SIZE as PIXEL_M } from '../../src/world/terrain/terrainSampler.js';
 import {
@@ -259,12 +260,14 @@ test('BANTHA1 the layout, four storeys: a canopy tree a cell where the jungle is
   const trees = out.filter((f) => f.jungle != null), rest = out.filter((f) => f.jungle == null);
   const canopy = trees.filter((f) => f.js >= JUNGLE.canopyScale[0]), young = trees.filter((f) => f.js <= JUNGLE.underScale[1]);
   assert.equal(canopy.length + young.length, trees.length, 'every tree a storey');
-  const cells = (128 / JUNGLE.cell) ** 2;
-  assert.ok(canopy.length > cells * 0.45 && canopy.length < cells * JUNGLE.canopy, `a closed canopy (${canopy.length} of ${cells} cells)`);
-  // ...and the gaps are the canopy's own chance: no cell stands its tree on a draw past JUNGLE.canopy, whatever its ground
-  const C = JUNGLE.cell, gap = canopy.filter((f) => tileDraw(PX * 128 + Math.floor(f.x / 6.4 / C) * C, -PY * 128 + Math.floor(f.z / 6.4 / C) * C, 22) >= JUNGLE.canopy);
-  assert.deepEqual(gap, [], 'a cell\'s gap is kept at JUNGLE.canopy');
-  assert.ok(young.length > 600, `an understorey (${young.length})`);
+  // PIN MOVED (SPREAD): a canopy tree a SITE - every other cell, a quincunx - where it was a tree a cell
+  const sites = (128 / JUNGLE.cell) ** 2 / 2;
+  assert.ok(canopy.length > sites * 0.45 && canopy.length < sites * JUNGLE.canopy, `a closed canopy (${canopy.length} of ${sites} sites)`);
+  // ...and the gaps are the canopy's own chance: no site stands its tree on a draw past JUNGLE.canopy, whatever its ground
+  const C = JUNGLE.cell, cellOf = (f) => [PX * 128 + Math.floor(f.x / 6.4 / C) * C, -PY * 128 + Math.floor(f.z / 6.4 / C) * C];
+  assert.deepEqual(canopy.filter((f) => tileDraw(...cellOf(f), 22) >= JUNGLE.canopy), [], 'a site\'s gap is kept at JUNGLE.canopy');
+  assert.deepEqual(canopy.filter((f) => !canopySite(...cellOf(f))), [], 'every canopy tree on a site');
+  assert.ok(young.length > 400, `an understorey (${young.length})`);   // PIN MOVED (SPREAD): a cell's one young tree at most - it was 600 a tile's
   for (const f of trees) {
     assert.equal(f.archive, 500); assert.equal(f.wood, 1);
     assert.equal(f.record, JUNGLE_SPECIES[f.jungle].record);
@@ -356,31 +359,57 @@ test('AUDIT BANTHA1 LAY-1/2/3/7/8/9: the groves and the stands on the world\'s l
   const ringYoung = out3.filter((f) => young(f) && ringD(f) >= 4 && ringD(f) <= 8).length;
   const deepYoung = out3.filter((f) => young(f) && tile(f)[0] >= 70 && tile(f)[0] < 98 && tile(f)[1] >= 70 && tile(f)[1] < 98).length / (28 * 28);
   assert.ok(ringYoung / 220 < deepYoung, `a town's ring stands fewer young trees a tile than the deep jungle (${(ringYoung / 220).toFixed(3)} vs ${deepYoung.toFixed(3)})`);
-  // LAY-7: two pixels side by side over flat grass - every tile at the west one's east edge whose young tree or palm a
-  // trunk of the EAST pixel's crowds (and none of its own) stands nothing; such a tile is rare (a trunk stands 2.56 m
-  // inside its cell), so fifty edges are read
+  // LAY-7: two pixels side by side over flat grass - every cell at the west one's east edge whose young tree or palm a
+  // trunk of the EAST pixel's crowds (and none of its own) stands nothing; such a cell is rare (a trunk stands 3.2 m
+  // inside its site), so fifty edges are read. PIN MOVED (SPREAD): the understorey a cell's - its place in the cell and
+  // its roll (salts 40-42), a light gap where no crown reaches - where it was a tile's
   const flat = { hm: new Float32Array(HEIGHTMAP_DIMENSION ** 2).fill(SCALED_BEACH_ELEVATION / MAX_TERRAIN_HEIGHT * 1.6), tm: new Uint8Array(16384).fill(2), paths: new Uint8Array(16384) };
-  const S7 = PIXEL_M / 128, C7 = JUNGLE.cell, [t0, t1] = JUNGLE.tileInset;
+  const S7 = PIXEL_M / 128, C7 = JUNGLE.cell, [u0, u1] = JUNGLE.underInset, [i0, i1] = JUNGLE.inset;
   const lay = (px) => withJungle([], flat.hm, flat.tm, { mapPixelX: px, mapPixelY: PY, locationRect: null, jungle: { nine: WHOLE, pois: [], paths: flat.paths } });
   const canopyOf = (l) => l.filter((f) => f.jungle != null && f.js >= JUNGLE.canopyScale[0]);
-  let crowded = 0;
+  let crowded = 0, shaded = 0, lit = 0;
   for (let px = 300; px < 350; px++) {
     const west = lay(px), east = lay(px + 1);
     const trunksE = canopyOf(east).filter((f) => f.x < 20).map((f) => [f.x + PIXEL_M, f.z, f.js]), trunksW = canopyOf(west).map((f) => [f.x, f.z, f.js]);
-    const cells = new Set(canopyOf(west).map((f) => `${Math.floor(f.x / S7 / C7)},${Math.floor(f.z / S7 / C7)}`));
-    for (let y = 0; y < 128; y++) {
-      for (const x of [126, 127]) {
-        const wx = px * 128 + x, wz = -PY * 128 + y, gap = !cells.has(`${Math.floor(x / C7)},${Math.floor(y / C7)}`);
-        if (tileDraw(wx, wz, 32) >= (gap ? JUNGLE.gapUnder : JUNGLE.under) + JUNGLE.palm) continue;
-        const mx = (x + t0 + (t1 - t0) * tileDraw(wx, wz, 30)) * S7, mz = (y + t0 + (t1 - t0) * tileDraw(wx, wz, 31)) * S7;
-        const hit = (ts) => ts.some(([tx, tz, js]) => Math.hypot(mx - tx, mz - tz) < JUNGLE.underClear * js);
+    const all = [...trunksW, ...trunksE];
+    // the east pixel's first column as the west one reads it: every SITE's trunk where it would stand, by its pure tile
+    // hashes - held as standing, grown or not (a glade's, the canopy's tenth unrolled)
+    const held = [];
+    for (let j = 0; j < 128 / C7; j++) {
+      const i = 128 / C7, wx = (px + 1) * 128, wz = -PY * 128 + j * C7;
+      if (!canopySite(wx, wz)) continue;
+      const [s0, s1] = tileDraw(wx, wz, 23) < JUNGLE.emergent ? JUNGLE.emergentScale : JUNGLE.canopyScale;
+      held.push([(i * C7 + C7 * (i0 + (i1 - i0) * tileDraw(wx, wz, 20))) * S7, (j * C7 + C7 * (i0 + (i1 - i0) * tileDraw(wx, wz, 21))) * S7, s0 + (s1 - s0) * tileDraw(wx, wz, 25)]);
+    }
+    for (let cy = 0; cy < 128 / C7; cy++) {
+      const cx = 128 / C7 - 1, wx = px * 128 + cx * C7, wz = -PY * 128 + cy * C7;
+      const mx = (cx * C7 + C7 * (u0 + (u1 - u0) * tileDraw(wx, wz, 40))) * S7, mz = (cy * C7 + C7 * (u0 + (u1 - u0) * tileDraw(wx, wz, 41))) * S7;
+      const near = (ts, r) => ts.some(([tx, tz, js]) => Math.hypot(mx - tx, mz - tz) < r * js);
+      const roll = tileDraw(wx, wz, 42), hit = (ts) => near(ts, JUNGLE.underClear);
+      // SPREAD: a cell under a crown of the EAST pixel's alone is under a crown - a roll past the crown's young trees and
+      // the palms, short of the gap's, stands nothing there (the gap's law would stand a young tree)
+      if (near(trunksE, JUNGLE.crown) && !near(trunksW, JUNGLE.crown) && !hit(all) && roll >= JUNGLE.under + JUNGLE.palm && roll < JUNGLE.gapUnder) {
+        shaded++;
+        assert.ok(!west.some((f) => f.x === mx && f.z === mz), `pixel ${px}'s cell (${cx}, ${cy}) stands no young tree in its neighbour's shade`);
+      }
+      // and the other way: a cell no crown reaches - the west pixel's grown trees', the east one's held sites' - its roll
+      // under the gap's young trees (whole jungle, grass), stands its young tree: a neighbour pixel's cell that is no
+      // site holds no trunk to shade it (the north and south pixels' cells read too at the first and last rows: not here;
+      // nor a cell a young tree's foot from a trail's dirt - JUNGLE-TRAILS keeps it off)
+      const youngFoot = Math.max(...JUNGLE_MEASURES.map((m) => m.foot)) * JUNGLE.underScale[1];
+      if (cy > 0 && cy < 128 / C7 - 1 && !near([...trunksW, ...held], JUNGLE.crown) && roll < JUNGLE.gapUnder * JUNGLE.ground[2] && trailRoom(px, PY, mx, mz) >= youngFoot) {
+        lit++;
+        assert.ok(west.some((f) => f.x === mx && f.z === mz && young(f)), `pixel ${px}'s cell (${cx}, ${cy}) stands its young tree in the light`);
+      }
+      {
         if (!hit(trunksE) || hit(trunksW)) continue;
         crowded++;
-        assert.ok(!west.some((f) => f.x === mx && f.z === mz), `pixel ${px}'s tile (${x}, ${y}) stands nothing under its neighbour's crown`);
+        assert.ok(!west.some((f) => f.x === mx && f.z === mz), `pixel ${px}'s cell (${cx}, ${cy}) stands nothing under its neighbour's crown`);
       }
     }
   }
-  assert.ok(crowded >= 3, `the edges read (${crowded} tiles crowded across them)`);
+  assert.ok(crowded + shaded >= 3, `the edges read (${crowded} cells crowded across them, ${shaded} shaded)`);
+  assert.ok(lit >= 20, `the edges' light gaps read (${lit})`);
   // LAY-8: the field's first read is a float32
   const field = jungleField({ width: 24, height: 16, insideAt: (x, y) => x >= 6 && x < 14 && y >= 4 && y < 11 });
   for (const [x, y] of [[4, 2], [15, 12], [5, 3]]) { const v = field.at(x, y); assert.equal(v, Math.fround(v)); assert.equal(field.at(x, y), v); }
@@ -513,6 +542,8 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
   for (const p of ['render/nodeGlow.js', 'render/auraRing.js', 'render/spoilsGlow.js', 'render/gate/gatePass.js', 'render/riteSmoke.js', 'render/superDungeon/sdOmenPass.js', 'render/foeTelegraph.js']) {
     assert.match(text(`src/${p}`), /if \(U\.uJungleHaze\) gl\.uniform4fv\(U\.uJungleHaze, fog\?\.haze \?\? NO_HAZE\);/, `${p} uploads it`);
   }
+  // AUDIT NODE-GLINT: the nodes' glint reads the frame's own (the renderer's), as its fog
+  assert.match(text('src/render/nodeGlint.js'), /if \(L\.uJungleHaze\) gl\.uniform4fv\(L\.uJungleHaze, r\._haze\);/, 'render/nodeGlint.js uploads it');
 });
 
 test('AUDIT BANTHA1 HAZE-1: every program a module under src/render exports compiles whole in the repo\'s GLSL reader - a block\'s uniform redeclared beside it (the Deadlands\' sea declared its own uHaze under the fog block\'s, and on the branch the Burning Court\'s sky and sea would not build) is a type error there; the jungle\'s uniform has a name of its own (mutant: the jungle\'s uniform named uHaze again)', async () => {
@@ -917,16 +948,28 @@ test('AUDIT BANTHA1 DOC-5: the four storeys\' laws, on a pixel with glades - no 
     assert.equal(f.jungle, canopySpecies(origin, tx, tz, above, light, draw), `the canopy tree at ${f.x.toFixed(1)}, ${f.z.toFixed(1)}`);
     n++; if (canopySpecies(origin, tx, tz, above, 0, draw) !== f.jungle) lit++;
   }
-  assert.ok(n > 1000 && lit > 20, `the light chose ${lit} of ${n}`);
-  // the understorey: a light gap (a cell no canopy tree stands) its young trees at JUNGLE.gapUnder, under a crown JUNGLE.under
+  assert.ok(n > 500 && lit > 20, `the light chose ${lit} of ${n}`);   // PIN MOVED (SPREAD): a site's canopy, half the cells'
+  // the understorey (PIN MOVED, SPREAD: a cell's spot, a light gap where no canopy crown reaches it - its young trees at
+  // JUNGLE.gapUnder, under a crown JUNGLE.under), read a cell inside the pixel's edge, where every crown is this pixel's
   const crowned = new Set(canopy.map((f) => `${Math.floor(f.x / S / C)},${Math.floor(f.z / S / C)}`));
-  let gapYoung = 0, crownYoung = 0;
-  for (const f of out) if (f.jungle != null && f.js <= JUNGLE.underScale[1]) (crowned.has(`${Math.floor(f.x / S / C)},${Math.floor(f.z / S / C)}`) ? crownYoung++ : gapYoung++);
-  const cells = (128 / C) ** 2;
-  assert.ok(gapYoung / (cells - crowned.size) > 3 * (crownYoung / crowned.size), `thicker in the gaps (${gapYoung} in ${cells - crowned.size} cells, ${crownYoung} in ${crowned.size})`);
+  const [u0, u1] = JUNGLE.underInset;
+  const youngAt = new Set(out.filter((f) => f.jungle != null && f.js <= JUNGLE.underScale[1]).map((f) => `${f.x},${f.z}`));
+  let gapCells = 0, crownCells = 0, gapYoung = 0, crownYoung = 0;
+  for (let cy = 3; cy < 128 / C - 3; cy++) {
+    for (let cx = 3; cx < 128 / C - 3; cx++) {
+      const wx = GX * 128 + cx * C, wz = -GY * 128 + cy * C;
+      const mx = (cx * C + C * (u0 + (u1 - u0) * tileDraw(wx, wz, 40))) * S, mz = (cy * C + C * (u0 + (u1 - u0) * tileDraw(wx, wz, 41))) * S;
+      const gap = !canopy.some((f) => Math.hypot(mx - f.x, mz - f.z) < JUNGLE.crown * f.js);
+      const stood = youngAt.has(`${mx},${mz}`);
+      if (gap) { gapCells++; if (stood) gapYoung++; } else { crownCells++; if (stood) crownYoung++; }
+    }
+  }
+  assert.ok(gapCells > 100 && crownCells > 1000, `both kinds of cell (${gapCells} in the light, ${crownCells} under crowns)`);
+  assert.ok(gapYoung / gapCells > 2 * (crownYoung / crownCells), `thicker in the gaps (${gapYoung} of ${gapCells} cells, ${crownYoung} of ${crownCells})`);
   // the mid storey and the floor
   const palms = out.filter((f) => f.jungle == null && JUNGLE_PALMS.includes(f.record)), floor = out.filter((f) => f.jungle == null && JUNGLE_COVER.includes(f.record));
-  assert.ok(palms.length > 16384 * JUNGLE.palm * 0.4 && palms.length < 16384 * JUNGLE.palm, `the rainforest's palms (${palms.length})`);
+  const cells = (128 / C) ** 2;
+  assert.ok(palms.length > cells * JUNGLE.palm * 0.4 && palms.length < cells * JUNGLE.palm, `the rainforest's palms (${palms.length})`);   // PIN MOVED (SPREAD): a cell's chance, where it was a tile's
   const planted = new Set(floor.map((f) => `${Math.floor(f.x / S)},${Math.floor(f.z / S)}`));
   let gT = 0, gF = 0, cT = 0, cF = 0;
   for (let y = 6; y < 128; y++) {

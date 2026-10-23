@@ -292,8 +292,8 @@
   {
     "name": "DECOR2a-the-rooms-words-a-cost",
     "file": "src/ui/decorPanel.js",
-    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station licence is not)' : ''}`;",
-    "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station licence is not)' : ''}`;",
+    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station license is not)' : ''}`;",
+    "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station license is not)' : ''}`;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]

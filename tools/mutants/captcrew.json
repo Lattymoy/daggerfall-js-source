@@ -247,8 +247,8 @@
   {
     "name": "CC-host-cook",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "atSea: !where().nearPort, wear: s.worth.wear });",
-    "new": "atSea: !where().nearPort });",
+    "old": "atSea: !inPortWaters(), wear: s.worth.wear });",
+    "new": "atSea: !inPortWaters() });",
     "tests": [
       "test/systems/naval/captcrew.test.js"
     ]

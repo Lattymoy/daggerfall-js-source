@@ -289,7 +289,7 @@ test('AUDIT 32 H8 (PROF-MENU): the list\'s search opens the body\'s own loot by 
 test('AUDIT 32 P10: the trace\'s end said - a clean pelt, a torn one (its part lost), a true line too quick or too slow', () => {
   const kind = huntKind({ book: { state: {} }, bodies: () => [] });
   assert.equal(kind.actNote({ clean: true, torn: false, score: 0.9, seconds: 2 }), ' (a clean pelt)');
-  assert.equal(kind.actNote({ clean: false, torn: true, score: 0.2, seconds: 2 }), ' (a torn pelt - its part lost)');
+  assert.equal(kind.actNote({ clean: false, torn: true, score: 0.2, seconds: 2 }), ' (a torn pelt, its part lost)');
   assert.equal(kind.actNote({ clean: false, torn: false, score: 0.95, seconds: TRACE_ACT.minS / 2 }), ' (a true line, too quick for a clean pelt)');
   assert.equal(kind.actNote({ clean: false, torn: false, score: 0.95, seconds: TRACE_ACT.maxS * 2 }), ' (a true line, too slow for a clean pelt)');
   assert.equal(kind.actNote({ clean: false, torn: false, score: 0.6, seconds: 2 }), '');
@@ -322,7 +322,7 @@ test('AUDIT 32 wiring: a flyer\'s body where its corpse lies (H3); no click thro
   // names none (test/systems/prof12_client.test.js R2-C2)
   assert.match(w, /kept: BENCH_KEPT_TEXT, xp: professionName\('carpentry'\) \}/, 'B4');   // PIN MOVED (CRAFT3): the workbench's XP word is its discipline's craft's name (professionName - Building), no literal
   assert.match(w, /xp: 'Smithing' \}\);/);
-  assert.match(src('src/systems/inputActions.js'), /\['ActChoice', 'At a profession node: the next of its acts on the list'\]/, 'R1');   // PROF-MENU: the key steps the node's list
+  assert.match(src('src/systems/inputActions.js'), /\['ActChoice', 'Next action at a profession node'\]/, 'R1');   // PROF-MENU: the key steps the node's list
   const idx = src('server-account/src/index.js');
   assert.match(idx, /POST \/v1\/prof\/harvest \{ character, node, kind, climate, region, act, at, rid, foe\? \}/, 'S6');
   assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, rid \}/);   // PIN MOVED (PROF10): a Lapidary's `cracked` gem

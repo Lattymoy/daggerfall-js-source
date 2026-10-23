@@ -295,8 +295,8 @@
   {
     "name": "AUDITDW-F1-the-archive-preload-takes-the-lazy-entries",
     "file": "src/systems/textureReplacement.js",
-    "old": "    if (entry && !entry.lazy && !decodedFrom(key, entry)) todo.push([key, entry]);",
-    "new": "    if (entry && !decodedFrom(key, entry)) todo.push([key, entry]);",
+    "old": "    if (entry && !entry.lazy && !decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]);",
+    "new": "    if (entry && !decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]);",
     "tests": [
       "test/systems/dw3_icons.test.js",
       "test/combat/weapon/auditdw.test.js"

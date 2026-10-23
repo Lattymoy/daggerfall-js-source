@@ -17,7 +17,7 @@
 // or a picker, and each able to push the next.
 
 import { nativeMetrics } from './native/nativePanel.js';
-import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, fitBoxRows } from './messageBox.js';   // AUDIT FB1019f F1: fitBoxRows, a long row wrapped on the screen
 import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { wrapText } from './talkWindow.js';
@@ -59,8 +59,14 @@ export const CURED_DISEASE = 'You are cured.';
  *    { rows, buttons: 'YesNo', onYes }
  *    { rows, buttonsMulti: [recordNums], onButton(n) }   QG1: PromptMulti - click-only, no cancel
  *    { rows, field: { numeric, maxCharacters, initial, label? }, onInput(text) }   rows = the tokens ABOVE, label = the field's own (DFU sets one or the other)
- *    { picker: [labels], onPick(i) }
+ *    { picker: [labels], onPick(i), onCancel(why) }   why: PICK_UNSHOWN when the pick could not be drawn, else nothing (Escape)
+ *  and any box may say `behind: true` - pushed onto a window already up, it waits its turn behind the boxes there
+ *  (push), where every other box goes in front, newest first (PushWindow). AUDIT QUESTLINES BRANCH-7: a quest's
+ *  question (scenes/quest/questBridge.js choiceBoxes) comes after the words that set it up.
  */
+/** AUDIT QUESTLINES BRANCH-3: what a pick step's onCancel is told when the window could not draw it (no PICK00I0 yet -
+ *  ui/listPicker.js, loaded at an interior's entry, a dungeon's build and the travel map). */
+export const PICK_UNSHOWN = 'unshown';
 /** QUEST-NOTE: the grace's clock (ms). */
 const graceNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -143,7 +149,9 @@ export class ServiceFlowWindow {
   _close() { this.done = true; noticeRelease(this); this.onClose?.(); }
 
   push(boxes) {
-    if (boxes?.length) { this.boxes.unshift(...boxes); this._shownAt = graceNow(); }
+    const front = (boxes ?? []).filter((b) => !b?.behind);
+    if (front.length) { this.boxes.unshift(...front); this._shownAt = graceNow(); }
+    for (const b of boxes ?? []) if (b?.behind) this.boxes.push(b);   // AUDIT QUESTLINES BRANCH-7: its turn, behind the rest
     this._syncPicker();
     this._syncValue();
   }
@@ -222,7 +230,9 @@ export class ServiceFlowWindow {
     if (!t) { this._close(); return; }
     if (t.picker) {
       noticeRelease(this);   // ENH-NOTICE2: a text step's panel does not outlive it
-      if (!listPickerArtLoaded()) { this._advance(); return; }
+      // AUDIT QUESTLINES BRANCH-3: a pick with no art is CANCELLED, told why - dropped bare it closed a quest's `ask` with
+      // no answer at all, and the question was never asked again until a load
+      if (!listPickerArtLoaded()) { this._advance(t.onCancel?.(PICK_UNSHOWN) ?? null); return; }
       this._picker?.draw(renderer, canvas, font);
       return;
     }
@@ -232,7 +242,10 @@ export class ServiceFlowWindow {
     // ENH-NOTICE2: a plain text step (no buttons, no picker, no field)
     // is DFU's click-anywhere box and the enhanced panel
     if (noticeFrame(this, buttons.length ? null : t.rows)) { this._box = null; return; }
-    this._box = layoutMessageBox(font, t.rows, buttons);
+    // AUDIT FB1019f F1: a row the port writes - QUESTOR-SAID's busy line names a quest - wraps on the screen (SS5's
+    // fitBoxRows, as the guild popup's own box: AUDIT GUILD-WORDS II F-2), where it ran past both edges; a TEXT.RSC row
+    // that fits is left as it is
+    this._box = layoutMessageBox(font, fitBoxRows(font, t.rows), buttons);
     drawMessageBox(renderer, m, font, this._box);
   }
 }

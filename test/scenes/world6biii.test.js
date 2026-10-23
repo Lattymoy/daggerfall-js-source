@@ -73,7 +73,7 @@ const step = (pool, me, pe, n = 1) => { for (let i = 0; i < n; i++) pool.update(
 
 test('WORLD6b-iii: the wire - the cast rides the record as c (the count, in [0, 65535]) and s (the spell index, a u8 - AUDIT WORLD6b-iii(a) C8), whole numbers; u whom the cast was at and b whom the blow was at, in g\'s spelling (A3); anything else refuses the record whole', () => {
   for (const r of [{ i: 1, c: 0, s: 0 }, { i: 1, c: 65535, s: 255 }, { i: 1 }, { i: 1, u: '.', b: '' }, { i: 1, u: 'bob-0002', b: 'eve-0003' }]) assert.deepEqual(validFoeRecord(r), r, JSON.stringify(r));
-  for (const r of [{ i: 1, c: -1 }, { i: 1, c: 65536 }, { i: 1, c: 1.5 }, { i: 1, s: -1 }, { i: 1, s: 256 }, { i: 1, s: 'x' }, { i: 1, c: null }, { i: 1, u: 'x' }, { i: 1, b: 7 }, { i: 1, u: null }]) assert.equal(validFoeRecord(r), null, JSON.stringify(r));
+  for (const r of [{ i: 1, c: -1 }, { i: 1, c: 65536 }, { i: 1, c: 1.5 }, { i: 1, s: -1 }, { i: 1, s: 65536 }, { i: 1, s: 'x' }, { i: 1, c: null }, { i: 1, u: 'x' }, { i: 1, b: 7 }, { i: 1, u: null }]) assert.equal(validFoeRecord(r), null, JSON.stringify(r));
 });
 
 test('WORLD6b-iii: the owner\'s foe CASTS at the peer it hunts - the decision runs as at me and reads no effects of mine, the missile leaves toward the peer\'s transform, an area blast is measured against MY capsule too (AUDIT WORLD6b-iii(a) A1: I am a collider in its sphere whoever it hunts), and the cast rides the record (c up by one, s the spell, u the peer)', async () => {

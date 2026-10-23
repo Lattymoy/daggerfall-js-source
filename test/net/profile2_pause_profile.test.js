@@ -208,5 +208,6 @@ test('PROFILE2 hosts: the world host hands the session its look once a second an
   assert.doesNotMatch(w, /online\.look = composeLook/, 'no look written past the session - a promoted halo sends no hello, so only setLook tells it');
   assert.equal((w.match(/online\.setLook\(composeLook\(playerEntity\)\)/g) ?? []).length, 3, 'the cadence, the join and the halo about to open');
   const body = src('src/player/eyeOfTheBeholder/eotbBody.js');
-  assert.match(body, /if \(renderer && \(was\.onFoot !== cfg\.onFoot \|\| was\.onHorse !== cfg\.onHorse\)\) preload\(\);/);
+  // PIN MOVED (LAYERED-GEAR): and a changed layered gearing skin - its switch or its body - fetches whole too
+  assert.match(body, /if \(renderer && \(was\.onFoot !== cfg\.onFoot \|\| was\.onHorse !== cfg\.onHorse(?: \|\| was\.wornArmour !== cfg\.wornArmour \|\| was\.layeredGender !== cfg\.layeredGender)?\)\) preload\(\);/);
 });

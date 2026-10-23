@@ -22,7 +22,7 @@ import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
 import { GENDERS, getNameBankOfRegion, fullName, monsterName } from '../../characters/nameHelper.js';
 import { srand, randomRange } from '../../formats/dfRandom.js';
-import { ENEMY_BASICS, ENEMY_NAMES, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
+import { enemyDisplayName, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the type name shown
 
 const MAX_SPAWN_COUNT = 8;
@@ -186,10 +186,10 @@ export class Foe extends QuestResource {
     // TextManager.GetLocalizedEnemyName's English - the CANONICAL name,
     // saved; expandMacro shows it in the player's language (L10N3e). The
     // enum-name fallback for a type missing from EnemyBasics is
-    // unreachable through the Quests-Foes table (every id is a real enemy)
-    this.typeName = ENEMY_BASICS[this.foeType]
-      ? ENEMY_NAMES[this.foeType < 128 ? this.foeType : 43 + this.foeType - 128]
-      : String(this.foeType);
+    // unreachable through the Quests-Foes table (every id is a real enemy).
+    // DEX1: a mod's foe (the table's new rows) by its custom name, as
+    // GetLocalizedEnemyName names it - enemyDisplayName is that one law
+    this.typeName = enemyDisplayName(this.foeType) ?? String(this.foeType);
     if (!isClassEnemyId(this.foeType)) {
       srand(this._range(1000) + randomRange(1, 1000000));
       this.displayName = monsterName(GENDERS.Male, this._rolls());

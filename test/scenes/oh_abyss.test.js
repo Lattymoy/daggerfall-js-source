@@ -33,7 +33,15 @@ import { lootMatrix, LOOT_MATRICES, tableLootSpawned, addPileLootExtras } from '
 import { enemyLootSpawned } from '../../src/characters/enemy/enemyEntity.js';
 import { spawnEnemyLoot } from '../../src/scenes/hostCombat.js';
 import { equipTableOf } from '../../src/systems/equip.js';
-import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { ENEMY_BASICS, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';
+import { installEnemyExpansion, _resetEnemyExpansion } from '../../src/systems/enemyExpansion/dexInstall.js';   // AUDIT DEX C4
+import { clearCustomEnemies } from '../../src/characters/enemy/customEnemies.js';
+import { _resetMintRowEditors } from '../../src/characters/enemy/enemyEntity.js';
+import { _resetFoeGhosts } from '../../src/characters/enemy/foeLook.js';
+import { _resetExtraQuestRows } from '../../src/systems/quest/tables.js';
+import { _resetEncounterTableSelectors } from '../../src/characters/encounterTableDoor.js';
+import { _resetPlayerGps } from '../../src/world/playerGps.js';
+import { _resetFormulaDoors } from '../../src/combat/formulas.js';
 import { _resetForTests } from '../../src/systems/uiPrefs.js';
 import { rriLootMatrix } from '../../src/systems/roleplayRealismItems/rriRealism.js';
 import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
@@ -68,7 +76,7 @@ const viewOf = (rec, demo = true) => ({
   get entity() { return rec.entity; },
   get dead() { return !!rec.dead; },
   get mobileType() { return rec.retypedTo ?? rec.mobileType; },
-  get isClass() { const t = rec.retypedTo ?? rec.mobileType; return t >= 128 && t <= 146; },
+  get isClass() { const t = rec.retypedTo ?? rec.mobileType; return enemyEntityType(t) === 'class'; },   // the host's (dungeonContext.js abyssFoeView): EntityType == EnemyClass
   get loadID() { return rec.src?.loadID ?? 0; },
   get questSpawn() { return !!rec.questBehaviour; },
   demo,
@@ -518,6 +526,27 @@ test('OH-E ProcessAbyssEnemy\'s pick: a monster one hash in three (the third of 
   // the hash's 64-bit load id: the low and high words each XORed into its axis
   assert.equal(enemyHash(PIT.x, PIT.y, 2 ** 32 + 5), enemyHash(PIT.x, PIT.y ^ 1 ^ 1, 2 ** 32 + 5));
   assert.notEqual(enemyHash(PIT.x, PIT.y, 2 ** 32 + 5), enemyHash(PIT.x, PIT.y, 5), 'the high word counts');
+});
+
+test('AUDIT DEX C4 ProcessAbyssEnemy\'s class is the mod\'s own range - EnemyClass AND an ID of 128-146 - so Daggerfall Enemy Expansion\'s classes are monsters to it: one hash in three, from the whole roster, never WasHumanoid; its Guard spared as a monster\'s Guard is', (t) => {
+  t.after(() => { _resetEnemyExpansion(); clearCustomEnemies(); _resetMintRowEditors(); _resetFoeGhosts(); _resetExtraQuestRows(); _resetEncounterTableSelectors(); _resetPlayerGps(); _resetFormulaDoors(); });
+  installEnemyExpansion({ on: true, log: () => {} });
+  const { abyss } = bare();
+  const d = fakeDungeon(loc(1, 1));
+  const roster = enemyRoster();
+  const { third, other } = loadIds();
+  const DRUID = 384, GUARD = 385;
+  assert.equal(enemyEntityType(DRUID), 'class', 'the host\'s EnemyClass');
+  const spared = foe(DRUID, { loadID: other });
+  abyss.processAbyssEnemy(d, viewOf(spared), true);
+  assert.equal(spared.retypedTo, undefined, 'two in three stay, as a monster\'s do - where a class (128-146) is always taken');
+  const druid = foe(DRUID, { loadID: third });
+  abyss.processAbyssEnemy(d, viewOf(druid), true);
+  assert.equal(druid.retypedTo, tryPickUnderwaterEnemy(Math.floor(enemyHash(PIT.x, PIT.y, third) / 3), false, false, roster), 'the third of the hash, the whole roster');
+  assert.equal(druid.abyssWasHumanoid, false);
+  const guard = foe(GUARD, { loadID: third });
+  abyss.processAbyssEnemy(d, viewOf(guard), true);
+  assert.equal(guard.retypedTo, undefined, 'a Guard passes only as a class of the range');
 });
 
 test('OH-E EnsureAquaticEnemyQuota: CeilToInt(living x 0.3f) aquatic - in floats (ten foes want three, not four), those never humanoid first, then the ones that were', () => {

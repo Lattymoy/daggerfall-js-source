@@ -194,7 +194,7 @@ test('B1: each modal host builds a stack under its slot and reconciles it', () =
   const dc = src('src/scenes/dungeonContext.js');
   const tt = src('src/scenes/townTalk.js');
 
-  assert.match(wm, /const interiorWindows = makeWindowStack\(\{ onTop: \(w\) => \{ interiorOverlay = w; \} \}\);/);
+  assert.match(wm, /const interiorWindows = makeWindowStack\(\{ onTop: \(w\) => \{ interiorOverlay = w; questWordsFirst\.settled\(w\); \} \}\);/);   // PIN MOVED (QUEST-WORDS-FIRST): and the held NPC door told the slot's new top
   assert.match(dc, /const dungeonWindows = makeWindowStack\(\{ onTop: \(w\) => \{ activeOverlay = w; \} \}\);/);
   assert.match(tt, /const windows = makeWindowStack\(\{ onTop: \(w\) => \{ overlay = w; \} \}\);/);
 

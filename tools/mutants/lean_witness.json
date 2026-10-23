@@ -1,0 +1,486 @@
+[
+  {
+    "name": "LEANW-kind-dropped",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS witness_lean_in AFTER INSERT ON world_witness WHEN NEW.kind IN ('npchall', 'seat')",
+    "new": "CREATE TRIGGER IF NOT EXISTS witness_lean_in AFTER INSERT ON world_witness WHEN NEW.kind IN ('npchall')",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the seats' answers inserted and never settled"
+  },
+  {
+    "name": "LEANW-confirm-count-moved",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "        SELECT report, account, at FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = NEW.kind AND key = NEW.key AND late = 1\n          AND at = (SELECT MIN(at) FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = NEW.kind AND key = NEW.key AND late = 1)))\n    WHERE n = 3 ORDER BY at, account LIMIT 1)",
+    "new": "        SELECT report, account, at FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = NEW.kind AND key = NEW.key AND late = 1\n          AND at = (SELECT MIN(at) FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = NEW.kind AND key = NEW.key AND late = 1)))\n    WHERE n = 2 ORDER BY at, account LIMIT 1)",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a key confirmed by two"
+  },
+  {
+    "name": "LEANW-confirm-order-moved",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "      SELECT report, account, at, ROW_NUMBER() OVER (PARTITION BY report ORDER BY at, account) AS n FROM (\n        SELECT report, account, at FROM world_witness INDEXED BY idx_world_witness_lean_key\n          WHERE kind = NEW.kind",
+    "new": "      SELECT report, account, at, ROW_NUMBER() OVER (PARTITION BY report ORDER BY at, account DESC) AS n FROM (\n        SELECT report, account, at FROM world_witness INDEXED BY idx_world_witness_lean_key\n          WHERE kind = NEW.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a shared second's confirmers counted in another order than witnessedFact's"
+  },
+  {
+    "name": "LEANW-earlier-answer-unsettled",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "    WHERE kind = NEW.kind AND key = NEW.key AND (report IS NULL OR NEW.at <= at);",
+    "new": "    WHERE kind = NEW.kind AND key = NEW.key AND (report IS NULL OR NEW.at < at);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "an answer in the confirmation's own second never re-counts the key"
+  },
+  {
+    "name": "LEANW-unconfirmed-unsettled",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "    WHERE kind = NEW.kind AND key = NEW.key AND (report IS NULL OR NEW.at <= at);",
+    "new": "    WHERE kind = NEW.kind AND key = NEW.key AND (NEW.at <= at);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a key that confirms nothing yet never confirmed by its third answer"
+  },
+  {
+    "name": "LEANW-insert-settle-ungated",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "    WHERE kind = NEW.kind AND key = NEW.key AND (report IS NULL OR NEW.at <= at);",
+    "new": "    WHERE kind = NEW.kind AND key = NEW.key;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "every answer settles its key - the same confirmation found again (a key's rows that are not late, a handful)",
+    "equivalent": true,
+    "why": "a settle finds a key's confirmation from its rows that are not late and its earliest late ones, which hold it whatever answer came - so settling after every answer finds the one already kept, and the moved trigger's ranges change nothing; the gate saves the window over a key's rows that are not late (a handful) on every late answer, which no answer can see"
+  },
+  {
+    "name": "LEANW-late-of-confirming-second",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "AND late = 0 AND report = NEW.report AND at > NEW.at);\nEND;",
+    "new": "AND late = 0 AND report = NEW.report AND at >= NEW.at);\nEND;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the confirming second's own answers let go late"
+  },
+  {
+    "name": "LEANW-dissent-late",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "  UPDATE world_witness SET late = 1 WHERE kind = NEW.kind AND key = NEW.key AND account = NEW.account AND late = 0\n    AND EXISTS (SELECT 1 FROM witness_confirmed c WHERE c.kind = NEW.kind AND c.key = NEW.key AND c.report = NEW.report AND NEW.at > c.at);",
+    "new": "  UPDATE world_witness SET late = 1 WHERE kind = NEW.kind AND key = NEW.key AND account = NEW.account AND late = 0\n    AND EXISTS (SELECT 1 FROM witness_confirmed c WHERE c.kind = NEW.kind AND c.key = NEW.key AND NEW.at > c.at);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a dissent after the confirmation let go late"
+  },
+  {
+    "name": "LEANW-late-answer-kept",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "  UPDATE world_witness SET late = 1 WHERE kind = NEW.kind AND key = NEW.key AND account = NEW.account AND late = 0\n    AND EXISTS",
+    "new": "  UPDATE world_witness SET late = 1 WHERE kind = NEW.kind AND key = NEW.key AND account = NEW.account AND late = 9\n    AND EXISTS",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "an agreeing answer after the confirmation never let go late"
+  },
+  {
+    "name": "LEANW-deletion-unsettled",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "    WHERE kind = OLD.kind AND key = OLD.key AND report = OLD.report AND OLD.at <= at;",
+    "new": "    WHERE kind = OLD.kind AND key = OLD.key AND report = OLD.report AND OLD.at < at;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the confirming row deleted (an account gone) leaves its key's confirmation standing"
+  },
+  {
+    "name": "LEANW-deletion-earliest-late-unread",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "(SELECT MIN(at) FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = OLD.kind",
+    "new": "(SELECT MAX(at) FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = OLD.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a confirmer deleted: the next confirmer sought among the latest answers, not the earliest"
+  },
+  {
+    "name": "LEANW-key-row-kept",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "  DELETE FROM witness_confirmed WHERE kind = OLD.kind AND key = OLD.key AND report IS NULL\n    AND NOT EXISTS",
+    "new": "  DELETE FROM witness_confirmed WHERE kind = OLD.kind AND key = OLD.key AND report IS NULL AND 0\n    AND NOT EXISTS",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a struck key's row kept with no answer under it"
+  },
+  {
+    "name": "LEANW-moved-confirmers-late",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report = NEW.report AND at <= NEW.at);",
+    "new": "WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report = NEW.report AND at < NEW.at);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a confirmation moved later leaves its new confirming second's rows late"
+  },
+  {
+    "name": "LEANW-settle-every-late-back",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report = NEW.report AND at <= NEW.at);",
+    "new": "WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report = NEW.report);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "every settle lets the key's every late row go back, and late again - the right rows, a key's whole each confirmer (the old Worker's strike quadratic)"
+  },
+  {
+    "name": "LEANW-turned-kept-late",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report IS NOT NEW.report);",
+    "new": "WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report IS NOT NEW.report AND 0);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "an answer that turned leaves the old answer's late rows late"
+  },
+  {
+    "name": "LEANW-backfill-unlate",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "    WHERE c.kind = world_witness.kind AND c.key = world_witness.key AND c.report = world_witness.report AND world_witness.at > c.at);",
+    "new": "    WHERE c.kind = world_witness.kind AND c.key = world_witness.key AND c.report = world_witness.report AND world_witness.at > c.at AND 0);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the rows that stood at the migration never let go late"
+  },
+  {
+    "name": "LEANW-backfill-count-moved",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "      FROM world_witness WHERE kind IN ('npchall', 'seat'))\n    WHERE n = 3)",
+    "new": "      FROM world_witness WHERE kind IN ('npchall', 'seat'))\n    WHERE n = 2)",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the standing keys confirmed by two"
+  },
+  {
+    "name": "LEANW-lean-index-every-kind",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_world_witness_lean_key ON world_witness (kind, key) WHERE kind IN ('npchall', 'seat') AND late = 0;",
+    "new": "CREATE INDEX IF NOT EXISTS idx_world_witness_lean_key ON world_witness (kind, key) WHERE late = 0;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "every pixel's row in the lean index, a write each harvest"
+  },
+  {
+    "name": "LEANW-judged-never-whole",
+    "file": "server-account/src/leanWitness.js",
+    "old": "  if (!ignored.size) return lean;",
+    "new": "  return lean;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a key an ignored account answered judged without its late rows"
+  },
+  {
+    "name": "LEANW-threshold-off",
+    "file": "server-account/src/leanWitness.js",
+    "old": "  return Number(row?.n ?? 0) >= SEAT_WITNESS_UNMATCHED_MAX;",
+    "new": "  return Number(row?.n ?? 0) > SEAT_WITNESS_UNMATCHED_MAX;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a liar with exactly three unmatched answers never asked the region's law"
+  },
+  {
+    "name": "LEANW-window-halved",
+    "file": "server-account/src/leanWitness.js",
+    "old": "nowS - 2 * SEAT_WITNESS_IGNORED_S);",
+    "new": "nowS - SEAT_WITNESS_IGNORED_S);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "an answer the law still counts left out of the count"
+  },
+  {
+    "name": "LEANW-count-unread",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (await mayBeIgnored(db, HALL_WITNESS_KIND, player.id, nowS)\n    && hallFacts",
+    "new": "  if (true\n    && hallFacts",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "every witness reads its region again"
+  },
+  {
+    "name": "LEANW-late-moves-version",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    bumpRegions(db, 'key = ?1', key, nowS, `changes() > 0 AND (NOT EXISTS (SELECT 1 FROM world_witness w WHERE w.kind = '${HALL_WITNESS_KIND}'\n      AND w.key = ?1 AND w.account = ?3 AND w.late = 1) OR ${CONFIRMER_MAY_BE_IGNORED})`, player.id, nowS - 2 * SEAT_WITNESS_IGNORED_S),",
+    "new": "    bumpRegions(db, 'key = ?1', key, nowS, `changes() > 0 AND ?3 IS NOT NULL AND ?4 IS NOT NULL`, player.id, nowS - 2 * SEAT_WITNESS_IGNORED_S),",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a late report moves its region's version, and every reader computes the region again"
+  },
+  {
+    "name": "LEANW-hall-read-not-lean",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    AND key IN (SELECT key FROM world_witness INDEXED BY idx_world_witness_lean_region WHERE kind = '${HALL_WITNESS_KIND}' AND ${LEAN_ROWS} AND region = ? AND key LIKE ?)`).bind(region, `${HALL_REPORT_V}:%`).all();\n  return exactRows",
+    "new": "    AND key IN (SELECT key FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND region = ? AND key LIKE ?)`).bind(region, `${HALL_REPORT_V}:%`).all();\n  return exactRows",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a region's towns found over every row"
+  },
+  {
+    "name": "LEANW-bump-lean-again",
+    "file": "server-account/src/npcHalls.js",
+    "old": "    WHERE kind = '${HALL_WITNESS_KIND}' AND ${keySql} AND ${guard}",
+    "new": "    WHERE kind = '${HALL_WITNESS_KIND}' AND ${keySql} AND ${LEAN_ROWS} AND ${guard}",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS A1: the bump asks its town's rows that are not late, and the planner walks every town's"
+  },
+  {
+    "name": "LEANW-audit-judged",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  const { towns, ignored } = hallFacts(await regionRows(db, region), nowS);\n  return {\n    region,",
+    "new": "  const { towns, ignored } = hallFacts(await judgedRows(db, region, nowS), nowS);\n  return {\n    region,",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the developers' audit list counts the late witnesses out"
+  },
+  {
+    "name": "LEANW-clock-every-row",
+    "file": "server-account/src/townSeats.js",
+    "old": "  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS);   // LEAN-WITNESS",
+    "new": "  const facts = seatFacts(await allSeatRows(db), nowS);   // LEAN-WITNESS",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "the seats' clock reads every row a minute again"
+  },
+  {
+    "name": "LEANW-dev-list-judged",
+    "file": "server-account/src/townSeats.js",
+    "old": "  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS);",
+    "new": "  const { seats, ignored } = dev ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "a developer's audit counts the late witnesses out"
+  },
+  {
+    "name": "LEANW2-strike-late-not-first",
+    "file": "server-account/src/leanWitness.js",
+    "old": "  db.prepare(`DELETE FROM world_witness WHERE kind = ?2 AND ${where} AND late = 1`).bind(key, kind),",
+    "new": "  db.prepare('SELECT ?1, ?2').bind(key, kind),",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A1: the confirmation emptied with the late rows still there - every one moved back before its delete"
+  },
+  {
+    "name": "LEANW2-strike-confirmation-kept",
+    "file": "server-account/src/leanWitness.js",
+    "old": "  db.prepare(`UPDATE witness_confirmed SET report = NULL, at = NULL WHERE kind = ?2 AND ${where}`).bind(key, kind),",
+    "new": "  db.prepare('SELECT ?1, ?2').bind(key, kind),",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A1/D1: a split key struck by a plain delete - its confirmation turned over at each confirmer"
+  },
+  {
+    "name": "LEANW2-confirmers-unasked",
+    "file": "server-account/src/npcHalls.js",
+    "old": "w.late = 1) OR ${CONFIRMER_MAY_BE_IGNORED})`",
+    "new": "w.late = 1) OR 0)`",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A2: a late report moves no version though the law leaves out one of its town's confirmers - the chapters stale"
+  },
+  {
+    "name": "LEANW2-dissent-for-confirmer",
+    "file": "server-account/src/npcHalls.js",
+    "old": "JOIN witness_confirmed c ON c.kind = '${HALL_WITNESS_KIND}' AND c.key = ?1 AND c.report = w.report",
+    "new": "JOIN witness_confirmed c ON c.kind = '${HALL_WITNESS_KIND}' AND c.key = ?1 AND c.report IS NOT NULL",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A2: any answer of the town asked, a dissent among them - a liar's dissent moves the version for a report that changes nothing"
+  },
+  {
+    "name": "LEANW2-confirmer-window-shut",
+    "file": "server-account/src/npcHalls.js",
+    "old": "OR ${CONFIRMER_MAY_BE_IGNORED})`, player.id, nowS - 2 * SEAT_WITNESS_IGNORED_S),",
+    "new": "OR ${CONFIRMER_MAY_BE_IGNORED})`, player.id, nowS),",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A2: the confirmers' answers counted from now - none, never ignored"
+  },
+  {
+    "name": "LEANW2-key-row-conflicts",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "  INSERT INTO witness_confirmed (kind, key) SELECT NEW.kind, NEW.key\n    WHERE NOT EXISTS (SELECT 1 FROM witness_confirmed WHERE kind = NEW.kind AND key = NEW.key);",
+    "new": "  INSERT OR IGNORE INTO witness_confirmed (kind, key) VALUES (NEW.kind, NEW.key);",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A4: an outer OR ABORT, OR FAIL or OR ROLLBACK refuses every answer after a key's first"
+  },
+  {
+    "name": "LEANW2-rewrite-unrefused",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "  SELECT RAISE(ABORT, 'a hall''s or a seat''s answer is never rewritten: delete it and give it again (migration 0135)');",
+    "new": "  SELECT 1;",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A4: an answer rewritten in place passes in silence, its key's confirmation and late rows as they were"
+  },
+  {
+    "name": "LEANW2-in-lean-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "FROM world_witness INDEXED BY idx_world_witness_lean_key\n          WHERE kind = NEW.kind",
+    "new": "FROM world_witness\n          WHERE kind = NEW.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: with statistics an insert's settle reads its key's every row"
+  },
+  {
+    "name": "LEANW2-in-min-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "(SELECT MIN(at) FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = NEW.kind",
+    "new": "(SELECT MIN(at) FROM world_witness WHERE kind = NEW.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: with statistics the earliest late second sought through the key's every row"
+  },
+  {
+    "name": "LEANW2-out-lean-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "FROM world_witness INDEXED BY idx_world_witness_lean_key\n          WHERE kind = OLD.kind",
+    "new": "FROM world_witness\n          WHERE kind = OLD.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: with statistics a deletion's settle reads its key's every row - the strike quadratic again"
+  },
+  {
+    "name": "LEANW2-out-min-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "(SELECT MIN(at) FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = OLD.kind",
+    "new": "(SELECT MIN(at) FROM world_witness WHERE kind = OLD.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: as LEANW2-in-min-unnamed, a deletion's"
+  },
+  {
+    "name": "LEANW2-moved-lean-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "UPDATE world_witness SET late = 1 WHERE rowid IN (SELECT rowid FROM world_witness INDEXED BY idx_world_witness_lean_key",
+    "new": "UPDATE world_witness SET late = 1 WHERE rowid IN (SELECT rowid FROM world_witness",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: with statistics a moved confirmation walks its key's every row"
+  },
+  {
+    "name": "LEANW2-turned-late-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "INDEXED BY idx_world_witness_late\n    WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report IS NOT NEW.report",
+    "new": "\n    WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report IS NOT NEW.report",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: with statistics a turned confirmation walks its key's every row"
+  },
+  {
+    "name": "LEANW2-in-late-at-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "SELECT report, account, at FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = NEW.kind",
+    "new": "SELECT report, account, at FROM world_witness WHERE kind = NEW.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: a read left to the statistics - a key-and-second read: under the pin's statistics (and every shape measured) the planner takes the late index for it unnamed; the pin counts every read the triggers name, so none is left to them"
+  },
+  {
+    "name": "LEANW2-out-late-at-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "SELECT report, account, at FROM world_witness INDEXED BY idx_world_witness_late WHERE kind = OLD.kind",
+    "new": "SELECT report, account, at FROM world_witness WHERE kind = OLD.kind",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: a read left to the statistics - as LEANW2-in-late-at-unnamed, a deletion's settle; the pin counts every read the triggers name, so none is left to them"
+  },
+  {
+    "name": "LEANW2-moved-late-unnamed",
+    "file": "server-account/migrations/0135_lean_witness.sql",
+    "old": "UPDATE world_witness SET late = 0 WHERE rowid IN (SELECT rowid FROM world_witness INDEXED BY idx_world_witness_late\n    WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report = NEW.report",
+    "new": "UPDATE world_witness SET late = 0 WHERE rowid IN (SELECT rowid FROM world_witness\n    WHERE kind = NEW.kind AND key = NEW.key AND late = 1 AND report = NEW.report",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: a read left to the statistics - a key's late rows up to a second: under the pin's statistics the planner takes the late index for the range unnamed; the pin counts every read the triggers name, so none is left to them"
+  },
+  {
+    "name": "LEANW2-judged-towns-unnamed",
+    "file": "server-account/src/npcHalls.js",
+    "old": "SELECT key, account, report, at FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE kind = '${HALL_WITNESS_KIND}' AND ${LEAN_ROWS}",
+    "new": "SELECT key, account, report, at FROM world_witness WHERE kind = '${HALL_WITNESS_KIND}' AND ${LEAN_ROWS}",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: with statistics a region's towns read by the table's key index - every row of each, the region's 24,000 again"
+  },
+  {
+    "name": "LEANW2-judged-region-unnamed",
+    "file": "server-account/src/npcHalls.js",
+    "old": "(SELECT key FROM world_witness INDEXED BY idx_world_witness_lean_region WHERE",
+    "new": "(SELECT key FROM world_witness WHERE",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "equivalent": true,
+    "why": "a region's lean towns sought by kind and region: with or without statistics the planner takes the lean region index, the one that holds those rows alone and the fewest - named so no other statistics can choose otherwise"
+  },
+  {
+    "name": "LEANW2-seats-judged-unnamed",
+    "file": "server-account/src/townSeats.js",
+    "old": "FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE kind = 'seat' AND ${LEAN_ROWS}",
+    "new": "FROM world_witness WHERE kind = 'seat' AND ${LEAN_ROWS}",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "equivalent": true,
+    "why": "the seats' lean rows sought by their kind: with or without statistics the planner takes the lean key index, which holds those rows alone and the fewest - named so no other statistics can choose otherwise"
+  },
+  {
+    "name": "LEANW2-confirmers-index-unnamed",
+    "file": "server-account/src/npcHalls.js",
+    "old": "(SELECT account, report FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE",
+    "new": "(SELECT account, report FROM world_witness WHERE",
+    "tests": [
+      "test/server/lean_witness.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 A3: a late report's confirmers left to the statistics - a 1,516-row town walked on every late report"
+  }
+]

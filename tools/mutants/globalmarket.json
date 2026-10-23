@@ -2,8 +2,8 @@
   {
     "name": "GLOBAL-MARKET-svc-orders-regional",
     "file": "server-account/src/market.js",
-    "old": "      AND (?2 IS NULL OR material IN (SELECT value FROM json_each(?2))) ORDER BY price DESC, at LIMIT ${MARKET_SHOWN}`).bind(nowS, familyKeys)]);",
-    "new": "      AND (?2 IS NULL OR material IN (SELECT value FROM json_each(?2))) AND region = ?3 ORDER BY price DESC, at LIMIT ${MARKET_SHOWN}`).bind(nowS, familyKeys, region)]);",
+    "old": "db.prepare(`SELECT * ${from} ORDER BY price DESC, at, id ${pageSql(page)}`).bind(nowS, familyKeys)]);",
+    "new": "db.prepare(`SELECT * ${from} AND region = ?3 ORDER BY price DESC, at, id ${pageSql(page)}`).bind(nowS, familyKeys, region)]);",
     "tests": [
       "test/net/globalmarket.test.js"
     ],

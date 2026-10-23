@@ -206,7 +206,7 @@ test('GRASS-LIT2: the vertex stage still fits the vectors WebGL2 promises every 
     for (const v of names.split(',')) vectors += Number(v.match(/\[(\d+)\]/)?.[1] ?? 1) * (type === 'mat4' ? 4 : 1);
   }
   assert.ok(vectors <= 256, `${vectors} vectors at most`);
-  assert.equal(vectors, 221, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1)
+  assert.equal(vectors, 222, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1); OW-HORIZON: 222, the cloud block's far law (+1 - never told here, so the grass reads (0, 0): the map to its edge, as before)
   // the two const face tables are 12 more if a driver keeps a dynamically indexed const array in uniform storage
   assert.ok(vectors + 12 <= 256);
   assert.ok(GAME_GRASS_VS.includes(`uniform vec4 uPointLights[${GRASS_MAX_LIGHTS}];`) && GAME_GRASS_VS.includes(`uniform vec3 uPointColors[${GRASS_MAX_LIGHTS}];`));
@@ -342,7 +342,9 @@ test('GRASS-LIT2: the placer asks the slope of every blade that stands, sliced o
   assert.equal(unpackHeightSlope(subs[0][3]).nx, 0);
   // the field threads the host's slope to every cell it places
   const placed = [];
-  const field = createGrassField({ allocSlots() {}, writeSlot: (s, c) => placed.push(c), clearSlot() {} }, { keep, slope, span: 40, range: 30, cell: 30, perFrame: 4, slots: 16, density: 1200000 });
+  // OW-HITCH: a cell is the renderer's during writeSlot alone - the field places its next cell into the same arrays - so
+  // the recorder keeps what it was handed as it was handed it
+  const field = createGrassField({ allocSlots() {}, writeSlot: (s, c) => placed.push({ count: c.count, slope: c.slope.slice() }), clearSlot() {} }, { keep, slope, span: 40, range: 30, cell: 30, perFrame: 4, slots: 16, density: 1200000 });
   field.update(0, 0);
   assert.ok(placed.length > 0 && placed.every((c) => c.slope && [...c.slope.subarray(0, c.count * 2)].some((v) => v !== 0)));
 });
@@ -355,15 +357,18 @@ test('GRASS-LIT2: the host reads the slope off the near grid\'s normals it keeps
   // the mod's tile set, asked before the three are learned so they land in one step
   // (AUDIT HOST-SPLIT 2, the second read: it ended at the build's createTerrainSurface, which now stands in the module the
   // join appends - so the slice ran to the end of world.js and any line below passed. It ends at the next door, in world.js)
-  const learnAt = w.indexOf('const drawnMeans = ');
-  const learn = w.slice(learnAt, w.indexOf('  async function buildPixel(', learnAt));
+  // PIN MOVED (OW-HITCH): the ground sets' home is scenes/groundSets.js (HOST-SPLIT) - read there, to its module's return
+  const gs = readFileSync(new URL('../../src/scenes/groundSets.js', import.meta.url), 'utf8');
+  const learnAt = gs.indexOf('const drawnMeans = ');
+  const learn = gs.slice(learnAt, gs.indexOf('  return { groundLayersOf', learnAt));
   assert.ok(learn.length > 0 && learn.length < 4000, `loadGroundSet's learning, read alone: ${learn.length} chars`);
   assert.ok(learn.startsWith('const drawnMeans = grassRecords.has(groundArchive) ? null\n      : groundDrawnMeans.has(groundArchive) ? groundDrawnMeans.get(groundArchive)\n      : (await dfmodGroundLayers(groundArchive, groundTex))?.map(tileMeanColour) ?? null;'));
   assert.ok(learn.indexOf('await') < learn.indexOf('grassRecords.set(') && learn.includes('groundMeanColour.set(groundArchive, drawnMeans ?? layers.map(tileMeanColour));'));
   // AUDIT GRASS-LIT2 B2: the means are the UPLOADED layers' - taken beside the upload, not asked of the door again
   // AUDIT PRECIP GROUND-2 (PIN MOVED): the set's OWN layers' means - never its twin's winter half
-  assert.ok(w.includes('if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);'));
-  assert.ok(w.indexOf('renderer.uploadTileArray(key, winter == null ? own.layers : twinLayers(') < w.indexOf('if (labGrass) groundDrawnMeans.set('));
+  assert.ok(gs.includes('if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);'));
+  assert.ok(gs.indexOf('const layers = winter == null ? own.layers : twinLayers(') < gs.indexOf('await stepsBreathing(renderer.uploadTileArraySteps(key, layers), breathe);')
+    && gs.indexOf('await stepsBreathing(renderer.uploadTileArraySteps(key, layers), breathe);') < gs.indexOf('if (labGrass) groundDrawnMeans.set('), 'PIN MOVED (OW-HITCH): uploaded a few layers a breath, then the means');
   assert.ok(learn.includes('grassRecords.set(groundArchive, grassRecordsOf(layers));'), 'which records are grass stays the classic file\'s question');
   // a mod's big tile is read every k-th texel, k odd - a two-texel pattern (the blue here) is read on both its phases; a classic tile whole
   const big = { width: 1024, height: 1024, colors: new Uint8Array(1024 * 1024 * 4) };
@@ -609,7 +614,7 @@ test('AUDIT GRASS-LIT2 C5: the draw cuts the lanterns to the shorter of its two 
 test('AUDIT GRASS-LIT2 C6: a rim cell placed a slice a frame asks the slope as a whole cell does - a walk\'s new cells stand on the hillside too', () => {
   const keep = () => 0, slope = () => [0.3, 0.9, -0.2];
   const placed = [];
-  const field = createGrassField({ allocSlots() {}, clearSlot() {}, shiftSlots() {}, writeSlot: (_s, c) => placed.push(c) }, { keep, slope, range: 120, span: 150 });
+  const field = createGrassField({ allocSlots() {}, clearSlot() {}, shiftSlots() {}, writeSlot: (_s, c) => placed.push({ count: c.count, slope: c.slope.slice() }) }, { keep, slope, range: 120, span: 150 });   // OW-HITCH: kept as handed (the arrays are placed into again)
   for (let f = 0; f < 3000 && field.update(0, 0) !== 0; f++);
   placed.length = 0;
   let ex = 0, sliced = 0;

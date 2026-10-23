@@ -41,6 +41,7 @@ import { plateMetal, SHIELD_VALUES } from '../armorMaterials.js';
 import { rarityOf } from '../loot/lootRarity.js';
 import { computeEntityMods } from '../entityMods.js';
 import { t } from '../textManager.js';   // L10N4: the page's words through the text core
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 /** The slots, in the page's order: `key` the record's, `label` the page's, `slot` the equip table's (a charm's is
  *  whichever jewellery slot the piece takes - null here). */
@@ -102,7 +103,7 @@ const ROMAN = Object.freeze(['', 'I', 'II', 'III', 'IV', 'V']);
 /** May its kind take a weapon and armour - DFU's own law of who carries equipment (the classes, the orcs, the centaur)? */
 export function armedKind(mobileType) {
   if (!Number.isInteger(mobileType)) return false;
-  const isClass = mobileType >= 128;
+  const isClass = isClassEnemyId(mobileType);
   return equipmentVariantFor(isClass ? mobileType - 128 : mobileType, isClass, () => 0) !== null;
 }
 /** A melee weapon (Dagger .. War Axe): what the weapon slot takes. */
@@ -145,13 +146,13 @@ const holdsShield = (gear) => !!gear?.weapon && !brokenPiece(gear.weapon) && !ne
  *  (the record's, by default). */
 export function gearRefusal(r, item, { gear = r?.companion?.gear ?? {}, kindName = null } = {}) {
   if (!r?.sworn) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
-  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad - its kit goes with it.');   // AUDIT RVN F10
+  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad with its kit.');   // AUDIT RVN F10
   const key = gearKeyOf(item);
-  if (!key) return t('rvn.gear.no.use', 'It cannot use that - a melee weapon, armour or a charm.');
+  if (!key) return t('rvn.gear.no.use', 'It can only use a melee weapon, armor or a charm.');
   if (item.questItem) return t('rvn.gear.no.quest', 'A quest item stays with you.');
   if ((item.timeForItemToDisappear ?? 0) !== 0) return t('rvn.gear.no.summoned', 'A summoned piece fades in any hand but yours.');
   if (gearTier(item) > 3) return t('rvn.gear.no.yours', 'It answers to you alone.');
-  if (key !== 'charm' && !armedKind(r.mobileType)) return t('rvn.gear.no.kind', '{kind} wields no weapon and wears no armour - only a charm.', { kind: kindName ?? t('rvn.gear.itsKind', 'Its kind') });
+  if (key !== 'charm' && !armedKind(r.mobileType)) return t('rvn.gear.no.kind', '{kind} wields no weapon and wears no armor, only a charm.', { kind: kindName ?? t('rvn.gear.itsKind', 'Its kind') });
   if (brokenPiece(item)) return t('rvn.gear.no.broken', 'It is broken.');
   const rank = Math.max(1, Math.min(5, r.rank | 0));
   const m = gearMetal(item), tier = gearTier(item);

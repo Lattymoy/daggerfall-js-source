@@ -84,8 +84,8 @@
   {
     "name": "BOARD-UI-the-day-at-the-foot",
     "file": "src/ui/noticeWindow.js",
-    "old": "    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    // CHAP3a: the account's Merit here",
-    "new": "    // CHAP3a: the account's Merit here",
+    "old": "    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    // CRAFT-WRITS: the character's crafting writs above the Court's",
+    "new": "    // CRAFT-WRITS: the character's crafting writs above the Court's",
     "tests": [
       "test/ui/board_ui.test.js"
     ],

@@ -21,7 +21,7 @@
     "old": "if (r !== rig) { for (const [k, e] of stood) letGo(k, e); rig = r ?? null; }", "new": "if (r !== rig) { rig = r ?? null; }",
     "tests": ["test/world/standflats.test.js"] },
   { "name": "STAND-HORSE-unseen-stepped", "file": "src/world/standingHorses.js",
-    "old": "        if (cam && outOfView([o.feet[0], o.feet[1] + VIEW_LIFT, o.feet[2]], VIEW_REACH, cam.view, cam.proj)) continue;", "new": "",
+    "old": "e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);", "new": "e.out = poseWhereSeen(rig, e.horse, o.feet, null, eye, frameNo, e.phase);",
     "tests": ["test/world/standflats.test.js"] },
   { "name": "STAND-HORSE-bind-unflushed", "file": "src/world/standingHorses.js",
     "old": "      } finally { if (open) renderer?.flushCharacterSpriteBatch?.(); }", "new": "      } finally { /* unflushed */ }",

@@ -51,6 +51,7 @@ import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { quadHalfDiagonal } from '../render/bounds.js';   // OW-PEERS: a grown sprite's reach, as the batch is made with
+import { LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js';   // LAYERED-GEAR-ON: the own-body choice, resolved before it is sent
 import { modSetting, storedModSetting } from '../systems/modSettings.js';   // DISC23-B: the Eye Of The Beholder set the look carries
 import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClassSprites' on/off, read once a sync (Other players, enhancedMenu.js peerSpritesCard)
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
@@ -380,8 +381,21 @@ export function ownEotbSet() {
   } catch { return null; }   // not vendored: no set
 }
 
-/** The player's look, as the hello carries it. DISC23-B: `eotbSet` the chosen sprite set (ownEotbSet, the host's read). */
-export function composeLook(entity, { eotbSet = ownEotbSet() } = {}) {
+/** LAYERED-GEAR: the On foot Layered Gearing Skin this player chose on the profile - 1 female, 2 male - or null: off, or
+ *  their Eye Of The Beholder off (no sprite body to dress). What the look's `lg` says (wire.js validLook).
+ *  LAYERED-GEAR-ON: the default, the character's own body, is sent as the body `entity` has. */
+export function ownLayeredGear(entity = null) {
+  try {
+    if (!modSetting('eye-of-the-beholder', 'Enabled')) return null;
+    const v = modSetting('eye-of-the-beholder', 'Graphics.LayeredGear');
+    if (v === LAYERED_OWN) return entity?.gender === 'female' ? 1 : 2;
+    return v === 1 || v === 2 ? v : null;
+  } catch { return null; }   // not vendored, or the key not declared: off
+}
+
+/** The player's look, as the hello carries it. DISC23-B: `eotbSet` the chosen sprite set (ownEotbSet, the host's read).
+ *  LAYERED-GEAR: `layered` the On foot Layered Gearing Skin chosen (ownLayeredGear). */
+export function composeLook(entity, { eotbSet = ownEotbSet(), layered = ownLayeredGear(entity) } = {}) {
   const items = [];
   const table = entity ? equipTableOf(entity) : [];
   for (let slot = 0; slot < table.length; slot++) {
@@ -406,7 +420,8 @@ export function composeLook(entity, { eotbSet = ownEotbSet() } = {}) {
   // serialize to the bytes it always did.
   const klass = careerName(entity);
   // DISC23-B: `eo` OMITTED while the mod is off, `class`'s law - a look without it keeps the bytes it always had
-  return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), ...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), items };
+  // LAYERED-GEAR: `lg` OMITTED while the skin is off, the same law
+  return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), ...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), ...(layered === 1 || layered === 2 ? { lg: layered } : {}), items };
 }
 
 /** One string per distinct look: the doll cache's key.

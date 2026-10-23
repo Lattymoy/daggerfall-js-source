@@ -28,8 +28,8 @@ export const CONDUCT_VERSION_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const conductTitle = () => t('net.conduct.title', 'Code of Conduct');
 /** The rules, in the player's language - each a line of its own. */
 export const conductRules = () => [
-  t('net.conduct.respect', 'Treat everyone with respect. No harassment, bullying or threats - in chat, in names, in notes or anywhere else.'),
-  t('net.conduct.hate', 'No hate. Never attack anyone for their race, ethnicity, nationality, religion, sex, gender identity, sexual orientation (asexuality included), disability or age - not even as a joke.'),
+  t('net.conduct.respect', 'Treat everyone with respect. No harassment, bullying or threats, whether in chat, in names, in notes or anywhere else.'),
+  t('net.conduct.hate', 'No hate. Never attack anyone for their race, ethnicity, nationality, religion, sex, gender identity, sexual orientation (asexuality included), disability or age, not even as a joke.'),
   t('net.conduct.sexual', 'No sexual remarks aimed at other players, and nothing sexual involving minors, ever.'),
   t('net.conduct.private', "Never share anyone's personal information, or ask for it."),
   t('net.conduct.spam', 'No spam, no scams, and no pretending to be staff.'),

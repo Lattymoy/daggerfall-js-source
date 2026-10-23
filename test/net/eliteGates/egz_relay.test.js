@@ -150,7 +150,7 @@ test('EG-ZQ A PINNED CASTER KEEPS TO ITS PILLAR (sections 8.3 and 12; EG-ZJ\'s f
   assert.ok(kept >= 4, `their Casters kept (${kept})`);
 });
 
-test('EG-ZQ THE LORDS\' SHARES (section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK\'s departure 1 retired): a Proving Walk\'s champion stood for the company the hall woke with is its fighters\' shares (ttkRef - here EG_PROVE_HP_S x the depth - x each one\'s reference damage); a member fallen before the wake and called back by a Memento in the hall brings its share at the fraction the champion stands at; a fall retires the fallen\'s share at that fraction and the whole fight is said with it, a witness seen in the hall restores nothing, a recall restores it; the last share is never retired; all through the seam\'s join, by the gate\'s own retireShare and restoreShare (mutants: a joiner\'s share unbrought or brought whole; a fall\'s share kept; the seen step restoring the fallen; the recall never restoring; the last share retired; the whole fight unsaid; the held threshold left; a mirror sized)', () => {
+test('EG-ZQ THE LORDS\' SHARES (section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK\'s departure 1 retired): a Proving Walk\'s champion stood for the company the hall woke with is its fighters\' shares (ttkRef - here EG_PROVE_HP_S x the depth - x each one\'s reference damage); a member fallen before the wake and called back by a Memento in the hall brings its share at the fraction the champion stands at; a fall while it sleeps in its ring lets the fallen\'s share go at that fraction and the whole fight is said with it, a witness seen in the hall restores nothing, a recall restores it (FIELD BUGS 2026-10-19e LORD-SHARES: it wakes for the company standing before it, and awake keeps every share - test/net/eliteGates/fb1019e_lordshares.test.js); the last share is never retired; all through the seam\'s join, by the gate\'s own retireShare and restoreShare (mutants: a joiner\'s share unbrought or brought whole; a fall\'s share kept; the seen step restoring the fallen; the recall never restoring; the last share retired; the whole fight unsaid; the held threshold left; a mirror sized)', () => {
   let S = null;
   for (let seed = 1; seed <= 40 && !S; seed++) for (const s of egCircleSpecs(seed, 1, 0, 8)) if (!S && s.kind === 'proving' && s.spots.niche?.length) S = breachAt(seed, s.h, { lvs: [40, 20, 30] });
   const { B, spec } = S, niche = spec.spots.niche[0], dps = [45, 25, 35];
@@ -182,11 +182,13 @@ test('EG-ZQ THE LORDS\' SHARES (section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK\'s
   assert.ok(Math.abs(L.hp / L.max - 0.6) < 1e-9, 'at the fraction the champion stands at: no heal');
   const said = S.frames.slice(k0).find((f) => f.k === 'efs');
   assert.ok(said && said.b.find((t) => t[0] === L.i)[7] === Math.ceil(L.max), 'the whole fight said again at once, with the new health');
-  // acct-1 falls: its share retired at the fraction
+  // acct-1 falls while the champion sleeps in its ring: its share let go at the fraction (PIN MOVED, FIELD BUGS 2026-10-19e
+  // LORD-SHARES - a lord awake keeps it)
+  assert.equal(L.up2, false, 'asleep in its ring');
   const max1 = L.max;
   S.dead('acct-1'); S.step();
   assert.equal(B.mem['acct-1'].alive, 0);
-  assert.ok(Math.abs(L.max - (max1 - per * dps[1])) < 1e-6 && Math.abs(L.hp / L.max - 0.6) < 1e-9, 'a fall retires its share, at the fraction');
+  assert.ok(Math.abs(L.max - (max1 - per * dps[1])) < 1e-6 && Math.abs(L.hp / L.max - 0.6) < 1e-9, 'a fall before its wake lets its share go, at the fraction');
   assert.equal(L.fs['acct-1'].retired, true);
   // the witness seen in the hall for seconds: nothing restored
   S.dead('acct-1', false);
@@ -200,7 +202,7 @@ test('EG-ZQ THE LORDS\' SHARES (section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK\'s
   assert.equal(B.mem['acct-1'].alive, 1, 'called back');
   S.at('acct-1', niche.x + 1, niche.z + 1.5); S.step();
   assert.ok(Math.abs(L.max - max1) < 1e-6 && L.fs['acct-1'].retired === false && Math.abs(L.hp / L.max - 0.6) < 1e-9, 'the recall restores it, at the fraction');
-  // the seam's join alone, on a copy: every share out but the last; an errand's held threshold kept at its fraction
+  // the seam's join alone, on a copy of the sleeping champion: every share out but the last; an errand's held threshold kept at its fraction
   const C = structuredClone(B.F), CL = C.bodies.find((b) => b.i === L.i), lf = egLordsFight(C, spec, {}, S.now());
   CL.hpFloor = Math.round(CL.max * 0.33);
   const floorFrac = CL.hpFloor / CL.max;

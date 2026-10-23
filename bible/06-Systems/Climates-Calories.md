@@ -657,7 +657,7 @@ the swimmer reaches the shore (`systems/rest/rest.js` `exhaustionOutcome`'s
 SPENT-ASHORE (FIELD BUGS 2026-10-13e, 2026-10-13: a player killed at full
 health seconds after a fight): on dry feet with a foe in the classic
 spawn band a drain to nothing costs the same tenth, with its own HUD line
-("You are too exhausted to fight - get clear and rest!") and no box, in
+("You are too exhausted to fight. Get clear and rest!") and no box, in
 all four hosts (`exhaustionOutcome`'s `spent`). No outcome is a death
 now: the collapse kills only through the tenths it takes, so the lethal
 branch this section pinned, and its raw zero, are gone from every host -

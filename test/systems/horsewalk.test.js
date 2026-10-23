@@ -285,7 +285,7 @@ test('HORSE-WALK THE 3D HORSE UNDER ITS RIDER: a slow ride (gallops false - the 
   rig.release(h);
   // the player's horse holds to the host's slow ride, a peer's to its pose's hs
   assert.match(rd('src/player/mwView.js'), /look: horse\.look \| 0, gallops: !horse\.slow \}\);/);
-  assert.match(rd('src/net/peer/peerBodies.js'), /look: shown\.rc \| 0, gallops: !shown\.hs \}\);/);
+  assert.match(rd('src/net/peer/peerBodies.js'), /look: shown\.rc \| 0, gallops: !shown\.hs, pose: false \}\);/);   // PIN MOVED (HORSE-VIEW): the gait alone stepped here - the pose waits for the rider's
 });
 
 test('HORSE-WALK THE SADDLE PANEL SAYS IT: Walking where horse care walks the horse, Galloping on the run, Trotting at DFU\'s ride (care off, or on the road), Rolling on a bench, Standing still; the host reads the very walk the motor took (its rideWalking, handed by the host\'s frame - HORSE-TIERS, PIN MOVED: the motor alone knows a gallop asked and refused), and the panel draws it (mutants: HORSEWALK-saddle-trots, -saddle-cart-walks, -saddle-host-unread, -saddle-panel-unread)', () => {
@@ -373,8 +373,8 @@ test('HORSE-WALK IN A TOWN (TOWN-GALLOP, 2026-10-13, Mac: "Remove forced horse w
 });
 
 test('HORSE-WALK THE WORDS: the Features row and the Horses tutorial say the horse walks and Run gallops it - in a town too since TOWN-GALLOP (AUDIT HORSE-WALK\'s "outside towns" retired with the town walk), and the tutorial says what a gallop into the people of a town does: the trample Roleplay & Realism ships on (TUT1: a slice that changes how a system plays changes its page) (mutants: TOWNGALLOP-tutorial-towns-back, TOWNGALLOP-tutorial-trample-dropped, TOWNGALLOP-trample-ships-off)', () => {
-  assert.match(FEATURES.find((f) => f.id === 'horse-care').note, /walks unless you hold Run to gallop on its breath/);
-  assert.ok(TUTORIALS.find((t) => t.id === 'horse').body.some((b) => b.includes('Your horse walks; hold {Run} to gallop. Don\'t gallop into people in town: trampling them is a crime.')));
+  assert.match(FEATURES.find((f) => f.id === 'horse-care').note, /walks unless you hold Run to gallop, which tires it/);
+  assert.ok(TUTORIALS.find((t) => t.id === 'horse').body.some((b) => b.includes('Your horse walks; hold {Run} to gallop. Do not gallop into people in town: trampling them is a crime.')));
   _resetModSettings();
   assert.equal(rrRidingSetting('TrampleCivilians'), true, 'the trample the page warns of ships on');
 });

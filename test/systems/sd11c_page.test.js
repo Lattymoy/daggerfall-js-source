@@ -21,7 +21,8 @@ import { scanGatePixels } from '../../src/systems/gate/gateSite.js';
 import { LOCATION_TYPES, CLIMATES } from '../../src/formats/mapsFile.js';
 import { isMainStoryDungeon } from '../../src/world/dungeon/dungeonTextures.js';
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdFoundLine, SD_COLLAPSE_MS, SD_CAST_OUT_LINE, SD_NO_CLOSED, isSdRoom, sdRoomKey } from '../../src/net/superDungeon/sdLaw.js';
-import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, sdRiftPlace, sdReturnPlace, sdLandingPlace, inSdPortal, SD_LANDING_PAST_M, SD_RETURN_REACH_M, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../src/world/superDungeon/sdDungeon.js';
+import { sdRiftWord, sdReturnStands, sdThroughStands, sdRiftCount, riftLook, sdRiftPlace, sdReturnPlace, sdLandingPlace, inSdPortal, SD_LANDING_PAST_M, SD_RETURN_REACH_M, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../src/world/superDungeon/sdDungeon.js';
+import { sdSlotsKept } from '../../src/systems/superDungeon/sdSlots.js';
 import { SD_REALM_TEXT } from '../../src/world/superDungeon/sdRealm.js';
 import { createSpoilsPool, spoilsStore, spoilsLevel, SPOILS_SPENT_RESEND_MS, SPOILS_SPENT_MAX, SPOILS_KEYS } from '../../src/scenes/spoilsPool.js';
 import { createSdClaims, SD_CLAIMS_MAX, SD_CLAIMS_ALL_MAX } from '../../src/net/superDungeon/sdClaims.js';
@@ -245,13 +246,10 @@ test('SD11c THE END JUDGED WHERE I STAND (L1 F3): a step under the veil - into t
 
 // ── L1 F3 (the step), the latent site guard, L6 F17 (the Rift's memory) ─
 
-/** world.js's Rift memory (its own text) over `storage`. */
+/** world.js's Rift memory over `storage` (SD-ONELIFE (PIN MOVED): one memory for the slots entered and died in; PIN MOVED (WITCH1): systems/superDungeon/sdSlots.js, out of world.js whole). */
 function enteredOf(storage) {
-  const at = W.indexOf('\n  const sdSlotsKept = (key) => {');   // SD-ONELIFE (PIN MOVED): one memory for the slots entered and died in
-  assert.ok(at > 0, 'sdSlotsKept');
-  const text = W.slice(at + 1, W.indexOf('\n  };\n', at) + 5);
-  assert.match(W, /\n  const _sdEntered = sdSlotsKept\(SD_ENTERED_KEY\);\n/);
-  return new Function('appStorage', 'SD_ENTERED_KEY', 'SD_ENTERED_MAX', '_accountSds', `${text}\nreturn sdSlotsKept(SD_ENTERED_KEY);`)(() => storage, SD_ENTERED_KEY, SD_ENTERED_MAX, { me: () => null });   // AUDIT SD III (H1, PIN MOVED): the signed-in account's - none here, the device's
+  assert.match(W, /\n  const _sdEntered = sdSlotsKept\(SD_ENTERED_KEY, \(\) => _accountSds\.me\(\)\);\n/);
+  return sdSlotsKept(SD_ENTERED_KEY, () => null, () => storage);   // AUDIT SD III (H1, PIN MOVED): the signed-in account's - none here, the device's
 }
 const memStorage = () => { const m = new Map(); return { m, getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; };
 
@@ -265,7 +263,7 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
     forceExitToExterior: () => log.push('out'), enterSdRealm: async () => { log.push('realm'); return entered; },
   };
   const env = {
-    sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 },
+    sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdThroughStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 },   // SD-THROUGH (PIN MOVED): the word says whether one went through
     INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
     sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door

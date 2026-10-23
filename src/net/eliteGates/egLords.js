@@ -27,9 +27,13 @@
 // ledge's face, and never run at a member on another floor's height.
 //
 // EG-ZQ (2026-10-12; sections 13.2 and 14): THE SHARES - every lord's health is its fighters' shares (egLordsShare, moved by the
-// seam's join: a member the hall did not wake with brings one, a fallen member's is retired at the fall and restored at the
-// recall - the gate's retireShare/restoreShare); the Markynaz's decree folded with the circle's (egMarkynazDecree); and
-// Colossal's size on the lord's body and on the wire (`sz`).
+// seam's join: a member the hall did not wake with brings one - the gate's retireShare/restoreShare); the Markynaz's decree
+// folded with the circle's (egMarkynazDecree); and Colossal's size on the lord's body and on the wire (`sz`).
+// FIELD BUGS 2026-10-19e LORD-SHARES (section 13.2; a breach's company: "Felt like he wasnt being damaged ... It felt like the
+// moment team died difficulty went down"): A LORD WAKES FOR THE COMPANY STANDING IN ITS HALL AND KEEPS WHAT THE FALLEN LEAVE -
+// stood for the members on its hall's arrival plate (egLordsStand; a latecomer brings its share at the fraction), and from its
+// wake no fall takes a share out of it: EG-ZQ retired a fallen member's share at the fall, so a death cost the company
+// nothing against a lord and every blow of the living moved its bar the further.
 //
 // AUDIT EG III (2026-10-13; sections 13.2, 13.3 and 13.4): the Mother of Dusk dragged down once a grounding, by anchors broken;
 // the Wyrm aloft again after a landing and its Burning Perches erupting; the Twin Lords' touch minted and said; fury's chain at
@@ -239,12 +243,14 @@ function sharesOf(F, L) {
 /**
  * EG-ZQ (2026-10-12; section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK's departure 1) - A MEMBER'S SHARE OF THE LORDS, as the boss
  * seam's `join` moves it: while the director admits `sub` (living, in the breach and its hall) its share stands in every
- * lord's health; refused (fallen), it is out. So -
- *   a member the hall did not wake with brings `per` x its reference damage to each lord, at the fraction the lord stands
- *     at (the gate's law for a newcomer: a late arrival never heals a lord) - a share brought as a retired one restored;
- *   a fallen member's share is RETIRED at the fall (retireShare), at the fraction the lord stands at - seven members never
- *     face a lord sized for eight - and RESTORED (restoreShare) when it is admitted again (the recall): the director's
- *     seen-and-restore step joins the living alone, so it never restores a fallen share;
+ * lord's health. So -
+ *   a member the hall did not wake with, or one its lords were stood without (egLordsStand), brings `per` x its reference
+ *     damage to each lord, at the fraction the lord stands at (the gate's law for a newcomer: a late arrival never heals a
+ *     lord) - a share brought as a retired one restored;
+ *   FIELD BUGS 2026-10-19e LORD-SHARES: refused (fallen), its share STAYS in every lord awake - the living finish what the
+ *     fallen left, so a death makes a fight harder for the company, never easier (the Remnant keeps a fallen body's share
+ *     too: net/superDungeon/sdRemnant.js) - and leaves a lord still asleep in its ring (retireShare, at the fraction it
+ *     stands at), which wakes for the company standing before it; a recall's share comes back with it (restoreShare);
  *   the last share in a lord is never retired: a lord sized for nobody would stand at nought (and fall as nought), and the
  *     company's wipe ends the breach first.
  * A mirror or an image carries no share (its health its own). A share moved keeps an errand's held threshold at its fraction
@@ -260,13 +266,31 @@ export function egLordsShare(F, sub, lv, admits) {
     let p = fs[sub];
     if (admits && !p) p = fs[sub] = { share: L.per * dpsRef(lv), retired: true };
     if (admits) restoreShare(L, p);
-    else if (p && Object.values(fs).some((q) => q !== p && !q.retired)) retireShare(L, p);
+    else if (p && !L.up2 && Object.values(fs).some((q) => q !== p && !q.retired)) retireShare(L, p);
     if (L.max === max0) continue;
     moved = true;
     if (L.hpFloor != null) L.hpFloor = egHoldHp(L.max, L.hold ?? L.hpFloor / max0);   // AUDIT EG IV (lane1 #2): the held line at the new max, still strictly above it
   }
   if (moved) F.stateAt = 0;
   return moved;
+}
+/**
+ * FIELD BUGS 2026-10-19e LORD-SHARES (section 13.2) - THE LORDS STAND FOR THE COMPANY ON THEIR HALL'S PLATE: as a hall's fight
+ * is stood (net/eliteGates/egBrain.js standFight, once every lord of it stands at its health), the share of every member not on
+ * its arrival plate (`here`, the members' accounts - one still on the stair, its socket closed) leaves each lord whole, never its
+ * last; each comes in at the fraction the lord stands at when the director first sees its member in the hall (egLordsShare).
+ * The hall's fight is sized by its whole living company, so a lord stood for an absent member held its share until its absence
+ * became a fall, 180 s on. Sized in the beat the hall wakes, whose whole fight (`efs`) every screen hears before any health
+ * word, never shrunk later: a health word that fell would read as a blow (net/eliteGates/egLink.js foldFight - `ehp` carries no
+ * whole). No lord stands with an errand's held line or a mirror yet: those come with its phases.
+ * @param {any} F @param {string[]} here
+ */
+export function egLordsStand(F, here) {
+  const on = new Set(here);
+  for (const L of egLordsOf(F)) {
+    const fs = sharesOf(F, L);
+    for (const [s, p] of Object.entries(fs)) if (!p.retired && !on.has(s) && Object.values(fs).some((q) => q !== p && !q.retired)) retireShare(L, p);
+  }
 }
 
 // ── the engine ───────────────────────────────────────────────────────────────────────────────────────────
@@ -876,15 +900,17 @@ export function egLordHitX(F, L, sub, pose, r, now) {
 /**
  * A BLOW ON A LORD LANDED (`got` what the purse let through): its threat, an errand's hold on the next threshold, the
  * Armsmaster's Riposte, the Spellmaster's images, a mirror's crack, a fall (the Twins' fifteen seconds, the survivor's
- * raise). Answers the frames.
+ * raise). Its frames into `out`; answers what the lord LOST - FIELD BUGS 2026-10-20f LANDED-WORD: an errand's held line takes
+ * back what fell past it, and the seam answered the purse's whole, so the recap, a Court's chart and the earned share counted
+ * blows the lord never felt while it was held.
  */
 export function egLordHit(F, spec, L, sub, name, got, pose, now, here, out, ctx = {}) {
   if (L.hpFloor != null && L.hp < L.hpFloor) { got -= L.hpFloor - L.hp; L.hp = L.hpFloor; }
   L.threat[sub] = (L.threat[sub] ?? 0) + got * (ctx.threatX ?? 1);
   if (!egHas(L, EG_FL.mirror)) KITS[L.key]?.hit?.(F, spec, L, sub, got, pose, now, here, out, ctx);   // AUDIT EG IV (lane1 #10): a mirror's blow is no duel's
-  if (L.hp > 1e-6) return;
+  if (L.hp > 1e-6) return got;
   L.hp = 0;
-  if (egHas(L, EG_FL.mirror)) { egGone(F, [L], EG_GONE.slain, name, now, out); KITS[L.key]?.mirrorDown?.(F, L, now, out); return; }
+  if (egHas(L, EG_FL.mirror)) { egGone(F, [L], EG_GONE.slain, name, now, out); KITS[L.key]?.mirrorDown?.(F, L, now, out); return got; }
   L.fellAt = now; egSaid(L, L.ph, now);   // EG-ZJ: its fall's instant on the wire (AUDIT EG V, lane1 #6: and the Twins' "Together" reads it)
   endChallenge(F, L, now, out, false, true);   // AUDIT EG V (lane1 #1): a fallen lord's duel ends with it - its ring never stands ownerless
   egSetFl(F, L, EG_FL.fell, true, out);
@@ -894,11 +920,12 @@ export function egLordHit(F, spec, L, sub, name, got, pose, now, here, out, ctx 
   if (left.length) {
     const P = egLordsPairOf(F), mate = P && (L.i === P.a || L.i === P.b) ? egBodyById(F, L.i === P.a ? P.b : P.a) : null;
     if (mate && mate.hp > 0) { F.mem.twinFellAt = now; say(out, 'twinfell', { n: egBossName(L.key, L.pt) }); }
-    return;
+    return got;
   }
   F.mem.lordsFell = 1;
   for (const m of egLordsOf(F).filter((x) => egHas(x, EG_FL.mirror))) egGone(F, [m], EG_GONE.crumbled, '', now, out);
   out.push({ k: 'efell', i: L.i, at: now, n: name });
+  return got;
 }
 
 // ── the kits ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -931,19 +958,19 @@ export const egGarothSig = (c) => ['ilthys', 'morvayn', 'seyth'][Math.floor(c / 
  * (`esay` 'phase', egLordsStep). Garoth's third is the signature he borrows (EG_GAROTH_SIG_CARDS, by EG_GAROTH_SIG_ORDERS).
  */
 export const EG_LORD_PHASES = Object.freeze({
-  hound: Object.freeze([['The Bridges Burn', 'Off a bridge before it burns.'], ['The Pack', 'The hunted run apart.']]),
+  hound: Object.freeze([['The Bridges Burn', 'Get off a bridge before it burns.'], ['The Pack', 'Run apart when hunted.']]),
   spellmaster: Object.freeze([['The Examination', 'Stand on the runes in order.'], ['The Final Examination', 'Break the seals.']]),
-  armsmaster: Object.freeze([['The Second Challenge', 'Answer the challenge.'], ['The Last Lesson', 'The ring of fire closes in.']]),
-  ilthys: Object.freeze([['The Conquest', 'Break her banners.'], ['The Last Charge', 'Leave the third that falls.']]),
-  cairnkeeper: Object.freeze([['The Cracked Gem', 'Three gems take every soul.'], ['The Double Tithe', 'Lay two souls each.']]),
-  twins: Object.freeze([['Rivalry', 'Strike the stronger twin.'], ['Both Courts Burn', 'Leave the thirds by the walkway.']]),
+  armsmaster: Object.freeze([['The Second Challenge', 'Answer the challenge.'], ['The Last Lesson', 'Stay inside the closing ring of fire.']]),
+  ilthys: Object.freeze([['The Conquest', 'Break her banners.'], ['The Last Charge', 'Get off the third of the floor that falls.']]),
+  cairnkeeper: Object.freeze([['The Cracked Gem', 'Lay your souls in the three gems left.'], ['The Double Tithe', 'Lay two souls each.']]),
+  twins: Object.freeze([['Rivalry', 'Strike the stronger twin.'], ['Both Courts Burn', 'Stay off the ground by the walkway.']]),
   morvayn: Object.freeze([['The Chaining', 'Stay close to your chain.'], ['The Last Rites', 'Chains of three. Stay together.']]),
   dusk: Object.freeze([['Wingbeat', 'Brace against the gusts.'], ['Moonfall', 'Break the anchors again.']]),
   stalker: Object.freeze([['Three Shadows', 'Find the shadow that glints.'], ['Blood Moon', 'Three are tethered. Stand apart.']]),
   seyth: Object.freeze([['The Mirrorcourt', 'Strike the true lord.'], ['The Long Night', 'Keep to the moon-shafts.']]),
   colossus: Object.freeze([['Paired Hearts', 'Break each pair together.'], ['Breakdown', 'It kneels. Strike now.']]),
   wyrm: Object.freeze([['Burning Perches', 'Clear the perch it leaves.'], ['Grounded', 'Beware its sweeping breath.']]),
-  garoth: Object.freeze([['The Clan Muster', 'Answer the honour duel.']]),
+  garoth: Object.freeze([['The Clan Muster', 'Answer the honor duel.']]),
 });
 /** Garoth's borrowed signature's order, by the signature (its name EG_GAROTH_SIG_CARDS'). */
 export const EG_GAROTH_SIG_ORDERS = Object.freeze({ ilthys: 'Break his banners.', morvayn: 'Stay close to your chain.', seyth: 'Strike the true lord.' });
@@ -1861,14 +1888,16 @@ export const EG_EARN_HALLS = 3;
  *   join(f, sub, name, lv, now, present, o)           whether `sub` fights the lords: the director's admission (`o.admits` -
  *                                                     living, in the breach and its hall; a witness never fights) while a
  *                                                     lord stands. EG-ZQ (section 13.2): and its share of every lord's
- *                                                     health with it (egLordsShare) - a member the hall did not wake with
- *                                                     brings its share, a fallen one's is retired (the director joins it
- *                                                     unadmitted at its fall) and restored when it is admitted again
+ *                                                     health with it (egLordsShare) - a member the hall or its lords did
+ *                                                     not stand for brings its share; a fallen one's (the director joins
+ *                                                     it unadmitted at its fall) stays in a lord awake (LORD-SHARES) and
+ *                                                     leaves one asleep, and is restored when it is admitted again
  *   hit(f, sub, d, r, pose, now, seq, o)              a member's blow on lord `o.i`: the gate's hand and purse (egHitBody - the
  *                                                     member's purse `o.p`, the Vestiges' weight `o.x`, the bucket's `o.bx`)
  *                                                     times the lord's own (egLordHitX), and what lands told the lord
  *                                                     (egLordHit - `o.name`, `o.here`, `o.threatX`, its words in `o.out`) -
- *                                                     answers egHitBody's `{ got, b }`
+ *                                                     answers egHitBody's `{ got, b }`, `got` what the lord lost (an
+ *                                                     errand's held line takes back what fell past it - LANDED-WORD)
  *   step(f, now, bodies, rng) -> frames[]             the lords' beat over the census (egLordsStep, `f.ctx` its context)
  *   stateOf(f)                                        the whole fight at the view's clock (`efs`), as a joiner is told it
  *   judge(f, bodies, now) -> [{sub, share, ...}]      the fight's blows on the relay's shared-time trails (net/bossRef.js
@@ -1884,12 +1913,12 @@ export const EG_EARN_HALLS = 3;
  */
 export const EG_SEAM = bossSeam('eg', {
   new: ({ F, spec, key, now, out, decrees = {}, n = F.n, at = undefined }) => ({ ...egLordsFight(F, spec, { decrees, n }, now), stood: egLordsNew(F, spec, key, now, out, { decrees, n, at }) }),
-  join: (f, sub, name, lv, now, present = null, o = {}) => { const up = egLordsOf(f.F).length > 0; if (up) { egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits) egUnchain(f.F, sub); } return !!o.admits && up; },   // EG-ZQ: its share in while admitted, out at its fall; AUDIT EG V (lane1 #8): unchained as it goes
+  join: (f, sub, name, lv, now, present = null, o = {}) => { const up = egLordsOf(f.F).length > 0; if (up) { egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits) egUnchain(f.F, sub); } return !!o.admits && up; },   // EG-ZQ: its share in while admitted - LORD-SHARES: kept at its fall by a lord awake; AUDIT EG V (lane1 #8): unchained as it goes
   hit: (f, sub, d, r, pose, now, seq = null, o = {}) => {
     const L = egBodyById(f.F, o.i);
     if (!L || L.role !== EG_ROLE.lord) return { got: 0, b: null };
     const res = egHitBody(f.F, f.spec, o.p, o.i, d, r, pose, now, seq, (o.x ?? 1) * egLordHitX(f.F, L, sub, pose, r, now), o.bx ?? 1);
-    if (res.got && res.b) egLordHit(f.F, f.spec, res.b, sub, o.name ?? '', res.got, pose, now, o.here ?? [], o.out ?? [], { threatX: o.threatX ?? 1 });
+    if (res.got && res.b) return { ...res, got: egLordHit(f.F, f.spec, res.b, sub, o.name ?? '', res.got, pose, now, o.here ?? [], o.out ?? [], { threatX: o.threatX ?? 1 }) };   // FIELD BUGS 2026-10-20f LANDED-WORD: what the lord lost, a held line's part taken back
     return res;
   },
   step: (f, now, bodies, rng) => { const out = []; egLordsStep(f.F, f.spec, now, bodies, rng, out, f.ctx); return out; },

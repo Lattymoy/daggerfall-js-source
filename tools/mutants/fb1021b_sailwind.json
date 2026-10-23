@@ -1,0 +1,11 @@
+[
+  { "name": "SAIL-WIND-load-keeps-none", "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);", "new": "",
+    "tests": ["test/systems/comeSailAway/fb1021b_sailwind.test.js"], "why": "the reported law: a load outdoors keeps the indoors' none, and a ship under sail stands still" },
+  { "name": "SAIL-WIND-indoors-rolled", "file": "src/systems/comeSailAway/csaLoadWind.js",
+    "old": "!inside && Array.isArray(wind)", "new": "Array.isArray(wind)",
+    "tests": ["test/systems/comeSailAway/fb1021b_sailwind.test.js"], "why": "a load indoors asks a wind (UpdateWind lays none there - the predicate's word alone)" },
+  { "name": "SAIL-WIND-any-wind-rolled", "file": "src/systems/comeSailAway/csaLoadWind.js",
+    "old": "wind.every((c) => c === 0)", "new": "wind.some((c) => c === 0)",
+    "tests": ["test/systems/comeSailAway/fb1021b_sailwind.test.js"], "why": "a saved wind outdoors rolled over at the load" }
+]

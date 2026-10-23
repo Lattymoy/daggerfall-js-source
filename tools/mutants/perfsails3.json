@@ -83,8 +83,8 @@
   {
     "name": "PERF-SAILS3-holders-skipped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      for (let k = 0; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], gameDt);",
-    "new": "      for (let k = 2; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], gameDt);",
+    "old": "      for (let k = 0; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], dt);",
+    "new": "      for (let k = 2; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], dt);",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]

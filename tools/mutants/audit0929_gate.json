@@ -71,8 +71,8 @@
   {
     "name": "AUDIT0929-W2-2-the-profile-reread",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  let P = _profileByMd.get(md);",
-    "new": "  let P = null;",
+    "old": "  let P = md == null || typeof md !== 'object' ? fightProfile(md) : _profileByMd.get(md);",
+    "new": "  let P = md == null || typeof md !== 'object' ? fightProfile(md) : null;",
     "tests": [
       "test/net/gate/audit0929_gate.test.js",
       "test/net/gate/wb8b_gate_marks.test.js"

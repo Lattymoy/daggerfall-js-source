@@ -30,11 +30,15 @@ not a 1:1 port, with the mod's own item art carried.**
   540 Skillet - and a row renaming 149, the men's Boots, "Shoes", which
   the port does not carry (DFU's Boots stand).
   `src/systems/survival/items.js` restates them as the port's custom
-  templates (same indices, same names, same textures) and changes five
+  templates (same indices, same names, same textures) and changes nine
   columns: four prices - the meat 50 to 15 and the skillet 500 to 60,
   where the mod's were typos, the cooked fish 4 to 6 and the raw meat
   10 to 8 - and the waterskin's weight, 2 kilos to half a kilo, because
-  the port weighs the water in it on top of the skin (two kilos full).
+  the port weighs the water in it on top of the skin (two kilos full);
+  and (CRAFT-PAYS, 2026-10-21) four food weights: the raw meat and the
+  raw fish 2 kilos to 1, the meat 2 kilos to half a kilo and the cooked
+  fish 1.5 to half a kilo, because a cut is a kilo and cooking takes
+  its water.
   It adds 541, the port's own Campfire (eight nights of fuel, REST2).
 - `Textures/` - eighteen of the mod's twenty PNGs, in two kinds.
 

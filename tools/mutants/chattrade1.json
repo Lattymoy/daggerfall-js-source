@@ -1,7 +1,7 @@
 [
   {"name": "CT-rooms-not-whitelisted", "file": "src/net/wire.js", "old": "...Object.keys(CHAT_LANGS).map(chatLangRoom), CHAT_TRADE_ROOM, CHAT_LFG_ROOM]));", "new": "...Object.keys(CHAT_LANGS).map(chatLangRoom)]));", "tests": ["test/ui/chattrade1.test.js"]},
   {"name": "CT-relay-min-early", "file": "src/net/wire.js", "old": "export const TRADE_CHAN_RELAY_MIN = 201;", "new": "export const TRADE_CHAN_RELAY_MIN = 200;", "tests": ["test/ui/chattrade1.test.js"]},
-  {"name": "CT-trade-tab-on-the-bar", "file": "src/net/chat.js", "old": "'Everyone in the Trade channel - buying, selling and swapping'); }, hidden: true }),", "new": "'Everyone in the Trade channel - buying, selling and swapping'); } }),", "tests": ["test/ui/chattrade1.test.js"]},
+  {"name": "CT-trade-tab-on-the-bar", "file": "src/net/chat.js", "old": "'Everyone in the Trade channel: buying, selling and swapping'); }, hidden: true }),", "new": "'Everyone in the Trade channel: buying, selling and swapping'); } }),", "tests": ["test/ui/chattrade1.test.js"]},
   {"name": "CT-joined-past-an-old-relay", "file": "src/scenes/world.js", "old": "      if (!chatLinks.get('world')?.tradeChanOk) continue;\n", "new": "", "tests": ["test/ui/chattrade1.test.js"]},
   {"name": "CT-not-left", "file": "src/scenes/world.js", "old": "      if (!room) { chatLog.setRoom(id, null, null); link.leave(); continue; }", "new": "      if (!room) { chatLog.setRoom(id, null, null); continue; }", "tests": ["test/ui/chattrade1.test.js"]},
   {"name": "CT-join-takes-any-name", "file": "src/net/chatCommands.js", "old": "chan: JOIN_CHANNELS.includes(chan) ? chan : ''", "new": "chan", "tests": ["test/ui/chattrade1.test.js"]},

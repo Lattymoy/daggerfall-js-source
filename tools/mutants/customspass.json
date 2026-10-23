@@ -94,7 +94,7 @@
   {
     "name": "CUSTOMS-PASS-refusal-text-says-nowhere-to-ask",
     "file": "src/net/accountClient.js",
-    "old": " If you played it online on an older version of the game after the realm opened, ask the developers on the Discord.')",
+    "old": " If you played it online on an older version of the game after the realm opened, ask the developers on Discord.')",
     "new": "')",
     "tests": ["test/server/customspass.test.js"]
   }

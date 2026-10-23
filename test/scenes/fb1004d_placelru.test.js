@@ -370,7 +370,8 @@ test('PLACE-LRU THE FOUR HOSTS: the world host holds each pixel and lets it go; 
   // ECOTONE1: PIN MOVED - the tile set's one home (loadGroundSet) holds through the pixel's door it is handed, the
   // build's own `pipeline`, for its own set and every border neighbour's
   // AUDIT PRECIP GROUND-2 (PIN MOVED): the set's KEY - its twin's on the snow lane, the one array the lane uploads
-  assert.match(W, /hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);[^\n]*\n\s*if \(!renderer\.tileArrays\.has\(key\)\)/, 'the ground held before the cache is asked');
+  // PIN MOVED (OW-HITCH): that home is scenes/groundSets.js, the world host's module (HOST-SPLIT)
+  assert.match(readFileSync(new URL('../../src/scenes/groundSets.js', import.meta.url), 'utf8'), /hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);[^\n]*\n\s*if \(!renderer\.tileArrays\.has\(key\)\)/, 'the ground held before the cache is asked');
   assert.match(W, /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/, '...the pixel\'s own, held by the pixel');   // AUDIT PRECIP GROUND-2 (PIN MOVED): with the winter its twin carries
   assert.match(W, /\n\s*placeHold: pipeline,\n\s*location: dfLocation \? dfLocation\.name : null,/, 'the published pixel carries its hold');
   assert.match(W, /console\.warn\(`\[roads\] pixel \$\{key\} painted without the network twice - kept as painted`\);\n\s*\}\n\s*const entry = built\.get\(key\); pipeline\.settle\(\);/, 'and settles it once it stands (past the roads retry, which tears it down and builds again)');

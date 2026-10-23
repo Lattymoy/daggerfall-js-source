@@ -98,6 +98,8 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
   // the port's own Enabled in front, then the mod's, section-dot-name
   assert.equal(Object.keys(ours)[0], 'Enabled');
   assert.equal(ours.Enabled.default, true, 'MO1: every vendored mod ships on');
+  // PLAIN-TEXT (2026-10-19): the one shipped key that does nothing here (no Real Grass in the game) says so - its words, exactly
+  const PLAIN = { 'GeneralOptions.AllowRealGrass': 'Has no effect here: Real Grass isn\u2019t included.' };
   let n = 0;
   const shippedNames = new Set();
   for (const section of shipped.Sections) {
@@ -111,7 +113,7 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
       // travelRateOf: a journey runs at its ground's rate)
       if (RATE_LAW_RETIRED.includes(key)) { assert.equal(def, undefined, `${key} is retired, never declared`); continue; }
       assert.ok(def, `${key} is declared`);
-      assert.equal(def.description, k.Description, `${key}'s description is the mod's own`);
+      assert.equal(def.description, PLAIN[key] ?? k.Description, `${key}'s description is the mod's own, or its plain rewording`);
       const kind = k.$type.split('.').pop();
       if (kind === 'ToggleKey') {
         // TO-FIELD2 (Mac, 2026-09-18: "travel options instantly

@@ -12,8 +12,9 @@ test('ROADS 24: the switches are the mod\u2019s own - names, defaults, descripti
   assert.equal(m.title, 'Basic Roads');
   assert.equal(m.keys.SmoothRoads.default, true);
   assert.equal(m.keys.RiversAndStreams.default, false);
-  assert.match(m.keys.SmoothRoads.description, /light smoothing of road surfaces/);
-  assert.match(m.keys.RiversAndStreams.description, /rivers and streams on terrain/);
+  // PIN MOVED (PLAIN-TEXT, 2026-10-19): the mod's two lines, said plainly for a player - their words, exactly
+  assert.equal(m.keys.SmoothRoads.description, 'Lightly smooths road surfaces. Turn it off for slightly better performance.');
+  assert.equal(m.keys.RiversAndStreams.description, 'Draws rivers and streams on the land.');
   // BR3: the switch this mod did not have. It was the only one of the six
   // with no `Enabled` and no gate, so it was not enabled-by-default, it was
   // unconditional - loadModRoads() ran with nothing to ask it.

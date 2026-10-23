@@ -53,7 +53,7 @@
 // One node each, UPDATED, NOT REBUILT, hidden with the HUD. The models are pure.
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
-import { egHallOf, egCircleOfHall, egSlotOfHall, egCountText, egObjectiveOf, EG_LAST_WORD_MS, EG_COUNT_START_MS, EG_REDOUBT_HOLD_MS, EG_BANDS, EG_DECREES, EG_DECREE_BY_KEY, EG_TWIST_LINES, EG_TEXT } from '../../net/eliteGates/egLaw.js';
+import { egHallOf, egCircleOfHall, egSlotOfHall, egCountText, EG_LAST_WORD_MS, EG_COUNT_START_MS, EG_REDOUBT_HOLD_MS, EG_BANDS, EG_DECREES, EG_DECREE_BY_KEY, EG_TWIST_LINES, EG_TEXT } from '../../net/eliteGates/egLaw.js';
 import { egCountAt, egLivingCount, egMemberOf, egRunOfMember } from '../../net/eliteGates/egLink.js';
 import { egGatherOf } from '../../net/eliteGates/egLink.js';   // AUDIT EG V (c, L3-10): the gather, as the room counts it
 import { EG_ROLE, EG_FL } from '../../net/eliteGates/egBodies.js';
@@ -62,6 +62,7 @@ import { egMarkynazDecree } from '../../net/eliteGates/egLords.js';   // EG-ZS (
 import { EG_CHAMPIONS } from '../../net/eliteGates/egLaw.js';   // EG-ZS: the champion's signature's title
 import { egProgressText, EG_MARK_NAMES, EG_POTIONS_PER_HALL } from './egHud.js';
 import { egNextCircleText } from './egHud.js';   // AUDIT EG V (L2-11): a rest's beacon - the next circle's decrees and lord
+import { egObjectiveText } from './egHud.js';   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the objective as the screen says it (the Gauntlet's in the player's language)
 import { egTwistShown } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (L2-4): no Bargain's line when no family is free
 import { EG_PRES_TEXT, EG_BAND_LINES } from './egBeats.js';
 import { EG_PARTY_CSS } from './egParty.js';
@@ -208,7 +209,7 @@ export function egArrivalCard(E, { first = false } = {}) {
   return {
     kicker: bandCard || court ? band?.name ?? '' : spec.name,
     main: court ? EG_PRES_TEXT.hallCourt(E.h) : EG_PRES_TEXT.hallBand(E.h, theOf(band?.name)),
-    sub: court ? spec.name : egObjectiveOf(spec),
+    sub: court ? spec.name : egObjectiveText(spec),
     twist: egTwistShown(spec, E.dc) ? EG_TWIST_LINES[spec.twist] ?? '' : '',
     dec: dec.length ? dec.join(' - ') : '',
     band: bandCard ? EG_BAND_LINES[spec.band] ?? '' : '',
@@ -418,7 +419,7 @@ export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, p
     potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',
     recall: mine && mine.alive && !mine.home && !mine.recall ? EG_PRES_TEXT.recallSpent : '',   // my last life (PARTY8-B's law: a fact when it is actionable)
     dec, decFold: L.dec === 'fold' && dec.length > 0 ? EG_PRES_TEXT.decrees(dec.length) : '', foldOpen,
-    objective: E.sg === 'trial' && !watching ? egObjectiveOf(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
+    objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
     riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\n') : '',   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to
     stage: watching ? witLine : [stageLine(E, now), E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(E, now, bridge && !watching)].filter(Boolean).join(' '),   // AUDIT EG V (c, L2-9, NEW-1): the rest card's stake and its heal; (a1, L2-11): the next circle named
     marks, marksSaid: marks.map((m) => `${EG_MARK_NAMES[m.k] ?? ''} ${m.secs}s`).join(' - '),
@@ -443,7 +444,7 @@ export const EG_SPIRE_CSS = `
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 300px; }
 .eg-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .eg-chip { padding: 2px 7px; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.eg-spire.enhanced .eg-chip { background: rgba(12,14,18,0.78); border: 2px solid #5a5446; }
+.eg-spire.enhanced .eg-chip { border-width: 2px; border-style: solid; }   /* EG-PLUS: the kit's chip paints it (ui/enhanced/enhancedFrame.js FRAME_ROLES) */
 .eg-spire.classic .eg-chip { background: rgba(0,0,0,0.55); border: 1px solid ${EG_CLASSIC_SHADOW_CSS}; }
 .eg-chip:empty { display: none; }
 .eg-count { font-size: 18px; letter-spacing: 0.04em; }
@@ -482,7 +483,9 @@ export const EG_SPIRE_CSS = `
 .eg-sigrow .eg-sig-stone { color: #e8c473; }
 .eg-sigrow .eg-sig-stone b { font-size: 14px; }
 .eg-first { color: #b9d0ff; font-style: italic; }
-.eg-fold { pointer-events: auto; font: inherit; color: inherit; background: rgba(12,14,18,0.78); border: 1px solid #5a5446; padding: 2px 8px; cursor: pointer; }
+.eg-fold { pointer-events: auto; font: inherit; color: inherit; padding: 2px 8px; cursor: pointer; }
+.eg-spire.classic .eg-fold { background: rgba(12,14,18,0.78); border: 1px solid #5a5446; }
+.eg-spire.enhanced .eg-fold { border-width: 2px; border-style: solid; }   /* EG-PLUS: the kit's button */
 .eg-fold:empty { display: none; }
 .eg-lord { position: absolute; left: 50%; top: calc(18px + 28px * var(--s) + 12px); transform: translateX(-50%) scale(var(--s)); transform-origin: top center; width: 460px; max-width: 88vw; display: none; }
 .eg-lord.on { display: block; }
@@ -500,7 +503,8 @@ export const EG_SPIRE_CSS = `
 .eg-door-arrow { display: block; font-size: 22px; line-height: 22px; }
 .eg-touch { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 10px; }
 .eg-touch:empty { display: none; }
-.eg-touch button { pointer-events: auto; min-width: 88px; min-height: 44px; font: inherit; color: inherit; background: rgba(12,14,18,0.82); border: 2px solid #5a5446; }
+.eg-touch button { pointer-events: auto; min-width: 88px; min-height: 44px; font: inherit; color: inherit; border: 2px solid #5a5446; }
+.eg-spire.classic .eg-touch button { background: rgba(12,14,18,0.82); }   /* EG-PLUS: on Enhanced Plus the kit's button paints it */
 .eg-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .eg-spire.upright .eg-col { left: 50%; top: calc(10px + 28px * var(--s) + 8px); transform: translateX(-50%) scale(var(--s)); transform-origin: top center; align-items: center; max-width: 92vw; }
 .eg-spire.upright .eg-count { font-size: 18px; }

@@ -209,7 +209,7 @@
   {
     "name": "SET5-a-sleeping-pieces-sigil-called-faint",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
+    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (inactive in a duel)'] : lines;",
     "new": "return lines;",
     "tests": [
       "test/systems/set5_ui.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "SET5-a-set-weapons-blow-unsaid-in-a-duel",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
-    "new": "return lines.length && sigilDueling() && setIdOf(item) ? ['Sigil (asleep in a duel)'] : lines;",
+    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (inactive in a duel)'] : lines;",
+    "new": "return lines.length && sigilDueling() && setIdOf(item) ? ['Sigil (inactive in a duel)'] : lines;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SET5-a-ring-called-a-sets",
     "file": "src/ui/sigilCard.js",
-    "old": "? (!setPiece ? 'A sigil that answers no set'",
-    "new": "? (false ? 'A sigil that answers no set'",
+    "old": "? (!setPiece ? 'A sigil with no set'",
+    "new": "? (false ? 'A sigil with no set'",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]

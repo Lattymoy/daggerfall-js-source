@@ -1,0 +1,465 @@
+[
+  {
+    "name": "AUDIT-QL-REWARD-9-class-fit-removed",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  if (isForbiddenEquip(entity?.career ?? null, item)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-9-lesser-gold-1",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "lesser: Object.freeze({ gold: 0.75,",
+    "new": "lesser: Object.freeze({ gold: 1,",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-9-greater-gold-1-no-rung",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "greater: Object.freeze({ gold: 1.25, gear: true, step: 1 })",
+    "new": "greater: Object.freeze({ gold: 1, gear: true, step: 0 })",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-9-tier-1-pays-rare",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  1: Object.freeze({ floor: 'magic', up: 0 }),",
+    "new": "  1: Object.freeze({ floor: 'magic', up: 1 }),",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-7-tier-4-rung-up",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  4: Object.freeze({ floor: 'rare', up: 0 }),",
+    "new": "  4: Object.freeze({ floor: 'rare', up: 0.15 }),",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-9-math-random-roll",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  const rolls = seededRng(seed >>> 0);\n  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const skills = bestWeaponSkills(entity);\n  const base",
+    "new": "  const rolls = Math.random;\n  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const skills = bestWeaponSkills(entity);\n  const base",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-9-name-never-set",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "if (isNamed) { item.name = named.name; item.qlNamed = true; }",
+    "new": "if (isNamed) { item.qlNamed = true; }",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-5-base-ignored",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  const base = namedBaseOf(named);\n",
+    "new": "  const base = null;\n",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-5-named-card-unfitted",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "      const item = baseOf(named.kind, base, lv, rolls);\n      if (fitsPlayer(item, named.kind, entity, skills)) return item;",
+    "new": "      const item = baseOf(named.kind, base, lv, rolls);\n      if (item) return item;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-5-metal-prefix-kept",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "  if (item?.qlNamed === true) return true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-10-armour-again",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "k = kind === 'armor' || out.some((p) => p.kind === 'armor') ? 'jewel' : 'armor';",
+    "new": "k = out.some((p) => p.kind === 'armor') ? 'jewel' : 'armor';",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-12-occupation-read",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "    if (Number.parseInt(table.getValue('p2', name), 10) !== -1) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-3-gold-taken-back",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  return Math.max(0, share(goldFactor(outcome)) - share(paid.factor));",
+    "new": "  return share(goldFactor(outcome)) - share(paid.factor);",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-3-shares-ignored",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  const shares = Math.max(1, Math.trunc(paid.shares ?? 1) || 1);",
+    "new": "  const shares = 1;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-3-settle-deleted",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      const owed = goldStillOwed(paidGold, outcome);   // REWARD-3",
+    "new": "      const owed = 0;   // REWARD-3",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-3-record-not-saved",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      gold: Object.fromEntries([...golds]",
+    "new": "      kept: Object.fromEntries([...golds]",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-9-named-every-time",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "const named = outcome.named && !history[`named:${line}`] && !offers.some(",
+    "new": "const named = outcome.named && !offers.some(",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LINES-20-spent-on-take-deleted",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (piece.named) history[`named:${offer.questName}`] = String(piece.item.name);\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LINES-20-cap-cuts-oldest",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "    const i = list.findIndex((o) => !o.pieces?.some((p) => p.named));",
+    "new": "    const i = 0;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-8-drop-unsaid",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      for (const gone of dropped) ctx.onOfferDropped?.(gone);\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-13-door-check-deleted",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "    take(id, index) {\n      if (!hasDoor()) return null;\n",
+    "new": "    take(id, index) {\n",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-13-list-shown-doorless",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "    offers: () => (hasDoor() ? offers.map((o) => ({ ...o })) : []),",
+    "new": "    offers: () => offers.map((o) => ({ ...o })),",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-13-cut-before-door",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      ctx.offerReward(null, piece.item);\n      offers.splice(offers.indexOf(offer), 1);",
+    "new": "      offers.splice(offers.indexOf(offer), 1);\n      ctx.offerReward(null, piece.item);",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-6-script-pay-unread",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "  return !!(quest.ql.paid || quest.questSuccess || (!quest.questComplete && scriptPays(quest)));",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-6-sheet-gear-unread",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "  if (!(o ? pays(o) : (sheet.outcomes ?? []).some(pays))) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-10-kind-dropped",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "export const sheetTextKey = (sheet, kind, id, choice = null) => `${sheet?.quest}.${kind}.${id}",
+    "new": "export const sheetTextKey = (sheet, kind, id, choice = null) => `${sheet?.quest}.${id}",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-11-row-never-kept",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (kept && kept.sig === sig && kept.expand === expand) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-11-states-unkeyed",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "|${read.map((x) => `${x.id}:${x.state}`).join(',')}|",
+    "new": "||",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-11-revision-unkeyed",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      const rev = textRevision();",
+    "new": "      const rev = 0;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-11-split-before-scale",
+    "file": "src/systems/quest/actions.js",
+    "old": "    this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);\n    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward",
+    "new": "    shareQuestGold(this.parentQuest, item.daggerfallUnityItem);   // REALM P0.4: a party's quest pays one reward\n    this.parentQuest.hooks?.questReward?.(this.parentQuest, item.daggerfallUnityItem, item);",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-6-catch-all-yield-deleted",
+    "file": "src/systems/questlines/qlLaw.js",
+    "old": "    if (o?.failure && quest.questSuccess && isCatchAll(o)) o = fallbackOutcome(quest, sheet) ?? o;",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-6-tombstone-settle-deleted",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (ended && !quest.questComplete && !quest.questTombstoned) quest.hooks?.questEnding?.(quest);",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-6-letter-rule-deleted",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next line waits an hour from it\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js",
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-6-moved-guard-deleted",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (!isStamped(quest) || quest.ql.moved) return null;",
+    "new": "      if (!isStamped(quest)) return null;",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js",
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-6-paid-guard-deleted",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (sheet && dfItem && !quest.ql.paid) {",
+    "new": "      if (sheet && dfItem) {",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js",
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-6-R1-greater-no-rung",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "greater: Object.freeze({ gold: 1.25, gear: true, step: 1 }),",
+    "new": "greater: Object.freeze({ gold: 1.25, gear: true, step: 0 }),",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-5-R3-greater-plain-coin",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "greater: Object.freeze({ gold: 1.25,",
+    "new": "greater: Object.freeze({ gold: 1,",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js",
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-6-R4-tier-3-magic",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "  3: Object.freeze({ floor: 'rare', up: 0 }),",
+    "new": "  3: Object.freeze({ floor: 'magic', up: 0 }),",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-8-R6-worst-weapon-skills",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": ".sort((a, b) => b.v - a.v || a.i - b.i)",
+    "new": ".sort((a, b) => a.v - b.v || a.i - b.i)",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-7-R7-betrayal-pays-gear",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "betrayal: Object.freeze({ gold: 1, gear: false, step: 0 }),",
+    "new": "betrayal: Object.freeze({ gold: 1, gear: true, step: 0 }),",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-11-L3-offers-hoard",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      const dropped = trimOffers(offers);\n",
+    "new": "      const dropped = [];\n",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-12-L4-legal-unmoved",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (Number.isSafeInteger(outcome.legal) && outcome.legal !== 0) ctx.changeLegalRep?.(outcome.legal);\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-11-L6-restore-ids-reset",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      nextOffer = Math.max(Number.isSafeInteger(data?.nextOffer) ? data.nextOffer : 1, ...offers.map((o) => o.id + 1), 1);",
+    "new": "      nextOffer = 1;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-DOC-14-L7-failure-struck-on-ladder",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "if (outcome ? !outcome.failure : quest.questSuccess) history[",
+    "new": "if (true) history[",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-14-failure-standing-online",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "const failureFree = !!outcome.failure && !!quest.hooks?.sharedClock?.();",
+    "new": "const failureFree = false;",
+    "tests": [
+      "test/systems/questlines/ql3_rewards.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-13-bridge-door-always",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "get offerReward() { return typeof ctx.offerReward === 'function' ? (q, item) => ctx.offerReward(q, item) : undefined; },",
+    "new": "offerReward: (q, item) => ctx.offerReward?.(q, item),",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-REWARD-8-bridge-dropped-unsaid",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "onOfferDropped: (offer) => ctx.addHUDText?.(",
+    "new": "onOfferDroppedX: (offer) => ctx.addHUDText?.(",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-11-lens-reads-windows",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "questLog: () => bridge.questLog({ windows: false }) });",
+    "new": "questLog: () => bridge.questLog() });",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-LAW-11-windows-ignored",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "lines: windows && questlinesOn() ? questlines.lineRows() : [],",
+    "new": "lines: questlinesOn() ? questlines.lineRows() : [],",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-19-ladder-titles-for-life",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "    if (ladderTitlesAt !== textRevision()) { ladderTitles.clear(); ladderTitlesAt = textRevision(); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-19-reward-named-in-its-rolled-words",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "offers: () => questlines.offers().map((o) => ({ ...o, title: questTitle(o.questName) || o.title })),",
+    "new": "offers: () => questlines.offers(),",
+    "tests": [
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  }
+]

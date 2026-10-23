@@ -39,8 +39,8 @@ test('TIME4 the Online pane says the sky\'s day as it is when the pane opens: tw
   assert.ok(Math.abs(ev - 1440) < 1e-6, 'two real hours, a day, before it');
   const menu = rd('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /can hurt you too\. \{skyDay\} The world\\u2019s clock and sky run on real time[^\n]*\{ skyDay: skyDayWords\(\) \}/, 'the paragraph opens its clock with the sentence');
-  assert.match(menu, /a full moon holds a lycanthrope for its night alone\./, 'TIME2, said at the door');
-  assert.match(menu, /loans and repairs run on it\. Quest timers run on the world\\u2019s clock while you play: resting, waiting and travelling don\\u2019t spend a quest\\u2019s days, and time logged off never counts\./, 'QCLOCK-WORLD, said at the door (TIME3 had the quest timers on it, a rest spending their days)');
+  assert.match(menu, /a lycanthrope\\u2019s full moon lasts one night\./, 'TIME2, said at the door');
+  assert.match(menu, /loans and repairs run on it\. Quest timers run on the world\\u2019s clock while you play\. Resting, waiting and traveling don\\u2019t use up a quest\\u2019s days, and time logged off never counts\./, 'QCLOCK-WORLD, said at the door (TIME3 had the quest timers on it, a rest spending their days)');   // PIN MOVED (VOICE2): American spelling (Voice.md rule 8)
 });
 
 test('TIME4 the figures the patch notes stated are the law\'s own: a day of 60 minutes, a full moon\'s night of 30, nightfall within 30, a three-day wait in about half a minute of rest, half an hour of game time at most for a tab away', () => {

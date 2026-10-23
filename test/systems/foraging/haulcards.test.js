@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   TIER_RARITY, tierRarity, rankProgress, storesHaul, harvestHauls, silverHaul, claimHauls, haulWords, materialImage,
-  HAUL_HOLD_MS, LODE_HOLD_MS, HAUL_CAPPED_TEXT, HAUL_ICON_BOX, LODE_ICON_BOX,
+  HAUL_HOLD_MS, LODE_HOLD_MS, haulCappedText, HAUL_ICON_BOX, LODE_ICON_BOX,
 } from '../../../src/ui/haulCards.js';
 import { createPickupQueue, pickupFeedLayout, showHaul, showPickups, destroyPickupFeed, _setPickupFeedForTests, PICKUP_FEED_ID, PICKUP_FEED_CSS, PICKUP_FEED_FADE_MS } from '../../../src/ui/pickupFeed.js';
 import { createProfBook } from '../../../src/net/profBook.js';
@@ -48,7 +48,7 @@ test('HAUL-CARDS the law: a material\'s tier wears the loot\'s colours - 1 and 2
   assert.equal(rankProgress(xpForRank(100) + 5000), 1, 'the top rank');
   assert.ok(HAUL_HOLD_MS > 2500 && LODE_HOLD_MS > HAUL_HOLD_MS);
   assert.deepEqual([HAUL_ICON_BOX, LODE_ICON_BOX], [32, 38]);
-  assert.equal(HAUL_CAPPED_TEXT, `No silver - the day's ${MARKS_COMBAT.perDay} for breaches, towns, serpents and Redoubts is reached`);   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts
+  assert.equal(haulCappedText(), 'Daily silver cap reached');   // SERPENT-SET: the serpents strike under the same cap; PIN MOVED (EG-E1): and the Spire's Redoubts; PIN MOVED (STAR7): and the held stars; PIN MOVED (VOICE2, in PLAIN-SWEEP's words): no dash aside (Voice.md rule 5); PIN MOVED (AUDIT STAR W2): a label through the text core, the chat's line names the cap
 });
 
 test('HAUL-CARDS a harvest\'s cards: the goods one card - "+3", its material\'s name and tier, its picture the pack\'s own item, "Stores 41" (own, bought and gold\'s), the XP on it and the rank\'s bar, a clean act\'s words its head - and a gem and a second find each their own; nothing for an answer it cannot read (mutants: the Stores\' count; the XP off the card; the gem dropped; the head unsaid)', () => {
@@ -90,11 +90,11 @@ test('HAUL-CARDS a claim\'s cards: a raid\'s 30 with the day\'s combat bar and t
   const [raid, deed, pay, ...rest] = claimHauls(data, 'raid');
   assert.deepEqual(rest, [], 'a contract that paid nothing has no card');
   assert.deepEqual(haulWords(raid), { head: '', plus: '+30', name: 'silver', sub: 'Town defended', tag: '', end: '90', row: { text: 'Combat today', fill: 0.8, end: '120 / 150' }, lode: null });
-  assert.deepEqual([deed.tone, haulWords(deed).sub, haulWords(deed).plus], ['treasury', 'Guild deed - to The HND Guild', '+25']);
+  assert.deepEqual([deed.tone, haulWords(deed).sub, haulWords(deed).plus], ['treasury', 'Guild deed: to The HND Guild', '+25']);   // PIN MOVED (VOICE2): no dash aside (Voice.md rule 5)
   assert.deepEqual([pay.tone, haulWords(pay).sub, haulWords(pay).plus], [undefined, 'Contract (2 tax) - [HND]', '+38']);   // AUDIT HAUL-CARDS C3 (PIN MOVED): the tax before the guild
   assert.equal(haulWords(claimHauls({ marks: { struck: 50, balance: 50 } }, 'gate')[0]).sub, 'Breach closed');
   const capped = claimHauls({ marks: { struck: 0, balance: 150, why: 'cap', combat: { earned: 150, max: 150 } } }, 'gate');
-  assert.deepEqual(capped.map((c) => [c.haul, haulWords(c).note]), [['note', HAUL_CAPPED_TEXT]]);
+  assert.deepEqual(capped.map((c) => [c.haul, haulWords(c).note]), [['note', haulCappedText()]]);
   assert.deepEqual([claimHauls({ marks: { struck: 0, why: 'full', balance: 1 } }, 'gate'), claimHauls(null, 'raid'), claimHauls({}, 'raid'), silverHaul(null)], [[], [], [], null]);
 });
 
@@ -239,7 +239,7 @@ test('HAUL-CARDS the face: on the enhanced skin a harvest\'s cards stand under t
       showHaul(claimHauls({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'));
       const cards = p.cards();
       assert.deepEqual(cards.map((c) => ['is-note', 'is-treasury', 'is-silver', 'is-stores'].find((k) => c.classList.contains(k))), ['is-note', 'is-silver', 'is-treasury', 'is-stores'], 'the newest first: the cap, the raid, its deed, the goods');
-      assert.equal(cards[0].textContent, HAUL_CAPPED_TEXT);
+      assert.equal(cards[0].textContent, haulCappedText());
       assert.equal(find(p.feed(), 'haul-coin').length, 1, 'the account\'s coin');
       assert.equal(find(p.feed(), 'haul-chest').length, 1, 'the treasury\'s chest');
       assert.equal(cards.length, 4);

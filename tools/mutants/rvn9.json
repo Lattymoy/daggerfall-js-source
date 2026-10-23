@@ -210,7 +210,7 @@
   {
     "name": "RVN9-card-words",
     "file": "src/systems/revenant/revenant.js",
-    "old": ": `${r.given} grows bolder - it has waited too long.`;",
+    "old": ": `${r.given} grows bolder. It has waited too long.`;",
     "new": ": `${r.given} grows bolder.`;",
     "tests": [
       "test/systems/rvn9_fester.test.js"

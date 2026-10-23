@@ -137,7 +137,7 @@ spell, the martial law's weapons and technique, one shape). Pure model (`specGui
   line (`familyLine`: the path held, the paths open, how one opens, or why none can - the class, or the slots its
   masteries spent) over its six skills, each with the Stats page's skill bar (gold past 100) and
   its state in a word, and a door to Master Skills; then every path the class can reach as a bar (its name, its pair,
-  its state's tag) that opens its detail beneath it - "Show all fifteen paths" adds the ones out of reach (no slots, or
+  its state's tag) that opens its detail beneath it - "Show all 15 paths" adds the ones out of reach (no slots, or
   not for the class). Master Skills off: the
   page says no path can open, and where the switch is (offline, Master Skills).
 
@@ -148,8 +148,13 @@ sky is a canvas with a view and pending stars - so a face (the Firmament, the ca
 **mounted once a visit** into a host element of its own, and each draw of the page **moves that host** into the new
 pane (`drawStage`: the key changes, the last face is dropped; the same key, the same host).
 
-- **The window widens** while a face stands (`px-win-wide`: up to 1440 x 940, 98% of the screen) and the rail becomes a
-  strip over the face, wrapped and never scrolled so the lit page stays in sight.
+- **One window for the whole tab** (GROWTH-BOOK, 2026-10-20, Dudey: *"it looks very messy changing its sizes all the
+  time ... structure it better so it doesnt change the window each time you click an option in the growth tab"*). The
+  Growth tab always wears `px-win-growth` (up to 1320 x 860, 96% of the screen), face or none, so pressing the rail
+  never resizes the window. The rail is always the journal's left column, each entry with a short line under its name
+  (the Grimoire: the book's left page, a quarter of the book). Every page has the same bones: its title, its line (and
+  Full screen), then its stage filling the rest of the page - or, on the Specializations page, its text scrolling in
+  it. The Level page's door is a centred card: the level in a diamond, a heading, the line and Open.
 - **Full screen** moves the same host into a box over everything (on the body, so no ancestor's transform holds it)
   and back. The face stands above a strip of its own with the leave press in it (laid over the face, it sat on the
   Ascension's Ascend and the skies' summary panel), and the focus stays in the box (a Tab walked under it to the
@@ -159,8 +164,8 @@ pane (`drawStage`: the key changes, the last face is dropped; the same key, the 
   and the phone's Open door (below), the face full screen. The Ascension is laid out for the whole screen - at 1366x768
   in the pane its figure flattened to 28 px and its stars stood on each other, Ascend fell off a 1024x600 pane, and the
   Grimoire's book is scaled to the screen, not the pane (AUDIT GROWTH LANE2-8).
-- **The Grimoire's rail** is a strip over a face as Plus's is (its book's left page outranked it, and the sky lost a
-  third of its height - LANE2-9).
+- **The Grimoire's rail** is the book's left page at a quarter of the book (its usual third left the sky too little
+  room - LANE2-9), never a strip over the face (GROWTH-BOOK).
 - **A face is built only while its page stands** (a Level face dropped before its chunk landed drew its pool and played
   its fanfare - LANE2 N4), and a chunk that fails is tried once more; one a deploy took says a reload fixes it -
   MENU1's words (`enhancedChunk.js` RELOAD_TEXT), not "try again" (LANE2-10).
@@ -356,16 +361,22 @@ one weapon skill"*), through Mac; asked, Mac: *"Paid skill swap"*. Record: `01-O
 - **The law** (`systems/skillSwap.js`): one class skill the character has not mastered out, one miscellaneous skill in,
   in the same group (the 2/2/1 slots stand); a mastered skill never leaves; the values stay; the career becomes the
   character's own copy, saved whole and marked `swapped`, so an heir keeps it (`legacy/family.js` careerFields, AUDIT
-  SUGGESTIONS-1019 L5-4) and its household still wears the class. Both stored level sums move by what the swap moved the sum, so the level and the
-  progress to the next stand. `SKILL_SWAP_GOLD` 100,000, paid as section 10's reset is (coins, letters, online the
-  Empire's account).
+  SUGGESTIONS-1019 L5-4) and its household still wears the class. The level and the progress to the next stand, and a
+  skill's training leaves with it (SWAP-CYCLE, `01-Overview/bugs/Field-Bugs-2026-10-20g.md`): the stored current sum is
+  the sum the level stands on, which no swap and no raise lowers; a swap moves both sums only by what it takes the
+  class's sum above it (a trained outsider brought in pays no level), and the ground a swap gives up is the class's
+  skills' to make up before the next level comes any closer - so no cycle of swaps passes the class's own ceiling.
+  `SKILL_SWAP_GOLD` 100,000, paid as section 10's reset is (coins, letters, online the Empire's account).
 - **The page** (`ui/growth/specGuide.js` drawSkillSwap): under the Specialisations page's paths - *Change a class skill*,
   the two picks, *Swap · 100,000 gold*, asked first, refused (the press disabled, saying why) short of the gold. A
   family whose class can never meet a path says, under its headline, that a class skill can be changed below - only
   where one swap would open a path (`swapOpens`, AUDIT SUGGESTIONS-1019 L5-1). A swap into a group whose mastery slots
   are spent, and offline with Master Skills off one that starts or ends DFU's 95 lock, is said beside the picks and in
-  the ask: a warning, not a refusal - a swap can be wanted for leveling alone (AUDIT L5-1, L5-2).
+  the ask: a warning, not a refusal - a swap can be wanted for leveling alone (AUDIT L5-1, L5-2). So is a swap that leaves the class's skills under the sum the
+  level stands on, with the points they make up first (SWAP-CYCLE; none on Oblivion's bar, where the sum levels
+  nothing).
 - Pins: `test/systems/fb1019b_skillswap.test.js`, the page drawn in `test/ui/growth/fb1019b_swappage.test.js`, the audit's
-  laws in `test/systems/fb1019b_audit.test.js`; `tools/mutants/fb1019b_skillswap.json`, `fb1019b_audit.json`. Audit:
+  laws in `test/systems/fb1019b_audit.test.js`, the level's law in `test/systems/swapcycle.test.js`;
+  `tools/mutants/fb1019b_skillswap.json`, `fb1019b_audit.json`, `swapcycle.json`. Audit:
   `01-Overview/audits/Audit-Suggestions-1019.md`.
 

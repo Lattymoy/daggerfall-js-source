@@ -291,7 +291,7 @@ test('REALM P2.2b the decor tool for a realm character: a piece placed pays at o
   // a removal whose answer was lost after it landed: the half is the service's to say, so nothing is guessed - the act
   // answers unknown and the session ends (AUDIT REALM L1-F3); a second piece from the catalogue
   const root = panelOf(rig);
-  all(root, 'dfdecor-chip').find((c) => c.textContent === 'Catalogue').fire('click');
+  all(root, 'dfdecor-chip').find((c) => c.textContent === 'Catalog').fire('click');   // PIN MOVED (VOICE2): Catalog, American spelling
   rows(root).find((r) => r.dataset.key === 'm41000').fire('click');
   all(root, 'dfdecor-btn').find((b) => b.textContent === 'Place').fire('click');
   rig.frame(); await settle(); rig.frame();
@@ -307,7 +307,7 @@ test('REALM P2.2b the decor tool for a realm character: a piece placed pays at o
   svc.answer = null;
   // a third piece, grown and shrunk: the difference paid at once, the shrink's half on the answer
   const root2 = panelOf(rig);
-  all(root2, 'dfdecor-chip').find((c) => c.textContent === 'Catalogue').fire('click');
+  all(root2, 'dfdecor-chip').find((c) => c.textContent === 'Catalog').fire('click');   // PIN MOVED (VOICE2): Catalog, American spelling
   rows(root2).find((r) => r.dataset.key === 'm41000').fire('click');
   all(root2, 'dfdecor-btn').find((b) => b.textContent === 'Place').fire('click');
   rig.frame(); await settle(); rig.frame();
@@ -383,7 +383,7 @@ test('AUDIT REALM L1-F3: the decor tool takes what the SERVICE paid the record -
   // removed, landed, its answer lost: as the shrink - nothing guessed, no checkpoint after
   svc.answer = null;
   const root = panelOf(rig);
-  all(root, 'dfdecor-chip').find((c) => c.textContent === 'Catalogue').fire('click');
+  all(root, 'dfdecor-chip').find((c) => c.textContent === 'Catalog').fire('click');   // PIN MOVED (VOICE2): Catalog, American spelling
   rows(root).find((r) => r.dataset.key === 'm41000').fire('click');
   all(root, 'dfdecor-btn').find((b) => b.textContent === 'Place').fire('click');
   rig.frame(); await settle(); rig.frame();

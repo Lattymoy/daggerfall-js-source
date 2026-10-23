@@ -43,6 +43,12 @@ export const LANTERN_SWING = Object.freeze({
   maxDt: 0.25,
 });
 
+/** HT-WAIST-SIZE (2026-10-20, Mac: "the lantern attached to the waist in absolutely gigantic on the morrowind model"):
+ *  A LANTERN AT THE WAIST STANDS THIS TALL (metres, ring to foot) on either body - Eye Of The Beholder's picture
+ *  (player/eyeOfTheBeholder/eotbLantern.js HIP_LANTERN_SPRITE) and the Morrowind body's mesh, scaled to it about its hook
+ *  (combat/fpArm.js hipLanternSize). One height, so the two bodies never hang two sizes of lantern. */
+export const HIP_LANTERN_HEIGHT = 0.3;
+
 /** A fresh swing, hanging plumb and still. */
 export function createLanternSwing() {
   return { fore: 0, side: 0, foreVel: 0, sideVel: 0, vFore: 0, vSide: 0 };

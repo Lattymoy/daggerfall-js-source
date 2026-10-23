@@ -91,7 +91,7 @@ export const topicLabel = (t) => LABEL[t] ?? t;
 export function topicQuestion(t, tone = 1) {
   const i = Math.max(0, Math.min(2, tone | 0));
   if (t === TOPIC.court) return ['Would you let me court you?', 'I would like to spend some time with you.', 'You and me - what do you say?'][i];
-  if (t === TOPIC.propose) return ['Will you do me the honour of marrying me?', 'Will you marry me?', 'Marry me.'][i];
+  if (t === TOPIC.propose) return ['Will you do me the honor of marrying me?', 'Will you marry me?', 'Marry me.'][i];
   if (t === TOPIC.wedding) return 'When shall we be wed?';
   return 'How is our family?';
 }

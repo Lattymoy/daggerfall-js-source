@@ -16,7 +16,7 @@
 // was dropped (ASYNC NEVER DROPS); now it is asked after it, and the older answer never lands over the newer write.
 //
 // LOOK-TRIED: closing the panel put a tried look away on the house but left it in the painter, so the panel opened
-// again on "Tried on your house - paint it to keep it" over a house wearing its painted look. Closing is leaving the tab.
+// again on "Shown on your house. Paint it to keep it" over a house wearing its painted look. Closing is leaving the tab.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -154,7 +154,7 @@ test('LOOK-BUTTONS: in the painter its three buttons - "The town\'s own", "Paint
   await settle(); await settle();
   assert.deepEqual(calls.find((c) => c[0] === 'commit')?.[1], { walls: { set: 'manor', climate: 'temperate' } }, 'painted');
   // out of the painter, its row goes with it
-  chipNamed(panel, 'Catalogue').fire('click');
+  chipNamed(panel, 'Catalog').fire('click');
   assert.equal(shown(r.doc, btnNamed(panel, 'Paint it')), false);
 });
 
@@ -221,7 +221,7 @@ test('LOOK-BUTTONS end to end: on her own lot the owner opens the decorator, tri
   await r.frame(true);
   assert.equal(btnNamed(panel, 'Paint it').disabled, true);
   // leaving the tab after painting never takes the painted look away
-  chipNamed(panel, 'Catalogue').fire('click');
+  chipNamed(panel, 'Catalog').fire('click');
   await r.frame(true);
   assert.deepEqual(r.homes.homeAt(7, 300).look, tried);
 });

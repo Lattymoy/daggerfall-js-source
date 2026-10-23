@@ -144,7 +144,7 @@ FOUND, on a body the relay runs. On every other foe the power works and always d
 - **The law** (`lootPowers.js:"      case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;"`): the share
   is the struck entity's health of its whole. An orc from makeEnemyEntity takes 8 whole and 12 under a fifth, before and
   after. But every body the relay runs is struck against a stand-in whose health is a placeholder nothing empties
-  (`gateBoss.js:"e.maxHealth = e.health = 1e9;"`), and the share read it as whole: the Warden at 200 of 1000 took 8.
+  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`), and the share read it as whole: the Warden at 200 of 1000 took 8.
   Every screen holds the relay's word of the real health - the boss bar draws it - and nothing handed it to the
   stand-in. So the power never fired on the Warden, his crystals or host, the Remnant, its Echoes or Hearts, the
   serpent, or any foe of an Elite Breach.
@@ -227,13 +227,13 @@ the company along its platforms. They are meant to die (3 s of the company's mea
 and a span's platforms are traversal ground. Reproduced on the real relay: ten 40-point blows from a platform landed
 nothing; from an island four killed one. The refusal is the design; the screen was the defect. It offered the Harrier,
 bled it, flashed it, popped a number and sent the blow, which resolves against a stand-in nothing can empty
-(`gateBoss.js:"e.maxHealth = e.health = 1e9;"`), so every heal of a landed blow answered the claim: 20 blows of a
+(`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`), so every heal of a landed blow answered the claim: 20 blows of a
 Vampiric Effect blade with a 10% leech line healed 264 for 240 claimed, the relay landing 0. The same hole stood
 wherever the relay lands nothing: a Vengeful Shade (warded from its rise), a held Ward-Bearer, a lord's ward, and a
 Court lord asleep in its ring.
 
 FIXED. One law: the relay's strike rule is `egBodies.js:"export function egStruckOff(view, b, x, y, z) {"`, called by
-`egBrain.js:"if (egStruckOff(view, body, p.x, p.y, p.z)) return out;"`, and the screen asks the same rule plus the
+`egBrain.js:"if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);"`, and the screen asks the same rule plus the
 flags the relay takes nothing through and a lord asleep (`egBodies.js:"export function egStrikeTurned(view, b, x, y, z, now = 0, spec = null) {"`).
 Each frame `egFight.js:"function turnStandIn(t, b) {"` marks a target's stand-in `warded` when the relay would refuse a
 blow from my feet; every heal and power already refuses a warded target, and Vampiric Effect now does too

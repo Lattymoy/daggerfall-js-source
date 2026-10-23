@@ -23,7 +23,7 @@
 // PURE: numbers and maps. The host (scenes/world.js) reads the pose and
 // the pref; the session (net/online.js) holds the socket.
 // ═══════════════════════════════════════════════════════════════════
-import { TRAV_KEEPALIVE_MS, TRAV_STALE_MS, TRAV_MODES, WORLD_PIXEL_BOUND } from '../net/wire.js';
+import { TRAV_KEEPALIVE_MS, TRAV_STALE_MS, TRAV_MODES, WORLD_PIXEL_BOUND, TRAV_SEND_MIN_MS } from '../net/wire.js';
 
 /** Native world units per map pixel (MapsFile.WorldMapTerrainDim; world/streamingWorld.js NATIVE_PIXEL). */
 const NATIVE_PIXEL = 32768;
@@ -73,20 +73,32 @@ export function travellerWorldOf(p) {
   return { x: p.px * NATIVE_PIXEL + (p.fx + 0.5) * TRAV_FRACTION, z: zRow * NATIVE_PIXEL + (p.fy + 0.5) * TRAV_FRACTION };
 }
 
+/** OW-CHASE-RANGE (bible/06-Systems/Travel-View.md): while a chase of me runs, my mark is said again this often - the
+ *  session's own floor (TRAV_SEND_MIN_MS), so the region sees the band where it runs, a refresh at a time. */
+export const TRAV_CHASE_REFRESH_MS = TRAV_SEND_MIN_MS;
+/** OW-CHASE-RANGE: what a mark's chase words (`bd`, `sr`, beside it) say that a mark must go again for - who chases me and
+ *  who is spent, never where (a chase moves every frame; its place rides the refresh). */
+export const chaseWordKey = (bd, sr = null) => [bd, sr].map((w) => (Array.isArray(w) ? w.map((e) => `${e[0]}:${e[3]}`).join(',') : '')).join('|');
+
 /**
  * WHEN TO SEND: 'send' (the mark), 'clear' (null - I went indoors, or hid) or null (nothing). `st` is what the relay
  * holds of me - `{ last, at }`, the last mark sent (null: none, or cleared) and when - and the host resets it when the
  * region's room changes (a new room holds nothing of mine). The session's own floor (TRAV_SEND_MIN_MS) paces what this
  * asks for; a 'send' it refuses is asked again the next frame.
  * @param {{ last: any, at: number }} st
- * @param {{ now: number, mark: any, alone: boolean, shown: boolean }} q - `shown`: outdoors AND the switch on
+ * @param {{ now: number, mark: any, alone: boolean, shown: boolean, chasing?: boolean }} q - `shown`: outdoors AND the switch
+ *   on; `chasing` a chase runs (AUDIT OW-REVISITED L4-8: the refresh's own - a raider ship that only stands about me is a
+ *   word's entry and no chase; absent, any chase the words name)
  */
-export function travellerDue(st, { now, mark, alone, shown }) {
+export function travellerDue(st, { now, mark, alone, shown, chasing = undefined }) {
   if (!shown || !mark) return st.last ? 'clear' : null;
   if (alone) return null;
   const l = st.last;
   if (!l) return 'send';
   if (l.px !== mark.px || l.py !== mark.py || l.m !== mark.m || l.tv !== mark.tv) return 'send';
+  if (chaseWordKey(l.bd, l.sr) !== chaseWordKey(mark.bd, mark.sr)) return 'send';   // OW-CHASE-RANGE: a chase begun or ended, a band spent
+  const running = chasing ?? [...(mark.bd ?? []), ...(mark.sr ?? [])].some((e) => e[3] === 1);
+  if (running && now - st.at >= TRAV_CHASE_REFRESH_MS) return 'send';   // OW-CHASE-RANGE: a chase running, said where it runs
   if (now - st.at >= TRAV_KEEPALIVE_MS) return 'send';
   return null;
 }

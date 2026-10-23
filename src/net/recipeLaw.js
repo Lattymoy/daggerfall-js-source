@@ -260,8 +260,9 @@ export const garmentGroup = (templateIndex) => (templateIndex <= 181 ? 'MensClot
  *  furniture takes no dye, so "a dye" has nothing to colour - and the skins of a pelt, Large two, Small one. */
 export const RUGS = Object.freeze([[237, 'Small Plain Rug'], [238, 'Large Plain Rug'], [239, 'Small Fine Rug'], [240, 'Large Fine Rug']]);
 export const TAPESTRIES = Object.freeze([[241, 'Large Tapestry'], [242, 'Medium Tapestry'], [243, 'Small Tapestry']]);
-/** The pelts the skins are cut from: a fur's hide, never silk, chitin, scales, feathers or shell. */
-export const PELTS = Object.freeze(['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger']);
+/** The pelts the skins are cut from: a fur's hide, never silk, chitin, scales, feathers or shell - DEX-HIDES (FIELD BUGS
+ *  2026-10-20h): and the Wolf Pelt and the Boar Hide, Daggerfall Enemy Expansion's furs. */
+export const PELTS = Object.freeze(['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger', 'hide:wolf', 'hide:boar']);
 /** The Fishing-Net (FORAGE0 14.7): Foraging's 1603, 2 Linen Bolt, rank 0. */
 export const FISHING_NET_TEMPLATE = 1603;
 const tierOfKey = (key) => minedMaterial(key)?.tier ?? 1;
@@ -915,7 +916,7 @@ export const markedName = (maker, name) => `${maker}'s ${name}`;
  *  as the item maker reads them (systems/enchanting.js craftedJewelPoints, client-side - this law is the Worker's too),
  *  the item's own where none is handed in. */
 export function pieceLines(item, points = null) {
-  if (item?.fieldKit === true) return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armour's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
+  if (item?.fieldKit === true) return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armor's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
   // CRAFT4: a found piece a temper raised says its quality (temperLaw.js - Fine or Superior; a found piece is Standard)
   if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];
   if (Number.isInteger(item.kitMetal)) {   // KIT-CEILING; CRAFT5: a kit's quality its reach

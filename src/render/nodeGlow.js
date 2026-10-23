@@ -1,8 +1,10 @@
 // @ts-check
 // NODE-MARKS (2026-10-01, Mac: "Any profession node, like herbs, should appear on the compass. The node itself should
-// also stand out with a detailed slight glow or something"): A NODE'S GLOW - every gathering node standing near the
-// player (a herb patch, a vein, a boulder, a tree, a school, a body: scenes/gatherHost.js marks) lit softly in its
-// profession's colour (ui/nodeMarks.js - the colour its compass mark wears), so the eye finds what the compass points at.
+// also stand out with a detailed slight glow or something"): A NODE'S GLOW - a gathering node standing near the player
+// (scenes/gatherHost.js marks) lit softly in its profession's colour (ui/nodeMarks.js - the colour its compass mark wears),
+// so the eye finds what the compass points at. It lit every node until NODE-OUTLINE (2026-10-19); since then a node with
+// a picture is lit on that picture (render/nodeGlint.js - NODE-GLINT's glints since 2026-10-20), and the glow lights a node
+// with none (a body drawn as a 3D character) and SENSE1's finds (systems/dungeon/dungeonSense.js).
 //
 // ONE CARD A NODE, turned about the upright to face the eye and stood a little toward it (NODE_GLOW_PULL), so the light
 // lies over the node's own picture rather than behind it. Three things in it, each answered per pixel from where the
@@ -73,7 +75,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
 
 /**
- * @typedef {{ at: number[], w: number, h: number, rgb: readonly number[], alpha: number, seed: number, form: readonly number[], pull?: number }} NodeGlow
+ * @typedef {{ at: number[], w: number, h: number, rgb: readonly number[], alpha: number, seed: number, form: readonly number[], pull?: number, mark?: any }} NodeGlow
  * @typedef {{ nodes: Map<string, { kindle: number, seen: number, seed: number }>, frame: number, lastS: number|null, pool: NodeGlow[] }} NodeGlowState
  */
 /** A fresh state for `nodeGlows` - each node's kindling, by its key, and the records `out` is refilled from. */
@@ -84,8 +86,10 @@ export const createNodeGlowState = () => /** @type {NodeGlowState} */ ({ nodes: 
  * those within NODE_GLOW_M of `eye`, at most NODE_GLOW_MAX - each kindling from nothing over NODE_GLOW_KINDLE_S when it
  * first stands near and fading toward nothing from NODE_GLOW_FADE_M to NODE_GLOW_M - written into `out` (one list,
  * refilled from the state's own records - AUDIT NODE-MARKS: none made a frame) and answered. A node no longer marked is
- * forgotten (it kindles again when it next stands near). `nowS` any clock in seconds. Pure but for `state` and `out`.
- * @param {ReadonlyArray<{ key: string, profession?: string, at: number[], w: number, h: number, rgb?: readonly number[], gain?: number, form?: readonly number[] }>|null|undefined} marks
+ * forgotten (it kindles again when it next stands near). A mark that is `quiet` (AUDIT NODE-GLINT: the node an act works -
+ * the act's own glint is the one to watch) dims over NODE_GLOW_KINDLE_S as it kindled, and kindles again when it is not.
+ * `nowS` any clock in seconds. Pure but for `state` and `out`.
+ * @param {ReadonlyArray<{ key: string, profession?: string, at: number[], w: number, h: number, rgb?: readonly number[], gain?: number, form?: readonly number[], quiet?: boolean }>|null|undefined} marks
  * @param {number[]|null|undefined} eye @param {number} nowS @param {NodeGlowState} state @param {NodeGlow[]} out
  */
 export function nodeGlows(marks, eye, nowS, state, out) {
@@ -100,15 +104,16 @@ export function nodeGlows(marks, eye, nowS, state, out) {
       const d = Math.hypot(m.at[0] - eye[0], m.at[1] - eye[1], m.at[2] - eye[2]);
       if (!(d <= NODE_GLOW_M)) continue;
       let n = state.nodes.get(m.key);
-      if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);
+      if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = m.quiet === true ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S) : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);   // AUDIT NODE-GLINT: a quiet mark dims as it kindled
       n.seen = frame;
       // SENSE1: a mark may carry its own colour (`rgb`) and a gain over its kindling (`gain`, 0..1 - the sense pulse's
       // fade); a node carries neither and is lit as it always was
       const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);
       if (!(alpha > 0.001)) continue;
       const rgb = m.rgb ?? nodeMarkRgb(m.profession);
-      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL };
+      const g = state.pool[out.length] ??= { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL, mark: m };
       g.at = m.at; g.w = m.w; g.h = m.h; g.rgb = rgb; g.alpha = alpha; g.seed = n.seed;
+      g.mark = m;   // NODE-OUTLINE: the mark it is - its pictures, which the glint lights (render/nodeGlint.js)
       g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL;   // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)
       g.form = m.form ?? NODE_GLOW_FORM;   // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole
       out.push(g);

@@ -312,7 +312,7 @@
   {
     "name": "TV7b-stale-forever",
     "file": "src/scenes/world.js",
-    "old": "    if (performance.now() - p.at > BAND_WORD_MS) { _bandPeer.delete(id); return null; }",
+    "old": "    if (performance.now() - p.at > p.hold) { _bandPeer.delete(id); return null; }",
     "new": "    // (never stale)",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"

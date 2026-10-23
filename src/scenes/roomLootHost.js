@@ -22,12 +22,13 @@ import { rollRoomBonus, spawnEnemyLoot, wildLootAfter } from './hostCombat.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
 import { stampWonWeapons } from '../systems/loot/lootRarity.js';
 import { wildPileMore } from '../systems/wild/wildZone.js';
+import { seaPileMore } from '../systems/sea/seaSpoils.js';
 
 /** @param {any} host */
 export function createRoomLoot(host) {
   const {
     _deepCleared, _deepFoeCleared, _sharedFoe, _wildDungeon, _wildRing, eliteLootOpts, fightN, foes, lootKeyOf,
-    lootableBody, opts, respawnDue, rollPileItems, roomLootKey, searchHeard, searchables, settleLootFlat
+    lootableBody, opts, respawnDue, rollPileItems, roomLootKey, searchHeard, searchables, settleLootFlat, dfLocation
   } = host;
   // ── PARTY-LOOT (2026-10-14, the field: "each of us DO NOT see the same loot"; Mac: "Shared base + personal bonus") ──
   // A ROOM'S CONTAINER IS ONE BASE LIST FOR EVERYONE IN IT (systems/roomLoot.js says the law whole). WORLD4 made a
@@ -160,6 +161,7 @@ export function createRoomLoot(host) {
     const t = { rolls, level: terms.lv, gender, luck: ROOM_BASE_LUCK, quarters: ROOM_BASE_QUARTERS, find: ROOM_BASE_FIND };
     const items = rollPileItems(t);
     if (_wildDungeon) wildPileMore(items, () => rollPileItems(t), _wildRing, rolls);
+    seaPileMore(items, dfLocation, rolls);   // SEA-SET: an isle's ruin of the deep - the Tidemail's share, last, on the room's dice
     if (h.pile.stopKey && _deepCleared.has(h.pile.stopKey)) items.length = 0;
     return items;
   }

@@ -201,9 +201,10 @@ test('LW6b the dungeon and the streaming host: the dungeon\'s resting places (it
   assert.match(w, /try \{ livingRemainsStep\(now\); \} catch \(e\) \{ console\.warn\('\[remains\] step', e\); \}   \/\/ LW6b/);   // PIN MOVED (AUDIT LW-II-2): wrapped as its neighbours are - a throw never kills the frame loop
   assert.match(w, /return !turns\.fallen\.has\(key\) && !turns\.spared\.has\(key\) && !turns\.slain\.has\(key\) && !turns\.died\.has\(key\) && !livingDivers\?\.stood\(r\.trip\.id, r\.res\.id\);/);   // LW-FIX1: and the player's own dead
   assert.match(w, /laid: \(key\) => livingRelations\.turns\(\)\.laid\.has\(key\),\n\s+mark: \(key\) => livingRelations\.turn\('laid', key\),/);
-  assert.match(w, /return d\.layRemains\(items, feet, \{ archive: corpse\.archive, record: corpse\.record \}, key\);/);   // PIN MOVED (AUDIT LW-III): and its key
-  assert.match(w, /const items = generateLootItems\(enemyLootTableKey\(res\.cls, look\.basics\.lootTableKey \?\? '-'\), \{ level, gender: res\.sex \?\? 'male' \}, rolls\);/);
-  assert.match(w, /for \(const raw of \[createRandomWeapon\(level, rolls\), createRandomArmor\(level, rolls\)\]\)/);
-  assert.match(w, /items\.push\(goldStack\(/);
+  const goods = rd('src/scenes/livingWorld/remainsGoods.js');   // PIN MOVED (HOST-SPLIT, SEA VENTURES 2026-10-22): livingRemainsLay moved verbatim out of bootWorld into scenes/livingWorld/remainsGoods.js
+  assert.match(goods, /return d\.layRemains\(items, feet, \{ archive: corpse\.archive, record: corpse\.record \}, key\);/);   // PIN MOVED (AUDIT LW-III): and its key
+  assert.match(goods, /const items = generateLootItems\(enemyLootTableKey\(res\.cls, look\.basics\.lootTableKey \?\? '-'\), \{ level, gender: res\.sex \?\? 'male' \}, rolls\);/);
+  assert.match(goods, /for \(const raw of \[createRandomWeapon\(level, rolls\), createRandomArmor\(level, rolls\)\]\)/);
+  assert.match(goods, /items\.push\(goldStack\(/);
   assert.match(w, /if \(livingRemains\) \{ livingRemains\.clear\(\); livingRemains = null; \}   \/\/ LW6b: \.\.\.and the deep's layer let go with its dungeon/);
 });

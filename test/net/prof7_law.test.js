@@ -44,6 +44,10 @@ test('PROF7 law: the ten hides (4.4, 655-664 in its order) - each its foes by DF
     ['hide:harpy', 662, 'Harpy Feathers', 5, null, null, null],
     ['hide:dreugh', 663, 'Dreugh Shell', 5, null, null, 'leather:hardened'],
     ['hide:dragonling', 664, 'Dragonling Scale', 6, 'part:dragonscale', null, 'leather:hardened'],
+    // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): Daggerfall Enemy Expansion's three families the ten do not hold
+    ['hide:wolf', 681, 'Wolf Pelt', 2, 'part:tooth', 'food:meat', 'leather:cured'],
+    ['hide:boar', 682, 'Boar Hide', 2, 'part:tooth', 'food:meat', 'leather:cured'],
+    ['hide:mudcrab', 683, 'Mudcrab Chitin', 1, null, 'food:meat', 'leather:cured'],
   ]);
   // the foes by DFU's own names (characters/mobile/mobileTypes.js, generated from DaggerfallUnityEnums.cs)
   const M = MOBILE_TYPES;
@@ -63,7 +67,7 @@ test('PROF7 law: the leathers (665 Cured tier 2, 666 Hardened tier 5) and the cl
   assert.deepEqual([CURED_LEATHER, HARDENED_LEATHER].map((m) => [m.key, m.templateIndex, m.tier, m.name]), [['leather:cured', 665, 2, 'Cured Leather'], ['leather:hardened', 666, 5, 'Hardened Leather']]);
   assert.deepEqual(CLOTHS.map((m) => [m.key, m.templateIndex, m.tier]), [['cloth:linen', 668, 1], ['cloth:wool', 669, 2], ['cloth:silk', 670, 4], ['cloth:standard', 671, 5]]);
   assert.deepEqual([LINEN, WOOL, SILK, STANDARD_SILK], CLOTHS);
-  assert.deepEqual(HIDE_TEMPLATES.map((m) => m.templateIndex), [655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 668, 669, 670, 671]);
+  assert.deepEqual(HIDE_TEMPLATES.map((m) => m.templateIndex), [655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 681, 682, 683, 665, 666, 668, 669, 670, 671]);   // PIN MOVED (DEX-HIDES): 681-683
   assert.deepEqual([...NO_PACK_FORM], ['work:ram', 'essence:arcane']);   // AUDIT PROF12 E1 (PIN MOVED): Arcane Essence the Stores'; SEAT2b part two (PIN MOVED): a siege work's road is the writ's - every hide, leather and cloth withdraws
   for (const m of [...HIDE_TEMPLATES, ...PARTS]) {
     assert.equal(minedMaterial(m.key)?.templateIndex, m.templateIndex, m.key);
@@ -178,8 +182,13 @@ test('PROF7 law: the trace - 4 + tier points (5 to 9) across the carcass; the to
 
 test('PROF7 law: the loom cures two hides to a leather (a Tanner\'s two a unit - a choice made at 50) and weaves three Spider Silk to a Silk Bolt; no XP - a hide\'s was its skinning\'s; the tailor\'s fee 50', () => {
   assert.deepEqual(CURE_RECIPES.map((r) => [r.id, r.out, r.inputs.map((i) => `${i.n} ${i.key}`).join(), r.station, r.per, r.more?.spec, r.more?.per, workSpecRank(r), r.xp]), [
-    ['cure:rat', 'leather:cured', '2 hide:rat', 'loom', 1, 'tanner', 2, 50, null], ['cure:bat', 'leather:cured', '2 hide:bat', 'loom', 1, 'tanner', 2, 50, null],
-    ['cure:bear', 'leather:cured', '2 hide:bear', 'loom', 1, 'tanner', 2, 50, null], ['cure:tiger', 'leather:cured', '2 hide:tiger', 'loom', 1, 'tanner', 2, 50, null],
+    // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the Mudcrab Chitin, the Wolf Pelt and the Boar Hide to Cured Leather,
+    // each by its tier among the ten's - a leather's cures cheapest first, as a chain plans them
+    ['cure:rat', 'leather:cured', '2 hide:rat', 'loom', 1, 'tanner', 2, 50, null], ['cure:mudcrab', 'leather:cured', '2 hide:mudcrab', 'loom', 1, 'tanner', 2, 50, null],
+    ['cure:bat', 'leather:cured', '2 hide:bat', 'loom', 1, 'tanner', 2, 50, null],
+    ['cure:wolf', 'leather:cured', '2 hide:wolf', 'loom', 1, 'tanner', 2, 50, null], ['cure:boar', 'leather:cured', '2 hide:boar', 'loom', 1, 'tanner', 2, 50, null],
+    ['cure:bear', 'leather:cured', '2 hide:bear', 'loom', 1, 'tanner', 2, 50, null],   // PIN MOVED (AUDIT FB1021 L2-1): the Ram Kit's hide last of its tier
+    ['cure:tiger', 'leather:cured', '2 hide:tiger', 'loom', 1, 'tanner', 2, 50, null],
     ['cure:scorpion', 'leather:hardened', '2 hide:scorpion', 'loom', 1, 'tanner', 2, 50, null], ['cure:slaughterfish', 'leather:hardened', '2 hide:slaughterfish', 'loom', 1, 'tanner', 2, 50, null],
     ['cure:dreugh', 'leather:hardened', '2 hide:dreugh', 'loom', 1, 'tanner', 2, 50, null], ['cure:dragonling', 'leather:hardened', '2 hide:dragonling', 'loom', 1, 'tanner', 2, 50, null],
   ]);
@@ -217,11 +226,11 @@ test('PROF7 law: Outfitting\'s recipes (9.3) - the leather armour in Cured and H
   assert.deepEqual(OUTFITTING_RECIPES.filter((r) => r.kind === 'garment' && r.dyes !== true).map((r) => r.id), []);
   assert.deepEqual([178, 179, 214, 215].map((t) => GARMENTS.find((g) => g[0] === t)[1]), ['Short Shirt, unchangeable', 'Long Shirt, unchangeable', 'Short Shirt, unchangeable', 'Long Shirt, unchangeable']);
   assert.deepEqual([...RUGS.map(([t]) => ins(`rug-${t}:wool`)), ...TAPESTRIES.map(([t]) => ins(`tapestry-${t}:wool`))], ['3 cloth:wool', '3 cloth:wool', '3 cloth:wool', '3 cloth:wool', '4 cloth:wool', '4 cloth:wool', '4 cloth:wool']);
-  assert.deepEqual([...PELTS], ['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger']);
+  assert.deepEqual([...PELTS], ['hide:rat', 'hide:bat', 'hide:bear', 'hide:tiger', 'hide:wolf', 'hide:boar']);   // PIN MOVED (DEX-HIDES): the mod's two furs
   assert.deepEqual(['skins-244:bear', 'skins-245:tiger'].map((id) => [recipeById(id).name, recipeById(id).tier, ins(id), recipeById(id).kind]), [['Large Skins (Bear Hide)', 2, '2 hide:bear', 'furniture'], ['Small Skins (Tiger Pelt)', 3, '1 hide:tiger', 'furniture']]);
   const net = recipeById('fishingnet:linen');
   assert.deepEqual([net.templateIndex, FISHING_NET_TEMPLATE, net.rank, ins('fishingnet:linen'), net.kind, net.profession], [1603, 1603, 0, '2 cloth:linen', 'tool', 'outfitting']);
-  assert.equal(OUTFITTING_RECIPES.length, 14 + 76 * 4 + 4 + 3 + 8 + 1);
+  assert.equal(OUTFITTING_RECIPES.length, 14 + 76 * 4 + 4 + 3 + 12 + 1);   // PIN MOVED (DEX-HIDES): skins of six pelts, not four
   assert.ok(OUTFITTING_RECIPES.every((r) => r.profession === 'outfitting' && r.metal === null));
   assert.equal(RECIPES.length, SMITH_RECIPES.length + CARPENTRY_RECIPES.length + OUTFITTING_RECIPES.length + 4 + 7 + 120);   // PIN MOVED (PROF11): the Sculptor's four stone pieces; PIN MOVED (PROF9): the fire's seven dishes; PIN MOVED (PROF10): the jeweller's 120 pieces
   assert.equal(new Set(RECIPES.map((r) => r.id)).size, RECIPES.length, 'every id its own');

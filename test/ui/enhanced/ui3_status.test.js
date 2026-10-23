@@ -100,7 +100,7 @@ test('UI3 the needs\' glyphs: every need the strip can raise has one - the tempe
 
 // ── THE POISONS AND DISEASES ────────────────────────────────────────
 
-test('UI3 the afflictions: the Status box\'s own law - one tile for being poisoned once a poison has left its waiting (however many, and still while its damage heals), a tile a disease once its incubation is over, by the name its message gives, and nothing for one still waiting or incubating, one ended, or an infection - the same entities the box itself answers (mutants: a waiting poison shown; a tile a poison; an incubating disease shown; an infection shown; an ended one shown)', () => {
+test('UI3 the afflictions: the Status box\'s own law - one tile for being poisoned once a poison has left its waiting (however many, and still while its damage heals), a tile a disease once its incubation is over, by the name its message gives, and nothing for a poison still waiting, one ended, or an infection - the same entities the box itself answers; PIN MOVED (FIELD BUGS 2026-10-19f DISEASE-UNWELL, the owner: "Unnamed \'Unwell\' tile"): a disease still incubating is one unnamed tile, "Unwell", and the box\'s one unwell line, where it showed nothing (mutants: a waiting poison shown; a tile a poison; an incubating disease named; an infection shown; an ended one shown)', () => {
   assert.deepEqual(afflictionRows(null), []);
   assert.deepEqual(afflictionRows({ activeEffects: [] }), []);
   const poison = (state, extra = {}) => ({ kind: 'poison', poison: POISONS.Arsenic, state, statMods: {}, ...extra });
@@ -111,7 +111,9 @@ test('UI3 the afflictions: the Status box\'s own law - one tile for being poison
     [[poison('active'), { ...poison('waiting'), poison: POISONS.Moonseed }, { ...poison('active'), poison: POISONS.Thyrwort }], ['Poisoned']],
     [[poison('complete', { statMods: { strength: -4 } })], ['Poisoned']],
     [[poison('active', { ended: true })], []],
-    [[disease(DISEASES.WitchesPox, false)], []],
+    [[disease(DISEASES.WitchesPox, false)], ['Unwell']],   // PIN MOVED (DISEASE-UNWELL): it showed nothing
+    [[disease(DISEASES.WitchesPox, false), disease(DISEASES.Plague, false)], ['Unwell']],   // one tile, however many incubate
+    [[disease(DISEASES.WitchesPox, false), disease(DISEASES.Plague, true), disease(DISEASES.Cholera, false)], ['Unwell', 'Plague']],   // where the first of them stands
     [[disease(DISEASES.WitchesPox, true)], ["Witches' Pox"]],
     [[disease(DISEASES.Plague, true), disease(DISEASES.WizardFever, true), poison('active')], ['Poisoned', 'Plague', 'Wizard Fever']],
     [[disease(DISEASES.Cholera, true, { ended: true })], []],
@@ -125,6 +127,7 @@ test('UI3 the afflictions: the Status box\'s own law - one tile for being poison
     const box = healthStatusRows(e, (id) => [`#${id}`]);
     assert.equal(box.includes('#117'), want.includes('Poisoned'), 'the box says poisoned when the widget does');
     for (const [i, name] of DISEASE_NAMES.entries()) assert.equal(box.includes(`#${100 + i}`), want.includes(name), `${name}: the box and the widget agree`);
+    assert.equal(box.filter((r) => r === 'You feel unwell.').length, want.includes('Unwell') ? 1 : 0, 'DISEASE-UNWELL: the box says unwell, once, exactly when the widget does');
     assert.deepEqual(rows.map((r) => r.glyph), want.map((w) => (w === 'Poisoned' ? 'poison' : 'disease')));
   }
 });
@@ -141,7 +144,7 @@ test('UI3 the diseases\' names are the seventeen the table carries, in its order
 // ── THE GLYPHS ──────────────────────────────────────────────────────
 
 test('UI3 the glyphs: sixteen (REST1 the Rested campfire; TELL9 the bleed\'s two drops; WILD1 the open zone\'s blades; SURV-BOONS Thriving\'s sparkle and the Hearth\'s flame; TEMP-UI the thermometer), each on the 16px grid the classic\'s spell icons use, every letter in its palette, every lit pixel outlined in the kit\'s black (no lit pixel touches the empty), drawn as runs, one source a name (mutants: a pixel unoutlined; a letter with no colour; the runs one rect a pixel)', () => {
-  assert.deepEqual(Object.keys(STATUS_GLYPHS).sort(), ['bleed', 'cold', 'disease', 'drunk', 'hearth', 'hot', 'hunger', 'poison', 'rested', 'sleep', 'stiff', 'thermo', 'thirst', 'thriving', 'wet', 'wild']);   // SURV-BOONS: and Thriving's sparkle; TEMP-UI: and the HUD plate's thermometer   // WILD1: and the open zone's crossed blades   // REST1: and the Rested campfire; PIN MOVED (TELL9: the bleed's own icon)
+  assert.deepEqual(Object.keys(STATUS_GLYPHS).sort(), ['bleed', 'cold', 'disease', 'drunk', 'hearth', 'hot', 'hunger', 'poison', 'rested', 'skillup', 'firmstar', 'sleep', 'stiff', 'thermo', 'thirst', 'thriving', 'wet', 'wild'].sort());   // SKILL-READY / FIRM-STARS: the two tiles beside the Renown bar   // SURV-BOONS: and Thriving's sparkle; TEMP-UI: and the HUD plate's thermometer   // WILD1: and the open zone's crossed blades   // REST1: and the Rested campfire; PIN MOVED (TELL9: the bleed's own icon)
   for (const [name, g] of Object.entries(STATUS_GLYPHS)) {
     assert.equal(g.rows.length, 16, `${name}: 16 rows`);
     let lit = 0;
@@ -318,7 +321,8 @@ test('UI3 the HUD, executed: the widget is the quickslot block\'s first child, o
     drawEnhancedHud(entity, 0, 0, opts);
     const root = document.body.children.find((n) => n.className === 'hud');
     const quick = find(root, 'hud-quick');
-    assert.deepEqual(quick.children.map((n) => n.className), ['hud-stat', 'hud-qcap', 'hud-qdiamond'], 'on the caption, in the block');
+    // DIAMOND-HB (PIN MOVED): the block also holds the hotbar's dock for the Diamond style, last
+    assert.deepEqual(quick.children.map((n) => n.className), ['hud-stat', 'hud-qcap', 'hud-qdiamond', 'hud-gemdock'], 'on the caption, in the block');
     assert.deepEqual(find(root, 'hud-bottom').children.map((n) => n.className), ['hud-hotdock', 'hud-breath', 'hud-breath hud-grip', 'hud-bars', 'hud-renown'], 'and not in the foot (CLIMB2: the grip beside the breath)');
     const stat = quick.children[0];
     assert.deepEqual(stat.children.map((c) => c.className), [

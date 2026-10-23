@@ -127,7 +127,7 @@
   },
   {
     "name": "CROSS-host-land-ring",
-    "file": "src/scenes/world.js",
+    "file": "src/systems/naval/etherCrossing.js",
     "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !seaPixel(px + dx, py + dy)) { d = r; break ring; }",
     "new": "        if (!seaPixel(px + dx, py + dy)) { d = r; break ring; }",
     "tests": [
@@ -254,7 +254,7 @@
   {
     "name": "HOST-deepest",
     "file": "src/scenes/etherHost.js",
-    "old": "    L.deepest?.(etherDepthAt(px));\n",
+    "old": "    L.deepest?.(etherDepthAt(px), day());   // SEA-SEASON: and the season's, by the world's day\n",
     "new": "",
     "tests": [
       "test/systems/naval/ethercross.test.js"

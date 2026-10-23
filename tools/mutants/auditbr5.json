@@ -204,8 +204,8 @@
   {
     "name": "AUDITBR5-the-decor-line-named",
     "file": "src/ui/decorPanel.js",
-    "old": "each can wear another of the original game\\'s own looks.",
-    "new": "each can wear another of Daggerfall\\'s own looks.",
+    "old": "can each take another look from the original game.",
+    "new": "can each take another look from Daggerfall.",
     "tests": [
       "test/ui/brand.test.js"
     ],

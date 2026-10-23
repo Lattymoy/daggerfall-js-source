@@ -162,7 +162,8 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
   const swing = SWING_MODS[d.sw ?? (d.by === 'arrow' ? 'StrikeDown' : '')] ?? { damage: 0, toHit: 0 };
   // TWO-HANDS (AUDIT, bible/05-Combat/Two-Hands.md): an OFF-HAND swing between players carries the off hand's terms, as
   // PlayerWeapon.resolveHit's does against a foe - its to-hit by the sheet's Agility, its share of the damage and its weight
-  const off = d.by === 'melee' && d.off === true;
+  // AUDIT PISTOLET A1: and a pair's off-hand SHOT - a Pistolet's, the one ranged weapon a pair holds
+  const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;
   const dmg = calculateAttackDamage(stub, target, {
     weapon, damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),
     ...(off ? OFF_HAND_BLOW : {}),

@@ -30,17 +30,17 @@ test('FT5: the registry row - Enhanced only, over the pref, on by default (BAL4)
   assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedAI', initial: true, online: true,   // RF4: the row declares its default and the lane's answer
     also: [{ store: 'prefs', key: 'telegraphContrast', initial: false, online: 'player' }], parts: [{ key: 'telegraphContrast', label: 'Telegraph contrast' }] });
   assert.equal(PREF_DEFAULTS.enhancedAI, true, 'BAL4: on by default - the classic motor one choice away');
-  assert.equal(f.effect, 'At once - the dungeon pathfinding from the next dungeon you enter.');   // AUDIT TACT D7: the tactics, cover and blows read the switch live; only the navmesh waits
+  assert.equal(f.effect, 'Takes effect at once; pathfinding from the next dungeon you enter.');   // AUDIT TACT D7: the tactics, cover and blows read the switch live; only the navmesh waits
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('prefs', 'enhancedAI'), f);
 });
 
 test('FT5: the note says what ships and names what it is not', () => {
   const f = FEATURES.find((x) => x.id === 'enhanced-ai');
-  assert.match(f.note, /Dungeons only for now/);
-  assert.match(f.note, /Off keeps the classic movement/);
-  assert.match(f.note, /not Daggerfall Unity’s “Smarter Enemies” setting/, 'the name collision, said outright');
-  assert.match(f.note, /which the port does not run/);
+  assert.equal(f.note, 'Enemies take turns, back off when hurt, and archers keep their distance. Big attacks are marked on the '
+    + 'ground: hit hard to stagger them or dodge. Red, hatched attacks can’t be stopped. Trees, rocks and crates block '
+    + 'sight and missiles. Pathfinding works in dungeons only for now; towns, interiors and doors come later. Off keeps '
+    + 'the classic behavior.');   // PIN MOVED (PLAIN TEXT SWEEP): the note in plain words; DFU's "Smarter Enemies" stays unrowed below
   // ...and the DFU key it names IS unavailable, in Settings, under that label
   assert.equal(tierOf('Enhancements/EnhancedCombatAI'), 'unavailable');
   assert.match(read('src/ui/settings/settingsCopy.js'), /"Enhancements\/EnhancedCombatAI": "Smarter Enemies",/);

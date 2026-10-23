@@ -335,8 +335,8 @@
  {
   "name": "SEAT2a4-honour-none",
   "file": "src/net/siege/siegeLink.js",
-  "old": "  if (!honours) return 'No Honours this battle:",
-  "new": "  if (honours === 7) return 'No Honours this battle:",
+  "old": "if (!honours) return 'No Honors this battle:",
+  "new": "if (honours === 7) return 'No Honors this battle:",
   "tests": [
    "test/net/siege/seat2a_siege_play.test.js"
   ]
@@ -353,7 +353,7 @@
  {
   "name": "SEAT2a4-model-kept",
   "file": "src/net/siege/siegeLink.js",
-  "old": "honours === undefined ? (claimable ? 'Your receipt is kept - claim it for your Honours.' : '')",
+  "old": "honours === undefined ? (claimable ? 'Your receipt is saved. Claim it for your Honors.' : '')",
   "new": "honours === undefined ? ''",
   "tests": [
    "test/net/siege/seat2a_siege_play.test.js"

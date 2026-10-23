@@ -165,6 +165,6 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.match(w, /const shared = modes\?\.placeSharedWorld\?\.\(\);/); assert.match(w, /modes\?\.restorePlaceSharedWorld\?\.\(shared\)/); assert.match(w, /modes\?\.applyPlaceActions\?\.\(id, data\)/);
   assert.equal((w.match(/modes\?\.placeActionRecords\?\./g) ?? []).length, 2, 'the act and the flush');
   assert.match(w, /onInteriorLeave: \(\) => \{ const n = handOverRoomFoes\(\);[^\n]*worldPublish\(performance\.now\(\), true\); \},/);   // QUEST-PARTY phase 3b: my foes to those who stay, then the memory
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /Dungeons and buildings are shared: enemies, doors, levers and every chest, shelf or cupboard someone has opened are the same for everyone, and stay that way\. In towns and the wilds you share who is around: what one player meets, everyone nearby sees and can fight, and those monsters can hurt you too\./);
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /Dungeons and buildings are shared: enemies, doors, levers and opened chests are the same for everyone and stay that way\. In towns and the wilds, everyone nearby sees the same monsters and can fight them, and they can hurt you too\./);
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6 \(2026-09-14\)/, 'the record');
 });

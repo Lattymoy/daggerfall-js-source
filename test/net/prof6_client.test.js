@@ -216,15 +216,15 @@ test('PROF6 the Work tab: this region\'s guild writs under the guild blue (Deliv
   await ticks();
   const cards = byClass(host, 'notice-writ');
   assert.deepEqual(cards.map((c) => c.className.match(/seal-\w+/)[0]), ['seal-guild', 'seal-guild', 'seal-commission', 'seal-commission']);
-  assert.match(cards[0].textContent, /Guild writThe Silver Hand \[SH\] needs 280 more Oak Logs/);
-  assert.match(cards[0].textContent, /Pays 3 silver each - 520 \/ 800 delivered/);
-  assert.match(cards[0].textContent, /5 days left/);
-  assert.match(cards[0].textContent, /50 in your Stores/);
-  assert.equal(byClass(cards[1], 'work-withdraw').length, 0, 'another guild\'s: no Withdraw');
+  assert.match(cards[1].textContent, /Guild writThe Silver Hand \[SH\] needs 280 more Oak Logs/);   // PIN MOVED (BOARD-SIFT): the work ends soonest first - W2's two days before W1's five
+  assert.match(cards[1].textContent, /Pays 3 silver each - 520 \/ 800 delivered/);
+  assert.match(cards[1].textContent, /5 days left/);
+  assert.match(cards[1].textContent, /50 in your Stores/);
+  assert.equal(byClass(cards[0], 'work-withdraw').length, 0, 'another guild\'s: no Withdraw');
   // Deliver a typed number: its words move, no redraw
-  const n = cards[0].querySelectorAll('input').find((i) => i.getAttribute('data-focus') === 'supply|W1');
+  const n = cards[1].querySelectorAll('input').find((i) => i.getAttribute('data-focus') === 'supply|W1');
   n.value = '40'; n.oninput();
-  const go = byClass(cards[0], 'work-deliver')[0];
+  const go = byClass(cards[1], 'work-deliver')[0];
   assert.equal(go.textContent, 'Deliver 40');
   const before = reads();
   go.click();
@@ -270,7 +270,7 @@ test('PROF6 the Work tab: this region\'s guild writs under the guild blue (Deliv
   r2.v.unmount();
   const r3 = workRig({ data: boardData(), pieces: [] });
   await ticks(); byClass(r3.host, 'notice-tab')[1].click(); await ticks();
-  assert.match(byClass(r3.host, 'notice-writ')[2].textContent, /You carry no unworn piece of your own make for it\./);   // BOARD-UI (PIN MOVED)
+  assert.match(byClass(r3.host, 'notice-writ')[2].textContent, /You carry no unworn piece you made for it\./);   // BOARD-UI (PIN MOVED)
   r3.v.unmount();
 });
 
@@ -379,14 +379,14 @@ test('PROF6 the Guild tab: the guild Stores read once, each material\'s count an
   assert.match(t, /Writ budget/);
   assert.equal(calls.filter((c) => c[0] === 'read').length, 1, 'read once');
   const fields = byClass(panel.root, 'dfsocial-field');
-  const units = fields.find((f) => f.getAttribute('aria-label') === 'Units (all of it when empty)');   // GUILD-UX (PIN MOVED): empty is all of it
+  const units = fields.find((f) => f.getAttribute('aria-label') === 'Units (leave empty for all)');   // GUILD-UX (PIN MOVED): empty is all of it
   units.value = '15'; units.dispatch('input', {});
   const btn = (label) => byClass(panel.root, 'dfsocial-btn').find((b) => b.textContent.startsWith(label));
   btn('Put in').click();
   await ticks();
   assert.deepEqual(calls.at(-1), ['deposit', OAK, 15]);
   panel.render();
-  const units2 = byClass(panel.root, 'dfsocial-field').find((f) => f.getAttribute('aria-label') === 'Units (all of it when empty)');   // GUILD-UX (PIN MOVED): empty is all of it
+  const units2 = byClass(panel.root, 'dfsocial-field').find((f) => f.getAttribute('aria-label') === 'Units (leave empty for all)');   // GUILD-UX (PIN MOVED): empty is all of it
   units2.value = '10'; units2.dispatch('input', {});
   btn('Take out').click();
   await ticks();

@@ -46,7 +46,7 @@
 // screen-space shadow.
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildProgram } from './glProgram.js';
+import { buildProgram, startPrograms } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { BAYER_8X8, WAVE_MATERIAL, wavePaintLevels, wavePictureMean } from '../systems/comeSailAway/comeSailAwayWaves.js';
 import { WATER_LAYER_UNITS } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: the breakers' place in the sea's stack
@@ -331,6 +331,11 @@ const uploadPicture = (gl, pic) => {
 };
 
 /** Come Sail Away's own passes, on the world renderer they draw beside. */
+/** SHADER-STALL: the particles' three programs (cut out, premultiplied, the cube) and the waves' one, as _ensurePart and
+ *  _ensureWave build them - what the warm starts ahead of the build (warmSteps; render/glProgram.js startPrograms). */
+export const CSA_PART_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[PART_VS, PART_CUT_FS], [PART_VS, PART_PREMUL_FS], [CUBE_VS, CUBE_FS]]));
+export const CSA_WAVE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[WAVE_VS, WAVE_FS]]));
+
 export class ComeSailAwayRenderer {
   /** @param {any} renderer - render/renderer.js's (its frame's matrices, light and fog are these passes' too) */
   constructor(renderer) {
@@ -360,12 +365,22 @@ export class ComeSailAwayRenderer {
   }
   hasParticleTexture(name) { return this._partTex.has(name); }
 
+  /** PERF-COMPILE1's idle warm of the sea's four programs (scenes/world.js warmPrograms) - SHADER-STALL: each build once
+   *  the driver says its programs are done (render/warmPrograms.js's named steps), never an idle task waiting on them. */
+  warmSteps() {
+    return [
+      { start: () => startPrograms(this.gl, CSA_PART_PROGRAMS), run: () => { this._ensurePart(); }, need: () => !this._part },   // AUDIT SHADER-STALL: built by a draw first, the warm stands down
+      { start: () => startPrograms(this.gl, CSA_WAVE_PROGRAMS), run: () => { this._ensureWave(); }, need: () => !this._wave },
+    ];
+  }
+
   _ensurePart() {
     if (this._part) return this._part;
     const gl = this.gl;
-    const cut = buildProgram(gl, PART_VS, PART_CUT_FS, 'come sail away particles (cut out)');
-    const pre = buildProgram(gl, PART_VS, PART_PREMUL_FS, 'come sail away particles (premultiplied)');
-    const cube = buildProgram(gl, CUBE_VS, CUBE_FS, 'come sail away particles (cube)');
+    const [cutSrc, preSrc, cubeSrc] = CSA_PART_PROGRAMS;
+    const cut = buildProgram(gl, cutSrc[0], cutSrc[1], 'come sail away particles (cut out)');
+    const pre = buildProgram(gl, preSrc[0], preSrc[1], 'come sail away particles (premultiplied)');
+    const cube = buildProgram(gl, cubeSrc[0], cubeSrc[1], 'come sail away particles (cube)');
     const base = ['uProj', 'uView', 'uCamPos', 'uViewScale', 'uTex'];
     const stream = (stride, attrs) => {
       const vao = gl.createVertexArray(), vbo = gl.createBuffer();
@@ -542,7 +557,8 @@ export class ComeSailAwayRenderer {
   _ensureWave() {
     if (this._wave) return this._wave;
     const gl = this.gl;
-    const p = buildProgram(gl, WAVE_VS, WAVE_FS, 'come sail away waves');
+    const [[vs, fs]] = CSA_WAVE_PROGRAMS;
+    const p = buildProgram(gl, vs, fs, 'come sail away waves');
     this._wave = { p, u: locs(gl, p, ['uProj', 'uView', 'uOrigin', 'uScale', 'uTile', 'uPaint', 'uSnow', 'uFrameSize', 'uSnowSize', 'uLastLevel', 'uScroll', 'uTileOffset',
       'uColor', 'uCutoff', 'uDitherStart', 'uDitherEnd', 'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze']),
     vao: gl.createVertexArray(), vbo: gl.createBuffer(), ebo: gl.createBuffer() };

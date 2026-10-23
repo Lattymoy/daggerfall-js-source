@@ -2,21 +2,23 @@
 // "Overworld view"; which: "Check it all"; asked the look: "Its own model, enlarged"): EACH DUNGEON'S OWN MODEL,
 // ENLARGED, UNDER THE OVERWORLD - the law (systems/travel/travelDungeonModels.js: the set, the entrance model by DFU's own door
 // law, the grow with the eye's distance, the matrix about its foot), the door law in one home (world/meshReader.js
-// subMeshDoorType, read by dfMeshToModel too), and the world host's list, load and draw (scenes/world.js), lifted and
-// run over stubs. Design: bible/06-Systems/Travel-View.md OW-DUNGEONS.
+// subMeshDoorType, read by dfMeshToModel too), and the world host's list, load and draw (scenes/world.js - since
+// OW-DUNGEON-SIZE moved out to scenes/travelViewDungeonModels.js, read through test/hostText.mjs), lifted and run over
+// stubs. Design: bible/06-Systems/Travel-View.md OW-DUNGEONS and OW-DUNGEON-SIZE.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';
 
 import {
   dungeonModelSet, meshHasDungeonEntrance, dungeonEntranceModel, owDungeonGrow, owDungeonDrawn, grownModelMatrix, modelFoot,
-  TV_DUNGEON_MODELS_MAX, TV_DUNGEON_ICON_K, TV_DUNGEON_GROW_MAX, TV_DUNGEON_GROWN_MIN, startDungeonLoads,
+  TV_DUNGEON_MODELS_MAX, TV_DUNGEON_ICON_M, TV_DUNGEON_GROW_MAX, TV_DUNGEON_GROWN_MIN, startDungeonLoads,
 } from '../../src/systems/travel/travelDungeonModels.js';
 import { subMeshDoorType, dfMeshToModel, DOOR_TYPE } from '../../src/world/meshReader.js';
 import { trs, multiply } from '../../src/world/mat4.js';
 import { TV_OWN_GROW_MAX, TV_OWN_GROW_M } from '../../src/player/travelCamera.js';
 
-const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+const WORLD = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the list, load and draw live in scenes/travelViewDungeonModels.js
 const lift = (re, what) => { const m = re.exec(WORLD); assert.ok(m, `lifted from scenes/world.js: ${what}`); return m[1]; };
 const near = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
 /** A point through a column-major 4x4. */
@@ -90,16 +92,23 @@ test('OW-DUNGEONS the model: the first placed model, in the blocks\' order and e
 
 // ── how much it grows, and where ────────────────────────────────────────────────────────────────────────────────────
 
-test('OW-DUNGEONS the grow: TV_DUNGEON_ICON_K of the eye\'s distance tall, never smaller than itself, never past OW-BIG\'s twelve; a stray distance or height none; a little over half again the traveller\'s icon (mutants: another height; no floor; no ceiling; a stray grown)', () => {
-  assert.equal(TV_DUNGEON_ICON_K, 0.09);
+test('OW-DUNGEON-SIZE the grow: to TV_DUNGEON_ICON_M tall whatever the eye\'s distance - four fifths of what the default view stood under the old law - never smaller than itself, never past OW-BIG\'s twelve; from its own size as the view rises to the whole as it stands up; a stray height or blend none (mutants: another height; no floor; no ceiling; the blend unread; a stray grown)', () => {
+  assert.equal(TV_DUNGEON_ICON_M, 24);
   assert.equal(TV_DUNGEON_GROW_MAX, TV_OWN_GROW_MAX, 'OW-BIG\'s own ceiling');
-  assert.ok(near(owDungeonGrow(450, 8), (0.09 * 450) / 8), 'a crypt 8 m tall at the view\'s 450 m: about 40 m');
-  assert.ok(near(owDungeonGrow(450, 8) * 8, 40.5));
-  assert.equal(owDungeonGrow(20, 8), 1, 'near the ground: itself');
-  assert.equal(owDungeonGrow(5000, 2), TV_DUNGEON_GROW_MAX, 'far, and small: at most twelve times');
-  for (const bad of [[NaN, 8], [450, 0], [0, 8], [-3, 8], [450, NaN], [Infinity, 8]]) assert.equal(owDungeonGrow(...bad), 1, String(bad));
-  const ratio = TV_DUNGEON_ICON_K / (1.8 / TV_OWN_GROW_M);
-  assert.ok(ratio > 1.5 && ratio < 1.7, `a little over half again the traveller's icon (${ratio.toFixed(2)})`);
+  assert.ok(near(owDungeonGrow(8) * 8, 24), 'a crypt 8 m tall stands 24 m');
+  assert.ok(near(owDungeonGrow(8, 1), 3));
+  assert.ok(near(owDungeonGrow(6) * 6, 24), 'a ruin 6 m tall the same 24 m - one height for every dungeon');
+  // the old law at the view's default: 260 m up at 52 degrees, 330 m from the traveller - 0.09 of it
+  const was = 0.09 * (260 / Math.sin((52 * Math.PI) / 180));
+  assert.ok(TV_DUNGEON_ICON_M / was > 0.75 && TV_DUNGEON_ICON_M / was < 0.85, `slightly smaller than the default view stood it (${(TV_DUNGEON_ICON_M / was).toFixed(2)})`);
+  assert.equal(owDungeonGrow(30), 1, 'taller than the height already: itself');
+  assert.equal(owDungeonGrow(1), TV_DUNGEON_GROW_MAX, 'small: at most twelve times');
+  assert.equal(owDungeonGrow(8, 0), 1, 'the view at the head: the world\'s own');
+  assert.ok(near(owDungeonGrow(8, 0.5), 2), 'halfway up: halfway grown');
+  assert.equal(owDungeonGrow(8, 2), owDungeonGrow(8, 1), 'a blend past the sky: the whole');
+  assert.equal(owDungeonGrow(8, -1), 1);
+  assert.equal(owDungeonGrow(8, NaN), owDungeonGrow(8, 1), 'a stray blend: the whole (the view up)');
+  for (const bad of [0, -3, NaN, Infinity]) assert.equal(owDungeonGrow(bad), 1, String(bad));
 });
 
 test('OW-DUNGEONS the matrix: grown about its foot - the middle of its plan on the location\'s level stands on the scene point given, a corner of its box as far out as it is grown, a point its height up that many times up; and over a built pixel drawn only once grown past the world\'s own (mutants: grown about its origin; about its top; drawn twice at its own size)', () => {
@@ -154,7 +163,7 @@ test('OW-DUNGEONS the host\'s list: TV6\'s own law with nothing left to the grid
   const ruin = { name: 'Old Ruin (12,20)', spawned: true };
   // ETHER-OW: the lists' rows and what stands on them (world.js tvDungeonRowsAt, tvDungeonAt), lifted beside it - the sea off
   const rows = lift(/\n {2}(const tvDungeonRowsAt = \(at, range = TV_FAR_RANGE\) => \{\n[\s\S]*?\n {2}\};\n {2}const tvDungeonAt = [^\n]*;)\n/, 'the rows');
-  const make = new Function('d', `let { tvDngModels } = d; const { playerTravelPixel, discoveryGeneration, nearDungeons, dungeonRows, mapDict, locationIndex, tvPlaceSummary, spawnedPixels, tvFiledSpawns, tvSpawnKnown, tvSpawnFound, tvSpawnGone, dungeonModelSet } = d; let _tvDungeonRows = null; let _locIndexGen = 0; d.gen = (n) => { _locIndexGen = n; };
+  const make = new Function('d', `const host = d; const { playerTravelPixel, discoveryGeneration, nearDungeons, dungeonRows, mapDict, locationIndex, tvPlaceSummary, spawnedPixels, tvFiledSpawns, tvSpawnKnown, tvSpawnFound, tvSpawnGone, dungeonModelSet } = d; let _tvDungeonRows = null; let _locIndexGen = 0; d._locIndexGen = 0; d.gen = (n) => { _locIndexGen = n; d._locIndexGen = n; };
     const etherSea = false, inEther = () => false, etherPlaceRows = () => [], tvEtherPlace = () => null, TV_FAR_RANGE = 24, tvKnownGen = () => discoveryGeneration();\n${rows}\n${src}\nreturn tvDungeonModelList;`);
   const d = {
     tvDngModels: { at: null, dg: -1, n: -1, list: [] },
@@ -216,7 +225,7 @@ test('OW-DUNGEONS the host\'s load: its blocks laid as its pixel\'s build lays t
       archAabb: (id, pos) => [pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]],
       ...over,
     };
-    const load = new Function('d', `const { _tvDngModel, maps, blocks, isEnhanced, tileSide, season, layoutLocation, getLocationTerrainTileOrigin, arch, dungeonEntranceModel, pipeline, cpuModels, isClimateFreeModel, NO_CLIMATE_REMAP, remapSubMeshes, applyClimate, getWorldClimateSettings, transformedAabb, archAabb } = d;\n${src}\nreturn tvDungeonModelLoad;`)(d);
+    const load = new Function('d', `const host = d; const { _tvDngModel, maps, blocks, isEnhanced, tileSide, season, layoutLocation, getLocationTerrainTileOrigin, arch, dungeonEntranceModel, pipeline, cpuModels, isClimateFreeModel, NO_CLIMATE_REMAP, remapSubMeshes, applyClimate, getWorldClimateSettings, transformedAabb, archAabb } = d;\n${src}\nreturn tvDungeonModelLoad;`)(d);
     return { s, d, load };
   };
   const settle = () => new Promise((r) => setImmediate(r));
@@ -258,8 +267,8 @@ test('OW-DUNGEONS the host\'s load: its blocks laid as its pixel\'s build lays t
   assert.equal(was9.ready, false, 'gone while dressed: never made ready');
 });
 
-test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (a new one loaded, one gone released), each drawn grown with the eye\'s distance about its foot - over a built pixel on the real model\'s own level and only once grown past it, past the grid on the far ring\'s ground - and none casting a giant\'s shadow (mutants: drawn in play; drawn with a shadow; the gone kept; the level the ground\'s over a built pixel; drawn twice at its own size)', () => {
-  const src = lift(/\n {2}(const _tvDngAt = \[0, 0, 0\];\n {2}function drawTvDungeonModels\(eye, up\) \{[\s\S]*?\n {2}\})\n/, 'drawTvDungeonModels');
+test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (a new one loaded, one gone released), each drawn grown to its one height (OW-DUNGEON-SIZE: the same whatever the eye\'s distance, from its own size as the view rises) about its foot - over a built pixel on the real model\'s own level and only once grown past it, past the grid on the far ring\'s ground - and none casting a giant\'s shadow (mutants: drawn in play; drawn with a shadow; the gone kept; the level the ground\'s over a built pixel; drawn twice at its own size)', () => {
+  const src = lift(/\n {2}(const _tvDngAt = \[0, 0, 0\];\n {2}function drawTvDungeonModels\(eye, up, blend\) \{[\s\S]*?\n {2}\})\n/, 'drawTvDungeonModels');
   const s = { list: [], loads: [], draws: [], released: [] };
   const map = new Map();
   const entry = (key, px, py) => ({ key, px, py, ready: true, gpu: { key }, local: trs(0, 0, 0, 0, 0, 0), box: [-2, 0, -2, 2, 8, 2], h: 8, texRemap: 'tex', matrix: new Float32Array(16), hold: { release: () => s.released.push(key) } });
@@ -294,11 +303,21 @@ test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (
   assert.equal(s.grounds, asked, 'the same ground: not asked again');
   s.gen = 2; draw([1000, 480, 1000]);
   assert.equal(s.grounds, asked + 1, 'the ground moved: asked again');
-  // near the built one's ground: the world's own model, not drawn twice
+  // OW-DUNGEON-SIZE: one height whatever the eye's distance - near or far, the same grown matrix
   s.draws.length = 0;
-  draw([1000, 40, 1000]);
+  draw([1000, 480, 1000]);
+  const farEye = s.draws.find((x) => x.key === 'dng:built').sy;
+  s.draws.length = 0;
+  draw([1000, 60, 1000]);
+  assert.ok(near(s.draws.find((x) => x.key === 'dng:built').sy, farEye), 'the eye nearer: the same size');
+  // the view at the head (its blend 0): the world's own model, not drawn twice; past the grid still stood
+  s.draws.length = 0;
+  draw([1000, 480, 1000], true, 0);
   assert.ok(!s.draws.some((x) => x.key === 'dng:built'), 'at its own size over its pixel: left to the world');
   assert.ok(s.draws.some((x) => x.key === 'dng:far'));
+  s.draws.length = 0;
+  draw([1000, 480, 1000], true, 0.5);
+  assert.ok(near(s.draws.find((x) => x.key === 'dng:built').sy, 1 + (farEye - 1) / 2), 'halfway risen: halfway grown');
   // one gone from the set
   s.list = [{ key: 'dng:far', px: 9, py: 9 }];
   draw([1000, 480, 1000]);
@@ -306,7 +325,7 @@ test('OW-DUNGEONS the host\'s draw: under the view alone, the set kept in step (
   assert.ok(!map.has('dng:built'));
   assert.equal(s.loads.length, 2, 'the one still there not loaded again');
   // drawn from the exterior frame under the view alone, beside the grown wagon
-  assert.match(WORLD, /hcc\.draw\(renderer, null, tvf \? \{ selfGrow: tvf\.grow, grow: peerGrow \} : undefined, yardCull\);[^\n]*\n\s*if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null, tvf\.fullyUp\);/);
+  assert.match(WORLD, /hcc\.draw\(renderer, null, tvf \? \{ selfGrow: tvf\.grow, grow: peerGrow \} : undefined, yardCull\);[^\n]*\n\s*if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null, tvf\.fullyUp, tvf\.blend\);/);
   assert.match(WORLD, /pipeline\.keepPlaces\('owdungeon', TV_DUNGEON_MODELS_MAX\);/);
   assert.match(WORLD, /tvDngModels = \{ at: null, dg: -1, n: -1, list: \[\] \}; for \(const e of _tvDngModel\.values\(\)\) e\.hold\.release\(\); _tvDngModel\.clear\(\);   \/\/ OW-DUNGEONS: nor their models, once the view is cut/, 'a load forgets them');
 });

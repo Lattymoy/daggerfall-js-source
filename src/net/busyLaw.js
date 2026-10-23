@@ -15,7 +15,9 @@
 // these reads the same way for a moment without asking the database, for the clients that predate the gate.
 //
 // THE READS ARE ONLY READS. Each route below answers what stands and writes nothing (its handler checked statement by
-// statement), so a read held back loses nothing: its book keeps the last good view and asks again. Writes, sign-ins
+// statement), so a read held back loses nothing: its book keeps the last good view and asks again. (BUSY-HEART's two
+// write what a missed ask loses anyway, below; VENDOR-BOARD's region's traders keep their board once a version, a write a
+// held read only defers - AUDIT LEAN-READS C9.) Writes, sign-ins
 // and every act are never held - each keeps its own retry, and an act is never dropped (`call` sends it). Left out on
 // purpose: a read that may settle something on its way (the market's read, the chapters' list), the arena's board, and
 // the mint and the account's own state.
@@ -39,7 +41,7 @@ export const BUSY_READS = new Map([
   ['/v1/homes/decor', 'POST'],      // a home's pieces
   ['/v1/prof/pixels', 'POST'],      // a pixel's nodes - the hour's third busiest (29,249 asks)
   ['/v1/seats/list', 'POST'],       // the seats, from the isolate's kept rows
-  ['/v1/market/vendors', 'POST'],   // a region's traders
+  ['/v1/market/vendors', 'POST'],   // a region's traders - VENDOR-BOARD: its kept board written once a version, a write a shed read only defers (market.js vendorBoard)
   ['/v1/marks/balance', 'POST'],    // the Marks held
   ['/v1/guilds/invites', 'POST'],   // the invitations waiting
   ['/v1/realm/lineages', 'POST'],   // the account's lineages
@@ -48,6 +50,7 @@ export const BUSY_READS = new Map([
   ['/v1/heartbeat', 'POST'],        // BUSY-HEART: the box, the board, the post and the beat - the overload's busiest
   ['/v1/prof/motherlodes', 'POST'], // BUSY-HEART: the day's three, and its pick
   ['/v1/towns/econ', 'POST'],       // AUDIT TOWN-ECON 2 CLI-8: the towns' shares - a display read every page asks each keeping
+  ['/v1/festival/town', 'POST'],    // WITCH1: a town's Hearth Offerings, asked a minute while the festival is live (scenes/witchesHost.js)
 ]);
 
 /** Whether a call is one of the reads that stand back. */

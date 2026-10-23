@@ -133,7 +133,8 @@ named here and in Port-Ledger A.
   room (AUDIT L1-1, a fault older than the departures). The middle metal goes through the Mods pane's material switches
   as the race's does (AUDIT L1-4).
 - **ASF-DEATH**. Both death drops leave the condition they roll as `foundCondition`, SELL-AS-FOUND's mark, so online a
-  mended drop sells as it fell. The rolls and the draws are the mod's.
+  drop mended at a smith sells as it fell, and its owner's own mends a third more (MEND-THIRD, `Economy-Arc.md`). The
+  rolls and the draws are the mod's.
 - **The armour's condition, capped** (AUDIT SUGGESTIONS-1019 L1-2). 1.1.2 reads the armour drop's condition off a
   RANDOM piece's maximum; under the ramp that piece can be heavier plate than the drop, so the drop could stand at up to
   135% of its own maximum - an online sale over whole. It is never over its own piece's maximum now: the one change to

@@ -419,8 +419,8 @@
   {
     "name": "STUDIO1-bitmap-at-the-box",
     "file": "src/systems/textureReplacement.js",
-    "old": "return { ...(d ? { width: d.width, height: d.height } : size(record)), data: null, rgba: topDownRgba(d) }; },",
-    "new": "return { ...size(record), data: null, rgba: topDownRgba(d) }; },",
+    "old": "return { ...(m ? { width: m.width, height: m.height } : size(record)), data: null, rgba: topDownRgba(d), record, frame }; },",
+    "new": "return { ...size(record), data: null, rgba: topDownRgba(d), record, frame }; },",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -428,7 +428,7 @@
   {
     "name": "STUDIO1-no-box-to-fit",
     "file": "src/systems/textureReplacement.js",
-    "old": "    getBox: (record) => decodedOf(archive, record)?.box ?? null,",
+    "old": "    getBox: (record) => measuredOf(archive, record)?.box ?? null,",
     "new": "    getBox: () => null,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"

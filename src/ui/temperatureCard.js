@@ -115,7 +115,7 @@ export function temperatureCompareBlock(entity, item, wear = null) {
   g.append(el('dt', null, w.label), dd);
   dl.append(g);
   box.append(dl);
-  box.title = `The felt temperature where you stand, now and ${w.label === 'Without it' ? 'with it off' : 'wearing it'} (${BAND_TEXT}).`;
+  box.title = `The temperature you feel here, now and ${w.label === 'Without it' ? 'with it off' : 'wearing it'} (${BAND_TEXT}).`;
   return box;
 }
 
@@ -126,7 +126,7 @@ export function temperatureStatRows(entity) {
   if (!r || !r.rows.length) return [];
   return [
     ...r.rows.map((x) => [x.label, `${signedDegrees(x.value)}${x.note ? ` (${x.note})` : ''}`, null]),
-    [`= Felt (${r.label.toLowerCase()})`, r.text, `The lines above added together - ${BAND_TEXT}.`],
+    [`= Felt (${r.label.toLowerCase()})`, r.text, `The lines above added together (${BAND_TEXT}).`],
   ];
 }
 

@@ -209,9 +209,9 @@ test('AUDIT CARDS-6 D7/D8: a short deck\'s card reaches the player - answered by
     assert.notEqual(iliacRefusalText(w), accountRefusalText(w), `${w}: its own sentence`);
     assert.doesNotMatch(iliacRefusalText(w), /gold|stake|backup|gate/i, w);
   }
-  assert.equal(iliacRefusalText('cards-closed'), 'The realm is not vouching for decks right now. Try again later.');
+  assert.equal(iliacRefusalText('cards-closed'), 'The realm cannot check decks right now. Try again later.');
   assert.equal(iliacRefusalText('ranked-needs-account'), 'Ranked games need a registered account.');
-  assert.equal(iliacRefusalText('offline'), 'The realm is not answering - try again.');
+  assert.equal(iliacRefusalText('offline'), 'The realm is not answering. Try again.');
   assert.equal(iliacRefusalText('lease'), accountRefusalText('lease'), 'a word not Iliac Hand\'s own is REFUSALS\'');
   assert.ok(Object.isFrozen(ILIAC_REFUSALS));
 });
@@ -245,7 +245,7 @@ test('AUDIT CARDS-6 D9 (E17): the host\'s carrier reads a receipt\'s life on the
   assert.equal(c.add(receipt), true, 'kept - its life the relay\'s');
   await c.flush();
   assert.deepEqual(asked, [receipt], 'and carried');
-  assert.match(said[0], /your rating 1016 \(\+16\)/);
+  assert.match(said[0], /Your rating is 1016 \(\+16\)/);
 });
 
 // ═══ D10: A DELETED CHAMPION'S TITLE ═════════════════════════════════════════════════════════════════════════════════
@@ -368,12 +368,12 @@ test('AUDIT CARDS-6 E6/E14: the ranked vouch is a read - the realm not answering
     ['an answer lost, then the record one on (a read lands nothing)', lostThenMoved()]]) {
     const { ranked, lost } = hostRanked(door);
     const r = await ranked.vouch(STARTER_DECK);
-    assert.deepEqual(r, { ok: false, why: 'The realm is not answering - try again.' }, what);
+    assert.deepEqual(r, { ok: false, why: 'The realm is not answering. Try again.' }, what);
     assert.deepEqual(lost, [], `${what}: the session stands`);
   }
   const said = async (answer) => (await hostRanked(async () => answer).ranked.vouch(STARTER_DECK)).why;
   assert.equal(await said({ ok: false, error: 'deck-short', card: 'lich', status: 400 }), 'Your realm character does not hold every card of that deck (Lich).');
-  assert.equal(await said({ ok: false, error: 'cards-closed', status: 503 }), 'The realm is not vouching for decks right now. Try again later.');
+  assert.equal(await said({ ok: false, error: 'cards-closed', status: 503 }), 'The realm cannot check decks right now. Try again later.');
   assert.equal(await said({ ok: false, error: 'ranked-needs-account', status: 403 }), 'Ranked games need a registered account.');
   assert.deepEqual(await hostRanked(async () => ({ ok: true, data: { order: 'v1.deck.order' } })).ranked.vouch(STARTER_DECK), { ok: true, order: 'v1.deck.order' });
   assert.equal(hostRanked(async () => ({ ok: false })).ranked.why(), null, 'a registered realm character may play ranked');

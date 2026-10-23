@@ -292,7 +292,7 @@
   },
   {
     "name": "AEOW-T-models-rows-bay",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
     "new": "    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
     "tests": [
@@ -302,7 +302,7 @@
   },
   {
     "name": "AEOW-T-models-loc-index",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonModels.js",
     "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
     "new": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),",
     "tests": [

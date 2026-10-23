@@ -80,7 +80,7 @@ test('ARENA1 model: the hosts draw a climate-free model by its own table and giv
   assert.match(w, /addStatic\(cpu, local, climateFree\)/);   // PIN MOVED (AUDIT PRECIP HOST-7): the merge's models logged - a climate-free one by its own table
   assert.match(w, /staticBuilder\.add\(cpu, local, own \? ownTexKey : resolveTexKey, nm\)/);
   assert.match(w, /const ownTexKey = keyResolver\(NO_CLIMATE_REMAP\);/);
-  assert.match(w, /collider\.addMesh\(gateKey, cpu\.positions, cpu\.indices, local,/, 'the world host: the mesh collider of every placed model (the colosseum\'s tiers, floor and walls)');
+  assert.match(w, /late\.add\(gateKey, cpu\.positions, cpu\.indices, local,/, 'the world host: the mesh collider of every placed model (the colosseum\'s tiers, floor and walls)');   // PIN MOVED (ROCK-CLEAR): the pixel's solids through the world collider's gate (player/lateSolid.js; test/scenes/fb1019f_rockclear.test.js)
   const e = read('src/scenes/exterior.js');
   assert.match(e, /if \(isClimateFreeModel\(id\)\) continue;[^\n]*\n\s*await remapSubMeshes\(gpu\.subMeshes, texRemap, climateArchive, pipeline\);/);
   assert.match(e, /if \(isClimateFreeModel\(placed\.modelIdNum\)\) entry\.texRemap = NO_CLIMATE_REMAP;/);

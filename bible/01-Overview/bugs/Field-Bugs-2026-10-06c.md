@@ -120,7 +120,9 @@ Flowers were in the pack when he was clicked.
 panel standing behind and above them - the shape of the "red brick" teleporter flats (FLAT-RELAY,
 `01-Overview/bugs/Field-Bugs-2026-10-05c.md`, made a walked-into flat teleport fire). Checked: DFU gives an action flat a box
 collider sized to its billboard (RDBLayout.cs AddAction), and the port brackets the billboard the same way, its width
-deep (dungeonContext.js registerFlatAction); a teleport flat walked into fires since FLAT-RELAY. Whether the shelves
+deep (dungeonContext.js registerFlatAction); a teleport flat walked into fires since FLAT-RELAY. [AUDIT FB1021d FW-3: and
+no longer, since FLAT-WALK (`Field-Bugs-2026-10-21d.md`) - a flat's Teleport fires on a click or a blow, as DFU's; the red
+brick teleporter is a model's relay (72100), walked into as ever.] Whether the shelves
 stand in front of the teleporter in Daggerfall's own block, and how Daggerfall Unity reaches it there, is the block's
 data. Wanted: the dungeon's name (or the save) to read the block.
 

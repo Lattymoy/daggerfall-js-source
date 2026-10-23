@@ -52,8 +52,8 @@
   {
     "name": "CREW-HOLD-landHit-mine",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight });",
-    "new": "roll: random(), weight: e.weight });",
+    "old": "roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight }));",
+    "new": "roll: random(), weight: e.weight }));",
     "tests": [
       "test/systems/naval/crewhold.test.js"
     ],

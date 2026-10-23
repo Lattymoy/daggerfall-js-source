@@ -20,9 +20,9 @@
 /** The channel every tab of this origin shares. */
 export const SEAT_CHANNEL = 'dagger.online.seat';
 /** The line said in the chat when this tab gives the seat up. */
-export const SEAT_NOTICE = 'You went online in another tab, window or device, so this one is offline now. Press "Play online here" to play in this one instead.';
+export const SEAT_NOTICE = 'You went online in another tab, window or device, so this one is now offline. Click "Play online here" to play here instead.';
 /** The same, short, over the screen (ui/midScreenText.js) - what a player coming back to the tab reads first. */
-export const SEAT_MID_TEXT = 'Online in another tab or device - this one is offline.';
+export const SEAT_MID_TEXT = 'Online in another tab or device. This one is offline.';
 /** The button under the chat while this tab is out: it takes the seat back. */
 export const PLAY_HERE_LABEL = 'Play online here';
 

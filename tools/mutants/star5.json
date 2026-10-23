@@ -1,0 +1,823 @@
+[
+ {
+  "name": "STAR5-an-imp-in-band-1",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "Object.freeze([M.Spider, M.Spriggan, M.GiantBat]),",
+  "new": "Object.freeze([M.Spider, M.Imp, M.GiantBat]),",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-band-2-past-silver",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "Object.freeze([M.FireAtronach, M.IceAtronach, M.SkeletalWarrior, MEMBER]),",
+  "new": "Object.freeze([M.FireAtronach, M.IceAtronach, M.Daedroth, MEMBER]),",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-one-member-career",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "return c === MEMBER ? STAR_MEMBERS[(r >>> 8) % STAR_MEMBERS.length] : c;",
+  "new": "return c === MEMBER ? STAR_MEMBERS[0] : c;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-every-star-alike",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "pick(roster, starRoll(n, k, 300 + w * 32 + i))",
+  "new": "pick(roster, starRoll(n, 0, 300 + w * 32 + i))",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-band-unclamped",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "const bandOk = (b) => Math.max(1, Math.min(3, b | 0));",
+  "new": "const bandOk = (b) => b | 0;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-no-flesh",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "2: Object.freeze(['mother', 'flesh', 'mother']),",
+  "new": "2: Object.freeze(['mother', 'mother', 'mother']),",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-circle-first-wave",
+  "file": "src/systems/starfall/starCoven.js",
+  "old": "  const roster = STAR_ROSTERS[bandOk(band)][STAR_WAVES - 1];",
+  "new": "  const roster = STAR_ROSTERS[bandOk(band)][0];",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-deadline-edge",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "if (t < T.endAt) return 'fallen';",
+  "new": "if (t <= T.endAt) return 'fallen';",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-ring-outer",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "const r = STAR_STAND_R[0] + ((starRoll",
+  "new": "const r = STAR_STAND_R[1] + ((starRoll",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-facing-away",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "out.push([dx, dz, Math.atan2(-dx, -dz)]);",
+  "new": "out.push([dx, dz, Math.atan2(dx, dz)]);",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-level-unclamped",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "lv: Math.max(1, Math.min(60, level | 0)),",
+  "new": "lv: level | 0,",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-any-star-hunted",
+  "file": "src/characters/enemy/enemyTargets.js",
+  "old": "export const huntsStar = (self, ward) => self?.starSite != null && self.starSite === ward?.site && huntsCivilians(self);",
+  "new": "export const huntsStar = (self, ward) => self?.starSite != null && !!ward && huntsCivilians(self);",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-never-turned",
+  "file": "src/characters/enemy/enemyTargets.js",
+  "old": "if (star && !self.starTurned) priority += STAR_HUNT_PRIORITY;",
+  "new": "if (star) priority += STAR_HUNT_PRIORITY;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-no-priority",
+  "file": "src/characters/enemy/enemyTargets.js",
+  "old": "export const STAR_HUNT_PRIORITY = 40;",
+  "new": "export const STAR_HUNT_PRIORITY = 0;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-team-chain",
+  "file": "src/characters/enemy/enemyTargets.js",
+  "old": "if (bout !== true && !civilian && !star) {",
+  "new": "if (bout !== true && !civilian) {",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-a-warded-nothing",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "? Math.max(1, Math.round(damage * STAR_CIRCLE_SHARE)) : damage;",
+  "new": "? Math.round(damage * STAR_CIRCLE_SHARE) : damage;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-a-kill-warded",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "const warded = !_whole && damage > 0 && f.circleWard?.()",
+  "new": "const warded = damage > 0 && f.circleWard?.()",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-no-ward",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "const healthDamage = bypassShield ? warded : damageShieldPool(f.entity, warded);",
+  "new": "const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-star-full-blows",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "calculateAttackDamage: _foeTarget.civilian || _foeTarget.starWard ? QUARRY_BLOW : calculateAttackDamage,",
+  "new": "calculateAttackDamage: _foeTarget.civilian ? QUARRY_BLOW : calculateAttackDamage,",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-any-part",
+  "file": "src/world/worldOfDaggerfall/wodShared.js",
+  "old": "star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/;",
+  "new": "star\\.\\d{1,10}\\.[0-2](?:\\.[a-z])?)$/;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-no-window-filter",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": ".filter((s) => starInWindow(s.n, s.k))",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-no-festival-days",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (!starfallStands(t)) { this.destroyAll(); return null; }",
+  "new": "if (!Number.isFinite(t)) { this.destroyAll(); return null; }",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-omen-everywhere",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (S.phase === 'omen' && inRegion(S)) {",
+  "new": "if (S.phase === 'omen') {",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-said-again",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (!text || S.said.has(id)) return;",
+  "new": "if (!text) return;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-whole-wave-again",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "Math.max(0, L.wz - L.kn - S.waveFoes.size)",
+  "new": "L.wz",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-any-death-a-kill",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (!f.puppet && S.waveFoes.has(f)) S.kn++;",
+  "new": "if (!f.puppet) S.kn++;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-counted-again",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "        if (S.counted.has(k)) continue;\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-a-body-not-needed",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (!f.corpse) continue;   // gone without a body",
+  "new": "if (false) continue;   // gone without a body",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-cleared-early",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "[...S.waveFoes].every((f) => f.dead)) S.wc = L.w;",
+  "new": "[...S.waveFoes].some((f) => f.dead)) S.wc = L.w;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-any-ward",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (S.own && S.phase === 'fallen' && S.known) out.push(S.ward);",
+  "new": "if (S.phase === 'fallen' && S.known) out.push(S.ward);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-blows-forgotten",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "        blows.set(S.hbWho, S.key, S.hb, S.site.n);\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-call-late",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "e.health / e.maxHealth <= STAR_CIRCLE_AT[S.calls]",
+  "new": "e.health / e.maxHealth < STAR_CIRCLE_AT[S.calls]",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-circle-unsized",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "const size = starCircleSize(L.nd, S.heartStar);",
+  "new": "const size = starCircleSize(0, S.heartStar);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-never-warded",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "f.circleWard = () => (S.circle | 0) > 0;",
+  "new": "f.circleWard = () => false;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-never-broken",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "    if (circle > 0) S.circleSeen = circle;\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-no-fall",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (f.site === S.sites.m && !f.puppet) S.mf = true;",
+  "new": "if (false) S.mf = true;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-held-fought-on",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "const over = held.has(S.key) || L?.p === P_HELD || L?.p === P_LOST || S.phase !== 'fallen';",
+  "new": "const over = held.has(S.key) || L?.p === P_LOST || S.phase !== 'fallen';",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-held-said-again",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "const first = !held.get(key)?.c;",
+  "new": "const first = true;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-peer-ignored",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (!(camp.peerHeldAgo?.(S.sites.base) >= STAR_ORPHAN_MS)) return false;",
+  "new": "if (false) return false;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-race-kept",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "else if (S.own && (camp.peerSprang?.(S.sites.base) || leashSlipped(S, t, inside))) dropDefense(S);",
+  "new": "else if (S.own && leashSlipped(S, t, inside)) dropDefense(S);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-compass-any-region",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (!inRegion(S) || S.phase === 'none' || S.phase === 'gone') continue;",
+  "new": "if (S.phase === 'none' || S.phase === 'gone') continue;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-blows-no-news",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "export const starWordKey = (w) => `${w.s}.${w.o}.${w.kw}.${w.kn}.${w.wc}.${w.hb}.${w.mf}`;",
+  "new": "export const starWordKey = (w) => `${w.s}.${w.o}.${w.kw}.${w.kn}.${w.wc}.${w.mf}`;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-beacon-undimmed",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "L.lost ? 0 : Math.min(1, since / 3000) * dim;",
+  "new": "L.lost ? 0 : Math.min(1, since / 3000);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-lost-beacon-lit",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "L.lost ? 0 : Math.min(1, since / 3000) * dim;",
+  "new": "Math.min(1, since / 3000) * dim;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C1-nothing-claimed",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "    if (!S.pending) claim(S, L);\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C1-no-hunter-of-the-star",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "    f.starSite = S.sites.base;\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C1-the-handed-no-wave",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "      for (const f of S.handed) if (!f.dead) S.waveFoes.add(f);",
+  "new": "      S.handed.size;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C1-the-whole-wave-over-them",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "Math.max(0, L.wz - L.kn - S.waveFoes.size)",
+  "new": "Math.max(0, L.wz - L.kn)",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C1-the-master-not-taken",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "        masterOf(S, f, M);\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C1-its-calls-made-again",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "        S.calls = Math.max(S.calls, STAR_CIRCLE_AT.filter((at) => share <= at).length);",
+  "new": "        S.calls = Math.max(S.calls, 0 * share);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C2-the-old-spring",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "inside = d <= STAR_SAY_M;",
+  "new": "inside = d <= 80;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C2-never-given-up",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "return t - S.awayAt >= STAR_ORPHAN_MS;",
+  "new": "return false;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C2-given-up-at-once",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "return t - S.awayAt >= STAR_ORPHAN_MS;",
+  "new": "return true;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C4-never-again",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "    if (L.p === P_MASTER && S.masterStood && !S.master && now() - S.standAt >= STAR_RESTAND_MS) S.masterStood = false;\n",
+  "new": "",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C4-again-over-one",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (L.p === P_MASTER && S.masterStood && !S.master && now()",
+  "new": "if (L.p === P_MASTER && S.masterStood && now()",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C5-the-last-stars-torn-down",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "starfallRuns(nowMs) || starfallRuns(nowMs - STAR_LIFE_MS - STAR_AFTER_MS);",
+  "new": "starfallRuns(nowMs);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C6-one-count-a-device",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "whoNow.id = `${acct ?? '-'}|${characterIdOf(playerEntity) ?? '-'}`;",
+  "new": "whoNow.id = `-|${characterIdOf(playerEntity) ?? '-'}`;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C6-the-credit-unheard",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "      creditedSaid(key, w.n, w.hm);",
+  "new": "      void w.hm;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C6-the-credit-lowers",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "    if (hm <= had) return;",
+  "new": "    if (hm === had) return;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C7-no-bound",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "careers.slice(0, Math.max(0, STAR_LIVE_MAX - liveOf(S))).forEach(",
+  "new": "careers.forEach(",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C7-the-camps-allowance",
+  "file": "src/world/worldOfDaggerfall/wodShared.js",
+  "old": "export const WOD_STAR_PUPPETS_MAX = 45;",
+  "new": "export const WOD_STAR_PUPPETS_MAX = 16;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-C7-a-star-a-camp",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "const kindOf = (t, site, dp, qq, rd) => (site && isStarSite(site) ? 'star' : kind(t, site, dp, qq, rd));",
+  "new": "const kindOf = kind;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-master-no-world-boss",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "f.entity.properName = M.name(); f.entity.worldBoss = true; }",
+  "new": "f.entity.properName = M.name(); }",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-a-copy-no-world-boss",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (f.site === S.sites.m && e.worldBoss !== true) e.worldBoss = true;",
+  "new": "if (false) e.worldBoss = true;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-every-witch-a-world-boss",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (f.site === S.sites.m && e.worldBoss !== true) e.worldBoss = true;",
+  "new": "if (e.worldBoss !== true) e.worldBoss = true;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R1-the-collider-left-behind",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (S.colliderGen === S.stoneGen && sameMatrix(S.colliderAt, S.mat)) return;",
+  "new": "if (S.colliderGen === S.stoneGen) return;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R1-the-band-unplaced",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "        if (S.mesh) place(S);",
+  "new": "        if (S.mesh && d <= STAR_BUILD_M) place(S);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R2-the-beacon-unclamped",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "sky.beacons.push({ origin: c.at, scale: c.s, fade, held: L.held });",
+  "new": "sky.beacons.push({ origin: [S.heart[0], S.heart[1] + STAR_STONE_H, S.heart[2]], scale: 1, fade, held: L.held });",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R3-no-ground-read",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "g[i * 2 + j] = (Number.isFinite(y) ? y - S.heart[1] : 0) + rimAt(rr);",
+  "new": "g[i * 2 + j] = rimAt(rr);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R3-one-edge",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "const rr = j ? r + STAR_RING_WIDTH_M : Math.max(0, r - STAR_RING_WIDTH_M);",
+  "new": "const rr = r;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R4-the-floor-not-pulled",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(STAR_FLOOR_OFFSET[0], STAR_FLOOR_OFFSET[1]);",
+  "new": "gl.polygonOffset(STAR_FLOOR_OFFSET[0], STAR_FLOOR_OFFSET[1]);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R7-the-strike-with-the-flash",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (d <= 2000) thunders.push({ due: T.fallAt + starHeardAfterMs(d), key: S.key, clip: null, volume: 1 });",
+  "new": "if (d <= 2000) playStarSound(audio, 'impact', S.heart);",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R8-said-as-it-came",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "    if (!L || !was) return;",
+  "new": "    if (!L) return;",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R9-the-coarse-each-frame",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "if (frameN - S.coarseAt >= STAR_COARSE_EVERY) {",
+  "new": "if (frameN >= S.coarseAt) {",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R9-built-in-the-frame",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "      if (stars.size) warmPass();",
+  "new": "      if (stars.size) ensurePass();",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-wave-no-news",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "export const starWordKey = (w) => `${w.s}.${w.o}.${w.kw}.${w.kn}.${w.wc}.${w.hb}.${w.mf}`;",
+  "new": "export const starWordKey = (w) => `${w.s}.${w.o}.${w.kn}.${w.wc}.${w.hb}.${w.mf}`;",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-deaths-of-no-wave-said",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "kn: kw ? Math.max(0, Math.min(99, mine.kn | 0)) : 0",
+  "new": "kn: Math.max(0, Math.min(99, mine.kn | 0))",
+  "tests": [
+   "test/systems/starfall/star5_defense.test.js"
+  ]
+ },
+ {
+  "name": "STAR5-the-word-names-no-wave",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "kw: S.stoodWave, kn: S.kn",
+  "new": "kw: 0, kn: S.kn",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-the-grace-dark",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "const undecided = (S, t) => S.phase === 'fallen' || (S.phase === 'after' && t < starLostAt(S.site.n, S.site.k));",
+  "new": "const undecided = (S, t) => S.phase === 'fallen';",
+  "tests": [
+   "test/scenes/starfall/star5_host.test.js"
+  ]
+ },
+  {
+    "name": "STAR-TUNE-the-coven-as-the-road",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "        if (site !== S.sites.m) toughen(f);",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "the coven's foes stand as the road's - too few to matter and dead too soon"
+  },
+  {
+    "name": "STAR-TUNE-the-master-toughened",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "if (site !== S.sites.m) toughen(f);",
+    "new": "toughen(f);",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "the master, an elite already, twice again"
+  },
+  {
+    "name": "STAR-TUNE-the-crater-hollow",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "buildStarModel(S.site.n, S.site.k, h, { thread: false });   // STAR-TUNE",
+    "new": "buildStarModel(S.site.n, S.site.k, h, { ground: false, thread: false });   // STAR-TUNE",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "the stone alone in the collider - the rim walked through"
+  },
+  {
+    "name": "STAR-TUNE-the-gate-passed",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "late.remove(key); late.add(key, S.stone.positions, S.stone.indices, S.mat); }",
+    "new": "late.remove(key); col.addMesh(key, S.stone.positions, S.stone.indices, S.mat); }",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "a crater built round a body on its rim closes on it"
+  },
+  {
+    "name": "STAR-TUNE-a-stand-under-the-rim",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (d != null) return { y: top - d, hitDist: 0.2 };\n",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "a foe stood on the rim lands on the land under it, inside the rim"
+  },
+  {
+    "name": "STAR-TUNE-the-coven-out-far",
+    "file": "src/systems/starfall/starfallClient.js",
+    "old": "export const STAR_STAND_R = Object.freeze([14, 20]);",
+    "new": "export const STAR_STAND_R = Object.freeze([25, 35]);",
+    "tests": [
+      "test/systems/starfall/star5_defense.test.js"
+    ],
+    "note": "the first run's stand, 25 to 35 m out - a wave's first seconds spent walking in"
+  },
+  {
+    "name": "STAR-TUNE-the-camps-grant",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": ", grantKind: session()?.starGrantOk ? 'star' : undefined }))",
+    "new": " }))",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "a star's stand asks the camps' grant - nine a grant, the camps' bucket spent"
+  },
+  {
+    "name": "STAR-TUNE-the-rolls-shared",
+    "file": "src/systems/starfall/starfallClient.js",
+    "old": "STAR_STAND_ROLLS + w * 32 + i) % 1000",
+    "new": "STAR_STAND_ROLLS + w * 16 + i) % 1000",
+    "tests": [
+      "test/systems/starfall/star5_defense.test.js"
+    ],
+    "note": "a wave of twenty-four shares its last places' rolls with the next wave's first"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F1-star-asked-of-any-relay",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "grantKind: session()?.starGrantOk ? 'star' : undefined",
+    "new": "grantKind: 'star'",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F1: a relay before world238 is asked a kind it does not mint - under enforce no wave stands, under grantStrip the coven is its owner's alone"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F1-the-relay-min-moved",
+    "file": "src/net/grantLaw.js",
+    "old": "export const STAR_GRANT_RELAY_MIN = 238;",
+    "new": "export const STAR_GRANT_RELAY_MIN = 237;",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F1: world237 is asked the star's kind it refuses"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F4-the-rebuild-replaced",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "if (S.colliderAt && S.colliderGen === S.stoneGen) late.replace(",
+    "new": "if (S.colliderAt) late.replace(",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F4: a crater built again round a body on its rim stood at once, the body's check skipped"
+  }
+]

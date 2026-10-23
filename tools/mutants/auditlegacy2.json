@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-LEGACY-II-H1-offline-copy-keeps-lineage",
     "file": "src/systems/offlineCopy.js",
-    "old": "  if (!copy || typeof copy !== 'object') return copy;\n  dropLineage(copy);\n  const own",
-    "new": "  if (!copy || typeof copy !== 'object') return copy;\n  const own",
+    "old": "  if (!copy || typeof copy !== 'object') return copy;\n  dropLineage(copy);\n  dropSeason(copy);\n  const own",
+    "new": "  if (!copy || typeof copy !== 'object') return copy;\n  dropSeason(copy);\n  const own",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-LEGACY-II-H1-customs-keeps-lineage",
     "file": "src/systems/offlineCopy.js",
-    "old": "  dropLineage(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
-    "new": "  if (!Number.isFinite(worldNow)) return copy;",
+    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
+    "new": "  dropSeason(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
     ]

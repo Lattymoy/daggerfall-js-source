@@ -11,14 +11,14 @@
 // the head first (MAP-POV's law).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { sheetHolderOf } from '../../../src/combat/weapon/weaponRig.js';
 import { createTownMapWindow } from '../../../src/ui/town/townMapDoor.js';
 import { createAutomapWindow } from '../../../src/ui/automap/automapDoor.js';
 import { HeldMapWindow } from '../../../src/ui/heldMap.js';
 import { setPref } from '../../../src/systems/uiPrefs.js';
+import { hostText } from '../../hostText.mjs';
 
-const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
 function fakeDocument() {
   const node = () => ({ children: [], style: {}, dataset: {}, classList: { add() {}, remove() {}, toggle() {}, contains: () => false }, append() {}, appendChild() {}, remove() {}, replaceChildren() {}, setAttribute() {}, removeAttribute() {}, addEventListener() {}, removeEventListener() {}, querySelector: () => null, querySelectorAll: () => [], getBoundingClientRect: () => ({ width: 0, height: 0, left: 0, top: 0 }), focus() {}, blur() {}, getContext: () => null });
   const body = node();
@@ -66,7 +66,9 @@ test('MW-MAP1: the two M-key doors hand the holder to the enhanced window - the 
 test('MW-MAP1: by source - every host with a rig hands sheetHolderOf(() => its rig) to every door it opens and goes into the head first; the travel builder reads the same holder and keeps no inline one; the ?interior host passes none', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /holder: sheetHolderOf\(\(\) => weaponRig\),\s*\n\s*\.\.\.extra,/, 'the V-key travel builder');
-  assert.match(w, /if \(!townMapDoorReady\(\)\) return;[^\n]*\n\s*mwViewFirstPerson\(\);[^\n]*\n\s*townTalk\.showOverlay\(createTownMapWindow\(\{\s*\n\s*holder: sheetHolderOf\(\(\) => weaponRig\),/, 'the world host\'s M: into the head, then the town plan with the holder');
+  // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the bag (with the holder) built by `townHere`, then into the head, then the town plan
+  assert.match(w, /if \(!townMapDoorReady\(\)\) return;[^\n]*\n\s*mwViewFirstPerson\(\);[^\n]*\n\s*townTalk\.showOverlay\(createTownMapWindow\(here\.deps\)\);/, 'the world host\'s M: into the head, then the town plan');
+  assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, deps: \{\s*\n\s*holder: sheetHolderOf\(\(\) => weaponRig\),/, '...with the holder');
   assert.equal((w.match(/hold: \(spec, opts\)/g) ?? []).length, 0, 'no inline holder left in world.js');
   const e = rd('src/scenes/exterior.js');
   assert.match(e, /if \(!townMapDoorReady\(\)\) return;[^\n]*\n\s*mwViewFirstPerson\(\);[^\n]*\n\s*townTalk\.showOverlay\(createTownMapWindow\(\{\s*\n\s*holder: sheetHolderOf\(\(\) => weaponRig\),/, 'the ?exterior host\'s M');

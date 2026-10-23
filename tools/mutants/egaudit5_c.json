@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-3-panel-mark-newest",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (base + y === focus) b.className = 'eg-focus';",
-    "new": "if (a === model.asks.at(-1) && y === focus) b.className = 'eg-focus';",
+    "old": "if (base + y === focus) b.className += ' eg-focus';",
+    "new": "if (a === model.asks.at(-1) && y === focus) b.className += ' eg-focus';",
     "tests": [
       "test/net/eliteGates/egaudit5_c.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-9-no-close",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "  if (recap) { const row = doc.createElement('div');",
-    "new": "  if (false) { const row = doc.createElement('div');",
+    "old": "  if (recap) { const dock = egEl(doc, 'div', 'eg-k-dock');",
+    "new": "  if (false) { const dock = egEl(doc, 'div', 'eg-k-dock');",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-9-close-deaf",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "b.addEventListener?.('click', () => onClose()); row.append(b); panel.append(row); }",
-    "new": "row.append(b); panel.append(row); }",
+    "old": "b.addEventListener?.('click', () => onClose()); dock.append(b); panel.append(dock); }",
+    "new": "dock.append(b); panel.append(dock); }",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -588,8 +588,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-9-enter-on-touch",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "recap ? (touch ? '' : 'Press Enter to close.')",
-    "new": "recap ? 'Press Enter to close.'",
+    "old": "recap ? (touch ? '' : EG_PANEL_TEXT.noteRecap)",
+    "new": "recap ? EG_PANEL_TEXT.noteRecap",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -804,8 +804,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-19-panel-runs-unasked",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "      const lines = egBoardLines(board, t, { runs: t === 'runs' ? runs() : [] });",
-    "new": "      const lines = egBoardLines(board, t, { runs: [] });",
+    "old": "      const view = egBoardView(board, k, { runs: k === 'runs' ? runs() : [] });",
+    "new": "      const view = egBoardView(board, k, { runs: [] });",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -975,7 +975,7 @@
   {
     "name": "AUDIT-EG-V-c-L8-6-card-unbuilt",
     "file": "src/systems/item/itemInfo.js",
-    "old": " || isWeirKey(item)) record = survivalInfoTokens(item);",
+    "old": " || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
     "new": ") record = survivalInfoTokens(item);",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"

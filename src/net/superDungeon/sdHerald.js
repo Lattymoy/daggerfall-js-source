@@ -58,7 +58,7 @@ const mentions = (role) => (role ? { roles: [role] } : { parse: [] });
  */
 export function sdRisePost({ rec, role = null }) {
   return {
-    content: `${ping(role)}**A bell rings where there is no bell: an Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the city it stands by speak of it. No map shows it - the first to stand at its door finds it. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
+    content: `${ping(role)}**A bell rings where there is no bell. An Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
     allowed_mentions: mentions(role),
   };
 }
@@ -71,7 +71,7 @@ export function sdRisePost({ rec, role = null }) {
 export function sdFoundPost({ rec, role = null }) {
   const name = sdHeraldName(rec.s);
   return {
-    content: `${ping(role)}**${sdFoundLine({ who: heraldName(rec.fb) || 'Someone', near: '', region: sdRegionName(rec.r) })}** ${name ?? 'It'} is on every map now. Fight through it to the Rift at its end: the Shattered Hour waits beyond, one life each to break it before it fades ${heraldStamp(rec.until, 'R')}.`,
+    content: `${ping(role)}**${sdFoundLine({ who: heraldName(rec.fb) || 'Someone', near: '', region: sdRegionName(rec.r) })}** ${name ?? 'It'} is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades ${heraldStamp(rec.until, 'R')}. Each fighter has one life.`,
     allowed_mentions: mentions(role),
   };
 }

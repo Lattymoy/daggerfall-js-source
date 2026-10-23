@@ -134,7 +134,9 @@ test('AUDIT 58: all three foe damage doors consult the Shield pool, and the zero
   // exactly as the player does. Only the player's door consumed it.
   for (const [file, sub] of [
     ['scenes/dungeonContext.js', 'const healthDamage = bypassShield ? damage : damageShieldPool(foe.entity, damage);'],
-    ['scenes/exteriorFoes.js', 'const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);'],
+    // PIN MOVED (STAR5): a master's circle wards the blow first (its share, scenes/starfall/starfallHost.js circleWard) - the
+    // pool then consults what is left, at the subtraction as before
+    ['scenes/exteriorFoes.js', 'const healthDamage = bypassShield ? warded : damageShieldPool(f.entity, warded);'],
     ['scenes/cityGuards.js', 'const healthDamage = bypassShield ? damage : damageShieldPool(g.entity, damage);'],
   ]) {
     const s = src(file);

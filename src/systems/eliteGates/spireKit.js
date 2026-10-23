@@ -12,7 +12,7 @@ import { madeRuleHere } from '../madeLevel.js';   // EG-H2 (Elite-Gates.md secti
 /** The classic Heal-Health effect key (HealHealth.cs - group 10, subgroup 8). */
 export const SPIRE_RESTORING_EFFECT = '10,8';
 /** The refusal's words. */
-export const SPIRE_POTION_TEXT = 'The Spire allows two restoring potions a hall. The next wake or Redoubt fills them again.';
+export const SPIRE_POTION_TEXT = 'You can drink 2 restoring potions a hall. They refill when the next hall wakes or at a Redoubt.';
 
 /** The restoring recipes' keys (the effect or a secondary heals health). */
 const RESTORING_KEYS = new Set(/** @type {any[]} */ (POTION_RECIPES).filter((r) => r.effect === SPIRE_RESTORING_EFFECT || (r.secondary ?? []).includes(SPIRE_RESTORING_EFFECT)).map((r) => potionRecipeKey(r.ingredients)));

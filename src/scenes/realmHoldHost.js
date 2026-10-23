@@ -27,14 +27,14 @@ export function piecesLockedNotice(/** @type {string[]} */ names, /** @type {num
   if (!(count > 0)) return null;
   if (count === 1) {
     return names[0]
-      ? t('realm.locked.named', 'The realm has locked your {name}: it found the same piece somewhere else too. A locked piece stays with you - it cannot be traded, sold, dropped or stored where others can take it. Your other pieces and your trading are not affected.', { name: names[0] })
-      : t('realm.locked.one', 'The realm has locked one of your pieces: it found the same piece somewhere else too. A locked piece stays with you - it cannot be traded, sold, dropped or stored where others can take it. Your other pieces and your trading are not affected.');
+      ? t('realm.locked.named', 'The realm has locked your {name}: it found the same piece somewhere else too. It stays with you and cannot be traded, sold, dropped or stored where others can take it. Your other pieces and your trading are not affected.', { name: names[0] })
+      : t('realm.locked.one', 'The realm has locked one of your pieces: it found the same piece somewhere else too. It stays with you and cannot be traded, sold, dropped or stored where others can take it. Your other pieces and your trading are not affected.');
   }
   const shown = names.slice(0, NAMED_MAX);
-  if (!shown.length) return t('realm.locked.many', 'The realm has locked {n, number} of your pieces: it found the same pieces somewhere else too. Locked pieces stay with you - they cannot be traded, sold, dropped or stored where others can take them. Your other pieces and your trading are not affected.', { n: count });
+  if (!shown.length) return t('realm.locked.many', 'The realm has locked {n, number} of your pieces: it found the same pieces somewhere else too. They stay with you and cannot be traded, sold, dropped or stored where others can take them. Your other pieces and your trading are not affected.', { n: count });
   const more = count - shown.length;
   const list = more > 0 ? t('realm.locked.listMore', '{names} and {n, number} more', { names: shown.join(', '), n: more }) : shown.join(', ');
-  return t('realm.locked.manyNamed', 'The realm has locked {n, number} of your pieces ({list}): it found the same pieces somewhere else too. Locked pieces stay with you - they cannot be traded, sold, dropped or stored where others can take them. Your other pieces and your trading are not affected.', { n: count, list });
+  return t('realm.locked.manyNamed', 'The realm has locked {n, number} of your pieces ({list}): it found the same pieces somewhere else too. They stay with you and cannot be traded, sold, dropped or stored where others can take them. Your other pieces and your trading are not affected.', { n: count, list });
 }
 
 /** AUDIT AUTO-HOLD: the ledger keys of the pieces a save holds BEYOND the character's own five lists - a room's chest, a

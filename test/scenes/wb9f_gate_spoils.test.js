@@ -243,8 +243,9 @@ test('WB9f the court: his spoils kept on the floor of the court he fell in, SPEW
 
 test('WB9f the seams, by source: the court stands the spoils and their words where it is stood; the dungeon arm\'s press takes a piece through the host before any loot rung; the plaque\'s list asks the host; the world host hands the pool to all four and names an item as the loot piles do (mutants: each seam removed)', () => {
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /ctx\.addActivationTargets\(\(\) => host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\);/);
-  assert.match(wm, /ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('spoil'\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);/);
+  const gs = read('src/scenes/gate/gateStand.js');   // WB14b (PIN MOVED): the court is stood out of the host
+  assert.match(gs, /ctx\.addActivationTargets\(\(\) => host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\);/);
+  assert.match(gs, /ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('spoil'\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);/);
   const press = wm.indexOf("if (key.startsWith('spoil')) { quickLootSpend(); host.takeSpoil?.(key); return true; }");   // AUDIT WB9 (spoils F2): the armed key spent on it
   assert.ok(press > 0, 'the press rung');
   assert.ok(press > wm.indexOf('if (_pick.distance > _pick.reach) { setMidScreenText(tooFarAwayText()); return true; }', press - 2000), 'after the reach is judged');

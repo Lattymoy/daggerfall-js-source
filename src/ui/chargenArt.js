@@ -46,6 +46,7 @@ import { FntFile } from '../formats/fntFile.js';   // AUDIT 18: FONT0002, Dagger
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
+import { reviseClassDescription } from '../systems/stockClasses.js';   // CLASS-USE: the description names the revised skills
 import { daggerY, tickDaggerTrails, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a; CG1 the trail machine
 import { labelRows, labelFor, LABEL_ORIGIN, LABEL_HIT_HEIGHT } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
@@ -258,7 +259,7 @@ const QUESTION_TEXT_COLOR = [0, 0, 0, 1];
 /** The rows a class-description box carries, or null. */
 export function classDescriptionLines(classIndex) {
   const rows = _art?.textRsc?.linesById(CLASS_DESCRIPTION_TEXT_ID + classIndex) ?? [];
-  return rows.length ? rows : null;
+  return rows.length ? reviseClassDescription(classIndex, rows) : null;
 }
 
 /** U20a: a bare TEXT.RSC record as box rows, or null - the builder's

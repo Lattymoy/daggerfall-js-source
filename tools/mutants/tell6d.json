@@ -175,8 +175,8 @@
   {
     "name": "TELL6d-every-archer",
     "file": "src/ai/tactics.js",
-    "old": "  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && ent.mobileType >= 128;",
-    "new": "  return !!ent && !!ai?.hasBowAttack && ent.mobileType >= 128;",
+    "old": "  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);",
+    "new": "  return !!ent && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]

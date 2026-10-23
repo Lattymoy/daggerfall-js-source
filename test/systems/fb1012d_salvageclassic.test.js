@@ -125,7 +125,7 @@ test('SALVAGE-CLASSIC: the class - every DFU magic row whatever its kind, a guil
 
 test('SALVAGE-CLASSIC: the Salvage page lists the classic piece after every piece that breaks - "Classic magic", no shards, why in its title; its press does nothing and the every-Magic sweep passes it by', () => {
   on();
-  assert.equal(REFORGE_REFUSALS.classic, 'Classic magic will not break - the guilds sell and make it; shards come from a piece the loot ladder graded');
+  assert.equal(REFORGE_REFUSALS.classic, "Classic magic items can't be salvaged. Only pieces with a rarity give shards");
   withDom((dom) => {
     const dagger = reported();
     const a = graded('magic', 21);
@@ -174,7 +174,7 @@ test('SALVAGE-CLASSIC: the pack card offers Salvage on the classic piece, and it
   globalThis.location = { search: '?skin=enhanced' };
   const dagger = reported();
   const name = itemLongName(dagger);
-  assert.equal(SALVAGE_CLASSIC(name), 'Blazing Holy Dagger of Fireballs will not break: its magic is classic, the kind the guilds sell and make. Welkynd Shards come only from a piece the loot ladder graded.');
+  assert.equal(SALVAGE_CLASSIC(name), 'Blazing Holy Dagger of Fireballs will not break: its magic is the classic kind the guilds sell and make. Welkynd Shards come only from loot with a rarity grade.');
   withDom((dom) => {
     const host = dom.mk('div');
     dom.body.append(host);

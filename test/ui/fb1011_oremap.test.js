@@ -35,10 +35,10 @@ test('ORE-MAP: the card says a pixel\'s veins, its dungeons\', its kingdom\'s ow
     'Sentinel\'s own ore: Ebony', 'Not yet witnessed: no Gold or Ebony here yet', ORE_WITNESS_RULE,
   ], 'the desert\'s Gold and Ebony wait on the witnesses');
   assert.deepEqual(oreMapTip({ climate: CLIMATES.Mountain, region: ORSINIUM, fact: { state: 'confirmed' } }).lines.slice(2), [
-    `${REGION_NAMES[ORSINIUM]}'s own ore: Orichalcum`, 'Witnessed ground: all its veins can stand here',
+    `${REGION_NAMES[ORSINIUM]}'s own ore: Orichalcum`, 'Witnessed ground: every vein can appear here',
   ], 'a Free Land\'s own, by its name; witnessed ground holds all of it');
-  assert.equal(oreMapTip({ climate: CLIMATES.Mountain, region: ORSINIUM, fact: { state: 'disputed' } }).lines.at(-1), 'Witnessed ground: all its veins can stand here', 'a disputed pixel keeps its confirmed answer');
-  assert.deepEqual(oreMapTip({ climate: CLIMATES.Woodlands, region: BETONY, fact: { state: 'none' } }).lines.slice(2), ['No vein here waits on witnesses'], 'a March\'s woodland - no crown\'s own ore - holds nothing over Silver');
+  assert.equal(oreMapTip({ climate: CLIMATES.Mountain, region: ORSINIUM, fact: { state: 'disputed' } }).lines.at(-1), 'Witnessed ground: every vein can appear here', 'a disputed pixel keeps its confirmed answer');
+  assert.deepEqual(oreMapTip({ climate: CLIMATES.Woodlands, region: BETONY, fact: { state: 'none' } }).lines.slice(2), ['No vein here needs witnesses'], 'a March\'s woodland - no crown\'s own ore - holds nothing over Silver');
   assert.equal(oreMapTip({ climate: CLIMATES.Ocean, region: GLENUMBRA }), null, 'the sea stands no vein');
   assert.equal(oreWord('ore:mithril'), 'Mithril');
   assert.equal(oreWord('ore:dwarven'), 'Dwarven Scrap');
@@ -74,7 +74,7 @@ test('ORE-MAP: the world host hands the held map the card online, asks a pixel\'
   // PIN MOVED (MINE-PERKS, Professions-Arc 43): and whether the reader is a Surveyor, whose own word witnesses the ground
   assert.match(w, /return oreMapTip\(\{ climate: maps\.getClimateIndex\(px, py\), region: maps\.getRegionIndexAt\(px, py\), fact, surveyed \}\);/, 'the ground\'s own climate and region, as the gathering host reads them');
   assert.match(w, /pixelInfo: \(x, y\) => \{ try \{ return \{ climate: maps\.getClimateIndex\(x, y\), region: maps\.getRegionIndexAt\(x, y\) \}; \}/, 'the same reads the veins stand by');
-  assert.match(MINING_GROUND_LINE, /Point at bare ground on the world map to see what its veins hold and whether it is witnessed yet\.$/);
+  assert.match(MINING_GROUND_LINE, /Point at open ground on the world map to see what its veins hold and whether it has been witnessed yet\.$/);   // VOICE1 (PIN MOVED): the same law in plain words
   // the gathering host's ask: a pixel it stands, answered as changed, is stood again
   const WOODS = CLIMATES.Woodlands, PX = 405, PY = 150, DAY = 20500;
   const law = veins({ x: PX, y: PY, day: DAY, climate: WOODS, region: GLENUMBRA, confirmed: false });

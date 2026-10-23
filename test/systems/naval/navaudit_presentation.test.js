@@ -792,7 +792,7 @@ test('AUDIT NAV1 (the presentation) THE SKINS AND THE WORDS: the kit\'s face on 
   assert.equal(144, 72 + 48 + 8 + 16, 'the menu\'s press, air, and the right margin');
   assert.equal(56, (72 + 48 + 8 - 16) / 2, 'centred in what is left');
   const host = readFileSync(new URL('../../../src/scenes/naval/navalHost.js', import.meta.url), 'utf8');
-  assert.ok(host.includes("`Grappling hooks! ${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside - repel boarders!`"));
+  assert.ok(host.includes("`Grappling hooks! ${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside. Repel boarders!`"));
 });
 
 // ── the sea at a glance (5d) ──────────────────────────────────────────────────────────────────────────────────────
@@ -983,7 +983,7 @@ test('AUDIT NAV1 (the presentation) THE TAGS DRAWN (#14): one node a slot, moved
   const again = byClass(layer, 'dfnaval-tag');
   assert.equal(again[0], nodes[0], 'the same node');
   assert.equal(again[0].style.transform, 'translate(420px, 200px) scale(1.5) translate(-50%, -100%)');
-  assert.equal(byClass(again[0], 'dfnaval-tag-state')[0].textContent, 'Colours struck');
+  assert.equal(byClass(again[0], 'dfnaval-tag-state')[0].textContent, 'Colors struck');
   assert.equal(again[1].style.display, 'none', 'a slot with no ship hidden');
   drawNavalTags([pt()], { covered: true });
   assert.ok(byClass(layer, 'dfnaval-tag').every((n) => n.style.display === 'none'), 'covered: all hidden');
@@ -991,8 +991,8 @@ test('AUDIT NAV1 (the presentation) THE TAGS DRAWN (#14): one node a slot, moved
   assert.equal(byClass(globalThis.document.body, 'dfnaval-tags').length, 0);
   // the words and the fade
   assert.deepEqual([{ state: 'sinking' }, { state: 'prize' }, { state: 'afloat', boarded: true }, { state: 'struck' }, { state: 'afloat', hostile: true }].map((t) => tagState({ name: 'The Red Wake', ...t })),
-    ['Going down', 'Taken', 'Boarded', 'Colours struck', ''], 'the card\'s words; none sailing - her red says hostile');
-  assert.equal(tagState({ state: 'struck' }), 'Colours struck', 'a nameless ship with no board in reach is not mine');
+    ['Going down', 'Taken', 'Boarded', 'Colors struck', ''], 'the card\'s words; none sailing - her red says hostile');
+  assert.equal(tagState({ state: 'struck' }), 'Colors struck', 'a nameless ship with no board in reach is not mine');
   assert.equal(tagAlpha(TAG_FADE_FROM, 700), 1);
   assert.equal(tagAlpha(700, 700), TAG_FADE_TO);
   assert.equal(tagAlpha(2000, 700), TAG_FADE_TO);

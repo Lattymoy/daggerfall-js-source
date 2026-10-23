@@ -329,7 +329,7 @@
   {
     "name": "GUILD1d-door-unmeasured",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            if (hf && !hf.door) hf.door = doorCornersOf(cpu.doors[0], local);\n",
+    "old": "            if (hf && !hf.door) { hf.door = doorCornersOf(cpu.doors[0], local); hf.normal = doorNormalOf(cpu.doors[0], local); }   // AUDIT WITCH1 D1: and its own outward normal - a door on its box's middle line takes its face from it, never the vertices' order (systems/siegeField.js doorFaceSign)\n",
     "new": "",
     "tests": [
       "test/net/guild1d_client.test.js"

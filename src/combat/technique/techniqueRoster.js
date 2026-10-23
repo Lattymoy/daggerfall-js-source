@@ -18,7 +18,7 @@
 // Physical Combat overhaul's model when it is on) - never a flat damage. A miss is still a miss.
 
 import { weaponSkillUsed } from '../../characters/weapons.js';
-import { THUNDERLOCK_TEMPLATE } from '../../characters/thunderlockIds.js';
+import { isGunTemplate } from '../../characters/thunderlockIds.js';
 import { SKILLS } from '../../systems/skills.js';
 import { RRI_CLASSES } from '../../systems/roleplayRealismItems/rriItems.js';   // AUDIT TECH1: an RRI class answers its family whatever its switch says
 
@@ -40,7 +40,7 @@ export function techniqueFamily(item) {
   if (!item || typeof item !== 'object') return null;
   if (item.group === 'Armor') return item.templateIndex === GAUNTLETS_TEMPLATE ? 'handToHand' : null;
   if (item.group !== 'Weapons' || !Number.isInteger(item.templateIndex)) return null;
-  if (item.templateIndex === THUNDERLOCK_TEMPLATE) return 'thunderlock';
+  if (isGunTemplate(item.templateIndex)) return 'thunderlock';   // PISTOLET: the guns' family - the Pistolet takes the Thunderlock's Piercing Shot, never a volley
   // AUDIT TECH1: a Roleplay & Realism class is its class with its switch off too - the piece in the pack is still that
   // weapon, and a family that came and went with a mod's switch made its line read as a forgery and its Reforge refuse
   const rri = RRI_CLASSES[item.templateIndex];
@@ -143,7 +143,7 @@ export function techniqueParts(id, value) {
   const m = techniqueMult(t.base, value);
   const what = (() => {
     switch (id) {
-      case 'volley': return `Aim: ${t.arrows} arrows rain on ${t.radius} m, ${pct(m)} each`;
+      case 'volley': return `Aim: ${t.arrows} arrows rain down within ${t.radius} m, ${pct(m)} each`;
       case 'pierce': return `Aim: a shot through ${t.through} foes, ${pct(m)} each`;
       case 'leap': return `Aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;
       case 'kick': return `Bare-handed, aim: leap ${t.range[1]} m, strike all in ${t.radius} m, ${pct(m)}`;   // AUDIT TECH1: the Gauntlets' - say they sleep with a weapon drawn

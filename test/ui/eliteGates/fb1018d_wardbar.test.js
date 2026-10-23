@@ -85,7 +85,7 @@ test('WARD-BAR (FIELD BUGS 2026-10-18d): ILTHYS\'S BANNERS\' WARD ON HER BAR - a
     drawEgSpireHud(egSpireHudModel(E, 'acct-0', now), { doc });
     const [track, track2] = find(doc.body, 'eg-lord-track');
     assert.deepEqual([find(doc.body, 'eg-lord-name')[0].textContent, track.className, track2.className], ['Valkynaz Ilthys - II - Warded', 'eg-lord-track ward', 'eg-lord-track'], 'drawn: the word, the cage on her own track alone');
-    assert.ok(said.includes('Banners claim the floor - it burns, and two standing ward the lord. Break them!'), `the Conquest's word says what they do (${JSON.stringify(said)})`);
+    assert.ok(said.includes('Banners claim the floor, and it burns. Two standing ward the lord. Break them!'), `PIN MOVED (VOICE2): the Conquest's word says what they do, in two sentences, no dash aside (${JSON.stringify(said)})`);
     // the ward lapses at 25 s, the banners still burning
     for (let k = 0; k < 120 && egLordBars(E)[0]?.ward; k++) beat();
     assert.deepEqual([egLordBars(E)[0].ward, banners()], [false, 3], 'its 25 s spent, the banners standing');

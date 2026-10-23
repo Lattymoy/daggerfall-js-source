@@ -154,6 +154,12 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   // and the mod's own value is one click away on the dial, which is
   // pinned below with both options in the shipped order.
   const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O', 'Handling.OnStow': 0, 'Handling.RelaxedTwoHandedWeapons': false });   // 3ARMS: the relaxed switch ships off - a held two-hander takes both hands, HT7's own reasoning
+  // PLAIN-TEXT (2026-10-19): three of the mod's lines said plainly for a player (the idle bob named the shield) - their words, exactly
+  const PLAIN = {
+    'Presentation.PlayerTorchAudio': 'Plays a burning sound while you hold a torch',
+    'Bob.BobWhileIdle': 'Whether the light will slightly bob while stationary',
+    'Step.Length': 'Size of each step. Higher moves in bigger jumps.',
+  };
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -174,8 +180,9 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
         const v = Array.isArray(k.Value) ? k.Value : [k.Value.First, k.Value.Second];
         assert.deepEqual([...def.default], v, `${name} defaults as shipped`);
       } else assert.fail(`${name}: an unknown key kind ${kind}`);
-      if (k.Description) assert.equal(def.description, k.Description, `${name}'s description is the mod's own`);
+      if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
       else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
+      if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
     }
   }
   assert.equal(n, 52, 'the eight sections carry 52 keys');

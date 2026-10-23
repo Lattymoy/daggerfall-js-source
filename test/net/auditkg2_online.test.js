@@ -110,14 +110,14 @@ test('AUDIT KG II B8 + B16 A PICK THE OTHER SEAT CLOSED: Ready says why and asks
   P.g.press('ready');
   await tick0();
   assert.deepEqual(asked, [], 'the realm holds nothing for a Ready the relay would refuse');
-  assert.match(P.g.g.why, /Oth stakes 50 gold: stake the same to play/);
+  assert.match(P.g.g.why, /Oth stakes 50 gold\. Match it to play/);
   P.g.press('stake', 50); P.g.press('ready');
   await tick0(); await tick0();
   assert.deepEqual(asked, [50]);
   assert.equal(P.g.g.why, 'Your purse cannot cover that stake.');
-  assert.equal(stakeRefusal({ ok: false, error: 'offline', unknown: true }), 'The realm did not answer - your stake will be settled when it does.');
+  assert.equal(stakeRefusal({ ok: false, error: 'offline', unknown: true }), 'The realm did not answer. Your stake will be settled when it does.');
   assert.equal(stakeRefusal({ ok: false, error: 'cards-closed' }), 'The realm is not holding stakes right now.');
-  assert.equal(stakeRefusal({ ok: false, error: 'mystery' }), 'The realm could not hold your stake - try again.');
+  assert.equal(stakeRefusal({ ok: false, error: 'mystery' }), 'The realm could not take your stake. Try again.');
 });
 
 test('AUDIT KG II B4 + B5 + B6 THE GOLD GAME, WATCHED AND PLAYED: a watcher stakes nothing (the save is not held), is told no gold line, and stands up at one press; a seated player\'s deal says its stake (mutants: the watcher\'s stake; the gold line; the deal\'s stake; the armed stand)', () => {
@@ -296,7 +296,7 @@ test('AUDIT KG II B2 A SOCKET DROPPED MID-GAME AND BACK: the game the relay gave
   for (let k = 0; k < 3; k++) { B.step(GAMBIT_RESULT_MS); await B.pump(); }
   assert.equal(B.g.g.phase, 'over');
   assert.equal(B.g.playing(), false);
-  assert.match(shown(B), /You lose - by forfeit/);
+  assert.match(shown(B), /You lose by forfeit/);
   assert.doesNotMatch(shown(B), /You are watching/);
 }));
 
@@ -314,8 +314,8 @@ test('AUDIT KG II B3 A SEAT STOOD UP BY THE CLOCK: its own loss read as its own 
   assert.equal(t.last.how, 'idle'); assert.equal(t.seats[1], null, 'the guest stood up');
   for (let k = 0; k < 4; k++) { B.step(GAMBIT_RESULT_MS); A.step(GAMBIT_RESULT_MS); }
   const box = find(B.g.g.hud.root, 'dfgambit-result')[0];
-  assert.equal(find(box, 'dfgambit-head')[0].textContent, 'You lose - by forfeit');
-  assert.match(text(box), /You let the clock run out 3 turns running\./);
+  assert.equal(find(box, 'dfgambit-head')[0].textContent, 'You lose by forfeit');
+  assert.match(text(box), /You let the clock run out 3 turns in a row\./);
   assert.ok(B.g.g.log.some((l) => /peer-a wins/.test(l)), 'its log says the end');
 }));
 

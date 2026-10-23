@@ -366,6 +366,18 @@ function segmentPlate(out, rec, k, y, sides, uv = null) {
 /** Quads into a faces() build. */
 const emit = (f, quads) => { for (const [rec, p, u] of quads) { if (p.length === 3) f.tri(rec, p[0], p[1], p[2], u[0], u[1], u[2]); else f.quad(rec, p[0], p[1], p[2], p[3], u[0], u[1], u[2], u[3]); } };
 
+/** STONE `i`'s STANDING PARTS into the faces() build `f` - SD-LOOK S10: plinth, shaft, relief, dial, notch, levers,
+ *  cradle, rod and its cap - where the Hour stands it (the hall's mesh, buildHallModel; one stone alone, buildStoneModel). */
+function stoneInto(f, i) {
+  const { R } = stoneFrame(i);
+  emit(f, stoneQuads(i));
+  // its brass cap - its solid's own box (stoneSolids, the collider's)
+  for (const [rec, quads] of stoneSolids(i).slice(1, 2)) quads.forEach(([a, b, d, e]) => f.quad(rec, a, b, d, e, ...(a[1] === b[1] && b[1] === d[1] ? TOP_UV : UPRIGHT_UV)));   // AUDIT SD IV (R4): a level face (a top, the cap's underside) the top's
+  // the notch over its twelfth hour, on the bezel's ring
+  const T = (p) => realmToDungeon(p[0], p[1], p[2]);
+  const tip = stonePoint(i, 0, SD_DIAL.y + SD_BEZEL.r0 - 0.01, SD_BEZEL.o1 - SD_STONE_SIZE.d / 2 + 0.007);   // SD-LOOK S10: the notch points down at the twelfth hour, proud of the bezel
+  f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), [0.5, 0], [0, 1], [1, 1]);
+}
 /**
  * THE HALL'S STANDING PARTS, one mesh (renderer.createMesh's model shape, the dungeon's frame, sub-meshes by record):
  * the six stones - SD-LOOK S10: plinth, shaft, relief, dial, notch, levers, cradle, rod and their caps - the six
@@ -373,19 +385,18 @@ const emit = (f, quads) => { for (const [rec, p, u] of quads) { if (p.length ===
  */
 export function buildHallModel() {
   const f = faces();
-  for (let i = 0; i < SD_STONES.length; i++) {
-    const { R } = stoneFrame(i);
-    emit(f, stoneQuads(i));
-    // its brass cap - its solid's own box (stoneSolids, the collider's)
-    for (const [rec, quads] of stoneSolids(i).slice(1, 2)) quads.forEach(([a, b, d, e]) => f.quad(rec, a, b, d, e, ...(a[1] === b[1] && b[1] === d[1] ? TOP_UV : UPRIGHT_UV)));   // AUDIT SD IV (R4): a level face (a top, the cap's underside) the top's
-    // the notch over its twelfth hour, on the bezel's ring
-    const T = (p) => realmToDungeon(p[0], p[1], p[2]);
-    const tip = stonePoint(i, 0, SD_DIAL.y + SD_BEZEL.r0 - 0.01, SD_BEZEL.o1 - SD_STONE_SIZE.d / 2 + 0.007);   // SD-LOOK S10: the notch points down at the twelfth hour, proud of the bezel
-    f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), [0.5, 0], [0, 1], [1, 1]);
-  }
+  for (let i = 0; i < SD_STONES.length; i++) stoneInto(f, i);
   for (let k = 0; k < SD_PLAQUE.bearings.length; k++) emit(f, lecternQuads(k));
   emit(f, dialFloorQuads());
   realmIsland(f, SD_FIRST_STEP.x, SD_FIRST_STEP.z, SD_FIRST_STEP.r, SD_REALM_FLOOR_RECORD);
+  return packRealmFaces(f);
+}
+/** STONE `i` ALONE, one mesh where the Hour stands it (its bezel, hand and gear their own meshes, as the hall's) - FIELD BUGS
+ *  2026-10-20f ORRERY-STONES: the Spire's Athenaeum stands it on its own court, carried there by a translation
+ *  (scenes/eliteGates/egOrrery.js). */
+export function buildStoneModel(i) {
+  const f = faces();
+  stoneInto(f, i);
   return packRealmFaces(f);
 }
 /** A plaque's face's bottom middle (the realm's frame): on its post's top, a little before it. */

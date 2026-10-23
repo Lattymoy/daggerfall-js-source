@@ -578,7 +578,7 @@ test('LR6: the loot ladder READS - identified names and affix lines, and one uni
     assert.equal(LR.rarityLines(it).includes('Unidentified'), false);
   }
   // (e) and the door's blurb no longer promises what it hides
-  assert.match(read('src/systems/testRoom.js'), /IDENTIFIED so their names and affix lines read/, 'the blurb says what the pack does');
+  assert.match(read('src/systems/testRoom.js'), /every Legendary, all identified/, 'the blurb says what the pack does');
   _resetForTests();
 });
 

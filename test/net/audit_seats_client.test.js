@@ -299,7 +299,7 @@ test('AUDIT-SEATS C7 EVERY SETTLING ANSWER REACHES THE CARD: claimed before, a v
   }
   assert.deepEqual([siegeClaimRefusal({ error: 'honours-twice' }), siegeClaimRefusal({ error: 'battle-none' }), siegeClaimRefusal({ error: 'receipt' }), siegeClaimRefusal({ error: 'whatever' })],
     [SIEGE_CLAIM_REFUSED['honours-twice'], SIEGE_CLAIM_REFUSED['battle-none'], SIEGE_CLAIM_REFUSED.receipt, SIEGE_CLAIM_REFUSED.receipt]);
-  assert.equal(siegeHonourLine('No Honours this battle: the battle was void.'), 'No Honours this battle: the battle was void.');
+  assert.equal(siegeHonourLine('No Honors this battle: the battle was void.'), 'No Honors this battle: the battle was void.');
   // the session's card
   const t = siegeRig();
   t.ses.enter(ANTICLERE, FIGHT, [[1, 2]]); await settle();
@@ -308,7 +308,7 @@ test('AUDIT-SEATS C7 EVERY SETTLING ANSWER REACHES THE CARD: claimed before, a v
   t.ses.onSiege({ k: 'end', r: 'attack', a: 1, rc: mine }, t.online.room);
   t.ses.tick();
   assert.equal(t.hud.at(-1).card.claim, true);
-  assert.match(t.hud.at(-1).card.honour, /^Your receipt is kept/);
+  assert.equal(t.hud.at(-1).card.honour, 'Your receipt is saved. Claim it for your Honors.');
   t.ses.claimed({ ok: false, error: 'honours-twice' }, old);
   t.ses.tick();
   assert.equal(t.hud.at(-1).card.claim, true, 'an older battle\'s answer is not this card\'s');
@@ -685,7 +685,7 @@ test('AUDIT-SEATS G5 THE WORLD\'S BATTLE ARMS by source: the swing and the shaft
   assert.match(w, /const duelSpellOut = \(peerId, sp\) => \{\n\s*if \(!duelMgr\.fighting\) return siegeSpellOut\(peerId, sp\);/);
   assert.match(w, /siegeStrikeOut\(best, 'melee', weaponRig\.playerWeapon\.strikingWeapon, weaponRig\.playerWeapon\.machine\?\.state, 0, \{ off: weaponRig\.playerWeapon\.offStrike \}\);/);   // PIN MOVED (TWO-HANDS AUDIT)
   assert.match(w, /battle\.blow\(to, \{ w: weapon \? weapon\.templateIndex : -1, m: held\?\.material \?\? 0, d: r\.dmg, r: siegeBlowKind\(by\) \}\);/);
-  assert.match(w, /duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id\)/);
+  assert.match(w, /duelStrikeOut\('arrow', m\.weapon \?\? null, 'StrikeDown', weaponRig\.playerWeapon\?\.lastDrawMs \?\? 0, t\.id, \{ off: !!weaponRig\.playerWeapon\?\.isOffHandItem\?\.\(m\.weapon\) \}\)/);
   assert.match(w, /const duelArrowTargets = \(\) => \{\n\s*if \(!duelMgr\.fighting\) \{\n\s*const bodies = battleFoeBodies\(royalSession\?\.active\(\) \? royalSession : siegeSession\);/);
   assert.match(w, /duelMark: \(\) => \{ if \(!duelMgr\.fighting\) return siegeSpellMarks\(\);/);
   assert.match(w, /return harm > 0 && siegeSession\.cast\(peerId, siegeCastClamp\(harm, false\)\);/);

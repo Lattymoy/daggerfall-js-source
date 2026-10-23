@@ -85,18 +85,18 @@ test('HOME-VOTE the law: a vote is -1, +1 or 0 (taken back); a home is shunned a
   assert.equal(homeMyVoteOf(5), 0);
   assert.equal(homeScoreText(3), '+3');
   assert.equal(homeScoreText(-2), '-2');
-  assert.equal(homeVotesLine(-2, HOME_VOTE_DOWN), 'Votes: -2 - you voted down');
+  assert.equal(homeVotesLine(-2, HOME_VOTE_DOWN), 'Votes: -2 (you voted down)');
   assert.match(homeVotedLine(0, 1), /took your vote back/);
   // AUDIT D6: the words themselves
   assert.equal(REFUSALS['vote-own'], 'You cannot vote on your own home, or on the hall of your own guild.');
-  assert.equal(REFUSALS['vote-rate'], 'You have voted on a great many homes this hour. Try again later.');
+  assert.equal(REFUSALS['vote-rate'], 'You have voted on too many homes this hour. Try again later.');
   assert.equal(REFUSALS['vote-young'], 'An account must have had its username and password for a week to vote on homes.');   // PIN MOVED (AUDIT HOME-VOTE II A7): a week REGISTERED
   assert.match(REFUSALS['bad-vote'], /could not read that vote/);
-  assert.match(homeVoteRefusalLine('homes-need-account'), /^Voting on a home needs a username/, 'a guest is not told about owning a home');
+  assert.equal(homeVoteRefusalLine('homes-need-account'), 'Voting on homes needs a username and password. Add them to this account to vote.', 'a guest is not told about owning a home');
   assert.equal(homeVoteRefusalLine('no-home'), HOME_VOTE_GONE_LINE, 'nor that it is not theirs any more');
   assert.equal(HOME_VOTE_GONE_LINE, 'Nobody owns that home any more.');
   assert.equal(homeVoteRefusalLine('vote-own'), null, 'the rest are the service\'s own words');
-  assert.equal(homeShunnedInsiderLine(-2, true), 'Votes: -2 - your hall\'s decorations are hidden from other players.');
+  assert.equal(homeShunnedInsiderLine(-2, true), 'Votes: -2. Your hall\'s decorations are hidden from other players.');
 });
 
 test('HOME-VOTE the door: a visitor reads two vote rows saying what each press does - the vote standing taken back by a row of its own (AUDIT B3), each row\'s verb the vote it sends; the Info box\'s choices are those rows; the score and one\'s own vote are said once there is either; the owner and a hall\'s guild read no rows, the owner told its score, and when shunned that its decor is hidden (mutants: the owner votes, a member votes, the kin votes, the take-back re-sent, a vote at zero unsaid, the owner told a zero)', () => {
@@ -118,9 +118,9 @@ test('HOME-VOTE the door: a visitor reads two vote rows saying what each press d
     { code: 'KeyU', label: 'U - Take back your vote up', vote: 0 }, { code: 'KeyD', label: 'D - Vote down', vote: -1 }]);
   assert.deepEqual(homeVoteChoices(visitor()).map((c) => c.vote), [1, -1], 'AUDIT D2: U is up');
   assert.deepEqual(homeVoteLines(visitor()), [], 'no votes, no line');
-  assert.deepEqual(homeVoteLines(visitor({ score: -5, myVote: -1 })), ['Votes: -5 - you voted down', HOME_SHUNNED_LINE]);
-  assert.deepEqual(homeVoteLines(visitor({ score: -4, myVote: -1 })), ['Votes: -4 - you voted down'], 'HOME-SHUN: not yet shunned');
-  assert.deepEqual(homeVoteLines(visitor({ score: 0, myVote: 1 })), ['Votes: 0 - you voted up'], 'AUDIT D5: one\'s vote said where the score nets to zero');
+  assert.deepEqual(homeVoteLines(visitor({ score: -5, myVote: -1 })), ['Votes: -5 (you voted down)', HOME_SHUNNED_LINE]);
+  assert.deepEqual(homeVoteLines(visitor({ score: -4, myVote: -1 })), ['Votes: -4 (you voted down)'], 'HOME-SHUN: not yet shunned');
+  assert.deepEqual(homeVoteLines(visitor({ score: 0, myVote: 1 })), ['Votes: 0 (you voted up)'], 'AUDIT D5: one\'s vote said where the score nets to zero');
   assert.deepEqual(homeVoteLines(visitor({ score: 2 })), ['Votes: +2']);
   assert.deepEqual(homeVoteLines(visitor({ own: true, mine: true, score: 2 })), ['Votes: +2'], 'the owner reads its score');
   assert.deepEqual(homeVoteLines(visitor({ own: true, mine: true })), [], 'AUDIT D5: and nothing where nobody voted');
@@ -466,7 +466,7 @@ test('HOME-VOTE AUDIT II the pins lane D found missing: the score triggers touch
 
 test('HOME-VOTE AUDIT II D8, D9: the words a player reads, as they read them; the Info box says a score of none; a vote thrown in the queue drops no later press (mutants: the words swapped or blank, the box\'s zero unsaid, the queue uncaught)', () => {
   assert.equal(HOME_SHUNNED_LINE, 'Its decorations are hidden: the town has voted it down.');
-  assert.equal(homeShunnedInsiderLine(-1, false), 'Votes: -1 - your home\'s decorations are hidden from other players.');
+  assert.equal(homeShunnedInsiderLine(-1, false), 'Votes: -1. Your home\'s decorations are hidden from other players.');
   assert.equal(homeVotedLine(1, 2), 'You voted this home up. Its votes: +2.');
   assert.equal(homeVotedLine(-1, -2), 'You voted this home down. Its votes: -2.');
   assert.equal(homeVotedLine(0, 0), 'You took your vote back. Its votes: 0.');

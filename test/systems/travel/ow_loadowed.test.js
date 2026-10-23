@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { StreamingWorldState, worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
-import { createLoadGovernor, unbuiltAround, TV_GOV_CLEAR_S } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, unbuiltAround, unbuiltCount, TV_GOV_CLEAR_S } from '../../../src/systems/travel/travelGovernor.js';
 import { threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
 import { foeHostile, foeAlerted } from '../../../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
@@ -65,7 +65,7 @@ function journeyHost() {
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
     worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, MAX_TIME_SCALE,
     // the stream and the count
-    state, built, queue, unbuiltAround, StreamingWorldState, worldCoordToMapPixel, modes: null, walkMode: true, playerSpawned: true,
+    state, built, queue, unbuiltAround, unbuiltCount, StreamingWorldState, worldCoordToMapPixel, modes: null, walkMode: true, playerSpawned: true,
     player, cam: { pos: at },
     // the pump's own doors: a build publishes into `built` (buildPixelNow's single atomic set), P's throws
     buildPixel: (px, py) => {
@@ -87,7 +87,7 @@ function journeyHost() {
     raiderSight: () => 1000, isNight: () => false, minuteNow: () => 0, travelViewRaiders: () => [], tvRaid: { spent: new Set(), chase: new Map() },
     navalRaidersOn: () => false, naval: null, seaRaidPeerChase: () => null, RAIDER_CONTACT_M: 60, RAIDER_CHASE_MPS: 4.2,
     exteriorFoes: { foes: [] }, foeHostile, foeAlerted, foeCampKey: () => null, SIGHT_RADIUS: 102.4,
-    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, _travelDrive: { yaw: 90 },   // the drive east, along +x
+    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ _travelDrive: { yaw: 90 },   // the drive east, along +x
     tvSay: (t) => d.said.push(t), TRAVEL_VIEW_TEXT, performance: { now: () => d.t * 1000 },
     travelWalkRate, TV_MOVE_ACTIONS, held: () => false, keys: new Set(), csaBoatUnderMe: () => null, gamePaused: () => false,
     travellerOnRoad: () => true, csaHoldsTimeScale: () => false,
@@ -130,10 +130,13 @@ test('LOAD-OWED: A PIXEL THE STREAM IS BUILDING HOLDS THE OVERWORLD\'S CLOCK, AN
   t.after(() => { resetTimeScale(); _resetTravelPace(); });
   const h = journeyHost();
   h.d.t = 0;
-  // P in flight: the land IS loading - the clock is halved down to walking pace, and the panel says it is the land
+  // P in flight: the land IS loading - the clock is held, and the panel says it is the land. PIN MOVED (OW-LEAD,
+  // test/systems/travel/ow_lead.test.js): held by how near P is - the traveller eased toward it, never into it (it was halved to
+  // x1 by the time P had stood unbuilt eight seconds, wherever P lay)
   await h.run(9);
-  assert.equal(timeScale(), 1, 'held to walking pace while the stream builds a pixel of the grid');
-  assert.deepEqual(h.held(), [1, 'load'], 'and said so: "Held to x1 of x100 while the land loads"');
+  assert.ok(timeScale() < ASK, `held while the stream builds a pixel of the grid: x${timeScale()}`);
+  assert.equal(h.held()[1], 'load', 'and said so: "Held to xN of x100 while the land loads"');
+  assert.ok(h.pixel().x < P.px, 'and never walked into the pixel the stream owes');
   assert.deepEqual(h.d.said, [], 'no enemy said - there is none');
   assert.equal(h.state.loaded.has(PK), true, 'owed: on the stream\'s books');
   // ... and its build throws
@@ -156,7 +159,8 @@ test('LOAD-OWED: A PIXEL THE STREAM IS BUILDING HOLDS THE OVERWORLD\'S CLOCK, AN
 });
 
 test('LOAD-OWED: THE COUNT IS THE STREAM\'S OWN BOOKS - built, or not owed by the stream (its `loaded` grid: built or building), the line the host counts with; a pixel queued or in flight is owed, one let go is not, and where the world streams nothing nothing is ever loaded (ETHER-OW\'s law, kept)', () => {
-  const m = /\n {6}uc\.n = unbuiltAround\(px, radius, (\(x, y\) => [^\n]*)\);\n/.exec(W);
+  // PIN MOVED (OW-LEAD, test/systems/travel/ow_lead.test.js): the count's line hands the owed pixels on too (`uc.owed`)
+  const m = /\n {6}uc\.n = unbuiltAround\(px, radius, (\(x, y\) => [^\n]*?)(?:, uc\.owed)?\);\n/.exec(W);
   assert.ok(m, 'the governor\'s count');
   const state = new StreamingWorldState(1);
   const built = new Set();

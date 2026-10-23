@@ -72,8 +72,8 @@
   {
     "name": "WIKIMAID-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "lilacwarren: 'wikimaid' });",
-    "new": "lilacwarren: 'aegis' });",
+    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -235,18 +235,18 @@
   {
     "name": "WIKIMAID-title-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'spirechampion', 'spirefirst', 'wikimaid']);",
-    "new": "'spirechampion', 'spirefirst']);",
+    "old": "'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "new": "'spirechampion', 'spirefirst', 'doorwarden',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The relay and the client refuse the word."
+    "note": "QL12 (re-aimed by content: the questlines' five after it). The relay and the client refuse the word."
   },
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'burningstair', 'firstlight', 'lilacwarren']);",
-    "new": "'burningstair', 'firstlight']);",
+    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
+    "new": "'burningstair', 'firstlight', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

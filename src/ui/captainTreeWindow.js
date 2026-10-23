@@ -40,7 +40,7 @@ const NAMES = Object.freeze({
   m_oar1: () => t('captain.star.mOar1', 'Stroke Oar'), m_turn1: () => t('captain.star.mTurn1', 'Lee Helm'),
   m_quick: () => t('captain.star.mQuick', 'Quick in Stays'), m_oar2: () => t('captain.star.mOar2', 'Double-Banked Oars'),
   m_hold1: () => t('captain.star.mHold1', 'Tight Stowage'), m_hold2: () => t('captain.star.mHold2', 'Dunnage and Ballast'),
-  m_deep: () => t('captain.star.mDeep', 'Deep Hold'), m_trade1: () => t('captain.star.mTrade1', 'Harbour Bargains'),
+  m_deep: () => t('captain.star.mDeep', 'Deep Hold'), m_trade1: () => t('captain.star.mTrade1', 'Harbor Bargains'),
   m_prince: () => t('captain.star.mPrince', 'Merchant Prince'),
   m_hull1: () => t('captain.star.mHull1', 'Doubled Planking'), m_rep1: () => t('captain.star.mRep1', 'Carpenter\'s Mate'),
   m_oak: () => t('captain.star.mOak', 'Heart of Oak'), m_hull2: () => t('captain.star.mHull2', 'Copper Sheathing'),
@@ -146,7 +146,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
       const level = el('span', 'fmt-purse');
       level.replaceChildren(el('span', null, t('captain.sky.level', 'Level')), el('b', null, String(c.level)),
         el('span', 'of', c.next == null ? t('captain.sky.top', 'max') : t('captain.sky.xp', '{xp} of {next} XP', { xp: formatNumber(c.xp), next: formatNumber(c.next) })));   // AUDIT RVN-STARS S25: the player's own grouping
-      level.title = t('captain.sky.levelTip', 'Captain XP comes from sinking and capturing ships, beating off boarders, claiming prizes, finishing contracts, distance sailed, treasure charts, charting isles and selling goods at the exchange.');
+      level.title = t('captain.sky.levelTip', 'A captain\'s experience comes from sinking and capturing ships, beating off boarders, claiming prizes, finishing contracts, distance sailed, treasure charts, charting isles and selling goods at the exchange.');
       const pts = el('span', 'fmt-purse life');
       pts.replaceChildren(el('span', null, '★'), el('b', null, String(Math.max(0, left))), el('span', 'of', t('captain.sky.of', 'of {n}', { n: c.points })));
       pts.title = t('captain.sky.pointsTip', 'One point per level after the first.');
@@ -163,7 +163,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
       parts.push(el('h3', null, t('captain.half.master', 'The Master')), el('p', 'fmt-sign', t('captain.sky.masterLore', 'Seamanship: sails, oars, steering, cargo, trade and repairs.')));
       parts.push(el('h3', null, t('captain.half.commander', 'The Commander')), el('p', 'fmt-sign', t('captain.sky.commanderLore', 'Combat: gun reload and accuracy, grapeshot, chain shot and heated shot, boarding and ramming.')));
       parts.push(el('p', 'fmt-note', t('captain.sky.note', 'Stars apply to all of your ships. Removing or changing stars is free.')));
-      if (c.level < 3) parts.push(el('p', 'fmt-note', t('captain.sky.oreNote', 'From level 3, shipwrights can refit a ship past tier III with Steel. Each later metal, up to Daedric, needs a higher level.')));
+      if (c.level < 3) parts.push(el('p', 'fmt-note', t('captain.sky.oreNote', 'From level 3, shipwrights can refit a ship past grade III with Steel. Each later metal, up to Daedric, needs a higher level.')));
       return parts;
     },
     figures: [{ text: () => t('captain.half.masterCaps', 'THE MASTER'), x: -440, y: -660 }, { text: () => t('captain.half.commanderCaps', 'THE COMMANDER'), x: 440, y: -660 }],
@@ -171,7 +171,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
     words: {
       forget: t('captain.sky.forget', 'Discard changes'), forgot: t('captain.sky.forgot', 'Changes discarded.'),
       accept: t('captain.sky.accept', 'Accept'), acceptN: (n) => t('captain.sky.acceptN', 'Accept ({n})', { n }),
-      summary: t('captain.sky.summary', 'Summary'), home: t('captain.sky.helmBtn', 'Helm'), homeAria: t('captain.sky.helmAria', 'Centre on the Helm'),
+      summary: t('captain.sky.summary', 'Summary'), home: t('captain.sky.helmBtn', 'Helm'), homeAria: t('captain.sky.helmAria', 'Center on the Helm'),
       close: t('captain.sky.close', 'Close'),
       hint: t('captain.sky.hint', 'Click a star to take it and the stars on the way to it · Right-click to remove · Drag to pan · Scroll to zoom · H: back to the Helm'),
       hintTouch: t('captain.sky.hintTouch', 'Tap a star to see it, tap again to take it · Hold a star to remove it · Drag to pan · Pinch to zoom'),
@@ -182,7 +182,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
       backMany: (n) => t('captain.tip.backAfter', 'Right-click to remove it and {n, plural, one {the star} other {the # stars}} after it.', { n }),   // AUDIT RVN-STARS S24: never "the 1 stars"
       back: t('captain.tip.back', 'Right-click to remove.'),
       take: (n) => t('captain.tip.take', 'Click to take: {n} {n, plural, one {point} other {points}}.', { n }),
-      noPoints: t('captain.sky.noPoints', 'You get one point per captain level after the first. Earn XP at sea: sink or capture a ship, finish a contract, or just sail.'),
+      noPoints: t('captain.sky.noPoints', 'You gain one point for each captain level after the first. Earn experience at sea: sink or capture a ship, finish a contract, or simply sail.'),
     },
   };
   return mountSkyWindow(host, sky, { changed, onExit, doc, embed });

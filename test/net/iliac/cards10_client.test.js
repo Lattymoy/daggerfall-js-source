@@ -183,18 +183,18 @@ test('CARDS10 online on two fake pages over the relay\'s table: a look on openin
   B.game.close();
   assert.equal(R.t.seats[1], null);
   assert.equal(A.game.g.phase, 'over');
-  assert.match(text(A.game.g.hud.root), /Your opponent stands up and concedes - the game is yours\./);
+  assert.match(text(A.game.g.hud.root), /Your opponent concedes\. You win\./);
   // PIN MOVED (AUDIT CARDS-6 E10): alone, the next game deals for nobody - the winner is told he waits; and the watcher, a
   // chair free, is back at the setup with the end said (he stood in 'over', nothing to press but Leave)
   assert.match(text(A.game.g.hud.root), /Waiting for another player to sit down\./);
   assert.doesNotMatch(text(A.game.g.hud.root), /The next game deals in a moment\./);
   assert.equal(Z.game.g.phase, 'setup');
-  assert.match(text(Z.game.g.hud.root), /B concedes - A wins\./);
+  assert.match(text(Z.game.g.hud.root), /B concedes\. A wins\./);
   A.game.close(); Z.game.close();
   assert.equal(R.t.seats.every((s) => !s), true, 'every road off the seat stands at the relay');
   // the words, said
   assert.equal(iliacOnlineLine({ t: 'commit', seat: 1, timeout: true }, ['Ann', 'Bob'], 0), 'Bob runs out of time and passes.');
-  assert.equal(iliacOnlineLine({ t: 'commit', seat: 0, timeout: true }, ['Ann', 'Bob'], 0), 'Your time runs out - you pass.');
+  assert.equal(iliacOnlineLine({ t: 'commit', seat: 0, timeout: true }, ['Ann', 'Bob'], 0), 'Your time runs out and you pass.');
   assert.equal(lastLineOf({ winner: null }), 'The game is drawn.');
   assert.equal(lastLineOf({ winner: 1, how: 'power', names: ['Ann', 'Bob'] }), 'Bob beats Ann on power.');
   assert.equal(ILIAC_ONLINE_REFUSALS['other game'], 'Another game is being played at this table.');   // PIN MOVED (KG5): a cloth's other game may be Hold'em or The King's Gambit
@@ -261,7 +261,7 @@ test('CARDS10 the season board in the panel: asked of the service on a press, it
   };
   assert.deepEqual(boardLines(data), ['Season 3, day 12.', '1. Eira - 1104 (9-2-1)', '2. Fen - 1050 (5-4-0)', '...', '14. Ves - 984 (1-3-0) - you', 'Iliac Champion: Eira.', 'Your rating 984, 4 games this season.']);
   assert.match(boardLines({ ...data, rows: [], pinned: null, champion: null })[1], /No ranked game has been played this season\./);
-  assert.match(boardLines({ ...data, champion: null }).join(' '), /No Iliac Champion yet - the top needs 10 games against 5 different players\./);
+  assert.match(boardLines({ ...data, champion: null }).join(' '), /No Iliac Champion yet\. The top player needs 10 games against 5 different players\./);
   const entity = { name: 'a', items: [], goldPieces: 100 };
   giveBinderAtChargen(entity);
   let answer = { ok: true, data };
@@ -282,6 +282,6 @@ test('CARDS10 the season board in the panel: asked of the service on a press, it
   answer = { ok: false, error: 'offline' };
   game.press('board');
   await new Promise((r) => setImmediate(r));
-  assert.match(text(game.g.hud.root), /The season board is not answering - try again\./);
+  assert.match(text(game.g.hud.root), /The season board is not responding\. Try again\./);
   game.close();
 });

@@ -51,6 +51,9 @@ export const CARD_EMBLEMS = Object.freeze([
   // KG-SET: the nine The King's Gambit's roster brought into the set - the bear, the great cat, the spider, the fish, the
   // wrapped dead, the bow (the Archer's and the Ranger's)
   'bear', 'cat', 'spider', 'fish', 'mummy', 'bow',
+  // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): the Witches' Festival's - the Wyrd's cauldron, a tallow
+  // candle
+  'witch', 'candle',
 ]);
 
 /** A card, frozen to its effect records. */
@@ -291,6 +294,22 @@ export const ILIAC_CARDS = Object.freeze([
     fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', n: 1 }] },
   { id: 'eg-garoth', name: 'Valkynaz Garoth', kind: 'unit', cost: 6, power: 9, tier: 'aetheric', tags: ['daedra'], emblem: 'fire',
     fx: [{ on: 'ongoing', do: 'buff', to: 'here.mine', n: 1 }] },
+  // ── WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md; the owner: "new cards"): THE WITCHES' FESTIVAL'S - "Demonologists,
+  //    conjurors, lamias, warlocks, and thaumaturgists meet in the wilderness" (TEXT.RSC 8392), and "the dead do walk
+  //    tonight" (8387); King Lysandus' spectre "began its haunting on the Day of the Dead" (8367). Sold by the Wyrd Sisters
+  //    alone (net/festivalLaw.js FESTIVAL_CARD_IDS): no pack, no regular, no foe deals them (systems/card/cardSources.js). ──
+  { id: 'warlock', name: 'Warlock', kind: 'unit', cost: 2, power: 2, tier: 'magic', tags: ['mage'], emblem: 'witch',
+    fx: [{ on: 'reveal', do: 'magicka', n: 1 }] },
+  { id: 'thaumaturge', name: 'Thaumaturge', kind: 'unit', cost: 3, power: 3, tier: 'magic', tags: ['mage'], emblem: 'mage',
+    fx: [{ on: 'ongoing', do: 'buff', to: 'here.mine', tag: 'mage', n: 1 }] },
+  { id: 'glenmoril-witch', name: 'Glenmoril Witch', kind: 'unit', cost: 4, power: 4, tier: 'rare', tags: ['mage'], emblem: 'witch',
+    fx: [{ on: 'reveal', do: 'transform', to: 'here.theirs', pick: 'weakest', card: 'rat' }] },
+  { id: 'demonologist', name: 'Demonologist', kind: 'unit', cost: 4, power: 3, tier: 'rare', tags: ['mage'], emblem: 'daedric',
+    fx: [{ on: 'reveal', do: 'summon', card: 'imp', n: 2 }] },
+  { id: 'tales-and-tallows', name: 'Tales and Tallows', kind: 'spell', cost: 3, power: 0, tier: 'magic', tags: [], emblem: 'candle',
+    fx: [{ on: 'reveal', do: 'summon', card: 'ghost' }] },
+  { id: 'spectre-of-lysandus', name: 'King Lysandus\' Spectre', kind: 'unit', cost: 6, power: 7, tier: 'legendary', tags: ['undead', 'noble'], emblem: 'ghost',
+    fx: [{ on: 'reveal', do: 'weaken', to: 'all.theirs', n: 1 }] },
 ].map(deepFreeze));
 
 /** THE HOLDINGS: the places of the Iliac Bay the game lays between the players, each bending its own ground. */

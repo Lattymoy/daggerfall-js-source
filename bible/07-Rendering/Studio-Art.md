@@ -57,9 +57,10 @@ public/art/studio/
   the suite on any problem, so none ships. The check also refuses a picture git would never commit (a folder named as
   a `.gitignore` pattern) and a name of a painted model's archive that is none of its slots. It exits 1 on a problem
   (`studioCli`, which takes the tree it reads - AUDIT STUDIO1 E13).
-- **The roster.** Each row is the doctrine decision: who may paint here, and the word that approved them. Two artists
-  are on it: trashBattery and Redclaw. trashBattery's "you and I" was said to Redclaw, and Mac's word covers both. An
-  artist's folder is made by their first picture.
+- **The roster.** Each row is the doctrine decision: who may paint here, and the word that approved them. Three artists
+  are on it: trashBattery, Redclaw and maya. trashBattery's "you and I" was said to Redclaw, and Mac's word covers both.
+  maya (weapon sprites) was proposed by trashBattery in #1108 and approved by the owner on 2026-10-21. An artist's
+  folder is made by their first picture, never a placeholder: the studio refuses any file that is not a PNG.
 
 ## How the game finds the pictures: the folder, listed where it is served
 

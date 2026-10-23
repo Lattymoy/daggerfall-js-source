@@ -122,7 +122,7 @@
   {
     "name": "HAUL-CARDS-cap-unsaid",
     "file": "src/ui/haulCards.js",
-    "old": "combat: true, cappedText: HAUL_CAPPED_TEXT });",
+    "old": "combat: true, cappedText: haulCappedText() });",
     "new": "combat: true, cappedText: null });",
     "tests": [
       "test/systems/foraging/haulcards.test.js"

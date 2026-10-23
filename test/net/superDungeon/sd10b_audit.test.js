@@ -29,7 +29,7 @@ import { handMatrix } from '../../../src/world/superDungeon/sdHall.js';
 import { mintSdReceipt, readSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
 import { spoilsLevel } from '../../../src/scenes/spoilsPool.js';
 import { sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT } from '../../../src/systems/superDungeon/sdSpoils.js';
-import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook } from '../../../src/world/superDungeon/sdDungeon.js';
+import { sdRiftWord, sdReturnStands, sdRiftCount, riftLook, sdThroughStands } from '../../../src/world/superDungeon/sdDungeon.js';
 import { sdFell, sdRoomKey, isSdRoom, SD_NO_CLOSED, SD_NO_FULL, SD_COLLAPSE_MS } from '../../../src/net/superDungeon/sdLaw.js';
 import { dungeonSizeFor, onlineDungeonSize } from '../../../src/world/smallerDungeons.js';
 import { orreryOf } from '../../../src/net/superDungeon/sdBrain.js';
@@ -171,7 +171,7 @@ function riftHost({ rec = null, entered = true, s = 7 } = {}) {
     forceExitToExterior: () => log.push('out'), enterSdRealm: async () => { log.push('realm'); return entered; },
   };
   const env = {
-    sdHost: { record: () => rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, isSdRealm,
+    sdHost: { record: () => rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdThroughStands, sdRiftCount, riftLook, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, isSdRealm,
     SD_REALM_TEXT: { lost: 'lost' }, setMidScreenText: (t) => log.push(['said', t]), _teleportToPixel: async () => log.push('pixel'), _sdEntered: new Set(), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): the Hour's lines through its voice
     sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door

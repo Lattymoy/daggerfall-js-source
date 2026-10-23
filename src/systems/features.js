@@ -50,11 +50,11 @@ import { t, localizedText } from './textManager.js';   // L10N4: the screen's wo
 export const KINDS = Object.freeze({
   enhanced: Object.freeze({
     get label() { return t('features.kind.enhanced', 'Enhanced'); },
-    get blurb() { return t('features.kind.enhanced.blurb', 'Built in house: the port’s own departures from the original game.'); },
+    get blurb() { return t('features.kind.enhanced.blurb', 'This game’s own changes and additions to the original.'); },
   }),
   mod: Object.freeze({
     get label() { return t('features.kind.mod', 'Mod Authored'); },
-    get blurb() { return t('features.kind.mod.blurb', 'Mods ported 1:1, under their authors’ names.'); },
+    get blurb() { return t('features.kind.mod.blurb', 'Mods by other authors, credited by name.'); },
   }),
   classic: Object.freeze({
     get label() { return t('features.kind.classic', 'DFU Classic'); },
@@ -257,6 +257,8 @@ export const MOD_CURATED = Object.freeze({
   // PI1: the four a player reaches for first - whether a body's gear lands round it, how hard it is thrown out, and the
   // two sizes most read (a weapon's and an armour piece's). The categories and the per-piece sizes stay in the mod's pane.
   'physical-items': Object.freeze(['Enemy Loot.Physical Enemy Drops', 'Enemy Loot.Impulse Strength', 'Item Sizes.Weapons', 'Item Sizes.Armor']),
+  // DEX0: the mod's one key - whether a fallen troll gets back up.
+  'daggerfall-enemy-expansion': Object.freeze(['Cheat.DisableTrollRespawn']),
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause',
@@ -329,7 +331,7 @@ export const FEATURES = Object.freeze([
     id: 'smaller-dungeons',
     group: 'world',
     get title() { return t('features.smallerDungeons.title', 'Smaller dungeons'); },
-    get note() { return t('features.smallerDungeons.note', 'Dungeons bigger than five blocks are cut down to five: a centre block with four around it, the same '
+    get note() { return t('features.smallerDungeons.note', 'Dungeons bigger than five blocks are cut down to five: a center block with four around it, the same '
       + 'every visit. Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '
       + 'dungeon has its own size instead.'); },
     get effect() { return t('features.smallerDungeons.effect', 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.'); },
@@ -346,9 +348,9 @@ export const FEATURES = Object.freeze([
     id: 'medium-dungeons',
     group: 'world',
     title: 'Medium dungeons',
-    note: 'Dungeons over eight blocks are cut to eight: two side by side, closed by six, the same every visit. If Smaller '
-      + 'dungeons is on too, it wins. Main-story dungeons keep full size; a quest keeps the size it was set up at (an '
-      + 'older save\u2019s may not). Online every dungeon has its own size instead.',
+    note: 'Dungeons over eight blocks are cut to eight: two side by side with six around them, the same every visit. If '
+      + 'Smaller dungeons is on too, it wins. Main-story dungeons keep full size; a quest keeps the size it was set up at. '
+      + 'Online every dungeon has its own size instead.',
     effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: false }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF
@@ -363,7 +365,7 @@ export const FEATURES = Object.freeze([
     id: 'world-dungeon-sizes',
     group: 'world',
     title: 'Dungeon sizes as online',
-    note: 'Every dungeon takes the size it has online - small, medium or large, half of them medium - the same every '
+    note: 'Every dungeon takes the size it has online (small, medium or large, half of them medium), the same every '
       + 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '
       + 'was set up at. Online it is always on.',
     effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
@@ -383,9 +385,9 @@ export const FEATURES = Object.freeze([
     id: 'horse-care',
     group: 'world',
     get title() { return t('features.horseCare.title', 'Horse care'); },   // HORSE-TIERS: the row's words in the player's language (L10N4's ratchet)
-    get note() { return t('features.horseCare.note', 'Every horse has its own Speed, Stamina, Endurance and Strength, walks unless you hold Run to gallop on its '
-      + 'breath, and grows with the bond feeding it builds. On Boons neglect costs nothing and it is never slower than the '
-      + 'classic horse; on Hard a hungry horse is weaker; Off is the classic horse.'); },
+    get note() { return t('features.horseCare.note', 'Every horse has its own Speed, Stamina, Endurance and Strength. It walks unless you hold Run to gallop, '
+      + 'which tires it, and feeding it builds a bond that makes it better. On Boons neglect costs nothing and it is '
+      + 'never slower than the classic horse; on Hard a hungry horse is weaker; Off is the classic horse.'); },
     get effect() { return t('features.horseCare.effect', 'Takes effect at once. Online, each player picks their own.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
@@ -428,8 +430,8 @@ export const FEATURES = Object.freeze([
     id: 'land-view-distance',
     group: 'sight',
     get title() { return t('features.landViewDistance.title', 'Land view distance'); },
-    get note() { return t('features.landViewDistance.note', 'How far the land around you is drawn, in map squares. Daggerfall Unity goes up to 4; the enhanced '
-      + 'outdoors go up to 6. The classic UI, and the enhanced UI with the outdoors off, stop at 4.'); },
+    get note() { return t('features.landViewDistance.note', 'How far the land around you is drawn, in map squares: up to 6 with the enhanced outdoors, and up to 4 '
+      + 'on the classic UI or with the outdoors off.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced', 'classic']),
     // LV1 (2026-09-12, Mac: "push the draw distance as far as we can push
@@ -453,8 +455,8 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.enhancedEnvironments.title', 'Enhanced environments'); },
     get note() { return t('features.enhancedEnvironments.note', 'A living sky with the sun, both moons and stars, clouds that build with the weather and cast '
       + 'shadows, falling rain and snow, and grass that bends in the wind. Off brings back the classic '
-      + 'painted sky and weather. The third choice uses Dynamic Skies by BadLuckBurt and carademono (included '
-      + 'with permission), and its own settings open on this tile.'); },
+      + 'painted sky and weather. The third choice uses Dynamic Skies by BadLuckBurt and carademono, included '
+      + 'with permission; its settings open on this tile.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced', 'mod']),
     // EE1: the outdoors as ONE switch (the sky, the ground's surfaces, the
@@ -483,12 +485,11 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-ai',
     group: 'combat',
     get title() { return t('features.enhancedAi.title', 'Enhanced AI'); },
-    get note() { return t('features.enhancedAi.note', 'Enemies take turns and back off when hurt; archers keep away, cowards flee. Wound-up blows are marked on the '
-      + 'ground: hit hard to stagger, dodge to punish; red, hatched iron cannot be stopped. Trees, rocks and crates block '
-      + 'sight and missiles. Dungeons only for now for pathfinding: towns, interiors and doors are to come. Off keeps '
-      + 'the classic movement and sight. This is not Daggerfall Unity’s “Smarter Enemies” setting, which the port does '
-      + 'not run.'); },
-    get effect() { return t('features.enhancedAi.effect', 'At once - the dungeon pathfinding from the next dungeon you enter.'); },   // AUDIT TACT D7: the tactics, cover and blows read the switch live
+    get note() { return t('features.enhancedAi.note', 'Enemies take turns, back off when hurt, and archers keep their distance. Big attacks are marked on the '
+      + 'ground: hit hard to stagger them or dodge. Red, hatched attacks can’t be stopped. Trees, rocks and crates block '
+      + 'sight and missiles. Pathfinding works in dungeons only for now; towns, interiors and doors come later. Off keeps '
+      + 'the classic behavior.'); },
+    get effect() { return t('features.enhancedAi.effect', 'Takes effect at once; pathfinding from the next dungeon you enter.'); },   // AUDIT TACT D7: the tactics, cover and blows read the switch live
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'enhancedAI', initial: true, online: true,   // BAL4: ON by default (it was off - DFU's classic motor the 1:1 law); the lane forces it on online as it always did; an unstamped shelf adopts it (uiPrefs.js PREF1_ADOPT_NEW_DEFAULT)
@@ -508,7 +509,7 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-climbing',
     group: 'world',
     get title() { return t('features.enhancedClimbing.title', 'Enhanced climbing'); },
-    get note() { return t('features.enhancedClimbing.note', 'Press Jump at a ledge to climb onto or over it, or moving forward to vault a low wall. Jump at a high '
+    get note() { return t('features.enhancedClimbing.note', 'Press Jump at a ledge to climb onto or over it, or while moving forward to vault a low wall. Jump at a high '
       + 'ledge to catch it and hang: Forward climbs up, Left and Right move along it, Crouch lets go. Hold '
       + 'Forward against any wall to climb it. Holding on wears out your grip; your Climbing skill sets how long it '
       + 'lasts, how high you reach and how fast you climb. Off keeps the classic climbing.'); },
@@ -542,8 +543,8 @@ export const FEATURES = Object.freeze([
     id: 'water-quality',
     group: 'sight',
     get title() { return t('features.waterQuality.title', 'Water quality'); },
-    get note() { return t('features.waterQuality.note', 'How much the enhanced water draws. Full looks through the water to what lies under it and ripples where '
-      + 'things move in it; Simple is lighter on your machine.'); },
+    get note() { return t('features.waterQuality.note', 'How detailed the enhanced water is. Full shows what lies under the surface and ripples where '
+      + 'things move; Simple is lighter on your machine.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'waterQuality', initial: 'full', online: 'player', tiers: Object.freeze([tier('full', () => t('features.waterQuality.full', 'Full')), tier('simple', () => t('features.waterQuality.simple', 'Simple'))]) }),   // WATER-NEXT: render/renderer.js waterSimple
@@ -557,8 +558,8 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.enhancedLighting.title', 'Enhanced lighting'); },
     get note() { return t('features.enhancedLighting.note', 'Warmer, more natural light: lanterns and torches that glow and fade with distance, light through '
       + 'fog, shadows from the sun and your torch, darker corners, a glow on windows and flames, and rays of '
-      + 'sunlight. Off is Daggerfall Unity’s flat lighting.'
-      + ' Steady shadows stops shadows popping (off: more frame rate); Calmer eye slows how fast your eyes adjust.'); },
+      + 'sunlight. Off is the classic flat lighting.'
+      + ' Steady shadows stops shadows flickering, at some cost to frame rate; Calmer eye slows how fast your eyes adjust to light and dark.'); },
     get effect() { return t('features.enhancedLighting.effect', 'Lighting takes effect when the world next loads; steady shadows and calmer eye at once.'); },
     kinds: Object.freeze(['enhanced']),
     // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): THE PLAYER'S, ONLINE TOO. It was forced on
@@ -605,8 +606,8 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     get title() { return t('features.grass.title', 'Grass'); },
     get note() { return t('features.grass.note', 'How much grass grows in the enhanced outdoors. Grass is the heaviest thing outdoors, so try Half '
-      + 'first if the game runs slow. Meadow is hand-drawn tufts, flowers and bushes that stand like the trees; '
-      + 'Pixel is the older, finer tufts; Smooth is softer, shaded blades.'); },
+      + 'first if the game runs slow. Meadow is hand-drawn tufts, flowers and bushes; Pixel is finer, older '
+      + 'tufts; Smooth is soft, shaded blades.'); },
     get effect() { return t('features.grass.effect', 'The amount takes effect when the world next loads; the style at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
@@ -655,8 +656,8 @@ export const FEATURES = Object.freeze([
     id: 'real-windows',
     group: 'sight',
     title: 'Real windows',
-    note: 'From the street, house windows show the rooms behind them, lit warm at night; from inside, the windows '
-      + 'look out on the world. Rooms only is lighter on your machine; Off is the flat glass of the original.',
+    note: 'From the street, house windows show the rooms behind them, warmly lit at night; from inside, you can see '
+      + 'out through them. Rooms only is lighter on your machine; Off is the classic flat glass.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]) }),   // RW1: render/realWindows.js realWindowsMode reads it
@@ -736,8 +737,8 @@ export const FEATURES = Object.freeze([
     id: 'quick-loot',
     group: 'loot',
     get title() { return t('features.quickLoot.title', 'Quick loot'); },
-    get note() { return t('features.quickLoot.note', 'Loot without a window: the wheel moves through the list, Activate takes one item and one key takes all '
-      + '(Take gear sets which gear; Junk is left). Off uses the inventory window.'); },   // LOOT18: the take-all's tier and the junk, in the FT15 budget
+    get note() { return t('features.quickLoot.note', 'Loot without opening a window: the mouse wheel moves through the list, Activate takes one item, and the Take '
+      + 'everything key takes all but junk (Take gear sets which gear). Off uses the inventory window.'); },   // LOOT18: the take-all's tier and the junk, in the FT15 budget
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
@@ -760,9 +761,9 @@ export const FEATURES = Object.freeze([
     id: 'loot-rarity',
     group: 'loot',
     get title() { return t('features.lootRarity.title', 'Loot rarity'); },
-    get note() { return t('features.lootRarity.note', 'Weapons, armour and jewellery can drop as Magic, Rare or Legendary, with extra bonuses you can read '
+    get note() { return t('features.lootRarity.note', 'Weapons, armor and jewelry can drop as Magic, Rare or Legendary, with extra bonuses you can read '
       + 'and compare. The odds depend on what you killed, where, and your luck, never your level. Rare and '
-      + 'Legendary items drop unidentified. Off is the classic loot exactly. Online, some weapons carry a '
+      + 'Legendary items drop unidentified. Off is the classic loot. Online, some weapons carry a '
       + 'sigil that grows with your Renown.'); },   // SIGIL1
     get effect() { return t('features.lootRarity.effect', 'Takes effect on the next drop; items you wear update within a few seconds.'); },
     kinds: Object.freeze(['enhanced']),
@@ -803,10 +804,9 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-sounds',
     group: 'sound',   // FT18: was world
     get title() { return t('features.enhancedSounds.title', 'Enhanced sounds'); },
-    get note() { return t('features.enhancedSounds.note', 'New sounds on the enhanced UI: a steady wind outdoors that rises and falls with its strength and '
-      + 'goes quiet indoors, a coin clink when you take or store items in the enhanced inventory, your hands '
-      + 'and boots on stone when you climb, and the axe, the pick, the leaves, the knife and the net when you '
-      + 'gather.'); },
+    get note() { return t('features.enhancedSounds.note', 'New sounds on the enhanced UI: wind outdoors that rises and falls with its strength and goes quiet '
+      + 'indoors, a coin clink when you take or store items in the enhanced inventory, your hands and boots on stone '
+      + 'when you climb, and the axe, the pick, the leaves, the knife and the net when you gather.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
@@ -871,8 +871,8 @@ export const FEATURES = Object.freeze([
     id: 'tamriel-map',
     group: 'interface',
     title: 'Tamriel on the map',
-    note: 'The enhanced map zooms out past the Iliac Bay to the whole of Tamriel, hand-drawn: the provinces, their '
-      + 'capitals, the mountains and the seas, joined to the Bay’s own coast. Nothing beyond the Bay can be travelled to.',
+    note: 'The enhanced map zooms out past the Iliac Bay to show all of Tamriel: its provinces, capitals, mountains and '
+      + 'seas, hand-drawn and joined to the Bay’s own coast. You can’t travel beyond the Bay.',
     effect: 'Takes effect the next time a map is opened.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
@@ -884,8 +884,8 @@ export const FEATURES = Object.freeze([
     id: 'tamriel-land',
     group: 'world',
     title: 'Land beyond the Bay',
-    note: 'Walk off the edge of the Iliac Bay and the land of Tamriel goes on: hills, mountains and coasts under each '
-      + 'province\u2019s own sky and trees. Empty ground for now - no towns, roads or dungeons stand there yet.',
+    note: 'The land goes on past the edge of the Iliac Bay, with the hills, mountains, coasts, sky and trees of each '
+      + 'province. There are no towns, roads or dungeons there yet.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielLand', initial: true, online: 'player' }),
@@ -934,8 +934,8 @@ export const FEATURES = Object.freeze([
     id: 'bantha-jungle',
     group: 'world',
     get title() { return t('features.banthaJungle.title', 'Jungle of Bantha'); },
-    get note() { return t('features.banthaJungle.note', 'Bantha, from Lainlyn to Mournoth, grows into dense jungle - giant trees overhead, palms, and ferns and '
-      + 'broad leaves underfoot - under a humid haze, thickest at dawn and in rain. Off, it keeps its original woods.'); },
+    get note() { return t('features.banthaJungle.note', 'Bantha, from Lainlyn to Mournoth, becomes dense jungle: giant trees overhead, palms, ferns and broad '
+      + 'leaves underfoot, and a humid haze that is thickest at dawn and in rain. Off keeps its original woods.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'banthaJungle', initial: true, online: true }),
@@ -993,12 +993,31 @@ export const FEATURES = Object.freeze([
     id: 'nearby-quests',
     group: 'world',
     title: 'Nearby quests',
-    note: 'Quests from guilds, temples, nobles and townsfolk send you to towns and dungeons near where you took them, a '
-      + 'day or two away at first and farther as you level, until by level fifteen or so anywhere in the region will do. '
-      + 'Off picks anywhere in the region from the start, like the original.',
+    note: 'Quests from guilds, temples, nobles and townsfolk send you to towns and dungeons near where you took them: a '
+      + 'day or two away at first, farther as you level, and anywhere in the region by about level 15. '
+      + 'Off sends you anywhere in the region from the start, like the original.',
     effect: 'Takes effect on the next quest you take; quests you already have keep their places.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'nearbyQuests', initial: true, online: 'player' }),
+  }),
+  // QL1 (2026-10-19, the owner: "modernize the questing system to be more in line with the mainline games ... This would
+  // be toggled for online and not be able to be changed"): QUESTLINES (bible/06-Systems/Questlines-Arc.md) - every quest's
+  // objectives, branches whose choices end it differently, outcomes that pay gear, and the questlines. A rule, so the lane
+  // forces it on online (the owner: locked); offline the player's, on by default (the owner's answer). Read when a quest
+  // STARTS and stamped on it for life (systems/questlines/qlLaw.js startStamp), so turning it off strands nothing.
+  Object.freeze({
+    id: 'questlines',
+    group: 'world',
+    get title() { return t('features.questlines.title', 'Questlines'); },
+    // AUDIT QUESTLINES VOICE-QL: since UI-4/REWARD-6 only a quest whose sheet pays gear offers a piece (qlLayer.js rowOf
+    // `gear`, which qlJournal.js qlObjectivesBlock reads) - "each one finished offers" was no longer true. Still two
+    // sentences and no longer than it was (FT15's note budget)
+    get note() { return t('features.questlines.note', 'Every quest shows its objectives, some let you choose how they end, some offer a piece of gear '
+      + 'fitted to you when done, and questlines lead to the Breaches, the Battlespire and the Abyss. Off is the classic journal '
+      + 'and its rewards, and online it is always on.'); },
+    get effect() { return t('features.questlines.effect', 'Takes effect on the next quest you take; quests you already have keep the rules they began with.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'questlines', initial: true, online: true }),   // systems/questlines/qlLaw.js QUESTLINES_PREF
   }),
   // LW2 (2026-10-04, Mac: "NPCs are no longer just random walking entities"): THE LIVING WORLD
   // (bible/06-Systems/Living-World.md) - a town's people are its residents, each with a name, a home, a trade and a
@@ -1009,9 +1028,9 @@ export const FEATURES = Object.freeze([
     id: 'living-world',
     group: 'world',
     title: 'Living world',
-    note: 'Townsfolk are residents with names, homes, trades and days of their own - they open their shops, meet at '
-      + 'the square and the tavern, talk among themselves, sleep at night and remember how you treated them, and '
-      + "everyone online sees the same people. Off, the streets fill with the classic wandering strangers, gone at dusk.",
+    note: 'Townsfolk have names, homes, trades and daily routines. They open their shops, meet and talk at the square '
+      + 'and the tavern, sleep at night and remember how you treated them. Everyone online sees the same people. '
+      + 'Off fills the streets with the classic wandering strangers, who vanish at dusk.',
     effect: 'Takes effect when a town next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'livingWorld', initial: true, online: 'player' }),
@@ -1055,7 +1074,7 @@ export const FEATURES = Object.freeze([
     // the mod's own name and its author, as every mod row carries them (AUDIT SURV E) - the bundle names none, so the
     // credits' own unnamed form (ui/credits.js), as Oblivion Remaster Like Leveling's row names its source
     get title() { return t('features.mod.title', '{title} by {author}', { title: 'The King\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }); },
-    get note() { return t('features.mod.kingsGambit.note', 'Armies and kings at a tavern\'s card table, against a regular or another player, for gold or fun. Off, the tables offer Hold\'em and Iliac Hand alone.'); },
+    get note() { return t('features.mod.kingsGambit.note', 'A game of armies and kings at a tavern\'s card table, against a regular or another player, for gold or for fun. Off, the tables offer only Hold\'em and Iliac Hand.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: KINGS_GAMBIT_KEY, initial: true, online: 'player' }),
@@ -1077,7 +1096,7 @@ export const FEATURES = Object.freeze([
   // IT1 (2026-10-04): IMMERSIVE TRAVEL - `world`, the carriages at the city gates. Its gate blocks and its two factions
   // are laid when the game loads (the world-data door latches its blocks, the faction dictionary is built at the load);
   // its fares and its rules are read as a driver's map opens.
-  modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect when the game is next started (an in-game Load keeps what it started with); its fares and rules at the next map.'), 'world'),
+  modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect the next time you start the game; loading a save is not enough. Fares and rules change at the next map.'), 'world'),
   // WOD1 (2026-09-23): WORLD OF DAGGERFALL - `world`, because it is the
   // wilderness itself. Read at the world's mount, like the roads it
   // consults: the loader's list is built once per world.
@@ -1092,8 +1111,8 @@ export const FEATURES = Object.freeze([
   // WD3 (2026-10-01): BEAUTIFUL VILLAGES and BEAUTIFUL CITIES - `world`, the towns themselves. The world-data
   // loader reads each switch once, when the game loads (scenes/modWorldData.js latches it), so a town never moves
   // under the player; online the room owns both.
-  modFeature('beautiful-villages', () => t('features.mod.beautifulTowns.effect', 'Takes effect when the game is next started (an in-game Load keeps the towns it started with). Offline it also needs Replace Game Artwork.'), 'world'),   // AUDIT WD3 B9
-  modFeature('beautiful-cities', () => t('features.mod.beautifulTowns.effect', 'Takes effect when the game is next started (an in-game Load keeps the towns it started with). Offline it also needs Replace Game Artwork.'), 'world'),   // AUDIT WD3 B9
+  modFeature('beautiful-villages', () => t('features.mod.beautifulTowns.effect', 'Takes effect the next time you start the game; loading a save is not enough. Offline it also needs Replace Game Artwork.'), 'world'),   // AUDIT WD3 B9
+  modFeature('beautiful-cities', () => t('features.mod.beautifulTowns.effect', 'Takes effect the next time you start the game; loading a save is not enough. Offline it also needs Replace Game Artwork.'), 'world'),   // AUDIT WD3 B9
   // WA1 (2026-09-25): WARM ASHES - SHIPS - `world`, the sea voyage. The travel
   // hook reads the switch as a journey starts; an ambush already at sea
   // finishes either way.
@@ -1121,7 +1140,11 @@ export const FEATURES = Object.freeze([
   // while it is on. AUDIT 28 F4: the pack is read once, when the quest lists
   // are built (questLists.js) - so the row says the two halves apart.
   modFeature('foraging', () => t('features.mod.foraging.effect', 'Takes effect at once; its quests when the game next loads.'), 'world'),
-  modFeature('meanerMonsters', () => t('features.mod.meanerMonsters.effect', 'Takes effect on monsters that appear after the change.'), 'combat'),
+  modFeature('meanerMonsters', () => t('features.mod.meanerMonsters.effect', 'Takes effect on monsters that appear after the change. With Daggerfall Enemy Expansion on, it takes effect when the game next loads.'), 'combat'),
+  // DEX0: DAGGERFALL ENEMY EXPANSION - `combat`, beside the other bestiary mod. Loaded for the game or not, as DFU loads
+  // a mod (its rows, its tables and its hooks written at its install - modSettings.js latchModLoaded), so a switch
+  // flipped mid-game waits for the next load, as Roleplay & Realism's enemy appearance does.
+  modFeature('daggerfall-enemy-expansion', () => t('features.effect.gameLoads', 'Takes effect when the game next loads.'), 'combat'),
   modFeature('pcaao', () => t('features.effect.atOnce', 'Takes effect at once.'), 'combat'),
   modFeature('unleveledLoot', () => t('features.mod.unleveledLoot.effect', 'Takes effect on the next drop or shop restock.'), 'loot'),
   modFeature('weapon-widget', () => t('features.effect.atOnce', 'Takes effect at once.'), 'combat'),   // WW1: the widget reads its switches every frame
@@ -1162,7 +1185,7 @@ export const FEATURES = Object.freeze([
   // PI1 (2026-10-07): PHYSICAL ITEMS - `world`, as Horse Cart and Cargo: what it changes is what lies in it. The layer
   // reads its switch and its settings every frame (scenes/physicalItemsLayer.js); a size lands on the items that stand
   // after it (the mod's "Applies to newly created visuals").
-  modFeature('physical-items', () => t('features.mod.physicalItems.effect', 'Takes effect at once; a new size on the items that land after it.'), 'world'),
+  modFeature('physical-items', () => t('features.mod.physicalItems.effect', 'Takes effect at once; a size change applies to items that drop after it.'), 'world'),
   // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
   // OpenMW mechanism, on the port's Morrowind third-person body. The
   // switch is the port's own pref (the mod ships no settings of its own);
@@ -1181,8 +1204,8 @@ export const FEATURES = Object.freeze([
     id: 'mod-weapon-sheathing',
     group: 'combat',
     title: 'Weapon Sheathing',
-    get note() { return t('features.mod.weaponSheathing.note', 'With the Morrowind body, a sheathed weapon stays on you, on your hip or back in a scabbard, with a '
-      + 'quiver for a bow. Off, a put-away weapon disappears, as in Morrowind.'); },
+    get note() { return t('features.mod.weaponSheathing.note', 'With the Morrowind body, a put-away weapon hangs in a scabbard on your hip or back, and a bow gets a '
+      + 'quiver. Off, a put-away weapon disappears, as in Morrowind.'); },
     get effect() { return t('features.mod.weaponSheathing.effect', 'Takes effect at once with the Morrowind body.'); },   // FT18: the Mods page it named is gone - the tile rebuilds it (enhancedMenu.js TILE_AFTER)
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
@@ -1196,7 +1219,7 @@ export const FEATURES = Object.freeze([
     id: 'steel-helm',
     group: 'combat',
     title: 'Steel Helm',
-    note: 'With the Morrowind body, a Steel Helm is worn closed, with a visor and a plume, or open, a nasal helm that shows the face.',
+    note: 'With the Morrowind body, choose how a Steel Helm looks: Closed has a visor and a plume; Open is a nasal helm that shows the face.',
     effect: 'Takes effect at once with the Morrowind body.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),
@@ -1210,7 +1233,7 @@ export const FEATURES = Object.freeze([
     id: 'mw-spell-effects',
     group: 'combat',
     title: 'Morrowind Spell Effects',
-    note: 'With Morrowind data, spells look as they do in Morrowind: a swirl and glowing hands as you cast, the bolt in flight, the hit and the burst. Off, the classic missiles fly alone.',
+    note: 'With Morrowind data, spells look as they do in Morrowind: a swirl and glowing hands as you cast, the bolt in flight, the hit and the burst. Off shows only the classic spell missiles.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSpellEffects', initial: true, online: 'player' }),
@@ -1225,8 +1248,8 @@ export const FEATURES = Object.freeze([
     id: 'mw-body-motion',
     group: 'combat',
     get title() { return t('features.mwBodyMotion.title', 'Morrowind Body Motion'); },
-    get note() { return t('features.mwBodyMotion.note', 'In third person a Morrowind body strides at the pace you move, for every race, carries each weapon '
-      + 'its own way, and swings with its whole body while its legs keep moving. Off plays Morrowind\u2019s own animations.'); },
+    get note() { return t('features.mwBodyMotion.note', 'In third person a Morrowind body walks at the pace you move, carries each weapon its own way, and '
+      + 'swings with its whole body while its legs keep moving. Off plays Morrowind\u2019s own animations.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwBodyMotion', initial: true, online: 'player' }),
@@ -1241,10 +1264,25 @@ export const FEATURES = Object.freeze([
     id: 'mw-npc-bodies',
     group: 'world',
     title: 'Morrowind People',
-    note: 'With the Morrowind body, the people around you stand in Morrowind bodies too, the nearest first. Near stands up to 24; All up to 48, at more cost.',
+    note: 'With the Morrowind body, the people around you get Morrowind bodies too, nearest first. Near shows up to 24; All shows up to 48 but costs more.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwNpcBodies', initial: 'near', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),
+  }),
+  // NPC-MARKS (2026-10-21, the owner: "vendors and quests npcs are hard to find due to everyone looking the same. Could we
+  // make a bobbing icon above their character for morrowind specifically?"): a bobbing mark over a Morrowind body whose
+  // click is a quest's (a yellow "!"), a merchant's (an amber coin) or a guild's or the arena's (a blue gem) - scenes/npcMarksHost.js. On by
+  // default. The VIEWER'S: how this machine draws the people, never the wire. Read every frame by each host's marks, so
+  // it lands at once; under the classic sprites nothing is drawn (the picture is the mark).
+  Object.freeze({
+    id: 'npc-marks',
+    group: 'world',
+    get title() { return t('features.npcMarks.title', 'Morrowind People Marks'); },
+    get note() { return t('features.npcMarks.note', 'With Morrowind People on, a small icon bobs over the people worth finding: a yellow mark over someone a '
+      + 'quest needs, a coin over a merchant, and a blue gem over guild trainers, guild quest givers and the arena\u2019s officers.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'npcMarks', initial: true, online: 'player' }),
   }),
   // BODY-CARD (2026-10-14, the owner: "Reimplement the billboard morrowind look as a toggle"; asked, the upright card
   // BODY-LEAN replaced): every Morrowind body and 3D horse - the player's, a peer's, the people's - stands on an UPRIGHT
@@ -1372,8 +1410,8 @@ export const FEATURES = Object.freeze([
     id: 'dungeon-wall-style',
     group: 'sight',
     get title() { return t('features.dungeonWallStyle.title', 'Dungeon Wall Style'); },
-    get note() { return t('features.dungeonWallStyle.note', 'Which textures dungeon walls use: the classic ones (Classic), the region’s climate (Climate), or '
-      + 'random (Random). Climate and Random keep main-story dungeons classic; Climate Only and Random Only '
+    get note() { return t('features.dungeonWallStyle.note', 'Which textures dungeon walls use: Classic, the region’s climate (Climate) or random (Random).'
+      + ' Climate and Random keep main-story dungeons classic; Climate Only and Random Only '
       + 'change them too. Classic by default in Daggerfall Unity.'); },
     get effect() { return t('features.effect.nextDungeon', 'Takes effect on the next dungeon you enter.'); },
     kinds: Object.freeze(['classic']),
@@ -1394,14 +1432,15 @@ export const FEATURES = Object.freeze([
     id: 'quick-slots',
     group: 'interface',
     get title() { return t('features.quickSlots.title', 'Quick slots'); },
-    get note() { return t('features.quickSlots.note', 'Diamond puts your weapon, off hand and two quick items in a diamond at the bottom left, set from the '
-      + 'inventory. Hotbar puts ten slots above your health bars on keys 1 to 0, filled by dragging from your '
-      + 'pack and spellbook. Off hides the diamond, but its keys still work.'); },
+    get note() { return t('features.quickSlots.note', 'Diamond puts 4 slots in a diamond at the bottom left, on keys 1 to 4. Hotbar puts 10 above your '
+      + 'health bars on keys 1 to 0; Diamonds makes them diamonds. Drag an item or spell onto a slot, or point at it '
+      + 'and press the key. Off hides them, but their keys still work.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'quickbarStyle', initial: 'hotbar', online: 'player', lane: 'quickSlots',   // HB1: ui/enhanced/enhancedHotbar.js HOTBAR_PREF
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' })]),   // QS: ui/enhanced/enhancedHud.js hides the diamond on false
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),   // QS: ui/enhanced/enhancedHud.js hides the diamond on false
+        Object.freeze({ store: 'prefs', key: 'hotbarShape', initial: 'square', online: 'player' })]),   // DIAMOND-HB: ui/enhanced/enhancedHotbar.js HOTBAR_SHAPE_PREF
     }),
   }),
   // LOAD1 (2026-10-05, Mac: "add loading screens where needed for the game in an enhanced UI type fashion, maybe make
@@ -1413,9 +1452,9 @@ export const FEATURES = Object.freeze([
     id: 'loading-screen',
     group: 'interface',
     title: 'Loading screens',
-    note: 'While the world loads - starting a game, a dungeon\u2019s door, a fast travel, a save - a screen shows where '
-      + 'you are going over one of your screenshots (chosen under Screenshots in the menu) or the menu\u2019s night sky. '
-      + 'Off is the classic one, with no screen.',
+    note: 'While the world loads, a screen shows where you are going over one of your screenshots or the menu\u2019s '
+      + 'night sky. Choose the screenshots under Screenshots in the menu. '
+      + 'Off keeps the classic load, with no screen.',
     effect: 'Takes effect at the next load.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
@@ -1430,8 +1469,8 @@ export const FEATURES = Object.freeze([
     id: 'quest-herald',
     group: 'interface',
     get title() { return t('features.questHerald.title', 'Quest news'); },
-    get note() { return t('features.questHerald.note', 'A notice slides in when a quest begins, when its journal gains an entry, when a deadline it gave you has '
-      + 'under a day left, and when it ends. Off is the classic silence: the journal changes without a word.'); },   // AUDIT GUIDE H1
+    get note() { return t('features.questHerald.note', 'A notice slides in when a quest begins, when its journal gains an entry, when one of its deadlines is '
+      + 'less than a day away, and when it ends. Off updates the journal without a notice.'); },   // AUDIT GUIDE H1
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),   // ui/quest/questHerald.js HERALD_PREF
@@ -1443,8 +1482,8 @@ export const FEATURES = Object.freeze([
     id: 'quest-tracker',
     group: 'interface',
     get title() { return t('features.questTracker.title', 'Quest tracker'); },
-    get note() { return t('features.questTracker.note', 'A card at the top right shows the quest your journal last changed - its newest entry, where it points and '
-      + 'the time left - or the one you track from the journal. Off is the classic HUD, which says nothing of quests.'); },
+    get note() { return t('features.questTracker.note', 'A card at the top right shows the quest you track from the journal, or else the one it last updated: its '
+      + 'newest entry, where it points and the time left. Off keeps the classic screen, with no quest card.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),   // ui/quest/questTracker.js TRACKER_PREF
@@ -1455,8 +1494,8 @@ export const FEATURES = Object.freeze([
     id: 'quest-marks',
     group: 'interface',
     get title() { return t('features.questMarks.title', 'Quest marks'); },
-    get note() { return t('features.questMarks.note', 'Your quests\u2019 places are marked on the map, and the one you follow on the compass - only places your map '
-      + 'already holds. Off is the classic map and compass, which mark nothing for a quest.'); },
+    get note() { return t('features.questMarks.note', 'Places your quests send you to are marked on the map once your map knows them, and the quest you follow is '
+      + 'marked on the compass. Off is the classic map and compass, which mark nothing for a quest.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF
@@ -1471,9 +1510,9 @@ export const FEATURES = Object.freeze([
     id: 'quest-guidance',
     group: 'interface',
     title: 'Quest guidance',
-    note: 'Journal marks only places your map already holds. Town rings the building your journal names on the Enhanced '
-      + 'town map and your compass. Exact also marks a quest\u2019s item, person or foe in dungeons and buildings - it '
-      + 'can spoil a search.',
+    note: 'Journal marks only places your map already knows. Town also circles the building your journal names, on the '
+      + 'Enhanced town map and your compass. Exact also marks a quest\u2019s item, person or foe in dungeons and buildings, '
+      + 'which can spoil the search.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/quest/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS
@@ -1500,7 +1539,7 @@ export const FEATURES = Object.freeze([
     id: 'dungeon-echoes',
     group: 'interface',
     title: 'Lever echoes',
-    note: 'When a lever or a plate moves something out of sight, a line says which way, the Enhanced map marks it, and '
+    note: 'When a lever or a plate moves something out of sight, a message says which way, the Enhanced map marks it, and '
       + 'it glows when you reach it. In Info mode, a lever\u2019s World Tooltips label says which way it works.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
@@ -1514,7 +1553,7 @@ export const FEATURES = Object.freeze([
     id: 'dungeon-way-out',
     group: 'interface',
     title: 'Way out',
-    note: 'In a dungeon, an arrow on the compass leads back along the way you walked to the way in.',
+    note: 'In a dungeon, an arrow on the compass leads you back the way you came, to the entrance.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonWayOut', initial: true, online: 'player' }),   // systems/wayOut.js WAY_PREF
@@ -1542,8 +1581,8 @@ export const FEATURES = Object.freeze([
     id: 'road-encounters',
     group: 'world',
     title: 'Encounters on the road',
-    note: 'While you travel, an enemy far below your level is passed by instead of stopping you, and the rest sometimes '
-      + 'come as a patrol. Off stops for every encounter, like the original.',
+    note: 'While you travel, enemies far below your level no longer stop you, and others sometimes come as a '
+      + 'patrol. Off stops for every encounter, like the original.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'roadEncounters', initial: true, online: 'player' }),
@@ -1596,7 +1635,7 @@ export const FEATURES = Object.freeze([
     get note() { return t('features.blood.note', 'Stains stay on floors and walls where blood lands. A big killing blow sprays it further, and a heavy '
       + 'hit on you splashes a few drops on the screen. The slider sets how much, from Light to Abattoir; Off '
       + 'keeps the classic splash that fades away.'); },
-    get effect() { return t('features.blood.effect', 'Takes effect at once; how many marks stay, when the game next loads or you enter a dungeon.'); },
+    get effect() { return t('features.blood.effect', 'Takes effect at once; the number of marks that stay changes when the game next loads or you enter a dungeon.'); },
     kinds: Object.freeze(['enhanced']),
     // FT18: BLOOD, ONE ROW. BLOOD1's marks, BLOOD1b's overkill, BLOOD2e's lens and BLOOD2g's gore were four tiles over
     // one system, and the gore dial had no Off: the one question a player asks - blood or no blood - took three
@@ -1622,8 +1661,8 @@ export const FEATURES = Object.freeze([
     group: 'character',
     get title() { return t('features.mod.title', '{title} by {author}', { title: 'Climates & Calories', author: 'Ralzar' }); },   // AUDIT SURV E: the author's name, as every mod row carries it
     get note() { return t('features.mod.climatesCalories.note', 'Hunger, thirst, sleep and the weather come into play: eat, drink, dress for the climate and rest by a '
-      + 'campfire or in a bed. On Boons neglect costs nothing and a body kept fed and watered, and rested in a bed or by '
-      + 'a fire, earns bonuses; on Casual, unmet needs only drain some stamina (never more than half) and it '
+      + 'campfire or in a bed. On Boons neglect costs nothing, and staying fed, watered and rested in a bed or by '
+      + 'a fire gives bonuses; on Casual, unmet needs only drain some stamina (never more than half) and it '
       + 'comes back once you’ve seen to them; on Hard they cost attributes and health and can make you sick; '
       + 'Off is the classic game.'); },
     get effect() { return t('features.mod.climatesCalories.effect', 'Takes effect at once. Online, each player picks their own.'); },
@@ -1686,9 +1725,9 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.navalCombat.title', 'Naval Combat'); },
     get note() { return t('features.navalCombat.note', 'Ship battles on Come Sail Away\u2019s boats: at the helm, look to one side and hold Attack to aim a broadside, '
       + 'then let go to fire. Pirates, merchant ships and navies sail the Bay; batter a ship until it surrenders, board '
-      + 'it, take its cargo, then sink it or let it go. Piracy is a crime, and pirates who board you bring Warm '
-      + 'Ashes\u2019 raids. Online, everyone in the room shares one sea.'); },
-    get effect() { return t('features.navalCombat.effect', 'Takes effect at once; Ship handling, the next time you take the helm. Online, the sea is on for everyone.'); },   // AUDIT NAV2 F14: the helm takes the handling once a session (comeSailAway.js responsive)
+      + 'it, take its cargo, then sink it or let it go. Piracy is a crime, and pirates can board your ship and '
+      + 'fight you on deck. Online, everyone in the room shares one sea.'); },
+    get effect() { return t('features.navalCombat.effect', 'Takes effect at once; Ship handling, the next time you take the helm. Online it is always on.'); },   // AUDIT NAV2 F14: the helm takes the handling once a session (comeSailAway.js responsive)
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'naval', initial: true, online: true,   // scenes/world.js navalOn: the host stands down and empties the sea

@@ -105,8 +105,8 @@ test('AUDIT WB B5 the seams: the door asked again once the fire has closed; a re
   const world = read('src/scenes/world.js');
   assert.match(world, /onRefused: \(why\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(gateRefusalText\(why\)\); \},/);   // GATE-RELOAD: in what the word means (net/gate/gateLink.js gateRefusalText)
   assert.match(world, /else if \(courtDay != null && online\?\.terminal\) ejectFromCourt\(GATE_NO_TEXT\[online\.error\] \?\? COURT_TEXT\.lost\);/);
-  const refusal = world.slice(world.indexOf('gateRefusal: (g) =>'), world.indexOf('gateRefusal: (g) =>') + 400);
-  assert.match(refusal, /!online\?\.gateOk \|\| online\?\.terminal \? GATE_TEXT\.notYet/, 'no relay to hold it');
+  const refusal = world.slice(world.indexOf('gateRefusal: (g) =>'), world.indexOf('gateRefusal: (g) =>') + 600);   // PIN MOVED (AUDIT WB14 WIRE-1): the longer for the portents' clause
+  assert.match(refusal, /!online\?\.gateOk \|\| online\?\.terminal \|\| \(!!gatePortentsOf\(g\.day\) && !online\?\.portentsOk\) \? GATE_TEXT\.notYet/, 'no relay to hold it (AUDIT WB14 WIRE-1: nor, on a portent night, one from before them)');
   assert.match(refusal, /Number\.isFinite\(gateLink\?\.fellAt\(g\.day\)\) \? GATE_NO_TEXT\['the gate is closing'\]/, 'its master fallen');
   assert.match(refusal, /!gateAdmits\(g\.day, Date\.now\(\) \+ _sharedOffsetMs\) \? GATE_TEXT\.sealed : null/, 'sealed while the fire burned');
   const modes = read('src/scenes/worldModes.js');

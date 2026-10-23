@@ -302,7 +302,8 @@ under another record):
 is the eye's third box, `benchBoxOf`) opens the Stores page, landed on The Workbench (`scenes/world.js` openYardBench:
 `focusStoresStation('workbench')`, then the pause on `stores`). Where the page is not (offline, the switch shut) it
 says the bench is bare (`WORKBENCH_COLD_LINE`, a home workbench's word). While the player's feet are within
-`YARD_REACH` of the bench across the ground and `YARD_BENCH_RISE` up or down (`workbenchNear`), the street's workbench
+`YARD_REACH` of one of the joinery's doors - its carpenter, its board or its bench, each box at its nearest point - across
+the ground, and `YARD_BENCH_RISE` up or down (`workbenchNear`; BENCH-DOORS, below), the street's workbench
 question answers `YARD_BENCH`: a shop's bench at the furnisher's own fee (`WORKBENCH_FEE` - no bench is a cheaper
 one), the carpenter the one paid. That question is `scenes/world.js` workbenchHere, asked by the craft, the Stores page
 and the saw alike; indoors it is still the mode machine's. The Stores page names the joinery's carpenter
@@ -315,6 +316,19 @@ yardGlyph, `yardMarkKind`), under the Towns switch.
 THE FOUR HOSTS (CARP-YARD): `scenes/world.js` - WIRED (the placing, the pool's bench, the street's workbench).
 `scenes/worldModes.js` - its street ray reaches every `yard:` key unchanged, and indoors its workbenchHere answers as
 before. `scenes/exterior.js` - stands no yard (FLAGGED above). `scenes/dungeonContext.js` - no town.
+
+**BENCH-DOORS (FIELD BUGS 2026-10-20c, the Discord: "the crafting station in towns dont have any craft buttons, just
+buttons to store goods").** The station question measured the feet from the bench's middle alone, and the carpenter
+stands 8.55 m from it, the board 9.55 m - past `YARD_REACH` (6.4 m). So a press on either, the two a player meets first,
+opened the Stores page with its Workbench Away: no saw and no craft, only the Stores' Put in and Take out, and words
+sending the player to a joinery. Over a quarter-metre grid round the yard, no wall in the way, 45% of the answered presses on the three opened it
+so - the bench's own among them, pressed on its end from six metres. The station is where its doors answer now: every
+box of a joinery is a door (its press opens the bench whatever part it meets, and a joinery stands no horse and no
+wagon), and the question measures each at its nearest point across the ground
+(`merchantYardsHost.js:"        for (const { aabb: b } of targetsOf(y)) {"`), the press's own boxes (`targetsOf`). A press
+answered from where the feet stand is a station answered there. Pinned by `test/scenes/fb1020c_benchdoors.test.js`;
+`tools/mutants/fb1020c_benchdoors.json`. Pin moved: `carpyard1.test.js`'s reach, measured from the bench's end; its two
+mutant records re-aimed.
 
 Pins: `test/systems/carpyard1.test.js` (8). Mutants: `tools/mutants/carpyard1.json` (23, all dead). Pins moved: `prof4_client`
 (the bench's empty line, the craft's station question), `audit30_client` and `prof7_client` (the host's question),

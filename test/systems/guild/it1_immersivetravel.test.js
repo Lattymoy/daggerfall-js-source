@@ -45,9 +45,18 @@ test('IT1 the record: the manifest and the settings verbatim, every key restated
   const restated = Object.keys(keys).filter((k) => k !== 'Enabled');
   const shipped = SHIPPED.Sections.flatMap((s) => s.Keys.map((k) => [`${s.Name}.${k.Name}`, k]));
   assert.deepEqual(restated, shipped.map(([n]) => n), 'every key, in the file\'s order');
+  // PLAIN-TEXT (2026-10-19): six of the author's lines said plainly for a player (two typos among them) - their words, exactly
+  const PLAIN = {
+    'General.DisableNormalTravel': 'You can no longer travel from the map, and must use carriages and ships.',
+    'General.DrawRoads': 'Draws roads on the map when Basic Roads is on.',
+    'General.DrawTracks': 'Draws dirt tracks on the map when Basic Roads is on.',
+    'ShipTravel.DailyShipCost': 'Daily cost of renting a ship, if you don’t own one.',
+    'ShipTravel.DailyCaptainFee': 'Daily cost of hiring a captain and crew. You pay a captain even if you own the ship.',
+    'ShipTravel.ShowLargerDocks': 'Uses larger dots on the map for locations with a dock.',
+  };
   for (const [name, k] of shipped) {
     const def = keys[name];
-    assert.equal(def.description, k.Description ?? '', `${name}: the author's words`);
+    assert.equal(def.description, PLAIN[name] ?? k.Description ?? '', `${name}: the author's words, or their plain rewording`);
     if (name === 'General.DisableNormalTravel') { assert.equal(k.Value, true, 'the mod ships it on'); assert.equal(def.default, false, 'IT1: the port ships it off'); continue; }
     assert.equal(def.default, k.Value, `${name}: the shipped default`);
     if (k.$type.endsWith('SliderIntKey')) assert.deepEqual([def.min, def.max], [k.Min, k.Max], `${name}: the slider's range`);

@@ -48,6 +48,7 @@ import { bitmapCanvas } from '../bitmapCanvas.js';
 import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
 import { overlayAction, isTextEntryTarget } from '../input.js';   // CG2: one definition of 'a DOM field's key is the field's'
 import { SKILL_NAMES } from '../../systems/skills.js';
+import { reviseClassDescription } from '../../systems/stockClasses.js';   // CLASS-USE: the description names the revised skills
 import { QUESTION_COUNT } from '../../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
 import { HELP_TOPICS, REP_GROUPS, REP_MAX, DIFFICULTY_MIN, DIFFICULTY_MAX, advancementMultiplier, daggerFraction, customClassDoc } from '../../systems/customClass.js';              // AUDIT 39: the builder's help picker; CC-REP: the reputation ledger's groups and reach; UXB1-H/I: the class document, the dagger
 import { ATTRIBUTE_BLURB, attributeLabel as attrName } from '../levelUp/levelUpView.js';   // UXB1-G: the port's own line per attribute, each true of the code (LV1's audit)
@@ -252,7 +253,7 @@ function refreshHover() {
   const who = hover ? RACE_TEMPLATES.find((r) => r.key === hover) : null;
   hoverTitle.textContent = who ? (PROVINCE_NAMES[who.key] ?? who.name) : 'Where are you from?';
   hoverBody.textContent = who
-    ? `Home of the ${who.name}. Press to read what it means to be born here.`
+    ? `Home of the ${who.name}. Click to read what it means to be born here.`
     : 'Your homeland sets your face, your name and how much of Tamriel greets you kindly.';
 }
 
@@ -679,7 +680,7 @@ function customAdvPane(c) {
     const main = el('button', 'row-main');
     main.append(el('div', 'row-name', labelFor(item.primary) || item.primary));
     if (item.secondary) main.append(el('div', 'row-sub', labelFor(item.secondary) || item.secondary));
-    main.append(el('div', 'row-note', 'Press to remove'));
+    main.append(el('div', 'row-note', 'Click to remove'));
     main.onclick = () => { flow.applyHit({ advRemove: i }); paint(); };
     row.append(main);
     rows.append(row);
@@ -712,7 +713,7 @@ function customRepPane(c) {
   const pts = c.repPoints ?? 0;
   head.append(el('span', 'skillpool', pts === 0 ? 'balanced' : `${pts} to distribute`));
   sec.append(head);
-  sec.append(el('div', 'row-note', 'How each group regards a new member of this class, from -' + REP_MAX + ' to +' + REP_MAX + '. Every point a group gives must be taken from another.'));
+  sec.append(el('div', 'row-note', 'How each group regards a new member of this class, from -' + REP_MAX + ' to +' + REP_MAX + '. Every point you add to one group must come from another.'));
   for (const group of REP_GROUPS) {
     const row = el('div', 'row');
     const main = el('div', 'row-main');
@@ -949,12 +950,12 @@ function classIoCard() {
   const say = (t) => { classIoNote = t; paint(); };
   if (classIo === 'export') {
     card.append(el('h3', null, 'Export this class'));
-    card.append(el('p', 'row-note', 'The name, the skills, the attributes, the special advantages and disadvantages and the reputations - everything you chose here.'));
+    card.append(el('p', 'row-note', 'Everything you chose here: the name, skills, attributes, special advantages and disadvantages, and reputations.'));
     const acts = el('div', 'acts');
     const copy = el('button', 'act primary', 'Copy to clipboard');
     copy.onclick = async () => {
       try { await globalThis.navigator.clipboard.writeText(classDocText()); say('Copied. Paste it into Import on any DFO Online character.'); }
-      catch { say('The browser would not let this page write the clipboard - save it as a file instead.'); }
+      catch { say('The browser blocked copying to the clipboard. Save it as a file instead.'); }
     };
     const save = el('button', 'act', 'Save as a file');
     save.onclick = () => {
@@ -970,7 +971,7 @@ function classIoCard() {
     card.append(acts);
   } else {
     card.append(el('h3', null, 'Import a class'));
-    card.append(el('p', 'row-note', 'A class exported from this screen. It replaces what is on the builder now; Create still checks it.'));
+    card.append(el('p', 'row-note', 'A class exported from this screen. It replaces the class you are building, and Create still checks it.'));
     const field = el('textarea', 'classio-text');
     field.setAttribute('aria-label', 'Paste a class here');
     field.placeholder = 'Paste a class here';
@@ -981,7 +982,7 @@ function classIoCard() {
       const r = flow.customImport(text);
       if (!r.ok) { say(r.error); return; }
       classIo = null;
-      say(r.skipped.length ? `Loaded. ${r.skipped.length} special pick${r.skipped.length === 1 ? '' : 's'} the windows would not take ${r.skipped.length === 1 ? 'was' : 'were'} left out.` : 'Loaded.');
+      say(r.skipped.length ? `Loaded. ${r.skipped.length} special pick${r.skipped.length === 1 ? '' : 's'} this screen could not take ${r.skipped.length === 1 ? 'was' : 'were'} left out.` : 'Loaded.');
     };
     const acts = el('div', 'acts');
     const go = el('button', 'act primary', 'Load');
@@ -989,7 +990,7 @@ function classIoCard() {
     const paste = el('button', 'act', 'Paste from clipboard');
     paste.onclick = async () => {
       try { load(await globalThis.navigator.clipboard.readText()); }
-      catch { say('The browser would not let this page read the clipboard - paste into the box instead.'); }
+      catch { say('The browser blocked reading the clipboard. Paste into the box instead.'); }
     };
     const open = el('button', 'act', 'Open a file');
     open.onclick = () => {
@@ -1167,7 +1168,7 @@ function faceStage() {
 
   if (!faces?.canvases?.length) {
     // NEVER TRAPS: no CIF, no portraits, and the wizard still walks.
-    wrap.append(el('p', 'mapnote', 'The portraits need this race\u2019s FACE CIF. Any of the ten will do.'));
+    wrap.append(el('p', 'mapnote', 'The portraits for this race could not be loaded. Any of the ten will do.'));
   }
   const grid = el('div', 'facegrid');
   for (let i = 0; i < FACES_PER_RACE; i++) {
@@ -1561,7 +1562,7 @@ function pendingStage(stage) {
   const pane = el('div', 'stagebody solo');
   const e = el('div', 'empty');
   e.append(el('h3', null, `${stage?.label ?? 'This stage'} has nothing to show`));
-  e.append(el('p', null, 'The wizard runs on one flow and this stage could not read what it needed. Go back and choose again.'));
+  e.append(el('p', null, 'This step could not load what it needed. Go back and choose again.'));
   pane.append(e);
   return pane;
 }
@@ -1717,7 +1718,7 @@ function paintInto() {
 export function attachChargenText(f, textRsc) {
   if (!textRsc) return f;
   f.describeRace = (race) => (race ? textRsc.linesById(race.descriptionId) : []);
-  f.describeClass = (i) => textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i);
+  f.describeClass = (i) => reviseClassDescription(i, textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i));
   f.describeText = (id) => textRsc.linesById(id);
   // THE BIOGRAPHY'S TWO TEXT SOURCES, and they are not decoration. The
   // BACKSTORY is what U13 built and what the character sheet's History

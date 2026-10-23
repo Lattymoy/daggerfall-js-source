@@ -20,6 +20,7 @@ const DISPLAY_READS = [
   ['/v1/homes/decor', 'POST', { mapId: 1, buildingKey: 1 }], ['/v1/prof/pixels', 'POST', { pixels: [[402, 151]] }],
   ['/v1/market/vendors', 'POST', { region: 17 }], ['/v1/marks/balance', 'POST', {}], ['/v1/guilds/invites', 'POST', {}],
   ['/v1/realm/lineages', 'POST', {}], ['/v1/realm/unions', 'POST', {}], ['/v1/saves', 'GET', null], ['/v1/arena/board', 'POST', {}],
+  ['/v1/festival/town', 'POST', { mapId: 1 }],   // PIN MOVED (WITCH1): and a town's Hearth Offerings
 ];
 const send = (S, path, { method = 'POST', secret, body = {}, mark = null } = {}) => S.fetch(`https://accounts.invalid${path}`, {
   method, headers: { authorization: `Bearer ${secret}`, ...(method === 'POST' ? { 'content-type': 'application/json' } : {}), ...(mark ? { 'x-d1-bookmark': mark } : {}) }, body: method === 'POST' ? JSON.stringify(body) : undefined,
@@ -55,7 +56,7 @@ test('DISPLAY-REPLICA: a seat read asked from a request already on a session (a 
   for (const w of [await svc.guest(), await svc.guest(), await svc.guest()]) base._raw.prepare("INSERT INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)").run(String(anticlere.key), w.id, seatReportText(anticlere), anticlere.region, T0 - 86400);
   const request = replicaDb(base, d1Position(base));
   const player = { id: 'p-somebody', handle: 'Somebody', registered_at: T0 - 30 * 86400 };
-  const seatSessions = () => base._sessions.filter((s) => s.statements.some((q) => q.includes("world_witness WHERE kind = 'seat'"))).map((s) => s.constraint);
+  const seatSessions = () => base._sessions.filter((s) => s.statements.some((q) => /world_witness (?:INDEXED BY \w+ )?WHERE kind = 'seat'/.test(q))).map((s) => s.constraint);   // PIN MOVED (AUDIT LEAN-READS 2 A3): the judged read names its index
   const first = await listSeats({ db: request, nowS: T0 }, player, ENV);
   assert.deepEqual(first.seats.map((s) => s.key), [anticlere.key]);
   assert.deepEqual(seatSessions(), [SEAT_ROWS_FROM], 'its own session, off the binding - not the request\'s');

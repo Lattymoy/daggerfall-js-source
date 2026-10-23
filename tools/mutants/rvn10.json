@@ -407,7 +407,7 @@
   {
     "name": "RVN10-felled-card-rank",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  const body = `${r.given} felled ${who}. ${r.rank > 1 ? `Now rank ${revenantRankNumeral(r.rank)} - it` : 'It'} will remember this.`;",
+    "old": "  const body = `${r.given} felled ${who}. ${r.rank > 1 ? `It is rank ${revenantRankNumeral(r.rank)} now, and` : 'It'} will remember this.`;",
     "new": "  const body = `${r.given} felled ${who}. It will remember this.`;",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
@@ -416,7 +416,7 @@
   {
     "name": "RVN10-routed-card-rank",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  const body = `You ran from ${r.given}. ${r.rank > 1 ? `Now rank ${revenantRankNumeral(r.rank)} - it` : 'It'} will remember this.`;",
+    "old": "  const body = `You ran from ${r.given}. ${r.rank > 1 ? `It is rank ${revenantRankNumeral(r.rank)} now, and` : 'It'} will remember this.`;",
     "new": "  const body = `You ran from ${r.given}. It will remember this.`;",
     "tests": [
       "test/systems/rvn10_deeds.test.js"

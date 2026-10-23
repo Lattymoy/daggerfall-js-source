@@ -1,0 +1,100 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE COURT CRAFTER, step 3 of 3.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 2 ends: the crafter's word is in the journal at once. The giver is unnamed (a court crafter): a Smith of the
+-- player's own town, at its general store. The act is the stations' (qlActs.js piece-crafted - net/profBook.js, a piece
+-- minted at a station; a brew's potions are no piece, nor a dish cooked at a fire - AUDIT QUESTLINES ACTS-4 - so the
+-- words name no alchemy, and say a pot on the fire is supper, not a piece). Nothing is taken.
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+Quest: QLIP03
+DisplayName: Made by Hand
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         _crafter_ has stopped waiting for your piece.
+
+QuestComplete:  [1004]
+<ce>        "An apprentice's last wage. Spend it on tools."
+<ce>          _crafter_ counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Word again from the court crafter: a gatherer is
+ only half a crafter. The other half is making. I
+ am to make a piece of my own at a crafting
+ station - a forge, a loom, a bench - and show it
+ to _crafter_, who judges work for the court at
+ _store_ in __store_.
+
+Message:  1011
+%qdt:
+ I have made a piece of my own at a station.
+ _crafter_ is waiting to hear of it at _store_
+ in __store_.
+
+Message:  1012
+<ce>         "Gathering is half of it. Make something.
+<ce>         The forge at an armorer's, the loom at a
+<ce>         clothier's, the mason's bench here - any
+<ce>         station will do. A pot on the fire is supper,
+<ce>              not a piece. Then come back to me."
+
+Message:  1013
+<ce>        "You made it yourself? Start to finish?"
+<ce>        _crafter_ asks after every step of the work,
+<ce>          and nods at every answer.
+<ce>
+<ce>       "Then you need no master, and the court crafter
+<ce>        has lost an apprentice. The court will hear your
+<ce>        name one day. I will tell it you began with us."
+
+Message:  1014
+_crafter_ at _store_ judges work for the court. Waiting on an apprentice's piece, I hear.
+<--->
+_crafter_ makes for the court. Says the new apprentice will make a crafter yet.
+<--->
+Looking for _crafter_? Try _store_, at the mason's bench.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--         _crafter_ occurs 8 times.
+--            _gold_ occurs 1 time.
+--           _store_ occurs 4 times.
+--          __store_ occurs 2 times.
+
+QBN:
+Item _gold_ gold range 100 to 200
+
+Person _crafter_ group Smith local anyInfo 1014
+Place _store_ local generalstore
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _crafter_ at _store_
+	log 1010 step 0
+	start timer _wait_
+
+_made_ task:
+	ql act piece-crafted 1
+	log 1011 step 1
+
+_clicked_ task:
+	clicked npc _crafter_
+
+_early_ task:
+	when _clicked_ and not _made_
+	say 1012
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _made_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

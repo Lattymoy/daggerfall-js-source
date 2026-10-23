@@ -279,8 +279,10 @@ test('PX30d: fatigue has no FIELD, it has a LAW - and the bar said 576000%', () 
     /export function maxFatigue\(entity\) \{\s*\n\s*return \(liveStat\(entity, 'strength'\) \+ liveStat\(entity, 'endurance'\)\) \* FATIGUE_MULTIPLIER;/);
   // ...and it is the SAME line the classic HUD's own snapshot uses.
   assert.match(read('src/ui/hud/hud.js'), /maxFatigue: maxFatigue\(vitals\) \|\| 1,/);
-  // Health and magicka DO have fields, and are left reading them.
-  assert.match(src, /\['health', parts\.health, vitals\.health \?\? 0, vitals\.maxHealth \|\| 1\]/);
+  // Health and magicka DO have fields, and are left reading them. PIN MOVED (FIELD BUGS 2026-10-19f DUEL-BAR): health
+  // reads drawHud's pair - the save's fields, or a duel's referee's vitality while one is live (hudVitals.js hudHealth)
+  assert.match(src, /const hp = opts\.health \?\? hudHealth\(vitals\);/);
+  assert.match(src, /\['health', parts\.health, hp\.health \?\? 0, hp\.maxHealth \|\| 1\]/);
   assert.match(src, /\['magicka', parts\.magicka, vitals\.magicka \?\? 0, vitals\.maxMagicka \|\| 1\]/);
   // CLAMPED AT BOTH ENDS: a bar cannot be more than full, and a number
   // that says otherwise is a bug wearing a percent sign. The floor at

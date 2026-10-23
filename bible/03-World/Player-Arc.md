@@ -1988,7 +1988,8 @@ first cut that set the body on any floor the head grounded on
 teleported the F5 stand onto its ceiling and was dropped). The swim
 stance's zero axis makes the two spheres one, and that one is the
 lower. `ridePlatform` (`scenes/shared.js`) resolves the rider with
-`player.height`, not the standing default. Measured after: feet 0.36
+`player.height`, not the standing default (MOVER-BODY, below, retired
+it: the mover carries the body itself, its own stance). Measured after: feet 0.36
 and 0.60 below a floor are on it within two steps; a lift at 0.40 and
 0.60 a frame carries its rider. Left open, its own slice: a body
 already a whole capsule deep (a load inside geometry, a mover past 0.7
@@ -2288,10 +2289,193 @@ UNSTUCK1, indoors and underground only - answered "There is nowhere to send you 
 - **THE FOUR HOSTS**: the streaming world's (`scenes/world.js`) alone - `scenes/exterior.js` is the fixed city (no WoD
   mountains, no fast travel); `scenes/worldModes.js` and `scenes/dungeonContext.js` have no fast-travel landing.
 
-OPEN for Mac (the investigation's, not built here): a body a neighbour pixel's rocks are built round after it stands is
-not ejected on its own - `/unstuck` (PVPUNSTUCK's walk to the nearest town) is its way out; the Overworld route no
-longer marks rock at all (MOUNTAINS WALKABLE, `11-Multiplayer/Wild-Zone.md` section 19), so its travel can walk into a
-massif; and the collider's floor is the bilinear read where the drawn landform ground is triangles, a gap that can reach
-metres on the steepest ridges. `test/player/unstuckout.test.js` (2) - the real collider over real closed rock meshes;
+The landing is this law's; after it, a rock built round the body is ROCK-CLEAR's (below - the owner, 2026-10-19: "Apply to
+rocks too"). OPEN for Mac (the investigation's, not built here): the collider's floor is the bilinear read where the drawn
+landform ground is triangles, a gap that can reach metres on the steepest ridges. `test/player/unstuckout.test.js` (2) - the
+real collider over real closed rock meshes;
 `tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
 beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).
+
+## DECOR-CLEAR - a late solid never closes on the body (FIELD BUGS 2026-10-19f)
+
+The collider is winding-blind and holds both faces of every triangle, so a solid ADDED where a body already stands holds
+it by its inner walls - or, under 0.9 m, the resolve throws it onto the top. Daggerfall Unity never meets this indoors:
+`PlayerEnterExit.TransitionInterior` lays the interior out first ("This needs to be done first", `PlayerEnterExit.cs:721`)
+and only then stands the player (`PlayerEnterExit.cs:794-795`, the landing and SetStanding). The port's online home stands its owner's
+pieces after the entry (`06-Systems/Online-Arc.md` DECOR-CLEAR, the two private reports), and UNSTUCK-OUT's landing check
+was the port's one guard against a late arrival, a fast-travel landing's alone.
+
+- **The law** (`player/lateSolid.js` lateSolidCloses, over a collider holding the late solid alone): it closes on a
+  body - `{ pos, height }`, the motor's own - never where its box misses the capsule's (a piece hung wholly over the
+  head, open beneath, though a line up from the feet crosses it once; the gate asks the box first, before it builds
+  that collider), else when one of its faces stands deeper in the capsule than the resolve's skin
+  (`collider.js` SKIN, exported for it: a face the body rests on or leans against stands at the radius and holds
+  nothing), or when the body's feet or head is inside one of its closed parts (`heldInSolid`, UNSTUCK-OUT's parity law,
+  which now takes the body's own height - a crouched head is lower; the landing's call is unchanged).
+- **The gate** (`lateSolidsOf(collider)`, one a collider, gone with it): `settle(body)`, asked every frame by the call
+  that holds the body, makes that body the one the gate GUARDS and stands each withheld solid it is now clear of; a
+  late solid goes in through `add` - at once where the body is clear of it, else WITHHELD - checked against the body
+  it names, or, naming none, the body the gate guards (none guarded yet, or `null`: at once, as every solid always
+  stood); `remove` takes a bucket down and forgets one withheld; `replace` stands a key's one solid again where a
+  recentre moved it - withheld, it stays withheld, asked again at the next settle. A settle handed no body asks the one
+  it guards; none guarded stands nothing. ROCK-CLEAR (below) widened it to the open world's buckets.
+- Its users: a home's placed pieces (`scenes/decor/decorRoom.js` - the motor handed in by `worldModes.js`, the room's
+  draw settling every frame), and a home's own furniture put back (`decorBase.js`, naming no body - the gate's); a
+  yard's pieces name none either since ROCK-CLEAR, held back from the body the world frame settles. Another player's
+  body is never this collider's: each client's gate guards its own. A mover's bucket (a lift, an action door, a placed
+  door hung as one) is MOVER-BODY's (below).
+
+`test/scenes/decor/fb1019f_decorclear.test.js` (7, the real motor and collider), `tools/mutants/decorclear.json` (26 since
+ROCK-CLEAR re-aimed it: 22 dead, 4 equivalent as recorded); `tools/mutants/unstuckout.json`'s head record re-aimed to the
+height (7, all dead).
+
+## ROCK-CLEAR - a rock built after the body stands never closes on it (FIELD BUGS 2026-10-19f)
+
+A player's private report: a fast travel left the character inside a mountain, and they could not leave. The landing
+pixel builds whole before the body stands (`_teleportToPixel` awaits it), and UNSTUCK-OUT's law reads it: a floor inside
+a rock stands the body on the nearest open ground. The pixels about it build after - and World of Daggerfall's mountains,
+meshes scaled by hundreds, reach past their own pixel, so a neighbour's rock was filed round a body already standing,
+held by its inner faces. The same for any pixel built round a body that outran the stream (a journey's, which since
+MOUNTAINS WALKABLE crosses massifs - `11-Multiplayer/Wild-Zone.md` section 19).
+
+- **The pixel build files every solid through the world collider's gate** (`scenes/pixelBuild.js`, `late.add`): the
+  mills, the town's models and gates, Gothway's boards, World of Daggerfall's pieces and the Hold's camp, each with its
+  bucket's own provider. The hill patch is ground, not a solid, and is filed directly. Trees carry no collider.
+- **The gate's three extensions** (`player/lateSolid.js`): `add` takes the bucket's translation, and the probe and its
+  box ride it (pixel-local triangles under the floating origin - a recentre moves a withheld part with the body); a
+  key holds as many parts as its bucket does, a withheld one beside the ones that stood; and the collider's own
+  `removeBucket` asks the gate to forget a bucket's withheld parts (`this.late?.forget`, beside TACT1's cover), so a
+  pixel streamed out (destroyPixel, releaseFailedBuild) stands none of them later.
+- **The body**: the world frame settles the gate after the motor's step (`world.js`, one line) with a getter - the motor
+  while it walks the world, none while a jump is under way (`worldMoveBusy`) - read the moment a part is asked. So the
+  landing's pixel, built while the jump runs, is filed whole and the landing's law sees all of it; a plain body handed
+  then would be the body where it stood before the jump, in the old frame. The yards' pools no longer hand their own.
+- Four hosts: `world.js` WIRED (the frame's settle; the pixel build is its module); `exterior.js` builds its one city
+  before the body stands (nothing late); `worldModes.js` and `dungeonContext.js` build their rooms and blocks before it
+  too (DECOR-CLEAR gates a home's pieces). Not through the gate: the city gates' dusk-and-dawn swap (a mover's) and
+  the open world's other placed solids - POIs, quays, the Oblivion Gate, merchant yards, shipyards, carts - each its
+  own module; each can stand through it with one `add`.
+
+`test/world/worldOfDaggerfall/fb1019f_rockclear.test.js` (6, the real motor, collider and streaming state, the build's
+own providers), `tools/mutants/rockclear.json` (16, all dead). PIN MOVED: `fb1001_wodrock`, `wod2_loader`, `wodbush`,
+`wod4_privateershold`, `arena1_model` (the pixel build's sites), `fb1019f_decorclear` (the yards name no body).
+
+## MOVER-BODY - a mover never closes on the body (FIELD BUGS 2026-10-19f)
+
+Two players' private reports: stuck in a dungeon's lift; out of the map when a floor lowered onto them while they swam
+in a dungeon's water. A mover (`world/actionSystem.js`, DaggerfallAction's Move tween) stood its collider bucket again at
+every frame's pose and asked nothing of the body. The ride was the host's (`ridePlatform`, PH1 above): a body STANDING
+on the mover moved the next frame by its last delta, through a sweep that stops at whatever blocks it - while the mover
+itself never stopped. A rider whose head met a lip stopped; its lift rose on into it, and the rider was left inside the
+lift and the floor above, held by both their inner faces (the collider is two-sided): measured, feet 2.72 with the
+lift's top at 4, every walk and jump moving it nothing. A swimmer under a lowering floor stood on nothing of it, so the
+floor came down through the body (feet -0.35 under a floor whose top is 0) and a stroke down from there left the world.
+
+DFU is the reference and has no rule here: TweenToEnd/TweenToStart hand iTween a linear MoveTo and RotateBy and the tween
+plays out whatever is in the way (DaggerfallAction.cs); PlayerGroundMotor.MoveWithMovingPlatform carries the body its
+controller last landed on - the platform's point under it, moved (`activePlatform.TransformPoint`), through one
+CharacterController.Move - and a body the mover meets otherwise is PhysX's overlap recovery's. The port's law
+(`player/moverBody.js`, `world/actionSystem.js _standMover`), the mover's every step:
+
+- **Met where it steps.** The action system takes the body (`update(dt, body)`: worldModes hands it the player for the
+  dungeon's movers and the building's, the standalone dungeon its walking player) and meets it as each mover's bucket
+  is stood at its new pose. A body standing on the mover (`groundKey`) or pressed by the new pose (`moverPresses`: a face
+  more than `MOVER_PRESS`, 1 mm, inside the capsule's chain) is carried by the mover's own motion at its centre
+  (`carriedBy` - MoveWithMovingPlatform's adhesion, a turn's sweep as well as a slide, from any side: pushed up, down or
+  aside), in one bare Move through everything but the mover (no ground snap: a snap to the floor under a plate coming
+  down flush took the rider off it), the body's own stance (`body.height`), its render span and its fall with it
+  (`carryBy`, the deck's and the Steps' carry).
+- **Held where it pins.** If the pose still presses the body after the carry - the sweep stopped short, the body
+  between the mover and the world - the mover HOLDS at its last pose that closed on nobody, its `t` with it: the tween
+  waits, and plays on once the body is clear (a step off the lift, a stroke out from under the slab). A DEPARTURE from
+  DaggerfallAction's tween, which never stops (Port-Ledger A, MOVER-BODY). A body the mover already pressed where it
+  stood - a load, a snap - is no reason to hold it (`before`).
+- **In steps.** A frame's tween is met in pieces no longer than `MOVER_STEP` (half the capsule's radius) of its motion
+  at the body (`moverSteps`, at most `MOVER_STEPS_MAX`), so a fast mover in a starved frame crosses no body unmet; a body
+  nowhere its step could reach costs the mover nothing past its own stand.
+
+The host-side ride is gone (`ridePlatform`, and the `frameDelta` it read): the carry happens where the mover moves, in
+either host's order, the render eye with it. Measured through the real motor: a rider carried up, down and aside to
+the bit and grounded at every frame (60 Hz and 0.1 s frames, either order); the lift under a 0.6 m lip holds with the
+rider's head at the lip and finishes, carrying it, once it steps toward the shaft's middle; the slab holds over the
+swimmer's head (0.9) and over a walker's (1.8), and settles once they are clear. Left as it was: a door is not met (its
+swing is a trigger while it moves and solid only closed, DFU's MakeTrigger; a Move-flagged door's record carries its
+closed bucket as before), a zero-duration flip and a load's or a peer's snap are placements, not motion, and a foe is
+neither carried nor holds a mover (EnemyMotor rides no platform). THE FOUR HOSTS: `scenes/worldModes.js` wired (the
+dungeon's movers and the building's, for `world.js` and `exterior.js` alike), `scenes/dungeon.js` (the standalone
+dungeon) wired; `scenes/dungeonContext.js` and `scenes/interiorContext.js` build the action systems and need nothing.
+
+Pinned: `test/world/fb1019f_moverbody.test.js` (with VOID-DUNGEON below; the movers minted by `layoutRdbBlock`, the real
+Collider and motor). PIN MOVED: `test/scenes/audit18_hosts_outer.test.js` (the ride is the movers' own; both hosts
+hand them the body), `test/player/ph1_physics.test.js` (the carry's own stance), `test/scenes/waveD_dungeonHost.test.js`
+(a flat is no platform: no bucket), `test/world/superDungeon/sd7b_steps.test.js` (the Steps ride before the motor).
+
+## VOID-DUNGEON - the dungeon's failsafe (FIELD BUGS 2026-10-19f)
+
+VOID-ENTRY (FIELD BUGS 2026-10-04d) stood a body that fell below everything a building stands on back at its door; a
+dungeon had nothing. Its collider has no ground (`heightAt` -Infinity), so a body out of its floor - the lowering
+floor's swimmer above, a save made there - fell or swam on for good, and `/unstuck`, which leaves by the door
+underground, waits out its cooldown (PVPUNSTUCK's). Now the context keeps VOID-ENTRY's record (`voidRescue`,
+`player/enterExit.js dungeonVoidRescue`), made the first time a frame asks - so the floors a host stands into the dungeon
+after its build (the Burning Court's) are under it - and kept: where the dungeon stands a body it places (its start
+marker's landing, by the way in, else its enter marker's: `startSpawn`), and `INTERIOR_VOID_DROP` (10 m) under its
+lowest triangle. Both dungeon hosts' frames ask it (`worldModes.js`, the else of the dungeon arm's drain, VOID-ENTRY's
+shape; `dungeon.js`, where the motor walks) and stand such a body there, its fall cleared, with a line of the port's own
+in the player's language (`player.dungeonVoid`, "There was no floor beneath you. You are back at the entrance."). A
+realm that casts its own void back keeps no record - the Hour's Unmoored Steps (SD7b) and an Elite Breach's spans (EG
+section 8) cost what their own laws say. DFU has no failsafe. Pinned by `test/world/fb1019f_moverbody.test.js`.
+
+## PROP-BODIES - a tree's trunk, a rock, a barrel walked round (2026-10-19, the owner)
+
+The owner: "I dont nessecarly want to implement prop collison, but walking through trees and objects is very immersion
+breaking. What could we do?", then "Implement collision for all props".
+
+DFU's flats are billboards with no collider (`DaggerfallBillboard`: a quad and a material; SH1 above: "wilderness trees
+are billboards with no collider at all"), so the player walked through every tree, rock, barrel and statue. Now a solid
+flat stands a BODY - an upright cylinder at its foot - and the player, on foot or mounted, is kept out of it.
+
+**Which flats** (`world/propBodies.js` `flatBody`): the solid ones - "all props", never the flora a body walks through.
+- A **tree** its trunk, never its crown: a Tree record of its climate (`terrainNature.js` `TREE_RECORDS`) or a record
+  Windfall sways Full (`systems/windfall.js` `RESPONSE.full` - the mod's own tier for the trees and the tall, stemmed
+  plants: the rainforest's twisted 500.3, the temperate 504.11 the tree table does not name), the trunk a tree's cover
+  stands (`COVER_TRUNK_R`, 0.3 m, to where its crown begins); a jungle tree its own measured girth (`JUNGLE_MEASURES`,
+  `jungleBody`) at its own scale.
+- A **still nature record** - a rock, a stump, a fallen log, a bare tree: Windfall's 0, the records it never sways - and
+  **every prop that is not nature** (a barrel, a crate, a statue, a well, a cart, a signpost): its foot MEASURED off its
+  own classic picture (`footShare`) - the median, over the rows between a step over its base and a capsule's height, of
+  how much of each row is picture, not air. A flat's drawn width is its widest reach - a bare tree's roots and branches,
+  a signpost's board - never what a body walks into: 511.2, a bare winter tree 4.1 m across, stands a 1 m foot, 504.24
+  a sapling 0.11 m, the temperate rocks 0.3 m, its stumps 0.55-0.68 m, the swamp's buttressed giant (502.24) 2.2 m.
+  A painted stand-in (the port's own art - the Witches' Festival's ward-staff, effigy and turnip lantern among it) has no
+  palette index to read, and its foot is measured off its own alpha (AUDIT WITCH1 D7: before, it stood its whole
+  picture's cover - a 2 px ward-staff an invisible wall).
+  The still records of all twelve climate archives were drawn off the player's ARENA2 (in a scratch directory, never the
+  tree) and six archives read by eye whole - 500, 502, 504, 508, 510, 511 - before the rule stood.
+- **None**: the flora Windfall sways Low or Medium (grass, flowers, ferns, bushes - a jungle of solid ferns could not be
+  walked), by the flat's own archive (`rmbFlats.js` `isNatureArchive` - the jungle's archive 500 in a mountain pixel
+  too); anything under a step (`STEP_OFFSET`: what the feet step over is no wall); a person, a town animal, a light,
+  the editor's markers and treasure (cover's `NOT_COVER_ARCHIVES`).
+
+**Where it lives.** A body rides the cover index (`ai/cover.js`, a proxy marked `body`) - filed in a grid of its own
+that no sight ray or missile reads, so cover's counts and every TACT1 law are as they were - and so it rides every set's
+lifecycle: a pixel, a building or a dungeon that leaves takes its bodies with it, a recentre moves them (the set's frame),
+a re-skin trades them in place, and a felled tree's body is gone with it (`FELLED`). Never the collider: the collider is
+shared, and a column there would stop arrows, foes, the camera and every activation ray - and a 0.3 m trunk in its
+triangle soup is walked through anyway (SH1's thin geometry). The hosts file a flat's body beside its cover: the stream
+once a group by the record's own size, the jungle's trunks, the scaled flats (`scenes/pixelBuild.js`); the city
+(`exterior.js`) and the rooms (`interiorContext.js`) a set of their own (`prop-bodies`); the dungeon
+(`dungeonContext.js`).
+
+**The clamp** (`player/bodyClamp.js` `keepOffBodies`, called each step after the arena's - DUEL1's ring's shape, not a
+mesh in the collider). Each body whose span the capsule's meets and whose foot circle, widened by the capsule's radius,
+the feet stand in puts the feet back to its edge along the line from its middle - so a walk into a trunk slides round
+it - and takes away the airborne momentum that points into it; a rock under the feet in a jump is cleared. A body the
+step BEGAN inside (a spawn, a teleport, a mount taken beside a tree) is never a trap: the feet are put back no deeper
+than they stood, so they walk out. The put-back is the collider's own move, so a wall still stops it. Nothing holds a
+body that nothing holds a wall for: a body the motor holds, the hands (a climb, a wall, a parkour move), a journey's
+pace. Foes, peers, the navmesh and the camera are as they were - the clamp is the player's; online nothing crosses the
+wire (a body's place is the layout's, the same on every client, and a felled tree's the character's own).
+
+Pinned by `test/player/propbodies.test.js` (the real motor and collider walking into a trunk, sliding round one, under a
+crown, through a felled tree; the clamp; the foot; which flats; the index; the hosts by source) and
+`tools/mutants/propbodies.json` (26, all dead). Port-Ledger A, THE SOLID FLATS STAND BODIES.

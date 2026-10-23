@@ -263,8 +263,8 @@
   {
     "name": "QS-the-list-unhanded",
     "file": "src/scenes/quest/questBridge.js",
-    "old": "ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved };",
-    "new": "ended, hidden: notebook?.getHiddenQuests?.() ?? [] };",
+    "old": "hidden: notebook?.getHiddenQuests?.() ?? [], shelved, unlogged,",
+    "new": "hidden: notebook?.getHiddenQuests?.() ?? [], unlogged,",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "QS-A-a-shelf-received",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
-    "new": "    questData = { ...this._onThisClock(questData), ...NO_INSTANCE };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid\n    const quest = this._newQuest();",
+    "new": "    questData = { ...this._onThisClock(questData), ...NO_INSTANCE, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid\n    const quest = this._newQuest();",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -470,7 +470,7 @@
   {
     "name": "QS-A-a-share-unworded",
     "file": "src/systems/quest/questShare.js",
-    "old": "  shelved: 'have abandoned it - reclaim it from your journal to take it up again.',",
+    "old": "  shelved: 'have abandoned it. Reclaim it from your journal to take it up again.',",
     "new": "",
     "tests": [
       "test/systems/quest/questshelf.test.js"

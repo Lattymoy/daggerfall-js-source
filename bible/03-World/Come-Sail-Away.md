@@ -106,6 +106,21 @@ live boat's deck pose. It uses feet height without snapping to the seabed. A mis
 boat refuses the exit without destroying the room. Cabin entry/exit does not take
 the helm, change sails, change cargo or add a second sailing simulation.
 
+**No cabin with enemies nearby (FB1020c CABIN-FOES, 2026-10-20; the field: "you can despawn pirates by entering your
+cabin on a ship").** The cabin is an interior, and every interior transition empties the sea (`world.js` navalTransition
+- NAV-H, "a building has no sea"): its ships dropped and a boarding's raid withdrawn. So a pirate alongside, or her
+boarders on the deck, left the sea for good when the player stepped below and back up. The door now asks what the rest,
+the journey, the time scale and the yard ask - a hostile ship within the sea's reach of her deck (`navalHost.js`
+hostileNear) - and refuses in its own words, *You cannot enter the cabin with enemies nearby.*
+(`systems/sailingCabin.js:"if (hostile) return CABIN_REFUSAL.enemies;"`), after the helm's and the deck's refusals. Both doors
+ask it: the deck's (`world.js:"csa: () => csaRuntime, hostile: () => navalHostileNear() || !!naval?.pvp?.captainNear?.(),"` - the two helm seams folded into the
+runtime's own; AUDIT SEA VENTURES E6A: and a stranger captain's ship near in the open sea, `navalPvp.js` captainNear) and Transport > Ship's to a linked bank cabin
+(`world.js:"if (csaRuntime.isSailing() || navalHostileNear())"`). Another player's cabin has no door
+from the deck (a private room is reached by a staff landing alone), so there is nothing more to ask. DFU keeps the
+exterior waiting behind a door (`PlayerEnterExit.cs` DisableAllParents and EnableExteriorParent set the exterior parent
+inactive and active again, its enemies with it); the port's sea is cleared instead, so the door is shut. Port-Ledger
+records it. `test/systems/comeSailAway/fb1020c_cabinfoes.test.js`; `tools/mutants/fb1020c_cabinfoes.json`.
+
 The cabin is private to the owning player, but passengers may remain on deck.
 Cabin entry keeps the exterior fleet active and its existing online cell/halo
 connection at the boat anchor. The kept fleet stands outside the room: every
@@ -1355,7 +1370,7 @@ Mac: *"Remove the time dial from ships online."* Online (the host's
 `sharedClockOn()`, the runtime's new `timeLocked` dep) the helm's time dial
 is gone: the three keys - and the enhanced panel's and the pad's presses,
 which ARE those keys (`BOAT_TIME_ACTIONS`) - say *"Online, time at sea
-keeps the world's pace."* (`HELM_TIME_LOCKED_TEXT`, a second and a half)
+runs at normal speed."* (`HELM_TIME_LOCKED_TEXT`, a second and a half)
 and move nothing (`updateSailing` returns before the three key lines, which
 stand byte for byte); `helmPanelState().timeDial` is false, so the
 enhanced helm draws no `−` / `×N` / `+` (`ui/enhanced/enhancedHelm.js helmButtons`),
@@ -2307,6 +2322,21 @@ the up arrow (`MoveForwards`, `BoatSailUp`) climb ONE ladder a rung a press, S a
 The test harnesses (`test/systems/comeSailAway/csa_sailing.test.js`, `test/csaScene.mjs`) take a key going down as the press it is - one held
 as the helm is taken is pressed at the helm. `tools/mutants/helmladder.json`.
 
+**The autorun takes the oars from the rung (FB1020c OAR-RUNG, 2026-10-20; the field: "ships drift off if you fast travel
+without full sails").** The Overworld's crossing (OWS2, `06-Systems/Travel-View.md`) sails a boat through the helm's keys
+alone and rows her through the autorun; it was written before this ladder and never knew the kept rung. A journey begun
+at a helm left on her oars - W once, or S from her last sail onto them - kept the rung through the journey and past its
+end: the hand let go, the sails came down, and she rowed on unsteered (a Large Galley, whose crew the hand always rows,
+at 7.8 m/s - 931 m in the two minutes after it let go). A helm left backing water turned the hand's rudder about (the
+answer astern, above) while the autorun rowed her ahead, so no journey from it arrived at all. While the autorun pulls she
+has no rung of her own - it is let go where the stroke is read
+(`comeSailAway.js:"if (deps.input?.toggleAutorun) state.oarThrottle = 0;"`) - so let go she rests, as the mod's
+MoveForwards let go left her; the player's own autorun at a helm takes the oars the same way. With no autorun the rung is
+the ladder's as above. Every hull and rung now arrives, and after the journey's end only Come Sail Away's current moves
+her. The answer astern still reads the rung (backing with her stern on a shoal reverses a helm that is not backing - the
+ladder's own case, left). `test/systems/comeSailAway/fb1020c_oarrung.test.js`, over the crossing's scene moved to
+`test/csaCrossing.mjs`; `tools/mutants/fb1020c_oarrung.json`.
+
 ## The responsive helm (HELM-WAY, 2026-09-29 - DECLARED)
 
 Mac: "Improve the overall mobility and maneuverability of ships." Measured first on the real runtime (1/60 s frames,
@@ -2944,12 +2974,20 @@ From the field: frames fell in a crowded inland town with "The sea & ships" on, 
 owned the mods cost nothing there; with boats owned, `animate` (the Animators' step at the head of LateUpdate, (19) of
 the Port-Ledger row) found every boat's Animators by walking her whole tree - a galleon's 1,228 nodes - every frame, for
 every boat the player had placed wherever it lay, and the peers' pose did the same for every other player's boat
-(`scenes/comeSailAway/comeSailAwayPeers.js`). `boatAnimators` keeps a tree's list while every tree's shape stands
+(`scenes/comeSailAway/comeSailAwayPeers.js`). `boatAnimators` keeps a tree's list while that tree's shape stands
 (`world/prefabNode.js` `prefabShapeStamp`, the stamp `world/prefabColliders.js` keeps a tree's colliders by): the same
 Animators, in the same order. The step itself is unchanged - a boat standing nowhere is still asked, because that ask is
 how an Animator starts over from its default state when she stands again ((18)). The naval HUD and the helm panel stopped
 making their keys' names for windows they were not showing. Measured, before and after, in
 `01-Overview/bugs/Field-Bugs-2026-10-11c.md`; `test/systems/comeSailAway/fb1011c_seatown.test.js`.
+
+Until BOAT-STAMP (2026-10-21) the stamp was one count for every tree in the game, so any boat built anywhere walked
+every boat's tree again the next frame; it is each tree's own now. BOAT-FAR (the same day) steps a peer's boat's
+Animators past 600 m of the player one frame in four on the time she missed, as the sea's ships' rigging steps; BOAT-OWN
+(the same day) steps mine the same - `animate` and `simulateParticles` call `scenes/comeSailAway/farLife.js`
+`createBoatLives`, from the pool's eye - and a boat switched on or off since she last lived lives that frame, so a far
+boat of mine stood again still starts over from her default state as she stands. All in
+`07-Rendering/Performance-Priority.md`.
 
 ## What was already waiting in the port
 

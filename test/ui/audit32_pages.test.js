@@ -125,7 +125,7 @@ test('AUDIT 32 P2/P4: one act a page - the loom\'s Craft held while the anvil\'s
     pickShirt(p);
     const loomCraft = p.buttons().filter((b) => b.textContent === 'Craft').at(-1);
     assert.equal(loomCraft.disabled, true, 'the loom waits');
-    assert.match(p.text(), /Your hands are at the anvil - finish there first\./);
+    assert.match(p.text(), /Your hands are at the anvil\. Finish there first\./);
     assert.equal(docKeys.size, 1, 'one act, one loop');
     setDownProfAct();
     p.draw();
@@ -185,7 +185,7 @@ test('AUDIT 32 P8/R4: Standard-bearer\'s Silk says what it waits on; the Outfitt
     p.btn('Clothing').onclick();
     p.btn('Straps').onclick();   // PIN MOVED (CRAFT2): a garment, then its cloth in the box
     p.btn('Standard-bearer\'s Silk').onclick();
-    assert.match(p.text(), /cloth:standard comes with the sieges - a Siege Honour's Spoils\./);   // PIN MOVED (AUDIT-SEATS): the sieges yield it now
+    assert.match(p.text(), /cloth:standard comes only from the sieges, as a Siege Honor's Spoils\./);   // PIN MOVED (AUDIT-SEATS): the sieges yield it now
     assert.doesNotMatch(p.text(), /Nothing yields it yet/);
     const root = el('div');
     document.body.append(root);
@@ -196,7 +196,7 @@ test('AUDIT 32 P8/R4: Standard-bearer\'s Silk says what it waits on; the Outfitt
     drawProfessionsPage(again, () => {}, kit);
     const t = again.textContent;
     assert.match(t, /Linen clothing; the Rat's skins; the Fishing-Netrank 0/);
-    assert.match(t, /the Bat's and the Bear's skinsrank 10/);
+    assert.match(t, /the Bat's, the Bear's, the Wolf's and the Boar's skinsrank 10/);   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the mod's Wolf Pelt and Boar Hide cut skins too
     assert.match(t, /The Tiger's skinsrank 25/);
     root.remove(); again.remove();
   } finally { resetProfPages(); setProfessionsPages(null); }
@@ -223,7 +223,7 @@ test('AUDIT 32 P11: the trace\'s meter draws the line through its points, marks 
     act.tick(0.05, { held: true, aim: { yaw: act.state.points[0][0], pitch: act.state.points[0][1] } });
     act.tick(0.05, { held: false });
     hud.setMeter(act, 'E');
-    assert.match(document.body.querySelector('.prof-meter').textContent, /let go - hold E on the first point again/);
+    assert.match(document.body.querySelector('.prof-meter').textContent, /let go\. Hold E on the first point again/);
   } finally { hud.dispose(); }
 });
 

@@ -1,0 +1,171 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE BURNING DOORS, step 5 of 5 - the line's end.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Ysolde's letter,
+-- then her table. She tells why Dagon's Faithful cage the Sigil Broker, and asks where the embers the player carried out
+-- of the breaches should go - one `ask`, three choices, the line's outcome (the sheet's `guild`, `order`, `broker`).
+-- Lore: canon - Dagon gave the Dark Seducers their wings; the Covenant of Akatosh and Alessia, kept by the Dragonfires;
+-- the Order of the Hour is Akatosh's. The port's own - the Broker, a Seducer who sells Dagon's sigils for embers to
+-- the ones who close his doors, and the cage his faithful keep her in (bible/11-Multiplayer/World-Bosses.md, "The
+-- caged Broker"). AUDIT QUESTLINES LINES-23: the Covenant is Akatosh's with the Emperors' blood (portBooks.js "The
+-- Covenant") - the Order of the Hour is Akatosh's, never the Covenant's keeper (1032, 1041).
+Quest: QLBD05
+DisplayName: The Caged Broker
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        Ysolde Marnhel has left _hall_ without her
+<ce>          answer, and taken her question with her.
+
+QuestComplete:  [1004]
+<ce>        A purse of _gold_ gold, for the doors you closed
+<ce>             and the fire you carried out of them.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Ysolde Marnhel has written again. She has learned
+ why Dagon's Faithful keep the Sigil Broker caged
+ at their circles, and she has a question for me
+ about the embers I have carried out of the
+ breaches. She is at _hall_ in __hall_.
+
+Message:  1011
+%pcn,
+
+     I have been asking about the Broker - the
+ winged one the faithful cage beside their braziers,
+ who sells Dagon's sigils for embers to anyone who
+ frees her. I have my answer, and it is not a
+ comfortable one.
+
+     I also have a question for you, about the
+ embers. Come to _hall_ in __hall_.
+
+<ce>                              Ysolde Marnhel
+
+Message:  1012
+<ce>          The Guild's courier again, out of breath this
+<ce>         time. "She says it will not keep," the courier
+<ce>                says, and hands you a letter.
+
+Message:  1013
+<ce>       "Every Dark Seducer flies on wings Dagon gave her
+<ce>        kind. The Broker is no different. And she repays
+<ce>        him by selling his sigils - his own mark, his
+<ce>        own fire - to the ones who close his doors. For
+<ce>        embers. For our embers."
+<ce>
+<ce>       "That is why the faithful cage her. Not to keep
+<ce>        her from us - to keep her from selling him to
+<ce>        us. And Dagon lets them. I think he likes to
+<ce>        watch what she does when the bars open."
+
+Message:  1014
+Ysolde Marnhel? She has been asking questions about the winged trader at the breaches.
+<--->
+The Master Conjurer is waiting for someone. She has been waiting a while.
+<--->
+They say Marnhel wants the embers from the breaches. So does everyone.
+
+Message:  1030
+<ce>       "Now. The embers you carried out of his doors do
+<ce>        not cool and do not go out. Where should they
+<ce>        go, %pcf?"
+
+Message:  1031
+To the Mages Guild, for study. You will know what to do with them.
+
+Message:  1032
+To the Order of the Hour. Let Akatosh's priests hold Dagon's fire.
+
+Message:  1033
+To the Broker. She pays best, and asks fewer questions.
+
+Message:  1040
+<ce>       Ysolde lets out a breath she seems to have been
+<ce>                holding since the first breach.
+<ce>
+<ce>       "Then the Guild will study them, and I will write
+<ce>        another book, and this one will say how a door
+<ce>        is shut for good. Your name will be in it."
+
+Message:  1041
+<ce>       "The Order of the Hour." Ysolde nods slowly.
+<ce>
+<ce>       "Akatosh keeps his covenant with the Emperors'
+<ce>        blood, not with priests. But his priests know a
+<ce>        fire that should not burn when they see one.
+<ce>        Dagon's will sit very quietly in their vaults.
+<ce>        The Guild will grumble. Let it."
+
+Message:  1042
+<ce>                Ysolde is quiet for a long moment.
+<ce>
+<ce>       "She will pay you well. She always does. And
+<ce>        every sigil she sells you is a little more of him
+<ce>        on our side of the door." She sets a purse on the
+<ce>        table all the same. "For the doors. The Guild
+<ce>        will not hear the rest from me. But it will hear."
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %pcn occurs 1 time.
+--               %qdt occurs 1 time.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 3 times.
+--            __hall_ occurs 2 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _ysolde_
+	say 1013
+	ask 1030 choices 1031 _toguild_ 1032 _toorder_ 1033 _tobroker_
+
+variable _toguild_
+variable _toorder_
+variable _tobroker_
+
+_guildway_ task:
+	when _toguild_
+	say 1040
+	outcome _guild_
+	give pc _gold_
+	end quest
+
+_orderway_ task:
+	when _toorder_
+	say 1041
+	outcome _order_
+	give pc _gold_
+	end quest
+
+_brokerway_ task:
+	when _tobroker_
+	say 1042
+	outcome _broker_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

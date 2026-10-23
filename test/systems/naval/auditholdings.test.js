@@ -250,12 +250,16 @@ test('AUDIT HOLDINGS C5/C6: a horse never named, renamed with nothing, keeps no 
   const runtime = { renameHorse: (v) => (owns ? (name = String(v ?? '').trim() || name) : null), stableView: () => ({}) };
   let owns = true;
   const p = stableProviderFor({ runtime, on: () => true, hasHorse: () => owns, hasCart: () => false });
-  assert.deepEqual(p.stableAct('rename', '  '), { ok: false, text: 'Your horse keeps no name - give him one.' });
+  assert.deepEqual(p.stableAct('rename', '  '), { ok: false, text: 'Your horse has no name. Give him one.' });
   assert.deepEqual(p.stableAct('rename', 'Shadowmere'), { ok: true, text: 'Your horse is called Shadowmere.' });
   owns = false;
   assert.deepEqual(p.stableAct('rename', 'X'), { ok: false, text: 'You do not own a horse.' });
   const menu = read('src/ui/enhanced/enhancedMenu.js');
-  assert.match(menu, /if \(!secs\.length\) \{\n    detail\.append\(el\('div', 'px-qverdict', 'Nothing here to hold'\)/);
+  // PIN MOVED (AUDIT COLLECTIONS-II, lanes 2 and 5): the rail is never empty - the Collections page is every player's, so a
+  // host with no holdings opens on it, never on the Stable's "you own no horse"; the empty rail's branch went with it
+  assert.doesNotMatch(menu, /if \(!secs\.length\) \{/);
+  assert.match(menu, /\.\.\.\(collectionsPageShown\(playerEntity\) \? COLLECTION_PAGE_SECTIONS : \[\]\)\];/);
+  assert.match(read('src/ui/collectionsPage.js'), /export const collectionsPageShown = \(_player = null\) => true;/);
 });
 
 // ── THE QUAYS ─────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -310,7 +314,8 @@ test('AUDIT HOLDINGS O1: a harbour is sounded only once every pixel its scan rea
   const world = read('src/scenes/world.js');
   assert.match(world, /for \(let i = 0; i <= nx; i\+\+\) for \(let k = 0; k <= nz; k\+\+\) if \(!csaPixelAt\(x0 \+ \(sx \* i\) \/ nx, z0 \+ \(sz \* k\) \/ nz\)\) return false;/);
   assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
-  assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(\) => \{\n\s+const x0 = rect\.minX - reach, z0 = rect\.minZ - reach, sx = rect\.maxX - rect\.minX \+ 2 \* reach, sz = rect\.maxZ - rect\.minZ \+ 2 \* reach;/, 'every pixel of that reach built');
+  // PIN MOVED (FB1020c HARBOUR-REACH): any reach the book asks it at - its own, or the port law's ring's - every pixel built
+  assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(r = reach\) => \{[^\n]*\n\s+const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
 });
 
 test('AUDIT HOLDINGS Q1: the gangway runs square to her side at her waist and touches nothing but where it rests - every edge, face and rope of it clear of her colliders and of the quay\'s, a ship\'s climbing from the deck at GANGWAY_SLOPE, a boat\'s stepping down from the kerb\'s edge onto her gunwale over the water; the cargo never in its lane', async () => {
@@ -518,7 +523,7 @@ test('AUDIT HOLDINGS Q9: a quay\'s lay that failed is laid again QUAY_RETRY_S la
   h.run(0.2);
   h.host.warp(h.boat, { struck: true, oars: false, dt: 0.1 });
   assert.equal(h.log.say.filter((s) => /brings the ship in alongside/.test(s)).length, 2, 'said again after the sea was cleared');
-  assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Made fast', tone: 'is-away', line: 'Made fast at a quay.' });
+  assert.deepEqual(whereWords({ where: 'away', docked: '', metres: null }), { state: 'Moored', tone: 'is-away', line: 'Moored at a quay.' });
 });
 
 // ── THE REFUSALS AND THE GUNS ─────────────────────────────────────────────────────────────────────────────────────────

@@ -366,7 +366,7 @@ test('ETHER-DEEP: the host carves the Eltheric by every arm, and holds the conti
   assert.equal(sent.holdsSea(dry.px, dry.py), true, 'the 3 x 3 sent: held');
   assert.equal(real.holdsSea(500, 250), true, 'the Bay\'s always - its global record');
   const world = src('src/scenes/world.js');
-  // PIN MOVED (AUDIT ETHER-OW C1-4): one tilemap for every template, cleared for each (deepWatersLocationRects' own way)
-  assert.match(world, /const _etherRectScratch = new Uint8Array\(128 \* 128\);[^\n]*\n {2}const deepWaters = dwRender \? createDeepWatersHost\(\{/);
-  assert.match(world, /ether: etherSea \? etherPlaceRects\(_etherTemplates, \(t\) => setLocationTiles\(\{ \.\.\.t, regionIndex: ETHER_REGION, locationIndex: -1000 \}, maps, blocks, _etherRectScratch\.fill\(0\)\)\) : null,[^\n]*\n\s+\}\) : null;/, 'the world hands the host its places\' rects with the sea standing');
+  // PIN MOVED (AUDIT ETHER-OW C1-4, then BOOT-RECTS): one walk over every template - its tilemap and its blocks the reader's
+  // (world/terrain/terrainTiles.js locationRectReader, test/world/terrain/bootrects.test.js), read as the isles' clones
+  assert.match(world, /ether: etherSea \? etherPlaceRects\(_etherTemplates, locationRectReader\(maps, blocks, \{ regionIndex: ETHER_REGION, locationIndex: -1000 \}\)\) : null,[^\n]*\n\s+\}\) : null;/, 'the world hands the host its places\' rects with the sea standing');
 });

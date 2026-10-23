@@ -1,0 +1,102 @@
+-- QL14 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.2): THE HOUR THAT WAS NOT, step 1 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the letter is the offer. Lore: canon - the Order of the Hour is Akatosh's, and Akatosh is time. The
+-- port's own: the Hollows' brass air and their bell (systems/superDungeon/sdOmen.js), the Hour, the Orrery of Endings.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName), and it was
+-- "Letter: of the Order of the Hour".
+Quest: QLHR01
+DisplayName: Brass at Dusk
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          Prior Anselm Vey has left _temple_ without you.
+
+QuestComplete:  [1004]
+<ce>          "For the road. May Akatosh keep your hours."
+<ce>        The Prior counts _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A courier brought me a letter from Prior Anselm
+ Vey of the Order of the Hour, Akatosh's own. His
+ priests feel a wound in time under the Bay, and
+ the taverns talk of brass where there should be
+ stone. He waits for me at _temple_ in __temple_.
+
+Message:  1011
+%pcn,
+
+     The Order of the Hour keeps Akatosh's time, and
+ of late time does not keep. My priests wake at the
+ same hour twice. A candle burns down at dusk and
+ stands whole again at dawn. Somewhere under the
+ Bay there is a wound in time, and it is bleeding.
+
+     The taverns knew it before we did. They say the
+ air goes brass-colored at dusk, and that a bell
+ rings where there is no bell. Brass, where there
+ should be stone.
+
+     I am a guest of _temple_ in __temple_.
+ Come, and I will tell you what the Order fears.
+
+<ce>                  Prior Anselm Vey of the Order of the Hour
+
+Message:  1012
+<ce>          A courier wearing Akatosh's hourglass falls
+<ce>            into step beside you and presses a sealed
+<ce>          letter into your hand. "From the Prior," the
+<ce>            courier says. "He does not ask twice."
+
+Message:  1013
+<ce>         "You came. Sit. Forgive me if I ask you the
+<ce>          hour - I no longer trust the bells."
+<ce>
+<ce>         "Some dungeons of the Bay are not what they
+<ce>          were. A seam has swallowed them - Hollows,
+<ce>          the taverns say, Abyss Dungeons - and at the
+<ce>          bottom of each is a door into a place that is
+<ce>          not a place. The Order calls it the Hour."
+<ce>
+<ce>         "In its hall stands an orrery of six stones:
+<ce>          the Orrery of Endings. When you are ready to
+<ce>          hear what the stones are, I will send for you."
+
+Message:  1014
+Prior Anselm Vey? A priest of Akatosh. He asks everyone the time.
+<--->
+The Prior is a guest at _temple_. He keeps a candle lit and watches it burn.
+<--->
+The Order of the Hour has sent someone. Something about bells, and brass.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _prior_ faction The_Order_of_the_Hour male anyInfo 1014
+Place _temple_ remote temple
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _prior_ Prior_Anselm_Vey
+	place npc _prior_ at _temple_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _prior_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

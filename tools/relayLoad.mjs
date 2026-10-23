@@ -8,7 +8,7 @@
 // d1Load.mjs's: questionBook, runBook), and .github/workflows/relay-load.yml asks them with the deploy's token, by hand.
 // It writes nothing.
 //
-//   node tools/relayLoad.mjs --sql <name> [hours]   one question's SQL (kinds | windows | crowds)
+//   node tools/relayLoad.mjs --sql <name> [hours]   one question's SQL (kinds | windows | crowds | fulls | storage)
 //   node tools/relayLoad.mjs --names                the questions' names, one a line
 //   node tools/relayLoad.mjs --table <name> <file>  an answer (the SQL API's JSON) as a Markdown table
 //   node tools/relayLoad.mjs --hours [hours]        the window a run asks (an empty input is one hour)
@@ -48,6 +48,18 @@ const W = {
   full: 'SUM(double13 * _sample_interval)',
   drops: 'SUM(double14 * _sample_interval)',
 };
+/** FOES-FIRST and FOES-HOLD: weighted sums of the blobs past the doubles (relayScale.js RoomMetrics names each), each a
+ *  count in decimal read back by `toUInt32` - the one conversion of the SQL API's reference past `toUInt8`. */
+const B = {
+  hitDrops: 'SUM(_sample_interval * toUInt32(blob3))',
+  fullDrops: 'SUM(_sample_interval * toUInt32(blob4))',
+  fulls: 'SUM(_sample_interval * toUInt32(blob5))',
+  held: 'SUM(_sample_interval * toUInt32(blob6))',
+  heldSent: 'SUM(_sample_interval * toUInt32(blob7))',
+  heldGone: 'SUM(_sample_interval * toUInt32(blob8))',
+  heldMs: 'SUM(_sample_interval * toUInt32(blob9))',
+  beats: 'SUM(_sample_interval * toUInt32(blob10))',
+};
 /** The windows question's span: the asked hours, at most WINDOW_HOURS_MAX (the window refused before it, as every other). */
 const windowHours = (h) => Math.min(loadHours(h), WINDOW_HOURS_MAX);
 
@@ -60,7 +72,16 @@ const windowHours = (h) => Math.min(loadHours(h), WINDOW_HOURS_MAX);
  *   relay (an estimate from below), its largest room, busy, full, drops, poses and sends - so a gate's crowd shows as its
  *   rows (a gate opens at HH:32:30 UTC every even hour); every row of the span, never cut;
  * - crowds: the forty busiest room-windows by their peak that are not a channel's (`chat` - its buses hold everyone) -
- *   when, which kind, how many it held and what it refused: the site's cell and the court, at a gate's hour.
+ *   when, which kind, how many it held and what it refused: the site's cell and the court, at a gate's hour;
+ * - fulls (FOES-FIRST and FOES-HOLD, 2026-10-21; bible/11-Multiplayer/Scale-Arc.md FOES-HOLD): every kind's foes budget
+ *   read by its blobs - the full frames asked and dropped, the frames held for their turn, sent, and gone unsent, the
+ *   mean wait of a held frame sent, the beats said for a held sender, and the blows the hit funnels dropped - over the
+ *   points that carry the hold's blobs (`blob6 != ''`: a relay before FOES-HOLD wrote none, and the SQL API's
+ *   `toUInt32` reads no empty string); whether the line holds live, kind by kind;
+ * - storage (FIELD BUGS 2026-10-21c, the rooms' resets: 877 "Internal error in Durable Object storage caused object to
+ *   be reset" on the evening of 2026-10-20, cause not found): the forty room-windows that wrote storage most - when,
+ *   which kind, its reads and writes and the sockets it held - so a night of resets is read beside the rooms that were
+ *   writing then (the resets themselves are Workers Observability's, not this dataset's).
  */
 export const QUESTIONS = Object.freeze([
   ['kinds', 'The rooms by kind (sends, most first)', ['kind', 'room_windows', 'peak', 'hellos', 'busy', 'room_full', 'refused', 'drops', 'poses', 'sends', 'sends_per_pose', 'mb_out', 'storage'],
@@ -69,6 +90,10 @@ export const QUESTIONS = Object.freeze([
     (h) => `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`],
   ['crowds', 'The busiest rooms but the channels (peak sockets, most first)', ['stamp', 'kind', 'peak', 'sockets', 'hellos', 'busy', 'room_full', 'drops', 'poses', 'sends'],
     (h) => `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`],
+  ['fulls', 'The foes budget\'s full frames and its hold, by kind (FOES-FIRST, FOES-HOLD)', ['kind', 'fulls', 'full_drops', 'held', 'held_sent', 'held_gone', 'wait_ms', 'beats', 'hit_drops'],
+    (h) => `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`],
+  ['storage', 'The room-windows that wrote storage most (writes, most first)', ['stamp', 'kind', 'writes', 'reads', 'room_sockets', 'room_peak'],
+    (h) => `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`],
 ]);
 
 const book = questionBook(QUESTIONS);

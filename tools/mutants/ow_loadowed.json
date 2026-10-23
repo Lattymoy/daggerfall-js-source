@@ -2,8 +2,8 @@
   {
     "name": "LOAD-OWED-streams-alone",
     "file": "src/scenes/world.js",
-    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
-    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => !StreamingWorldState.streams(x, y) || built.has(`${x},${y}`));",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => !StreamingWorldState.streams(x, y) || built.has(`${x},${y}`), uc.owed);",
     "tests": [
       "test/systems/travel/ow_loadowed.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "LOAD-OWED-books-unread",
     "file": "src/scenes/world.js",
-    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
-    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`));",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`), uc.owed);",
     "tests": [
       "test/systems/travel/ow_loadowed.test.js",
       "test/systems/travel/ether_ow.test.js"
@@ -23,8 +23,8 @@
   {
     "name": "LOAD-OWED-nothing-owed",
     "file": "src/scenes/world.js",
-    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`));",
-    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => true);",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => true, uc.owed);",
     "tests": [
       "test/systems/travel/ow_loadowed.test.js"
     ],

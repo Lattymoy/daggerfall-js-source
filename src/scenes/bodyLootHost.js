@@ -646,6 +646,7 @@ export function createBodyLoot(h) {
 
   /** The record's `o`: the places not gone (the owner's own pieces are not on offer), the state minted if it has none. */
   function placesLeft(f) {
+    if (f?.corpseDisabled) return 0;   // DEX5b: a body no one may search (a mod's corpse prefab took its loot) offers no place - and no copy opens
     const st = online() ? ownState(f) : null;
     if (!st) return Math.min(255, peerHanded(f.entity?.items ?? []).length);
     ownTick(st);

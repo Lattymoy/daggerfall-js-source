@@ -425,11 +425,13 @@
  },
  {
   "name": "BANTHA2-FLOOR-the-carpet-as-first-drawn",
-  "file": "src/scenes/jungleFloorHost.js",
-  "old": "  plants: 1.8,\n",
-  "new": "  plants: 2.5,\n",
+  "file": "src/render/jungleFloorArt.js",
+  "old": "export const JUNGLE_FLOOR_JUDGED = 1.8;",
+  "new": "export const JUNGLE_FLOOR_JUDGED = 2.5;",
+  "note": "JUNGLE-GRASS (PIN MOVED): the owner's judged 1.8 is the floor's flora's rate now (render/jungleFloorArt.js); the host's density is derived from it",
   "tests": [
-   "test/world/bantha2_floor.test.js"
+   "test/world/bantha2_floor.test.js",
+   "test/world/junglegrass.test.js"
   ]
  }
 ]

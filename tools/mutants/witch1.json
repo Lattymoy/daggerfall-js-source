@@ -1,0 +1,675 @@
+[
+  {
+    "name": "WITCH1-the-days-a-day-short",
+    "file": "src/net/festivalLaw.js",
+    "old": "toMs: Date.UTC(2026, 10, 8), eveFromMs",
+    "new": "toMs: Date.UTC(2026, 10, 7), eveFromMs",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js"
+    ],
+    "note": "The festival closes on the 6th: a week past Halloween is the 7th, whole."
+  },
+  {
+    "name": "WITCH1-the-nights-give-once",
+    "file": "src/net/festivalLaw.js",
+    "old": "export const FIND_NIGHT_MULT = 2;",
+    "new": "export const FIND_NIGHT_MULT = 1;",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js",
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A night the dead walk gives what any other does."
+  },
+  {
+    "name": "WITCH1-a-card-held-as-an-account-ware",
+    "file": "src/net/festivalLaw.js",
+    "old": ".split(' ').filter((id) => accountWare(wareById(id))) : []);",
+    "new": ".split(' ').filter((id) => wareById(id)) : []);",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js"
+    ],
+    "note": "A pack ware read off the account column: the wardrobe would hold a card."
+  },
+  {
+    "name": "WITCH1-the-asks-cap-off-by-one",
+    "file": "server-account/src/festival.js",
+    "old": "ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks < ?3 RETURNING asks, found",
+    "new": "ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks <= ?3 RETURNING asks, found",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "One ask past the day's cap is heard."
+  },
+  {
+    "name": "WITCH1-the-cakes-cap-ignored",
+    "file": "server-account/src/festival.js",
+    "old": "const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), left);",
+    "new": "const want = findCount(source, skyDayAt(nowS), nowS * 1000);",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A day's last find gives past FIND_CAKES_PER_DAY."
+  },
+  {
+    "name": "WITCH1-owned-unsaid",
+    "file": "server-account/src/festival.js",
+    "old": ".first())?.fest_wares).includes(w.id)) return { error: 'owned' };",
+    "new": ".first())?.fest_wares).includes('none')) return { error: 'owned' };",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A second Witchwarden is refused as cakes short, never as owned."
+  },
+  {
+    "name": "WITCH1-ones-own-bowl",
+    "file": "server-account/src/festival.js",
+    "old": "  if (o.player === player.id) return { error: 'own' };\n",
+    "new": "",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "An account takes its own cakes back out of its own bowl, counted as taken."
+  },
+  {
+    "name": "WITCH1-the-orphan-keeps-its-cakes",
+    "file": "server-account/src/festival.js",
+    "old": "UPDATE players SET fest_cakes = fest_cakes + (SELECT COALESCE(SUM(stock), 0) FROM fest_offerings WHERE ${ORPHAN}),",
+    "new": "UPDATE players SET fest_cakes = fest_cakes + 0 * (SELECT COALESCE(SUM(stock), 0) FROM fest_offerings WHERE ${ORPHAN}),",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A sold home's bowl goes with its cakes."
+  },
+  {
+    "name": "WITCH1-a-hall-is-a-home",
+    "file": "server-account/src/festival.js",
+    "old": "AND h.char_id = ?4 AND h.guild_id IS NULL)`;",
+    "new": "AND h.char_id = ?4)`;",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A guild hall's keeper sets an offering at its guild's door."
+  },
+  {
+    "name": "WITCH1-no-take-in-after",
+    "file": "server-account/src/festival.js",
+    "old": "  if (!player?.handle) return { error: 'guest' };\n  if (overAccountRate(`fest:${player.id}`, ctx.nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };\n  const { db } = ctx;",
+    "new": "  if (!player?.handle) return { error: 'guest' };\n  if (!inDays(ctx.nowS)) return { error: 'closed' };\n  if (overAccountRate(`fest:${player.id}`, ctx.nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };\n  const { db } = ctx;",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A bowl's cakes lost to the festival's end: take-in refused after it."
+  },
+  {
+    "name": "WITCH1-hearthkeeper-one-late",
+    "file": "server-account/src/titles.js",
+    "old": "if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
+    "new": "if (Number(player?.fest_given) > HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "The 25th cake given earns nothing."
+  },
+  {
+    "name": "WITCH1-soulcake-one-late",
+    "file": "server-account/src/titles.js",
+    "old": "if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
+    "new": "if (Number(player?.fest_taken) > SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "The 10th cake taken earns nothing."
+  },
+  {
+    "name": "WITCH1-the-token-believes-any-icon",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false;",
+    "new": "  if (c.pi !== undefined && typeof c.pi !== 'string') return false;",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js"
+    ],
+    "note": "A token claims a picture the vocabulary does not hold."
+  },
+  {
+    "name": "WITCH1-the-relay-drops-the-icon",
+    "file": "server/src/index.js",
+    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "new": "au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js"
+    ],
+    "note": "The room never sees an icon."
+  },
+  {
+    "name": "WITCH1-the-peer-icon-unread",
+    "file": "src/net/online.js",
+    "old": "au: readAura(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), rb: readRibbon(p), lv: readRenown(p),",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js"
+    ],
+    "note": "An introduced peer wears its face."
+  },
+  {
+    "name": "WITCH1-a-body-asks-twice",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "neverPays(entity) || _asked.has(entity)) return;",
+    "new": "neverPays(entity)) return;",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "A body two pools report asks two finds."
+  },
+  {
+    "name": "WITCH1-a-lost-sale-never-asked-again",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  learn(r.data);\n  await resumeSale();\n  return true;",
+    "new": "  learn(r.data);\n  return true;",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "A sale whose answer was lost waits for ever."
+  },
+  {
+    "name": "WITCH1-the-haunted-woods-breton",
+    "file": "src/world/witchesDecor.js",
+    "old": "  if (climateIndex === CLIMATES.HauntedWoodlands) return 'haunted';",
+    "new": "  if (climateIndex === CLIMATES.HauntedWoodlands) return 'breton';",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "The Haunted Woodlands dressed as any High Rock town."
+  },
+  {
+    "name": "WITCH1-no-door-pair",
+    "file": "src/world/witchesDecor.js",
+    "old": "    pair(front, kit.door);\n",
+    "new": "",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "A tavern's door stands bare."
+  },
+  {
+    "name": "WITCH1-through-the-wall",
+    "file": "src/world/witchesDecor.js",
+    "old": "    for (const h of S.rayHeights) if (blocked(",
+    "new": "    for (const h of S.rayHeights) if (false && blocked(",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "A piece stands in a wall."
+  },
+  {
+    "name": "WITCH1-the-offering-on-the-steps-side",
+    "file": "src/world/witchesDecor.js",
+    "old": "const side = witchStepSide(mapId, key) * (far ? 1 : -1);",
+    "new": "const side = witchStepSide(mapId, key);",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "The offering and the step piece in one place."
+  },
+  {
+    "name": "WITCH1-offline-the-bowls-stay",
+    "file": "src/scenes/witchesHost.js",
+    "old": "    if (who !== account) { account = who; heard = false; towns.clear(); for (const k of [...stood.keys()]) unstand(k); }",
+    "new": "    if (who !== account) { account = who; heard = false; towns.clear(); }",
+    "tests": [
+      "test/scenes/witch1_host.test.js"
+    ],
+    "note": "Offline, the bowls another pixel stood stay up."
+  },
+  {
+    "name": "WITCH1-the-lantern-stays-lit",
+    "file": "src/scenes/witchesHost.js",
+    "old": "      if (j >= 0) s.entry.lights.splice(j, 1);",
+    "new": "      if (j < 0) s.entry.lights.splice(j, 1);",
+    "tests": [
+      "test/scenes/witch1_host.test.js"
+    ],
+    "note": "A bowl taken down leaves its lantern burning in the air."
+  },
+  {
+    "name": "WITCH1-the-owner-takes",
+    "file": "src/scenes/witchesHost.js",
+    "old": "      if (ownsHome(s, r)) return { title, subs, actions:",
+    "new": "      if (false && ownsHome(s, r)) return { title, subs, actions:",
+    "tests": [
+      "test/scenes/witch1_host.test.js"
+    ],
+    "note": "The owner is offered a cake from their own bowl."
+  },
+  {
+    "name": "WITCH1-set-out-from-the-street",
+    "file": "src/scenes/witchesHost.js",
+    "old": "tr[2] - feet[2]) > OFFERING_SET_REACH) continue;",
+    "new": "tr[2] - feet[2]) > OFFERING_SET_REACH * 10) continue;",
+    "tests": [
+      "test/scenes/witch1_host.test.js"
+    ],
+    "note": "An offering set out from down the street."
+  },
+  {
+    "name": "WITCH1-worn-reads-wear",
+    "file": "src/ui/wyrdWindow.js",
+    "old": "  if (row.worn) return { label: t('festival.window.takeOff', 'Take off'), why: null };\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "A title worn offers Wear again."
+  },
+  {
+    "name": "WITCH1-need-the-whole-price",
+    "file": "src/ui/wyrdWindow.js",
+    "old": "  const need = row.price - (s.cakes ?? 0);",
+    "new": "  const need = row.price;",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "The Need line ignores the cakes held."
+  },
+  {
+    "name": "WITCH1-tallow-ward-blind",
+    "file": "src/systems/festival/festivalFoes.js",
+    "old": "export const hallowedFoe = (/** @type {any} */ e) => FESTIVAL_UNDEAD.includes(e?.mobileType) || FESTIVAL_SUMMONED.includes(e?.mobileType);",
+    "new": "export const hallowedFoe = (/** @type {any} */ e) => FESTIVAL_UNDEAD.includes(e?.mobileType);",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "Tallow-Ward misses the summoned."
+  },
+  {
+    "name": "WITCH1-a-card-in-the-packs",
+    "file": "src/systems/card/cardSources.js",
+    "old": "&& !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id)).map",
+    "new": "&& !BOSS_CARD_IDS.includes(c.id)).map",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "A festival card turns up in a pack."
+  },
+  {
+    "name": "WITCH1-AUDIT-the-watch-pays",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "e?.mobileType === KNIGHT_CITY_WATCH || e?.team",
+    "new": "false || e?.team",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "C1: the city watch's death asks a find."
+  },
+  {
+    "name": "WITCH1-AUDIT-the-pack-unrestacked",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "if (Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();",
+    "new": "if (false && Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "The pack's cakes no face of the count."
+  },
+  {
+    "name": "WITCH1-AUDIT-the-bowls-unrestacked",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "if (Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();",
+    "new": "if (false && Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "A8: the pack's bowls no face of the account's."
+  },
+  {
+    "name": "WITCH1-AUDIT-one-deed-two-finds",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (_actTurn.has(g)) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "C10: a breach closed with its rite broken asks two finds."
+  },
+  {
+    "name": "WITCH1-AUDIT-the-elite-act-finds-too",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);",
+    "new": "const ACT_NOT_FOUND = Object.freeze(['wyrd-met']);",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "C10: an elite foe's act finds beside its kill."
+  },
+  {
+    "name": "WITCH1-AUDIT-sale-mints-twice",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (_asking?.sale === sale) return _asking.p;\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "C2/E1: two asks of one sale in flight, two pieces minted."
+  },
+  {
+    "name": "WITCH1-AUDIT-sale-dropped-on-fault",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "    else if (r && SALE_FINAL.includes(r.error)) {",
+    "new": "    else if (r && r.error !== 'offline') {",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "C3/A4: a sale the service's fault answered is let go - paid, never minted."
+  },
+  {
+    "name": "WITCH1-AUDIT-sale-any-account",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (!_pending || !_api || _pending.account !== _api.me()) return;",
+    "new": "  if (!_pending || !_api) return;",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "C3/A9: a kept sale asked under another account - charged to them."
+  },
+  {
+    "name": "WITCH1-AUDIT-guest-told-closed",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (!s || s.kind === 'guest') return 'guest';",
+    "new": "  if (!s || s.kind === 'guest') return 'closed';",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "F-M1: a guest told the festival is not open."
+  },
+  {
+    "name": "WITCH1-AUDIT-pieces-unbound",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "if (it) it.bound = true; return it;",
+    "new": "return it;",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js",
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "F-M2: a Raiment piece is gold and another player's."
+  },
+  {
+    "name": "WITCH1-AUDIT-set-out-blind-to-the-row",
+    "file": "server-account/src/festival.js",
+    "old": "WHERE id = ?5 AND EXISTS (SELECT 1 FROM fest_offerings WHERE ${prev}) AND ${may}`)",
+    "new": "WHERE id = ?5 AND ${may}`)",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A1: the old owner credited from a row gone since."
+  },
+  {
+    "name": "WITCH1-AUDIT-no-bowl-spent",
+    "file": "server-account/src/festival.js",
+    "old": "    db.prepare(`UPDATE players SET fest_bowls = fest_bowls - 1 WHERE id = ?3 AND ${may}",
+    "new": "    db.prepare(`UPDATE players SET fest_bowls = fest_bowls - 0 WHERE id = ?3 AND ${may}",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A8: a set-out spends no bowl."
+  },
+  {
+    "name": "WITCH1-AUDIT-take-any-owner",
+    "file": "server-account/src/festival.js",
+    "old": "WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?6 AND o.player <> ?3) >= ?5",
+    "new": "WHERE o.map_id = ?1 AND o.building_key = ?2) >= ?5",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A11: a take credits an owner it never read."
+  },
+  {
+    "name": "WITCH1-AUDIT-closed-town-shows-all",
+    "file": "server-account/src/festival.js",
+    "old": "WHERE o.map_id = ?1${open ? '' : ' AND o.player = ?2'}`",
+    "new": "WHERE o.map_id = ?1`",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A10: after the festival every bowl stands to be asked of."
+  },
+  {
+    "name": "WITCH1-AUDIT-orphan-read-writes",
+    "file": "server-account/src/festival.js",
+    "old": "WHERE id = ?1 AND EXISTS (SELECT 1 FROM fest_offerings WHERE ${ORPHAN})`).bind(id),",
+    "new": "WHERE id = ?1`).bind(id),",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "A6: every read of an account's festival writes its row."
+  },
+  {
+    "name": "WITCH1-AUDIT-pi-unsigned",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.pi !== undefined) claims.pi = who.pi;",
+    "new": "",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "B1: the icon worn never signed - no other player sees it."
+  },
+  {
+    "name": "WITCH1-AUDIT-icon-unkept",
+    "file": "src/net/accountClient.js",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, nameAsAt })",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "B2: this device's own mark never wears the icon."
+  },
+  {
+    "name": "WITCH1-AUDIT-eve-not-doubled",
+    "file": "src/net/festivalLaw.js",
+    "old": "=> festivalNight(dayOfYear) || festivalEve(nowMs);",
+    "new": "=> festivalNight(dayOfYear);",
+    "tests": [
+      "test/systems/festival/witch1_law.test.js"
+    ],
+    "note": "B6: the festival's own night gives no more."
+  },
+  {
+    "name": "WITCH1-AUDIT-door-normal-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "hf.door = doorCornersOf(cpu.doors[0], local); hf.normal = doorNormalOf(cpu.doors[0], local); }",
+    "new": "hf.door = doorCornersOf(cpu.doors[0], local); }",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "D1: a door on its box's middle line faces into its building."
+  },
+  {
+    "name": "WITCH1-AUDIT-sister-commoner",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "witch: flat.witch ?? null, ...(flat.witch ? { _mwLook: null } : {}) });",
+    "new": "witch: flat.witch ?? null });",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "D6: the Sister a Morrowind commoner."
+  },
+  {
+    "name": "WITCH1-AUDIT-water-stood",
+    "file": "src/world/witchesDecor.js",
+    "old": "    if (!ground(xz[0], xz[1])) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "D7: a piece on the water or off the blocks."
+  },
+  {
+    "name": "WITCH1-AUDIT-dressing-holds-the-frame",
+    "file": "src/world/witchesDecor.js",
+    "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
+    "new": "  while (!r.done) { r = steps.next(); }",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "D3: a city's rays one frame's."
+  },
+  {
+    "name": "WITCH1-AUDIT-hammerfell-fen",
+    "file": "src/world/witchesDecor.js",
+    "old": "  if (climateIndex === CLIMATES.Swamp) return 'fen';\n",
+    "new": "  if (climateIndex === CLIMATES.Swamp || climateIndex === CLIMATES.Subtropical) return 'fen';\n",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "F-M3: Sentinel dressed as a fen."
+  },
+  {
+    "name": "WITCH1-AUDIT-town-asked-all-year",
+    "file": "src/scenes/witchesHost.js",
+    "old": "const asks = (/** @type {number} */ mapId) => festivalLive() ||",
+    "new": "const asks = (/** @type {number} */ mapId) => true ||",
+    "tests": [
+      "test/scenes/witch1_host.test.js"
+    ],
+    "note": "A5: the town asked all year, a guest's too."
+  },
+  {
+    "name": "WITCH1-AUDIT-bowl-at-a-refused-spot",
+    "file": "src/scenes/witchesHost.js",
+    "old": "    if (entry.witchHomes instanceof Map) return entry.witchHomes.get(bk) ?? null;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/witch1_host.test.js"
+    ],
+    "note": "D2: a bowl stood where the build found no room."
+  },
+  {
+    "name": "WITCH1-AUDIT-raiment-plate",
+    "file": "src/systems/aetheric.js",
+    "old": "group === 'Weapons' ? 'Elven' : 'Leather'",
+    "new": "'Elven'",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "B4: the caster's set plate - most classes cannot wear it."
+  },
+  {
+    "name": "WITCH1-AUDIT-candle-seam",
+    "file": "src/render/auraRing.js",
+    "old": "    float k = mod(floor(fract(a / TAU) * ${WITCH_CANDLES.toFixed(1)} + 0.5), ${WITCH_CANDLES.toFixed(1)});",
+    "new": "    float k = floor(fract(a / TAU) * ${WITCH_CANDLES.toFixed(1)} + 0.5);",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "E5: the first candle two halves out of step."
+  },
+  {
+    "name": "WITCH1-AUDIT-window-never-looks-again",
+    "file": "src/ui/wyrdWindow.js",
+    "old": "if (now !== was) { was = now; render(); }",
+    "new": "if (now !== was) { was = now; }",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "E10: the window blind to the relay coming back."
+  },
+  {
+    "name": "WITCH1-AUDIT-stand-in-foot-unmeasured",
+    "file": "src/world/propBodies.js",
+    "old": "bmp?.rgba?.length >= bmp?.width * bmp?.height * 4 ? (",
+    "new": "false ? (",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "D7: a painted stand-in's foot its whole picture's cover - a ward-staff's invisible wall."
+  },
+  {
+    "name": "WITCH1-AUDIT-the-world-boss-finds-twice",
+    "file": "src/systems/festival/festivalFoes.js",
+    "old": "  if (e?.worldBoss === true) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js",
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "A Starfall master's body asks an elite's find beside the endgame find its held star gives: one deed, two finds."
+  },
+  {
+    "name": "WITCH1-AUDIT-the-enhanced-card-silent",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "|| isFestivalFace(item) ? { survival:",
+    "new": " ? { survival:",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "The enhanced card says nothing of a Soul Cake or a Hearth Offering - the classic box alone tells what either is for."
+  },
+  {
+    "name": "WITCH1-AUDIT-G1-no-look-down",
+    "file": "src/world/witchesDecor.js",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floorY + S.downFrom, z], [x, floorY + S.lip, z])) return false;",
+    "new": "    for (const [x, z] of []) if (blocked([x, floorY + S.downFrom, z], [x, floorY + S.lip, z])) return false;",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "G1: a spot is never looked down on - a turnip lantern sunk in a house's plinth."
+  },
+  {
+    "name": "WITCH1-AUDIT-G1-middle-only",
+    "file": "src/world/witchesDecor.js",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (",
+    "new": "    for (const [x, z] of [xz]) if (",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "G1: only the middle looked down on - a foot's edge on the plinth."
+  },
+  {
+    "name": "WITCH1-AUDIT-G1-lip-at-the-street",
+    "file": "src/world/witchesDecor.js",
+    "old": "downFrom: 1.2, lip: 0.08,",
+    "new": "downFrom: 1.2, lip: -0.01,",
+    "tests": [
+      "test/world/witch1_decor.test.js"
+    ],
+    "note": "G1: the look reaches the street itself - every spot refused where the ground is in the collider."
+  },
+  {
+    "name": "WITCH1-AUDIT-G2-a-nought-known",
+    "file": "src/ui/wyrdWindow.js",
+    "old": "    const heard = Number.isSafeInteger(have);",
+    "new": "    const heard = true; have = have ?? 0;",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "G2: an unheard count shown as a known nought (0/25)."
+  },
+  {
+    "name": "WITCH1-AUDIT-G2-the-reason-unsaid",
+    "file": "src/ui/wyrdWindow.js",
+    "old": "    const told = note ?? (s.shut ? { ok: false, text: festivalRefusalText(s.shut) } : null);",
+    "new": "    const told = note;",
+    "tests": [
+      "test/systems/festival/witch1_wares.test.js"
+    ],
+    "note": "G2: why the window cannot trade said only once a press asks it."
+  },
+  {
+    "name": "WITCH1-AUDIT-G2-another-accounts-state",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "export const festivalState = () => (_stateOf === festivalAccount() ? _state : UNHEARD);",
+    "new": "export const festivalState = () => _state;",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "G2: another account signed in reads the last one's counts."
+  },
+  {
+    "name": "WITCH1-AUDIT-G2-learned-onto-anothers",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": "  if (who !== _stateOf) { _state = UNHEARD; _stateOf = who; }",
+    "new": "  if (who !== _stateOf) { _stateOf = who; }",
+    "tests": [
+      "test/systems/festival/witch1_client.test.js"
+    ],
+    "note": "G2: an answer laid over another account's state - its wares kept."
+  }
+]

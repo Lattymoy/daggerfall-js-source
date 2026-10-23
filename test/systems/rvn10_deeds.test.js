@@ -247,13 +247,13 @@ test('RVN10 THE CARDS, THE PAGE, THE SAVE: Felled and Routed told; the page says
   const ev = N.revenantFelledEvent(r, 'Borgakh');
   assert.deepEqual([ev.kind, ev.kicker, ev.body, ev.line], ['felled', 'Felled', `${r.given} felled Borgakh. It will remember this.`, `${r.name} felled Borgakh.`]);
   r.rank = 3;
-  assert.equal(N.revenantFelledEvent(r, 'Borgakh').body, `${r.given} felled Borgakh. Now rank III - it will remember this.`);
+  assert.equal(N.revenantFelledEvent(r, 'Borgakh').body, `${r.given} felled Borgakh. It is rank III now, and will remember this.`);
   assert.equal(N.revenantFelledEvent(r, null).line, `${r.name} felled your companion.`);
   const q = N.revenantRouted(p, rec(), { now: 600, rolls: () => 0 });
   const rv = N.revenantRoutedEvent(q);
   assert.deepEqual([rv.kind, rv.kicker, rv.body], ['routed', 'Routed', `You ran from ${q.given}. It will remember this.`]);
   q.rank = 2;
-  assert.equal(N.revenantRoutedEvent(q).body, `You ran from ${q.given}. Now rank II - it will remember this.`);
+  assert.equal(N.revenantRoutedEvent(q).body, `You ran from ${q.given}. It is rank II now, and will remember this.`);
   assert.equal(historyWords({ deed: 'felled', at: 1, ally: 'Borgakh' }), 'felled Borgakh');
   assert.equal(historyWords({ deed: 'felled', at: 1 }), 'felled your companion');
   assert.equal(historyWords({ deed: 'routed', at: 1 }), 'routed you');

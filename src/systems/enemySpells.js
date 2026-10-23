@@ -87,14 +87,32 @@ export function setEnemySpells(entity, spellList, spellsByIndex) {
   }
 }
 
+/** DEX4a (bible/04-Characters/Enemy-Expansion.md section 8): A MOD'S SPELLBOOK. DFU's SetEnemyCareer gives the list
+ *  below, and a mod's EnemyEntity.OnLootSpawned handler may then delete it and add its own (Daggerfall Enemy
+ *  Expansion's SetEnemySpells, BestiaryMod.cs:1404-1447) - so the list a foe casts is the mod's where it answers one:
+ *  `fn(entity, level)` -> SPELLS.STD indices, or null for DFU's own. Every reader of what a foe casts asks here (its
+ *  spawn, a puppet's cast resolved, a grant's copy). */
+const _spellbooks = [];
+export function registerEnemySpellbook(fn) {
+  if (typeof fn !== 'function') throw new Error('registerEnemySpellbook: a function of (entity, level)');
+  _spellbooks.push(fn);
+}
+/** The test seam. */
+export function _resetEnemySpellbooks() { _spellbooks.length = 0; }
+
 /** The SetEnemyCareer spell-assignment tail as indices: monsters take
  *  their per-career list; class enemies with CastsMagic take
  *  EnemyClassSpells[min(6, level / 3)] (C# int division). Empty for a
  *  foe that casts nothing. GRANT0 (bible/11-Multiplayer/Spawn-Grants.md
  *  section 8): `level` apart from the entity's, so a dungeon copy built
- *  at its reader's level asks what its owner's foe casts at the owner's. */
+ *  at its reader's level asks what its owner's foe casts at the owner's.
+ *  DEX4a: a mod's spellbook first (registerEnemySpellbook). */
 export function enemySpellIndices(entity, level = entity?.level) {
   if (!entity) return [];
+  for (const fn of _spellbooks) {
+    const book = fn(entity, level);
+    if (book) return book;
+  }
   if (!entity.isClass) return MONSTER_SPELL_LISTS[entity.careerIndex] ?? [];
   if (!entity.basics?.castsMagic) return [];
   return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];

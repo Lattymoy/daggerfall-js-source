@@ -1,0 +1,352 @@
+[
+ {
+  "name": "DEX3-the-door-hands-every-roll-the-writes",
+  "file": "src/characters/encounterTableDoor.js",
+  "old": "  if (place?.local || place?.dungeon) {",
+  "new": "  if (true) {",
+  "why": "a roll every machine must agree on reads this machine's own events - a member's species, a band, a road's trouble each its machine's",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-a-draw-where-one-table",
+  "file": "src/characters/encounterTableDoor.js",
+  "old": "  if (choices.length < 2) return choices[0] ?? null;",
+  "new": "  if (choices.length < 1) return null;",
+  "why": "a roll with one table to read spends a draw on it, and DFU's own stream moves under every agreed roll",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-seed-uncast",
+  "file": "src/systems/enemyExpansion/dexEncounters.js",
+  "old": "    srand((unknown2 & 0xffff) ^ ((region & 0xff) << 8));   // (ushort)Unknown2 ^ ((byte)region << 8)",
+  "new": "    srand(unknown2 ^ (region << 8));",
+  "why": "the C#'s ushort and byte casts dropped: a dungeon's seed past them picks another table",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-generator-left-moved",
+  "file": "src/systems/enemyExpansion/dexEncounters.js",
+  "old": "    setSeed(was);\n",
+  "new": "",
+  "why": "the dungeon's pick leaves the shared stream moved, inside the population",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-exit-picks-nothing",
+  "file": "src/systems/enemyExpansion/dexEncounters.js",
+  "old": "      exitLocationRect: selectClimateTables,",
+  "new": "      exitLocationRect: () => {},",
+  "why": "leaving a town re-picks no day or night (PlayerGPS_OnExitLocationRect)",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-entry-picks-the-day",
+  "file": "src/systems/enemyExpansion/dexEncounters.js",
+  "old": "if (band) selectTable(band[0]); },",
+  "new": "if (band) selectTable(band[1]); },",
+  "why": "entering a town picks the day's table, not its city night",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-a-broken-table-written",
+  "file": "src/systems/enemyExpansion/dexEncounters.js",
+  "old": "  const write = (index, table) => { if (table.enemyIds) written.set(index, table.enemyIds); };",
+  "new": "  const write = (index, table) => { written.set(index, table.enemyIds); };",
+  "why": "a pick on a table whose ids did not parse overwrites the last write - the C#'s throw writes nothing",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-a-broken-table-a-choice",
+  "file": "src/systems/enemyExpansion/dexEncounters.js",
+  "old": "      const ids = tablesAt(index).map((t) => t.enemyIds).filter(Boolean);",
+  "new": "      const ids = tablesAt(index).map((t) => t.enemyIds);",
+  "why": "a table no pick can write offered to a roll every machine agrees on",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-rect-flag-starts-in",
+  "file": "src/world/playerGps.js",
+  "old": "const start = () => { _climate = 0; _inRect = false; };",
+  "new": "const start = () => { _climate = 0; _inRect = true; };",
+  "why": "the first reading inside a town raises no entry - PlayerGPS's flag starts false",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-rect-events-swapped",
+  "file": "src/world/playerGps.js",
+  "old": "(_inRect ? l.enterLocationRect : l.exitLocationRect)",
+  "new": "(_inRect ? l.exitLocationRect : l.enterLocationRect)",
+  "why": "an entry heard as an exit",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-reading-indoors",
+  "file": "src/systems/encounters.js",
+  "old": "  if (!ctx.inside) readPlayerGps(gps);",
+  "new": "  readPlayerGps(gps);",
+  "why": "an indoor roll's place taken for the GPS's reading",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-players-roll-agreed",
+  "file": "src/systems/encounters.js",
+  "old": "  return { ...ctx, local: true };",
+  "new": "  return ctx;",
+  "why": "the player's own roll ignores what the mod's events wrote",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-agreed-die-not-the-rolls",
+  "file": "src/systems/encounters.js",
+  "old": "  const table = ctx.table ?? encounterTable(idx, ctx, rolls);",
+  "new": "  const table = ctx.table ?? encounterTable(idx, ctx, () => 0);",
+  "why": "an agreed roll's table not picked by its own die",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-group-reads-no-table",
+  "file": "src/systems/campEncounters.js",
+  "old": "  const rollCtx = { ...ctx, isDay, table: tableIdx != null ? (ctx.table ?? encounterTable(tableIdx, { ...ctx, isDay }, rolls)) : null };",
+  "new": "  const rollCtx = { ...ctx, isDay };",
+  "why": "a group's seed re-reads its table each try and its mates read none",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-camp-not-the-players-reading",
+  "file": "src/systems/campEncounters.js",
+  "old": "export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {\n  ctx = playerReading(ctx, chunkGps(ctx));   // DEX3: the player's own roll, where it stands\n",
+  "new": "export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {\n",
+  "why": "the world's chunk-load camp roll (AUDIT DEX C5: the one world.js calls) raises no GPS event for the pixel just entered",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C5-the-street-camp-not-the-players-reading",
+  "file": "src/systems/campEncounters.js",
+  "old": "export function rollCampEncounter(ctx, rolls = Math.random) {\n  ctx = playerReading(ctx);   // DEX3: the player's own roll, where it stands\n",
+  "new": "export function rollCampEncounter(ctx, rolls = Math.random) {\n",
+  "why": "the street's minute camp roll (exterior.js's) raises no GPS event and reads DFU's tables, not the mod's writes",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-bounds-the-first-choice",
+  "file": "src/scenes/grantHost.js",
+  "old": "encounterTableChoices(/** @type {number} */ (i)).flat())",
+  "new": "encounterTableChoices(/** @type {number} */ (i))[0])",
+  "why": "a reader bounds a granted species by one table of the mod's, and refuses the other machine's pick",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-bounds-kept-past-the-selectors",
+  "file": "src/scenes/grantHost.js",
+  "old": "  const key = `${c}:${encounterTableGeneration()}`;",
+  "new": "  const key = c;",
+  "why": "a climate's species bounds kept from before the mod's tables stood",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-population-reads-DFU",
+  "file": "src/characters/dungeonEnemies.js",
+  "old": "  const dungeonTable = encounterTable(dungeonType, place), underwaterTable = encounterTable(UNDERWATER_TABLE, place);",
+  "new": "  const dungeonTable = ENCOUNTER_TABLES[dungeonType], underwaterTable = ENCOUNTER_TABLES[UNDERWATER_TABLE];",
+  "why": "a dungeon's random foes from DFU's tables with the mod loaded",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-population-not-the-players",
+  "file": "src/characters/dungeonEnemies.js",
+  "old": "  const place = { dungeon, local: true };",
+  "new": "  const place = { dungeon };",
+  "why": "a population handed no dungeon reads as a roll every machine agrees on, and throws for a die it was never given",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-place-without-its-region",
+  "file": "src/characters/dungeonEnemies.js",
+  "old": "region: dfLocation.regionIndex },",
+  "new": "region: 0 },",
+  "why": "every region's dungeon seeded as region 0's",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-the-install-deaf-to-the-gps",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "    onPlayerGpsEvents(encounters.gps);\n",
+  "new": "",
+  "why": "loaded, the climate tables are never picked",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-a-replacement-moved-by-an-empty-cell",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "            if (tableIndices.length !== 0 && !same) {",
+  "new": "            if (!same) {",
+  "why": "a replacement line with no indices takes its table off every index",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-a-default-unsaid",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "      if (!(read.byIndex.get(index)?.length)) log('error', `[DEX] Encounter index '${name}' has no tables`);",
+  "new": "      if (false) log('error', `[DEX] Encounter index '${name}' has no tables`);",
+  "why": "a default moved off its index leaves it empty in silence",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "DEX3-a-default-not-a-copy",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "    const table = { name, tableIndices: null, enemyIds: [...vanilla(index)] };",
+  "new": "    const table = { name, tableIndices: null, enemyIds: vanilla(index) };",
+  "why": "a default table is DFU's own array, not the C#'s copy",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C1-reset-state-keeps-the-flag",
+  "file": "src/world/playerGps.js",
+  "old": "export function resetPlayerGpsState(jump) { if (RESET_ON.has(jump)) _inRect = false; }",
+  "new": "export function resetPlayerGpsState(jump) { }",
+  "why": "PlayerGPS.ResetState keeps the rect flag: a fast travel into another climate's town raises no entry, and its city night is never drawn",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C1-the-jump-core-plays-no-reset",
+  "file": "src/scenes/world.js",
+  "old": "    resetPlayerGpsState(modEvent);",
+  "new": "    resetPlayerGpsState(null);",
+  "why": "the jump core drops the host's rect flag and not the GPS's: a load or a fast travel from one town into another keeps the mod's last city night",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C1-a-fast-travel-resets-nothing",
+  "file": "src/world/playerGps.js",
+  "old": "const RESET_ON = new Set(['load', 'travel']);",
+  "new": "const RESET_ON = new Set(['load']);",
+  "why": "OnPostFastTravel is not heard: a fast travel from one town into another climate's raises no entry, and its city night is never drawn",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C1-a-load-resets-nothing",
+  "file": "src/world/playerGps.js",
+  "old": "const RESET_ON = new Set(['load', 'travel']);",
+  "new": "const RESET_ON = new Set(['travel']);",
+  "why": "OnStartLoad is not heard: a load in the town it was saved in raises no second entry, and its city night is not drawn again",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C1-every-jump-resets",
+  "file": "src/world/playerGps.js",
+  "old": "export function resetPlayerGpsState(jump) { if (RESET_ON.has(jump)) _inRect = false; }",
+  "new": "export function resetPlayerGpsState(jump) { _inRect = false; }",
+  "why": "a Recall or a guild teleport resets the flag too, where DFU raises ResetState only on a load's start and a fast travel's end (HOST-SPLIT at DEX's merge: the rule moved from the jump core into the module)",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C7-the-chunk-hands-its-ring",
+  "file": "src/systems/campEncounters.js",
+  "old": "const chunkGps = (ctx) => ({ climateIndex: ctx.climateIndex });",
+  "new": "const chunkGps = (ctx) => ctx;",
+  "why": "a chunk-load roll hands the camp gate's ring of any town to PlayerGPS: an entry, then an exit, the player never made - the mod's city night and day drawn between two readings",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C7-the-reading-not-handed",
+  "file": "src/systems/encounters.js",
+  "old": "  if (!ctx.inside) readPlayerGps(gps);",
+  "new": "  if (!ctx.inside) readPlayerGps(ctx);",
+  "why": "the roll's own place feeds the GPS whatever reading it was handed",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C6-the-dungeon-hands-no-place",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      ...dungeonPlace(dfLocation),   // DEX3: its LocationId and the place a mod's table is picked for\n",
+  "new": "",
+  "why": "the dungeon's population is handed no place: no LocationId seeds its random markers and no mod's pick is read - DFU's tables under the mod",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C8-the-names-ordinal",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "  const tables = new IgnoreCaseMap(), byIndex = new Map();",
+  "new": "  const tables = new Map(), byIndex = new Map();",
+  "why": "a table's name matched case for case: a line in another case adds a second table where the C#'s OrdinalIgnoreCase dictionary replaces the first",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-DEX-C8-the-header-case-sensitive",
+  "file": "src/systems/enemyExpansion/dexTables.js",
+  "old": "    const hasTableIndices = fields[1].toLowerCase() === 'table indices';",
+  "new": "    const hasTableIndices = fields[1] === 'Table Indices';",
+  "why": "the header's column read case for case: a file whose header says TABLE INDICES reads its indices as ids and refuses every new table",
+  "tests": [
+   "test/systems/enemyExpansion/dex3_encounters.test.js"
+  ]
+ }
+]

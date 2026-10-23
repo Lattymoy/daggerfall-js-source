@@ -366,10 +366,10 @@ test('AUDIT GUILD1d R10-R14: a heraldry draft is one guild\'s; a pick changes th
   r.panel.openGuild('arms'); await settle(); await settle(); r.panel.render();
   const swatch = (label) => find(r.panel.root, 'dfsocial-swatch').find((f) => f.attrs['aria-label'] === label);
   const strip = find(r.panel.root, 'dfsocial-subtabs')[0];
-  swatch('Field colour: Crimson').fire('click');
+  swatch('Field color: Crimson').fire('click');
   assert.equal(find(r.panel.root, 'dfsocial-subtabs')[0], strip, 'R11: the page is not repainted - the arms\' box alone');
-  assert.equal(r.doc.activeElement, swatch('Field colour: Crimson'), 'R11: the focus on the pick');
-  assert.equal(swatch('Field colour: Crimson').attrs['aria-pressed'], 'true');
+  assert.equal(r.doc.activeElement, swatch('Field color: Crimson'), 'R11: the focus on the pick');
+  assert.equal(swatch('Field color: Crimson').attrs['aria-pressed'], 'true');
   const img = find(r.panel.root, 'dfsocial-armspics')[0].children[0];
   assert.ok(img.src.includes(encodeURIComponent('#b3262e')), 'the picture is the draft');
   assert.equal(button(r.panel.root, 'Change it').disabled, false, 'a change the treasury can pay');

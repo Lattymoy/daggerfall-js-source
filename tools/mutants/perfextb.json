@@ -11,8 +11,8 @@
   {
     "name": "PERF-EXT10-2-conceal-noShadow-and-selfCard-are-gained-a-walker-a-pile-and-the-card-split",
     "file": "src/render/renderer.js",
-    "old": " conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined,",
-    "new": " hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, _dead: undefined,",
+    "old": " conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined,",
+    "new": " hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, ghost: undefined, _dead: undefined,",
     "tests": [
       "test/render/perfextb.test.js"
     ]

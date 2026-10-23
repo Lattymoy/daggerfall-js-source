@@ -20,7 +20,7 @@ import { createCaptainLedger } from '../../../src/systems/naval/captainLedger.js
 import { createHarbourOffice } from '../../../src/scenes/harbourOffice.js';
 import { PORT_LOCATION_IDS, hasPort } from '../../../src/systems/travel/travelPorts.js';
 import { isPortTownType, isPortTown, PORT_TOWN_TYPES } from '../../../src/systems/portPlaces.js';
-import { openSeaOf, seaBears, portTownOnSea } from '../../../src/world/portSites.js';   // FIELD BUGS 2026-10-14 INLAND-PORTS
+import { openSeaOf, seaBears, portTownOnSea, SEA_RING, boardPortAt } from '../../../src/world/portSites.js';   // FIELD BUGS 2026-10-14 INLAND-PORTS; FB1020c BERTH-RING: the berth's ring
 import { MapsFile, LOCATION_TYPES, getPixelFromPixelID } from '../../../src/formats/mapsFile.js';
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
 import { buildMapDict } from '../../../src/systems/map/mapDirectory.js';
@@ -39,9 +39,9 @@ function hostPorts({ dict, maps, here = { x: 0, y: 0 }, openSea = () => true }) 
   // all sea here unless a test hands its own; test/systems/naval/fb1014_inlandports.test.js asks it of a capital in the hills
   // eslint-disable-next-line no-new-func
   return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals',
-    'playerTravelPixel', 'etherSea', 'inEther', 'etherPortNear', 'etherPortOf', 'seaBears', 'openSea',
+    'playerTravelPixel', 'etherSea', 'inEther', 'etherPortNear', 'etherPortOf', 'seaBears', 'openSea', 'boardPortAt',
     `${list[1]}\n${near[1]}\nreturn { navalPortList, navalPortHere };`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [],
-    () => here, false, () => false, () => null, () => null, seaBears, openSea);
+    () => here, false, () => false, () => null, () => null, seaBears, openSea, boardPortAt);   // PIN MOVED (FB1020c BERTH-RING): the port-here's ring is SEA_RING; PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): the port law's boardPortAt holds it
 }
 
 /** Eight of Travel Options' harbours, each given a kind of place: three towns, five that are no port of anyone's. */
@@ -79,29 +79,35 @@ const seaAt = (x, y) => y >= 101;
 const HOME = { key: '100,100', name: 'Home', px: 100, py: 100, region: 23, crown: 'Wayrest' };
 const COAST = { key: '120,100', name: 'Coast Town', px: 120, py: 100, region: 23, crown: 'Wayrest' };
 const TWO_OFF = { key: '110,99', name: 'Daggerfall', px: 110, py: 99, region: 17, crown: 'Daggerfall' };   // the sea two pixels off it
+const THREE_OFF = { key: '112,98', name: 'Tulune', px: 112, py: 98, region: 17, crown: 'Daggerfall' };   // FB1020c BERTH-RING: three off it
 const INLAND = { key: '90,80', name: 'Wrothgaria', px: 90, py: 80, region: 16, crown: 'Wayrest' };
 
-test('PORT-TOWNS: a cargo goes only to a port with the sea beside it - its own pixel or one of the eight about it, never a capital two pixels off the sea or in the mountains; a board with no such port far enough posts no cargo (mutants: the sea not asked, the sea anywhere)', () => {
+// PIN MOVED (FB1020c BERTH-RING): a port the sea bears on within SEA_RING takes a cargo - the berth names a port within it
+// now (scenes/world.js navalPortHere) - so a capital two pixels off the sea does; three off, none
+test('PORT-TOWNS: a cargo goes only to a port the sea bears on - its own pixel or one within SEA_RING of it, never a town three pixels off the sea or in the mountains; a board with no such port far enough posts no cargo (mutants: the sea not asked, the sea anywhere; FB1020c: the ring a pixel)', () => {
+  assert.equal(SEA_RING, 2);
   assert.equal(deliveryPort({ px: 5, py: 5 }, (x, y) => x === 5 && y === 5), true, 'its own pixel');
   assert.equal(deliveryPort({ px: 5, py: 5 }, (x, y) => x === 6 && y === 6), true, 'a corner of the eight');
-  assert.equal(deliveryPort({ px: 5, py: 5 }, (x, y) => x === 7 && y === 5), false, 'the sea two pixels off');
+  assert.equal(deliveryPort({ px: 5, py: 5 }, (x, y) => x === 7 && y === 5), true, 'the sea two pixels off - SEA_RING\'s');
+  assert.equal(deliveryPort({ px: 5, py: 5 }, (x, y) => x === 3 && y === 3), true, 'the ring\'s corner');
+  assert.equal(deliveryPort({ px: 5, py: 5 }, (x, y) => x === 8 && y === 5), false, 'three off');
   assert.equal(deliveryPort({ px: 5, py: 5 }, null), false, 'no sea law, no port');
   assert.equal(deliveryPort(null, seaAt), false);
-  assert.deepEqual([HOME, COAST, TWO_OFF, INLAND].map((p) => deliveryPort(p, seaAt)), [true, true, false, false]);
+  assert.deepEqual([HOME, COAST, TWO_OFF, THREE_OFF, INLAND].map((p) => deliveryPort(p, seaAt)), [true, true, true, false, false]);
   const to = new Set();
   let cargoes = 0;
   for (let day = 0; day < 300; day++) {
-    for (const o of boardFor({ port: HOME, crown: 'Wayrest', day, level: 5, ports: [HOME, COAST, TWO_OFF, INLAND], seaAt })) {
+    for (const o of boardFor({ port: HOME, crown: 'Wayrest', day, level: 5, ports: [HOME, COAST, TWO_OFF, THREE_OFF, INLAND], seaAt })) {
       if (o.kind !== 'delivery') continue;
       cargoes++;
       to.add(o.to.key);
-      assert.match(o.words, /^.+, to Coast Town's harbourmaster within \d+ days\./);
+      assert.match(o.words, /^.+, to (Coast Town|Daggerfall)'s harbormaster within \d+ days\./);
     }
   }
   assert.ok(cargoes > 20, `cargoes were posted (${cargoes})`);
-  assert.deepEqual([...to], [COAST.key], 'every cargo for the port on the sea');
+  assert.deepEqual([...to].sort(), [COAST.key, TWO_OFF.key].sort(), 'every cargo for a port the sea bears on');
   let none = 0;
-  for (let day = 0; day < 300; day++) none += boardFor({ port: HOME, crown: 'Wayrest', day, level: 5, ports: [HOME, TWO_OFF, INLAND], seaAt }).filter((o) => o.kind === 'delivery').length;
+  for (let day = 0; day < 300; day++) none += boardFor({ port: HOME, crown: 'Wayrest', day, level: 5, ports: [HOME, THREE_OFF, INLAND], seaAt }).filter((o) => o.kind === 'delivery').length;
   assert.equal(none, 0, 'no port on the sea far enough: no cargo');
 });
 
@@ -164,7 +170,7 @@ test('PORT-TOWNS: the world hands the harbour office its port list and the sea i
 const ARENA2 = process.env.ARENA2_PATH;
 const HAS_ARENA2 = !!ARENA2 && existsSync(ARENA2);
 
-test('PORT-TOWNS (ARENA2): on the real map - 378 harbours on Travel Options\' table, 155 of them towns, 106 of those on the open sea the board\'s ports (INLAND-PORTS), each the shipyard law\'s port town and every one of those on the table among them; 101 with the sea beside them take a cargo; the flag\'s low four bits name sides the sea lies on and 0x10 is the capitals\' mark, 31 of them inland', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, () => {
+test('PORT-TOWNS (ARENA2): on the real map - 378 harbours on Travel Options\' table, 155 of them towns, 106 of those on the open sea the board\'s ports (INLAND-PORTS), each the shipyard law\'s port town and every one of those on the table among them; every one takes a cargo (FB1020c BERTH-RING: the sea within SEA_RING); the flag\'s low four bits name sides the sea lies on and 0x10 is the capitals\' mark, 31 of them inland', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, () => {
   const maps = new MapsFile();
   assert.equal(maps.load(new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK')))), true);
   maps.autoDiscard = false;
@@ -191,14 +197,14 @@ test('PORT-TOWNS (ARENA2): on the real map - 378 harbours on Travel Options\' ta
   assert.equal(tomb?.locationType, LOCATION_TYPES.DungeonLabyrinth, 'the report\'s kind of place: on the table, no port of the board\'s');
   assert.equal(listed.has(`${getPixelFromPixelID(tomb.id).x},${getPixelFromPixelID(tomb.id).y}`), false);
   const cargoPorts = list.filter((p) => deliveryPort(p, sea));
-  assert.equal(cargoPorts.length, 101, 'PIN MOVED (INLAND-PORTS): 113 less the twelve by a lake inland');
+  assert.equal(cargoPorts.length, 106, 'PIN MOVED (INLAND-PORTS): 113 less the twelve by a lake inland; PIN MOVED (FB1020c BERTH-RING): every board port, the sea within SEA_RING of each');
   const capitals = [...dict.values()].filter((s) => (maps.getLocation(s.regionIndex, s.mapIndex).exterior.exteriorData.portTownAndUnknown ?? 0) === 0x10);
   assert.equal(capitals.length, 39);
   assert.ok(capitals.every((s) => s.locationType === LOCATION_TYPES.TownCity), 'the capitals\' mark is a city\'s');
   const ringOf = (x, y) => { for (let r = 0; r <= 6; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && sea(x + dx, y + dy)) return r; return Infinity; };
   assert.equal(capitals.filter((s) => { const p = getPixelFromPixelID(s.id); return ringOf(p.x, p.y) === Infinity; }).length, 31, 'no sea within six pixels');
   const named = (n) => list.find((p) => p.name === n);
-  assert.deepEqual(['Daggerfall', 'Sentinel', 'Wayrest', 'Wrothgaria'].map((n) => [!!named(n), deliveryPort(named(n), sea)]), [[true, false], [true, false], [true, false], [false, false]], 'their own towns - no cargo goes to them (INLAND-PORTS: and a capital in the mountains is no port of the board\'s)');
+  assert.deepEqual(['Daggerfall', 'Sentinel', 'Wayrest', 'Wrothgaria'].map((n) => [!!named(n), deliveryPort(named(n), sea)]), [[true, true], [true, true], [true, true], [false, false]], 'PIN MOVED (FB1020c BERTH-RING): the crowns\' capitals two pixels off the sea take a cargo now - a berth names them within SEA_RING (INLAND-PORTS: and a capital in the mountains is no port of the board\'s)');
   let flagged = 0;
   for (const s of dict.values()) {
     const v = (maps.getLocation(s.regionIndex, s.mapIndex).exterior.exteriorData.portTownAndUnknown ?? 0) & 0x0f;

@@ -38,8 +38,8 @@
   {
     "name": "FAR-SEA1-the-fill-spills-past-the-hole",
     "file": "src/render/farRing.js",
-    "old": "      if (px < holeX - holeRadius || px > holeX + holeRadius - 1) continue;",
-    "new": "      if (px < holeX - holeRadius || px > holeX + holeRadius) continue;",
+    "old": "  if (px < holeX - holeRadius || px > holeX + holeRadius - 1 || py < holeY - holeRadius || py > holeY + holeRadius - 1) return false;",
+    "new": "  if (px < holeX - holeRadius || px > holeX + holeRadius || py < holeY - holeRadius || py > holeY + holeRadius - 1) return false;",
     "tests": [
       "test/render/farsea1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FAR-SEA1-the-lane-ring-sea-loses-its-sky",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor), sea);",
-    "new": "  if (sea > 0.0) shown = mix(shown, shown + 0.0 * ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor), sea);",
+    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);",
+    "new": "  if (sea > 0.0) shown = mix(shown, shown + 0.0 * ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);",
     "tests": [
       "test/render/farsea1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FAR-SEA1-the-classic-ring-sea-loses-its-sky",
     "file": "src/render/farRing.js",
-    "old": "  if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor), sea);",
-    "new": "  if (sea > 0.0) lit = mix(lit, lit + 0.0 * ringSea(uAmbient, uSunColor, uMoonColor), sea);",
+    "old": "  if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);",
+    "new": "  if (sea > 0.0) lit = mix(lit, lit + 0.0 * ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);",
     "tests": [
       "test/render/farsea1.test.js"
     ]

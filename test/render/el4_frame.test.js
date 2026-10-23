@@ -173,7 +173,7 @@ test('EL4: the eye in the shaders - every lane shader and the far ring multiply 
   }
   assert.match(EL_FAR_RING_FS, /float ex = uELExposure \* elAdapt\(\);/); assert.match(EL_FAR_RING_FS, /elTonemapRGB\(lit \* ex\)/);   // HQ1
   const fr = read('src/render/farRing.js');
-  assert.match(fr, /'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye'\]\) \{   \/\/ BANTHA1/); assert.match(fr, /gl\.bindTexture\(gl\.TEXTURE_2D, adaptTex \?\? this\._adaptOne\(\)\);/);
+  assert.match(fr, /'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye',   \/\/ BANTHA1/);   // PIN MOVED (OW-HORIZON, 2026-10-20): the list goes on to the fog's focus and the clouds' assert.match(fr, /gl\.bindTexture\(gl\.TEXTURE_2D, adaptTex \?\? this\._adaptOne\(\)\);/);
   assert.match(fr, /new Uint8Array\(\[128, 128, 128, 255\]\)/, 'the bare image holds the multiplier 1');
   assert.match(read('src/scenes/world.js'), /adaptTex: renderer\.adaptTexture/);
   // the far ring on the lane binds the eye's unit

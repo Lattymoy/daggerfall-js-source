@@ -228,6 +228,18 @@ export function rollAttackFrames(basics, roll100) {
   return basics.primaryAttackAnimFrames ?? [0, 1, 2, 3, 4];
 }
 
+/** DEX4b (bible/04-Characters/Enemy-Expansion.md section 9): A MOD'S FORCED GENDER - `fn(mobileType)` -> 'male' |
+ *  'female' | null. Daggerfall Enemy Expansion's OnLootSpawned sets the entity's gender and the unit summary's over
+ *  whatever the unit resolved (BestiaryMod.cs:1364-1392), "so we get the correct groans": after the roll, never
+ *  instead of it - the DFRandom draw is spent as it was. */
+const _forcedGenders = [];
+export function registerForcedGender(fn) {
+  if (typeof fn !== 'function') throw new Error('registerForcedGender: a function of (mobileType)');
+  _forcedGenders.push(fn);
+}
+/** The test seam. */
+export function _resetForcedGenders() { _forcedGenders.length = 0; }
+
 /**
  * One monster's animation unit. The scene feeds intent each frame
  * ({moving, striking, hurting}) plus the camera; the unit owns state
@@ -246,10 +258,15 @@ export class MobileUnit {
    *  Math.random at their spawn arms - and the dungeon LAYOUT path
    *  never rolled at all, so every random human class enemy stood male.
    */
-  static resolveGender(gender, basics) {
-    if (gender && gender !== 'unspecified') return gender;
-    if (basics?.affinity === 'Human') return rand() % 2 === 0 ? 'male' : 'female';
-    return 'unspecified';
+  static resolveGender(gender, basics, mobileType = null) {
+    let resolved = 'unspecified';
+    if (gender && gender !== 'unspecified') resolved = gender;
+    else if (basics?.affinity === 'Human') resolved = rand() % 2 === 0 ? 'male' : 'female';
+    for (const fn of _forcedGenders) {   // DEX4b: a mod's forced gender, over what the unit resolved
+      const forced = fn(mobileType);
+      if (forced) return forced;
+    }
+    return resolved;
   }
 
   constructor(mobileType, basics, frameCount, rolls = Math.random, gender = 'male') {

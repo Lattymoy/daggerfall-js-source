@@ -31,7 +31,18 @@ import { busyRead, BUSY_SHED_MS } from '../../src/net/busyLaw.js';   // BUSY-GAT
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/server/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct158';   // acct158: FOE-BOUNDS and GRANT-ASKS (2026-10-19, acct156 on its branch, renumbered past TOWN-ECON's acct156 and PLAN-1000's acct157 at the merges; Mac: "Spec + B + A"; bible/11-Multiplayer/Spawn-Grants.md sections 19 and 21) - the relay's own count opens a moderators' case: a record it stripped because no builder could give it (the batch's `~relay` tally, its evidence on the line) and an account's own asks far past its budget in a window; one batch's findings on an account are one line; the count opens at most GRANT_OWN_CASES_HOUR cases an hour; a tally's `stats` is a case's reason; the Discord card says the spawn grants opened a case of theirs
+export const ACCOUNT_VERSION = 'acct173';   // acct173: LOST-SPOILS (2026-10-22, the owner: "utilize the mailbox as a way to obtain lost items/loot if not picked up from a boss" - asked, "Mail the leftovers"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md LOST-SPOILS; acct168 on its branch, renumbered past STAFF-PANEL1's acct168, CRAFT-PAYS' acct169, PISTOLET's acct170, AUDIT COLLECTIONS-II's acct171 and SEA VENTURES' acct172 at the merge) - POST /v1/post/lost writes a boss's floor's leftovers to the post from the Lost and Found, one piece an item, under a kill the service recorded (a gate's, an Hour's, a Redoubt that paid), once a piece, read to its own body bound (lostSpoils.js); a Lost and Found piece's claim is charged to the budget, never witnessed (post.js, realm.js prepareRealmRecord `witness`). No migration.
+// acct172: SEA VENTURES (2026-10-22, acct168 on its branch, then acct169 - renumbered past STAFF-PANEL1's acct168, CRAFT-PAYS' acct169, PISTOLET's acct170 and AUDIT COLLECTIONS-II's acct171 at the merges; the owner: "Build ever single bit of this and dont return until its perfected" - the Eltheric Ocean's ventures; bible/03-World/Eltheric-Ocean.md SEA-SET and its sections after it) - item law 11 (the Eltheric Tidemail's nine records lawful, systems/aetheric.js ELTHERIC_SET_PIECES), the sea's season boards, its bounties and its wrecks' prizes; migrations from 0146
+// acct171: AUDIT COLLECTIONS-II (2026-10-22, the owner: "Audit this"; bible/01-Overview/audits/Audit-Collections-II.md; acct169 on its branch, renumbered past CRAFT-PAYS' acct169 and PISTOLET's acct170 at the merge) - the glyph's and the icon's doors answer the whole wardrobe: the arena's, Iliac Hand's, The King's Gambit's and the Spire's honours read on them (arena.js ARENA_HONOUR_PATHS), and the glyph's reads a Charter's and a chapter's titles, as the title's door does - a press there dropped a champion's title and laurel from the answer the flow takes whole, and the laurel could not be hidden
+// acct170: PISTOLET (2026-10-22, acct168 on its branch, renumbered past STAFF-PANEL1's acct168 and CRAFT-PAYS' acct169 at the merge; bible/05-Combat/Dwarven-Pistolet.md; AUDIT PISTOLET A7, C1, D8) - the item law moves to 10 (systems/item/itemLaw.js ITEM_LAW_VERSION): the Dwarven Pistolet (562) is a template the judge knows, and the Sunken Sovereign is lawful as the gilded Pistolet it is minted as now and as the Ebony Saber minted before (systems/gilded.js SOVEREIGN_SABER_ERA). No migration: no law-10 finding has been made, and law 9 never saw a Pistolet. Before it, acct167: CAKE-CAP-SAID.
+// acct169: CRAFT-PAYS and CRAFT-WRITS, one release (2026-10-21 and 22; acct168 and migration 0144 on its branch, renumbered past STAFF-PANEL1's at the merge; the Discord's #feature-feedback, "Crafting seems unrewarding"; bible/06-Systems/Professions-Arc.md sections 48 and 49) - a Novice's brew answers two potions where it answered one (src/net/alchemyLaw.js brewCount; the rungs above stand, prof_brews.count's CHECK of 1 to 3 with them), and a brew says whether it was witnessed whole; the crafting writs - an account's three a day on the Work tab (AUDIT CRAFT-WRITS E1: the account's draw, never a character's), filled by any of its realm characters with its own witnessed brews and pieces out of its realm record (craftWrits.js; /v1/writs/craft, `crafts` on /v1/writs/list), migration 0145_craft_writs.
+// acct168: STAFF-PANEL1 (2026-10-22, mob: "a staff admin panel"; design doc "DFO Staff Panel: design", build step 1) - the staff panel's sign-in (staff.js): a password, a key only the staff member's own Staff Panel extension holds, and the role lists; staff keys, invites, sessions and an append-only audit. Migration 0144.
+// acct167: CAKE-CAP-SAID (FIELD BUGS 2026-10-21b, the Discord's #bug-reports: "Soul Cake stopped dropping"; bible/01-Overview/bugs/Field-Bugs-2026-10-21b.md; acct166 on its branch, renumbered past FIELD BUGS 2026-10-20h's acct166 - ESSENCE-LOOSE and SOUL-LAW - at the merge) - a festival find answers the day's cakes found (`today`) and `capped: true` once they are all found, and the account's festival answers `today` too: a find past the day's 120 had answered a miss's own `{ found: 0 }`. No migration.
+// acct166: FIELD BUGS 2026-10-20h, one release - ESSENCE-LOOSE (FIELD BUGS 2026-10-20h, 2026-10-21 - a player's Arcane Essence "bought with gold"; bible/01-Overview/bugs/Field-Bugs-2026-10-20h.md ESSENCE-LOOSE) - a piece walled to gold by the loose goods it was made or raised with says so (products.loose, migration 0142_essence_loose; professions.js craftAtAnvil and temperPiece write it, market.js buyWithGold clears it), and its disenchant's Arcane Essence goes into the Stores LOOSE, a station's, never gold's (alchemy.js disenchantPiece; prof_disenchants.origin may be 'loose', the Essence already misnamed moved); the Reforge with Essence spends as a station does, loose first (reforgeWithEssence - workableSql, workStatements); and SOUL-LAW (FIELD BUGS 2026-10-20h - a Soul Trap holding an Ogre's soul, and its trapper's trading frozen; bible/01-Overview/bugs/Field-Bugs-2026-10-20h.md SOUL-LAW) - item law 9 (src/systems/item/itemLaw.js reads Daggerfall Enemy Expansion's fifty ids from the mod's own tables, src/systems/enemyExpansion/dexIds.js): law 8 found a soul of theirs in a Soul Gem or Azura's Star 'soul', and held its character's trade with a strike; migration 0143 lifts what that finding alone made, as 0130 lifted the Weir Key's. Before it, acct165: THE WITCHES' FESTIVAL AND ITS STARFALL, one release - WITCH1 (2026-10-20, the owner: "develop our first live event"; bible/06-Systems/Witches-Festival.md; acct162 then acct164 and migration 0134 then 0135 on its branch, renumbered past NAME-WORDS' acct162, PURSE-MEND's acct163 and LEAN-READS' acct164 and migrations 0135-0139 at the merges) - THE WITCHES' FESTIVAL (src/festival.js, migrations/0140_festival.sql): an account's Soul Cakes, the day's finds rolled by the service's own die, the Wyrd Sister's sales, the Hearth Offerings at homes' doors; the profile icon worn (/v1/account/icon, the token's `pi`) and the festival's titles and aura in the wardrobe. STAR7 (2026-10-20, the owner: "a lore accurate world encounter defense mission ... a boss topping off the encounter at the end"; bible/11-Multiplayer/Starfall.md section 6) - /v1/star/claim: a fallen star's `j1` receipt (the relay's, world235) counted once a (star, account), nine a UTC day of its fall, paid in Renown and in silver under the day's combat cap (stars.js claimStar, marks.js starStrikeStatement - MARKS_COMBAT gains `star`), the device's spoils once (star_spoils), the cards' stars held (starRecordOf; migration 0141 - 0140 on its branch, past WITCH1's 0140 when the festival was folded in); STAR8, the same version: the questlines' `star` and `stars3` witnesses over stars_held and the Thirteenth of Frostfall's Starwarden (questlines.js QL_WITNESS_SQL, net/questlineClaims.js). acct164: LEAN-READS (2026-10-19, acct159, acct160, acct161, acct162 then acct163 and migrations 0133-0137 then 0134-0138 on its branch, renumbered past QL12's acct159 and 0133, WB14's acct160, JUNGLE-WOODS' acct161, NAME-WORDS' acct162 and 0134 and PURSE-MEND's acct163 at the merges; the account database overloaded again from 18:05 UTC - "D1 DB is overloaded. Requests queued for too long." on the harvest and the pixels, the median request 10 s; the owner: "Do everything. No band aids. No short fixes."; bible/11-Multiplayer/Scale-Arc.md THE OVERLOAD OF 2026-10-19) - LEAN-WITNESS: a hall's and a seat's answers that agree with their key's confirmation a second after it are late, kept by the database (witness_confirmed, its triggers), and the reads that judge read the rest - a hall witness reads no region unless its own answers could have it ignored, and a late report moves no region (leanWitness.js, npcHalls.js, townSeats.js; migration 0135); YARD-SNAP: a town's yards one row, built at the version the database moves on every yard row written (decor.js, migration 0136); VENDOR-BOARD: a region's traders one row, the caller's door off its own rows (market.js vendorBoard, migration 0137); WRIT-BOARD: a region's writs sought by their owner (professions.js, migration 0138); ARENA-BOARD: the arena board's counts one row a season (arena.js arenaShared, migration 0139); SLOW-SHED: an isolate whose requests wait SLOW_SHED_WAIT_MS a trip sheds what an overload sheds (service.js noteD1Wait); AUDIT LEAN-READS (2026-10-20, the owner: "Audit this and ensure perfection"): a key's answers settled at the cost of the rows that change (a strike, the old Worker's too, a confirmer at a time), every kept board in its reads' shape (keptBoard.js), kept once, last and only where it serves - the vendor board from the second it was read at - and the shed weighed by trips; AUDIT LEAN-READS 2 (2026-10-20, the owner: "Audit this"): a strike deletes each row once (leanWitness.js strikeWitness), every trigger read names its index, a late report whose town rests on a confirmer the law may ignore moves its region, the boards' versions narrow rows of their own and the traders' board served to a lagging clock (market.js vendorSpan), a trip capped where it is measured
+// acct165: THE WITCHES' FESTIVAL AND ITS STARFALL, one release - WITCH1 (2026-10-20, the owner: "develop our first live event"; bible/06-Systems/Witches-Festival.md; acct162 then acct164 and migration 0134 then 0135 on its branch, renumbered past NAME-WORDS' acct162, PURSE-MEND's acct163 and LEAN-READS' acct164 and migrations 0135-0139 at the merges) - THE WITCHES' FESTIVAL (src/festival.js, migrations/0140_festival.sql): an account's Soul Cakes, the day's finds rolled by the service's own die, the Wyrd Sister's sales, the Hearth Offerings at homes' doors; the profile icon worn (/v1/account/icon, the token's `pi`) and the festival's titles and aura in the wardrobe. STAR7 (2026-10-20, the owner: "a lore accurate world encounter defense mission ... a boss topping off the encounter at the end"; bible/11-Multiplayer/Starfall.md section 6) - /v1/star/claim: a fallen star's `j1` receipt (the relay's, world235) counted once a (star, account), nine a UTC day of its fall, paid in Renown and in silver under the day's combat cap (stars.js claimStar, marks.js starStrikeStatement - MARKS_COMBAT gains `star`), the device's spoils once (star_spoils), the cards' stars held (starRecordOf; migration 0141 - 0140 on its branch, past WITCH1's 0140 when the festival was folded in); STAR8, the same version: the questlines' `star` and `stars3` witnesses over stars_held and the Thirteenth of Frostfall's Starwarden (questlines.js QL_WITNESS_SQL, net/questlineClaims.js). acct164: LEAN-READS (2026-10-19, acct159, acct160, acct161, acct162 then acct163 and migrations 0133-0137 then 0134-0138 on its branch, renumbered past QL12's acct159 and 0133, WB14's acct160, JUNGLE-WOODS' acct161, NAME-WORDS' acct162 and 0134 and PURSE-MEND's acct163 at the merges; the account database overloaded again from 18:05 UTC - "D1 DB is overloaded. Requests queued for too long." on the harvest and the pixels, the median request 10 s; the owner: "Do everything. No band aids. No short fixes."; bible/11-Multiplayer/Scale-Arc.md THE OVERLOAD OF 2026-10-19) - LEAN-WITNESS: a hall's and a seat's answers that agree with their key's confirmation a second after it are late, kept by the database (witness_confirmed, its triggers), and the reads that judge read the rest - a hall witness reads no region unless its own answers could have it ignored, and a late report moves no region (leanWitness.js, npcHalls.js, townSeats.js; migration 0135); YARD-SNAP: a town's yards one row, built at the version the database moves on every yard row written (decor.js, migration 0136); VENDOR-BOARD: a region's traders one row, the caller's door off its own rows (market.js vendorBoard, migration 0137); WRIT-BOARD: a region's writs sought by their owner (professions.js, migration 0138); ARENA-BOARD: the arena board's counts one row a season (arena.js arenaShared, migration 0139); SLOW-SHED: an isolate whose requests wait SLOW_SHED_WAIT_MS a trip sheds what an overload sheds (service.js noteD1Wait); AUDIT LEAN-READS (2026-10-20, the owner: "Audit this and ensure perfection"): a key's answers settled at the cost of the rows that change (a strike, the old Worker's too, a confirmer at a time), every kept board in its reads' shape (keptBoard.js), kept once, last and only where it serves - the vendor board from the second it was read at - and the shed weighed by trips; AUDIT LEAN-READS 2 (2026-10-20, the owner: "Audit this"): a strike deletes each row once (leanWitness.js strikeWitness), every trigger read names its index, a late report whose town rests on a confirmer the law may ignore moves its region, the boards' versions narrow rows of their own and the traders' board served to a lagging clock (market.js vendorSpan), a trip capped where it is measured
+// acct160: WB14g (2026-10-19, acct159 on its branch, renumbered past the acct159 of QL12 at the merge; Mac: "This is all yours to take on"; bible/11-Multiplayer/Breach-Portents.md section 11) - a kill receipt's portents (net/gate/gateReceipt.js `p`, a bit each: the Vanguard, the Sundering, the Captive freed) read and verified, and a portent night's receipt rolls the Weir Key at the rite's odds (eg.js EG_KEY_ODDS_PORTENT, a quarter); AUDIT WB14 (WIRE-6, before it shipped): and fills the wealth budget a piece's room more for each portent (budget.js SPOILS_GRANT_PIECE, portentPieces)
+// acct159: QL12 (2026-10-19, acct157 on its branch, renumbered past PLAN-1000 and FOE-BOUNDS, acct157 and acct158, at the merge; the owner: "New questlines tying into and introduced the oblivion gates, abyss dungeons, elite dungeons and elite breaches"; bible/06-Systems/Questlines-Arc.md sections 1 and 5.3) - the questlines' claim (/v1/ql/claim, questlines.js): a step opened by its first claim, witnessed by its endgame receipt written after it (gate_kills, eg_redoubts - no Rehearsal's -, sd_kills, serpent_kills); a line's title on `players.ql_titles`, held for good (titles.js titlesHeld - the five in the vocabulary, RELAY world228 first), and the Covens' Hoard's Weir Key once an account (`ql_key`, `eg_keys` + 1); QUESTLINES_OPEN; migration 0133.
+// acct158: FOE-BOUNDS and GRANT-ASKS (2026-10-19, acct156 on its branch, renumbered past TOWN-ECON's acct156 and PLAN-1000's acct157 at the merges; Mac: "Spec + B + A"; bible/11-Multiplayer/Spawn-Grants.md sections 19 and 21) - the relay's own count opens a moderators' case: a record it stripped because no builder could give it (the batch's `~relay` tally, its evidence on the line) and an account's own asks far past its budget in a window; one batch's findings on an account are one line; the count opens at most GRANT_OWN_CASES_HOUR cases an hour; a tally's `stats` is a case's reason; the Discord card says the spawn grants opened a case of theirs
 // acct157: PLAN-1000 (2026-10-18, acct155 on its branch, renumbered past GRANT2's acct155 and TOWN-ECON TE2's acct156 at the merge; the owner at a thousand online: "We really need to future proof even more and improve our server. Like really deep"; bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000) - PRIMARY-FOLD: a claim's door asks its tombstone, seat and bucket in one statement (door.js), the spend steps its bucket inside its own upsert (progress.js spendProgress, AUDIT PLAN-1000 C1), a week read settled stays settled in its isolate (weekKept.js), the chapters' sheet and a chapter claim read in one batch each; SESSION-SIGN: the hot routes believe a signed pass of five minutes for the session's lookup (sessionPass.js, `x-session-pass`); no migration.
 // acct156: TOWN-ECON TE2 (2026-10-18, Mac: "Everything"; bible/06-Systems/Town-Economy-Arc.md section 4) - the town economy's players' share: the towns' shares read (/v1/towns/econ), a town witnessed into the registry (/v1/towns/witness), the Watch's ticks walked in a town claimed (/v1/towns/watch), a trader's sale, a patron's and a raid driven off counted at their town, each account capped a town a day; migration 0132 (renumbered past GRANT2's 0131_grant_measure, acct155, at the merge). And LAW-3 (section 7.4): the item law's `counterPaid` (src/systems/item/itemFields.js) SEA-TRADE and AUDIT TOWN-ECON 2 (2026-10-18, the same branch, the same version - none of it deployed between): a captain's dealing a `sea` act of the Watch's claim; a town reported with a Watch tick at its pixel, struck and audited by a developer (/v1/towns/strike, /v1/towns/audit), its shares kept by the clock (`town_econ_kept`), the doors behind TOWNS_OPEN, and the town Watch asked of the account's seat (INT16).
 // acct155: GRANT2 (2026-10-18, Mac: "Lets build the plan"; bible/11-Multiplayer/Spawn-Grants.md section 12) - the spawn grants' measure: POST /v1/mod/grant-feed takes a cell's window of grant asks under the relay's signature (grants.js takeGrantMeasure, net/grantMeasure.js), once, into grant_batches and grant_rows (migration 0131_grant_measure); a developer reads it with /v1/mod/realm-grants (grantsMeasure: per kind, an account's asks an hour, what the buckets and the ceiling would have refused, the cells' most live; tools/realmReview.mjs grants)
@@ -80,7 +91,51 @@ export function noteOverload(/** @type {number} */ nowMs) { busyShedUntil = Math
 /** BUSY-GATE: whether this request is a read the isolate sheds at `nowMs`. */
 export const shedding = (/** @type {string} */ path, /** @type {string} */ method, /** @type {number} */ nowMs) => busyRead(path, method) && nowMs < busyShedUntil;
 /** BUSY-GATE: a stood service is a fresh isolate - nothing shed. */
-export function _resetBusyShed() { busyShedUntil = 0; }
+export function _resetBusyShed() { busyShedUntil = 0; slowWaits.length = 0; slowSum.ms = 0; slowSum.trips = 0; }
+
+/** SLOW-SHED (2026-10-19, the account database overloaded again, 18:05-18:25 UTC; bible/11-Multiplayer/Scale-Arc.md
+ *  SLOW-SHED): A DATABASE TOO SLOW TO ANSWER IS SHED AS ONE THAT REFUSES. BUSY-GATE's shed opened only on D1's own word
+ *  (`overloaded`), and it left the case it could not measure yet - "a slow database that is not yet refusing opens neither
+ *  gate". In the overload it is the case that held: 52 refusals logged in twelve minutes while the median request waited
+ *  10 s and the region's traders were asked four times as often (each tab's read timing out and asked again).
+ *
+ *  THE MEASURE IS A TRIP'S WAIT (AUDIT LEAN-READS C1): the queue makes each round trip wait - a statement awaited alone,
+ *  or a batch whole - so a request's D1 wait over its trips (metrics.js measured) is the queue's depth whatever the
+ *  request batches; over its statements a batch of twelve read twelve times shorter. Measured over thirty hours of the
+ *  service's own metrics (each request's wait over its statements, ten-minute points; a trip carries 1 to 1.2 statements,
+ *  PRIMARY-TRIPS): a healthy service 40-680 ms a statement, so at most some 820 ms a trip; every overload 1,212 ms a
+ *  statement or more, so as much a trip at the least. SLOW_SHED_WAIT_MS stands between (C2: 1,500 was above the lowest
+ *  overload). Each trip counts SLOW_SHED_TRIP_CAP_MS at most (C4: one heavy statement in a quiet isolate's window is no
+ *  queue). While the last SLOW_SHED_SPAN_MS of SLOW_SHED_MIN requests or more average SLOW_SHED_WAIT_MS a trip, each request
+ *  itself that slow opens what an overload opens (noteOverload) - so it closes BUSY_SHED_MS after the last one once the
+ *  database answers quickly again - and says so in the log when it opens (C6). A shed read asks the database nothing and
+ *  adds nothing here. */
+export const SLOW_SHED_WAIT_MS = 1_000;
+export const SLOW_SHED_TRIP_CAP_MS = 5_000;
+export const SLOW_SHED_SPAN_MS = 30_000;
+export const SLOW_SHED_MIN = 16;
+/** SLOW-SHED: this isolate's recent requests - `{ at, ms, trips }` their D1 wait (each trip capped) over their trips - and
+ *  their sums, kept as they come and go (AUDIT LEAN-READS: an overload's window is the busiest; it is never added up again). */
+const slowWaits = /** @type {{ at: number, ms: number, trips: number }[]} */ ([]);
+const slowSum = { ms: 0, trips: 0 };
+/** SLOW-SHED: a request's D1 wait (`ms`) over its `trips`, ended at `nowMs` - and the shed opened where the span averages
+ *  too slow. A request that asked the database nothing says nothing of it. */
+export function noteD1Wait(/** @type {number} */ ms, /** @type {number} */ trips, /** @type {number} */ nowMs) {
+  if (!(trips > 0) || !Number.isFinite(ms)) return;
+  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS);   // metrics.js caps each trip; a caller that hands the whole is held to the same bound
+  slowWaits.push({ at: nowMs, ms: waited, trips });
+  slowSum.ms += waited;
+  slowSum.trips += trips;
+  while (slowWaits.length && nowMs - slowWaits[0].at > SLOW_SHED_SPAN_MS) {
+    const gone = /** @type {{ ms: number, trips: number }} */ (slowWaits.shift());
+    slowSum.ms -= gone.ms;
+    slowSum.trips -= gone.trips;
+  }
+  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open
+  if (slowSum.ms / slowSum.trips < SLOW_SHED_WAIT_MS) return;
+  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened - ${slowWaits.length} requests in ${SLOW_SHED_SPAN_MS / 1000} s waited ${Math.round(slowSum.ms / slowSum.trips)} ms a trip`);
+  noteOverload(nowMs);
+}
 
 /** SCALE4d (2026-10-10, Mac: "we just hit 500 online people. I think its time to scale up our server and improve
  *  performance for more people"): THE ROUTES WHOSE READS A D1 READ REPLICA MAY SERVE. The token's mint is a dozen
@@ -109,6 +164,11 @@ export const REPLICA_ROUTES = new Map([
   // the bookmark a tab carries, every statement a replica's; with none - a page from before this, or the read after a
   // write, which the client forgets its bookmark for (net/accountClient.js `call`, AUDIT SCALE II A-2) - the first, the
   // session's lookup, the primary's, and every one after it a replica's at least as new: the caller's own writes read.
+  // LEAN-READS (AUDIT LEAN-READS B4): two of them write now - the region's traders (market.js vendorBoard) and the
+  // arena's board (arena.js arenaShared) keep their board's one row where it was stale, a write the session sends to the
+  // primary, after every read the request makes (D5) and only where the version it read is the primary's still: a
+  // replica is a prefix of the primary and a version only rises, so a board read on a replica is kept at its version or
+  // not at all. Neither keeps anything an isolate shares.
   ['/v1/homes/town', 'POST'],
   ['/v1/homes/mine', 'POST'],
   ['/v1/homes/rooms', 'POST'],
@@ -121,6 +181,7 @@ export const REPLICA_ROUTES = new Map([
   ['/v1/realm/unions', 'POST'],
   ['/v1/saves', 'GET'],
   ['/v1/arena/board', 'POST'],
+  ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings - reads and nothing else (festival.js festivalTown)
 ]);
 /** SCALE4d: where a replica session's FIRST statement goes - the primary. A mint's first statement is the session
  *  lookup, and every statement after it is served by a replica at least as new as that answer (D1's Sessions API: one
@@ -302,6 +363,11 @@ export const ROUTES = new Set([
   // WB9g: the Broker's insignia - a title and an aura BOUGHT (a sale recorded, the account's closed gates paying),
   // and the one other thing about the wardrobe a player chooses: the aura worn.
   '/v1/account/insignia', '/v1/account/aura',
+  '/v1/account/icon',   // WITCH1: a profile icon worn, or none
+  // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL - the account's cakes, a find, a sale, a town's
+  // offerings, and an offering set out, filled, taken in and taken from
+  '/v1/festival/mine', '/v1/festival/find', '/v1/festival/buy', '/v1/festival/town',
+  '/v1/festival/offering/set', '/v1/festival/offering/fill', '/v1/festival/offering/take-in', '/v1/festival/offering/take',
   // GLYPH-WEAR: a glyph shown or hidden - paint alone, the rights that ride one untouched.
   '/v1/account/glyph',
   // NAME-AS: which name the room reads - the account's, or the character's the mint is for (accounts.js chooseNameAs).
@@ -334,6 +400,7 @@ export const ROUTES = new Set([
   '/v1/mod/realm-trades',   // HACKED-GOLD: a character's realm trades, whom it traded with (review.js tradesOf)
   '/v1/mod/realm-characters',   // SUMMON-REPAIR: an account's realm characters by handle (review.js)
   '/v1/mod/realm-repair',       // SUMMON-REPAIR: one character mended by staff, once a ticket (review.js repairAct)
+  '/v1/mod/realm-mend',         // PURSE-MEND: a purse below nothing mended by staff, once a ticket (review.js mendAct)
   // ACC2: the LISTING is a fixed path; every other save route carries
   // the slot in it and is matched by `savePathOf`.
   '/v1/saves',
@@ -345,6 +412,8 @@ export const ROUTES = new Set([
   // SERVER-POST: the developers' pieces to one registered account - the box a GET, the three that change something POSTs,
   // each naming the piece in its body; a claim names the realm character it goes into and where its record stands.
   '/v1/post/box', '/v1/post/read', '/v1/post/claim', '/v1/post/delete',
+  // LOST-SPOILS: a boss's floor's leftovers sent to the account that left them - a POST, the kill named by the pool's day
+  '/v1/post/lost',
   // PRIVATE-REPORT: a registered player's private report - sent, and their own listed; the readers' inbox, a report
   // opened and closed. All POSTs, every id in the body.
   '/v1/report/send', '/v1/report/mine', '/v1/report/inbox', '/v1/report/read', '/v1/report/close',
@@ -446,6 +515,7 @@ export const ROUTES = new Set([
   // here by the account it names with the character that fought it.
   '/v1/raid/claim',
   '/v1/serpent/claim',   // SERPENT1: a sea serpent's receipt
+  '/v1/star/claim',   // STAR7: a fallen star's receipt
   '/v1/sd/claim',   // SD9b: a Brass Remnant's receipt - an Hour broken, and its grants on the first write
   '/v1/eg/keys',   // EG-PLAY: the Weir Keys held, the live breach, the day's Rehearsal
   '/v1/eg/open',   // EG-PLAY: a key staked and the open order signed
@@ -457,6 +527,7 @@ export const ROUTES = new Set([
   '/v1/eg/starts',   // EG-F: the start window's preflight - which starts each member of the opener's party may make
   '/v1/eg/first',   // EG-ZF: the first-time lines a client showed, kept once an account
   '/v1/lamp/claim',   // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp laid on the row once (AUDIT FIVE-ASKS A1: it was never listed, so every claim was a 404)
+  '/v1/ql/claim',   // QL12: a questline's step claimed - opened, then witnessed by its endgame receipt; a line's title, the Covens' Hoard's key (questlines.js)
   // MARKS1: Marks (marks.js) - an account's balance, the Bank's exchange (Marks for gold, never the other way), a
   // guild's Marks treasury, and the developers' weekly report. Every one behind a session, an account's alone.
   // SILVER-FINDS: and a loot find (the service's dice, the day's count).
@@ -469,6 +540,9 @@ export const ROUTES = new Set([
   '/v1/safety/blocks', '/v1/safety/block', '/v1/safety/unblock', '/v1/safety/report', '/v1/safety/conduct',
   '/v1/mod/ban', '/v1/mod/unban', '/v1/mod/strikes', '/v1/mod/feed', '/v1/discord/interactions',
   '/v1/mod/cases', '/v1/mod/case', '/v1/mod/dismiss',
+  // STAFF-PANEL1: the staff panel's doors (staff.js) - its own sign-in and session, never a game session (STAFF_ROUTES)
+  '/v1/staff/login', '/v1/staff/enroll', '/v1/staff/me', '/v1/staff/logout', '/v1/staff/keys', '/v1/staff/key/forget',
+  '/v1/staff/team', '/v1/staff/invite', '/v1/staff/cut', '/v1/staff/audit', '/v1/staff/mods', '/v1/staff/mod/add', '/v1/staff/mod/remove',
   // PROF1: the professions (professions.js) - a character's tracks, Stores and day, the witnessed pixels, a harvest,
   // a specialisation, a withdrawal to the pack, a region's Court writs and a delivery. Every one behind a session, a
   // registered account's alone, and PROFESSIONS_OPEN's.
@@ -487,6 +561,8 @@ export const ROUTES = new Set([
   '/v1/writs/cancel', '/v1/writs/decline', '/v1/stores/guild', '/v1/stores/guild-deposit', '/v1/stores/guild-withdraw',
   // SILVER-WAYS: a guild contract posted and withdrawn (contracts.js); its pay rides a raid's claim
   '/v1/writs/contract', '/v1/writs/contract-withdraw',
+  // CRAFT-WRITS: a crafting writ filled (craftWrits.js) - its goods out of the realm record; its list rides /v1/writs/list
+  '/v1/writs/craft',
   // PROF5: the market (market.js) - the Market tab's views, a listing, a purchase, a cancel, a buy order, a fill, an
   // order withdrawn, a piece collected, a report and a moderator's removal. Every one behind a session, a registered
   // account's alone, and the board's, the professions' and the Marks' switches together. PROF5b: an auction posted, a bid.
@@ -494,6 +570,9 @@ export const ROUTES = new Set([
   '/v1/market/read', '/v1/market/list', '/v1/market/buy', '/v1/market/cancel', '/v1/market/order', '/v1/market/fill',
   '/v1/market/unorder', '/v1/market/collect', '/v1/market/report', '/v1/market/remove', '/v1/market/auction', '/v1/market/bid',
   '/v1/market/gold',
+  '/v1/sea/bounty/board', '/v1/sea/bounty/post', '/v1/sea/bounty/collect',   // SEA-BOUNTY: a freeport's bounty board on the open sea's killers
+  '/v1/sea/season/board',   // SEA-SEASON: the sea's season boards
+  '/v1/sea/wreck', '/v1/sea/prize/collect', '/v1/sea/prize/reclaim',   // SHIP-PVP: a wreck at sea, and its prize
   '/v1/cards/stake',   // CARDS6: a card table's stake held against the realm record
   '/v1/cards/cashout',   // CARDS6: the relay's cash-out receipt paid back into it
   '/v1/cards/deck',   // CARDS10: a ranked seat's deck vouched for (iliac.js deckOrderOf)
@@ -568,3 +647,7 @@ export const PATREON_OPEN_ROUTES = new Set(['/v1/patreon/callback', '/v1/patreon
  *  lines and Discord's presses and commands. Each proves itself by a signature over its exact bytes (the relay's receipt
  *  key, the Discord application's key), never a session. */
 export const SAFE_OPEN_ROUTES = new Set(['/v1/mod/feed', '/v1/discord/interactions']);
+
+/** STAFF-PANEL1: the staff panel's doors (staff.js), NOT the JSON ladder's - none takes a game session. Two prove themselves by
+ *  a password and an extension's signature (login, enroll); the rest by a staff session in `x-staff-session`. */
+export const STAFF_ROUTES = new Set([...ROUTES].filter((r) => r.startsWith('/v1/staff/')));

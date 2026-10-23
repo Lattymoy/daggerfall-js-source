@@ -157,8 +157,8 @@
   {
     "name": "DEV3-tabby-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,RookieG,Roderic\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
     "tests": [
       "test/net/titlen.test.js"
     ],
@@ -167,8 +167,8 @@
   {
     "name": "DEV4-rookieg-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG(Dev),Roderic\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG(Dev),Roderic,SirMcMobdon,kpblca_1\"",
     "tests": [
       "test/net/titlen.test.js"
     ],
@@ -177,8 +177,8 @@
   {
     "name": "DEV5-trashbattery-still-listed",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG,Roderic\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
     "tests": [
       "test/net/titlen.test.js"
     ],
@@ -187,12 +187,22 @@
   {
     "name": "DEV6-roderic-not-granted",
     "file": "server-account/wrangler.toml",
-    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic\"",
-    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG\"",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,SirMcMobdon,kpblca_1\"",
     "tests": [
       "test/net/titlen.test.js"
     ],
     "note": "DEV6 (Mac: \"Give roderic the developer access ingame (title/glyph)\"): Roderic left off the list holds no title, glyph, wings or moderating."
+  },
+  {
+    "name": "STAFF-PANEL1-kpblca-not-granted",
+    "file": "server-account/wrangler.toml",
+    "old": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1\"",
+    "new": "DEVELOPER_HANDLES = \"Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon\"",
+    "tests": [
+      "test/net/titlen.test.js"
+    ],
+    "note": "STAFF-PANEL1 (mob: \"kpblca_1 needs added to them as welll\"): kpblca_1 left off the list holds no developer set and no staff panel Admin role."
   },
   {
     "name": "DISC-flylighter-not-granted",

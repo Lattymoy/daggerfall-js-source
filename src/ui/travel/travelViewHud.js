@@ -51,6 +51,7 @@ import {
 import { paintWaypointFlag, flagBox } from '../waypointFlags.js';   // WAYPOINTS: the small flags
 import { closeWaypointMenu } from '../waypointMenu.js';   // WAYPOINTS: the Overworld's menu goes down with the view
 import { appStorage } from '../../systems/appStorage.js';   // WAYPOINTS: the filter block's folded state, kept on the device
+import { QUEST_MARK_CSS } from '../quest/questMarks.js';   // OW-QUEST: the journal's gold, the held map's diamond
 
 export const TRAVEL_VIEW_HUD_ID = 'travel-view';
 /** The name on the screen (the code's is TRAVEL VIEW: "overworld" is the streaming world's own word in the tree). */
@@ -231,8 +232,9 @@ function build(doc, hooks) {
   const title = el('div', 'tview-title', TRAVEL_VIEW_TITLE);
   const where = el('div', 'tview-where');
   const trip = el('div', 'tview-trip');   // TV2: the journey in words
+  const sky = el('div', 'tview-sky');   // OW-FORECAST: the weather ahead (scenes/overworldForecastHost.js) - the way's, or here
   const hint = el('div', 'tview-hint');
-  text.append(title, where, trip, hint);
+  text.append(title, where, trip, sky, hint);
   // TV2: the route line, under the marks - a casing and the line over it, one path's data for both
   let route = null, casing = null, line = null;
   if (typeof doc.createElementNS === 'function') {
@@ -267,7 +269,7 @@ function build(doc, hooks) {
   // dock holds this in its place: no journey, how to set out, and the map.
   const idle = el('div', 'tview-idle');
   const idleText = el('div', 'tview-idle-text');
-  idleText.append(el('span', 'tview-label', 'Journey'), el('span', 'tview-idle-name', 'Not travelling'),
+  idleText.append(el('span', 'tview-label', 'Journey'), el('span', 'tview-idle-name', 'Not traveling'),
     el('span', 'tview-idle-sub', 'Click a town or the land to set out'));
   idle.append(idleText);
   dock.append(idle);
@@ -350,7 +352,7 @@ function build(doc, hooks) {
   // own - a switch like the others that unfolds the waypoints as switches under it (a browser <select> wears no stone)
   const wpPick = /** @type {HTMLButtonElement} */ (el('button', 'tview-filter tview-cycle tview-cycle-wide tview-wp-pick on'));
   wpPick.type = 'button';
-  wpPick.title = 'Choose a waypoint to follow - it stays at the screen\'s edge with its distance';
+  wpPick.title = 'Choose a waypoint to follow. It stays at the edge of the screen with its distance.';
   const wpPop = el('div', 'tview-wp-pop');
   wpPop.style.display = 'none';
   wpPick.onclick = (e) => { e.preventDefault(); if (wpPick.disabled) return; wpPop.style.display = wpPop.style.display === 'none' ? '' : 'none'; paintPickWord(); furniture.at = -Infinity; };
@@ -382,7 +384,7 @@ function build(doc, hooks) {
   if (route) r.append(route);
   r.append(canvas, you, bar, side, said, tip);
   doc.body.append(r);
-  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
+  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
 }
 
 /**
@@ -734,7 +736,7 @@ function listenPointer(win, on) {
 /**
  * One frame's readout.
  * @param {{ feet: {x:number,y:number,front:boolean}|null, heading: number|null, yaw: number, where: string, keys?: {move?:string, out?:string}|null,
- *   touch?: boolean, fade?: number, trip?: string, route?: Array<{x:number,y:number,front:boolean}|null>, followDist?: Record<string,string>|null,
+ *   touch?: boolean, fade?: number, trip?: string, sky?: string, route?: Array<{x:number,y:number,front:boolean}|null>, followDist?: Record<string,string>|null,
  *   routeDots?: Array<{x:number,y:number,c?:number}|null>|null, routeDotSizes?: readonly number[]|null,
  *   marks?: Array<{key:string, x:number, y:number, front:boolean, label?:string, sub?:string, kind?:string, pick?:boolean, edge?:boolean}> }} f
  *   `feet` the projected feet, `heading` the chevron's degrees (null keeps the last), `yaw` the camera's heading,
@@ -759,12 +761,14 @@ export function updateTravelViewHud(f) {
     style(parts.you, 'you-t', 'transform', `translate3d(${f.feet.x.toFixed(1)}px, ${f.feet.y.toFixed(1)}px, 0)`);
   } else style(parts.you, 'you-d', 'display', 'none');
   if (f.heading != null) style(parts.chev, 'chev', 'transform', `rotate(${f.heading.toFixed(1)}deg)`);
-  const words = `${last.where}|${last.hint}|${last.trip}`;
+  const words = `${last.where}|${last.hint}|${last.trip}|${last.sky}`;
   put(parts.where, 'where', f.where ?? '');
   put(parts.hint, 'hint', f.touch ? TRAVEL_VIEW_HINTS.touch : travelViewMouseHint(f.keys ?? {}));
   put(parts.trip, 'trip', f.trip ?? '');
   style(parts.trip, 'trip-d', 'display', f.trip ? '' : 'none');
-  if (`${last.where}|${last.hint}|${last.trip}` !== words) furniture.at = -Infinity;   // the bar's words changed: its height may have (a line wrapped, a journey's line came) - measured again next frame
+  put(parts.sky, 'sky', f.sky ?? '');   // OW-FORECAST
+  style(parts.sky, 'sky-d', 'display', f.sky ? '' : 'none');
+  if (`${last.where}|${last.hint}|${last.trip}|${last.sky}` !== words) furniture.at = -Infinity;   // the bar's words changed: its height may have (a line wrapped, a journey's line came) - measured again next frame
   if (parts.line) {
     const d = routePath(f.route ?? [], vw, vh);   // FB0929: cut to the screen read above - a far journey's line dashed off it cost the frame
     // OW-DOTS-GROUND: the line is drawn as its dots - each a point on the land the view projected (scenes/travelView.js
@@ -1030,6 +1034,17 @@ export function crossGlyph(g, x, y, r = TV_CROSS_R) {
   g.lineCap = 'butt';
   g.fillStyle = f; g.strokeStyle = k; g.lineWidth = w;
 }
+/** OW-QUEST (2026-10-19): A QUEST'S PLACE - the held map's own diamond (ui/heldMap.js's legend: the followed quest's
+ *  filled, the rest hollow) in the journal's gold on the dots' black edge, `r` its half-height; the brush handed back. */
+export const TV_QUEST_R = 7;
+export function questGlyph(g, x, y, filled, r = TV_QUEST_R) {
+  const f = g.fillStyle, k = g.strokeStyle, w = g.lineWidth;
+  const path = () => { g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r * 0.72, y); g.lineTo(x, y + r); g.lineTo(x - r * 0.72, y); g.closePath(); };
+  path(); g.lineWidth = 4; g.strokeStyle = '#000'; g.stroke();
+  path(); g.lineWidth = 2; g.strokeStyle = QUEST_MARK_CSS; g.stroke();
+  if (filled) { g.fillStyle = QUEST_MARK_CSS; g.fill(); }
+  g.fillStyle = f; g.strokeStyle = k; g.lineWidth = w;
+}
 /** OW-GLYPHS: a profession's group of nodes by its work, in its colour. `prof` the kind's second word. */
 export function gatherGlyph(g, x, y, prof, color) {
   if (prof === 'mining') {   // the pick: its handle, its curved head
@@ -1082,6 +1097,7 @@ const lookOf = (m) => {
   if (k === 'waypoint') return k;   // WAYPOINTS: a flag
   if (k === 'stranger') return k;   // WILD3: another player in the open zone - an enemy
   if (k === 'yard') return k;   // YARDS-FOUND: a town's Stable or Wagon Yard
+  if (k === 'quest') return k;   // OW-QUEST: a quest's place
   return k === 'place' || k === 'far' || k === 'dest' || k === 'target' || k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';
 };
 /** OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the plates' stone - the Enhanced
@@ -1126,10 +1142,10 @@ function labelSprite(doc, text, look, size, journey, hover, dpr, hub = false) {
     if (plusFace) { x.shadowColor = '#050608'; x.shadowBlur = 0; x.shadowOffsetX = 1; x.shadowOffsetY = 1; }   // OW-PLUS-FACE: the kit's cut shadow
   } else if (plusFace) {
     x.shadowColor = '#050608'; x.shadowBlur = 0; x.shadowOffsetX = 1; x.shadowOffsetY = 1;   // OW-PLUS-FACE
-    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : C.bone;   // OW-KIN
+    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'quest' ? QUEST_MARK_CSS : C.bone;   // OW-KIN
   } else {
     x.shadowColor = '#000'; x.shadowBlur = 3; x.shadowOffsetY = 1;
-    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : C.bone;   // OWS3: "Pirates" in their colour; OW-KIN: a friend's, a guild-mate's name in theirs
+    x.fillStyle = TV_KIN_COLORS[look.slice(4)] && look.startsWith('kin-') ? TV_KIN_COLORS[look.slice(4)] : look === 'dest' ? C.brass : look === 'sub' ? 'rgba(233,228,217,0.8)' : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'quest' ? QUEST_MARK_CSS : C.bone;   // OWS3: "Pirates" in their colour; OW-KIN: a friend's, a guild-mate's name in theirs
   }
   x.fillText(text, padX, padY + 1);
   if (journey) { x.fillStyle = C.brass; x.fillText(' →', padX + tw, padY + 1); }
@@ -1352,7 +1368,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
-    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\b(fight|hideout)\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
+    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'quest' ? QUEST_MARK_CSS : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\b(fight|hideout)\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
       g.save(); g.translate(x, y); g.rotate((held.angle * Math.PI) / 180);
@@ -1362,6 +1378,8 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       g.restore();
     } else if (look === 'waypoint') {   // WAYPOINTS: a small flag in its colour (a party's pip, a guild's bar)
       paintWaypointFlag(g, x, y, { color: m.color, kind: m.wpKind, followed: !!m.followed, hover: m.key === hover });
+    } else if (look === 'quest') {   // OW-QUEST: a quest's place - the held map's diamond, the followed one's filled
+      questGlyph(g, x, y, /\btracked\b/.test(m.kind ?? ''));
     } else if (look === 'target' || look === 'dest') {   // OW-CROSS: where the click walks to - an X marks the spot (a place's end the larger)
       crossGlyph(g, x, y, look === 'dest' ? TV_CROSS_R + 0.5 : TV_CROSS_R);
     } else if (isShipKind(m)) {

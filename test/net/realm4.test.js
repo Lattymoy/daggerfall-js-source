@@ -204,7 +204,7 @@ test('REALM P2.1 law: the swap - each side takes what the other gives, as the gi
   assert.deepEqual([saveA.goldPieces, saveB.items[0].stackCount], [50, 10], 'the service\'s copies are never changed in place');
   assert.deepEqual(settleRealmTrade(saveA, saveB, hA, { give: giveB, get: { ...giveA, gold: 19 }, pick: [0] }), { why: 'mismatch' });
   assert.deepEqual(settleRealmTrade(saveA, { items: [], goldPieces: 5 }, hA, hB), { why: 'goods' }, 'B\'s record holds no arrows');
-  assert.match(realmTradeRefusalText('goods'), /nothing was traded/);
+  assert.equal(realmTradeRefusalText('goods'), 'The realm could not find the goods offered. Nothing changed hands.');
 });
 
 // ---- the service -----------------------------------------------------------------------------------------------------
@@ -472,7 +472,7 @@ test('REALM P2.1: a hold whose goods could not be reserved is released - the tra
   t.entA.items.splice(0, 1);   // the dagger leaves the pack between the confirms (a drop, a sale)
   sa.confirm(); t.pump();
   assert.equal(sa.phase, 'cancelled');
-  assert.ok(t.said.A.includes('Your goods changed - the trade is off.'));
+  assert.ok(t.said.A.includes('Your goods changed. The trade is off.'));
   await until(async () => (await t.A.session.checkpoint('{"after":"release"}')).ok === true, 'the hold let go');
 });
 

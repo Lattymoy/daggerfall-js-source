@@ -25,9 +25,20 @@
 // can read it, so 1-4 do not ALSO press the diamond's slots the hotbar
 // replaced. Under a window (the HUD hidden) the keys are the window's,
 // and in a text field they are the field's.
+//
+// DIAMOND-HB (2026-10-18, Discord: fix the 4-slot diamond, add "Diamonds" as an option, hover an item + key to slot it):
+//  - Diamond (style 'diamond') is this same bar showing only slots 1-4, laid out like the d-pad: 1 top, 2 bottom,
+//    3 left, 4 right. It sits where the old diamond sat (the HUD's `.hud-quick`) and works exactly like the row:
+//    same model, drag and drop, keys and press. The old QS diamond is only used by Off now.
+//  - Diamonds (`hotbarShape: 'diamond'`) gives the ten-slot row diamond-shaped slots. Squares stay the default. Slots
+//    are clipped with clip-path instead of rotated, so sprites are not resampled; the clip also limits the click area.
+//  - With the pack or spellbook open, pressing a slot's key puts the item or spell under the mouse on that slot. If
+//    nothing is under the mouse, the item or spell selected in the window is used (setHotbarPick). If there is
+//    neither, the key goes to the window as before.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from '../pixelifyFive.js';
 import { getPref } from '../../systems/uiPrefs.js';
+import { HOTBAR_STYLES } from '../../systems/uiSkin.js';   // DIAMOND-HB: the styles that are this bar
 import { isTextEntryTarget, bindings, eventActions, mouseCode, hostPaused } from '../input.js';   // AUDIT FB1018f L2-5: and the host's pause, at the press
 import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
 import { quickslotTag } from '../quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
@@ -61,7 +72,17 @@ import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first 
 
 /** The pref and its two words (systems/features.js 'quickbar-style'). */
 export const HOTBAR_PREF = 'quickbarStyle';
-export const hotbarMode = () => getPref(HOTBAR_PREF) === 'hotbar';
+export const hotbarMode = () => HOTBAR_STYLES.includes(getPref(HOTBAR_PREF));   // DIAMOND-HB: the row of ten, or the diamond's four
+/** DIAMOND-HB: the diamond - the bar's first four slots, laid out as the quickslot diamond. */
+export const DIAMOND_SIZE = 4;
+export const hotbarDiamond = () => getPref(HOTBAR_PREF) === 'diamond';
+/** DIAMOND-HB: Diamonds - the row of ten in diamond sockets (systems/featureLanes.js HOTBAR_SHAPE_PREF). */
+export const HOTBAR_SHAPE_PREF = 'hotbarShape';
+export const hotbarGems = () => getPref(HOTBAR_PREF) === 'hotbar' && getPref(HOTBAR_SHAPE_PREF) === 'diamond';
+/** DIAMOND-HB: position of slots 1-4 in the diamond, in d-pad order (systems/inputActions.js: up, down, left, right). */
+export const DIAMOND_POS = Object.freeze(['top', 'bottom', 'left', 'right']);
+/** DIAMOND-HB: how many slots are shown and usable: 16 as a crossbar, 4 as the diamond, 10 as a row. */
+export const hotbarSize = () => (xbOn ? HOTBAR_CAPACITY : hotbarDiamond() ? DIAMOND_SIZE : HOTBAR_SIZE);
 
 /** How long the press caption stands over the bar. */
 const CAPTION_MS = 1100;
@@ -86,6 +107,11 @@ let slots = [];          // per slot: { node, icon, glyph, count, key, wear, wea
 let caption = null;
 let hint = null;
 let dock = null;         // the HUD's own place for it
+let quadDock = null;     // DIAMOND-HB: HUD container for the diamond layout (bottom-left)
+let barShape = 'row';    // DIAMOND-HB: current layout: 'row', 'xb' (crossbar) or 'quad' (diamond)
+let gemKey = '';         // DIAMOND-HB: which diamond-slot classes are set ('', 'quad' or 'row')
+const pickers = new Map();   // DIAMOND-HB: owner -> { selected(), changed() }, see setHotbarPick
+let pointerAt = null;    // DIAMOND-HB: last mouse position, to find the hovered item
 let dropLayer = null;    // the body-level place, while a window is up
 const dropOwners = new Set();
 let dropEntity = null;
@@ -141,10 +167,10 @@ const padInHand = () => { try { return controllerLook(); } catch { return false;
 // pad's, a rebound Select's), and the bar's hint stands beside it.
 export const PAD_ARRANGE_TEXT = Object.freeze({
   choose: (name) => `Choose a hotbar slot for ${name}.`,
-  picked: (name) => `${name} is in hand - choose a slot for it.`,
+  picked: (name) => `${name} is in hand. Choose a slot for it.`,
   hint: 'Select a slot to take it in hand, then another to put it there. Options clears a slot.',
-  hintHand: 'Choose a slot: select it - or hold a bumper and press the slot\'s button.',
-  hintHandRow: 'Choose a slot: select it.',
+  hintHand: 'Choose a slot, or hold a bumper and press the slot\'s button.',
+  hintHandRow: 'Select a slot to choose it.',
 });
 /** The bar's raise and its picked slot, from every reason it may be up under a window. */
 function raiseSync() {
@@ -196,7 +222,7 @@ const mouseMode = () => !!bar && hotbarMode() && !lastHidden && !dropOwners.size
 const editable = () => hotbarAcceptsDrops() || mouseMode();
 const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.';   // UI2: any item
 const HINT_EDIT = 'Click a slot to use it. Drag to move it, drag it off the bar or right-click to clear it.';
-const HINT_XB = 'Drag onto a slot. In play, hold LB or RB and press the button the slot shows - the d-pad alone never uses a slot.';
+const HINT_XB = 'Drag onto a slot. In play, hold LB or RB and press the button the slot shows. The d-pad alone never uses a slot.';
 
 // ── PADPLUS1: THE CROSSBAR ────────────────────────────────────────
 /** Is the bar a crossbar right now: Enhanced Plus, the hotbar chosen, and the Plus card's Crossbar switch - Auto
@@ -206,7 +232,7 @@ const tuckUnderWindows = () => { try { return isEnhancedPlus(); } catch { return
 
 export function crossbarMode() {
   try {
-    if (!isEnhancedPlus() || !hotbarMode()) return false;
+    if (!isEnhancedPlus() || getPref(HOTBAR_PREF) !== 'hotbar') return false;   // DIAMOND-HB: the diamond is never a crossbar
     const m = plusCrossbarMode();
     return m === 'on' || (m === 'auto' && padFamily() != null);
   } catch { return false; }
@@ -237,7 +263,6 @@ registerCrossbar({
 });
 function buildCrossbar() {
   xbWrap = el('div', 'xb-wrap');
-  rowHold = el('div', 'xb-hold');
   for (let set = 0; set < 2; set++) {
     if (set) xbWrap.append(el('i', 'xb-sep'));
     const sec = el('section', 'xb-set');
@@ -254,11 +279,12 @@ function buildCrossbar() {
     xbWrap.append(sec);
   }
 }
-/** Stand the sixteen nodes where the mode says: a row of ten, or two sets of eight. */
-function layout(on) {
+/** Stand the sixteen nodes where the mode says: a row of ten, two sets of eight, or (DIAMOND-HB) the diamond's four. */
+function layout(shape) {
   if (!bar) return;
   refit();   // UI2: a crossbar's slot is another size
   const row = bar.querySelector('.hb-row');
+  const on = shape === 'xb';
   if (on) {
     if (!xbWrap) buildCrossbar();
     for (let i = 0; i < HOTBAR_CAPACITY; i++) {
@@ -269,14 +295,17 @@ function layout(on) {
     }
     if (xbWrap.parentNode !== bar) row.after(xbWrap);
   } else {
+    const shown = shape === 'quad' ? DIAMOND_SIZE : HOTBAR_SIZE;
     for (let i = 0; i < HOTBAR_CAPACITY; i++) {
       const n = slots[i].node;
       n.style.gridRow = ''; n.style.gridColumn = '';
-      (i < HOTBAR_SIZE ? row : rowHold).append(n);
+      if (shape === 'quad' && i < DIAMOND_SIZE) n.dataset.pos = DIAMOND_POS[i]; else delete n.dataset.pos;   // DIAMOND-HB
+      (i < shown ? row : rowHold).append(n);
     }
     xbWrap?.remove();
   }
   bar.classList.toggle('xb', on);
+  bar.classList.toggle('hb-quad', shape === 'quad');   // DIAMOND-HB
   xbFamily = null;
   lastSig = null;
 }
@@ -355,26 +384,35 @@ function build() {
     slots.push({ node, face, icon, glyph, count, key, wear, wearFill, pip, badge });
     iconKeys[i] = null;
   }
+  rowHold = el('div', 'xb-hold');   // DIAMOND-HB: holds the slot nodes the current layout does not show
+  for (let i = HOTBAR_SIZE; i < HOTBAR_CAPACITY; i++) rowHold.append(slots[i].node);
   hint = el('div', 'hb-hint', HINT_DROP);
   bar.append(caption, row, hint);
 }
 
 /** The HUD hands the bar its place in play: the bottom column, above the
- *  vitals. Called from the enhanced HUD's build; safe to call again. */
-export function mountHotbarDock(dockEl) {
+ *  vitals. Called from the enhanced HUD's build; safe to call again.
+ *  DIAMOND-HB: `diamondEl` is the diamond's place - the quickslot block in the bottom-left corner. */
+export function mountHotbarDock(dockEl, diamondEl = null) {
   if (typeof document === 'undefined') return;
   if (!bar) build();
   dock = dockEl;
-  if (!dropOwners.size && bar.parentNode !== dock) dock.append(bar);
+  quadDock = diamondEl;
+  const home = homeDock();
+  if (!dropOwners.size && home && bar.parentNode !== home) home.append(bar);
   bindKeys();
 }
+/** DIAMOND-HB: the bar's place in play - the diamond's corner for the diamond, else the column over the vitals. */
+const homeDock = () => (hotbarDiamond() && quadDock ? quadDock : dock);
 
 function bindKeys() {
-  if (keysBound || typeof window === 'undefined') return;
+  if (keysBound || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;   // DIAMOND-HB: also called from setHotbarDropMode, where a test's window may be bare
   keysBound = true;
   window.addEventListener('keydown', onKey, true);
   window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button
+  window.addEventListener('pointermove', onPointerAt, { capture: true, passive: true });   // DIAMOND-HB: track the mouse for hover + key
 }
+const onPointerAt = (e) => { pointerAt = { x: e.clientX, y: e.clientY }; };
 
 // ── THE FRAME ─────────────────────────────────────────────────────
 /**
@@ -404,17 +442,30 @@ function paint() {
   if (dropping) {
     if (!dropLayer) { dropLayer = el('div', 'hb-droplayer'); document.body.append(dropLayer); }
     if (bar.parentNode !== dropLayer) { dropLayer.append(bar); refit(); }   // UI2: out from under the HUD's scale
-  } else if (dock && bar.parentNode !== dock) {
-    dock.append(bar);
-    refit();
-    dropLayer?.remove(); dropLayer = null;
+  } else {
+    const home = homeDock();   // DIAMOND-HB: the diamond's corner, or the column over the vitals
+    if (home && bar.parentNode !== home) {
+      home.append(bar);
+      refit();
+      dropLayer?.remove(); dropLayer = null;
+    }
   }
   bar.classList.toggle('on', shown);
   bar.classList.toggle('dropping', dropping);
   bar.classList.toggle('tuck', dropping && tuckUnderWindows());   // PADPLUS5
   const xb = crossbarMode();   // PADPLUS1
-  if (xb !== xbOn) { xbOn = xb; layout(xb); }
+  const shape = xb ? 'xb' : on && hotbarDiamond() ? 'quad' : 'row';   // DIAMOND-HB: and the diamond's four
+  if (shape !== barShape) { barShape = shape; xbOn = xb; layout(shape); }
   if (xb) paintBadges();
+  // DIAMOND-HB: diamond sockets - the diamond's always, the row's when Diamonds is chosen
+  const gems = shape === 'quad' ? 'quad' : shape === 'row' && hotbarGems() ? 'row' : '';
+  if (gems !== gemKey) {
+    gemKey = gems;
+    bar.classList.toggle('hb-gem', !!gems);
+    bar.classList.toggle('hb-gemrow', gems === 'row');
+    refit(); lastSig = null;
+    for (let k = 0; k < iconKeys.length; k++) iconKeys[k] = null;   // slot size changed: redraw icons
+  }
   const editing = shown && !dropping && mouseMode();
   if (bar.classList.contains('editing') !== editing) {
     bar.classList.toggle('editing', editing);
@@ -642,7 +693,9 @@ function onKey(e) {
   // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
   // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing. AUDIT FB1018f
   // L2-5: the pause at this press, the host's (keysPaused) - never the last frame's while a host can answer
-  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return;
+  if (!bar || !hotbarMode()) return;
+  if (dropOwners.size) { pickKey(e); return; }   // DIAMOND-HB: pack or spellbook open: slot key adds the hovered thing
+  if (keysPaused()) return;
   if (keyHolds.size) return;   // AUDIT POI E1: a surface that owns the keys is up
   if (e.metaKey || isTextEntryTarget(e.target)) return;
   // KB1: THE SLOTS ARE REGISTRY ACTIONS. This read `Digit1`-`Digit0` off the event and stepped aside for any digit
@@ -650,7 +703,7 @@ function onKey(e) {
   // player who moved slot 7 to a mouse button, or a pad's d-pad on slots 1-4, presses it; a digit bound to anything
   // else is simply not a slot.
   const i = slotOfActions(eventActions(e));   // AUDIT KB1: the event's own read - a listener writes no latch
-  if (i < 0) return;
+  if (i < 0 || i >= hotbarSize()) return;   // DIAMOND-HB: only keys of shown slots (1-4 for the diamond)
   // The hotbar owns the digit: no host ladder below may read it too
   // (keys 1-4 are the diamond's by default, and the diamond is put away).
   e.preventDefault();
@@ -671,10 +724,53 @@ function onMouse(e) {
   const code = mouseCode(e.button);
   if (!code) return;
   const i = slotOfActions(eventActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }));
-  if (i < 0) return;
+  if (i < 0 || i >= hotbarSize()) return;   // DIAMOND-HB
   e.preventDefault();
   e.stopImmediatePropagation();   // the hosts' mousedown (the swing, the activate) never sees a button a slot took
   pressHotbar(i);
+}
+
+// ── DIAMOND-HB: hover an item or spell and press a slot key ───────
+/** A window registers what is selected in it (`selected()` -> { kind: 'item', item } | { kind: 'spell', spell } | null)
+ *  and how to redraw after a slot changed (`changed()`). Same owners as setHotbarDropMode; null removes it. */
+export function setHotbarPick(owner, picker) {
+  if (picker && typeof picker.selected === 'function') pickers.set(owner, picker);
+  else pickers.delete(owner);
+}
+/** The item or spell under the mouse: the nearest element carrying `_hotbarItem` or `_hotbarSpell` (pack rows, worn
+ *  panels, spellbook rows), or null. */
+export function hotbarPointedThing(at = pointerAt) {
+  if (!at || typeof document === 'undefined') return null;
+  for (let n = document.elementFromPoint?.(at.x, at.y) ?? null; n && n !== document.body; n = n.parentNode) {
+    if (n._hotbarItem) return { kind: 'item', item: n._hotbarItem };
+    if (n._hotbarSpell) return { kind: 'spell', spell: n._hotbarSpell };
+  }
+  return null;
+}
+/** What a slot key would add right now: the thing under the mouse, else the selection of the most recent window. */
+export function hotbarPickNow() {
+  const pointed = hotbarPointedThing();
+  if (pointed) return pointed;
+  for (const p of [...pickers.values()].reverse()) {
+    let got = null;
+    try { got = p.selected(); } catch { got = null; }
+    if (got && (got.kind === 'item' ? !!got.item : got.kind === 'spell' && !!got.spell)) return got;
+  }
+  return null;
+}
+/** Slot key while a window is open: put the hovered (or selected) thing on that slot. Keys with nothing to add, keys
+ *  that are not a shown slot, and keys typed into a text field are left to the window. */
+function pickKey(e) {
+  if (keyHolds.size || hbDrag || e.metaKey || isTextEntryTarget(e.target)) return;
+  const i = slotOfActions(eventActions(e));
+  if (i < 0 || i >= hotbarSize()) return;
+  const pick = hotbarPickNow();
+  if (!pick) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();   // the window does not also handle this key
+  if (e.repeat) return;
+  const ok = pick.kind === 'spell' ? hotbarDropSpell(i, pick.spell) : hotbarDropItem(i, pick.item);
+  if (ok) for (const p of pickers.values()) { try { p.changed?.(); } catch (err) { console.warn('[hotbar] pick', err?.message ?? err); } }
 }
 
 // ── THE DROP ──────────────────────────────────────────────────────
@@ -686,10 +782,11 @@ function onMouse(e) {
  */
 export function setHotbarDropMode(owner, on, entity = null) {
   if (on) { dropOwners.add(owner); if (entity) dropEntity = entity; }
-  else dropOwners.delete(owner);
+  else { dropOwners.delete(owner); pickers.delete(owner); }   // DIAMOND-HB: drop the window's picker when it closes
   if (!dropOwners.size) { dropEntity = null; dragEnd(false); hand = null; arranging = false; handPress = -1; raiseSync(); }   // PAD-ARRANGE: the last window lets go
   lastSig = null;
   if (!bar && on && hotbarMode() && typeof document !== 'undefined') build();
+  if (bar && on) bindKeys();   // DIAMOND-HB: listen for keys even if the HUD has not drawn yet
   paint();
 }
 
@@ -729,23 +826,30 @@ export function hotbarDropSpell(i, sp) {
 /** The click path beside the drag, for a player who would rather press
  *  a button: on the bar already comes OFF, else it goes on the first
  *  free slot. Answers a line for the window to show. */
+/** DIAMOND-HB: the slot this item kind (or spell) is on, or -1 if it is not on a shown slot (the diamond shows only
+ *  four, so something on slot 7 has no key there). */
+export function hotbarShownSlotOf(thing, opts = {}) {
+  const at = hotbarSlotOf(thing, opts);
+  return at >= 0 && at < hotbarSize() ? at : -1;
+}
+
 export function toggleHotbarItem(item) {
-  const at = hotbarSlotOf(item);
+  const at = hotbarShownSlotOf(item);
   if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(hotbarEntryForItem(item)?.name ?? 'It'); }
   // PAD-ARRANGE: with the pad in hand the new entry goes IN HAND, and the player chooses its slot
   const e = padInHand() && hotbarAcceptsDrops() ? hotbarEntryForItem(item) : null;
   if (e) { hand = { kind: 'item', item, name: e.name }; lastSig = null; raiseSync(); paint(); return PAD_ARRANGE_TEXT.choose(e.name); }
-  const free = firstFreeHotbarSlot(xbOn ? HOTBAR_CAPACITY : HOTBAR_SIZE);
+  const free = firstFreeHotbarSlot(hotbarSize());   // DIAMOND-HB: the diamond's four
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropItem(free, item);
   return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', free + 1);
 }
 export function toggleHotbarSpell(sp) {
-  const at = hotbarSlotOf(sp, { spell: true });
+  const at = hotbarShownSlotOf(sp, { spell: true });
   if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(shownSpellName(sp) ?? 'It'); }
   const e = padInHand() && hotbarAcceptsDrops() ? hotbarEntryForSpell(sp) : null;   // PAD-ARRANGE: and a spell
   if (e) { hand = { kind: 'spell', spell: sp, name: e.name }; lastSig = null; raiseSync(); paint(); return PAD_ARRANGE_TEXT.choose(entryName(e)); }   // L10N3e: its name as the book shows it
-  const free = firstFreeHotbarSlot(xbOn ? HOTBAR_CAPACITY : HOTBAR_SIZE);
+  const free = firstFreeHotbarSlot(hotbarSize());   // DIAMOND-HB
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropSpell(free, sp);
   return HOTBAR_TEXT.added(shownSpellName(sp) ?? 'It', free + 1);
@@ -940,7 +1044,8 @@ function bindSlot(node, i) {
 export function detachHotbarDock() {
   dragEnd(false);
   if (bar && bar.parentNode === dock) bar.remove();
-  dock = null;
+  if (bar && bar.parentNode === quadDock) bar.remove();   // DIAMOND-HB
+  dock = null; quadDock = null;
   liveOpts = {}; liveEntity = null; lastHidden = true; lastSig = null;
 }
 
@@ -1008,6 +1113,65 @@ const CROSSBAR_CSS = `
 @media (max-width: 900px) { .hb.xb { --xb-cell: 38px; } .xb-wrap { gap: 12px; } .xb-body { gap: 6px; } .xb-badge { width: 16px; height: 16px; left: -5px; top: -5px; } }
 @media (max-width: 560px) { .hb.xb { --xb-cell: 30px; } .xb-headglyph { width: 22px; height: 22px; } .xb-head { font-size: 11px; } }
 @media (prefers-reduced-motion: reduce) { .xb-set { transition: none; } }
+`;
+
+/** DIAMOND-HB: diamond-shaped slots, styled like the old diamond (ui/enhanced/enhancedStyle.js .hud-qcell). The slot
+ *  is clipped to a diamond (background and click area) and the frame is a clipped ring coloured by its background.
+ *  Nothing is rotated. Key at the top point, count at the bottom point. The 4-slot diamond uses --qs-cell / --qs-box
+ *  from .hud-quick (smaller on phones), and the phone size under a window.
+ *  Rim colours come from variables a dress sets on .hb, the way it dressed the old diamond's rim: --gem-rim,
+ *  --gem-rim-empty, --gem-rim-active, --gem-rim-strike (ui/enhanced/enhancedFrame.js for Plus, ui/grimoireDress.js
+ *  for DFO Grimoire). A rarity tier uses the old diamond's tier gradient. */
+const GEM_RING = 'polygon(evenodd, 50% 0, 100% 50%, 50% 100%, 0 50%, 50% 0, 50% 3px, 3px 50%, 50% calc(100% - 3px), calc(100% - 3px) 50%, 50% 3px)';
+const GEM_CSS = `
+.hb.hb-gem .hb-slot { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); box-shadow: none; }
+.hb.hb-gem .hb-frame { border: 0 !important; box-shadow: none !important; clip-path: ${GEM_RING};
+  background: var(--gem-rim, rgba(125,116,96,0.6)); }
+.hb.hb-gem .hb-slot.hb-empty .hb-frame { background: var(--gem-rim-empty, rgba(125,116,96,0.3)); }
+.hb.hb-gem .hb-slot[data-rarity] .hb-frame { background: linear-gradient(135deg, var(--rar-hi) 0%, var(--rar) 45%, var(--rar-lo) 100%); }
+.hb.hb-gem .hb-slot.hb-active .hb-frame { background: var(--gem-rim-active, var(--brass, #c08a3e)); }
+.hb.hb-gem .hb-slot.hb-inhand .hb-frame { background: #f3cf86; }
+.hb.hb-gem .hb-slot.dragover .hb-frame { background: var(--verdigris, #4e7f72); }
+.hb.hb-gem .hb-slot.hb-strike .hb-frame { background: var(--gem-rim-strike, #f1d49a); }
+.hb.hb-gem .hb-slot.hb-deny .hb-frame { background: var(--blood, #8c3a32); }
+.hb.hb-gem.editing .hb-slot:not(.hb-empty):hover .hb-frame { background: rgba(192,138,62,0.85); }
+.hb.hb-gem .hb-slot.hb-active::after { display: none; }   /* the brass ring says it; a gem over the point would be clipped */
+.hb.hb-gem .hb-face { inset: 24%; }
+.hb.hb-gem .hb-slot.hb-spell .hb-face { inset: 26%; }
+.hb.hb-gem .hb-key { left: 50%; top: 5%; transform: translateX(-50%); }
+.hb.hb-gem .hb-count { left: 50%; right: auto; bottom: 4%; transform: translateX(-50%); }
+.hb.hb-gem .hb-pip { right: 16%; top: 24%; }
+.hb.hb-gem .hb-wear { left: 30%; right: 30%; bottom: 25%; }
+.hb.hb-gem .hb-slot[data-sigil]::before, .hb.hb-gem .hb-slot[data-set]::before { right: 22%; bottom: 30%; }
+/* Diamonds: slightly larger cells than the squares so icons stay the same size */
+.hb.hb-gemrow { --hb-cell: 64px; --hb-gap: 3px; }
+/* under a window the diamond keeps its shape, at the phone size (the bar only shows there while dragging) */
+.hb-droplayer .hb.hb-quad { --qs-cell: 60px; --qs-box: 124px; }
+/* the 4-slot diamond in play, same size as the old diamond */
+.hb.hb-quad { align-items: flex-start; }
+.hb.hb-quad .hb-row { position: relative; display: block; width: var(--qs-box, 172px); height: var(--qs-box, 172px); margin-top: 8px; }
+.hb.hb-quad .hb-slot { position: absolute; width: var(--qs-cell, 84px); height: var(--qs-cell, 84px); }
+.hb.hb-quad .hb-slot[data-pos="top"] { left: calc((var(--qs-box, 172px) - var(--qs-cell, 84px)) / 2); top: 0; }
+.hb.hb-quad .hb-slot[data-pos="bottom"] { left: calc((var(--qs-box, 172px) - var(--qs-cell, 84px)) / 2); top: calc(var(--qs-box, 172px) - var(--qs-cell, 84px)); }
+.hb.hb-quad .hb-slot[data-pos="left"] { left: 0; top: calc((var(--qs-box, 172px) - var(--qs-cell, 84px)) / 2); }
+.hb.hb-quad .hb-slot[data-pos="right"] { left: calc(var(--qs-box, 172px) - var(--qs-cell, 84px)); top: calc((var(--qs-box, 172px) - var(--qs-cell, 84px)) / 2); }
+.hb.hb-quad .hb-face { inset: 25%; }
+.hb.hb-quad .hb-key { font-size: 12px; }
+/* each key at its slot's outer point, where the old diamond had its key tags */
+.hb.hb-quad .hb-slot[data-pos="top"] .hb-key { left: 50%; top: 6px; transform: translateX(-50%); }
+.hb.hb-quad .hb-slot[data-pos="bottom"] .hb-key { left: 50%; top: auto; bottom: 6px; transform: translateX(-50%); }
+.hb.hb-quad .hb-slot[data-pos="left"] .hb-key { left: 7px; top: 50%; transform: translateY(-50%); }
+.hb.hb-quad .hb-slot[data-pos="right"] .hb-key { left: auto; right: 7px; top: 50%; transform: translateY(-50%); }
+.hb.hb-quad .hb-count { left: auto; right: 22%; bottom: 36%; transform: none; font-size: 12px; }
+.hb.hb-quad .hb-pip { right: 26%; top: 24%; }
+.hb.hb-quad .hb-wear { left: 32%; right: 32%; bottom: 30%; }
+/* caption to the right of the diamond; the row above it holds the mode word */
+.hb.hb-quad .hb-caption { bottom: auto; top: 50%; left: 100%; margin: 0 0 0 10px; transform: translateY(-50%); }
+.hb.hb-quad .hb-hint { max-width: calc(var(--qs-box, 172px) + 80px); }
+.hud-gemdock { display: contents; }
+@media (max-width: 760px) { .hb.hb-gemrow { --hb-cell: 50px; --hb-gap: 2px; } }
+@media (max-width: 480px) { .hb.hb-gemrow { --hb-cell: 38px; --hb-gap: 1px; }
+  .hb.hb-gemrow .hb-glyph { font-size: 11px; } }
 `;
 
 export const HOTBAR_CSS = `
@@ -1130,6 +1294,7 @@ export const HOTBAR_CSS = `
 .hb-ghost.clearing .hb-ghostverb { background: var(--blood, #8c3a32); color: var(--bone, #e9e4d9); }
 
 ${CROSSBAR_CSS}
+${GEM_CSS}
 /* THE DIAMOND STANDS DOWN while the hotbar is up (one bar or the other). */
 .hud-quick.hotbarmode .hud-qdiamond, .hud-quick.hotbarmode .hud-qspell { display: none; }
 

@@ -73,6 +73,8 @@ test('AUDIT 68 S12-spellsstd-dup: one SetSpellTypes gate, and the world loader r
   const spells = rd('src/formats/spellsStd.js');
   assert.equal((spells.match(/effects\[0\]\.type > -1/g) ?? []).length, 1, 'readSpellsStd rides readSpellRecord\'s gate');
   const shared = rd('src/scenes/shared.js');
-  assert.ok(shared.includes("spellsByIndexMap(readSpellsStd(await fetch('SPELLS.STD')))"), 'loadMagicRegistries folds through spellsByIndexMap');
+  // PIN MOVED (DEX4a): loadMagicRegistries builds RebuildClassicSpellsDict whole (systems/spell/standardSpells.js)
+  assert.ok(shared.includes("standardSpellsByIndex(await fetch('SPELLS.STD'))"), 'loadMagicRegistries rides the one rebuild');
+  assert.ok(rd('src/systems/spell/standardSpells.js').includes('spellsByIndexMap(mergeSpellRecords(readSpellsStd(bytes)))'), 'which folds through spellsByIndexMap');
   assert.equal(/byIndex\.has\(sp\.index\)/.test(shared), false, 'no hand-rolled copy of the fold');
 });

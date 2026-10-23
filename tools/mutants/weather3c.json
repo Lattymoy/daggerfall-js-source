@@ -26,7 +26,7 @@
  {"name": "WEATHER3c-sim-approach-stale", "file": "src/systems/weather/weatherSim.js",
   "old": "  _mapApproach = approachAt(_mapNear, at[0], at[1]);", "new": "  _mapApproach = 0;", "tests": ["test/systems/weather/weather3c_sky.test.js"]},
  {"name": "WEATHER3c-host-no-base", "file": "src/scenes/world.js",
-  "old": "cells: fieldCellsHere(), cloudBase: weatherOverride ? null : currentCloudBase(), approach", "new": "cells: fieldCellsHere(), cloudBase: null, approach", "tests": ["test/systems/weather/weather3c_sky.test.js"]},
+  "old": "cells: fieldCellsHere(), cloudBase: weatherOverride || seaStormShown() ? null : currentCloudBase(), approach", "new": "cells: fieldCellsHere(), cloudBase: null, approach", "tests": ["test/systems/weather/weather3c_sky.test.js"]},
  {"name": "WEATHER3c-host-drops-imp", "file": "src/render/volumetricClouds.js",
   "old": "  const out = { ...cell, imp: c.imp, rank: c.rank };", "new": "  const out = { ...cell };", "tests": ["test/systems/weather/weather3c_sky.test.js"]}
 ]

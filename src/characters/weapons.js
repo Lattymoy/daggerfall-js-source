@@ -12,7 +12,7 @@ import templates from './itemTemplates.json' with { type: 'json' };
 import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
 import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
 import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
-import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';
+import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE, PISTOLET_SPAN } from './thunderlockIds.js';
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
 
 export const WEAPONS = Object.freeze({
@@ -97,6 +97,7 @@ const MIN_DAMAGE = new Map([
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMinDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min;   // THE DEPARTURE, below
+  if (weapon === PISTOLET_TEMPLATE) return PISTOLET_SPAN.min;   // PISTOLET: the second gun's, the same departure
   const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMin
   if (cls?.baseDamageMin) return cls.baseDamageMin();
   const o = _damageOverride.min?.(weapon);   // TryGetOverride("CalculateWeaponMinDamage") - RRI2's weaponBalance registers one
@@ -128,6 +129,7 @@ const MAX_DAMAGE = new Map([
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMaxDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.max;   // THE DEPARTURE, below
+  if (weapon === PISTOLET_TEMPLATE) return PISTOLET_SPAN.max;   // PISTOLET
   const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMax
   if (cls?.baseDamageMax) return cls.baseDamageMax();
   const o = _damageOverride.max?.(weapon);   // TryGetOverride("CalculateWeaponMaxDamage")
@@ -181,6 +183,7 @@ export function weaponSkillUsed(templateIndex) {
   // which skill a hit was scored on answers Archery from here, without
   // any of them learning that a new weapon exists.
   if (templateIndex === THUNDERLOCK_TEMPLATE) return SKILLS.Archery;
+  if (templateIndex === PISTOLET_TEMPLATE) return SKILLS.Archery;   // PISTOLET: fired, and it spends the Pellet - the same answer
   const cls = customItemClass(templateIndex);   // RRI1: GetWeaponSkillUsed
   if (cls?.weaponSkillUsed) return SKILLS[cls.weaponSkillUsed];
   return WEAPON_SKILL_USED.get(templateIndex) ?? null;

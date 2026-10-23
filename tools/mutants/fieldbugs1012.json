@@ -32,7 +32,7 @@
     "name": "RING-WARN-the-strikes-unsaid",
     "file": "src/net/realm/realmTradeLaw.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the warning names a week where it named staff (AUDIT: \"then opens on its own\" was false with the piece carried)",
-    "old": "export const TRADE_HELD_STRIKES = ' Each time the law holds it counts: the third time, trading stays frozen for a week even once it is gone (a month if it comes to that again).';",
+    "old": "export const TRADE_HELD_STRIKES = ' Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a month each time after that.';",
     "new": "export const TRADE_HELD_STRIKES = '';",
     "tests": [
       "test/systems/item/ringhold.test.js"

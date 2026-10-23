@@ -50,6 +50,7 @@ import { markPlayerHarm } from './harmMark.js';   // REVENANT-HARM: a lingering 
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
 import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { HEAL_SPELL_POINTS_KEY } from './potionRecipes.js';   // PROF12: Heal-SpellPoints' key, beside the one recipe that names it
+import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
@@ -332,8 +333,11 @@ export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && (isPacify
 export const isIdentifyEffect = (e) => e.type === 40 && classicSub(e) === 255;
 /** Identify.cs:54-55 - the refund never drops below 5. */
 export const IDENTIFY_REFUND_FLOOR = 5;
+/** presence = active; expired entries End on the NEXT tick pass (DFU shape). HELD-CONCEAL: an ENDED entry is not -
+ *  DoConstantEffects runs no ConstantEffect once HasEnded (EntityEffectManager.cs:1693-1694), so it sets no flag. A worn
+ *  item's concealment a blow broke stands ended on its item until the reroll (concealment.js). */
 export const hasActiveEffect = (entity, kind) =>
-  !!entity?.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
+  !!entity?.activeEffects?.some((a) => a.kind === kind && !a.ended);
 /** CSA-I: Come Sail Away's WaterWalkingSilent (WaterWalkingSilent.cs) - an incumbent of its own kind, as its
  *  IsLikeKind keeps it from stacking onto the spell's Water Walking; no spell icon (ShowSpellIcon false). */
 export const WATER_WALKING_SILENT_KIND = 'waterWalkingSilent';
@@ -1626,7 +1630,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // (world/gate/gateBoss.js bossStandIn - the gate's Warden) refuses it before any roll: no chance, no save, no flag
       if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }
       const matches = isCharmEffect(e)
-        ? mt >= 128                             // IsClassEnemyId - Charm is enemy CLASSES only
+        ? isClassEnemyId(mt)                    // IsClassEnemyId - Charm is enemy CLASSES only
         : enemyGroupOf(mt) === PACIFY_GROUP[classicSub(e)];
       if (!matches) continue;                   // a mismatch is silent, exactly as DFU's `if` is
       if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
@@ -1722,7 +1726,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const rounds = rollDuration(e, casterLevel);
       const mt = target?.mobileType;
       if (mt == null) continue;                          // the silent default arm
-      if (mt >= 128) { out.trapAlert = 'trapHumanoid'; continue; }   // humanoid: speaks, then ends
+      if (isClassEnemyId(mt)) { out.trapAlert = 'trapHumanoid'; continue; }   // humanoid: speaks, then ends
       if (rounds > 0) {
         const inc = findInc((a) => a.kind === 'soulTrap' && !a.ended);
         // AddState stacks ROUNDS onto the incumbent and nothing else

@@ -128,10 +128,11 @@
   {
     "name": "INT5-the-spoils-unfilled",
     "file": "server-account/src/budget.js",
-    "old": "    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1))'",
-    "new": "    'UPDATE realm_characters SET allowance = allowance + 0 * ?2 + 0 * ?3 * MAX(1, COALESCE(level_seen, 1))'",
+    "old": "    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'",
+    "new": "    'UPDATE realm_characters SET allowance = allowance + 0 * ?2 + 0 * ?3 * MAX(1, COALESCE(level_seen, 1)) + 0 * ?4'",
     "tests": [
       "test/server/int5_budget.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   }
 ]

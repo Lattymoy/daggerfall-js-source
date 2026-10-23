@@ -121,7 +121,7 @@ export function createFleetHost(deps) {
       : sailing ? 'Not while you are at a helm.'
       : inFight ? 'Not while the ship is in combat.'
       : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'
-      : !atPort ? 'Your ships are brought round to a port - go to one.'
+      : !atPort ? 'Ships can only be summoned to a port. Go to one first.'
       : null;
     const away = !r ? 'Come Sail Away is not running.'
       : at.where === 'laidup' ? 'This ship is already laid up.'
@@ -139,7 +139,7 @@ export function createFleetHost(deps) {
       : !st.wants && !st.fire ? 'This ship doesn\'t need repairs.'
       : st.inFight ? 'The crew is busy fighting.'
       : null;
-    const yard = !n ? `The shipwrights are not at work (Naval Combat, ${optionPath('feat:naval-combat')}).`   // ORG2
+    const yard = !n ? `Shipwrights need Naval Combat turned on (${optionPath('feat:naval-combat')}).`   // ORG2
       : !atPort ? 'A shipwright works at a port.'
       : at.where === 'away' || at.where === 'packed' ? 'Bring the ship to this port first.'
       : inFight ? 'Not while the ship is in combat.'
@@ -288,7 +288,7 @@ export function createFleetHost(deps) {
       if (berth) {
         const boat = r.SummonBoat(uid, title, fleetBook(), berth.position, berth.direction, deps.terrainAt?.(berth.position) ?? null);
         if (!boat) return said(false, 'The ship couldn\'t be brought here.');
-        return said(true, `${name} is brought round to ${berth.harbour ? `${berth.harbour}'s` : 'the'} quay and made fast.`);
+        return said(true, `${name} is brought to ${berth.harbour ? `${berth.harbour}'s` : 'the'} quay and moored.`);
       }
       // no berth known (the sea fight off, every one taken): the deed's own placing - the water clicked
       if (!title && at.where !== 'away') return said(false, 'The ship couldn\'t be brought here.');
@@ -341,7 +341,7 @@ export function createFleetHost(deps) {
       if ((deps.gold?.() ?? 0) < row.next.gold) return said(false, `The shipwright asks ${row.next.gold} gold.`);
       const lists = [pack(), at.boat?.Cargo?.Items ?? []];
       for (const m of row.next.mats) if (materialCount(lists, m.kind) < m.n) return said(false, `The shipwright needs ${m.n} ${m.label} (you have ${m.have}).`);
-      if (!materialsFor(lists, row.next.mats)) return said(false, t('naval.refit.short', 'Not enough materials - one item can\'t count for two requirements.'));   // REFIT-ORES: a steel ingot counted for Steel and Iron both
+      if (!materialsFor(lists, row.next.mats)) return said(false, t('naval.refit.short', 'Not enough materials. One item cannot count for two requirements.'));   // REFIT-ORES: a steel ingot counted for Steel and Iron both
       takeAllMaterials(lists, row.next.mats);   // AUDIT 2: as materialsFor tried them
       deps.pay?.(row.next.gold);
       addRefit(uid, row.id);

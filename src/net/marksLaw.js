@@ -68,6 +68,12 @@ export const MARK_WORTH_GOLD = 10;
  *               Redoubt of the Elite Breach taken - its `w` receipt the relay signed at the lord's fall and the service
  *               counted - EG_PAY_MARKS (20, net/eliteGates/egPay.js), once an account a Redoubt an arena week (the week's pay), under
  *               the COMBAT cap.
+ *   star      - STAR7 (2026-10-20; bible/11-Multiplayer/Starfall.md section 6): a fallen star held - its `j1` receipt the relay
+ *               signed at its master's fall and the service counted once a (star, account): 30, a raid's worth (a fight
+ *               about as long), under the COMBAT cap.
+ *   craftWrit - CRAFT-WRITS (2026-10-22; bible/06-Systems/Professions-Arc.md section 49): a crafting writ filled - goods the
+ *               service saw made (a character's own brews, its own crafted pieces) taken out of its realm record: the
+ *               writ's own pay (craftWritLaw.js, at most CRAFT_WRIT_PAY_MAX), 3 an account a UTC day, beside the Court's.
  */
 export const MARKS_FAUCETS = Object.freeze({
   gate: Object.freeze({ amount: 50 }),
@@ -79,6 +85,8 @@ export const MARKS_FAUCETS = Object.freeze({
   gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),
   find: Object.freeze({ chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }), amount: Object.freeze([1, 4]), perDay: 20 }),
   eg: Object.freeze({ amount: EG_PAY_MARKS }),   // EG-E1: a Redoubt the week pays (server-account/src/egEconomy.js)
+  star: Object.freeze({ amount: 30 }),   // STAR7: a fallen star held (server-account/src/stars.js)
+  craftWrit: Object.freeze({ perDay: 3 }),   // CRAFT-WRITS: the pay is each writ's own (craftWritLaw.js craftWritOf)
 });
 /**
  * SILVER-WAYS: THE DAY'S COMBAT CAP - what the gates and the raids strike an account together, a UTC day. The gate was
@@ -86,9 +94,10 @@ export const MARKS_FAUCETS = Object.freeze({
  * little (150 = three gates, or five raids, or two gates and a raid and part of another). The strike that meets the cap
  * pays what the day has left of it (`combatStrike`), never nothing for a few silver short. SERPENT-SET: a serpent slain
  * strikes under the same cap - a sailor reaches the day's silver at sea too, and the ceiling does not rise. EG-E1: and a
- * Redoubt of the Elite Breach taken (`eg`) - the Spire's fighter reaches it there, and the ceiling still does not rise.
+ * Redoubt of the Elite Breach taken (`eg`) - the Spire's fighter reaches it there, and the ceiling still does not rise. STAR7:
+ * and a fallen star held (`star`), under the same ceiling.
  */
-export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 });
+export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 });
 /** What a combat faucet's `amount` strikes when `earned` is the day's combat silver so far: the amount, or the day's last. */
 export const combatStrike = (amount, earned) => Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)));
 /** The Bank of the Empire's exchange: Marks for gold, never the other way. */
@@ -163,7 +172,9 @@ export const MARKS_KINDS = Object.freeze({
   patron: 'burn',             // CHAP7a: the winning bid, burnt at the Turning that opens its Season (Chapters-Arc 8, CALL 6)
   'patron-return': 'move',    // CHAP7a: a losing bid, home to its guild at that Turning - burnt where the guild is gone or full
   eg: 'mint',                 // EG-E1: a Redoubt of the Elite Breach taken - the relay's receipt, counted once a week (under the day's combat cap)
+  star: 'mint',               // STAR7: a fallen star's receipt, counted (bible/11-Multiplayer/Starfall.md section 6)
   firmament: 'burn',          // FIRM1: the Firmament's refunds - silver a star taken back, at Renown 10 and past (firmamentLaw.js refundSilver)
+  'craft-writ': 'mint',       // CRAFT-WRITS: a crafting writ filled - goods the service saw made, out of the realm record (server-account/src/craftWrits.js)
 });
 
 /** The switch the service's config holds (MARKS_OPEN): off, dev (the developers alone), on. */

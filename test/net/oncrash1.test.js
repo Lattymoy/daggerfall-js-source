@@ -19,7 +19,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { OnlineSession, THREW_SAY_MS, lerpPose } from '../../src/net/online.js';
 import { PeerBodies, peerCamera } from '../../src/net/peer/peerBodies.js';
 import { withinYaw, turnTowards } from '../../src/characters/enemy/enemyMotor.js';
-import { validPose, validFoeRecord, validSharedFoe, SHARED_EFFECTS_MAX, RELAY_VERSION } from '../../src/net/wire.js';
+import { validPose, validFoeRecord, validSharedFoe, SHARED_EFFECTS_MAX, RELAY_VERSION, FOE_TYPE_MAX } from '../../src/net/wire.js';
 import { wrapAngle } from '../../src/world/mat4.js';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 
@@ -138,7 +138,7 @@ test('ONCRASH1: the throw is SAID - the FULL text on the console once per distin
   // the HUD line: the player reporting "it crashed" has the KIND and the TEXT - the text is the whole point, and
   // dropping it from the line passed the first cut's pin
   const line = s.statusLine();
-  assert.match(line, /a 'act' frame from another player was dropped/);
+  assert.match(line, /a 'act' message from another player was dropped/);
   assert.match(line, /Error: door/, 'the error itself is on the line, not just that one happened');
   assert.match(s.statusLine('chat'), /^chat: /, 'the label is the session\'s own');
 });
@@ -324,7 +324,8 @@ test('ONCRASH1 A3: validSharedFoe IS the memory\'s door - every field by its own
     assert.equal(validSharedFoe({ [k]: 'x' }), null, `${k} not a number`);
     assert.equal(validSharedFoe({ [k]: 5 })[k], 5, `${k} ordinary`);
   }
-  assert.equal(validSharedFoe({ mobileType: 900 }), null);
+  assert.equal(validSharedFoe({ mobileType: FOE_TYPE_MAX + 1 }), null);
+  assert.equal(validSharedFoe({ mobileType: 900 })?.mobileType, 900, 'DEX1: a mod\'s kind is a kind (MobileTypes\' u16)');
   assert.equal(validSharedFoe({ mobileType: 1.5 }), null);
   assert.equal(validSharedFoe({ gender: 'x'.repeat(40) }), null);
   // THE VOCABULARY: what sharedWorld deletes, this does not admit (AUDIT WORLD4 D3's law)

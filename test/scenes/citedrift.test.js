@@ -8,7 +8,7 @@
 //
 //   - `ui/spell/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:934)". Section A carried no widget row at all -
+//     (Port-Ledger.md:949)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -748,7 +748,7 @@ const SOURCE_CITES = [
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `dungeon\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/, EX, /^ {6}fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?,/],   // CLIMB4: the climb's kick on the lens
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `dungeon\.js:"([^"]+)"(?:\.\."([^"]+)")?`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?, largeHudWorldAspect/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `interior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js/, WM, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ \(host\.climbFeel\?\.fovRad\(\) \?\? 0\))?, largeHudWorldAspect/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `interior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js/, WO, /^ {4}const proj = mirrorProjectionX\(perspective\((glassFov\()?fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?(, spyglass\.lens\))?, worldAspect/],   // SPYGLASS (PIN MOVED): the captain's glass narrows that lens while it is up
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `interior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js/, WO, /^ {4}const proj = horizonProj\((glassFov\()?fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?(, spyglass\.lens\))?, worldAspect/],   // SPYGLASS (PIN MOVED): the captain's glass narrows that lens while it is up; PIN MOVED (OW-HORIZON, 2026-10-20): the lens through scenes/travelHorizon.js horizonProj - mat4's mirrored perspective, its planes grown under the travel view
   ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `interior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js/, 'src/scenes/interior.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],   // AUDIT RETRO1 A8: the hosts' one denominator here too
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the

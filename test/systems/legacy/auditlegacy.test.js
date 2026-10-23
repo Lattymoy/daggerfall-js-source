@@ -242,7 +242,7 @@ test('AUDIT LEGACY B6: a switch and a retirement never go on without their save'
   const w = world({ model: MODELS.enduring });
   const sib = addChild(w.host.family, 1, { rng: familyRng(2) }).person;
   w.saveOk = false;
-  assert.deepEqual(w.host.switchTo(sib.id), { ok: false, why: 'Your journey could not be saved here - not now.' });
+  assert.deepEqual(w.host.switchTo(sib.id), { ok: false, why: 'Your game could not be saved here right now.' });
   assert.equal(w.host.family.currentId, 1);
   w.host.current().toll = 100;
   assert.equal(w.host.passMantle().ok, false);

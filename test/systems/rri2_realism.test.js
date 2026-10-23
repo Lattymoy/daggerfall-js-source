@@ -24,7 +24,8 @@ import { dfuItemRepairCost as calculateItemRepairCost } from '../../src/systems/
 import { weaponMinDamage, weaponMaxDamage, WEAPONS, WEAPON_MATERIALS } from '../../src/characters/weapons.js';
 import { getMeleeWeaponAnimTime, CLASSIC_FRAME_UPDATE, swingFrameSeconds, swingHandling, swingHeft } from '../../src/characters/weaponStates.js';
 import { installSwingLaw } from '../../src/combat/swingLaw.js';
-import { assignEnemyStartingEquipment, equipmentItems } from '../../src/combat/enemyEquipment.js';
+import { assignEnemyStartingEquipment, equipmentItems, rollEnemyEquipment } from '../../src/combat/enemyEquipment.js';
+import { equipEnemy } from '../../src/scenes/hostCombat.js';
 import { assignRriEnemyEquipment, convertOrcish, getArmorTemplateIndex, RRI_ITEM } from '../../src/combat/rriEnemyEquipment.js';
 import { onShopShelfStocked, assignSkillEquipment, assignSkillSpellbook, RRI_SPELLS, useBandage, KIT } from '../../src/systems/roleplayRealismItems/rriKits.js';
 import { assignStartingEquipment, STARTING_GOLD } from '../../src/systems/startingGear.js';
@@ -45,6 +46,7 @@ const on = (key, v = true) => setModSetting(V, key, v);
 const reset = () => { _resetModSettings(); };
 const mint = (item) => mintCondition(setItemFields(item));
 const seq = (...vals) => { let i = 0; return () => vals[Math.min(i++, vals.length - 1)]; };
+const counted = (r) => { const f = () => { f.calls++; return r(); }; f.calls = 0; return f; };
 
 installRoleplayRealismModules();
 
@@ -231,7 +233,7 @@ test('RRI2 weaponBalance: the two damage overrides (:312-379) answer ahead of DF
 });
 
 // ---- realisticEnemyEquipment ------------------------------------------------
-test('RRI2 realisticEnemyEquipment: a class is kitted by its class (:523-681) at 30-75% condition, the custom pieces under newArmor (:727-757); a monster keeps ItemHelper\'s arm then ConvertOrcish (:683-705); off, DFU\'s roll', () => {
+test('RRI2 realisticEnemyEquipment: a class is kitted by its class (:523-681) at 30-75% condition, the custom pieces under newArmor (:735-757); a monster keeps ItemHelper\'s arm then ConvertOrcish (:683-719); off, DFU\'s roll', () => {
   reset();
   const player = { level: 5, gender: 'male', race: 'Breton' };
   const mage = { mobileType: MOBILE_TYPES.Mage, isClass: true, level: 5, careerIndex: 0, basics: { team: 'KnightsAndMages' } };
@@ -290,6 +292,65 @@ test('RRI2 realisticEnemyEquipment: the armor ladder, the archer\'s quiver, the 
   d = assignEnemyStartingEquipment(mage, 0, 5, { player, rolls: () => 0 });
   assert.ok(Array.isArray(d.items) && d.items.length > 0, 'on: the mod\'s list');
   assert.equal(equipmentItems(d), d.items, 'equipmentItems hands the minted list over as it is');
+});
+
+test('RRI2 realisticEnemyEquipment, AUDIT DEX E2: every piece the kit puts on goes through EquipItem\'s hand rules (ItemEquipTable.cs:94-154) - a shield after a Barbarian\'s big weapon takes it off the right hand (:125-132), and the foe fights bare-handed and rolls no poison; the left-hand weapon is carried (:573)', () => {
+  // PIN ADDED (AUDIT DEX E2): the arm filled the hands in order and took nothing off, so this Barbarian swung the
+  // Claymore beside its Buckler; DFU's table leaves the right hand empty. RRI's own behaviour, corrected - not DEX's.
+  reset();
+  const player = { level: 5, gender: 'male', race: 'Breton' };
+  const barb = () => ({ mobileType: MOBILE_TYPES.Barbarian, isClass: true, level: 5, careerIndex: 15, items: [] });
+  // rolls at 0: RandomBigWeapon the Claymore, the shield's Dice100 lands, RandomShield the Buckler
+  const arm = counted(() => 0);
+  const eq = assignRriEnemyEquipment(barb(), 0, 5, { player, rolls: arm });
+  assert.equal(eq.rightHand, null, 'the Buckler (LeftOnly) took the two-handed Claymore off');
+  assert.equal(eq.leftHand?.templateIndex, 109, 'the Buckler in the left hand');
+  const claymore = eq.items.find((it) => it.templateIndex === WEAPONS.Claymore);
+  assert.ok(claymore && !eq.worn.includes(claymore), 'the Claymore stays in Items (the corpse\'s), not worn');
+  assert.ok(eq.armorPieces.some((a) => a.shield && a.piece === 109), 'the shield is worn');
+  // through the spawn: no weapon, the table as EquipItem left it, and no poison drawn (`mainWeapon != null`, :667-668) -
+  // the variant's Range(0, 2), the arm's draws and the humanoid cut's one per piece, and nothing else
+  const foe = barb();
+  const spawn = counted(() => 0);
+  equipEnemy(foe, MOBILE_TYPES.Barbarian, 5, spawn, { player });
+  assert.equal(foe.weapon, null, 'bare-handed');
+  const slots = equipTableOf(foe);
+  assert.equal(slots[EQUIP_SLOTS.RightHand], null);
+  assert.equal(slots[EQUIP_SLOTS.LeftHand]?.templateIndex, 109);
+  assert.equal(spawn.calls, 1 + arm.calls + eq.items.length, 'no poison draw for an empty right hand');
+  // a Knight (the coin blunt, the Mace): the shield's Dice100 at 60 fails, the left-hand weapon's at 0 lands - a Dagger, carried
+  const knight = assignRriEnemyEquipment({ mobileType: MOBILE_TYPES.Knight, isClass: true, level: 5, careerIndex: 16 }, 0, 5, { player, rolls: seq(0, 0, 0, 0, 0.6, 0, 0, 0, 0, 0) });
+  assert.equal(knight.rightHand.templateIndex, WEAPONS.Mace);
+  assert.equal(knight.leftHand, null, 'RRI\'s AddOrEquipWornItem with no `equip`: the left hand stays empty');
+  const dagger = knight.items.find((it) => it.templateIndex === WEAPONS.Dagger);
+  assert.ok(dagger && !knight.worn.includes(dagger), 'the Dagger carried');
+  reset();
+});
+
+test('RRI2 realisticEnemyEquipment, AUDIT DEX E3: a monster\'s poison is ItemHelper\'s, rolled inside its arm (ItemHelper.cs:1460-1474) before the mod\'s ConvertOrcish (:528-529) - and once', () => {
+  // PIN ADDED (AUDIT DEX E3): the port drew ConvertOrcish's Dice100(80) in the arm and the poison after it, in equipEnemy
+  reset();
+  const player = { level: 5, gender: 'male', race: 'Breton' };
+  const orc = () => ({ mobileType: MOBILE_TYPES.Orc, isClass: false, level: 5, careerIndex: 7, basics: { team: 'Orcs' }, items: [] });
+  const n = counted(() => 0.99);   // ItemHelper's own draws at 0.99, every Dice100 failing
+  rollEnemyEquipment(orc(), 0, 5, n);
+  const stream = (...next) => counted(seq(...Array(n.calls).fill(0.99), ...next, 0.99));
+  // the draw after ItemHelper's is the poison's Dice100(5), the next its Range(128, 136), then ConvertOrcish's
+  let o = orc();
+  equipEnemy(o, MOBILE_TYPES.Orc, 5, stream(0.03, 0.9), { player });
+  assert.equal(o.weapon.poisonType, 135, 'Dice100 at 3 lands, Range(128, 136) at 0.9 is 135');
+  o = orc();
+  const mod = stream(0.9, 0.03);
+  equipEnemy(o, MOBILE_TYPES.Orc, 5, mod, { player });
+  assert.equal(o.weapon.poisonType, undefined, 'Dice100 at 90 fails; the 3 is ConvertOrcish\'s');
+  // ItemHelper's own arm (the module off) on the same draws: the same poison, one draw fewer - ConvertOrcish's
+  on('realisticEnemyEquipment', false);
+  o = orc();
+  const own = stream(0.9, 0.03);
+  equipEnemy(o, MOBILE_TYPES.Orc, 5, own, { player });
+  assert.equal(o.weapon.poisonType, undefined);
+  assert.equal(mod.calls, own.calls + 1, 'the poison drawn once - in the arm, not again at the spawn');
+  reset();
 });
 
 test('RRI2 ConvertOrcish: an Orc\'s ebony-and-up (a Warlord\'s mithril-and-up) is Orcish four times in five - weight, value and condition the template\'s under the new material', () => {
@@ -424,7 +485,7 @@ test('RRI2 wiring: the install registers the six delegates; the read-through sit
   assert.match(rd('src/systems/useItem.js'), /const handler = itemUseHandler\(item\.templateIndex\);\n  if \(handler\) \{\n    const handled = handler\(item, collection, \{ entity, rolls, nowMinute, localItems: bag, target, chooseTarget \}\);[^\n]*\n    if \(handled\) return questItem \? \{ \.\.\.handled, questItem: true \} : handled;\n  \}\n\n  let out = null;/, 'the delegate arm, then the ladder');
   assert.match(rd('src/systems/inventory.js'), /if \(isRriStackable\(item\)\) return true;/);
   assert.match(rd('src/systems/shopStock.js'), /let cost = conditionBasedPricesOn\(\) \? conditionCostBase\(baseValue, conditionPercentage\) : baseValue;/);
-  assert.match(rd('src/systems/tradeModes.js'), /calculateCost\(counterValueOf\(item\), quality, priceAdjustment, saleConditionPercentage\(item, \{ online \}\)\) \* stack;/, 'the Sell arm passes ConditionPercentage (:462) - offline as it is, online no higher than the find (SELL-AS-FOUND, test/systems/sell_as_found.test.js)');   // PIN MOVED (CRAFT-WORTH): the value the counter pays on (tradeModes.js counterValueOf)
+  assert.match(rd('src/systems/tradeModes.js'), /calculateCost\(counterValueOf\(item\), quality, priceAdjustment, saleConditionPercentage\(item, \{ online \}\)\) \* stack;/, 'the Sell arm passes ConditionPercentage (:462) - offline as it is, online the find and a third of its owner\'s own mends past it (SELL-AS-FOUND, MEND-THIRD - test/systems/sell_as_found.test.js, mend_third.test.js)');   // PIN MOVED (CRAFT-WORTH): the value the counter pays on (tradeModes.js counterValueOf)
   assert.match(rd('src/systems/repairService.js'), /conditionBasedPricesOn\(\) \? conditionRepairCostBase\(baseItemValue, condition, max, instantRepairs\) : Math\.trunc\(10 \* baseItemValue \/ 100\)/);
   assert.match(rd('src/systems/chargenSession.js'), /assignStartingSpells\(setIndex, spellsByIndex, result\.career\)/);
   assert.match(rd('src/systems/chargenSession.js'), /assignStartingEquipment\(playerEntity, \{ classIndex: result\.careerIndex/);

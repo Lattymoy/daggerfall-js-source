@@ -5,7 +5,7 @@
 //   THE TRACKER (a readout, no click): outside the Spire the call; inside, THE COUNT CHIP (gold above 10:00, white to
 //     2:00, red below and pulsing in the last 30 s; *Held* while it holds; the last word's seal when it is nearer), the
 //     circle and hall by name with its band, the objective and its progress (rifts 3 of 5, the hold's seconds, the winch,
-//     the casters left), the decrees in force, my run (Reliquaries, lumen, shards, tonics, Cantrips, THE POTION LAW's
+//     the Gauntlet's plates left), the decrees in force, my run (Reliquaries, lumen, shards, tonics, Cantrips, THE POTION LAW's
 //     pip), the marks on me, the company's rows (numerals, a cracked recall, a witness's eye, home, forsaken), a
 //     witness's own line;
 //   THE PANEL (clicked, or answered by keys and `/breach` words): the Vestige offer (each card its name, rank and line;
@@ -28,7 +28,8 @@
 import { egHallOf, egCircleOfHall, egSlotOfHall, egPhase, egTimes, egCountText, egObjectiveOf, EG_TEXT, EG_COUNT_START_MS, EG_LAST_WORD_MS, EG_BANDS, EG_DECREES, EG_TWIST_NAMES } from '../../net/eliteGates/egLaw.js';
 import { EG_OPEN_ENDS } from '../../net/eliteGates/egLaw.js';   // AUDIT EG III (section 16.3): the ends that open the Reliquaries
 import { egBossOf, egLordCard } from '../../net/eliteGates/egLaw.js';   // AUDIT EG V (L2-11): the next Court's lord, the law's
-import { egStrataSecond } from '../../net/eliteGates/egBrain.js';   // AUDIT EG V (L2-11): and the second lord its strata stand beside it
+import { egStrataSecond, EG_RESPITE_STEP_MS } from '../../net/eliteGates/egBrain.js';   // AUDIT EG V (L2-11): and the second lord its strata stand beside it
+import { EG_SILENCE_MS } from '../../net/eliteGates/egBrain.js';   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: how long a Gauntlet's plate is held
 import { egPanoplyIn, egValkRedoubt } from '../../net/eliteGates/egPay.js';   // AUDIT EG III: the rest's stake line - a Reliquary's Panoply odds
 import { EG_RELIQUARY_PANOPLY_X } from '../../systems/eliteGates/egSpoils.js';
 import { egCountAt, egLivingCount, egMemberOf, egRunOfMember } from '../../net/eliteGates/egLink.js';
@@ -37,7 +38,9 @@ import { egCardAccords } from '../../net/eliteGates/egVestige.js';   // EG-ZS (s
 import { egResonance, egRankOf, EG_ACCORDS, EG_CAPSTONES, EG_V_FAMILY_NAMES } from '../../net/eliteGates/egVestige.js';   // AUDIT EG III: the capstone a card completes, what an Accord does
 import { EG_CANTRIPS } from '../../net/eliteGates/egRun.js';
 import { egTwistShown } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (L2-4): no Bargain's name when no family is free
-import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';
+import { FRAME_TONES } from '../enhanced/enhancedFrame.js';   // EG-PLUS: the kit's brass for the tracker's head
+import { PIXEL_FONT_CSS } from '../pixelifyFive.js';   // EG-PLUS: the game's face
+import { dressEgKit, egEl, egHead, egSection } from './egKit.js';   // EG-PLUS: the breach windows' chrome and the kit's classic copy
 import { chartShare, chartNumber } from '../gate/gateDamageChart.js';   // EG-ZF: the share and the numbers as the gate's chart says them
 import { EG_PRES_TEXT } from './egBeats.js';   // EG-ZF: the board's line and the chart's words
 import { t } from '../../systems/textManager.js';   // AUDIT EG V (c): the words this audit adds, in the player's language
@@ -51,44 +54,49 @@ export const EG_MARK_NAMES = Object.freeze(['The Scent', 'Soul-mark', 'Fire-touc
 /** THE POTION LAW (section 17.4): restoring potions a hall. */
 export const EG_POTIONS_PER_HALL = 2;
 export const EG_HUD_STYLE_ID = 'dagger-eg-hud-style';
+/** EG-PLUS (ui/eliteGates/egKit.js): the call's tracker is a plate over the world (the kit's `panel` - `body .eg-hud`) and
+ *  the panel a breach window (`.eg-win`, the chrome's); this sheet writes their geometry and words, the kit their paint. */
 export const EG_HUD_CSS = `
 .eg-hud { position: fixed; right: 16px; top: 24%; width: min(320px, 72vw); box-sizing: border-box; pointer-events: none; z-index: 30;
-  padding: 10px 14px 11px; border: 1px solid rgba(214,170,92,0.55); border-radius: 3px;
-  background: linear-gradient(180deg, rgba(18,12,10,0.82), rgba(10,7,6,0.72)); box-shadow: 0 0 18px rgba(0,0,0,0.65);
-  font: 600 calc(14px * var(--hud-scale, 1)) 'Cormorant', Georgia, serif; color: #f1dcc2; text-shadow: 0 0 3px #000; }
-.eg-hud-kicker { font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase; color: #d6aa5c; }
-.eg-hud-title { font-size: 18px; line-height: 1.15; margin-top: 2px; color: #ffe9cf; }
-.eg-hud-count { font: 700 26px 'Cormorant', Georgia, serif; font-variant-numeric: tabular-nums; letter-spacing: 0.06em; margin-top: 4px; color: #ffffff; }
+  padding: 9px 12px 10px; border-width: 2px; border-style: solid; ${PIXEL_FONT_CSS} font-size: calc(14px * var(--hud-scale, 1)); line-height: 1.35;
+  color: #efe8d6; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); --egk-dim: #b9ab93; }
+.eg-hud-kicker { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: ${FRAME_TONES.brassHi}; }
+.eg-hud-title { font-size: 16px; line-height: 1.25; margin-top: 3px; color: #fff2cc; }
+.eg-hud-count { font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: 0.06em; margin-top: 4px; color: #ffffff; }
 .eg-hud-count.gold { color: #e8c473; }
 .eg-hud-count.held { color: #e8c473; }
-.eg-hud-count.low { color: #ff6a4a; text-shadow: 0 0 4px #000, 0 0 12px rgba(255,60,30,0.6); }
-.eg-hud-count.pulse { color: #ff4a2a; animation: eg-pulse 1s ease-in-out infinite; }
+.eg-hud-count.low { color: #ff6a4a; }
+.eg-hud-count.pulse { color: #ff4a2a; animation: eg-pulse 1s steps(2, jump-none) infinite; }
 @keyframes eg-pulse { 50% { opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) { .eg-hud-count.pulse { animation: none; } }
 .eg-hud-count:empty { display: none; }
-.eg-hud-line { font-size: 15px; line-height: 1.25; margin-top: 5px; }
-.eg-hud-sub, .eg-hud-run, .eg-hud-dec, .eg-hud-mark { font-size: 13px; line-height: 1.25; margin-top: 3px; color: #cdb79e; }
+.eg-hud-line { font-size: 15px; line-height: 1.35; margin-top: 6px; }
+.eg-hud-sub, .eg-hud-run, .eg-hud-dec, .eg-hud-mark { font-size: 13px; line-height: 1.35; margin-top: 3px; color: var(--egk-dim); }
 .eg-hud-mark { color: #ff8a6a; }
 .eg-hud-sub:empty, .eg-hud-company:empty, .eg-hud-run:empty, .eg-hud-dec:empty, .eg-hud-mark:empty { display: none; }
-.eg-hud-company { font-size: 12px; letter-spacing: 0.06em; margin-top: 7px; color: #b9a084; white-space: pre-line; }
-.eg-panel { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); width: min(620px, 92vw); box-sizing: border-box; z-index: 32; pointer-events: auto;
-  padding: 14px 16px; border: 1px solid rgba(214,170,92,0.7); border-radius: 4px; background: rgba(14,10,8,0.92); box-shadow: 0 0 28px rgba(0,0,0,0.8);
-  font: 600 15px 'Cormorant', Georgia, serif; color: #f1dcc2; }
-.eg-panel h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; color: #d6aa5c; font-weight: 700; }
-.eg-panel .eg-cards { display: flex; flex-wrap: wrap; gap: 8px; }
-.eg-panel button { flex: 1 1 170px; text-align: left; cursor: pointer; padding: 8px 10px; border: 1px solid rgba(214,170,92,0.45); border-radius: 3px;
-  background: rgba(40,28,20,0.85); color: #f1dcc2; font: inherit; }
-.eg-panel button:hover, .eg-panel button:focus { border-color: #e8c473; background: rgba(70,50,30,0.95); outline: none; }
-.eg-panel button.eg-focus { border-color: #6f9dff; box-shadow: 0 0 0 1px #6f9dff; }
-.eg-panel button b { display: block; color: #ffe9cf; }
-.eg-panel button small { display: block; color: #cdb79e; font-size: 13px; margin-top: 2px; }
-.eg-panel button small.eg-accord { color: #8fb4ff; font-style: italic; }
-.eg-panel button small.eg-cap { color: #8fb4ff; }
-.eg-panel .eg-ask { margin-top: 10px; }
-.eg-panel .eg-note { margin-top: 8px; font-size: 13px; color: #b9a084; }
-@media (max-width: 640px) { .eg-hud { top: 16%; right: 8px; padding: 7px 10px 8px; } .eg-hud-title { font-size: 15px; } .eg-hud-count { font-size: 21px; } .eg-hud-line { font-size: 13px; } .eg-panel { top: 8%; } }
+.eg-hud-company { font-size: 12px; letter-spacing: 0.04em; margin-top: 7px; color: var(--egk-dim); white-space: pre-line; }
+.eg-panel { left: 50%; top: 14%; transform: translateX(-50%); width: min(640px, calc(100vw - 24px)); max-height: calc(100vh - 14% - 18px); }
+.eg-panel .eg-k-line.eg-rel { color: var(--egk-blue); }
+.eg-panel .eg-k-tile .eg-k-tline.eg-cap, .eg-panel .eg-k-tile .eg-k-tline.eg-accord { color: var(--egk-blue); }
+.eg-panel .eg-k-acts.eg-votes .eg-k-btn { flex: 1 1 120px; }
+@media (max-width: 640px) { .eg-hud { top: 16%; right: 8px; padding: 7px 10px 8px; } .eg-hud-title { font-size: 15px; } .eg-hud-count { font-size: 18px; } .eg-hud-line { font-size: 14px; } .eg-panel { top: 6%; max-height: calc(100vh - 6% - 12px); } }
 `;
-
+/** EG-PLUS: the panel's own words - its head by what it shows, its sections and its foot. */
+export const EG_PANEL_TEXT = Object.freeze({
+  get offer() { return t('eg.panel.offer', 'Choose a Vestige'); },
+  offerMany: (n) => t('eg.panel.offerMany', 'Choose {n} Vestiges', { n }),
+  get word() { return t('eg.panel.word', 'The company decides'); },
+  get keys() { return t('eg.panel.keys', 'Keys'); },
+  surplus: (n) => t('eg.panel.surplus', 'Surplus {n}', { n }),
+  surplusCard: (n) => t('eg.panel.surplusCard', 'Spend a Surplus: a fourth card ({n} left)', { n }),
+  get surplusReroll() { return t('eg.panel.surplusReroll', 'Spend a Surplus: draw new cards'); },
+  get majority() { return t('eg.panel.majority', 'The majority of those who answer decides.'); },
+  get circles() { return t('eg.panel.circles', 'Circles'); },
+  get company() { return t('eg.panel.company', 'Company'); },
+  get vestiges() { return t('eg.panel.vestiges', 'Vestiges'); },
+  get noteKeys() { return t('eg.panel.noteKeys', '1-6 to choose, Y for Ready, R for a respite'); },
+  get noteRecap() { return t('eg.panel.noteRecap', 'Press Enter to close.'); },
+});
 const ms = (v) => egCountText(Math.max(0, v));
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 const FAMILY = Object.freeze({ blows: 'blows', legion: 'legion', ground: 'ground', covenant: 'Covenant', lord: 'lord' });
@@ -99,12 +107,17 @@ export function egProgressText(spec, pg) {
   if (pg.obj === 'wellspring') return pg.anchors > 0 ? `Anchors standing: ${pg.anchors}` : 'The Wellspring is open to blows';
   if (pg.obj === 'holdfast') return `Hold ${ms(75_000 - (pg.hold ?? 0))} - the relic ${pg.relic ?? 100}%`;
   if (pg.obj === 'winch') return `The winch ${Math.round(((pg.winch ?? 0) / 60_000) * 100)}%`;
-  if (pg.obj === 'gauntlet') return `Casters left: ${pg.left ?? 0}`;
+  if (pg.obj === 'gauntlet') return t('eg.progress.gauntlet', 'Casters left: {n}. Hold a plate {s} s or slay its caster', { n: pg.left ?? 0, s: EG_SILENCE_MS / 1000 });   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the two ways a Caster is silenced named - its plate held, or its death (GAUNTLET-SLAIN)
   if (pg.obj === 'engine') return `Hold the engine ${ms(45_000 - (pg.hold ?? 0))}`;
   if (pg.obj === 'orrery' && Array.isArray(pg.st)) return `Stones true: ${pg.lit ?? 0} of 6 - fray ${pg.f ?? 0}`;
   if (pg.obj === 'quiet') return `The door opens in ${ms(pg.quiet ?? 0)}`;
   return '';
 }
+/** FIELD BUGS 2026-10-19f GAUNTLET-PLATES: a hall's objective as the screen says it (this tracker's line, ui/eliteGates/egSpireHud.js's
+ *  chip and arrival card) - the Gauntlet's naming its plates, in the player's language, in place of the law's "Silence the
+ *  casters." (net/eliteGates/egLaw.js EG_OBJECTIVES - a hall's bytes, kept as laid: section 22's law pin); every other hall's
+ *  the law's words as they stand. */
+export const egObjectiveText = (spec) => (spec?.variant === 'gauntlet' ? t('eg.objective.gauntlet', "Silence each caster: stand on its plate, or slay it.") : egObjectiveOf(spec));
 /** A stage's words, by the hall's kind where it matters. */
 function stageLines(E, spec, now) {
   const left = E.su > 0 ? E.su - now : 0;
@@ -112,7 +125,7 @@ function stageLines(E, spec, now) {
     case 'wait': return { line: EG_TEXT.sealed(ms(left)), sub: 'Gather your company.' };
     case 'arrive': return { line: 'Gather on the arrival plate.', sub: left > 0 ? `The hall wakes in ${ms(left)}.` : '' };
     case 'trial': {
-      const obj = egObjectiveOf(spec), prog = egProgressText(spec, E.fight?.pg);
+      const obj = egObjectiveText(spec), prog = egProgressText(spec, E.fight?.pg);
       const lordAsleep = spec?.kind === 'court' && !(E.fight?.bodies ?? []).some((b) => b.role === 0 && b.ph);
       return { line: obj, sub: prog || (spec?.kind === 'court' && lordAsleep && !(E.fight?.says ?? []).some((s) => s.w === 'wake') ? 'Step into the ring to wake its lord.' : egTwistShown(spec, E.dc) ? EG_TWIST_NAMES[spec.twist] : '') };
     }
@@ -175,7 +188,11 @@ export function egHudModel(E, me, now, { inSpire = false, witness = false, potio
     const left = E.wk > 0 ? egCountAt(E, now) : EG_COUNT_START_MS;
     const lastWord = E.op + EG_LAST_WORD_MS - now;
     const { line, sub } = stageLines(E, spec, now);
-    const n = E.co.length, standing = egLivingCount(E);
+    // FIELD BUGS 2026-10-20d (AUDIT FB1020d L1-3): THE COMPANY THE TRACKER COUNTS - the whole called company until the breach's first
+    // wake, its entrants after it, when the door is closed to the rest (net/eliteGates/egLaw.js egAdmits): as the gather counts it
+    // (net/eliteGates/egLink.js egGatherOf), and as the herald and the Descent do. A member called who never came is no company
+    const co = E.wk > 0 ? E.co.filter((c) => c[5] === 1) : E.co;
+    const n = co.length, standing = egLivingCount(E);
     const held = !(E.ca > 0);
     const seal = lastWord < left;
     const shown = seal ? lastWord : left;
@@ -192,7 +209,7 @@ export function egHudModel(E, me, now, { inSpire = false, witness = false, potio
       kicker: `${E.rh ? `${EG_TEXT.name} - Rehearsal` : EG_TEXT.name}${spec ? ` - ${EG_BANDS[spec.band]?.name ?? ''}` : ''}`,
       title: spec ? `Circle ${egCircleOfHall(E.h)} - Hall ${egSlotOfHall(E.h)}: ${spec.name}` : 'The Battlespire',
       count: E.sg === 'end' ? '' : `${held ? 'Held ' : ''}${seal ? 'Last word ' : ''}${ms(shown)}`, countCls,
-      line: witLine || line, sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub, company: n > 1 ? `${standing} of ${n} standing\n${egCompanyRows(E)}` : '',
+      line: witLine || line, sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub, company: n > 1 ? `${standing} of ${n} standing\n${egCompanyRows({ ...E, co })}` : '',
       run: runLine, dec: E.sg === 'rest' ? egNextCircleText(E) : dec.length ? `Decrees: ${dec.join(', ')}` : '', mark: marks.join(' - '),   // AUDIT EG V (L2-11): a rest's beacon
     };
   }
@@ -211,13 +228,14 @@ export function egHudModel(E, me, now, { inSpire = false, witness = false, potio
   };
 }
 
-/** A choice's words (the company's word - section 16.4). */
+/** A choice's words (the company's word - section 16.4): its title, a line under it where the title alone would not say
+ *  what a yes does, and its options - EG-PLUS: a decree's options its names, with what each does in `lines`. */
 export function egAskText(q, o) {
-  if (q.startsWith('dec:')) { const fam = q.slice(4); return { title: `The next circle's ${FAMILY[fam] ?? fam} decree`, opts: o.map((id) => `${EG_DECREES[id]?.name ?? '?'} - ${EG_DECREES[id]?.line ?? ''}`) }; }
-  if (q === 'bargain') return { title: "Dagon's Bargain: one more decree for this circle, a Reliquary to each who says yes", opts: ['No', 'Yes'] };
-  if (q === 'respite') return { title: 'Take a respite? Two minutes from the budget, the count held', opts: ['No', 'Yes'] };
-  if (q === 'ready') return { title: 'Ready to descend?', opts: ['Not yet', 'Ready'] };
-  return { title: q, opts: o.map(String) };
+  if (q.startsWith('dec:')) { const fam = q.slice(4); return { title: `The next circle's ${FAMILY[fam] ?? fam} decree`, line: '', opts: o.map((id) => EG_DECREES[id]?.name ?? '?'), lines: o.map((id) => EG_DECREES[id]?.line ?? '') }; }
+  if (q === 'bargain') return { title: "Dagon's Bargain", line: t('eg.ask.bargain', 'One more decree this circle. Each member who says yes gains a Reliquary.'), opts: ['No', 'Yes'] };
+  if (q === 'respite') return { title: 'Take a respite?', line: t('eg.ask.respite', 'The rest runs {min} minutes longer and the count holds.', { min: Math.round(EG_RESPITE_STEP_MS / 60_000) }), opts: ['No', 'Yes'] };
+  if (q === 'ready') return { title: 'Ready to descend?', line: '', opts: ['Not yet', 'Ready'] };
+  return { title: q, line: '', opts: o.map(String) };
 }
 /**
  * AUDIT EG III (section 15's resonance: "Three different Vestiges of one family ... grant that family's capstone"): the line a
@@ -366,12 +384,12 @@ let shown = SHOWN();
 const KEYS = ['kicker', 'title', 'count', 'line', 'sub', 'run', 'dec', 'mark', 'company'];
 
 function ensureStyle(doc) {
+  dressEgKit(doc);   // EG-PLUS: the chrome, the face, and the kit's copy on the classic skin
   if (doc.getElementById && !doc.getElementById(EG_HUD_STYLE_ID)) {
     const st = doc.createElement('style');
     st.id = EG_HUD_STYLE_ID;
     st.textContent = EG_HUD_CSS;
     (doc.head ?? doc.body)?.append(st);
-    if (doc.head) injectEnhancedFonts(doc);
   }
 }
 function build(doc) {
@@ -422,70 +440,98 @@ export function drawEgPanel(model, { hidden = false, doc = globalThis.document, 
   }
   ensureStyle(doc);
   panel?.remove?.();
-  panel = doc.createElement('div');
-  panel.className = 'eg-panel';
+  // EG-PLUS: a breach window in the kit - the header band names what it shows, each part a section, a choice a tile or a
+  // press, the seconds a chip, the keys in the foot
+  panel = egEl(doc, 'div', 'eg-panel eg-win');
   panelKey = { model, recap, title: recap?.title ?? '', why: recap?.why ?? '', board: recap?.board ?? '', focus, touch };
-  const h = (text) => { const e = doc.createElement('h3'); e.textContent = text; return e; };
+  const offer = model?.offer ?? null;
+  const head = recap ? (words?.recapHead ?? EG_PRES_TEXT.recapHead) : offer ? (offer.n > 1 ? EG_PANEL_TEXT.offerMany(offer.n) : EG_PANEL_TEXT.offer) : EG_PANEL_TEXT.word;
+  panel.setAttribute?.('aria-label', head);
+  const headChips = [];
+  if (offer && !touch) headChips.push(egEl(doc, 'span', 'eg-k-chip', `${EG_PANEL_TEXT.keys} 1-${offer.cards.length}`));
+  if (offer?.surplus > 0) headChips.push(egEl(doc, 'span', 'eg-k-chip blue', EG_PANEL_TEXT.surplus(offer.surplus)));
+  panel.append(egHead(doc, head, { chips: headChips }));   // the recap's close is its own press, at its foot
+  const body = egEl(doc, 'div', 'eg-k-body');
+  const line = (text, cls = '') => egEl(doc, 'div', `eg-k-line${cls ? ` ${cls}` : ''}`, text);
+  const row = (text) => { const r = egEl(doc, 'div', 'eg-k-row'); r.append(egEl(doc, 'span', 'eg-k-who', text)); return r; };
   if (recap && words) {
-    // EG-G1 (section 27.6): THE RECAP, whole - the depth, the time and why, a strip per circle, the company member by
-    // member, the Vestiges and the Accords, the Reliquaries opening one by one, the board's line
-    panel.append(h(words.recapHead));
-    const opened = doc.createElement('div'); opened.className = 'eg-note eg-rel'; opened.setAttribute('data-rel', '1'); opened.textContent = words.recapReliquaries(relShown ?? recap.opened);
-    const lines = [words.recapDepth(recap.depth.h, recap.depth.rd, recap.depth.band), `${words.recapTime(recap.time)} - ${recap.whyText || recap.why}`, opened,
-      ...recap.strip.map((c) => `Circle ${c.c}: ${c.glyphs.join(' ')}${c.lord ? ` - ${c.lord}` : ''}${c.falls ? ` (${c.falls === 1 ? 'a fall' : `${c.falls} falls`})` : ''}`),
-      ...recap.members.map((m) => egRecapMemberLine(m, { left: words.recapLeft, recall: words.recapRecall, share: words.recapShare, healed: words.recapHealed })),
-      recap.vestiges.length ? `Vestiges: ${recap.vestiges.join(', ')}` : '', recap.capstones?.length ? `${words.recapCapstones}: ${recap.capstones.join(', ')}` : '',   // AUDIT EG III: the capstones
-      recap.accords.length ? `${words.recapAccords}: ${recap.accords.join(', ')}` : '', recap.board];
-    for (const line of lines) {
-      if (!line) continue;
-      if (typeof line !== 'string') { panel.append(line); continue; }
-      const p = doc.createElement('div'); p.className = 'eg-note'; p.style.whiteSpace = 'pre-line'; p.textContent = line; panel.append(p);
+    // EG-G1 (section 27.6): THE RECAP, whole - the depth, the time and why, the Reliquaries opening one by one and the
+    // board's line; a row per circle; the company member by member; the Vestiges, the capstones and the Accords
+    const top = egSection(doc, '');
+    const opened = line(words.recapReliquaries(relShown ?? recap.opened), 'eg-rel'); opened.setAttribute('data-rel', '1');
+    top.append(line(words.recapDepth(recap.depth.h, recap.depth.rd, recap.depth.band), 'gold'), line(`${words.recapTime(recap.time)} - ${recap.whyText || recap.why}`, 'dim'), opened);
+    if (recap.board) top.append(line(recap.board, 'gold'));
+    body.append(top);
+    if (recap.strip.length) {
+      const sec = egSection(doc, EG_PANEL_TEXT.circles);
+      for (const c of recap.strip) sec.append(row(`Circle ${c.c}: ${c.glyphs.join(' ')}${c.lord ? ` - ${c.lord}` : ''}${c.falls ? ` (${c.falls === 1 ? 'a fall' : `${c.falls} falls`})` : ''}`));
+      body.append(sec);
     }
+    const crew = egSection(doc, EG_PANEL_TEXT.company);
+    for (const m of recap.members) crew.append(row(egRecapMemberLine(m, { left: words.recapLeft, recall: words.recapRecall, share: words.recapShare, healed: words.recapHealed })));
+    body.append(crew);
+    const held = [recap.vestiges.length ? `${EG_PANEL_TEXT.vestiges}: ${recap.vestiges.join(', ')}` : '', recap.capstones?.length ? `${words.recapCapstones}: ${recap.capstones.join(', ')}` : '',   // AUDIT EG III: the capstones
+      recap.accords.length ? `${words.recapAccords}: ${recap.accords.join(', ')}` : ''].filter(Boolean);
+    if (held.length) { const sec = egSection(doc, EG_PANEL_TEXT.vestiges); for (const h of held) sec.append(line(h, 'blue')); body.append(sec); }
   } else if (recap) {
-    panel.append(h('The breach is over'));
-    for (const line of [recap.title, `Time: ${recap.time} - ${recap.why}`, `Reliquaries opened: ${recap.opened ?? 0}`, ...recap.circles, recap.company, recap.vestiges.length ? `Vestiges: ${recap.vestiges.join(', ')}` : '']) {
-      if (!line) continue;
-      const p = doc.createElement('div'); p.className = 'eg-note'; p.style.whiteSpace = 'pre-line'; p.textContent = line; panel.append(p);
+    const top = egSection(doc, '');
+    for (const text of [recap.title, `Time: ${recap.time} - ${recap.why}`, `Reliquaries opened: ${recap.opened ?? 0}`, ...recap.circles, recap.company, recap.vestiges.length ? `Vestiges: ${recap.vestiges.join(', ')}` : '']) {
+      if (text) { const p = line(text); p.style.whiteSpace = 'pre-line'; top.append(p); }
     }
+    body.append(top);
   }
-  if (model?.offer) {
-    panel.append(h(`A Vestige${model.offer.n > 1 ? ` - take ${model.offer.n}` : ''} (keys 1-${model.offer.cards.length})`));
-    const row = doc.createElement('div'); row.className = 'eg-cards';
-    for (const c of model.offer.cards) {
-      const b = doc.createElement('button');
-      if (c.key - 1 === focus) b.className = 'eg-focus';   // EG-G1: the pad's choice
-      const t = doc.createElement('b'); t.textContent = `${c.key}. ${c.name}`;
-      const s = doc.createElement('small'); s.textContent = c.line;
-      b.append(t, s);
-      if (c.completes) { const k = doc.createElement('small'); k.className = 'eg-cap'; k.textContent = c.completes; b.append(k); }   // AUDIT EG III: the capstone it completes
-      if (c.accord) { const a = doc.createElement('small'); a.className = 'eg-accord'; a.textContent = c.accord; b.append(a); }   // EG-ZS: the Accord it takes
+  if (offer) {
+    const sec = egSection(doc, '');
+    const tiles = egEl(doc, 'div', 'eg-k-tiles');
+    for (const c of offer.cards) {
+      const b = egEl(doc, 'button', `eg-k-tile${c.key - 1 === focus ? ' eg-focus' : ''}`);   // EG-G1: the pad's choice
+      const name = egEl(doc, 'span', 'eg-k-tname');
+      name.append(egEl(doc, 'span', 'eg-k-key', String(c.key)), egEl(doc, 'span', '', c.name));
+      b.append(name, egEl(doc, 'span', 'eg-k-tline', c.line));
+      if (c.completes) b.append(egEl(doc, 'span', 'eg-k-tline eg-cap', c.completes));   // AUDIT EG III: the capstone it completes
+      if (c.accord) b.append(egEl(doc, 'span', 'eg-k-tline eg-accord', c.accord));   // EG-ZS: the Accord it takes
       b.addEventListener?.('click', () => onPick(c.card));
-      row.append(b);
+      tiles.append(b);
     }
-    panel.append(row);
-    if (model.offer.surplus > 0) {
-      const sr = doc.createElement('div'); sr.className = 'eg-cards eg-ask';
-      for (const [use, label] of /** @type {[number, string][]} */ ([[0, `Spend a Surplus: a fourth card (${model.offer.surplus})`], [1, 'Spend a Surplus: reroll']])) { const b = doc.createElement('button'); if (focus === model.offer.cards.length + use) b.className = 'eg-focus'; b.textContent = label; b.addEventListener?.('click', () => onSurplus(use)); sr.append(b); }   // EG-ZD (section 27.8): the pad reaches the Surplus's two buttons, after the cards
-      panel.append(sr);
+    sec.append(tiles);
+    if (offer.surplus > 0) {
+      const acts = egEl(doc, 'div', 'eg-k-acts');
+      for (const [use, label] of /** @type {[number, string][]} */ ([[0, EG_PANEL_TEXT.surplusCard(offer.surplus)], [1, EG_PANEL_TEXT.surplusReroll]])) {   // EG-ZD (section 27.8): the pad reaches the Surplus's two buttons, after the cards
+        const b = egEl(doc, 'button', `eg-k-btn${focus === offer.cards.length + use ? ' eg-focus' : ''}`, label);
+        b.addEventListener?.('click', () => onSurplus(use));
+        acts.append(b);
+      }
+      sec.append(acts);
     }
+    body.append(sec);
   }
   // AUDIT EG V (c, L7-3): the pad's focus runs on from the cards (and a Surplus's two) through every choice's options
-  let at = model?.offer ? model.offer.cards.length + (model.offer.surplus > 0 ? 2 : 0) : 0;
+  let at = offer ? offer.cards.length + (offer.surplus > 0 ? 2 : 0) : 0;
   for (const a of model?.asks ?? []) {
-    const box = doc.createElement('div'); box.className = 'eg-ask';
-    const t = h(a.title); const left = doc.createElement('span'); left.setAttribute('data-left', a.q); left.textContent = `${Math.ceil(a.left / 1000)}s`; t.append(' - ', left);
-    box.append(t);
-    const row = doc.createElement('div'); row.className = 'eg-cards';
+    const left = egEl(doc, 'span', 'eg-k-chip gold', `${Math.ceil(a.left / 1000)}s`); left.setAttribute('data-left', a.q);
+    const sec = egSection(doc, a.title, [left]);
+    if (a.line) sec.append(line(a.line, 'dim'));
     const base = at;
-    a.opts.forEach((label, y) => { const b = doc.createElement('button'); if (base + y === focus) b.className = 'eg-focus'; b.textContent = `${a.mine === y ? '> ' : ''}${label}`; b.addEventListener?.('click', () => onVote(a.q, y)); row.append(b); });   // EG-G1: the pad's choice
+    const pick = (y, b) => { if (a.mine === y) { b.className += ' on'; b.setAttribute('aria-pressed', 'true'); } if (base + y === focus) b.className += ' eg-focus'; b.addEventListener?.('click', () => onVote(a.q, y)); return b; };   // EG-G1: the pad's choice
+    if (a.lines) {
+      // a decree's choice: each a tile, its name over what it does
+      const tiles = egEl(doc, 'div', 'eg-k-tiles');
+      a.opts.forEach((label, y) => { const b = egEl(doc, 'button', 'eg-k-tile'); b.append(egEl(doc, 'span', 'eg-k-tname', label), egEl(doc, 'span', 'eg-k-tline', a.lines[y] ?? '')); tiles.append(pick(y, b)); });
+      sec.append(tiles);
+    } else {
+      const acts = egEl(doc, 'div', 'eg-k-acts eg-votes');
+      a.opts.forEach((label, y) => acts.append(pick(y, egEl(doc, 'button', 'eg-k-btn', label))));
+      sec.append(acts);
+    }
     at += a.opts.length;
-    box.append(row);
-    panel.append(box);
+    body.append(sec);
   }
+  if (model?.asks?.length) body.append(line(EG_PANEL_TEXT.majority, 'dim'));
   // AUDIT EG V (c, L7-9): the recap closes by a tap - its own button - and a screen in hand reads no key's words (L7-20)
-  if (recap) { const row = doc.createElement('div'); row.className = 'eg-cards eg-ask'; const b = doc.createElement('button'); b.className = 'eg-close'; b.textContent = t('eg.recap.close', 'Close'); b.addEventListener?.('click', () => onClose()); row.append(b); panel.append(row); }
-  const noteText = recap ? (touch ? '' : 'Press Enter to close.') : touch ? t('eg.panel.noteTouch', 'Tap a card or a choice.') : 'Y: the Ready vote - R: a respite - 1-6: a card or a choice; /breach pick and /breach vote work in chat.';
-  if (noteText) { const note = doc.createElement('div'); note.className = 'eg-note'; note.textContent = noteText; panel.append(note); }
+  panel.append(body);
+  if (recap) { const dock = egEl(doc, 'div', 'eg-k-dock'); const b = egEl(doc, 'button', 'eg-k-btn eg-close', t('eg.recap.close', 'Close')); b.setAttribute('data-kind', 'primary'); b.addEventListener?.('click', () => onClose()); dock.append(b); panel.append(dock); }
+  const noteText = recap ? (touch ? '' : EG_PANEL_TEXT.noteRecap) : touch ? t('eg.panel.noteTouch', 'Tap a card or a choice.') : EG_PANEL_TEXT.noteKeys;
+  if (noteText) panel.append(egEl(doc, 'div', 'eg-k-foot', noteText));
   (doc.body ?? doc.documentElement)?.append(panel);
 }
 

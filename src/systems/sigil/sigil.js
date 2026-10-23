@@ -102,7 +102,7 @@ export const SIGIL_XP_MAX = SIGIL_STAGES[SIGIL_STAGES.length - 1].xp;
 /** SET1: the sets a sigil may name (systems/sigil/sigilSets.js SIGIL_SETS, in its order) - the four of the world, then the
  *  gate boss's own, then (RAID4b) the three the raiding parties' raids pay: the knights', the bandits', the orcs' - then
  *  (SERPENT-SET) the sea serpent's own. */
-export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply']);   // SD9d: THE BRASS OF NUMIDIUM; EG15: THE BATTLEMAGE'S PANOPLY, last
+export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric']);   // WITCH1: THE WYRD'S RAIMENT, the Witches' Festival's; STAR7: THE STARSPUN WEAVE, the festival's Starfall's; SEA-SET: THE ELTHERIC TIDEMAIL, the deep sea's, last; SD9d: THE BRASS OF NUMIDIUM; EG15: THE BATTLEMAGE'S PANOPLY, last
 
 const partyOf = (n) => (Number.isFinite(n) ? Math.max(1, Math.min(PARTY_MAX, Math.floor(n))) : 1);
 /** A fight's size as a sigil records it: whole, 1..PARTY_MAX (SET4: a set piece's record takes it the same way). */
@@ -228,7 +228,7 @@ export function sigilRiseLine(name, rank) {
   const line = `The sigil on your ${name} brightens: ${stage.name}.`;
   const cap = renownSigilStage(_renown);
   if (cap < 0 || cap >= rank) return line;
-  return `${line} Your Renown holds it at ${SIGIL_STAGES[cap].name} until Renown ${SIGIL_STAGES[cap + 1].renown}.`;
+  return `${line} Your Renown limits it to ${SIGIL_STAGES[cap].name} until Renown ${SIGIL_STAGES[cap + 1].renown}.`;
 }
 
 // ── the blow ───────────────────────────────────────────────────────
@@ -265,11 +265,11 @@ export function sigilLines(item) {
   // (systems/sigil/sigilSets.js setLines)
   const blow = sigilHasBlow(s);
   const full = blow ? `: +${s.power}% at Ascendant` : '';
-  if (_renown == null) return [`Sigil (Dormant - wakes online, with your Renown)${full}`];
+  if (_renown == null) return [`Sigil (Dormant: works online only)${full}`];
   const st = sigilStageIn(s, _renown);
   const out = [blow ? `Sigil (${SIGIL_STAGES[st].name}): +${pctText(sigilPercent(s, _renown))}% damage, +${s.power}% at Ascendant` : `Sigil (${SIGIL_STAGES[st].name})`];
   const next = SIGIL_STAGES[rank + 1];
-  if (rank > st) out.push(`Held at ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`);
+  if (rank > st) out.push(`Limited to ${SIGIL_STAGES[st].name} by your Renown (${SIGIL_STAGES[st + 1].name} at Renown ${SIGIL_STAGES[st + 1].renown})`);
   else if (next) out.push(`${SIGIL_STAGES[rank].name}: ${s.xp.toLocaleString('en-US')} / ${next.xp.toLocaleString('en-US')} to ${next.name}`);
   if (s.party > 1) out.push(`Won in a fight of ${s.party}`);
   return out;

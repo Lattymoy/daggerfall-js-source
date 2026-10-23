@@ -181,6 +181,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createExteriorFoes } from './exteriorFoes.js';
 import { createPopulationLane } from '../characters/npcBodies.js'; import { folkActor } from '../characters/folkBodies.js';   // MWNPC7: the walkers in Morrowind bodies
 import { personLook, personActor, figureLook } from '../characters/peopleBodies.js'; import { staticNpcData } from '../characters/staticNpc.js';   // MWNPC8c: and its standing people
+import { createNpcMarks } from './npcMarksHost.js';   // NPC-MARKS: the marks over its people who do something
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatableHit, pickQuestFoe, pickFoe, peacefulFoePass } from '../player/activate.js';   // G3: corpse loot; QG1/ROAD-G G2: the foe-click door; TI1: the lock-on pick
@@ -251,7 +252,9 @@ import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the c
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // WATER1: the water's switch
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { createCoverIndex, isCoverFlat, coverProxies } from '../ai/cover.js';   // TACT1: billboards are cover
+import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door (as world.js)
 import { LPT_SCALE_MAX, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { spherePlanes } from '../render/bounds.js';   // LPT1 (AUDIT LPT B4): the near trees' sphere test reads normalised planes
@@ -318,7 +321,7 @@ import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // ROAD-G G2: FinalizeFoe's Flying lift reads the behaviour flag
 import { isHouseOwned } from '../systems/banking.js';   // QX1/H1: Place.SetupSites' residence filter
 import { generateBuildingName } from '../world/buildingNames.js';   // QX1/IH1: %cbd regenerates the current building's name
-import { createQuestBridge, tokensToRows } from './quest/questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
+import { createQuestBridge, tokensToRows, choiceDoor } from './quest/questBridge.js';   // QX1: THE QUEST MACHINE, in the fixed-city host
 import { QuestAudioSource } from '../systems/audio.js';   // QX1/E6: PlaySound's ONE source per machine
 import { WORLD_CONTEXT, makeAnchor, teleportPlan, ANCHOR_MUST_BE_SET } from '../systems/teleportAnchor.js';   // TP2/A10: the Recall anchor's law - shape, IsSameInterior, the plan, and the 4001 record id
 import { STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the anchor's stamp
@@ -667,6 +670,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   // MWNPC8c (section 13c): AND ITS STANDING PEOPLE - each a batch of their own (the NPC pass), read as the buildings'
   // are (their StaticNPC data with the location's region race, their faction's row)
   const standPeople = createPopulationLane({ laneName: 'people', renderer, collider: () => collider });
+  // NPC-MARKS (scenes/npcMarksHost.js): a bobbing mark over a standing person's body whose click is a quest's or a guild's -
+  // the route read in the street (no building), as world.js's street reads it
+  const npcMarks = createNpcMarks(renderer.gl), standMarkCtx = { get dict() { return townTalk.factionDict ?? null; }, building: null };
   // STAND-FLAT / STAND-HORSE (section 28): the location's town horses as the 3D horse, and its people no StaticNPC holds
   // read as a placed figure is (FLATS.CFG's sex and caption, the location's region race)
   const standingHorses = createStandingHorses({ renderer });
@@ -1162,6 +1168,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // SIB1: the cache's answer for this archive; LPT1: its far picture and its 3D tree near - AUDIT 05b A12: the choice is
     // every host's one (world/naturePicture.js)
     const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons, renderer, uploadRecord }, t, archive, record);
+    collider.cover.add('prop-bodies', flatBodies(t, archive, record, plain, centers, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // PROP-BODIES: the record's own
     if (far) {
       lowPolyTrees.acquire(far); lptHandles.push(far);
       lptGroups.push({ h: lptHandles.length - 1, centers, wild: null });
@@ -2238,7 +2245,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     hurtGuard: (f, damage, feet) => cityGuards.hurtGuard?.(f, damage, feet, null),
     damageFoe: (f, damage, feet) => exteriorFoes.damageFoe(f, damage, feet, null, { kind: 'melee' }),
     voice: (f) => enemyHeavyPainVoice(f),
-    playVoice: (f, v) => audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift }),   // AUDIT-RR2 G5: EnemySounds.cs:172-175
+    playVoice: (f, v) => audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], monsterVolume(), { maxDistance: 16, pitch: 1 + v.pitchLift }),   // AUDIT-RR2 G5: EnemySounds.cs:172-175
   });
   // AUDIT 62 F14: DFU's population is INACTIVE indoors. PlayerEnterExit
   // .DisableAllParents (PlayerEnterExit.cs:1047) does
@@ -4233,6 +4240,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       buttonsMulti: buttons,
       onButton: (b) => { respond(b); return []; },
     }),
+    showChoice: choiceDoor(showQuestBox),   // QL4: the questlines' `ask` (questBridge.js choiceBoxes, through choiceDoor - HOST-SPLIT)
     // E6: PlaySound's busy skip over the ONE source (PlaySound.cs:110-116).
     // AUDIT 58: the table id goes through the ID door, as
     // PlaySound.cs:74-75 does at create - the four-hosts twin of the
@@ -6101,6 +6109,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       else sf.batch.castOnly = false;
     }
     standPeople.draw(canvas, proj, view, eye, townTalk.overlayActive ? 0 : dt);
+    npcMarks.gather(standMarkCtx, exteriorNpcs);   // NPC-MARKS: who of them earns a mark (drawn after the person billboards)
     if (standingHorses.end(dt, { proj, view })) standingHorses.draw(canvas, { eye, proj, view });
     _visBatches.length = 0; _castBatches.length = 0;
     for (const b of billboardBatches) {
@@ -6202,6 +6211,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       cityGuards.drawVeiledBodies();   // MWNPC6: and the watch's
       folkStreet.drawVeiled();   // MWNPC7: and the walkers'
       hcc.drawVeiled3d();   // AUDIT COATS3D A5: and a concealed owner's 3D horses
+      if (npcMarks.draw(proj, view, eye, standPeople, now / 1000)) renderer.markForeignPass();   // NPC-MARKS: the marks over the standing people
     }
     // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
     if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();
@@ -6282,7 +6292,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             // and a BOW always takes the FULL tally arm (Archery AND
             // CriticalStrike) - this arm tallied Archery alone, free.
             drainExteriorFatigue(SWING_FATIGUE_COST);
-            tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
+            tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);   // AUDIT PISTOLET A2: an off-hand shot counts as its blow weighs, as the other two hosts count it (THE FOUR HOSTS RULE)
             arrows.fire(eye, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: weaponRig.thunderlockMuzzle(fieldOfView()), summoned: shot.summoned });   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // #64: LastBowUsed rides the shaft - the impact prices off it   // ROAD-H H1c: ArrowFlight.fire applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           }
           continue;

@@ -266,10 +266,10 @@ test('AUDIT MARTIAL L1 L6 / L2 F2: a signature\'s HUD chip makes nothing a frame
 
 test('AUDIT MARTIAL L1 N1, L1 N3, L4 N3: a follow-up owed a body the relay runs shows its number; "blows and arrows" where arrows pay; Blackjack\'s "twice" is its number; Hallowed Strike\'s mace says its +25 to hit (mutants: the number in the record\'s branch alone; Blackjack\'s times moved)', () => clean(() => {
   const powers = src('src/systems/martialPowers.js');
-  const shown = powers.indexOf('  if (!f?.dead) showFollowUp(n, word);'), branch = powers.indexOf('  if (f) { if (!f.dead) door.hurtFoe(f, n); return; }');
+  const shown = powers.indexOf('  if (!f?.dead) showFollowUp(n, word, entity);'), branch = powers.indexOf('  if (f) { if (!f.dead) door.hurtFoe(f, n); return; }');
   assert.ok(shown >= 0 && branch > shown, 'the number before the record\'s branch (the loot\'s again, ROSE-SEEN)');
   const W = (id) => MP.martialWords(id);
-  assert.match(W('blademaster').passive, /blow or arrow/); assert.match(W('cutthroat').passive, /blows and arrows/);
+  assert.match(W('blademaster').passive, /blows or arrows/); assert.match(W('cutthroat').passive, /blows and arrows/);
   assert.match(W('berserker').passive, /blows and arrows/); assert.match(W('warblade').rider, /blows and arrows/);
   assert.equal(MP.MARTIAL_NUMBERS.blackjack.times, 2, 'the word "twice" is this number');
   assert.equal(W('cutthroat').rider, 'An enemy that hadn\'t noticed you takes the blow twice.');
@@ -479,7 +479,7 @@ test('AUDIT MARTIAL L4 L3: a card shows only to a character that can EVER meet a
 
 test('AUDIT MARTIAL L4 L4 / L4 L6 / L4 N1 / L4 N2: the martial ask is never the arcane ask\'s words; a found line asleep (the ladder off) leaves the key to the signature; the runner\'s English lines name a signature in English; no path is named as a star of the Firmament (mutants: the title shared; the sleeping line kept; the localised name in an English line)', () => clean(() => {
   const ranger = pathFighter('ranger');
-  assert.equal(MP.martialChoiceRows(fighter([LB, AR], 100), 'ranger')[0], 'Martial specialisation: Ranger?', 'never "Specialise as" - the arcane ask\'s');
+  assert.equal(MP.martialChoiceRows(fighter([LB, AR], 100), 'ranger')[0], 'Martial specialization: Ranger?', 'never "Specialize as" - the arcane ask\'s');
   const lined = weapon(WEAPONS.Longsword, { affixes: [{ id: 'technique', param: 'leap', value: 20 }] });
   assert.equal(techniqueInHand(ranger, { weapon: lined })?.id, 'leap', 'the ladder on: the line');
   setPref(LOOT_RARITY_KEY, false);
@@ -756,7 +756,7 @@ test('AUDIT MARTIAL L5 L4: the box counts the OTHER open paths only - none with 
   const rows1 = MP.martialChoiceRows(fighter([LB, AR], 100), 'ranger');
   assert.equal(rows1.some((r) => /other martial/.test(r)), false);
   const rows3 = MP.martialChoiceRows(fighter([LB, AR, SB], 100), 'ranger');
-  assert.equal(rows3.at(-1), '2 other martial specialisations are open to you.');
+  assert.equal(rows3.at(-1), '2 other martial specializations are open to you.');   // PIN MOVED (VOICE2): specialization (Voice.md rule 8)
 }));
 
 test('AUDIT MARTIAL L5 H2: THE ONE ASK (scenes/shared.js raisePlayerSkills), DRIVEN - one path open is asked in the martial words and Yes chooses it; several are named in an OK box choosing none; asked once; with the arcane ask due on the same pass, the arcane box first and the martial on the next (mutants: the ask forgets it asked; one open given the OK box; Yes chooses the arcane)', () => clean(() => {
@@ -765,7 +765,7 @@ test('AUDIT MARTIAL L5 H2: THE ONE ASK (scenes/shared.js raisePlayerSkills), DRI
   const one = fighter([LB, AR], 100); one.masterSkillsInfoSeen = true;
   raisePlayerSkills(one, { ask, rolls: () => 0.99 });
   assert.equal(asks.length, 1);
-  assert.deepEqual([asks[0].rows[0], asks[0].okOnly, one.martialPrompted], ['Martial specialisation: Ranger?', false, true]);
+  assert.deepEqual([asks[0].rows[0], asks[0].okOnly, one.martialPrompted], ['Martial specialization: Ranger?', false, true]);
   asks[0].onYes();
   assert.equal(one.martialPath, 'ranger', 'Yes chooses it');
   raisePlayerSkills(one, { ask, rolls: () => 0.99 });
@@ -787,9 +787,9 @@ test('AUDIT MARTIAL L5 H2: THE ONE ASK (scenes/shared.js raisePlayerSkills), DRI
   const before = asks.length;
   raisePlayerSkills(both, { ask, rolls: () => 0.99 });
   assert.equal(asks.length, before + 1);
-  assert.match(asks.at(-1).rows[0], /^Specialise as /, 'the arcane box first');
+  assert.match(asks.at(-1).rows[0], /^Specialize as /, 'the arcane box first');
   raisePlayerSkills(both, { ask, rolls: () => 0.99 });
-  assert.equal(asks.at(-1).rows[0], 'Martial specialisation: Blademaster?', 'the martial on the next pass');
+  assert.equal(asks.at(-1).rows[0], 'Martial specialization: Blademaster?', 'the martial on the next pass');
 }));
 
 test('AUDIT MARTIAL L5 H2: THE CLASSIC SHEET\'S W ROW, DRIVEN - drawn under the S row with both open; W asks about the first, No, then W, the next (the plate behind the box); a click on the row asks too; Yes chooses the MARTIAL path; a chosen path\'s W shows what it is, ending in the key\'s words (mutants: W never the next; Yes chooses the arcane; the click asks the arcane; the row over the S row; the about box gone)', () => clean(() => {
@@ -810,10 +810,10 @@ test('AUDIT MARTIAL L5 H2: THE CLASSIC SHEET\'S W ROW, DRIVEN - drawn under the 
     assert.equal(sheet.page, 1, 'the plate behind the box');
     sheet.input('KeyN');
   }
-  assert.deepEqual(titles, ['Martial specialisation: Blademaster?', 'Martial specialisation: Ranger?', 'Martial specialisation: Assassin?']);
+  assert.deepEqual(titles, ['Martial specialization: Blademaster?', 'Martial specialization: Ranger?', 'Martial specialization: Assassin?']);
   const [x, y, w, h] = sheet._martialRow;
   assert.equal(sheet.click(x + w / 2, y + h / 2), true, 'a click on the row');
-  assert.equal(sheet.child?.rows[0], 'Martial specialisation: Blademaster?', 'asks the martial, round the pool');
+  assert.equal(sheet.child?.rows[0], 'Martial specialization: Blademaster?', 'asks the martial, round the pool');
   sheet.input('KeyY');
   assert.deepEqual([e.martialPath, e.arcanePath ?? null], ['blademaster', null], 'Yes chooses the martial path');
   sheet.page = 1;
@@ -828,7 +828,7 @@ test('AUDIT MARTIAL L5 H2: THE ENHANCED MODEL - each open path with its pair; th
   const fam = (e) => specGuideModel(e).families.find((f) => f.id === 'martial');
   const m = fam(fighter([LB, AR, SB], 100));
   assert.deepEqual(m.paths.filter((p) => p.state === 'open').map((p) => [p.id, p.pairText]), [['blademaster', 'Long Blade and Short Blade'], ['ranger', 'Long Blade and Archery'], ['assassin', 'Short Blade and Archery']]);
-  assert.equal(m.paths.find((p) => p.id === 'ranger').ask()[0], 'Martial specialisation: Ranger?');
+  assert.equal(m.paths.find((p) => p.id === 'ranger').ask()[0], 'Martial specialization: Ranger?');
   const e = fighter([LB, AR], 100);
   assert.equal(fam(e).paths.find((p) => p.id === 'ranger').choose().ok, true);
   assert.equal(e.martialPath, 'ranger');
@@ -854,14 +854,14 @@ test('AUDIT MARTIAL L5 H2: THE ENHANCED PAUSE WINDOW, DRIVEN - the Stats page\'s
       assert.equal(door?.textContent, 'Growth (1)');
       assert.equal(btn('Master Skills')?.textContent, 'Master Skills', 'a path waiting is the Growth door\'s count now');
       door.onclick();
-      host.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specialisations')).onclick();
+      host.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specializations')).onclick();
       const bar = host.querySelectorAll('button').find((b) => String(b.className).includes('gr-pathbar') && b.textContent.startsWith('Ranger'));
       assert.ok(bar, 'the guide\'s Ranger');
       assert.match(bar.textContent, /Long Blade and Archery/);
       bar.onclick();
       btn('Choose Ranger').onclick();
       const ask = globalThis.document.body.querySelectorAll('div').find((d) => String(d.className).includes('px-master-ask'));
-      assert.match(ask.textContent, /Martial specialisation: Ranger\?/);
+      assert.match(ask.textContent, /Martial specialization: Ranger\?/);
       ask.querySelectorAll('button').find((b) => b.textContent === 'Yes').onclick();
       assert.equal(playerEntity.martialPath, 'ranger');
     } finally { menu.unmount(); }

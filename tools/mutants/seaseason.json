@@ -1,0 +1,749 @@
+[
+  {
+    "name": "SEA-SEASON-vendor",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const SEA_SEASON_VENDOR = 'Captain';",
+    "new": "export const SEA_SEASON_VENDOR = 'Captains';",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-deepest-max",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const SEA_DEEPEST_MAX = 1365;",
+    "new": "export const SEA_DEEPEST_MAX = 1366;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-legends",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const SEA_LEGENDS = 6;",
+    "new": "export const SEA_LEGENDS = 7;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rise-days",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const SEA_LEGEND_RISE_DAYS = 30;",
+    "new": "export const SEA_LEGEND_RISE_DAYS = 31;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rise-wall",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "SEA_LEGEND_RISE_DAYS * 1440 / ONLINE_MINUTES_PER_MS / 1000);",
+    "new": "SEA_LEGEND_RISE_DAYS * 1440 / ONLINE_MINUTES_PER_MS / 1200);",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rows",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const SEA_SEASON_ROWS = 10;",
+    "new": "export const SEA_SEASON_ROWS = 11;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-last-rows",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const SEA_SEASON_LAST_ROWS = 3;",
+    "new": "export const SEA_SEASON_LAST_ROWS = 4;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-day-clock",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440) / 1000",
+    "new": "wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440 + 1440) / 1000",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-start-off-one",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "ARENA_SEASON_EPOCH_S + (Math.max(1, Math.floor(season)) - 1) * ARENA_SEASON_S;",
+    "new": "ARENA_SEASON_EPOCH_S + Math.max(1, Math.floor(season)) * ARENA_SEASON_S;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-possible-no-first",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "/ SEA_LEGEND_RISE_S) + 1);",
+    "new": "/ SEA_LEGEND_RISE_S));",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-possible-one",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "export const seaLegendsPossible = (/** @type {number} */ nowS) => SEA_LEGENDS * (",
+    "new": "export const seaLegendsPossible = (/** @type {number} */ nowS) => (",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-figures-any-season",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!Number.isSafeInteger(n) || (n !== cur && !before)) return null;",
+    "new": "  if (!Number.isSafeInteger(n)) return null;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-figures-past-sea",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!Number.isSafeInteger(deepest) || deepest < 0 || deepest > SEA_DEEPEST_MAX) return null;",
+    "new": "  if (!Number.isSafeInteger(deepest) || deepest < 0) return null;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-figures-negative-deep",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!Number.isSafeInteger(deepest) || deepest < 0 || deepest > SEA_DEEPEST_MAX) return null;",
+    "new": "  if (!Number.isSafeInteger(deepest) || deepest > SEA_DEEPEST_MAX) return null;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-figures-fractional",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!Number.isSafeInteger(deepest) || deepest < 0 || deepest > SEA_DEEPEST_MAX) return null;",
+    "new": "  if (!Number.isFinite(deepest) || deepest < 0 || deepest > SEA_DEEPEST_MAX) return null;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-figures-past-rises",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS)) return null;",
+    "new": "legends < 0) return null;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-figures-negative-legends",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends >",
+    "new": "  if (!Number.isSafeInteger(legends) || legends >",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-read-any-season",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  if (!v || typeof v !== 'object' || !Number.isSafeInteger(v.season) || v.season < 1) return null;",
+    "new": "  if (!v || typeof v !== 'object') return null;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-read-any-length",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  const rows = (/** @type {any} */ list, max) => (Array.isArray(list) ? list : []).slice(0, max)",
+    "new": "  const rows = (/** @type {any} */ list, max) => (Array.isArray(list) ? list : [])",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-read-unnamed",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "    .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
+    "new": "    .filter((r) => r && typeof r.name === 'string' && r.name.length <= 64)",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-read-negative",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "  const whole = (/** @type {any} */ n) => (Number.isSafeInteger(n) && n >= 0 ? n : 0);",
+    "new": "  const whole = (/** @type {any} */ n) => (Number.isFinite(n) ? n : 0);",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-read-rank-none",
+    "file": "src/net/sea/seaSeasonLaw.js",
+    "old": "(m && Number.isSafeInteger(m.rank) && m.rank >= 1 ? { rank: m.rank, n: whole(m.n) } : null)",
+    "new": "(m && Number.isSafeInteger(m.rank) && m.rank >= 0 ? { rank: m.rank, n: whole(m.n) } : null)",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-ledger-old-day-resets",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    if (ether.season && n < ether.season.n) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-ledger-never-anew",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    if (!ether.season || n > ether.season.n) ether.season = { n, deepest: 0, legends: 0 };",
+    "new": "    if (!ether.season) ether.season = { n, deepest: 0, legends: 0 };",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-ledger-deep-falls",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      if (s) s.deepest = Math.max(s.deepest, Math.min(SEA_DEEPEST_MAX, Math.floor(d)));",
+    "new": "      if (s) s.deepest = Math.min(SEA_DEEPEST_MAX, Math.floor(d));",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-ledger-deep-past-sea",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      if (s) s.deepest = Math.max(s.deepest, Math.min(SEA_DEEPEST_MAX, Math.floor(d)));",
+    "new": "      if (s) s.deepest = Math.max(s.deepest, Math.floor(d));",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-ledger-legend-uncounted",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      if (s) s.legends = whole(s.legends + 1);\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-ledger-no-day-marks",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    if (!Number.isFinite(day)) return null;\n    const n = seaSeasonOfDay(/** @type {number} */ (day));",
+    "new": "    const n = seaSeasonOfDay(/** @type {number} */ (Number(day) || 0));",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-restore-past-sea",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "&& v.deepest <= SEA_DEEPEST_MAX",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-restore-season-none",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "(v && Number.isSafeInteger(v.n) && v.n >= 1 &&",
+    "new": "(v && Number.isSafeInteger(v.n) &&",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-restore-negative",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "  && Number.isSafeInteger(v.legends) && v.legends >= 0 ? {",
+    "new": "  && Number.isSafeInteger(v.legends) ? {",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-restore-dropped",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      ether.season = restoreSeason(e.season);   // SEA-SEASON\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-save-unkept",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    season: () => (ether.season ? { ...ether.season } : null),",
+    "new": "    season: () => (ether.season ? { ...ether.season, n: 1 } : null),",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-host-no-day",
+    "file": "src/scenes/etherHost.js",
+    "old": "    L.deepest?.(etherDepthAt(px), day());",
+    "new": "    L.deepest?.(etherDepthAt(px));",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-offline-keeps",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  const own",
+    "new": "  dropLineage(copy);\n  const own",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-online-keeps",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  if (!Number.isFinite(worldNow))",
+    "new": "  dropLineage(copy);\n  if (!Number.isFinite(worldNow))",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-drop-nothing",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  if (e && typeof e === 'object') e.season = null;",
+    "new": "  if (e && typeof e === 'object') e.charted = [];",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-empty",
+    "file": "server-account/src/seaSeason.js",
+    "old": "  if (!f || (f.deepest === 0 && f.legends === 0)) return [];",
+    "new": "  if (!f) return [];",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-unlawful",
+    "file": "server-account/src/seaSeason.js",
+    "old": "  const f = seaSeasonFigures(save, nowS);",
+    "new": "  const f = save?.modData?.Captain?.ether?.season;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-held",
+    "file": "server-account/src/seaSeason.js",
+    "old": " WHERE NOT EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND held IS NOT NULL)",
+    "new": " WHERE 1",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-moment-moves",
+    "file": "server-account/src/seaSeason.js",
+    "old": "      deep_at = CASE WHEN excluded.deepest > sea_season.deepest THEN excluded.at ELSE sea_season.deep_at END,",
+    "new": "      deep_at = CASE WHEN excluded.deepest >= sea_season.deepest THEN excluded.at ELSE sea_season.deep_at END,",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-deep-falls",
+    "file": "server-account/src/seaSeason.js",
+    "old": "      deepest = MAX(sea_season.deepest, excluded.deepest),",
+    "new": "      deepest = excluded.deepest,",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-legends-moment",
+    "file": "server-account/src/seaSeason.js",
+    "old": "      legends_at = CASE WHEN excluded.legends > sea_season.legends THEN excluded.at ELSE sea_season.legends_at END,",
+    "new": "      legends_at = sea_season.legends_at,",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-steps-legends-fall",
+    "file": "server-account/src/seaSeason.js",
+    "old": "      legends = MAX(sea_season.legends, excluded.legends),",
+    "new": "      legends = excluded.legends,",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-board-held-shown",
+    "file": "server-account/src/seaSeason.js",
+    "old": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL\n    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
+    "new": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id\n    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-board-least-first",
+    "file": "server-account/src/seaSeason.js",
+    "old": "ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2",
+    "new": "ORDER BY s.${n} ASC, s.${at}, rc.name LIMIT ?2",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-board-by-name",
+    "file": "server-account/src/seaSeason.js",
+    "old": "ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2",
+    "new": "ORDER BY s.${n} DESC, rc.name LIMIT ?2",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-board-zero-shown",
+    "file": "server-account/src/seaSeason.js",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
+    "new": "    WHERE s.season = ?1 ORDER BY",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rank-held-ahead",
+    "file": "server-account/src/seaSeason.js",
+    "old": "      JOIN realm_characters orc ON orc.id = o.char_id AND orc.held IS NULL",
+    "new": "      JOIN realm_characters orc ON orc.id = o.char_id",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rank-moment-blind",
+    "file": "server-account/src/seaSeason.js",
+    "old": "(o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name)))",
+    "new": "(o.${n} = s.${n} AND orc.name < rc.name)",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rank-ties-ahead",
+    "file": "server-account/src/seaSeason.js",
+    "old": "WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR",
+    "new": "WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} >= s.${n} OR",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rank-anyones",
+    "file": "server-account/src/seaSeason.js",
+    "old": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.player = ?3 AND s.${n} > 0`).bind(season, character, player.id);",
+    "new": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.${n} > 0`).bind(season, character, player.id);",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-rank-held-placed",
+    "file": "server-account/src/seaSeason.js",
+    "old": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL\n    WHERE s.season = ?1 AND s.char_id = ?2",
+    "new": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id\n    WHERE s.season = ?1 AND s.char_id = ?2",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-last-this",
+    "file": "server-account/src/seaSeason.js",
+    "old": "    top(WAYS.deep, season - 1, SEA_SEASON_LAST_ROWS), top(WAYS.legends, season - 1, SEA_SEASON_LAST_ROWS),",
+    "new": "    top(WAYS.deep, season, SEA_SEASON_LAST_ROWS), top(WAYS.legends, season, SEA_SEASON_LAST_ROWS),",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-board-ends",
+    "file": "server-account/src/seaSeason.js",
+    "old": "    season, ends: arenaSeasonEndsS(season),",
+    "new": "    season, ends: arenaSeasonEndsS(season) - 1,",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-checkpoint-lawless",
+    "file": "server-account/src/realm.js",
+    "old": "      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),",
+    "new": "      ...seaSeasonSteps(db, { player: playerId, char: id }, save, nowS),",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-checkpoint-none",
+    "file": "server-account/src/realm.js",
+    "old": "      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-route-gone",
+    "file": "server-account/src/index.js",
+    "old": "      if (path === '/v1/sea/season/board') {",
+    "new": "      if (path === '/v1/sea/season/boards') {",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-offline",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "  const on = () => !!deps.live?.() && !!deps.session;",
+    "new": "  const on = () => !!deps.live?.();",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-read-twice",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "    if (reading || !on()) return;",
+    "new": "    if (!on()) return;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-stale-late",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "    if (!reading && now() >= nextAt) void read();",
+    "new": "    if (!reading && now() > nextAt) void read();",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-fresh",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "export const SEA_SEASON_FRESH_MS = 60_000;",
+    "new": "export const SEA_SEASON_FRESH_MS = 30_000;",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-days-floor",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000))",
+    "new": "daysLeft: Math.max(0, Math.floor((board.ends * 1000 - now()) / 86_400_000))",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-days-negative",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000))",
+    "new": "daysLeft: Math.ceil((board.ends * 1000 - now()) / 86_400_000)",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-refusal-unsaid",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "      else { line = { text: accountRefusalText(r?.error), warn: true }; nextAt",
+    "new": "      else { line = null; nextAt",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-page-unread-an-empty-season",
+    "file": "src/scenes/seaSeasonHost.js",
+    "old": "    if (!board) return { asking: true,",
+    "new": "    if (!board) return { asking: false,",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-tab-no-section",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "season: o.season ? seasonText(o.season) : null };",
+    "new": "season: null };",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-days",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft })",
+    "new": "t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft + 1 })",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-rank-zero",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "  const rows = (list, words) => list.map((r, i) => ({ title: `${i + 1}. ${r.name}`, words: words(r.n) }));",
+    "new": "  const rows = (list, words) => list.map((r, i) => ({ title: `${i}. ${r.name}`, words: words(r.n) }));",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-plural",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "'{n, plural, one {{figure} league} other {{figure} leagues}}', { n, figure: g(n) }",
+    "new": "'{n, plural, one {{figure} league} other {{figure} leagues}}', { n: 2, figure: g(n) }",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-figure-plain",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "'{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: g(n) }",
+    "new": "'{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: n }",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-mine-unsaid",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    s.mine?.deep ? t('sea.season.mineDeep',",
+    "new": "    false ? t('sea.season.mineDeep',",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-last-unsaid",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    lastLegends ? t('sea.season.lastLegends',",
+    "new": "    false ? t('sea.season.lastLegends',",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-asking-lists",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    lists: s.asking ? [] : [",
+    "new": "    lists: [",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-words-asking-unsaid",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    lede: s.asking ? t('sea.season.asking',",
+    "new": "    lede: false ? t('sea.season.asking',",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-win-always-shown",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    seasonSec.style.display = st ? '' : 'none';",
+    "new": "    seasonSec.style.display = '';",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-win-no-titles",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "      seasonList.append(el('li', 'dfnaval-item more', list.title));\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-win-no-none",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-win-line-plain",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    seasonLine.className = `dfnaval-note${st.line?.warn ? ' warn' : ''}`;",
+    "new": "    seasonLine.className = 'dfnaval-note';",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-win-office-hides",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "new": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-win-unrendered",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    renderSeason(ot.season);   // SEA-SEASON\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-door-route",
+    "file": "src/net/accountClient.js",
+    "old": "  return { board: (req) => post('/v1/sea/season/board', req) };",
+    "new": "  return { board: (req) => post('/v1/sea/season/boards', req) };",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  },
+  {
+    "name": "SEA-SEASON-host-unspread",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "office: () => ({ wanted: bounty.office(), season: season.office() }),",
+    "new": "office: () => ({ wanted: bounty.office(), season: null }),",
+    "tests": [
+      "test/systems/sea/seaseason.test.js"
+    ]
+  }
+]

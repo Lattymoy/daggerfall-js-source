@@ -20,6 +20,7 @@ import { pathChoices } from '../../systems/arcanePaths.js';
 import { martialChoices } from '../../systems/martialPaths.js';
 import { drawStage, dropStage, stageBack, stageAsks, stageLive, STAGE_CSS } from './growthStage.js';
 import { firmamentBook } from '../../net/firmament/firmamentBook.js';
+import { pointsLeft } from '../../net/firmament/firmamentLaw.js';   // FIRM-STARS: the stars not yet placed, on the rail
 import { t } from '../../systems/textManager.js';
 import { usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // ORL1: which bar the view of the stars reads
 import { GROWTH_PAGE_SECTIONS, SPEC_LANDINGS, growthPageAt } from './growthPages.js';   // the leaf the boot doors read
@@ -29,9 +30,16 @@ export { GROWTH_PAGE_SECTIONS, growthPageAt };
 /** The rail's words in the player's language. */
 const LABEL = Object.freeze({
   level: () => t('growth.rail.level', 'Level'),
-  specs: () => t('growth.rail.specs', 'Specialisations'),
+  specs: () => t('growth.rail.specs', 'Specializations'),
   firmament: () => t('growth.rail.firmament', 'Firmament'),
   captain: () => t('growth.rail.captain', 'Captain\'s Stars'),
+});
+/** GROWTH-BOOK: each page's one line under its name on the rail. */
+const SUB = Object.freeze({
+  level: () => t('growth.rail.levelSub', 'Attributes and skills'),
+  specs: () => t('growth.rail.specsSub', 'Mastery paths'),
+  firmament: () => t('growth.rail.firmamentSub', 'Online star tree'),
+  captain: () => t('growth.rail.captainSub', 'Ship and crew'),
 });
 
 let sec = 'level';
@@ -67,6 +75,10 @@ export function growthDue(ctx) {
   const e = ctx?.entity;
   const due = { level: e?.readyToLevelUp ? 1 : 0, specs: 0, firmament: 0, captain: 0 };
   if (e) due.specs = (pathChoices(e).length ? 1 : 0) + (martialChoices(e).length ? 1 : 0);
+  // FIRM-STARS: the Firmament's stars not yet placed, as the book last said its purses (the HUD's tile beside the Renown bar
+  // says the same number)
+  const fb = firmamentBook()?.state;
+  if (fb?.open === true) { const left = pointsLeft(fb.sending?.keys ?? fb.tree?.keys ?? [], Number(fb.stars) || 0, Number(fb.craft) || 0); due.firmament = Math.max(0, left.stars | 0) + Math.max(0, left.craft | 0); }
   const s = ctx?.captain?.model?.()?.stars;
   if (s) due.captain = Math.max(0, (s.points ?? 0) - (s.set ?? 0));
   return due;
@@ -84,11 +96,17 @@ export function drawGrowthTab(body, ctx) {
   const secs = growthSections(ctx);
   if (!secs.some(([id]) => id === sec)) sec = secs[0][0];
   const due = growthDue(ctx);
-  const wrap = el('div', 'px-journal');
+  // GROWTH-BOOK (2026-10-20, Dudey: "it looks very messy changing its sizes all the time ... structure it better so it
+  // doesnt change the window each time you click an option in the growth tab"): one window size for every page
+  // (enhancedMenu.js pauseWindow's px-win-growth), the rail always the journal's left column (the Grimoire's left page),
+  // and each page the same bones - its title, its line, then its stage or its text
+  const wrap = el('div', 'px-journal gr-book');
   const rail = el('div', 'px-qrail');
   for (const [id] of secs) {
     const b = el('button', `px-qrow${id === sec ? ' on' : ''}`);
-    b.append(el('span', 'px-c', '◆'), document.createTextNode(LABEL[id]()));
+    const words = el('span', 'gr-railtext');
+    words.append(el('span', 'gr-railname', LABEL[id]()), el('span', 'gr-railsub', SUB[id]()));
+    b.append(el('span', 'px-c', '◆'), words);
     if (due[id]) b.append(el('span', 'gr-due', id === 'level' ? '!' : String(due[id])));
     b.onclick = () => { if (sec !== id && stageAsks()) return; if (sec !== id) dropStage(); sec = id; ctx.render(); };   // GROWTH5: unaccepted stars asked about once
     rail.append(b);
@@ -96,9 +114,8 @@ export function drawGrowthTab(body, ctx) {
   wrap.append(rail);
   const detail = el('div', 'px-qdetail px-sys gr-pane');
   ({ level: levelPage, specs: specsPage, firmament: firmamentPage, captain: captainPage })[sec]?.(detail, ctx);
-  // GROWTH3: a face on the stage takes the window's body - the rail a strip over it, the window nearly the screen's
-  // (enhancedMenu.js pauseWindow's px-win-wide)
-  if (stageLive()) wrap.classList.add('gr-faced');
+  // a face on the stage fills the page below its title; a page of text scrolls in it
+  detail.className += stageLive() ? ' gr-staged' : ' gr-scrolls';
   wrap.append(detail);
   body.append(wrap);
 }
@@ -127,11 +144,14 @@ function levelPage(detail, ctx) {
   const open = typeof hooks?.ascendScreen === 'function' ? hooks.ascendScreen : null;
   const owed = !!entity?.readyToLevelUp && !!open;
   if (!entity) { dropStage(); detail.append(divider(t('growth.level.title', 'Level')), el('p', 'px-note', t('growth.level.none', 'Your level isn\'t available here.'))); return; }
+  detail.append(divider(t('growth.level.title', 'Level')));
   drawStage(detail, `level:${owed ? 'owed' : 'view'}:${entity.level ?? 0}`, (host) => import('../enhanced/enhancedLevelUp.js').then(({ mountEnhancedLevelUp, viewOnlyScreen }) =>
     mountEnhancedLevelUp(host, { screen: (owed && open()) || viewOnlyScreen(entity, usesVirtueLeveling(entity)), entity, embed: true, onExit: () => { dropStage(); ctx.render(); } })), {
     el, ...stageWords(),
     door: levelDoor(),
-    lead: owed ? t('growth.level.owed', 'You have a level up waiting. Place your points, then press {ascend}. If you leave first, the points stay unspent and you place them again.', { ascend: t('levelup.ok.ascend', 'Ascend') })   // AUDIT GROWTH LANE5-2: the button's own word, in every language
+    badge: String(entity.level ?? 1),
+    heading: owed ? t('growth.level.owedHead', 'A level up is waiting') : t('growth.level.viewHead', 'Level {n}', { n: entity.level ?? 1 }),
+    lead: owed ? t('growth.level.owed', 'You have a level up waiting. Place your points, then press {ascend}. If you leave first, the points stay unspent.', { ascend: t('levelup.ok.ascend', 'Ascend') })   // AUDIT GROWTH LANE5-2: the button's own word, in every language
       : t('growth.level.view', 'Your attributes, skills and progress to the next level. When you level up, you spend your points here.'),
   });
 }
@@ -152,6 +172,7 @@ function firmamentPage(detail, ctx) {
     detail.append(divider(t('growth.firm.title', 'Firmament')), el('p', 'gr-lead', t('growth.firm.offline', 'The Firmament is a tree of passive bonuses, online only. Choose a birthsign, then spend the stars you earn from Renown.')));
     return;
   }
+  detail.append(divider(t('growth.firm.title', 'Firmament')));
   drawStage(detail, 'firmament', (host) => import('../firmamentWindow.js').then(({ mountFirmamentWindow }) =>
     mountFirmamentWindow(host, { embed: true })), { el, ...stageWords(), lead: t('growth.firm.lead', 'Passive bonuses for online play, bought with the stars you earn. Press {accept} to keep your changes.', { accept: t('firmament.accept', 'Accept') }) });
 }
@@ -162,6 +183,7 @@ function captainPage(detail, ctx) {
   const { el, divider, captain } = ctx;
   const deps = captain?.stars?.() ?? null;
   if (!deps?.ledger) { dropStage(); detail.append(divider(t('growth.captain.title', 'Captain\'s Stars')), el('p', 'px-note', t('growth.captain.none', 'Your captain\'s stars aren\'t available here.'))); return; }
+  detail.append(divider(t('growth.captain.title', 'Captain\'s Stars')));
   drawStage(detail, 'captain', (host) => import('../captainTreeWindow.js').then(({ mountCaptainTreeWindow }) =>
     mountCaptainTreeWindow(host, { ledger: deps.ledger, changed: deps.changed, embed: true })), {
     el, ...stageWords(),
@@ -173,21 +195,47 @@ function captainPage(detail, ctx) {
 
 const GROWTH_STYLE_ID = 'growth-tab-style';
 const GROWTH_CSS = `
-.px-qrow .gr-due { margin-left: auto; min-width: 18px; padding: 0 5px; line-height: 18px; font-size: 12px; text-align: center; color: #10120f; background: #e0c36a; }
-/* GROWTH3: a face on the stage - the window nearly the screen's, the rail a strip over the face, the face the rest */
-.px-win.px-win-wide { width: min(1440px, 98vw); height: min(940px, calc(100dvh - 56px)); }
-.px-win-wide .px-body { padding: 8px 12px 10px; overflow: hidden; display: flex; flex-direction: column; }
-.px-journal.gr-faced { flex-direction: column; flex: 1; min-height: 0; }
-.gr-faced > .px-qrail { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 0 4px; border-right: 0; border-bottom: 2px solid rgba(125,116,96,0.45); padding: 0 0 4px; max-height: none; overflow: visible; }
-.gr-faced > .px-qrail .px-qrow { width: auto; min-height: 38px; padding: 4px 10px; font-size: 15px; }
-.gr-faced > .px-qdetail { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 6px 0 0; }
-.gr-faced > .px-qdetail .gr-stage { flex: 1; height: auto; min-height: 240px; }
-@media (max-width: 480px) { .gr-faced > .px-qrail .px-qrow { font-size: 13px; padding: 4px 8px; min-height: 36px; } }   /* wrapped, never scrolled: the lit page stays in sight */
-/* AUDIT GROWTH LANE2-9: the Grimoire's book (grimoireDress.js - its left page a third of the window, the body let
-   overflow) outranked the strip: the page list stood a book page in the corner and the sky lost a third of its height */
-:root[data-plus-dress="grimoire"] .px-win.px-win-wide > .px-body { overflow: hidden !important; }
-:root[data-plus-dress="grimoire"] .px-journal.gr-faced > .px-qrail { width: auto; min-width: 0; max-width: none; flex: 0 0 auto; display: flex; flex-wrap: wrap; overflow: visible; }
-:root[data-plus-dress="grimoire"] .px-journal.gr-faced > .px-qdetail { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+/* GROWTH-BOOK: the counts on the rail - the pixel font at its own 16px (12px blurred it), no shadow (the row's doubled
+   it), a gold plaque in whole pixels */
+.px-qrow .gr-due { margin-left: auto; flex: none; box-sizing: border-box; min-width: 26px; height: 22px; padding: 0 6px; font-size: 16px; line-height: 20px;
+  letter-spacing: 0; text-align: center; color: #15120a; text-shadow: none; background: #e0c36a; border: 1px solid #10120f;
+  box-shadow: inset 0 1px 0 #f6e6a6, inset 0 -2px 0 #a8892f, 0 0 0 1px rgba(224,195,106,0.25); }
+.px-qrow.on .gr-due { background: rgb(243,239,44); box-shadow: inset 0 1px 0 #fffbb0, inset 0 -2px 0 #b5a414, 0 0 0 1px rgba(243,239,44,0.3); }
+/* GROWTH-BOOK: one window for every page of the tab - the size never changes as the rail is pressed */
+.px-win.px-win-growth { width: min(1320px, 96vw); height: min(860px, calc(100dvh - 64px)); }
+.px-win-growth > .px-body { padding: 10px 14px 12px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.px-journal.gr-book { flex: 1 1 auto; min-height: 0; height: auto; }
+.gr-book > .px-qrail { flex: 0 0 256px; display: flex; flex-direction: column; gap: 2px; padding: 4px 12px 4px 0; overflow-y: auto; }
+.gr-book > .px-qrail .px-qrow { align-items: flex-start; min-height: 54px; padding: 8px 8px; }
+.gr-book > .px-qrail .px-qrow .px-c { margin-top: 4px; }
+.gr-book .gr-railtext { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.gr-book .gr-railname { line-height: 1.15; }
+.gr-book .gr-railsub { font-size: 12px; letter-spacing: 0.04em; text-transform: none; color: #9c937d; text-shadow: none; line-height: 1.2; }
+.gr-book > .px-qrail .px-qrow .gr-due { margin-top: 0; }
+.gr-book > .px-qdetail.gr-pane { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 4px 6px 4px 22px; }
+.gr-book > .gr-pane.gr-staged { overflow: hidden; }
+.gr-book > .gr-pane.gr-scrolls { overflow-y: auto; overflow-x: hidden; display: block; }
+.gr-book > .gr-pane > .px-divider { flex: none; }
+.gr-staged > .gr-frame { flex: 1 1 auto; min-height: 220px; }
+.gr-staged > .gr-stagebar { flex: none; }
+@media (max-width: 480px) {
+  .gr-book > .px-qrail { flex: 0 0 auto; max-height: 34%; }
+  .gr-book > .px-qrail .px-qrow { min-height: 44px; padding: 4px 8px; }
+  .gr-book .gr-railsub { display: none; }
+  .gr-book > .px-qdetail.gr-pane { padding: 8px 2px 4px; }
+}
+/* the Grimoire: the same book - the page list on the left page, the page on the right - in the same window */
+:root[data-plus-dress="grimoire"] .px-win.px-win-growth > .px-body { overflow: hidden !important; }
+:root[data-plus-dress="grimoire"] .px-journal.gr-book > .px-qrail { width: 25%; min-width: min(230px, 40%); max-width: 32%; flex: 0 0 auto; }
+:root[data-plus-dress="grimoire"] .px-journal.gr-book > .px-qdetail.gr-pane { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+:root[data-plus-dress="grimoire"] .px-journal.gr-book > .gr-pane.gr-staged { overflow: hidden; }
+:root[data-plus-dress="grimoire"] .px-journal.gr-book > .gr-pane.gr-scrolls { overflow-y: auto; display: block; }
+:root[data-plus-dress="grimoire"] .gr-book .gr-railsub { color: rgba(60,36,18,0.72); }
+:root[data-plus-dress="grimoire"] .px-qrow .gr-due { color: #f3e2b8; background: #8e1a10; border-color: #3a0904; font-family: inherit;
+  box-shadow: inset 0 1px 0 rgba(255,190,150,0.35), inset 0 -2px 0 #5c0f08, 0 1px 0 rgba(0,0,0,0.25); }
+:root[data-plus-dress="grimoire"] .px-qrow.on .gr-due { background: #a8231a; box-shadow: inset 0 1px 0 rgba(255,200,160,0.45), inset 0 -2px 0 #6b120a, 0 1px 0 rgba(0,0,0,0.25); }
+:root[data-plus-dress="grimoire"] .gr-book .px-qrow.on .gr-railsub { color: rgba(122,30,18,0.8); }
+@media (max-width: 480px) { :root[data-plus-dress="grimoire"] .px-journal.gr-book > .px-qrail { width: auto; max-width: none; max-height: 34%; } }
 ${SPEC_GUIDE_CSS}
 ${STAGE_CSS}
 `;

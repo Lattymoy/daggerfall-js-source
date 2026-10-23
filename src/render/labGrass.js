@@ -42,7 +42,8 @@ import { EL_CODEC_GLSL, EL_TONEMAP_GLSL, EL_ATTEN_GLSL, EL_MAX_LIGHTS, elDecode,
  *
  * GR1's law was that the shaders are the lab's text byte for byte, and
  * the pin enforced it by slicing `grass-proto.html` at test time. That
- * law has been broken deliberately, three times, and the honest way to
+ * law has been broken deliberately, three times (SWAY-SOFT made it a
+ * fifth edit, GRASS6 having taken one back), and the honest way to
  * break it is to say exactly where rather than to loosen the pin: the
  * lab's text plus THESE edits, and nothing else, is what the game
  * compiles. Any other drift still fails the pin, which is the whole
@@ -99,6 +100,11 @@ export const GRASS2_VS_EDITS = Object.freeze([
   // hashes) for a value that never changed. The lab's own line,
   // `vTint = aInst2.z;`, is what compiles again; the lane carries the
   // patched tint from the placer.
+  Object.freeze({
+    why: 'SWAY-SOFT (2026-10-21, Mac: "make the grass sway more subtle"): a gentler gust and a smaller lean - LAB_LEAN_PER_PUSH and LAB_GUST_MAX in grassMeadow.js',
+    from: '  float push = length(uWindV) * (0.55 + gust * 0.75);\n  vec2 lean = aInst2.xy + wdir * push * 0.055;',
+    to: '  float push = length(uWindV) * (0.6 + gust * 0.45);\n  vec2 lean = aInst2.xy + wdir * push * 0.032;',
+  }),
 ]);
 
 export const LAB_GRASS_HEAD = `#version 300 es
@@ -224,8 +230,9 @@ void main(){
   vec2 wdir = length(uWindV) > 1e-4 ? normalize(uWindV) : vec2(1.0, 0.0);
   float along = dot(root, wdir);
   float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;
-  float push = length(uWindV) * (0.55 + gust * 0.75);
-  vec2 lean = aInst2.xy + wdir * push * 0.055;
+  // SWAY-SOFT (2026-10-21): a gentler gust and a subtler lean - 0.55 + 0.75 and 0.055 before (GRASS2_VS_EDITS)
+  float push = length(uWindV) * (0.6 + gust * 0.45);
+  vec2 lean = aInst2.xy + wdir * push * 0.032;
   vec3 p;
   p.xz = root + lean * (vT*vT) * h;
   // GR2 (Mac: from the side the blades are completely flat). A blade's
@@ -1341,7 +1348,32 @@ export function grassVnoise(x, z) {
  *  whatever map pixel the player was in (GRASS2 had it too; the GPU
  *  hash is 0 there as well). The offsets are arbitrary fractions of a
  *  lattice cell, so no lattice corner of either octave lands on 0. */
-export const grassClump = (x, z) => grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;
+export function grassClump(x, z) {
+  // OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): grassVnoise of each octave with
+  // its four grassHash corners written out in it - the same operations in the same order, so the same number to the
+  // bit (test/render/owhitch.test.js holds it to `grassVnoise(...) * 0.66 + grassVnoise(...) * 0.34`). Asked once a
+  // blade that stands, the ten calls under it were each a number made and dropped (a call's answer is an object unless
+  // it is inlined, and the placer's loop is past the inliner's budget): a fifth of a gigabyte a field's refill.
+  let sum = 0;
+  for (let o = 0; o < 2; o++) {
+    const vx = o === 0 ? x * 0.055 + 0.317 : x * 0.017 + 0.531, vz = o === 0 ? z * 0.055 + 0.713 : z * 0.017 + 0.279;
+    const ix = Math.floor(vx), iz = Math.floor(vz);
+    let fx = vx - ix, fz = vz - iz;
+    fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);
+    let a = 0, b = 0, c = 0, d = 0;
+    for (let k = 0; k < 4; k++) {   // grassHash at (ix, iz), (ix + 1, iz), (ix, iz + 1), (ix + 1, iz + 1)
+      let px = (ix + (k & 1)) * 123.34, pz = (iz + (k >> 1)) * 456.21;
+      px -= Math.floor(px); pz -= Math.floor(pz);
+      const dd = px * (px + 45.32) + pz * (pz + 45.32);
+      px += dd; pz += dd;
+      const pp = px * pz, h = pp - Math.floor(pp);
+      if (k === 0) a = h; else if (k === 1) b = h; else if (k === 2) c = h; else d = h;
+    }
+    const v = (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fz;
+    sum = o === 0 ? v * 0.66 : sum + v * 0.34;
+  }
+  return sum;
+}
 /** the lane's tint: the lab's per-blade random, pulled 0.55 of the way to its patch */
 export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClump(x, z) - rnd) * 0.55));
 
@@ -1360,7 +1392,7 @@ export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClum
  * end - the one loop, which a field on the move runs a slice at a time.
  */
 export function placeLabGrassCell(cx, cz, opts) {
-  const st = beginGrassCell(cx, cz, opts);
+  const st = beginGrassCell(cx, cz, opts);   // OW-HITCH: `opts.reuse` - a spent cell's arrays, placed into again
   stepGrassCell(st, st.perCell, opts);
   return { inst: st.inst, inst2: st.inst2, rootY: st.rootY, ground: st.ground, slope: st.slope, count: st.count, perCell: st.perCell };
 }
@@ -1380,28 +1412,44 @@ export function placeLabGrassCell(cx, cz, opts) {
  * the lanes are the same bytes (pinned at 1, 1,500 and the whole cell).
  * The arrays are the cell's own, handed to writeSlot when it is done,
  * exactly as placeLabGrassCell's were.
+ *
+ * OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): `reuse` - a cell's state whose
+ * arrays writeSlot has already packed and let go - is placed into again, zeroed first, so a cell begun on it is the
+ * bytes a new one is. The five arrays are 343 KB a cell at the shipped density, and a field filling after a teleport or
+ * the Overworld's landing places some 360 cells: 120 MB of garbage the collector then stopped frames for. The field
+ * keeps two (createGrassField: the cell placed whole, and the rim cell in slices); a caller that keeps what it was
+ * handed (a test's recorder) passes none and is handed new arrays as before.
  */
-export function beginGrassCell(cx, cz, { perCell, seed = LAB_GRASS.seed, cell = GRASS_CELL, originX = 0, originZ = 0 }) {
+export function beginGrassCell(cx, cz, { perCell, seed = LAB_GRASS.seed, cell = GRASS_CELL, originX = 0, originZ = 0, reuse = null }) {
+  const again = reuse && reuse.perCell === perCell;
+  if (again) { reuse.inst.fill(0); reuse.inst2.fill(0); reuse.rootY.fill(0); reuse.ground.fill(0); reuse.slope.fill(0); }
   return {
     cx, cz, cell, originX, originZ, perCell,
     s: grassCellSeed(cx, cz, seed),   // the xorshift word
     i: 0,                             // the next candidate
     n: 0,                             // the blades that stood so far
     count: 0,                         // writeSlot's name for n
-    inst: new Float32Array(perCell * 4), inst2: new Float32Array(perCell * 4),
-    rootY: new Float32Array(perCell), ground: new Float32Array(perCell * 3),
-    slope: new Float32Array(perCell * 2),   // GRASS-LIT2: the ground normal's x and z under each root (0, 0: level)
+    inst: again ? reuse.inst : new Float32Array(perCell * 4), inst2: again ? reuse.inst2 : new Float32Array(perCell * 4),
+    rootY: again ? reuse.rootY : new Float32Array(perCell), ground: again ? reuse.ground : new Float32Array(perCell * 3),
+    slope: again ? reuse.slope : new Float32Array(perCell * 2),   // GRASS-LIT2: the ground normal's x and z under each root (0, 0: level)
   };
 }
 
+/** OW-HITCH: stepGrassCell's xorshift word while a slice runs (one slice at a time: the placer is synchronous). */
+const _xs = new Uint32Array(1);
 /** PERF-EXT22: `budget` more candidates of a begun cell; true once the
  *  last one is placed. `keep`/`ground` are this frame's - a slice asks
  *  the world as it stands when the slice runs. */
 export function stepGrassCell(st, budget, { keep, ground = null, slope = null, height = LAB_GRASS.height }) {
   const { inst, inst2, rootY, cell, originX, originZ } = st;
   const groundCol = st.ground;
-  let s = st.s;
-  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  // OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): THE WORD IN A TYPED SLOT. A
+  // `let` a closure writes lives in the closure's context, and a context holds a number past a small integer as an
+  // object - so every step of the xorshift (four writes a draw, ten draws a candidate, 6,122 candidates a cell) made one:
+  // some 2 MB a cell of garbage, a field's refill after the Overworld 0.7 GB of it. The word lives in a Uint32Array
+  // now and the steps are the same integer operations on the same number: the same draws, bit for bit.
+  _xs[0] = st.s;
+  const rnd = () => { let s = _xs[0]; s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; _xs[0] = s; return s / 4294967296; };
   const ox = st.cx * cell, oz = st.cz * cell;
   let n = st.n;
   const end = Math.min(st.perCell, st.i + budget);
@@ -1427,7 +1475,7 @@ export function stepGrassCell(st, budget, { keep, ground = null, slope = null, h
     st.slope[n * 2] = gn ? gn[0] : 0; st.slope[n * 2 + 1] = gn ? gn[2] : 0;
     n++;
   }
-  st.s = s; st.i = end; st.n = n; st.count = n;
+  st.s = _xs[0]; st.i = end; st.n = n; st.count = n;
   // the pad: height 0 draws nothing (the vertex stage collapses h=0)
   return end >= st.perCell;
 }
@@ -1439,12 +1487,20 @@ export const GRASS_SLICE = 1500;
  *  placed WHOLE - the shader's own fade start (`smoothstep(uRange*0.55,
  *  uRange, d)`, the lab's), inside which every blade of a cell draws. */
 export const GRASS_WHOLE_AT = 0.55;
-/** PERF-EXT22: more cells than this waiting and the field is catching up
- *  (a boot, a teleport, a pixel re-read under the eye), and fills whole
- *  cells at the pace it always did; this many or fewer, and it is a walk.
- *  Eight holds a 15 m/s ride to slices (four did not - `grassWalkKeep.mjs`),
- *  and costs a boot the last eight rim cells a slice at a time, at 300 m. */
-export const GRASS_CATCH_UP = 8;
+/** FB1021B (FIELD BUGS 2026-10-21c row 6): the fraction of the range a rim cell must stand placed by - the eye's
+ *  approach is its deadline. Out here the shader's fade (`smoothstep(uRange*0.55, uRange, d)`) leaves a blade 12.6%
+ *  of itself, at the rim 0. A cell nearer than this and missing is due now: a birth's, an invalidate's. */
+export const GRASS_DUE_AT = 0.9;
+/** FB1021B: the field's time a frame for the cells due now - a birth's, an invalidate's - past the frame's first
+ *  whole cell: 3 ms of a 60 Hz frame, and that share of a longer one (GRASS_FRAME_SHARE), so a birth fills in the
+ *  same seconds at any frame rate. On the field's own clock; a whole cell's cost is the one it just placed. */
+export const GRASS_FRAME_MS = 3;
+/** FB1021B: the share of the frame - the time between two updates on the field's clock - its catch-up may take. */
+export const GRASS_FRAME_SHARE = GRASS_FRAME_MS * 60 / 1000;
+/** FB1021B: the longest frame that share is taken of - a 20 fps frame; a hitch past it grants no more. */
+export const GRASS_FRAME_GAP_MS = 50;
+/** FB1021B: candidates between two reads of that clock - the most a budget is overrun by, past a pack. */
+export const GRASS_STEP = 250;
 
 /**
  * The field: which cells stand around the eye, each in its own slot.
@@ -1452,13 +1508,15 @@ export const GRASS_CATCH_UP = 8;
  * most `perFrame` new ones - a cell is a few thousand blades and a
  * few thousand keep() lookups, milliseconds. PERF-EXT22: and on a walk
  * that is the spike - a rim cell is placed a slice a frame (see update).
+ * FB1021B: and past the slice at the eye's own pace, a birth inside a share
+ * of the frame's time (see update).
  */
 /**
  * @param {LabGrassRenderer} renderer
  * @param {{ keep: (x: number, z: number) => number | null | undefined, ground?: any, slope?: any, span?: number, density?: number,
- *   height?: number, seed?: number, cell?: number, range?: number, perFrame?: number, slots?: number }} o
+ *   height?: number, seed?: number, cell?: number, range?: number, perFrame?: number, slots?: number, frameMs?: number, clock?: () => number }} o
  */
-export function createGrassField(renderer, { keep, ground = null, slope = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, range = LAB_GRASS.range, perFrame = 2, slots: slotsOverride = 0 }) {
+export function createGrassField(renderer, { keep, ground = null, slope = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, range = LAB_GRASS.range, perFrame = 2, slots: slotsOverride = 0, frameMs = GRASS_FRAME_MS, clock = () => performance.now() }) {   // FB1021B: `clock` a test seam - the game passes neither
   const perCell = grassPerCell(density);   // GRASS2: the RATE, off the lab's own span - `span` below is the window, and the two are not the same question
   // PERF10 (2026-09-19, Mac: "when youre further out in the wilderniss
   // it loaded many chunks and grass the performance still degrades"):
@@ -1511,6 +1569,14 @@ export function createGrassField(renderer, { keep, ground = null, slope = null, 
   /** PERF-EXT22: the rim cell being placed a slice a frame - { d, cx,
    *  cz, key, st } - or null. Not live and holding no slot until done. */
   let pending = null;
+  /** FB1021B: where the last update's eye stood (the field's scene, moved with it at a shift) - its step is the
+   *  approach every rim cell's deadline is reckoned on - and when the last update began, on the field's clock. */
+  let lastX = NaN, lastZ = NaN, lastT = NaN;
+  /** OW-HITCH: the two cells' arrays the field places into again (beginGrassCell `reuse`) - the last cell placed whole
+   *  and the last rim cell begun. A renderer packs a cell in writeSlot and holds none of it after (LabGrassRenderer
+   *  copies it into its lanes' scratch), so a cell's arrays are free the moment it is written; the rim cell's are the
+   *  pending cell's until it is written or let go, and a rim cell is begun only when none is pending. */
+  let wholeSpare = null, rimSpare = null;
   /** PERF10: the square distance from the eye to a cell's nearest point -
    *  _drawVisibleSlots' own test, so what is filled is what is drawn.
    *  PERF-EXT21: the cell's edges stood in the field's frame, the eye
@@ -1529,6 +1595,7 @@ export function createGrassField(renderer, { keep, ground = null, slope = null, 
      *  packed lanes are cell-local and never knew where the scene was. */
     shiftOrigin(offset) {
       gx += offset[0]; gz += offset[2];
+      lastX += offset[0]; lastZ += offset[2];   // FB1021B: the eye moved with the scene - a shift is no step
       renderer.shiftSlots(offset);
       pending = null;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame - it starts again in the new one
     },
@@ -1584,76 +1651,147 @@ export function createGrassField(renderer, { keep, ground = null, slope = null, 
         if (nearSq(held.cx, held.cz, ex, ez) > keepR2) { renderer.clearSlot(held.slot); live.delete(key); free.push(held.slot); }
       }
       if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null;   // PERF-EXT22: walked out of reach before it was done - it would not be begun now either
-      // fill what came into range, nearest first, a few a frame
-      let budget = perFrame;
-      /** @type {{ d:number, cx:number, cz:number, key:number, st?:object }[]} */
+      // FB1021B (FIELD BUGS 2026-10-21c row 6, a player's CPU profile: grass streaming 11-24% of the main thread): THE
+      // RIM IS PLACED BY THE EYE'S APPROACH, NOT BY THE FRAME. PERF-EXT22 placed a rim cell GRASS_SLICE candidates a
+      // frame and, with more than eight cells waiting, every cell whole, two a frame. A slice a frame is a cell every
+      // five frames, so the rim's pace was the FRAME RATE's while its arrivals are the eye's speed's - and at 20 fps a
+      // DFU ride (10.8 m/s) fell eight cells behind on 13% of its frames, a gallop on 25%, a run and a cart on 5%, at
+      // 30 fps a ride on 3.5% and a gallop on 13%, at 60 a strong gallop (22 m/s) on 4%: each of those frames two whole
+      // cells, eight to ten times its neighbours - the spike PERF-EXT22 had removed, back on the slowest machines, the
+      // ones least able to pay it (tools/grassMoveProbe.mjs). Now:
+      // - a cell's DEADLINE is the frames the eye, coming straight at it at this frame's step, would take to bring its
+      //   nearest point inside GRASS_DUE_AT of the range - 0 if it stands there already (a birth's, an invalidate's),
+      //   never while the eye stands, nor for a cell past the fade's start the step is leaving behind - and the cells
+      //   are placed nearest first, as they always were, those behind the step after the rest: a birth on the move
+      //   fills the way the eye is going, and what it leaves the hysteresis takes, most of it never placed;
+      // - a cell inside the fade's start still comes whole - the frame's first always, so a hole the eye sees is
+      //   closed on the frame it is missed, the next while it fits the frame's time (GRASS_FRAME_MS, or its share of
+      //   a longer frame) at the cost of the whole cell just placed;
+      // - the rim takes one slice a frame, as it did (a frame a whole cell took, none), and past it what the deadlines
+      //   ask: the least pace that has every rim cell placed by its own (earliest deadline first: the nearest) - the
+      //   eye's own speed's work, spread over the frames it has, never capped below it, or the grass would stand holes
+      //   the old catch-up never left - and, with a cell due now (inside already), the frame's time past that pace,
+      //   GRASS_STEP candidates at a time.
+      // A walk that keeps up is PERF-EXT22's walk to the candidate. A ride the slice cannot keep up with is paced to
+      // the eye, frame for frame, and never two whole cells; a birth fills nearest first inside the frame's time.
+      // AUDIT FB1021B F1 (the owner: "no band aids and true improvements"): the cells due now took the frame's time
+      // INSTEAD of the pace, and before the cells it was owed to - so one cell due now (a birth on the move: the jungle
+      // floor's re-made meadow on a ride, an Overworld journey's end, a publish over the disc; a band cell re-read the
+      // step leaves behind) turned the deadlines off, and where the frame's time placed less than the eye brought in
+      // (a slow machine, a fast ride) the cells ahead missed theirs, came due now themselves, and kept it so: the bench's
+      // slow machine (a candidate 1/256 ms) born on a 20 fps DFU ride stood holes inside GRASS_DUE_AT for 1,006 frames,
+      // 342 cells crossing it unplaced; a strong gallop with one band cell re-read behind it never recovered. Now the
+      // pace is spent first on the cells whose deadlines ask it, the cells due now take the frame's time past it, and
+      // the rest wait: no cell with a deadline is let cross GRASS_DUE_AT for a backlog's sake, and a birth on the move
+      // fills in the frames a standing one does (597 there).
+      const ux = Number.isFinite(lastX) ? ex - lastX : 0, uz = Number.isFinite(lastZ) ? ez - lastZ : 0;   // the eye's step this frame
+      const step = Math.hypot(ux, uz);
+      lastX = ex; lastZ = ez;
+      const wholeR = range * GRASS_WHOLE_AT, dueR = range * GRASS_DUE_AT;
+      const wholeR2 = wholeR * wholeR, dueR2 = dueR * dueR;
+      // AUDIT FB1021B F2: a cell in progress the eye has brought inside the fade's start is an inner cell, let go so the
+      // loop below places it whole as one never begun - held, it was in no list but its own, and stood unplaced inside
+      // 165 m (as near as 141) while cells farther out were placed
+      if (pending && nearSq(pending.cx, pending.cz, ex, ez) <= wholeR2) pending = null;
+      /** FB1021B: 1 for a cell past the fade's start whose nearest point the step moves away from, else 0 */
+      const behind = (cx, cz, d2) => (d2 > wholeR2 && (Math.min(Math.max(ex, cx * cell + gx), (cx + 1) * cell + gx) - ex) * ux
+        + (Math.min(Math.max(ez, cz * cell + gz), (cz + 1) * cell + gz) - ez) * uz < 0 ? 1 : 0);
+      /** FB1021B: a cell's deadline in frames: 0 inside dueR, Infinity while the eye leaves it behind - or stands (a step of 0) */
+      const dueIn = (d2, back) => { const d = Math.sqrt(d2); return d <= dueR ? 0 : back ? Infinity : (d - dueR) / step; };
+      /** @type {{ d:number, cx:number, cz:number, key:number, back:number }[]} */
       const want = [];   // HARD3: a NAMED shape, because a mixed [number, number, number, string] literal widens to (number|string)[] and `a[0] - b[0]` stops type-checking
       for (let cz = ecz - k; cz <= ecz + k; cz++) for (let cx = ecx - k; cx <= ecx + k; cx++) {
         const d = nearSq(cx, cz, ex, ez);
         if (d > fillR2) continue;
         const key = cellKey(cx, cz);
-        if (!live.has(key) && key !== pending?.key) want.push({ d, cx, cz, key });
+        if (!live.has(key) && key !== pending?.key) want.push({ d, cx, cz, key, back: behind(cx, cz, d) });
       }
-      want.sort((a, b) => a.d - b.d);
+      want.sort((a, b) => a.back - b.back || a.d - b.d);   // nearest first - FB1021B: the earliest deadline first, what the step leaves behind last
       const missing = want.length + (pending ? 1 : 0);
-      // PERF-EXT22: A WALK PLACES ITS RIM A SLICE A FRAME. A walking eye
-      // brings cells in at the rim - their nearest point just inside the
-      // 300 m range, where the draw keeps 0-2% of a cell's blades - one
-      // every ~11 frames at a run, and each was a whole cell on the frame
-      // it arrived: a 4-8 ms spike on 5-17% of frames. With a few cells
-      // waiting, a rim cell (past GRASS_WHOLE_AT of the range, where the
-      // fade begins) is begun and placed GRASS_SLICE candidates a frame,
-      // written the frame it is done; it lands ~4 frames later, a metre
-      // at a gallop, 300 m out. A cell inside the fade's start still
-      // comes whole, and with more than GRASS_CATCH_UP waiting - a boot,
-      // a teleport, a near pixel re-read - every cell does, two a frame,
-      // at the pace the field always filled at.
-      const catchUp = missing > GRASS_CATCH_UP;
-      const wholeR2 = (range * GRASS_WHOLE_AT) * (range * GRASS_WHOLE_AT);
-      const ask = { keep: keepNow, ground: groundNow, slope: slopeNow, height };
-      let sliced = false;
-      if (pending) {
-        sliced = !catchUp;
-        if (stepGrassCell(pending.st, catchUp ? perCell : GRASS_SLICE, ask)) {
-          want.unshift({ ...pending, d: nearSq(pending.cx, pending.cz, ex, ez) });   // done: it takes its slot below, first
-          pending = null;
+      // AUDIT PERF10 F1: A BOUND CAN BE WRONG; A HOLE MUST NOT BE
+      // ABLE TO SURVIVE IT. `slots` is discSlotCount's swept answer,
+      // and the first draft of that sweep was two cells short - at
+      // which point this loop simply broke and the cell stayed
+      // unplaced for as long as the eye stood there. `want` is
+      // sorted nearest-first (FB1021B: what the step leaves behind
+      // after the rest), so the nearest waiting cell takes the
+      // farthest standing one's slot; when every slot already holds
+      // something nearer there is nothing to gain and the walk
+      // stops. The invariant is not "the bound is right" but THE
+      // FIELD HOLDS THE NEAREST `slots` CELLS, which no bound can
+      // break. FB1021B: asked before a cell is begun as well as when
+      // it is written, so no slice is spent on a cell no slot takes.
+      const slotFor = (d, take) => {
+        if (free.length) return take ? free.pop() : free[free.length - 1];
+        let far = null, farKey = 0, farD = d;
+        for (const [k, held] of live) {
+          const hd = nearSq(held.cx, held.cz, ex, ez);
+          if (hd > farD) { farD = hd; far = held; farKey = k; }
         }
-      }
-      for (const item of want) {
-        const { d, cx, cz, key } = item;
-        if (budget <= 0) break;
-        if (!item.st && !catchUp && d > wholeR2) {   // PERF-EXT22: a rim cell on a walk
-          if (pending || sliced) continue;           // one slice a frame
-          const st = beginGrassCell(cx, cz, { perCell, seed, cell, originX: gx, originZ: gz });
-          sliced = true;
-          if (!stepGrassCell(st, GRASS_SLICE, ask)) { pending = { d, cx, cz, key, st }; continue; }
-          item.st = st;   // a cell no bigger than a slice is done in one
-        }
-        let slot = free.pop();
-        if (slot === undefined) {
-          // AUDIT PERF10 F1: A BOUND CAN BE WRONG; A HOLE MUST NOT BE
-          // ABLE TO SURVIVE IT. `slots` is discSlotCount's swept answer,
-          // and the first draft of that sweep was two cells short - at
-          // which point this loop simply broke and the cell stayed
-          // unplaced for as long as the eye stood there. `want` is
-          // sorted nearest-first, so the nearest waiting cell takes the
-          // farthest standing one's slot; when every slot already holds
-          // something nearer there is nothing to gain and the walk
-          // stops. The invariant is not "the bound is right" but THE
-          // FIELD HOLDS THE NEAREST `slots` CELLS, which no bound can
-          // break.
-          let far = null, farKey = 0, farD = d;
-          for (const [k, held] of live) {
-            const hd = nearSq(held.cx, held.cz, ex, ez);
-            if (hd > farD) { farD = hd; far = held; farKey = k; }
-          }
-          if (!far) break;
-          renderer.clearSlot(far.slot); live.delete(farKey); slot = far.slot;
-        }
+        if (!far) return undefined;
+        if (take) { renderer.clearSlot(far.slot); live.delete(farKey); }
+        return far.slot;
+      };
+      const t0 = clock();
+      const gap = Number.isFinite(lastT) ? Math.min(t0 - lastT, GRASS_FRAME_GAP_MS) : 0;   // the frame, measured
+      lastT = t0;
+      const budgetMs = Math.max(frameMs, gap * GRASS_FRAME_SHARE);   // the time the due may take this frame
+      let budget = perFrame, wholeMs = 0;   // the cells written this frame, at most; what its last whole cell cost, placed and written
+      const write = ({ key, cx, cz }, slot, placed) => {
         budget--;
-        renderer.writeSlot(slot, item.st ?? placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, slope: slopeNow, perCell, height, seed, cell, originX: gx, originZ: gz }));   // PERF-EXT21; PERF-EXT22: or the rim cell its slices finished
+        renderer.writeSlot(slot, placed);   // PERF-EXT22: a whole cell, or the rim cell its slices finished
         live.set(key, { slot, cx, cz });
+      };
+      // the cells inside the fade's start: whole - the frame's first always, the next while it fits
+      for (const item of want) {
+        if (item.d > wholeR2 || budget <= 0) break;   // nearest first, and none behind: the inner cells are the sort's head
+        if (budget < perFrame && clock() - t0 + wholeMs > budgetMs) break;
+        const slot = slotFor(item.d, true);
+        if (slot === undefined) return missing;   // every slot holds a nearer cell
+        const s = clock();
+        wholeSpare = placeLabGrassCell(item.cx, item.cz, { keep: keepNow, ground: groundNow, slope: slopeNow, perCell, height, seed, cell, originX: gx, originZ: gz, reuse: wholeSpare });   // PERF-EXT21; OW-HITCH: into the last whole cell's arrays (written below before the next is placed)
+        write(item, slot, wholeSpare);
+        wholeMs = clock() - s;
       }
+      // the rim: the cell in progress, the cells the deadlines' pace reaches, the cells due now, then the rest by deadline
+      // (an inner cell the frame's time left waits for the next frame, whole)
+      const ask = { keep: keepNow, ground: groundNow, slope: slopeNow, height };
+      const late = want.filter((w) => w.d > wholeR2 && w.d <= dueR2 && !w.back);   // due now, and the step not leaving them
+      const rim = want.filter((w) => w.d > dueR2 || (w.d > wholeR2 && w.back));   // a deadline to come, or none: what the step leaves
+      let owed = 0, need = 0, now = late.length > 0;   // the candidates owed in this order, the least pace meeting every deadline, a cell due now
+      // a deadline of `due` frames leaves ceil(due) updates before the step that brings the cell inside - this one
+      // and the rest - so the pace is the owed over those; a cell inside already is due now
+      const owe = (d2, back, n) => { owed += n; const due = dueIn(d2, back); if (due === 0) now = true; else need = Math.max(need, owed / Math.ceil(due)); };
+      if (pending) { const pd = nearSq(pending.cx, pending.cz, ex, ez); owe(pd, behind(pending.cx, pending.cz, pd), perCell - pending.st.i); }
+      for (const w of rim) owe(w.d, w.back, perCell);
+      // AUDIT FB1021B F1: the cells due now come after the rim cells this frame's pace reaches - the cell in progress's
+      // rest and as many whole cells as the pace's candidates - and before the rest, so the pace lands where it is owed
+      let head = 0;
+      for (let o = pending ? perCell - pending.st.i : 0; head < rim.length && o < need; head++) o += perCell;
+      rim.splice(head, 0, ...late);
+      let cur = pending, ri = 0, done = 0, first = budget === perFrame, paced = 0;   // the slice a frame - on a frame no whole cell took; the time the pace past it took
+      pending = null;
+      while (budget > 0) {
+        if (!first && done >= need && !(now && clock() - t0 - paced < budgetMs)) break;   // one slice a frame; past it the deadlines' pace - with a cell due now, the frame's time past it
+        if (!cur) {
+          if (ri >= rim.length || slotFor(rim[ri].d, false) === undefined) break;   // AUDIT PERF10 F1: nothing begun that no slot would take
+          const w = rim[ri++];
+          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: gx, originZ: gz, reuse: rimSpare });   // OW-HITCH: into the last rim cell's arrays - begun only when none is in progress
+          cur = { ...w, st: rimSpare };
+        }
+        const st = cur.st, i0 = st.i;
+        const timed = now && !first && done < need, s = timed ? clock() : 0;   // a step of the pace while a cell is due now: not the frame's time's
+        const finished = stepGrassCell(st, first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);
+        first = false;
+        done += st.i - i0;
+        if (timed) paced += clock() - s;
+        if (!finished) continue;
+        const slot = slotFor(nearSq(cur.cx, cur.cz, ex, ez), true);
+        if (slot === undefined) { cur = null; break; }   // a nearer cell took the last slot meanwhile: begun again from the world as it stands
+        write(cur, slot, st);
+        cur = null;
+      }
+      pending = cur;   // the cell begun and not done, carried to the next frame
       // AUDIT PERF10 F5: what was MISSING when this update began - not
       // what is still missing now. GR5's comment said "pending" and the
       // number never meant that; the one caller ignores it and the pin
@@ -2073,7 +2211,6 @@ export class LabGrassRenderer {
     if (this.slotSpan) this.slotSpan[slot] = xSpan;
     const hFloor = heightFloor(this.height), hSpan = Math.max(1e-6, heightSpan(this.height));
     const A = this._packA, B = this._packB, C = this._packC;
-    A.fill(0); B.fill(0); C.fill(0);
     const u16 = (v) => Math.max(0, Math.min(65535, Math.round(v * 65535)));
     const u8 = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
     // AUDIT MEADOW1: THE MEADOW'S CARDS, which stand taller and reach wider than any blade: the tallest blade of the run
@@ -2109,11 +2246,18 @@ export class LabGrassRenderer {
       C[i * 4 + 3] = u8(ph / 6.283185307179586);
     }
     if (this.slotCardH) { this.slotCardH[slot] = cardH; this.slotCardRise[slot] = n > 0 ? Math.max(0, cardTop - y1) : 0; this.slotCardTilt[slot] = cardTilt; }   // AUDIT MEADOW1: over the box's own top, so a shift moves nothing here; and the steepest ground a card of it is sheared to
-    for (let k = 0; k < this._lanes.length; k++) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[k]);
-      gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k]);
+    // OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): ONLY THE BLADES THAT STOOD GO
+    // UP. A slot draws its first `slotCount` blades and never one past them (_drawVisibleSlots instances the count, and
+    // the prefix inside it), so the pad behind them is bytes no draw reads - and a write into a buffer the last frame
+    // drew from is one the driver may have to wait on or copy. A cell on a road or a shore is mostly pad; an empty one
+    // uploads nothing. The lanes the draw reads are the bytes they were.
+    if (n > 0) {
+      for (let k = 0; k < this._lanes.length; k++) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[k]);
+        gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k], 0, n * 4);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
   /** PERF-EXT21: the floating origin moved by `offset` - every standing
@@ -2131,19 +2275,15 @@ export class LabGrassRenderer {
     }
   }
 
-  /** GR5: a cell leaves - its heights go to zero, and h=0 draws nothing. */
+  /** GR5: a cell leaves - its slot draws nothing from here. OW-HITCH: and nothing is uploaded for it. A slot is drawn
+   *  only with a box and a count (_drawVisibleSlots: no box, no draw; GRASS2: no blade past `slotCount`), so the zeros
+   *  this wrote over its heights were never read - GRASS5 had already said the count, not the zeros, kept it off the
+   *  GPU. They were a bufferSubData a cell: the Overworld coming down frees every cell the journey left behind in one
+   *  frame (the eye is kilometres on), and the real game stood 4.6 s in that frame's zeros. The next cell written into
+   *  the slot writes every blade it draws (writeSlot). */
   clearSlot(slot) {
-    const gl = this.gl; const p = this.perCell;
     if (this.slotBox) this.slotBox[slot] = null;   // PERF2
     if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2
-    // GRASS5: zeroing A zeroes the packed HEIGHT, and a blade of the
-    // cell's height FLOOR still draws - so a cleared slot is also
-    // dropped by slotCount, which is what really keeps it off the GPU.
-    // AUDIT GRASS-LIT2 A3: and the zero word's slope is level (stored XOR 15).
-    if (!this._zeros || this._zeros.length !== p * 4) this._zeros = new Uint16Array(p * 4);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[0]);
-    gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * 8, this._zeros);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
   /** the lab's draw. `light` = {sunDir, amb, sunCol, dim}; `wind` = {dir, speed, windV, sway} (AUDIT MEADOW1: `sway`

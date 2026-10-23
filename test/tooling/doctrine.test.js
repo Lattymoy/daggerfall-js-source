@@ -87,6 +87,13 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/fonts/opendyslexic/OFL.txt', 'TEXT-FONT: the font\'s SIL Open Font License, which travels with it'],
   ['public/art/gun-idle.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
+  ['public/art/pistol-frames.png', "OURS - the owner's own six fire frames for the pistol lab (2026-10-21), laid side by side with their pixels unchanged; no ARENA2 pixel in it"],
+  ['public/art/pistolet-icon.png', "OURS - the owner's own Dwarven Pistolet sprite (PISTOLET, 2026-10-21), its 24x17 pixels recovered from the owner's screenshot; the inventory picture as it is; no ARENA2 pixel in it"],
+  ['public/art/pistolet-paperdoll.png', "OURS - pistolet-icon.png with the fist's gap cut across its grip, flipped left to right and tilted barrel-down toward the other hand (RotSprite, no new colour) by tools/pistoletArt.mjs (the right hand's doll layer); no ARENA2 pixel in it"],
+  ['public/art/pistolet-paperdoll-left.png', "OURS - pistolet-icon.png with the fist's gap cut across its grip and tilted barrel-down (RotSprite, no new colour) by tools/pistoletArt.mjs (the left hand's doll layer); no ARENA2 pixel in it"],
+  ['public/art/pistolet-icon-gilded.png', "OURS - pistolet-icon.png laid on the gold-leaf ramp by tools/pistoletArt.mjs (tools/gunIcons.mjs gild - the Sunken Sovereign's); no ARENA2 pixel in it"],
+  ['public/art/pistolet-paperdoll-gilded.png', "OURS - pistolet-paperdoll.png in gold leaf by tools/pistoletArt.mjs; no ARENA2 pixel in it"],
+  ['public/art/pistolet-paperdoll-left-gilded.png', "OURS - pistolet-paperdoll-left.png in gold leaf by tools/pistoletArt.mjs; no ARENA2 pixel in it"],
   ['public/art/gun-paperdoll.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19), baked down and cut for the doll's hand by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
   ['public/art/gun-ammo.png', "OURS - Mac's own ammunition art for the gun lab (2026-09-19), baked down by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
   // THUNDERLOCK-ART + GILDED1 (2026-10-07): the gun's list picture and the Hourlock's gold pair, each DERIVED from the
@@ -459,6 +466,10 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Pellet_Shot.fbx', "OURS - Mac's own Blender export of the Dwarven Thunderlock, committed so the two files below are a DERIVATION the gate can re-run rather than a blob"],
   ['src/assets/mw/meshes/thunderlock.nif', "OURS - Mac's own Dwarven Thunderlock model, baked to a Morrowind NIF by tools/nifWrite.mjs; a Bethesda format, no Bethesda data"],
   ['src/assets/mw/textures/thunderlock.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs (position, normal and cast occlusion); no image input, no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/meshes/pistolet.nif', "OURS - the Dwarven Pistolet modelled part by part by tools/modelPistolet.mjs and written by tools/nifWrite.mjs (PISTOLET-MODEL); a Bethesda format, no Bethesda data"],
+  ['src/assets/mw/textures/pistolet.dds', "OURS - that model's atlas, painted from its own surface by tools/modelPistolet.mjs; no ARENA2 or Morrowind pixel in it"],
+  ['src/assets/mw/meshes/pistolet_gilded.nif', "OURS - the same model as pistolet.nif (the Sunken Sovereign's twin), naming its own texture, by tools/bakePistolet.mjs; a Bethesda format, no Bethesda data"],
+  ['src/assets/mw/textures/pistolet_gilded.dds', "OURS - that model's atlas painted in gold leaf by tools/modelPistolet.mjs; no ARENA2 or Morrowind pixel in it"],
   ['src/assets/mw/meshes/thunderlock_gilded.nif', "OURS - the same baked mesh as thunderlock.nif (GILDED1, the Hourlock's twin), naming its own texture, by tools/bakeThunderlock.mjs; a Bethesda format, no Bethesda data"],
   ['src/assets/mw/textures/thunderlock_gilded.dds', 'OURS - generated from that mesh\'s own geometry by tools/meshTexture.mjs on its gold-leaf bands (GILDED_BANDS); no image input, no ARENA2 or Morrowind pixel in it'],
   // MW-BRIG1 (2026-09-29): the Steel Brigandine, the port's own worn
@@ -864,6 +875,10 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
 const VE4_DERIVED = "Port-Doctrine's one exception (Mac, 2026-10-05): Daggerfall's own textures, repainted by the mod's author, carried on Mac's approval";
 /** ALIKR1 / SNOWFALL1: the second exception's mark - the desert's and the winter's ground, its own approval. */
 const ENVIRONS_DERIVED = "Port-Doctrine's second exception (Mac, 2026-10-08): Daggerfall's own desert and winter ground tiles, repainted by the packs' authors, carried on Mac's approval";
+/** LAYERED-GEAR: the third exception's mark - the game's own worn armor, drawn from Daggerfall's sprites, its own approval. */
+const LAYERED_DERIVED = "Port-Doctrine's third exception (the owner, 2026-10-19): the Layered Gearing look's armor, drawn for the game from Daggerfall's own class and enemy sprites, carried on the owner's approval";
+/** DEX0: the fourth exception's mark (the third on its branch, renumbered past LAYERED-GEAR's at the merge) - Daggerfall's own enemy and class sprites under the authors' paint, its own approval. */
+const DEX_DERIVED = "Port-Doctrine's fourth exception (Mac, 2026-10-19): Daggerfall's own enemy and enemy-class sprites, repainted by the mods' authors, carried on Mac's approval";
 const BUNDLE_ART = new Map([
   // FORAGE1 (2026-09-28): Foraging's seven pictures - the author's own
   // pixel art (tools, a wood bundle, an egg), no Daggerfall record - taken
@@ -940,9 +955,14 @@ const BUNDLE_ART = new Map([
   // tools/classSkinsListing.mjs proves the bytes. The first cut of this slice ran the suite BEFORE `git add` and
   // shipped without this row - AUDIT-TO1 F3's trap again; the art is not ARENA2's (redrawn at twice the size, under
   // archive numbers past TEXTURE.511 that the mods' art uses).
+  // DEX0 (2026-10-19, Mac: "Bring under 3rd exception"): the row above said these were redrawn at twice the size and not
+  // ARENA2's. Measured silhouette for silhouette against every TEXTURE record (the way tools/dexExtract.mjs measures the
+  // enemy mod's), most of them are Daggerfall's own enemy-class sprites (TEXTURE.477-490) at their own size, under the
+  // artists' paint - the bounty hunter (1504) is the very sheet Daggerfall Enemy Expansion ships. So the row says what
+  // the pack is, and Port-Doctrine's fourth exception names its directory.
   ['vendor/class-skins/Textures/',
-    { manifest: 'vendor/class-skins/class-skins.files.json',
-      why: "THIRD-PARTY - Daggerfall class skins (Mac's ExistingClasses archive; the artists unnamed but the bounty hunter's, Kamer); twenty redrawn enemy-class sprite sheets, byte for byte from the archive under the names class-skins.files.json maps (see vendor/class-skins/README.md for the open permission record)" }],
+    { manifest: 'vendor/class-skins/class-skins.files.json', derived: DEX_DERIVED,
+      why: "THIRD-PARTY - Daggerfall class skins (Mac's ExistingClasses archive; the artists unnamed but the bounty hunter's, Kamer), carried on Mac's word of the artists' permission; twenty enemy-class sprite sheets, most of them Daggerfall's own class sprites under the artists' paint, byte for byte from the archive under the names class-skins.files.json maps (see vendor/class-skins/README.md for the open permission record)" }],
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
       why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
@@ -986,6 +1006,22 @@ const BUNDLE_ART = new Map([
   ['public/art/snowfall/',
     { manifest: 'vendor/snowfall/snowfall.files.json', derived: ENVIRONS_DERIVED,
       why: "THIRD-PARTY - Snowfall 1.0.5 (demifiend000), carried on Mac's word of the author's permission; the 168 winter ground records its bundle packages (TEXTURE.103, .303, .403 - Daggerfall's winter tiles under the author's snow), its snow albedo and its three surface masks, decoded losslessly from the bundle's Texture2D and TextAsset objects (see vendor/snowfall/README.md)" }],
+  // LAYERED-GEAR (2026-10-19, the owner: "Approve as an exception"): THE THIRD EXCEPTION - the worn-armor strips, the
+  // cloak layer and the hood fixes, DFO's own work but drawn from Daggerfall's sprites, so derived. No bundle ships a
+  // manifest for them: the folder answers to the listing tools/layered-armor/listing.mjs writes (every picture, its sha256).
+  ['vendor/layered-armor/',
+    { manifest: 'vendor/layered-armor/layered-armor.files.json', derived: LAYERED_DERIVED,
+      why: "OURS - Layered Gearing (DFO, made for the game), carried under the owner's third exception; the worn-armor strips of both bodies, the cloak layer and the hood fixes, drawn from Daggerfall's class sprites 1540/1541 and the enemy frames of TEXTURE.475-490 - the 7,369 PNGs its listing names (see vendor/layered-armor/README.md)" }],
+  // DEX0 (2026-10-19, Mac: "I want to implement this as our next mod 1:1"): DAGGERFALL ENEMY EXPANSION's pictures, in two
+  // directories by what they are, each answering to the listing tools/dexExtract.mjs writes (every name and its sha256)
+  // after measuring every picture against every TEXTURE record: the authors' own renders, and the repaints the fourth
+  // exception carries. The 858 that ARE Daggerfall's records are in neither - the player's own files rebuild them.
+  ['public/art/daggerfall-enemy-expansion/',
+    { manifest: 'vendor/daggerfall-enemy-expansion/daggerfall-enemy-expansion.files.json',
+      why: "THIRD-PARTY - Daggerfall Enemy Expansion 1.3.4 (Kamer & Kab), carried on Mac's word of the authors' permission; the authors' own enemy sprites and emission maps (Kamer's renders and his own drawings, Kab's classes, the 1995 demo's four), re-encoded from the bundle's Texture2D objects by tools/dexExtract.mjs as indexed PNG where the picture fits one, none of them a picture any TEXTURE record covers, and none of their archives one that follows Daggerfall's sprites' outlines but the demo's Bat (the extractor's silhouette guard; see vendor/daggerfall-enemy-expansion/README.md)" }],
+  ['public/art/daggerfall-enemy-expansion-repainted/',
+    { manifest: 'vendor/daggerfall-enemy-expansion/repainted.files.json', derived: DEX_DERIVED,
+      why: "THIRD-PARTY - Daggerfall Enemy Expansion 1.3.4 (Kamer & Kab), carried on Mac's word of the authors' permission; Daggerfall's own sprites under the authors' paint - the Bounty Hunter, the Royal Knight, the Druid, the Necromancer Acolyte, the Rogue Druid, the four riders' new sets and King Lysandus - byte for byte from the bundle (see vendor/daggerfall-enemy-expansion/README.md)" }],
   // WINDFALL1: the mod's own three pictures - leaves and a snowflake, the author's pixels (no Daggerfall record).
   ['vendor/windfall/Textures/',
     { manifest: 'vendor/windfall/windfall.files.json',
@@ -1038,7 +1074,7 @@ test('doctrine EOTB0: a vendored bundle\u2019s art is the art its own manifest n
     const names = bundleNames(dir);
     const here = tracked('.').filter((f) => f.startsWith(dir));
     assert.ok(here.length > 0, `${dir} has a row and no files - a claim about art that is not there`);
-    assert.ok(rec.why.startsWith('THIRD-PARTY'), `${dir} must say whose art it is`);
+    assert.match(rec.why, /^(THIRD-PARTY|OURS) - /, `${dir} must say whose art it is`);   // LAYERED-GEAR: the game's own, derived
 
     // Nothing under the directory that the bundle did not ship. This is
     // the arm that makes the directory row safe: it is not "anything
@@ -1080,21 +1116,26 @@ test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both
 // approved: the doctrine's exception paragraph names the directory, and a
 // derived row anywhere else, or a named directory with no row, reddens.
 const DOCTRINE = 'bible/01-Overview/Port-Doctrine.md';
-/** The directories Port-Doctrine's exception paragraph names - every backticked `public/` path on its line. */
+/** The directories Port-Doctrine's exception paragraphs name - every backticked `public/` or `vendor/` path on their lines. */
 function exceptionDirs() {
-  // ALIKR1/SNOWFALL1: every exception paragraph's line - THE ONE EXCEPTION (Vanilla Enhanced) and THE SECOND EXCEPTION
-  const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND) EXCEPTION\b/.test(l));
-  return lines.flatMap((line) => [...line.matchAll(/`(public\/[^`]+\/)`/g)].map((m) => m[1]));
+  // ALIKR1/SNOWFALL1: every exception paragraph's line - THE ONE EXCEPTION (Vanilla Enhanced) and THE SECOND EXCEPTION;
+  // LAYERED-GEAR: and THE THIRD, whose art sits under vendor/ (the build reaches it through a glob, as Eye of the Beholder's)
+  // DEX0: and THE FOURTH, whose class skins live under vendor/ (the player body's sprite index reads them there)
+  const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND|THIRD|FOURTH) EXCEPTION\b/.test(l));
+  return lines.flatMap((line) => [...line.matchAll(/`((?:public|vendor)\/[^`]+\/)`/g)].map((m) => m[1]));
 }
 /** The mark each directory's approval gave it: Vanilla Enhanced's rows the first exception's, the environment packs' the
- *  second's - a row in one exception wearing the other's mark is a row approved by the wrong approval. */
-const markFor = (dir) => (dir.startsWith('public/art/vanilla-enhanced/') ? VE4_DERIVED : ENVIRONS_DERIVED);
+ *  second's, Layered Gearing's the third's, the enemies' and the class skins' the fourth's - a row in one exception
+ *  wearing another's mark is a row approved by the wrong approval. */
+const markFor = (dir) => (dir.startsWith('public/art/vanilla-enhanced/') ? VE4_DERIVED
+  : dir.startsWith('vendor/layered-armor/') ? LAYERED_DERIVED
+  : dir.startsWith('public/art/daggerfall-enemy-expansion-repainted/') || dir.startsWith('vendor/class-skins/') ? DEX_DERIVED : ENVIRONS_DERIVED);
 /** The derived rows standing outside every directory the exception names. */
 const derivedOutside = (rows, dirs) => [...rows].filter(([dir, r]) => r.derived && !dirs.some((d) => dir.startsWith(d))).map(([dir]) => dir);
 
 test('doctrine VE4: a derived row stands inside the exception Port-Doctrine records, and every row inside it says it is derived', () => {
   const dirs = exceptionDirs();
-  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/'], 'the doctrine names three directories, under two approvals');
+  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/', 'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/', 'vendor/class-skins/Textures/'], 'the doctrine names six directories, under four approvals');
   assert.deepEqual(derivedOutside(BUNDLE_ART, dirs), [], 'repainted game data outside the approved directory');
   for (const d of dirs) assert.ok([...BUNDLE_ART].some(([dir, r]) => r.derived && dir.startsWith(d)), `${d} is approved and no row carries it`);
   // and inside it nothing passes as the port's own: every row there says what it is

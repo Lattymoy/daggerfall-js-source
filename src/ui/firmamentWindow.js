@@ -87,6 +87,15 @@ export const FIRM_CSS = `
 .fmt-root { position: fixed; inset: 0; z-index: 14; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
 .fmt-root.fmt-embed { position: absolute; z-index: auto; }   /* GROWTH3: drawn in the pause window's Growth tab, the stage's size */
 .fmt-root.fmt-embed .fmt-bar h2 { display: none; }   /* GROWTH3: the rail names the page */
+/* GROWTH-BOOK: in the tab the sky's words stand left of its side panel - the help line wraps there, never cut at both
+   ends, and the birthsign line is centred over the sky, not under the panel */
+@media (min-width: 761px) {
+  .fmt-root.fmt-embed .fmt-side { width: 280px; }
+  .fmt-root.fmt-embed .fmt-hint { left: 12px; right: 304px; transform: none; white-space: normal; max-width: none; text-align: center; line-height: 1.4; }
+  .fmt-root.fmt-embed .fmt-say { left: calc((100% - 292px) / 2); max-width: calc(100% - 316px); }
+  .fmt-root.fmt-embed:has(.fmt-side.shut) .fmt-hint { right: 12px; }
+  .fmt-root.fmt-embed:has(.fmt-side.shut) .fmt-say { left: 50%; max-width: calc(100% - 32px); }
+}
 .fmt-root canvas.fmt-sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 .fmt-root canvas.fmt-sky.drag { cursor: grabbing; }
 .fmt-root canvas.fmt-sky.over { cursor: pointer; }
@@ -195,7 +204,7 @@ function ensureStyle(doc) {
 /** What a star is called by kind, as its card says it. */
 export function kindWords(n) {
   const ring = n.ring === 'life' ? 'life' : 'combat';
-  if (n.kind === 'start') return n.key === `${SERPENT.id}.start` ? t('firmament.kind.signCentre', 'Birthsign, in the centre') : t('firmament.kind.sign', 'Birthsign');
+  if (n.kind === 'start') return n.key === `${SERPENT.id}.start` ? t('firmament.kind.signCentre', 'Birthsign, in the center') : t('firmament.kind.sign', 'Birthsign');
   if (n.kind === 'keystone') return t('firmament.kind.keystone', '{ring, select, life {Craft keystone} other {Combat keystone}}', { ring });
   if (n.kind === 'notable') return t('firmament.kind.notable', '{ring, select, life {Craft notable} other {Combat notable}}', { ring });
   return n.kind === 'road' ? t('firmament.kind.road', '{ring, select, life {Craft} other {Combat}} · {name}', { ring, name: n.name })
@@ -308,7 +317,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   const undoBtn = btn(t('firmament.discard', 'Discard changes'), '', () => { pending = cloneTree(committed); refresh(); say(t('firmament.say.discarded', 'Changes discarded.')); });
   const goBtn = btn(t('firmament.accept', 'Accept'), 'fmt-go', () => openConfirm());
   const sideBtn = btn(t('firmament.summary', 'Summary'), '', () => { side.classList.toggle('shut'); });
-  const signBtn = btn(t('firmament.signBtn', 'Birthsign'), '', () => focusSign(), t('firmament.signAria', 'Centre on your birthsign'));
+  const signBtn = btn(t('firmament.signBtn', 'Birthsign'), '', () => focusSign(), t('firmament.signAria', 'Center on your birthsign'));
   const respecBtn = btn(t('firmament.respecBtn', 'Respec'), '', () => openRespec(), t('firmament.respec.tip', 'Remove all your stars and your birthsign for {gold, number} gold.', GOLD));
   const shareBtn = btn(t('firmament.shareBtn', 'Share'), '', () => openShare(), t('firmament.shareAria', 'Copy your build code, or load one'));
   const exitBtn = btn(t('firmament.close', 'Close'), 'fmt-exit', () => close());
@@ -320,7 +329,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   tip.setAttribute('data-grim', 'ink');
   const coarse = !!globalThis.matchMedia?.('(pointer: coarse)')?.matches;   // AUDIT UICALM-FIRM1 L4 H1: a finger's words
   const hint = el('div', 'fmt-hint', coarse ? t('firmament.hintTouch', 'Tap a star to see it, tap again to learn it and the stars on the way · Hold a learned star to remove it · Drag to pan · Pinch to zoom')
-    : t('firmament.hint', 'Click a star to learn it and the stars on the way · Right-click a learned star to remove it · Drag to pan · Scroll to zoom · F: centre on your birthsign'));
+    : t('firmament.hint', 'Click a star to learn it and the stars on the way · Right-click a learned star to remove it · Drag to pan · Scroll to zoom · F: center on your birthsign'));
   hint.setAttribute('data-grim', 'ink');
   const sayBox = el('div', 'fmt-say');
   sayBox.setAttribute('data-grim', 'ink');
@@ -433,7 +442,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     const sign = pending.start ? signById(pending.start.split('.')[0]) : null;
     const parts = [];
     parts.push(el('h3', null, sign ? sign.name : t('firmament.side.noSign', 'No birthsign chosen')));
-    parts.push(el('p', 'fmt-sign', sign ? sign.lore : t('firmament.side.chooseSign', 'Click one of the seven large stars to choose your birthsign. The Serpent, in the centre, can reach every part of the sky.')));
+    parts.push(el('p', 'fmt-sign', sign ? sign.lore : t('firmament.side.chooseSign', 'Click one of the seven large stars to choose your birthsign. The Serpent, in the center, can reach every part of the sky.')));
     for (const ring of /** @type {const} */ (['combat', 'life'])) {
       parts.push(el('h3', null, ring === 'combat' ? t('firmament.side.combat', 'Combat') : t('firmament.side.craft', 'Crafting and trade')));
       const ul = el('ul');
@@ -689,7 +698,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (st.error === 'firm-closed') return t('firm.readFail.closed', 'The Firmament is turned off on this server for now, so your stars can\'t be loaded.');
     if (st.error === 'no-session') return t('firm.readFail.session', 'Sign in to see your stars.');
     if (st.error === 'offline') return t('firm.readFail.offline', 'The server didn\'t answer, so your stars couldn\'t be loaded. Try again in a moment.');
-    if (st.status === 404) return t('firm.readFail.missing', 'This server doesn\'t have the Firmament yet (404). Its account service needs an update. Your stars are not lost.');
+    if (st.status === 404) return t('firm.readFail.missing', 'This server doesn\'t have the Firmament yet. Your stars are not lost.');
     return t('firm.readFail.other', 'Your stars couldn\'t be loaded (the server answered {why}). The points shown are not your real totals.', { why: st.status ?? st.error });
   }
   async function commit() {

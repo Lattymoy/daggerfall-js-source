@@ -20,10 +20,11 @@
 // marks' row, the bar clear of the crosshair.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, ATTACKS, PHASE_AT, profileOf, HOST, isDagons } from '../../net/gate/gateBrain.js';
+import { ATTACK_BY_ID, ATTACKS, PHASE_AT, profileOf, HOST, isDagons, VG_STAGES, HALF, SUNDER_LAST, sunders, wardTakes, captiveSpent } from '../../net/gate/gateBrain.js';
+import { t } from '../../systems/textManager.js';   // WB14c: the Vanguard's line in the player's language (L10N4)
 import { telegraphAt } from '../../net/gate/gateStrike.js';
 import { countdownText } from '../../net/gate/gateLaw.js';
-import { attackColor, crystalColor, STUN_COLOR, WARD_COLOR } from '../../world/gate/gateBoss.js';
+import { attackColor, crystalColor, STUN_COLOR, WARD_COLOR, emberColor, halfName } from '../../world/gate/gateBoss.js';
 import { GATE_RING_CSS } from './gateMapMark.js';
 import { marksViewOf, markIconHtml } from './gateMarksView.js';   // WB9a: the night's marks under his health, each its sign and name
 import { stepGhost } from '../barLoss.js';   // WB13c: the trailing damage segment, the vitals' own
@@ -65,7 +66,28 @@ export const BOSS_BAR_TEXT = Object.freeze({
   // saw them rise); the rest of his host standing, in the foot
   bearers: (left, n) => `Ward-Bearers - ${n > left ? `${left} of ${n}` : left} ${left === 1 ? 'stands' : 'stand'}`,
   host: (n) => `His host: ${n}`,
+  // WB14c: his Vanguard holding the approach - its platform and its wave (read through the text core - L10N4)
+  vanguard: (stage, w, of) => t('gate.bar.vanguard', 'The Vanguard - {stage}, wave {w} of {of}', { stage, w, of }),
+  vanguardHolds: (stage) => t('gate.bar.vanguardHolds', 'The Vanguard - {stage}', { stage }),   // AUDIT WB14 (TEXT-15): a platform before its first wave
+  stages: () => [t('gate.bar.bridgehead', 'Bridgehead'), t('gate.bar.muster', 'Muster')],
+  // WB14d: a half's line on its own track - kneeling and its seconds, warded, or alone (and mending)
+  kneels: (secs) => t('gate.bar.kneels', 'Kneels - {secs}s', { secs }),
+  halfWarded: () => t('gate.bar.halfWarded', 'Warded'),
+  alone: () => t('gate.bar.alone', 'Alone'),
+  // WB14f: the Captive's - his gaolers standing, then the Covenant's ward over the court until it takes a Reckoning
+  gaolers: (n) => t('gate.bar.gaolers', 'Gaolers: {n}', { n }),
+  ward: () => t('gate.bar.ward', 'The Covenant\'s ward'),
 });
+
+/** WB14d: the bar's line for half `b` of a sundered state at `now` - its kneel's seconds, its ward, its being alone - or ''. Pure. */
+export function halfState(s, b, now) {
+  const S = s?.sd;
+  if (!S) return '';
+  const kn = S.kn[b] | 0, su = b === HALF.flame ? S.fl.su : s.stunUntil, sh = b === HALF.flame ? S.fl.sh : s.shieldUntil;
+  if (kn > 0 && now < su) return BOSS_BAR_TEXT.kneels(Math.max(0, Math.ceil((su - now) / 1000)));
+  if (now < sh) return BOSS_BAR_TEXT.halfWarded();
+  return S.lo[b] ? BOSS_BAR_TEXT.alone() : '';
+}
 
 const css = (c) => `rgb(${Math.round(c[0] * 255)}, ${Math.round(c[1] * 255)}, ${Math.round(c[2] * 255)})`;
 const WARD_CSS = css(WARD_COLOR);
@@ -100,6 +122,16 @@ export const BOSS_BAR_CSS = `
 .wb-boss-ward { position: absolute; inset: -2px; border: 2px solid rgba(255,220,130,0.95); box-shadow: 0 0 12px rgba(255,210,120,0.85);
   opacity: 0; transform: scale(1.04); transition: opacity 160ms ease-out, transform 160ms ease-out; }
 .wb-boss-bar.warded .wb-boss-ward { opacity: 1; transform: scale(1); }
+.wb-boss-halves { display: flex; gap: 12px; margin: 1px 0 3px; }
+.wb-boss-half { flex: 1 1 0; min-width: 0; text-align: left; }
+.wb-boss-half.flame { text-align: right; }
+.wb-boss-half-name { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wb-boss-half-track { position: relative; height: 7px; margin: 2px 0 1px; border: 1px solid rgba(255,120,60,0.45); background: rgba(20,4,2,0.72); }
+.wb-boss-half-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: linear-gradient(180deg, #ff7a3a 0%, #c81e0c 55%, #6e0a04 100%); transition: width 250ms cubic-bezier(.2,.7,.3,1); }
+.wb-boss-half.flame .wb-boss-half-fill { left: auto; right: 0; }
+.wb-boss-half.kneels .wb-boss-half-track { border-color: rgba(160,180,255,0.8); box-shadow: 0 0 8px rgba(150,170,255,0.6); }
+.wb-boss-half.warded .wb-boss-half-track { border-color: rgba(255,220,130,0.95); box-shadow: 0 0 8px rgba(255,210,120,0.7); }
+.wb-boss-half-state { font-size: 11px; min-height: 13px; letter-spacing: 0.06em; color: #d9b9a0; font-variant-numeric: lining-nums tabular-nums; }
 .wb-boss-bar.warded .wb-boss-fill { filter: saturate(0.45) brightness(0.8); }
 .wb-boss-bar.wbreak .wb-boss-track { animation: wb-ward-break ${FLASH_MS.wardBreak}ms ease-out; }
 @keyframes wb-ward-break { from { box-shadow: 0 0 0 2px #fff, 0 0 22px 6px rgba(255,244,214,0.95); } }
@@ -150,6 +182,13 @@ export const BOSS_BAR_CSS = `
 .wb-boss-bar.sea .wb-boss-fill { background: linear-gradient(180deg, #4fe0c0 0%, #1a8a86 55%, #0b3a4a 100%); }
 .wb-boss-bar.sea .wb-boss-tag { background: rgba(2,14,18,0.55); border-color: rgba(90,210,190,0.25); }
 .wb-boss-bar.sea .wb-boss-wrath { color: #ffd2a0; border-color: rgba(255,160,80,0.55); }
+/* STAR6: a fallen star's master - the same readout in the star's violet (its model's \`theme\`, ui/starfall/starBar.js) */
+.wb-boss-bar.star { color: #e6defa; }
+.wb-boss-bar.star .wb-boss-name { color: #c9b6ff; text-shadow: 0 0 3px #000, 0 0 10px rgba(150,110,255,0.55); }
+.wb-boss-bar.star .wb-boss-sub { color: #b7a9d8; }
+.wb-boss-bar.star .wb-boss-track { border-color: rgba(170,140,255,0.55); background: rgba(12,6,24,0.75); }
+.wb-boss-bar.star .wb-boss-fill { background: linear-gradient(180deg, #c7b0ff 0%, #7a52e0 55%, #2c1660 100%); }
+.wb-boss-bar.star .wb-boss-tag { background: rgba(12,6,24,0.55); border-color: rgba(170,140,255,0.25); }
 @media (max-width: 640px) {
   .wb-boss-bar { top: 72px; }
   .wb-boss-marks { column-gap: 10px; }
@@ -177,39 +216,51 @@ export const BOSS_BAR_CSS = `
  * @param {{ name: string, title: string }} boss net/gate/gateLaw.js gateBossOf
  * @param {string|null} [aimed] the name of the blow still to land on my feet
  */
-export function bossBarModel(s, now, boss, aimed = null) {
+export function bossBarModel(s, now, boss, aimed = null, { flame = null, flameMine = false } = {}) {
   if (!s || s.day === null || !boss) return null;
   const P = profileOf(s);
   const frac = s.fell ? 0 : s.max > 0 ? Math.max(0, Math.min(1, s.hp / s.max)) : 1;
-  const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
-  const tel = A ? telegraphAt(atk, s.phase, now) : null;
-  let callout = !s.fell && A && tel && !tel.over ? { text: P.atk[A.key].name, color: css(attackColor(A, P)), t: now < atk.at ? tel.t : 1, dagon: isDagons(A), move: !!aimed && aimed === P.atk[A.key].name } : null;
+  // WB14d: sundered, the callout is the blow of the half whose court I stand in - his Flame's when I stand in its alone
+  const C = flameMine && flame ? flame : s, PC = C === s ? P : profileOf(C);
+  const atk = C.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
+  const tel = A ? telegraphAt(atk, C.phase, now) : null;
+  let callout = !s.fell && A && tel && !tel.over ? { text: PC.atk[A.key].name, color: css(attackColor(A, PC)), t: now < atk.at ? tel.t : 1, dagon: isDagons(A), move: !!aimed && aimed === PC.atk[A.key].name } : null;
   // WB9c: the Reckoning winding up says what is left to break and how long there is; a stun says itself
   if (!s.fell && A === ATTACKS.reckon && tel && now < atk.at && s.cx) {
     let left = 0;
     for (const q of s.cx.c) if (q[2] > 0) left++;
-    callout = { text: BOSS_BAR_TEXT.reckon(P.atk.reckon.name, left, s.cx.c.length, Math.ceil((atk.at - now) / 1000)), color: css(crystalColor(P)), t: tel.t, dagon: true, move: false };
-  } else if (!s.fell && s.wrath == null && now < (s.stunUntil ?? 0)) callout = { text: BOSS_BAR_TEXT.stunned(Math.ceil((s.stunUntil - now) / 1000)), color: css(STUN_COLOR), t: null, dagon: false, move: false };
+    callout = { text: BOSS_BAR_TEXT.reckon(P.atk.reckon.name, left, s.cx.c.length, Math.ceil((atk.at - now) / 1000)), color: css(wardTakes(s.cp, atk) ? WARD_COLOR : crystalColor(P)), t: tel.t, dagon: true, move: false };   // WB14f: in the ward's gold, the one it takes
+  } else if (!s.fell && s.wrath == null && now < (s.stunUntil ?? 0) && !s.sd) callout = { text: BOSS_BAR_TEXT.stunned(Math.ceil((s.stunUntil - now) / 1000)), color: css(STUN_COLOR), t: null, dagon: false, move: false };   // WB14d: a half's kneel is said on its own track
   // WB11c: his Ward-Bearers holding his ward say themselves where nothing of his is being wound up
-  let bearers = 0, others = 0;
-  for (const a of s.lg?.ads ?? []) { if (a.k === HOST.bearer) bearers++; else others++; }
+  let bearers = 0, others = 0, gaolers = 0;
+  for (const a of s.lg?.ads ?? []) { if (a.k === HOST.bearer) bearers++; else if (a.k === HOST.gaoler) gaolers++; else if (a.k !== HOST.tithe) others++; }   // WB14e: the Tithe-Imp is no host of his; WB14f: the gaolers the Captive's
   if (!s.fell && s.wrath == null && bearers > 0 && now < s.shieldUntil && !callout) callout = { text: BOSS_BAR_TEXT.bearers(bearers, s.lg?.ward?.n ?? bearers), color: css(WARD_COLOR), t: null, dagon: false, move: false };
   const toWrath = Number.isFinite(s.wrathAt) ? s.wrathAt - now : Infinity;
   const toReckon = !s.fell && s.wrath == null && s.phase >= 3 && s.rk > now ? s.rk - now : null;
   const since = s.fell ? now - (Number.isFinite(s.fell.at) ? s.fell.at : now) : 0;
   const alpha = s.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;
   const view = P.md ? marksViewOf(P.md) : null;   // WB9a: the row under his health - made once a marks array
+  // WB14d: SUNDERED, the halves side by side under his health - each one's name, its pool, its line (its kneel, its ward,
+  // its being alone); and a Sundering night's last mark where his last stand begins
+  const S = !s.fell && s.wrath == null ? s.sd ?? null : null;
+  const halves = S ? [HALF.blade, HALF.flame].map((b) => ({
+    name: halfName(b, P, boss.name), frac: S.m > 0 ? Math.max(0, Math.min(1, S.h[b] / S.m)) : 0, state: halfState(s, b, now),
+    kneels: (S.kn[b] | 0) > 0, warded: now < (b === HALF.flame ? S.fl.sh : s.shieldUntil), color: b === HALF.flame ? css(emberColor(P)) : '',
+  })) : null;
   return {
-    name: boss.name, title: boss.title, frac, marks: [...PHASE_AT], phase: s.phase,
+    name: boss.name, title: boss.title, frac, marks: sunders(s) ? [PHASE_AT[0], SUNDER_LAST] : [...PHASE_AT], phase: s.phase, halves,
     spent: PHASE_AT.map((_, i) => s.phase > i + 1),   // WB13c: the marks he has passed
     epithet: P.md ? P.aspect.epithet : '', trials: P.trialsLine,   // AUDIT PRE-MERGE 0929 W2-2: joined once, on the profile
     epithetColor: view?.aspect.color ?? null, marksView: view,
-    warded: !s.fell && now < s.shieldUntil, fallen: !!s.fell, callout,
+    warded: !s.fell && now < s.shieldUntil && !(halves && !halves.every((h) => h.warded)), fallen: !!s.fell, callout,   // WB14d: sundered, his whole warded only while both halves are
     wrath: !s.fell && s.wrath == null && toWrath <= WRATH_WARN_MS ? BOSS_BAR_TEXT.wrathIn(countdownText(toWrath)) : null,
     wrathNear: !s.fell && s.wrath == null && toWrath <= WRATH_NEAR_MS,
     fighters: s.fighters | 0,
     reckonIn: toReckon !== null ? BOSS_BAR_TEXT.reckonIn(countdownText(toReckon)) : null,   // WB9c
-    host: !s.fell && s.wrath == null && others > 0 ? BOSS_BAR_TEXT.host(others) : null,   // WB11c: the rest of his host standing
+    host: !s.fell && s.wrath == null && s.vg && s.vg[0] < 2 ? (s.vg[1] > 0 ? BOSS_BAR_TEXT.vanguard(BOSS_BAR_TEXT.stages()[s.vg[0]], s.vg[1], VG_STAGES[s.vg[0]].waves.length) : BOSS_BAR_TEXT.vanguardHolds(BOSS_BAR_TEXT.stages()[s.vg[0]]))   // AUDIT WB14 (TEXT-15): no wave counted before one has risen
+      : !s.fell && s.wrath == null && gaolers > 0 ? BOSS_BAR_TEXT.gaolers(gaolers)   // WB14f: the Captive's gaolers, then his ward over the court
+      : !s.fell && s.wrath == null && s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now) ? BOSS_BAR_TEXT.ward()
+      : !s.fell && s.wrath == null && others > 0 ? BOSS_BAR_TEXT.host(others) : null,   // WB11c: the rest of his host standing; WB14c: his Vanguard's progress in its place
     alpha: Math.round(alpha * 20) / 20, now,
     low: !s.fell && frac > 0 && frac < LOW_HEALTH,   // WB13e: the bar pulses
   };
@@ -221,7 +272,7 @@ let root = null, parts = null;
 const SHOWN = () => ({ vis: '', name: null, sub: null, subColor: null, marks: null, marksTheme: null, spent: null, ticks: null, spentAt: null, spentNew: null, marksAt: null,
   frac: -1, ghost: -1, g: null, at: null, warded: null, breakAt: null, rootCls: null,
   callout: null, calloutColor: null, calloutCls: null, calloutT: -1, inAt: null, outAt: null, dagon: false, move: false,
-  tags: [null, null, null, null], wrathNear: null, hostNear: null, alpha: -1, introAt: null });
+  tags: [null, null, null, null], wrathNear: null, hostNear: null, alpha: -1, introAt: null, halves: null });
 let shown = SHOWN();
 
 function build(doc) {
@@ -269,9 +320,19 @@ function build(doc) {
   const foot = part('wb-boss-foot');
   const tags = ['wb-boss-tag', 'wb-boss-tag wb-boss-host', 'wb-boss-tag', 'wb-boss-tag wb-boss-wrath'].map((cls) => { const t = part(cls, 'span'); t.style.display = 'none'; return t; });
   foot.append(...tags);
-  root.append(name, sub, track, marks, callout, foot);
+  // WB14d: THE HALVES, side by side under his health while he is sundered - each its name, its track and its line
+  const halves = part('wb-boss-halves');
+  const half = ['blade', 'flame'].map((k) => {
+    const h = part(`wb-boss-half ${k}`), hname = part('wb-boss-half-name'), htrack = part('wb-boss-half-track'), hfill = part('wb-boss-half-fill'), hstate = part('wb-boss-half-state');
+    htrack.append(hfill);
+    h.append(hname, htrack, hstate);
+    halves.append(h);
+    return { root: h, name: hname, fill: hfill, state: hstate, key: k };
+  });
+  halves.style.display = 'none';
+  root.append(name, sub, track, marks, callout, foot, halves);   // WB14d: the halves under it all (the parts before keep their places)
   (doc.body ?? doc.documentElement)?.append(root);
-  parts = { name, sub, marks, chips, ghost, fill, ward, ticks, callout, calloutText, move, calloutLine, foot, tags };
+  parts = { name, sub, marks, chips, ghost, fill, ward, ticks, callout, calloutText, move, calloutLine, foot, tags, halves, half };
 }
 
 /** WB9a: one chip of the marks' row - a mark's sign and name (the aspect's in its colour) - or hidden (no mark for it). */
@@ -348,8 +409,23 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
   if (cls !== shown.rootCls) { shown.rootCls = cls; root.className = cls; }
   const alpha = model.alpha ?? 1;
   if (alpha !== shown.alpha) { shown.alpha = alpha; root.style.opacity = alpha < 1 ? String(alpha) : ''; }
+  // WB14d: THE HALVES - written when they change (each one's name, share, line and state), hidden while he is whole
+  const hv = model.halves ?? null;
+  const hkey = hv ? hv.map((h) => `${h.name}|${Math.round(h.frac * 1000)}|${h.state}|${h.kneels ? 1 : 0}${h.warded ? 1 : 0}|${h.color}`).join('#') : '';
+  if (hkey !== shown.halves) {
+    shown.halves = hkey;
+    parts.halves.style.display = hv ? '' : 'none';
+    if (hv) parts.half.forEach((p, i) => {
+      const h = hv[i];
+      p.name.textContent = h.name;
+      p.name.style.color = h.color;
+      p.fill.style.width = `${(h.frac * 100).toFixed(1)}%`;
+      p.state.textContent = h.state;
+      p.root.className = `wb-boss-half ${p.key}${h.kneels ? ' kneels' : ''}${h.warded ? ' warded' : ''}`;
+    });
+  }
   // THE CALLOUT - WB13c: in on a change, out over CALLOUT_OUT_MS, a line filling to its landing, Dagon's on a plate
-  const text = model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen : model.callout ? model.callout.text : model.warded ? BOSS_BAR_TEXT.warded : '';   // AUDIT SD III (T10): a fight's own word for its fall (the Hour's "Undone")
+  const text = model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen : model.callout ? model.callout.text : model.warded ? model.wardedText ?? BOSS_BAR_TEXT.warded : '';   // AUDIT SD III (T10): a fight's own word for its fall (the Hour's "Undone"); AUDIT STAR U3: and for its ward (the star's master's, in the player's language)
   const color = model.fallen ? model.ringCss ?? GATE_RING_CSS : model.callout ? model.callout.color : model.warded ? WARD_CSS : model.ringCss ?? GATE_RING_CSS;   // SERPENT1: the sea's ring colour
   if (text) {
     shown.outAt = null;

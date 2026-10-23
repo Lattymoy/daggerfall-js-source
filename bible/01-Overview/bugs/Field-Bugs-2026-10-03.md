@@ -116,6 +116,10 @@ guards' lines are unchanged (tools/mutants/auditpace.json quotes them). `test/sy
 
 ## BODYGUARD-CLOSE (6)
 
+[RAVEN-CLOSE, FIELD BUGS 2026-10-21d: the start-up closing is read as the quest stands, at run time - the clock's own task
+and every `when` its end sets off alone with what is set now: this reading saw the clock's own task alone, and B0B81Y02's
+`_2dung_` closes through a `when` - `01-Overview/bugs/Field-Bugs-2026-10-21d.md`.]
+
 `systems/quest/clock.js` closesStartUp, QUIET_CLOSE, `isDeadline`. A0C01Y01 (The Bodyguard): `_questdone_` pays on
 `when _clickqgiver_ and _slain_`, and the script's one `end quest` is `_timer_` (1.03:00), started by the start-up block
 - offline (and in DFU) the paid quest stands in the journal until that day and three hours run out. TIMEFREE reads

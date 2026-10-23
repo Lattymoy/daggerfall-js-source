@@ -171,11 +171,11 @@ as a CHAMPION, with one TRAIT:
 
 | trait | does |
 |---|---|
-| Mighty | its blows land half again as hard |
-| Stalwart | half again its health, on top of a champion's double |
+| Mighty | its blows hit 50% harder |
+| Stalwart | it has 50% more health, on top of a champion's double |
 | Swift | thirty more Speed (at most 100): it closes and attacks sooner |
-| Vampiric | half of what its blows take from you heals it |
-| Thorned | your blows that land on it hurt you back, a seventh of them |
+| Vampiric | it heals for half the damage it deals you |
+| Thorned | your hits on it hurt you for a seventh of their damage |
 
 Every champion has twice its health and its blows a quarter harder (damageScale, multiplied - never overwriting an
 elite's). Its name is the trait's and its own - `Mighty Orc Warlord` - on the HUD's target bar, its corpse and its
@@ -489,6 +489,19 @@ same holds for a Rare that carries one.
 
 **Seen.** `lootHudChips` - Flow's and Bedrock's stacks, Dawnward's charges, a recovery running - beside the sets' chips
 (`scenes/world.js` hands the HUD both, line-neutral), in the Legendary's orange (`ui/enhanced/enhancedHud.js`).
+
+**A reach says its harm** (FIELD BUGS 2026-10-19f CHAIN-SEEN; a player's private report: a Legendary bow's Chain Lightning
+shows nothing). The arc landed - half the shaft, as shock, on the nearest other foe within 6 m - through that foe's own
+pool's door, which runs no formula, so HN1's numbers (`10-UI/UI-Arc.md`) never heard it: no number, no word, while
+`again()`'s follow-up beside it raised its own since ROSE-SEEN. Every reach of a blow on another foe was the same
+omission - Earthshaker's quake, Dragonfire's burst - and Dragonfire's own second burn rose untagged. Each lands through
+one door now (`lootPowers.js:"function reachOn(door, f, n, word) {"`), its number risen and tagged with its power's name
+(`showFollowUp`), before the foe takes it; enhanced only, as HN1 is. NOT the same omission, left: thorns, an affix line
+that answers a foe's blow where its attacker stands (as the sets' Spite of the Spurned does), not a reach of my blow at the
+reticle - a number of its own is the owner's call; and the arcane paths' arcs (`arcanePowers.js` - Rift Lance, the
+Elementalist's own Chain Lightning, Blood Boil, Dawnbolt's burn), the same silence outside this page.
+Pinned: `test/systems/fb1019f_chainseen.test.js` (2); `tools/mutants/fb1019f_chainseen.json` (9, all dead); `gilded2.json`'s
+four Dragonfire records re-aimed by content (all dead).
 
 **What it moved.** SET5's pin on the HUD's wiring reads both lists; five mutant records whose anchors the arc's edits
 moved were re-aimed by content (DISC29-B's unguarded name, SET3's import and its fall, SET5's chips, LOOT4's focus
@@ -914,8 +927,8 @@ half and a seventh, each at least 1 a blow - the floor is what lifts both on sma
   its on me, mine on it, through formulas.js's struck and strike tails under their own name (`CHAMPIONS_SAID`), the
   seams every pool already shares (the dungeon's, the street's, a building's, a puppet's), so no host stands it - says
   two rows on the line every skin draws (`notify.js` `popupMessage`, DaggerfallUI.PopupMessage, the line "%s just
-  died." is said on; the first producer to walk that door): `Mighty Orc stands as a champion.` and `Its blows land
-  half again as hard.` Once per champion (a rebuild or a load is a new one); never a plain foe, a blow on a peer's copy
+  died." is said on; the first producer to walk that door): `Mighty Orc stands as a champion.` and `Its blows hit
+  50% harder.` Once per champion (a rebuild or a load is a new one); never a plain foe, a blow on a peer's copy
   (another player's screen is theirs) or a peer's blow. The longest row, the Thorned's at 60 characters, measures about
   225 px in FONT0003's own advances (the `grimoire-ui` SDF cut of it, 4 px to an `a`) - inside the classic line's 320,
   which centres a row and never wraps it. On the enhanced skin each row is a toast (ENH-NOTICE3).
@@ -1043,14 +1056,19 @@ opens - the sigils' own five (`sigil.js` `renownSigilStage`: Renown 1, 10, 20, 3
 
 | Renown | the buff | items kept | blue at level 0 | healing (a foe / a pile) | Restore Power (a foe / a pile) | rest supplies |
 |---|---|---|---|---|---|---|
-| 1-9 | half | 62.5% | 4.5% | 8 / 15 | 3 / 5 | half LOOT-EASE's |
-| 10-19 | three quarters | 68.75% | 4.75% | 9 / 16.5 | 4.5 / 7.5 | three quarters |
-| 20-29 | all | 75% | 5% | 10 / 18 | 6 / 10 | LOOT-EASE's |
-| 30-39 | five quarters | 81.25% | 5.25% | 11 / 19.5 | 7.5 / 12.5 | five quarters |
-| 40-50 | half again | 87.5% | 5.5% | 12 / 21 | 9 / 15 | half again |
+| 1-9 | half | 62.5% | 4.5% | 3 / 6 | 1 / 2 | half LOOT-EASE's |
+| 10-19 | three quarters | 68.75% | 4.75% | 3.5 / 7 | 1.5 / 3 | three quarters |
+| 20-29 | all | 75% | 5% | 4 / 8 | 2 / 4 | LOOT-EASE's |
+| 30-39 | five quarters | 81.25% | 5.25% | 4.5 / 9 | 2.5 / 5 | five quarters |
+| 40-50 | half again | 87.5% | 5.5% | 5 / 10 | 3 / 6 | half again |
 
 The live game before LOOT-EASE: 50% kept, 4% blue, 6 / 12 healing, no Restore Power, no rest supply online. Every
-stage is above it, and Renown 40 is under the loot before PLAIN-LOOT (section 18).
+stage is above it but the two potions, and Renown 40 is under the loot before PLAIN-LOOT (section 18). POT-THIN
+(2026-10-21, `06-Systems/Professions-Arc.md` section 48, the owner: "decrease pot drops") cut the potion columns BELOW
+the live game's on purpose - a crafter's bottle is the supply now, the drop a windfall - so the healing ladder's step
+starts at an invented 2 / 4 (`healingSupply.js` HEALING_ENEMY_CHANCE_BEFORE, HEALING_PILE_CHANCE_BEFORE), not the live
+game's 6 / 12; it was 8 / 15 to 12 / 21, and Restore Power 3 / 5 to 9 / 15 (AUDIT CRAFT-WRITS T7: the table stood at its
+old numbers).
 
 **What stays whole at every stage.** What LOOT-EASE fixed rather than tuned: a foe's worn kit rolls the plain ladder at
 its death (KIT-ROLL - every foe's since AUDIT 625, section 21), the cap keeps a supply before plain gear
@@ -1080,7 +1098,8 @@ seed's other loot is the same loot at every Renown; only what each roll decides 
 bodies a cell, a plain Warrior at level 8: 1.11 pieces a body at Renown 1 (26.5% gold alone), 1.21 at 10, 1.30 at 20
 (18.7%; offline the same), 1.39 at 30, 1.46 at 40 (13.2%); a Potion of Healing on 5.8% / 7.9% / 10.1% of them at
 Renown 1 / 20 / 40, Restore Power on 2.2% / 4.3% / 8.2%, a rest supply on 2.4% / 7.1% / 11.0%. A skeleton's body 0.46 /
-0.59 / 0.75 pieces.
+0.59 / 0.75 pieces. (The potions' shares were measured before POT-THIN; at its chances a foe's healing potion and Restore
+Power fall to some two fifths and one third of them.)
 
 Pinned: `test/systems/renownloot.test.js` (6 - the stage and its door, the table, the keep through the real spawn, the kit at
 death, the supplies through the real hooks with their draws counted, the hosts). Moved: `test/systems/rf2_spawnloot.test.js`

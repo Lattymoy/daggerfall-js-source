@@ -99,6 +99,16 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   assert.match(rd('vendor/better-ambience/LICENSE'), /^MIT License/);
   const shipped = JSON.parse(rd('vendor/better-ambience/modsettings.json'));
   const PORT_DEFAULT = Object.freeze({ 'Better Footsteps.enable': false, 'Dungeon Lighting.enableFogAmbientEffect': false });   // the two departures (modSettings.js says why; BA2 the second)
+  // PLAIN-TEXT (2026-10-19): the mod's lines that read as notes to a developer, said plainly for a player - their words, exactly
+  const PLAIN = {
+    'Better Footsteps.enable': 'Plays Better Ambience’s own footstep sounds',
+    'Dungeon Fog.enableFog': 'Gives each dungeon its own random fog',
+    'Dungeon Fog.maxFogDistance': 'How far past its start the fog can reach, at most',
+    'Dungeon Fog.minFogDistance': 'How far past its start the fog reaches, at least',
+    'Dungeon Fog.maxFogStart': 'Furthest from you the fog can start',
+    'Dungeon Fog.minFogStart': 'Nearest to you the fog can start',
+    'Dungeon Lighting.enableFogAmbientEffect': 'Lights each dungeon in the color of its fog',
+  };
   let n = 0; const kinds = new Set();
   for (const section of shipped.Sections) {
     for (const k of section.Keys) {
@@ -113,8 +123,9 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
       else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
       else assert.fail(`${name}: a key kind the mod does not ship (${kind})`);
-      if (k.Description) assert.equal(def.description, k.Description, `${name}'s description is the mod's own`);
+      if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
       else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
+      if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
     }
   }
   assert.equal(n, 20, 'six sections, twenty keys');
@@ -135,7 +146,7 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   assert.ok(row); assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(row.effect, /^Takes effect at once/); assert.equal(row.group, 'world');
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k}`);
   const credit = CREDITS.mods.find((c) => c.vendor.includes(V));
-  assert.ok(credit); assert.equal(credit.version, '0.1.4'); assert.equal(credit.author, 'Joshua Steinhauer'); assert.match(credit.terms, /MIT/); assert.match(credit.terms, /no twin/);
+  assert.ok(credit); assert.equal(credit.version, '0.1.4'); assert.equal(credit.author, 'Joshua Steinhauer'); assert.match(credit.terms, /MIT/); assert.match(credit.terms, /Its rain and snow particle changes are not included\./);
   const readme = rd('vendor/better-ambience/README.md');
   assert.match(readme, /Better Ambience 0\.1\.4/); assert.match(readme, /MIT/); assert.match(readme, /Permission/); assert.match(readme, /0\.1\.5/, 'the Nexus label');
   assert.match(rd('bible/01-Overview/Mod-Registry.md'), /\| `better-ambience` \|/);

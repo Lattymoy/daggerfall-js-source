@@ -215,7 +215,7 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     episodes: 0, flips: 0, holds: 0,   // counted, for the pins
   };
   /** The caller-owned shapes, made once (steerDrive fills `input`). */
-  const input = { key: null, x: 0, z: 0, tx: 0, tz: 0, yaw: 0, goal: Infinity, reach: 0, quantum: 0, asked: 0, manual: false };
+  const input = { key: null, x: 0, z: 0, tx: 0, tz: 0, yaw: 0, goal: Infinity, reach: 0, quantum: 0, asked: 0, manual: false, pathed: false };
   const output = { yaw: 0, forward: 1, stop: null, deflected: false };
   /** This frame's reading of the line - scratch, so the helpers below are
    *  made once rather than closed over afresh every frame. */
@@ -397,8 +397,12 @@ export function createTravelSteer(params = TRAVEL_STEER) {
 
     // 3. THE WAY WANTED. On the line with no detour running: the mod's own
     // bearing, exactly. Otherwise the pursuit point PURSUIT ahead on it.
+    // OW-ROAD-TRUE / OW-TOWN-WALK: a leg that walks a line (a road's lane, a
+    // street's runs) pursues it itself, every frame (travelAutopilot.js
+    // pathPursuit) - its bearing IS the way back to its line, and this one's
+    // line (from where the leg began) is not the road's.
     f.want = inp.yaw;
-    if (s.episode || Math.abs(f.lat) > P.onLine) {
+    if (!inp.pathed && (s.episode || Math.abs(f.lat) > P.onLine)) {
       const ahead = len > 1e-6 ? Math.min(len, f.along + P.pursuit) : f.along + P.pursuit;
       const ax = s.ox + f.ux * ahead - inp.x, az = s.oz + f.uz * ahead - inp.z;
       if (ax * ax + az * az > 1e-8) f.want = Math.atan2(ax, az);
@@ -411,7 +415,7 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     const reach = Math.max(0, inp.reach);
     const need = reach + P.standoff;
     const look = Math.max(P.minLook, P.lookFrames * reach) + P.standoff;
-    const lookWant = Math.min(look, Math.max(0, inp.goal) + P.standoff);
+    const lookWant = Math.min(look, Math.max(0, inp.goal) + (inp.pathed ? 0 : P.standoff));   // AUDIT OW-REVISITED L1-3: a line's run is walked TO its end
     f.reachFan = Math.min(look, P.feelerMax);
     const pass = P.standoff + P.minStep;
     const keep = Math.max(pass, 0.5 * Math.min(need, f.reachFan));
@@ -548,15 +552,24 @@ export function steerDrive(steer, drive, worldX, worldZ, autopilot, frame, probe
   const inp = steer.input;
   inp.key = autopilot;
   inp.x = worldX / r; inp.z = worldZ / r;
-  inp.tx = autopilot.destinationCentre.x / r;
-  inp.tz = autopilot.destinationCentre.z / r;
-  inp.goal = rectDistance(autopilot.destinationWorldRect, worldX, worldZ) / r;
+  const to = autopilot.steerTarget ?? autopilot.destinationCentre;   // OW-TOWN-WALK: a line's leg, the run it is on
+  inp.tx = to.x / r;
+  inp.tz = to.z / r;
+  inp.pathed = !!autopilot.path;   // OW-ROAD-TRUE / OW-TOWN-WALK: the drive's bearing already keeps the line
+  // AUDIT OW-REVISITED L1-3: a line's leg asks its corridor to the run's end - a street turns BECAUSE a building stands
+  // at the corner, and nine metres asked along the run's bearing past it was a detour begun at every corner
+  inp.goal = (inp.pathed ? Math.hypot(to.x - worldX, to.z - worldZ) : rectDistance(autopilot.destinationWorldRect, worldX, worldZ)) / r;
+  inp.manual = !!frame.strafe;   // TRAVEL-STRAFE: the hand's sidestep, kept
+  // AUDIT OW-REVISITED L2-5: TRAVEL-STRAFE ON A LINE'S LEG - the leg pursues its line every frame, so a held strafe was
+  // pulled back toward it before the steering ever saw the hand (TRAVEL-STRAFE's own bug again: a dozen metres out at
+  // most). While the key is held the run's own bearing is walked, the body beside the line where the hand put it; let go,
+  // the road is the route (OW-ROAD-TRUE) and the pursuit takes it back
+  if (inp.manual && inp.pathed && autopilot.runYaw != null) drive.yaw = autopilot.runYaw;
   inp.yaw = drive.yaw * DEG;
   const force = Math.max(0, drive.forward);
   inp.reach = travelFrameReach(frame.speed, frame.dt, frame.scale) * force;
   inp.quantum = Math.max(0, frame.speed) * Math.max(0, frame.scale) * FIXED_DT * force;
   inp.asked = frame.asked;
-  inp.manual = !!frame.strafe;   // TRAVEL-STRAFE: the hand's sidestep, kept
   const out = steer.step(inp, probe, steer.output);
   if (out.deflected) drive.yaw = out.yaw / DEG;
   drive.forward *= out.forward;

@@ -34,8 +34,8 @@
   {
     "name": "ANY-HOUR-the-net-line-by-daylight",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "`Fishing is done in water: stand in it,",
-    "new": "`Fishing is done in water by daylight: stand in it,",
+    "old": "`Fishing is done in water: stand or swim in it,",
+    "new": "`Fishing is done in water by daylight: stand or swim in it,",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js",
       "test/systems/fb0930b_toolsaid.test.js"
@@ -44,8 +44,8 @@
   {
     "name": "ANY-HOUR-the-page-by-daylight",
     "file": "src/ui/professions/profPages.js",
-    "old": "stand at sea, at any hour. Hold",
-    "new": "stand at sea, by daylight. Hold",
+    "old": "or aboard a ship, at any hour. Hold",
+    "new": "or aboard a ship, by daylight. Hold",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js"
     ]

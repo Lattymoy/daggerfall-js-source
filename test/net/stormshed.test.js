@@ -21,7 +21,7 @@ import { CLOSE_POLICY } from '../../src/net/wire.js';
 import { createTownSeatBook, SEAT_WATCH_RETRY_MS, SEAT_WATCH_CLAIM_EVERY_MS } from '../../src/net/townSeatBook.js';
 import { SEAT_WATCH_CLAIM_MAX, seatReportText } from '../../src/net/townSeatLaw.js';
 import { mintWatchReceipt } from '../../src/net/watchReceipt.js';
-import { listSeats, confirmedSeats, witnessSeat, strikeSeat, SEAT_ROWS_KEPT_S } from '../../server-account/src/townSeats.js';
+import { listSeats, confirmedSeats, witnessSeat, strikeSeat, SEAT_ROWS_KEPT_S, SEAT_ROWS_SQL, SEAT_JUDGED_SQL } from '../../server-account/src/townSeats.js';
 import { claimWatch } from '../../server-account/src/seatInfluence.js';
 import { countedDb } from '../../server-account/src/metrics.js';
 import { d1, standService, T0 } from '../accountDb.mjs';
@@ -253,7 +253,7 @@ test('STORM-SHED B: a Watch claim that failed waits SEAT_WATCH_RETRY_MS before t
 const ENV = { SEATS_OPEN: 'on', DEVELOPER_HANDLES: 'Devra' };
 const ANTICLERE = { key: 3021, name: 'Anticlere', region: 21, tier: 'palace', pixel: [402, 151] };
 const ALCAIRE = { key: 3022, name: 'Alcaire', region: 21, tier: 'palace', pixel: [410, 160] };
-const WITNESS_SQL = "SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'";
+const seatRead = (sql) => sql === SEAT_ROWS_SQL || sql === SEAT_JUDGED_SQL;   // LEAN-WITNESS (PIN MOVED): the rows the law judges by are a read of them
 
 /** The service's database with three witnesses agreeing on Anticlere, its seat witness reads counted - and, `gate.hold`
  *  set, each such read held until `gate.release()`. */
@@ -268,7 +268,7 @@ async function seatsDb() {
   const db = Object.create(base);
   db.prepare = (sql) => {
     const st = base.prepare(sql);
-    if (sql !== WITNESS_SQL) return st;
+    if (!seatRead(sql)) return st;
     c.n++;
     return { all: async () => { const r = await st.all(); if (gate.hold) await new Promise((res) => { gate.release = res; }); return r; } };
   };

@@ -14,7 +14,7 @@
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (WB).
 import { sharedClassicMinutes, wallMsForClassicMinutes } from '../wire.js';
-import { GATE_ASPECTS, GATE_TRIALS, readGateMods } from './gateMods.js';   // WB8b: the Warden's marks, drawn by the day
+import { GATE_ASPECTS, GATE_TRIALS, readGateMods, GATE_DIRE, gateDireLine, CAPTIVE_NAMES, validGatePortents, portentOf } from './gateMods.js';   // WB8b: the Warden's marks, drawn by the day; WB14b: and the night's portents
 
 /** Classic minutes in a game day (gameDate.js MINUTES_PER_DAY - pinned equal; not imported, the relay's graph stays flat). */
 export const GATE_DAY_MINUTES = 1440;
@@ -315,6 +315,69 @@ export function gateModsOf(day) {
   const c = marksCycle(), g = gateIndex(day);
   return c[((g % c.length) + c.length) % c.length];
 }
+
+// ═══ WB14b: THE PORTENTS' BAG ═════════════════════════════════════════
+//
+// (2026-10-19, bible/11-Multiplayer/Breach-Portents.md section 1.) A night's portents are drawn by its place among the
+// gates that can carry one - every gate but a Legion-Lord night (his host is tied to his courts and phases: the Vanguard
+// would put two hosts in one fight, the Sundering two of him for his Sappers to walk at). Every other one of those
+// carries one, so no two gates running ever share a portent and none is lost to the trial that excludes it; WHICH one is
+// a shuffle bag - the provinces' law (pickGateRegion): each round of six brings the Vanguard twice, the Sundering twice,
+// the Captive once and the Dire Breach once, in an order the round's own rolls shuffle.
+
+/** WB14b: the stream the portents' bag is shuffled on (the provinces' is 11, the marks' 12-15). */
+export const PORTENT_BAG_KEY = 16;
+/** WB14b: one round of the bag - `dire` the Vanguard and the Sundering together (net/gate/gateMods.js GATE_DIRE). */
+export const PORTENT_BAG = Object.freeze(['vanguard', 'vanguard', 'sunder', 'sunder', 'captive', 'dire']);
+/** WB14b: may a gate's marks carry a portent - any but a Legion-Lord night's. */
+export const marksCarryPortent = (md) => !(Array.isArray(md) && md.includes('legion'));
+/** WB14b: how many gates of one cycle of marks before each of its places can carry a portent (the last entry the cycle's
+ *  whole count). Made once. @type {number[]|null} */
+let _carriers = null;
+function carriersBefore() {
+  if (_carriers) return _carriers;
+  const c = marksCycle(), pre = [0];
+  for (let i = 0; i < c.length; i++) pre.push(pre[i] + (marksCarryPortent(c[i]) ? 1 : 0));
+  return (_carriers = pre);
+}
+/**
+ * WB14b: A NIGHT'S PORTENTS - null for none, else its ids (net/gate/gateMods.js GATE_PORTENTS: one, or the Dire Breach's
+ * two), from the day alone: the relay draws a fight's with it (net/gate/gateBrain.js newFight), every screen and the herald
+ * say it before the gate opens.
+ * @param {number} day
+ * @returns {ReadonlyArray<string>|null}
+ */
+export function gatePortentsOf(day) {
+  if (!isGateDay(day)) return null;
+  const c = marksCycle(), L = c.length, g = gateIndex(day), pos = ((g % L) + L) % L, q = Math.floor(g / L);
+  if (!marksCarryPortent(c[pos])) return null;
+  const pre = carriersBefore(), n = q * pre[L] + pre[pos];
+  if (((n % 2) + 2) % 2 === 1) return null;   // every other carrier
+  const k = n / 2, round = Math.floor(k / PORTENT_BAG.length), at = k - round * PORTENT_BAG.length;
+  const id = PORTENT_BAG[shuffledRound(round, PORTENT_BAG_KEY, PORTENT_BAG.length)[at]];
+  return id === 'dire' ? GATE_DIRE : _portentOne(id);
+}
+const _onePortent = new Map();
+const _portentOne = (id) => { let a = _onePortent.get(id); if (!a) { a = Object.freeze([id]); _onePortent.set(id, a); } return a; };
+
+/** WB14e: THE TITHE-IMP - one night in TITHE_ONE_IN, unannounced (bible/11-Multiplayer/Breach-Portents.md section 9). */
+export const TITHE_ONE_IN = 5;
+/** WB14e: it rises this long after his wake at the soonest, and up to TITHE_SPREAD_MS later, by the day's roll. */
+export const TITHE_AFTER_MS = 50_000;
+export const TITHE_SPREAD_MS = 100_000;
+/** WB14e: when a night's Tithe-Imp rises, ms after his wake - null on a night with none. */
+export const gateTitheOf = (day) => (isGateDay(day) && gateRoll(day, 21) % TITHE_ONE_IN === 0 ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000 : null);
+/** WB14f: the night's captive knight - by his place in net/gate/gateMods.js CAPTIVE_NAMES (CAPTIVE_DAMES says a Dame's), and
+ *  by name. */
+export const captiveIndexOf = (day) => gateRoll(day, 23) % CAPTIVE_NAMES.length;
+export const captiveNameOf = (day) => CAPTIVE_NAMES[captiveIndexOf(day)]();
+/** WB14b: the portents said - "His vanguard holds the approach." (the Dire Breach's line before its two); '' for none. */
+export const portentsLine = (pt) => {
+  const ok = validGatePortents(pt);
+  if (!ok) return '';
+  const lines = ok.map((id) => portentOf(id).line);
+  return (ok.length > 1 ? [gateDireLine(), ...lines] : lines).join(' ');
+};
 
 // ═══ THE WORDS ════════════════════════════════════════════════════════
 //

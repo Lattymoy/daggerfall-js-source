@@ -560,8 +560,8 @@
   {
     "name": "HOST-berth-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (boat && w.port && yardHere(boat)) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });",
-    "new": "    if (false) deps.captain?.event?.({ type: 'berth', port: w.port.key, boat: boat.uid ?? null });",
+    "old": "    berths.step(boat, w.port);",
+    "new": "",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "TAB-lede-rank",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    : `${o.port} - ${o.crown}'s harbourmaster. You are ${o.rank === 'Unsworn' ? 'Unsworn' : `${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`} of ${o.crown} (standing ${o.standing}).`;",
-    "new": "    : `${o.port} - ${o.crown}'s harbourmaster.`;",
+    "old": "    : `${o.port} - ${o.crown}'s harbormaster. You are ${o.rank === 'Unsworn' ? 'Unsworn' : `${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`} of ${o.crown} (standing ${o.standing}).`;",
+    "new": "    : `${o.port} - ${o.crown}'s harbormaster.`;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]

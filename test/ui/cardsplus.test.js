@@ -440,7 +440,7 @@ test('CARDS-PLUS the words the panel\'s look added are the player\'s language\'s
       return out;
     });
     const en = shown();
-    for (const w of ['Your deck', 'Play against', 'has paid a card tonight', 'Play for a card', 'The loser pays one from their deck', 'Ranked', 'The season\'s board - your realm character\'s own cards', 'Turn', 'Magicka', 'Committed', 'No cards in hand.']) {
+    for (const w of ['Your deck', 'Play against', 'has paid a card tonight', 'Play for a card', 'The loser pays one from their deck', 'Ranked', 'Counts on the season board. Uses your realm character\'s cards.', 'Turn', 'Magicka', 'Committed', 'No cards in hand.']) {
       assert.ok(en.some((x) => x.words.includes(w)), `the English: ${w}`);
     }
     assert.equal(en[0].fold, 'Collapse the panel', 'AUDIT CARDS-PLUS D5: what the fold does to the panel');

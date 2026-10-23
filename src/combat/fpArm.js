@@ -102,8 +102,9 @@ import { injectSkeletonNodes } from '../formats/morrowind/mwSkin.js';   // WS1: 
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 import { armKickMatrix } from './gun/gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
-import { rifleStanceStep, applyRifleStance } from './gun/rifleStance.js';   // RIFLE-STANCE: a long gun held in the hands - the low ready, the aim
-import { createHipLantern } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there)
+import { rifleStanceStep } from './gun/rifleStance.js';   // RIFLE-STANCE: a long gun held in the hands - the low ready, the aim
+import { holdsGun, applyGunStance } from './gun/gunHold.js';   // PISTOL-STANCE: the hold by the gun's kind - the rifle's or the pistol's
+import { createHipLantern, HIP_LANTERN_HEIGHT } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there); HT-WAIST-SIZE: the one height they hang
 import { createBodyMotion, motionWord } from '../characters/bodyMotion/bodyMotion.js';   // BODY-MOTION: the third-person body's gait, carry and blows
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
@@ -1644,6 +1645,7 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
  *                (Bip01 R Thigh at x 6.6), a little forward, at belt height (the scabbard's own 86.5);
  *   the HANG   - plumb from the hook, not the pelvis's rotation (mwFirstPerson.js hangAffine), times the swing
  *                law (systems/lanternSwing.js) stepped off the body's motion every frame it is drawn;
+ *   the SIZE   - a belt lantern's (hipLanternSize, HT-WAIST-SIZE), whatever size the record's mesh was made at;
  *   the RIG    - the third-person body ALONE: the first-person arms have no hip to hang it on, and a lantern at
  *                the waist is exactly the light the arm does NOT hold.
  *
@@ -1679,14 +1681,24 @@ export function resolveHipLanternPart({ hipLight = false, allLights, find, skele
   hipInfo = { id: rec.id, name: rec.name, model: rec.model, bone: HIP_LIGHT_BONE, fire: !!rec.fire };
   return { parts, hipInfo, notes };
 }
-/** HT-WAIST: a bound hip lantern's hook and anchor, measured once on the assembly it hangs from. Answers the hang
- *  (null when none is bound). */
+/**
+ * HT-WAIST-SIZE (2026-10-20, Mac: "the lantern attached to the waist in absolutely gigantic on the morrowind model"):
+ * THE SCALE A LANTERN'S MESH HANGS AT, from its own height (rig units, mwFirstPerson.js hangAnchor's) - a belt
+ * lantern's, systems/lanternSwing.js HIP_LANTERN_HEIGHT, the height Eye Of The Beholder's picture hangs at. Morrowind
+ * hangs no lantern on a belt: its carriable lanterns are lights made to hang in a street or be held up in a hand, and
+ * HT-WAIST hung the record's mesh at the size its author made it for that - nothing in the hang said how big a
+ * lantern at the waist is. 1 for a part with no height to read.
+ */
+export const hipLanternSize = (height) => (height > 1e-6 ? (HIP_LANTERN_HEIGHT * MW_UNITS_PER_METER) / height : 1);
+/** HT-WAIST: a bound hip lantern's hook, anchor and size, measured once on the assembly it hangs from. Answers the
+ *  hang (null when none is bound). */
 export function hangHipLight(arm) {
   const piece = arm?.pieces?.find((p) => p.slot === HIP_LIGHT_SLOT && p.hang);
   if (!piece) return null;
   const hang = piece.hang;
   hang.hookLocal = hookOnBone(arm, HIP_LIGHT_BONE, HIP_LANTERN_HOOK) ?? [...HIP_LANTERN_HOOK];
   hangAnchor(arm.pieces, hang);
+  hang.size = hipLanternSize(hang.height);   // HT-WAIST-SIZE
   return hang;
 }
 
@@ -1928,7 +1940,10 @@ export function resolveOffWeaponParts({ weapon, allWeapons, find, skeletonBytes,
   if (!carries) {
     return { parts: [], info: null, notes: [...notes, noBoneNote('offweapon', OFF_WEAPON_BONE, r.weaponInfo?.name ?? main.slot)] };
   }
-  return { parts: [{ slot: 'offweapon', bones: [OFF_WEAPON_BONE], bytes: main.bytes }], info: { ...r.weaponInfo, bone: OFF_WEAPON_BONE }, notes };
+  // AUDIT PISTOLET C6: and the weapon's own attitude on its bone - the Pistolet's grip through the fist
+  // (ownWeaponModels.js PISTOL_GRIP_ATTITUDE); the pair's left hung in the raw mesh frame without it. A weapon with none
+  // (every Morrowind record's) is the part it always was.
+  return { parts: [{ slot: 'offweapon', bones: [OFF_WEAPON_BONE], bytes: main.bytes, ...(main.preTransform ? { preTransform: main.preTransform } : {}) }], info: { ...r.weaponInfo, bone: OFF_WEAPON_BONE }, notes };
 }
 
 export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, skeletonBytes, has = null }) {
@@ -1952,7 +1967,7 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
       // Not "your archives do not carry it": ours is SHIPPED, so a miss
       // here is the build's fault and not the player's, and saying so
       // is the difference between a bug report and a wild goose chase.
-      notes.push(`weapon: ${path} ships with the port and did not load - this is a build problem, not your data`);
+      notes.push(`weapon: ${path} comes with the game and did not load. This is a game problem, not your files`);
     } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
       notes.push(noBoneNote('weapon', own.bone, own.name));
     } else {
@@ -3153,8 +3168,8 @@ export async function buildFpArm({
       return {
         ok: false,
         stage: 'camera',
-        error: 'this skeleton has no "Camera" bone and no "Head" bone - '
-          + 'rule 54 has nothing to track',
+        error: 'this skeleton has no "Camera" bone and no "Head" bone '
+          + 'for the view to follow',
         notes: [...missing, ...(arm.notes || [])],
         rows: wanted,
       };
@@ -4396,8 +4411,9 @@ export function createFpArm() {
   // ---- TWO-HANDS: the second hand on the body (combat/twoHands/mirrorRig.js) and the run's pump -----------------------------
   const attackingNow = () => upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
   // ---- RIFLE-STANCE: the long gun in the hands (combat/gun/rifleStance.js) ---------------------------------------------------
-  /** The rig holds its weapon as a long gun (the row's `holdAs` - the Thunderlock). */
-  const holdsRifle = (r) => !!(r && r.weapon && r.weapon.holdAs === 'rifle');
+  /** The rig holds its weapon in a gun's own stance (the row's `holdAs` - the Thunderlock's long gun; PISTOL-STANCE: the
+   *  Pistolet's pistol, combat/gun/gunHold.js). */
+  const holdsRifle = (r) => !!(r && holdsGun(r.weapon));
   /** The hold's state for the frame: wanted while the gun is in the hands and nothing else has them - not the draw or
    *  the sheathe (the clip carries the gun from the holster and back), not the stone, a seat, a saddle, a sheet, a spell
    *  or the dead; up to the aim while it shoots, for RIFLE_EASE.hold after, and while the fight's signal stands. */
@@ -4408,7 +4424,7 @@ export function createFpArm() {
   }
   /** The hold for rig `r` in `view` (poseAssembly's `hold`), or null while it weighs nothing. */
   const rifleHold = (view, r) => (rifle.w > 0 && holdsRifle(r)
-    ? (sk, pose, root, sm) => applyRifleStance(sk, pose, root, sm, { w: rifle.w, ready: rifle.ready, view, eyeRef: view === 'first' ? r.cameraRef : null, attitude: r.weapon.attitude })
+    ? (sk, pose, root, sm) => applyGunStance(r.weapon.holdAs, sk, pose, root, sm, { w: rifle.w, ready: rifle.ready, view, eyeRef: view === 'first' ? r.cameraRef : null, attitude: r.weapon.attitude, pair: offShown(r) })   // PISTOL-STANCE: a pair's left hand on its second pistol
     : null);
   /** The left hand's weapon shows on rig `r`: a pair is held, a weapon is in hand (drawn, no spell), and the rig bound
    *  one on its Weapon Bone Left. The blade's alone - the arm's composition is pairHeld's. */

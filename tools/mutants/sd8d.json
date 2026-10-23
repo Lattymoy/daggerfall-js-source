@@ -245,8 +245,8 @@
   {
     "name": "SD8D-the-courts-radius-over-the-arena",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    const floorCourts = floor?.courts ?? COURTS, floorR = floor?.r ?? COURT_R;",
-    "new": "    const floorCourts = floor?.courts ?? COURTS, floorR = COURT_R;",
+    "old": "    const floorCourts = floor?.courts ?? COURTS, floorR = floor?.r ?? COURT_R, floorKs",
+    "new": "    const floorCourts = floor?.courts ?? COURTS, floorR = COURT_R, floorKs",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]

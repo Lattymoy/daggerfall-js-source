@@ -187,9 +187,12 @@ test('SEAT1d THE CLIENT\'S OWN (systems/seatEdicts.js): a seat town\'s shops pri
   // court.js: the host's factor doubles the legal loss alone
   const player = { legalRep: new Array(62).fill(0), factionRep: null };
   setCrimeRepFactor(() => 2);
-  lowerRepForCrime(player, 21, CRIME_IDS.Pickpocketing);
+  lowerRepForCrime(player, 21, CRIME_IDS.Pickpocketing, { curfew: true });   // PIN MOVED (AUDIT FB1021d SM-8): the town watch's charge alone
   const doubled = player.legalRep[21];
+  lowerRepForCrime(player, 23, CRIME_IDS.Pickpocketing);   // a road's report, a loan defaulted: no crime in the town stood in
+  const plain = player.legalRep[23];
   setCrimeRepFactor(null);
+  assert.equal(doubled, 2 * plain, 'AUDIT FB1021d SM-8: the Curfew doubles the watch\'s charge, not a charge laid while standing there');
   lowerRepForCrime(player, 22, CRIME_IDS.Pickpocketing);
   assert.equal(doubled, 2 * player.legalRep[22]);
   assert.ok(player.legalRep[22] < 0);

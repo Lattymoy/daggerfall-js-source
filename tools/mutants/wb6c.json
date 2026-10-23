@@ -79,7 +79,7 @@
   {
     "name": "WB6c-a-page-with-no-webgl2-asked-again",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      broken = true;\n",
+    "old": "    broken = true;\n",
     "new": "",
     "tests": ["test/ui/gate/wb6c_gate_veil.test.js"]
   },

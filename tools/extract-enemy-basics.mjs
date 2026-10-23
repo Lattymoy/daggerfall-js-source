@@ -42,6 +42,17 @@ writeFileSync(new URL('../src/characters/enemy/enemyBasics.js', import.meta.url)
 // Class entries (128+) carry no health/level/damage - those come
 // from the career (CLASS*.CFG) + FormulaHelper, per SetEnemyCareer.
 // Do not hand-edit; regenerate: node tools/extract-enemy-basics.mjs
-export const ENEMY_BASICS = Object.freeze(${body});
+// DEX1: the table itself is not frozen, as DFU's EnemyBasics.Enemies is not - a mod's enemies join it
+// (registerEnemyRows) and a mod's edits are written over its rows, which every reader then sees (as RR1's
+// enemyAppearance writes over them). Its classic rows are DFU's, generated; only a mod's install writes it.
+export const ENEMY_BASICS = (${body});
+
+/** DEX1: THE TABLE AS DFU SHIPS IT - EnemyBasics.Enemies' own initializer, copied before any mod writes a row (this
+ *  module's evaluation ends before an importer runs) and frozen to the leaf. For the readers a mod's edit must never
+ *  reach: King's Gambit's roster is one for every client and the relay (bible/11-Multiplayer/Kings-Gambit.md, "the
+ *  vanilla rows, never a mod's overlay"), and a client evaluating it after Daggerfall Enemy Expansion's Start wrote its
+ *  classic rows would build another. */
+const deepFreeze = (o) => { for (const v of Object.values(o)) if (v && typeof v === 'object') deepFreeze(v); return Object.freeze(o); };
+export const VANILLA_ENEMY_BASICS = deepFreeze(structuredClone(ENEMY_BASICS));
 `);
 console.log('written');

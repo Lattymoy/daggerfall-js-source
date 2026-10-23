@@ -49,6 +49,8 @@ export function registerCustomTemplates(rows) {
   return _custom.size;
 }
 export const customTemplateCount = () => _custom.size;
+/** Every custom row registered so far (AUDIT STAR I1: test/systems/starfall/auditstar.test.js holds each one's name its own). */
+export const customTemplateRows = () => [..._custom.values()];
 // RRI1: A MOD'S PATCHES TO CLASSIC ROWS. ItemHelper.LoadItemTemplates
 // (:1488-1494) merges every loaded mod's ItemTemplates.json over the
 // classic table by index the moment the mod loads - a Katana at 3.5 kg

@@ -270,14 +270,14 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
   const whole = info?.blow !== false;
   for (const { power: p } of blowPowers(attacker, weapon)) {
     switch (p.kind) {
-      case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres); break;
-      case 'quake': if (weapon && !ranged(weapon)) quake(target, (damage * p.share) / 100, p.metres); break;
+      case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres, p.name); break;
+      case 'quake': if (weapon && !ranged(weapon)) quake(target, (damage * p.share) / 100, p.metres, p.name); break;
       case 'echo': if (_rand() * 100 < p.chance) again(target, damage, p.name); break;
       case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)
       case 'conduit': if (whole) gainMana(attacker, p.mana); break;
       case 'flow': if (whole) { _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; } break;
       case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now }; } break;   // GILDED1
-      case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group); break;   // GILDED2
+      case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name); break;   // GILDED2
       case 'undertow': if (weapon && whole) _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: now + p.seconds, at: now }); break;   // GILDED2
       default: break;
     }
@@ -303,39 +303,46 @@ function again(target, damage, word) {
   const door = playerDoor();
   const f = recordOf(door, target);
   const n = Math.max(1, Math.round(damage));
-  if (!f?.dead) showFollowUp(n, word);   // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone
+  if (!f?.dead) showFollowUp(n, word, target);   // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands
   if (f) { if (!f.dead) door.hurtFoe(f, n); return; }
   oweFoe(target, n);   // FIELD BUGS 2026-10-12g OPEN-HAND: a body the relay runs (the gate's Warden) - its host's claim carries it
 }
-/** Chain Lightning: the nearest other foe within `metres` of the struck one takes `amount` as shock. */
-function arc(target, amount, metres) {
+/** FIELD BUGS 2026-10-19f CHAIN-SEEN: A BLOW'S REACH LANDS ON ANOTHER FOE (Chain Lightning's arc, Earthshaker's quake,
+ *  Dragonfire's burst) - through its own pool's door, which runs no formula, so HN1's seam never hears it: its number
+ *  rises, tagged `word` (the power's name), as again()'s follow-up does (ROSE-SEEN). `f` a living record of the door's. */
+function reachOn(door, f, n, word) {
+  showFollowUp(n, word);
+  door.hurtFoe(f, n);
+}
+/** Chain Lightning: the nearest other foe within `metres` of the struck one takes `amount` as shock - its number risen. */
+function arc(target, amount, metres, word) {
   const door = playerDoor();
   const struck = recordOf(door, target);
   if (!struck?.ai?.feet || !(amount > 0)) return;
   let best = null, bestD = metres;
   for (const f of near(door, struck.ai.feet, metres, target)) { const d = flat2(f.ai.feet, struck.ai.feet); if (d <= bestD) { best = f; bestD = d; } }
   const n = best ? Math.floor(amount * elementShare(best.entity, 'shock')) : 0;
-  if (best && n > 0) door.hurtFoe(best, n);
+  if (best && n > 0) reachOn(door, best, n, word);   // FIELD BUGS 2026-10-19f CHAIN-SEEN: the arc said nothing - no number, no word
 }
 /** GILDED2: Dragonfire - the struck one takes `amount` again, and every other foe of `group` within `metres` of it as much, no
  *  element's share of it: Akatosh's fire, which no Daedra resists. AUDIT WORLD-REWARDS B1: the struck one's burn goes as
  *  Many Endings' echo does (again - through its record, or OWED to the claim a body the relay runs sends, the relay's caps
  *  deciding); the burst is Earthshaker's reach (near) over one kind of foe, and reaches only the foes the world runs - a
  *  body the relay runs has no record, and no other is in reach of it (the gate's court, an Elite Gate's legion). */
-function dragonfire(target, amount, metres, group) {
+function dragonfire(target, amount, metres, group, word) {
   if (!(amount > 0)) return;
-  again(target, amount);
+  again(target, amount, word);   // FIELD BUGS 2026-10-19f CHAIN-SEEN: its number tagged with its name, as Many Endings' is
   const door = playerDoor();
   const struck = recordOf(door, target);
   if (!struck?.ai?.feet) return;
-  for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) door.hurtFoe(f, Math.max(1, Math.round(amount)));
+  for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN
 }
-/** Earthshaker: every other foe within `metres` of the struck one takes `amount`. */
-function quake(target, amount, metres) {
+/** Earthshaker: every other foe within `metres` of the struck one takes `amount` - each its number risen. */
+function quake(target, amount, metres, word) {
   const door = playerDoor();
   const struck = recordOf(door, target);
   if (!struck?.ai?.feet || !(amount > 0)) return;
-  for (const f of near(door, struck.ai.feet, metres, target)) door.hurtFoe(f, Math.max(1, Math.round(amount)));
+  for (const f of near(door, struck.ai.feet, metres, target)) reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN
 }
 
 // ── a foe's blow landed: thorns ────────────────────────────────────
@@ -441,7 +448,7 @@ export function lootHurt(entity, { before, after, saved = false }) {
   _s.recovering.add('vigil');
   lootSpireHold('vigil');
   healMine(entity, (max * v.heal) / 100);
-  say("The Ghost-King's Vigil - you are not alone on the field.");
+  say("The Ghost-King's Vigil. You are not alone on the field.");
 }
 
 // ── LOOT5: a kill of mine ───────────────────────────────────────────

@@ -520,9 +520,9 @@ test('CSA-D x AUDIT NAV1 (the helm): the sea fight\'s seams - moveSpeed times `w
   near(s.rt.properties.moveSpeed(), oars, 1e-6, 'no word, her own');
   // the refusal: said, and the sails stay stowed - before the mod's own obstruction
   boat.NodeTileMapIndices[3] = 7;
-  s.deps.sailRefused = () => 'The rigging is shot away - no sail will set.';
+  s.deps.sailRefused = () => 'The rigging is shot away. No sail will set.';
   s.rt.RaiseSails();
-  assert.equal(s.out.hud.at(-1), 'The rigging is shot away - no sail will set.');
+  assert.equal(s.out.hud.at(-1), 'The rigging is shot away. No sail will set.');
   assert.equal(s.rt.state.sailPosition, 0);
   assert.ok(boat.Sails.every((n) => stowed(n)), 'every sail stowed');
   boat.NodeTileMapIndices[3] = 0;

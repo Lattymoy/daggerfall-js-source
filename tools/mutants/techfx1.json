@@ -701,7 +701,7 @@
   {
     "name": "TECHFX1-AUDIT-the-muzzle-undipped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    if (_dipPx) _tlDrawn.rect.y += _dipPx;",
+    "old": "    if (_dipPx) drawn.rect.y += _dipPx;",
     "new": "    // the muzzle undipped",
     "tests": [
       "test/systems/techfx1_audit.test.js"

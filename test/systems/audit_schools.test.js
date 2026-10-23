@@ -591,16 +591,22 @@ test('AUDIT SCHOOLS L5 M3 / L2 F9: ILLUSION PAST 100 LENGTHENS CHAMELEON AND SHA
 
 test('AUDIT SCHOOLS L2 F4: MY SPELL ON THE RELAY\'S STAND-INS IS TOLD TO THE RIDERS - the court\'s Warden, its crystals, its host and the serpent\'s hide each tell the landing (no foe record: the relay holds the body), and the cast engine hands each its cast\'s wrapper (by source: the stand-ins live inside the page builders) (mutants: a stand-in untold; the caster dropped)', () => {
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /function tellStandIn\(sp, entity, r, dealt, caster\) \{\n\s*tellSpellLanded\(\{ caster: playerEntity, target: entity, foe: null, spell: sp, r, self: false, took: dealt, cast: caster\?\.cast \?\? null \}\);/);
-  for (const [fn, who] of [['spellOnCrystal', 'cr'], ['spellOnHost', 'hb'], ['spellOnBoss', 'boss']]) {
-    assert.match(dc, new RegExp(`function ${fn}\\(sp, [^)]*caster = null\\) \\{[\\s\\S]*?r = applySpell\\(harm, playerEntity\\.level, ${who}\\.entity, sinks, Math\\.random, \\{ entity: playerEntity \\}\\);[^\\n]*\\n\\s*if \\(!\\(dealt >= 1\\)\\) return false;\\n\\s*tellStandIn\\(sp, ${who}\\.entity, r, dealt, caster\\);`), fn);
+  // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the court's three spell doors left the context as one
+  // (scenes/gate/standInSpell.js onBody) - each counted on its stand-in and told, and what the riders are told is what can
+  // land there (the number the HUD says), never a claim no relay lands
+  const sis = src('src/scenes/gate/standInSpell.js');
+  assert.match(sis, /function tellStandIn\(sp, entity, r, took, caster\) \{\n\s*tellSpellLanded\(\{ caster: player, target: entity, foe: null, spell: sp, r, self: false, took, cast: caster\?\.cast \?\? null \}\);/);
+  assert.match(sis, /const \{ dealt, r, kept \} = countOnStandIn\(harm, body\.entity, player\.level, player, rolls, rounds\.carried\(key\)\);\n\s*if \(!\(dealt >= 1\)\) \{[^]*?\n\s*\}\n\s*const shown = standInShown\(dealt, standInBlowCap\(body\.entity, player\.level\)\);\n\s*tellStandIn\(sp, body\.entity, r, shown, caster\);/);
+  for (const [fn, who, land] of [['spellOnCrystal', 'cr', 'landOnCrystal'], ['spellOnHost', 'hb', 'landOnHost'], ['spellOnBoss', 'boss', 'landOnBoss']]) {
+    assert.match(sis, new RegExp(`function ${fn}\\(sp, [^)]*caster = null\\) \\{[\\s\\S]*?return onBody\\(sp, ${who}, harm, caster, host\\.${land}, `), fn);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): each its rounds' key
   }
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp, caster\) => spellOnBoss\(sp, caster\) : null,/);
   assert.match(dc, /castAtCrystal: opts\.gateCrystals \? \(sp, c, caster\) => spellOnCrystal\(sp, c, caster\) : null,/);
   assert.match(dc, /castAtHost: opts\.gateHost \? \(sp, i, caster\) => spellOnHost\(sp, i, caster\) : null,/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /tellSpellLanded\(\{ caster: playerEntity, target: e, foe: null, spell: sp, r, self: false, took: dealt, cast: caster\?\.cast \?\? null \}\);/);
-  assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpellOn\(sp, q, caster\),/);
+  // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the serpent's door left bootWorld for scenes/gate/standInSpell.js createSerpentSpell, which tells the riders
+  assert.match(sis, /tellSpellLanded\(\{ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown\(dealt, SERPENT_HIT_CAP_X \* SERPENT_HAND_REF\), cast: caster\?\.cast \?\? null \}\);/);
+  assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpell\.cast\(sp, q, caster\),/);
   const hm = src('src/scenes/hostMagic.js');
   assert.match(hm, /function giveToBoss\(mark, sp, caster = null\) \{/);
   assert.match(hm, /else giveToBoss\(hitBoss, m\.spell, playerCaster\(m\.cast \?\? null\)\);/);
@@ -698,7 +704,7 @@ test('AUDIT SCHOOLS L4 M1 / L5 H3: THE ONE ASK (scenes/shared.js raisePlayerSkil
   one.masterSkillsInfoSeen = true;
   raisePlayerSkills(one, { ask, rolls: () => 0.99 });
   assert.equal(asks.length, 1);
-  assert.equal(asks[0].rows[0], 'Specialise as Necromancer?');
+  assert.equal(asks[0].rows[0], 'Specialize as Necromancer?');
   assert.equal(asks[0].okOnly, false);
   assert.equal(one.pathPrompted, true);
   asks[0].onYes();
@@ -711,7 +717,7 @@ test('AUDIT SCHOOLS L4 M1 / L5 H3: THE ONE ASK (scenes/shared.js raisePlayerSkil
   assert.equal(asks.length, 2);
   // PIN MOVED (GROWTH4, bible/10-UI/Growth.md section 7): the enhanced skin's box sends the player to the Growth tab; the
   // classic skin's to the skill screen, whose S row opens the same guide
-  assert.deepEqual(asks[1].rows, ['Specialisation', '', '3 specialisations are open to you:', 'Riftwalker, Warden, Necromancer', '', 'See them all and choose one on the Growth tab of the pause menu.', 'Resetting it later costs 200,000 gold.']);   // PIN MOVED (SPEC-RESET; AUDIT SPEC-RESET L4-5: the price a row of its own)
+  assert.deepEqual(asks[1].rows, ['Specialization', '', '3 specializations are open to you:', 'Riftwalker, Warden, Necromancer', '', 'See them all and choose one on the Growth tab of the pause menu.', 'Resetting it later costs 200,000 gold.']);   // PIN MOVED (SPEC-RESET; AUDIT SPEC-RESET L4-5: the price a row of its own)
   assert.equal(AP.pathsOpenRows([AP.PATH_BY_ID.warden]).at(-2), 'Choose one in your skill screen.', 'the classic skin\'s');
   assert.deepEqual([asks[1].okOnly, asks[1].onYes, three.arcanePath ?? null, three.pathPrompted], [true, null, null, true], 'named, none chosen');
   // one box a pass: a mastery waiting is asked first, the path on the next quiet pass
@@ -724,7 +730,7 @@ test('AUDIT SCHOOLS L4 M1 / L5 H3: THE ONE ASK (scenes/shared.js raisePlayerSkil
   assert.match(asks.at(-1).rows.join(' '), /Alteration/, 'the mastery first');
   assert.equal(busy.pathPrompted ?? false, false, 'the path not asked under it');
   raisePlayerSkills(busy, { ask, rolls: () => 0.99 });
-  assert.equal(asks.at(-1).rows[0], 'Specialise as Necromancer?', 'the next pass');
+  assert.equal(asks.at(-1).rows[0], 'Specialize as Necromancer?', 'the next pass');
 });
 
 test('AUDIT SCHOOLS L4 H1 / L5 H3: THE CLASSIC SHEET\'S S ROW - drawn on a skill page with paths open; S asks about the first, No, then S, the next (the plate stays behind the box, so the key the box names reaches it); Yes chooses; a chosen path\'s S shows what it is (mutants: the plate closed under the box; the row never drawn; Yes chooses nothing)', () => {
@@ -745,7 +751,7 @@ test('AUDIT SCHOOLS L4 H1 / L5 H3: THE CLASSIC SHEET\'S S ROW - drawn on a skill
     sheet.input('KeyN');
     assert.equal(sheet.child, null, 'No closes it');
   }
-  assert.deepEqual(titles, ['Specialise as Riftwalker?', 'Specialise as Warden?', 'Specialise as Necromancer?'], 'No, then S, for the next');
+  assert.deepEqual(titles, ['Specialize as Riftwalker?', 'Specialize as Warden?', 'Specialize as Necromancer?'], 'No, then S, for the next');
   sheet.input('KeyS');   // Riftwalker again, round the pool
   sheet.input('KeyS');   // ...the box's own key: nothing
   sheet.input('KeyY');
@@ -790,7 +796,7 @@ test('AUDIT SCHOOLS L5 H3: THE ENHANCED PAUSE WINDOW, DRIVEN - its Master Skills
       const door = btn('Growth');
       assert.equal(door?.textContent, 'Growth (1)', 'the door counts the specialisation waiting');
       door.onclick();
-      host.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specialisations')).onclick();
+      host.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specializations')).onclick();   // PIN MOVED (VOICE2): the rail's American spelling
       const bar = host.querySelectorAll('button').find((b) => String(b.className).includes('gr-pathbar') && b.textContent.startsWith('Necromancer'));
       assert.ok(bar, 'the guide\'s Necromancer');
       assert.match(bar.textContent, /Restoration and Mysticism/);
@@ -798,7 +804,7 @@ test('AUDIT SCHOOLS L5 H3: THE ENHANCED PAUSE WINDOW, DRIVEN - its Master Skills
       btn('Choose Necromancer').onclick();
       const ask = globalThis.document.body.querySelectorAll('div').find((d) => String(d.className).includes('px-master-ask'));
       assert.ok(ask, 'the Yes/No card');
-      assert.match(ask.textContent, /Specialise as Necromancer\?/);
+      assert.match(ask.textContent, /Specialize as Necromancer\?/);
       ask.querySelectorAll('button').find((b) => b.textContent === 'Yes').onclick();
       assert.equal(playerEntity.arcanePath, 'necromancer', 'Yes chooses');
     } finally { menu.unmount(); }
@@ -812,7 +818,7 @@ test('AUDIT SCHOOLS L5 H3: THE ENHANCED PAUSE WINDOW, DRIVEN - its Master Skills
     try {
       // PIN MOVED (GROWTH2): the guide says it - no arcane path for a class with no two schools, the Brute's weapons meet the martial
       host2.querySelectorAll('button').find((b) => b.textContent.startsWith('Growth')).onclick();
-      host2.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specialisations')).onclick();
+      host2.querySelectorAll('button').find((b) => String(b.className).includes('px-qrow') && b.textContent.includes('Specializations')).onclick();
       const head = () => host2.querySelectorAll('div').find((d) => String(d.className).includes('gr-headline'))?.textContent ?? '';
       host2.querySelectorAll('button').find((b) => String(b.className).includes('gr-fam') && b.textContent.startsWith('Arcane')).onclick();
       assert.match(head(), /Your class can't master two schools of magic/, 'no arcane path for a class with no two schools');

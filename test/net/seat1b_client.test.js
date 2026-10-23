@@ -140,7 +140,7 @@ test('SEAT1b THE SEAT TAB\'S WORDS: the week\'s clock, a standing, the empty boa
   assert.deepEqual(seatMineLines(ANTICLERE, { ...mine, bound: 'g2' }), ['Your guild is pledged to Anticlere.', 'Your account fights for another guild this week.']);
   assert.deepEqual(seatMineLines(ANTICLERE, null), ['Join a guild to fight for a seat.']);
   assert.match(seatTributeLine(100), /^Tribute: up to 100 silver more this week/);
-  assert.match(seatTributeLine(0), /no room left this week - it is at most a fifth of your guild's influence here\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
+  assert.match(seatTributeLine(0), /no room left this week\. It may be no more than a fifth of your guild's influence here\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
 });
 
 /** A seats' book over a scripted door. */
@@ -218,7 +218,7 @@ test('SEAT1b THE BOOK\'S STANDINGS, PLEDGE AND TRIBUTE: the standings kept half 
   const ids = calls.filter((c) => c[0] === 'tribute').map((c) => c[4]);
   assert.equal(ids[0], ids[1], 'the same payment, asked again, carries the same id');
   tributeAnswer = { ok: true, data: { ok: true, influence: 10, marks: 100 } };
-  assert.deepEqual(await book.tribute(ANTICLERE, 100), { ok: true, text: 'Tribute paid to Anticlere: 100 silver burnt, 10 influence.' });
+  assert.deepEqual(await book.tribute(ANTICLERE, 100), { ok: true, text: 'Tribute paid to Anticlere: 100 silver burned, 10 influence.' });
   await book.tribute(ANTICLERE, 100);
   const after = calls.filter((c) => c[0] === 'tribute').map((c) => c[4]);
   assert.notEqual(after[3], after[2], 'an answered payment lets its id go - the next is a new payment');

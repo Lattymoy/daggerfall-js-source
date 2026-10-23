@@ -84,7 +84,7 @@
   {
     "name": "sc1-dynamicnear-counts-flames",
     "file": "src/render/shadowPass.js",
-    "old": "          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;\n",
+    "old": "          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive) || b.ghost) continue;\n",
     "new": "",
     "tests": [
       "test/render/audit_lighting.test.js"

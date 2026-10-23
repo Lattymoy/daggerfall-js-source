@@ -11,8 +11,8 @@
   {
     "name": "SILVER-WAYS-law-cap-151",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 }",
-    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 151 }",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 151 }",
     "tests": [
       "test/net/silverways_service.test.js"
     ],
@@ -21,7 +21,7 @@
   {
     "name": "SILVER-WAYS-law-cap-gate-alone",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 }",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
     "new": "kinds: Object.freeze(['gate']), perDay: 150 }",
     "tests": [
       "test/net/silverways_service.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "SILVER-WAYS-cli-raid-capped-the-breach",
     "file": "src/net/marksBook.js",
-    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : MARKS_TEXT.capped)",
-    "new": "(kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : MARKS_TEXT.capped)",
+    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
+    "new": "(kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
     "tests": [
       "test/net/silverways_client.test.js"
     ],

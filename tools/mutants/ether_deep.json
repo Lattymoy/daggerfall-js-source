@@ -191,7 +191,7 @@
   {
     "name": "ED-world-unsaid",
     "file": "src/scenes/world.js",
-    "old": "    ether: etherSea ? etherPlaceRects(_etherTemplates, (t) => setLocationTiles({ ...t, regionIndex: ETHER_REGION, locationIndex: -1000 }, maps, blocks, _etherRectScratch.fill(0))) : null,",
+    "old": "    ether: etherSea ? etherPlaceRects(_etherTemplates, locationRectReader(maps, blocks, { regionIndex: ETHER_REGION, locationIndex: -1000 })) : null,",
     "new": "    ether: null,",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"

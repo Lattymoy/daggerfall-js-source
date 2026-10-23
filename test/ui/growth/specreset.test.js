@@ -111,9 +111,9 @@ test('SPEC-RESET THE REFUSALS: short of the price by one (coins and letters toge
   const none = spellsword({ mastered: [LB, AR] });
   none.goldPieces = 500000;
   assert.equal(resetHeld(none, 'martial'), null);
-  assert.equal(resetSpec(none, 'martial').text, 'You have no specialisation of this kind to reset.');
+  assert.equal(resetSpec(none, 'martial').text, 'You have no specialization of this kind to reset.');
   assert.equal(none.goldPieces, 500000);
-  assert.equal(resetSpec(none, 'firmament').text, 'No such specialisation.');
+  assert.equal(resetSpec(none, 'firmament').text, 'No such specialization.');
   // offline the refusal says what pays (no bank account stands in the pause window)
   const away = held(5);
   away._online = false;
@@ -286,7 +286,7 @@ test('SPEC-RESET THE GUIDE\'S MODEL: a held path\'s Reset - none with nothing he
   const off = held(250000);
   off._online = false; off.masterSkills = false;
   assert.equal(family(specGuideModel(off), 'arcane').reset.refusal, null);
-  assert.equal(family(specGuideModel(off), 'arcane').reset.rows().at(-1), 'Master Skills is off. Turn it on to choose a specialisation again.');
+  assert.equal(family(specGuideModel(off), 'arcane').reset.rows().at(-1), 'Master Skills is off. Turn it on to choose a specialization again.');
   // short of the gold: the law's refusal
   const poor = held(5);
   assert.equal(family(specGuideModel(poor), 'arcane').reset.refusal, 'Resetting costs 200,000 gold. You have 5.');

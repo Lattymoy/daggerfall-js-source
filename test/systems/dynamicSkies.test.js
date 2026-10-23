@@ -684,10 +684,12 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
     assert.match(s, /if \(skyInside\) \{ skyInside = false; sky\.setInside\(false\); \}/, `${host}: ExteriorTransitionEvent before the sky’s frame`);
     assert.match(s, /isEnhanced\(\) && !sky\.dynamic \? strobe : 1/, `${host}: one lightning under the mod - the strobe stands down (AUDIT 61)`);
     assert.match(s, /classicMinutes: playerTicker\.classicMinutes, skyMinutes: skyMinutes\(\), sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);   // TIME1: and the sky's minute beside the event clock's
-    assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\) \?\? boltFrame\.flash\);/, `${host}: the flash on the light channel - the mod's first, else a near ground strike's (BOLT)`);
+    // PIN MOVED (STAR4): the world host's channel takes a fallen star's landing last (scenes/starfall/starfallHost.js flash)
+    const starLast = host === 'src/scenes/world.js' ? ' ?? starfall?.flash() ?? null' : '';
+    assert.ok(s.includes(`renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash${starLast});`), `${host}: the flash on the light channel - the mod's first, else a near ground strike's (BOLT)`);
     assert.match(s, /if \(sky\.pixelSnow\) precipOpts\.pixelSnow = sky\.pixelSnow;/, `${host}: the pixel snow`);
     // the flash composes AFTER the lanterns are stored
-    assert.ok(s.lastIndexOf('renderer.setPointLights(') < s.indexOf('renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash)'), `${host}: setFlashLight follows setPointLights`);
+    assert.ok(s.lastIndexOf('renderer.setPointLights(') < s.indexOf('renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash'), `${host}: setFlashLight follows setPointLights`);
   }
   // AUDIT 61: the mod's fog rows are installed verbatim - EV4's distance
   // scale is DFU's row's law - and the far ring's ramp starts where the
@@ -776,7 +778,9 @@ test('DS1 settings: the mod’s own keys as modsettings ships them, the integer 
         assert.equal(def.default, k.Value, `${k.Name} default`);
         if (k.Min !== undefined) { assert.equal(def.min, k.Min); assert.equal(def.max, k.Max); assert.ok(isIntKey(def)); }
         else assert.ok(!isIntKey(def));
-        assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
+        // PLAIN-TEXT (2026-10-19): MaxParticles is read and never applied (AUDIT 61), and the pane now says so - its words, exactly
+        if (k.Name === 'MaxParticles') assert.equal(def.description, 'Has no effect: the mod never uses this setting.', 'the pane says the slider does nothing');
+        else assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
       }
     }
     assert.equal(modSetting('dynamic-skies', 'Enabled'), true, 'VC1 (2026-09-07) made it a choice in the Mods pane; MO1 (Mac, 2026-09-12): every mod is on by default');

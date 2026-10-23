@@ -47,6 +47,25 @@ import { NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from './city/cityNavigation
 import { summed, frontStrip, closeSite, YARD_PAD_M, YARD_TURNS, NO_ROAD_COST } from './merchantYards/merchantYardSites.js';
 import { PORT_SITE_ORDER, portPlaceName, portTownByData } from '../systems/portPlaces.js';
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { SEA_RING, seaBears } from '../net/fortLaw.js';   // FB1020c BERTH-RING: the ring and the sea's bearing, the coast law's own
+
+export { SEA_RING, seaBears };
+
+/** FIELD BUGS 2026-10-21b VOYAGE-HOLD: the board port whose waters map pixel (x, y) lies in - the nearest of `ports` within
+ *  SEA_RING by the crow's flight (the squared pixels, exact on every engine), or null outside every ring. By the ring's
+ *  squares alone (BERTH-RING's reading) a tie went to the list's first, and every pixel of Pencart's water tied it with
+ *  Longham's: no berth ever named Pencart. Inside a ring of two the crow's flight differs from the squares on a tie alone.
+ *  @template {{ px: number, py: number }} P @param {ReadonlyArray<P>} ports @param {number} x @param {number} y @returns {P|null} */
+export function boardPortAt(ports, x, y) {
+  let port = null, best = Infinity;
+  for (const q of ports) {
+    const dx = q.px - x, dy = q.py - y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) continue;
+    const e = dx * dx + dy * dy;
+    if (e < best) { best = e; port = q; }
+  }
+  return port;
+}
 
 /** Each place's ground, metres: half its width (x) and half its depth (z) - its fence or wall and the apron before its
  *  gate (world/shipyardModel.js, world/lighthouseModel.js lay both out inside it). */
@@ -56,8 +75,8 @@ export const PORT_FOOT = Object.freeze({
 });
 /** The least body of water, cells, that is the sea (never a puddle or a pond) - a body reaching the block grid's edge. */
 export const SEA_CELLS_MIN = 48;
-/** How far the map pixels round the town's are asked for the sea, and each ring's weight (the nearest the heavier). */
-export const SEA_RING = 2;
+/** How far the map pixels round the town's are asked for the sea (SEA_RING, net/fortLaw.js - FB1020c BERTH-RING: the coast's
+ *  law's home, which the account Worker bundles), and each ring's weight (the nearest the heavier). */
 export const SEA_RING_WEIGHT = Object.freeze([0, 2, 1]);
 /** Off the seaward edge's middle: a cell of distance for every LATERAL_K^-1 cells along it. */
 export const LATERAL_K = 0.25;
@@ -190,14 +209,6 @@ export function openSeaOf(isWater, width, height) {
     }
   }
   return sea;
-}
-
-/** Whether the sea bears on a map pixel: a pixel of it (`isSea(x, y)`) within SEA_RING - the ring its bearing is read off
- *  (`seaBearing`), so a town it bears on has a seaward edge to stand its places on. Pure. */
-export function seaBears(px, py, isSea) {
-  if (typeof isSea !== 'function') return false;
-  for (let dy = -SEA_RING; dy <= SEA_RING; dy++) for (let dx = -SEA_RING; dx <= SEA_RING; dx++) if (isSea(px + dx, py + dy)) return true;
-  return false;
 }
 
 /**

@@ -40,9 +40,9 @@ export const SHOT_DOWNLOAD_PREF = 'shotDownload';
 const keepInGallery = (blob, place) => import('../systems/shotGallery.js').then((g) => g.keepShot(blob, { place }));
 /** LOAD1: what the HUD says once the gallery has answered - the id kept, 'full', or null (not kept). */
 export function keptLine(kept, downloaded) {
-  if (kept === 'full') return downloaded ? 'Screenshot saved. The gallery is full - delete some under Screenshots.' : 'The gallery is full - delete some under Screenshots.';
+  if (kept === 'full') return downloaded ? 'Screenshot saved. The gallery is full. Delete some under Screenshots.' : 'The gallery is full. Delete some under Screenshots.';
   if (kept == null) return downloaded ? 'Screenshot saved.' : 'The screenshot could not be kept.';
-  return 'Screenshot kept - see Screenshots in the menu.';
+  return 'Screenshot added to Screenshots in the menu.';
 }
 const sayOnHud = (line) => import('../systems/notify.js').then((n) => n.hudText(line)).catch(() => {});
 

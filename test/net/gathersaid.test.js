@@ -152,7 +152,7 @@ test('GATHER-SAID the report, reproduced: Iron and an Amber at a rank\'s rise to
   assert.equal(r.said.length, 5, r.said.join(' | '));
   assert.deepEqual([r.said[0], r.said[1], r.said[3], r.said[4]], [
     '+3 Iron and an Amber to your Stores', storesWhereLine('E'), 'Mining 49 -> 50',
-    'A specialisation may be chosen on the Professions page (the pause menu\'s Stats).',
+    'You can now choose a specialization on the Professions page (pause menu > Stats).',
   ], 'the goods, where they went, the rise and the hint: five lines');
   assert.match(r.said[2], /^\+33 Mining XP/);
   const reading = r.queue.lines.map((l) => l.text);

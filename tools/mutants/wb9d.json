@@ -20,8 +20,8 @@
   {
     "name": "WB9d-the-warning-out-of-the-ground",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
-    "new": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : GROUND_VIEW_TEXT.warn(ground)",
+    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
+    "new": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : GROUND_VIEW_TEXT.warn(ground)",
     "tests": [
       "test/net/gate/wb9d_gate_ground.test.js"
     ]

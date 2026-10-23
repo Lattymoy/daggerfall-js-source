@@ -295,7 +295,7 @@ test('GUILD1d the Guild tab: with no hall how one is bought; with one where it s
   assert.equal(button(gm.panel.root, 'Disband').disabled, true, 'sell the hall first');
   // a change short of Drakes - GUILD2c: the field's colour a swatch now, not a select (PIN MOVED)
   await gm.go('arms');
-  const crimson = find(gm.panel.root, 'dfsocial-swatch').find((b) => b.attrs['aria-label'] === 'Field colour: Crimson');
+  const crimson = find(gm.panel.root, 'dfsocial-swatch').find((b) => b.attrs['aria-label'] === 'Field color: Crimson');
   crimson.fire('click');
   assert.equal(button(gm.panel.root, 'Change it').disabled, true, `${HERALDRY_CHANGE_DRAKES} Drakes wanted, 100 held`);
   const recruit = await tabRig(view({ rank: 3, hall, heraldry: WOLF, members: [{ member: 'm2', name: 'Rhea', rank: 3, joinedAt: 1, you: true }] }));
@@ -380,7 +380,7 @@ test('GUILD1d wired: the building host - the hall\'s rows and its buy, the chest
   assert.match(src('src/systems/homeRent.js'), /home\.own === true \|\| !!\(home\.hall && home\.member\) \|\| rentDaysLeft/);   // PIN MOVED (the merge of main's RENT-REST): a member's bed is the home's bed rule's, homeBedIsMine
   assert.match(wm, /if \(mode !== 'interior' \|\| !b \|\| !\(decorOwnerHere\(\) \|\| decorKeeperHere\(\)\)\) return null;/);
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /if \(hf && !hf\.door\) hf\.door = doorCornersOf\(cpu\.doors\[0\], local\);/);
+  assert.match(w, /if \(hf && !hf\.door\) \{ hf\.door = doorCornersOf\(cpu\.doors\[0\], local\); hf\.normal = doorNormalOf\(cpu\.doors\[0\], local\); \}/);   // PIN MOVED (AUDIT WITCH1 D1): and the door's own outward normal beside it - a hall's banners face where it says
   assert.match(w, /const hallBanners = onlineHomes && bannerPass \? createHallBanners\(\{/);
   assert.ok(w.indexOf('const hung = bannersHung();') < w.indexOf('    drawVeiledPeerBodies();   // INVIS-LOOK'), 'before every glow (AUDIT GUILD1d R3; SEAT1a: the seats\' banners with the halls\')');
   assert.match(w, /openStores: \(\) => socialPanel\?\.openGuild\?\.\('vault'\) === true,/);   // PIN MOVED (GUILD2b): the chest opens the vault's page

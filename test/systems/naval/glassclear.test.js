@@ -296,7 +296,7 @@ test('GLASS-CLEAR the world: the glass\'s focus taken each frame from the ship I
   assert.match(w, /const at = projectToScreen\(head, w, h, proj, view, rect\);\n[^\n]*\n\s+if \(glassCuts\(at\)\) continue;/, 'the bars');
   assert.match(w, /const at = projectToScreen\(l\.head, w, h, proj, view, rect\);\n[^\n]*\n\s+if \(glassCuts\(at\)\) continue;/, 'the lines');
   assert.match(w, /const blocked = \(head, id\) => glassCuts\(projectToScreen\(head, 1, 1, proj, view\)\) \|\| nameSight\.blocked\(player\.collider, eye, id, head\);/, 'the players\' names');
-  assert.match(w, /const proj = mirrorProjectionX\(perspective\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, 6000\)\);/, 'the frame\'s lens');
+  assert.match(w, /const proj = horizonProj\(glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\), worldAspect, spyglass\.near, tvf\);/, 'the frame\'s lens');   // PIN MOVED (OW-HORIZON, 2026-10-20): through scenes/travelHorizon.js horizonProj - the glass's near on the ground, the planes grown under the travel view
   const nh = rd('src/scenes/naval/navalHost.js');
   assert.match(nh, /const boat = boatInPlay\(\) \?\? seaDeckUnderMe\(\)\?\.boat \?\? deps\.aboardPeer\?\.\(\) \?\? null;/, 'my deck, a sea ship\'s, another player\'s I ride');
   assert.match(nh, /\n\s+ownExtent,\n/, 'the host\'s door');

@@ -76,8 +76,8 @@
   {
     "name": "WB13a-the-edge-his-aspect-s",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "color: attackColor(A, P), edge: telegraphEdge(A),",
-    "new": "color: attackColor(A, P), edge: attackColor(A, P),",
+    "old": "edge: torment ? TORMENT_EDGE : telegraphEdge(A),",
+    "new": "edge: torment ? TORMENT_EDGE : attackColor(A, P),",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
     ]
@@ -139,20 +139,22 @@
   {
     "name": "WB13a-the-peril-never-said",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
-    "new": "      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : false;",
+    "old": "head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
+    "new": "head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : false;",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB13a-the-charge-behind-him-a-peril",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
-    "new": "      const on = inAttack(atk, fx, fz, P);",
+    "old": "      const on = A === ATTACKS.wheel ? soon(fx, fz) : head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
+    "new": "      const on = A === ATTACKS.wheel ? soon(fx, fz) : inAttack(atk, fx, fz, P);",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
-    ]
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB13a-the-way-out-turned-the-wrong-way",
@@ -184,8 +186,8 @@
   {
     "name": "WB13a-the-grounds-warning-over-a-blow",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
-    "new": "warn: inside ? GROUND_VIEW_TEXT.warn(ground) : peril ? GROUND_VIEW_TEXT.peril(peril.name) : null",
+    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
+    "new": "warn: inside ? GROUND_VIEW_TEXT.warn(ground) : peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : null",
     "tests": [
       "test/scenes/wb13a_telegraphs.test.js"
     ]

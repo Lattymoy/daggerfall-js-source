@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { JUNGLE_FLOOR_PLANTS, JUNGLE_FLOOR_ARCHIVE, FLOOR_MEAN_BLADE, jungleFloorArt, floorPick } from '../../src/render/jungleFloorArt.js';
+import { JUNGLE_FLOOR_PLANTS, JUNGLE_FLOOR_ARCHIVE, FLOOR_MEAN_BLADE, JUNGLE_FLOOR_PLANTS_M2, jungleFloorArt, floorPick } from '../../src/render/jungleFloorArt.js';
 import { fitSprite, meadowSpriteBox, cardMeasures, meadowTexel, meadowArtGround, MEADOW_SLOTS, MEADOW_LUSH, MEADOW_GREEN } from '../../src/render/grassMeadow.js';
 import { MEADOW_SPRITES } from '../../src/render/meadowArt.js';
 import { grassStagesOf, MEADOW_ART, LabGrassRenderer, GAME_GRASS_VS, GAME_GRASS_FS, GRASS_TONES, floorRecordsOf, grassRecordsOf, LAB_GRASS, heightFloor, heightSpan } from '../../src/render/labGrass.js';
@@ -245,7 +245,9 @@ test('BANTHA2 THE FLOOR\'S HOST: made once, the first time the jungle comes with
   assert.deepEqual(drawn, [['P', 'V', 'E', 1, 'L', 'W', 300, 'meadow']], 'beside the meadow\'s draw, under its frame');
   assert.equal(floor.field.perCell, Math.round(floorDensity(0.5) * 900 / (420 * 420)), 'the pref\'s share of its density');
   assert.ok(Math.abs(floorDensity(1) - JUNGLE_FLOOR.plants * 3 * 420 * 420) < 1e-6, 'plants a square metre, three blades a tuft, over the lab\'s measuring span');
-  assert.equal(JUNGLE_FLOOR.plants, 1.8, 'the owner\'s carpet, a little thinner than the preview\'s first ("Its a little too much")');
+  // PIN MOVED (JUNGLE-GRASS, test/world/junglegrass.test.js): the owner's judged 1.8 is the floor's FLORA's rate now; its
+  // plants are the meadow's grass and that flora
+  assert.equal(JUNGLE_FLOOR.plants, JUNGLE_FLOOR_PLANTS_M2, 'the meadow\'s grass and the flora the owner judged ("Its a little too much" at 2.5)');
   assert.notEqual(JUNGLE_FLOOR.seed, LAB_GRASS.seed, 'never the meadow\'s spots');
   const none = createJungleFloorHost({ gl: stubGl(), jungle, pictures: async () => new Map([[7, pics.get(7)]]), onArrive: () => { arrived++; } });
   none.update(0, 0, () => 1);
@@ -260,7 +262,8 @@ test('BANTHA2 THE WIRING: the world builds the floor after the jungle, with the 
   const j = w.indexOf('const jungle = jungleOn() ? createJungleHost('), f = w.indexOf('const jungleFloor = jungle && labGrass ? createJungleFloorHost({ gl: renderer.gl, jungle, pictures: floorPictures({ getTexture, palette }), density: grassDensity / LAB_GRASS.density,');
   assert.ok(j > 0 && f > j, 'after the jungle, with the grass');
   assert.match(w, /onArrive: \(\) => \{ labGrassField = null; \}/, 'the meadow placed again beside it');
-  assert.match(w, /grassRecords\.set\(groundArchive, grassRecordsOf\(layers\)\); floorRecords\.set\(groundArchive, floorRecordsOf\(layers\)\);/);
+  // PIN MOVED (OW-HITCH): the records are learned in the ground sets' home, scenes/groundSets.js (HOST-SPLIT)
+  assert.match(readFileSync(new URL('../../src/scenes/groundSets.js', import.meta.url), 'utf8'), /grassRecords\.set\(groundArchive, grassRecordsOf\(layers\)\); floorRecords\.set\(groundArchive, floorRecordsOf\(layers\)\);/);
   assert.match(w, /const keep = \(x, z, floor = false\) => \{/);
   const pair = w.indexOf('jungleFloor.pair(createGrassField(labGrass, { keep, ground, slope, density: grassDensity }))');
   const meadowWalk = w.indexOf('labGrassField.update(ex, ez, keep, ground, slope);');

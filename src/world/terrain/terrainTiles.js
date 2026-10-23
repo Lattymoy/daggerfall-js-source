@@ -32,6 +32,7 @@
 import { perlinNoise } from '../perlin.js';
 import { UMRandom } from '../../formats/umRandom.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
+import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // BOOT-RECTS: whether a layout pin stands where a walk reads
 
 /** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
  *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
@@ -48,8 +49,10 @@ const RMB_TILES_PER_TERRAIN = 128;
 export const BEACH_JITTER = 1.5;
 
 const SEED = 417028; // Use same seed to ensure continuous tiles
-const WATER = 0;
-const DIRT = 1;
+/** The tile data's ground classes (GenerateTileDataJob's): water, dirt, grass, stone - JUNGLE-TRAILS
+ *  (world/jungle/jungleTrails.js) paints its corners dirt over the land. */
+export const WATER = 0;
+export const DIRT = 1;
 const GRASS = 2;
 const STONE = 3;
 
@@ -306,6 +309,46 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
     xMax: xmax + extraClearance,
     yMin: ymin - extraClearance,
     yMax: ymax + extraClearance,
+  };
+}
+
+/**
+ * BOOT-RECTS (2026-10-20, bible/07-Rendering/Performance-Priority.md BOOT-RECTS): SetLocationTiles' RECT FOR MANY
+ * LOCATIONS IN ONE WALK - the boot's two: the Eltheric isles' templates (etherWatersBake.js etherPlaceRects, 7,538 of
+ * them) and the Bay's coastal towns for Deep Waters (deepWatersClient.js deepWatersLocationRects). BlocksFile keeps ONE
+ * parsed block (autoDiscard, as BlocksFile.cs:32), so a walk parsed a block again - and dried its puddles again
+ * (puddleDry.js) - every time its name came round: the isles' templates name 384 blocks. The walk keeps each block's
+ * ground tiles, the one thing SetLocationTiles reads of it, for itself. A block reads alike at every location the
+ * world-data door reads it at, save where a layout pin stands (worldDataReplacement.js pinnedHere): a location with one,
+ * or one the door cannot place (no integer indices - its blocks read in the last place's context), reads through as it
+ * always did. `as` lays fields over every location read (the isles' templates are read as a clone of them is).
+ * Answers `(dfLocation) => rect`; the tilemap is the walk's own scratch, never read.
+ * @param {object} mapsFile @param {object} blocksFile @param {object|null} [as]
+ * @returns {(dfLocation: object) => {xMin: number, xMax: number, yMin: number, yMax: number}}
+ */
+export function locationRectReader(mapsFile, blocksFile, as = null) {
+  /** @type {Map<number, object|null>} block index -> its ground tiles, as getBlock serves them */
+  const ground = new Map();
+  const shared = {
+    checkName: (name) => blocksFile.checkName(name),
+    getBlockIndex: (name) => blocksFile.getBlockIndex(name),
+    getBlock: (index) => {
+      let b = ground.get(index);
+      if (b === undefined) {
+        const block = blocksFile.getBlock(index);
+        const groundTiles = block?.rmbBlock?.fldHeader?.groundData?.groundTiles;
+        b = groundTiles ? { rmbBlock: { fldHeader: { groundData: { groundTiles } } } } : block;   // a block with none fails SetLocationTiles as it did
+        ground.set(index, b);
+      }
+      return b;
+    },
+  };
+  const scratch = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
+  return (dfLocation) => {
+    const loc = as ? { ...dfLocation, ...as } : dfLocation;
+    const door = worldDataDoor();
+    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));
+    return setLocationTiles(loc, mapsFile, own ? blocksFile : shared, scratch.fill(0));
   };
 }
 

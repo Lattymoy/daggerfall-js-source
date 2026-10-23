@@ -1,0 +1,137 @@
+[
+  {
+    "name": "AUDIT-QL-VOICE-a-harbourmaster-back-in-a-sheet",
+    "file": "src/systems/questlines/sheets/questlines.json",
+    "old": "own sail, and the harbormaster paid for it.",
+    "new": "own sail, and the harbourmaster paid for it.",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-Colours-back-in-QLIS03-s-DisplayName",
+    "file": "src/systems/questlines/quests/QLIS03.txt",
+    "old": "DisplayName: Strike Your Colors",
+    "new": "DisplayName: Strike Your Colours",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-an-armourer-back-as-a-line-s-giver",
+    "file": "src/systems/questlines/qlLines.js",
+    "old": "t('ql.line.introGear.giver', 'an armorer')",
+    "new": "t('ql.line.introGear.giver', 'an armourer')",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-an-aside-back-in-a-sheet",
+    "file": "src/systems/questlines/sheets/fightersGuild.json",
+    "old": "the client is safe, for now.",
+    "new": "the client is safe - for now.",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-the-share-s-dash-back",
+    "file": "src/systems/quest/questShare.js",
+    "old": "'A questline is your own road. Its steps cannot be shared.'",
+    "new": "'A questline is your own road - its steps cannot be shared.'",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-the-receiver-s",
+    "file": "src/systems/quest/questShare.js",
+    "old": "'cannot be given a step of a questline. Each player walks their own.'",
+    "new": "'cannot be given a step of a questline - each walks their own.'",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-aren-t-back",
+    "file": "src/net/accountClient.js",
+    "old": "rewards are not available to you right now.'",
+    "new": "rewards aren\\'t available to you right now.'",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-each-one-finished-offers",
+    "file": "src/systems/features.js",
+    "old": "'Every quest shows its objectives, some let you choose how they end, some offer a piece of gear '\n      + 'fitted to you when done, and questlines lead",
+    "new": "'Every quest shows its objectives, some let you choose how they end, and each one finished offers a piece of gear '\n      + 'fitted to you; questlines lead",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-quest-after-quest",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Questlines are longer stories told in several quests, one after another. The same tab lists them.",
+    "new": "Questlines are longer stories, quest after quest, listed in the same tab.",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-an-endgame-place-back",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "'A witnessed step is done in a Dagon’s Breach, an Elite Breach’s Redoubts, the Abyss Dungeon’s Shattered Hour, against the Sea Serpent or at a fallen star. The account service checks it against that place’s own record before it pays.'",
+    "new": "'Done in an endgame place: the account service checks it against that place’s own record before it pays'",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-Armour-back-on-a-card",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "armor: t('ql.journal.armour', 'Armor')",
+    "new": "armor: t('ql.journal.armour', 'Armour')",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-Jewellery-back-on-a-card",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "jewel: t('ql.journal.jewel', 'Jewelry')",
+    "new": "jewel: t('ql.journal.jewel', 'Jewellery')",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-Armour-back-on-a-card-s-stat-line",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "t('ql.journal.pieceArmour', 'Armor {mod}'",
+    "new": "t('ql.journal.pieceArmour', 'Armour {mod}'",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-aren-t-back-drawn",
+    "file": "src/net/accountClient.js",
+    "old": "rewards are not available to you right now.'",
+    "new": "rewards aren\\'t available to you right now.'",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-VOICE-the-honour-back-in-a-patch-s-message",
+    "file": "src/systems/questlines/patches/knightlyOrders.json",
+    "old": "accept the honor?",
+    "new": "accept the honour?",
+    "tests": [
+      "test/systems/questlines/qlvoice.test.js"
+    ]
+  }
+]

@@ -25,8 +25,8 @@
 //     clamp, the invert and the pause gate are the mouse's.
 //   - THE UI BUTTONS are GetMouseButton's OR (:1050-1063): LeftClick,
 //     RightClick and MiddleClick are Mouse0/Mouse1/Mouse2 in the held
-//     set (ActivateCenterObject, SwingWeapon and AutoRun by default -
-//     and a swing's direction is the camera stick, through the attack
+//     set (ActivateCenterObject, SwingWeapon and PartyPing by default -
+//     AutoRun ships on F3; a swing's direction is the camera stick, through the attack
 //     hook, as the swipe is on a phone); Back is the Escape action
 //     (GetBackButtonDown :1065-1068), pressed only while a window is
 //     up - in the world DFU's B does nothing unless bound.

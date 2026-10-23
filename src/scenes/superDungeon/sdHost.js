@@ -118,7 +118,12 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     if (memo && memo.s === r.s) return memo.none ? null : memo;
     const sc = scan();
     if (!sc) { warmScan(); return null; }
-    const site = findSdSite(r, sc, cities(r.r), ground);   // AUDIT SD IV (F37): on dry ground
+    // SD-SEA (FIELD BUGS 2026-10-20b): a region with no town to rise by - a relay before SD-SEA raised one where a crowd
+    // stood at sea (net/superDungeon/sdLaw.js SD_TOWNLESS_REGIONS) - rises by the Bay's great cities, as one whose census
+    // counted nobody does: the same city and pixel on every client, where it stood by none
+    let at = r, near = cities(r.r);
+    if (!near.length && r.r >= 0) { at = { ...r, r: -1 }; near = cities(-1); }
+    const site = findSdSite(at, sc, near, ground);   // AUDIT SD IV (F37): on dry ground
     const template = site ? pickSdTemplate(r.s, templates()) : null;
     const loc = site && template ? sdHollowLocation(r, site, template, where(site.px, site.py)) : null;
     if (!loc) { memo = { s: r.s, none: true }; console.warn(`[sd] slot ${r.s}: the world offers no Hollow (${site ? 'no template' : 'no site'})`); return null; }

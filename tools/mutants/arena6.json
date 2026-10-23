@@ -551,7 +551,7 @@
   {
     "name": "ARENA6-REFUSAL-UNSAID",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "  'bout on': 'A bout is on - end it first.',\n",
+    "old": "  'bout on': 'A bout is under way. End it first.',\n",
     "new": "",
     "tests": [
       "test/systems/arena/arena6_private.test.js"

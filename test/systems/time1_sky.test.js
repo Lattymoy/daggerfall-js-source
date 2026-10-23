@@ -167,14 +167,14 @@ test('TIME1 the nightfall words time the SKY\'s dusk at the sky\'s rate - fiftee
   const at = { t: noon };
   installAt(at);
   assert.equal(minuteOfDay(Math.round(skyMinutes())), 720);
-  assert.equal(worldNightfallText(), "The sun is the world's - night falls in about 15 minutes.", 'six sky hours at TimeScale 24: fifteen real minutes');
+  assert.equal(worldNightfallText(), "Online, resting does not move the sun. Night falls in about 15 minutes.", 'six sky hours at TimeScale 24: fifteen real minutes');
   at.t = noon + 15 * 60_000 - 30_000;
-  assert.equal(worldNightfallText(), "The sun is the world's - night falls in about 1 minute.");
+  assert.equal(worldNightfallText(), "Online, resting does not move the sun. Night falls in about 1 minute.");
   at.t = noon + 15 * 60_000 + 1000;
   assert.equal(worldNightfallText(), null, 'night: nothing to wait for');
   // a bare source keeps WORLD5's rate (the words a pre-TIME1 install said)
   setSharedClock(() => 9 * MINUTES_PER_DAY + 720);
-  assert.equal(worldNightfallText(), "The sun is the world's - night falls in about 30 minutes.");
+  assert.equal(worldNightfallText(), "Online, resting does not move the sun. Night falls in about 30 minutes.");
   setSharedClock(null);
   setWorldMinutes(9 * MINUTES_PER_DAY + 720);
   assert.equal(worldNightfallText(), null, 'offline the player rests to dusk');

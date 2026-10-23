@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SPAWN_CHANCE, ELITE_CHANCE, ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, isEliteSpawn, spawnsDungeon, synthesizeDungeonLocation, dungeonSightLine } from '../../src/world/spawnedDungeons.js';
+import { SPAWN_CHANCE, ELITE_CHANCE, SPAWN_KEEP, ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, isEliteSpawn, spawnsDungeon, synthesizeDungeonLocation, dungeonSightLine } from '../../src/world/spawnedDungeons.js';
 import { expandEliteEnemies, ELITE_COPY_OFFSET } from '../../src/characters/dungeonEnemies.js';
 import { calculateAttackDamage, registerFormulaOverride } from '../../src/combat/formulas.js';
 
@@ -11,8 +11,9 @@ test('ELITE: the constants are the requested ones', () => {
   assert.equal(ELITE_DAMAGE_SCALE, 2);
 });
 
-test('ELITE: 30% normal, 10% elite, never both on one pixel, the same answer every load', () => {
+test('ELITE: the band is 30% normal and 10% elite, the keep leaves three quarters of each, never both on one pixel, the same answer every load', () => {
   assert.equal(ELITE_CHANCE, 0.10);
+  assert.equal(SPAWN_KEEP, 0.75);
   assert.equal(isEliteSpawn(7, 100, 200), isEliteSpawn(7, 100, 200));
   let normal = 0, elite = 0, n = 0;
   for (let x = 0; x < 300; x++) for (let y = 0; y < 200; y++) {
@@ -21,8 +22,8 @@ test('ELITE: 30% normal, 10% elite, never both on one pixel, the same answer eve
     if (el) assert.ok(any, 'an elite pixel is a spawn pixel');
     if (el) elite++; else if (any) normal++;
   }
-  assert.ok(Math.abs(normal / n - SPAWN_CHANCE) < 0.015, `normal ~30%, got ${(normal / n).toFixed(3)}`);
-  assert.ok(Math.abs(elite / n - ELITE_CHANCE) < 0.015, `elite ~10%, got ${(elite / n).toFixed(3)}`);
+  assert.ok(Math.abs(normal / n - SPAWN_CHANCE * SPAWN_KEEP) < 0.015, `normal ~22.5% standing, got ${(normal / n).toFixed(3)}`);
+  assert.ok(Math.abs(elite / n - ELITE_CHANCE * SPAWN_KEEP) < 0.015, `elite ~7.5% standing, got ${(elite / n).toFixed(3)}`);
 });
 
 test('ELITE: the clone keeps the template look, says Elite in its name and carries the flag', () => {
@@ -40,9 +41,9 @@ test('ELITE: the clone keeps the template look, says Elite in its name and carri
   assert.equal(plain.name, 'Old Ruin (10,20)');
   assert.strictEqual(elite.dungeon.blocks, template.dungeon.blocks, 'same blocks - the same look');
   assert.deepEqual(elite.exterior.exteriorData.blockNames, template.exterior.exteriorData.blockNames);
-  assert.match(dungeonSightLine(410, 'North', 'elite'), /^You see an Elite Dungeon 410 metres to the North!$/);   // PIN MOVED (TIER1): the tier, not a flag
-  assert.match(dungeonSightLine(410, 'North', 'super'), /^You see an Abyss Dungeon 410 metres to the North!$/);
-  assert.match(dungeonSightLine(410, 'North'), /^You see a Dungeon 410 metres/);
+  assert.match(dungeonSightLine(410, 'North', 'elite'), /^You see an Elite Dungeon 410 meters to the North!$/);   // PIN MOVED (TIER1): the tier, not a flag
+  assert.match(dungeonSightLine(410, 'North', 'super'), /^You see an Abyss Dungeon 410 meters to the North!$/);
+  assert.match(dungeonSightLine(410, 'North'), /^You see a Dungeon 410 meters/);
 });
 
 test('ELITE: every marker stands three foes, in a fixed order, pulled back from walls', () => {

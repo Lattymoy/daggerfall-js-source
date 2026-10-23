@@ -303,7 +303,11 @@ export const EG_HALL_NAMES = Object.freeze({
   riftyard: 'The Rift-Yard', wellspring: 'The Wellspring', muster: 'The Muster', holdfast: 'The Holdfast', wellmouth: 'The Wellmouth',
   siege: 'The Siege-Walk', fallingwall: 'The Falling Wall', winch: 'The Winch', gauntlet: 'The Gauntlet', forgebridge: 'The Forge Bridge',
 });
-/** What each hall asks (section 27.3's objective chip), by variant where it has one, else by kind. */
+/** What each hall asks (section 27.3's objective chip), by variant where it has one, else by kind. Each spec carries its
+ *  hall's (`objective`), so these words are a hall's bytes (section 22's law pin - egSpecDigest, every law's halls hashed
+ *  whole) and stay as laid. FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the screen no longer shows the Gauntlet's - "Silence the
+ *  casters." sent a company to kill them, and a slain Caster is not silenced (net/eliteGates/egBrain.js trialStep); it says
+ *  ui/eliteGates/egHud.js egObjectiveText's, the plates named, in the player's language. */
 export const EG_OBJECTIVES = Object.freeze({
   yard: 'Close the rifts.', riftyard: 'Close the rifts.', wellspring: 'Break the anchors, then the Wellspring.', muster: 'Fell the standard.', holdfast: 'Hold the relic.', wellmouth: 'Close the wandering rifts.',
   rampart: 'Break the wards at the portcullis.', siege: 'Break the wards at the portcullis.', fallingwall: 'Outrun the falling wall. Break the wards.', winch: 'Hold the winch plates.', gauntlet: 'Silence the casters.', forgebridge: 'Climb the forge bridge. Break the wards.',
@@ -333,8 +337,8 @@ export const EG_TWIST_NAMES = Object.freeze({
   deserter: 'The Deserter', mimic: 'The Kyn Mimic', captive: 'The Captive Battlemage', sutler: 'The Sutler',
 });
 export const EG_TWIST_LINES = Object.freeze({
-  vault: 'A side span leads to a sealed vault.', bargain: 'A shrine to Dagon offers a bargain.', squad: 'A Kynval squad holds this hall.', scriptorium: 'A quiet hall. The Battlemages kept their books here.',
-  ghost: "A Battlemage's ghost fights beside you.", deserter: 'A Dremora deserter races you to the rifts.', mimic: 'Not every cache is what it seems.', captive: 'A Battlemage hangs in chains.', sutler: 'The Kyn quartermaster sells for lumen.',
+  vault: 'A side span leads to a vault with an extra Reliquary.', bargain: 'A shrine to Dagon offers a Reliquary for one more decree.', squad: 'A Kynval squad holds this hall.', scriptorium: 'A quiet hall. You heal, and the door opens in 30 s.',
+  ghost: "A Battlemage's ghost fights beside you.", deserter: 'A Dremora deserter races you to close the rifts.', mimic: 'Some caches are Kyn Mimics. Their lids breathe red.', captive: 'A Battlemage hangs in chains. Break them for a Cantrip each.', sutler: 'The Sutler sells Cantrips, Tonics and shards for lumen.',
 });
 
 // ── the lords (section 13.3) ─────────────────────────────────────────────────────────────────────────────
@@ -379,19 +383,19 @@ const milli = (v) => Math.round(v * EG_LAW_UNIT);
 /** EVERY DECREE: its number, its family, its name, its line (and the lord family's `law` - section 14's merge). */
 export const EG_DECREE_FAMILIES = Object.freeze(['blows', 'legion', 'ground', 'covenant', 'lord']);
 export const EG_DECREES = Object.freeze([
-  Object.freeze({ id: 0, key: 'chained', fam: 'blows', name: 'Chained Blows', line: 'The legion\'s blows chain a second shape.' }),
+  Object.freeze({ id: 0, key: 'chained', fam: 'blows', name: 'Chained Blows', line: 'Each legion blow is followed by a second.' }),
   Object.freeze({ id: 1, key: 'twincharge', fam: 'blows', name: 'Twin Charge', line: 'A Breaker\'s charge is followed by a second.' }),
   Object.freeze({ id: 2, key: 'pyre', fam: 'blows', name: 'Pyre-Bound', line: 'A slain add bursts into flame.' }),
-  Object.freeze({ id: 3, key: 'shades', fam: 'blows', name: 'Vengeful Shades', line: 'A slain add\'s shade follows its slayer.' }),
+  Object.freeze({ id: 3, key: 'shades', fam: 'blows', name: 'Vengeful Shades', line: 'A slain add\'s shade chases its slayer, then bursts.' }),
   Object.freeze({ id: 4, key: 'pack', fam: 'legion', name: 'Hunting Pack', line: 'Harriers hunt every hall.' }),
   Object.freeze({ id: 5, key: 'swarm', fam: 'legion', name: 'Swarm-Mother', line: 'Every wave carries a Binder.' }),
-  Object.freeze({ id: 6, key: 'vigil', fam: 'legion', name: "Kyn's Vigil", line: 'The champion waits on every arrival plate.' }),
-  Object.freeze({ id: 7, key: 'rally', fam: 'legion', name: "Kyn's Rally", line: 'A slain add strengthens its wave.' }),
-  Object.freeze({ id: 8, key: 'soulpools', fam: 'legion', name: 'Soul-Pools', line: 'A slain add leaves a pool that heals its kin.' }),
-  Object.freeze({ id: 9, key: 'ashfall', fam: 'ground', name: 'Ashfall', line: 'Fire falls on the courts.' }),
-  Object.freeze({ id: 10, key: 'gale', fam: 'ground', name: 'Gale-Swept', line: 'Every span carries a gust.' }),
-  Object.freeze({ id: 11, key: 'crumbling', fam: 'ground', name: 'Crumbling Halls', line: 'Every span crumbles.' }),
-  Object.freeze({ id: 12, key: 'sparks', fam: 'ground', name: 'Wellhead Sparks', line: 'Sparks rise and burst.' }),
+  Object.freeze({ id: 6, key: 'vigil', fam: 'legion', name: "Kyn's Vigil", line: 'A champion and its escort wait at the start of every hall.' }),
+  Object.freeze({ id: 7, key: 'rally', fam: 'legion', name: "Kyn's Rally", line: 'A slain add makes the rest of its wave stronger.' }),
+  Object.freeze({ id: 8, key: 'soulpools', fam: 'legion', name: 'Soul-Pools', line: 'A slain add leaves a pool that heals other adds unless you stand in it.' }),
+  Object.freeze({ id: 9, key: 'ashfall', fam: 'ground', name: 'Ashfall', line: 'Meteors fall on the fight floors.' }),
+  Object.freeze({ id: 10, key: 'gale', fam: 'ground', name: 'Gale-Swept', line: 'Gusts blow across every span.' }),
+  Object.freeze({ id: 11, key: 'crumbling', fam: 'ground', name: 'Crumbling Halls', line: 'Part of every span crumbles away.' }),
+  Object.freeze({ id: 12, key: 'sparks', fam: 'ground', name: 'Wellhead Sparks', line: 'Sparks rise and burst unless struck down.' }),
   Object.freeze({ id: 13, key: 'press', fam: 'covenant', name: "The Covenant's Press", line: 'The next Redoubt gives less time.' }),
   Object.freeze({ id: 14, key: 'ashen', fam: 'covenant', name: 'Ashen Vigil', line: 'The next rest heals less.' }),
   // EG5 (2026-10-12; section 14, THE MERGE): the lord family's four are the gate's boss-general trials (net/gate/gateMods.js
@@ -399,10 +403,10 @@ export const EG_DECREES = Object.freeze([
   // in thousandths (EG_LAW_UNIT: the law decides in integers); a key ending in X multiplies, any other is the last decree's
   // that names it (egLawFold). Colossal's radii are the page's 1.2 (the Slam 8.4 m, not the gate's 8.5); Unyielding's ward is
   // x2, the trial's 6 s over the gate's SHIELD_MS 3 s, in place of its `shieldMs`
-  Object.freeze({ id: 15, key: 'colossal', fam: 'lord', name: 'Colossal', line: 'The lord stands larger.', law: lawRanks({ sizeX: milli(trial('colossal').size), hpX: milli(trial('colossal').hp), radiusX: 1200 }, { sizeX: 1400, hpX: 1400, radiusX: 1300 }) }),
-  Object.freeze({ id: 16, key: 'unyielding', fam: 'lord', name: 'Unyielding', line: 'The lord\'s ward holds longer.', law: lawRanks({ shieldX: 2000, hitX: milli(trial('unyielding').hit) }, { shieldX: 3000, hitX: 750 }) }),
+  Object.freeze({ id: 15, key: 'colossal', fam: 'lord', name: 'Colossal', line: 'The lord is larger and tougher, with a wider reach.', law: lawRanks({ sizeX: milli(trial('colossal').size), hpX: milli(trial('colossal').hp), radiusX: 1200 }, { sizeX: 1400, hpX: 1400, radiusX: 1300 }) }),
+  Object.freeze({ id: 16, key: 'unyielding', fam: 'lord', name: 'Unyielding', line: 'The lord takes less damage, and its ward holds longer.', law: lawRanks({ shieldX: 2000, hitX: milli(trial('unyielding').hit) }, { shieldX: 3000, hitX: 750 }) }),
   Object.freeze({ id: 17, key: 'vengeful', fam: 'lord', name: 'Vengeful', line: 'The lord strikes harder.', law: lawRanks({ dmgX: milli(trial('vengeful').dmg) }, { dmgX: 1400 }) }),
-  Object.freeze({ id: 18, key: 'grudge', fam: 'lord', name: 'Grudge-Bearer', line: 'The lord never forgets.', law: lawRanks({ threatPick: milli(trial('grudge').threatPick), threatDecay: milli(trial('grudge').threatDecay) }, { threatPick: 950, threatDecay: 0 }) }),
+  Object.freeze({ id: 18, key: 'grudge', fam: 'lord', name: 'Grudge-Bearer', line: 'The lord hunts whoever hurts it most.', law: lawRanks({ threatPick: milli(trial('grudge').threatPick), threatDecay: milli(trial('grudge').threatDecay) }, { threatPick: 950, threatDecay: 0 }) }),
   // AUDIT EG V (L2-10; sections 8.4 and 14): THE FRAYING - the Hour's omen (net/superDungeon/sdMarks.js SD_OMENS) as a decree of the ground,
   // drawn only for a circle with an Athenaeum; its fray is net/eliteGates/egRun.js egFrayOf's, fed to the Orrery's draw (net/eliteGates/egBrain.js)
   Object.freeze({ id: 19, key: 'fraying', fam: 'ground', name: 'The Fraying', line: 'The Orrery snaps back sooner.' }),
@@ -2046,8 +2050,8 @@ export const egInVent = (v, x, z) => Math.abs(z - v.z) <= v.d / 2 && Math.abs(x 
 export const EG_TEXT = Object.freeze({
   name: 'Elite Breach',
   keyName: 'Weir Key',
-  keyLine: "One of the Spire's portal keys, surrendered to the Kyn in 3E 398. It opens the Weir Gate's road from this side.",
-  cold: 'The key is cold here.',
+  keyLine: "One of the Spire's portal keys, surrendered to the Kyn in 3E 398. Use it under open sky to open an Elite Breach.",
+  cold: 'The key is cold. Go online to turn it.',
   sky: 'The key wants open sky.',
   near: 'Another breach stands near.',
   held: 'You hold a breach already.',
@@ -2058,17 +2062,17 @@ export const EG_TEXT = Object.freeze({
     enemies: 'You cannot open a breach with enemies nearby.', journey: 'You cannot open a breach while you travel.' }),
   water: 'The key will not turn in the water.',
   aboard: 'The key will not turn aboard a boat.',
-  within: (place) => `Not within ${place}.`,
+  within: (place) => `You cannot open a breach within ${place}.`,
   room: 'There is no room for it here.',
   startHall: 'Hall 1',
   startRedoubt: (w, band) => `Redoubt ${w} - ${band}`,
-  stake: (n) => `Weir Keys: ${n} - one will be staked.`,
+  stake: (n) => `Weir Keys: ${n}. One will be staked.`,
   without: (names) => `Go without ${names}?`,
   questDue: 'A quest falls due before the breach can close.',
   notStart: (w) => `You have not taken Redoubt ${w} this season.`,
   wager: (names) => (names ? `The Wager: ${names}` : 'The Wager: none'),
   wagerDone: 'Done',
-  wagerFamily: 'The Wager takes one decree of a family.',
+  wagerFamily: 'The Wager takes one decree from each family.',
   wagerFull: 'The Wager takes three decrees at most.',
   plaqueSub: 'The Battlespire',
   company: (opener) => `${opener}'s company`,
@@ -2101,11 +2105,11 @@ export const EG_TEXT = Object.freeze({
   wayHome: 'The way home',
   walkHome: 'Walk home? The Redoubts you took are kept.',
   ended: 'The breach is over.',
-  rehearsal: 'Rehearse - Halls 1-5, no key',
+  rehearsal: 'Rehearse: Halls 1-5, no key',
   rehearsalDone: 'The Rehearsal is over. The Spire waits for a key.',
   noSave: 'The Spire keeps no saves.',
   noMap: 'The Spire keeps no map.',
-  noRest: 'There is no rest in the Spire but a Redoubt.',
+  noRest: 'You can rest only at a Redoubt.',
   noRecall: 'The Spire holds you.',
   noCompanions: 'Your companions cannot follow you into the Spire.',
 });

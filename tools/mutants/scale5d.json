@@ -152,12 +152,12 @@
   {
     "name": "SCALE5d-hint-unasked",
     "file": "src/net/online.js",
-    "old": "    try { ws = new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`); }",
-    "new": "    try { ws = new this._WS(`${this.url}/room/${this.room}`); }",
+    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`), this.room); }",
+    "new": "    try { ws = this._leased(new this._WS(`${this.url}/room/${this.room}`), this.room); }",
     "tests": [
       "test/net/scale5d.test.js"
     ],
-    "note": "a party scattered over the layers"
+    "note": "LEASE1 (PIN MOVED): the socket is now wrapped by _leased. a party scattered over the layers"
   },
   {
     "name": "SCALE5d-reconnect-hint",

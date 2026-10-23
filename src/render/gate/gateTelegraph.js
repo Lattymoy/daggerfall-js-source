@@ -35,12 +35,12 @@
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from '../labGrass.js';
 import { buildProgram } from '../glProgram.js';
-import { ATTACK_BY_ID, ATTACKS, BOSS_R, COURT_CENTRE, COURT_R, COURTS, BASE_PROFILE, windupOf, nearestCourt, isDagons, WALKS, WALK_HALF_W } from '../../net/gate/gateBrain.js';
-import { telegraphAt } from '../../net/gate/gateStrike.js';
+import { ATTACK_BY_ID, ATTACKS, BOSS_R, COURT_CENTRE, COURT_R, COURTS, BASE_PROFILE, windupOf, nearestCourt, isDagons, WALKS, WALK_HALF_W, PLAN_PLAIN, CHAIN_HOLD_M } from '../../net/gate/gateBrain.js';
+import { telegraphAt, wheelAngle } from '../../net/gate/gateStrike.js';
 import { attackColor } from '../../world/gate/gateBoss.js';
 
 /** The shapes, as the shader's `uKind` says them. WBX5: the Spokes of Dagon's lanes; WBX4: his mark. */
-export const TELEGRAPH_KIND = Object.freeze({ cone: 0, disc: 1, discs: 2, lane: 3, ring: 4, all: 5, spokes: 6, mark: 7 });
+export const TELEGRAPH_KIND = Object.freeze({ cone: 0, disc: 1, discs: 2, lane: 3, ring: 4, all: 5, spokes: 6, mark: 7, wedges: 8 });   // WB14a: the Unmaking's wedges
 /** The most lanes one spokes lays (the shader's loop bound). */
 export const TELEGRAPH_SPOKES_MAX = 8;
 /** WBX4 (2026-09-26, Swololo on Discord: "its hard to see where boss is and where he is facing, maybe he should have a
@@ -106,6 +106,18 @@ export const TELEGRAPH_WAVE_MAX_M = 3.5;
 export const TELEGRAPH_NOW_MS = 180;
 /** An attack's grain under a profile: Dagon's own, else its element's (his weight's when it carries none). */
 export const telegraphStyle = (A, P = BASE_PROFILE) => (isDagons(A) ? TELEGRAPH_STYLE.dagon : TELEGRAPH_STYLE[P.atk[A.key].el ?? 'weight'] ?? TELEGRAPH_STYLE.weight);
+/** WB14a: THE NEW ARSENAL'S GROUND - a shape of the gate's own kinds for each but the Unmaking's (a kind of its own,
+ *  TELEGRAPH_KIND.wedges): the Chains a path (TELEGRAPH_POOL.path - dashes flowing to him) from him to the chained,
+ *  TELEGRAPH_CHAIN_HALF_W across, in his blow's colour while they stand inside its hold and the safe edge's past it; the
+ *  Brand his element's rings and the Torment a gold one (TORMENT_COLOR - a ring to gather in, never one to leave), each
+ *  where this screen sees its marked fighter; the Wheel the Spokes' lanes, turning; the Gaze none - it lands on a view,
+ *  never on the ground. */
+export const TELEGRAPH_CHAIN_HALF_W = 0.35;
+export const TORMENT_COLOR = Object.freeze([1.0, 0.8, 0.28]);
+export const TORMENT_EDGE = Object.freeze([1.0, 0.9, 0.5]);
+/** WB14a: the shape each new attack's ground takes (TELEGRAPH_KIND by name - the gate's own shapes keep their own). */
+const ARSENAL_KIND = Object.freeze({ tether: 'lane', brand: 'discs', torment: 'discs', wheel: 'spokes', wedges: 'wedges' });
+
 /** WB13a: an attack's line - Dagon's crimson for his own, the danger edge for every other. */
 export const telegraphEdge = (A) => (A && isDagons(A) ? TELEGRAPH_EDGE_DAGON : TELEGRAPH_EDGE);
 
@@ -121,31 +133,40 @@ const DEG = Math.PI / 180;
  * @param {{a: number, at: number, x: number, z: number, yw: number, tg: number[][]}|null} atk @param {number} phase @param {number} now
  * @param {ReturnType<typeof import('../../net/gate/gateBrain.js').fightProfile>} [P]
  */
-export function telegraphShape(atk, phase, now, P = BASE_PROFILE) {
+export function telegraphShape(atk, phase, now, P = BASE_PROFILE, markAt = null) {
   /** @type {any} an attack of any shape - the fields its shape does not have read as none */
   const A = atk ? ATTACK_BY_ID[atk.a] : null;
   const tel = A ? telegraphAt(atk, phase, now) : null;
-  if (!A || !tel) return null;
+  if (!A || !tel || A.shape === 'gaze') return null;   // WB14a: the Gaze lands on a view, never on the ground
   const span = Math.max(A.active, 1);
   if (tel.since >= span + TELEGRAPH_FLASH_MS) return null;
   const start = atk.at - windupOf(A, phase);
   const fadeOut = tel.since > span ? 1 - (tel.since - span) / TELEGRAPH_FLASH_MS : 1;
-  const kind = A.shape === 'disc' ? (A.aim === 'self' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs) : TELEGRAPH_KIND[A.shape];
-  const end = atk.tg?.[0] ?? [atk.x, atk.z];
+  const kind = A.shape === 'disc' ? (A.aim === 'self' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs) : TELEGRAPH_KIND[ARSENAL_KIND[A.shape] ?? A.shape];
+  // WB14a: a marked fighter where this screen sees them now (`markAt(k)` - the court's: my feet, the online frame's place
+  // of another), else where they stood at the word
+  const placed = (k) => markAt?.(k) ?? atk.tg?.[k] ?? null;
+  const tether = A.shape === 'tether', wheel = A.shape === 'wheel', wedges = A.shape === 'wedges';
+  const end = (tether ? placed(0) : null) ?? atk.tg?.[0] ?? [atk.x, atk.z];
   // WBX5: a 'point' disc is one mark (the leap's landing, the meteor's fall); the spokes' lanes are `len` long
-  const marks = A.aim === 'players' ? (atk.tg ?? []).slice(0, TELEGRAPH_POINTS_MAX) : A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : [];
+  const marks = A.aim === 'players' ? (atk.tg ?? []).slice(0, TELEGRAPH_POINTS_MAX).map((p, k) => placed(k) ?? p) : A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : [];
   // WB9b: the court it is drawn over - where it lands (the bound's landing is the next court's heart), else where he stood
-  const at = A.aim === 'point' && marks.length ? marks[0] : [atk.x, atk.z];
+  const at = A.aim === 'point' && marks.length ? marks[0] : A.aim === 'players' && marks.length ? marks[0] : [atk.x, atk.z];
+  const held = tether && Math.hypot(end[0] - atk.x, end[1] - atk.z) <= CHAIN_HOLD_M;   // WB14a: the chain's colour says whether it holds
+  const torment = A.shape === 'torment';
   return {
-    kind, origin: [atk.x, atk.z], yaw: atk.yw, r: A.shape === 'spokes' ? A.len : P.atk[A.key].r ?? 0, halfArc: ((A.arc ?? 0) / 2) * DEG, body: P.bossR,
-    end: [end[0], end[1]], halfW: A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, P.bossR) : (A.width ?? 0) / 2, r0: A.r0 ?? 0, r1: A.r1 ?? 0,   // AUDIT WBX F7: the charge strikes as wide as his body (net/gate/gateStrike.js chargeStrikes), and shows so
-    points: marks.map((p) => [p[0], p[1]]), n: A.shape === 'spokes' ? Math.min(TELEGRAPH_SPOKES_MAX, A.n) : 0,
-    t: tel.t, flash: tel.since >= 0 ? 1 : 0, alpha: Math.max(0, fadeOut), color: attackColor(A, P), edge: telegraphEdge(A),
-    runS: A === ATTACKS.charge ? span / 1000 : 0, pool: TELEGRAPH_POOL.blow,
+    kind, origin: wedges ? [at[0], at[1]] : [atk.x, atk.z], yaw: wheel ? wheelAngle(atk, now) : atk.yw,
+    r: A.shape === 'spokes' || wheel ? A.len : P.atk[A.key].r ?? 0, halfArc: wedges ? Math.PI / A.n : ((A.arc ?? 0) / 2) * DEG, body: wedges ? 0 : P.bossR,
+    end: [end[0], end[1]], halfW: tether ? TELEGRAPH_CHAIN_HALF_W : A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, P.bossR) : (A.width ?? 0) / 2, r0: A.r0 ?? 0, r1: A.r1 ?? 0,   // AUDIT WBX F7: the charge strikes as wide as his body (net/gate/gateStrike.js chargeStrikes), and shows so
+    points: marks.map((p) => [p[0], p[1]]), n: A.shape === 'spokes' || wheel ? Math.min(TELEGRAPH_SPOKES_MAX, A.n) : wedges ? A.n / 2 : 0,
+    // WB14a: the Wheel's blades stand lit through their whole turn (its landing's flash at their end); the chain is a path
+    t: tel.t, flash: tel.since >= 0 && !(wheel && tel.since < span) ? 1 : 0, alpha: Math.max(0, fadeOut),
+    color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) : torment ? TORMENT_COLOR : attackColor(A, P), edge: torment ? TORMENT_EDGE : telegraphEdge(A),
+    runS: A === ATTACKS.charge ? span / 1000 : 0, pool: tether ? TELEGRAPH_POOL.path : TELEGRAPH_POOL.blow,
     // WB9b: over which court (all three for the whole arena's - the Wrath's and the Reckoning's); WB9e: its grain, its own
     // clock (seconds since the word, the wind-up's length) and how long since it landed (the shockwave's)
     court: A.shape === 'all' ? -1 : nearestCourt(at[0], at[1]), style: telegraphStyle(A, P),
-    since: Math.max(0, (now - start) / 1000), span: Math.max(0.001, windupOf(A, phase) / 1000), after: tel.since >= 0 ? tel.since / 1000 : -1,
+    since: Math.max(0, (now - start) / 1000), span: Math.max(0.001, windupOf(A, phase) / 1000), after: tel.since >= 0 && !(wheel && tel.since < span) ? (wheel ? tel.since - span : tel.since) / 1000 : -1,
   };
 }
 
@@ -314,6 +335,14 @@ export function telegraphField(sh, px, pz) {
       }
       return { inside: best <= sh.halfW, edge: Math.abs(best - sh.halfW), s: bh };
     }
+    case TELEGRAPH_KIND.wedges: {
+      // WB14a: the Unmaking's lit wedges - `n` about its heart, the first centred on its facing, `halfArc` each side
+      const per = (2 * Math.PI) / Math.max(1, sh.n), a = Math.atan2(rx, rz) - sh.yaw, C = COURTS[sh.court] ?? COURTS[0];
+      const off = Math.abs(a - per * Math.floor(a / per + 0.5)) - sh.halfArc;
+      const across = d * Math.sin(Math.min(Math.abs(off), Math.PI / 2));
+      const inside = d <= sh.r && off <= 0;
+      return { inside, edge: inside ? Math.min(across, sh.r - d) : Math.max(off > 0 ? across : 0, d - sh.r), s: d / Math.min(sh.r, rimDist(sh.origin[0], sh.origin[1], rx / (d || 1), rz / (d || 1), C[0], C[1])) };   // AUDIT WB14 (SCREEN-13): the fill meets the rim it is seen at (the Nova's and the Spokes' law)
+    }
     case TELEGRAPH_KIND.mark: {
       const fx = Math.sin(sh.yaw), fz = Math.cos(sh.yaw), along = rx * fx + rz * fz, side = rx * fz - rz * fx;
       const k = (along - sh.r) / sh.r1;
@@ -351,7 +380,7 @@ const TAU_S = (TELEGRAPH_FLASH_TAU_MS / 1000).toFixed(3), WAVE_S = (TELEGRAPH_WA
 const vec3Of = (c) => `vec3(${c.map((v) => v.toFixed(3)).join(', ')})`;
 export const TELEGRAPH_FS = HEAD + `in vec2 vCourt;
 in vec3 vWorld;
-uniform int uKind;       // 0 cone, 1 disc, 2 discs, 3 lane, 4 ring, 5 all, 6 spokes, 7 his mark (TELEGRAPH_KIND)
+uniform int uKind;       // 0 cone, 1 disc, 2 discs, 3 lane, 4 ring, 5 all, 6 spokes, 7 his mark, 8 the Unmaking's wedges (TELEGRAPH_KIND)
 uniform vec2 uOrigin;    // where he stood
 uniform float uYaw;      // his facing, atan2(dx, dz)
 uniform float uR;
@@ -454,6 +483,15 @@ void main() {
       if (ld < best) { best = ld; bh = clamp(h / min(uR, rimDist(uOrigin, dir, uCourt, uFloorR)), 0.0, 1.0); }   // WB13a: to the rim
     }
     inside = best <= uHalfW; edge = abs(best - uHalfW); s = bh;
+  } else if (uKind == 8) {
+    // WB14a: the Unmaking - uCount lit wedges about the court's heart, the first centred on uYaw, uHalfArc each side, uR out
+    float per = 6.283185307179586 / float(max(uCount, 1));
+    float a = atan(rel.x, rel.y) - uYaw;
+    float off = abs(a - per * floor(a / per + 0.5)) - uHalfArc;
+    float across = d * sin(min(abs(off), 1.5707963));
+    inside = d <= uR && off <= 0.0;
+    edge = inside ? min(across, uR - d) : max(off > 0.0 ? across : 0.0, d - uR);
+    s = d / min(uR, rimDist(uOrigin, rel / max(d, 1e-4), uCourt, uFloorR));   // AUDIT WB14 (SCREEN-13): to the rim it is seen at
   } else if (uKind == 7) {
     // WBX4: his mark - a ring about his feet (uR), a faint floor inside it, and a chevron before it where he faces (uR1
     // long, uHalfW wide at the ring), steady: it is where he is, not what he does. WB13a: dashed and dim - it was the
@@ -681,6 +719,10 @@ export function spireTelegraphVs(vs) {
 export const TELEGRAPH_VS_SPIRE = spireTelegraphVs(TELEGRAPH_VS);
 /** EG-G2: the Spire's fragment stage (spireTelegraphFs over the gate's). */
 export const TELEGRAPH_FS_SPIRE = spireTelegraphFs(TELEGRAPH_FS);
+/** SHADER-STALL: the pass's one program, the gate's or (`spire`) the Spire's, as its constructor builds it - what a host
+ *  starts ahead of the build (render/glProgram.js startPrograms).
+ *  @param {boolean} spire @returns {ReadonlyArray<readonly [string, string]>} */
+export const telegraphPrograms = (spire) => [spire ? [TELEGRAPH_VS_SPIRE, TELEGRAPH_FS_SPIRE] : [TELEGRAPH_VS, TELEGRAPH_FS]];
 /** EG-G2: what the Spire's pass draws a shape with when the shape says nothing: no fog floor, the whole fill, no bits. */
 const NO_FOG_FLOOR = Object.freeze([0, 0, 1]);
 
@@ -690,7 +732,8 @@ export class GateTelegraphRenderer {
   constructor(gl, { spire = false } = {}) {
     this.gl = gl;
     this.spire = !!spire;
-    const prog = buildProgram(gl, this.spire ? TELEGRAPH_VS_SPIRE : TELEGRAPH_VS, this.spire ? TELEGRAPH_FS_SPIRE : TELEGRAPH_FS);
+    const [[vs, fs]] = telegraphPrograms(this.spire);
+    const prog = buildProgram(gl, vs, fs);
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uCentre', 'uCourt', 'uLo', 'uHi', 'uLift', 'uKind', 'uOrigin', 'uYaw', 'uR', 'uHalfArc', 'uBody', 'uEnd', 'uHalfW', 'uR0', 'uR1', 'uPts', 'uCount',
@@ -738,8 +781,9 @@ export class GateTelegraphRenderer {
    */
   draw(shape, proj, view, eye, seconds, fog = null, centre = COURT_CENTRE, walks = null, floor = null) {
     // SD8d: another floor than the Burning Court's - `floor` { r, courts } (the Brass Remnant's arena: one floor, its
-    // centre the frame's origin); the court's own by default
-    const floorCourts = floor?.courts ?? COURTS, floorR = floor?.r ?? COURT_R;
+    // centre the frame's origin); the court's own by default. WB14b: `ks` the night's floors among them (net/gate/gateBrain.js
+    // nightPlan) - the whole arena's shape is drawn over those alone (a portent's platform stands only on its night)
+    const floorCourts = floor?.courts ?? COURTS, floorR = floor?.r ?? COURT_R, floorKs = floor ? floor.ks ?? null : PLAN_PLAIN.floors;
     this.drawn = 0;
     this.walked = 0;
     if (!shape || !(shape.alpha > 0.001) || !this.gl) return;   // AUDIT EG V (L6-5): a destroyed pass draws nothing
@@ -769,7 +813,7 @@ export class GateTelegraphRenderer {
     this._pts.fill(0);
     shape.points.forEach((p, i) => { this._pts[i * 2] = p[0]; this._pts[i * 2 + 1] = p[1]; });
     gl.uniform2fv(U.uPts, this._pts);
-    gl.uniform1i(U.uCount, shape.kind === TELEGRAPH_KIND.spokes ? (shape.n ?? 0) : shape.points.length);   // WBX5: the spokes' count rides the points' slot
+    gl.uniform1i(U.uCount, shape.kind === TELEGRAPH_KIND.spokes || shape.kind === TELEGRAPH_KIND.wedges ? (shape.n ?? 0) : shape.points.length);   // WBX5: the spokes' count rides the points' slot (WB14a: and the wedges')
     gl.uniform1f(U.uT, shape.t);
     gl.uniform1f(U.uFlash, shape.flash);
     gl.uniform1f(U.uAlpha, Math.min(1, shape.alpha));
@@ -799,6 +843,7 @@ export class GateTelegraphRenderer {
       gl.uniform2f(U.uWalkA, strip.a[0], strip.a[1]); gl.uniform2f(U.uWalkU, strip.u[0], strip.u[1]); gl.uniform1f(U.uWalkLen, strip.len);
     }
     for (let k = k0; k < k1; k++) {
+      if (!one && floorKs && !floorKs.includes(k)) continue;
       const q = telegraphQuadOver(shape, k, floorCourts, floorR);
       if (!q) continue;
       gl.uniform2f(U.uCourt, floorCourts[k][0], floorCourts[k][1]);
@@ -812,13 +857,13 @@ export class GateTelegraphRenderer {
       let on = false;
       for (const w of WALKS) {
         const f = walks[w.k];
-        if (!(f > 0) || (one && w.k !== k0 && w.k !== k0 - 1)) continue;
+        if (!(f > 0) || (one && w.a !== k0 && w.b !== k0)) continue;   // WB14b: a walkway by its two floors
         if (!on) { on = true; gl.bindVertexArray(this.walkVao); gl.uniform1i(U.uOnWalk, 1); gl.uniform2f(U.uCourt, COURTS[k0][0], COURTS[k0][1]); }
         gl.uniform2f(U.uWalkA, w.ax, w.az);
         gl.uniform2f(U.uWalkU, w.ux, w.uz);
         gl.uniform1f(U.uWalkLen, w.len * Math.min(1, f));
-        gl.uniform2f(U.uWalkC0, COURTS[w.k][0], COURTS[w.k][1]);
-        gl.uniform2f(U.uWalkC1, COURTS[w.k + 1][0], COURTS[w.k + 1][1]);
+        gl.uniform2f(U.uWalkC0, COURTS[w.a][0], COURTS[w.a][1]);
+        gl.uniform2f(U.uWalkC1, COURTS[w.b][0], COURTS[w.b][1]);
         gl.drawArrays(gl.TRIANGLES, 0, TELEGRAPH_WALK_QUAD.length / 2);
         this.walked++;
       }

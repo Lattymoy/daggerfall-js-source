@@ -28,7 +28,7 @@
  {"name": "WEATHER3b-front-ignores-the-place", "file": "src/systems/weather/weatherFront.js",
   "old": "      if (episode && peak != null) episode.peak = rollPeak(episode.mode, peak);\n", "new": "", "tests": ["test/systems/weather/weather3b_simseam.test.js"]},
  {"name": "WEATHER3b-world-front-no-peak", "file": "src/scenes/world.js",
-  "old": "jump, peak: weatherOverride ? null : currentWeatherIntensity() });", "new": "jump });", "tests": ["test/systems/weather/weather3b_simseam.test.js"]},
+  "old": "jump, peak: weatherOverride ? null : seaStormShown() ? 1 : currentWeatherIntensity() });", "new": "jump });", "tests": ["test/systems/weather/weather3b_simseam.test.js"]},
  {"name": "WEATHER3b-indoor-host-unwired", "file": "src/scenes/worldModes.js",
   "old": "        host.weatherIndoors?.();\n", "new": "", "tests": ["test/systems/weather/weather3b_simseam.test.js", "test/systems/weather/weather3f_audit.test.js"]},
  {"name": "WEATHER3b-overhead-any-word", "file": "src/systems/weather/weatherSim.js",

@@ -2263,7 +2263,7 @@ export class ShadowPass {
         for (const b of (cand ? cand.bb[j] : r.batches)) {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.castOnly || b.conceal) continue;   // MWNPC16: its body is the mover, its own record
           if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into
-          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
+          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive) || b.ghost) continue;
           if (b._shSway && near === DYN_SWAY) continue;
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup
           if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
@@ -2572,7 +2572,7 @@ export class ShadowPass {
         let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
         const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // PERF-EXT1: the record's wind, for its quads' lean; WINDFALL1: and whose law
         for (const b of (cand ? cand.bb[j] : r.batches)) {
-          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
+          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive) || b.ghost) continue;   // a concealed foe and a ghost cast nothing (DEX2: a Spectral row's, foeLook.js)
           if (filter === REPLAY_LO ? (b._shDyn && !b._shAnim) : (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn)) continue;   // SC1: by the batch's own word; DISC29-E: the lo tier takes a flat that animates in place
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
           if (lightPos && b.selfCard && !self) continue;   // DISC24-C: the player's own card, only where it is redrawn every frame

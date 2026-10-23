@@ -232,7 +232,7 @@ test('HOOD-SAID: the door\'s hint names the button that raises the hood - the pa
   try {
     globalThis.location = { search: '?skin=enhanced' };
     assert.deepEqual(racialFastTravelBlock(v, noon), { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT });
-    assert.equal(VAMPIRE_HOOD_TEXT, 'Raise the hood of a cloak or robe to travel by day - Raise hood, on its card in the pack.');
+    assert.equal(VAMPIRE_HOOD_TEXT, 'Raise the hood of a cloak or robe to travel by day. Use Raise hood on its card in your pack.');
     globalThis.location = { search: '?skin=classic' };
     assert.deepEqual(racialFastTravelBlock(v, noon), { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT_CLASSIC });
     assert.equal(VAMPIRE_HOOD_TEXT_CLASSIC, 'Use a cloak or robe on your doll until its hood is up.');

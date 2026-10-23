@@ -207,7 +207,7 @@ test('AUDIT CAPTAIN\'S SEA S5/D5: under false colours she passes for the merchan
   assert.equal(xt.name, etherShipNames(trader, seed).name, 'an Isles trader\'s name');
   aimAt(v, x);
   const xc = v.host.glass(0.1, { up: true });
-  assert.ok(xc.rows.some(([l, w]) => l === 'Colours' && w === `${ISLES_FLAG}' merchant colours`), JSON.stringify(xc.rows));
+  assert.ok(xc.rows.some(([l, w]) => l === 'Colours' && w === `${ISLES_FLAG}' merchant colors`), JSON.stringify(xc.rows));
   assert.ok(!CROWNS.some((c) => xc.rows.some(([, w]) => w.includes(c.name))), 'no Bay crown past the Veil');
 });
 
@@ -311,7 +311,7 @@ test('AUDIT CAPTAIN\'S SEA S11/S18/S22/S20: an unknown hull\'s glass title never
   assert.equal(glassCard({ hull: 2, hostile: true, distance: 500, speed: 0 }, KNOW.hull).tone, 'unknown');
   assert.deepEqual([0, 1, 2, 3, 7, 12].map(handsWords), ['no hands', 'a hand', 'a hand or two', 'about 5 hands', 'about 5 hands', 'about 10 hands']);
   assert.equal(hullWord(2), 'two-master');
-  assert.deepEqual([cargoWords(0), cargoWords(-1), cargoWords(1), cargoWords(9)], ['riding high - hold empty', 'riding high - hold empty', 'riding high - a light hold', 'riding deep - a rich hold']);
+  assert.deepEqual([cargoWords(0), cargoWords(-1), cargoWords(1), cargoWords(9)], ['riding high - hold empty', 'riding high - hold empty', 'riding high, a light hold', 'riding deep, a rich hold']);
   const s = await sea({ hull: 2 });
   const e = spawn(s, 'merchantCoaster', 400, Math.PI / 2);
   s.run(0.2);
@@ -398,8 +398,8 @@ test('AUDIT CAPTAIN\'S SEA S19: the glass holds her by her extent as she lies to
 
 test('AUDIT CAPTAIN\'S SEA S21: the black flag said as she is known to me - the trader\'s name only while her colours held, her own once seen through; "is a pirate" said only where she is seen (mutants: the colours\' arm, the studied arm, the sight gate)', () => {
   const src = rd('src/scenes/naval/navalHost.js');
-  assert.match(src, /deps\.say\?\.\(was === KNOW\.colours \? `False colours! \$\{disguiseOf\(e\)\?\.name \?\? 'The merchantman'\} runs up the black flag!` : was >= KNOW\.studied \? `\$\{s\.names\?\.name \?\? 'It'\} runs up the black flag!` : `\$\{withArticle\(hullWord\(s\.hull\)\)\} runs up the black flag!`, 4\);/);
-  assert.match(src, /if \(held > 0 \|\| dist <= Math\.max\(reach\.eye, reach\.lookout\)\) deps\.mid\?\.\(`False colours! \$\{s\.names\?\.name \?\? 'It'\} is a pirate\.`, 4\);/);
+  assert.match(src, /deps\.say\?\.\(was === KNOW\.colours \? `False colors! \$\{disguiseOf\(e\)\?\.name \?\? 'The merchantman'\} runs up the black flag!` : was >= KNOW\.studied \? `\$\{s\.names\?\.name \?\? 'It'\} runs up the black flag!` : `\$\{withArticle\(hullWord\(s\.hull\)\)\} runs up the black flag!`, 4\);/);
+  assert.match(src, /if \(held > 0 \|\| dist <= Math\.max\(reach\.eye, reach\.lookout\)\) deps\.mid\?\.\(`False colors! \$\{s\.names\?\.name \?\? 'It'\} is a pirate\.`, 4\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA S24: an unknown hull\'s hurts are no more read than her colours - GLASS-SPOT (PIN MOVED): she gives no card at all, where her card carried no bars; made out, her bar as her tag\'s (mutants: the HUD\'s)', async () => {
@@ -466,7 +466,7 @@ test('AUDIT CAPTAIN\'S SEA G2/P7: THE SWITCH SPLIT - the sea stands in every gam
   const core = w.slice(w.indexOf('  async function _teleportToPixel('));
   const land = core.indexOf('    const unstreamed = _streamedLanding(px, py);\n    if (unstreamed) { px = unstreamed.px; py = unstreamed.py; localPos = null; resolveArrival = null; }');
   assert.ok(land > core.indexOf('climbFeel.reset();') && land < core.indexOf('if (modEvent == null && !resolveArrival) csaPreJump();') && land < core.indexOf('state.init(px, py)'), 'after the resets, before the helm and the build');
-  assert.match(w, /if \(_unstreamedLanding\) \{\n\s+townTalk\.say\(_unstreamedLanding === 'ether' \? `\$\{ETHER_SEA_TITLE\} is closed in this game/);   // PIN MOVED (ELTHERIC): the sea's name its one home's
+  assert.match(w, /if \(_unstreamedLanding\) \{\n\s+townTalk\.say\(_unstreamedLanding === 'ether' \? `\$\{ETHER_SEA_TITLE\} is closed\. You wake in the Bay's waters/);   // PIN MOVED (ELTHERIC): the sea's name its one home's
   const { crossingTarget } = await import('../../../src/systems/naval/etherCrossing.js');
   const { HOME_WATERS } = await import('../../../src/world/ethericSea.js');
   assert.deepEqual(crossingTarget('home', { px: 8000, py: -5000 }), { px: HOME_WATERS.px, py: HOME_WATERS.py }, 'never a way out in the sea itself');
@@ -578,7 +578,11 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
   assert.equal(findHarbour({ rect: rectOf(E.veilhaven(), 4, 3), isWater }), null, 'the Bay\'s reach falls short of it - the isle\'s own is asked');
   const w = hostText('src/scenes/world.js');
   assert.match(w, /town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);
-  assert.match(rd('src/systems/naval/harbourBook.js'), /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), \.\.\.\(near\.reach \? \{ reach: near\.reach \} : \{\}\) \}\)/);
+  // PIN MOVED (FB1020c HARBOUR-REACH): the book sounds the reach it is handed (its own, HARBOUR_REACH without one), and an
+  // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js)
+  const book = rd('src/systems/naval/harbourBook.js');
+  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach \}\);/);
+  assert.match(book, /far = own === HARBOUR_REACH \? portRingReach\(near\.rect\) : 0;/);
   assert.match(w, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');
 });
 
@@ -617,7 +621,8 @@ test('AUDIT CAPTAIN\'S SEA P3/P12: an isle\'s place is never a spawn\'s template
 test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the nearest port isle (never a Bay temple a crossing away) and no Bay cemetery takes a vampire there; no teleport crosses the Veil; an isle\'s quest site resolves by its region\'s own name; an isle town\'s house is no deed\'s and none is sold there; an isle\'s port is a port for ship boarding whatever Travel Options says (mutants: each seam)', async () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /else if \(etherSea && inEther\(px\.x, px\.y\)\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const port = etherRisePort\(px\.x, px\.y\);\n\s+land = \{ x: port\.px, y: port\.py \}; kind = 'city';/);
-  assert.match(w, /const etherRisePort = \(x, y\) => islesNear\(x, y, ETHER_RISE_PX\)\.find\(\(i\) => i\.kind === 'port'\) \?\? veilhaven\(\);/);
+  // PIN MOVED (AUDIT SEA VENTURES C5/F2): the nearest port by distance, sought from ETHER_RISE_PX out until one stands within reach (Veilhaven the farthest)
+  assert.match(rd('src/systems/wild/etherWild.js'), /export function etherRisePort\(x, y\) \{\n  const h = veilhaven\(\), far = Math\.hypot\(h\.px - x, h\.py - y\);/);   // HOST-SPLIT (SEA VENTURES): out of bootWorld
   const { islesNear, veilhaven, inEther } = await import('../../../src/world/ethericSea.js');
   const rise = islesNear(7900, -5300, 60).find((i) => i.kind === 'port') ?? veilhaven();
   assert.ok(rise.kind === 'port' && inEther(rise.px, rise.py), 'a port isle of the sea');
@@ -678,6 +683,8 @@ async function crossingWorld(over = {}) {
   const { createCaptainLedger } = await import('../../../src/systems/naval/captainLedger.js');
   const src = hostText('src/scenes/world.js');
   const text = src.slice(src.indexOf('  const crossGate = createCrossingGate();'), src.indexOf('  let _navalWasOn = null;'));
+  // PIN MOVED (HOST-SPLIT at the merge of main into SEA VENTURES): her heading's law at the module's scope, the camera's yaw its argument
+  const boatForward = new Function(`${src.match(/\nconst boatForward = \(boat, yaw\) => \{[\s\S]*?\n\};\n/)[0]}\nreturn boatForward;`)();
   const log = [];
   const w = { etherSea: true, etherOut: true, sailing: true, paused: false, loading: false, overlay: null, transitioning: false, mode: 'exterior', busy: false, arriving: false, px: 150, py: 300, hostile: false, passengers: 0, teleport: null, ...over };
   const ledger = createCaptainLedger();
@@ -692,15 +699,16 @@ async function crossingWorld(over = {}) {
   const townTalk = { get overlayActive() { return !!w.overlay && !w.overlay.done; }, say: (t) => log.push(`say: ${t}`), showOverlay: (o) => { w.overlay = o; log.push('asked'); } };
   class YesNoBoxWindow { constructor(o) { Object.assign(this, o); this.done = false; } answer(yes) { if (this.done) return; this.done = true; (yes ? this.onYes : this.onNo)?.(); } withdraw() { this.done = true; log.push('withdrawn'); } }
   const scope = {
-    createCrossingGate: EC.createCrossingGate, CROSS_LAND_PX: ES.CROSS_LAND_PX, seaPixel: () => true,
+    createCrossingGate: EC.createCrossingGate, createCrossLand: EC.createCrossLand, seaPixel: () => true,   // SEA-BOUNTY: the land ring built by its own module
     get etherSea() { return w.etherSea; }, get etherOut() { return w.etherOut; }, csaRuntime, CROSS_CHECK_S: EC.CROSS_CHECK_S,
     gamePaused: () => w.paused, get _loading() { return w.loading; }, townTalk, modes: { get transitioning() { return w.transitioning; } }, _mode: () => w.mode,
     worldMoveBusy: () => w.busy, get _partyArrivalPending() { return w.arriving; },
     playerTravelPixel: () => ({ x: w.px, y: w.py }), crossingWayAt: EC.crossingWayAt, CROSS_X: ES.CROSS_X, inEther: ES.inEther,
     navalHostileNear: () => w.hostile, CROSS_REFUSED: EC.CROSS_REFUSED, CROSS_STALE: EC.CROSS_STALE, CROSS_FAILED: EC.CROSS_FAILED, csaPassengersOn: () => w.passengers, YesNoBoxWindow,
     crossingRows: EC.crossingRows, captainLedger: ledger, crossingTarget: EC.crossingTarget, CROSS_DAYS: EC.CROSS_DAYS,
+    _onlineWorldSession: () => !!w.online, get online() { return w.online ?? null; },   // ETHER-WILD: the question's warning is online's (offline here, as these pins were written)
     hudFade: { smashHUDToBlack: () => log.push('black'), fadeHUDFromBlack: () => log.push('fade in') },
-    csaCall: (fn) => fn(), cam: { yaw: 0 },
+    csaCall: (fn) => fn(), cam: { yaw: 0 }, boatForward,
     _teleportToPixel: async (px, py, local, opts) => {
       log.push(`teleport(${px},${py})`);
       if (w.teleport) return w.teleport(px, py, opts);
@@ -751,7 +759,7 @@ test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, 
   c.w.px = 150; c.w.py = 300; c.step();
   assert.equal(c.log.at(-1), 'asked', 'asked afresh in its own waters');
   c.w.passengers = 1; c.w.overlay.answer(true);
-  assert.match(c.log.at(-1), /no place for passengers/, 'a guest aboard since: refused');
+  assert.match(c.log.at(-1), /Passengers can't cross the Veil/, 'a guest aboard since: refused');
   c.w.passengers = 0;
   // another helm, no helm, the world moving, a party's arrival: each a stale question
   const { CROSS_STALE } = await import('../../../src/systems/naval/etherCrossing.js');
@@ -886,13 +894,15 @@ test('AUDIT CAPTAIN\'S SEA X15/X16: the chart goes with the world it charts - sh
   const src = hostText('src/scenes/world.js');
   assert.match(src, /const navalClear = \(\) => \{[^\n]*closeNavalYard\(\); closeEtherChart\(\);/);
   const open = src.slice(src.indexOf('  function openEtherChart() {'), src.indexOf('  /** AUDIT NAV1 (the helm): the shipwright\'s window over the world'));
-  const fwd = src.match(/ {2}const boatForward = \(boat\) => \{[\s\S]*?\n {2}\};\n/)[0];
+  const fwd = src.match(/\nconst boatForward = \(boat, yaw\) => \{[\s\S]*?\n\};\n/)[0];   // PIN MOVED (HOST-SPLIT at the merge of main into SEA VENTURES): at the module's scope, the camera's yaw its argument
   const seen = [];
   const w = { sailing: true, boat: { GameObject: { rotation: [0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)] } } };   // turned a quarter: her bow east
   const scope = {
     csaRuntime: { isSailing: () => w.sailing, get state() { return { CurrentBoat: w.boat }; } }, cam: { yaw: Math.PI },
     playerTravelPixel: () => ({ x: 6000, y: -5000 }), etherHost: { chart: (px, py, yaw) => { seen.push(yaw); return {}; } },
     createEtherChartOverlay: ({ word }) => { word(); return {}; }, townTalk: { showOverlay: () => {} },
+    _onlineWorldSession: () => false, online: null,   // ETHER-WILD: the word's pvp - offline here
+    seaVentures: { chartWord: () => ({ pvp: false, vaults: [] }) },   // SEA-VAULTS: the word's pvp and vaults the sea's ventures' (scenes/seaVenturesHost.js) - offline here
   };
   const openEtherChart = new Function('scope', `with (scope) { ${fwd}\n${open}\nreturn openEtherChart; }`)(scope);
   assert.equal(openEtherChart(), true);
@@ -1037,7 +1047,7 @@ test('AUDIT CAPTAIN\'S SEA D1: a strand\'s casks float once - out of its reach a
   w.sites = []; s.run(1.2);
   w.sites = [site]; s.run(1.2);
   assert.equal(casks().length, 3, 'the same three afloat');
-  assert.equal(s.log.say.filter((t) => /pulls in to the strand/.test(t)).length, 1, 'said once');
+  assert.equal(s.log.say.filter((t) => /Your boat goes ashore and comes back with its haul/.test(t)).length, 1, 'said once');
   // bare from its FIRST cask hauled - one hauled days after never pushes the strand's day on
   const { createEtherHost, STRAND_SITE } = await import('../../../src/scenes/etherHost.js');
   const { createCaptainLedger } = await import('../../../src/systems/naval/captainLedger.js');
@@ -1223,7 +1233,7 @@ test('AUDIT CAPTAIN\'S SEA D10: the Ninefold Hunger boards, and boards again - h
   };
   const crew = e.ship.damage.crew;
   throwBack();
-  assert.ok(s.log.mid.includes('The boarders are thrown back - and Ninefold Hunger sends more over the rail!'), s.log.mid.join(' | '));
+  assert.ok(s.log.mid.includes('The boarders are thrown back, but Ninefold Hunger sends more over the rail!'), s.log.mid.join(' | '));
   assert.ok(Math.abs(e.ship.damage.crew - crew / 2) < 1e-6, 'half her hands');
   assert.equal(e.ship.damage.state, 'afloat');
   assert.equal(s.host.boarding?.kind, 'repel', 'the second wave at once, from where she lies');
@@ -1551,7 +1561,7 @@ test('AUDIT CAPTAIN\'S SEA B6/B8/B10: a chart\'s port drawn again till one has o
   assert.ok(office.raiseCache(id) > 0);
   const again = office.readChart(mintChart(5));
   assert.equal(L.charts().length, 0, 'marked nothing');
-  assert.match(again.text, /raised long since/);
+  assert.match(again.text, /raised long ago\./);
   // PIN MOVED (FIELD BUGS 2026-10-14 INLAND-PORTS, Mac: "Fix harbour seaAt too"): the office's sea is the open sea, and
   // B10's edge - past the map only where the land beyond the Bay stands - is the open sea's own (run by
   // test/systems/naval/fb1014_inlandports.test.js)
@@ -1577,9 +1587,9 @@ test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in 
   assert.equal(goodIn(hold, 'wine'), 4, 'stopped short of dead in the water');
   assert.ok(r.ok);
   const again = office.exchange({ cargo: hold, room }).buy('wine', 1);
-  assert.deepEqual([again.ok, again.text], [false, 'The ship can\'t carry any more. Any heavier and it couldn\'t move.']);
+  assert.deepEqual([again.ok, again.text], [false, 'The ship can\'t carry any more.']);
   const { exchangeText } = await import('../../../src/ui/naval/navalYardWindow.js');
-  assert.match(exchangeText({ port: 'Wayrest', weight: 40, room: 10, gold: 5, rows: [] }).lede, /room for 10 kg more before the ship can't move/);
+  assert.match(exchangeText({ port: 'Wayrest', weight: 40, room: 10, gold: 5, rows: [] }).lede, /room for 10 kg more\)/);
   const { contractLine } = await import('../../../src/systems/naval/harbourBoard.js');
   assert.equal(contractLine({ until: 30, title: 't', words: 'w', kind: 'hunt', done: 0, need: 2, pay: 5 }, 0).left, '1 hour left');
   // Come Sail Away's own reckoning, read

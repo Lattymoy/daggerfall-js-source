@@ -132,8 +132,8 @@
   {
     "name": "OW3-J3-line-beside",
     "file": "src/scenes/world.js",
-    "old": "    const j = travelOptions.route?.join;\n",
-    "new": "    const j = null;\n",
+    "old": "    const j = travelOptions.route?.join, sw = ",
+    "new": "    const j = null, sw = ",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

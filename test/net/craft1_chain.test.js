@@ -60,13 +60,13 @@ test('CRAFT1 law: the works a chain may plan - every work of the forge, the work
     'ingot:iron', 'ingot:steel', 'ingot:silver', 'metal:brass', 'ingot:moonstone', 'ingot:dwarven', 'ingot:mithril', 'ingot:adamantium', 'ingot:ebony', 'ingot:orichalcum',
     'burn:pine',
     'saw:pine', 'saw:oak', 'saw:cherry', 'saw:teak', 'saw:mahogany', 'saw:ironwood', 'saw:ghostwood',
-    'cure:rat', 'cure:bat', 'cure:bear', 'cure:scorpion', 'cure:slaughterfish', 'cure:dreugh',
+    'cure:rat', 'cure:mudcrab', 'cure:bat', 'cure:wolf', 'cure:boar', 'cure:bear', 'cure:scorpion', 'cure:slaughterfish', 'cure:dreugh',   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the mod's three hides
     'weave:silk', 'cut:stone', 'mix:mortar',
   ]);
   const left = WORK_RECIPES.filter((r) => !CHAIN_WORKS.includes(r)).map((r) => r.id);
   assert.deepEqual(left, ['burn:oak', 'burn:cherry', 'burn:teak', 'burn:mahogany', 'burn:ironwood', 'burn:ghostwood', 'cure:tiger', 'cure:dragonling',
     'transmute:tin', 'transmute:copper', 'transmute:silver', 'transmute:gold']);
-  assert.deepEqual(producersOf('leather:cured').map((r) => r.id), ['cure:rat', 'cure:bat', 'cure:bear'], 'the cheapest hide first');
+  assert.deepEqual(producersOf('leather:cured').map((r) => r.id), ['cure:rat', 'cure:mudcrab', 'cure:bat', 'cure:wolf', 'cure:boar', 'cure:bear'], 'the cheapest hide first');   // PIN MOVED (DEX-HIDES; AUDIT FB1021 L2-1: the Ram Kit's Bear Hide last of its tier)
   assert.deepEqual(producersOf('leather:hardened').map((r) => r.id), ['cure:scorpion', 'cure:slaughterfish', 'cure:dreugh']);
   // FACT, pinned rather than sorted: every product two works make stands in the table cheapest first
   const worth = (r) => r.inputs.reduce((n, i) => n + i.n * materialOf(i.key, () => null).value, 0) / r.per;
@@ -143,7 +143,7 @@ test('AUDIT CRAFT1 law: F1 the Stores\' room - a product the Stores have no room
 test('CRAFT1 law: what a chain refined, said - the products and each profession\'s XP; nothing said where nothing was refined', () => {
   const name = (k) => ({ 'ingot:iron': 'Iron Ingot', 'wood:charcoal': 'Charcoal', 'ingot:steel': 'Steel Ingot', 'leather:cured': 'Cured Leather' })[k] ?? k;
   assert.equal(refinedText([{ id: 'ingot:iron', count: 3, xp: 30 }, { id: 'burn:pine', count: 3, xp: 0 }, { id: 'ingot:steel', count: 3, xp: 60 }, { id: 'cure:rat', count: 1, xp: 0 }], name),
-    'Refined first: Iron Ingot x3, Charcoal x3, Steel Ingot x3, Cured Leather x1 (+90 Smithing XP).');
+    'Refined first: Iron Ingot x3, Charcoal x3, Steel Ingot x3, Cured Leather x1 (+90 Smithing experience).');
   assert.equal(refinedText([{ id: 'saw:pine', count: 2, xp: 0 }], name), 'Refined first: plank:pine x4.');
   assert.equal(refinedText([{ id: 'cure:rat', count: 1, xp: 0, made: 2 }], name), 'Refined first: Cured Leather x2.', 'AUDIT CRAFT1 F4: the service\'s made, not the yield the book reads now');
   assert.equal(refinedText([{ id: 'cure:rat', count: 1, xp: 0 }], name, () => ({ specs: { 50: 'tanner' } })), 'Refined first: Cured Leather x2.', 'no made kept: the yield');
@@ -345,7 +345,7 @@ test('CRAFT1 anvil page: a recipe whose inputs are made from raw says so, its bo
   assert.equal(row.className.includes('prof-locked'), false);
   row.onclick();
   assert.match(root.textContent, /Steel Longsword - rank 10/);
-  assert.match(root.textContent, /Refined first, here: smelt ingot:iron x3, burn wood:charcoal x3, smelt ingot:steel x3, cure leather:cured x1 - from metal:iron x6, log:pine x3, hide:rat x2\./);
+  assert.match(root.textContent, /Refined first: smelt ingot:iron x3, burn wood:charcoal x3, smelt ingot:steel x3, cure leather:cured x1 - from metal:iron x6, log:pine x3, hide:rat x2\./);
   const craft = buttons().find((b) => b.textContent === 'Craft');
   assert.equal(craft.disabled, false, 'offered');
   // AUDIT CRAFT1 F1 + N1: while the craft (and its chain) is in flight, no forge work is pressed and no other bench's hands start
@@ -360,9 +360,9 @@ test('CRAFT1 anvil page: a recipe whose inputs are made from raw says so, its bo
   assert.deepEqual(crafted, ['longsword:steel']);
   held.set('metal:iron', 4);
   draw();
-  assert.match(buttons().find((b) => b.textContent.startsWith('Longsword')).textContent, /wants its inputs/, 'PIN MOVED (CRAFT2): no metal of the pattern made now or from raw');
+  assert.match(buttons().find((b) => b.textContent.startsWith('Longsword')).textContent, /needs materials/, 'PIN MOVED (CRAFT2): no metal of the pattern made now or from raw');
   press('Steel');   // the box's metal
-  assert.match(root.textContent, /From raw goods, short of metal:iron x2\./);
+  assert.match(root.textContent, /Not enough raw materials: short of metal:iron x2\./);
   assert.equal(buttons().find((b) => b.textContent === 'Craft').disabled, true);
   setPref('gentleActs', false);
   setProfessionsPages(null);
@@ -393,10 +393,10 @@ test('AUDIT CRAFT1 the other four benches drawn: the workbench\'s staff from Pin
     row('Bracer').onclick();
     // PIN MOVED (CRAFT2): the workbench and the loom list patterns - a case its row's name and its box's
     const cases = [
-      ['Staff', 'Pine Staff', 'Refined first, here: saw plank:pine x4 - from log:pine x2. Their XP is the works\' own; what is left over stays in your Stores.'],
-      ['Cuirass', 'Leather Cuirass', 'Refined first, here: cure leather:cured x6 - from hide:rat x12. Their XP is the works\' own; what is left over stays in your Stores.'],
-      ['Stone Column', 'Stone Column', 'Refined first, here: cut stone:cut x12, mix stone:mortar x10 - from stone:rough x29, metal:sulphur x1, metal:lead x1. Their XP is the works\' own; what is left over stays in your Stores.'],
-      ['Silver Bracer', 'Silver Bracer', 'Refined first, here: cure leather:cured x1 - from hide:rat x2. Their XP is the works\' own; what is left over stays in your Stores.'],
+      ['Staff', 'Pine Staff', 'Refined first: saw plank:pine x4 - from log:pine x2. The refining earns its own experience, and anything left over stays in your Stores.'],
+      ['Cuirass', 'Leather Cuirass', 'Refined first: cure leather:cured x6 - from hide:rat x12. The refining earns its own experience, and anything left over stays in your Stores.'],
+      ['Stone Column', 'Stone Column', 'Refined first: cut stone:cut x12, mix stone:mortar x10 - from stone:rough x29, metal:sulphur x1, metal:lead x1. The refining earns its own experience, and anything left over stays in your Stores.'],
+      ['Silver Bracer', 'Silver Bracer', 'Refined first: cure leather:cured x1 - from hide:rat x2. The refining earns its own experience, and anything left over stays in your Stores.'],
     ];
     for (const [name, boxed, words] of cases) {
       const r = row(name);
@@ -416,7 +416,7 @@ test('AUDIT CRAFT1 the other four benches drawn: the workbench\'s staff from Pin
     tracks.set('logging', T('logging', 100, null, 'timberwright'));
     draw();
     row('Staff').onclick();
-    assert.ok(note().some((n) => n.startsWith('Refined first, here: saw plank:pine x3 - from log:pine x1.')), JSON.stringify(note()));
+    assert.ok(note().some((n) => n.startsWith('Refined first: saw plank:pine x3 - from log:pine x1.')), JSON.stringify(note()));
     // a rank-locked row stays locked, though a chain could make its inputs (12 Scorpion hides cure to its 6 Hardened Leather)
     assert.equal(chainPlan(recipeById('leather-cuirass:hardened').inputs, (k) => held.get(k) ?? 0).ok, true);
     // PIN MOVED (CRAFT2): the Hardened Leather is the Cuirass's other material, in its box - its Cured from raw open
@@ -432,7 +432,7 @@ test('AUDIT CRAFT1 the yields said: a Quartermaster\'s ingots two a work on the 
   const qm = () => ({ specs: { 100: 'quartermaster' } });
   assert.equal(refinedText([{ id: 'ingot:iron', count: 2, xp: 0 }], name, qm), 'Refined first: ingot:iron x4.');
   assert.equal(refinedText([{ id: 'saw:pine', count: 1, xp: 0 }], name, () => ({ specs: { 100: 'timberwright' } })), 'Refined first: plank:pine x3.');
-  assert.equal(refinedText([{ id: 'ingot:iron', count: 100, xp: 1000, made: 100 }, { id: 'ingot:iron', count: 50, xp: 500, made: 50 }], name), 'Refined first: ingot:iron x150 (+1500 Smithing XP).');
+  assert.equal(refinedText([{ id: 'ingot:iron', count: 100, xp: 1000, made: 100 }, { id: 'ingot:iron', count: 50, xp: 500, made: 50 }], name), 'Refined first: ingot:iron x150 (+1500 Smithing experience).');
   // the lenient pass's spare: one log short for two planks asked apart - not two
   assert.deepEqual(chainPlan([{ key: 'plank:pine', n: 1 }, { key: 'plank:pine', n: 1 }], heldOf({})).short, [{ key: 'log:pine', n: 1 }]);
 });

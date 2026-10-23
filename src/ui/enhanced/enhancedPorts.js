@@ -406,7 +406,7 @@ const spellShop = {
               { type: 'stats', items: [['Casting cost', `${castSp} spell points`], ['Target', fr.target ?? '-'], ['Element', fr.element ?? '-']] },
             ] },
             { type: 'rows', title: 'Effects', key: 'fx', items: fx, empty: 'This spell has no effects.' },
-            { type: 'text', rows: [canPay ? `${price} gold to learn it.` : `It costs ${price} gold - you have ${gold}.`] },
+            { type: 'text', rows: [canPay ? `${price} gold to learn it.` : `It costs ${price} gold. You have ${gold}.`] },
           ] : [{ type: 'text', center: true, rows: ['Choose a spell on the shelf.'] }],
         ] },
       ],

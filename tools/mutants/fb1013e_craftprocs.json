@@ -191,8 +191,8 @@
   {
     "name": "CRAFT-PROCS-the-crafted-view-reads-no-record",
     "file": "server-account/src/market.js",
-    "old": "p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
-    "new": "p.hand, p.template, p.material AS dfu_material\n      FROM market_listings l JOIN products p",
+    "old": "p.hand, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "new": "p.hand, p.template, p.material AS dfu_material\n      ${from}",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]

@@ -112,8 +112,8 @@
   {
     "name": "WB5-the-gather-leaving-pieces",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      floor.forEach((f) => takeOne(f));",
-    "new": "      floor.slice(0, 1).forEach((f) => takeOne(f));",
+    "old": "    floor.forEach((f) => takeOne(f));",
+    "new": "    floor.slice(0, 1).forEach((f) => takeOne(f));",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "WB5-the-record-without-its-pieces",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    keep(STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-recordsMax));",
-    "new": "    keep(STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: [] }].slice(-recordsMax));",
+    "old": "    keep(STORE_KEY, trimRecords([...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]));",
+    "new": "    keep(STORE_KEY, trimRecords([...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: [] }]));",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]

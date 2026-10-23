@@ -40,7 +40,7 @@ import { savingThrow, EFFECT_FLAGS } from './spellcast.js';
 import { isEntityImmuneToDisease } from './effects.js';   // AUDIT 63 F15: AssignBundle's hard-immunity gate (EntityEffectManager.cs:495-499), beside its paralysis twin
 import { INFECTION, startInfection } from './infection.js';   // V1: the three special infections OnMonsterHit mints
 import { FATIGUE_MULTIPLIER } from './statMods.js';
-import { dice100 } from '../combat/formulas.js';
+import { dice100, formulaOverride } from '../combat/formulas.js';   // DEX4b: OnMonsterHit's TryGetOverride
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -172,6 +172,13 @@ export function startDisease(target, diseaseType, currentDay, rolls = Math.rando
  *  is money and not decoration. */
 export const diseaseCount = (entity) =>
   (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended).length;
+/** DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Unnamed 'Unwell' tile"): a PLAIN disease still in
+ *  its incubation - caught, live, a classic type, its first symptom day (the day's turn on the character's own clock,
+ *  updateDiseases) not come. DFU says nothing of one (CreateHealthStatusBox reads IncubationOver; no disease shows a HUD
+ *  icon, ShowSpellIcon false) while its travel popup counts it; the port's HUD shows it unnamed - "Unwell" - and the
+ *  Status box says the character feels unwell (ui/hud/hudStatus.js afflictionRows, systems/healthStatus.js). A
+ *  vampirism or lycanthropy infection is never one (it carries no type - DFU's Diseases.None). */
+export const diseaseIncubating = (a) => a?.kind === 'disease' && !a.ended && !a.incubationOver && a.disease != null;
 /** FIELD BUGS 29h (INFECTION-KEPT): the diseases the next cure ENDS - the plain ones while any runs, else the
  *  lycanthropy or vampirism infections (GetDiseaseCount then) - so the temple prices and claims what it takes
  *  (effects.js cureDiseasesInfectionsLast). */
@@ -282,64 +289,77 @@ export function fatigueDamage(target, damage, sinks) {
 }
 
 /**
- * FormulaHelper.OnMonsterHit, verbatim rider table - called per hit
- * (hitDamage > 0) from the monster multi-attack loop. deps: rolls,
- * currentDay, sinks (the TARGET's), onContract(diseaseType, entry),
- * castParalyze (the scene's free-cast of classic spell 66 from the
- * attacker - S19). Werewolf/Wereboar/Vampire special infections:
- * ROUTED (vampirism/lycanthropy line) - rolls consumed.
+ * FormulaHelper.OnMonsterHit (FormulaHelper.cs:1263-1373), verbatim rider table - called per hit (hitDamage > 0) from
+ * the monster multi-attack loop. deps: rolls, currentDay, sinks (the TARGET's), onContract(diseaseType, entry),
+ * regionIndex, readySpell(index) (the scene's SetReadySpell(spell, noSpellPointCost: true) - the attacker casts the
+ * standard spell `index` free, S19).
+ * DEX4b: a mod's override replaces the whole, as DFU's TryGetOverride("OnMonsterHit") does (:1265-1270) - Daggerfall
+ * Enemy Expansion's (systems/enemyExpansion/dexCombat.js) reuses these arms by number.
  */
 export function onMonsterHit(attacker, target, damage, deps = {}) {
+  const o = formulaOverride('onMonsterHit');
+  if (o) { o(attacker, target, damage, deps); return; }
+  runMonsterHitArm(CLASSIC_HIT_ARM[attacker.careerIndex] ?? 0, attacker, target, damage, deps);
+}
+
+/** DFU's switch, career -> arm (:1279-1371). The arms are numbered as Daggerfall Enemy Expansion's OnHit column numbers
+ *  them - its chain tests them in this order (BestiaryMod.cs:1477-1561) - and the Nymph's and the Lamia's are one body. */
+export const CLASSIC_HIT_ARM = Object.freeze({
+  [MOBILE_TYPES.Rat]: 1, [MOBILE_TYPES.GiantBat]: 2, [MOBILE_TYPES.Spider]: 3, [MOBILE_TYPES.GiantScorpion]: 3,
+  [MOBILE_TYPES.Werewolf]: 4, [MOBILE_TYPES.Nymph]: 5, [MOBILE_TYPES.Lamia]: 5, [MOBILE_TYPES.Wereboar]: 6,
+  [MOBILE_TYPES.Zombie]: 7, [MOBILE_TYPES.Mummy]: 8, [MOBILE_TYPES.Vampire]: 9, [MOBILE_TYPES.VampireAncient]: 9,
+});
+/** How many arms DFU's switch has. */
+export const MONSTER_HIT_ARMS = 9;
+
+/** One arm of OnMonsterHit's switch, its case body verbatim (0, or any other number: the default - nothing). */
+export function runMonsterHitArm(arm, attacker, target, damage, deps = {}) {
   const { rolls = Math.random, currentDay = 0, sinks = null, onContract = null } = deps;
   const inflict = (list) => inflictDisease(target, list, { rolls, currentDay, onContract });
-  switch (attacker.careerIndex) {
-    case MOBILE_TYPES.Rat:
+  switch (arm) {
+    case 1:   // Rat
       // classic = listA only; DF Chronicles' listB kept (DFU choice)
       if (dice100(5, rolls())) inflict(DISEASE_LIST_B);
       break;
-    case MOBILE_TYPES.GiantBat:
+    case 2:   // GiantBat
       // classic 2% (DF Chronicles says 5%) - classic kept
       if (dice100(2, rolls())) inflict(DISEASE_LIST_B);
       break;
-    case MOBILE_TYPES.Spider:
-    case MOBILE_TYPES.GiantScorpion:
-      // S19: the attacker casts classic spell 66 (Spider Touch -
-      // Paralyze) unless the target is already paralyzed
-      // (FindIncumbentEffect<Paralyze> == null gate). SetReadySpell
-      // noSpellPointCost=true - the scene's castParalyze closure is
-      // a free cast through the enemy spell seam.
-      if (!target.activeEffects?.some((a) => a.kind === 'paralyze') && deps.castParalyze) deps.castParalyze();
+    case 3:   // Spider, GiantScorpion
+      // S19: the attacker readies classic spell 66 (Spider Touch - Paralyze) unless the target is already paralyzed
+      // (FindIncumbentEffect<Paralyze> == null gate). SetReadySpell noSpellPointCost=true - the scene's readySpell is a
+      // free cast through the enemy spell seam.
+      if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(SPIDER_TOUCH_SPELL_INDEX);
       break;
-    case MOBILE_TYPES.Werewolf: {
+    case 4: {   // Werewolf
       const random = rolls() * 100;   // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
         startInfection(target, INFECTION.Werewolf, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
       }
       break;
     }
-    case MOBILE_TYPES.Nymph:
+    case 5:   // Nymph, and the Lamia (nothing in classic; DF Chronicles' fatigue rule kept) - one body in DFU's two cases
       fatigueDamage(target, damage, sinks);
       break;
     // DFU puts the Nymph BETWEEN the two lycanthropes and gives each
     // its own arm (:1307-1329) - they are not the shared case this
     // port had while both were routed, because each mints its own
     // strain and the two cancel each other.
-    case MOBILE_TYPES.Wereboar: {
+    case 6: {   // Wereboar
       const random = rolls() * 100;   // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
         startInfection(target, INFECTION.Wereboar, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
       }
       break;
     }
-    case MOBILE_TYPES.Zombie:
+    case 7:   // Zombie
       // nothing in classic; DF Chronicles' 2% kept (DFU choice)
       if (dice100(2, rolls())) inflict(DISEASE_LIST_C);
       break;
-    case MOBILE_TYPES.Mummy:
+    case 8:   // Mummy
       if (dice100(5, rolls())) inflict(DISEASE_LIST_C);
       break;
-    case MOBILE_TYPES.Vampire:
-    case MOBILE_TYPES.VampireAncient: {
+    case 9: {   // Vampire, VampireAncient
       const random = rolls() * 100;   // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
         // Stage-one vampirism, which records WHERE it was caught: the
@@ -351,10 +371,6 @@ export function onMonsterHit(attacker, target, damage, deps = {}) {
       }
       break;
     }
-    case MOBILE_TYPES.Lamia:
-      // nothing in classic; DF Chronicles' fatigue rule kept
-      fatigueDamage(target, damage, sinks);
-      break;
     default:
       break;
   }

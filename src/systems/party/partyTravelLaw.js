@@ -101,7 +101,7 @@ export function tripCountText(tally) {
 /** The words the leader's arm and the member's arm say - one home, so the chat, the prompt and the pins read alike. */
 export const PARTY_TRAVEL_TEXT = Object.freeze({
   noParty: 'You are not in a party.',
-  leading: 'You lead the party - the others travel to you.',
+  leading: 'You lead the party. The others travel to you.',
   offline: 'Your party leader is not online.',
   unseen: 'Your party leader has not been seen yet.',
   inside: 'Step outside to travel to your party leader.',
@@ -109,7 +109,7 @@ export const PARTY_TRAVEL_TEXT = Object.freeze({
   called: 'The leader called off the journey.',
   off: 'The journey is off.',
   late: 'The party was not ready in time. The journey is off.',
-  moved: 'Travel vote canceled - moved too far from where it started.',
+  moved: 'Travel vote canceled. You moved too far from where it started.',
   stay: 'You stay behind.',
   lost: 'You were too far from the leader to travel with the party.',
   busy: 'Close the open window first.',
@@ -196,8 +196,8 @@ export function fareText(computed, afford = true, coinsShort = false) {
 /** The rows of the offer to travel to the leader (a Yes/No box, ui/yesNoBox.js, either skin). */
 export function leaderOfferRows(trip, dest, fare, unwell = false) {
   const rows = [`Travel to ${trip.name}${dest ? ` at ${dest}` : ''}?`];
-  if (trip.inside === 'dungeon') rows.push(`${trip.name} is inside ${trip.loc || 'a dungeon'} - you will arrive at its door.`);
-  else if (trip.inside === 'building') rows.push(`${trip.name} is indoors - you will arrive outside.`);
+  if (trip.inside === 'dungeon') rows.push(`${trip.name} is inside ${trip.loc || 'a dungeon'}. You will arrive at its door.`);
+  else if (trip.inside === 'building') rows.push(`${trip.name} is indoors. You will arrive outside.`);
   rows.push(fare);
   if (unwell) rows.push('You are diseased or poisoned.');
   return rows;

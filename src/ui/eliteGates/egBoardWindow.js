@@ -21,6 +21,7 @@ import { ListPickerWindow } from '../listPicker.js';
 import { registerOverlay } from '../enhanced/enhancedOverlays.js';   // AUDIT EG III: on the enhanced doors' stack
 import { overlayAction } from '../input.js';   // AUDIT EG III: the doors' own Back
 import { t } from '../../systems/textManager.js';   // AUDIT EG V (c, L7-19): the last runs' words, in the player's language
+import { dressEgKit, egEl, egHead, egSection } from './egKit.js';   // EG-PLUS: the breach windows' chrome
 
 /** The tabs, in their order: the Descent's three brackets (server-account/src/egHonours.js EG_BRACKETS), the Depths and
  *  the Deepest Redoubts. */
@@ -28,7 +29,7 @@ export const EG_BOARD_TABS = Object.freeze(['alone', 'few', 'company', 'depths',
 /** A tab's name. AUDIT EG V (c, L7-19; section 27.6 - "the last five runs are kept"): the sixth, this device's own last runs
  *  (ui/eliteGates/egHud.js egRecapsKept - the recaps it kept, read here and nowhere else before). */
 export const EG_BOARD_TAB_TEXT = Object.freeze({
-  alone: 'The Descent - Alone', few: 'The Descent - The Few', company: 'The Descent - The Company',
+  alone: 'The Descent: Alone', few: 'The Descent: The Few', company: 'The Descent: The Company',
   depths: 'The Depths', deepest: 'The Deepest Redoubts',
   get runs() { return t('eg.board.runs', 'Your last runs'); },
 });
@@ -120,37 +121,73 @@ export function egBoardLines(board, tab, { short = false, runs = [] } = {}) {
   return out;
 }
 
-const STYLE_ID = 'dfegboard-style';
-const CSS = `
-.dfegboard{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:13;box-sizing:border-box;width:min(640px,calc(100vw - 32px));
-  max-height:calc(100vh - 36px);overflow:auto;background:rgba(18,14,10,.93);border:1px solid #8a6a2c;border-radius:6px;color:#e8dcc0;
-  font:14px/1.35 Georgia,serif;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,.6)}
-.dfegboard h3{margin:0 0 6px;font-size:15px;color:#e2b85a;font-weight:normal;letter-spacing:.04em}
-.dfegboard .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
-.dfegboard .tabs button.on{border-color:#e2b85a;color:#fff3cf;box-shadow:0 0 0 1px #e2b85a inset}
-.dfegboard .line{margin:1px 0}.dfegboard .line.you{color:#f6e3a4}.dfegboard .line.head{color:#c8b48a;font-size:13px}
-.dfegboard .foot{margin-top:6px;color:#c8b48a;font-size:13px}
-.dfegboard .acts{display:flex;justify-content:flex-end;margin-top:8px}
-.dfegboard button{background:#3a2c14;color:#f0dfb0;border:1px solid #8a6a2c;border-radius:3px;padding:3px 9px;font:13px Georgia,serif;cursor:pointer}
-.dfegboard:focus{outline:none}.dfegboard button:focus-visible{outline:2px solid #f0dfb0;outline-offset:1px}
+/**
+ * EG-PLUS: THE ENHANCED PANEL'S VIEW of a tab (`tab` one of EG_BOARD_TABS - the first for any other) - the board's facts as
+ * rows of their own, where the classic picker's lines (egBoardLines) run them into one string: `season` (its chip),
+ * `note` (reading, a refusal, an empty board), `rows` - each `{ rank, who, sub, val, you, flame }` - and `pinned` (the
+ * reader's own row under the ten), `foot` (this week's Proclamation and the reader's best). The last runs (`runs`) are
+ * this device's, newest first, with no rank and no foot. Pure.
+ * @param {any} board @param {string} tab @param {{ runs?: any[] }} [o]
+ */
+export function egBoardView(board, tab, { runs = [] } = {}) {
+  if (tab === 'runs') {
+    const list = (Array.isArray(runs) ? runs : []).filter((r) => r && typeof r === 'object' && typeof r.title === 'string').slice().reverse();
+    return { season: '', note: list.length ? '' : t('eg.board.noRuns', 'No run is kept on this device yet.'), foot: [], pinned: null,
+      rows: list.map((r) => ({ rank: '', who: r.title, sub: [dayOf(Number(r.at) / 1000), r.whyText || r.why || '', r.board || ''].filter(Boolean).join(' - '), val: r.time ?? '', you: false, flame: false })) };
+  }
+  if (!board) return { season: '', note: EG_BOARD_TEXT.reading, rows: [], pinned: null, foot: [] };
+  if (board.error) return { season: '', note: EG_BOARD_TEXT.failed(board.error), rows: [], pinned: null, foot: [] };
+  const k = EG_BOARD_TABS.includes(tab) ? tab : EG_BOARD_TABS[0];
+  /** @type {any} */ let b;
+  /** @type {(r: any) => { who: string, sub: string, val: string, flame?: boolean }} */ let row;
+  let none;
+  if (k === 'depths') {
+    b = board.depths; none = EG_BOARD_TEXT.noDepths;
+    const wager = (r) => { const names = (Array.isArray(r.wg) ? r.wg : []).map((id) => EG_DECREES[id]?.name).filter(Boolean); return names.length ? EG_TEXT.wager(names.join(', ')) : r.wagered ? EG_BOARD_TEXT.wagered : ''; };
+    row = (r) => ({ who: r.name ?? '?', sub: [r.ew > 0 ? t('eg.board.fromRedoubt', 'From Redoubt {n}', { n: r.ew }) : '', wager(r)].filter(Boolean).join(' - '), val: `Hall ${r.h}` });
+  } else if (k === 'deepest') {
+    b = board.deepest; none = EG_BOARD_TEXT.noDeepest;
+    row = (r) => ({ who: r.name ?? '?', sub: dayOf(r.at), val: `Redoubt ${r.w}` });
+  } else {
+    b = board.descent?.[k]; none = EG_BOARD_TEXT.noDescent;
+    row = (r) => ({ who: (Array.isArray(r.names) && r.names.length ? r.names : ['?']).join(', '), sub: [`Hall ${r.h} - ${EG_BAND_NAMES[egBandOfHall(r.h)]}`, r.pr || ''].filter(Boolean).join(' - '), val: egBoardClock(r.t), flame: !!r.flame });
+  }
+  const full = (r) => ({ rank: `${r.rank}.`, flame: false, ...row(r), you: !!r.you });
+  return {
+    season: EG_BOARD_TEXT.season(board.season), note: b?.rows?.length ? '' : none, rows: (b?.rows ?? []).map(full), pinned: b?.pinned ? full(b.pinned) : null,
+    foot: [board.proclamation ? EG_BOARD_TEXT.proclamation(board.proclamation) : '', board.best ? EG_BOARD_TEXT.best(board.best.h, board.best.t) : EG_BOARD_TEXT.noBest].filter(Boolean),
+  };
+}
+
+const STYLE_ID = 'dagger-eg-board-style';
+/** EG-PLUS: the boards are a breach window (ui/eliteGates/egKit.js) - this sheet places it and sizes its rows; the kit paints. */
+export const EG_BOARD_CSS = `
+.eg-board { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(660px, calc(100vw - 24px)); z-index: 13; }
+.eg-board .eg-k-row .eg-k-val { min-width: 76px; }
+.eg-board .eg-k-gap { padding: 2px 8px; font-size: 13px; color: var(--egk-dim); }
+.eg-board .eg-k-flame { margin-left: 6px; text-transform: capitalize; }
+@media (max-width: 480px) { .eg-board .eg-k-tab { flex: 1 1 45%; } }
 `;
 
 /**
- * THE ENHANCED SKIN'S PANEL in the page: the title, the five tabs, the tab's lines (egBoardLines - the head's two, the
- * rows, the foot's two), a close. `onTab(tab)` a tab pressed, `onClose()` the close or Escape. `render(board, tab)`
- * repaints; `destroy()` takes it away (once).
+ * THE ENHANCED SKIN'S PANEL in the page: a breach window (EG-PLUS) - the header band with the season and a close, the six
+ * tabs, the tab's rows (egBoardView - a rank, who, where and when, the time or depth, the Unfallen's mark, the reader's
+ * own row in brass), this week's Proclamation and the reader's best. `onTab(tab)` a tab pressed, `onClose()` the close or
+ * Escape. `render(board, tab)` repaints; `destroy()` takes it away (once).
  * @param {{ doc?: any, onTab: (tab: string) => void, onClose: () => void, runs?: () => any[] }} p
  */
 export function createEgBoardPanel({ doc = document, onTab, onClose, runs = () => [] }) {   // AUDIT EG V (c, L7-19): `runs` this device's last runs
+  dressEgKit(doc);
   if (doc?.getElementById && !doc.getElementById(STYLE_ID)) {
     const s = doc.createElement('style');
-    s.id = STYLE_ID; s.textContent = CSS;
+    s.id = STYLE_ID; s.textContent = EG_BOARD_CSS;
     (doc.head ?? doc.body)?.append(s);
   }
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-  const root = el('div', 'dfegboard');
+  const el = (tag, cls, text) => egEl(doc, tag, cls, text);
+  const root = el('div', 'eg-win eg-board');
   root.id = EG_BOARD_PANEL_ID;   // AUDIT EG III: an enhanced door, for the pad
   root.setAttribute('tabindex', '-1');
+  root.setAttribute('aria-label', EG_BOARD_TEXT.title);
   // a press on the panel is the panel's - never a swing or a look (ui/iliacTableHud.js's law); Escape is its close
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) root.addEventListener(t, (e) => e.stopPropagation());
   root.addEventListener('keydown', (e) => { e.stopPropagation?.(); if (e.key === 'Escape') { e.preventDefault?.(); onClose(); } });
@@ -163,33 +200,44 @@ export function createEgBoardPanel({ doc = document, onTab, onClose, runs = () =
   const win = doc.defaultView ?? globalThis;
   const onBack = (e) => { if (typeof e?.key !== 'string' || e.metaKey || e.ctrlKey || e.altKey || overlayAction(e) !== 'back') return; e.preventDefault?.(); e.stopPropagation?.(); onClose(); };
   win.addEventListener?.('keydown', onBack, { capture: true });
+  const rowOf = (r) => {
+    const n = el('div', `eg-k-row${r.you ? ' on' : ''}`);
+    if (r.rank) n.append(el('span', 'eg-k-rank', r.rank));
+    const who = el('span', 'eg-k-who', r.who);
+    if (r.you) who.append(el('span', 'eg-k-chip gold eg-k-flame', EG_BOARD_TEXT.you));
+    if (r.flame) who.append(el('span', 'eg-k-chip gold eg-k-flame', EG_BOARD_TEXT.unfallen));
+    if (r.sub) who.append(el('span', 'eg-k-sub', r.sub));
+    n.append(who);
+    if (r.val) n.append(el('span', 'eg-k-val', r.val));
+    return n;
+  };
   return {
     root,
     render(board, tab) {
       if (!alive) return;
-      const t = EG_BOARD_TABS.includes(tab) ? tab : EG_BOARD_TABS[0];
+      const k = EG_BOARD_TABS.includes(tab) ? tab : EG_BOARD_TABS[0];
+      const view = egBoardView(board, k, { runs: k === 'runs' ? runs() : [] });
       root.replaceChildren();
-      root.append(el('h3', '', EG_BOARD_TEXT.title));
-      const tabs = el('div', 'tabs');
-      for (const k of EG_BOARD_TABS) {
-        const b = el('button', k === t ? 'on' : '', EG_BOARD_TAB_TEXT[k]);
-        b.setAttribute('data-tab', k);
-        b.addEventListener('click', () => onTab(k));
+      root.append(egHead(doc, EG_BOARD_TEXT.title, { chips: view.season ? [el('span', 'eg-k-chip', view.season)] : [], onClose: () => onClose(), closeWords: EG_BOARD_TEXT.close }));
+      const body = el('div', 'eg-k-body');
+      const tabs = el('div', 'eg-k-tabs');
+      tabs.setAttribute('role', 'tablist');
+      for (const key of EG_BOARD_TABS) {
+        const b = el('button', `eg-k-tab${key === k ? ' on' : ''}`, EG_BOARD_TAB_TEXT[key]);
+        b.setAttribute('data-tab', key);
+        b.setAttribute('role', 'tab');
+        b.setAttribute('aria-selected', String(key === k));
+        b.addEventListener('click', () => onTab(key));
         tabs.append(b);
       }
-      root.append(tabs);
-      const lines = egBoardLines(board, t, { runs: t === 'runs' ? runs() : [] });
-      const foot = t !== 'runs' && board && !board.error;   // AUDIT EG V (c, L7-19): the last runs have no foot and no head of the season
-      const rows = foot ? lines.length - 2 : lines.length;   // the foot's two (the Proclamation, the best) apart
-      lines.forEach((line, i) => {
-        if (i >= rows && foot) { root.append(el('div', 'foot', line)); return; }
-        root.append(el('div', `line${(foot && i < 2) || (t === 'runs' && i === 0) ? ' head' : ''}${/ - you$/.test(line) ? ' you' : ''}`, line));
-      });
-      const acts = el('div', 'acts');
-      const close = el('button', '', EG_BOARD_TEXT.close);
-      close.addEventListener('click', () => onClose());
-      acts.append(close);
-      root.append(acts);
+      body.append(tabs);
+      const sec = egSection(doc, EG_BOARD_TAB_TEXT[k]);
+      if (view.note) sec.append(el('div', 'eg-k-line dim', view.note));
+      for (const r of view.rows) sec.append(rowOf(r));
+      if (view.pinned) sec.append(el('div', 'eg-k-gap', '...'), rowOf(view.pinned));
+      body.append(sec);
+      for (const line of view.foot) body.append(el('div', 'eg-k-line dim', line));
+      root.append(body);
     },
     destroy() { if (!alive) return; alive = false; unregister(); win.removeEventListener?.('keydown', onBack, { capture: true }); root.remove?.(); },
   };

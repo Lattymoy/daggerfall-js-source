@@ -79,6 +79,6 @@ export const healCurseText = Object.freeze({
     'Every gift and every weakness it gave you will go with it.',
     `The rite costs ${cost.toLocaleString('en-US')} gold. Will you have it done?`,
   ],
-  poor: (cost) => `The rite costs ${cost.toLocaleString('en-US')} gold - more than you carry.`,
+  poor: (cost) => `The rite costs ${cost.toLocaleString('en-US')} gold, more than you carry.`,
   lifted: 'The priests chant over you through the long hours. When it is done, the curse is gone.',
 });

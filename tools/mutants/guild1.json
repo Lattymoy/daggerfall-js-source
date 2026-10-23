@@ -20,8 +20,8 @@
   {
     "name": "GUILD1-a-bigger-guild",
     "file": "src/net/guild/guildLaw.js",
-    "old": "export const GUILD_MEMBERS_MAX = 50;",
-    "new": "export const GUILD_MEMBERS_MAX = 60;",
+    "old": "export const GUILD_MEMBERS_MAX = 75;",
+    "new": "export const GUILD_MEMBERS_MAX = 90;",
     "tests": [
       "test/server/guild1.test.js"
     ]

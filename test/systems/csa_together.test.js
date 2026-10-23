@@ -27,6 +27,7 @@ import { helmButtons, drawEnhancedHelm, hideEnhancedHelm, enhancedHelmMounted, e
 import { HELM_DPAD } from '../../src/ui/plus/plusPad.js';
 import { FRAME_ROLES } from '../../src/ui/enhanced/enhancedFrame.js';
 import { fakeDoc, all, one } from '../decorFakes.mjs';
+import { createJourneyHand } from '../../src/scenes/naval/passageHelm.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const fileFetch = async (url) => {
@@ -716,12 +717,13 @@ test('CSA-L: the host\'s helm seam - the panel\'s and the pad\'s presses reach t
   const seam = cut(WORLD, '  const csaHelmInput = { edges: new Set(), chord: new Set(), held: new Set() };', '\n');
   const press = cut(WORLD, '  const csaHelmPress = (action, withHeld = null) =>', '\n');
   const hold = cut(WORLD, '  const csaHelmHold = (action, on) =>', '\n');
-  const journey = cut(WORLD, '  const csaJourneyHelm = { held: new Set(), row: false };', '\n');   // OWS2: the journey's hand, beside the panel's
+  const journey = cut(WORLD, '  const csaJourneyHelm = createJourneyHand();', '\n');   // OWS2: the journey's hand, beside the panel's - PASSAGE-HANDS: made by scenes/naval/passageHelm.js
+  scope.createJourneyHand = createJourneyHand;
   const api = mount(scope, `${seam}${press}${hold}${journey}`, '{ csaHelmInput, csaHelmPress, csaHelmHold, csaJourneyHelm }');
   const keys = new Set(), latch = { edge: { downFrame: new Set() } };
   let atHelm = false;   // HELM-KEYS: whether the turn keys are the rudder's (scenes/world.js helmTurnKeys)
   Object.assign(scope, { ...api, keys, latch, held: (k, a) => k.has(a), pressed: (e, k, a) => e.downFrame.has(a), HELM_RUDDER_ACTIONS, helmTurnKeys: () => atHelm });
-  const input = cut(WORLD, '      has: (action) => held(keys, action) ||', '\n') + cut(WORLD, '      started: (action) => (pressed(latch.edge, keys, action) &&', '\n');   // PIN MOVED (AUDIT NAV2 F17): the sail keys' press gated by the travel view (test/systems/comeSailAway/auditnav2_helm.test.js)
+  const input = cut(WORLD, '      has: (action) => held(keys, action) ||', '\n') + cut(WORLD, '      started: (action) => !(travelView?.active &&', '\n');   // PIN MOVED (AUDIT NAV2 F17): the sail keys' press gated by the travel view (test/systems/comeSailAway/auditnav2_helm.test.js)
   const { has, started } = mount(scope, `const __i = { ${input} };`, '__i');
   api.csaHelmPress('BoatToggleSail', 'BoatTrimModifier');
   assert.equal(started('BoatToggleSail'), true, 'the tap is the action\'s edge');

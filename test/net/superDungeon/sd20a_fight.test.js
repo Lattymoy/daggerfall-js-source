@@ -232,7 +232,7 @@ test('SD20a THE RESET\'S RACE (F5, F6): the Hardened Hearts take a party at refe
   const hardened = SD_OMENS.find((o) => o.id === 'hardened');
   const open = SD_BLOWS.reset.windup - SD_HEARTS_CLOSE_MS;
   assert.ok(SD_HEART.teamS * hardened.law.heartX * 1000 <= open / 2, `the Hearts' share of their window: ${SD_HEART.teamS * hardened.law.heartX} s of ${open / 1000}`);
-  assert.equal(hardened.text, 'Its Hearts hold a quarter again as much.');
+  assert.equal(hardened.text, 'Its Hearts take 25% more to break.');
   // F6: a Pulse due inside the Reset's race
   assert.equal(SD_PULSE_CLEAR_MS, 4000);
   const wake = T0 + SD_OPENING_MS;

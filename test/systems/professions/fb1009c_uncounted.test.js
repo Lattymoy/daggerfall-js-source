@@ -66,7 +66,7 @@ test('UNCOUNTED: the Stores page lists the looted blood and says what it is; LOO
   const n = heldOf(e, TROLL);
   const book = createProfBook({ door: { account: () => 'a', state: async () => ({ ok: true, data: { stores: [], carried: [{ material: HERB, own: 4, bought: 0 }] } }) }, storage: memStorage(), character: () => 'c', sleep: noWait, carry: { held: (k) => heldOf(e, k), room: (k) => roomFor(e, k) } });
   await book.refresh({ force: true });
-  const deposits = [];
+  const batches = [];
   await withDom(async (dom) => {
     resetProfPages();
     const kit = { el: (tag, cls, text) => { const x = dom.mk(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; }, divider: (w) => { const x = dom.mk('h3'); x.textContent = w; return x; }, meter: () => dom.mk('div') };
@@ -74,7 +74,8 @@ test('UNCOUNTED: the Stores page lists the looted blood and says what it is; LOO
       book, name: (k) => k, withdraw: async () => ({ ok: true, text: '' }), inTown: () => true, room: (k) => roomFor(e, k),
       carriedHeld: (k) => heldOf(e, k), heldKeys: () => heldKeysOf(e),
       bag: () => ({ has: true, kg: bagWeight(e), max: 300, count: e.bagItems.length }),
-      deposit: async (k, q, o) => { deposits.push([k, q, o]); return { ok: true, text: '' }; },
+      // PIN MOVED (FB1020c ONE-SAVE): the page hands the provider its put-ins as one batch - a plan, answered one a put-in
+      deposit: async (plan) => { batches.push(plan.map((d) => [d.material, d.qty, d.order])); return plan.map(() => ({ ok: true, text: '' })); },
     });
     let root = null;
     const draw = () => { root = dom.mk('div'); drawStoresPage(root, draw, kit); };
@@ -88,18 +89,19 @@ test('UNCOUNTED: the Stores page lists the looted blood and says what it is; LOO
     const put = root.querySelectorAll('button').find((b) => b.textContent === 'Put in');
     assert.equal(put.disabled, false, 'LOOT-LOOSE: Put in takes the looted blood');
     await put.onclick();
-    assert.deepEqual(deposits, [[TROLL, 1, 'work']], 'as loose - never by `all`, which the service refuses past the count');
-    deposits.length = 0;
+    assert.deepEqual(batches, [[[TROLL, 1, 'work']]], 'as loose - never by `all`, which the service refuses past the count');
+    batches.length = 0;
     await root.querySelectorAll('button').find((b) => b.textContent === BAG_PAGE_WORDS.allIn).onclick();
-    assert.deepEqual(deposits, [[HERB, 4, 'all'], [TROLL, n, 'work']], 'Put everything in: the gathered herbs as they were, the blood as loose');
+    assert.deepEqual(batches, [[[HERB, 4, 'all'], [TROLL, n, 'work']]], 'Put everything in: the gathered herbs as they were, the blood as loose - one batch');
   });
   setProfessionsPages(null);
-  assert.match(BAG_PAGE_WORDS.uncounted, /^Looted, bought at a shop or given by another player, a material goes into your Stores as loose: every crafting station uses it, but no writ, no guild Stores and no market sale takes it/);
+  assert.match(BAG_PAGE_WORDS.uncounted, /^Materials you loot, buy at a shop or get from another player go into your Stores as loose goods\. Crafting stations can use them, but writs, guild Stores and the market only take what you gathered/);
   assert.equal(BAG_PAGE_WORDS.uncountedSplit(2), '2 loose');
 });
 
 test('UNCOUNTED wired: the world host hands the page every material held', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /carriedHeld: \(k\) => bagHeldOf\(playerEntity, k, \{ counter: false \}\),[^\n]*\n\s+heldKeys: \(\) => bagHeldKeysOf\(playerEntity\),/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-2): the page never puts a counter's piece in
-  assert.match(w, /deposit: async \(k, n, order = 'all'\) => \{[^\n]*\n\s+const r = await profBook\.deposit\(k, n, \{ order \}\);/, 'LOOT-LOOSE: the page\'s order reaches the book');
+  // PIN MOVED (FB1020c ONE-SAVE): the page's plan reaches the book whole, each put-in with its own order
+  assert.match(w, /deposit: async \(plan\) => \(await profBook\.depositMany\(plan\)\)\.map\(\(r, i\) => /, 'LOOT-LOOSE: the page\'s order reaches the book');
 });

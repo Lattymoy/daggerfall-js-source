@@ -372,18 +372,18 @@
   },
   {
     "name": "LW6b-host-picture",
-    "file": "src/scenes/world.js",
-    "old": "    return d.layRemains(items, feet, { archive: corpse.archive, record: corpse.record }, key);",
-    "new": "    return d.layRemains(items, feet, null, key);",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
+    "old": "  return d.layRemains(items, feet, { archive: corpse.archive, record: corpse.record }, key);",
+    "new": "  return d.layRemains(items, feet, null, key);",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
   },
   {
     "name": "LW6b-host-loot",
-    "file": "src/scenes/world.js",
-    "old": "    for (const raw of [createRandomWeapon(level, rolls), createRandomArmor(level, rolls)]) if",
-    "new": "    for (const raw of []) if",
+    "file": "src/scenes/livingWorld/remainsGoods.js",
+    "old": "  for (const raw of [createRandomWeapon(level, rolls), createRandomArmor(level, rolls)]) if",
+    "new": "  for (const raw of []) if",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]

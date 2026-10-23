@@ -311,8 +311,8 @@
   {
     "name": "FLEET-summon-from-anywhere",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : !atPort ? 'Your ships are brought round to a port - go to one.'",
-    "new": "      : false ? 'Your ships are brought round to a port - go to one.'",
+    "old": "      : !atPort ? 'Ships can only be summoned to a port. Go to one first.'",
+    "new": "      : false ? 'Ships can only be summoned to a port. Go to one first.'",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]

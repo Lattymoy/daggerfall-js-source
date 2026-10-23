@@ -234,7 +234,7 @@ test('SUNBABY1 host: the sky controller draws the flower sky over the sky and it
 
 test('SUNBABY1 host: world.js hears the sun baby on the hub\'s one onEvent, SHOWS the clear day through every door the weather is applied by (never the sim\'s word), stills the far storms, lifts the light, sets the sky before its frame, and says a word an older relay does not know in words (mutants: the weather left; the hub word unheard; the storms; the light; the sky never told; the word sent to an old relay)', () => {
   const world = rd('src/scenes/world.js');
-  assert.match(world, /const shownWeather = \(\) => \(sunbaby\.on \? SUNBABY_WEATHER : currentWeather\(\)\);/);
+  assert.match(world, /const shownWeather = \(\) => \(sunbaby\.on \? SUNBABY_WEATHER : seaStormShown\(\) \?\? currentWeather\(\)\);/);   // PIN MOVED (SEA-EVENTS, 2026-10-22): under the Sun Baby, the Aether Storm's thunder over the player at sea (scenes/seaVenturesHost.js seaStormShown)
   assert.equal((world.match(/applyWeather\(currentWeather\(\)\)/g) ?? []).length, 0, 'no door applies the sim\'s word past the event');
   assert.match(world, /const weatherStale = \(\) => shownWeather\(\) !== weather \|\| weatherSystemStamp\(\) !== seenSystem;/, 'stale is the SHOWN word moved (or the system under it)');   // AUDIT PRECIP FALL-2 (PIN MOVED): one test for the three doors
   assert.equal((world.match(/if \(weatherStale\(\)\) applyWeather\(shownWeather\(\)\);/g) ?? []).length, 3, 'the frame\'s drain, the teleport\'s and the travel\'s');

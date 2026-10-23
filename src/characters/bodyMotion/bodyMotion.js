@@ -22,10 +22,10 @@
 
 import { MW_WEAPON_TYPE, MW_UNITS_PER_METER } from '../../formats/morrowind/mwFirstPerson.js';
 import { getPref } from '../../systems/uiPrefs.js';
-import { algebra, ease, clamp01, RAD, bodyOf, bodyKindOf, reflect, apply } from './bodyKit.js';
-import { rotAxisAngle } from '../../combat/climbRig.js';
+import { algebra, ease, clamp01, RAD, bodyOf, bodyKindOf, reflect, bodyTurn, mul, transpose } from './bodyKit.js';
+import { rotAxisAngle, rotFraction } from '../../combat/climbRig.js';
 import { createGaitState, stepGait, gaitPose, TURN } from './gait.js';
-import { carryClassOf, carryHands, CARRY, TWO_HAND_GRIP, TWO_HAND_HAFT, armByAngles, mirrorRequest, hafHand, blendHand, gaitShares } from './carry.js';
+import { carryClassOf, carryHands, CARRY, TWO_HAND_GRIP, TWO_HAND_HAFT, armByAngles, mirrorRequest, hafHand, blendHand, gaitShares, turnAbout, strideRide } from './carry.js';
 import { meleeFamilyOf, blowName, blowU, blowPose, windFor } from './melee.js';
 import { solveBody, gripRequest } from './bodySolve.js';
 
@@ -53,19 +53,20 @@ const SHEET_BLADE = Object.freeze({ one: 58, two: 88, wide: 112, spear: 120, dua
  *   drawn), travel (the body's own ground, world metres, cumulative - player/motor.js travelAt, a peer's drawn feet's;
  *   null where none: the pace along the keys stands in), carriedYaw (the turns a deck gave it, cumulative);
  *   height, weight (the race's scale);
- *   mwType, shown (the weapon in the hand), hands ('single' | 'dual' | 'fists'), torch (the left hand's light), spell
- *   (a readied spell or a cast), equip (a draw or a sheathe in the hands), rifle (the long gun's hold has the hands);
+ *   mwType, shown (the weapon in the hand), hands ('single' | 'dual' | 'fists'), torch (the left hand's light), shield
+ *   (a shield on the left arm), spell (a readied spell or a cast), equip (a draw or a sheathe in the hands), rifle (the
+ *   long gun's hold has the hands);
  *   blow - { type, reversed, hand, section, progress, strength } while a melee blow is in the machine, else null;
  *   guard - { L, R } (radians) the pair's guard: how far each arm is lowered while the other strikes, or null.
  */
 export function sceneInput({
   forward = 0, strafe = 0, speed = 0, running = false, sneaking = false, yaw = 0, grounded = true, travel = null, carriedYaw = 0,
   weapon = MW_WEAPON_TYPE.None, hands = 'single', shown = undefined, blow = null, kind = 'male',
-  height = 1, weight = 1, torch = false, spell = false, equip = false, rifle = false, on = true, busy = null, guard = null,
+  height = 1, weight = 1, torch = false, shield = false, spell = false, equip = false, rifle = false, on = true, busy = null, guard = null,
 } = {}) {
   return {
     on, kind, busy, speed, forward, strafe, running, sneaking, grounded, swimming: false, levitating: false, yaw, travel, carriedYaw,
-    height, weight, mwType: weapon, shown: shown ?? weapon !== MW_WEAPON_TYPE.None, hands, torch, spell, equip, rifle, blow, guard,
+    height, weight, mwType: weapon, shown: shown ?? weapon !== MW_WEAPON_TYPE.None, hands, torch, shield, spell, equip, rifle, blow, guard,
   };
 }
 
@@ -76,7 +77,7 @@ const SECTION_OF = Object.freeze({ AttackWindUp: 'windup', AttackRelease: 'relea
  * THE RIG'S WORD, made from its own state each frame (combat/fpArm.js update - the one place it is read, so a peer's
  * body and a person's take it exactly as the player's): `cam` the frame's camera bag (its `move`, `yaw`, `sneaking`,
  * `climb`, `seat`, `saddle`), `third` the body drawn in third person, `rig` the third-person build (its skeleton's
- * path, its weapon type), `built` the rig's (its race's scale, a werewolf's or a creature's body), `dead`, `hit` (a
+ * path, its weapon type, the pieces it wears - a shield among them), `built` the rig's (its race's scale, a werewolf's or a creature's body), `dead`, `hit` (a
  * recoil in the clip), `climb` the climb's weight, `upper` the upper body's state by name, the blow's `attackType`,
  * `reversed` and `hand` and its section's `progress` and `strength`, `shown` the weapon in the hand, `hands` how the
  * hands are held (TWO-HANDS), `torch` the left hand's light, `spell` a spell readied or cast, `rifle` the long gun's
@@ -102,6 +103,9 @@ export function motionWord({
     yaw: Number.isFinite(mv.bodyYaw) ? mv.bodyYaw : (Number(cam?.yaw) || 0) + (Number(mv.bodyYawOff) || 0),
     height: built?.raceScale?.height ?? 1, weight: built?.raceScale?.weight ?? 1,
     mwType: rig?.mwType ?? MW_WEAPON_TYPE.None, shown: !!shown, hands, torch: !!torch, spell: !!spell,
+    // SHIELD-RUN: a shield is a piece the body wears on its left arm, at the Shield Bone - the composer names its slot
+    // `shield (<record>)` (formats/morrowind/mwItemMap.js composeWornArmor; fitThirdPersonCloak reads it so too)
+    shield: !!rig?.arm?.pieces?.some((p) => /^shield\b/.test(p.slot ?? '')),
     equip: upper === 'Equipping' || upper === 'Unequipping', rifle: rifle > 0.01,
     blow: section && attackType ? { type: attackType, reversed: !!reversed, hand, section, progress, strength } : null,
     // AUDIT BODY-MOTION MELEE-11: the pair's guard - each arm's dip while the other strikes (fpArm.js pairDip, radians)
@@ -170,11 +174,12 @@ export function createBodyMotion() {
   };
 
   /** THE HANDS on the trunk that now stands: the carry's (the class it is changing to eased over the one it leaves),
-   *  a blow's over them. Exposed for the pins. */
-  function handsFor(ctx, gp, bp) {
-    let hands = carryHands(cls, gp, ctx, { armW, shares: shares.x });
+   *  a blow's over them; `steady` the turn that takes the stride's wave off the trunk (HELD-STEADY - carry.js
+   *  carryHands). Exposed for the pins. */
+  function handsFor(ctx, gp, bp, steady = null) {
+    let hands = carryHands(cls, gp, ctx, { armW, shares: shares.x, steady });
     if (clsFrom && clsMix < 1) {
-      const from = carryHands(clsFrom, gp, ctx, { armW, shares: shares.x });
+      const from = carryHands(clsFrom, gp, ctx, { armW, shares: shares.x, steady });
       hands = { L: blendHand(from.L, hands.L, clsMix), R: blendHand(from.R, hands.R, clsMix) };
     }
     // the pair's guard: the arm whose fellow strikes lowered at its shoulder, as the mirror lowers the clip's (TWO-HANDS
@@ -214,8 +219,12 @@ export function createBodyMotion() {
       clsMix = ease(clsMix, 1, MOTION_EASE.cls, dt);
       if (clsMix > 0.999) { clsMix = 1; clsFrom = null; }
       const hands = !input.equip && !input.rifle && cls !== 'clip';
+      // SHIELD-RUN (the Discord's "sprinting with my mace and shield out just makes me look incredibly stupid"): a shield
+      // on the arm leaves the left arm to the clip, as a torch does - Morrowind's own groups carry a shield; the free
+      // run's pump swung it up behind the head. Only where the reference shows it: drawn fists and a two-hander hide it.
+      const shieldArm = !!input.shield && (cls === 'one' || cls === 'free');
       for (const side of ['L', 'R']) {
-        const want = hands && !(side === 'L' && input.torch) ? 1 : 0;
+        const want = hands && !(side === 'L' && (input.torch || shieldArm)) ? 1 : 0;
         armW[side] = ease(armW[side], want, want ? MOTION_EASE.armIn : MOTION_EASE.armOut, dt);
         if (!want && armW[side] < 1e-3) armW[side] = 0;
       }
@@ -275,22 +284,33 @@ export function createBodyMotion() {
       const gp = gaitPose(gait, gi, body);
       const L = body.leg;
       const runLean = lerp(CARRY[clsFrom]?.runLean ?? 0, CARRY[cls]?.runLean ?? 0, clsFrom ? clsMix : 1) * gp.run * gp.move * RAD;
+      // TWO-RUN: a class's chest turned toward its weapon at a run (CARRY's `runTurn`), as the lean, by the run's share
+      const runTurn = lerp(CARRY[clsFrom]?.runTurn ?? 0, CARRY[cls]?.runTurn ?? 0, clsFrom ? clsMix : 1) * gp.run * gp.move * RAD;
       const hipYaw = gp.hip.yaw - gait.psi * gp.move * BLOW_TRUNK.steer * k + (bp ? bp.hip * RAD * wind : 0);
+      /** The chest's turn with `wave` of the stride's own counter-turn and counter-drop on it. */
+      const chestAt = (wave) => ({
+        yaw: Math.max(hipYaw - BLOW_TRUNK.twist * RAD, Math.min(hipYaw + BLOW_TRUNK.twist * RAD, (gp.chest.yaw - gp.chest.wave.yaw * (1 - wave) + runTurn) * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0))),
+        roll: gp.chest.roll - gp.chest.wave.roll * (1 - wave) + (bp ? bp.chest[1] * RAD * wind : 0),
+        pitch: gp.chest.pitch + runLean + (bp ? bp.chest[2] * RAD * wind : 0),
+      });
+      // HELD-STEADY (carry.js strideRide, carryHands): the chest takes the stride's wave as far as its arms are free to ride
+      // it (a weapon in both hands binds the shoulders), each arm as far as its row swings - turned back from the chest as
+      // laid to the chest without the wave, as far as the solve lays the chest (the layer's weight, the arms it has)
+      const sh = shares.x ?? gaitShares(gp);
+      const ride = lerp(clsFrom ? strideRide(clsFrom, sh, armW.L) : 1, strideRide(cls, sh, armW.L), clsFrom ? clsMix : 1);
+      const chest = chestAt(ride), calm = chestAt(0);
+      const steady = { ride, turn: rotFraction(mul(bodyTurn(calm.yaw, calm.roll, calm.pitch), transpose(bodyTurn(chest.yaw, chest.roll, chest.pitch))), w * Math.max(armW.L, armW.R)) };
       const plan = {
         w,
         hip: {
           at: add(gp.hip.at, [0, bp ? bp.shift * L * wind : 0, bp ? -bp.drop * L * wind : 0]),
           yaw: hipYaw, roll: gp.hip.roll, pitch: gp.hip.pitch,
         },
-        chest: {
-          yaw: Math.max(hipYaw - BLOW_TRUNK.twist * RAD, Math.min(hipYaw + BLOW_TRUNK.twist * RAD, gp.chest.yaw * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0))),
-          roll: gp.chest.roll + (bp ? bp.chest[1] * RAD * wind : 0),
-          pitch: gp.chest.pitch + runLean + (bp ? bp.chest[2] * RAD * wind : 0),
-        },
+        chest,
         head: { yaw: 0, roll: 0, pitch: 0 },
         feet: gp.feet,
         armW: { L: armW.L, R: armW.R },
-        arms: (ctx) => handsFor(ctx, gp, bp),
+        arms: (ctx) => handsFor(ctx, gp, bp, steady),
       };
       const report = solveBody(skeleton, pose, rootRef, skelMats, plan);
       last = { gp, bp, report };
@@ -331,14 +351,7 @@ export function createBodyMotion() {
 function lowered(h, S, up, angle) {
   const v = sub(h.at, S), ax = cross(v, up), l = len(ax);
   if (!(l > 1e-6)) return h;
-  const R = rotAxisAngle(scale(ax, 1 / l), -angle);
-  const pt = (p) => add(S, apply(R, sub(p, S)));
-  const way = (d) => (d ? apply(R, d) : d);
-  return {
-    ...h, at: pt(h.at), fingers: way(h.fingers), palm: way(h.palm), pole: way(h.pole),
-    ...(h.grip ? { grip: pt(h.grip) } : {}),
-    ...(h.frame ? { frame: { blade: apply(R, h.frame.blade), edge: apply(R, h.frame.edge), flat: apply(R, h.frame.flat) } } : {}),
-  };
+  return turnAbout(h, S, rotAxisAngle(scale(ax, 1 / l), -angle));
 }
 
 /** A carry's striking hand as a blow's keys read it (melee.js): the RIGHT hand's, in the body frame - its grip in arm

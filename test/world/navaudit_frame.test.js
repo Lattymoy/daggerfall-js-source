@@ -275,7 +275,7 @@ test('AUDIT NAV1 (#12) A MESH\'S TRIANGLES FILED BY WHERE THEY STAND: rayMeshEnt
   pool.remove(boat);
 });
 
-test('AUDIT NAV1 (#12) THE INDEX FOLLOWS THE TREE\'S SHAPE: the stamp moves when a node is hung elsewhere or given a component, never on a switch or a move; what is on is read live - a collider switched off, an object hidden above it - and the colliders after a reshape are the walk\'s own (mutants: setParent or addComponent unstamped, the index kept past a stamp)', () => {
+test('AUDIT NAV1 (#12) THE INDEX FOLLOWS THE TREE\'S SHAPE: the stamp moves when a node is hung elsewhere or given a component, never on a switch or a move; what is on is read live - a collider switched off, an object hidden above it - and the colliders after a reshape are the walk\'s own (mutants: setParent or addComponent unstamped, the index kept past a stamp) - BOAT-STAMP: each tree its own stamp, another tree\'s build, reshape or component leaving it, a node hung across moving both (mutants: the tree left or the tree joined unstamped, the node stamped and not its top, a count per tree)', () => {
   const box = (y) => ({ type: 'BoxCollider', m_Enabled: true, m_IsTrigger: false, m_Center: { x: 0, y, z: 0 }, m_Size: { x: 1, y: 1, z: 1 } });
   const root = new PrefabNode('root');
   const a = new PrefabNode('a', { components: [box(0)] }).setParent(root);
@@ -283,22 +283,50 @@ test('AUDIT NAV1 (#12) THE INDEX FOLLOWS THE TREE\'S SHAPE: the stamp moves when
   const c = new PrefabNode('c', { components: [box(1)] }).setParent(b);
   const names = () => collidersOf(root).map((x) => x.node.name);
   assert.deepEqual(names(), ['a', 'c']);
-  let s = prefabShapeStamp();
+  // BOAT-STAMP (2026-10-21): the stamp is the tree's own - read off any node of it, its top node's
+  let s = prefabShapeStamp(root);
   b.setActive(false); a.localPosition = [5, 0, 0];
-  assert.equal(prefabShapeStamp(), s, 'a switch and a move leave the shape');
+  assert.equal(prefabShapeStamp(root), s, 'a switch and a move leave the shape');
   assert.deepEqual(names(), ['a'], 'hidden above it: gone at once');
   b.setActive(true); a.components[0].m_Enabled = false;
   assert.deepEqual(names(), ['c'], 'switched off: gone at once');
   a.components[0].m_Enabled = true;
   const d = new PrefabNode('d', { components: [box(2)] });
-  s = prefabShapeStamp();
+  s = prefabShapeStamp(root);
   d.setParent(c);
-  assert.ok(prefabShapeStamp() > s, 'hung under another: the shape moved');
+  assert.ok(prefabShapeStamp(root) > s, 'hung under another: the shape moved');
   assert.deepEqual(names(), ['a', 'c', 'd']);
-  s = prefabShapeStamp();
+  s = prefabShapeStamp(root);
   b.addComponent(box(3));
-  assert.ok(prefabShapeStamp() > s, 'a component more: the shape moved');
+  assert.ok(prefabShapeStamp(root) > s, 'a component more: the shape moved');
   assert.deepEqual(names(), ['a', 'b', 'c', 'd']);
+  assert.equal(prefabShapeStamp(d), prefabShapeStamp(root), 'any node of the tree reads its top node\'s stamp');
+  // BOAT-STAMP: ANOTHER TREE'S CHANGES ARE NOT THIS ONE'S - a tree built, reshaped and given a component elsewhere (a
+  // boat streaming in, a fitting stood on another deck) leaves this tree's stamp, and its index, as they were
+  s = prefabShapeStamp(root);
+  const other = new PrefabNode('other');
+  new PrefabNode('o1', { components: [box(4)] }).setParent(other);
+  other.addComponent(box(5));
+  new PrefabNode('o2').setParent(other).setParent(null);
+  assert.equal(prefabShapeStamp(root), s, 'another tree built, given a component, a node taken out of it: this one\'s shape stands');
+  // a node hung from this tree into the other moves both - the tree it left and the tree it joined
+  const so = prefabShapeStamp(other);
+  d.setParent(other);
+  assert.ok(prefabShapeStamp(root) > s, 'the tree it left: its shape moved');
+  assert.ok(prefabShapeStamp(other) > so, 'the tree it joined: its shape moved');
+  assert.deepEqual(names(), ['a', 'b', 'c'], 'gone from this tree\'s index with it');
+  assert.deepEqual(collidersOf(other).map((x) => x.node.name), ['other', 'o1', 'd'], 'and in the other\'s');
+  // a node whose top node changes reads a stamp it never read: every stamp is a draw of one count, so a tree new to it
+  // never happens to hold the value its old one had (a count per tree would: p bumped twice as x joined it, q once by
+  // its component, and once more as x joins it - two, the value x read under p)
+  const p = new PrefabNode('p'), x = new PrefabNode('x').setParent(p);
+  const read = prefabShapeStamp(x);
+  const q = new PrefabNode('q');
+  q.addComponent(box(6));
+  x.setParent(q);
+  assert.notEqual(prefabShapeStamp(x), read, 'hung under a tree new to it: a stamp it never read');
+  x.setParent(null);
+  assert.ok(prefabShapeStamp(x) !== read && prefabShapeStamp(x) !== prefabShapeStamp(p), 'standing alone: its own, again new');
   // and its poses: each object's own matrix
   for (const { node, world } of colliderPoses(root)) assert.deepEqual([...world], [...node.worldMatrix()]);
 });

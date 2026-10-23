@@ -127,15 +127,6 @@
     ]
   },
   {
-    "name": "PRECIP4-the-slope-unread",
-    "file": "src/render/snowCoverGlsl.js",
-    "old": "  c *= smoothstep(${f(s0)}, ${f(s1)}, n.y);   // a steep face sheds it",
-    "new": "",
-    "tests": [
-      "test/render/precip4_snowground.test.js"
-    ]
-  },
-  {
     "name": "PRECIP4-the-patches-over-a-whole-cover",
     "file": "src/render/snowCoverGlsl.js",
     "old": "  if (c <= 0.0 || c >= 1.0) return c;",
@@ -230,8 +221,8 @@
   {
     "name": "PRECIP1-the-snow-mass-warm",
     "file": "src/systems/weather/airTemperature.js",
-    "old": "chill: wet * FALL.chill + snow * FALL.snowCold",
-    "new": "chill: wet * FALL.chill - snow * FALL.snowCold",
+    "old": "out.chill = wet * FALL.chill + snow * FALL.snowCold;",
+    "new": "out.chill = wet * FALL.chill - snow * FALL.snowCold;",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -465,7 +456,7 @@
   {
     "name": "PRECIP4-the-turn-unmarked",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "!turned.has(p)) { turned.add(p); markReskin(key); }",
+    "old": "!turned.has(p)) { turned.add(p); markRebuild(key); }",
     "new": "!turned.has(p)) { turned.add(p); }",
     "tests": [
       "test/render/precip4_snowground.test.js"
@@ -600,7 +591,7 @@
   {
     "name": "PRECIP4-grass-through-the-snow",
     "file": "src/scenes/world.js",
-    "old": "        if (snowCover.on && snowCover.buries(p, lx, lz, x, z, h + t[1])) return null;",
+    "old": "        if (snowCover.on && snowCover.buries(p, lx, lz, h + t[1])) return null;",
     "new": "        // grass through the snow",
     "tests": [
       "test/render/precip4_snowground.test.js"
@@ -611,6 +602,33 @@
     "file": "src/scenes/world.js",
     "old": "snowCover.tick({ px: _sp.x, py: _sp.y, dt, arriving: !playerSpawned }); renderer.setSnowFrame",
     "new": "renderer.setSnowFrame",
+    "tests": [
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "PRECIP4-the-blades-shift-the-wrong-sign",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "y - stateOf().compensation[1] - SEA_LEVEL_M",
+    "new": "y + stateOf().compensation[1] - SEA_LEVEL_M",
+    "tests": [
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "PRECIP4-the-feets-height-unshifted",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "pos[1] - c[1] - SEA_LEVEL_M) >= 0.5",
+    "new": "pos[1] - SEA_LEVEL_M) >= 0.5",
+    "tests": [
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "PRECIP4-the-laid-snows-footprint-one-axis",
+    "file": "src/render/snowCoverGlsl.js",
+    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
+    "new": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gx);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

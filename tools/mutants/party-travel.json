@@ -578,8 +578,8 @@
   {
     "name": "PT-host-session-never-told-sent",
     "file": "src/scenes/world.js",
-    "old": "    if (socialLink()?.sendParty(_partyPose)) partyTravel?.sent(_partyPose);",
-    "new": "    socialLink()?.sendParty(_partyPose);",
+    "old": "    if (socialLink()?.sendParty(_partyPose, { urgent: pingNow })) {\n      partyTravel?.sent(_partyPose);\n      if (pingNow) partyPing.sent();\n    }",
+    "new": "    if (socialLink()?.sendParty(_partyPose, { urgent: pingNow })) { if (pingNow) partyPing.sent(); }",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]

@@ -1,0 +1,81 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE HERALD'S CALL, step 1 of 2 - the
+-- introduction to the Arena (the Tutorials' `challenges` group). Started by the line's runner, never offered by a
+-- questor: the Herald's broadsheet is the offer and the word. The act: a bout won in the Arena (`ql act arena-won 1` -
+-- systems/questlines/qlActs.js, a ladder bout of the player's own); the Herald of the Arena stands at its gate in
+-- Daggerfall (bible/11-Multiplayer/Arena.md section 1) and pays the purse where the bout is won, so no Person is placed.
+-- The giver is unnamed, as the registry's (qlLines.js "the Arena's Herald").
+-- AUDIT QUESTLINES LINES-26: the broadsheet ends on its crier's name - DFU's pack names a quest letter by its last line
+-- (ItemHelper.cs:335-348, itemInfo.js questLetterName); it was "Letter: Somebody always bleeds."
+Quest: QLIA01
+DisplayName: First Blood
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          The Herald's call has gone out to other blood.
+
+QuestComplete:  [1004]
+<ce>         The Herald presses the first purse into your hand:
+<ce>                         _gold_ gold.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A broadsheet of the Arena's Herald found me: new
+ blood wanted on the sand of the Arena in Daggerfall.
+ Win a bout there - the Herald at the Arena's gate
+ opens the Ladder - and the first purse is mine.
+
+Message:  1011
+<ce>                        NEW BLOOD WANTED
+
+     The Herald of the Arena of Daggerfall calls
+ every arm in the Iliac Bay to the sand! No name?
+ No matter. Names are made here.
+
+     Come to the Arena's gate, in the heart of the
+ city of Daggerfall. Ask the Herald for a place on
+ the Ladder. Win your first bout, and the Herald
+ pays the first purse, in advance of glory.
+
+<ce>                Nobody dies on the Arena's sand.
+<ce>                   Somebody always bleeds.
+<ce>
+<ce>              The Herald of the Arena of Daggerfall
+
+Message:  1012
+<ce>          A crier in the Arena's colors slaps a broadsheet
+<ce>             into your hand and is off down the street,
+<ce>                bellowing, "New blood! New blood!"
+
+Message:  1013
+<ce>         As the crowd's roar dies, the Herald of the Arena
+<ce>                  finds you at the gate.
+<ce>
+<ce>         "First blood, and yours! The crowd will not know
+<ce>          your name yet, but I do. Here is the purse I
+<ce>          promised. Come back for the next one."
+
+QBN:
+Item _sheet_ letter used 1011
+Item _gold_ gold range 200 to 400
+
+Clock _word_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	start timer _word_
+
+_word_ task:
+	give pc _sheet_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_won_ task:
+	ql act arena-won 1
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

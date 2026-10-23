@@ -245,8 +245,8 @@
   {
     "name": "SPY-card-unknown-named",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "    return { title: unknownName(f.hull), sub: 'Colours not yet identified', rows,",
-    "new": "    return { title: f.name, sub: 'Colours not yet identified', rows,",
+    "old": "    return { title: unknownName(f.hull), sub: 'Colors not yet identified', rows,",
+    "new": "    return { title: f.name, sub: 'Colors not yet identified', rows,",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "SPY-card-seen-unsaid",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "    if (f.falseFlag) rows.unshift(['False colours', 'Too many gunports for a trader - this is a pirate']);\n",
+    "old": "    if (f.falseFlag) rows.unshift(['False colors', 'Too many gunports for a trader. This is a pirate']);\n",
     "new": "",
     "tests": [
       "test/systems/naval/spyglass.test.js"
@@ -440,7 +440,7 @@
   {
     "name": "SPY-H-seen-through-unsaid",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "deps.mid?.(`False colours! ${s.names?.name ?? 'It'} is a pirate.`, 4);",
+    "old": "deps.mid?.(`False colors! ${s.names?.name ?? 'It'} is a pirate.`, 4);",
     "new": "void 0;",
     "tests": [
       "test/systems/naval/spyglass.test.js"
@@ -530,8 +530,8 @@
   {
     "name": "SPY-W-lens-unnarrowed",
     "file": "src/scenes/world.js",
-    "old": "    const proj = mirrorProjectionX(perspective(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, 6000));",
-    "new": "    const proj = mirrorProjectionX(perspective(fieldOfView() + climbFeel.fovRad(), worldAspect, spyglass.near, 6000));",
+    "old": "    const proj = horizonProj(glassFov(fieldOfView() + climbFeel.fovRad(), spyglass.lens), worldAspect, spyglass.near, tvf);",
+    "new": "    const proj = horizonProj(fieldOfView() + climbFeel.fovRad(), worldAspect, spyglass.near, tvf);",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]

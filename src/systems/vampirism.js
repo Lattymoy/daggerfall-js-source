@@ -177,7 +177,7 @@ export const sunlightTravelText = () => localizedText('sunlightDamageFastTravelD
  *  and the line names it. The classic window has no such button - its
  *  Use on the doll steps DFU's drawings, the doll redrawn at each - so
  *  on that skin the line says that. */
-export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day - Raise hood, on its card in the pack.';
+export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day. Use Raise hood on its card in your pack.';
 export const VAMPIRE_HOOD_TEXT_CLASSIC = 'Use a cloak or robe on your doll until its hood is up.';
 
 /** The live curse entry, or null. VU1 moved the DECLARATION into

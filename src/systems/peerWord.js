@@ -55,4 +55,4 @@ export const letterRefusesPut = (/** @type {any} */ item, /** @type {{ container
   online && isLetterOfCredit(item) && container && !own;
 
 /** The refusal, in the windows' own voice (itemBound.js boundText's shape). */
-export const letterPutText = (/** @type {string} */ name) => `${name || 'A letter of credit'} stays with you online - a chest or a body is everyone's. Hand it over in a trade.`;
+export const letterPutText = (/** @type {string} */ name) => `${name || 'A letter of credit'} stays with you online, because anyone can take from a chest or a body. Hand it over in a trade.`;

@@ -1,0 +1,232 @@
+[
+ {
+  "name": "SLOWSHED-floor",
+  "file": "server-account/src/service.js",
+  "old": "  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open",
+  "new": "  if (slowWaits.length < SLOW_SHED_MIN - 1 || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "one request fewer than the floor opens the shed"
+ },
+ {
+  "name": "SLOWSHED-threshold-side",
+  "file": "server-account/src/service.js",
+  "old": "  if (slowSum.ms / slowSum.trips < SLOW_SHED_WAIT_MS) return;",
+  "new": "  if (slowSum.ms / slowSum.trips <= SLOW_SHED_WAIT_MS) return;",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a database exactly at the threshold not shed"
+ },
+ {
+  "name": "SLOWSHED-span",
+  "file": "server-account/src/service.js",
+  "old": "  while (slowWaits.length && nowMs - slowWaits[0].at > SLOW_SHED_SPAN_MS) {",
+  "new": "  while (slowWaits.length && nowMs - slowWaits[0].at > 10 * SLOW_SHED_SPAN_MS) {",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "slow requests long gone keep the shed opening"
+ },
+ {
+  "name": "SLOWSHED-unweighted",
+  "file": "server-account/src/service.js",
+  "old": "  slowSum.ms += waited;\n  slowSum.trips += trips;",
+  "new": "  slowSum.ms += waited / trips;\n  slowSum.trips += 1;",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "the mean a request's, not a trip's - a request of a hundred slow trips weighs as one"
+ },
+ {
+  "name": "SLOWSHED-quick-keeps-open",
+  "file": "server-account/src/service.js",
+  "old": "  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open",
+  "new": "  if (slowWaits.length < SLOW_SHED_MIN) return;   // a quick request keeps nothing open",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a quick request keeps the shed open past the drain"
+ },
+ {
+  "name": "SLOWSHED-nothing-counted",
+  "file": "server-account/src/service.js",
+  "old": "  if (!(trips > 0) || !Number.isFinite(ms)) return;",
+  "new": "  if (!Number.isFinite(ms)) return;",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a shed read (no trip) counted as a quick request"
+ },
+ {
+  "name": "SLOWSHED-uncapped",
+  "file": "server-account/src/service.js",
+  "old": "  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS);",
+  "new": "  const waited = ms;",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS C4: one heavy statement in a quiet isolate opens the shed"
+ },
+ {
+  "name": "SLOWSHED-unsaid",
+  "file": "server-account/src/service.js",
+  "old": "  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened",
+  "new": "  if (false) console.warn(`[busy] slow: the shed opened",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS C6: the shed opens with no word in the log"
+ },
+ {
+  "name": "SLOWSHED-said-each",
+  "file": "server-account/src/service.js",
+  "old": "  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened",
+  "new": "  if (true) console.warn(`[busy] slow: the shed opened",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS C6: every slow request while it is open says it again"
+ },
+ {
+  "name": "SLOWSHED-wait-unheard",
+  "file": "server-account/src/metrics.js",
+  "old": "  noteD1Wait(tally.capped, tally.trips, Date.now());   // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time\n",
+  "new": "",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "the service never hears its own wait"
+ },
+ {
+  "name": "SLOWSHED-by-statements",
+  "file": "server-account/src/metrics.js",
+  "old": "  noteD1Wait(tally.capped, tally.trips, Date.now());",
+  "new": "  noteD1Wait(tally.capped, tally.n, Date.now());",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS C1: a batch's wait read over its statements, twelve times short"
+ },
+ {
+  "name": "SLOWSHED-batch-untripped",
+  "file": "server-account/src/metrics.js",
+  "old": "          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+  "new": "          } finally { add(tally, 'ms', Date.now() - started); add(tally, 'capped', Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a batch's wait heard with no trip - the shed never weighs it"
+ },
+ {
+  "name": "SLOWSHED-statement-untripped",
+  "file": "server-account/src/metrics.js",
+  "old": "          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+  "new": "          } finally { add(tally, 'ms', Date.now() - started); add(tally, 'capped', Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a lone statement's wait heard with no trip - a request of single statements never weighed"
+ },
+ {
+  "name": "SLOWSHED-client-timeout-unheard",
+  "file": "src/net/accountClient.js",
+  "old": "    if (e?.name === 'TimeoutError' && busyRead(path, method) && busyAgain(sentAt)) {",
+  "new": "    if (false && busyRead(path, method) && busyAgain(sentAt)) {",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a display read that timed out asked again at once"
+ },
+ {
+  "name": "SLOWSHED-client-any-read",
+  "file": "src/net/accountClient.js",
+  "old": "    if (e?.name === 'TimeoutError' && busyRead(path, method) && busyAgain(sentAt)) {",
+  "new": "    if (e?.name === 'TimeoutError' && busyAgain(sentAt)) {",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "an act that timed out holds the reads"
+ },
+ {
+  "name": "SLOWSHED-client-unreachable",
+  "file": "src/net/accountClient.js",
+  "old": "    if (e?.name === 'TimeoutError' && busyRead(path, method) && busyAgain(sentAt)) {",
+  "new": "    if (busyRead(path, method) && busyAgain(sentAt)) {",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "the player's own dropped line holds the reads"
+ },
+ {
+  "name": "SLOWSHED-client-stall-each",
+  "file": "src/net/accountClient.js",
+  "old": "    if (e?.name === 'TimeoutError' && busyRead(path, method) && busyAgain(sentAt)) {",
+  "new": "    if (e?.name === 'TimeoutError' && busyRead(path, method)) {",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS C3: one stall's seven timeouts double the hold six times"
+ },
+ {
+  "name": "SLOWSHED-client-no-doubling",
+  "file": "src/net/accountClient.js",
+  "old": "      _busy = { n, until: now() + busyWaitMs(n, rand()) };",
+  "new": "      _busy = { n, until: now() + busyWaitMs(1, rand()) };",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "timeouts in a row never wait longer"
+ },
+ {
+  "name": "SLOWSHED-cap-per-request",
+  "file": "server-account/src/metrics.js",
+  "old": "  add(tally, 'capped', Math.min(ms, SLOW_SHED_TRIP_CAP_MS));",
+  "new": "  add(tally, 'capped', ms);",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS (audit two, C1): the cap the request's - one 25 s statement among nine quick trips opens the shed"
+ },
+ {
+  "name": "SLOWSHED-trip-only-where-answered",
+  "file": "server-account/src/metrics.js",
+  "old": "            const r = await v.apply(target, args);\n            if (key === 'all' || key === 'run') noteMeta(r, tally, sql);",
+  "new": "            const r = await v.apply(target, args).catch((err) => { tally.trips -= 1; throw err; });\n            if (key === 'all' || key === 'run') noteMeta(r, tally, sql);",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "a statement that threw counted no trip - its wait over another's trips"
+ },
+ {
+  "name": "SLOWSHED-sums-keep-the-gone",
+  "file": "server-account/src/service.js",
+  "old": "    slowSum.ms -= gone.ms;\n",
+  "new": "",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "the window's sums keep the waits of requests gone from it - a drained database still reads slow"
+ },
+ {
+  "name": "SLOWSHED-client-late-read-counted",
+  "file": "src/net/accountClient.js",
+  "old": "    if (e?.name === 'TimeoutError' && busyRead(path, method) && busyAgain(sentAt)) {",
+  "new": "    if (e?.name === 'TimeoutError' && busyRead(path, method) && now() >= _busy.until) {",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS (audit two): a read that left before the stall's hold and timed out after it doubles the hold again"
+ },
+ {
+  "name": "SLOWSHED-client-burst-each",
+  "file": "src/net/accountClient.js",
+  "old": "      const again = busyAgain(sentAt);",
+  "new": "      const again = true;",
+  "tests": [
+   "test/net/slow_shed.test.js"
+  ],
+  "note": "AUDIT LEAN-READS (audit two, C2): a burst of the shed's 503s counted per answer - the page held up to a minute"
+ }
+]

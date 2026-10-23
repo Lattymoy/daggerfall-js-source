@@ -258,8 +258,8 @@ test('HORSE-TIERS NO RED WHERE HUNGER COSTS NOTHING, AND EACH TIER\'S WORDS: the
   assert.deepEqual([read(false, 'starving', 'Starving'), read(false, 'hungry', 'Hungry'), read(true, 'starving', 'Starving'), read(undefined, 'starving', 'Starving')], ['warn', 'warn', 'low', 'low'], 'Boons amber; Hard - and a read that does not say - red');
   const boons = { hungerCosts: false }, hard = { hungerCosts: true };
   assert.deepEqual([hungerTone({ hungerKey: 'starving' }, boons), hungerTone({ hungerKey: 'starving' }, hard), hungerTone({ hungerKey: 'hungry' }, boons)], ['is-hurt', 'is-lost', 'is-hurt'], 'the Stable card\'s chip: amber on Boons');
-  assert.deepEqual([hungerLine({ hungerKey: 'starving' }, boons), hungerLine({ hungerKey: 'hungry' }, boons)], ['Starving - no gallop until it eats. Feed it.', 'Hungry - it costs nothing yet.']);
-  assert.deepEqual([hungerLine({ hungerKey: 'starving' }, hard), hungerLine({ hungerKey: 'starving' })], ['Starving - every stat twenty-five lower, no gallop, and your bond fading. Feed it.', 'Starving - every stat twenty-five lower, no gallop, and your bond fading. Feed it.']);
+  assert.deepEqual([hungerLine({ hungerKey: 'starving' }, boons), hungerLine({ hungerKey: 'hungry' }, boons)], ['Starving. It will not gallop until it eats. Feed it.', 'Hungry, but no penalty yet.']);
+  assert.deepEqual([hungerLine({ hungerKey: 'starving' }, hard), hungerLine({ hungerKey: 'starving' })], ['Starving: every attribute 25 lower, no gallop, and your bond is fading. Feed it.', 'Starving: every attribute 25 lower, no gallop, and your bond is fading. Feed it.']);
   onPage(false, () => {
     const up = hostUpkeep([horse(2, { horseFed: T0 - STARVING_AFTER - 60 })]);
     assert.deepEqual([up.saddle('Horse').horse.hungerCosts, up.model().hungerCosts, up.model().tier], [false, false, 'boons']);

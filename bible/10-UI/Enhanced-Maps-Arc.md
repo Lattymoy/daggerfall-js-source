@@ -327,10 +327,74 @@ that inks nothing.
   > system. So for now the town key opens the streets and the travel key
   > opens the bay, each with its own ladder, and the one window still
   > holds both sheets the moment that call is taken.
+  >
+  > **FB1020c STREETS-TAB (2026-10-20) took the other half:** the travel
+  > key's window holds the streets now while the player stands in a town
+  > (below). That way round needs none of the four checks - the streets
+  > are handed over after the travel key's ladder has passed. The bay
+  > from the TOWN key is still open, for the reason above.
+
+  **FB1020c STAR-PLATE (2026-10-20): A PLATE THE SOLVER GIVES UP ON IS
+  DFU'S "*", NEVER NOTHING.** A player's report: "citizens who mark
+  locations on your map don't leave a mark". The mark itself was whole
+  (a 7332 answer's `%loc` discovers the building, and the sheet's ladder
+  names it - driven over every Where-is row of 701 towns), but the sheet
+  DROPPED a plate the collision solver surrendered, where DFU letters it
+  "*" with its building's name as a zero-delay tooltip
+  (`DaggerfallExteriorAutomapWindow.cs` :870-878, :900-904;
+  `ExteriorAutomap.cs` :1365-1376) and the classic window always did. So
+  a building an NPC marked on a crowded plan had no mark at all: with
+  both town packs, Daggerfall with 152 others found lettered 85 of its
+  153 names at rest and not the marked one. Now the surrendered plate is
+  lettered `nameplateLayout.js:"export const STAR_PLATE = '*';"` - one
+  word both maps read - where the solver left it
+  (`townSheet.js:"          text: s.replaced ? STAR_PLATE : n.text, name: n.text,"`),
+  ticked and inked as any name, and the pointer over it reads its
+  building's name. Not a departure: DFU's own law, which this sheet had
+  left. Pins `test/ui/ink/fb1020c_starplate.test.js` (4); mutants
+  `tools/mutants/fb1020c_starplate.json`. `em34.json`'s EM4-20 (below,
+  one of the three recorded equivalent) is re-aimed by content at the
+  star and dies now.
+
+  **FB1020c STREETS-TAB (2026-10-20): THE TRAVEL KEY'S WINDOW HOLDS THE
+  STREETS IN A TOWN.** The same report's other half. A townsperson's mark
+  is a building on the TOWN'S plan, and only the town key's window held
+  the plan: the travel key's - which the dial's Map opens too - held the
+  bay alone, so a player who looked there found no mark, however whole
+  it was. This arc's tab law already offered a town's streets beside the
+  bay and the window already held both sheets; only the travel key's door
+  handed no streets. In the town key's module
+  (`scenes/exteriorAutomapToggle.js`, out of `bootWorld` by STAR0 -
+  `01-Overview/Host-Split.md`), `townHere` builds the town the player
+  stands in once for either key: the M key's window as before
+  (`toggleExteriorAutomap`), and the travel key's streets
+  (`exteriorAutomapToggle.js:"    return { town: townSheetBag(here.deps), where: here.deps.where, openOnSheet: 'world' };"`),
+  spread into its window at the door past the whole ladder
+  (`world.js:"_travelMap = buildTravelMapWindow({ ...travelTown(), onTravel"`),
+  `{}` in the wild, indoors and in a dungeon. One bag, one home: both
+  keys' streets come off `ui/town/townMapDoor.js` `townSheetBag` - the
+  same summaries, the same discovery record, the yards laid the same -
+  so a mark is on both, plate for plate. The window opens on the bay,
+  where the travel key always has (`mapTabs.openOn('town', 'world')`),
+  the streets one tab away; `ui/map/mapStrip.js` is unchanged - its
+  narrowing reads the two sheets the window now holds. THE FOUR HOSTS:
+  `bootWorld` wired (the one door every travel-map press passes - the
+  key, the dial, the journal's Find Place, the party tab, the Overworld
+  block; the teleport, the portal stone, the driver's map and the POI
+  editor's jump are armed windows and take none); `bootExterior` has no
+  travel map (its M builds through the same door, so its streets are the
+  same bag); `createWorldModes` and `buildDungeonContext` - the travel
+  key is refused indoors and in a dungeon (IsPlayerInside), and their M
+  opens their own plans. A departure from DFU, whose travel map holds no
+  town plan - this arc's, the Enhanced skin's alone; the classic travel
+  window takes no `town` and is DFU's. Pins
+  `test/ui/town/fb1020c_streetstab.test.js` (4, one over Daggerfall);
+  mutants `tools/mutants/fb1020c_streetstab.json` (12, all dead).
 - **EM5 — the campaigns, and what only a browser can answer.** The
   campaigns are run: `tools/mutants/em1.json` (34, all dead),
   `em2.json` (29, 27 dead and 2 recorded equivalent) and `em34.json`
-  (47, 44 dead and 3 recorded equivalent). Six pins in the two ink
+  (47, 44 dead and 3 recorded equivalent; FB1020c STAR-PLATE re-aimed
+  one of the three, EM4-20, at the star, and it dies now). Six pins in the two ink
   modules exist because a mutant walked past the first version of them,
   and two of the six taught the code something rather than the test:
   the FLD ground flat is in DFU's SHOWALL set (so folding that set into
@@ -653,7 +717,55 @@ all.
   the party. The `?exterior` probe host hands none.
 
 Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` (`paintBoardMark`, `paintHomeMark`),
-`ui/town/townSheet.js`, `ui/town/townMapDoor.js`, `scenes/world.js` (`townBoardMarks`, `townHomes`). Pins:
+`ui/town/townSheet.js`, `ui/town/townMapDoor.js`, `scenes/world.js` (`townBoardMarks`), `scenes/exteriorAutomapToggle.js` (`townHomes`). Pins:
 `test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 
+## FINDME-TOWN (2026-10-19) - Find me finds the player on the sheet that is up
+
+A player's private report: the town map's Find me never found them. FINDME (`11-Multiplayer/Wild-Zone.md`) was built
+for the bay - glide to the player's world pixel at the find's zoom and blink a red cross over it for three seconds, the
+cross drawn by the world sheet's own overlay - and FINDME-SHEET (`10-UI/Overhauls.md`) kept the button on the town's
+sheet. But no town door hands the window a world position (the bay is not handed over from a town, EM4 above), so
+the window's stand-in for a missing pixel, the bay's middle (500, 250), was read as a spot on the streets: every press
+landed on the town's right-hand edge, wherever the player stood, in every town, and no cross was drawn. The dungeon's
+sheet, where every dress but the grimoire's shows the button, did the same.
+
+**Find me asks the sheet that is up.** Two optional members join the sheet contract beside `meView` and `panBox`:
+
+- `findMe(limits, view)` - the view on the player, in the sheet's own space, or null where no player stands on it. The
+  bay's: the pixel's middle at FOCUS_SCALE or nearer, the zone map at its own zoom, as it was. The town's: the
+  player's own caret (`playerOnSheet`, EM-BUG3's one seam) at STREET ZOOM - `FIND_ME_BLOCKS` (two) blocks across the
+  paper's short side, or nearer where the plan is zoomed past it already (`townSheet.js:"findMe(limits, view = null) {"`).
+  The dungeon's: its own Me - back to the player's floor, then `meView`; the Home key, the Me button and Find me share
+  one "back to you" (`automapSheet.js:"function backToMe() {"`).
+- `me()` - where the player stands on the sheet. The cross is the WINDOW's now, painted after the sheet's overlay
+  through that point (`heldMap.js:"const me = this._findMeT > 0"`), so it crosses the caret on the streets and on the
+  floor as it crossed the pixel on the bay. It draws over the wild zone's crows and flames, where it drew under them.
+
+**Off the paper, the cross holds its edge** (AUDIT FB1019f E4). The town map opens anywhere in the location's pixel, and
+the town's blocks are not all of it: a player in the fields round the walls stands off the town's grid. Find me glides
+there as anywhere, the view keeps the town on the paper, and so it lands on the town's edge nearest them - the streets
+they would walk in by. The cross was drawn through their caret, off the paper: one of its lines off it, or both off a
+corner. It stands at the paper's edge on their side now, on their row west or east of the town, on their column north
+or south of it, in the corner off a corner, half its stroke inside the edge so all of the line shows
+(`heldMap.js:"const cx = clamp(fx, edge, paperW - edge), cy = clamp(fy, edge, paperH - edge);"`). On the paper nothing moves: it goes through the caret, the pixel and
+the dungeon's Me as before. A sheet dragged away while the cross blinks holds it the same way. Find me still answers
+there: a player stands on the sheet, only off its blocks, so "no answer, nothing moved and nothing blinked" stays the
+case with no player at all.
+
+**A missing position is never read as one.** A window whose host hands no pixel holds none
+(`heldMap.js:"const p = deps.getPlayerPixel?.() ?? null;"`), and a sheet with no player answers null: Find me moves
+nothing and blinks nothing. The bay's middle stood in nowhere else that a player reaches - the pixel's other readers
+(the bay's caret, the zone map's ring, ZONE-FIRST's centring, MAP2's journey centring, the party poll) are the travel
+map's, and its bag always carries the pixel (`playerTravelOrigin`).
+
+DFU reference: the classic town map's focus key, `DaggerfallExteriorAutomapWindow.ActionFocusPlayerPosition`, puts
+the camera on the player marker at its own zoom; the classic window keeps it whole
+(`exteriorAutomapWindow.js:"actionFocusPlayerPosition() {"`). The held map's Find me departs from it as FINDME did on
+the bay, on the enhanced skin alone (the held map's own row, `01-Overview/Port-Ledger.md` MAP1): it zooms in to the
+street, never out, and blinks the cross.
+
+Code: `ui/heldMap.js` (`_findMe`, `_paint`, the world sheet's `me`/`findMe`), `ui/town/townSheet.js`,
+`ui/automap/automapSheet.js`. Pins: `test/ui/town/fb1019f_findme_town.test.js` (7). Mutants:
+`tools/mutants/findme_town.json` (23, all dead). The record is `01-Overview/bugs/Field-Bugs-2026-10-19f.md` FINDME-TOWN.

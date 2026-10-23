@@ -122,7 +122,7 @@ test('NUDE-DECOR the decorator: a figure placed while Show Nudity was on shows i
     await settle();
     assert.equal(rowPicture(root, id), 'url:184.29', 'the stand-in\'s picture, asked anew - never the one kept from before');
     assert.ok(asked.includes('184.29'));
-    tab(root, /^Catalogue/).fire('click');
+    tab(root, /^Catalog/).fire('click');   // PIN MOVED (VOICE2): the tab says Catalog (Voice.md rule 8, American spelling)
     assert.equal(rows(root).some((r) => r.dataset.key === 'f184.11'), false, 'the catalogue offers the figure no more');
     assert.equal(rows(root).some((r) => r.dataset.key === 'f184.29'), true, 'its stand-in, as itself');
     // moved: the ghost is what the room stands it as
@@ -201,6 +201,8 @@ const NO_PERSON = Object.freeze({
   'src/scenes/gate/gateCourt.js': 'the gate boss as a mobile unit, and his corpse',
   'src/scenes/eliteGates/egFight.js': 'an Elite Breach\'s champion or Court lord as a mobile unit (EG-PLAY)',
   'src/scenes/gate/gateHost.js': 'the boss\'s host as mobile units',
+  'src/scenes/gate/gateFlame.js': 'the boss\'s Flame (WB14d) as a mobile unit - his aspect\'s Atronach',
+  'src/scenes/gate/gateCaptive.js': 'the Captive (WB14f) as a mobile unit - Daggerfall\'s Knight (archives 488 and 487), never the table\'s flats',
   'src/scenes/gatherHost.js': 'gathering nodes',
   'src/scenes/hideouts.js': 'a band\'s camp fire (its people are the encounter pool\'s own)',   // LW12
   'src/scenes/hitEffects.js': 'hit splashes',
@@ -217,6 +219,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/riteHost.js': 'a rite\'s fire',
   'src/scenes/siegeNpcs.js': 'a siege\'s fighters as mobile units',
   'src/scenes/sigilBrokerPool.js': 'the Sigil broker as a mobile unit',
+  'src/scenes/witchesHost.js': 'the Hearth Offerings at the homes\' doors (the festival\'s painted bowl, FESTIVAL_ARCHIVE) - never a person; the Wyrd Sisters stand with the street\'s people through drawnFlat (scenes/pixelBuild.js)',   // WITCH1
   'src/scenes/spoilsPool.js': 'a boss\'s spoils',
   'src/scenes/treeHost.js': 'felled trees',
   'src/scenes/yardNature.js': 'a yard\'s trees and plants',

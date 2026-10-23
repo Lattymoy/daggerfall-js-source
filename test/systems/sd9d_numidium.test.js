@@ -65,7 +65,7 @@ const seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)
 // ── the law and the records ───────────────────────────────────────────
 
 test('SD9d THE LAW: The Brass of Numidium after the serpent\'s - Aetheric, Kagrenac its patron, the Hourbreaker\'s brass its colour, no raiding party\'s, never a world set; Dwemer Brass, Gearward and The Hour Turns at 2, 4 and 6 pieces, each a whole pair from Faint to Ascendant, every brief inside BRIEF_MAX at every stage (mutants: a tier\'s number; a world set)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-2), ['numidium', 'panoply'], 'the Brass Remnant\'s own - PIN MOVED (EG15): the Battlemage\'s Panoply after it');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-5), ['numidium', 'panoply', 'wyrd', 'starspun', 'eltheric'], 'PIN MOVED (SEA-SET): the Eltheric Tidemail last - the Brass Remnant\'s own - PIN MOVED (EG15): the Battlemage\'s Panoply after it - PIN MOVED (WITCH1): the Wyrd\'s Raiment after that - PIN MOVED (STAR7): the Starspun Weave last');
   const s = setById('numidium');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['numidium', 'The Brass of Numidium', 'Kagrenac', '#b5862f', true, false, 'What the Warp kept of the Walking Brass']);
@@ -79,7 +79,7 @@ test('SD9d THE LAW: The Brass of Numidium after the serpent\'s - Aetheric, Kagre
   ]);
   for (const t of s.tiers) for (let st = 0; st <= SET_STAGE_MAX; st++) { const b = t.brief(tierValues(t, st)); assert.ok(b.length <= BRIEF_MAX, `${t.key} at ${st}: "${b}"`); }
   assert.deepEqual(s.tiers.map((t) => t.brief(tierValues(t, SET_STAGE_MAX))), ['+10 magic, +10 shock resist', 'A foe\'s blow 30% lighter', 'Death turned back, heal 25%']);
-  assert.equal(s.tiers[1].text(tierValues(s.tiers[1], 0)), 'The gear catches the next foe\'s blow that lands on you: it is 15% lighter, and the gear winds again. Recovers in 18 s');
+  assert.equal(s.tiers[1].text(tierValues(s.tiers[1], 0)), 'The next enemy hit on you deals 15% less damage. Recovers in 18 s');
 });
 
 test('SD9d THE RECORDS: nine in the places\' order - the seven body pieces, a round shield and a ONE-HANDED Longsword (all nine worn at once) - Dwarven, the Dwemer\'s brass; every affix at the Legendary band\'s TOP (the Regalia\'s), the blow the sigil\'s greatest; never a magic or shock resistance (the 2-piece tier\'s) and one of an element at most; AETHERIC_RECORDS ends with them (mutants: a number off the top; a doubled element; the make; the order)', () => {

@@ -305,6 +305,15 @@ enhanced plus UI feature."
   (Call - refused, and saying why, while the slots are full or it is still hurt; its rest), **Release** asked twice.
 - **Its words**: as it arrives when called, as it is sent away or released, when it falls, now and then as it goes into
   a fight or over a kill (a minute between each one's, twenty seconds between any) - all in its voice.
+- **In the open zone (COMPANION-DROP, FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in
+  zone")**: the one at my side there - `swornAtYourSide`, the first walking with me as the record lists it, the one the
+  zone stands (PVPDUNGEONS; the rest wait outside the zone) - carries its pack and its kit at stake with mine: a death
+  there drops them as it drops my bag (`11-Multiplayer/Wild-Zone.md` section 4,
+  `wildDropLaw.js:"export function wildPacks"`). So it is never sent away nor on an errand from my side there
+  (`revenantCompanions.js:"export const leaveRefusal = (r) =>"` - the roster says it, and the slots' hold sends
+  another), nothing of mine is given as kit to one waiting outside the zone, and knocked out there it hands me its pack
+  and its kit before it goes, said once (`revenantCompanions.js:"function leftWithYou(r)"`; one carrying nothing hands
+  nothing and says nothing - AUDIT FB1019f B4): nothing it carries leaves the zone but at my side.
 
 ## 14. The portals and the dissolve (COMPANION-PORTAL, DISSOLVE)
 
@@ -511,6 +520,14 @@ LETTERS-HOME (FIELD BUGS 2026-10-18b, `01-Overview/bugs/Field-Bugs-2026-10-18b.m
 it never takes one. "Gold" was read as the coin alone, so a letter - worth hundreds of thousands, by far the pack's most
 valuable piece - was in every draw. A letter one took before is the player's again at the next load; a deserter's
 letter comes back with its gold.
+
+STEED-KEPT (FIELD BUGS 2026-10-19f, a player's private report - their horse gone after a death in a dungeon; the owner,
+2026-10-19: "Exclude, and return taken ones"): it never takes what never changes hands, as the open zone's death reads
+it - a horse or a cart (owning one is having it in the pack), a deed (Daggerfall's, and a ship's deed or her packed
+parts) or the spellbook (`revenant.js:"export const revenantMayTake = (item) =>"`); a bound piece stays its own (AUDIT
+625 W2). A stable's horse beside a worn longsword was drawn one death in six. One it took before comes home to the pack
+at the next load, from the save's own copy, and is said once ("Grushnak the Butcher could not keep your Horse. It is
+back in your pack."); a deserter's ship's deed comes back with the rest. The law: `12-Enhanced-AI/Feud-Arc.md` section 19.
 
 ## 25. Festering (FEUD RVN9, 2026-10-04)
 
@@ -789,7 +806,10 @@ A sworn revenant wears what the player gives it. `systems/revenant/revenantGear.
   item lists customs and the load's repairs read (`net/realm/realmGoldLaw.js stashedItemLists`, AUDIT RVN G10: customs
   itself moves gold and letters, never a piece) and the realm's own (`systems/item/possessedItems.js`) - a release hands
   it back with its pack, and a deserter or a betrayer weighs it with its pack (`splitPack` - it keeps the more valuable
-  half). Abroad, its kit goes with it: nothing is given or taken back (AUDIT RVN F10).
+  half). Abroad, its kit goes with it: nothing is given or taken back (AUDIT RVN F10). COMPANION-DROP (FIELD BUGS
+  2026-10-19f, section 13): in the open zone the kit of the one at my side drops with my bag at a death there, as its pack
+  does - DECIDED there, named: its pieces are mine, given from the pack and taken back at will, worn by it and never by me,
+  so my own worn law is not theirs - and nothing of mine is given to one waiting outside the zone.
 - **Its weight abroad** (`gearPower`, section 42): a twentieth of a point a piece worn, and its tier's share more (Magic
   0.1, Rare 0.2, Legendary 0.35), at most two (AUDIT RVN G8 - ten Common pieces weighed what three Legendaries did).
 - **The page**: the Companions page's **Gear** opens a sheet under its card - a well a slot it may fill (a beast's the
@@ -902,15 +922,28 @@ provinces (`world/tamriel/tamrielGeography.js PROVINCES`; a city of it named, dr
 - **Forage**: crafting materials first.
 - **Sell-sword**: gold first.
 
-It leaves through its portal (the layer reads the party), is gone the place's days on the character's own clock
-(`ownMinutes`), and comes back at the party's frame (`revenantParty().wake`). **Online only the time lived with the world
-carries it on** (AUDIT RVN F1 - `errandStep`, `chargeErrands`): the clock stands while the player is away, and a rest, a
-Loiter or a journey raises it (`worldTick.js raisedMinutes`) - a raise pushes every errand's minute back by as much, and a
-step past `ERRAND.STEP_MAX` (30 minutes - a quest clock's played step; time away) by the rest. A day abroad is two real
-hours of play. It is QCLOCK-WORLD's law (`quest/clock.js chargeSeconds`, "the lived step, never the raise"): a raise that
-paid was a faucet the world pays for (Lived-Time.md) - measured, a road journey's x100 raised 906k of wealth an hour at
-level 30 against the band's 200k. Offline the one clock carries it, DFU's own; the page says so online. The law is `systems/revenant/revenantErrands.js`; the acts are
-`revenantCompanions.js` (`sendOnErrand`, `recallFromErrand`, `returnFromErrand`).
+It leaves through its portal (the layer reads the party), is gone the place's days, and comes back at the party's frame
+(`revenantParty().wake`). **Online it keeps the world's time** (OFFLINE-ROAD, FIELD BUGS 2026-10-21,
+`01-Overview/bugs/Field-Bugs-2026-10-21.md` - `errandOnWorld`, `chargeErrands`): its `due` is the world's minute it is
+back (`worldTick.js worldMinutes`, the event clock, which runs on the wall whoever plays), so time away carries it on and a
+day abroad is two real hours, played or not. A rest, a Loiter or a journey raises the character's own clock alone
+(`worldTick.js raisedMinutes`), never the world's, so a raise still carries it on not a minute - AUDIT RVN F1's faucet
+(QCLOCK-WORLD's law, `quest/clock.js chargeSeconds`, "the lived step, never the raise": a raise that paid was a faucet the
+world pays for, Lived-Time.md - measured, a road journey's x100 raised 906k of wealth an hour at level 30 against the
+band's 200k) stays shut. Until the relay's clock is heard (`trustedWorldMinutes`) the lived step carries it as AUDIT RVN F1
+built it (`errandStep`: a raise pushes every errand's minute back by as much, and a step past `ERRAND.STEP_MAX` - 30
+minutes, a quest clock's played step - by the rest); an errand sent then takes its minutes left onto the world's clock at
+the first trusted wake, from its minute charged by that wake's lived step (AUDIT FB1021 L3-2: a raise across the first
+trusted wake was paid on it). The world's minute an errand reads is held to the time this session lived (AUDIT FB1021
+L3-1, `errandWorldMinute`): the client's world clock is the machine's clock plus the relay's offset, read once a welcome,
+so a machine clock set forward mid-session moved it and returned every errand at once (fourteen returns for ten +8 h
+moves, where the lived step held each wake to its thirty minutes); each primary welcome marks the world's minute with
+`performance.now()` (`worldTick.js hearSharedClock`), and a wake reads no more than that minute plus the monotonic time
+since at the wire's rate, plus a minute. A load hears the relay again, so time away still counts. Offline the one clock
+carries it, DFU's own. Online the page says so, and its times left are real minutes and hours at the wire's rate (AUDIT
+FB1021 L3-5: "back in about 24 hours" was two real hours, and the sky clock passes 48 in them). The law is
+`systems/revenant/revenantErrands.js`; the acts are `revenantCompanions.js` (`sendOnErrand`, `recallFromErrand`,
+`returnFromErrand`).
 
 | Place | Days | Danger | Its goods |
 |---|---|---|---|
@@ -952,7 +985,9 @@ odds with the share.
 - **Measured** (lane E's probe, 1,500 seeds a cell, two abroad, rank V and its best kit, on lived time): at level 30 the
   best route brings about 990 gold a real hour (Black Marsh, Sell-sword) or 4,200 of item worth (`itemLaw.itemWorth`) -
   0.5% and 2% of the wealth budget's 200k band (`server-account/src/budget.js`) - and 0.03 Legendaries an hour; at level
-  10, 330 gold and 1,400 of worth an hour.
+  10, 330 gold and 1,400 of worth an hour. Per character (AUDIT FB1021 L3-4): online, since OFFLINE-ROAD, every one of an
+  account's realm characters keeps its errands on the world's clock while another is played, so an account of six
+  (`realm.js REALM_CHARACTERS_MAX`) may have twelve abroad - six times the hour at most, still 3% and 12% of the band.
 
 It is handed over at its return: gold to the purse, pieces to the pack, goods to the Materials Bag (then the pack, any
 overflow forced in - `materialsBag.js giveCarried`; units minted on the client are loose, as a find's are -
@@ -984,6 +1019,8 @@ layer for its street, `scenes/worldModes.js`'s buildings and `scenes/dungeonCont
 returns wherever the player is; no host line. `scenes/exterior.js` stands no sworn one - FLAGGED, as section 40.
 
 Pinned: `test/systems/revenant/rvnerrand.test.js` (10); `tools/mutants/rvnerrand.json` (all dead - section 43).
+OFFLINE-ROAD and its audit: `test/systems/revenant/fb1021_offlineroad.test.js` (8); `tools/mutants/fb1021_offlineroad.json`
+(19, all dead).
 
 ## 43. AUDIT RVN - the kit, the arts and the errands audited (2026-10-17)
 

@@ -224,13 +224,13 @@ test('SHIPYARDS THE WINDOW\'S WORDS: a ship\'s card (her figures, a galley lying
   const card = shipCardText({ ...shipSpec(3), asked: 150000, docks: false, why: null });
   assert.match(card.figs, /a crew of \d+, 8 named on deck/);
   assert.match(card.figs, /a ram/);
-  assert.equal(card.note, 'Too big for the quay - it anchors off the harbour.');
+  assert.equal(card.note, 'Too big for the quay. It anchors off the harbor.');
   assert.deepEqual([card.press, card.can], ['Buy - 150,000 gold', true]);
   const row = shipCardText({ ...shipSpec(0), asked: 4000, docks: true, why: 'short' });
-  assert.match(row.figs, /no crew - you sail it alone/);
+  assert.match(row.figs, /no crew \(you sail it alone\)/);
   assert.deepEqual([row.can, row.why], [false, 'short']);
   const f = fleetRowText({ label: 'Kestrel', hullName: 'Small Ship', where: 'laidup', port: 'Sentinel', worth: 90000, offer: 40000, sell: null, upgrades: { hold: 1 }, can: {} });
-  assert.match(f.worth, /^Worth 90,000 gold - the shipmaster offers 40,000 gold\./);
+  assert.match(f.worth, /^Worth 90,000 gold\. The shipmaster offers 40,000 gold\./);
   assert.equal(f.canSell, true);
   const t = recruitText({ name: 'Anna Voss', gradeLabel: 'Seasoned', trade: 'Gunner', className: 'Archer', sex: 'female', fights: 1, boardings: 3, line: 'Twelve years.', fee: 500, why: null });
   assert.equal(t.who, 'Seasoned Gunner - Archer, she has 1 fight, 3 boardings.');

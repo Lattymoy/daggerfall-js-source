@@ -122,12 +122,12 @@ export const OVERHAUL_PANELS = Object.freeze([
     options: Object.freeze([
       textureOption('classic', 'Classic', {
         by: 'The original game',
-        blurb: 'The original game\u2019s own textures for adventurers who want that classic look from the old days.',
+        blurb: 'The original game\u2019s own textures, for the classic look.',
         isOn: classicTexturesWorn, wear: wearClassicTextures, blocked: classicBlocked,
       }),
       textureOption('vanilla-enhanced', 'Vanilla Enhanced', {
         by: () => { const b = veBase(); return b?.version ? `carademono, version ${b.version}` : 'carademono'; },
-        blurb: 'The original game\u2019s own textures remastered for adventurers who want the classic look, sharper: the ground, the trees and rocks, the city walls and the dungeons.',
+        blurb: 'The original game\u2019s own textures, remastered and sharper: the ground, trees, rocks, city walls and dungeons.',
         isOn: veWorn, wear: wearVanillaEnhanced, addons: veAddons, vendor: 'vanilla-enhanced',
       }),
     ]),
@@ -137,24 +137,24 @@ export const OVERHAUL_PANELS = Object.freeze([
     effect: 'Takes effect at once.',
     online: null,
     options: Object.freeze([
-      preset('classic', 'Classic', 'classic', SOUND_ROWS, { by: 'The original game', blurb: 'The original game\u2019s own sounds for adventurers who like a retro ambience, classic and timeless.' }),
-      preset('enhanced', 'Enhanced', 'enhanced', SOUND_ROWS, { by: 'The port and Immersive Footsteps', blurb: 'New and improved sounds for DFO Online for adventurers who like some more quality ambience.' }),
+      preset('classic', 'Classic', 'classic', SOUND_ROWS, { by: 'The original game', blurb: 'The original game\u2019s own sounds, for a retro feel.' }),
+      preset('enhanced', 'Enhanced', 'enhanced', SOUND_ROWS, { by: 'DFO Online and Immersive Footsteps', blurb: 'New and improved sounds and ambience.' }),
     ]),
   }),
   Object.freeze({
     id: 'ui', title: 'UI Overhaul',
     effect: 'Switching reloads the game.',
-    online: 'Online, the chat, your friends, the party and trading keep their own panels over any of these.',
+    online: 'Online, chat, friends, party and trading keep their own panels with any of these.',
     options: Object.freeze([
-      uiOption('classic', SKIN_NAMES.classic, 'classic', UI_PACK_NONE, { by: 'The original game', blurb: 'The original game\u2019s own UI for adventurers who want to have that classic feel from the old days.' }),
+      uiOption('classic', SKIN_NAMES.classic, 'classic', UI_PACK_NONE, { by: 'The original game', blurb: 'The original game\u2019s own interface, for the classic feel.' }),
       // PLUS1 (2026-09-25): the enhanced screens in the refreshed dress. PLUS-ONLY (2026-09-26): and the only enhanced
       // option - plain Enhanced, which stood beside it, is retired (systems/uiSkin.js isEnhancedPlus).
-      uiOption('enhanced-plus', SKIN_NAMES.enhanced, 'enhanced', UI_PACK_NONE, { by: 'The port', blurb: 'New and improved UI for adventurers who want a more modern feel. Everything is built for playing with a mouse and keyboard, pad, controller or even a phone. You can tweak some settings the way you want and also tweak the controller bindings.' }),
-      uiOption(G.id, G.title, 'classic', G.id, { by: `${G.author}, version ${G.version}`, blurb: 'A mix between classic and enhanced for adventurers who like that classic feeling from the old days but still want some improvements. 3 times more detail than classic, a brand new font, a spellbook for all the spells you ever need and a nice parchment and wood UI instead of the original rock one.' }),
+      uiOption('enhanced-plus', SKIN_NAMES.enhanced, 'enhanced', UI_PACK_NONE, { by: 'DFO Online', blurb: 'A modern interface built for mouse and keyboard, controller or phone. You can adjust some settings and the controller bindings.' }),
+      uiOption(G.id, G.title, 'classic', G.id, { by: `${G.author}, version ${G.version}`, blurb: 'The classic interface with improvements: 3 times the detail, a new font, a spellbook for all your spells, and parchment and wood in place of the original stone.' }),
       // GRIM1 (2026-10-09, Discord: "I want some of the features of enhanced+ just not the overall look of it"): DFO
       // GRIMOIRE - the enhanced skin, every window and feature it carries, dressed in GrimoireUI's own parchment, wood,
       // red presses, glass vials and lettering (ui/grimoireDress.js). Its art is the pack's, so it names the pack.
-      uiOption('dfo-grimoire', 'DFO Grimoire', 'enhanced', UI_PACK_NONE, { dress: 'grimoire', vendor: G.vendor, by: `The port, in ${G.author}'s GrimoireUI ${G.version}`, blurb: 'GrimoireUI\u2019s parchment, wood and red-and-gold presses over every window the game has, for adventurers who love the Grimoire look but want everything Enhanced Plus does: the hotbar, the camps and tents, the rest, the maps, trading and every online panel. The vitals are its glass vials.' }),
+      uiOption('dfo-grimoire', 'DFO Grimoire', 'enhanced', UI_PACK_NONE, { dress: 'grimoire', vendor: G.vendor, by: `DFO Online, in ${G.author}'s GrimoireUI ${G.version}`, blurb: 'GrimoireUI\u2019s parchment, wood and red-and-gold buttons on every window, with everything Enhanced Plus has: the hotbar, camps and tents, resting, the maps, trading and every online panel. Your vitals show as glass vials.' }),
     ]),
   }),
 ]);

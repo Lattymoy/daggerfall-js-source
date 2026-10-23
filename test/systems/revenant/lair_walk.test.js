@@ -103,6 +103,6 @@ test('LAIR-WALK the host: the bake anchored where I came in and said landed or f
   assert.match(lair, /const walk = enhancedNav\.chf \? reachableFrom\(enhancedNav\.chf, enhancedNav\.anchor\) : null;\n\s*const reaches = walk && \(\(m\) => walk\(floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\)\);\n\s*const far = \(reaches && dungeonEnd\(reaches\)\) \|\| dungeonEnd\(\);/);
   assert.match(lair, /const about = spotAbout\(\[far\.x, far\.y, far\.z\], 4\);\n\s*const sp = about && \(!reaches \|\| reaches\(about\)\) \? about : \{ x: far\.x, y: far\.y, z: far\.z \};/, 'its spot on the walk\'s floor, else the marker');
   assert.match(D, /function dungeonEnd\(reaches = null\) \{\n\s*const from = dungeon\.enterMarker \?\? dungeon\.startMarker \?\? null;\n\s*return reachableEndOf\(from, sdEndMarks\(_layoutEnemies, dungeon\.blocks, \(m\) => floorLanding\(collider, \[m\.x, m\.y \+ 0\.2, m\.z\]\)\[1\]\), reaches\) \?\? \(reaches \? reachableEndOf\(from, _layoutEnemies\.filter\(\(m\) => !m\.eliteCopy\), reaches\) : null\);/);
-  const rift = D.slice(D.indexOf('function standSdEnd() {'), D.indexOf('const probe = {', D.indexOf('function standSdEnd() {')));
+  const rift = D.slice(D.indexOf('function standSdEnd() {'), D.indexOf('const probe = sdProbeOf(collider);', D.indexOf('function standSdEnd() {')));   // SD-THROUGH (PIN MOVED): the end's one probe (scenes/superDungeon/sdEnd.js sdProbeOf)
   assert.match(rift, /const end = dungeonEnd\(\);/, 'the Rift: the same on every client, never one client\'s walk');
 });

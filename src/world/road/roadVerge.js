@@ -178,3 +178,26 @@ export function lptFitCap(mask, net, px, py, x, z, crown, widest) {
   if (net) room = Math.min(room, roadRoom(net, px, py, x, z, reach));
   return room >= reach ? Infinity : Math.max(LPT_FIT_FLOOR, room / crown);
 }
+
+/**
+ * FB1020c TRUNK-FIT (a player's report, 2026-10-20: "Fountain inside a tree in Crossleigh behind a house west of The
+ * Emperor's Gear Store"): THE TRUNK FITS ITS ROOM TOO. LPT-FIT keeps a Low Poly tree's crown off the roads and streets;
+ * nothing kept its TRUNK off the town's own things. A location's block stands its ground scenery on a 6.4 m grid that
+ * reads none of its misc flats (RMBLayout.AddNatureFlats), so Daggerfall's authors set pictures a metre or two from a
+ * fountain or a crate - Crossleigh's GENRAS01 stands TEXTURE.504's tree 12 1.58 m from its fountain (212, 2) - and Low
+ * Poly Trees stands that tree's trunk 3.42 m about its root where it meets the ground: the fountain inside it. So a
+ * location's Low Poly tree is drawn no wider than the room its root has to the nearest SOLID flat of its pixel - a body
+ * (world/propBodies.js flatBody: a fountain, a well, a crate, a statue, its own measured foot) - over its trunk
+ * (world/lptCrowns.js LPT_TRUNKS). A scale, never a move, as LPT-FIT's: the root, its collider, Logging's tree and its
+ * cover stand where DFU stands the flat. A departure from DFU with Low Poly Trees (MeshReplacement.cs
+ * ImportCustomFlatGameobject stands the prefab whole) - Port-Ledger A, TRUNK-FIT.
+ * @param {ReadonlyArray<{c: ArrayLike<number>, r: number}>|null} solids the pixel's solid bodies, pixel-local (`c` x, y, z)
+ * @param {number} x @param {number} z the root, pixel-local (m)
+ * @param {number} trunk the prototype's trunk at the ground (m, at its prefab's scale) @param {number} widest the largest scale drawn
+ */
+export function lptTrunkCap(solids, x, z, trunk, widest) {
+  if (!(trunk > 0) || !solids?.length) return Infinity;
+  let room = Infinity;
+  for (const s of solids) room = Math.min(room, Math.hypot(s.c[0] - x, s.c[2] - z) - s.r);
+  return room >= trunk * widest ? Infinity : Math.max(LPT_FIT_FLOOR, room / trunk);
+}

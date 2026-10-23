@@ -13,7 +13,7 @@ import {
   RITE_BUCKET, RITE_GROUND_EVERY, RITE_SIGIL_DRAW_M, RITE_FLAME_SCALE, RITE_FLAME_PHASES,
 } from '../../../src/scenes/riteHost.js';
 import { riteLocalOf, riteFaithfulOf, RITE_REACH_M, RITE_WORD_MS, RITE_SUMMONER_CAREER, RITE_HELPERS_MAX } from '../../../src/net/gate/gateRite.js';
-import { gateTimes, gateSpotLocal, gateModsOf, gateBossOf, marksLine, GATE_COLLAPSE_MS } from '../../../src/net/gate/gateLaw.js';
+import { gateTimes, gateSpotLocal, gateModsOf, gateBossOf, gatePortentsOf, portentsLine, marksLine, GATE_COLLAPSE_MS } from '../../../src/net/gate/gateLaw.js';
 import { worldRoom, validRiteOut, RITE_COUNT_MAX, RITE_BY_MAX } from '../../../src/net/wire.js';
 import { riteLayout, buildRiteModel, RITE_BRAZIERS, RITE_BRAZIER_R, RITE_BRAZIER_W, RITE_RING_R, RITE_TENT_R, RITE_SIGIL_LIFT, RITE_SIGIL_REACH, RITE_SIGIL_R, RITE_ALTAR } from '../../../src/world/riteModel.js';
 import { GATE_PLINTH_RECORD, GATE_STONE_RECORD, RITE_SIGIL_RECORD, GATE_ARCHIVE, GATE_SPINE_RECORD, GATE_RIM_RECORD } from '../../../src/world/gate/gateModel.js';
@@ -631,7 +631,7 @@ test('AUDIT WB12d (G2): the burned earth - the circle says where no grass grows 
   assert.deepEqual(r2.bare.at(-1), [E + 100 - RITE_BARE_R, N - RITE_BARE_R, E + 100 + RITE_BARE_R, N + RITE_BARE_R], 'gone: placed again where the scene has it now');
   assert.equal(r2.host.clearing(), null);
   const w = read('src/scenes/world.js');
-  assert.match(w, /const _bare = riteHost\?\.clearing\(\) \?\? null;/);
+  assert.match(w, /const _bare = riteHost\?\.clearing\(\) \?\? starfall\?\.clearing\(\) \?\? null;/);
   assert.match(w, /if \(_bare && \(x - _bare\.x\) \* \(x - _bare\.x\) \+ \(z - _bare\.z\) \* \(z - _bare\.z\) <= _bare\.r \* _bare\.r\) return null;/);
   assert.match(w, /onBare: \(x0, z0, x1, z1\) => labGrassField\?\.invalidate\(x0, z0, x1, z1\),/);
 });
@@ -975,13 +975,15 @@ test('WB12d the omen\'s order: right after the omen\'s line, before tonight\'s m
     return { said, seen };
   };
   const marks = marksLine({ boss: gateBossOf(DAY).name, md: gateModsOf(DAY) });
+  const pt = portentsLine(gatePortentsOf(DAY));   // WB14b: the day's Sundering, after its marks
+  assert.ok(pt);
   const ok = run();
-  assert.equal(ok.said.length, 3);
+  assert.equal(ok.said.length, 4);
   assert.ok(ok.said[0].startsWith('The sky burns near Copperham, Wrothgarian Mountains.'), ok.said[0]);
-  assert.deepEqual(ok.said.slice(1), [riteOmenLine(), marks]);
+  assert.deepEqual(ok.said.slice(1), [riteOmenLine(), marks, pt]);
   assert.deepEqual(ok.seen, [[DAY, PX, PY]], 'asked of this breach\'s circle, once');
-  assert.deepEqual(run({ broken: true }).said.slice(1), [marks]);
-  assert.deepEqual(run({ ready: false }).said.slice(1), [marks]);
+  assert.deepEqual(run({ broken: true }).said.slice(1), [marks, pt]);
+  assert.deepEqual(run({ ready: false }).said.slice(1), [marks, pt]);
   const w = read('src/scenes/world.js');
   assert.match(w, /riteBroken: \(day, s\) => !!riteHost\?\.isBroken\(day, s\?\.px, s\?\.py\),/);
   assert.match(w, /riteReady: \(\) => !!online\?\.riteOk,/);

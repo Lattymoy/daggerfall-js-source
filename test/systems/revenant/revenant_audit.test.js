@@ -134,7 +134,7 @@ test('AUDIT A4/A5: A SWORN ONE\'S PACK IS THE SAVE\'S - a load lays the save\'s 
   RC.releaseRevenant(r.id);
   assert.equal(me.items.length, items0 + 1, 'the sword into the pack');
   assert.equal(me.goldPieces, 40, 'the gold into the purse, never a row');
-  assert.match(read('src/ui/companionRoster.js'), /hands you back what it carries/, 'the confirm says so (AUDIT RVN G6: its pack and its kit)');
+  assert.match(read('src/ui/companionRoster.js'), /giving back what it carries/, 'the confirm says so (AUDIT RVN G6: its pack and its kit)');
 });
 
 test('AUDIT A7-A15: its words - the tally taunt only with kills to count, a revenant\'s flight knows the player\'s name, a beast\'s moment keeps what it says, a skeleton is never a wit, a $ in a name is a letter, three risen taunts each, one possessive for every title, the cornered say their words (mutants: the tally for a runner; a stranger to its own revenant; the body dropped; a mute kind talking temperaments)', () => {
@@ -207,7 +207,7 @@ test('AUDIT C4-C6: the rest never reads longer than a rest (an older save\'s clo
 
 test('AUDIT C3/C7: the world keeps the slots and the words true - past the slots the most lately sworn steps away; opposite acts in one pause cancel; a load forgets the words and the members (mutants: a fourth at the side; a dismiss said for one that never left)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /if \(companionsWithYou\(\) > COMPANION_SLOTS\) \{\n\s*const last = revenantsWithYou\(\)\.sort\(\(a, b\) => \(b\.swornAt \?\? 0\) - \(a\.swornAt \?\? 0\)\)\[0\];\n\s*if \(last && sendRevenantAway\(last\.id, \{ byYou: false \}\)\)/);   // PIN MOVED (RVN11a, Feud-Arc.md 22.1): the slots' hold, never the player's sending - no loyalty lost
+  assert.match(w, /if \(companionsWithYou\(\) > COMPANION_SLOTS\) \{\n\s*const last = revenantsWithYou\(\)\.filter\(\(r\) => !leaveRefusal\(r\)\)\.sort\(\(a, b\) => \(b\.swornAt \?\? 0\) - \(a\.swornAt \?\? 0\)\)\[0\];.*\n\s*if \(last && sendRevenantAway\(last\.id, \{ byYou: false \}\)\)/);   // PIN MOVED (RVN11a, Feud-Arc.md 22.1): the slots' hold, never the player's sending - no loyalty lost; PIN MOVED (COMPANION-DROP): never the one at my side in the open zone
   assert.match(w, /if \(kind === 'arrive'\) \{ if \(sentAt >= 0\) _revenantDepartures\.splice\(sentAt, 1\); else noteRevenantArrival\(r\.id\); return; \}/);
   // PIN MOVED (AUDIT FEUD: a load forgets a turning queued under a window too)
   assert.match(w, /const clearSworn = \(\) => \{ revenantAshore\.clear\(\); _revenantArrivals\.clear\(\); _revenantDepartures\.length = 0; _revenantBetrayals\.length = 0; forgetSwornMember\(\); \};/);
@@ -243,7 +243,7 @@ test('AUDIT B1/B4/B6: the window holds the wait; one held is no swing\'s, spell\
   assert.deepEqual(e.items, [], 'handed over, not copied');
   // the dungeon's save: gone with no body, laid with none
   assert.match(d, /\.\.\.\(f\.dead && \(f\.escaped \|\| f\.executed \|\| f\._swornAway\) \? \{ noBody: true \} : \{\}\)/);
-  assert.match(d, /if \(sf\.noBody && sf\.dead\) \{ if \(!f\.dead\) questPoolOps\.removeFoe\(f\);[^\n]*\n\s*patchFoe\(f, sf, wire\);/, 'ahead of the patch that lays a corpse');
+  assert.match(d, /if \(\(sf\.noBody \|\| sf\.bg\) && sf\.dead\) \{ if \(!f\.dead\) questPoolOps\.removeFoe\(f\);[^\n]*\n\s*patchFoe\(f, sf, wire\);/, 'ahead of the patch that lays a corpse (PIN MOVED, AUDIT DEX D3/D4: a mod prefab\'s gone body - `bg` - takes the same arm)');
   assert.match(d, /for \(const f of foes\) \{ if \(!f\) continue; f\.yielded = null; f\.executing = null; f\.sparing = null; f\.trophy = null; f\.yieldEvent = null; \}/, 'a same-dungeon load ends a judgement in flight');
   assert.match(d, /for \(const f of w\.foes\) delete f\.noBody;/, 'the room\'s door has no field for it');
 });
@@ -269,7 +269,7 @@ test('AUDIT B2/B3/B5/P1-P3: the execution pays its Renown and takes its soul; a 
 
 // ── THE UI ───────────────────────────────────────────────────────────────────────────────────────────────────────
 test('AUDIT D1/D4/D5: Enter on a focused button is that button\'s; the judgement opens in beast form; the classic box keys short and its details wrapped, a refused choice saying why (mutants: Enter confirms over Back; the beast refuses; a long label)', () => {
-  const fate = { options: [{ id: 'kill', key: 'K', label: 'Kill', detail: 'It drops a rod', disabled: false }, { id: 'spare', key: 'S', label: 'Spare', detail: 'You keep 6 sworn already - release one first', disabled: true }], name: 'Grushnak', sub: 'Rank II', plea: { speech: 'Mercy!' }, choose: () => {} };
+  const fate = { options: [{ id: 'kill', key: 'K', label: 'Kill', detail: 'It drops a rod', disabled: false }, { id: 'spare', key: 'S', label: 'Spare', detail: 'You keep 6 sworn already. Release one first', disabled: true }], name: 'Grushnak', sub: 'Rank II', plea: { speech: 'Mercy!' }, choose: () => {} };
   const got = [];
   const kit = { onPick: (id) => got.push(['pick', id]), onChoose: (id) => got.push(['choose', id]) };
   assert.equal(fateKey({ key: 'Enter', target: { closest: () => ({}) } }, fate, 'kill', kit), false, 'a focused button keeps its Enter');

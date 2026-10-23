@@ -58,16 +58,16 @@
   {
     "name": "RELAY-SHARE-a-crystal-stand-in-unhanded",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  const e = bossStandIn(look, CRYSTAL_NAME, share);",
-    "new": "  const e = bossStandIn(look, CRYSTAL_NAME);",
+    "old": "  const e = bossStandIn(look, CRYSTAL_NAME, share, blowX);",
+    "new": "  const e = bossStandIn(look, CRYSTAL_NAME, null, blowX);",
     "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
     "why": "a crystal's (and a Heart's, an Elite Breach object's) reader never reaches its stand-in"
   },
   {
     "name": "RELAY-SHARE-a-host-stand-in-unhanded",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  const e = bossStandIn({ mobile: look.mobile }, look.name, share);",
-    "new": "  const e = bossStandIn({ mobile: look.mobile }, look.name);",
+    "old": "  const e = bossStandIn({ mobile: look.mobile }, look.name, share, blowX);",
+    "new": "  const e = bossStandIn({ mobile: look.mobile }, look.name, null, blowX);",
     "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
     "why": "a host body's (an Echo's, an Elite Breach lord's and add's) reader never reaches its stand-in"
   },
@@ -114,8 +114,8 @@
   {
     "name": "RELAY-SHARE-the-breach-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m))",
-    "new": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i)",
+    "old": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX)",
+    "new": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, null, myBlowX)",
     "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
     "why": "every lord and add of an Elite Breach read as whole"
   },
@@ -130,8 +130,8 @@
   {
     "name": "RELAY-SHARE-the-breach-objects-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp)",
-    "new": "crystalStandIn({ mobile: 31, scale: 1 }, b.i)",
+    "old": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)",
+    "new": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, null, myBlowX)",
     "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
     "why": "an Elite Breach's struck objects read as whole"
   },
@@ -242,8 +242,8 @@
   {
     "name": "RELAY-SHARE-the-breach-object-reader-stale",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "() => c.hp)",
-    "new": "((s0) => () => s0)(b.max > 0 ? b.hp / b.max : 0))",
+    "old": "() => c.hp, myBlowX)",
+    "new": "((s0) => () => s0)(b.max > 0 ? b.hp / b.max : 0), myBlowX)",
     "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
     "why": "lane L3's survivor (L3-breach-object-reader-stale): a struck object's stand-in reads the share it was first drawn at, never its word as it falls"
   },

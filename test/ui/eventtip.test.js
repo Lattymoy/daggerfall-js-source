@@ -129,8 +129,8 @@ test('EVENT-TIP: the gate\'s card - where, when it next moves (the countdown\'s 
   const marks = (day) => { const w = gateModsWords(gateModsOf(day)); return `${w.charAt(0).toUpperCase()}${w.slice(1)}`; };
   assert.deepEqual(at(t.omenAt + 1000), { title: 'Dagon\'s Breach', lines: ['Near Copperham, Wrothgarian Mountains', `Opens in ${countdownText(t.openAt - t.omenAt - 1000)}`, 'Valkynaz Ruhn, Warden of the Burning Gate', marks(740)] });   // WB8c: and tonight's marks while he stands
   assert.equal(marks(740), 'The Storm-Crowned - Vengeful, Dagon\'s Favoured');   // WB11a: the nine-trial rotation's (it was Vengeful, Soul-Hungry)
-  assert.equal(at(t.openAt + 1000).lines[1], `Open - seals in ${countdownText(t.sealAt - t.openAt - 1000)}`);
-  assert.equal(at(t.sealAt + 2000).lines[1], 'Sealed - collapses in 9:58', 'GATE-COLLAPSE: the sealed hours say when they end');
+  assert.equal(at(t.openAt + 1000).lines[1], `Open. Seals in ${countdownText(t.sealAt - t.openAt - 1000)}`);
+  assert.equal(at(t.sealAt + 2000).lines[1], 'Sealed. Collapses in 9:58', 'GATE-COLLAPSE: the sealed hours say when they end');
   assert.equal(at(t.wrathAt + 1000).lines[1], 'Collapsing');
   assert.deepEqual(at(t.openAt + 65_000, t.openAt + 60_000).lines.slice(1), ['Collapsing', 'Valkynaz Ruhn has fallen'], 'a kill: collapsing, and he fell');
   // the omen's mark carries it, and the map reads it through
@@ -218,7 +218,7 @@ test('EVENT-TIP on the held map: the hover asks a party member, a raided town, a
     const [gx, gy] = toPaper(win._view, 5.2, 3.4);
     const onRing = win._hoverLabel(gx, gy);
     assert.equal(onRing.tip.title, 'Dagon\'s Breach');
-    assert.deepEqual(onRing.tip.lines, ['Near Copperham, Daggerfall', `Open - seals in ${countdownText(t.sealAt - clock.now)}`, 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Burning - Unyielding, Echoing']);   // WB8c: day 741's marks (WB11a's rotation - they were the Venom-Blooded, Scarring and Grudge-Bearer)
+    assert.deepEqual(onRing.tip.lines, ['Near Copperham, Daggerfall', `Open. Seals in ${countdownText(t.sealAt - clock.now)}`, 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Burning - Unyielding, Echoing', 'The Captive']);   // WB14b: and its portent; WB8c: day 741's marks (WB11a's rotation - they were the Venom-Blooded, Scarring and Grudge-Bearer)
     assert.equal(onRing.label, `Dagon's Breach - seals in ${countdownText(t.sealAt - clock.now)}`);
     const [ox, oy] = toPaper(win._view, 9.5, 9.5);
     assert.equal(win._hoverLabel(ox, oy).tip, undefined, 'past the ring: the province, no card');
@@ -234,7 +234,7 @@ test('EVENT-TIP on the held map: the hover asks a party member, a raided town, a
     // a STILL pointer's card follows the poll: the gate seals under it
     clock.now = t.sealAt + 2000; omen.frame();
     win.tick(0.3);
-    assert.deepEqual(cardText(win).slice(0, 3), ['Dagon\'s Breach', 'Near Copperham, Daggerfall', 'Sealed - collapses in 9:58']);
+    assert.deepEqual(cardText(win).slice(0, 3), ['Dagon\'s Breach', 'Near Copperham, Daggerfall', 'Sealed. Collapses in 9:58']);
     assert.equal(win._chrome.label.textContent, 'Dagon\'s Breach - sealed, collapses in 9:58', 'and the label with it');
     // ...and goes when the gate does
     clock.now = t.wrathAt + GATE_COLLAPSE_MS; omen.frame();

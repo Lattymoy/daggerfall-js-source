@@ -47,7 +47,7 @@ test('LEGACY5 the topics: a friend is courted, a full heart hears a proposal, a 
   assert.deepEqual(topicsFor(f, me, { ...RES, id: 'L120.5' }, 100), [], 'the wed court no one else');
   assert.equal(residentInHouse(f, RES.id), true);
   assert.deepEqual(topicLabel(TOPIC.court), 'Courtship');
-  assert.equal(topicQuestion(TOPIC.propose, 0), 'Will you do me the honour of marrying me?');
+  assert.equal(topicQuestion(TOPIC.propose, 0), 'Will you do me the honor of marrying me?');
   assert.equal(spouseOf(f, me), s);
 });
 

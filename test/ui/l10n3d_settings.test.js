@@ -210,8 +210,8 @@ test('L10N3d controls prompts: the grid\'s and the joystick window\'s multipleAs
   cw.top = 'defaults';
   assert.deepEqual(cw.promptRows(), ['Voulez-vous vraiment remettre les commandes par defaut ?']);
   cw.top = 'remove';
-  assert.deepEqual(cw.promptRows(), ['Voulez-vous vraiment retirer la touche', "de Auto Run ('MIDDLE CLICK') ?"],
-    'formatted, and broken before the word that leads into the action');
+  assert.deepEqual(cw.promptRows(), ['Voulez-vous vraiment retirer la touche', "de Auto Run ('F3') ?"],
+    'formatted, and broken before the word that leads into the action');   // PARTY-PING: auto-run's default is F3
   assert.ok(paints(joy, 'Vous avez des affectations multiples...'));
   assert.equal(paints(joy, MULTIPLE_ASSIGNMENTS), false);
   // the break follows the pattern: the key named first, or the action first on the line

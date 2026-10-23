@@ -92,8 +92,8 @@
   {
     "name": "GUIDE4-the-heralds-cap",
     "file": "src/ui/quest/questTracker.js",
-    "old": "      opening: entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
-    "new": "      opening: entryOpening(v.latest?.lines),",
+    "old": "entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
+    "new": "entryOpening(v.latest?.lines),",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "GUIDE4-time-without-its-word",
     "file": "src/ui/quest/questRail.js",
-    "old": "export const timeLeftWords = (s) => `${remainWords(s)} left`;",
+    "old": "export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });",
     "new": "export const timeLeftWords = (s) => remainWords(s);",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"

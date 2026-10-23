@@ -121,6 +121,9 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
   // ARENA1: the one credited work that is NOT a switch - the Arena of Daggerfall stands in the city in every game (Arena.md:
   // "the arena is not a switch, it is the city"), so there is nothing on the Features home to turn off
   named.add('daggerfall-arena');
+  // MUDEX1: MUDEX is no switch of its own - it is Meaner Monsters' switch beside Daggerfall Enemy Expansion (the author's
+  // form of that mod for this one, systems/enemyExpansion/dexSwitches.js), so the Meaner Monsters row turns it off
+  if (named.has('meanerMonsters') && named.has('daggerfall-enemy-expansion')) named.add('mudex');
   const missing = CREDITS.mods
     .flatMap((r) => (r.vendor ?? []).map((v) => [r.title, v]))
     .filter(([, v]) => !named.has(v) && !named.has(v.toLowerCase()));

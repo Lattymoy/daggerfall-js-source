@@ -33,6 +33,7 @@ import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The item flats' archive - every plant's world picture is in it (its template's worldTextureRecord). */
 export const HERB_FLAT_ARCHIVE = 254;
@@ -187,6 +188,9 @@ export function herbKind({ book }) {
       };
     },
     cleanNote: (a) => (a.harvest === 'food' ? ' (every find)' : ' (unbruised)'),
+    /** QL11: a harvest the service answered - its herbs or the Basket's food, in the Stores or the bag (the host's one
+     *  answer to it: the act's own, or a kept one's through the pump). */
+    answered() { noteAct('herb-gathered'); },   // QL11: a plant gathered
     title: () => 'Herbalist',
   };
 }

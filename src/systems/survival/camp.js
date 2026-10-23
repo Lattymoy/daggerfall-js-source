@@ -284,8 +284,12 @@ export const hasSkillet = (items) => (items ?? []).some(isSkillet);
 /**
  * COOK one: the cooked food minted a stage nearer fresh, one raw off
  * the pack, the cooked one in. Returns { item, minutes, text } or null.
+ * FB1020c BAG-COOK: `list` is the list the raw food is in, `into` the one
+ * the cooked food joins - the pack, where the raw one came out of the
+ * Materials Bag: a cooked food is no material, and the bag holds
+ * materials alone (materialsBag.js).
  */
-export function cookFood(item, list, { skillet = false } = {}) {
+export function cookFood(item, list, { skillet = false, into = list } = {}) {
   const f = foodOf(item);
   if (!f?.cooks) return null;
   const rawName = item.name;   // AUDIT SURV E: the line names what went on the fire
@@ -295,7 +299,7 @@ export function cookFood(item, list, { skillet = false } = {}) {
   if (Array.isArray(list)) {
     if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;
     else { const i = list.indexOf(item); if (i >= 0) list.splice(i, 1); }
-    list.push(cooked);
+    (Array.isArray(into) ? into : list).push(cooked);   // FB1020c BAG-COOK: into the pack, never the bag
   }
   return { item: cooked, minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };
 }

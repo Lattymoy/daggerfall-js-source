@@ -125,7 +125,7 @@ beforeEach(() => { _resetFirmamentLiveForTests(); _resetFirmamentPowersForTests(
 // ─── LANE 1: the law, the sky and the powers ────────────────────────
 
 test('AUDIT UICALM-FIRM1 L1 H1: a key star\'s raw points and a small star\'s share are ONE channel - the build that made +21 Strength and +86 Health makes +15 and +75, the budget\'s', () => {
-  const t = walk('wr.start', 'wr.c7.2', named('Warlord'), named('Headsman'), named("Giant's Heart"), named("Troll's Blood"), named('Shield Wall'), named("The Lady's Favour"), named('Reaver'));
+  const t = walk('wr.start', 'wr.c7.2', named('Warlord'), named('Headsman'), named("Giant's Heart"), named("Troll's Blood"), named('Shield Wall'), named("The Lady's Favor"), named('Reaver'));
   const c = treeStats(t);
   assert.ok(c.strength > 0 && c['pct.strength'] > 0 && c.hp > 0 && c.hpPct > 0, 'the build carries both kinds of each');
   const p = structuredClone(FRESH);
@@ -139,7 +139,7 @@ test('AUDIT UICALM-FIRM1 L1 H1: a key star\'s raw points and a small star\'s sha
 });
 
 test('FIRM2: a Strength already at 100 still takes the stars\' points, up to the sky\'s own +15 and no further', () => {
-  const t = walk('wr.start', 'wr.c7.2', named('Warlord'), named('Headsman'), named("Giant's Heart"), named("Troll's Blood"), named('Shield Wall'), named("The Lady's Favour"), named('Reaver'));
+  const t = walk('wr.start', 'wr.c7.2', named('Warlord'), named('Headsman'), named("Giant's Heart"), named("Troll's Blood"), named('Shield Wall'), named("The Lady's Favor"), named('Reaver'));
   const p = structuredClone(FRESH);
   createCharacter(p, career, -1, { rolls: () => 0.5 });
   p.level = 30; p.activeEffects = []; p.stats.strength = 100;

@@ -2,8 +2,8 @@
   {
     "name": "GUIDE1-quiet-read-reveals",
     "file": "src/ui/quest/questLens.js",
-    "old": "    return message.getTextTokens(-1, QUIET_ROLL, true, false);",
-    "new": "    return message.getTextTokens(-1, QUIET_ROLL, true, true);",
+    "old": "    return quietly(quest, () => message.getTextTokens(-1, QUIET_ROLL, true, false));",
+    "new": "    return quietly(quest, () => message.getTextTokens(-1, QUIET_ROLL, true, true));",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ],
@@ -256,8 +256,8 @@
   {
     "name": "GUIDE1-ended-always-paid",
     "file": "src/scenes/quest/questBridge.js",
-    "old": "success: !!q.questSuccess });",
-    "new": "success: true });",
+    "old": "success: !!q.questSuccess, ql:",
+    "new": "success: true, ql:",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js",
       "test/systems/quest/questbridge.test.js"

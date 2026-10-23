@@ -138,7 +138,7 @@ export const SD_ENDING_RUMOR = Object.freeze({
   blades: 'a dragon\'s shadow crosses where no dragon flies',
 });
 /** The taverns' word of it (section 4) - SD18c: the omen its Ending sends, else the bell where there is no bell. */
-export const sdRumorLine = (city, ending = null) => `They say the air goes brass-coloured past the walls of ${city} at dusk, and ${SD_ENDING_RUMOR[ending] ?? 'a bell rings where there is no bell'}.`;
+export const sdRumorLine = (city, ending = null) => `They say the air goes brass-colored past the walls of ${city} at dusk, and ${SD_ENDING_RUMOR[ending] ?? 'a bell rings where there is no bell'}.`;
 
 /**
  * "Any news?" asked in the city a standing Hollow stands by (`here` my map pixel), while it has risen or been found -

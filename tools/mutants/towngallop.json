@@ -39,8 +39,8 @@
   {
     "name": "TOWNGALLOP-tutorial-towns-back",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "Your horse walks; hold {Run} to gallop. Don",
-    "new": "Your horse walks; hold {Run} to gallop outside towns. Don",
+    "old": "Your horse walks; hold {Run} to gallop. Do not",
+    "new": "Your horse walks; hold {Run} to gallop outside towns. Do not",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "TOWNGALLOP-tutorial-trample-dropped",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": " Don\\'t gallop into people in town: trampling them is a crime.",
+    "old": " Do not gallop into people in town: trampling them is a crime.",
     "new": "",
     "tests": [
       "test/systems/horsewalk.test.js"

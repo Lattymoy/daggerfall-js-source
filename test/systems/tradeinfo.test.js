@@ -87,7 +87,7 @@ test('TRADE-FIT an offer too big for one trade frame is refused in words before 
   r.pump();
   assert.equal(r.B.session.theirs.items.length, 3, 'and so does theirs of mine');
   assert.equal(r.A.session.phase, 'open', 'the trade is not over');
-  assert.match(OFFER_TOO_BIG_TEXT, /offer fewer items/);
+  assert.equal(OFFER_TOO_BIG_TEXT, 'That is too much for one trade. Offer fewer items.');
   assert.equal(tradeFrameBytes({ k: 'offer' }), JSON.stringify({ t: 'trade', data: { k: 'offer' } }).length, 'the frame as the relay reads it');
 });
 

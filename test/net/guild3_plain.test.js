@@ -50,8 +50,8 @@ test('GUILD3a a chapter\'s rank 9 is its Master\'s CHAIR and its rank 8 a COUNCI
   assert.equal(seatLineOf({ f: FIGHTERS, region: ANTICLERE, seat: 'master' }), 'You hold the Master\'s chair of the Fighters Guild in Anticlere.');
   assert.equal(seatLineOf({ f: MAGES, region: ANTICLERE, seat: 'officer' }, false), 'You no longer hold a council chair of the Mages Guild in Anticlere.');
   assert.deepEqual(seatLinesOf(null, [{ f: FIGHTERS, region: ANTICLERE, seat: 'officer' }]), ['You hold a council chair of the Fighters Guild in Anticlere.']);
-  assert.equal(bookCappedLine([FIGHTERS]), 'The Fighters Guild keeps ranks 8 and 9 for its chapters\' Masters and councils, won by Merit - your rank there is 7.');
-  assert.equal(bookCappedLine([FIGHTERS, MAGES]), 'The Fighters Guild and the Mages Guild keep ranks 8 and 9 for their chapters\' Masters and councils, won by Merit - your rank there is 7.');
+  assert.equal(bookCappedLine([FIGHTERS]), 'The Fighters Guild keeps ranks 8 and 9 for its chapters\' Masters and councils, won by Merit. Your rank there is 7.');
+  assert.equal(bookCappedLine([FIGHTERS, MAGES]), 'The Fighters Guild and the Mages Guild keep ranks 8 and 9 for their chapters\' Masters and councils, won by Merit. Your rank there is 7.');
   assert.deepEqual(chapterRollLines(FIGHTERS, { strength: 50, seats: [{ seat: 'officer', name: 'Bryn' }] }),
     ['The chapter of the Fighters Guild here is Steady (Strength 50).', 'The Master\'s chair stands empty.', 'Its council: Bryn.']);
   assert.deepEqual(chapterRollLines(FIGHTERS, { seats: [{ seat: 'master', name: 'Alda' }, { seat: 'officer', name: 'Bryn' }, { seat: 'officer', name: 'Cael' }] }),
@@ -73,7 +73,7 @@ test('GUILD3a a chapter\'s rank 9 is its Master\'s CHAIR and its rank 8 a COUNCI
 });
 
 test('GUILD3a silver in every sentence a player reads - a siege\'s Honour, a struck Charter\'s refund, the day\'s reset - never "Marks" (mutants: each sentence)', () => {
-  assert.equal(siegeHonourLine({ marks: 50, xp: 2000 }), 'Your Honour: 50 silver, 2,000 Renown, one Spoils of War roll');
+  assert.equal(siegeHonourLine({ marks: 50, xp: 2000 }), 'Your Honor: 50 silver, 2,000 Renown, one Spoils of War roll');
   const seat = { key: 1, name: 'Anticlere', region: ANTICLERE, tier: 'palace' };
   assert.equal(chronicleLine({ kind: 'strike', week: 5, data: { guild: { name: 'The Silver Hand', tag: 'SH' }, refund: 8000 } }, seat),
     'In week 5, Anticlere was struck from the registry, and the Silver Hand <SH>\'s Charter with it - its claim fee of 8,000 silver refunded.');
@@ -157,15 +157,15 @@ test('GUILD3c what each rank may do: every power of the four tables worded, each
   assert.deepEqual(guildRankActsOf(3), ['put gold and silver into the treasuries', 'put pieces into the vault', 'pin notes on the guild\'s board',
     'put materials into the guild Stores, and take their own back out', 'fill the guild\'s own writs for their pay', 'be paid by the guild\'s own contracts']);
   assert.deepEqual(guildRankLines().map((l) => [l.name, l.text]), [
-    ['Guildmaster', 'Everything the Officer may, and: take pieces out of the vault, any number; take gold and silver out of the treasuries; set the Officers\' weekly budget - the silver they may post guild writs and contracts with; withdraw any guild writ or contract; pay Tribute at the seat the guild pledged; hire Sellswords for the guild\'s battles; give a held Charter up; buy and sell the hall; choose the guild\'s arms; grant or take back each member\'s use of the vault; rename the ranks; give the guild a new name, for a price; hand the guild on; disband it.'],
-    ['Officer', 'Everything the Member may except fill the guild\'s own writs for their pay or be paid by the guild\'s own contracts, and: take pieces out of the vault, 10 a day; invite new members, and pin the guild\'s call for them on a town\'s Notice Board; promote and demote the ranks below their own; remove a member of a lower rank; choose who may walk into the hall; decorate the hall, its yard and its outside; take down anyone\'s note on the guild\'s board; post guild writs and contracts - an Officer within the weekly budget the guildmaster sets - and withdraw the ones they posted; take any materials out of the guild Stores; pledge the guild to a seat in the Muster; run a held seat - its Tithe, its Edict, its battle window, its Works, its fealty and Pacts.'],
+    ['Guildmaster', 'Everything the Officer may, and: take pieces out of the vault, any number; take gold and silver out of the treasuries; set the Officers\' weekly silver budget for guild writs and contracts; withdraw any guild writ or contract; pay Tribute at the seat the guild pledged; hire Sellswords for the guild\'s battles; give a held Charter up; buy and sell the hall; choose the guild\'s arms; grant or take back each member\'s use of the vault; rename the ranks; give the guild a new name, for a price; hand the guild on; disband it.'],
+    ['Officer', 'Everything the Member may except fill the guild\'s own writs for their pay or be paid by the guild\'s own contracts, and: take pieces out of the vault, 10 a day; invite new members, and pin the guild\'s call for them on a town\'s Notice Board; promote and demote the ranks below their own; remove a member of a lower rank; choose who may enter the hall; decorate the hall, its yard and its outside; take down anyone\'s note on the guild\'s board; post guild writs and contracts (Officers within the weekly budget the guildmaster sets) and withdraw the ones they posted; take any materials out of the guild Stores; pledge the guild to a seat in the Muster; run a held seat: its Tithe, Edict, battle window, Works, fealty and Pacts.'],
     ['Member', 'The same as the Recruit.'],
     ['Recruit', 'Put gold and silver into the treasuries; put pieces into the vault; pin notes on the guild\'s board; put materials into the guild Stores, and take their own back out; fill the guild\'s own writs for their pay; be paid by the guild\'s own contracts.'],
   ]);
   assert.deepEqual(guildRankLines(['Captain', 'The Unsworn', 'Honoured Blade', 'Unit']).map((l) => l.text.split(':')[0]),
     ['Everything The Unsworn may, and', 'Everything the Honoured Blade may except fill the guild\'s own writs for their pay or be paid by the guild\'s own contracts, and', 'The same as the Unit.', 'Put gold and silver into the treasuries; put pieces into the vault; pin notes on the guild\'s board; put materials into the guild Stores, and take their own back out; fill the guild\'s own writs for their pay; be paid by the guild\'s own contracts.'],
     'the guild\'s own names, as written');
-  assert.match(GUILD_RANK_ACTS_NOTE, /grant or take back/);
+  assert.equal(GUILD_RANK_ACTS_NOTE, 'The guildmaster can grant or remove each member\'s vault access on this page.');
 });
 
 test('GUILD3c everything that holds a guild that would go: the page\'s own (gold, the hall, the vault; others still in it for a leave) and the service\'s last word, less what the page sees cleared since - each in the refusal\'s sentence (mutants: each known reason, the clearing)', () => {
@@ -273,8 +273,8 @@ test('GUILD3c the tab: a guild in one look for a character in none; where the re
   assert.ok(texts(t.panel.root).includes(GUILD_ELSEWHERE_TEXT));
   await t.go('treasury');
   // PIN MOVED: AUDIT GUILD3 W15 - the rename's own words, a new name or tag; C10 - a guild with its hall, the name alone
-  assert.ok(texts(t.panel.root).includes('12,000 gold of the treasury\'s 30,000 can buy a hall, or a new name or tag - the gold realm characters put in. A bank account\'s gold never does.'));
-  assert.equal(guildRealmGoldText(12_000, 30_000, true), '12,000 gold of the treasury\'s 30,000 can pay for a new name or tag - the gold realm characters put in. A bank account\'s gold never does.');
+  assert.ok(texts(t.panel.root).includes('12,000 of the treasury\'s 30,000 gold was put in by realm characters and can buy a hall, or a new name or tag. Gold in a bank account cannot.'));
+  assert.equal(guildRealmGoldText(12_000, 30_000, true), '12,000 of the treasury\'s 30,000 gold was put in by realm characters and can pay for a new name or tag. Gold in a bank account cannot.');
   assert.equal(guildRealmGoldText(undefined, 1), null, 'an older service: nothing said');
   await t.go('members');
   const ranks = find(t.panel.root, 'dfsocial-ranks')[0];
@@ -313,7 +313,7 @@ test('GUILD3c the Settings page says, before the press, everything that holds th
   const viewed = await tab(view({ treasury: 0, hallGold: 0, keeps: ['guild-seat', 'guild-patron'] }), 'settings');
   assert.deepEqual(find(viewed.panel.root, 'dfsocial-keeps')[0]?.children.map((li) => li.textContent), [accountRefusalText('guild-seat'), accountRefusalText('guild-patron')]);
   assert.equal(btn(viewed.panel.root, 'Disband').disabled, true);
-  assert.ok(texts(btn(viewed.panel.root, 'Disband')).includes('what is listed above first'));
+  assert.ok(texts(btn(viewed.panel.root, 'Disband')).includes('clear the list above first'));
   assert.equal(btn(viewed.panel.root, 'Leave').disabled, true, 'a lone guildmaster leaves only a guild that can go');
   // PIN MOVED: AUDIT GUILD3 S3 - the view reads the silver's room too now: its word stands for it; a code it reads not stays
   assert.deepEqual(guildKeepsOf(view({ treasury: 0, keeps: [] }), ['guild-writs', 'marks-full', 'guild-some-new-hold']), ['guild-some-new-hold'], 'the view\'s word stands for what it reads; a refusal\'s other word stays');

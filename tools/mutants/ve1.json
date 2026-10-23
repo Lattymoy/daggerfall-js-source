@@ -217,7 +217,7 @@
   },
   {
     "name": "VE2-world-host-hands-the-count",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundSets.js",
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],

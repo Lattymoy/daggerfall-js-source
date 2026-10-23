@@ -297,12 +297,12 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `TurnRight` | RIGHT |  | Turn right |
 | `LookUp` | INS |  | Look up |
 | `LookDown` | DEL |  | Look down |
-| `CenterView` | HOME |  | Centre the view |
+| `CenterView` | HOME |  | Center the view |
 | `TogglePerspective` | MOUSE4 |  | First / third person |
 | `Jump` | SPACE | `JoystickButton5` | Jump |
 | `Crouch` | C | `JoystickButton4` | Crouch and sneak |
 | `Run` | LSHIFT | `JoystickButton8` | Run |
-| `AutoRun` | MIDDLE CLICK |  | Auto run |
+| `AutoRun` | F3 |  | Auto run |
 | `Sneak` | (unbound) |  | Sneak (held, no crouch) |
 | `WalkMode` | (unbound) |  | Walk mode on / off |
 | `FloatUp` | PG UP |  | Float up (levitate, swim) |
@@ -343,6 +343,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `Transport` | T |  | Transport |
 | `Rest` | R |  | Rest |
 | `SaddlePanel` | F2 |  | Saddle panel: show or hide (riding) |
+| `PartyPing` | MIDDLE CLICK |  | Ping |
 
 ### Windows
 
@@ -392,7 +393,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 
 | Action | Key | Pad | What it does |
 |---|---|---|---|
-| `ActChoice` | UP |  | At a profession node: the next of its acts on the list |
+| `ActChoice` | UP |  | Next action at a profession node |
 | `Professions` | DOWN |  | Open your Professions page (online) |
 
 ### Game

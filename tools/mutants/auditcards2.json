@@ -268,7 +268,7 @@
   {
     "name": "E-hud-empty-msg",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "why === 'empty' ? 'The table has emptied - every patron is broke.' :",
+    "old": "why === 'empty' ? 'The table has emptied. Every patron is broke.' :",
     "new": "why === 'empty' ? 'You leave the table.' :",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",

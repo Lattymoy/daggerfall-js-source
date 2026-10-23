@@ -38,7 +38,7 @@
   {
     "name": "GUIDE5-several-unnamed",
     "file": "src/ui/quest/questMarks.js",
-    "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [`+${more} more`] : [])] },",
+    "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : [])] },",
     "new": "lines: [fitHead(place, '', QUEST_TIP_TEXT)] },",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "GUIDE5-quest-before-the-raid",
     "file": "src/ui/heldMap.js",
-    "old": "    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n    // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it\n    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };",
-    "new": "    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };\n    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };",
+    "old": "    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n    // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)\n    const star = this._starAt(sx, sy);\n    if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };\n    // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it\n    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };",
+    "new": "    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };\n    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n    // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)\n    const star = this._starAt(sx, sy);\n    if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]

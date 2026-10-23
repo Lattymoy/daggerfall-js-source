@@ -193,8 +193,8 @@
   {
     "name": "autopilot-forward-fixed",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
-    "new": "    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
+    "old": "    // forward at the journey's speed multiplier.\n    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
+    "new": "    // forward at the journey's speed multiplier.\n    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

@@ -28,7 +28,7 @@ export const SEAT_WORKS_WORDS = Object.freeze({
 export const fortLeverText = (id, t) => {
   const w = FORT_WORKS.find((x) => x.id === id);
   const row = fortTierRow(id, t);
-  return w && row ? `Raise the ${w.name} to tier ${t} (${row.marks.toLocaleString('en-US')} silver)` : '';
+  return w && row ? `Raise the ${w.name} to grade ${t} (${row.marks.toLocaleString('en-US')} silver)` : '';
 };
 
 /**

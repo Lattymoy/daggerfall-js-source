@@ -38,16 +38,32 @@
 // mode (src/systems/wild/wildDropLaw.js wildCartMayBeAway: parked, stabled or none - never driven, following or beside them
 // unstabled). A seizure honours none (its carrier holds neither the record nor the mask), and a tab that says nothing
 // (one from before the word) drops the cart as ever. Asked again, a fall answers its first take, whatever is said.
+//
+// COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone"): A COMPANION AT THE
+// FALLEN'S SIDE DROPS HIS PACK WITH THEIRS. No word is asked: the record says who is at the side - its sea's crew
+// ashore and its feud's sworn walking with it, the zone's one (src/systems/wild/wildDropLaw.js wildPacksOf) - and the law
+// takes their packs and kits as it takes the cart, its answer's `took` naming each piece's pack and `gold.packs` each
+// pack's coin share, so the fallen's game takes the same out of its own (wildTakeTook). AUDIT FB1019f B2: A TAB FROM
+// BEFORE IT IS NEVER HANDED SUCH A TAKE. Its game read every piece not the cart's as the bag's and no pack's coin - it
+// stripped a piece of the bag bearing a companion's piece's marks, and left his piece and his coin in his pack while the
+// record had dropped them. So the fallen's own tab says its game reads the packs (`packs` 1, wildDropLaw.js
+// WILD_FALL_PACKS), and a take of the packs asked without it is REFUSED, nothing moved, in the word every shipped build
+// says as "The game may need updating" (`not-found` - accounts.js legalRefusal's old game's word). Never a smaller take:
+// the record decides what drops, and a word that shrank it would let any tab keep its companions' packs by leaving it
+// out. A seizure takes them whatever is said: no game applies it (its fallen plays a record that moved under it, and
+// its next join reads it) - so a fall at another's hand that the old tab is refused is still taken whole, by its killer
+// once the grace is gone; a death to a foe, the fallen's own act, waits for a tab that says the word.
 import { verifyWildReceipt, verifyWildCollect, WILD_FALL_GRACE_S, WILD_COLLECT_TTL_S } from '../../src/net/wild/wildReceipt.js';
 import { mintRemainsOrder, remainsDigest, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { streamsFoes, WILD_REMAINS_MS } from '../../src/net/wire.js';
 import { GUILD_ID_RE } from '../../src/net/guild/guildLaw.js';
-import { takeWildDeath, wildDropCandidates, wildTookOf, wildCartRecordOf, wildCartMayBeAway } from '../../src/systems/wild/wildDropLaw.js';
+import { takeWildDeath, wildDropCandidates, wildTookOf, wildCartRecordOf, wildCartMayBeAway, WILD_FALL_PACKS, wildTakesPacks } from '../../src/systems/wild/wildDropLaw.js';
 import { mintItemId } from '../../src/systems/item/itemIds.js';
 import { giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';
 import { prepareRealmRecord, seizeRealmRecord, realmAtOf, realmActFirst, recordMovedOf, mustChange, dropIfUnnamed, dropObjects, realmSaveTextOf, holdRefusal, REALM_ID_RE } from './realm.js';
 import { ledgerKeyOf } from './judge.js';
 import { piecesBarred, knownCopySteps } from './ledger.js';
+import { seaKillSteps } from './seaBounty.js';   // SEA-BOUNTY: a kill at sea, written with its fall
 
 /** How long a fall's row is kept (its receipt's hour, and the room's remains' ten minutes past its respawn's two). */
 export const WILD_FALLS_KEEP_S = 2 * 3600;
@@ -82,7 +98,8 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
     const wh = await remainsDigest(records, { subtle: ctx.subtle });
     order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });
   }
-  return { r, order, items: records, kept, wi: killerFirst ? 0 : -1, took: Array.isArray(tk?.took) ? tk.took : [], gold: { purse: tk?.gold?.purse ?? 0, cart: tk?.gold?.cart ?? 0 }, ...(burnt ? { burnt: true } : {}), ...(seq != null ? { realm: { seq } } : {}), ...(escrow ? { escrow: escrowView(escrow) } : {}) };
+  const packs = tk?.gold?.packs && typeof tk.gold.packs === 'object' ? { packs: tk.gold.packs } : {};   // COMPANION-DROP: each pack's coin share, by its word
+  return { r, order, items: records, kept, wi: killerFirst ? 0 : -1, took: Array.isArray(tk?.took) ? tk.took : [], gold: { purse: tk?.gold?.purse ?? 0, cart: tk?.gold?.cart ?? 0, ...packs }, ...(burnt ? { burnt: true } : {}), ...(seq != null ? { realm: { seq } } : {}), ...(escrow ? { escrow: escrowView(escrow) } : {}) };
 }
 
 /**
@@ -90,11 +107,13 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
  * none (a death to a foe: the caller's own, `body.n` its tab's nonce); `body.realm` the caller's record where its tab says
  * it stands (the fallen's own act - required of the fallen, never of a killer); `body.room` the room the remains will be
  * laid in (the order names it, and no other room keeps it); `body.cart` 0 the fallen's word that its wagon is away
- * (CART-AWAY - honoured where its record agrees, never on a seizure). Answers `{ r, order, items, kept, took, gold, burnt?, realm? }`
+ * (CART-AWAY - honoured where its record agrees, never on a seizure); `body.packs` 1 the fallen's word that its game
+ * reads its companions' packs (COMPANION-DROP, WILD_FALL_PACKS). Answers `{ r, order, items, kept, took, gold, burnt?, realm? }`
  * - the remains' id, the order the room keeps a deposit on (null: nothing for the room), the records taken, the ledger
  * keys the record kept, what the record lost as the fallen's game finds it again - or `{ error }`: 'no-signing-key',
  * 'no-gate-key', 'receipt' (with `why`), 'not-yours', 'no-realm-character', 'grace' (the fallen's own tab has the first
- * WILD_FALL_GRACE_S), 'nonce', 'room', the record's own words.
+ * WILD_FALL_GRACE_S), 'nonce', 'room', 'not-found' (a take of the packs, asked by a fallen's tab without `packs` 1: a
+ * game too old to apply it), the record's own words.
  * @param {any} ctx `{ db, bucket, rand, nowS, subtle }` @param {any} player the session's account
  * @param {any} body @param {{ gateKey: CryptoKey|null, signing: CryptoKey|null }} keys @param {boolean} [again] the
  *   second asking after a batch another asking beat
@@ -102,7 +121,7 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
  */
 export async function wildFall(ctx, player, body, { gateKey, signing }, again = false) {
   if (!signing) return { error: 'no-signing-key' };
-  let fallen = player.id, killer = null, charId = null, r = null, w = -1, wt = null, seize = false;
+  let fallen = player.id, killer = null, charId = null, r = null, w = -1, wt = null, seize = false, sea = null;
   if (body?.receipt !== undefined) {
     if (!gateKey) return { error: 'no-gate-key' };
     const v = await verifyWildReceipt(body.receipt, gateKey, { subtle: ctx.subtle, nowS: ctx.nowS });
@@ -112,6 +131,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
     if (!c.c) return { error: 'no-realm-character' };
     ({ f: fallen, k: killer, c: charId, r, w } = c);
     wt = Array.isArray(c.wt) ? c.wt : null;
+    sea = c;   // SEA-BOUNTY: the room it fell in and its killer's character - a kill at sea, written with the fall
     if (player.id === c.k) {
       if (ctx.nowS < c.i + WILD_FALL_GRACE_S) return { error: 'grace' };
       seize = true;
@@ -155,6 +175,8 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   // CART-AWAY: the fallen's own word that its wagon is away, where its record agrees - the cart's pieces and coin stay
   const away = !seize && body?.cart === 0 && wildCartMayBeAway(wildCartRecordOf(stored));
   const cart = { cart: !away };
+  // COMPANION-DROP (AUDIT FB1019f B2): the fallen's own tab says its game reads the packs, or is handed no take of them
+  const packsRead = seize || body?.packs === WILD_FALL_PACKS;
   const barred = await piecesBarred(ctx.db, charId, wildDropCandidates(stored, w, wt, cart).map(ledgerKeyOf).filter((k) => k != null));
   const keep = (/** @type {any} */ it) => { const k = ledgerKeyOf(it); return k != null && barred.has(k); };
   /** @type {any} */ let drop = null;
@@ -163,6 +185,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   /** @type {Set<string>} */ const escrowKeys = new Set();
   const change = (/** @type {any} */ save) => {
     drop = takeWildDeath(save, w, keep, wt, cart);
+    if (!packsRead && wildTakesPacks(drop)) return 'not-found';   // a game from before the word: the take refused, nothing moved
     if (collect && drop.killer) { const k = ledgerKeyOf(drop.taken[0]); if (k != null) escrowKeys.add(k); }
     return null;
   };
@@ -196,6 +219,9 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
     // MAC (2026-10-14): the killer's piece, held - in the batch that took it off the record, or neither lands
     ...(escrow ? [ctx.db.prepare("INSERT INTO wild_escrow (r, player, char_id, killer, rec, at, until_s, state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'held')")
       .bind(escrow.r, escrow.player, escrow.char_id, escrow.killer, escrow.rec, escrow.at, escrow.until_s)] : []),
+    // SEA-BOUNTY (seaBounty.js): a fall at sea at another's hand - the bounties on the fallen claimed for its killer, in the
+    // batch that writes the fall, or neither lands
+    ...seaKillSteps(ctx.db, sea, ctx.nowS),
   ];
   try { await ctx.db.batch(steps); } catch (e) {
     await dropIfUnnamed(ctx.db, ctx.bucket, fallen, charId, moved.key);

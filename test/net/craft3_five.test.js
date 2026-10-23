@@ -168,7 +168,7 @@ test('CRAFT3 law: the crafter\'s limit two of five - a third craft past Journeym
   assert.equal(craftXpCap('enchanting', { jewelcrafting: 90, masonry: 90 }), PROF_XP_MAX, 'ranks are the tracks\' own - a discipline\'s key none');
 });
 
-test('CRAFT3 law: each choice acts on its own discipline\'s work - a Master Jeweller\'s Masterwork points on a jewel alone, a Masterwright\'s on the smith\'s; every recipe and work keeps its discipline', () => {
+test('CRAFT3 law: each choice acts on its own discipline\'s work - a Master Jeweler\'s Masterwork points on a jewel alone, a Masterwright\'s on the smith\'s; every recipe and work keeps its discipline', () => {
   const ring = recipeById('ring:gold:ruby'), sword = recipeById('longsword:steel');
   assert.deepEqual([masterworkSpec('master-jeweller', ring), masterworkSpec('master-jeweller', sword), masterworkSpec('masterwright', sword), masterworkSpec('masterwright', ring), masterworkSpec('masterwright')], [true, false, true, false, true]);
   assert.deepEqual([...new Set(RECIPES.map((r) => r.profession))].sort(), ['carpentry', 'cooking', 'jewelcrafting', 'masonry', 'outfitting', 'smithing']);

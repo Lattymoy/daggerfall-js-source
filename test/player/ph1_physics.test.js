@@ -83,13 +83,14 @@ test('PH1: a lift advancing past the sphere\'s radius in one frame carries the r
     const m = new PlayerMotor(col); m.pos = [0, 0, 0]; m.grounded = true;
     for (let i = 0; i < 20; i++) {
       y += lift; col.removeBucket('lift'); const q = plate(); col.addMesh('lift', q.positions, q.indices, I);   // the mover's mesh jumps first (actionSystem)
-      col.move(m.pos, 0, lift, 0, m.height);   // then the ride applies the frame delta (shared.ridePlatform)
+      col.move(m.pos, 0, lift, 0, m.height);   // then the ride applies the frame delta (the mover's own carry since MOVER-BODY - player/moverBody.js meetBody)
       m.update(1 / 60, still, 0);
     }
     assert.ok(Math.abs(m.pos[1] - y) < 1e-3, `lift ${lift}/frame: feet ${m.pos[1].toFixed(3)} on the plate at ${y.toFixed(2)}`);
     assert.equal(m.grounded, true);
   }
-  assert.match(read('src/scenes/shared.js'), /player\.collider\.move\(player\.pos, d\[0\], d\[1\], d\[2\], player\.height\);/, 'the ride resolves the rider\'s own capsule');
+  // PIN MOVED (FIELD BUGS 2026-10-19f MOVER-BODY): the ride is the mover's own carry, a bare Move of the body's own stance
+  assert.match(read('src/player/moverBody.js'), /collider\.move\(to, want\[0\], want\[1\], want\[2\], body\.height, false\);/, 'the ride resolves the rider\'s own capsule');
 });
 
 /** Walk a staircase down (from the landing, -z) or up, counting what the camera would feel. */
