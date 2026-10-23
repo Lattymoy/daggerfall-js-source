@@ -242,7 +242,7 @@ test('AUDIT UICALM-FIRM1 L1 L2: mentoring puts the whole sky to sleep at once - 
   assert.equal(told, 1, 'told once a change');
   setFirmamentMentoring(false);
   assert.deepEqual([told, firmActMult('herbalism')], [2, herb]);
-  assert.match(read('src/scenes/world.js'), /const mentorWord = refreshMentor\(playerEntity, mentorLevels\);\n\s+setFirmamentMentoring\(!!playerEntity\._mentor\);/);
+  assert.match(read('src/scenes/world.js'), /const mentorWord = refreshMentor\(playerEntity, mentorLevels, true, placeCeilingAt\([^\n]*\n\s+setFirmamentMentoring\(isMentoring\(playerEntity\)\);/);
 });
 
 test('AUDIT UICALM-FIRM1 L1 L3: taking the seat back reads the book again', () => {

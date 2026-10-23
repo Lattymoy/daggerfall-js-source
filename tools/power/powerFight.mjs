@@ -33,6 +33,9 @@ const [F, PC, PE, EN, EB, EQE, WT, PK, WS, SWL, FPS, EA, SKS, ENC] = await Promi
 const { liveStat } = await mod('systems/statMods.js');
 const { heroThreat } = await mod('systems/heroThreat.js');
 const LRT = await mod('systems/loot/lootRarity.js');
+const MM = await mod('systems/mentorMode.js');   // PWR3: the overlay a place's ceiling lays on the player
+const PS = await mod('systems/placeSync.js');   // PWR3: a place's ceiling, off DFU's tables
+const { CLIMATES } = await mod('formats/mapsFile.js');
 
 /** The overhaul as it ships (heroMeasure's OVERHAUL): the redone hit and armour, the crits, the fixed strength term. */
 export const OVERHAUL = Object.freeze({ Enabled: true, equipmentDamageEnhanced: false, fadingEnchantedItems: false, fixedStrengthDamageModifier: true,
@@ -63,12 +66,20 @@ export function placeOf(table) {
   return { share: SKS.wildernessShare(false), place: SKS.placeVeteran(SKS.wildernessThreat(false)) };
 }
 
+/** PWR3: the ceiling a table's place holds (systems/placeSync.js): a dungeon kind's own; the temperate wilds' is
+ *  their climate's ground (the Woodlands' three tables). */
+export const ceilingOf = (table) => (table < 19 ? PS.dungeonCeiling(table) : PS.groundCeiling(CLIMATES.Woodlands));
+
 /** One foe of DFU's band at level `L`, built as heroMeasure builds one (makeEnemyEntity, a class foe's gear), then
  *  scaled as the spawn doors scale one (scenes/dungeonContext.js applyProgressionScalingTo, scenes/exteriorFoes.js):
  *  its place's share and veteran (placeOf), `player`'s standing (skillSoftcap.js combatStanding - the climb past 100
- *  the foes answer), and the threat (`hero`, heroThreat's record, or null), through the real writer. */
-export function foeAt(L, r, { hero = null, player = null } = {}) {
-  const table = TABLES[Math.floor(r() * TABLES.length)];
+ *  the foes answer), and the threat (BAL11's at the world's level, `heroRenown` its Renown; none unless `hero`),
+ *  through the real writer. PWR3 `sync`: the place's ceiling laid on the player first, as the frame lays it in play
+ *  (mentorMode.js refreshMentor) - the world built at its level (effectiveLevel), the player at the place's edge.
+ *  Answers the foe, its weapon, its kind and the level the world was built at. */
+export function foeAt(L, r, { hero = false, heroRenown = null, player = null, sync = false, tables = TABLES } = {}) {
+  const table = tables[Math.floor(r() * tables.length)];
+  if (sync && player) { MM.refreshMentor(player, [], true, ceilingOf(table)); L = MM.effectiveLevel(player); }
   const w = bandWeights(L);
   let x = r(), slot = 0;
   for (; slot < 19; slot++) { x -= w[slot]; if (x < 0) break; }
@@ -81,10 +92,11 @@ export function foeAt(L, r, { hero = null, player = null } = {}) {
     weapon = eq.rightHand ? { ...eq.rightHand, maxCondition: 1e9, currentCondition: 1e9 } : null;
   }
   const { share, place } = placeOf(table);
-  const scaling = SKS.progressionScaling(player ? SKS.combatStanding(player) : null, share, SKS.foeShare(EB.ENEMY_BASICS[id]?.level ?? e.level, id >= 128), place, hero);
+  const threat = hero ? heroThreat(sync && player ? MM.playLevelIn(player) : L, heroRenown) : null;   // PWR3: the hero as the hero plays
+  const scaling = SKS.progressionScaling(player ? SKS.combatStanding(player) : null, share, SKS.foeShare(EB.ENEMY_BASICS[id]?.level ?? e.level, id >= 128), place, threat);
   if (scaling) EN.applyProgressionScaling(e, scaling);
   e.health = e.maxHealth;
-  return { e, weapon, id };
+  return { e, weapon, id, level: L };
 }
 
 /** The seconds one swing of the player's takes (the swing law, at their live Speed, five frames). */
@@ -95,10 +107,10 @@ export function swingSeconds(player, weapon) {
 
 /**
  * ONE CHAIN: the dressed kit (`kit.player`, `kit.weapon`) against foe after foe at its level. `hero` true stands the
- * BAL11 threat on every foe (offline the level's, online the Renown's too). Returns
- * `{ kills, spent, healed, dealt, taken, swings, fell, seconds }`.
+ * BAL11 threat on every foe (offline the level's, online the Renown's too). PWR3 `sync` (an online kit's, by default):
+ * each foe's place sets the player (foeAt). Returns `{ kills, spent, healed, dealt, taken, swings, fell, seconds }`.
  */
-export function chain(kit, { seed = 1, hero = false, maxKills = MAX_KILLS, unawareOpen = false } = {}) {
+export function chain(kit, { seed = 1, hero = false, maxKills = MAX_KILLS, unawareOpen = false, sync = !!kit.online, tables = TABLES } = {}) {
   const r = mulberry(seed);
   const saved = { random: Math.random, now: performance.now };
   let clock = 1000;   // seconds; never 0 (a module's "never" reads 0 as unset)
@@ -107,12 +119,12 @@ export function chain(kit, { seed = 1, hero = false, maxKills = MAX_KILLS, unawa
   try {
     const p = kit.player, w = kit.weapon, L = kit.level;
     p.health = p.maxHealth;
-    const threat = hero ? heroThreat(L, kit.online ? kit.renown : null) : null;
+    const at = { hero, heroRenown: kit.online ? kit.renown : null, player: p, sync, tables };
     const dfRand = () => Math.floor(r() * 32768);
-    let foe = foeAt(L, r, { hero: threat, player: p });
+    let foe = foeAt(L, r, at);
     let fresh = true;
     let kills = 0, spent = 0, healed = 0, dealt = 0, taken = 0, swings = 0, minutes = 0;
-    let tP = clock + swingSeconds(p, w), tF = clock + NEXT_FOE_S + EA.resetMeleeTimer(L, 2, r()), tR = clock + ROUND_S;
+    let tP = clock + swingSeconds(p, w), tF = clock + NEXT_FOE_S + EA.resetMeleeTimer(foe.level, 2, r()), tR = clock + ROUND_S;
     const before = () => p.health;
     while (kills < maxKills && p.health > 0) {
       clock = Math.min(tP, tF, tR);
@@ -139,9 +151,9 @@ export function chain(kit, { seed = 1, hero = false, maxKills = MAX_KILLS, unawa
           const kd = p.health - k;
           if (kd > 0) healed += kd;
           kills++;
-          foe = foeAt(L, r, { hero: threat, player: p });
+          foe = foeAt(L, r, at);
           fresh = true;
-          tF = clock + NEXT_FOE_S + EA.resetMeleeTimer(L, 2, r());
+          tF = clock + NEXT_FOE_S + EA.resetMeleeTimer(foe.level, 2, r());
           tP = clock + NEXT_FOE_S + swingSeconds(p, w);
         } else tP = clock + swingSeconds(p, w);
         continue;
@@ -152,12 +164,13 @@ export function chain(kit, { seed = 1, hero = false, maxKills = MAX_KILLS, unawa
       if (n > 0) { taken += n; PE.hurtPlayer(p, n); }
       const d = h - p.health;
       if (d > 0) spent += d; else if (d < 0) healed -= d;
-      tF = clock + EA.resetMeleeTimer(L, 2, r());
+      tF = clock + EA.resetMeleeTimer(foe.level, 2, r());
     }
     return { kills, spent, healed, dealt, taken, swings, fell: p.health <= 0, seconds: clock - 1000 };
   } finally {
     Math.random = saved.random;
     performance.now = saved.now;
+    if (sync) MM.refreshMentor(kit.player, [], true, null);   // PWR3: the overlay off with the chain
   }
 }
 
@@ -165,13 +178,14 @@ export function chain(kit, { seed = 1, hero = false, maxKills = MAX_KILLS, unawa
  * A CELL: `n` chains of a kit (rebuilt and dressed for each - `make()` answers a fresh dressed kit), summed. Per kill,
  * over the player's maximum health: `hurt` the health the foes took, `heal` what came back, `cost` the two's difference
  * (heroMeasure's "a kill's cost" with the sustain in it); `ttk` the seconds a kill took (the swings and the walk between
- * foes); `kills` the chains' mean (BAL7's measure, capped at maxKills); `blow` the mean landed blow.
+ * foes); `kills` the chains' mean (BAL7's measure, capped at maxKills); `blow` the mean landed blow. `sync` (PWR3): the
+ * place's ceiling on the player - unset, an online kit's (chain's default).
  */
-export function cell(make, { n = 8, seed = 1, hero = false, maxKills = MAX_KILLS } = {}) {
+export function cell(make, { n = 8, seed = 1, hero = false, maxKills = MAX_KILLS, sync = undefined, tables = TABLES } = {}) {
   let kills = 0, spent = 0, healed = 0, dealt = 0, swings = 0, max = 0, falls = 0, seconds = 0;
   for (let i = 0; i < n; i++) {
     const kit = make();
-    const c = chain(kit, { seed: seed * 7919 + i, hero, maxKills });
+    const c = chain(kit, { seed: seed * 7919 + i, hero, maxKills, tables, ...(sync === undefined ? {} : { sync }) });
     kills += c.kills; spent += c.spent; healed += c.healed; dealt += c.dealt; swings += c.swings; max = kit.player.maxHealth; falls += c.fell ? 1 : 0; seconds += c.seconds;
   }
   const k = Math.max(1, kills);

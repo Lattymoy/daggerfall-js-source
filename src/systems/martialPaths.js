@@ -35,6 +35,7 @@ import { SKILLS, SKILL_NAMES } from './skills.js';
 import { masterSkillsActive, isMasteredSkill, masteredSkills, masterableCount } from './masterSkills.js';
 import { t, textRevision } from './textManager.js';
 import { SPEC_RESET_GOLD } from './arcanePaths.js';   // SPEC-RESET: one price for either family's reset
+import { isMentoring } from './mentorMode.js';   // PWR3: the party's mentoring, never the place's sync (a leaf)
 
 const { LongBlade: LB, ShortBlade: SB, Axe: AX, BluntWeapon: BL, Archery: AR, HandToHand: HH } = SKILLS;
 
@@ -455,7 +456,7 @@ export function martialHeld(entity) {
 /** Does the path ACT for this entity now - its passive and its signature's rider? Held, and not mentoring. (A refereed
  *  fight is the powers' word to add - systems/martialPowers.js.) */
 export function martialAwake(entity) {
-  return entity?._mentor ? null : martialHeld(entity);
+  return isMentoring(entity) ? null : martialHeld(entity);
 }
 
 /** THE SIGNATURE IN HAND: the form of MY held path's signature that answers a weapon of `family` (techniqueRoster.js

@@ -36,24 +36,24 @@ const online = (renown) => { _resetSigilForTests(); if (renown != null) { setSig
 
 // ── THE LAW ───────────────────────────────────────────────────────
 
-test('BAL11 the law: nothing at or under level 10 and Renown 15; each level past 10 x1.07 blows and x1.04 health, each Renown past 15 x1.01 and x1.005, compounding; level 30 and Renown 50 the top; anything not a number pays nothing', () => {
-  assert.deepEqual(HERO_THREAT, { level: { from: 10, to: 30, damage: 1.07, health: 1.04 }, renown: { from: 15, to: 50, damage: 1.01, health: 1.005 } });
+test('BAL11 the law: nothing at or under level 10 and Renown 15; each level past 10 x1.07 blows and x1.04 health, each Renown past 15, to 20, x1.014 and x1.008 (PWR3: re-derived on the real kit, PWR4 stopping Renown at 20 - PIN MOVED: 15 to 50 at x1.01 and x1.005), compounding; level 30 and Renown 20 the top; anything not a number pays nothing', () => {
+  assert.deepEqual(HERO_THREAT, { level: { from: 10, to: 30, damage: 1.07, health: 1.04 }, renown: { from: 15, to: 20, damage: 1.014, health: 1.008 } });
   assert.ok(Object.isFrozen(HERO_THREAT) && Object.isFrozen(HERO_THREAT.level) && Object.isFrozen(HERO_THREAT.renown), 'the table is frozen');
   // the measured ladder's points (Balance-Arc.md section 17.4's table)
   const TABLE = [
     [1, null, 1, 1], [10, null, 1, 1], [10, 15, 1, 1], [9, 14, 1, 1],
-    [11, null, 1.07, 1.04], [10, 16, 1.01, 1.005], [11, 16, 1.0807, 1.0452],
-    [15, 22, 1.5037, 1.2599], [20, null, 1.9672, 1.4802], [20, 30, 2.2838, 1.5952],
-    [25, 38, 3.4686, 2.0199], [30, 45, 5.2158, 2.5448], [30, 50, 5.4818, 2.6090],
-    [31, 51, 5.4818, 2.6090], [60, 60, 5.4818, 2.6090],   // the top holds
+    [11, null, 1.07, 1.04], [10, 16, 1.014, 1.008], [11, 16, 1.085, 1.0483],
+    [15, 22, 1.5035, 1.2661], [20, null, 1.9672, 1.4802], [20, 30, 2.1088, 1.5404],
+    [25, 38, 2.9576, 1.8741], [30, 45, 4.1483, 2.2802], [30, 50, 4.1483, 2.2802],
+    [31, 51, 4.1483, 2.2802], [60, 60, 4.1483, 2.2802],   // the top holds - PIN MOVED (PWR3): it was Renown 50's x5.4818 and x2.6090
   ];
   for (const [L, R, d, h] of TABLE) {
     const t = heroThreat(L, R);
     close(t.damage, d, `level ${L}, Renown ${R}: the blows`);
     close(t.health, h, `level ${L}, Renown ${R}: the health`);
   }
-  assert.deepEqual([heroThreat(20, 30).level, heroThreat(20, 30).renown], [10, 15], 'the steps paid');
-  assert.deepEqual([heroThreat(30, 50).level, heroThreat(30, 50).renown], [20, 35], 'the steps at the top');
+  assert.deepEqual([heroThreat(20, 30).level, heroThreat(20, 30).renown], [10, 5], 'the steps paid - PIN MOVED (PWR3): Renown pays to 20, it paid 15');
+  assert.deepEqual([heroThreat(30, 50).level, heroThreat(30, 50).renown], [20, 5], 'the steps at the top (PIN MOVED, PWR3: Renown 35 steps, to 50)');
   assert.deepEqual([heroThreat(12.9, 15.9).level, heroThreat(12.9, 15.9).renown], [2, 0], 'whole levels only');
   for (const bad of [NaN, undefined, null, Infinity, -Infinity, '20']) assert.deepEqual(heroThreat(/** @type {any} */ (bad), /** @type {any} */ (bad)), { damage: 1, health: 1, level: 0, renown: 0 }, `${String(bad)}: nothing`);
   // the report's own ask, reached at the top of the curve and not at its foot (4x-6x the blows, 2x-3x the health)
@@ -66,8 +66,8 @@ test('BAL11 the law: nothing at or under level 10 and Renown 15; each level past
 test('BAL11 the scaling: the hero multiplies onto the place and the veteran, stands alone where neither does, is never under 1, and teaches nothing more (no skill, no challenge level)', () => {
   const hero = heroThreat(20, 30);
   const alone = progressionScaling(null, 0, 0, 0, hero);
-  close(alone.healthMult, 1.5952, 'the hero alone: its health');
-  close(alone.damageMult, 2.2838, 'the hero alone: its blows');
+  close(alone.healthMult, 1.5404, 'the hero alone: its health');
+  close(alone.damageMult, 2.1088, 'the hero alone: its blows');
   assert.deepEqual([alone.skillGain, alone.challengeLevels], [0, 0], 'no skill, no challenge level');
   assert.deepEqual([alone.heroHealth, alone.heroDamage], [hero.health, hero.damage]);
   // over a Dragon's Den's whole row (x2 health, x1.25 blows), multiplied
@@ -91,16 +91,16 @@ test('BAL11 the one writer: a foe\'s health and blows at the threat, its kind\'s
   applyProgressionScaling(e, progressionScaling(null, 0, 1, placeVeteran(18), heroThreat(30, 50)));
   assert.equal(e.maxHealth, Math.max(1, Math.round(hp * 2 * heroThreat(30, 50).health)));
   assert.equal(e.health, e.maxHealth);
-  close(e.damageScale, 1.25 * 5.4818, 'blows');
-  close(e.healthMult, 2.6090, 'the hero\'s health stood on healthMult (the place\'s is not - BAL3 as it was)');
+  close(e.damageScale, 1.25 * 4.148254, 'blows');
+  close(e.healthMult, 2.2802, 'the hero\'s health stood on healthMult (the place\'s is not - BAL3 as it was)');
   assert.equal(Math.round(kindHealth(e)), kind * 2, 'the poise reads the kind\'s own health and the place\'s, never the hero\'s (to the maximum\'s rounding)');
-  close(e.progression.hero.damage, 5.4818, 'recorded'); close(e.progression.hero.health, 2.6090, 'recorded');
+  close(e.progression.hero.damage, 4.1483, 'recorded'); close(e.progression.hero.health, 2.2802, 'recorded');
   assert.equal(e.progression.place, 1);
   // an elite promoted first (x5, x3) compounds, as the place does
   const el = monster(24); const ehp = el.maxHealth; el.maxHealth *= 5; el.health = el.maxHealth; el.healthMult = 5; el.damageScale = 3;
   applyProgressionScaling(el, progressionScaling(null, 0, 1, 0, heroThreat(20, 30)));
   assert.equal(el.maxHealth, Math.round(ehp * 5 * heroThreat(20, 30).health));
-  close(el.damageScale, 3 * 2.2838, 'an elite\'s x3 under the hero');
+  close(el.damageScale, 3 * 2.108762, 'an elite\'s x3 under the hero');
   assert.equal(Math.round(kindHealth(el)), ehp, 'an elite\'s poise is its kind\'s (to the maximum\'s rounding)');
 });
 
@@ -114,14 +114,14 @@ test('BAL11 the reader: the level the world is built around and the page\'s Reno
     assert.equal(heroThreatOf(null), null);
     close(heroThreatOf({ level: 20 }).damage, 1.9672, 'offline: the level alone');
     online(30);
-    close(heroThreatOf({ level: 20 }).damage, 2.2838, 'online: the level and the Renown');
-    close(heroThreatOf({ level: 10 }).damage, 1.01 ** 15, 'online at level 10: the Renown alone');
+    close(heroThreatOf({ level: 20 }).damage, 2.1088, 'online: the level and the Renown (PIN MOVED, PWR3: 2.2838 - the arm stops at 20)');
+    close(heroThreatOf({ level: 10 }).damage, 1.014 ** 5, 'online at level 10: the Renown alone, to 20 (PIN MOVED, PWR3: 1.01 ** 15)');
     // mentoring: the group's level (mentorMode.js effectiveLevel), and the Firmament asleep - no Renown
     close(heroThreatOf({ level: 30, _mentor: { level: 15 } }).damage, 1.07 ** 5, 'a mentor: the group\'s level, no Renown');
     assert.equal(heroThreatOf({ level: 30, _mentor: { level: 8 } }), null, 'a mentor of a level-8 group: nothing');
     // a puppet: my threat's blows, its health its owner's word
     const p = heroThreatOf({ level: 20 }, { puppet: true });
-    close(p.damage, 2.2838, 'a puppet\'s blows at me: mine'); assert.equal(p.health, 1, 'a puppet\'s health: its owner\'s');
+    close(p.damage, 2.1088, 'a puppet\'s blows at me: mine'); assert.equal(p.health, 1, 'a puppet\'s health: its owner\'s');
     ladder(false);
     assert.equal(heroThreatOf({ level: 30 }), null, 'the ladder off: DFU\'s own foes');
     assert.equal(lootRarityOn(), false);
@@ -175,7 +175,7 @@ test('BAL11 the wilds by execution: my foe stands at the place and my threat; an
     // online, the Renown too
     online(50);
     const r50 = await spawn(30);
-    close(r50.damageScale, (1 + ENEMY_SCALING.veteran.damage * p) * 5.4818, 'level 30, Renown 50');
+    close(r50.damageScale, (1 + ENEMY_SCALING.veteran.damage * p) * 4.1483, 'level 30, Renown 50');
     online(null);
     // an elite (promoted first, x5 / x3) stands under the hero too
     const el = await spawn(30, { eliteFoe: true });

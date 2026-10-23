@@ -178,7 +178,7 @@ test('audit18 sweep: all three spawn sites run the one shared equip chain', () =
     if (name === 'hostCombat.js') continue;   // the one shared home
     assert.equal(/assignEnemyEquipment\(|\bequipEnemy\(/.test(src), false, `${name} keeps a private copy of the equip chain`);
   }
-  assert.match(hostSrc('hostCombat.js'), /^  const eq = equipEnemy\(entity, mobileType, effectiveLevel\(player\), rolls, \{ player \}\);   \/\/ SOFTCAP2/m, 'the seam runs the shared chain (RRI2: the player rides in for a mod\'s assigner)');
+  assert.match(hostSrc('hostCombat.js'), /^  const eq = equipEnemy\(entity, mobileType, effectiveLevel\(player, ceiling\), rolls, \{ player \}\);   \/\/ SOFTCAP2/m, 'the seam runs the shared chain (RRI2: the player rides in for a mod\'s assigner)');
 });
 
 // ---------------------------------------------------------------
@@ -555,9 +555,9 @@ test('audit18 sweep: enemy cast cost is priced off the PLAYER skills', () => {
 test('audit18 sweep: enemy loot rolls the PLAYER gender at both dungeon spawn sites', () => {
   // RF2: both arms hand the PLAYER entity to the one seam, whose table roll reads its gender
   const src = hostSrc('dungeonContext.js');
-  assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2);
+  assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon', ceiling: _ceiling \}\)/g) ?? []).length, 2);
   assert.equal(/generateItems\([^)]*gender: e\.gender/.test(src), false);
-  assert.match(hostSrc('hostCombat.js'), /generateItems\(enemyLootTableKey\(mobileType, basics\?\.lootTableKey \?\? '-'\), \{ level: effectiveLevel\(player\), gender: player\.gender \}, rolls, \{ itemChanceScale, mobileType \}\)/, 'the PLAYER\'s gender (SOFTCAP2: at the mentor\'s level), LootTables.cs:212/:229/:237');   // PIN MOVED (PARTY-LOOT): on the caller's dice - the player a room's base hands in is the room's roller
+  assert.match(hostSrc('hostCombat.js'), /generateItems\(enemyLootTableKey\(mobileType, basics\?\.lootTableKey \?\? '-'\), \{ level: effectiveLevel\(player, ceiling\), gender: player\.gender \}, rolls, \{ itemChanceScale, mobileType \}\)/, 'the PLAYER\'s gender (SOFTCAP2: at the mentor\'s level), LootTables.cs:212/:229/:237');   // PIN MOVED (PARTY-LOOT): on the caller's dice - the player a room's base hands in is the room's roller
 });
 
 test('audit18 sweep: the swing fatigue and the tally arm are wired into the dungeon rig', () => {

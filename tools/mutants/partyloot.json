@@ -120,8 +120,8 @@
   {
     "name": "PARTY-LOOT-spawn-table-on-math-random",
     "file": "src/scenes/hostCombat.js",
-    "old": "{ level: effectiveLevel(player), gender: player.gender }, rolls, { itemChanceScale, mobileType });",
-    "new": "{ level: effectiveLevel(player), gender: player.gender }, undefined, { itemChanceScale, mobileType });",
+    "old": "{ level: effectiveLevel(player, ceiling), gender: player.gender }, rolls, { itemChanceScale, mobileType });",
+    "new": "{ level: effectiveLevel(player, ceiling), gender: player.gender }, undefined, { itemChanceScale, mobileType });",
     "tests": [
       "test/systems/partyloot.test.js"
     ]

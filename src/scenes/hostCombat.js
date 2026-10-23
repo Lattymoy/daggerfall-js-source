@@ -151,11 +151,11 @@ const eliteLooted = (entity) => !!(entity?.eliteFoe || entity?.elite || champion
 // the dice reach every draw (the table's, the kit's variant and its poison were Math.random), and `quarters`, `luck` and
 // `find` default to the roller's own (renownLootQuarters, the live Luck, legendaryFindMult) only when the caller names
 // none. `rejects`, when given, receives the pieces PLAIN-LOOT's keep let go - the personal bonus's own draw.
-export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null, quarters = renownLootQuarters(), luck = liveStat(player, 'luck'), find = undefined, rejects = null } = {}) {
+export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null, ceiling = undefined, quarters = renownLootQuarters(), luck = liveStat(player, 'luck'), find = undefined, rejects = null } = {}) {
   const itemChanceScale = (isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1) * lootDropMult;
   const ease = quarters;   // RENOWN-LOOT: the roller's Renown, read once for the keep and the ladder alike (PARTY-LOOT: the caller's terms)
-  entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: effectiveLevel(player), gender: player.gender }, rolls, { itemChanceScale, mobileType });   // PARTY-LOOT: on the caller's dice (it rolled Math.random whatever `rolls` said)
-  const eq = equipEnemy(entity, mobileType, effectiveLevel(player), rolls, { player });   // SOFTCAP2: a mentor's foes carry the GROUP's loot and gear
+  entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: effectiveLevel(player, ceiling), gender: player.gender }, rolls, { itemChanceScale, mobileType });   // PARTY-LOOT: on the caller's dice (it rolled Math.random whatever `rolls` said)
+  const eq = equipEnemy(entity, mobileType, effectiveLevel(player, ceiling), rolls, { player });   // SOFTCAP2: a mentor's foes carry the GROUP's loot and gear; PWR3: at the place's ceiling (`ceiling`: a dungeon's own, read at its build)
   addEnemyLootExtras(entity.items, basics, rolls, { quarters: ease });
   const keep = plainFoeLootKeep(ease);
   if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => { if (isGoldPieces(it) || rolls() < keep) return true; rejects?.push(it); return false; });   // PLAIN-LOOT: three pieces in four (LOOT-EASE; RENOWN-LOOT: by the roller's Renown), on the host's stream as the kit's cut is; PARTY-LOOT: what it let go, for the bonus

@@ -326,7 +326,7 @@ test('PROF12 items: a brew\'s potions are DFU\'s own (createPotion - its key, pr
   const e = bundle.effects[0];
   assert.deepEqual([e.magnitudeBaseLow, e.magnitudeLevelBase], [5, 9]);
   const src0 = src('src/scenes/hostMagic.js');
-  assert.match(src0, /drinkPotion\(recipeKey, potent = 0\) \{\n\s*const plain = potionBundle\(recipeKey\);\n\s*if \(!plain\) return null;\n[^\n]*(?:\s*\/\/[^\n]*\n)+\s*const bundle = potent \? \{ \.\.\.plain, effects: plain\.effects\.map\(\(e\) => potentEffect\(e, potent, effectiveLevel\(playerEntity\)\)\) \} : plain;/);
+  assert.match(src0, /drinkPotion\(recipeKey, potent = 0\) \{\n\s*const plain = potionBundle\(recipeKey\);\n\s*if \(!plain\) return null;\n[^\n]*(?:\s*\/\/[^\n]*\n)+\s*const bundle = potent \? \{ \.\.\.plain, effects: plain\.effects\.map\(\(e\) => potentEffect\(e, potent, playLevel\(playerEntity\)\)\) \} : plain;/);
   const drunk = [];
   const bag = [{ ...potent[0], stackCount: 1 }];
   useItem(bag[0], bag, { drinkPotion: (key, share) => { drunk.push([key, share]); return 'Healing'; } });

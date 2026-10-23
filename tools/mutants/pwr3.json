@@ -1,0 +1,248 @@
+[
+  {
+    "name": "PWR3-a-class-foe-counted",
+    "file": "src/systems/placeSync.js",
+    "old": "const CLASS_FOE_FROM = 128;",
+    "new": "const CLASS_FOE_FROM = 256;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ],
+    "equivalent": true,
+    "why": "DFU's class rows (characters/enemy/enemyBasics.js ENEMY_BASICS 128 and over) carry no base level - a class foe stands at the player's (SetEnemyCareer) - so counting them adds nothing; the threshold says the law, and test/systems/power/pwr3_place.test.js recomputes every kind's ceiling off the monsters alone"
+  },
+  {
+    "name": "PWR3-the-ceiling-the-first-native",
+    "file": "src/systems/placeSync.js",
+    "old": "  for (const id of t) if (id < CLASS_FOE_FROM) most = Math.max(most,",
+    "new": "  for (const id of t) if (id < CLASS_FOE_FROM && !most) most = Math.max(most,",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-ground-one-table",
+    "file": "src/systems/placeSync.js",
+    "old": "  const tops = band.map(tableCeiling).filter((c) => c != null);",
+    "new": "  const tops = [tableCeiling(band[1])].filter((c) => c != null);",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-a-tuned-place-bound",
+    "file": "src/systems/placeSync.js",
+    "old": "  _dungeon = !tuned && isOnlinePage() ?",
+    "new": "  _dungeon = isOnlinePage() ?",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-offline-binding",
+    "file": "src/systems/placeSync.js",
+    "old": "  _dungeon = !tuned && isOnlinePage() ?",
+    "new": "  _dungeon = !tuned ?",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-frame-inside-reads-the-ground",
+    "file": "src/systems/placeSync.js",
+    "old": "  return inside?.insideDungeon ? _dungeon : groundCeiling(climateIndex);",
+    "new": "  return groundCeiling(climateIndex);",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-frame-offline",
+    "file": "src/systems/placeSync.js",
+    "old": "  if (!online) return null;\n  return inside",
+    "new": "  return inside",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-edge-moved",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const PLACE_SYNC_EDGE = 1.15;",
+    "new": "export const PLACE_SYNC_EDGE = 1.25;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-line-base-unread",
+    "file": "src/systems/mentorMode.js",
+    "old": "(PLACE_SYNC_EDGE * expectedSkillAt(ceiling) - SKILL_LINE_BASE) / SKILL_LINE_PER_LEVEL",
+    "new": "(PLACE_SYNC_EDGE * expectedSkillAt(ceiling)) / SKILL_LINE_PER_LEVEL",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-engaged-at-the-edge",
+    "file": "src/systems/mentorMode.js",
+    "old": "  return realLevel > t ? t : null;",
+    "new": "  return realLevel >= t ? t : null;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-world-at-the-edge",
+    "file": "src/systems/mentorMode.js",
+    "old": "    level: party ?? r, playLevel: t,",
+    "new": "    level: t, playLevel: t,",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-higher-plays",
+    "file": "src/systems/mentorMode.js",
+    "old": "  const byParty = party != null && (place == null || party <= place);",
+    "new": "  const byParty = party != null && (place == null || party >= place);",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-world-uncapped",
+    "file": "src/systems/mentorMode.js",
+    "old": "  return Number.isInteger(ceiling) && ceiling >= 1 && entity?.isPlayer ? Math.min(level, ceiling) : level;",
+    "new": "  return level;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-place-mentoring",
+    "file": "src/systems/mentorMode.js",
+    "old": "export const isMentoring = (entity) => !!entity?._mentor && entity._mentor.source !== 'place';",
+    "new": "export const isMentoring = (entity) => !!entity?._mentor;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-ceiling-unkept",
+    "file": "src/systems/mentorMode.js",
+    "old": "  _placeCeiling = Number.isInteger(ceiling) && ceiling >= 1 ? ceiling : null;",
+    "new": "  void ceiling;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-end-said-as-mentoring",
+    "file": "src/systems/mentorMode.js",
+    "old": "  if (was && !next) { _ended = was.source ?? 'party'; return 'off'; }",
+    "new": "  if (was && !next) return 'off';",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-play-level-unsynced",
+    "file": "src/systems/mentorMode.js",
+    "old": "  return edge != null && entity?.isPlayer ? Math.min(level, edge) : level;",
+    "new": "  return level;",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-threat-at-the-world",
+    "file": "src/systems/heroThreat.js",
+    "old": "  const t = heroThreat(playLevelIn(player, ceiling),",
+    "new": "  const t = heroThreat(Math.min(player?._mentor?.level ?? player?.level ?? 1, ceiling ?? Infinity),",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-renown-dropped-under-a-place",
+    "file": "src/systems/heroThreat.js",
+    "old": "isMentoring(player) ? null : sigilRenown());",
+    "new": "player._mentor ? null : sigilRenown());",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-renown-arm-to-50",
+    "file": "src/systems/heroThreat.js",
+    "old": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.008 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.014, health: 1.008 }),",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js",
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-foe-bound-out-of-step",
+    "file": "src/net/foeBounds.js",
+    "old": "    renown: Object.freeze({ from: 15, to: 20, health: 1.008 }),",
+    "new": "    renown: Object.freeze({ from: 15, to: 20, health: 1.005 }),",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-climb-read-off-the-real-skill",
+    "file": "src/systems/skillSoftcap.js",
+    "old": "export const climbedSkill = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));",
+    "new": "export const climbedSkill = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-place-sleeps-the-climb",
+    "file": "src/systems/weaponMastery.js",
+    "old": "entity.peer || isMentoring(entity) || entity.isInBeastForm",
+    "new": "entity.peer || entity._mentor || entity.isInBeastForm",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-build-hands-no-ceiling-to-the-threat",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "heroThreatOf(foeDeps.playerEntity, { puppet, ceiling: _ceiling });",
+    "new": "heroThreatOf(foeDeps.playerEntity, { puppet });",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-build-spawns-at-the-frame",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: a mentor's dungeon draws",
+    "new": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon draws",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-the-frame-no-place",
+    "file": "src/scenes/world.js",
+    "old": "    const mentorWord = refreshMentor(playerEntity, mentorLevels, true, placeCeilingAt(",
+    "new": "    const mentorWord = refreshMentor(playerEntity, mentorLevels, true, null && placeCeilingAt(",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  },
+  {
+    "name": "PWR3-a-cast-at-the-world",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, playLevel(playerEntity), playerCaster(cast));",
+    "new": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, effectiveLevel(playerEntity), playerCaster(cast));",
+    "tests": [
+      "test/systems/power/pwr3_place.test.js"
+    ]
+  }
+]

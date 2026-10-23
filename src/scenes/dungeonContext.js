@@ -16,7 +16,8 @@ import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // SOFTCAP3: the Master Sk
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';
 import { combatStanding, dungeonShare, foeShare, progressionScaling, placeVeteran } from '../systems/skillSoftcap.js';   // SOFTCAP2: tougher foes, by dungeon tier; BAL3: and by the place's own threat
-import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP1
+import { effectiveLevel, playLevel } from '../systems/mentorMode.js';   // SOFTCAP1
+import { enterDungeonPlace } from '../systems/placeSync.js';   // PWR3: the place sets the player - this dungeon's ceiling
 import { heroThreatOf } from '../systems/heroThreat.js';   // BAL11: the hero's threat
 import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty quickslot press reads the hand   // PX30
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
@@ -1043,6 +1044,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _sdRealm = isSdRealm(dfLocation);   // SD5a: the Shattered Hour, read once - every arm below asks the flag
   const _egHall = isEgHall(dfLocation);   // EG-PLAY: an Elite Breach's circle, read once
   const _made = madeLevelOf(dfLocation);   // EG-H2 (Elite-Gates.md section 24): the made level this is ('court', 'hour', 'spire' or null), read once - its rules are the law's (systems/madeLevel.js)
+  // PWR3 (bible/05-Combat/Power-Arc.md section 6): THE PLACE SETS THE PLAYER - this dungeon's ceiling, online (its
+  // kind's deadliest native, systems/placeSync.js), read once and handed to every level this build reads (the frame
+  // has not seen the dungeon yet); none on a tuned stage, a Super or an Elite dungeon, or the open zone's
+  const _ceiling = enterDungeonPlace(dfLocation, _made != null || _superTier || _sdRealm || isGateArena(dfLocation) || isArenaFloor(dfLocation) || !!dfLocation?.elite || (isOnlinePage() && (isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether)));
   // REST3 (2026-10-03, bible/06-Systems/Rest-Arc.md section 4; Mac: "Dungeon layouts now recieve multiple strategic
   // placements for campfires"): THE DUNGEON'S OWN FIRES (world/dungeon/dungeonFires.js). Placed here - after every block's
   // geometry is in the collider, before the flats are batched and the lights' flicker is sized - so a placed fire is a
@@ -1112,7 +1117,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     {
       ...dungeonPlace(dfLocation),   // DEX3: its LocationId and the place a mod's table is picked for
       dungeonType: dfLocation.mapTableData.dungeonType,
-      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon draws the GROUP's monsters. ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1); SD4a: a Super dungeon's at the top band
+      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: a mentor's dungeon draws the GROUP's monsters. ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1); SD4a: a Super dungeon's at the top band
     });
   // LW14 (bible/06-Systems/Living-World-II.md "LW14"): THE DIVE'S STOPS - this dungeon's random foe and treasure markers
   // in the order a company works them (systems/livingWorld/deepRoute.js), and those a dive of the living world left
@@ -1193,7 +1198,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // (ARENA-FIX 4: the undercroft's chained beasts stand passive, which the pick never takes)
   // AUDIT BAL (Balance-Arc.md section 10): offline, ELITE-FLOOR reads the level this dungeon's class foes are built at
   const _eliteOnline = isOnlinePage() || opts.selfId?.() != null;
-  if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite, count: _superTier ? SUPER_ELITE_FOES : null, classLevel: _eliteOnline ? Infinity : (_superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity)) });   // SD4a: a Super dungeon's six
+  if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite, count: _superTier ? SUPER_ELITE_FOES : null, classLevel: _eliteOnline ? Infinity : (_superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling)) });   // SD4a: a Super dungeon's six
   hearEliteFoesIn(dfLocation);   // QL11: an elite foe slain by my blow in an ELITE-tier dungeon - the condition the act's own module's (systems/questlines/qlEliteFoe.js; AUDIT QUESTLINES ACTS-8: HOST-SPLIT)
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
@@ -1440,7 +1445,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function applyProgressionScalingTo(entity, basics, { puppet = false, ally = false } = {}) {
     const place = lootRarityOn() ? _placeVeteran : 0;
     const share = puppet ? 0 : _dungeonShare;
-    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });
+    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet, ceiling: _ceiling });   // PWR3: at this dungeon's ceiling
     if (!(share > 0) && !(place > 0) && !hero) return;
     const scaling = progressionScaling(puppet ? null : combatStanding(foeDeps.playerEntity), share, foeShare(basics?.level ?? entity.level, entity.isClass), place, hero);
     foeDeps.applyProgressionScaling?.(entity, scaling);   // lazily loaded beside makeEnemyEntity; the dungeon's own deps (the import used `D`, which only the spawn builders below bind)
@@ -1533,7 +1538,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const idleH = idleSpriteHeight(t);   // INCIDENT 2026-09-04: SetupDemoEnemy.cs:104 - the capsule reads the idle sprite
       if (!puppet) freeLodgedFeet(collider, pos, { height: enemyControllerHeight(idleH, basics.behaviour ?? 'General') });   // FIELD BUGS 2026-10-04d CRATE-FREE: a marker or a spot inside a crate's model stands the foe beside it, never in it (characters/foeSpacing.js)
       // E3a: the real entity - career from CLASS{ID-128}.CFG (DEX1: or a mod's), level = player level, HP/skills/LiveSpeed verbatim (SetEnemyCareer)
-      const entity = D.makeEnemyEntity(e.mobileType, basics, await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's; SD4a: a Super dungeon's class foe at its band
+      const entity = D.makeEnemyEntity(e.mobileType, basics, await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity, _ceiling)) : effectiveLevel(D.playerEntity, _ceiling)));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's; SD4a: a Super dungeon's class foe at its band
       applyEliteScaling(entity, e); if (puppet) entity.unquiet = false;   // ELITE: double health, double damage; AUDIT UNQUIET: a puppet's mark is its owner's (each client drew its own)
       if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics, { ally: !!e.allied });   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter (the ladder is a fixed mountain)
       else if (puppet && e.level == null) applyProgressionScalingTo(entity, basics, { puppet: true, ally: !!e.allied });   // AUDIT BAL: a puppet stands at this place too - its blows on me as on its owner (BAL3)
@@ -1547,10 +1552,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // rarity roll over the carried loot - ONE seam (RF2:
       // hostCombat.spawnEnemyLoot); the loot rides the entity and the
       // corpse carries it on death.
-      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, { ...eliteLootOpts(e), where: 'dungeon' });   // ELITE: +20% drops, +20% quality; AUDIT OH-F B3: the dungeon's own
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, { ...eliteLootOpts(e), where: 'dungeon', ceiling: _ceiling });   // ELITE: +20% drops, +20% quality; AUDIT OH-F B3: the dungeon's own
       if (_wildDungeon) wildLootAfter(entity);   // WILD1: twice the gold
-      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity));   // ELITE FOES: better loot
-      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });   // RVN7d: its own drop - found in its lair, its gold x LAIR_GOLD
+      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity, _ceiling));   // ELITE FOES: better loot
+      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity, _ceiling), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });   // RVN7d: its own drop - found in its lair, its gold x LAIR_GOLD
       const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
         nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navGoal: (f) => navGoalOn(enhancedNav.chf, f, { collider }), navSeed: (yawDeg * 1000) | 0,   // INDOOR-WATCH AUDIT: a player past the mesh's snap is walked in to, as in a building
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
@@ -1573,7 +1578,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         canCastRangedSpell: () => rec?.caster?.canCastRangedSpell() ?? false,   // D9: SelectedSpell, from the caster that owns the pick
         hasMagickaToCast: () => foeDeps.hasMagickaToCast(entity), vitals: () => entity,   // GetDestination's own term (:539-540) - CurrentMagicka > 0, not the band gate; TACT2: the brain reads its health
       });
-      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => effectiveLevel(D.playerEntity), reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => effectiveLevel(D.playerEntity, _ceiling), reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
       // FLAGS, with zero inventory involvement (AUDIT 18 - minting
       // this from an equipped bow meant no enemy could ever fire one,
@@ -1626,7 +1631,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const pos = behaviour === 'Flying' ? flyerStandFeet(collider, [e.x, e.y, e.z], idleH, feetGiven) : D.floorLanding(collider, [e.x, e.y + 0.2, e.z]); if (!puppet) freeLodgedFeet(collider, pos, { height: enemyControllerHeight(idleH, behaviour), airborne: behaviour === 'Flying' });   // FIELD BUGS 2026-10-04d CRATE-FREE: the class arm's law, for a monster - a flyer freed at its own height
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadEnemyCareer(e.mobileType, D.fetchBytes);
-      const entity = D.makeEnemyEntity(e.mobileType, basics, career, e.level ?? effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's
+      const entity = D.makeEnemyEntity(e.mobileType, basics, career, e.level ?? effectiveLevel(D.playerEntity, _ceiling));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's
       applyEliteScaling(entity, e); if (puppet) entity.unquiet = false;   // ELITE: double health, double damage; AUDIT UNQUIET: a puppet's mark is its owner's (each client drew its own)
       if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics, { ally: !!e.allied });   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter
       else if (puppet && e.level == null) applyProgressionScalingTo(entity, basics, { puppet: true, ally: !!e.allied });   // AUDIT BAL: a puppet stands at this place too - its blows on me as on its owner (BAL3)
@@ -1634,10 +1639,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       applySpawnAlliance(entity, e);   // MT-ii / AUDIT OH-F C4
       entity._feudPlace = 'dungeon';   // RVN1 (Feud-Arc.md 12): where a fight with it is fought, for its ledger
       if (e.revenant && !puppet) applyRevenant(entity, e.revenant, { turned: !!e.turned });   // RVN7d (Feud-Arc.md 18.4): a revenant stood here - its name and rank, before its loot; RVN11c: a betrayer's turning is no return
-      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, { ...eliteLootOpts(e), where: 'dungeon' });   // ELITE: +20% drops, +20% quality. RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, { ...eliteLootOpts(e), where: 'dungeon', ceiling: _ceiling });   // ELITE: +20% drops, +20% quality. RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
       if (_wildDungeon) wildLootAfter(entity);   // WILD1: twice the gold
-      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity));   // ELITE FOES: the champion's own drop
-      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });   // RVN7d: its own drop - found in its lair, its gold x LAIR_GOLD
+      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity, _ceiling));   // ELITE FOES: the champion's own drop
+      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity, _ceiling), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });   // RVN7d: its own drop - found in its lair, its gold x LAIR_GOLD
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -1658,7 +1663,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         canCastRangedSpell: () => rec?.caster?.canCastRangedSpell() ?? false,   // D9: SelectedSpell, from the caster that owns the pick
         hasMagickaToCast: () => foeDeps.hasMagickaToCast(entity), vitals: () => entity,   // GetDestination's own term (:539-540) - CurrentMagicka > 0, not the band gate; TACT2: the brain reads its health
       });
-      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => effectiveLevel(D.playerEntity), reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => effectiveLevel(D.playerEntity, _ceiling), reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // The same EnemyMotor.cs:131-137 flag test the class branch
       // runs - false for all 43 monsters today, but it must not stay
       // undefined (the archer draw/loose path reads it every frame).
@@ -1901,12 +1906,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!far) { releaseRevenantStand(r); return null; }
     const about = spotAbout([far.x, far.y, far.z], 4);
     const sp = about && (!reaches || reaches(about)) ? about : { x: far.x, y: far.y, z: far.z };
-    const so = revenantSpawnOptions(r, effectiveLevel(playerEntity));
+    const so = revenantSpawnOptions(r, effectiveLevel(playerEntity, _ceiling));
     const f = await spawnLooseFoe(r.mobileType, [sp.x, sp.y, sp.z], { gender: so.gender, level: so.level, revenant: r, lairStand: true }).catch(() => null);
     if (!f || !f.entity?.revenant) { releaseRevenantStand(r); return null; }
     f._lairStand = true;
     if (f.ai) { f.ai.detected = false; f.ai.target = null; }   // found resting: it hunts nobody yet
-    standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity)));
+    standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity, _ceiling)));
     return f;
   }
   /** RVN6's band, underground (scenes/exteriorFoes.js standBand's law): placed about it, loose (the dungeon's save
@@ -1951,7 +1956,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const live = foes.filter((g) => g !== f && !g.dead && g.retinueOf === id && !g.scattering && g.ai);
     for (const g of live) { g.ai.detected = true; g.ai.makeHostileToPlayer?.(undefined, f.ai.feet); }
     if (live.length) return live.length;
-    return standDungeonBand(f, bandMembers(revenantById(id), effectiveLevel(playerEntity), RALLY_KIN), { portal: true }).length;
+    return standDungeonBand(f, bandMembers(revenantById(id), effectiveLevel(playerEntity, _ceiling), RALLY_KIN), { portal: true }).length;
   }
   // ── REVENANT-FATE underground: the open world's law (scenes/exteriorFoes.js), for a foe of the player's alone ─────
   const portals = createPortalSet({ renderer, audio });   // COMPANION-PORTAL: this place's own, drawn with its foes
@@ -2971,7 +2976,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const fly = (ENEMY_BASICS[mobileType].behaviour ?? 'General') === 'Flying';
     // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
     // gender through GetTextureArchive's own DFRandom arm.
-    const so = revenant ? revenantSpawnOptions(revenant, effectiveLevel(playerEntity)) : null;   // RVN7d: a returning one's gender and a class foe's level
+    const so = revenant ? revenantSpawnOptions(revenant, effectiveLevel(playerEntity, _ceiling)) : null;   // RVN7d: a returning one's gender and a class foe's level
     const f = await buildFoeAt({
       mobileType, gender: so?.gender ?? 'unspecified',
       x: spot.x, y: fly ? spot.y + 1.5 : spot.y, z: spot.z, spawnDistanceType: 0,
@@ -3000,7 +3005,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!f?.entity?.revenant) { releaseRevenantStand(r); return; }
       f._lairStand = true; f._taunted = true;   // it has said what it came to say: it woke me
       revenantSay(revenantWakeEvent(r, { archive: f.mobileArchive }), (l) => hudText.add(l));
-      standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity)));
+      standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity, _ceiling)));
     }).catch(() => releaseRevenantStand(r));
     return true;
   }
@@ -3010,7 +3015,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!r) return false;
     _spawnEncounter({ ...hit, mobileType: r.mobileType }, { revenant: r }).then((f) => {
       if (!f?.entity?.revenant) { releaseRevenantStand(r); return; }
-      standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity)));
+      standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity, _ceiling)));
     }).catch(() => releaseRevenantStand(r));
     return true;
   }
@@ -3124,7 +3129,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       restAsks: playerEntity.restAsks,   // SURV4 + SURV-TIERS: priced at the open (scenes/shared.js) - the bare floor asks twice in Hard; a fire on it, or any Casual floor, once
       enemyAlertActive: !!playerEntity.enemyAlertActive,
       dungeonType: dfLocation.mapTableData.dungeonType,
-      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode - the group's level; SD4a: a Super dungeon's at the top band
+      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: mentor mode - the group's level; SD4a: a Super dungeon's at the top band
     });
     // RVN7d (bible/12-Enhanced-AI/Feud-Arc.md 18.4): in its own lair a due revenant answers the rest's first roll ("You
     // wake to Grushnak standing over you."); and any roll that hits may be a due one's return - the open world's arm.
@@ -3970,7 +3975,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  PLAYER's level and gender, the pile trio, the rarity roll at the dungeon's tier). */
   // PARTY-LOOT: every term of the roll is an argument - the player's own by default (offline, DFU's: the PLAYER's level
   // and gender, their Luck, their Renown, their finders, Math.random), the room's for a room's shared base (roomPileBase)
-  function rollPileItems({ rolls = Math.random, level = effectiveLevel(playerEntity), gender = playerEntity.gender, luck = liveStat(playerEntity, 'luck'), quarters = undefined, find = undefined } = {}) {
+  function rollPileItems({ rolls = Math.random, level = effectiveLevel(playerEntity, _ceiling), gender = playerEntity.gender, luck = liveStat(playerEntity, 'luck'), quarters = undefined, find = undefined } = {}) {
     const elite = !!dfLocation?.elite;   // ELITE: the piles get the same +20% drops and +20% quality as the foes
     const items = generateLootItems(lootKey, { level, gender }, rolls, _superTier ? { itemChanceScale: SUPER_LOOT_DROP_MULT } : elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});   // SD4a: a Super dungeon's +50%
     addPileLootExtras(items, lootKey, rolls, { locationIndex: dfLocation.mapTableData.dungeonType, luck, level, where: 'dungeon', quarters });   // FORAGE3: OnLootSpawned at the dungeon type's index; REALM P0.4: online, the level's gold divided back; AUDIT OH-F B3: the dungeon's own
@@ -4766,7 +4771,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
         if (m.spell?.rangeType === 4) {
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe), foe: m.casterFoe } : null;   // ARENA-TEAMS: and its foe - whose blast it is (hostMagic.js missileCaster's shape)
-          magic.explodeAt(impact, m.spell, m.casterLevel ?? effectiveLevel(playerEntity), playerFeet, wCaster, { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
+          magic.explodeAt(impact, m.spell, m.casterLevel ?? effectiveLevel(playerEntity, _ceiling), playerFeet, wCaster, { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }
         // AUDIT 26 F033: DoCollision swaps the billboard to record 1 of
         // the missile's own element archive, one-shot at 15fps
@@ -4990,8 +4995,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const af = m.aimFoe;
         if (missileHitsFoe(m.pos, af)) {
           const fCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe), foe: m.casterFoe } : null;   // ARENA-TEAMS
-          if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? effectiveLevel(playerEntity), playerFeet, fCaster, { playerHeight });   // ROAD-H H2
-          else applySpell(m.spell, m.casterLevel ?? effectiveLevel(playerEntity), af.entity, foeSinks(af, false), Math.random, fCaster);   // AUDIT WORLD2 B7: a foe's missile
+          if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? effectiveLevel(playerEntity, _ceiling), playerFeet, fCaster, { playerHeight });   // ROAD-H H2
+          else applySpell(m.spell, m.casterLevel ?? effectiveLevel(playerEntity, _ceiling), af.entity, foeSinks(af, false), Math.random, fCaster);   // AUDIT WORLD2 B7: a foe's missile
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
         }
@@ -5002,8 +5007,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // transfer heal-back pair); trap casts stay casterless (DFU
         // action casters are null) on the S4b player-level shape.
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe), foe: m.casterFoe } : null;   // ARENA-TEAMS
-        if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? effectiveLevel(playerEntity), playerFeet, mCaster, { playerHeight });   // ROAD-H H2
-        else magic.applySpellToPlayer(m.spell, m.casterLevel ?? effectiveLevel(playerEntity), mCaster);
+        if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? effectiveLevel(playerEntity, _ceiling), playerFeet, mCaster, { playerHeight });   // ROAD-H H2
+        else magic.applySpellToPlayer(m.spell, m.casterLevel ?? effectiveLevel(playerEntity, _ceiling), mCaster);
         showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
         retireMissile(m);
       }
@@ -8480,7 +8485,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     markSearched(key, now);
     const outcome = rollSearchOutcome();
-    const level = effectiveLevel(playerEntity);
+    const level = effectiveLevel(playerEntity, _ceiling);
     let find = [];
     if (outcome === 'loot') {
       const dt = dfLocation?.mapTableData?.dungeonType;
@@ -8905,7 +8910,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** X11 probe seams: the FOE cast door and the per-foe sinks. Both
      *  halves of a reflection live here - the spell going out and the
      *  caster's own vitals doors it comes back through. */
-    castAtFoe: (spell, foe, caster = null) => magic.applySpellToFoe(spell, effectiveLevel(playerEntity), foe, caster),
+    castAtFoe: (spell, foe, caster = null) => magic.applySpellToFoe(spell, playLevel(playerEntity), foe, caster),   // PWR3: the player's own cast, at the level they play at
     foeSinksFor: (foe, fromPlayer) => foeSinks(foe, fromPlayer),   // AUDIT 68 X4: the router hands the cast engine's provenance on
     flicker,
     waterQuads,

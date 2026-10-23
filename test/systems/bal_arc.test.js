@@ -297,7 +297,7 @@ test('BAL3 the dungeon\'s seam by source: the dungeon\'s ladder tier read once a
   assert.ok(build > 0 && fn > build, 'the tier at the build, before the seam');
   const body = dc.slice(fn, dc.indexOf('\n  }\n', fn));
   assert.match(body, /const place = lootRarityOn\(\) \? _placeVeteran : 0;/, 'the ladder\'s switch at each spawn');
-  assert.match(body, /const share = puppet \? 0 : _dungeonShare;\n\s*const hero = ally \|\| _heroStage \? null : heroThreatOf\(foeDeps\.playerEntity, \{ puppet \}\);\n\s*if \(!\(share > 0\) && !\(place > 0\) && !hero\) return;/, 'no share, no place and no hero\'s threat: nothing');
+  assert.match(body, /const share = puppet \? 0 : _dungeonShare;\n\s*const hero = ally \|\| _heroStage \? null : heroThreatOf\(foeDeps\.playerEntity, \{ puppet, ceiling: _ceiling \}\);[^\n]*\n\s*if \(!\(share > 0\) && !\(place > 0\) && !hero\) return;/, 'no share, no place and no hero\'s threat: nothing');
   assert.match(body, /progressionScaling\(puppet \? null : combatStanding\(foeDeps\.playerEntity\), share, foeShare\(basics\?\.level \?\? entity\.level, entity\.isClass\), place, hero\);/);
   assert.match(dc, /import \{ combatStanding, dungeonShare, foeShare, progressionScaling, placeVeteran \} from '\.\.\/systems\/skillSoftcap\.js';/);
   assert.match(dc, /dungeonRarityTier, dungeonFamily, stampWonWeapons, lootRarityOn \} from '\.\.\/systems\/loot\/lootRarity\.js';/);
@@ -509,7 +509,7 @@ test('AUDIT BAL elites at their floor and their doors: offline a class foe stand
   assert.equal(pickDungeonElites(list(), `k${key}`, { elite: false }), 1, 'online (Infinity): the class foe may stand');
   assert.equal(pickDungeonElites(list(), `k${key}`, { elite: false, classLevel: ELITE_FOE_MIN_LEVEL - 1 }), 0, 'offline, a level-2 party: no class elite');
   assert.equal(pickDungeonElites(list(), `k${key}`, { elite: false, classLevel: ELITE_FOE_MIN_LEVEL }), 1, 'at the floor: one');
-  assert.match(rd('src/scenes/dungeonContext.js'), /classLevel: _eliteOnline \? Infinity : \(_superTier \? superFoeLevel\(effectiveLevel\(playerEntity\)\) : effectiveLevel\(playerEntity\)\)/);
+  assert.match(rd('src/scenes/dungeonContext.js'), /classLevel: _eliteOnline \? Infinity : \(_superTier \? superFoeLevel\(effectiveLevel\(playerEntity, _ceiling\)\) : effectiveLevel\(playerEntity, _ceiling\)\)/);
   assert.match(rd('src/scenes/dungeonContext.js'), /if \(elitesAllowed\(\{ onlinePage: isOnlinePage\(\), inRoom: opts\.selfId\?\.\(\) != null \}\)\) pickDungeonElites\(/, 'the pick asks where elites stand');
   // a search's elite: its roll first, then where elites stand
   let draws = 0; const roll0 = () => { draws++; return 0; };

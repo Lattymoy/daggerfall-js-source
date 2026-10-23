@@ -37,6 +37,7 @@ import { SKILL_SOFT_CAP, climbedSkill } from '../skillSoftcap.js';
 import { isOnlinePage } from '../online/onlineLane.js';
 import { sigilDueling } from '../sigil/sigil.js';   // SCHOOLS2: a self perk sleeps in a refereed fight, as every loot and set power does
 import { budgeted } from '../power/powerBudget.js';   // PWR1: the spell's percents and the pierce's points, each through its channel's curve
+import { isMentoring } from '../mentorMode.js';   // PWR3: the party's mentoring, never the place's sync (a leaf)
 
 /** Each effective point of Destruction past 100 is this much more damage (CLIMB-PAST's CLIMB_OVERCAP_SPEED_PER_POINT). */
 export const DESTRUCTION_POTENCY_PER_POINT = 0.01;
@@ -51,7 +52,7 @@ export const ownSpellOnSelf = (caster, target) => !!caster?.isPlayer && !caster.
 /** The school past 100: 1 to 100, then 1% a point of the school's CLIMB (effective 140 at most: x1.4) - Destruction's
  *  unless `school` names another (SCHOOLS2). Online alone, and none while mentoring. */
 export function schoolPotency(caster, { online = isOnlinePage(), school = SKILLS.Destruction } = {}) {
-  if (!online || !caster?.isPlayer || caster._mentor) return 1;
+  if (!online || !caster?.isPlayer || isMentoring(caster)) return 1;
   const climbed = climbedSkill(caster, school);
   return climbed > SKILL_SOFT_CAP ? 1 + (climbed - SKILL_SOFT_CAP) * SCHOOL_POTENCY_PER_POINT : 1;
 }

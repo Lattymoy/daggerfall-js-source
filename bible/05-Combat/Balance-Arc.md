@@ -1086,6 +1086,13 @@ level 10 to 30 where it fell to a hundredth; the hero keeps a 1.1x-1.9x edge, ri
 steps make it uneven, not the law). Nothing moves at or under level 10 and Renown 15 - the report's "early game is
 fine".
 
+**PWR3 (2026-10-23, `05-Combat/Power-Arc.md` section 6) moved two of this section's laws, and that section governs.**
+The Renown arm stops at Renown 20, where PWR4 stops Renown's power, re-derived by this section's own rule on the real
+online kit (`tools/power/powerMeasure.mjs renown`). From 15 to 20 the kill grows a sixth cheaper, x1.18 at level 12 and
+x1.14 at 30, and is flat past it. So the arm pays x1.014 the blows and x1.008 the health a Renown, and its top is level 30
+and Renown 20: x4.15 and x2.28. And WHOSE LEVEL is the level the hero plays at: where a place's ceiling binds the player
+(its sync), the threat answers the place's edge, never the world's ceiling.
+
 ### 17.5 Recorded, not built
 
 - **The kit is the ladder's middles.** A player in a BAL7 kit (Legendaries, the guards, a set) still wins far more

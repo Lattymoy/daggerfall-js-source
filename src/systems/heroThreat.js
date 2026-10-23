@@ -20,13 +20,18 @@
 // its compounding) and leaves the hero the last quarter: a kill costs a level-20 Renown-30 hero about two thirds of what
 // it costs a level-10 Renown-15 one, where it cost under a fifth (16% of a life to 24%; it was 4%). Damage carries two
 // thirds of it (the report's split - "mobs dont need much more hp": the danger is the blow, never a longer fight). At
-// level 30 and Renown 50 a foe hits x5.5 and stands x2.6 - the report's 4x-6x and 2x-3x, reached at the top of the
-// curve, not at its foot.
+// level 30 and Renown 50 a foe hit x5.5 and stood x2.6 - the report's 4x-6x and 2x-3x, reached at the top of the
+// curve, not at its foot. PWR3 (2026-10-23, bible/05-Combat/Power-Arc.md section 6): the Renown arm re-derived on the
+// real kit once PWR4 stopped Renown's power at 20 - x1.014 and x1.008 a Renown from 15 to 20, three quarters of what
+// those five Renown measure (tools/power/powerMeasure.mjs renown), nothing past it: the top is level 30 and Renown 20,
+// x4.1 and x2.3, still the report's.
 //
 // WHOSE LEVEL. The threat is read where the foe is built, off the builder's player - and every client builds its own copy
 // of every foe it sees, so a foe's blows at me are MY threat's: my own foes, a dungeon's layout copy, a peer's puppet
-// (its blows alone - its maximum is its owner's word, `k`). Mentoring, the group's level (mentorMode.js effectiveLevel)
-// and no Renown (the Firmament sleeps while mentoring). Offline Renown is null - the level alone.
+// (its blows alone - its maximum is its owner's word, `k`). Mentoring, the group's level and no Renown (the Firmament
+// sleeps while mentoring). PWR3: the level the hero PLAYS at (mentorMode.js playLevelIn) - a place's sync answered at
+// the place's edge, never at the world's ceiling the place builds its foes at (the foes answer the hero, not the
+// place), and the Renown kept (the sync keeps the kit). Offline Renown is null - the level alone.
 //
 // WHERE IT STANDS. The seams BAL3's place already runs through (systems/skillSoftcap.js progressionScaling, one writer -
 // characters/enemy/enemyEntity.js applyProgressionScaling): every dungeon foe and every foe of the wilds, of every kind -
@@ -39,7 +44,7 @@
 // class foe at the player's level. Ledger A (BAL11).
 // ═══════════════════════════════════════════════════════════════════
 
-import { effectiveLevel } from './mentorMode.js';
+import { playLevelIn, isMentoring } from './mentorMode.js';
 import { sigilRenown } from './sigil/sigil.js';
 import { lootRarityOn } from './loot/lootRarity.js';
 
@@ -47,7 +52,11 @@ import { lootRarityOn } from './loot/lootRarity.js';
  *  factor each level between them stands on a foe, compounding. */
 export const HERO_THREAT = Object.freeze({
   level: Object.freeze({ from: 10, to: 30, damage: 1.07, health: 1.04 }),
-  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),
+  // PWR3 (bible/05-Combat/Power-Arc.md section 6): THE RENOWN ARM RE-DERIVED ON THE REAL KIT - PWR4 stops Renown's power
+  // at 20, and tools/power/powerMeasure.mjs renown finds the online kit's kill a sixth cheaper from Renown 15 to 20 (x1.18
+  // at level 12, x1.14 at 30) and flat past it; three quarters of that growth, two thirds of it in the blow, BAL11's own
+  // rule. It was 15 to 50 at x1.01 and x1.005, BAL11's average over a Renown that grew to 50.
+  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.008 }),
 });
 
 /** How many of a track's levels pay: `v` past `from`, never past `to` (a whole number; 0 for anything not a number). */
@@ -74,12 +83,12 @@ export function heroThreat(level, renown = null) {
  * around it (a mentor's, the group's), its Renown unless mentoring - or null where none stands (the ladder off, or
  * nothing to pay). `puppet`: another client's foe - its blows alone; its health is its owner's word.
  * @param {any} player
- * @param {{ puppet?: boolean }} [o]
+ * @param {{ puppet?: boolean, ceiling?: number|null }} [o] PWR3: `ceiling` a place's own, handed by the host that builds it
  * @returns {{ damage: number, health: number, level: number, renown: number } | null}
  */
-export function heroThreatOf(player, { puppet = false } = {}) {
+export function heroThreatOf(player, { puppet = false, ceiling = undefined } = {}) {
   if (!player || !lootRarityOn()) return null;
-  const t = heroThreat(effectiveLevel(player), player._mentor ? null : sigilRenown());
+  const t = heroThreat(playLevelIn(player, ceiling), isMentoring(player) ? null : sigilRenown());   // PWR3: the level the hero plays at (a place's edge over it - never the world's ceiling); the place's sync keeps the Renown
   if (!(t.damage > 1 || t.health > 1)) return null;
   return puppet ? { ...t, health: 1 } : t;
 }

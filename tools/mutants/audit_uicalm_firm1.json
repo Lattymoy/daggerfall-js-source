@@ -68,7 +68,8 @@
     "old": "  const exact = (dmg * pct) / 100 + _guardOwed[k];",
     "new": "  const exact = (dmg * pct) / 100 + _guardOwed.blow;",
     "tests": [
-      "test/systems/power/pwr1_budget.test.js", "test/systems/audit_uicalm_firm1.test.js"
+      "test/systems/power/pwr1_budget.test.js",
+      "test/systems/audit_uicalm_firm1.test.js"
     ]
   },
   {
@@ -455,7 +456,8 @@
     "old": "  if (!(roll < p)) return false;",
     "new": "  if (!(roll < 100)) return false;",
     "tests": [
-      "test/systems/power/pwr1_budget.test.js", "test/systems/audit_uicalm_firm1.test.js"
+      "test/systems/power/pwr1_budget.test.js",
+      "test/systems/audit_uicalm_firm1.test.js"
     ]
   },
   {
@@ -524,8 +526,8 @@
   {
     "name": "AUF-L5H5-quiet-ignored-by-life",
     "file": "src/systems/firmamentPowers.js",
-    "old": "const life = (e) => (!_quiet && mine(e) && !e?._mentor ? firmamentStats() : NONE);",
-    "new": "const life = (e) => (mine(e) && !e?._mentor ? firmamentStats() : NONE);",
+    "old": "const life = (e) => (!_quiet && mine(e) && !isMentoring(e) ? firmamentStats() : NONE);",
+    "new": "const life = (e) => (mine(e) && !isMentoring(e) ? firmamentStats() : NONE);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -596,7 +598,7 @@
   {
     "name": "AUF-L1L2-partyframe-unsaid",
     "file": "src/scenes/world.js",
-    "old": "    setFirmamentMentoring(!!playerEntity._mentor);",
+    "old": "    setFirmamentMentoring(isMentoring(playerEntity));",
     "new": "    void setFirmamentMentoring;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"

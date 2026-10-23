@@ -107,7 +107,7 @@ const D = read('src/scenes/dungeonContext.js');
 
 test('RVN7d THE DUNGEON\'S BUILD: a revenant\'s record stands on the built body (both builds - a person\'s and a monster\'s) before its loot, and its drop after it - its gold x LAIR_GOLD when found in its lair; a loose stand carries the record (mutants: unapplied; no drop; the lair\'s gold unread; the record dropped)', () => {
   assert.equal((D.match(/if \(e\.revenant && !puppet\) applyRevenant\(entity, e\.revenant, \{ turned: !!e\.turned \}\);/g) ?? []).length, 2, 'both builds');   // PIN MOVED (RVN11c: a betrayer's turning is no return)
-  assert.equal((D.match(/if \(e\.revenant && entity\.revenant\) grantRevenantLoot\(entity, effectiveLevel\(D\.playerEntity\), Math\.random, \{ goldMult: e\.lairStand \? LAIR_GOLD : 1 \}\);/g) ?? []).length, 2);
+  assert.equal((D.match(/if \(e\.revenant && entity\.revenant\) grantRevenantLoot\(entity, effectiveLevel\(D\.playerEntity, _ceiling\), Math\.random, \{ goldMult: e\.lairStand \? LAIR_GOLD : 1 \}\);/g) ?? []).length, 2);
   for (const [a, b] of [...D.matchAll(/applyRevenant\(entity, e\.revenant\)/g)].map((m) => [m.index, D.indexOf('spawnEnemyLoot(entity', m.index)])) assert.ok(b > a, 'before its loot');
   assert.match(D, /\.\.\.\(revenant \? \{ revenant, lairStand: !!lairStand, \.\.\.\(turned \? \{ turned: true \} : \{\}\) \} : \{\}\) \};/);   // PIN MOVED (RVN11c)
   assert.match(D, /async function spawnLooseFoe\(mobileType, position, \{[^}]*revenant = null, lairStand = false(?:, turned = false)? \} = \{\}\)/);   // PIN MOVED (RVN11c: and a betrayer's turning)
@@ -124,7 +124,7 @@ test('RVN7d THE STAND: asked once a visit, the first frame I stand there; this d
   assert.match(D, /const far = \(reaches && dungeonEnd\(reaches\)\) \|\| dungeonEnd\(\);/);   // PIN MOVED (LAIR-WALK): the farthest a walk reaches, else SD-REACH's
   assert.match(D, /const f = await spawnLooseFoe\(r\.mobileType, \[sp\.x, sp\.y, sp\.z\], \{ gender: so\.gender, level: so\.level, revenant: r, lairStand: true \}\)\.catch\(\(\) => null\);\n\s*if \(!f \|\| !f\.entity\?\.revenant\) \{ releaseRevenantStand\(r\); return null; \}/);
   assert.match(D, /f\._lairStand = true;\n\s*if \(f\.ai\) \{ f\.ai\.detected = false; f\.ai\.target = null; \}   \/\/ found resting/);
-  assert.match(D, /standDungeonBand\(f, bandMembers\(r, effectiveLevel\(playerEntity\)\)\);\n\s*return f;/);
+  assert.match(D, /standDungeonBand\(f, bandMembers\(r, effectiveLevel\(playerEntity, _ceiling\)\)\);\n\s*return f;/);
   // the pixel is the lair door's own
   // PIN MOVED (AUDIT FEUD: no lair on the Burning Court, the Arena's floor or a spawned dungeon - `lairable`)
   assert.match(D, /function lairPixel\(\) \{\n\s*const mt = dfLocation\.mapTableData;\n\s*if \(!mt \|\| !lairable\(\)\) return null;\n\s*const p = longitudeLatitudeToMapPixel\(mt\.longitude, mt\.latitude\);\n\s*return \{ px: p\.x, py: p\.y \};/);
@@ -143,7 +143,7 @@ test('RVN7d THE BAND UNDERGROUND: stood about it in the ring, loose, marked, in 
   assert.match(D, /if \(n\) hudText\.add\(`The \$\{\(bandWord\(f\.mobileType\) \?\? 'band'\)\.toLowerCase\(\)\} scatters\.`\);/);
   assert.match(D, /if \(f\.scattering && !\(f\.ai\.fleeLeft > 0\)\) \{ questPoolOps\.removeFoe\(f\); f\.escaped = true; continue; \}/);
   assert.match(D, /if \(ev && \(f\.entity\.revenant\.rank \| 0\) >= 5\) rallyDungeonBand\(f\);/);
-  assert.match(D, /return standDungeonBand\(f, bandMembers\(revenantById\(id\), effectiveLevel\(playerEntity\), RALLY_KIN\), \{ portal: true \}\)\.length;/);
+  assert.match(D, /return standDungeonBand\(f, bandMembers\(revenantById\(id\), effectiveLevel\(playerEntity, _ceiling\), RALLY_KIN\), \{ portal: true \}\)\.length;/);
 });
 
 test('RVN7d THE TAUNT AND THE REST: one found in its lair says what it came to say once roused, in sight and near; in its own lair a due one answers a rest\'s first roll (its card, its band), and any roll that hits may be a due one\'s return - mine alone, the room\'s rest its host\'s (mutants: the taunt every frame; the lair\'s roll unanswered; the return arm unwired; online)', () => {

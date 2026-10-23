@@ -251,7 +251,9 @@ import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST-PARTY 
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
 import { chooseRandomEnemy } from '../systems/encounters.js';   // LW6: a dungeon's own foes for a dive's trouble
 import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth; WILD-ALERT: the notice's
-import { refreshMentor, mentorStatusText, effectiveLevel } from '../systems/mentorMode.js';
+import { refreshMentor, effectiveLevel, playLevel, isMentoring } from '../systems/mentorMode.js';
+import { mentorStatusText, mentorEndedText } from '../systems/mentorText.js';   // SOFTCAP1 / PWR3: the overlay's words
+import { placeCeilingAt } from '../systems/placeSync.js';   // PWR3: the place sets the player - the ceiling of where I stand, every frame
 import { setMasterSkillsGate, MASTER_SKILLS_DUNGEON_TEXT } from '../systems/masterSkills.js';   // SOFTCAP3
 import { isOnlinePage, ONLINE_LAND_TRAVEL_REFUSAL } from '../systems/online/onlineLane.js';   // SOFTCAP3: Master Skills is online only; AUDIT TRAVEL-ONLINE T7: the map's floor
 import { readImmersiveTravelSettings, immersiveTravelLoaded, IT_POPUP } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel - a driver's map and its fast travel; AUDIT IT1 W4: the mod loaded for the game
@@ -24223,7 +24225,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // save spent in a breach held to that breach's next Redoubt (scenes/eliteGates/egClient.js `redoubt`)
   setSetPowersAllies({
     near: (m) => { const f = player.feetAt(); return (allyMarksNear() ?? []).filter((p) => p.mate && p.feet && Math.hypot(p.feet[0] - f[0], p.feet[1] - f[1], p.feet[2] - f[2]) <= m); },
-    shield: (a, sp) => castAtAllyDoor(a.id, allyCastFrame(sp, effectiveLevel(playerEntity), a.id)),
+    shield: (a, sp) => castAtAllyDoor(a.id, allyCastFrame(sp, playLevel(playerEntity), a.id)),
   });
   setSpireRecovery(() => modes?.egHallBreach?.() ?? null);
   // EG-E3 (Elite-Gates.md section 5, THE DUNGEON'S FIND): an elite foe's death in a dungeon online asks the account service
@@ -27890,10 +27892,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     playerEntity._online = isOnlinePage();   // SOFTCAP3: Master Skills is in force only online (systems/masterSkills.js)
     // SOFTCAP1: MENTOR MODE follows the party every frame - so leaving the group hands my real character back the same frame.
     const mentorLevels = partyMateLevels();
-    const mentorWord = refreshMentor(playerEntity, mentorLevels);
-    setFirmamentMentoring(!!playerEntity._mentor);   // AUDIT UICALM-FIRM1 L1 L2: the sky sleeps the frame mentoring starts, and wakes the frame it ends
+    const mentorWord = refreshMentor(playerEntity, mentorLevels, true, placeCeilingAt(playerEntity._online, modes?.insideContext?.(), maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y)));   // PWR3: and the place's ceiling, online (systems/placeSync.js)
+    setFirmamentMentoring(isMentoring(playerEntity));   // AUDIT UICALM-FIRM1 L1 L2: the sky sleeps the frame mentoring starts, and wakes the frame it ends
     if (mentorWord) {
-      const text = mentorWord === 'on' ? mentorStatusText(playerEntity) : 'Mentoring ended. Your real level, skills, attributes and gear are back.';
+      const text = mentorWord === 'on' ? mentorStatusText(playerEntity) : mentorEndedText();   // PWR3: the party's or the place's
       try { chatLog.push(chatLog.active, { text, system: true }); } catch { /* no chat yet: the sheet says it too */ }
     }
     if (!social) return;

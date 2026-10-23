@@ -47,8 +47,8 @@
   {
     "name": "BAL9b-potency-offline-too",
     "file": "src/systems/spell/spellPower.js",
-    "old": "  if (!online || !caster?.isPlayer || caster._mentor) return 1;",
-    "new": "  if (!caster?.isPlayer || caster._mentor) return 1;",
+    "old": "  if (!online || !caster?.isPlayer || isMentoring(caster)) return 1;",
+    "new": "  if (!caster?.isPlayer || isMentoring(caster)) return 1;",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "BAL9b-while-mentoring",
     "file": "src/systems/spell/spellPower.js",
-    "old": "if (!online || !caster?.isPlayer || caster._mentor) return 1;",
+    "old": "if (!online || !caster?.isPlayer || isMentoring(caster)) return 1;",
     "new": "if (!online || !caster?.isPlayer) return 1;",
     "tests": [
       "test/systems/bal9_destruction.test.js"

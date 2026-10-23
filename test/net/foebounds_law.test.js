@@ -47,7 +47,7 @@ test('FOE-BOUNDS EACH MULTIPLIER IS ITS HOME\'S: the class roll, the elite, the 
   assert.deepEqual([FOE_BOUND.rite, FOE_BOUND.star, FOE_BOUND.watch], [RITE_SUMMONER_HEALTH, STAR_FOE_HEALTH, KNIGHT_CITY_WATCH]);
   assert.deepEqual(FOE_BOUND.hero, { level: { from: HERO_THREAT.level.from, to: HERO_THREAT.level.to, health: HERO_THREAT.level.health }, renown: { from: HERO_THREAT.renown.from, to: HERO_THREAT.renown.to, health: HERO_THREAT.renown.health } });
   assert.equal(FOE_HERO_HEALTH_MAX, heroThreat(1000, 1000).health, 'the hero at its worst');
-  assert.equal(FOE_HERO_HEALTH_MAX, 2.6090292465253375, 'the spec\'s figure');
+  assert.equal(FOE_HERO_HEALTH_MAX, 2.2801816510627924, 'the spec\'s figure - PIN MOVED (PWR3): 2.6090292465253375, the Renown arm to 50');
 });
 
 test('FOE-BOUNDS EACH MONSTER\'S ROW AT ITS MOST: the most health and the most level of its vanilla row, Ralzar\'s Meaner Monsters and Kirk.O\'s edit over it, and DEX1 Daggerfall Enemy Expansion\'s classic lines over each (the mod\'s Start after their Init) - and the most level its TABLE row holds, the progression share\'s - all 42 monsters, never the horse; a class foe has no row (mutants: a row one off; one profile left out)', () => {

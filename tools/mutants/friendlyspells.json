@@ -11,7 +11,7 @@
   {
     "name": "FS-gift-not-through-castAtAlly",
     "file": "src/scenes/hostMagic.js",
-    "old": "    try { sent = !!castAtAlly?.(mark.id, allyCastFrame(sp, effectiveLevel(playerEntity), mark.id)); } catch { sent = false; }",
+    "old": "    try { sent = !!castAtAlly?.(mark.id, allyCastFrame(sp, playLevel(playerEntity), mark.id)); } catch { sent = false; }",
     "new": "    sent = true;",
     "tests": [
       "test/systems/friendlyspells.test.js"

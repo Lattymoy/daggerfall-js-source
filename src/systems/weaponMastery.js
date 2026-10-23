@@ -40,6 +40,7 @@ import { registerSwingPaceMod } from '../characters/weaponStates.js';
 import { swingFamily } from '../combat/swingLaw.js';   // AUDIT MARTIAL L2 F3: the swing's family, no record built
 import { techniqueFamily } from '../combat/technique/techniqueRoster.js';
 import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
+import { isMentoring } from './mentorMode.js';   // PWR3: the party's mentoring, never the place's sync (a leaf)
 
 /** Each effective point of a weapon's climb past 100 is this much more of what it does (BAL9b's per point). */
 export const WEAPON_POTENCY_PER_POINT = SCHOOL_POTENCY_PER_POINT;
@@ -59,7 +60,7 @@ export const blowSkillOf = (weapon) => (weapon ? SKILL_OF_FAMILY[techniqueFamily
 /** The effective points of `skill`'s CLIMB past 100 that pay for `entity` now (0 to 40): mine, online, not mentoring,
  *  not the beast. */
 export function weaponClimb(entity, skill, { online = isOnlinePage() } = {}) {
-  if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill)) return 0;
+  if (!online || !entity?.isPlayer || entity.peer || isMentoring(entity) || entity.isInBeastForm || !Number.isInteger(skill)) return 0;
   const c = climbedSkill(entity, skill);
   return c > SKILL_SOFT_CAP ? c - SKILL_SOFT_CAP : 0;
 }

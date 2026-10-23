@@ -72,7 +72,7 @@
   {
     "name": "AUDIT-GROWTH-L1-3-mentor-unread",
     "file": "src/ui/growth/specGuide.js",
-    "old": "  if (entity?._mentor) return 'mentor';\n",
+    "old": "  if (isMentoring(entity)) return 'mentor';\n",
     "new": "",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"

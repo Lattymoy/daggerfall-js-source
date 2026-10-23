@@ -21,7 +21,7 @@ test('EG-E THE HOSTS (sections 15, 19, 20, 25.4): the claim with its character a
   // the Timers row's Elite entries and the start window share - its `open` the skin's and the service's, as before
   assert.match(w, /board: \(\) => egBoardDoor\(\),/);
   assert.match(w, /open: \(o\) => openEgBoard\(\{ doc: document, classic: !isEnhancedPlus\(\), fetchBoard: \(\) => _accountEg\.board\(\)/);
-  assert.match(w, /setSetPowersAllies\(\{\s*near: \(m\) => \{[^\n]*p\.mate && p\.feet && Math\.hypot\([^\n]*<= m\); \},\s*shield: \(a, sp\) => castAtAllyDoor\(a\.id, allyCastFrame\(sp, effectiveLevel\(playerEntity\), a\.id\)\),/);
+  assert.match(w, /setSetPowersAllies\(\{\s*near: \(m\) => \{[^\n]*p\.mate && p\.feet && Math\.hypot\([^\n]*<= m\); \},\s*shield: \(a, sp\) => castAtAllyDoor\(a\.id, allyCastFrame\(sp, playLevel\(playerEntity\), a\.id\)\),/);
   assert.match(w, /setSpireRecovery\(\(\) => modes\?\.egHallBreach\?\.\(\) \?\? null\);/);
   assert.match(w, /if \(egClient\?\.quiet\?\.\(\)\) return;/);
   assert.match(w, /now: \(\) => \(egClient \? egClient\.sharedNow\(\) : egNow\(\)\)/);

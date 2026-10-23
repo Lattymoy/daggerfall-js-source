@@ -104,7 +104,7 @@ test('MT-iv: BowDamage forks too - an arrow aimed at a foe LANDS on it, and the 
     ':145-147 - the recovered Arrow goes into the TARGET\'s items, not the player\'s');
   // the enemy SPELL missile takes the same fork
   assert.match(DG, /an enemy SPELL missile aimed at another foe resolves/);
-  assert.match(DG, /applySpell\(m\.spell, m\.casterLevel \?\? effectiveLevel\(playerEntity\), af\.entity, foeSinks\(af, false\)/,
+  assert.match(DG, /applySpell\(m\.spell, m\.casterLevel \?\? effectiveLevel\(playerEntity, _ceiling\), af\.entity, foeSinks\(af, false\)/,
     'and lands on that foe\'s own sinks');
 });
 

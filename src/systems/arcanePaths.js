@@ -30,6 +30,7 @@
 import { SKILLS, MAGIC_SKILLS, SKILL_NAMES } from './skills.js';
 import { masterSkillsActive, isMasteredSkill, masteredSkills, masterableCount } from './masterSkills.js';
 import { t } from './textManager.js';
+import { isMentoring } from './mentorMode.js';   // PWR3: the party's mentoring, never the place's sync (a leaf)
 
 const { Destruction: DES, Restoration: RES, Illusion: ILL, Alteration: ALT, Thaumaturgy: THA, Mysticism: MYS } = SKILLS;
 
@@ -382,7 +383,7 @@ export function pathAboutRows(p) {
  *  its schools mastered, not mentoring. Answers the path, or null. (A refereed fight is the powers' word to add -
  *  systems/arcanePowers.js; the price reads none, and a duel's opponent takes the plain bundle whatever it cost.) */
 export function pathAwake(entity) {
-  return entity?._mentor ? null : pathHeld(entity);
+  return isMentoring(entity) ? null : pathHeld(entity);
 }
 /** The path this entity HOLDS now, mentoring or not - my own player entity, Master Skills in force, both its schools
  *  mastered. What a signature spell is cast in and the shelf read (AUDIT SCHOOLS L2 F5: through pathAwake, a mentored

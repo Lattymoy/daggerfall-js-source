@@ -74,7 +74,7 @@
 import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
 import { skillAdvanceProgress } from '../../systems/advancement.js';   // SKILL-TICK: the uses toward each skill's next point
 import { SKILLS, SKILL_NAMES, skillValue, displaySkillValue, realSkillValue, skillValueText, skillModOf } from '../../systems/skills.js';
-import { mentorStatusText } from '../../systems/mentorMode.js';   // SOFTCAP1
+import { mentorStatusText } from '../../systems/mentorText.js';   // SOFTCAP1 (PWR3: its words, apart from the law)
 import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, setMasterSkills, MASTER_SKILLS_ABOUT, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill } from '../../systems/masterSkills.js';   // SOFTCAP3/4
 import { pathOf, pathPossible } from '../../systems/arcanePaths.js';   // AUDIT GROWTH LANE5-6: the specialisations' line
 import { martialPathOf, martialPossible } from '../../systems/martialPaths.js';

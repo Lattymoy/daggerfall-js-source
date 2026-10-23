@@ -127,7 +127,7 @@ test('AUDIT 68 S04-melee-timer-stale-level: ResetMeleeTimer reads the player lev
   assert.equal(a.meleeTimer, resetMeleeTimer(20, 2, 0.5), 'the reset used the level of the moment');
   assert.equal(a.playerLevel, 20, 'and EnemyCaster\'s touch reset reads the same live value');
   // every host hands the live read, never the spawn-time number
-  const sites = [['src/scenes/dungeonContext.js', 2, /playerLevel: \(\) => effectiveLevel\(D\.playerEntity\), reflexes: D\.playerEntity\.reflexes/g],
+  const sites = [['src/scenes/dungeonContext.js', 2, /playerLevel: \(\) => effectiveLevel\(D\.playerEntity, _ceiling\), reflexes: D\.playerEntity\.reflexes/g],
     ['src/scenes/exteriorFoes.js', 1, /new EnemyAttack\(\{[^\n]*playerLevel: \(\) => effectiveLevel\(playerEntity\), reflexes: playerEntity\.reflexes/g],
     ['src/scenes/cityGuards.js', 1, /new EnemyAttack\(\{[^\n]*playerLevel: \(\) => effectiveLevel\(playerEntity\), reflexes: playerEntity\.reflexes/g]];
   for (const [file, n, re] of sites) assert.equal((rd(file).match(re) ?? []).length, n, `${file} passes playerLevel as a thunk`);

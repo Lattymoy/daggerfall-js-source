@@ -53,6 +53,18 @@
 //     above 100 are weighed against the REAL skill (skillSoftcap.js), so
 //     weak foes teach a mentor nothing, and a mentor's overcap power does
 //     not raise the group's enemies either.
+//
+// PWR3 (2026-10-23, bible/05-Combat/Power-Arc.md section 6; Mac, asked: "Online only, keep a 15% edge"): THE PLACE
+// SETS THE PLAYER - the same overlay, a second source. A place's CEILING is the deadliest native its own encounter
+// table fields (systems/placeSync.js, off DFU's tables and bestiary); online, a player above it plays at the level
+// whose skill line stands PLACE_SYNC_EDGE over the ceiling's (placeEdgeLevel: E(t) = 1.15 E(c), the game's own line),
+// and the world is built at the ceiling (effectiveLevel) - so a level-30 hero in a Cemetery plays a level-14 character's
+// skills against its level-11 natives, a sixth stronger than one who belongs there. Between the ceiling and that level
+// the player plays whole and the world stops at the ceiling, so the edge grows smoothly to its 15% and no further.
+// The PARTY's source keeps its own law (the port's powers sleep while mentoring - isMentoring); the PLACE's keeps them
+// awake - they are the player's kit, bounded by PWR1 and PWR2, and Renown's by PWR4 - and reads only what a level
+// gives: skills, attributes, health, the gear's scale, the level the player's own spells are cast at (playLevel).
+// Where both stand, the lower level plays and the lower world is built.
 
 export const MENTOR_LEVEL_ALLOWANCE = 1;
 export const MENTOR_MIN_GAP = 3;
@@ -65,7 +77,21 @@ export const MENTOR_MAX_DAMAGE_MULT = 5;
 const STAT_KEYS = ['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'];
 
 /** The game's skill line for a level: SetEnemyCareer's 5L + 30, unclamped. */
-export const expectedSkillAt = (level) => 5 * Math.max(1, level) + 30;
+const SKILL_LINE_PER_LEVEL = 5, SKILL_LINE_BASE = 30;
+export const expectedSkillAt = (level) => SKILL_LINE_PER_LEVEL * Math.max(1, level) + SKILL_LINE_BASE;
+
+/** PWR3: how much stronger than the place's own a synced player stays (Mac: "keep a 15% edge"). */
+export const PLACE_SYNC_EDGE = 1.15;
+/** PWR3: the level a player plays at above a place's ceiling - the one whose skill line stands PLACE_SYNC_EDGE over the
+ *  ceiling's: E(t) = 1.15 E(c), whole (a Cemetery's 11 plays at 14, the bestiary's top 21 at 25). */
+export const placeEdgeLevel = (ceiling) => Math.round((PLACE_SYNC_EDGE * expectedSkillAt(ceiling) - SKILL_LINE_BASE) / SKILL_LINE_PER_LEVEL);   // the line inverted
+/** PWR3: the level a player plays at in a place of `ceiling`, or null when the place does not bind them (no ceiling, or
+ *  a player at or under its edge level). */
+export function placeTargetLevel(realLevel, ceiling) {
+  if (!Number.isInteger(ceiling) || ceiling < 1 || !(realLevel >= 1)) return null;
+  const t = placeEdgeLevel(ceiling);
+  return realLevel > t ? t : null;
+}
 
 /** Harmonic mean of the partners' levels (null when there are none). */
 export function groupReferenceLevel(levels) {
@@ -82,11 +108,16 @@ export function mentorTargetLevel(realLevel, partnerLevels) {
   return realLevel - t >= MENTOR_MIN_GAP ? t : null;
 }
 
-/** The whole profile (pure). null = not mentoring. */
-export function mentorProfile(entity, partnerLevels) {
+/** The whole profile (pure). null = neither the party nor the place binds. `ceiling` (PWR3): the place's, online - null
+ *  for none. `level` is the level the WORLD is built at before the place's ceiling (the party's, else the real one -
+ *  effectiveLevel lays the ceiling over it), `playLevel` the one the player plays at, `source` whose it is. */
+export function mentorProfile(entity, partnerLevels, ceiling = null) {
   const r = entity?.level ?? 1;
-  const t = mentorTargetLevel(r, partnerLevels);
-  if (t == null) return null;
+  const party = mentorTargetLevel(r, partnerLevels);
+  const place = placeTargetLevel(r, ceiling);
+  if (party == null && place == null) return null;
+  const byParty = party != null && (place == null || party <= place);
+  const t = byParty ? party : place;
   const skillFactor = Math.sqrt(t / r);
   const skillCeiling = expectedSkillAt(t) + MENTOR_SKILL_CEILING_SLACK;
   // attributes: D points back, in proportion to the excess over the baseline
@@ -108,32 +139,62 @@ export function mentorProfile(entity, partnerLevels) {
   const damageTakenMult = rawMax > 0 ? Math.min(MENTOR_MAX_DAMAGE_MULT, Math.max(1, rawMax / mentoredMax)) : 1;
   const gearScale = Math.min(1, Math.max(0.5, Math.sqrt(expectedSkillAt(t) / expectedSkillAt(r))));
   return {
-    level: t, realLevel: r, skillFactor, skillCeiling, statCut,
+    level: party ?? r, playLevel: t, realLevel: r, source: party != null ? 'party' : 'place', skillFactor, skillCeiling, statCut,
     mentoredMaxHealth: Math.round(mentoredMax), damageTakenMult, gearScale,
-    reference: groupReferenceLevel(partnerLevels),
+    reference: party != null ? groupReferenceLevel(partnerLevels) : null, ceiling: Number.isInteger(ceiling) ? ceiling : null,
   };
 }
+
+/** PWR3: the ceiling of the place the player stands in now, online (the frame's - refreshMentor), or null. */
+let _placeCeiling = null;
+/** Whose overlay ended last ('party' or 'place') - the chat's line for it (mentorEndedText). */
+let _ended = 'party';
 
 /**
  * The host's per-frame door (scenes/world.js partyFrame). `partnerLevels` are
  * the party's other members' levels; mentoring is automatic, so `enabled`
- * exists only for a host that must hold it off (none does today). Returns
+ * exists only for a host that must hold it off (none does today). PWR3:
+ * `ceiling` the place's (systems/placeSync.js placeCeilingAt - null offline or
+ * where none binds), kept for the world's reads (effectiveLevel). Returns
  * 'on' / 'off' on a change (for the chat line), null otherwise.
  */
-export function refreshMentor(entity, partnerLevels, enabled = true) {
+export function refreshMentor(entity, partnerLevels, enabled = true, ceiling = null) {
   if (!entity) return null;
+  _placeCeiling = Number.isInteger(ceiling) && ceiling >= 1 ? ceiling : null;
   const was = entity._mentor ?? null;
-  const next = enabled ? mentorProfile(entity, partnerLevels) : null;
+  const next = enabled ? mentorProfile(entity, partnerLevels, _placeCeiling) : null;
   entity._mentor = next;
   if (!was && next) return 'on';
-  if (was && !next) return 'off';
-  if (was && next && was.level !== next.level) return 'on';
+  if (was && !next) { _ended = was.source ?? 'party'; return 'off'; }
+  if (was && next && (was.playLevel !== next.playLevel || was.source !== next.source)) return 'on';
   return null;
 }
 
 export const isMentored = (entity) => !!entity?._mentor;
-/** The level the WORLD should build around (spawns): mentored, else real. */
-export const effectiveLevel = (entity) => entity?._mentor?.level ?? entity?.level ?? 1;
+/** PWR3: whether the PARTY binds - mentoring's own law (the Firmament, the paths, the climb and the spells' power
+ *  sleep; the foes answer no standing). A place that binds alone is no mentoring: the kit stays awake. */
+export const isMentoring = (entity) => !!entity?._mentor && entity._mentor.source !== 'place';
+/** The level the WORLD should build around (spawns, a foe's loot and gear, its swing, its spells, the hero's threat):
+ *  the party's when mentoring, else the real one - PWR3: no higher than the place's ceiling (`ceiling`: a host that
+ *  builds a place hands its own - a dungeon's, read at its build before the frame has seen it; else the frame's). */
+export function effectiveLevel(entity, ceiling = _placeCeiling) {
+  const level = entity?._mentor?.level ?? entity?.level ?? 1;
+  return Number.isInteger(ceiling) && ceiling >= 1 && entity?.isPlayer ? Math.min(level, ceiling) : level;
+}
+/** PWR3: the level the PLAYER plays at - their own spells' caster level: the overlay's (the party's or the place's
+ *  edge), else the real one. */
+export const playLevel = (entity) => entity?._mentor?.playLevel ?? entity?._mentor?.level ?? entity?.level ?? 1;
+/** PWR3: the level the player plays at in a place of `ceiling` - the party's mentoring, else the real level, no higher
+ *  than the place's edge (placeTargetLevel). What the hero's threat answers (systems/heroThreat.js): the foes answer the
+ *  hero as the hero plays, never the world's level a place's ceiling built them at. A host building a place hands its
+ *  own ceiling (the frame's is the default). */
+export function playLevelIn(entity, ceiling = _placeCeiling) {
+  const level = entity?._mentor?.level ?? entity?.level ?? 1;
+  const edge = placeTargetLevel(entity?.level ?? 1, ceiling);
+  return edge != null && entity?.isPlayer ? Math.min(level, edge) : level;
+}
+/** Tests: the frame's place forgotten. */
+export function _resetPlaceCeilingForTests() { _placeCeiling = null; }
 
 /** A permanent skill value, as the mentored character holds it. */
 export function mentoredSkill(entity, raw) {
@@ -160,9 +221,6 @@ export function mentorArmorValue(entity, raw) {
 
 export const mentorDamageTakenMult = (entity) => entity?._mentor?.damageTakenMult ?? 1;
 
-/** One line for the chat and the sheet. */
-export function mentorStatusText(entity) {
-  const m = entity?._mentor;
-  if (!m) return `Not mentoring. You mentor automatically in a party at least ${MENTOR_MIN_GAP} levels below you.`;
-  return `Mentoring: you fight as level ${m.level} (really ${m.realLevel}). Your real progress is kept.`;
-}
+/** PWR3: whose overlay ended last - 'party' or 'place' (systems/mentorText.js mentorEndedText says it). */
+export const mentorEndedSource = () => _ended;
+

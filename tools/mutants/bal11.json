@@ -38,8 +38,8 @@
   {
     "name": "BAL11-a-renown-hits-2-percent",
     "file": "src/systems/heroThreat.js",
-    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
-    "new": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.02, health: 1.005 }),",
+    "old": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.008 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.02, health: 1.008 }),",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BAL11-a-renown-stands-1-percent",
     "file": "src/systems/heroThreat.js",
-    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
-    "new": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.01 }),",
+    "old": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.008 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.01 }),",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -56,17 +56,17 @@
   {
     "name": "BAL11-the-threat-from-renown-14",
     "file": "src/systems/heroThreat.js",
-    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
-    "new": "  renown: Object.freeze({ from: 14, to: 50, damage: 1.01, health: 1.005 }),",
+    "old": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.008 }),",
+    "new": "  renown: Object.freeze({ from: 14, to: 20, damage: 1.014, health: 1.008 }),",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
   },
   {
-    "name": "BAL11-the-top-at-renown-49",
+    "name": "BAL11-the-top-at-renown-19",
     "file": "src/systems/heroThreat.js",
-    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
-    "new": "  renown: Object.freeze({ from: 15, to: 49, damage: 1.01, health: 1.005 }),",
+    "old": "  renown: Object.freeze({ from: 15, to: 20, damage: 1.014, health: 1.008 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 19, damage: 1.014, health: 1.008 }),",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BAL11-a-mentor-keeps-his-renown",
     "file": "src/systems/heroThreat.js",
-    "old": "  const t = heroThreat(effectiveLevel(player), player._mentor ? null : sigilRenown());",
-    "new": "  const t = heroThreat(effectiveLevel(player), sigilRenown());",
+    "old": "  const t = heroThreat(playLevelIn(player, ceiling), isMentoring(player) ? null : sigilRenown());",
+    "new": "  const t = heroThreat(playLevelIn(player, ceiling), sigilRenown());",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BAL11-a-mentor-at-his-own-level",
     "file": "src/systems/heroThreat.js",
-    "old": "  const t = heroThreat(effectiveLevel(player), player._mentor ? null : sigilRenown());",
-    "new": "  const t = heroThreat(player.level, player._mentor ? null : sigilRenown());",
+    "old": "  const t = heroThreat(playLevelIn(player, ceiling), isMentoring(player) ? null : sigilRenown());",
+    "new": "  const t = heroThreat(player.level, isMentoring(player) ? null : sigilRenown());",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "BAL11-an-ally-answers-the-hero",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });",
-    "new": "    const hero = _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });",
+    "old": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet, ceiling: _ceiling });",
+    "new": "    const hero = _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet, ceiling: _ceiling });",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -222,7 +222,7 @@
   {
     "name": "BAL11-a-dungeon-puppet-takes-my-health",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });",
+    "old": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet, ceiling: _ceiling });",
     "new": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity);",
     "tests": [
       "test/systems/bal11_hero.test.js"

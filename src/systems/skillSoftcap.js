@@ -40,6 +40,7 @@
 //   (movementTallyWeight, below).
 
 import { masterSkillsActive, masterCappedSkill } from './masterSkills.js';   // SOFTCAP3: a leaf
+import { isMentoring, mentoredSkill } from './mentorMode.js';   // PWR3: the party's mentoring, and the overlay's skills (a leaf)
 
 export const SKILL_SOFT_CAP = 100;
 export const SKILL_HARD_CAP = 200;
@@ -340,11 +341,11 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
  *  100 a mastered skill alone - SOFTCAP4 - at a quarter a point and the milestones), without what is worn or cast on it.
  *  What the foes' edge reads below, and what a school's potency reads (systems/spell/spellPower.js schoolPotency): the climb
  *  that raises the foes is the climb that pays the caster. */
-export const climbedSkill = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));
+export const climbedSkill = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));   // PWR3: as skillValue reads it - a place's sync scales the climb the foes answer
 
 export function combatEdge(entity) {
   // SOFTCAP3: no edge while mentoring, and none while Master Skills is off (or offline) - the climb is opt-in
-  if (!Array.isArray(entity?.skills) || entity._mentor || !masterSkillsActive(entity)) return 0;
+  if (!Array.isArray(entity?.skills) || isMentoring(entity) || !masterSkillsActive(entity)) return 0;   // PWR3: the party's mentoring; a place's sync reads the synced climb (climbedSkill)
   const gains = EDGE_SKILL_IDS.map((id) => Math.max(0, climbedSkill(entity, id) - SKILL_SOFT_CAP))   // SOFTCAP4: mastered skills only; BAL9b: the climb's one home
     .sort((a, b) => b - a).slice(0, EDGE_TOP_N);
   return gains.reduce((a, g) => a + g, 0) / EDGE_TOP_N;
@@ -371,9 +372,9 @@ export function rawSkillForEffective(target) {
 /** VETERAN, 0..1: how far the three best combat/magic skills stand from 75 toward 100 (real values, capped at 100;
  *  0 while mentoring or while Master Skills is not in force). */
 export function veteranProgress(entity) {
-  if (!Array.isArray(entity?.skills) || entity._mentor || !masterSkillsActive(entity)) return 0;
+  if (!Array.isArray(entity?.skills) || isMentoring(entity) || !masterSkillsActive(entity)) return 0;
   const from = ENEMY_SCALING.veteranFrom, span = SKILL_SOFT_CAP - from;
-  const parts = EDGE_SKILL_IDS.map((id) => clamp01((Math.min(SKILL_SOFT_CAP, entity.skills[id] ?? 0) - from) / span))
+  const parts = EDGE_SKILL_IDS.map((id) => clamp01((Math.min(SKILL_SOFT_CAP, mentoredSkill(entity, entity.skills[id] ?? 0)) - from) / span))   // PWR3: the synced skill
     .sort((a, b) => b - a).slice(0, EDGE_TOP_N);
   return parts.reduce((a, g) => a + g, 0) / EDGE_TOP_N;
 }

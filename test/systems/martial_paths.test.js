@@ -49,6 +49,7 @@ import { WEAPONS } from '../../src/characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE } from '../../src/characters/thunderlockIds.js';
 import { FIRM_NODES } from '../../src/net/firmament/firmamentTree.js';
 import { _setPowerBudgetRandForTests, _resetPowerBudgetForTests, budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the evasion's one roll, the channel's curve
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // PWR3: mentoring's real profile
 
 const { LongBlade: LB, ShortBlade: SB, Axe: AX, BluntWeapon: BL, Archery: AR, HandToHand: HH, Destruction: DES, Restoration: RES } = SKILLS;
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -299,7 +300,7 @@ test('MARTIAL2 THE WEAPON PAST 100: online, each effective point of the climb - 
     lb.skills[LB] = 200;
     assert.equal(blow100(lsw, lb, { ...foe(), isPlayer: true }), 100, 'never at a player');
     assert.equal(blow100(lsw, lb, foe({ warded: true })), 100, 'nor the Warden\'s ward');
-    lb._mentor = { level: 3 }; assert.equal(blow100(lsw, lb, foe()), 100, 'mentoring'); lb._mentor = null;
+    lb._mentor = mentorProfile({ ...lb, level: 30 }, [24, 24]); assert.equal(blow100(lsw, lb, foe()), 100, 'mentoring (PIN MOVED, PWR3: a real party\'s profile at 25 of 30, where the synced climb would still pay)'); lb._mentor = null;
     lb.isInBeastForm = true; assert.equal(blow100(lsw, lb, foe()), 100, 'the beast'); lb.isInBeastForm = false;
     setSigilDueling(true); try { assert.equal(blow100(lsw, lb, foe()), 100, 'a refereed fight'); } finally { setSigilDueling(false); }
     assert.equal(blow100(lsw, { ...lb, peer: 'x' }, foe()), 100, 'a peer\'s stand-in');

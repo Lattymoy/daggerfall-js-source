@@ -58,7 +58,7 @@ export const FOE_BOUND = Object.freeze({
   watch: 146,               // characters/mobile/mobileTypes.js KNIGHT_CITY_WATCH
   hero: Object.freeze({     // systems/heroThreat.js HERO_THREAT's health
     level: Object.freeze({ from: 10, to: 30, health: 1.04 }),
-    renown: Object.freeze({ from: 15, to: 50, health: 1.005 }),
+    renown: Object.freeze({ from: 15, to: 20, health: 1.008 }),   // PWR3: the arm re-derived, to the soft cap
   }),
 });
 

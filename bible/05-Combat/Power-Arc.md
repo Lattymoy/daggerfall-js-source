@@ -272,7 +272,80 @@ Ledger A (PWR2). `test/systems/power/pwr2_attunement.test.js` (9); `tools/mutant
 
 ## 6. PWR3 - the place sets the player
 
-(Its slice follows in this pull request.)
+THE CAUSE (section 2, finding 5; Mac's call 4, "Online only, keep a 15% edge"): DFU builds every place around the player
+(RDBLayout.ChooseRandomEnemyType and RandomEncounters.ChooseRandomEnemy band a place's table on the player's level; a
+class foe stands at it - EnemyEntity.SetEnemyCareer), and BAL11 then answers the player's growth on every foe of every
+place alike. Nothing let a place stay what it is: a Cemetery at level 30 was as deadly as a Dragon's Den, and a hero
+who outgrew a place could only be met by making the place itself grow.
+
+A PLACE'S CEILING (`systems/placeSync.js`) is the deadliest native its own table fields - the highest base level of a
+monster in it, off DFU's EncounterTables and its bestiary, never restated (a class foe stands at the player's level and
+is no native's ceiling). A Cemetery's is 11 (its Mummy), a Prison's 16, an Orc's or a Giant's Stronghold 18, a Human
+Stronghold 19, every other dungeon kind 20 or 21 - the bestiary's top. The open country is its climate's three tables
+(a town's rect at night, the wilds by day and by night): the deadliest of them, 19 or 20; a building stands on that
+ground. A mod's table edits (DEX3) leave the ceiling DFU's - every client reads the same one. Where the port tuned a
+place for the top of the curve - a made level, the arena's floor, the gate's court, the Shattered Hour, a Super or an
+Elite dungeon, a dungeon of the open zone - there is none.
+
+THE SYNC, online (`systems/mentorMode.js` - mentor mode's overlay, a second source; never a write):
+
+- **The edge.** A player above a place's ceiling plays at the level whose skill line (SetEnemyCareer's 5L + 30) stands
+  15% over the ceiling's - `placeEdgeLevel`, E(t) = 1.15 E(c): a Cemetery's 11 plays at 14, the bestiary's 21 at 25.
+  The overlay at that level is SOFTCAP1's own (the skills' square root, the attributes' points, the health a blow lands
+  on, the gear's scale); the player's own spells are cast at it (`playLevel`).
+- **The world at the ceiling.** The place is built at its ceiling (`effectiveLevel` - its natives' band, a class foe's
+  level, a foe's loot and gear, its swing, its spells): a dungeon reads its own at the build (`enterDungeonPlace`, the
+  frame not yet in it), every other place the frame's (`scenes/world.js` partyFrame, `placeCeilingAt`). Between the
+  ceiling and the edge the player plays whole while the world stops at the ceiling, so the edge grows smoothly to its
+  15% and no further.
+- **The kit stays awake.** A place's sync is no mentoring (`isMentoring` is the party's alone): the Firmament, the
+  paths, the climb past 100 and the spells' power stay the player's - bounded by PWR1 and PWR2, and Renown's by PWR4.
+  The climb the foes answer is read off the synced skill (`skillSoftcap.js` climbedSkill), as the player's own blow
+  reads it. Where the party and the place both bind, the lower level plays and the lower world is built, and the
+  party's law holds (the kit sleeps).
+- **The hero's threat answers the hero as they play** (`heroThreat.js` heroThreatOf through `playLevelIn`): at the
+  place's edge, never at the world's ceiling the place builds its foes at - the foes answer the hero, not the place;
+  the Renown kept.
+- The chat and the sheet say it: "This place's foes stand no higher than level 11: you fight as level 14 (really 30)"
+  (`systems/mentorText.js`, the words apart so the law stays import-free - RF1).
+
+BAL11 RE-DERIVED ON THE REAL KIT. PWR4 stops Renown's power at 20; `tools/power/powerMeasure.mjs renown` measures the
+online kit's kill, no threat, unsynced, at Renown 1 to 30 - from 15 to 20 a sixth cheaper (x1.18 at level 12, x1.14 at
+level 30; level 20's cells stand at the fifty-kill cap and read no growth) and flat past it. BAL11's own rule - three
+quarters of the measured growth, two thirds of it in the blow - makes the Renown arm x1.014 the blows and x1.008 the
+health a Renown from 15 to 20, nothing past it (it was x1.01 and x1.005 to 50, BAL11's average over a Renown that grew to
+50). The top is level 30 and Renown 20: x4.15 and x2.28, still the report's 4x-6x and 2x-3x. FOE_BOUND's hero arm
+(`net/foeBounds.js`) in step; the relay's world248. The level arm stands: it is offline's too, and Mac's call 4 leaves
+offline as it is.
+
+MEASURED (`node tools/power/powerMeasure.mjs place` and `edge`, 8 chains a cell, under BAL11's threat), a kill's net cost:
+
+| level, build | sync off | sync on |
+| --- | --- | --- |
+| 20 online | 7.5% | 6.5% |
+| 25 online | 11.9% | 8.3% |
+| 30 online | 8.7% | 3.7% |
+| 20 stacked | 7.7% | 8.1% |
+| 25 stacked | 11.1% | 10.7% |
+| 30 stacked | 11.8% | 6.0% |
+
+On the bestiary's top band alone (the dungeon kinds whose ceiling is 20), a native at level 20 pays 9.3% a kill; the
+same build at level 25 synced pays 10.7% (x0.87 the native) and at level 30 5.2% (x1.79) - a second run of 6 chains,
+x0.76 and x1.40.
+
+What it says:
+
+1. **The place matters again.** A low place stays low for everyone above it - a level-30 hero across DFU's places pays
+   3.7% a kill synced where BAL11 alone made every place grow to meet them (8.7%) - and the top places stay the top: the
+   port's own (the Elite and Super dungeons, the open zone, the gates) and the bestiary's band.
+2. **The edge is the skill line's 15%; the measured one moves with the kit's own steps.** Against a native of the top
+   band, the synced hero stands x0.8-0.9 at level 25 and x1.4-1.8 at level 30. The level-25 kit pays more than the
+   level-20 one even unsynced (13.1% to 9.3% on that band): BAL11's level arm, sized on a stated kit's metal steps, over-
+   answers the real kit's flat stretch from 20 to 25, and the level-30 kit's steps (the metal, the climb) are its
+   earned quality, which the gear's scale only partly takes. Recorded, not built: BAL11's level arm re-derived on the
+   real kits (it moves offline, which Mac's call 4 keeps) is Mac's to call.
+
+A DEPARTURE: Ledger A (PWR3). `test/systems/power/pwr3_place.test.js` (6); `tools/mutants/pwr3.json`.
 
 ## 7. PWR4 - wider, not taller
 
@@ -332,5 +405,8 @@ What it says:
 4. **The ablation, after**: no single source decides now - taking any one away moves the stacked kit at level 20 by a
    few kills either way (the sky 39.8 -> 35.8, the jewels -> 36.0, the climb -> 44.4 at a blow of 43, the foes'
    overcap standing down with it); the budget, not any one system, is what holds it.
+
+(PWR3's slice, section 6, moved these numbers after them - the place's sync on the online kits and BAL11's Renown arm to
+20: this table is PWR3's before.)
 
 A DEPARTURE: Ledger A (PWR4). `test/net/firmament/pwr4_soft_cap.test.js` (5); `tools/mutants/pwr4.json`.

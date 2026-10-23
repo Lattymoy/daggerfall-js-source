@@ -27,6 +27,7 @@ import { sigilDueling } from '../../systems/sigil/sigil.js';
 import { lootRarityOn } from '../../systems/loot/lootRarity.js';
 import { effectWords, spellFrame } from '../enhanced/enhancedSpellbook.js';   // the spellbook's own reading of an effect (SB-FX)
 import { t } from '../../systems/textManager.js';
+import { isMentoring } from '../../systems/mentorMode.js';   // PWR3: the party's mentoring, never the place's sync
 
 /** The two families, in the page's order. */
 export const SPEC_FAMILIES = Object.freeze(['arcane', 'martial']);
@@ -140,7 +141,7 @@ function pathState(entity, law, p, held, open, on) {
  *  gates: Master Skills off, mentoring, a refereed duel, and the beast for a martial path). */
 function pathAsleep(entity, id, on) {
   if (!on) return 'off';
-  if (entity?._mentor) return 'mentor';
+  if (isMentoring(entity)) return 'mentor';
   if (sigilDueling()) return 'duel';
   if (id === 'martial' && entity?.isInBeastForm) return 'beast';
   return null;

@@ -128,7 +128,7 @@
   {
     "name": "RVN7d-no-drop",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });   // RVN7d: its own drop - found in its lair, its gold x LAIR_GOLD\n      const ai = new (getPref",
+    "old": "      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity, _ceiling), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });   // RVN7d: its own drop - found in its lair, its gold x LAIR_GOLD\n      const ai = new (getPref",
     "new": "      const ai = new (getPref",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "RVN7d-lair-gold-unread",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity));   // ELITE FOES: better loot\n      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });",
-    "new": "      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity));   // ELITE FOES: better loot\n      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity), Math.random, { goldMult: 1 });",
+    "old": "      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity, _ceiling));   // ELITE FOES: better loot\n      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity, _ceiling), Math.random, { goldMult: e.lairStand ? LAIR_GOLD : 1 });",
+    "new": "      if (e.eliteFoe) grantEliteLoot(entity, effectiveLevel(D.playerEntity, _ceiling));   // ELITE FOES: better loot\n      if (e.revenant && entity.revenant) grantRevenantLoot(entity, effectiveLevel(D.playerEntity, _ceiling), Math.random, { goldMult: 1 });",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]
@@ -192,7 +192,7 @@
   {
     "name": "RVN7d-no-band",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity)));\n    return f;",
+    "old": "    standDungeonBand(f, bandMembers(r, effectiveLevel(playerEntity, _ceiling)));\n    return f;",
     "new": "    return f;",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
@@ -291,8 +291,8 @@
   {
     "name": "RVN7d-rally-all-kin",
     "file": "src/scenes/dungeonContext.js",
-    "old": "bandMembers(revenantById(id), effectiveLevel(playerEntity), RALLY_KIN), { portal: true }).length;",
-    "new": "bandMembers(revenantById(id), effectiveLevel(playerEntity)), { portal: true }).length;",
+    "old": "bandMembers(revenantById(id), effectiveLevel(playerEntity, _ceiling), RALLY_KIN), { portal: true }).length;",
+    "new": "bandMembers(revenantById(id), effectiveLevel(playerEntity, _ceiling)), { portal: true }).length;",
     "tests": [
       "test/systems/rvn7d_stand.test.js"
     ]

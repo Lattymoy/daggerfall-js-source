@@ -116,6 +116,43 @@ export function ablateRows({ L = 20, n = 8 } = {}) {
   return rows;
 }
 
+/** RENOWN'S GROWTH (PWR3, BAL11's own measure on the real kit): the online kit at levels 12, 20 and 30 at Renown 1 to
+ *  30, no threat, the place unsynced - a kill's hurt, and how much cheaper it is than at Renown 15 (BAL11's base). What
+ *  the hero's Renown arm answers three quarters of (systems/heroThreat.js). */
+export const RENOWN_STEPS = Object.freeze([1, 5, 10, 15, 20, 25, 30]);
+export function renownRows({ n = 8 } = {}) {
+  const rows = [];
+  for (const L of [12, 20, 30]) {
+    const cells = RENOWN_STEPS.map((R) => FI.cell(() => K.dress(K.kitAt('online', L, { R })), { n, sync: false }));
+    const base = cells[RENOWN_STEPS.indexOf(15)];
+    rows.push({ L, cells, cheaper: cells.map((c) => base.hurt / Math.max(1e-6, c.hurt)) });
+  }
+  return rows;
+}
+
+/** THE PLACE (PWR3): the online and the stacked kits at levels 20, 25 and 30 with the place's sync off and on, each
+ *  under BAL11's threat - what the place takes off a hero who has outgrown it. */
+export function placeRows({ n = 8 } = {}) {
+  const rows = [];
+  for (const b of ['online', 'stacked']) {
+    for (const L of [20, 25, 30]) {
+      const make = () => K.dress(K.kitAt(b, L));
+      rows.push({ build: b, L, off: FI.cell(make, { n, hero: true, sync: false }), on: FI.cell(make, { n, hero: true, sync: true }) });
+    }
+  }
+  return rows;
+}
+
+/** THE EDGE (PWR3): one band of places - the dungeon kinds whose ceiling is 20, the bestiary's top band - a level-20
+ *  online hero (a native there, never synced) against the same build at 25 and 30, synced and not, under the hero's
+ *  threat: how much stronger than the place's own a hero who outgrew it stands (Mac: "keep a 15% edge"). */
+export function edgeRows({ n = 8 } = {}) {
+  const tables = [...Array(19).keys()].filter((k) => FI.ceilingOf(k) === 20);
+  const at = (L, sync) => FI.cell(() => K.dress(K.kitAt('online', L)), { n, hero: true, sync, tables });
+  const native = at(20, false);
+  return { tables, native, rows: [25, 30].map((L) => { const off = at(L, false), on = at(L, true); return { L, off, on, edge: native.cost / Math.max(1e-6, on.cost) }; }) };
+}
+
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const nAt = args.indexOf('--n');
@@ -133,6 +170,19 @@ if (isMain(import.meta.url)) {
       console.log(`  the weapon's lines on its roll: +${s.roll.toFixed(0)}%; Critical Strike ${s.crit} -> a critical x${s.critMult.toFixed(2)}`);
       for (const r of s.rows) console.log(`  ${r.situation.padEnd(8)} ${Object.entries(r.by).map(([k, v]) => `${k} ${v.toFixed(0)}`).join(', ')} | sum +${r.sum.toFixed(0)}% landed +${r.landed.toFixed(0)}%`);
     }
+  }
+  if (!only || only === 'renown') {
+    console.log(`RENOWN'S GROWTH - the online kit, no threat, unsynced (${n} chains a cell): a kill's hurt, and x cheaper than at Renown 15`);
+    for (const r of renownRows({ n })) console.log(`  L${r.L} ${RENOWN_STEPS.map((R, i) => `R${R} ${pct(r.cells[i].hurt)} x${r.cheaper[i].toFixed(2)}`).join(' | ')}`);
+  }
+  if (!only || only === 'place') {
+    console.log(`THE PLACE (PWR3) - under the hero's threat, the place's sync off and on (${n} chains a cell)`);
+    for (const r of placeRows({ n })) console.log(`  L${r.L} ${r.build.padEnd(8)} off: ${cellText(r.off)} | on: ${cellText(r.on)}`);
+  }
+  if (!only || only === 'edge') {
+    const e = edgeRows({ n });
+    console.log(`THE EDGE (PWR3) - the dungeon kinds whose ceiling is 20 (${e.tables.join(', ')}), under the hero's threat (${n} chains a cell): a native at 20, ${cellText(e.native)}`);
+    for (const r of e.rows) console.log(`  L${r.L} off: ${cellText(r.off)} | on: ${cellText(r.on)} | x${r.edge.toFixed(2)} the native`);
   }
   if (!only || only === 'ablate') {
     console.log(`THE ABLATION - the stacked kit at level 20, one source taken away (${n} chains a cell)`);

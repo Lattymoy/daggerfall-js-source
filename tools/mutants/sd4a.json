@@ -110,8 +110,8 @@
   {
     "name": "SD4A-the-layout-at-the-player's-level",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon",
-    "new": "      playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon",
+    "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: a mentor's dungeon",
+    "new": "      playerLevel: effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: a mentor's dungeon",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD4A-the-rest-at-the-player's-level",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode",
-    "new": "      playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode",
+    "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: mentor mode",
+    "new": "      playerLevel: effectiveLevel(playerEntity, _ceiling),   // SOFTCAP2: mentor mode",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD4A-the-class-foe-at-the-player's-level",
     "file": "src/scenes/dungeonContext.js",
-    "old": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));",
-    "new": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? effectiveLevel(D.playerEntity));",
+    "old": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity, _ceiling)) : effectiveLevel(D.playerEntity, _ceiling)));",
+    "new": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? effectiveLevel(D.playerEntity, _ceiling));",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]

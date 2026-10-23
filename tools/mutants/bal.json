@@ -490,7 +490,7 @@
   {
     "name": "AUDIT-BAL-the-host-hands-no-class-level",
     "file": "src/scenes/dungeonContext.js",
-    "old": "classLevel: _eliteOnline ? Infinity : (_superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity)) });",
+    "old": "classLevel: _eliteOnline ? Infinity : (_superTier ? superFoeLevel(effectiveLevel(playerEntity, _ceiling)) : effectiveLevel(playerEntity, _ceiling)) });",
     "new": "classLevel: Infinity });",
     "tests": [
       "test/systems/bal_arc.test.js"

@@ -38,6 +38,7 @@ import { playerEntity } from '../../src/characters/playerEntity.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import { SPECIAL_ABILITY } from '../../src/systems/rest/rest.js';
 import { budgeted } from '../../src/systems/power/powerBudget.js';   // PWR1: the spell channel's curve
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // PWR3: mentoring's real profile
 
 const D = SKILLS.Destruction;
 const on = () => { _resetForTests(); setPref('lootRarity', true); LP._resetLootPowersForTests(); _resetSetPowersForTests(); setPlayerDoor(null); };
@@ -151,7 +152,8 @@ test('BAL9b THE SCHOOL PAST 100 IS ITS POTENCY: online, 1% a point of Destructio
   assert.equal(page(true, () => lands(BOLT(100), capped)), 140, 'x1.4, whatever is worn');
   off();
   // mentoring reads none, as the edge reads none
-  assert.equal(page(true, () => SP.schoolPotency({ ...mage(200), _mentor: { level: 5 } })), 1);
+  // PIN MOVED (PWR3): a real party's profile at a level the climb would still pay at (25 of 30 - the synced skill past 100), never a bare stub
+  assert.equal(page(true, () => SP.schoolPotency({ ...mage(200), _mentor: mentorProfile({ ...mage(200), level: 30 }, [24, 24]) })), 1);
 });
 
 test('BAL9c THE LINES: potency and wellspring - a caster\'s, banded, worth focus\'s, worded, never past their ceilings; the last pass lands them on their groups alone, lawful on the wire and to the law (mutants: wellspring on a blade)', () => {

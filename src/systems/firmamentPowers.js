@@ -51,16 +51,17 @@ import { setOnlineLayerExtra, renownHpOf, renownMpOf } from './renownLayer.js';
 import { evenHpOf } from './levelEven.js';   // AUDIT LEVEL-EVEN L2-4: the floored body a health star's share is of
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { isMentoring } from './mentorMode.js';   // PWR3: the party's mentoring, never the place's sync (a leaf)
 
 /** @type {Readonly<Record<string, number>>} */
 const NONE = Object.freeze({});
 const mine = (e) => !!e?.isPlayer && !e.peer;
 /** Whether the sky's COMBAT channels act for `e` now: mine, the tree in force, no refereed fight, not mentoring. */
-export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling() && !e?._mentor;
+export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling() && !isMentoring(e);
 /** The capped channels that act for `e` in a fight now (none asleep). */
 const fight = (e) => (!_quiet && firmamentAwake(e) ? firmamentStats() : NONE);
 /** The capped channels that act for `e` in a life (the tree in force, mine). */
-const life = (e) => (!_quiet && mine(e) && !e?._mentor ? firmamentStats() : NONE);
+const life = (e) => (!_quiet && mine(e) && !isMentoring(e) ? firmamentStats() : NONE);
 /** True while a sheet is read with the sky taken off it (withoutFirmament). */
 let _quiet = false;
 /** THE SKY TAKEN OFF: `fn()` read with none of the tree's channels on `entity` - its fold recomputed without the sky
