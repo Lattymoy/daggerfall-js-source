@@ -135,7 +135,9 @@ below-average body to the average and nothing above it. `test/systems/fb1019b_le
   through the writs book's own door, so every check the service makes and the writs' hour budget stand. A refusal stops
   the run and says what went in and why (AUDIT L4-5); what went in stays in.
 - Not built: the hall's own containers (row 4). The sluggishness is the vault's three round trips a piece (a checkpoint,
-  the act, a read again); a remote pane in the pack with its own act would cut it, and is a slice of its own.
+  the act, a read again); a remote pane in the pack with its own act would cut it, and is a slice of its own - built as
+  GUILD-PANE (`11-Multiplayer/Guild-Overhaul.md`, 2026-10-23): the vault as a pane beside the pack, with its own put and
+  take.
 
 `test/net/guild/fb1019b_guildux.test.js` (10, six of them AUDIT L4's); `tools/mutants/fb1019b_guildux.json` (12, 12 dead). PIN MOVED:
 `prof6_client.test.js` and `audit31_client.test.js` find the Units field by its new label.

@@ -1,0 +1,931 @@
+[
+  {
+    "name": "GUILD-PANE-3-caravan-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "if (!inCaravan || !tag) return false;",
+    "new": "if (!tag) return false;",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-tag-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "if (!inCaravan || !tag) return false;",
+    "new": "if (!inCaravan) return false;",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-entry-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "return visit.entry === 'guild' && caravanGuildTag(visit.guild) === tag;",
+    "new": "return caravanGuildTag(visit.guild) === tag;",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-tag-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "return visit.entry === 'guild' && caravanGuildTag(visit.guild) === tag;",
+    "new": "return visit.entry === 'guild';",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-own-door-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "return ownEntry === 'guild';",
+    "new": "return !!ownEntry;",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-ignored",
+    "file": "src/systems/caravanVisit.js",
+    "old": "if (visit) return visit.entry",
+    "new": "if (false) return visit.entry",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-room-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "inCaravan: !!modes?.caravanRoom,",
+    "new": "inCaravan: true,",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-unread",
+    "file": "src/systems/caravanVisit.js",
+    "old": "visit: modes?.caravanVisit ?? null,",
+    "new": "visit: null,",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-guest-reads-own-door",
+    "file": "src/systems/caravanVisit.js",
+    "old": "ownEntry: modes?.caravanGuest ? null : caravanEntryOf(",
+    "new": "ownEntry: caravanEntryOf(",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-guest-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "get caravanGuest() { return caravanGuestHere(); },",
+    "new": "get caravanGuest() { return false; },",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-drops-entry",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "entry: homeEntryOk(t.entry) ? t.entry : HOME_ENTRY_DEFAULT, guild: caravanGuildTag(t.guild) });",
+    "new": "guild: caravanGuildTag(t.guild) });",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-drops-guild",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "entry: homeEntryOk(t.entry) ? t.entry : HOME_ENTRY_DEFAULT, guild: caravanGuildTag(t.guild) });",
+    "new": "entry: homeEntryOk(t.entry) ? t.entry : HOME_ENTRY_DEFAULT });",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-entry-unchecked",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "entry: homeEntryOk(t.entry) ? t.entry : HOME_ENTRY_DEFAULT,",
+    "new": "entry: t.entry ?? HOME_ENTRY_DEFAULT,",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-visit-tag-unchecked",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "guild: caravanGuildTag(t.guild) });",
+    "new": "guild: t.guild ?? null });",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-reach-town-only",
+    "file": "src/scenes/world.js",
+    "old": "reach: () => _storesReached() || caravanVaultReached(modes, playerEntity.items, guildBook?.guild?.tag),",
+    "new": "reach: () => _storesReached(),",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-reach-caravan-only",
+    "file": "src/scenes/world.js",
+    "old": "reach: () => _storesReached() || caravanVaultReached(",
+    "new": "reach: () => caravanVaultReached(",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-3-reach-tag-unread",
+    "file": "src/scenes/world.js",
+    "old": "caravanVaultReached(modes, playerEntity.items, guildBook?.guild?.tag)",
+    "new": "caravanVaultReached(modes, playerEntity.items, null)",
+    "tests": [
+      "test/systems/wagon/guildpane_caravan.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-mine-always",
+    "file": "server-account/src/guildVault.js",
+    "old": "mine: ownDeposit(r, player.id, character) })",
+    "new": "mine: true })",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-mine-account-unread",
+    "file": "server-account/src/guildVault.js",
+    "old": "String(row.dep_player) === String(playerId) && row.dep_char === character",
+    "new": "row.dep_char === character",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-mine-character-unread",
+    "file": "server-account/src/guildVault.js",
+    "old": "String(row.dep_player) === String(playerId) && row.dep_char === character",
+    "new": "String(row.dep_player) === String(playerId)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-ownback-gated-on-standing",
+    "file": "server-account/src/guildVault.js",
+    "old": "  if (!own) {\n    if (standing.level !== 'withdraw')",
+    "new": "  if (true) {\n    if (standing.level !== 'withdraw')",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-ownback-counted-limit",
+    "file": "server-account/src/guildVault.js",
+    "old": "    if (!vaultMayTake(standing, takenToday(me ?? a.me, nowS))) return { error: 'guild-vault-limit' };\n  }\n  if (!slotOk)",
+    "new": "  }\n  if (!vaultMayTake(standing, takenToday(me ?? a.me, nowS))) return { error: 'guild-vault-limit' };\n  if (!slotOk)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-slot-guard-update-dropped",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND rec = ?7${own ? ' AND dep_player = ?8 AND dep_char = ?9' : ''}`)",
+    "new": "AND rec = ?7`)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-slot-guard-delete-dropped",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND rec = ?5${own ? ' AND dep_player = ?6 AND dep_char = ?7' : ''}`)",
+    "new": "AND rec = ?5`)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-slot-guard-account-dropped",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND dep_player = ?6 AND dep_char = ?7' : ''}`)",
+    "new": "AND dep_char = ?7' : ''}`)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-slot-guard-character-dropped",
+    "file": "server-account/src/guildVault.js",
+    "old": "AND dep_player = ?6 AND dep_char = ?7' : ''}`)",
+    "new": "AND dep_player = ?6' : ''}`)",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-member-guard-dropped",
+    "file": "server-account/src/guildVault.js",
+    "old": "UPDATE guild_members SET vault_day = vault_day WHERE rowid = ?1 AND guild_id = ?2')",
+    "new": "UPDATE guild_members SET vault_day = vault_day WHERE rowid = ?1 AND guild_id = ?2 OR 1')",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-removed-member-unrefused",
+    "file": "server-account/src/guildVault.js",
+    "old": "    if (!again) return { error: 'guild-vault-rank' };   // no longer a member",
+    "new": "    if (false) return { error: 'guild-vault-rank' };   // no longer a member",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-ownback-moved-unsaid",
+    "file": "server-account/src/guildVault.js",
+    "old": "    if (own) return { error: 'guild-vault-moved' };",
+    "new": "    if (false) return { error: 'guild-vault-moved' };",
+    "tests": [
+      "test/net/guild2_service.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-realm-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "return !!(b && b.realm && b.pack && b.guild?.id",
+    "new": "return !!(b && b.pack && b.guild?.id",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-pack-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "b.realm && b.pack && b.guild?.id",
+    "new": "b.realm && b.guild?.id",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-guild-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "b.pack && b.guild?.id && (b.character",
+    "new": "b.pack && (b.character",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-character-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "b.guild?.id && (b.character?.() ?? null));",
+    "new": "b.guild?.id);",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-read-twice",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (reading && !again) return reading;",
+    "new": "if (false) return reading;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-foreign-error",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "return b.vaultFor === `${b.character?.() ?? null}|${b.guild?.id ?? ''}` ? b.vaultError ?? null : null;",
+    "new": "return b.vaultError ?? null;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-row-key",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "const rowKey = (row) => `${row.slot}|${row.at}|${row.count}`;",
+    "new": "const rowKey = (row) => `${row.slot}`;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-door-items-identity",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (v === madeFrom) return made;",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-door-mine-always",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "mine: (item) => rowsOf.get(item)?.mine === true,",
+    "new": "mine: (item) => rowsOf.has(item),",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-door-mayput-always",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "mayPut: () => vaultMayPut(door.standing()),",
+    "new": "mayPut: () => true,",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-door-ownback-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "return door.mine(item) || vaultMayTake(st, Number(st?.taken ?? 0));",
+    "new": "return vaultMayTake(st, Number(st?.taken ?? 0));",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-door-put-law-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "putRefusal: (item) => vaultPutRefusal(item, bookNow()?.pack ?? null),",
+    "new": "putRefusal: () => null,",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-take-reach",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.view() || door.slotOf(item) == null) return refused('guild-vault-empty');\n      if (!door.reach()) return refused('vault-reach');",
+    "new": "if (!door.view() || door.slotOf(item) == null) return refused('guild-vault-empty');",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-take-busy",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.reach()) return refused('vault-reach');\n      if (door.busy()) return refused('vault-busy');\n      if (!door.mine(item)) {",
+    "new": "if (!door.reach()) return refused('vault-reach');\n      if (!door.mine(item)) {",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-take-ownback-unread",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.mine(item)) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-take-rank",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (st?.level !== 'withdraw') return refused('guild-vault-rank');",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-take-limit",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!vaultMayTake(st, Number(st.taken ?? 0))) return refused('guild-vault-limit');",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-take-count",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "}\n      const n = count ?? stackOf(item);\n      return !Number.isSafeInteger(n) || n < 1 || n > stackOf(item) ? refused('bad-vault-count') : null;",
+    "new": "}\n      return null;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-reach",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!bookNow() || !door.shown()) return refused('guild-vault-empty');\n      if (!door.reach()) return refused('vault-reach');",
+    "new": "if (!bookNow() || !door.shown()) return refused('guild-vault-empty');",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-busy",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.reach()) return refused('vault-reach');\n      if (door.busy()) return refused('vault-busy');\n      if (!door.view())",
+    "new": "if (!door.reach()) return refused('vault-reach');\n      if (!door.view())",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-unread-shelf",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.view()) return refused('guild-vault-empty');\n      if (!door.mayPut())",
+    "new": "if (!door.mayPut())",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-standing",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.mayPut()) return refused('guild-vault-rank');",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-law",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (why) return refused('vault-goods', why);",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-full",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (door.slots().used >= door.slots().max) return refused('guild-vault-full');",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-count",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "refused('guild-vault-full');\n      const n = count ?? stackOf(item);\n      return !Number.isSafeInteger(n) || n < 1 || n > stackOf(item) ? refused('bad-vault-count') : null;",
+    "new": "refused('guild-vault-full');\n      return null;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-gate-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (no) { notice = no.text; render(); return; }",
+    "new": "  if (false) { notice = no.text; render(); return; }",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-count-question",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (amount == null) { notice = HOW_MANY_ITEMS(stack); render(); return; }",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-field-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const amount = chosenAmount(item, stack);   // the card's field where",
+    "new": "  const amount = stack;   // the card's field where",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-stow-unwired",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (remote?.kind === 'vault') return vaultMove('put', item);",
+    "new": "  if (remote?.kind === 'vault') return;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-take-unwired",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (remote?.kind === 'vault') return vaultMove('take', item);",
+    "new": "  if (remote?.kind === 'vault') return;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-busy-unmarked",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "row.classList.add('busy'); row.setAttribute('aria-disabled', 'true');",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-busy-undrawn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  render();   // the rows draw disabled while the book is out\n",
+    "new": "\n",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-sound-silent",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      audio.playOneShot(SOUND.ButtonClick, 1);   // on success alone\n",
+    "new": "",
+    "tests": [
+      "test/systems/enhancedsounds.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-pick-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      if (picked === item) { picked = null; side = dir === 'put' ? 'remote' : 'local'; }\n    }\n    vaultSig",
+    "new": "    }\n    vaultSig",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-closed-act-drawn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (!host) return;   // the pack was closed: the book landed the piece without us",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-click-always-takes",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "!(remote.kind === 'vault' && (e?.ctrlKey || e?.metaKey))) { take(item); return; }",
+    "new": "true) { take(item); return; }",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-click-never-takes",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (from === 'remote' && remote.kind !== 'reward' && !(remote.kind === 'vault' && (e?.ctrlKey || e?.metaKey))) { take(item); return; }",
+    "new": "if (from === 'remote' && remote.kind !== 'reward' && remote.kind !== 'vault') { take(item); return; }",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-shift-unwired",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "(STORE_BULK_KINDS.has(remote.kind) || remote.kind === 'vault')) {   // GUILD-PANE: the vault's put is the same gesture",
+    "new": "STORE_BULK_KINDS.has(remote.kind)) {   // GUILD-PANE: the vault's put is the same gesture",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-drag-always-stows",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "vaultCanStow(item) ? { kind: 'stow', label: stowLabelOf() } : { kind: 'nope', label: null };",
+    "new": "{ kind: 'stow', label: stowLabelOf() };",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-card-stow-always",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (remote?.kind === 'vault') return vaultCanStow(item);",
+    "new": "if (remote?.kind === 'vault') return true;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-stow-standing-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "return !!d && !!d.view() && d.mayPut() && !d.putRefusal(item); };",
+    "new": "return !!d && !!d.view() && !d.putRefusal(item); };",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-stow-law-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "return !!d && !!d.view() && d.mayPut() && !d.putRefusal(item); };",
+    "new": "return !!d && !!d.view() && d.mayPut(); };",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-take-card-always",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (d?.mayTake(picked)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-take-back-unsaid",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const back = d.mine(picked) && !vaultMayTake(st, Number(st?.taken ?? 0));",
+    "new": "const back = false;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-take-some-unoffered",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      if (!qty && max > 1) {\n        const some",
+    "new": "      if (false) {\n        const some",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-use-offered",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "(!hooded || isEnchanted(picked)) && !(side !== 'local' && remote?.kind === 'vault')) {",
+    "new": "(!hooded || isEnchanted(picked))) {",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-pane-hint-unsaid",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (remote.kind === 'vault' && packOpen) {   // GUILD-PANE: the gestures say themselves",
+    "new": "  if (false) {   // GUILD-PANE: the gestures say themselves",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-bag-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  session.usingBag = plan.usingBag;\n  session.usingWagon = plan.usingWagon;\n  if (plan.usingBag) session.usingVault = false;",
+    "new": "  session.usingBag = plan.usingBag;\n  session.usingWagon = plan.usingWagon;\n  void 0;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-toggle-bag-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  session.usingVault = plan.usingVault;\n  session.usingWagon = plan.usingWagon;\n  session.usingBag = plan.usingBag;",
+    "new": "  session.usingVault = plan.usingVault;\n  session.usingWagon = plan.usingWagon;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-toggle-wagon-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  session.usingVault = plan.usingVault;\n  session.usingWagon = plan.usingWagon;\n  session.usingBag = plan.usingBag;",
+    "new": "  session.usingVault = plan.usingVault;\n  session.usingBag = plan.usingBag;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-no-poll",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  vaultPoll = globalThis.setInterval(vaultTick, VAULT_POLL_MS);",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-poll-outlives-pack",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      vaultPollStop();   // GUILD-PANE: and the vault pane's poll",
+    "new": "      void 0;   // GUILD-PANE: and the vault pane's poll",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-poll-outlives-hide",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  session.usingVault = false;\n  vaultPollStop();",
+    "new": "  session.usingVault = false;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-poll-outlives-toggle",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (plan.usingVault) { vaultPollStart(); readVault(false); } else vaultPollStop();",
+    "new": "if (plan.usingVault) { vaultPollStart(); readVault(false); }",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-gone-vault-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (!vaultDoor()?.shown()) { vaultHide(); refresh(); render(); return; }",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-reach-unwatched",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "d.error() ?? '', d.reach() ? 1 : 0, d.busy() ? 1 : 0]",
+    "new": "d.error() ?? '', 1, d.busy() ? 1 : 0]",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-pane-version-unwatched",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "[d.shown() ? 1 : 0, d.version(), d.view()",
+    "new": "[d.shown() ? 1 : 0, 0, d.view()",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-vault-unclaimed",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.usingVault) return deps.guildVault?.()?.items() ?? [];",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-vault-floor",
+    "file": "src/systems/inventorySession.js",
+    "old": "if (state.usingWagon || state.usingBag || state.usingVault || state.chooseOne) return null;",
+    "new": "if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-vault-capacity",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.usingVault) return null;   // GUILD-PANE: the vault is bounded",
+    "new": "  if (false) return null;   // GUILD-PANE: the vault is bounded",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-vault-type",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (state.usingVault) return REMOTE_TARGET_TYPES.Vault;",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-no-door",
+    "file": "src/systems/inventorySession.js",
+    "old": "if (!door || !door.shown()) return { ok: false, refusal: { reason: 'noVault', text: null } };",
+    "new": "if (!door) return { ok: false, refusal: { reason: 'noVault', text: null } };",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-tray",
+    "file": "src/systems/inventorySession.js",
+    "old": "if (state.chooseOne && !state.usingVault) return { ok: false, refusal: { reason: 'reward'",
+    "new": "if (false) return { ok: false, refusal: { reason: 'reward'",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-wagon-kept",
+    "file": "src/systems/inventorySession.js",
+    "old": "usingWagon: usingVault ? false : !!state.usingWagon,",
+    "new": "usingWagon: !!state.usingWagon,",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-session-bag-kept",
+    "file": "src/systems/inventorySession.js",
+    "old": "usingBag: usingVault ? false : !!state.usingBag };",
+    "new": "usingBag: !!state.usingBag };",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-filter-vault-unbarred",
+    "file": "src/ui/storeFilter.js",
+    "old": "new Set([...STORE_BULK_KINDS, 'vault'])",
+    "new": "new Set([...STORE_BULK_KINDS])",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-1-filter-vault-bulk",
+    "file": "src/ui/storeFilter.js",
+    "old": "new Set(['wagon', 'storage', 'bag', 'container']));\n/** The remote kinds that carry the filter bar",
+    "new": "new Set(['wagon', 'storage', 'bag', 'container', 'vault']));\n/** The remote kinds that carry the filter bar",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-pack-only",
+    "file": "src/net/guild/guildVaultPut.js",
+    "old": "  if (isPackOnly(item)) return packOnlyText(name);\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-trade",
+    "file": "src/net/guild/guildVaultPut.js",
+    "old": "  if (trade) return trade;\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-pack-refusal",
+    "file": "src/net/guild/guildVaultPut.js",
+    "old": "  if (packs) return packs;\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-put-bound",
+    "file": "src/net/guild/guildVaultPut.js",
+    "old": "  if (boundRefusesPut(item, 'vault')) return boundText(name, item);\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ],
+    "equivalent": true,
+    "why": "a bound piece is refused by tradeRefusal's isBound a clause earlier, and boundRefusesPut(item, 'vault') is isBound(item) && (packOnly || the vault is no bound-keeping), which is isBound(item) for 'vault'; so the clause is the pack's own stow guard kept for the day the trade's list and the pack's keeping part ways (it is the pane's SS3 ladder, restated). It cannot be killed without a bound piece the trade lets through, and there is none."
+  },
+  {
+    "name": "GUILD-PANE-2-put-letter",
+    "file": "src/net/guild/guildVaultPut.js",
+    "old": "  if (letterRefusesPut(item, { container: true, own: false, online: true })) return letterPutText(name);\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-social-takeback-always",
+    "file": "src/ui/socialPanel.js",
+    "old": "const backOnly = !mayTake && row.mine === true;",
+    "new": "const backOnly = !mayTake;",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-2-social-offers-unfiltered",
+    "file": "src/ui/socialPanel.js",
+    "old": "filter((it) => it && vaultPutRefusal(it, g.pack) == null);",
+    "new": "filter((it) => it);",
+    "tests": [
+      "test/net/guild/guild2_client.test.js"
+    ]
+  }
+]

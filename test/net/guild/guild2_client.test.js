@@ -497,6 +497,7 @@ test('GUILD-PANE 2 vaultPutRefusal: one law for what may be put in the vault - t
   assert.match(refuse({ ...sword, locked: true }), /Sword is locked/);
   assert.match(refuse({ group: 'MiscItems', templateIndex: 275, name: 'Letter' }), /stays with you online/);
   assert.match(refuse({ group: 'UselessItems2', templateIndex: 600, name: 'Materials Bag' }), /Materials Bag stays/);
+  assert.equal(refuse({ group: 'MiscItems', templateIndex: 580, name: 'Wallet' }), 'Wallet stays in your pack.', 'a pack-only piece, in its own words rather than the trade\'s');
   assert.equal(refuse(sword, { refuses: () => 'Empty your wagon before it changes hands.' }), 'Empty your wagon before it changes hands.', 'the pack\'s own refusal');
   assert.equal(refuse(sword, { refuses: () => null }), null);
   assert.equal(refuse(null), 'That is not an item.');

@@ -573,3 +573,27 @@ test('GUILD-PANE service (race): a removal from the guild between the read and t
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM guild_vault WHERE guild_id = ? AND slot = 1').get(s.gid).n, 1, 'the arrows stay on the shelf');
   assert.equal((await s.record(s.member)).items.some((i) => i.name === 'Arrow'), false, 'and are not in her record');
 });
+
+test('GUILD-PANE service (race): the own guard on the slot holds BOTH halves of the depositor - the account and the character - in a whole take and in a partial one: each alone moved under a held take refuses it (mutants: the account half of the guard dropped; the character half dropped; either statement unguarded)', async () => {
+  for (const part of [false, true]) {
+    for (const half of ['dep_char', 'dep_player']) {
+      const s = await stand();
+      const what = `${part ? 'a partial take' : 'a whole take'}, ${half} moved`;
+      await hold(s, s.member, [arrows(20)]);
+      assert.equal((await putBy(s, s.member, { pick: 0, item: arrows(20) })).status, 200);
+      const held = holdNextRead(s);
+      const stale = takeBy(s, s.member, part ? { slot: 0, count: 3 } : { slot: 0 });
+      await held.reached;
+      assert.equal(held.armed, false, `${what}: her take has read the slot as her own`);
+      // the very same piece in the very same slot (its at, its count, its record untouched) - the depositor alone differs
+      if (half === 'dep_char') s.raw.prepare('UPDATE guild_vault SET dep_char = ? WHERE guild_id = ? AND slot = 0').run('r00000000000000000000', s.gid);
+      else s.raw.prepare('UPDATE guild_vault SET dep_player = ? WHERE guild_id = ? AND slot = 0').run(s.gm.id, s.gid);
+      held.release();
+      const r = await stale;
+      held.restore();
+      assert.deepEqual([r.status, r.body.error], [409, 'guild-vault-moved'], `${what}: refused`);
+      assert.equal((await s.record(s.member)).items.length, 0, `${what}: she was given nothing`);
+      assert.equal(Number(s.raw.prepare('SELECT count FROM guild_vault WHERE guild_id = ? AND slot = 0').get(s.gid).count), 20, `${what}: the piece stays whole`);
+    }
+  }
+});

@@ -28,6 +28,9 @@ import { packTradeRefusal } from '../../src/systems/tradePack.js';
 import { HOW_MANY_ITEMS } from '../../src/systems/item/itemTransfer.js';
 import { packOnlyText } from '../../src/systems/item/itemBound.js';
 import { lockedText } from '../../src/systems/item/itemLock.js';
+import { TEMPLATES } from '../../src/systems/useItem.js';
+import { SOUND } from '../../src/systems/soundClips.js';
+import { audio } from '../../src/systems/audio.js';
 import { accountRefusalText } from '../../src/net/accountClient.js';
 import { newWagonItem } from '../../src/systems/wagon/wagonKinds.js';
 import * as storeFilter from '../../src/ui/storeFilter.js';
@@ -296,6 +299,10 @@ test('GUILD-PANE 1 THE DOOR\'S READ: one read in flight is the one a second ask 
   assert.equal(r.door.error(), 'server');
   assert.match(r.door.errorText(), /\S/, 'in words');
   assert.notEqual(r.door.errorText(), 'server');
+  r.state.character = 'rSOMEONEELSE';
+  assert.equal(r.door.error(), null, 'another character\'s reading never wears the last one\'s refusal');
+  r.state.character = s.gm.character;
+  assert.equal(r.door.error(), 'server', 'and the refusal is hers again');
   r.gate.fail = null;
   await r.door.read({ again: true });
   assert.equal(r.door.error(), null);
@@ -362,7 +369,12 @@ test('GUILD-PANE 1 OPENING: the vault opens beside the pack and hides the wagon 
       assert.equal(kind(), 'vault');
       assert.equal(JSON.parse(globalThis.__pack()).usingWagon, false, 'the wagon is hidden');
       actBtn(host, 'Close vault').onclick();
-      assert.equal(kind(), 'ground', 'Close vault closes it');
+      assert.equal(kind(), 'ground', 'Close vault closes it - and neither the wagon nor the bag comes back from under it');
+      actBtn(host, 'Materials Bag').onclick();
+      actBtn(host, 'Guild Vault').onclick();
+      await settle();
+      actBtn(host, 'Close vault').onclick();
+      assert.equal(kind(), 'ground', 'the bag opened under the vault is hidden by it');
       assert.equal(actBtn(host, 'Guild Vault')?.textContent, 'Guild Vault', 'and the door is back on the footer');
     });
   });
@@ -617,13 +629,15 @@ test('GUILD-PANE 1 THE REPAINT: an open vault pane repaints when the book\'s ver
         assert.equal(poll.live.size, 1, 'one poll while it shows');
         // a read that lands elsewhere (the Social page's, an act's) moves the version: the pane follows at the next tick
         const slot = r.door.view().items.find((x) => x.name === 'Arrow');
-        const taken = await s.call('/v1/guilds/vault/take', { character: s.gm.character, realm: s.gm.realm.at(), slot: slot.slot, at: slot.at }, s.gm.secret);
+        // a PARTIAL take: the row count stands, one row's count moves - the book's version alone says so
+        const taken = await s.call('/v1/guilds/vault/take', { character: s.gm.character, realm: s.gm.realm.at(), slot: slot.slot, count: 5, at: slot.at }, s.gm.secret);
         assert.equal(taken.status, 200);
-        assert.equal(remoteRows(host).length, 3, 'not yet: nothing has read the vault');
+        assert.match(named(vaultNamed(host, /Arrow/)), /×20$/, 'not yet: nothing has read the vault');
         await r.book.readVault();
-        assert.equal(remoteRows(host).length, 3, 'a read alone repaints nothing - the poll does');
+        assert.match(named(vaultNamed(host, /Arrow/)), /×20$/, 'a read alone repaints nothing - the poll does');
         poll.fire();
-        assert.equal(remoteRows(host).length, 2, 'the tick repaints it');
+        assert.equal(remoteRows(host).length, 3);
+        assert.match(named(vaultNamed(host, /Arrow/)), /×15$/, 'the tick repaints it');
         // the reach moves as the player walks out of town
         assert.equal(host.querySelector('.vaultreach'), null);
         r.state.reach = false;
@@ -725,16 +739,20 @@ test('GUILD-PANE 2 TAKE: a click on a vault row takes the whole stack - one act 
   const s = await stood();
   await withDomAsync(async (dom) => {
     const r = await rig(s, s.gm, { items: [] });
-    await pane(dom, r, async ({ host }) => {
+    const realOne = audio.playOneShot;
+    const sounds = [];
+    audio.playOneShot = (...a) => { sounds.push(a); };
+    try { await pane(dom, r, async ({ host }) => {
       await openVault(host, r);
       vaultNamed(host, /Arrow/).onclick({});
       assert.ok(await until(() => r.entity.items.length === 1 && remoteRows(host).length === 2), 'the piece arrives and the shelf shrinks');
       assert.deepEqual(r.gate.calls, ['take'], 'one act');
+      assert.deepEqual(sounds.map((a) => a[0]), [SOUND.ButtonClick], 'the click, once, on success');
       assert.deepEqual([r.entity.items[0].name, r.entity.items[0].stackCount], ['Arrow', 20], 'the whole stack');
       assert.equal(remoteRows(host).some((row) => /Arrow/.test(named(row))), false, 'off the shelf');
       assert.equal(s.record(s.gm).items.filter((i) => i.name === 'Arrow').reduce((n, i) => n + i.stackCount, 0), 40, 'and in the record the service wrote: the twenty beside the twenty she kept');
       assert.equal(host.querySelector('.packtip'), null, 'no card left up');
-    });
+    }); } finally { audio.playOneShot = realOne; }
   });
 });
 
@@ -759,6 +777,7 @@ test('GUILD-PANE 2 THE HOW-MANY FIELD: Control-click opens a vault piece\'s card
       again.querySelectorAll('.act').find((b) => b.textContent === 'Take').onclick();
       assert.ok(await until(() => r.entity.items.length === 1), 'five arrive');
       assert.deepEqual([r.entity.items[0].stackCount, r.gate.calls], [5, ['take']]);
+      assert.ok(await until(() => host.querySelector('.packtip') === null), 'the card goes with the take');
       assert.ok(await until(() => r.book.vaultNow().items.filter((x) => x.name === 'Arrow').map((x) => x.count).join() === '15'), 'fifteen stay');
     });
     // the other way: a stack on the pack's own card
@@ -886,15 +905,22 @@ test('GUILD-PANE 2 CLOSING MID-ACT: the pack closed while a take is out still la
     const r = await rig(s, s.gm, { items: [] });
     let release = null;
     r.gate.holdAct = (act) => (act === 'take' ? new Promise((res) => { release = res; }) : null);
-    await pane(dom, r, async ({ host, view }) => {
-      await openVault(host, r);
-      vaultNamed(host, /Arrow/).onclick({});
-      await until(() => r.gate.calls.length === 1);
-      view.unmount();
-      release();
-      assert.ok(await until(() => r.entity.items.length === 1), 'the piece lands with no pane');
-      assert.equal(r.entity.items[0].name, 'Arrow');
-    });
+    const real = audio.playOneShot;
+    const sounds = [];
+    audio.playOneShot = (...a) => { sounds.push(a); };
+    try {
+      await pane(dom, r, async ({ host, view }) => {
+        await openVault(host, r);
+        vaultNamed(host, /Arrow/).onclick({});
+        await until(() => r.gate.calls.length === 1);
+        view.unmount();
+        release();
+        assert.ok(await until(() => r.entity.items.length === 1 && !r.door.busy()), 'the piece lands with no pane');
+        await settle();
+        assert.equal(r.entity.items[0].name, 'Arrow');
+        assert.deepEqual(sounds, [], 'and no pane is left to click for it');
+      });
+    } finally { audio.playOneShot = real; }
   });
 });
 
@@ -929,6 +955,16 @@ test('GUILD-PANE 2 WHAT MAY NOT GO IN never reaches the service: a locked piece,
       packRows(host)[0].onclick({ shiftKey: true });
       assert.match(noticeOf() ?? '', /locked/);
       assert.deepEqual(m.gate.calls, []);
+      // its card has no Put in vault, and a drag of it over the vault window is shown as refused
+      packRows(host)[0].onclick({});
+      assert.equal(host.querySelector('.packtip').querySelectorAll('.act').some((b) => /^Put in vault/.test(b.textContent)), false, 'no Put in vault on a locked piece\'s card');
+      const win = dom.doc.querySelectorAll('.loot-win')[0];
+      dom.doc.elementFromPoint = () => win;
+      packRows(host)[0].onpointerdown({ pointerId: 7, button: 0, pointerType: 'mouse', clientX: 10, clientY: 10 });
+      dom.win.fire('pointermove', { pointerId: 7, clientX: 80, clientY: 80 });
+      assert.ok(dom.doc.querySelectorAll('.dragghost')[0].classList.contains('refused'), 'the ghost is refused over the vault');
+      dom.win.fire('pointerup', { pointerId: 7, clientX: 80, clientY: 80 });
+      assert.deepEqual(m.gate.calls, [], 'and the release asks nothing');
     });
   });
 });
@@ -952,6 +988,10 @@ test('GUILD-PANE 2 THE DOOR\'S GATES, in the plan\'s order: the reach, then busy
   assert.equal(m.door.mine(sword), false);
   assert.equal(m.door.mayPut(), true);
   assert.equal((await m.door.put(locked)).error, 'vault-goods', 'the law of the piece');
+  assert.equal((await m.door.put(blade, 2)).error, 'bad-vault-count', 'a put of more than the stack');
+  assert.equal((await m.door.put(blade, 0)).error, 'bad-vault-count');
+  assert.equal(m.door.putGate(blade, 2)?.error, 'bad-vault-count', 'the gate itself says it, in the frame of the press - the book would refuse it later');
+  assert.equal(m.door.putGate(blade, 1), null, 'and lets a lawful count through');
   // a full vault
   for (let i = 3; i < GUILD_VAULT_SLOTS; i++) {
     s.raw.prepare('INSERT INTO guild_vault (guild_id, slot, rec, name, count, dep_player, dep_char, dep_name, at) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)')
@@ -960,7 +1000,21 @@ test('GUILD-PANE 2 THE DOOR\'S GATES, in the plan\'s order: the reach, then busy
   await m.door.read({ again: true });
   assert.equal(m.door.slots().used, GUILD_VAULT_SLOTS);
   assert.equal((await m.door.put(blade)).error, 'guild-vault-full', 'no free slot');
+  const g = await rig(s, s.gm, { items: [] });   // a withdrawer: the count is the last gate a take passes
+  await g.door.read();
+  for (const bad of [0, -1, 1.5, 99]) {
+    assert.equal((await g.door.take(g.door.items()[0], bad)).error, 'bad-vault-count', `a take of ${bad}`);
+  }
+  assert.deepEqual(g.gate.calls, []);
   assert.deepEqual(m.gate.calls, [], 'none of it asked of the service');
+  // no access at all: nothing goes in, though the piece is lawful and the shelves have room
+  const mid = `m${s.raw.prepare('SELECT rowid AS rid FROM guild_members WHERE char_id = ?').get(s.member.character).rid}`;
+  s.raw.prepare('DELETE FROM guild_vault WHERE guild_id = ? AND slot >= 3').run(s.gid);
+  assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: mid, level: 'none' }, s.gm.secret)).status, 200);
+  await m.door.read({ again: true });
+  assert.equal(m.door.mayPut(), false);
+  assert.equal((await m.door.put(blade)).error, 'guild-vault-rank', 'the standing: a member at no access puts nothing in');
+  assert.deepEqual(m.gate.calls, [], 'and the service is not asked');
   // no vault read: nothing to take from, nothing to put in against
   const bare = await rig(s, s.member, { items: [BLADE] });
   assert.equal((await bare.door.put(bare.entity.items[0])).error, 'guild-vault-empty', 'unread: no shelves to put on');
@@ -1034,4 +1088,25 @@ test('GUILD-PANE 2 THE WORDS: the pane\'s new strings go through t() with their 
   for (const [k, en] of Object.entries(want)) assert.equal(rows.get(k), en, k);
   const pane = read('src/ui/enhanced/enhancedInventory.js') + read('src/scenes/guildVaultHost.js');
   for (const k of Object.keys(want)) assert.ok(pane.includes(`'${k}'`), `${k} is read`);
+});
+
+test('GUILD-PANE 2 A MAP in the vault is taken as any piece is - to the pack, unread: the vault side has no Use, and a take is not a reading (mutants: Use offered on the vault side; a map intercepted on its way out)', async () => {
+  const s = await stand({ gmItems: [{ group: 'MiscItems', templateIndex: TEMPLATES.Map, name: 'Map', value: 10 }] });
+  await s.putIn(s.gm, 0);
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [] });
+    const revealed = [];
+    await pane(dom, r, async ({ host }) => {
+      await openVault(host, r);
+      assert.equal(remoteRows(host).length, 1);
+      remoteRows(host)[0].onclick({ ctrlKey: true });
+      const tip = host.querySelector('.packtip');
+      assert.ok(tip);
+      assert.equal(tip.querySelectorAll('.act').some((b) => b.textContent === 'Use'), false, 'a map has a Use in the pack, never on the vault side');
+      remoteRows(host)[0].onclick({});
+      assert.ok(await until(() => r.entity.items.length === 1 && r.book.vaultNow()?.items.length === 0));
+      assert.equal(revealed.length, 0, 'nothing read');
+      assert.deepEqual(r.entity.items.map((i) => i.name), ['Map'], 'the map is in the pack');
+    }, { revealMap: (...a) => revealed.push(a) });
+  });
 });
