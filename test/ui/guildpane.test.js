@@ -1110,3 +1110,27 @@ test('GUILD-PANE 2 A MAP in the vault is taken as any piece is - to the pack, un
     }, { revealMap: (...a) => revealed.push(a) });
   });
 });
+
+test('GUILD-PANE REVIEW R2-1 A STALE ROW TAKES NOTHING: a pane piece whose slot was emptied and filled again (by anyone) is no longer the shelf\'s - its take is refused as moved and the service is never asked, so the piece now in that slot is never the one taken (mutants: the take gated on the slot alone)', async () => {
+  const s = await stood();
+  const r = await rig(s, s.gm, { items: [] });
+  await r.door.read();
+  const stale = r.door.items().find((it) => it.name === 'Steel Longsword' && !it.stolen);
+  assert.ok(stale, 'the sword stands on the shelf, in the pane');
+  const slot = r.door.slotOf(stale);
+  // the slot is emptied and filled again behind the pane: the guildmaster's other tab takes the sword, Brenna puts her blade in
+  const view = r.book.vaultNow().items.find((x) => x.slot === slot);
+  const took = await s.call('/v1/guilds/vault/take', { character: s.gm.character, realm: s.gm.realm.at(), slot, at: view.at }, s.gm.secret);
+  assert.equal(took.status, 200, JSON.stringify(took.body));
+  await s.putIn(s.member, 0);
+  await r.book.readVault();
+  assert.equal(r.book.vaultNow().items.find((x) => x.slot === slot)?.name, 'Brenna\'s Blade', 'the slot holds another piece now (guard)');
+  const asked = r.gate.calls.length;
+  const no = r.door.takeGate(stale);
+  assert.equal(no?.error, 'guild-vault-moved', `the stale piece's take is refused as moved: ${JSON.stringify(no)}`);
+  const res = await r.door.take(stale);
+  assert.equal(res.ok, false);
+  assert.equal(r.gate.calls.length, asked, 'the service is never asked');
+  assert.equal(r.book.vaultNow().items.find((x) => x.slot === slot)?.name, 'Brenna\'s Blade', 'and the blade stays on the shelf');
+  assert.equal(r.door.takeGate(r.door.items().find((it) => it.name === 'Brenna\'s Blade')), null, 'the piece the shelf holds now may be taken (guard)');
+});
