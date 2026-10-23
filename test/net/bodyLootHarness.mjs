@@ -359,11 +359,12 @@ export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts =
     assert.ok(rat, 'the owner\'s foe stands');
     run(net, 400);
     await armed?.({ where, net, bob, them, rat });
+    // every taker stands Bob's foe before a blow is struck (a puppet stands a beat after its first record: settle, then run)
+    for (let i = 0; i < 40 && !them.every((t) => t.pool().foes.some((x) => x.puppet === bob.id)); i++) { await settle(); run(net, 50); }
     if (!kill) {   // PARTY-SKIN: the foe is left standing - a taker's blow is to fell it
       const roomKey0 = where === 'building' ? ROOM_BUILDING : ROOM_STREET;
       return { where, net, bob, them, mac: them[0], eve: them[1] ?? null, ghosts: [], old: null, rat, roomKey: roomKey0, frame: (to, fields) => ({ to, k: roomKey0, i: rat.seq, ...(where === 'building' ? { own: 1 } : {}), ...fields }) };
     }
-    for (let i = 0; i < 40 && !them.every((t) => t.pool().foes.some((x) => x.puppet === bob.id)); i++) { await settle(); run(net, 50); }
     const pile = () => [...(base ?? PILE)().map((it) => ({ ...it })), ...extra.map((it) => ({ ...it }))];
     rat.entity.items = pile();
     if (extra.length) delete rat.entity.lootCap;   // FOE-CAP: a body carrying more than a plain foe's three (a revenant's, a boss's)
