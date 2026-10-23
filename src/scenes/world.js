@@ -29853,6 +29853,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     holdRealmDeed: onlineHomes ? (d) => holdGrantedDeed(d) : null,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: an order's house, held by the service
     marks: marksBook,   // MARKS1: the Bank of the Empire's Marks, online
     saveSoon: () => saveSoon.changed(),   // PROF-SAVE: a Marks sale's gold in the Bank's account saved soon
+    checkpointLanded: onlineCheckpointLanded,   // SHELF-HOLD (FIELD BUGS 2026-10-22d): a shop's deal checkpointed at once, its sale said to the room once the realm's answer lands
     homeDecor,   // DECOR1c: an online home's placed pieces (null offline - the house's and the ship's are the save's)
     decorCharacter: () => characterIdOf(playerEntity),   // DECOR1d: the character an online home's placements are written as
     // REALM P2.2b: a realm character's home and decor acts move its record's gold on the service, in the act's own batch

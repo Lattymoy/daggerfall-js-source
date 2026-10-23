@@ -110,8 +110,8 @@
   {
     "name": "HACKED-GOLD-a-buildings-record-said-with-a-letter",
     "file": "src/world/interior/interiorShared.js",
-    "old": "r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
-    "new": "r: t.items.map((it) => clearStolen({ ...it })),",
+    "old": "r: peerHanded(items).map((it) => clearStolen({ ...it })),",
+    "new": "r: items.map((it) => clearStolen({ ...it })),",
     "note": "STOLEN-GOODS AUDIT S3 (re-aimed by content): the outgoing copy strips the theft's mark too - the mutant still drops peerHanded alone",
     "tests": [
       "test/systems/hackedgold.test.js"

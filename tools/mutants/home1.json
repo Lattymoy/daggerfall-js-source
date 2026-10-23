@@ -364,8 +364,8 @@
   {
     "name": "HOME1-a-homes-memory-names-its-cupboards",
     "file": "src/world/interior/interiorShared.js",
-    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),",
-    "new": "loot: interiorLootRecords(ctx, [...seen], tooBig, { room }),",
+    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room, hold }),",
+    "new": "loot: interiorLootRecords(ctx, [...seen], tooBig, { room, hold }),",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -387,8 +387,8 @@
   {
     "name": "HOME1-a-refused-act-names-a-cupboard",
     "file": "src/world/interior/interiorShared.js",
-    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });",
-    "new": "const l = interiorLootRecords(ctx, keys, tooBig, { room });",
+    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room, hold });",
+    "new": "const l = interiorLootRecords(ctx, keys, tooBig, { room, hold });",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",

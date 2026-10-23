@@ -277,7 +277,7 @@ import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExterio
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talk/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { carriedPieces } from '../systems/item/itemIds.js';   // AUTO-HOLD: the room's word never lands a piece I carry (world/interior/interiorShared.js)
-import { interiorLocationKey, mintInteriorShared, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll, interiorLootBirth, interiorLootAside, interiorLootLeave } from '../world/interior/interiorShared.js';   // WORLD6a: the building as a world room - the pure half; AUDIT WORLD6a A1: the bag minted there
+import { interiorLocationKey, mintInteriorShared, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll, interiorLootBirth, interiorLootAside, interiorLootLeave, interiorShelfDealt } from '../world/interior/interiorShared.js';   // WORLD6a: the building as a world room - the pure half; AUDIT WORLD6a A1: the bag minted there; SHELF-HOLD: a deal at the counter
 import { wallMsForClassicMinutes } from '../net/wire.js';   // OUTDOOR-LOOT: the SHARED clock - the relay's wall - a cupboard's first-open instant is read from (R-3)
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, guildGroupOfFaction, isMember } from '../systems/guild/guilds.js';
@@ -3659,7 +3659,7 @@ export function createWorldModes(host) {
           decorDeliverCarried();   // DECOR2b: furniture taken off the shelf is delivered, never carried
         },
       });
-      if (win) { interiorOverlay = win; interiorLootOpen(interiorCtx, `shelf:${i}`, win, _intShared, { fresh }); }   // WORLD6a: the shelf is the room's from the open
+      if (win) { interiorOverlay = win; interiorLootOpen(interiorCtx, `shelf:${i}`, win, _intShared, { fresh, watchPuts: true }); }   // WORLD6a: the shelf is the room's from the open; SHELF-HOLD: a piece left on it held as a sale is
       return;
     }
     // U8c: the native trade screen when the art is up (the E2/E3
@@ -4047,6 +4047,7 @@ export function createWorldModes(host) {
       // that stood for that return aliased each item into it a second
       // time - and doubled the count of anything stackable.
     }
+    interiorShelfDealt(interiorCtx, _intShared, shelf, mode, staged);   // SHELF-HOLD (FIELD BUGS 2026-10-22d): checkpointed at once, and a piece sold reaches the room's shelf once that checkpoint lands
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
   }
@@ -4074,6 +4075,7 @@ export function createWorldModes(host) {
     // this town's port); one the book will not take (no number) into the pack as before
     else if (!(it?.templateIndex === FLEET_DEED_TEMPLATE && titleDeed(it, { port: buildingDirectory?.()?.locationName ? { name: buildingDirectory().locationName } : null }))) addItem(playerEntity.items, it);
     restockEndless(shelf.items, [it]);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's
+    interiorShelfDealt(interiorCtx, _intShared, shelf, 'Buy', [it]);   // SHELF-HOLD: the keyed list's purchase checkpointed, as the counter's
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // per completed trade (DFU OnTrade)
     surfacePlayer();
     return price;
@@ -4095,6 +4097,7 @@ export function createWorldModes(host) {
     playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
     landSold(shelf.items, it);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone
     setJunk(it, false);   // AUDIT LOOT II C5: sold, its junk mark ends
+    interiorShelfDealt(interiorCtx, _intShared, shelf, 'Sell', [it]);   // SHELF-HOLD: the keyed list's sale held from the room until its checkpoint lands, as the counter's
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
     return price;
@@ -8801,7 +8804,7 @@ export function createWorldModes(host) {
         // HOME1: an ONLINE home keeps its room - its owner and whoever they let in stand in it together, and its
         // cupboards are never the room's (the owner's are their storage, a visitor's are shut - the container arm).
         const owned = !!privateVisitRoom || b?.buildingType === BUILDING_TYPES.Ship || (!interiorHome && houseOwnedAt(b, b?.buildingKey));
-        _intShared = mintInteriorShared(interiorLocationKey(questSceneCtx?.()?.mapId ?? 0, b?.buildingKey ?? 0, visitLayoutNow()), { owned, home: !!interiorHome, net: { selfId: () => host.selfId?.() ?? null, seat: () => host.roomHost?.() ?? null, now: () => performance.now(), wallNow: () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : null), send: (d) => host.onActions?.(d), say: (t) => setMidScreenText(t), claimed: () => host.onLootClaimed?.(), entity: () => playerEntity, carried: () => carriedPieces(playerEntity) } });   // WD3 (AUDIT WD3 B3): the room of the building in its layout   // AUDIT WORLD6a A1: the bag from the one mint, its key spelled as the pure half reads it   // OUTDOOR-LOOT: and the host's wiring - the act path, the SHARED clock (R-3), the seat, the player's hands - for the cupboards' room law
+        _intShared = mintInteriorShared(interiorLocationKey(questSceneCtx?.()?.mapId ?? 0, b?.buildingKey ?? 0, visitLayoutNow()), { owned, home: !!interiorHome, net: { selfId: () => host.selfId?.() ?? null, seat: () => host.roomHost?.() ?? null, now: () => performance.now(), wallNow: () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : null), send: (d) => host.onActions?.(d), say: (t) => setMidScreenText(t), claimed: () => host.onLootClaimed?.(), entity: () => playerEntity, carried: () => carriedPieces(playerEntity), checkpoint: () => host.checkpointLanded?.() } });   // WD3 (AUDIT WD3 B3): the room of the building in its layout   // AUDIT WORLD6a A1: the bag from the one mint, its key spelled as the pure half reads it   // OUTDOOR-LOOT: and the host's wiring - the act path, the SHARED clock (R-3), the seat, the player's hands - for the cupboards' room law; SHELF-HOLD: the checkpoint a shop's held shelf waits on
         interiorLootAside(ctx, _intShared);   // OUTDOOR-LOOT: a list a stranger's cupboard was built with is no one's word (again after the cache restore below)
         const key = _intShared.locationKey;
         if (key) ctx.actions.onChanged = (recs) => host.onActions?.({ k: key, a: recs });
@@ -13434,7 +13437,7 @@ export function createWorldModes(host) {
     },
     placeActionRecords(keys) {
       if (mode === 'dungeon') return dungeonCtx ? (dungeonCtx.actionRecords?.(keys) ?? null) : null;
-      return mode === 'interior' && interiorCtx && _intShared?.locationKey ? interiorActionRecords(interiorCtx, keys, { locationKey: _intShared.locationKey, tooBig: _intShared.tooBig, home: _intShared.home, room: _intShared.room }) : null;
+      return mode === 'interior' && interiorCtx && _intShared?.locationKey ? interiorActionRecords(interiorCtx, keys, { locationKey: _intShared.locationKey, tooBig: _intShared.tooBig, home: _intShared.home, room: _intShared.room, hold: _intShared.hold }) : null;   // SHELF-HOLD: a refused act's heal held as every word is
     },
     restoreDungeonSave(extras) {
       if (mode !== 'dungeon' || !dungeonCtx) return false;

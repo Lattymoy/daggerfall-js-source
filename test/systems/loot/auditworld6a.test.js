@@ -44,7 +44,7 @@ const ctxOf = () => ({
 test('AUDIT WORLD6a A1 (THE ROOT): the memory composes through THE BAG THE MODE HANDS IN - minted by the pure half, its key spelled as the pure half reads it - so the building is published; the bag refuses to compose without a key, and an owned building has none', () => {
   const bag = mintInteriorShared(interiorLocationKey(187853213, 4));
   assert.equal(bag.locationKey, 'interior:m187853213.4');
-  assert.deepEqual(Object.keys(bag).sort(), ['applied', 'home', 'locationKey', 'net', 'openKey', 'openWin', 'owned', 'room', 'seen', 'stamp', 'tooBig', 'unreadable']);   // AUDIT SETS M2: `unreadable`   // HOME1: `home` - an online home's room carries no loot (home1.test.js)   // PIN MOVED (OUTDOOR-LOOT): `net` the host's wiring and `room` the cupboards' room law (null with no net: a bare bag, an offline page, a home)
+  assert.deepEqual(Object.keys(bag).sort(), ['applied', 'hold', 'home', 'left', 'locationKey', 'net', 'openKey', 'openWin', 'owned', 'room', 'seen', 'stamp', 'tooBig', 'unreadable']);   // PIN MOVED (SHELF-HOLD, FIELD BUGS 2026-10-22d): `hold` the puts on its shop's shelves the record has not backed, `left` the visit over (fb1022d_shelfhold.test.js)   // AUDIT SETS M2: `unreadable`   // HOME1: `home` - an online home's room carries no loot (home1.test.js)   // PIN MOVED (OUTDOOR-LOOT): `net` the host's wiring and `room` the cupboards' room law (null with no net: a bare bag, an offline page, a home)
   bag.seen.add('shelf:0');
   const shared = composeInteriorShared(ctxOf(), bag);
   assert.ok(shared, 'the memory composes - before A1 every publish answered null and no building was ever remembered');
@@ -136,7 +136,7 @@ test('AUDIT WORLD6a by source: the settle asks the stack (A3), the keyed shop fa
   // is incidental - a comment added at the gold gate closed it.
   assert.match(m, /const at = shelf\.items\.indexOf\(it\);\s*if \(at < 0\) return undefined;[\s\S]{0,500}?shelf\.items\.splice\(at, 1\);/, 'A4: a row the shelf no longer holds');
   assert.equal((m.match(/interiorPublishLoot\(key\);   \/\/ WORLD6a: the new day's stock/g) ?? []).length, 0, 'A5: no restock is said at the roll');
-  assert.match(pure, /export function interiorLootOpen\(ctx, key, win, bag, \{ fresh = false, keeping = null \} = \{\}\) \{[\s\S]*?publishWhole\(ctx, canon, bag, \{ claim: !fresh \}\);/, 'A5: said at the window, a fresh roll not a claim');
+  assert.match(pure, /export function interiorLootOpen\(ctx, key, win, bag, \{ fresh = false, keeping = null, watchPuts = false \} = \{\}\) \{[\s\S]*?publishWhole\(ctx, canon, bag, \{ claim: !fresh \}\);/, 'A5: said at the window, a fresh roll not a claim');   // PIN MOVED (SHELF-HOLD): the shut shop's window watched for puts
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt)
   assert.match(m, /const owned = !!privateVisitRoom \|\| b\?\.buildingType === BUILDING_TYPES\.Ship \|\| \(!interiorHome && houseOwnedAt\(/, 'B6: any ship');   // HOME1 re-aim: an online home keeps its room (home1.test.js)
   assert.match(m, /_intShared\?\.owned \? \{ private: true, privateRoom: privateVisitRoom \}/, 'A6: private presence only, no shared loot room');

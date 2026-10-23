@@ -27,9 +27,11 @@
  *  away checkpoints as it hides (scenes/world.js whenPageHides) - a close may cut that put off, and RESCUE-SAVE keeps the
  *  hide's save on this device for its next join, while another device reads the service's. AUDIT PLAN-1000 G10: so a
  *  killed browser or a crash between checkpoints loses at most five minutes of what the service did not settle - the
- *  walking and looting, a quest's steps, a level and its skills, a local shop's buys - never a trade's goods; and a give
- *  a receiver took from a giver that crashed before its record saw it (a drop, a chest, a body) is locked as the
- *  receiver's copy (server-account/src/ledger.js AUTO-HOLD), its window five minutes where it was two. */
+ *  walking and looting, a quest's steps, a level and its skills - never a trade's goods, nor a shop's deal (SHELF-HOLD,
+ *  FIELD BUGS 2026-10-22d: a deal at a shop's counter is checkpointed at once, and a piece sold reaches the room's shelf
+ *  only once the checkpoint that holds the sale has landed - world/interior/shelfHold.js); and a give a receiver took
+ *  from a giver that crashed before its record saw it (a drop, a chest, a body) is locked as the receiver's copy
+ *  (server-account/src/ledger.js AUTO-HOLD), its window five minutes where it was two. */
 export const ONLINE_CHECKPOINT_MS = 300_000;
 
 /**
@@ -46,6 +48,12 @@ export const ONLINE_CHECKPOINT_MS = 300_000;
 export function checkpointAllowed({ online = false, spawned = false, seatOut = false, duel = false, walkWaiting = false } = {}) {
   return !!online && !!spawned && !seatOut && !duel && !walkWaiting;
 }
+
+/** AUDIT PRE-MERGE 1003 O10: whether a checkpoint's answer (awaited) says the save landed: a slot's `true`, a realm put's
+ *  `{ ok: true }`; no hook at all (`undefined`) asks no checkpoint. Pure. Its one home (SHELF-HOLD moved it from
+ *  onlineHomes.js, which hands it on): a displaced home's move said read, and a shop's shelf let go
+ *  (world/interior/interiorShared.js). */
+export const checkpointLanded = (/** @type {any} */ c) => c === undefined || c === true || c?.ok === true;
 
 /** Whether the periodic checkpoint is due, `nowMs` and `lastMs` on one clock. */
 export const checkpointDue = (/** @type {number} */ nowMs, /** @type {number} */ lastMs) => Number.isFinite(nowMs) && nowMs - lastMs >= ONLINE_CHECKPOINT_MS;

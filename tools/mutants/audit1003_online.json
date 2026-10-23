@@ -374,9 +374,9 @@
   },
   {
     "name": "AUDIT1003-O10-READ-ON-A-REFUSAL",
-    "file": "src/systems/online/onlineHomes.js",
-    "old": "export const checkpointLanded = (c) => c === undefined || c === true || c?.ok === true;",
-    "new": "export const checkpointLanded = (c) => c !== false;",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "export const checkpointLanded = (/** @type {any} */ c) => c === undefined || c === true || c?.ok === true;",
+    "new": "export const checkpointLanded = (/** @type {any} */ c) => c !== false;",
     "tests": [
       "test/systems/arena/audit1003_online.test.js",
       "test/systems/arena/arena4b_homeclient.test.js"

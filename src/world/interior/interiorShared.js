@@ -50,9 +50,11 @@
 import { sharedRecord, validActionRecord } from '../actionSystem.js';
 import { validLootList, LOOT_LIST_MAX, LOOT_NEWER_TEXT } from '../../systems/loot/loot.js';   // LOOT_NEWER_TEXT: AUDIT SETS M2 - a shelf the room has spoken about in words this build cannot read
 import { peerHanded } from '../../systems/peerWord.js';   // SS3: a bound piece in a room's container never lands; HACKED-GOLD: nor a letter of credit (systems/peerWord.js)
-import { clearStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a shelf's or a cupboard's piece is its owner's, never stolen
+import { clearStolen, piecesOf } from '../../systems/stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a shelf's or a cupboard's piece is its owner's, never stolen; SHELF-HOLD: a sold stack's count
 import { mintSharedStamp } from '../../net/wire.js';   // AUDIT WORLD6a B7: one stamp mint at the wire, twelve digits always
 import { createInteriorRoomLoot } from './interiorRoomLoot.js';   // OUTDOOR-LOOT: the cupboards' room law
+import { createShelfHold, SHELF_HOLD_RETRY_MS } from './shelfHold.js';   // SHELF-HOLD: a put on a shop's shelf waits for the record
+import { checkpointLanded } from '../../systems/online/onlineCheckpoint.js';   // SHELF-HOLD: a checkpoint's answer read as every door reads it
 
 /** The room's own key for a building - the SAME spelling roomKeyFor mints for the relay room (the map id unsigned,
  *  AUDIT WORLD34 A2), so the memory's `locationKey` and the room agree by construction. */
@@ -84,7 +86,7 @@ export function layoutRoomKey(buildingKey, layout = null) {
  *  owning one owns them all, and two players in one hull would disagree about whether the room exists) keeps NO
  *  room at all: no key, no memory, no presence room either (the host reports a 0 building key). */
 export function mintInteriorShared(locationKey, { owned = false, home = false, net = null } = {}) {
-  const bag = { locationKey: owned ? null : (locationKey ?? null), owned: !!owned, home: !!home, stamp: mintSharedStamp(), seen: new Set(), tooBig: new Set(), unreadable: new Set(), applied: false, openKey: null, openWin: null, net, room: null };   // AUDIT SETS M2: `unreadable` the containers whose room word this build cannot read; OUTDOOR-LOOT: `net` the host's wiring (the act path, the clocks, the seat, the player's hands) and `room` the cupboards' room law
+  const bag = { locationKey: owned ? null : (locationKey ?? null), owned: !!owned, home: !!home, stamp: mintSharedStamp(), seen: new Set(), tooBig: new Set(), unreadable: new Set(), applied: false, openKey: null, openWin: null, net, room: null, hold: createShelfHold(), left: false };   // AUDIT SETS M2: `unreadable` the containers whose room word this build cannot read; OUTDOOR-LOOT: `net` the host's wiring (the act path, the clocks, the seat, the player's hands) and `room` the cupboards' room law; SHELF-HOLD: `hold` the puts on its shop's shelves the record has not backed (shelfHold.js), `left` the visit over
   if (net && !bag.owned && !bag.home && bag.locationKey) bag.room = createInteriorRoomLoot(net, bag);   // HOME1: a home's cupboards are its owner's; an owned house or ship keeps no room - the module is inert there, as the bag is
   return bag;
 }
@@ -111,7 +113,10 @@ export function interiorLootTarget(ctx, key) {
  *  each under the cap the reader obeys (AUDIT WORLD4 A2/B2/D1: what cannot be said is not said, once, out loud, and
  *  the container stays this player's own). `tooBig` is the caller's said-once set. OUTDOOR-LOOT: a cupboard the room
  *  holds (`bag.room`, a live seat) says the module's word - the seat's state, a claimer's claims in flight - never its list;
- *  a shelf, and a cupboard no room holds (a bare context, an offline page), say the whole list as WORLD6a built it. */
+ *  a shelf, and a cupboard no room holds (a bare context, an offline page), say the whole list as WORLD6a built it.
+ *  SHELF-HOLD: a shelf says what its `hold` lets the room hear (shelfHold.js heard) - never a piece the player put there
+ *  before a checkpoint that holds the put has landed. Every word of a shelf comes through here: the window's open and
+ *  close, the seat's memory, a refused act's heal. */
 export function interiorLootRecords(ctx, keys, tooBig = new Set(), bag = null) {
   const out = [];
   for (const key of keys ?? []) {
@@ -127,7 +132,8 @@ export function interiorLootRecords(ctx, keys, tooBig = new Set(), bag = null) {
       continue;
     }
     tooBig.delete(canon);
-    out.push({ k: canon, r: peerHanded(t.items).map((it) => clearStolen({ ...it })), d: Number.isFinite(t.stockedDate) ? t.stockedDate : 0 });   // AUDIT SS: never a bound piece on the wire - a stone left in one before SS3 stays off the room (an older build connected beside this one would land it); HACKED-GOLD: nor a letter of credit; STOLEN-GOODS AUDIT S3: nor a theft's mark (a stash left on a shut shelf is no peer's theft, and an older build would land it)
+    const items = canon.startsWith('shelf:') && bag?.hold ? bag.hold.heard(t, canon) : t.items;   // SHELF-HOLD
+    out.push({ k: canon, r: peerHanded(items).map((it) => clearStolen({ ...it })), d: Number.isFinite(t.stockedDate) ? t.stockedDate : 0 });   // AUDIT SS: never a bound piece on the wire - a stone left in one before SS3 stays off the room (an older build connected beside this one would land it); HACKED-GOLD: nor a letter of credit; STOLEN-GOODS AUDIT S3: nor a theft's mark (a stash left on a shut shelf is no peer's theft, and an older build would land it)
   }
   return out;
 }
@@ -203,12 +209,12 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
 /** The building's SHARED world for the room's memory: the opened containers the room knows of (`seen`) and every
  *  action record's shared half; keyed by the building and stamped by the mode's context, so another building's
  *  memory - or this one's own, back from a reconnect's welcome (AUDIT WORLD B1) - is refused. */
-export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(), tooBig = new Set(), home = false, room = null } = {}) {
+export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(), tooBig = new Set(), home = false, room = null, hold = null } = {}) {
   if (!ctx || !locationKey) return null;
   return {
     locationKey, stamp,
     world: {
-      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),   // HOME1: a home's cupboards are its owner's alone
+      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room, hold }),   // HOME1: a home's cupboards are its owner's alone; SHELF-HOLD: the memory, held as every word is
       actions: (ctx.actions?.collectSaveData?.() ?? []).map(sharedRecord),
     },
   };
@@ -228,11 +234,11 @@ export function applyInteriorShared(ctx, shared, { locationKey, stamp, seen = ne
 
 /** AUDIT WORLD3 A3's seam for a building: the CURRENT shared record of each named object - a door's or a
  *  container's, told apart by the key - for an act the wire refused. */
-export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set(), home = false, room = null } = {}) {
+export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set(), home = false, room = null, hold = null } = {}) {
   if (!ctx || !locationKey || !Array.isArray(keys) || !keys.length) return null;
   const want = new Set(keys);
   const a = (ctx.actions?.collectSaveData?.() ?? []).filter((r) => want.has(r.key)).map(sharedRecord);
-  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });   // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it
+  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room, hold });   // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it; SHELF-HOLD: a shelf's, held
   return a.length || l.length ? { k: locationKey, ...(a.length ? { a } : {}), ...(l.length ? { l } : {}) } : null;
 }
 
@@ -248,7 +254,7 @@ function publishWhole(ctx, canon, bag, { claim = false } = {}) {
   if (!bag?.locationKey || !canon || !ctx || bag.home) return false;   // HOME1: a home's cupboards are never the room's
   if (bag.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read
   if (claim && bag.seen.has(canon)) return false;
-  const l = interiorLootRecords(ctx, [canon], bag.tooBig);
+  const l = interiorLootRecords(ctx, [canon], bag.tooBig, { hold: bag.hold });   // SHELF-HOLD: never a put the record has not backed
   if (!l.length) return false;   // never opened, or too large to say - it stays this player's own
   const first = !bag.seen.has(canon);
   bag.seen.add(canon);
@@ -263,12 +269,16 @@ function publishWhole(ctx, canon, bag, { claim = false } = {}) {
  *  had already told the room the cupboard's whole contents; `fresh` is the arm's word that this open rolled the new day's stock,
  *  and then the word is not a claim but the room's new stock. OUTDOOR-LOOT: a cupboard's window is the room's too - nothing is
  *  composed under it (C1) and its takes are claimed as they are made - but its birth was minted at the Yes, ahead of this
- *  (interiorLootBirth: the keeping the window's theft marks read is taken after it). */
-export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = null } = {}) {
+ *  (interiorLootBirth: the keeping the window's theft marks read is taken after it).
+ *  SHELF-HOLD: `watchPuts` - the shut shop's window (the pack beside the shelf, no basket): whatever its shelf gains while
+ *  it is open came out of the player's own lists, and is held as a sale is (shelfHold.js watch). */
+export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = null, watchPuts = false } = {}) {
   const canon = interiorLootKeyOf(key);
   if (!bag?.locationKey || !canon || !win) return;
   if (canon.startsWith('container:') && bag.room?.live()) { bag.room.open(canon, win, keeping); return; }
   if (bag.unreadable?.has(canon)) bag.net?.say?.(LOOT_NEWER_TEXT);   // AUDIT SETS M2: what is shown is this build's own roll, and it is never said to the room
+  bag.hold?.unwatch();   // a window laid over the watched one's: the last look is the one it took
+  if (watchPuts && canon.startsWith('shelf:')) bag.hold?.watch(interiorLootTarget(ctx, canon), canon);   // SHELF-HOLD: counted from what it holds as it opens
   bag.openKey = canon; bag.openWin = win;
   publishWhole(ctx, canon, bag, { claim: !fresh });
 }
@@ -283,13 +293,19 @@ export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = 
  *  lapse and re-ask, a seat's change, a put's re-say. */
 export function interiorLootFrame(ctx, bag, { now = 0, open = () => true } = {}) {
   if (!bag?.locationKey) return;
+  bag.hold?.look();   // SHELF-HOLD: the shut shelf looked at every frame - a piece taken, a checkpoint, the piece put back is a put
   const win = bag.openWin;
   if (win && !(String(bag.openKey).startsWith('container:') && bag.room?.live()) && !(open(win) && !win.done)) {
     const k = bag.openKey;
     bag.openKey = null; bag.openWin = null;
     publishWhole(ctx, k, bag);
+    if (bag.hold?.watching === k) bag.hold.unwatch();
   }
   bag.room?.frame(ctx, now, open);
+  // SHELF-HOLD: a put asks the checkpoint that lets it go; one no checkpoint has let go asks again, never faster than
+  // SHELF_HOLD_RETRY_MS (a refused checkpoint - a duel, a journey - or a put the service did not take)
+  const hold = bag.hold;
+  if (hold && !hold.asking && (hold.dirty || (hold.waiting && now - hold.askedAt >= SHELF_HOLD_RETRY_MS))) askShelfCheckpoint(ctx, bag);
 }
 
 /** Whether a cupboard is one this client has not heard of - the plaque (CONTAINER-PEEK) names it and lists nothing: no state
@@ -323,4 +339,52 @@ export function interiorLootAside(ctx, bag) { bag?.room?.aside(ctx); }
 
 /** D-1/D-1a: the claimer's own teardown (exitInteriorNow, forceExitToExterior - a teleport's and a load's) - ahead of the bag's
  *  drop: a claim in flight and not lapsed goes with its claimer. */
-export function interiorLootLeave(ctx, bag) { bag?.room?.leave(ctx); }
+export function interiorLootLeave(ctx, bag) {
+  bag?.room?.leave(ctx);
+  if (bag) bag.left = true;   // SHELF-HOLD: a landing after the visit re-says nothing - the farewell said the shelf as the record then backed it
+}
+
+// ═══ SHELF-HOLD (FIELD BUGS 2026-10-22d, shelfHold.js): A SHOP'S SHELF SAYS ONLY WHAT THE RECORD BACKS ═══════════════════════
+
+/** A DEAL CONCLUDED AT A SHOP'S COUNTER (worldModes.js commitTrade, the keyed list's doBuy and doSell). A sale's pieces,
+ *  landed on the shelf, are held out of the room's word (shelfHold.js put); a sale and a purchase alike ask a checkpoint at
+ *  once, whose landing lets the held pieces go - the shelf said whole again and the memory pushed. A shelf no room hears
+ *  (a street merchant's, a building with none, a home) holds nothing and asks nothing. Answers whether it was a room's. */
+export function interiorShelfDealt(ctx, bag, shelf, mode, staged = []) {
+  if (!bag?.hold || !bag.locationKey || bag.home || !shelf || !Array.isArray(ctx?.shelves)) return false;
+  const i = ctx.shelves.indexOf(shelf);
+  if (i < 0) return false;
+  const sale = mode === 'Sell' || mode === 'SellMagic';
+  if (!sale && mode !== 'Buy') return false;
+  if (sale) for (const it of Array.isArray(staged) ? staged : []) if (Array.isArray(shelf.items) && shelf.items.includes(it)) bag.hold.put(it, piecesOf([it]), `shelf:${i}`, shelf);   // a stolen piece is the merchant's to be rid of, and never shelved (landSold)
+  askShelfCheckpoint(ctx, bag);
+  return true;
+}
+
+/** The checkpoint a hold asks (`bag.net.checkpoint` - the host's onlineCheckpointLanded: the realm's answer to the put
+ *  that carried the save, a slot's `true`, or `false` refused). One at a time: a change while one is out asks again once
+ *  it is answered, since the one out was composed before it. No door at all is no hold (checkpointLanded's `undefined`). */
+function askShelfCheckpoint(ctx, bag) {
+  const hold = bag.hold;
+  if (hold.asking) { hold.again = true; return; }
+  const g = hold.covers();
+  hold.dirty = false;
+  hold.askedAt = bag.net?.now?.() ?? 0;
+  let r;
+  try { r = bag.net?.checkpoint?.(); } catch (e) { console.warn('[loot] the shelf\'s checkpoint', e); r = false; }
+  if (typeof r?.then !== 'function') { if (checkpointLanded(r)) shelfBacked(ctx, bag, g); return; }
+  hold.asking = true;
+  Promise.resolve(r).then((a) => { if (checkpointLanded(a)) shelfBacked(ctx, bag, g); }, () => {}).finally(() => {
+    hold.asking = false;
+    if (hold.again && !bag.left) { hold.again = false; askShelfCheckpoint(ctx, bag); }
+  });
+}
+
+/** A checkpoint that covered `g` landed: each shelf whose every put it backs is said whole now - but the open one, whose
+ *  close says it - and the memory goes out this frame (bag.net.claimed). Nothing once the visit is over. */
+function shelfBacked(ctx, bag, g) {
+  const keys = bag.hold.landed(g);
+  if (!keys.length || bag.left) return;
+  for (const k of keys) if (k !== bag.openKey) publishWhole(ctx, k, bag);
+  bag.net?.claimed?.();
+}

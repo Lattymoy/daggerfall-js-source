@@ -51,6 +51,7 @@ import { GUILD_HALL_ENTRIES, GUILD_HALL_ENTRY_WORDS, guildHallPrice } from '../.
 import { heraldryOf } from '../../net/heraldryLaw.js';   // GUILD1d: a hall's heraldry, off the town's answer
 import { layoutStampOfMapId, CLASSIC_LAYOUT } from '../layoutPins.js';   // WD3: a home is bought in its town's layout
 import { goldSum as gold, EMPIRE_ACCOUNT_WORDS } from '../homeWords.js';   // HOME-PRICE: every sum with its thousands; online, the Empire's account (EMPIRE-ACCOUNT)
+import { checkpointLanded } from './onlineCheckpoint.js';   // SHELF-HOLD: the landed answer's one home
 import { walletReserve } from '../../net/realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
 import {
   HOME_VOTE_UP, HOME_VOTE_DOWN, homeScoreOf, homeMyVoteOf, homeShunned, homeShunnedInsiderLine, homeVotesLine, HOME_SHUNNED_LINE,
@@ -862,9 +863,9 @@ async function sellOut(homes, { mapId, buildingKey, credit, realm }) {
 
 /** How many houses a move is posted to before it waits for the next boot (one taken under each pick). */
 export const ARENA_MOVE_TRIES = 3;
-/** AUDIT PRE-MERGE 1003 O10: whether a checkpoint's answer (awaited) says the save landed: a slot's `true`, a realm put's
- *  `{ ok: true }`; no hook at all (`undefined`) asks no checkpoint. Pure. */
-export const checkpointLanded = (c) => c === undefined || c === true || c?.ok === true;
+/** AUDIT PRE-MERGE 1003 O10: whether a checkpoint's answer says the save landed - its one home is onlineCheckpoint.js
+ *  (SHELF-HOLD reads it too), handed on here for the doors that read it from this module. */
+export { checkpointLanded };
 
 /**
  * THE MOVES, made and read (above). `homes` the registry (createOnlineHomes), `api` net/accountClient.js accountHomes,

@@ -379,7 +379,11 @@ against the code, two paths made copies no player chose, and the hold made every
 - **A giver's game killed after a chest's hand-off.** The giver's record had not seen the give (a checkpoint every 120
   s), it rejoined with the piece, and its next checkpoint past the grace proved the RECEIVER the copier - three of those
   and the receiver's trade was staff's. Reproduced over the real Worker in the session (a scratch test, not kept). The
-  realm trade window is not this path: the service settles both records at once.
+  realm trade window is not this path: the service settles both records at once. SHELF-HOLD (FIELD BUGS 2026-10-22d,
+  `01-Overview/bugs/Field-Bugs-2026-10-22d.md`): a shop's shelf was the same order with no receiver to lock - a piece sold,
+  the game closed before the record saw the sale, and the relay's shelf offered the seller's own piece to everyone. A
+  piece put on a shop's shelf from the player's own lists now reaches the room only once the checkpoint that holds the
+  put has landed (`world/interior/shelfHold.js`); the cupboard's hand-off stays this bullet's.
 - **The hold itself:** `dupes` counted pieces, not incidents (one copied save of three pieces held the character at
   once), never fell, staff alone lifted it, and the player was never told which piece.
 

@@ -1,0 +1,371 @@
+[
+  {
+    "name": "FB1022D-SHELFHOLD-heard-says-every-piece",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "if (w === 0) { out.push(it); continue; }",
+    "new": "if (true) { out.push(it); continue; }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-heard-stack-at-its-whole-count",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "const n = countOf(it) - w;",
+    "new": "const n = countOf(it);",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-heard-a-piece-at-nothing-said",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "if (n > 0) out.push({ ...it, stackCount: n });",
+    "new": "if (n >= 0) out.push({ ...it, stackCount: n });",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-withheld-its-own-landing-backs-nothing",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "for (const r of rows) if (r.g > backed) n += r.n;",
+    "new": "for (const r of rows) if (r.g >= backed) n += r.n;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-landed-moves-back",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "if (!(g > backed)) return [];",
+    "new": "if (false) return [];",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-landed-last-put-never-let-go",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "for (const [k, at] of keys) if (at <= backed) { out.push(k); keys.delete(k); }",
+    "new": "for (const [k, at] of keys) if (at < backed) { out.push(k); keys.delete(k); }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-put-door-counted-twice-on-a-watched-shelf",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "if (watch && shelf === watch.target) watch.seen.set(item, (watch.seen.get(item) ?? 0) + n);",
+    "new": "if (false) watch.seen.set(item, (watch.seen.get(item) ?? 0) + n);",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-watch-counts-the-shops-own-stock",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "watch = target && typeof canon === 'string' ? { target, canon, seen: countsOf(target.items) } : null;",
+    "new": "watch = target && typeof canon === 'string' ? { target, canon, seen: new Map() } : null;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-look-never-moves-on",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "      watch.seen = now;\n",
+    "new": "\n",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-look-a-take-then-put-back-unseen",
+    "file": "src/world/interior/shelfHold.js",
+    "old": "if (c > was) { hold.put(it, c - was, watch.canon); any = true; }",
+    "new": "if (c > was && !watch.seen.has(it)) { hold.put(it, c - was, watch.canon); any = true; }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-records-say-the-live-shelf",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "const items = canon.startsWith('shelf:') && bag?.hold ? bag.hold.heard(t, canon) : t.items;",
+    "new": "const items = t.items;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-memory-unheld",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room, hold }),",
+    "new": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-heal-unheld",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room, hold });",
+    "new": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-window-word-unheld",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "const l = interiorLootRecords(ctx, [canon], bag.tooBig, { hold: bag.hold });",
+    "new": "const l = interiorLootRecords(ctx, [canon], bag.tooBig);",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-bag-holds-nothing",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "hold: createShelfHold(), left: false };",
+    "new": "hold: null, left: false };",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-dealt-sale-unheld",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (sale) for (const it of Array.isArray(staged) ? staged : []) if (Array.isArray(shelf.items) && shelf.items.includes(it)) bag.hold.put(",
+    "new": "if (false) for (const it of Array.isArray(staged) ? staged : []) if (Array.isArray(shelf.items) && shelf.items.includes(it)) bag.hold.put(",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-dealt-holds-a-piece-never-shelved",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (Array.isArray(shelf.items) && shelf.items.includes(it)) bag.hold.put(",
+    "new": "if (Array.isArray(shelf.items)) bag.hold.put(",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-dealt-asks-no-checkpoint",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  askShelfCheckpoint(ctx, bag);\n  return true;\n}",
+    "new": "  return true;\n}",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-dealt-purchase-asks-nothing",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (!sale && mode !== 'Buy') return false;",
+    "new": "if (!sale) return false;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-dealt-street-shelf-asks",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  if (i < 0) return false;\n  const sale",
+    "new": "  const sale",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-ask-second-change-dropped",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (hold.asking) { hold.again = true; return; }",
+    "new": "if (hold.asking) { return; }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-ask-landing-backs-what-it-never-carried",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "Promise.resolve(r).then((a) => { if (checkpointLanded(a)) shelfBacked(ctx, bag, g); }",
+    "new": "Promise.resolve(r).then((a) => { if (checkpointLanded(a)) shelfBacked(ctx, bag, hold.covers()); }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-ask-slots-true-never-lands",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (typeof r?.then !== 'function') { if (checkpointLanded(r)) shelfBacked(ctx, bag, g); return; }",
+    "new": "if (typeof r?.then !== 'function') { return; }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-ask-refusal-lands",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "Promise.resolve(r).then((a) => { if (checkpointLanded(a)) shelfBacked",
+    "new": "Promise.resolve(r).then((a) => { if (a) shelfBacked",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-frame-retry-a-moment-late",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "(hold.waiting && now - hold.askedAt >= SHELF_HOLD_RETRY_MS)",
+    "new": "(hold.waiting && now - hold.askedAt > SHELF_HOLD_RETRY_MS)",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-frame-retry-every-frame",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "(hold.waiting && now - hold.askedAt >= SHELF_HOLD_RETRY_MS)",
+    "new": "(hold.waiting)",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-frame-put-never-asks",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "(hold.dirty || (hold.waiting",
+    "new": "((hold.waiting",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-frame-close-keeps-watching",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "    if (bag.hold?.watching === k) bag.hold.unwatch();\n",
+    "new": "",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-backed-says-over-the-open-window",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "for (const k of keys) if (k !== bag.openKey) publishWhole(ctx, k, bag);",
+    "new": "for (const k of keys) publishWhole(ctx, k, bag);",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-backed-memory-waits",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "publishWhole(ctx, k, bag);\n  bag.net?.claimed?.();\n}",
+    "new": "publishWhole(ctx, k, bag);\n}",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-backed-after-the-visit",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (!keys.length || bag.left) return;",
+    "new": "if (!keys.length) return;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-leave-never-said",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  if (bag) bag.left = true;",
+    "new": "",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-open-every-window-watched",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "if (watchPuts && canon.startsWith('shelf:')) bag.hold?.watch(",
+    "new": "if (canon.startsWith('shelf:')) bag.hold?.watch(",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-landed-undefined-is-a-refusal",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "export const checkpointLanded = (/** @type {any} */ c) => c === undefined || c === true || c?.ok === true;",
+    "new": "export const checkpointLanded = (/** @type {any} */ c) => c === true || c?.ok === true;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-host-bag-checkpoint-the-handover",
+    "file": "src/scenes/worldModes.js",
+    "old": "checkpoint: () => host.checkpointLanded?.() } });",
+    "new": "checkpoint: () => host.saveSoon?.() } });",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-host-commit-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorShelfDealt(interiorCtx, _intShared, shelf, mode, staged);",
+    "new": "    void 0;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-host-keyed-sale-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorShelfDealt(interiorCtx, _intShared, shelf, 'Sell', [it]);",
+    "new": "    void 0;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-host-keyed-buy-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    interiorShelfDealt(interiorCtx, _intShared, shelf, 'Buy', [it]);",
+    "new": "    void 0;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-host-shut-shelf-unwatched",
+    "file": "src/scenes/worldModes.js",
+    "old": "_intShared, { fresh, watchPuts: true }); }",
+    "new": "_intShared, { fresh }); }",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-host-heal-unheld",
+    "file": "src/scenes/worldModes.js",
+    "old": "room: _intShared.room, hold: _intShared.hold }) : null;",
+    "new": "room: _intShared.room }) : null;",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  },
+  {
+    "name": "FB1022D-SHELFHOLD-boot-handover-not-landed",
+    "file": "src/scenes/world.js",
+    "old": "    checkpointLanded: onlineCheckpointLanded,",
+    "new": "    checkpointLanded: onlineCheckpoint,",
+    "tests": [
+      "test/world/interior/fb1022d_shelfhold.test.js"
+    ]
+  }
+]
