@@ -58,10 +58,19 @@ export const DUPE_GRACE_S = 750;
 export const UID_CHUNK = 90;
 /** How many rows one INSERT writes: the four the rows share (?1-?4) and two of each row's own, under D1's hundred. */
 export const UPSERT_ROWS = 48;
+/** STAFF-PANEL4-CENSUS: how many copies one INSERT writes - the three the rows share (?1-?3) and six of each row's own
+ *  (the piece, its first holder and since when, its claimant and since when, its print), under D1's hundred. */
+export const DUPE_ROWS = 16;
 /** The most new keys one checkpoint takes into the ledger; the rest wait for the next (twenty statements). */
 export const LEDGER_NEW_MAX = 960;
 /** The most keys one checkpoint reads the ledger for (67 reads at most); a save holding more has the rest unfollowed. */
 export const LEDGER_KEYS_MAX = 6000;
+/** STAFF-PANEL3-REALM (design doc weak spots, "Items, census and economy": "Staff-taken ids keep a 'seized' state, so a
+ *  save that shows one again is charged as a copy"): an `escrow` row's `char_id` when staff took the piece (staffRealm.js
+ *  - off the market, or out of a save) - in the service's hands, as escrow is, and no record's. No realm id is shaped
+ *  like it (realm.js REALM_ID_RE), and 0096's CHECK on `state` stands as it is. Put back hands the row back - to the
+ *  market's hands, or to the record it was taken from (staffRealm.js evidence/return). */
+export const SEIZED = 'seized';
 
 const marks = (/** @type {number} */ n, /** @type {number} */ from) => Array.from({ length: n }, (_, i) => `?${from + i}`).join(', ');
 /** `[...list]` in slices of `n`. */
@@ -87,7 +96,7 @@ const overKeys = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type
  *  copies - as statements, so a checkpoint sends them in the batch that reads its record (each was a round trip of its
  *  own, and a checkpoint is a third of the primary's statements). */
 export const ledgerReads = (/** @type {any} */ db, /** @type {string} */ char) => [
-  db.prepare('SELECT uid, char_id, state, fp, claim_char, claim_at FROM item_uids WHERE char_id = ?1 OR claim_char = ?1').bind(char),
+  db.prepare('SELECT uid, char_id, state, fp, claim_char, claim_at, at FROM item_uids WHERE char_id = ?1 OR claim_char = ?1').bind(char),
   db.prepare('SELECT uid FROM item_dupes WHERE char_id = ?').bind(char),
 ];
 
@@ -123,7 +132,7 @@ export async function ledgerStep(db, at, pieces, known = null) {
   for (const r of mine?.results ?? []) rows.set(r.uid, r);
   const copiesKnown = new Set(((known ? known.dupes : await dupesRead.all())?.results ?? []).map((/** @type {any} */ r) => r.uid));
   for (const part of chunks([...shown.keys()].filter((k) => !rows.has(k) && !copiesKnown.has(k)), UID_CHUNK)) {
-    const r = await db.prepare(`SELECT uid, char_id, state, fp, claim_char, claim_at FROM item_uids WHERE uid IN (${marks(part.length, 1)})`).bind(...part).all();
+    const r = await db.prepare(`SELECT uid, char_id, state, fp, claim_char, claim_at, at FROM item_uids WHERE uid IN (${marks(part.length, 1)})`).bind(...part).all();
     for (const row of r?.results ?? []) rows.set(row.uid, row);
   }
   /** @type {[string, string][]} */
@@ -141,6 +150,8 @@ export async function ledgerStep(db, at, pieces, known = null) {
       if (!rehomedPrint(r.fp, fp)) { forged.push(key); continue; }   // another piece's key: no claim to that piece
       reprint.push([key, fp, r.fp]);   // AUDIT FB1018f L1-1: the piece itself, its base moved home by the load (lootRarity.js)
     }
+    // STAFF-PANEL3-REALM: a piece staff took, shown again - a copy of it, charged to this record (and locked, as every copy)
+    if (r && r.state === 'escrow' && r.char_id === SEIZED) { copies.push(key); continue; }
     if (n > 1) { copies.push(key); if (!r) fresh.push([key, fp]); continue; }   // one piece twice in one record
     if (!r) { if (fresh.length < LEDGER_NEW_MAX) fresh.push([key, fp]); continue; }
     if (r.char_id === char && r.state === 'held') {
@@ -180,7 +191,9 @@ export async function ledgerStep(db, at, pieces, known = null) {
   // the writes - only what changed
   steps.push(...insertSteps(db, at, fresh, 'ON CONFLICT (uid) DO NOTHING'));
   for (const [key, fp, was] of reprint) steps.push(db.prepare('UPDATE item_uids SET fp = ?2 WHERE uid = ?1 AND fp = ?3').bind(key, fp, was));   // AUDIT FB1018f L1-1
-  if (copies.length) steps.push(...copyRows(db, copies, char, nowS));
+  // STAFF-PANEL4-CENSUS: each copy written down with the record the ledger had holding it and since when - a piece shown
+  // twice in one record is that record's claim on itself, now
+  if (copies.length) steps.push(...copyRows(db, copies, char, nowS, 'twice', (k) => { const r = rows.get(k); return { first: r ? r.char_id || null : char, firstAt: r ? r.at : nowS, claimant: char, claimAt: nowS, fp: shown.get(k)?.fp ?? null }; }));
   steps.push(...overKeys(db, claim, [char, nowS], (m) => `UPDATE item_uids SET claim_char = ?1, claim_at = ?2 WHERE uid IN (${m}) AND claim_char IS NULL`));
   steps.push(...overKeys(db, takeUp, [at.player, char, at.seq, nowS], (m) => `UPDATE item_uids SET player = ?1, char_id = ?2, seen_seq = ?3, state = 'held', claim_char = NULL, claim_at = NULL, at = ?4 WHERE uid IN (${m}) AND state = 'gone'`));
   steps.push(...overKeys(db, moveOn, [char, nowS], (m) => `UPDATE item_uids SET char_id = claim_char, player = COALESCE((SELECT c.player FROM realm_characters c WHERE c.id = item_uids.claim_char), player),
@@ -192,14 +205,16 @@ export async function ledgerStep(db, at, pieces, known = null) {
     // the claim was a copy: the claimant's - written down, locked, and found with no strike (AUTO-HOLD: contested); the
     // piece stays this record's
     steps.push(...overKeys(db, keys, [claimant], (m) => `UPDATE item_uids SET claim_char = NULL, claim_at = NULL WHERE uid IN (${m}) AND claim_char = ?1`));
-    steps.push(...copyRows(db, keys, claimant, nowS), ...chargeSteps(db, claimant, keys, nowS, { strike: false }));
+    // STAFF-PANEL4-CENSUS: a CONTESTED piece - its first holder (this record) and its claimant, each with its time
+    steps.push(...copyRows(db, keys, claimant, nowS, 'claim', (k) => { const r = rows.get(k); return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null }; }),
+      ...chargeSteps(db, claimant, keys, nowS, { strike: false }));
     charged += keys.length;
   }
-  for (const keys of upheld.values()) {
+  for (const [claimant, keys] of upheld) {
     // the craft's record names the claimant: this record kept a piece it sold - the piece goes, and the copy is this one's
     steps.push(...overKeys(db, keys, [nowS], (m) => `UPDATE item_uids SET char_id = claim_char, player = COALESCE((SELECT c.player FROM realm_characters c WHERE c.id = item_uids.claim_char), player),
       claim_char = NULL, claim_at = NULL, at = ?1 WHERE uid IN (${m})`));
-    steps.push(...copyRows(db, keys, char, nowS));
+    steps.push(...copyRows(db, keys, char, nowS, 'craft', (k) => { const r = rows.get(k); return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null }; }));
     copies.push(...keys);
   }
   // AUTO-HOLD: THE PIECES LOCKED in this record - its known copies it still shows, and the copies found now - for the
@@ -208,13 +223,18 @@ export async function ledgerStep(db, at, pieces, known = null) {
   return { steps, copies, forged, charged, locked };
 }
 
-/** Copies written down: `keys`, each a copy `char` holds. */
-const copyRows = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS) =>
-  chunks(keys, UPSERT_ROWS).map((part) => db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at) VALUES ${part.map((_, i) => `(?${3 + i}, ?1, ?2)`).join(', ')}`).bind(char, nowS, ...part));
+/** @typedef {{ first: string | null, firstAt: number | null, claimant: string | null, claimAt: number | null, fp: string | null }} CopyWho */
+/** Copies written down: `keys`, each a copy `char` holds - STAFF-PANEL4-CENSUS: found as `kind` (migration 0154), and
+ *  `whoOf(key)` the record the ledger had holding it first and the one that claimed it, each with its time, and its print. */
+const copyRows = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type {string} */ char, /** @type {number} */ nowS,
+  /** @type {string | null} */ kind = null, /** @type {(k: string) => CopyWho | null} */ whoOf = () => null) =>
+  chunks(keys, DUPE_ROWS).map((part) => db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES ${part.map((_, i) => { const o = 4 + 6 * i; return `(?${o}, ?1, ?2, ?3, ?${o + 1}, ?${o + 2}, ?${o + 3}, ?${o + 4}, ?${o + 5})`; }).join(', ')}`)
+    .bind(char, nowS, kind, ...part.flatMap((k) => { const w = whoOf(k); return [k, w?.first ?? null, w?.firstAt ?? null, w?.claimant ?? null, w?.claimAt ?? null, w?.fp ?? null]; })));
 
 /** INT9 (AUDIT): `keys` written down as copies `char` holds - a death's dropped pieces, whose ids the remains carry afresh
  *  (server-account/src/wild.js): never charged, and moved by no route. */
-export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) => copyRows(db, keys, char, nowS);
+export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) =>
+  copyRows(db, keys, char, nowS, 'drop', () => ({ first: char, firstAt: null, claimant: null, claimAt: null, fp: null }));   // STAFF-PANEL4-CENSUS: bookkeeping, never contested
 
 /**
  * AUDIT LW-II-2 S2: A PIECE IN ESCROW THE SERVICE DESTROYED - a patron's purchase (market.js reckonPatrons): no record
@@ -230,7 +250,10 @@ export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char
 export function escrowSpentSteps(db, key, claim, nowS) {
   if (!claim) return [db.prepare("DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL").bind(key)];
   return [
-    ...copyRows(db, [key], claim, nowS),
+    // STAFF-PANEL4-CENSUS: the service held it first (no record), since it went into escrow; the claim's time and the
+    // print off the ledger's row, read before this batch's own step below clears the claim
+    db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES (?1, ?2, ?3, 'escrow', NULL,
+      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`).bind(key, claim, nowS),
     ...chargeSteps(db, claim, [key], nowS, { strike: false }),
     db.prepare("UPDATE item_uids SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2").bind(key, claim, nowS),
   ];

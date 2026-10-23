@@ -50,7 +50,7 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, mintId, overRate } from './accounts.js';
-import { canModerate } from './titles.js';
+import { canModerate, isDeveloper } from './titles.js';
 import { marksOpenFor, balanceOf } from './marks.js';
 import { boardOpenFor } from './board.js';
 import { titheAt } from './seatHolding.js';   // SEAT1d: the bailiwick's Tithe
@@ -95,6 +95,7 @@ import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // I
 import { vendorOf, VENDOR_STATION, VENDOR_LISTING_S, VENDOR_STOCK_SHOWN, VENDOR_STOCK_MAX, VENDOR_BOARD_SHOWN } from '../../src/net/vendorLaw.js';   // HOME-VENDOR: a home's trader
 import { tradeActStatements, patronActStatements } from './townEcon.js';   // TOWN-ECON TE2: a trader's sale and a patron's, counted at their town
 import { shapeOf, keptFits } from './keptBoard.js';   // AUDIT LEAN-READS B1/B10: a kept board's shape, and its bound in bytes
+import { auditStatement } from './staff.js';   // STAFF-PANEL3-REALM: a removal's audit row (read at a call, never at load)
 
 const DAY_S = 86_400;
 /** GOLD-MARKET: the Stores origin of units bought in the row's own currency (a listing's or a sale's `currency`). */
@@ -121,6 +122,13 @@ const shut = (player, env) => (marketOpenFor(player, env) ? null : { error: 'mar
  *  query joins it as `d` to its home `h`. */
 const VENDOR_STANDS_SQL = `d.map_id = ?1 AND d.id = ?2 AND d.yard = 0 AND json_extract(d.place, '$.station') = '${VENDOR_STATION}'`;
 const idOk = (id) => typeof id === 'string' && MARKET_ID_RE.test(id);
+/** STAFF-PANEL3-REALM (design doc weak spots, "Freeze and trade holds": "A banned, frozen or held player's market listings
+ *  keep selling. Buys and bids check the seller's hold, ban and freeze"): 1 when the seller of listing or auction `x` may
+ *  sell nothing now - its account banned, or the character it listed from held (realm.js holdStandsSql, the patrons'
+ *  own) - `now` the SQL of the time. Read with the row a buy or a bid reads, so it costs no round trip. The freeze joins
+ *  it beside the ban (the freeze's own build). */
+export const sellerStoppedSql = (/** @type {string} */ x, /** @type {string} */ now) => `(EXISTS (SELECT 1 FROM players sp WHERE sp.id = ${x}.seller AND sp.banned_until > ${now})
+  OR EXISTS (SELECT 1 FROM realm_characters sc WHERE sc.id = ${x}.char_id AND sc.player = ${x}.seller AND ${holdStandsSql('sc', now)}))`;
 /** An account a week registered may witness (SEAT0 3.2), as a harvest's does. */
 const witnessOf = (player, nowS) => (Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - WITNESS.ageS ? 1 : 0);
 
@@ -1236,11 +1244,16 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   // MARKET-SPEED: the hour's acts counted and the listing read at once - the hour's refusal still the first word
   const [over, l] = await Promise.all([
     overRate(ctx, `market:${me}`, MARKET_OPS_MAX, MARKET_WINDOW_S),
-    db.prepare('SELECT * FROM market_listings WHERE id = ?1').bind(id).first(),
+    db.prepare(`SELECT l.*, ${sellerStoppedSql('l', '?2')} AS seller_stopped,
+      (SELECT frozen_until FROM players WHERE id = l.seller) AS seller_frozen FROM market_listings l WHERE l.id = ?1`).bind(id, nowS).first(),
   ]);
   if (over) return { error: 'market-rate' };
   if (!l || l.state !== 'open' || Number(l.expires_at) <= nowS) return { error: 'market-gone' };
+  if (Number(l.seller_frozen) > nowS) return { error: 'market-seller-frozen' };   // STAFF-PANEL5-FREEZE: a frozen account's listings sell nothing
   if (l.seller === me) return { error: 'market-own' };
+  // STAFF-PANEL3-REALM: a seller held or banned sells nothing - the word every game already reads for a listing it can no
+  // longer buy (a word of its own would need its text in every language the game ships)
+  if (Number(l.seller_stopped)) return { error: 'market-gone' };
   // HOME-VENDOR: a trader's piece is bought at its trader alone - the buyer's word names the listing's own stall, in its
   // home's region, and the stall still stands; any other listing is no trader's
   const vend = vendor == null ? null : vendorOf(vendor);
@@ -1940,9 +1953,12 @@ export async function marketBid(ctx, player, env, { character, region, auction: 
   if (!idOk(id)) return { error: 'bad-listing' };
   if (!bidOk(amount)) return { error: 'bad-bid' };   // AUDIT 31 L6: a bid's bound is the Marks cap, never a price's
   if (await overRate(ctx, `market:${me}`, MARKET_OPS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
-  const a = await db.prepare(`SELECT a.*, (SELECT bidder FROM market_bids WHERE id = a.high_bid) AS high_bidder FROM market_auctions a WHERE a.id = ?1`).bind(id).first();
+  const a = await db.prepare(`SELECT a.*, (SELECT bidder FROM market_bids WHERE id = a.high_bid) AS high_bidder, ${sellerStoppedSql('a', '?2')} AS seller_stopped,
+    (SELECT frozen_until FROM players WHERE id = a.seller) AS seller_frozen FROM market_auctions a WHERE a.id = ?1`).bind(id, nowS).first();
   if (!a || a.state !== 'open' || Number(a.ends_at) <= nowS) return { error: 'market-gone' };
+  if (Number(a.seller_frozen) > nowS) return { error: 'market-seller-frozen' };   // STAFF-PANEL5-FREEZE: nor its auctions
   if (a.seller === me) return { error: 'market-own' };
+  if (Number(a.seller_stopped)) return { error: 'market-gone' };   // STAFF-PANEL3-REALM: a seller held or banned (sellerStoppedSql)
   if (a.high_bidder === me) return { error: 'auction-leading' };
   const high = a.high == null ? null : Number(a.high);
   const next = auctionNext(high, Number(a.opening));
@@ -2043,19 +2059,49 @@ export async function marketReport(ctx, player, env, { listing: id } = {}) {
   return { ok: true };
 }
 
-/** REMOVE: `{ listing }` - a moderator's: the listing off every board, its goods returned on its seller's next read.
- *  PROF5b: an auction likewise - its standing bid voided (its escrow back on its bidder's read), its piece returned. */
-export async function marketRemove(ctx, player, env, { listing: id } = {}) {
+/** REMOVE: `{ listing }` - a developer's: the listing off every board, its goods returned on its seller's next read.
+ *  PROF5b: an auction likewise - its standing bid voided (its escrow back on its bidder's read), its piece returned.
+ *  STAFF-PANEL2-FIX (design doc "DFO Staff Panel: design", Weak spots: "/v1/mod/ acts are limited to in-game mute and
+ *  ban, and Market Pull is Admin only"): a Moderator no longer pulls a listing - an Admin (DEVELOPER_HANDLES) does.
+ *  STAFF-PANEL3-REALM (design doc "Remove items": "Remove from market: the listing ends and the item does not go back"):
+ *  `keep` - the staff panel's removal: the same end, and the goods marked returned in the statement that ends it (`rn` the
+ *  removal's nonce), so its seller's settle never hands them back; `also(nonce, table)` the panel's own statements for the
+ *  batch (its 30-day store's row, the ledger's mark), each guarded on the nonce. Put back clears the mark (staffRealm.js),
+ *  and the seller's next read settles the goods back as any removal's.
+ *  STAFF-PANEL3-REALM (FLAW REVIEW; design doc weak spots: "Audit rows are written inside the shared act code, so in-game
+ *  ... acts land in the log too"): ONE staff_audit ROW A REMOVAL, whichever door asked it - the staff panel's (`audit`, its
+ *  member, act and words) or the game's (/v1/market/remove: the developer, an Admin) - a refusal 'failed' with its word,
+ *  and the removal's own row in the removal's own batch, 'ok' only where it ended an open listing or auction. */
+export async function marketRemove(ctx, player, env, { listing: id } = {}, { keep = false, also = null, audit = null } = {}) {
   const { db, nowS, rand } = ctx;
-  if (!canModerate(player, env)) return { error: 'not-moderator' };
-  if (!idOk(id)) return { error: 'bad-listing' };
-  const r = await db.prepare(`UPDATE market_listings SET state = 'removed', closed_at = ?2 WHERE id = ?1 AND state = 'open'`).bind(id, nowS).run();
-  if (r.meta?.changes) return { ok: true };
+  if (!isDeveloper(player, env)) return { error: 'not-developer' };
+  /** @type {(how: { target: string|null, okIf?: { sql: string, args: unknown[] }, error?: string }) => any} */
+  const row = audit ?? ((how) => auditStatement(db, nowS, {
+    actor: player, role: 'admin', act: 'market-pull', target: how.target,
+    detail: { listing: String(id ?? '').slice(0, 40), door: 'game', ...(how.error ? { error: how.error } : {}) }, ...(how.okIf ? { okIf: how.okIf } : { outcome: 'failed' }),
+  }));
+  const refuse = async (/** @type {string|null} */ target, /** @type {string} */ error) => { await row({ target, error }).run(); return { error }; };
+  if (!idOk(id)) return refuse(null, 'bad-listing');
+  const at = await db.prepare("SELECT 'listing' AS t, seller, state FROM market_listings WHERE id = ?1 UNION ALL SELECT 'auction', seller, state FROM market_auctions WHERE id = ?1").bind(id).first();
+  if (at?.state !== 'open') return refuse(at?.seller ?? null, 'market-gone');
   const nonce = mintId(rand);
+  const kept = keep ? ', returned = 1, rn = ?3' : '';
+  const more = (/** @type {'listing'|'auction'} */ table) => (also ? also(nonce, table) : []);
+  const written = (/** @type {string} */ table) => row({ target: at.seller, okIf: { sql: `EXISTS (SELECT 1 FROM ${table} WHERE id = ? AND state = 'open')`, args: [id] } });
+  if (at.t === 'listing') {
+    const [, r] = await db.batch([
+      written('market_listings'),
+      db.prepare(`UPDATE market_listings SET state = 'removed', closed_at = ?2${kept} WHERE id = ?1 AND state = 'open'`).bind(id, nowS, ...(keep ? [nonce] : [])),
+      ...more('listing'),
+    ]);
+    return r.meta?.changes ? { ok: true } : { error: 'market-gone' };
+  }
   await db.batch([
-    db.prepare(`UPDATE market_auctions SET state = 'removed', closed_at = ?2, cn = ?3 WHERE id = ?1 AND state = 'open'`).bind(id, nowS, nonce),
+    written('market_auctions'),
+    db.prepare(`UPDATE market_auctions SET state = 'removed', closed_at = ?2, cn = ?3${kept} WHERE id = ?1 AND state = 'open'`).bind(id, nowS, nonce),
     db.prepare(`UPDATE market_bids SET state = 'void' WHERE auction = ?1 AND state = 'high'
       AND EXISTS (SELECT 1 FROM market_auctions WHERE id = ?1 AND cn = ?2 AND state = 'removed')`).bind(id, nonce),
+    ...more('auction'),
   ]);
   const a = await db.prepare('SELECT cn FROM market_auctions WHERE id = ?1').bind(id).first();
   return a?.cn === nonce ? { ok: true } : { error: 'market-gone' };

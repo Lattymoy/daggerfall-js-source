@@ -292,7 +292,9 @@ test('SERVER-POST the wiring: the pause face stands the envelope beside the hour
   assert.match(src('src/scenes/dungeonContext.js'), /\n {8}post: \(\) => opts\.post\?\.\(\) \?\? null,/, 'the dungeon\'s pause');
   assert.match(world, /onPost: \(event\) => \{ chatLog\.push\(tab\.id, \{ text: postNoticeText\(event\), system: true \}\); \},/, 'its news on the world tab, a line nobody spoke');
   assert.match(world, /heartbeat\.add\('post', whileLive\(postBox\.heartbeatPart\(\), \(\) => performance\.now\(\) - _mailFrameAt < FRAME_LIVE_MS\)\);/, 'on the letterbox\'s clock, while the lane runs');
-  assert.match(world, /pack: \{ add: \(rec\) => \{ addItem\(\(playerEntity\.items \?\?= \[\]\), setItemFields\(rec\), 'back'\); \}, changed: \(\) => \{ saveSoon\.changed\(\); \} \},\n    \}\);\n    heartbeat\.add\('post'/, 'a claimed item made whole and put in the pack as the vault\'s');
+  // PIN MOVED (LOST-SPOILS): a claimed item goes into the pack by a spoil's own door (takeGateSpoil - addItem's own 'back',
+  // and a first Sigil Stone's book, which a Lost and Found ember brings as the floor's does)
+  assert.match(world, /pack: \{ add: \(rec\) => \{ playerEntity\.items \?\?= \[\]; takeGateSpoil\(\{ kind: 'item', item: setItemFields\(rec\) \}\); \}, changed: \(\) => \{ saveSoon\.changed\(\); \} \},[^\n]*\n    \}\);\n    heartbeat\.add\('post'/, 'a claimed item made whole and put in the pack as the vault\'s');
   assert.match(ENHANCED_CSS, /\n\.px-postmark \{ position: absolute;/);
   assert.match(ENHANCED_CSS, /\n\.px-win\.px-postwin \{/);
 });

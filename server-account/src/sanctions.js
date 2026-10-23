@@ -26,10 +26,10 @@
 // order lands on the target's next connection, as MOD1's always did without a key.
 // ═══════════════════════════════════════════════════════════════════
 
-import { canModerate } from './titles.js';
+import { canModerate, isDeveloper } from './titles.js';
 import { displayName, isMuted } from './accounts.js';
 import { signingKey } from './signing.js';
-import { mintOrder, mintBanOrder, ID_RE } from '../../src/net/identityToken.js';
+import { mintOrder, mintBanOrder, mintStaffCutOrder, ID_RE } from '../../src/net/identityToken.js';
 import { STRIKE_WINDOW_S, LADDER_BAN_AT, ladderMinutes, BAN_DAYS_MAX, banUntil } from '../../src/net/safety/safetyLaw.js';
 import { MUTE_MAX_MIN } from '../../src/net/moderation.js';
 import { SAFE_LAW_PATH } from '../../src/net/wire.js';
@@ -53,13 +53,14 @@ export const isBanned = (row, nowS) => bannedUntil(row) > nowS;
 export const reasonOf = (r) => (typeof r === 'string' && r.trim() ? r.replace(/\s+/g, ' ').trim().slice(0, REASON_MAX) : null);
 
 /**
- * ONE ACT, RECORDED. `actor` an account id or an automatic actor's word; `actorName` what a moderator reads.
+ * ONE ACT, RECORDED. `actor` an account id or an automatic actor's word; `actorName` what a moderator reads. `click`
+ * (STAFF-PANEL2-FIX) the one-time id of the press that made it, where one did (safety.js modAct).
  * @param {any} db
- * @param {{ target: string, kind: string, until?: number|null, reason?: string|null, actor: string, actorName?: string|null, caseId?: string|null, at: number }} act
+ * @param {{ target: string, kind: string, until?: number|null, reason?: string|null, actor: string, actorName?: string|null, caseId?: string|null, click?: string|null, at: number }} act
  */
-export const actionStatement = (db, { target, kind, until = null, reason = null, actor, actorName = null, caseId = null, at }) =>
-  db.prepare('INSERT INTO mod_actions (target, kind, until, reason, actor, actor_name, case_id, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
-    .bind(target, kind, until, reason, actor, actorName, caseId, at);
+export const actionStatement = (db, { target, kind, until = null, reason = null, actor, actorName = null, caseId = null, click = null, at }) =>
+  db.prepare('INSERT INTO mod_actions (target, kind, until, reason, actor, actor_name, case_id, at, click) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)')
+    .bind(target, kind, until, reason, actor, actorName, caseId, at, click);
 
 /** The strikes standing against an account: its mutes and bans of the last STRIKE_WINDOW_S, the voided not counted. */
 export async function strikesOf(db, target, nowS) {
@@ -88,14 +89,15 @@ export async function findAccount(db, { target, name }) {
 
 /**
  * A MUTE WRITTEN, by anyone the caller has already judged may write it - MOD1's row (`muted_until`, `muted_by`) and its
- * act in the record, in one batch. `minutes` 0 lifts it. Answers the mute's end (0 for lifted).
+ * act in the record, in one batch. `minutes` 0 lifts it. Answers the mute's end (0 for lifted). Its callers write only
+ * automatic mutes and lift only those, so it is never an Admin's (`mute_admin`, STAFF-PANEL2-FIX).
  * @param {any} db @param {any} row the target's row
  * @param {{ minutes: number, actor: string, actorName?: string|null, reason?: string|null, caseId?: string|null, nowS: number }} act
  */
 export async function writeMute(db, row, { minutes, actor, actorName = null, reason = null, caseId = null, nowS }) {
   const until = minutes ? nowS + minutes * 60 : null;
   await db.batch([
-    db.prepare('UPDATE players SET muted_until = ?1, muted_by = ?2 WHERE id = ?3').bind(until, until ? actor : null, row.id),
+    db.prepare('UPDATE players SET muted_until = ?1, muted_by = ?2, mute_admin = NULL WHERE id = ?3').bind(until, until ? actor : null, row.id),
     actionStatement(db, { target: row.id, kind: until ? 'mute' : 'unmute', until, reason, actor, actorName, caseId, at: nowS }),
   ]);
   return until ?? 0;
@@ -136,9 +138,12 @@ export async function voidAutoMutes({ db, nowS, subtle }, env, { caseId, row, ac
  * button) never shortens a ban that stands longer (AUDIT SAFE DISCORD-5: "Ban 30 days" cut a ban for good) - its act
  * is recorded, the longer end kept; a moderator who names the days by command means them.
  * @param {{ db: any, nowS: number }} ctx @param {any} actor @param {any} env
- * @param {{ target?: unknown, name?: unknown, days?: unknown, reason?: unknown, caseId?: string|null, actorName?: string|null, keepLonger?: boolean }} ask
+ * STAFF-PANEL2-FIX: `also(answer)`, the caller's own statements for the same batch (safety.js modAct: its case closed,
+ * so the ban, its record and the close land together or none does).
+ * @param {{ target?: unknown, name?: unknown, days?: unknown, reason?: unknown, caseId?: string|null, click?: string|null, actorName?: string|null, keepLonger?: boolean,
+ *   also?: ((answer: { ok: true, target: string, name: string, until: number, reason: string|null }) => any[])|null }} ask
  */
-export async function banAccount({ db, nowS }, actor, env, { target, name, days, reason, caseId = null, actorName = null, keepLonger = false }) {
+export async function banAccount({ db, nowS }, actor, env, { target, name, days, reason, caseId = null, click = null, actorName = null, keepLonger = false, also = null }) {
   if (!canModerate(actor, env)) return { error: 'not-moderator' };
   if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 0 || /** @type {number} */ (days) > BAN_DAYS_MAX) return { error: 'bad-days' };
   const row = await findAccount(db, { target, name });
@@ -147,11 +152,21 @@ export async function banAccount({ db, nowS }, actor, env, { target, name, days,
   const asked = banUntil(/** @type {number} */ (days), nowS);
   const until = keepLonger && isBanned(row, nowS) ? Math.max(asked, bannedUntil(row)) : asked;
   const why = reasonOf(reason) ?? (until !== asked ? (row.ban_reason ?? null) : null);
+  // STAFF-PANEL2-FIX (design doc, Weak spots: "A Moderator can lift an Admin's ban"): a ban an Admin set (`ban_admin`,
+  // 0156) is cut short by an Admin alone, and stays the Admin's when another moderator lengthens it; who set the ban that
+  // stands is kept beside it (`banned_by`), as MOD1's `muted_by` is beside a mute
+  const adminHeld = row.ban_admin === 1 && isBanned(row, nowS);
+  const admin = isDeveloper(actor, env);
+  if (adminHeld && !admin && until < bannedUntil(row)) return { error: 'admin-sanction' };
+  const keptOld = until !== asked;   // a button's ban that left a longer one standing: its setter stays who set it
+  const done = /** @type {{ ok: true, target: string, name: string, until: number, reason: string|null }} */ ({ ok: true, target: row.id, name: displayName(row), until, reason: why });
   await db.batch([
-    db.prepare('UPDATE players SET banned_until = ?1, ban_reason = ?2 WHERE id = ?3').bind(until, why, row.id),
-    actionStatement(db, { target: row.id, kind: 'ban', until, reason: why, actor: actor.id, actorName: actorName ?? displayName(actor), caseId, at: nowS }),
+    db.prepare(`UPDATE players SET banned_until = ?1, ban_reason = ?2, banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE ?4 END,
+      ban_admin = CASE WHEN ?5 = 1 THEN ban_admin ELSE ?6 END WHERE id = ?3`).bind(until, why, row.id, actor.id, keptOld ? 1 : 0, admin || adminHeld ? 1 : 0),
+    actionStatement(db, { target: row.id, kind: 'ban', until, reason: why, actor: actor.id, actorName: actorName ?? displayName(actor), caseId, click, at: nowS }),
+    ...(also ? also(done) : []),
   ]);
-  return { ok: true, target: row.id, name: displayName(row), until, reason: why };
+  return done;
 }
 
 /** UNBAN, a moderator's - the ban lifted, the record kept; an account not banned is told so, and nothing is written
@@ -161,8 +176,9 @@ export async function unbanAccount({ db, nowS }, actor, env, { target, name, act
   const row = await findAccount(db, { target, name });
   if ('error' in row) return row;
   if (!isBanned(row, nowS)) return { error: 'not-banned' };
+  if (row.ban_admin === 1 && !isDeveloper(actor, env)) return { error: 'admin-sanction' };   // STAFF-PANEL2-FIX: an Admin's ban, an Admin's to lift
   await db.batch([
-    db.prepare('UPDATE players SET banned_until = NULL, ban_reason = NULL WHERE id = ?1').bind(row.id),
+    db.prepare('UPDATE players SET banned_until = NULL, ban_reason = NULL, banned_by = NULL, ban_admin = NULL WHERE id = ?1').bind(row.id),
     actionStatement(db, { target: row.id, kind: 'unban', actor: actor.id, actorName: actorName ?? displayName(actor), at: nowS }),
   ]);
   return { ok: true, target: row.id, name: displayName(row), until: 0 };
@@ -170,15 +186,17 @@ export async function unbanAccount({ db, nowS }, actor, env, { target, name, act
 
 /**
  * A MODERATOR'S LOOK at an account: its strikes, the next rung (a mute's minutes, or 'ban' past the ladder), whether it
- * is muted or banned now, and its last HISTORY_MAX acts.
- * @param {{ db: any, nowS: number }} ctx @param {any} actor @param {any} env @param {{ target?: unknown, name?: unknown }} who
+ * is muted or banned now, and its last HISTORY_MAX acts. STAFF-PANEL-SPEED: `row` the account's row, from a door that
+ * found it already (staffCases.js).
+ * @param {{ db: any, nowS: number }} ctx @param {any} actor @param {any} env @param {{ target?: unknown, name?: unknown, row?: any }} who
  */
-export async function strikesLook({ db, nowS }, actor, env, { target, name }) {
+export async function strikesLook({ db, nowS }, actor, env, { target, name, row: found = null }) {
   if (!canModerate(actor, env)) return { error: 'not-moderator' };
-  const row = await findAccount(db, { target, name });
+  const row = found ?? await findAccount(db, { target, name });
   if ('error' in row) return row;
-  const strikes = await strikesOf(db, row.id, nowS);
-  const acts = (await db.prepare('SELECT kind, until, reason, actor_name, case_id, at, void_at FROM mod_actions WHERE target = ?1 ORDER BY at DESC, id DESC LIMIT ?2').bind(row.id, HISTORY_MAX).all())?.results ?? [];
+  // STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows"): the strikes and the history, one trip
+  const [strikes, acts] = await Promise.all([strikesOf(db, row.id, nowS),
+    db.prepare('SELECT kind, until, reason, actor_name, case_id, at, void_at FROM mod_actions WHERE target = ?1 ORDER BY at DESC, id DESC LIMIT ?2').bind(row.id, HISTORY_MAX).all().then((/** @type {any} */ r) => r?.results ?? [])]);
   return {
     ok: true, target: row.id, name: displayName(row), strikes,
     next: strikes >= LADDER_BAN_AT ? 'ban' : ladderMinutes(strikes),
@@ -209,9 +227,12 @@ export async function lawOrder(env, subtle, nowS, { s, mu, bn }) {
  * Worker fetching another's workers.dev address on the same account may be refused outright (Cloudflare's error 1042),
  * and a push that fails is silent by design, so the binding is the door and the address only names the path; a Worker
  * without it (a test, a local run) fetches the address.
+ * STAFF-PANEL5-MESSAGE: `hear`, for a caller that reads more of the door's answer than yes or no - handed the body of an
+ * answer the door took (a staff message's: how many of its target's sockets the hub handed the nudge).
  * @param {any} env @param {(url: string, init: any) => Promise<Response>} fetchFn @param {string|null} order
+ * @param {((said: any) => void)|null} [hear]
  */
-export async function pushLaw(env, fetchFn, order) {
+export async function pushLaw(env, fetchFn, order, hear = null) {
   const url = env?.RELAY_LAW_URL;
   if (!order || typeof url !== 'string' || !url.startsWith('https://') || !url.endsWith(SAFE_LAW_PATH)) return false;
   const init = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order }), signal: AbortSignal.timeout(LAW_PUSH_MS) };
@@ -220,6 +241,19 @@ export async function pushLaw(env, fetchFn, order) {
     const said = res.ok ? await res.json().catch(() => null) : null;
     // the hub's own word: the Worker answers 200 only for an order the hub took (AUDIT SAFE RELAY-13)
     if (!res.ok || said?.ok === false) console.warn('[safety] the relay\'s door said', res.status, said?.error ?? '');
+    else hear?.(said);
     return res.ok && said?.ok !== false;
   } catch (e) { console.warn('[safety] the relay\'s door', /** @type {any} */ (e)?.message ?? e); return false; }
+}
+
+/**
+ * STAFF-PANEL2-FIX (design doc, Weak spots: "the cut also ends game sessions and pushes a relay order that strips staff
+ * glyphs"): THE CUT'S ORDER FOR THE RELAY - `{o:'staffcut', s, i, e}`, signed (identityToken.js mintStaffCutOrder): the
+ * hub closes every socket of account `s` whose token was minted before it, so its staff glyphs leave with them; the
+ * account's next token (staff.js /v1/staff/cut ended its game sessions, so only after it signs in again) carries none.
+ * null for a service with no key. @param {any} env @param {SubtleCrypto} subtle @param {number} nowS @param {string} s
+ */
+export async function staffCutOrder(env, subtle, nowS, s) {
+  const key = await signingKey(env, subtle);
+  return key ? mintStaffCutOrder({ s }, key, { subtle, nowS }) : null;
 }

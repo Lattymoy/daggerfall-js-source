@@ -91,8 +91,9 @@ export const PURSE_SIG = lawSigOf([{ code: 'gold' }]);
 const noteOf = (/** @type {unknown} */ v) => (typeof v === 'string' ? v.slice(0, NOTE_MAX) : null);
 const parse = (/** @type {string} */ t) => { try { return JSON.parse(t); } catch { return null; } };
 
-/** A staff act's own finding: who, what, the note - kept with the judge's. */
-const staffFinding = (/** @type {any} */ db, /** @type {any} */ row, /** @type {number} */ nowS, /** @type {any} */ detail) => db.prepare(
+/** A staff act's own finding: who, what, the note - kept with the judge's. STAFF-PANEL3-REALM: the panel's own acts write
+ *  theirs too (staffRealm.js). */
+export const staffFinding = (/** @type {any} */ db, /** @type {any} */ row, /** @type {number} */ nowS, /** @type {any} */ detail) => db.prepare(
   "INSERT INTO realm_findings (player, char_id, seq, at, law, kind, detail) VALUES (?, ?, ?, ?, 0, 'staff', ?)",
 ).bind(row.player, row.id, row.seq, nowS, JSON.stringify(detail));
 
@@ -206,9 +207,12 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
     const text = await realmSaveTextOf(object);
     const save = parse(text ?? '');
     if (!save) return { error: 'no-clean' };
-    // the clean save becomes the record, one sequence on, its seat taken from any tab - and the hold lifted with what made it
+    // the clean save becomes the record, one sequence on, its seat taken from any tab - and the hold lifted with what made it.
+    // STAFF-PANEL3-REALM (design doc weak spots, "Items, census and economy": "keep staff holds through it"): staff's own
+    // hold is a person's word, never the save's - it stands through a rollback, and only a clear lifts it
     const moved = await db.prepare(
-      'UPDATE realm_characters SET seq = seq + 1, obj = clean_obj, prev = obj, bytes = ?, lease = NULL, judged_seq = seq + 1, clean_seq = seq + 1, held = NULL, held_at = NULL,'
+      'UPDATE realm_characters SET seq = seq + 1, obj = clean_obj, prev = obj, bytes = ?, lease = NULL, judged_seq = seq + 1, clean_seq = seq + 1,'
+      + " held = CASE WHEN held = 'staff' THEN 'staff' END, held_at = CASE WHEN held = 'staff' THEN held_at END,"
       + ' held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, law_sig = NULL, wealth = ?, witnessed = 0, judge_rev = judge_rev + 1, updated_at = ? WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',
     ).bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save), nowS, row.id, row.clean_obj, row.seq).run();
     if (!moved.meta.changes) return { error: 'no-clean' };
@@ -404,8 +408,9 @@ export async function gainsMeasure(db, nowS, days) {
 }
 
 /** What one side of a settled trade received (realmTradeLaw.js settleRealmTrade's `toA`/`toB`, kept in the row's `result`):
- *  its gold, its letters of credit at their worth, and how many pieces. */
-const receiptOf = (/** @type {any} */ side) => {
+ *  its gold, its letters of credit at their worth, and how many pieces. STAFF-PANEL3-PLAYERS: the panel's Trades tab reads
+ *  a trade's sides by it too (staffPlayers.js). */
+export const receiptOf = (/** @type {any} */ side) => {
   const items = Array.isArray(side?.items) ? side.items : [];
   const letters = items.filter((/** @type {any} */ it) => it?.templateIndex === REALM_LETTER_TEMPLATE).reduce((/** @type {number} */ n, /** @type {any} */ it) => n + (Number(it.value) || 0), 0);
   return { gold: Number(side?.gold) || 0, letters, pieces: items.length };

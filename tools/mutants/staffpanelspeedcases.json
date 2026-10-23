@@ -1,0 +1,134 @@
+[
+  {
+    "name": "STAFF-PANEL-SPEED-cases-list-apart",
+    "file": "server-account/src/staffCases.js",
+    "old": "const read = await db.batch([",
+    "new": "const read = await (async (l) => { const o = []; for (const st of l) o.push((await db.batch([st]))[0]); return o; })([",
+    "why": "the open cases' reads and audit row awaited one after another (a trip each) instead of in one batch",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-account-then-case",
+    "file": "server-account/src/staffCases.js",
+    "old": "const byId = typeof body.target === 'string' && ID_RE.test(body.target);",
+    "new": "const byId = false;",
+    "why": "an account named by its id found first, its open case read after (a trip more on every case door)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-case-row-again",
+    "file": "server-account/src/staffCases.js",
+    "old": "Promise.all([strikesLook(ctx, me, env, { target: row.id, row }),",
+    "new": "Promise.all([strikesLook(ctx, me, env, { target: row.id }),",
+    "why": "a case read finds its account again inside strikesLook (a trip more)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-case-batch-apart",
+    "file": "server-account/src/staffCases.js",
+    "old": "      db.batch([...(one ? caseReads(db, open.id) : []),",
+    "new": "      (async (l) => { const o = []; for (const st of l) o.push((await db.batch([st]))[0]); return o; })([...(one ? caseReads(db, open.id) : []),",
+    "why": "a case's lines, reports, kept claim, audit row and claim read back awaited one after another",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-look-then-batch",
+    "file": "server-account/src/staffCases.js",
+    "old": "const [look, out] = await Promise.all([strikesLook(",
+    "new": "const [look, out] = await Promise.all([await strikesLook(",
+    "why": "a case's or strikes' record (strikesLook) read first, its batch sent after (a trip more on both doors)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-look-refusal-first",
+    "file": "server-account/src/staffCases.js",
+    "old": "    if (!canModerate(me, env)) return { error: 'not-moderator' };   // strikesLook's own refusal",
+    "new": "    if (false) return { error: 'not-moderator' };   // strikesLook's own refusal",
+    "why": "a staff session's member always moderates (staff.js staffRole: Admin or Moderator, both canModerate), so strikesLook never refuses here today; the check is kept so a change to staffRole can never write a look's claim keep and audit row before the refusal",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ],
+    "equivalent": true
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-no-case-read",
+    "file": "server-account/src/staffCases.js",
+    "old": "    if (one && !open) return { error: 'no-case' };",
+    "new": "    if (false) return { error: 'no-case' };",
+    "why": "an account with no open case read as one (the case door throws instead of answering no-case)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-act-row-again",
+    "file": "server-account/src/staffCases.js",
+    "old": "target: row.id, row, caseId: body.case ?? null,",
+    "new": "target: row.id, caseId: body.case ?? null,",
+    "why": "an act finds its account again inside modAct (a trip more)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-closed-case-kept",
+    "file": "server-account/src/staffCases.js",
+    "old": "  if (r.case !== open?.id) await keep()?.run();",
+    "new": "  await keep()?.run();",
+    "why": "an act that closed the open case still sends the claim's keep, which can change nothing (a trip more)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-cases-same-account-guard",
+    "file": "server-account/src/staffCases.js",
+    "old": "const open = byId && row.id === body.target ? early : await openOf(row.id);",
+    "new": "const open = byId ? early : await openOf(row.id);",
+    "why": "findAccount by id answers that id's own row (players.id compares exactly), so the guard never fires today; it is kept so a change to findAccount's rule can never pair an account with another account's case",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ],
+    "equivalent": true
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-strikes-history-apart",
+    "file": "server-account/src/sanctions.js",
+    "old": "const [strikes, acts] = await Promise.all([strikesOf(db, row.id, nowS),",
+    "new": "const [strikes, acts] = await Promise.all([await strikesOf(db, row.id, nowS),",
+    "why": "a look's strikes counted, then its history read (a trip more on the panel's and the game's strikes and case doors)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-game-case-reads-apart",
+    "file": "server-account/src/safety.js",
+    "old": "const [lines, reports] = await Promise.all(caseReads(db, c.id).map(async (st) => (await st.all())?.results ?? []));",
+    "new": "const [lines, reports] = [(await caseReads(db, c.id)[0].all())?.results ?? [], (await caseReads(db, c.id)[1].all())?.results ?? []];",
+    "why": "the game's case read: its lines, then its reports (a trip more)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-press-then-case",
+    "file": "server-account/src/safety.js",
+    "old": "    click ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1').bind(click).first() : null,",
+    "new": "    click ? await db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1').bind(click).first() : null,",
+    "why": "an act's press id checked, then its case read (a trip more on every Mute, Ban and Dismiss)",
+    "tests": [
+      "test/server/staffpanelspeedcases.test.js"
+    ]
+  }
+]

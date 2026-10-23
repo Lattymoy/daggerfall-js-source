@@ -42,7 +42,7 @@ import { MOD_SETTINGS } from '../../systems/modSettings.js';
 import { WEAPON_WIDGET_VENDOR } from '../weapon/weaponWidgetMotion.js';
 import { GUN_FEEL } from './gunFeel.js';
 import { ALIGN } from '../weapon/weaponAlign.js';
-import { walkSpeed, runSpeed } from '../../player/motor.js';
+import { walkSpeed, runSpeed, crouchSpeed, DIAGONAL_FACTOR } from '../../player/motor.js';
 
 /** FPSWeaponClone's .ctor fields, the ones the three modules carry
  *  between frames. The lab's `createWidgetRig`, verbatim. */
@@ -152,15 +152,25 @@ export function gunRigStep(rig, s, dt, {
  * over it, and localVel the eye's motion in the body's frame (right,
  * up, forward). The lab's `labMotion`, kept so the LAB can still
  * drive this without a motor; the game passes its real one.
+ *
+ * AUDIT PISTOL-PORT B1 B6: AS THE GAME'S MOTOR MOVES. A crouched walk at the motor's crouch speed, never the walk's (the
+ * pistol lab's crouch bobbed twice the game's); a strafe alone (`strafe` -1 left, 1 right) at the walk's, and with a step
+ * forward each axis at PlayerMotor's diagonal .7071; `vertical` the eye's climb or fall in the air (a jump), `grounded`
+ * false while it lasts. The labs could not strafe or jump at all, so the Inertia their owner tuned had never seen either.
  */
-export function gunMotion({ walking = false, running = false, crouching = false, liveSpeed = 50, strafe = 0 } = {}) {
+export function gunMotion({ walking = false, running = false, crouching = false, liveSpeed = 50, strafe = 0, vertical = null } = {}) {
   const base = walkSpeed(liveSpeed);
-  const speed = walking ? (running ? runSpeed(liveSpeed, 50, crouching) : base) : 0;
+  const moving = walking || strafe !== 0;
+  // PlayerMotor.Speed, which the hosts hand the rig as `speedField` (player/motor.js motionBagOf): the walk, the run or
+  // the crouch the body is set to, standing or not - never nought
+  const stateSpeed = running ? runSpeed(liveSpeed, 50, crouching) : (crouching ? crouchSpeed(liveSpeed) : base);
+  const speed = moving ? stateSpeed : 0;
+  const axis = walking && strafe !== 0 ? speed * DIAGONAL_FACTOR : speed;
   return {
-    grounded: true, crouching, riding: false, standing: !walking,
-    speedRatio: base > 0 ? speed / base : 1,
+    grounded: vertical === null, crouching, riding: false, standing: !moving && vertical === null,
+    speedRatio: base > 0 ? stateSpeed / base : 1,
     baseSpeed: base,
-    localVel: [strafe * speed, 0, walking ? speed : 0],
+    localVel: [strafe * axis, vertical ?? 0, walking ? axis : 0],
   };
 }
 

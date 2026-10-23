@@ -281,8 +281,9 @@ test('PROF5 service: a cancel returns a material\'s units with their origins (th
   assert.deepEqual((await s.call('/v1/market/report', { listing: p.body.listing.id }, mac.secret)).body, { error: 'market-own' });
   assert.equal((await s.read(ann, 'crafted')).body.rows[0].reports, undefined, 'a reader sees no count');
   assert.equal((await s.read(mod, 'crafted')).body.rows[0].reports, 1, 'a moderator does');
-  assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, ann.secret)).body, { error: 'not-moderator' });
-  assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, mod.secret)).body, { ok: true });
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, ann.secret)).body, { error: 'not-developer' });
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, mod.secret)).body, { error: 'not-developer' }, 'STAFF-PANEL2-FIX: a pull is an Admin\'s, never a Moderator\'s');
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: p.body.listing.id }, mac.secret)).body, { ok: true }, 'a developer\'s');
   // PIN MOVED (INT19): the piece comes back as the record that left, collected into the seller's record
   const back = (await s.read(mac, 'mine')).body.road;
   assert.deepEqual(back.map((d) => [d.kind, d.why, d.ready, d.item.currentCondition]), [['item', 'returned', true, 500]]);

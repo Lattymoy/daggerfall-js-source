@@ -127,12 +127,13 @@ export const bannedText = (until, reason = null) => {
 };
 
 /** SAFE4: WHICH DOOR AN ORDER GOES TO - 'mute' or 'ban', read off its body, or null. The client never verifies an order
- *  (the room does, with the key); it only needs to carry a pushed one (the hub's `law`) to the arm that reads its kind. */
+ *  (the room does, with the key); it only needs to carry a pushed one (the hub's `law`) to the arm that reads its kind.
+ *  STAFF-PANEL5-CUT-FIX: and 'staffcut', a staff member cut off - carried by the ban's door (the room's `_banFrame`). */
 export function orderKindOf(order) {
   const body = typeof order === 'string' ? order.split('.')[1] : null;
   const raw = body ? _b64url.decode(body) : null;
   if (!raw) return null;
-  try { const o = JSON.parse(new TextDecoder().decode(raw))?.o; return o === 'mute' || o === 'ban' ? o : null; } catch { return null; }
+  try { const o = JSON.parse(new TextDecoder().decode(raw))?.o; return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null; } catch { return null; }
 }
 
 /* ═══ THE COMMANDS ═════════════════════════════════════════════════════ */

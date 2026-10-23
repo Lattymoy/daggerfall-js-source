@@ -2768,6 +2768,7 @@ ${SUPPORT_MARKS_CSS}
   border: 1px solid rgba(192,138,62,0.55); background: rgba(192,138,62,0.08); }
 .px-postwin .pm-itemname { font-size: 16px; letter-spacing: 0.04em; }
 .px-postwin .pm-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.px-postwin .pm-claimrow { justify-content: flex-end; margin: 0 0 8px; }   /* LOST-SPOILS: Claim all, above the list */
 .px-postwin [data-rarity="magic"] { color: #6f9ee8; } .px-postwin [data-rarity="rare"] { color: #e4c34f; } .px-postwin [data-rarity="legendary"] { color: #e07a2e; }
 .px-postwin [data-rarity="aetheric"] { color: #bfe8ff; } .px-postwin [data-rarity="artifact"] { color: #b57bee; } .px-postwin [data-rarity="gilded"] { color: #ff3b4a; }
 /* AUDIT SERVER-POST: the tiers above are LR1's own hexes (systems/loot/lootRarity.js RARITIES, pinned against it - a stylesheet

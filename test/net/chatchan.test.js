@@ -44,7 +44,7 @@ test('CHAT-CHAN wire: one channel per politic region, whitelisted by enumeration
   for (const bad of ['chat:region.62', 'chat:region.-1', 'chat:region.01', 'chat:region.x', 'chat:party.q123']) assert.equal(isChatRoom(bad), false, `${bad}: a list, not a prefix (AUDIT CHAT A1)`);
   assert.ok(isSocialRoom(SOCIAL_ROOM) && !isSocialRoom(chatRegionRoom(4)), 'a region\'s channel is no hub: it keeps no seats');
 
-  assert.deepEqual(CHAT_LINE_CHANNELS, ['party', 'guild']);   // GUILD1c: and a guild's line (test/net/guild1c.test.js)
+  assert.deepEqual(CHAT_LINE_CHANNELS, ['party', 'guild', 'staff']);   // STAFF-PANEL5-FREEZE: and a staff chat thread's nudge   // GUILD1c: and a guild's line (test/net/guild1c.test.js)
   const hello = { hasHello: true };
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'hi all' }), hello), { t: 'chat', text: 'hi all' }, 'a line naming no channel: the old shape, no key');
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: ' hi party ', ch: 'party' }), hello), { t: 'chat', text: 'hi party', ch: 'party' });

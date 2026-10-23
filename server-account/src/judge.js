@@ -70,7 +70,7 @@ const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
 const arrayOf = (/** @type {unknown} */ x) => (Array.isArray(x) ? x : []);
 /** A count of gold in a save: a whole number, never below nothing - any other word (a fraction, Infinity, a string) is
  *  nothing (AUDIT INT: `goldPieces: 1e999` read as Infinity, and the verdict's NOT NULL threw the save away). */
-const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);
+export const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);
 
 /** THE LISTS THE CHARACTER HOLDS (possessedItemLists) - systems/item/possessedItems.js, their one home since AUDIT AUTO-HOLD
  *  (the client's shelf reads them too: a piece stowed in a ship's hold came back to its holder off a stale shelf), handed
@@ -98,6 +98,11 @@ export const realmLoanOwedMax = (/** @type {number} */ level) => Math.trunc(Math
  *  handed over, systems/item/itemBound.js) or a quest's (never sold). */
 const worthless = (/** @type {any} */ it) => it?.bound === true || lawTemplate(it?.templateIndex)?.bound === true || it?.questItem === true;
 
+/** The pieces wealthOf counts - every one the character holds or laid on the ground - and each as it counts it: a coin or
+ *  a letter at its gold (`liquid`), a bound or quest piece at nothing, any other at its worth. */
+const wealthLists = (/** @type {any} */ save) => [...possessedItemLists(save), ...groundItemLists(save)];
+const pieceWealth = (/** @type {any} */ it, liquid = liquidWorthOf(it)) => (liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it));
+
 /**
  * THE CHARACTER'S WEALTH: the purse, every bank account less what it owes (the debt counted no further than
  * realmLoanOwedMax at `level` - the save's own, or the level the realm trusts), each deed at the realm's buy-back
@@ -112,14 +117,18 @@ export function wealthOf(save, { level = save?.level } = {}) {
   for (const a of arrayOf(save.bankAccounts)) { banks += goldOf(/** @type {any} */ (a)?.accountGold); owed += goldOf(/** @type {any} */ (a)?.loanTotal); }
   const deeds = deedsOf(save).reduce((s, d) => s + d.value, 0);
   let goods = 0;
-  for (const list of [...possessedItemLists(save), ...groundItemLists(save)]) {
-    for (const it of list) {
-      const liquid = liquidWorthOf(it);
-      goods += liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it);
-    }
-  }
+  for (const list of wealthLists(save)) for (const it of list) goods += pieceWealth(it);
   const w = Math.trunc(purse + banks - Math.min(owed, realmLoanOwedMax(Number(level))) + deeds + goods);
   return Number.isSafeInteger(w) ? w : Math.sign(w) * Number.MAX_SAFE_INTEGER;
+}
+/** STAFF-PANEL3-REALM (design doc weak spots: "split gold from item worth"): THE GOODS OF wealthOf - its pieces that are
+ *  not gold, at its own worth; the rest of the wealth is gold, the debt off it (verdict.js writes it on a gain's finding).
+ *  @param {any} save */
+export function goodsOf(save) {
+  if (!save || typeof save !== 'object') return 0;
+  let goods = 0;
+  for (const list of wealthLists(save)) for (const it of list) if (!(liquidWorthOf(it) > 0)) goods += pieceWealth(it, 0);
+  return Math.trunc(goods);
 }
 
 /** A count the save may leave out, and must otherwise write as gold is written: a whole number, never below nothing. */

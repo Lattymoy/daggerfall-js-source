@@ -101,6 +101,7 @@ import { EG_HONOUR, EG_HONOUR_TITLES, EG_HONOUR_AURA, EG_CHAMPION_TITLE, EG_FIRS
 import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the row
 import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // QL12: the questlines' titles on the row
 import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
+import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -268,26 +269,34 @@ export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'discip
  *  config at every ask, never a sale recorded on the row. */
 export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });   // WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
 
+/** STAFF-PANEL2-FIX (design doc, Weak spots: "Cutting off a staff member misses most doors" - "A stored suspended flag is
+ *  checked in every role path"): a staff member an owner cut off (`players.staff_suspended`, migration 0156, staff.js
+ *  /v1/staff/cut) holds no staff role while it stands - not a developer, not a moderator, and no title whose glyph opens
+ *  the staff's commands (net/staffCommands.js STAFF_GLYPHS) - so the panel, the game's /v1/mod doors, Discord and the
+ *  next token's glyphs all read it at once. @param {any} player */
+export const staffSuspended = (player) => player?.staff_suspended === 1;
+
 /** Does this player hold that list's title? A guest holds none, for the developer's reason. PATREON-LINK (2026-10-01,
  *  Mac: "having to manually hand out titles ... its really hard to keep up with it"): AND a Patreon tier's title is held
  *  by the pledge too - the account's linked Patreon membership, read against PATREON_TIERS (patreon.js) - so a patron
  *  needs no line here, and the lists stay for the titles Mac grants by name. */
 export const holdsTier = (title, player, env) =>
   typeof player?.handle === 'string' && !!player.handle && Object.hasOwn(TIER_LISTS, title)
+  && !(staffSuspended(player) && STAFF_GLYPHS.includes(TIER_GLYPH[/** @type {keyof typeof TIER_GLYPH} */ (title)]))
   && (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) || patreonTitlesOf(player, env).includes(title));
 
 /** Is this player one of them? A handle a guest does not have cannot
  *  be in any list, so a guest is never a developer - which is right:
  *  the list names people, and a guest row is a device. */
 export const isDeveloper = (player, env) =>
-  typeof player?.handle === 'string' && !!player.handle
+  typeof player?.handle === 'string' && !!player.handle && !staffSuspended(player)
   && developerHandles(env).has(player.handle.toLowerCase());
 
 /** MOD1: is this player a moderator? A guest cannot be, for the same
  *  reason a guest cannot be a developer. STAFF-PANEL1: listed, or added by an Admin from the staff panel
  *  (`staff_mod`, migration 0144) - the account's, so a rename keeps it and a listed handle is never needed. */
 export const isModerator = (player, env) =>
-  typeof player?.handle === 'string' && !!player.handle
+  typeof player?.handle === 'string' && !!player.handle && !staffSuspended(player)
   && (moderatorHandles(env).has(player.handle.toLowerCase()) || player.staff_mod === 1);
 
 /** SHADOW-FANG-MOD (2026-10-19, Mac: "Give the shadow fang title mod perms including ban"): THE TITLES THAT MODERATE -

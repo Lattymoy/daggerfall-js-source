@@ -72,7 +72,7 @@
   {
     "name": "SCALE5b-attach-unwritten",
     "file": "server/src/index.js",
-    "old": "...(m.w2 === 1 ? { w2: 1 } : {})",
+    "old": "...(m.w2 === 1 ? { w2: 1 } : {}), ",
     "new": "",
     "tests": [
       "test/net/scale5b.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "SCALE5b-join-at-once",
     "file": "server/src/index.js",
-    "old": "        this._fanRoster(ws, said);",
-    "new": "        this._fanBut(ws, said);",
+    "old": "if (!who.hid) this._fanRoster(ws, said);",
+    "new": "if (!who.hid) this._fanBut(ws, said);",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "SCALE5b-leave-at-once",
     "file": "server/src/index.js",
-    "old": "    if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);",
-    "new": "    this._fanBut(ws, out);",
+    "old": "if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);",
+    "new": "this._fanBut(ws, out);",
     "tests": [
       "test/net/scale5b.test.js"
     ],

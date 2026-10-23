@@ -460,11 +460,12 @@ one, never one hand's glow on both:
 ## A pair of guns (PISTOLET, 2026-10-21)
 
 The Dwarven Pistolet is one-handed, so two of them are a pair: `DUAL_GUN_TYPES` [19, 20] beside `DUAL_TYPES`, and a pair
-is TWO OF A KIND - two melee weapons or two Pistolets, never one of each (`handsModeOf`). The one machine keeps this
-page's flurry; what a gun adds is each hand's own reload (`combat/playerWeapon.js gunPair`), a pull falling to the loaded
-pistol when the law's hand is reloading, and no flurry frame skip. The sprite lane draws a gun pair through the gun's own
-frame (`combat/gun/gunPair.js`, ahead of `twoHands.drawPair`); the guard, the mirror and the two sway rules are this
-page's. Its record and its measured balance: `Dwarven-Pistolet.md`.
+is TWO OF A KIND - two melee weapons or two Pistolets, never one of each (`handsModeOf`). A gun pair fires on the pistol
+lab's own two machines (`combat/playerWeapon.js pistols`, `combat/gun/pistolPair.js` - PISTOL-PORT), which run this
+page's flurry (`strikeHandOf`); what a gun adds is each hand's own six frames and reload, a pull falling to the loaded
+pistol when the law's hand is reloading, and no flurry frame skip. The sprite lane draws a gun pair through the page's own
+frame (`combat/gun/pistolViewmodel.js` through `pistolLane.js`, ahead of `twoHands.drawPair`); the guard, the mirror and
+the two sway rules are this page's. Its record and its measured balance: `Dwarven-Pistolet.md`.
 
 ## Departures from DFU (Port-Ledger A, TWO-HANDS)
 

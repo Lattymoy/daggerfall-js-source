@@ -31,7 +31,9 @@ import { busyRead, BUSY_SHED_MS } from '../../src/net/busyLaw.js';   // BUSY-GAT
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/server/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct172';   // acct172: SEA VENTURES (2026-10-22, acct168 on its branch, then acct169 - renumbered past STAFF-PANEL1's acct168, CRAFT-PAYS' acct169, PISTOLET's acct170 and AUDIT COLLECTIONS-II's acct171 at the merges; the owner: "Build ever single bit of this and dont return until its perfected" - the Eltheric Ocean's ventures; bible/03-World/Eltheric-Ocean.md SEA-SET and its sections after it) - item law 11 (the Eltheric Tidemail's nine records lawful, systems/aetheric.js ELTHERIC_SET_PIECES), the sea's season boards, its bounties and its wrecks' prizes; migrations from 0146
+export const ACCOUNT_VERSION = 'acct176';   // acct176: STAFF-PANEL-SPEED (2026-10-23, mob: "slow when moving in menus"), the staff routes' reads and audit rows folded into fewer D1 round trips, with two indexes (migrations 0161-0162). acct175: STAFF-PANEL5, the staff panel relay half: follow tokens, Message on screen, the staff feeds, hidden staff, freeze and staff chat; acct174 on its branch, renumbered past STAFF-PANEL2-6 at its merge; migrations 0157-0160. acct174: STAFF-PANEL2 to STAFF-PANEL6, the staff panel's server side (2026-10-22, mob: "do all 6", "serer side shit should have AALLLL been done"; acct171 on its branch, then acct172, renumbered past AUDIT COLLECTIONS-II's acct171, SEA VENTURES' acct172 and LOST-SPOILS' acct173 at the merges) - step 2 (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 2) - the staff panel's reports (staffCases.js): the open chat cases most urgent first, one case with its strike record, a case claimed by one staff member (a Moderator one at a time; mod_cases.claimed_by, claim_until and claim_from, migration 0149; a Discord press leaves a case another holds in the panel alone), and Mute, Ban, Unban and Dismiss made as the game's moderators' own acts, from the panel; step 3 notes, watchlist, settings, server notice and the AI scorecard (staffDesk.js, migration 0150), players: search, profile, devices and rename (staffPlayers.js, 0151), trade holds, roll back, the account fix desk, unexplained gains and item removal (staffRealm.js, 0152), market and trades, node activity and the economy (staffEconomy.js, 0153); step 4 the census and contested pieces (staffCensus.js, 0154); step 6 the status tiles, the limits an Admin sets and Home (staffStatus.js, 0155).
+// acct173: LOST-SPOILS (2026-10-22, the owner: "utilize the mailbox as a way to obtain lost items/loot if not picked up from a boss" - asked, "Mail the leftovers"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md LOST-SPOILS; acct168 on its branch, renumbered past STAFF-PANEL1's acct168, CRAFT-PAYS' acct169, PISTOLET's acct170, AUDIT COLLECTIONS-II's acct171 and SEA VENTURES' acct172 at the merge) - POST /v1/post/lost writes a boss's floor's leftovers to the post from the Lost and Found, one piece an item, under a kill the service recorded (a gate's, an Hour's, a Redoubt that paid), once a piece, read to its own body bound (lostSpoils.js); a Lost and Found piece's claim is charged to the budget, never witnessed (post.js, realm.js prepareRealmRecord `witness`). No migration.
+// acct172: SEA VENTURES (2026-10-22, acct168 on its branch, then acct169 - renumbered past STAFF-PANEL1's acct168, CRAFT-PAYS' acct169, PISTOLET's acct170 and AUDIT COLLECTIONS-II's acct171 at the merges; the owner: "Build ever single bit of this and dont return until its perfected" - the Eltheric Ocean's ventures; bible/03-World/Eltheric-Ocean.md SEA-SET and its sections after it) - item law 11 (the Eltheric Tidemail's nine records lawful, systems/aetheric.js ELTHERIC_SET_PIECES), the sea's season boards, its bounties and its wrecks' prizes; migrations from 0146
 // acct171: AUDIT COLLECTIONS-II (2026-10-22, the owner: "Audit this"; bible/01-Overview/audits/Audit-Collections-II.md; acct169 on its branch, renumbered past CRAFT-PAYS' acct169 and PISTOLET's acct170 at the merge) - the glyph's and the icon's doors answer the whole wardrobe: the arena's, Iliac Hand's, The King's Gambit's and the Spire's honours read on them (arena.js ARENA_HONOUR_PATHS), and the glyph's reads a Charter's and a chapter's titles, as the title's door does - a press there dropped a champion's title and laurel from the answer the flow takes whole, and the laurel could not be hidden
 // acct170: PISTOLET (2026-10-22, acct168 on its branch, renumbered past STAFF-PANEL1's acct168 and CRAFT-PAYS' acct169 at the merge; bible/05-Combat/Dwarven-Pistolet.md; AUDIT PISTOLET A7, C1, D8) - the item law moves to 10 (systems/item/itemLaw.js ITEM_LAW_VERSION): the Dwarven Pistolet (562) is a template the judge knows, and the Sunken Sovereign is lawful as the gilded Pistolet it is minted as now and as the Ebony Saber minted before (systems/gilded.js SOVEREIGN_SABER_ERA). No migration: no law-10 finding has been made, and law 9 never saw a Pistolet. Before it, acct167: CAKE-CAP-SAID.
 // acct169: CRAFT-PAYS and CRAFT-WRITS, one release (2026-10-21 and 22; acct168 and migration 0144 on its branch, renumbered past STAFF-PANEL1's at the merge; the Discord's #feature-feedback, "Crafting seems unrewarding"; bible/06-Systems/Professions-Arc.md sections 48 and 49) - a Novice's brew answers two potions where it answered one (src/net/alchemyLaw.js brewCount; the rungs above stand, prof_brews.count's CHECK of 1 to 3 with them), and a brew says whether it was witnessed whole; the crafting writs - an account's three a day on the Work tab (AUDIT CRAFT-WRITS E1: the account's draw, never a character's), filled by any of its realm characters with its own witnessed brews and pieces out of its realm record (craftWrits.js; /v1/writs/craft, `crafts` on /v1/writs/list), migration 0145_craft_writs.
@@ -394,6 +396,8 @@ export const ROUTES = new Set([
   '/v1/mod/realm-bodies',   // INT14: the boss fights' count, measured (review.js bodiesMeasure)
   '/v1/mod/realm-grants',   // GRANT2: the spawn grants' asks, measured (grants.js grantsMeasure)
   '/v1/mod/grant-feed',     // GRANT2: the relay's door in - a cell's window of asks, proven by its signature (grants.js)
+  '/v1/mod/reaction-feed',  // STAFF-PANEL5-FEEDS: the relay's door in - the bot check's episodes, by its signature (staffReactions.js)
+  '/v1/mod/hidden-seen',    // STAFF-PANEL5-HIDDEN: the relay's door in - a hidden staff subject entered a private home, proven by its signature (staffHidden.js takeHiddenSeen)
   '/v1/mod/realm-gains',    // HACKED-GOLD: who gained past the bucket (review.js gainsMeasure)
   '/v1/mod/realm-progress', // INT17: the progression claims' measure and their line (review.js progressMeasure)
   '/v1/mod/realm-trades',   // HACKED-GOLD: a character's realm trades, whom it traded with (review.js tradesOf)
@@ -411,6 +415,8 @@ export const ROUTES = new Set([
   // SERVER-POST: the developers' pieces to one registered account - the box a GET, the three that change something POSTs,
   // each naming the piece in its body; a claim names the realm character it goes into and where its record stands.
   '/v1/post/box', '/v1/post/read', '/v1/post/claim', '/v1/post/delete',
+  // LOST-SPOILS: a boss's floor's leftovers sent to the account that left them - a POST, the kill named by the pool's day
+  '/v1/post/lost',
   // PRIVATE-REPORT: a registered player's private report - sent, and their own listed; the readers' inbox, a report
   // opened and closed. All POSTs, every id in the body.
   '/v1/report/send', '/v1/report/mine', '/v1/report/inbox', '/v1/report/read', '/v1/report/close',
@@ -540,6 +546,45 @@ export const ROUTES = new Set([
   // STAFF-PANEL1: the staff panel's doors (staff.js) - its own sign-in and session, never a game session (STAFF_ROUTES)
   '/v1/staff/login', '/v1/staff/enroll', '/v1/staff/me', '/v1/staff/logout', '/v1/staff/keys', '/v1/staff/key/forget',
   '/v1/staff/team', '/v1/staff/invite', '/v1/staff/cut', '/v1/staff/audit', '/v1/staff/mods', '/v1/staff/mod/add', '/v1/staff/mod/remove',
+  // STAFF-PANEL2: the panel's reports - the open cases, one case, a claim and its release, a strike record, and the acts
+  '/v1/staff/cases', '/v1/staff/case', '/v1/staff/claim', '/v1/staff/release', '/v1/staff/strikes',
+  '/v1/staff/mute', '/v1/staff/ban', '/v1/staff/unban', '/v1/staff/dismiss',
+  // STAFF-PANEL3-DESK: staff notes, the watchlist and its events, your settings; the Admins' server notice, AI check
+  // scorecard, and reported board notes (Remove, Restore) and market listings (staffDesk.js)
+  '/v1/staff/notes', '/v1/staff/notes/add', '/v1/staff/watch', '/v1/staff/watch/add', '/v1/staff/watch/remove', '/v1/staff/watch/events',
+  '/v1/staff/settings', '/v1/staff/settings/save', '/v1/staff/notice', '/v1/staff/ai-score', '/v1/staff/board/reported', '/v1/staff/board/moderate',
+  '/v1/staff/market/reported',
+  // STAFF-PANEL3-PLAYERS: the panel's players (staffPlayers.js) - the search, a profile's tabs, its devices, Sign out
+  // everywhere, and a rename - Admins' alone
+  '/v1/staff/players', '/v1/staff/player', '/v1/staff/player/devices', '/v1/staff/player/signout', '/v1/staff/player/rename',
+  // STAFF-PANEL6-STATUS: the panel's server status, its Admin-set limits, and Home (staffStatus.js)
+  '/v1/staff/status', '/v1/staff/home', '/v1/staff/limits', '/v1/staff/limit/set',
+  // STAFF-PANEL3-REALM: the trade holds, a character's findings, a hold laid (one character, or every one of an account) and
+  // lifted, Roll back, Fix account, wealth past the allowance, and the removals with their 30-day store (staffRealm.js)
+  '/v1/staff/trade-holds', '/v1/staff/findings', '/v1/staff/trade-hold', '/v1/staff/trade-unhold', '/v1/staff/rollback', '/v1/staff/fix/repair',
+  '/v1/staff/fix/mend', '/v1/staff/gains', '/v1/staff/market/pull', '/v1/staff/market/remove', '/v1/staff/item/take', '/v1/staff/evidence',
+  '/v1/staff/evidence/return',
+  // STAFF-PANEL4-CENSUS: the item and gold census (a kind found, its count and holders, its jumps) and the contested pieces
+  // (the list, one piece's trail, a trail check recorded) - Admin only (staffCensus.js)
+  '/v1/staff/census/find', '/v1/staff/census', '/v1/staff/census/jumps', '/v1/staff/contested', '/v1/staff/contested/piece', '/v1/staff/contested/trail',
+  // STAFF-PANEL3-ECON: the panel's economy (staffEconomy.js) - the market and trades stream, node activity, the economy, per guild
+  '/v1/staff/econ/stream', '/v1/staff/econ/harvests', '/v1/staff/econ/economy', '/v1/staff/econ/guilds',
+  // STAFF-PANEL5-FOLLOW: a follow token for a hidden staff spectator, minted and written down (staffFollow.js)
+  '/v1/staff/follow',
+  // STAFF-PANEL5-MESSAGE: Message on screen - one sent, and each one's state (staffMessage.js); and the game's two: the
+  // messages waiting for its player, and one pressed OK (behind the game's own session)
+  '/v1/staff/message', '/v1/staff/messages', '/v1/safety/staff-messages', '/v1/safety/staff-message-ok',
+  // STAFF-PANEL5-FEEDS: the relay's counts - Network bursts, Monster watch and its Flag, the bot check's Reactions and
+  // their keeping (staffNet.js, staffMonsters.js, staffReactions.js); and the relay's net feed in, by its signature
+  '/v1/staff/net', '/v1/staff/monsters', '/v1/staff/monster/flag', '/v1/staff/reactions', '/v1/staff/reactions/keep', '/v1/staff/net-feed',
+  // STAFF-PANEL5-HIDDEN: Hide me and Show myself - a staff member hidden from every player (staffHidden.js)
+  '/v1/staff/hide',
+  // STAFF-PANEL5-FREEZE (staffFreeze.js): freeze and unfreeze, the frozen list and a push again (Admins); Talk, a thread, a
+  // line, a thread closed and the open threads (Admins and Moderators) - and the player's own two doors to their thread,
+  // behind the game's session
+  '/v1/staff/freeze', '/v1/staff/unfreeze', '/v1/staff/freezes', '/v1/staff/freeze-push',
+  '/v1/staff/talk', '/v1/staff/chat', '/v1/staff/chat-send', '/v1/staff/chat-close', '/v1/staff/chats',
+  '/v1/staff-chat/read', '/v1/staff-chat/send',
   // PROF1: the professions (professions.js) - a character's tracks, Stores and day, the witnessed pixels, a harvest,
   // a specialisation, a withdrawal to the pack, a region's Court writs and a delivery. Every one behind a session, a
   // registered account's alone, and PROFESSIONS_OPEN's.
@@ -647,4 +692,4 @@ export const SAFE_OPEN_ROUTES = new Set(['/v1/mod/feed', '/v1/discord/interactio
 
 /** STAFF-PANEL1: the staff panel's doors (staff.js), NOT the JSON ladder's - none takes a game session. Two prove themselves by
  *  a password and an extension's signature (login, enroll); the rest by a staff session in `x-staff-session`. */
-export const STAFF_ROUTES = new Set([...ROUTES].filter((r) => r.startsWith('/v1/staff/')));
+export const STAFF_ROUTES = new Set([...ROUTES].filter((r) => r.startsWith('/v1/staff/') && r !== '/v1/staff/net-feed'));   // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session

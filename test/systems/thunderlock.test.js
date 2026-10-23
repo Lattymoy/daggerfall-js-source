@@ -928,7 +928,7 @@ test('FIELD-GUN12: the lab and the game are the SAME function, not two that agre
   // ...and the rig really DRAWS through it, rather than importing it
   // and then doing something else.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /const \{ rect \} = gunFrameRect\(\{/, 'the draw takes the prototype\'s rect');
+  assert.match(rig, /const \{ rect \} = hand \? pistols\.rect\(playerWeapon\.pistols, hand, art, canvas, handedFlip\(\)\) : gunFrameRect\(\{/, 'the draw takes the prototype\'s rect');   // PIN MOVED (PISTOL-PORT): a Pistolet's is ITS prototype's (pistolLane.js)
   assert.match(rig, /gunRigStep\(_tlRig, gunWidgetSettings\(null, feel\.widget\), dt, \{/, 'and the prototype\'s module step (PISTOLET: on the held gun\'s own tuning - none for the Thunderlock, so the player\'s own)');
   assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\)/, 'and puts it on the screen');
   // PISTOLET: and the PICTURE is mirrored under the flip, as the lab's ctx.scale(-1, 1) mirrors it - it had moved only the
@@ -1364,7 +1364,7 @@ test('FIELD-GUN17b: the flash and its light are the ORB’s colour, sampled off 
   // BOTH consumers read the one leaf - the sprite's own tint and the
   // light the shot throws on the world.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /const flash = orbColour\(\);/);
+  assert.match(rig, /const flash = ph \? PAINTED_FLASH : orbColour\(\);/);   // PIN MOVED (PISTOL-PORT): the Thunderlock's; a Pistolet's flash is drawn as painted
   assert.match(rig, /tint\.map\(\(v, i\) => v \+ \(flash\[i\] - v\) \*/, 'the frame LERPS to the orb, so an unlit room still darkens the gun');
   const gun = readFileSync('src/systems/thunderlock.js', 'utf8');
   assert.match(gun, /color: orbColour\(\)/, 'and the point light carries it too');
@@ -1529,7 +1529,7 @@ test('FIELD-GUN19: the shot leaves the barrel through the WORLD STRIP, not the c
   // PISTOLET: the record is built once (`drawn`) and parked on the one gun's `_tlDrawn` or on a pair's hand
   assert.match(rig, /const drawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \},[^}]*viewport: renderer\.worldViewportRect \?\? null[^}]*\}/,   // RETRO-UI: the rect measured back on the real canvas
     'drawThunderlock parks the strip the world was drawn into');
-  assert.match(rig, /if \(hand\) gunPair\.hands\[hand\]\.drawn = drawn; else _tlDrawn = drawn;/,
+  assert.match(rig, /if \(ph\) ph\.drawn = drawn; else _tlDrawn = drawn;/,   // PIN MOVED (PISTOL-PORT): each Pistolet's own hand, on its lane
     'drawThunderlock parks the strip the world was drawn into');
   const renderer = readFileSync('src/render/renderer.js', 'utf8');
   assert.match(renderer, /get worldViewportRect\(\)/, 'the renderer exposes the frame\'s strip');
@@ -1614,7 +1614,7 @@ test('FIELD-GUN19: a blown-out core has no opinion about hue', () => {
   // same function, or "the same colour as the orb" is two answers.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
   const sys = readFileSync('src/systems/thunderlock.js', 'utf8');
-  assert.match(rig, /const flash = orbColour\(\);/, 'the muzzle FLASH wears it');
+  assert.match(rig, /const flash = ph \? PAINTED_FLASH : orbColour\(\);/, 'the muzzle FLASH wears it');   // PIN MOVED (PISTOL-PORT): the Thunderlock's; a Pistolet's flash is drawn as painted
   assert.match(sys, /color: orbColour\(\),/, 'and so does the light it throws');
 });
 

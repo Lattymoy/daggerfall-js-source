@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   PISTOL_STRIP, PISTOL_OPENING, PAIR_TRIGGER, stripCellRect, hardenAlpha, nativeWidthPct, createPair,
-  strikeHandOf, guardOffset, GUARD, FLURRY_WINDOW, gunFrameRect, createWidgetRig, ALIGN, SFX_CANDIDATES,
+  strikeHandOf, guardOffset, GUARD, FLURRY_WINDOW, gunFrameRect, createWidgetRig, ALIGN, SFX_CANDIDATES, pistolPageState,
 } from '../../../src/tools/pistolLab.js';
 import { strikeHandOf as LAW_STRIKE, guardOffset as LAW_GUARD } from '../../../src/combat/twoHands/handsLaw.js';
 import { gunFrameRect as GAME_FRAME } from '../../../src/combat/gun/gunViewmodel.js';
@@ -23,8 +23,10 @@ test('the lab is a lab: nothing the game runs imports it', () => {
     'src/combat/weapon/weaponWidgetMotion.js', 'src/combat/gun/gunViewmodel.js', 'src/combat/twoHands/handsLaw.js',
     'src/combat/twoHands/twoHands.js', 'src/systems/thunderlock.js',
     // AUDIT PISTOLET D31: and the modules the lab graduated into the game
-    'src/systems/pistolet.js', 'src/combat/gun/gunPair.js', 'src/combat/gun/pistoletArt.js', 'src/combat/gun/pistolStrip.js',
+    'src/systems/pistolet.js', 'src/combat/gun/pistoletArt.js', 'src/combat/gun/pistolStrip.js',
     'src/combat/gun/gunFeel.js', 'src/combat/playerWeapon.js',
+    // PIN MOVED (PISTOL-PORT): combat/gun/gunPair.js is gone - the page's own machine, pair and frame moved into the game
+    'src/combat/gun/gunMachine.js', 'src/combat/gun/pistolPair.js', 'src/combat/gun/pistolViewmodel.js', 'src/combat/gun/pistolLane.js',
   ]) {
     // a side-effect import (`import '...pistolLab.js'`) is an import too
     assert.doesNotMatch(readFileSync(f, 'utf8'), /^\s*import\s+(?:[\s\S]*?from\s+)?'[^']*pistolLab/m, `${f} does not import the lab`);
@@ -37,9 +39,13 @@ test('what it borrows is RUN, not restated: the game’s frame and the Two-Hands
   assert.equal(strikeHandOf, LAW_STRIKE, 'handsLaw.strikeHandOf itself - the flurry the swords obey');
   assert.equal(guardOffset, LAW_GUARD, 'handsLaw.guardOffset itself');
   // AUDIT 68 S08's law, held for the second lab: the page composes its
-  // frame through gunFrameRect and never calls the steps inside it
+  // frame through the game's and never calls the steps inside it
+  // PIN MOVED (PISTOL-PORT): through pistolHandRect, the game's own draw block, which runs gunFrameRect
+  // (test/combat/gun/pistolport.test.js holds the rest of the page to the game's frame)
   const html = page();
-  assert.match(html, /\bgunFrameRect\(\{/);
+  // PIN MOVED (AUDIT PISTOL-PORT D7): the page asks its panel's rect of the lab module, which runs pistolHandRect
+  assert.match(html, /\bpistolPageRect\(hands, hd, state, art, canvas\)/);
+  assert.match(readFileSync('src/tools/pistolLab.js', 'utf8'), /=> pistolHandRect\(hands, h, \{/);
   for (const step of ['placeSprite(', 'widgetTransformRect(', 'unionDrawRect(']) {
     assert.ok(!html.includes(step), `the page calls ${step} itself - a second copy of the frame the game draws`);
   }
@@ -189,12 +195,14 @@ test('the owner\u2019s numbers, exactly (PISTOL-LAB 2: "Must be these values/sou
 
 test('the page opens on the row: state is read from it, and every control is set from state before it is bound', () => {
   const html = page();
-  assert.match(html, /const O = PISTOL_OPENING;/);
-  assert.match(html, /const W = O\.widget;/);
-  for (const k of ['scale', 'raise', 'kick', 'shake', 'drop', 'alphaCut']) assert.match(html, new RegExp(`\\b${k}: O\\.${k}\\b`), `state.${k} is the row's`);
-  assert.match(html, /sfxFire: pickOf\('fire', O\.sfxFire\)/);
-  assert.match(html, /bobLength: W\['Bob\.Length'\]/);
-  assert.match(html, /inFwd: W\['Inertia\.ForwardDepth'\]/);
+  // PIN MOVED (AUDIT PISTOL-PORT D7): the state is the lab module's (pistolPageState), which the port's pins run - read
+  // here off the row by value, not by the page's text
+  assert.match(html, /const state = pistolPageState\(\);/);
+  const st = pistolPageState();
+  for (const k of ['scale', 'raise', 'kick', 'shake', 'drop', 'alphaCut']) assert.equal(st[k], PISTOL_OPENING[k], `state.${k} is the row's`);
+  assert.equal(st.sfxFire, PISTOL_OPENING.sfxFire);
+  assert.equal(st.bobLength, PISTOL_OPENING.widget['Bob.Length']);
+  assert.equal(st.inFwd, PISTOL_OPENING.widget['Inertia.ForwardDepth']);
   // the sync runs before the binding - the markup's value= cannot win
   assert.ok(html.indexOf("el.checked = !!state[id]; else el.value = String(state[id]);") < html.indexOf('for (const id of CONTROLS) bind(id);'));
   // and the markup agrees anyway, so a reader of the HTML is not misled

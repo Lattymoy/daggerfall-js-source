@@ -34,7 +34,7 @@ const PV = 'a19a19a19a19a190';
 const PV2 = 'b19b19b19b19b190';
 
 async function stand() {
-  const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on', MODERATOR_HANDLES: 'Asynian' });
+  const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on', MODERATOR_HANDLES: 'Asynian', DEVELOPER_HANDLES: 'Lattymoy' });   // STAFF-PANEL2-FIX: a pull is a developer's
   const raw = s.env.DB._raw;
   const fund = (who, marks) => raw.prepare('INSERT INTO marks (account, balance) VALUES (?, ?) ON CONFLICT (account) DO UPDATE SET balance = excluded.balance').run(who.id, marks);
   /** A crafted piece this account owns and made, as the anvil writes it (its maker `maker`, a character of the account). */
@@ -158,7 +158,8 @@ test('INT19 service: cancelled, expired or removed - the piece comes back as its
   const back = await s.call('/v1/market/collect', { character: mac.character, delivery: e.body.listing.id, rid: rid(), realm: mac.at() }, mac.secret);
   assert.equal(back.status, 200);
   const r = await s.list(mac, { provenance: PV2 });
-  assert.equal((await s.call('/v1/market/remove', { listing: r.body.listing.id }, mod.secret)).status, 200);
+  assert.equal((await s.call('/v1/market/remove', { listing: r.body.listing.id }, mod.secret)).status, 403, 'STAFF-PANEL2-FIX: a pull is an Admin\'s, never a Moderator\'s');
+  assert.equal((await s.call('/v1/market/remove', { listing: r.body.listing.id }, (await s.registered('Lattymoy')).secret)).status, 200);
   const road2 = (await s.call('/v1/market/read', { character: mac.character, region: DF, view: 'mine', hubs: HUBS }, mac.secret)).body.road;
   assert.deepEqual(road2.map((d) => [d.kind, d.item?.provenance]), [['item', PV2]]);
   // a listing from before INT19 (no record held for it): a provenance delivery, as ever

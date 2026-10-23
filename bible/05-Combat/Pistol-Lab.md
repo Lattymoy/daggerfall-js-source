@@ -16,7 +16,9 @@ DFU does"), so all of this is our own (SCOPE1); it reads DFU's placement law fir
 
 **Nothing here touches the game.** No module the game runs imports `src/tools/pistolLab.js`, and
 `test/combat/weapon/pistolLab.test.js` fails if `weaponRig.js`, `fpsWeapon.js`, the Weapon Widget, the gun's viewmodel, the
-Two-Hands law or `thunderlock.js` ever does. There is no item, no template, no skill and no damage. The lab answers the
+Two-Hands law or `thunderlock.js` ever does. The arrow runs the other way: since PISTOL-PORT the page's machine, pair
+and frame ARE the game's (`combat/gun/gunMachine.js`, `pistolPair.js`, `pistolViewmodel.js`), and the page imports them
+back. There is no item, no template, no skill and no damage. The lab answers the
 question a source sweep cannot: what does a pair of these FEEL like?
 
 ## What it runs rather than restates
@@ -31,8 +33,9 @@ identity, not by value:
   pinned for this page too).
 - **The gun's feel**, `combat/gun/gunFeel.js`: the recoil spring, the trauma screenshake (which moves the camera and not the
   weapons), and the muzzle light's curve.
-- **The gun lab's machine and sound player** (`src/tools/gunLab.js`): Idle, then six frames, then the reload, then Idle;
-  a hit frame; a one-shot that cannot be interrupted. The same CC0 clips, baked to DAGGER.SND's 11025 Hz 8-bit mono.
+- **The gun lab's machine** (`combat/gun/gunMachine.js` since PISTOL-PORT; `src/tools/gunLab.js` re-exports it) **and
+  sound player** (`gunLab.js`): Idle, then six frames, then the reload, then Idle; a hit frame; a one-shot that cannot be
+  interrupted. The same CC0 clips, baked to DAGGER.SND's 11025 Hz 8-bit mono.
 - **The Two-Hands law** for the pair (`combat/twoHands/handsLaw.js`): which hand fires (`strikeHandOf`, the flurry the
   dual wielder's swords obey), the resting hand's guard (`guardStep`, `guardOffset`), and the mirror (a left hand is a
   right hand in the glass).
@@ -136,6 +139,22 @@ cannot open the panel on a different weapon.
 
 "Walking" was ticked in the screenshot. It is a movement toggle (W), not a setting, so the lab still opens standing.
 
+## The page is the game's player (AUDIT PISTOL-PORT, 2026-10-22)
+
+The page could not make three things a player does, so the owner's tuning had never seen them (`Audit-Pistol-Port.md`
+B1 B2 B6):
+- **It strafes and jumps.** A and D strafe (press again to stop; S stops everything), J jumps - on `gunMotion`, the labs'
+  stand-in motor, which now moves as the game's motor does: a crouch at the motor's crouch speed, a strafe on its own at
+  the walk's, a step and a strafe each at the diagonal .7071, a jump at the motor's JUMP_SPEED and GRAVITY
+  (`pistolJumpClimb`), and the speed ratio PlayerMotor.Speed's over the walk, standing or not.
+- **It turns as the game does.** The mouse turns the page's stand-in camera at the game's own MouseLookSensitivity
+  (`ui/lookSettings.js lookScale`, 2.0 out of the box) - it turned at 1.0, so a flick swayed the game's pistols twice as
+  far - and the page draws in CSS pixels, as the game's canvas does (Bob and Inertia move in pixels; a high-DPI screen
+  showed half the sway).
+- **What the panel feeds the frame is a module** (`src/tools/pistolLab.js` `pistolPageState`, `pistolPageStep`,
+  `pistolPageRect`): the page calls them, and the port's pins run them on the page's own opening state. Its keys, its
+  mouse and its canvas size are the page's alone, and `tools/pistolPortProbe.mjs` drives them in Chromium.
+
 ## Running it, and its own deploy
 
     npx vite                # then open /pistol-proto.html
@@ -162,7 +181,12 @@ in four runs of four.
 
 ## Graduation
 
-**GRADUATED (PISTOLET, 2026-10-21)** as the Dwarven Pistolet - `Dwarven-Pistolet.md` is its record. It answered what this
+**GRADUATED (PISTOLET, 2026-10-21)** as the Dwarven Pistolet - `Dwarven-Pistolet.md` is its record. **PORTED
+(PISTOL-PORT, 2026-10-22)**, as the gun lab was by FIELD-GUN12: the page's pair (`createPair`, `PAIR_TRIGGER`) and its
+frame - each hand's spring, guard, picture, rig, rect, order and two clacks - moved into the game
+(`combat/gun/pistolPair.js`, `combat/gun/pistolViewmodel.js`), and the Pistolet fires and draws on them, one or a pair. The
+page composes nothing of its own now; `test/combat/gun/pistolport.test.js` holds the identity, and the real rig drawing
+every hand at the page's rect, picture and order on one clock (`Dwarven-Pistolet.md` "PISTOL-PORT"). It answered what this
 section listed: the pair's `DUAL_GUN_TYPES` row and its balance (measured there), the Pellet spent through the one
 machine (the out-of-Pellets guard asks whether the weapon is a gun, which serves a pair), the doll and the icons, the
 four hosts through the rig, and the Port-Ledger's A entry. The lab now READS the game's row (`combat/gun/gunFeel.js`

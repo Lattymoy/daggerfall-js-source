@@ -1,0 +1,724 @@
+[
+  {
+    "name": "STAFF-PANEL3-PLAYERS-role-check",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (who.role !== 'admin') {",
+    "new": "if (who.role === 'nobody') {",
+    "why": "a Moderator opens a profile",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-search-name-half",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "UNION SELECT player FROM realm_characters WHERE name >= ?5 COLLATE NOCASE AND name < ?6 COLLATE NOCASE",
+    "new": "UNION SELECT player FROM realm_characters WHERE 0 AND ?5 = ?6",
+    "why": "a character's name finds no account",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-search-online-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const online = body.online === true;",
+    "new": "const online = false;",
+    "why": "\"online now\" lists everyone",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-search-next-full-page",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "next: rows.length > PLAYERS_PAGE ? page[page.length - 1].handle_lc : null,",
+    "new": "next: rows.length >= PLAYERS_PAGE ? page[page.length - 1].handle_lc : null,",
+    "why": "a page just full points past itself",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-online-grace-wide",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "nowS - p.played_at <= PLAY_GRACE_S;",
+    "new": "nowS - p.played_at <= PLAY_GRACE_S * 2;",
+    "why": "a tab gone quiet read as online",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-search-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": ", audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S })]);",
+    "new": "]);",
+    "why": "a search unwritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-search-audit-every-page",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "{ q, online }, { onceIn: READ_ONCE_S }",
+    "new": "{ q, online }, {}",
+    "why": "a search written every page",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-skills-not-high",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "skills: tab(f.charLaw, 'high'",
+    "new": "skills: tab(f.charLaw, 'medium'",
+    "why": "a law finding on the character ranked medium",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-equipment-not-high",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "equipment: tab(f.pieceLaw, 'high'",
+    "new": "equipment: tab(f.pieceLaw, 'medium'",
+    "why": "a law finding on a piece ranked medium",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-copy-not-high",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "f.copies ? 'high' : 'medium'",
+    "new": "'medium'",
+    "why": "a locked copy ranked medium",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-market-low",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "market: tab(f.reported, 'medium'",
+    "new": "market: tab(f.reported, 'low'",
+    "why": "a reported listing ranked low",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-trades-low",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "trades: tab(f.refusedHeld, 'medium'",
+    "new": "trades: tab(f.refusedHeld, 'low'",
+    "why": "a refused trade ranked low",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-budget-not-high",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "f.budget ? 'high' : 'medium'",
+    "new": "'medium'",
+    "why": "a gain the budget held ranked medium",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-history-not-low",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "history: tab(f.findings, 'low'",
+    "new": "history: tab(f.findings, 'medium'",
+    "why": "the week's findings outrank a reported listing",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-frozen-not-high",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "f.openCases || f.holds || f.banned || f.frozen ? 'high'",
+    "new": "f.openCases || f.holds || f.banned ? 'high'",
+    "why": "a frozen account ranked medium",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-frozen-uncounted",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "(f.frozen ? 1 : 0) + ",
+    "new": "",
+    "why": "a freeze counted nothing",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-level-tie-to-later",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "lb > la ||",
+    "new": "lb >= la ||",
+    "why": "a level tie goes to the later tab",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-count-tie-to-later",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "b.count > a.count",
+    "new": "b.count >= a.count",
+    "why": "a count tie goes to the later tab",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-lists-named-wrong",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "[save.bagItems, 'bag'], [save.wagonItems, 'wagon']",
+    "new": "[save.bagItems, 'wagon'], [save.wagonItems, 'bag']",
+    "why": "the bag and the wagon swapped",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-home-is-other",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "home.has(list[0]) ? 'home' : 'other'",
+    "new": "'other'",
+    "why": "a home's piece shown as elsewhere",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-home-decor-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    for (const held of Object.values(objectOf(sc?.decorItems))) for (const it of arrayOf(held)) home.add(it);\n",
+    "new": "",
+    "why": "a home's stored piece shown as elsewhere",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-flag-any-save",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (law && law.seq === seq) for",
+    "new": "if (law) for",
+    "why": "a finding of an older save laid on this one's piece",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-piece-finding-by-list",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "export const isPieceFinding = (f) => f?.list != null || ",
+    "new": "export const isPieceFinding = (f) => ",
+    "why": "an item law finding read as the character's",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-held-any-side",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "(a_player = ?1 AND why = 'trade-held:a') OR (b_player = ?1 AND why = 'trade-held:b')",
+    "new": "(a_player = ?1 OR b_player = ?1) AND why LIKE 'trade-held:%'",
+    "why": "a trade the other side's hold refused counted as this one's",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-claims-made-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "SELECT (SELECT COUNT(*) FROM item_uids WHERE claim_char IN (${inIds}) AND claim_char IS NOT NULL)\n        + (SELECT",
+    "new": "SELECT (0)\n        + (SELECT",
+    "why": "a claim the character made uncounted",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-claims-on-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "+ (SELECT COUNT(*) FROM item_uids WHERE char_id IN (${inIds}) AND claim_char IS NOT NULL) AS n",
+    "new": "+ (SELECT 0 WHERE ?1 IS NOT NULL) AS n",
+    "why": "a claim on the character's piece uncounted",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-copies-uncounted",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "SELECT COUNT(*) AS n FROM item_dupes WHERE char_id IN",
+    "new": "SELECT 0 AS n FROM item_dupes WHERE char_id IN",
+    "why": "a locked copy uncounted",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-newest-is-staff",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "AND kind != 'staff' ORDER BY at DESC, id DESC LIMIT 1",
+    "new": "ORDER BY at DESC, id DESC LIMIT 1",
+    "why": "staff's own act shown as the newest flag",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-history-counts-staff",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "s + (k === 'staff' ? 0 : v)",
+    "new": "s + v",
+    "why": "staff's own acts counted open",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-read-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "body, audit('player-read', p.id, { tab }, { onceIn: READ_ONCE_S }));",
+    "new": "body, db.prepare('SELECT 1'));",
+    "why": "a profile read unwritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-read-audit-every-page",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "{ tab }, { onceIn: READ_ONCE_S }",
+    "new": "{ tab }, {}",
+    "why": "a profile read written every page",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-devices-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": ", audit('devices-read', p.id, null, { onceIn: READ_ONCE_S }).run()]);",
+    "new": "]);",
+    "why": "a device list read unwritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-signout-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    await audit('signout-all', p.id, { name: displayName(p), revoked: r.revoked }).run();\n",
+    "new": "",
+    "why": "Sign out everywhere unwritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-act-by-name",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "acting ? { target: body.target } : ",
+    "new": "false ? { target: body.target } : ",
+    "why": "an act taken on a name",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-char-listed",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    if (listed.has(to.toLowerCase())) return fail('rename-listed', detail);",
+    "new": "",
+    "why": "a character given a listed name",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-handle-canmoderate",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (canModerate(p, env) || listed.has(p.handle_lc)",
+    "new": "if (listed.has(p.handle_lc)",
+    "why": "a Moderator made on the row renamed",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-handle-from-listed",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "|| listed.has(p.handle_lc) || listed.has(to.toLowerCase())) return",
+    "new": "|| listed.has(to.toLowerCase())) return",
+    "why": "a title holder's listed handle renamed away",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-handle-to-listed",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "|| listed.has(p.handle_lc) || listed.has(to.toLowerCase())) return",
+    "new": "|| listed.has(p.handle_lc)) return",
+    "why": "a handle renamed to a listed one",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-lists-developers-only",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (k.endsWith('_HANDLES'))",
+    "new": "if (k === 'DEVELOPER_HANDLES')",
+    "why": "a title list's handle not refused",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-owner-keys-wrong-half",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "k === 'OWNER_KEYS' ? 0 : 1",
+    "new": "1",
+    "why": "an owner key read by its key, not its handle",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-char-taken-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (isHandleShaped(to) && await",
+    "new": "if (false && await",
+    "why": "a character given another account's handle",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-handle-same",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "  if (to === p.handle) return fail('rename-same', detail);\n",
+    "new": "",
+    "why": "a handle renamed to itself",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-char-same",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    if (to === c.name) return fail('rename-same', detail);\n",
+    "new": "",
+    "why": "a character renamed to its own name",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-handle-refusal-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "  if (why) return fail('rename-bad', { ...detail, why });\n",
+    "new": "",
+    "why": "a handle the game refuses given",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-char-worn-refusal-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "realmNameOf(to) !== to || wornNameRefusal(to)",
+    "new": "realmNameOf(to) !== to",
+    "why": "a character name the wire refuses given",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-char-other-account",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "WHERE id = ?1 AND player = ?2').bind(body.char, p.id)",
+    "new": "WHERE id = ?1').bind(body.char)",
+    "why": "another account's character renamed",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-copies-letters-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "['letters', 'from_name', 'from_id = ?3'], ",
+    "new": "",
+    "why": "a letter's sender keeps the old handle",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-rename-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "      audit('rename', p.id, { ...detail, to }),\n      db.prepare('UPDATE players",
+    "new": "      db.prepare('UPDATE players",
+    "why": "a handle rename unwritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-trades-one-side",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "WHERE t.a_player = ?1 OR t.b_player = ?1 ORDER BY",
+    "new": "WHERE t.a_player = ?1 ORDER BY",
+    "why": "a trade the account was the second side of missed",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-trades-held-swapped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "side[2] === mine ? 'mine' : 'theirs'",
+    "new": "side[2] === mine ? 'theirs' : 'mine'",
+    "why": "whose hold refused a trade turned around",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-trades-gave-got-swapped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "gave: r ? receiptOf(r[theirs]) : null, got: r ? receiptOf(r[mine]) : null",
+    "new": "gave: r ? receiptOf(r[mine]) : null, got: r ? receiptOf(r[theirs]) : null",
+    "why": "what a side gave and got turned around",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-economy-uncapped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "body.days <= ECONOMY_DAYS_MAX",
+    "new": "body.days <= 1000",
+    "why": "the day range past its cap",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-letters-filter",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "where === 'letters' ? r.letter === true : r.where === where",
+    "new": "r.where === where",
+    "why": "the letters filter finds none",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-min-filter",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "(!min || (r.worth ?? 0) >= min)",
+    "new": "true",
+    "why": "the worth filter ignored",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-section-from-ignored",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const from = one ? fromOf(body.from) : 0;",
+    "new": "const from = 0;",
+    "why": "a section's next page the first again",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-locked-unmarked",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "{ locked: true }",
+    "new": "{}",
+    "why": "a locked copy not marked on its piece",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-taken-precheck-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "  if (await db.prepare('SELECT 1 AS taken FROM players WHERE handle_lc = ?1 AND id != ?2').bind(to.toLowerCase(), p.id).first()) return fail('rename-taken', detail);\n",
+    "new": "",
+    "why": "equivalent: the unique index on handle_lc refuses the name taken in the batch, answered rename-taken the same - the precheck only spares the batch",
+    "equivalent": true,
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-guest-signout",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (!p.handle) {\n      await audit('signout-all'",
+    "new": "if (false) {\n      await audit('signout-all'",
+    "why": "Sign out everywhere ends a guest's only sessions, locking it out for good",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-guest-signout-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "      await audit('signout-all', p.id, { name: displayName(p), error: 'no-handle' }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a guest's refused sign-out leaves no row",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-rename-scope-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "lower(?2)${scope ? ` AND ${scope}` : ''}",
+    "new": "lower(?2)${scope ? ' AND ?3 = ?3' : ''}",
+    "why": "every copy matched on the name alone, other accounts' rows rewritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-rename-scope-letters",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "['letters', 'from_name', 'from_id = ?3']",
+    "new": "['letters', 'from_name']",
+    "why": "another sender's letter that reads like the handle is rewritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-rename-scope-homes",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "['homes', 'owner_name', 'player = ?3 AND guild_id IS NULL']",
+    "new": "['homes', 'owner_name']",
+    "why": "a home or hall of any account that reads like the handle is rewritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-rename-scope-hall",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "'player = ?3 AND guild_id IS NULL'",
+    "new": "'player = ?3'",
+    "why": "the hall of a guild named like the handle takes the account's new name",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-rename-scope-marks",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "['marks_ledger', 'who', 'actor = ?3']",
+    "new": "['marks_ledger', 'who']",
+    "why": "another account's Marks line whose `who` reads like the handle is rewritten",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-rename-renown-copied",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "  ['guild_store_ledger', 'who'],\n",
+    "new": "  ['guild_store_ledger', 'who'], ['renown_tracks', 'name', 'player = ?3'],\n",
+    "why": "a character's renown track takes the account's new handle",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-open-cases-first-only",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "openCases: (open.results ?? []).map(",
+    "new": "openCases: (open.results ?? []).slice(0, 1).map(",
+    "why": "Overview shows one of two open cases",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-open-cases-badge-boolean",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "openCases: n('case'),",
+    "new": "openCases: Math.min(1, n('case')),",
+    "why": "the badge counts two open cases as one",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-open-cases-order",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "status = 'open' ORDER BY kind\").bind(p.id),",
+    "new": "status = 'open'\").bind(p.id),",
+    "why": "equivalent: the read stands on mod_cases_open (target, kind) WHERE status = 'open' (migration 0156), so SQLite answers in kind's order either way - ORDER BY kind says it rather than leaning on the plan",
+    "equivalent": true,
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-economy-cut",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "LIMIT ${PLAYERS_PAGE + 1} OFFSET ${from}`).bind(...ids, since),",
+    "new": "LIMIT ${PLAYERS_PAGE * 4}`).bind(...ids, since),",
+    "why": "the gains cut at a hundred, the older unreachable",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-economy-from-ignored",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    const from = fromOf(body.from);\n    const [hours, gains]",
+    "new": "    const from = 0;\n    const [hours, gains]",
+    "why": "every page of gains is the first",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-economy-next-dropped",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "      next: rows.length > PLAYERS_PAGE ? from + PLAYERS_PAGE : null,\n      characters:",
+    "new": "      next: null,\n      characters:",
+    "why": "the gains answer no next page",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-PLAYERS-FIX-online-unindexed",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "AND id IN (SELECT id FROM players WHERE handle IS NOT NULL AND played_at >= ?${args.length})",
+    "new": "AND played_at >= ?${args.length}",
+    "why": "\"online now\" walks every handle for the order, played_at checked row by row",
+    "tests": [
+      "test/server/staffpanel3players.test.js"
+    ]
+  }
+]

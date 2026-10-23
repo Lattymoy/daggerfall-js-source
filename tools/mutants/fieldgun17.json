@@ -153,8 +153,8 @@
   {
     "name": "FIELD-GUN17-17-the-flash-is-painted-white-again",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const flash = orbColour();",
-    "new": "    const flash = [1, 1, 1];",
+    "old": "    const flash = ph ? PAINTED_FLASH : orbColour();",
+    "new": "    const flash = ph ? PAINTED_FLASH : [1, 1, 1];",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

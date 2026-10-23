@@ -1,0 +1,956 @@
+[
+  {
+    "name": "STAFF-PANEL5-FREEZE-admin-door-open",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (ADMIN_ROUTES.has(path) && who.role !== 'admin') {",
+    "new": "if (false) {",
+    "why": "a Moderator freezes",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-gate-gone",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
+    "new": "if (true) return null;",
+    "why": "the freeze gate gone: a modded client opens every door",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-allow-list-ignored",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
+    "new": "if (!isFrozen(player, nowS) || readsRecord) return null;",
+    "why": "a frozen player cannot sign out or read the staff chat",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-record-read-refused",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
+    "new": "if (!isFrozen(player, nowS) || ALLOWED.has(path)) return null;",
+    "why": "the look-around save unreadable",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-minutes-unbound",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "minutes > FREEZE_MINUTES_MAX)) return failed('bad-minutes'",
+    "new": "minutes > FREEZE_MINUTES_MAX * 2)) return failed('bad-minutes'",
+    "why": "a freeze past its bound",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-reason-optional",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (freeze && !reason) return failed('bad-reason');",
+    "new": "if (false) return failed('bad-reason');",
+    "why": "a freeze with no reason",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-self-freeze",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (freeze && row.id === me.id) return failed('staff-self');",
+    "new": "if (false) return failed('staff-self');",
+    "why": "an Admin freezes themself",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-staff-frozen",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (freeze && canModerate(row, env)) return failed('protected');",
+    "new": "if (false) return failed('protected');",
+    "why": "staff frozen",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-unfreeze-unfrozen",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!freeze && !isFrozen(row, nowS)) return failed('not-frozen');",
+    "new": "if (false) return failed('not-frozen');",
+    "why": "an unfreeze of nobody frozen",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-rev-race-unsaid",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!set.meta.changes) return { error: 'freeze-moved' };",
+    "new": "if (false) return { error: 'freeze-moved' };",
+    "why": "two Admins at once both answered ok",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-freeze-thread-player-out",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1",
+    "new": "SELECT ?1, 'freeze', ?2, ?3, 0, ?2, 1",
+    "why": "a freeze opens no thread its player is in",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-unfreeze-thread-open",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "        : db.prepare(`UPDATE staff_chat_threads SET closed_at = ?2",
+    "new": "        : db.prepare(`UPDATE staff_chat_threads SET last_at = ?2",
+    "why": "the unfreeze leaves the chat open",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-live-any-rev",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "WHERE id = ?1 AND freeze_rev = ?2 AND freeze_live = 0').bind(row.id, Number(row.freeze_rev))",
+    "new": "WHERE id = ?1 AND freeze_live = 0').bind(row.id)",
+    "why": "an old push marks a newer act live",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-push-again-when-live",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (row.freeze_live !== 0) return { ok: true, target: row.id, name, live: true };",
+    "new": "if (false) return { ok: true, target: row.id, name, live: true };",
+    "why": "a live act pushed again",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-freeze-thread-outlives",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "(t.why === 'talk' || isFrozen(player, nowS))",
+    "new": "(true)",
+    "why": "a freeze thread open past its freeze",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-player-in-unread",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "const open = threadOpen(thread, player, nowS) && thread.player_in === 1;",
+    "new": "const open = threadOpen(thread, player, nowS);",
+    "why": "a Talk thread read by its player before staff wrote",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-player-rate-gone",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "PLAYER_LINES_MAX, PLAYER_LINES_WINDOW_S)) return { error: 'rate' };",
+    "new": "PLAYER_LINES_MAX, PLAYER_LINES_WINDOW_S) && false) return { error: 'rate' };",
+    "why": "a player floods staff",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-player-line-unaudited",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "  await auditStatement(db, nowS, { actor: player,",
+    "new": "  if (false) await auditStatement(db, nowS, { actor: player,",
+    "why": "a player line not in the audit log",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-staff-line-join-lost",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "SET player_in = 1, last_at = ?2, last_staff = 1 WHERE player = ?1",
+    "new": "SET last_at = ?2, last_staff = 1 WHERE player = ?1",
+    "why": "the player never joins on the first staff line",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-staff-line-words-logged",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "audit('chat-line', row.id, { name, line: line.id, len: text.length }),",
+    "new": "audit('chat-line', row.id, { name, line: line.id, len: text.length, text }),",
+    "why": "a line's words in the audit log",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-freeze-thread-closed-by-hand",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (thread.why === 'freeze') return failed('freeze-thread');",
+    "new": "if (false) return failed('freeze-thread');",
+    "why": "a freeze thread closed while the freeze stands",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-sweep-closes-talk",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "WHERE t.closed_at IS NULL AND t.why = 'freeze' AND COALESCE(p.frozen_until, 0) <= ?1",
+    "new": "WHERE t.closed_at IS NULL AND COALESCE(p.frozen_until, 0) <= ?1",
+    "why": "the sweep closes a Talk thread",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-sweep-keeps-old-lines",
+    "file": "server-account/src/staffFreeze.js",
+    "old": ".bind(nowS - STAFF_LINES_KEEP_S, page)",
+    "new": ".bind(nowS - STAFF_LINES_KEEP_S * 2, page)",
+    "why": "lines kept past 90 days",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-invite-http",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "/^https:\\/\\/[\\w.-]+\\/[\\w/-]+$/",
+    "new": "/^https?:\\/\\/[\\w.-]+\\/[\\w/-]+$/",
+    "why": "an http invite shown",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-retry-too-soon",
+    "file": "server-account/src/staffFreeze.js",
+    "old": ".bind(nowS - PUSH_RETRY_AFTER_S, PUSH_RETRY_MAX)",
+    "new": ".bind(nowS, PUSH_RETRY_MAX)",
+    "why": "an act pushed again before its own push had its chance",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-talk-joins-at-once",
+    "file": "server-account/src/staffFreeze.js",
+    "old": ".bind(row.id, nowS, me.id, isFrozen(row, nowS) ? 1 : 0),",
+    "new": ".bind(row.id, nowS, me.id, 1),",
+    "why": "Talk puts the player in before any staff line",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-token-no-fz",
+    "file": "server-account/src/index.js",
+    "old": "...(wa ? { wa } : {}), ...(fz ? { fz } : {}) };",
+    "new": "...(wa ? { wa } : {}) };",
+    "why": "a reload sheds the freeze",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-checkpoint-saves",
+    "file": "server-account/src/realm.js",
+    "old": "if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS) return { error: 'frozen'",
+    "new": "if (false) return { error: 'frozen'",
+    "why": "a frozen checkpoint saves under an old pass",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-beat-credits",
+    "file": "server-account/src/accounts.js",
+    "old": "AND COALESCE(frozen_until, 0) <= ?1",
+    "new": "AND 1",
+    "why": "a frozen beat credits play",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-market-buy-frozen-seller",
+    "file": "server-account/src/market.js",
+    "old": "if (Number(l.seller_frozen) > nowS) return { error: 'market-seller-frozen' };",
+    "new": "if (false) return { error: 'market-seller-frozen' };",
+    "why": "a frozen seller's listing sells",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-market-bid-frozen-seller",
+    "file": "server-account/src/market.js",
+    "old": "if (Number(a.seller_frozen) > nowS) return { error: 'market-seller-frozen' };",
+    "new": "if (false) return { error: 'market-seller-frozen' };",
+    "why": "a frozen seller's auction takes a bid",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-fall-names-frozen",
+    "file": "server-account/src/wild.js",
+    "old": "if (fallen !== player.id && isFrozen(",
+    "new": "if (false && isFrozen(",
+    "why": "a frozen player robbed by a filed fall",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-door-refuses-freeze",
+    "file": "server/src/index.js",
+    "old": "kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "new": "kind !== 'hide') return json({ error: 'bad law' }, 403);",
+    "why": "the service's freeze refused at the door",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-client-carries-freeze",
+    "file": "server/src/index.js",
+    "old": "if (hand && STAFF_ORDER_KINDS.includes(kind)) kinds = STAFF_ORDER_KINDS;",
+    "new": "if (STAFF_ORDER_KINDS.includes(kind)) kinds = STAFF_ORDER_KINDS;",
+    "why": "a client carries a freeze in on the ban frame",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-older-order-applied",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (held && (c.i < held.i || held.sig === sig)) return true;",
+    "new": "if (held && held.sig === sig) return true;",
+    "why": "an older lift lifts a newer freeze",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-book-unsaved",
+    "file": "server/src/staffFreeze.js",
+    "old": "  await saveFreezes(room, nowS);\n  const told",
+    "new": "  const told",
+    "why": "the book lost at a wake",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-old-build-kept",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (fz && b.fv !== 1) room._refuse(",
+    "new": "if (false) room._refuse(",
+    "why": "an old build frozen with no screen stays",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-book-unread-at-hello",
+    "file": "server/src/staffFreeze.js",
+    "old": "const book = key === SOCIAL_ROOM ? await bookOver(",
+    "new": "const book = key === 'never' ? await bookOver(",
+    "why": "a reload sheds the freeze at the hub",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-old-build-hello-kept",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (who.fz && m.fv !== 1) { room._refuse(",
+    "new": "if (false) { room._refuse(",
+    "why": "an old build's frozen hello let in",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-bus-book-unread",
+    "file": "server/src/index.js",
+    "old": "    if (!(a = await busFreeze(this, vws, a, ti, now, GROUND_OLD_WORDS))) return;",
+    "new": "    void busFreeze;",
+    "why": "a shard's hello past the bus's book",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-seat-unsaid",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (seatBarred(was) === seatBarred(now) || isChatRoom(was?.key)) return;",
+    "new": "if (true) return;",
+    "why": "the seat moves unsaid",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-walk-unbarred",
+    "file": "server/src/index.js",
+    "old": "for (const [ws, a] of this._all()) if (ws !== except && a.id && !a.hid && !seatBarred(a)) list.push(a);",
+    "new": "for (const [ws, a] of this._all()) if (ws !== except && a.id && !a.hid) list.push(a);",
+    "why": "a frozen host",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-lead-unbarred",
+    "file": "server/src/index.js",
+    "old": "if (a.hid || seatBarred(a)) return false;",
+    "new": "if (a.hid) return false;",
+    "why": "a frozen socket leads",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-lapsed-said-standing",
+    "file": "server/src/index.js",
+    "old": "fz: frozenAt(a, nowS) ? a.fz : 0, at: nowS, p:",
+    "new": "fz: a.fz ?? 0, at: nowS, p:",
+    "why": "a lapsed freeze said standing in the lease",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): the mint says a pass (`p`) after its time."
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-seat-back-by-clock",
+    "file": "server/src/staffFreeze.js",
+    "old": "export const seatBarred = (a) => Number(a?.fz) > 0;",
+    "new": "export const seatBarred = (a) => frozenAt(a, Date.now() / 1000);",
+    "why": "the seat moves back unsaid at the clock",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-staff-line-dropped",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (m.t === 'chat' && m.ch === 'staff' && m.me !== true) return false;",
+    "new": "if (m.t === 'never') return false;",
+    "why": "a frozen player cannot talk to staff",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-camera-whole",
+    "file": "server/src/staffFreeze.js",
+    "old": "{ m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 }; return false; }",
+    "new": "{ return false; }",
+    "why": "a frozen camera walks",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-aim-unread",
+    "file": "server/src/staffFreeze.js",
+    "old": "  return aimedAtFrozen(room, a, m, nowS);",
+    "new": "  return false;",
+    "why": "a frozen player traded with",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-words-carried",
+    "file": "server/src/staffFreeze.js",
+    "old": "th: a.sub, sl, id: a.id, name: a.name, at: now });",
+    "new": "th: a.sub, sl, id: a.id, name: a.name, at: now, text: frame.text });",
+    "why": "the nudge carries words",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-members-all",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
+    "new": "if (b.id) room._send(other, out);",
+    "why": "a nudge to everyone",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX (re-aimed by content): staff sockets are the hidden ones (isHidden), never `hd` 1."
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-no-thread-nudges",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return;",
+    "new": "if (false) return;",
+    "why": "a player in no thread nudges staff",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-join-lost",
+    "file": "server/src/staffFreeze.js",
+    "old": "  joined.set(c.s, c.i);",
+    "new": "  void joined;",
+    "why": "a staff line joins nobody",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-mute-shuts-staff",
+    "file": "server/src/index.js",
+    "old": "      if (m.ch === 'staff') { staffLine(this, ws, a, m, now); return; }",
+    "new": "      if (m.ch === 'never') { staffLine(this, ws, a, m, now); return; }",
+    "why": "a muted player cannot talk to staff",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-cell-staff-line",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (frame.t !== 'chat' || !isSocialRoom(a.key)) { room._junk(ws); return; }",
+    "new": "if (frame.t !== 'chat') { room._junk(ws); return; }",
+    "why": "a staff nudge from a cell",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-fv-unsaid",
+    "file": "src/net/online.js",
+    "old": "    frame.fv = 1;   // STAFF-PANEL5-FREEZE",
+    "new": "    frame.fv = 0;   // STAFF-PANEL5-FREEZE",
+    "why": "a new build closed as an old one",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-staff-gate-open",
+    "file": "src/net/online.js",
+    "old": "    if (ch === 'staff' && !this.staffOk) return false;",
+    "new": "    if (false) return false;",
+    "why": "a nudge to a hub that never spoke the staff word",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-nudge-as-line",
+    "file": "src/net/online.js",
+    "old": "    } else if (m.t === 'chat' && m.ch === 'staff') {",
+    "new": "    } else if (m.t === 'never') {",
+    "why": "a staff frame read as a chat line",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-blow-delivered",
+    "file": "src/characters/playerEntity.js",
+    "old": "if (_staff.god || staffFrozen()) return true;",
+    "new": "if (_staff.god) return true;",
+    "why": "a frozen player takes damage",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-two-reads",
+    "file": "src/net/staffChat.js",
+    "old": "if (reading) { again = true; return reading; }",
+    "new": "if (false) { again = true; return reading; }",
+    "why": "two reads at once",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-read-from-start",
+    "file": "src/net/staffChat.js",
+    "old": "const r = await read(last);",
+    "new": "const r = await read(0);",
+    "why": "the thread read from its start every time",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-nudge-on-refusal",
+    "file": "src/net/staffChat.js",
+    "old": "if (!r?.ok) { system(accountRefusalText(r?.error ?? 'server')); return; }",
+    "new": "if (!r?.ok) { system(accountRefusalText(r?.error ?? 'server')); nudge(0); return; }",
+    "why": "a nudge for a line the service refused",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-poll-never",
+    "file": "src/net/staffChat.js",
+    "old": "if ((frozen() || open) && at - readAt >= STAFF_POLL_MS) refresh();",
+    "new": "if (false) refresh();",
+    "why": "a lost nudge never read",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-tab-unshown",
+    "file": "src/net/staffChat.js",
+    "old": "const shown = () => log.setShown(STAFF_TAB, frozen() || open || copied.has(log));",
+    "new": "const shown = () => log.setShown(STAFF_TAB, false);",
+    "why": "the Staff tab never on the bar",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-invite-twice",
+    "file": "src/net/staffChat.js",
+    "old": "if (url && url !== invite) {",
+    "new": "if (url) {",
+    "why": "the invite said at every read",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-invite-any",
+    "file": "src/net/staffChat.js",
+    "old": "/^https:\\/\\/[^\\s]+$/",
+    "new": "/^https?:\\/\\/[^\\s]+$/",
+    "why": "an http invite shown",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-tab-open-frozen",
+    "file": "src/scenes/staffFreezeHost.js",
+    "old": "claims: (tabId) => tabId === STAFF_TAB || chat.frozen(),",
+    "new": "claims: (tabId) => tabId === STAFF_TAB,",
+    "why": "a frozen player talks on the World tab",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-copy-on-player-line",
+    "file": "src/net/chat.js",
+    "old": "const copied = sys && typeof copy === 'string' && copy ? { copy } : {};",
+    "new": "const copied = typeof copy === 'string' && copy ? { copy } : {};",
+    "why": "a player line offers words to copy",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-screen-never-hidden",
+    "file": "src/ui/freezeScreen.js",
+    "old": "root.hidden = !(u > 0);",
+    "new": "root.hidden = false;",
+    "why": "the screen stays after the lift",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-motor-free",
+    "file": "src/scenes/world.js",
+    "old": "const paralyzed = entityIsParalyzed(playerEntity) || staffFrozen();",
+    "new": "const paralyzed = entityIsParalyzed(playerEntity);",
+    "why": "a frozen player walks in the world",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-lost-unfreeze-closes-thread",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "WHERE player = ?1 AND closed_at IS NULL AND ${LANDED}",
+    "new": "WHERE player = ?1 AND closed_at IS NULL",
+    "why": "an unfreeze that lost its race closes the winning freeze's thread",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-lost-freeze-opens-thread",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE ${LANDED}",
+    "new": "SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE 1",
+    "why": "a freeze that lost its race opens a thread",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-old-lease-rooms",
+    "file": "src/net/roomLease.js",
+    "old": "export const leaseRoom = (key) => typeof key === 'string' && !isSocialRoom(key);",
+    "new": "export const leaseRoom = (key) => typeof key === 'string' && !isSocialRoom(key) && /^(chat|world|dungeon|interior):/.test(key);",
+    "why": "finding 21: a home, a caravan, a siege, an arena, a gate, a breach and a Super dungeon realm out of the leases again - a freeze never reaches them",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-hello-pose-taken",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (who.fz && !isChatRoom(key)) m.pose = posedHere(room, who.subject);",
+    "new": "if (false) m.pose = posedHere(room, who.subject);",
+    "why": "finding 22: a frozen hello stands where it says - a reconnect is a step",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-pose-of-anyone",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (b.sub === sub && b.pose && typeof b.pose === 'object') return",
+    "new": "if (b.pose && typeof b.pose === 'object') return",
+    "why": "finding 22: a frozen hello stands where anyone in the room stands",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-pose-walking",
+    "file": "server/src/staffFreeze.js",
+    "old": "return { ...b.pose, mv: 0 };",
+    "new": "return b.pose;",
+    "why": "finding 22: a frozen reconnect stands walking",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-staff-by-hd",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
+    "new": "if (b.id && (b.sub === sub || b.hd === 1)) room._send(other, out);",
+    "why": "findings 19, 24, 30: staff matched on `hd` 1, which no attachment carries - no staff socket nudged",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-shard-mints-own",
+    "file": "server/src/index.js",
+    "old": "if (a.vid && isChannelShard(room) && !this._upRetry) { this._hubForward(ws, a, message); return; }",
+    "new": "if (false) { this._hubForward(ws, a, message); return; }",
+    "why": "finding 25: a hub shard mints a lease from its own copy before the bus's book reaches a fresh hello",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): the forward waits on a bus that takes its hand-ups (`!this._upRetry`)."
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-no-push-after",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (set.meta.changes || tries < 1) return true;",
+    "new": "return true;",
+    "why": "finding 23: a push whose revision moved on is the last word - a stale freeze held at the hub",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-push-after-own-rev",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!cur || Number(cur.freeze_rev) === Number(row.freeze_rev)) return true;",
+    "new": "if (!cur) return true;",
+    "why": "finding 23: a push of a revision live already pushes it again, and again",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-failed-after-live",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "if (!(await pushFreeze({ db, nowS: at, subtle }, env, cur, tries - 1))) await db.prepare(",
+    "new": "await pushFreeze({ db, nowS: at, subtle }, env, cur, tries - 1); if (false) await db.prepare(",
+    "why": "finding 23: a failed push after leaves the newer act said live, never tried again",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-order-time-request",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "const at = Math.max(nowS, Math.floor(Date.now() / 1000));",
+    "new": "const at = nowS;",
+    "why": "finding 23: an order's time is its request's - older than an act committed before its mint",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-firing-read-pushed",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "for (const { id } of rows) {\n    const r = await db.prepare('SELECT id, frozen_until, freeze_rev FROM players WHERE id = ?1 AND freeze_live = 0').bind(id).first();",
+    "new": "for (const r of rows) {",
+    "why": "finding 23: the clock pushes each row as its firing read it",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-tries",
+    "file": "server-account/src/staffFreeze.js",
+    "old": "export async function pushFreeze({ db, nowS, subtle }, env, row, tries = 3) {",
+    "new": "export async function pushFreeze({ db, nowS, subtle }, env, row, tries = 1) {",
+    "why": "finding 23: the bound on pushes after",
+    "tests": [
+      "test/server/staffpanel5_freeze.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-read-raises-only",
+    "file": "src/net/staffChat.js",
+    "old": "until = f ? f.until : 0;",
+    "new": "if (f && f.until > until) until = f.until;",
+    "why": "finding 26: a read never lowers the freeze - a lift the relay never said holds the motor",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-relay-word-overruled",
+    "file": "src/net/staffChat.js",
+    "old": "if (word === heard) {",
+    "new": "if (true) {",
+    "why": "finding 26: a read begun before the relay's lift puts the freeze back",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-hall-lease-untaken",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      for (const x of links()) link.leaseFrom?.(x);\n",
+    "new": "",
+    "why": "round two, item 1: a new hall link holds no lease - with the door on, its queue word is heard in nothing",
+    "tests": [
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-shard-waits-on-bus",
+    "file": "server/src/index.js",
+    "old": "isChannelShard(room) && !this._upRetry)",
+    "new": "isChannelShard(room))",
+    "why": "round two, item 2: an ask while the bus takes nothing waits on it - no lease",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-miss-unanswered",
+    "file": "server/src/index.js",
+    "old": "this._upRetry = body; await busMissed(this, body.e); }",
+    "new": "this._upRetry = body; }",
+    "why": "round two, item 2: the ask a missed hand-up carried is never answered",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-every-try",
+    "file": "server/src/index.js",
+    "old": "if (this._upRetry !== body) {",
+    "new": "if (true) {",
+    "why": "round two, item 2: a pass minted again on every try of the same hand-up",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-unmarked",
+    "file": "server/src/index.js",
+    "old": "p: a.vid && isChannelShard(room) ? 1 : 0 }",
+    "new": "p: 0 }",
+    "why": "round two, item 2 (finding 25 kept): the shard's own lease is no pass - a fresh hello's lifts a freeze the bus's book holds",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-newer-word",
+    "file": "server/src/index.js",
+    "old": "const law = !r.p && ",
+    "new": "const law = ",
+    "why": "round two, item 2 (finding 25 kept): a pass read as the newer word lifts a freeze",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-read-unmarked",
+    "file": "src/net/roomLease.js",
+    "old": "u: c.u, ...(c.p ? { p: 1 } : {}) };",
+    "new": "u: c.u };",
+    "why": "round two, item 2: a pass read as any lease",
+    "tests": [
+      "test/net/lease1.test.js",
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-mark-unchecked-read",
+    "file": "src/net/roomLease.js",
+    "old": "|| (c.p !== undefined && c.p !== 1)) return null;",
+    "new": ") return null;",
+    "why": "round two, item 2: any `p` read",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-mark-unchecked-mint",
+    "file": "src/net/roomLease.js",
+    "old": "|| (p !== 0 && p !== 1)) return null;",
+    "new": ") return null;",
+    "why": "round two, item 2: any `p` minted",
+    "tests": [
+      "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-for-any-frame",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (kind !== 'f' || !said.startsWith('{\"t\":\"lease\"')) continue;",
+    "new": "if (kind !== 'f') continue;",
+    "why": "round two, item 2: a missed hand-up's line answered with a pass",
+    "tests": [
+      "test/net/staffpanel5_freeze_relay.test.js"
+    ]
+  }
+]

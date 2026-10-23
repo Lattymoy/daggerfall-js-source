@@ -253,8 +253,8 @@
   {
     "name": "PROF5b-svc-seller-bids",
     "file": "server-account/src/market.js",
-    "old": "  if (a.seller === me) return { error: 'market-own' };\n  if (a.high_bidder === me) return { error: 'auction-leading' };",
-    "new": "  if (a.high_bidder === me) return { error: 'auction-leading' };",
+    "old": "  if (a.seller === me) return { error: 'market-own' };\n  if (Number(a.seller_stopped))",
+    "new": "  if (Number(a.seller_stopped))",
     "tests": [
       "test/net/prof5b_service.test.js"
     ]

@@ -19788,6 +19788,11 @@ hourglass is: `ui/enhanced/enhancedPost.js`.
   letterbox's own manner.
 - Pins: `test/net/serverpost_client.test.js`; PIN MOVED: `test/ui/enhanced/outsideTap.test.js` (five scrims, the envelope inside the
   pause face's; the face under the account window inert; the window's place reset on a tap outside).
+- **LOST-SPOILS (2026-10-22): Claim all.** A boss's floor's leftovers come a piece an item, from the Lost and Found
+  (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` LOST-SPOILS), so the list stands *Claim all (N)* above itself while two
+  or more items wait (`.pm-claimrow`, the window's own foot row set right), down while a claim or a Claim all runs, as
+  a piece's Claim is while one is out. Pressed, it claims each in turn (`net/serverPost.js` claimAll) and says what landed
+  (`post.claimedAll`), or that and where it stopped. One waiting item has only its own Claim.
 
 
 ## EVERY-STANDING - every organization's standing, a setting (FIELD BUGS 2026-10-09e)

@@ -32,7 +32,7 @@
 // the key that signs a receipt. A relay without the secret hands out none, and binds nobody.
 
 import { _b64url, ID_RE } from './identityToken.js';
-import { isChatRoom, isSocialRoom, streamsFoes, LEASE_WIRE_MAX } from './wire.js';
+import { isSocialRoom, LEASE_WIRE_MAX } from './wire.js';
 
 /** How often a game asks its hub for a lease. */
 export const LEASE_MS = 30_000;
@@ -57,9 +57,12 @@ export const LEASE_OLD_REASON = 'old lease';
 export const LEASE_RELAY_MIN = 242;
 /** Does the relay at version `v` know the lease frame? An older one closes a socket on a frame type it does not know. */
 export const relaySupportsLease = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= LEASE_RELAY_MIN;
-/** A room a lease binds: a channel that is not the hub's (Trade, LFG, a language's, a region's and its shards), and a
- *  cell or world room (where a frozen player stands). The hub hands leases out; every other room is outside them. */
-export const leaseRoom = (key) => !isSocialRoom(key) && (isChatRoom(key) || streamsFoes(key));
+/** A room a lease binds: EVERY ROOM BUT THE HUB'S (and its shards), which hands leases out - a channel (Trade, LFG, a
+ *  language's, a region's and its shards), a cell or world room, and every place a player acts in besides: a home, a
+ *  caravan, a boat, a siege or a Royal Tourney, an arena's hall and floors, a gate's court, an Elite Breach, a Super
+ *  dungeon's realm (STAFF-PANEL5-FREEZE-FIX, mob: "freeze they can only talk to staff while frozen" - a review found a
+ *  frozen player free in each of these, which no lease reached). A room's kind added later is bound from its first day. */
+export const leaseRoom = (key) => typeof key === 'string' && !isSocialRoom(key);
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -79,20 +82,26 @@ export async function leaseKeyOf(secret, { subtle }) {
 }
 
 /**
- * MINT - the hub's half: `<claims>.<mac>`, base64url, or null for claims no lease carries.
- * @param {{ s: string, mu?: number, fz?: number, at: number }} what  `s` the account, `mu`/`fz` until when (epoch s; 0 none), `at` now (epoch s)
+ * MINT - the hub's half: `<claims>.<mac>`, base64url, or null for claims no lease carries. STAFF-PANEL5-FREEZE-FIX (round
+ * two, a review: a hub shard's lease is its bus's to mint, so a bus that did not answer left every lease room unheard):
+ * `p` 1 is a PASS, the lease a hub shard mints off its own attachment while its bus takes nothing it hands up - a room
+ * reads it as a lease older than its own last word (`readLease` says `p`; server/src/index.js `_leaseRead`): its life
+ * renewed and a freeze it carries taken, never a mute or a freeze lifted (a fresh hello there has not heard the bus's
+ * book of freezes - the review's finding 25).
+ * @param {{ s: string, mu?: number, fz?: number, at: number, p?: number }} what  `s` the account, `mu`/`fz` until when (epoch s; 0 none), `at` now (epoch s), `p` 1 a pass
  * @param {CryptoKey} key @param {{subtle: SubtleCrypto}} env
  */
-export async function mintLease({ s, mu = 0, fz = 0, at }, key, { subtle }) {
-  if (typeof s !== 'string' || !ID_RE.test(s) || until(mu) == null || until(fz) == null || !(until(at) > 0)) return null;
-  const body = _b64url.encode(enc.encode(JSON.stringify({ s, m: mu, f: fz, a: at, u: at + LEASE_LIFE_S })));
+export async function mintLease({ s, mu = 0, fz = 0, at, p = 0 }, key, { subtle }) {
+  if (typeof s !== 'string' || !ID_RE.test(s) || until(mu) == null || until(fz) == null || !(until(at) > 0) || (p !== 0 && p !== 1)) return null;
+  const body = _b64url.encode(enc.encode(JSON.stringify({ s, m: mu, f: fz, a: at, u: at + LEASE_LIFE_S, ...(p ? { p } : {}) })));
   const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(body)));
   const l = `${body}.${_b64url.encode(mac)}`;
   return l.length <= LEASE_WIRE_MAX ? l : null;
 }
 
 /**
- * READ - a room's half: `{ s, mu, fz, at, u }` for a lease this relay signed that has not lapsed at `nowS`, else null.
+ * READ - a room's half: `{ s, mu, fz, at, u }` (and `p` 1, a pass) for a lease this relay signed that has not lapsed at
+ * `nowS`, else null.
  * @param {unknown} l @param {CryptoKey} key @param {{subtle: SubtleCrypto, nowS: number}} env
  */
 export async function readLease(l, key, { subtle, nowS }) {
@@ -106,7 +115,7 @@ export async function readLease(l, key, { subtle, nowS }) {
   if (!ok) return null;
   let c;
   try { c = JSON.parse(dec.decode(_b64url.decode(body) ?? new Uint8Array(0))); } catch { return null; }
-  if (!c || typeof c.s !== 'string' || !ID_RE.test(c.s) || until(c.m) == null || until(c.f) == null || !(until(c.a) > 0) || c.u !== c.a + LEASE_LIFE_S) return null;
+  if (!c || typeof c.s !== 'string' || !ID_RE.test(c.s) || until(c.m) == null || until(c.f) == null || !(until(c.a) > 0) || c.u !== c.a + LEASE_LIFE_S || (c.p !== undefined && c.p !== 1)) return null;
   if (c.u <= nowS || c.a > nowS + 30) return null;   // lapsed, or from a clock past the relay's own skew
-  return { s: c.s, mu: c.m, fz: c.f, at: c.a, u: c.u };
+  return { s: c.s, mu: c.m, fz: c.f, at: c.a, u: c.u, ...(c.p ? { p: 1 } : {}) };
 }

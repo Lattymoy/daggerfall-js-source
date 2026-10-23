@@ -18,8 +18,8 @@
   {
     "name": "MOD1-3-no-record-of-who",
     "file": "server-account/src/accounts.js",
-    "old": "    .bind(until, until ? actor.id : null, target).run();",
-    "new": "    .bind(until, null, target).run();",
+    "old": "    .bind(until, until ? actor.id : null, until ? (admin || adminHeld ? 1 : 0) : null, target);",
+    "new": "    .bind(until, null, until ? (admin || adminHeld ? 1 : 0) : null, target);",
     "tests": ["test/net/mod1.test.js"],
     "note": "A moderator's power with no record of its use."
   },

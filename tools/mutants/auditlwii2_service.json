@@ -128,8 +128,9 @@
   },
   {
     "name": "AUDITLWII2-S2-copy",
+    "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
-    "old": "    ...copyRows(db, [key], claim, nowS),\n",
+    "old": "    db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES (?1, ?2, ?3, 'escrow', NULL,\n      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`).bind(key, claim, nowS),\n",
     "new": "",
     "tests": [
       "test/systems/auditlwii2_service.test.js"

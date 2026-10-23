@@ -150,7 +150,8 @@
     "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (!Number.isSafeInteger(days)",
     "new": "  if (!Number.isSafeInteger(days)",
     "tests": [
-      "test/server/safe_service.test.js"
+      "test/server/safe_service.test.js",
+      "test/server/staffpanel2fix.test.js"
     ],
     "note": "The hole the ban must not have: a player who asks is a moderator."
   },

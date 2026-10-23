@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-SCALE5a-n-counts-the-dead",
     "file": "server/src/index.js",
-    "old": "if (b.id && !this._dead.has(ws) && !this._gone.has(ws)) n++; return n; }",
-    "new": "if (b.id && !this._gone.has(ws)) n++; return n; }",
+    "old": "if (b.id && !b.hid && !this._dead.has(ws) && !this._gone.has(ws)) n++; return n; }",
+    "new": "if (b.id && !b.hid && !this._gone.has(ws)) n++; return n; }",
     "tests": [
       "test/net/scale5a.test.js",
       "test/net/rosterg.test.js"

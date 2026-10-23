@@ -261,6 +261,13 @@ const REFUSAL_WORDS = {
   'post-no-item': () => t('account.refusal.postNoItem', 'That message holds no item to claim.'),
   'post-claimed': () => t('account.refusal.postClaimed', 'That item has already been claimed.'),
   'post-unclaimed': () => t('account.refusal.postUnclaimed', 'Claim the item in that message before you throw it away.'),
+  // LOST-SPOILS: the Lost and Found's (server-account/src/lostSpoils.js) - the spoils pool turns each into its own line, but
+  // every word the service can say has a sentence
+  'lost-pieces': () => t('account.refusal.lostPieces', 'The Lost and Found could not take those spoils.'),
+  'lost-item': () => t('account.refusal.lostItem', 'The Lost and Found will not keep a piece no fight could have dropped.'),
+  'lost-no-kill': () => t('account.refusal.lostNoKill', 'The Lost and Found has no word of that fight yet.'),
+  'lost-spent': () => t('account.refusal.lostSpent', 'Those spoils were left too long ago for the Lost and Found to take.'),
+  'lost-full': () => t('account.refusal.lostFull', 'Your mailbox holds too many unclaimed spoils. Claim some first.'),
   // PRIVATE-REPORT, a player's private report to the developers (server-account/src/reports.js, net/reportLaw.js)
   'report-needs-account': () => t('account.refusal.reportNeedsAccount', 'Private reports need a username and a password, so the developers can follow up with you. Give this account one, then send it.'),
   'report-kind': () => t('account.refusal.reportKind', 'Choose what kind of problem this is.'),
@@ -847,6 +854,20 @@ const REFUSAL_WORDS = {
   // AUDIT SAFE DOC-4: a moderator's look at a case, and an unban of an account no ban holds
   'no-case': () => t('account.refusal.noCase', 'That player has no open case.'),
   'not-banned': () => t('account.refusal.notBanned', 'That account is not banned.'),
+  // STAFF-PANEL2-FIX (server-account/src/safety.js modAct, every moderator's door): a case another staff member holds in
+  // the staff panel, a case another act already took or closed, a sanction an Admin set, and a press of the wrong shape
+  'staff-claimed': () => t('account.refusal.staffClaimed', 'Another staff member has taken that case in the staff panel.'),
+  'case-acted': () => t('account.refusal.caseActed', 'Another moderator is acting on that case right now.'),
+  'case-closed': () => t('account.refusal.caseClosed', 'That case is already closed.'),
+  'admin-sanction': () => t('account.refusal.adminSanction', 'An Admin set this. Only an Admin can lift or shorten it.'),
+  'bad-click': () => t('account.refusal.badClick', 'That request was not sent properly. Try again.'),
+  // STAFF-PANEL5-FREEZE (server-account/src/staffFreeze.js): a staff freeze - every door but signing out, the account, the
+  // realm's loads, the token and the staff chat; a frozen seller's goods; a fall naming a frozen player; the Staff tab's own
+  frozen: () => t('account.refusal.frozen', 'Your account is frozen by staff. You can still talk to staff in the Staff tab.'),
+  'market-seller-frozen': () => t('account.refusal.marketSellerFrozen', 'That seller\'s goods are on hold for now.'),
+  'fallen-frozen': () => t('account.refusal.fallenFrozen', 'That player is held by staff. Nothing can be taken from them.'),
+  'bad-text': () => t('account.refusal.badText', 'Write something to send.'),
+  'no-thread': () => t('account.refusal.noThread', 'There is no staff chat open for you right now.'),
 };
 /** AUDIT SAFE CLIENT-2 (2026-10-17): THE SERVICE'S LAST WORD ON A BAN - `{ until, reason }` off the newest `banned`
  *  refusal any door answered (`call`), or null. The service refuses a banned account on every door but signing out
@@ -1711,6 +1732,17 @@ export function accountDuels({ fetch, storage }) {
   return {
     claim: async (receipt) => { const i = io(); return i ? claimDuelReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
+  };
+}
+
+/** STAFF-PANEL5-FREEZE (net/staffChat.js; server-account/src/staffFreeze.js playerStaffChat): MY STAFF CHAT THREAD'S TWO
+ *  CALLS, bound to this device's stored session as the duels' are - `read(after)` answers `{ open, frozen: { until, reason }
+ *  | null, lines: [{ id, at, staff, text }], invite }` (lines past `after`), `send(text)` `{ ok, line: { id, at, staff, text } }`. */
+export function accountStaffChat({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    read: async (/** @type {number} */ after = 0) => { const i = io(); return i ? call(i, '/v1/staff-chat/read', { after }) : { ok: false, error: 'no-session' }; },
+    send: async (/** @type {string} */ text) => { const i = io(); return i ? call(i, '/v1/staff-chat/send', { text }) : { ok: false, error: 'no-session' }; },
   };
 }
 

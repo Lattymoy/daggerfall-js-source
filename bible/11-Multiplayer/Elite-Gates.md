@@ -2436,7 +2436,10 @@ fight hall's door is no part. A receipt banks:
 - **the depth**: the Redoubt joins the member's taken Redoubts, this season and all time;
 - **the week's spoils** of that Redoubt, rolled from the seed its claim answers - the receipt's secret seed (section 22)
   mixed with the account service's own draw, so no page rolls a receipt's spoils before the service has said which
-  receipt the week pays (AUDIT EG V) - and thrown at the beacon like the gate's spew (section 19);
+  receipt the week pays (AUDIT EG V) - and thrown at the beacon like the gate's spew (section 19). LOST-SPOILS
+  (2026-10-22, `06-Systems/Accounts-And-Cloud-Saves-Arc.md`): an item still there when the member leaves the Spire, or
+  when the next Redoubt's spoils are thrown, goes to the mailbox from the Lost and Found, its gold to the purse; a
+  Reliquary does not (the owner: "No, keep the risk");
 - **Marks**, and the embers section 19 pays, thrown among the spoils (AUDIT EG V);
 - **a sealed Reliquary**, when that Redoubt pays this week (section 16.3);
 - **the board's standing** (section 20).

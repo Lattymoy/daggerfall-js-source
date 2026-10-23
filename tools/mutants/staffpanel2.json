@@ -1,0 +1,264 @@
+[
+  {
+    "name": "STAFF-PANEL2-sev3-not-high",
+    "file": "server-account/src/staffCases.js",
+    "old": "if (sev >= 3 || (sev === 2",
+    "new": "if (sev > 3 || (sev === 2",
+    "why": "a severity 3 case read as medium",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-threat2-not-high",
+    "file": "server-account/src/staffCases.js",
+    "old": "(c.ai_category === 'threat' || c.ai_category === 'personal-info')",
+    "new": "(c.ai_category === 'personal-info')",
+    "why": "a threat at severity 2 read as medium",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-reason-not-standing-in",
+    "file": "server-account/src/staffCases.js",
+    "old": "    if (threats) raise(threats >= THREAT_HIGH ? 2 : 1, 'reported as a threat');",
+    "new": "    if (false) raise(threats >= THREAT_HIGH ? 2 : 1, 'reported as a threat');",
+    "why": "a threat the reviewer has not read yet ranked low",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-failed-read-not-high",
+    "file": "server-account/src/staffCases.js",
+    "old": "  if (c.ai_state === 'failed') raise(2, 'AI check failed');\n  else if",
+    "new": "  if (false) raise(2, 'AI check failed');\n  else if",
+    "why": "a failed read ranked low",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-waiting-read-unseen",
+    "file": "server-account/src/staffCases.js",
+    "old": "nowS - Number(c.updated_at) >= AI_WAIT_S) raise(1",
+    "new": "nowS - Number(c.updated_at) > AI_WAIT_S * 6) raise(1",
+    "why": "a read waiting ten minutes ranked low",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-auto-mute-unseen",
+    "file": "server-account/src/staffCases.js",
+    "old": "  if (c.auto) raise(2, 'muted automatically, unchecked');\n",
+    "new": "",
+    "why": "an automatic mute nobody checked ranked low",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-wave-any-span",
+    "file": "server-account/src/staffCases.js",
+    "old": "while (counted[j] - counted[i] > 3600) i++;",
+    "new": "",
+    "why": "three reporters across a day read as a wave",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-guests-count",
+    "file": "server-account/src/staffCases.js",
+    "old": "else if (n >= 2 && counted.length) raise(1, '');",
+    "new": "else if (n >= 2) raise(1, '');",
+    "why": "reporters all guests or new raise a case",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-ban-next-unseen",
+    "file": "server-account/src/staffCases.js",
+    "old": "  if (strikes >= LADDER_BAN_AT) raise(2, `${strikes} strikes: next is a ban`);\n  else if",
+    "new": "  if (false) raise(2, `${strikes} strikes: next is a ban`);\n  else if",
+    "why": "a player whose next strike is a ban ranked medium",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-discord-failed-unseen",
+    "file": "server-account/src/staffCases.js",
+    "old": "  if (c.discord_state === 'failed') raise(1, 'Discord card failed');\n",
+    "new": "",
+    "why": "a card nobody saw ranked low",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-stale-past-high",
+    "file": "server-account/src/staffCases.js",
+    "old": "STALE_S && rank < 2) {",
+    "new": "STALE_S) {",
+    "why": "a stale high case past the top level",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-claimed-not-below",
+    "file": "server-account/src/staffCases.js",
+    "old": "      || (a.claim && !a.claim.idle ? 1 : 0) - (b.claim && !b.claim.idle ? 1 : 0)   // a claimed case sorts below the rest of its level, unless left idle\n",
+    "new": "",
+    "why": "a claimed case above the free ones of its level",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-pages-overlap",
+    "file": "server-account/src/staffCases.js",
+    "old": "next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE : null",
+    "new": "next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE - 1 : null",
+    "why": "a case on two pages",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-read-every-time",
+    "file": "server-account/src/staffCases.js",
+    "old": "const said = audit('cases-read', null, { sort }, { onceIn: 10 * 60 });",
+    "new": "const said = audit('cases-read', null, { sort });",
+    "why": "every poll a row",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-mod-many-cases",
+    "file": "server-account/src/staffCases.js",
+    "old": "          AND NOT EXISTS (SELECT 1 FROM mod_cases o WHERE o.status = 'open' AND o.claimed_by = ?2 AND ${claimHeldSql('o', 3)} AND o.id != ?1)`)",
+    "new": "          `)",
+    "why": "a Moderator holds two cases",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-mod-takes-held",
+    "file": "server-account/src/staffCases.js",
+    "old": "          AND (claimed_by IS ?2 OR NOT ${claimHeldSql('mod_cases', 3)})\n",
+    "new": "",
+    "why": "a Moderator takes a case another holds",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-take-untold",
+    "file": "server-account/src/staffCases.js",
+    "old": "claim_from = CASE WHEN claimed_by != ?2 AND ${claimHeldSql('mod_cases', 3)} THEN claimed_by ELSE NULL END,",
+    "new": "claim_from = NULL,",
+    "why": "the Moderator never told",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-held-acted-on",
+    "file": "server-account/src/safety.js",
+    "old": "      AND (claimed_by IS ?4 OR NOT ${claimHeldSql('mod_cases', 3)})`)",
+    "new": "      AND (claimed_by IS ?4 OR 1 OR NOT ${claimHeldSql('mod_cases', 3)})`)",
+    "why": "a held case acted on by another",
+    "tests": [
+      "test/server/staffpanel2.test.js",
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-look-lets-go",
+    "file": "server-account/src/staffCases.js",
+    "old": "    const k = keep();\n",
+    "new": "    const k = null;\n",
+    "why": "the holder's look lets the claim go",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-mute-untold",
+    "file": "server-account/src/safety.js",
+    "old": "  if (order) await (push ?? ",
+    "new": "  if (false) await (push ?? ",
+    "why": "a mute the live rooms never hear",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-ban-untold",
+    "file": "server-account/src/safety.js",
+    "old": "    if (!r.error) order = await lawOrder(env, subtle, nowS, { s: row.id, bn: r.until });",
+    "new": "    if (false) order = await lawOrder(env, subtle, nowS, { s: row.id, bn: r.until });",
+    "why": "a ban the live rooms never hear",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-mute-case-open",
+    "file": "server-account/src/safety.js",
+    "old": "        ...closing(x, mutedTill(x))] });",
+    "new": "        ] });",
+    "why": "a muted account's case left open",
+    "tests": [
+      "test/server/staffpanel2.test.js",
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-panel-unnamed",
+    "file": "server-account/src/staffCases.js",
+    "old": "const asName = `${displayName(me)} (staff panel)`;",
+    "new": "const asName = displayName(me);",
+    "why": "the strike history never says the panel",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-failed-unwritten",
+    "file": "server-account/src/safety.js",
+    "old": "outcome: r.error ? (ACT_DENIED.includes(r.error) ? 'denied' : 'failed') : 'ok'",
+    "new": "outcome: 'ok'",
+    "why": "a refused act reads as done (STAFF-PANEL2-FIX: the row is modAct's now)",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-discord-press-past-claim",
+    "file": "server-account/src/safety.js",
+    "old": "return { error: now?.held && now.claimed_by !== actor.id ? 'staff-claimed' : now?.status",
+    "new": "return { error: now?.status",
+    "why": "a Discord press on a case another holds in the panel",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-staff-still-report",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "const rows = staff() ? [] : REPORT_REASONS",
+    "new": "const rows = REPORT_REASONS",
+    "why": "an Admin's or a Moderator's chat menu still offers Report",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  }
+]

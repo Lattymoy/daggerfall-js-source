@@ -403,8 +403,8 @@
   {
     "name": "GRANT7-case-a-reports",
     "file": "server-account/src/grants.js",
-    "old": "const caseId = await openCaseFor(ctx, env, sender, 'review');",
-    "new": "const caseId = await openCaseFor(ctx, env, sender, 'report');",
+    "old": "const caseId = await openCaseFor(ctx, env, sender, 'review', 'spawn');",
+    "new": "const caseId = await openCaseFor(ctx, env, sender, 'report', 'spawn');",
     "why": "the grant case a report's",
     "tests": [
       "test/server/grant7_case.test.js"

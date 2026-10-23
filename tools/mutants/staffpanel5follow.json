@@ -1,0 +1,1175 @@
+[
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-role-door-open",
+    "file": "server-account/src/staffFollow.js",
+    "old": "if (!FOLLOW_ROLES.includes(who.role)) {",
+    "new": "if (false) {",
+    "why": "any role mints a follow token",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-role-refusal-unwritten",
+    "file": "server-account/src/staffFollow.js",
+    "old": "{ path, need: 'moderator' }, { outcome: 'denied' }",
+    "new": "{ path, need: 'moderator' }, { outcome: 'ok' }",
+    "why": "a refused role written as done",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-self-follow",
+    "file": "server-account/src/staffFollow.js",
+    "old": "if (sub === who.player.id) return { error: 'staff-self' };",
+    "new": "if (false) return { error: 'staff-self' };",
+    "why": "staff follow themselves",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-no-player",
+    "file": "server-account/src/staffFollow.js",
+    "old": "if (!target) return { error: 'no-player' };",
+    "new": "if (false) return { error: 'no-player' };",
+    "why": "a token for an account that does not exist",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-sub-shape",
+    "file": "server-account/src/staffFollow.js",
+    "old": "typeof sub !== 'string' || !ID_RE.test(sub) ||",
+    "new": "typeof sub !== 'string' ||",
+    "why": "any string a target",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-room-length",
+    "file": "server-account/src/staffFollow.js",
+    "old": "const ROOM_RE = /^[\\w:.,#@+-]{1,128}$/;",
+    "new": "const ROOM_RE = /^[\\w:.,#@+-]{1,129}$/;",
+    "why": "a room past any key",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-home-unseen",
+    "file": "server-account/src/staffFollow.js",
+    "old": "const home = room !== null && privateRoomOf(room);",
+    "new": "const home = false;",
+    "why": "entering a home folded into the minute",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-audit-every-mint",
+    "file": "server-account/src/staffFollow.js",
+    "old": "await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();",
+    "new": "await audit(act, sub, detail, {}).run();",
+    "why": "a row per room",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-audit-unwritten",
+    "file": "server-account/src/staffFollow.js",
+    "old": "await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();",
+    "new": "void 0;",
+    "why": "a mint never written down",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-no-key-ok",
+    "file": "server-account/src/staffFollow.js",
+    "old": "await audit(act, sub, detail, { outcome: 'failed' }).run(); return { error: 'no-signing-key' };",
+    "new": "await audit(act, sub, detail, { outcome: 'ok' }).run(); return { error: 'no-signing-key' };",
+    "why": "a failed mint written as done",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-not-hidden",
+    "file": "server-account/src/staffFollow.js",
+    "old": "n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }",
+    "new": "n: SPECTATOR_NAME, k: 'guest', fo: sub }",
+    "why": "a follow token with no hidden mark",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-wrong-target",
+    "file": "server-account/src/staffFollow.js",
+    "old": "n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }",
+    "new": "n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: target.id === sub ? 'acct-someone' : sub }",
+    "why": "the token names another",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-own-subject",
+    "file": "server-account/src/staffFollow.js",
+    "old": "const eye = await followSubject(who.hash, subtle);",
+    "new": "const eye = who.player.id;",
+    "why": "the staff member's own account on a hidden socket",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-subject-short",
+    "file": "server-account/src/staffFollow.js",
+    "old": "[...d.slice(0, 12)]",
+    "new": "[...d.slice(0, 11)]",
+    "why": "a hidden subject a player id's length",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-acct-status-word",
+    "file": "server-account/src/staff.js",
+    "old": "'no-signing-key': 503,",
+    "new": "'no-signing-key': 500,",
+    "why": "the no-key refusal answered as a crash",
+    "tests": [
+      "test/server/staffpanel5follow.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-newest-note",
+    "file": "server/src/staffFollow.js",
+    "old": "if (b.pm && (!pm || b.pm.at > pm.at)) pm = b.pm;",
+    "new": "if (b.pm && !pm) pm = b.pm;",
+    "why": "the first tab's note read, not the newest",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-stale-edge",
+    "file": "server/src/staffFollow.js",
+    "old": "if (!pm || !(now - pm.at <= NOTE_STALE_MS)) return null;",
+    "new": "if (!pm || !(now - pm.at < NOTE_STALE_MS)) return null;",
+    "why": "a note of exactly the limit read as none",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-stale-never",
+    "file": "server/src/staffFollow.js",
+    "old": "if (!pm || !(now - pm.at <= NOTE_STALE_MS)) return null;",
+    "new": "if (!pm) return null;",
+    "why": "an old note read as fresh",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-oldest-note",
+    "file": "server/src/staffFollow.js",
+    "old": "if (b.pm && (!pm || b.pm.at > pm.at)) pm = b.pm;",
+    "new": "if (b.pm && (!pm || b.pm.at < pm.at)) pm = b.pm;",
+    "why": "the older tab's note read",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-told-every-note",
+    "file": "server/src/staffFollow.js",
+    "old": "noteWhere(was) !== noteWhere(p)) tell(",
+    "new": "true) tell(",
+    "why": "a spectator told every note",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-fan-keeps-room",
+    "file": "server/src/staffFollow.js",
+    "old": "  const { rk, ...fan } = p;\n  void rk;\n  return fan;",
+    "new": "  return p;",
+    "why": "a party member reads the room",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-followers-cap",
+    "file": "server/src/staffFollow.js",
+    "old": "if (set.size >= FOLLOWERS_MAX) return;",
+    "new": "if (set.size > FOLLOWERS_MAX) return;",
+    "why": "one follower past the cap",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-followed-cap",
+    "file": "server/src/staffFollow.js",
+    "old": "if (follows.size >= FOLLOWED_MAX) return;",
+    "new": "if (follows.size > FOLLOWED_MAX) return;",
+    "why": "one account past the cap",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-follow-off-hub",
+    "file": "server/src/staffFollow.js",
+    "old": "if (typeof a?.fo !== 'string' || !isSocialRoom(a.key)) return;",
+    "new": "if (typeof a?.fo !== 'string') return;",
+    "why": "a room holds followers",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-no-gone-at-hello",
+    "file": "server/src/staffFollow.js",
+    "old": "  else if (!socketsOf(room, a.fo).length) room._send(ws, JSON.stringify({ t: 'fol', k: 'gone', sub: a.fo }));",
+    "new": "",
+    "why": "an offline target never said",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-no-prune",
+    "file": "server/src/staffFollow.js",
+    "old": "  for (const ws of set) if (!live(room, ws)) set.delete(ws);",
+    "new": "",
+    "why": "a gone follower holds its place",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-target-here-unsaid",
+    "file": "server/src/staffFollow.js",
+    "old": "if (here) say(room, a.fo, 'in', room._attach(here));",
+    "new": "if (false) say(room, a.fo, 'in', room._attach(here));",
+    "why": "a spectator arriving beside its target hears nothing",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-says-everyone",
+    "file": "server/src/staffFollow.js",
+    "old": "if (a.sub && room._fol?.has(a.sub) && socketsOf(room, a.sub, ws).length === 0) say(",
+    "new": "if (a.sub && socketsOf(room, a.sub, ws).length === 0) say(",
+    "why": "every join told to the bus",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-leave-says-everyone",
+    "file": "server/src/staffFollow.js",
+    "old": "if (!a.sub || !(room._follows?.has(a.sub) || room._fol?.has(a.sub)) || socketsOf(room, a.sub, ws).length) return;",
+    "new": "if (!a.sub || socketsOf(room, a.sub, ws).length) return;",
+    "why": "every leave told to the bus",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-no-gone",
+    "file": "server/src/staffFollow.js",
+    "old": "if (isSocialRoom(a.key)) tell(room, a.sub, { k: 'gone', sub: a.sub });",
+    "new": "if (false) tell(room, a.sub, { k: 'gone', sub: a.sub });",
+    "why": "the target offline, never said",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-count-sticks",
+    "file": "server/src/staffFollow.js",
+    "old": "if (n > 1) room._fol?.set(a.fo, n - 1); else room._fol?.delete(a.fo);",
+    "new": "room._fol?.set(a.fo, n - 1);",
+    "why": "a room keeps saying an account nobody follows there",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-say-door-open",
+    "file": "server/src/staffFollow.js",
+    "old": "if (!b) return Response.json({ error: 'bad' }, { status: 400 });",
+    "new": "if (false) return Response.json({ error: 'bad' }, { status: 400 });",
+    "why": "a malformed word at the bus",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-hello-unheld",
+    "file": "server/src/index.js",
+    "old": "    followHello(this, ws, now);   // STAFF-PANEL5-FOLLOW",
+    "new": "    void 0;   // STAFF-PANEL5-FOLLOW",
+    "why": "the hub never holds a follower",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-join-unsaid",
+    "file": "server/src/index.js",
+    "old": "      followJoined(this, ws, this._attach(ws));",
+    "new": "      void 0;",
+    "why": "a room never says a follow",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-leave-unsaid",
+    "file": "server/src/index.js",
+    "old": "    followLeft(this, ws, a);   // STAFF-PANEL5-FOLLOW",
+    "new": "    void 0;   // STAFF-PANEL5-FOLLOW",
+    "why": "a leave never said",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-say-door-shut",
+    "file": "server/src/index.js",
+    "old": "    if (path === FOLLOW_INTERNAL_SAY) return followSayInternal(this, request);",
+    "new": "    if (false) return followSayInternal(this, request);",
+    "why": "the bus deaf to rooms",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-no-fo-claim",
+    "file": "server/src/index.js",
+    "old": "    if (c.fo) house.fo = c.fo;",
+    "new": "    if (false) house.fo = c.fo;",
+    "why": "the token's target read by nobody",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-view-keeps-room",
+    "file": "server/src/index.js",
+    "old": "if (pm) { p = withoutRoom(pm); delete p.at; }",
+    "new": "if (pm) { p = { ...pm }; delete p.at; }",
+    "why": "a joiner reads a member's room",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-relay-note-after-write",
+    "file": "server/src/index.js",
+    "old": "const fan = followNoted(this, a, m.p);",
+    "new": "const fan = followNoted(this, this._attach(ws), m.p);",
+    "why": "the room change read off the note just written: never told",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-tp-quiet-without-ask",
+    "file": "server/src/staffTeleport.js",
+    "old": "const quiet = m.nt === 1 && quietTeleportAllowed(a.glyphs);",
+    "new": "const quiet = quietTeleportAllowed(a.glyphs);",
+    "why": "an old build answered a note it cannot read",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-tp-quiet-anyone",
+    "file": "server/src/staffTeleport.js",
+    "old": "const quiet = m.nt === 1 && quietTeleportAllowed(a.glyphs);",
+    "new": "const quiet = m.nt === 1;",
+    "why": "a Dungeon Master answered from a note",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-tp-cap-ignored",
+    "file": "server/src/staffTeleport.js",
+    "old": "if (quiet && m.cap !== 1) {",
+    "new": "if (quiet) {",
+    "why": "an unmatched note answered again",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-tp-fb-swapped",
+    "file": "server/src/staffTeleport.js",
+    "old": "(m.cap === 1 ? 'mismatch' : 'missing')",
+    "new": "(m.cap === 1 ? 'missing' : 'mismatch')",
+    "why": "the wrong flag",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-tp-fb-dropped",
+    "file": "server/src/staffTeleport.js",
+    "old": ", dest: m.dest, ...(p.fb ? { fb: p.fb } : {}) }",
+    "new": ", dest: m.dest }",
+    "why": "a fallback unflagged",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-tp-fang-loud",
+    "file": "src/net/staffTeleport.js",
+    "old": "glyphs.includes('dev') || glyphs.includes('shadowfang')",
+    "new": "glyphs.includes('dev')",
+    "why": "the Shadow Fang asks the game",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js",
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-due-edge",
+    "file": "src/net/staffFollow.js",
+    "old": "now - lastAt >= (changed ?",
+    "new": "now - lastAt > (changed ?",
+    "why": "a note one ms late",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-due-swapped",
+    "file": "src/net/staffFollow.js",
+    "old": "(changed ? WHERE_NOTE_MOVING_MS : WHERE_NOTE_STILL_MS)",
+    "new": "(changed ? WHERE_NOTE_STILL_MS : WHERE_NOTE_MOVING_MS)",
+    "why": "a still player sends every 5 s",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-bk-outside",
+    "file": "src/net/staffFollow.js",
+    "old": "${p?.in === 2 ? p?.bk ?? '' : ''}",
+    "new": "${p?.bk ?? ''}",
+    "why": "a building key outside read as a move",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-ly-bound",
+    "file": "src/net/staffFollow.js",
+    "old": "b.ly > 0 && b.ly < 64",
+    "new": "b.ly > 0 && b.ly < 65",
+    "why": "a layer past the relay's",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-room-length",
+    "file": "src/net/staffFollow.js",
+    "old": "b.room.length > 128",
+    "new": "b.room.length > 129",
+    "why": "a room past any key",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-any-room",
+    "file": "src/net/staffFollow.js",
+    "old": "said && (isWorldRoom(said.room) || isCellRoom(said.room) || privateInteriorOf(said.room)) ? said : null",
+    "new": "said",
+    "why": "a spectator sent to a channel",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-negative-age",
+    "file": "src/net/staffFollow.js",
+    "old": "Number.isSafeInteger(m.ag) && m.ag >= 0 ? m.ag : 0",
+    "new": "Number.isSafeInteger(m.ag) ? m.ag : 0",
+    "why": "a negative age",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-law-relay-min",
+    "file": "src/net/staffFollow.js",
+    "old": ")?.[1]) >= FOLLOW_RELAY_MIN;",
+    "new": ")?.[1]) > FOLLOW_RELAY_MIN;",
+    "why": "the follow's relay refused",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-claims-fo-alone",
+    "file": "src/net/identityToken.js",
+    "old": "!(c.hd === 1 && typeof c.fo === 'string'",
+    "new": "!(typeof c.fo === 'string'",
+    "why": "a player's token naming a follow",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-claims-fo-self",
+    "file": "src/net/identityToken.js",
+    "old": "ID_RE.test(c.fo) && c.fo !== c.s))",
+    "new": "ID_RE.test(c.fo)))",
+    "why": "a follow of itself",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-wire-any-room",
+    "file": "src/net/wire.js",
+    "old": "if (isWorldRoom(p.rk) || isCellRoom(p.rk) || privateInteriorOf(p.rk)) out.rk = p.rk;",
+    "new": "if (typeof p.rk === 'string') out.rk = p.rk;",
+    "why": "a home's key in a note",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-feet-some",
+    "file": "src/net/staffTeleport.js",
+    "old": "if ([p.wx, p.wy, p.wz].every(finite))",
+    "new": "if ([p.wx, p.wy, p.wz].some(finite))",
+    "why": "half a position placed",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-whole-lost",
+    "file": "src/net/staffTeleport.js",
+    "old": "whole: !!word || !m[2], pos: null",
+    "new": "whole: !!word, pos: null",
+    "why": "a public dungeon built at the world's size",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-record-byte",
+    "file": "src/net/staffTeleport.js",
+    "old": "recordIndex: bk & 0xff,",
+    "new": "recordIndex: bk & 0xffff,",
+    "why": "the wrong building's door",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-no-building",
+    "file": "src/net/staffTeleport.js",
+    "old": "if (!integer(bk) || !bk ||",
+    "new": "if (!integer(bk) ||",
+    "why": "a building of no key",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-placed-nowhere",
+    "file": "src/net/staffTeleport.js",
+    "old": "if (now.pos) await place(now);",
+    "new": "await place(now);",
+    "why": "staff put at a spot the note never named",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-cap-unsaid",
+    "file": "src/net/staffTeleport.js",
+    "old": "      answer = await ask({ id, cap: 1 });",
+    "new": "      answer = await ask({ id });",
+    "why": "an unmatched note asked for again",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-line-swapped",
+    "file": "src/net/staffTeleport.js",
+    "old": "because their where note was missing (the player",
+    "new": "because their where note did not match (the player",
+    "why": "the wrong reason said",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-notes-cap-stripped",
+    "file": "src/net/staffTeleport.js",
+    "old": "id: m.id, ...nt, ...(m.cap === 1 ? { cap: 1 } : {}) };",
+    "new": "id: m.id, ...nt };",
+    "why": "the relay never told the note did not match",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-session-old-relay",
+    "file": "src/net/online.js",
+    "old": "if (this.solo) { if (!this.followOk || !whereNoteDue(",
+    "new": "if (this.solo) { if (!whereNoteDue(",
+    "why": "notes to a relay that writes each at once",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-session-always-changed",
+    "file": "src/net/online.js",
+    "old": "whereNoteDue(now, this._lastPartyAt, this._lastParty !== s)",
+    "new": "whereNoteDue(now, this._lastPartyAt, true)",
+    "why": "a still player every 5 s",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-session-fol-any-room",
+    "file": "src/net/online.js",
+    "old": "if (!primary || !isSocialRoom(room)) return;   // STAFF-PANEL5-FOLLOW: the hub alone says it",
+    "new": "if (!primary) return;   // STAFF-PANEL5-FOLLOW: the hub alone says it",
+    "why": "a room's `fol` believed",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-session-follow-always",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.followOk = followSupported(relayV);",
+    "new": "if (primary) this.followOk = true;",
+    "why": "every relay a follow's",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-locked-unasked",
+    "file": "src/net/staffHook.js",
+    "old": "locked: () => !!target && on,",
+    "new": "locked: () => !!target,",
+    "why": "a camera no relay checked",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-any-sub",
+    "file": "src/net/staffHook.js",
+    "old": "if (!f || f.sub !== target) return;",
+    "new": "if (!f) return;",
+    "why": "another follow's word taken",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-any-origin",
+    "file": "src/net/staffHook.js",
+    "old": "e?.origin !== origin || ",
+    "new": "",
+    "why": "another origin's message taken",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-any-window",
+    "file": "src/net/staffHook.js",
+    "old": "if (e?.source !== win || ",
+    "new": "if (",
+    "why": "another window's message taken",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-long-token",
+    "file": "src/net/staffHook.js",
+    "old": "typeof m.tok === 'string' && m.tok.length <= TOKEN_MAX_CHARS ? m.tok : null",
+    "new": "typeof m.tok === 'string' ? m.tok : null",
+    "why": "any length a token",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-mint-after-let-go",
+    "file": "src/net/staffHook.js",
+    "old": "(sub === target ? askToken(sub, r) : Promise.resolve(null))",
+    "new": "askToken(sub, r)",
+    "why": "a let-go link asks for tokens",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-room-before-on",
+    "file": "src/net/staffHook.js",
+    "old": "      if (!on) return;\n",
+    "new": "",
+    "why": "a room joined before the relay said",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-cell-ignored",
+    "file": "src/net/staffHook.js",
+    "old": "isCellRoom(room) ? cellRoomOfWire(seen.x, seen.z) ?? room : room",
+    "new": "room",
+    "why": "outdoors the follow lags the note",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-hook-panel-unseen",
+    "file": "src/net/staffHook.js",
+    "old": "if (m.dfoStaff === 'hook?') { seen = true; post(",
+    "new": "if (m.dfoStaff === 'hook?') { post(",
+    "why": "a panel that spoke not heard",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-page-tp-follows-anyway",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "door.panel() && hook.follow(sub)",
+    "new": "hook.follow(sub)",
+    "why": "a TP knocks with no panel",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-host-exterior-reentered",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "!(d.kind === 'exterior' && mode() === 'exterior' && hook.view())",
+    "new": "true",
+    "why": "the open air re-entered under a seen target",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-host-entered-again",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "&& key !== entered &&",
+    "new": "&&",
+    "why": "the same place entered every frame",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-host-unparked",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "if (parked !== null && parked !== where()) parked = null;",
+    "new": "if (parked !== null) parked = null;",
+    "why": "the body shown where the target stood",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-host-fall-billed",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "player.velY = 0; player.falling = false; player.fallStart = q[1];",
+    "new": "",
+    "why": "a carried body billed a fall",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-host-eye-while-loading",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "const v = !entering && hook.locked() ? hook.view() : null;",
+    "new": "const v = hook.locked() ? hook.view() : null;",
+    "why": "the camera in a place half loaded",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-world-solo-no-feet",
+    "file": "src/scenes/world.js",
+    "old": "...(!social?.party && mode === 'exterior' && walkMode && playerSpawned && !worldMoveBusy() && partyFeetOf(player.pos)),",
+    "new": "...{},",
+    "why": "a solo note with no feet: no silent TP lands on them",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-world-note-no-room",
+    "file": "src/scenes/world.js",
+    "old": "...(online?.room ? { rk: online.room } : {}),",
+    "new": "...{},",
+    "why": "a note with no room",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-world-never-solo",
+    "file": "src/scenes/world.js",
+    "old": "if (socialLink()) socialLink().solo = !social.party;",
+    "new": "if (!social.party) return;",
+    "why": "no note outside a party",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-world-preview-nowhere",
+    "file": "src/scenes/world.js",
+    "old": "    if (preview) modes?.setPlayerLocalPosition?.(preview);",
+    "new": "    modes?.setPlayerLocalPosition?.(preview);",
+    "why": "staff put at no spot",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-world-tp-no-follow",
+    "file": "src/scenes/world.js",
+    "old": "say(staffTpLine(who)); staffFollow.follow(who.acct); }",
+    "new": "say(staffTpLine(who)); }",
+    "why": "a TP that never follows",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-world-tp-line-old",
+    "file": "src/scenes/world.js",
+    "old": "{ say(staffTpLine(who)); staffFollow.follow",
+    "new": "{ say(`Teleported to ${who.name}'s exact position.`); staffFollow.follow",
+    "why": "a TP that says nothing of being seen",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-tp-lookup-names-hidden",
+    "file": "server/src/staffTeleport.js",
+    "old": "b.id && !b.hid && !room._dead.has(other)",
+    "new": "b.id && !room._dead.has(other)",
+    "why": "finding 6: a hidden socket matched by /tp, detectable by a Dungeon Master",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-note-drops-private-room",
+    "file": "src/net/wire.js",
+    "old": "if (isWorldRoom(p.rk) || isCellRoom(p.rk) || privateInteriorOf(p.rk)) out.rk = p.rk;",
+    "new": "if (isWorldRoom(p.rk) || isCellRoom(p.rk)) out.rk = p.rk;",
+    "why": "finding 2: a note from a home names no room, so no follow enters it",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js",
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-note-room-not-private",
+    "file": "src/net/staffFollow.js",
+    "old": "if (!p || !(isWorldRoom(p.rk) || isCellRoom(p.rk) || privateInteriorOf(p.rk))) return null;",
+    "new": "if (!p || !(isWorldRoom(p.rk) || isCellRoom(p.rk))) return null;",
+    "why": "finding 2: the follow never takes a home for its room",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js",
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-note-place-any-private",
+    "file": "src/net/staffTeleport.js",
+    "old": "home?.buildingKey === bk)) return null;",
+    "new": "!!home)) return null;",
+    "why": "finding 2: a boat's cabin, a caravan or another building's home placed as this door",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-note-place-home-public",
+    "file": "src/net/staffTeleport.js",
+    "old": "...(home ? { privateRoom: rk } : {}), ",
+    "new": "",
+    "why": "finding 2: a home's place is its public building, never the home",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-say-no-id",
+    "file": "server/src/staffFollow.js",
+    "old": "...(a.ly ? { ly: a.ly } : {}), id: a.id });",
+    "new": "...(a.ly ? { ly: a.ly } : {}) });",
+    "why": "finding 1: a room's word names no socket, so the spectator never finds the target",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-say-door-drops-id",
+    "file": "src/net/staffFollow.js",
+    "old": "...(typeof b.id === 'string' && ID_RE.test(b.id) ? { id: b.id } : {})",
+    "new": "...{}",
+    "why": "finding 1: the bus and the game drop the target's id",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-say-door-any-id",
+    "file": "src/net/staffFollow.js",
+    "old": "typeof b.id === 'string' && ID_RE.test(b.id) ? { id: b.id }",
+    "new": "typeof b.id === 'string' ? { id: b.id }",
+    "why": "finding 1: an id of any shape carried on",
+    "tests": [
+      "test/net/staffpanel5follow_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-in-id-unkept",
+    "file": "src/net/staffHook.js",
+    "old": "ly = f.ly ?? 0; pid = f.id ?? pid; if",
+    "new": "ly = f.ly ?? 0; if",
+    "why": "finding 1: the id a room said is thrown away",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-peer-by-account-only",
+    "file": "src/net/staffHook.js",
+    "old": "(p.sub === target || (pid && p.id === pid))",
+    "new": "(p.sub === target)",
+    "why": "finding 1: peers matched by an account no place room sends - the camera never locks",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-gone-keeps-id",
+    "file": "src/net/staffHook.js",
+    "old": "seen = null; pid = null; }   // offline",
+    "new": "seen = null; }   // offline",
+    "why": "finding 1: an offline target's old socket id still matched",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-lease-not-to-eye",
+    "file": "src/net/staffHook.js",
+    "old": "h.sendLease(l); eye?.sendLease(l); };",
+    "new": "h.sendLease(l); };",
+    "why": "finding 5: a lease that comes after the eye is made never reaches it",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-lease-not-kept",
+    "file": "src/net/staffHook.js",
+    "old": "=> { h.sendLease(l); eye?.sendLease(l); };",
+    "new": "=> { eye?.sendLease(l); };",
+    "why": "finding 5: a lease before the eye is made is lost - its first frames are unheard",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-eye-not-leased",
+    "file": "src/net/staffHook.js",
+    "old": "eye.leaseFrom(hub); }",
+    "new": "}",
+    "why": "finding 5: the eye never takes the hub's kept lease",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-eye-visible-seat",
+    "file": "src/net/staffHook.js",
+    "old": "WebSocketImpl: hiddenSeat(WS) });",
+    "new": "WebSocketImpl: WS });",
+    "why": "finding 18: the eye asks no hidden seat - a full layer walks it elsewhere",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hook-hub-hidden-seat",
+    "file": "src/net/staffHook.js",
+    "old": "mintToken: mint(target), WebSocketImpl: WS });",
+    "new": "mintToken: mint(target), WebSocketImpl: hiddenSeat(WS) });",
+    "why": "finding 18: the hub link takes one of a room's few reserve seats",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-hidden-seat-after-layer",
+    "file": "src/net/staffHook.js",
+    "old": "url.includes('?') ? '&' : '?'",
+    "new": "'?'",
+    "why": "finding 18: a layer asked and a hidden seat make a broken query",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-FIX-tp-line-missing-as-mismatch",
+    "file": "src/net/staffTeleport.js",
+    "old": "if (who.fb === 'missing') return t(",
+    "new": "if (who.fb === 'nope') return t(",
+    "why": "the /tp line says a missing note did not match",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-note-keeps-pose",
+    "file": "src/net/staffHook.js",
+    "old": "ly = r.ly; if (r.room !== seenIn || eye?.welcomed) seen = null; } }",
+    "new": "ly = r.ly; } }",
+    "why": "round 2: a newer note loses to the pose seen before it - a fast travel while the eye was on its way leaves it in the old cell",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-in-keeps-pose",
+    "file": "src/net/staffHook.js",
+    "old": "pid = f.id ?? pid; if (f.room !== seenIn) seen = null; }",
+    "new": "pid = f.id ?? pid; }",
+    "why": "round 2: a room's newer word loses to the pose seen before it",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-pose-any-frame",
+    "file": "src/net/staffHook.js",
+    "old": "if (v && (eye.room === room || (isCellRoom(eye.room) && isCellRoom(room)))) {",
+    "new": "if (v) {",
+    "why": "round 2: a pose in an interior's own frame names an outdoor cell (world:0,31) after a door out",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-interior-pose-outdoors",
+    "file": "src/net/staffHook.js",
+    "old": "(isCellRoom(eye.room) && isCellRoom(room))",
+    "new": "isCellRoom(room)",
+    "why": "round 2: an interior's pose leads once the note names a cell",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-pose-not-in-own-room",
+    "file": "src/net/staffHook.js",
+    "old": "eye.room === room || (isCellRoom",
+    "new": "(isCellRoom",
+    "why": "round 2: inside a building or dungeon the eye stands on nobody - no lock-on for range within the room",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-pose-outlives-room",
+    "file": "src/net/staffHook.js",
+    "old": "      else if (!v && eye?.room === seenIn) seen = null;\n",
+    "new": "",
+    "why": "round 2: a pose seen after a fast travel's note, then gone, holds the eye in the old cell",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R2-hook-pose-room-unkept",
+    "file": "src/net/staffHook.js",
+    "old": "seen = v; seenIn = eye.room; }",
+    "new": "seen = v; }",
+    "why": "round 2: the room a pose was seen in is not kept, so its going is never noticed",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R3-hook-in-own-room-drops-pose",
+    "file": "src/net/staffHook.js",
+    "old": "if (f.room !== seenIn) seen = null; }",
+    "new": "seen = null; }",
+    "why": "round 3: the eye's own `in` from the cell it just left drops the pose that led it on - at a seam the eye flips between two cells, a token and a hello each",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R3-hook-note-own-room-drops-pose",
+    "file": "src/net/staffHook.js",
+    "old": "if (r.room !== seenIn || eye?.welcomed) seen = null",
+    "new": "seen = null",
+    "why": "round 3: a note sent before the crossing, naming the cell the pose was seen in, sends the eye back while it is on its way",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-R3-hook-note-welcomed-unread",
+    "file": "src/net/staffHook.js",
+    "old": "r.room !== seenIn || eye?.welcomed",
+    "new": "r.room !== seenIn",
+    "why": "round 3: a pose that led to a cell that welcomed the eye without them holds it there against every note naming the room it was seen in (a recall back)",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  }
+]

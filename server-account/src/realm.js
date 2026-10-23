@@ -562,12 +562,16 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   // primary's statements. One snapshot, read before anything is judged, as the reads were
   const keptConfig = budgetKept(db);
   const [rowRes, mineRes, dupesRes, configRes] = await db.batch([
-    // SESSION-SIGN (AUDIT PLAN-1000 E3): and the session the save is asked under, and the account's ban, as they stand
+    // SESSION-SIGN (AUDIT PLAN-1000 E3): and the session the save is asked under, and the account's ban, as they stand;
+    // STAFF-PANEL4-CENSUS: and the census's latest tally, so an unchanged one is written nowhere (staffCensus.js censusStep)
     db.prepare(`SELECT seq, lease, obj, prev, origin_id, summary, dead_at, ${JUDGE_COLUMNS},
     (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
     (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
     (SELECT ban_reason FROM players p WHERE p.id = realm_characters.player) AS ban_reason_now,
-    (SELECT 1 FROM sessions s WHERE s.id = ?3 AND s.player_id = realm_characters.player) AS session_alive
+    (SELECT frozen_until FROM players p WHERE p.id = realm_characters.player) AS frozen_until_now,
+    (SELECT frozen_reason FROM players p WHERE p.id = realm_characters.player) AS frozen_reason_now,
+    (SELECT 1 FROM sessions s WHERE s.id = ?3 AND s.player_id = realm_characters.player) AS session_alive,
+    (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally
     FROM realm_characters WHERE id = ?1 AND player = ?2`).bind(id, playerId, session),
     ...ledgerReads(db, id),
     ...(keptConfig ? [] : [budgetRead(db)]),
@@ -582,6 +586,9 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   // pass was minted saves nothing (a request the lookup answered knows both already; the save asks them all the same)
   if (session != null && row.session_alive == null) return { error: 'auth' };
   if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };
+  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "checkpoints still save"): and the freeze - a frozen player
+  // only looks around, so its save moves nothing while the freeze stands
+  if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS) return { error: 'frozen', player: { frozen_until: row.frozen_until_now, frozen_reason: row.frozen_reason_now } };
   if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again
   if (row.lease !== lease) return { error: 'lease' };
   if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };   // the service's own: a client whose last answer was lost resyncs
@@ -704,11 +711,17 @@ export function realmAtOf(/** @type {any} */ v) {
  * 'piece-dupe', whatever the act: no route moves that piece again. INT5: the wealth the change moves is WITNESSED - the
  * row's `witnessed` takes it in the same step, so the budget never charges a gain the service itself made. INT6: the
  * last checkpoint judged clean is never `prev` to drop.
+ * STAFF-PANEL3-REALM: `take` - staff take pieces out (staffRealm.js, the design's "Remove from a player"): a piece leaves
+ * whatever the ledger says of it, a copy above all, so INT4's refusals are not asked (design doc weak spots: "The repair
+ * path refuses to touch copied pieces").
+ * LOST-SPOILS: `witness` false - a piece the CLIENT rolled, carried into the record by the service (a boss's floor's
+ * leftover, claimed from the Lost and Found - post.js claimPost): the budget charges it as it charges that piece taken
+ * off the floor, so the service's hand is no road past the budget for what the client said.
  * @param {any} ctx @param {string} playerId @param {{ id: string, lease: string, seq: number }} at
- * @param {(save: any) => string | null} change @param {{ outbound?: boolean, escrow?: boolean | Set<string>, seize?: boolean }} [opts]
+ * @param {(save: any) => string | null} change @param {{ outbound?: boolean, escrow?: boolean | Set<string>, seize?: boolean, take?: boolean, witness?: boolean }} [opts]
  *   `escrow`: the pieces leaving in the service's hands (ledger.js ledgerMoves - true all, a Set those keys)
  */
-export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false, seize = false } = {}) {
+export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, at, change, { outbound = false, escrow = false, seize = false, take = false, witness = true } = {}) {
   if (!bucket) return { error: 'no-storage' };
   const row = await db.prepare('SELECT seq, lease, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(at.id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
@@ -734,7 +747,7 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   const piecesAfter = ledgerPieces(save);
   // AUDIT AUTO-HOLD: a key whose count fell is leaving - one of two the record held is a copy, never handed on
   const { leaving, twice } = leavingKeys(piecesBefore, piecesAfter);
-  const why = twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;
+  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;
   if (why) return { error: why };
   const text = JSON.stringify(save);
   const bytes = new TextEncoder().encode(text).byteLength;
@@ -751,7 +764,7 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
   const steps = [
     db.prepare(`UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}
       WHERE id = ?6 AND player = ?7 AND ${seize ? '?8 = ?8 AND dead_at IS NULL' : 'lease = ?8'} AND seq = ?9`)
-      .bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),
+      .bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),
     mustChange(db),
     ...moves.left,
     ...moves.entered,
@@ -767,12 +780,12 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
  * join reads the new one (the staff rollback's way, review.js). Answers prepareRealmRecord's `{ steps, key, prev, seq }`,
  * guarded on the sequence it read, or `{ error }`.
  * @param {any} ctx @param {string} playerId @param {string} charId
- * @param {(save: any) => string | null} change @param {{ escrow?: boolean | Set<string> }} [opts]
+ * @param {(save: any) => string | null} change @param {{ escrow?: boolean | Set<string>, take?: boolean }} [opts] `take` prepareRealmRecord's
  */
-export async function seizeRealmRecord(ctx, playerId, charId, change, { escrow = true } = {}) {
+export async function seizeRealmRecord(ctx, playerId, charId, change, { escrow = true, take = false } = {}) {
   const row = await ctx.db.prepare('SELECT seq, lease FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(charId, playerId).first();
   if (!row) return { error: 'no-realm-character' };
-  return prepareRealmRecord(ctx, playerId, { id: charId, lease: row.lease ?? '', seq: row.seq }, change, { escrow, seize: true });
+  return prepareRealmRecord(ctx, playerId, { id: charId, lease: row.lease ?? '', seq: row.seq }, change, { escrow, seize: true, take });
 }
 
 /** AUDIT REALM2 S3: AFTER A BATCH THAT THREW, the object it wrote goes only if the row names it nowhere (`obj` or

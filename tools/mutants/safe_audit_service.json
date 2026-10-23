@@ -258,7 +258,7 @@
     "name": "AUDIT-SAFE-D3-no-claim",
     "file": "server-account/src/discord.js",
     "old": "  if (!claimed?.meta?.changes) return redraw(ctx, caseId);\n",
-    "new": "",
+    "new": "  if (false) return redraw(ctx, caseId);\n",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDIT-SAFE-D4-push-awaited",
     "file": "server-account/src/discord.js",
-    "old": "  pushAfter(io, env, await lawOrder(env, ctx.subtle, ctx.nowS, { s: row.id, mu: r.until }));",
-    "new": "  await pushAfter(io, env, await lawOrder(env, ctx.subtle, ctx.nowS, { s: row.id, mu: r.until }));",
+    "old": "    { push: (o) => { pushAfter(io, env, o); } });",
+    "new": "    { push: (o) => pushAfter(io, env, o) });",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -283,9 +283,9 @@
   },
   {
     "name": "AUDIT-SAFE-D5-mute-shortened",
-    "file": "server-account/src/discord.js",
-    "old": "  if (keepLonger && minutes && isMuted(row, ctx.nowS) && Number(row.muted_until) >= ctx.nowS + minutes * 60) {",
-    "new": "  if (false) {",
+    "file": "server-account/src/safety.js",
+    "old": "    if (ask.keepLonger && muteMinutesOk(minutes) && minutes && isMuted(row, nowS) && Number(row.muted_until) >= nowS + minutes * 60) {",
+    "new": "    if (false) {",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -337,9 +337,9 @@
   },
   {
     "name": "AUDIT-SAFE-D11-mod-leaves-case",
-    "file": "server-account/src/discord.js",
-    "old": "      if (minutes) await closed(",
-    "new": "      if (false) await closed(",
+    "file": "server-account/src/safety.js",
+    "old": "      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone\n      : db.prepare(",
+    "new": "      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone\n      : false && db.prepare(",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -391,9 +391,9 @@
   },
   {
     "name": "AUDIT-SAFE-S2-game-mute-leaves-case",
-    "file": "server-account/src/index.js",
-    "old": "        if (r.until) await resolveCase(db, { target: r.target, status: 'actioned'",
-    "new": "        if (false) await resolveCase(db, { target: r.target, status: 'actioned'",
+    "file": "server-account/src/safety.js",
+    "old": "said) => (c ? [resolveCase(db, { caseId, status: 'actioned'",
+    "new": "said) => (c && false ? [resolveCase(db, { caseId, status: 'actioned'",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -467,7 +467,8 @@
     "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  const row = await findAccount(db, { target, name });\n  if ('error' in row) return row;\n  if (!isBanned(row, nowS)) return { error: 'not-banned' };",
     "new": "  const row = await findAccount(db, { target, name });\n  if ('error' in row) return row;\n  if (!isBanned(row, nowS)) return { error: 'not-banned' };",
     "tests": [
-      "test/server/safe_audit.test.js"
+      "test/server/safe_audit.test.js",
+      "test/server/staffpanel2fix.test.js"
     ]
   },
   {

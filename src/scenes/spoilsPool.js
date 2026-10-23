@@ -70,6 +70,19 @@
 // they wanted swept up every piece in their path, unlooked at. WBX3's wait after a piece came to rest (SPOILS_TAKE_AFTER_MS)
 // and the walk-over's reach (SPOILS_TAKE_M) went with it; leaving the court still gathers what is left (`gather`).
 //
+// LOST-SPOILS (2026-10-22, the owner: "I want to utilize the mailbox as a way to obtain lost items/loot if not picked up
+// from a boss"; asked, "Mail the leftovers"): WHAT IS LEFT ON THE FLOOR GOES TO THE MAILBOX. Leaving gathered every piece
+// still on the floor into the pack; now, where the host hands a `mail` (net/lostSpoils.js lostSpoilsMail) and its box is
+// known to take post, each ITEM still there is owed to the Lost and Found instead (net/lostLaw.js) - claimed from the
+// mailbox beside the hourglass, into whichever online character is played - and the gold still goes to the purse. The
+// hand-off is ONE WRITE of the spew's crash record: its `pieces` become the ones the pack holds and the rest its `mail`
+// (`{ i, piece }`, each piece's place in the spoils as rolled - the service's once-a-piece key), so no crash between two
+// writes ever hands a piece to both. The pool sends it (`mailOwed`), asks again LOST_RETRY_MS on while the answer is
+// not a yes, and gives the pieces to the pack on a refusal that will never be one, or after LOST_OWED_MAX_MS; a record
+// owing the mailbox outlives the save that holds its pack's part and the records' cap. And a new burst over a floor not
+// yet left gathers it first: a breach's second Redoubt had thrown its spoils over the first's, whose leftovers were then
+// on no floor and in no pack until the next boot handed the whole of it back, pressed pieces too.
+//
 // Not a DFU member. Ledger A (WB).
 import { rollSpoils, nameEmbers, sigilStone } from '../systems/gate/gateSpoils.js';
 import { seededRng } from '../systems/wind/wind.js';
@@ -83,6 +96,8 @@ import { SOUND } from '../systems/soundClips.js';
 import { CLIPS } from '../systems/handheldTorches.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // WB9f: a piece is pressed as a loot pile is
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a piece's light named by its piece
+import { LOST_OWED_MAX_MS } from '../net/lostLaw.js';   // LOST-SPOILS: how long a floor's leftovers are asked after
+import { t } from '../systems/textManager.js';
 
 /** WBX3: an item's picture stands this many metres a texel tall on the floor, and never taller than the most. */
 export const SPOILS_ICON_M_PER_PX = 0.022;
@@ -204,6 +219,20 @@ export const SPOILS_SPENT_MAX = 32;
 export const SPOILS_SPENT_RESEND_MS = 5000;
 /** A spent receipt's key: its day and account (AUDIT WB A9). */
 export const spentKey = (day, acct) => `${day}:${acct ?? ''}`;
+/** LOST-SPOILS: how long after a send that did not land the pool asks again - twice as long after each round that landed
+ *  nothing, to LOST_RETRY_MAX_MS (a kill the service never records is asked a few hundred times in its window, not tens
+ *  of thousands) - and how long after it is made it first asks for what an earlier sitting left owed (the box's first
+ *  look rides the heartbeat before it). */
+export const LOST_RETRY_MS = 30_000;
+export const LOST_RETRY_MAX_MS = 30 * 60_000;
+export const LOST_FIRST_MS = 20_000;
+/** LOST-SPOILS: the words - what was left went to the mailbox, or could not and is in the pack. */
+export const LOST_TEXT = Object.freeze({
+  mailed: () => t('spoils.lost.mailed', 'What you left on the floor will wait for you in your mailbox, beside the hourglass in the pause menu.'),
+  back: () => t('spoils.lost.back', 'What you left on the floor could not be sent to your mailbox, so it is in your pack.'),
+});
+/** LOST-SPOILS: a record's pieces owed to the mailbox - `{ i, piece }`, an item's - or none. */
+export const mailOf = (r) => (Array.isArray(r?.mail) ? r.mail.filter((m) => m && Number.isSafeInteger(m.i) && m.piece?.kind === 'item') : []);
 /** The records as a list - an older build's single record is a list of one. */
 const recordsOf = (v) => (Array.isArray(v) ? v : v && typeof v === 'object' ? [v] : []);
 
@@ -269,6 +298,8 @@ export function recoverSpoils(store, take, { who = null, saves = [], onHanded = 
  *   onSpent?: (day: number|string) => (boolean|void), keys?: { store: string, day: string }, recordsMax?: number, itemName?: ((item: any) => string)|null,
  *   me?: () => (string|null),
  *   gathered?: string,
+ *   mail?: { ready: () => boolean, send: (o: { day: any, pieces: Array<{ i: number, item: any }> }) => Promise<'ok'|'refused'|'later'>, sent?: () => void, say?: (text: string) => void } | null,
+ *   later?: (fn: () => void, ms: number) => any,
  * }} deps
  *   AUDIT WBX S1: `onSpent` is told each day whose receipt is spent here and safe (its record on the device, or a save
  *   holding its pieces) - and again whenever a spent one is offered - so the hub forgets its kept copy.
@@ -286,12 +317,16 @@ export function recoverSpoils(store, take, { who = null, saves = [], onHanded = 
  *   AUDIT SD II (L5 F4): `me` the account the hub's link speaks for now (the signed-in session's - the token's subject),
  *   or null when unknown: a spent word is said only on its own account's socket (AUDIT WBX2 M6's law - said on another's,
  *   the hub forgot that account's copy of a receipt it never had the spoils of), and owed until it can be.
+ *   LOST-SPOILS: `mail` the Lost and Found's door (net/lostSpoils.js lostSpoilsMail): `ready` whether its box takes post
+ *   now, `send` a record's owed pieces (answering 'ok', 'refused' - never a yes - or 'later'), `sent` told when some
+ *   landed, `say` where its words go (the chat). Without it, leaving gathers everything into the pack, as it always did.
+ *   `later` the timer the sends are asked again on (setTimeout's shape).
  */
 export function createSpoilsPool({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   ray, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(), iconOf = null, gathered = SPOILS_TEXT.gathered,
   onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',
-  me = () => null,
+  me = () => null, mail = null, later = (fn, ms) => globalThis.setTimeout?.(fn, ms),
 }) {
   const STORE_KEY = keys.store, DAY_KEY = keys.day;   // RAID4b: a town's thanks keep their own
   let glow = null;
@@ -353,6 +388,29 @@ export function createSpoilsPool({
     const kept = read(DAY_KEY);
     return Array.isArray(kept) && kept.includes(spentKey(day, acct));
   }
+  /** LOST-SPOILS: the records past the most this pool keeps go, the oldest first - but a record still owing the mailbox is
+   *  neither counted nor let go (it goes when its pieces are sent, or given to the pack), so it never takes a crash's
+   *  record's place. */
+  function trimRecords(list) {
+    let over = list.filter((r) => !mailOf(r).length).length - recordsMax;
+    return over <= 0 ? list : list.filter((r) => mailOf(r).length > 0 || over-- <= 0);
+  }
+  /** LOST-SPOILS: one record rewritten where it stands - `fn` answers it as it is to be, or null to let it go. Answers the
+   *  record as it was, or null when there is none of that id. */
+  function rewrite(id, fn) {
+    const all = recordsOf(read(STORE_KEY));
+    let was = null;
+    const out = [];
+    for (const r of all) {
+      if (r?.id !== id || was) { out.push(r); continue; }
+      was = r;
+      const next = fn(r);
+      if (next) out.push(next);
+    }
+    if (!was) return null;
+    if (out.length) keep(STORE_KEY, out); else { try { store?.remove(STORE_KEY); } catch { /* nothing to lose */ } }
+    return was;
+  }
   /** The receipt spent, here and on the device, and its pieces kept as rolled until a save holds them. AUDIT WBX S5: the
    *  record FIRST, and the device's mark no surer than it; AUDIT WBX S1: the hub told once it is safe. Answers the
    *  record's id. */
@@ -361,7 +419,7 @@ export function createSpoilsPool({
     const w = owner, at = wall();
     const id = `${day}:${w ?? ''}:${at}`;
     const recs = recordsOf(read(STORE_KEY)).filter((r) => r && !(r.day === day && r.who === w));
-    keep(STORE_KEY, [...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }].slice(-recordsMax));
+    keep(STORE_KEY, trimRecords([...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]));
     const durable = store?.persisted?.(STORE_KEY) ?? true;
     const kept = read(DAY_KEY);
     const marks = [...(Array.isArray(kept) ? kept : Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []), spentKey(day, acct)].slice(-SPOILS_SPENT_MAX);
@@ -421,6 +479,98 @@ export function createSpoilsPool({
     if (spewId && floor.every((g) => g.taken)) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack
   }
 
+  // ── LOST-SPOILS: the floor's leftovers owed to the mailbox ────────────────
+  /** the records whose send is out, and the timer the sends are asked again on */
+  const sending = new Set();
+  let retryTimer = null, idleRounds = 0;
+  const sayMail = (/** @type {string} */ text) => { try { (mail?.say ?? say)(text); } catch { /* a word is not the spoils' problem */ } };
+  const retryMail = (ms = LOST_RETRY_MS) => {
+    if (!mail || retryTimer) return;
+    try { retryTimer = later(() => { retryTimer = null; sendMail().catch(() => {}); }, ms) ?? null; } catch { retryTimer = null; }
+  };
+  /** THE FLOOR'S ITEMS LEFT, OWED TO THE MAILBOX in one write of the spew's record (its `pieces` the pack's part, the rest
+   *  its `mail`) and off the floor, never into the pack. None - the pack takes them, as ever - with no `mail`, a box not
+   *  known to take post (a guest, signed out, not yet looked at), another account's spoils, or a record this device
+   *  could not keep. Answers the floor's pieces owed. */
+  function owedToMail(left) {
+    const items = left.filter((f) => f.piece.kind === 'item');
+    if (!mail || !spewId || !rec || !items.length) return [];
+    let ready = false;
+    try { ready = mail.ready() && mine(rec.acct); } catch { ready = false; }
+    // and only onto a record the device holds: one kept in this sitting's memory alone (a full quota, a private window)
+    // dies with the tab, and its receipt is given again (AUDIT WBX S5) - so its floor goes to the pack, as ever
+    if (!ready || store?.persisted?.(STORE_KEY) === false) return [];
+    const at = new Map(items.map((f) => [floor.indexOf(f), f]));
+    const acct = rec.acct ?? '';
+    const kept = rewrite(spewId, (r) => ({ ...r, acct, pieces: (r.pieces ?? []).filter((/** @type {any} */ _p, /** @type {number} */ i) => !at.has(i)), mail: [...mailOf(r), ...[...at].map(([i, f]) => ({ i, piece: f.piece }))], mailAt: wall() }));
+    if (!kept) return [];
+    for (const f of items) { f.taken = true; if (f.batch) { renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; } }
+    return items;
+  }
+  /** A send landed: those pieces are the post's. The record goes once it owes nothing more - its pack's part held by a
+   *  save, or none - else it waits for that save, as any record does. */
+  function mailLanded(id, sent) {
+    const gone = new Set(sent.map((/** @type {any} */ x) => x.i));
+    rewrite(id, (r) => {
+      const owed = mailOf(r).filter((x) => !gone.has(x.i));
+      if (owed.length) return { ...r, mail: owed };
+      const { mail: _mail, mailAt: _at, ...rest } = r;
+      return rest.pieces?.length ? rest : null;
+    });
+    try { mail?.sent?.(); } catch { /* the box looks again on its own clock */ }
+  }
+  /** THE MAILBOX WILL NOT TAKE THEM: the pieces into the pack after all - its record's pack part first (one write, so a crash
+   *  hands them from there), then the pack, held for the next save. Another character's wait for it to stand up. */
+  function mailBack(id) {
+    const r0 = recordsOf(read(STORE_KEY)).find((r) => r?.id === id);
+    if (!r0 || (r0.who != null && r0.who !== who())) return false;
+    const back = mailOf(r0);
+    rewrite(id, (r) => { const { mail: _mail, mailAt: _at, ...rest } = r; return { ...rest, pieces: [...(rest.pieces ?? []), ...back.map((x) => x.piece)] }; });
+    for (const x of back) { const q = keptPiece(x.piece); if (q) take(q); }
+    held.set(id, { who: who(), day: r0.day });
+    sayMail(LOST_TEXT.back());
+    return true;
+  }
+  /** WHAT IS OWED TO THE MAILBOX, SENT - each record's pieces in one send, on its own account's session alone. A yes lets
+   *  them go; a refusal that will never be one, or LOST_OWED_MAX_MS of asking, gives them to the pack; anything else is
+   *  asked again LOST_RETRY_MS on. Answers how many records still owe. */
+  async function sendMail() {
+    if (!mail) return 0;
+    let owing = 0, landed = 0;
+    for (const r of recordsOf(read(STORE_KEY))) {
+      const owed = mailOf(r);
+      if (!owed.length) continue;
+      if (sending.has(r.id)) { owing++; continue; }
+      const late = !(wall() - (Number(r.mailAt) || 0) < LOST_OWED_MAX_MS);
+      /** @type {'ok'|'refused'|'later'} */
+      let word = 'refused';
+      if (!late) {
+        if (!mine(r.acct)) { owing++; continue; }
+        sending.add(r.id);
+        try { word = await mail.send({ day: r.day, pieces: owed.map((x) => ({ i: x.i, item: x.piece.item })) }); } catch { word = 'later'; } finally { sending.delete(r.id); }
+      }
+      if (word === 'ok') { mailLanded(r.id, owed); landed++; continue; }
+      if (word === 'refused' && mailBack(r.id)) continue;
+      owing++;
+    }
+    if (landed) idleRounds = 0; else if (owing) idleRounds++;   // a round that owed nothing is no round
+    if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));
+    return owing;
+  }
+  /** Out of the court: whatever is still on its floor (or in the air) goes into the pack - the record stands until a save
+   *  holds them. LOST-SPOILS: its items to the mailbox instead, where it takes post. */
+  function gatherFloor() {
+    const left = floor.filter((f) => !f.taken);
+    const mailed = owedToMail(left);
+    floor.forEach((f) => takeOne(f));
+    if (spewId) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack now
+    rec = null; floor = []; launches = [];
+    if (left.length > mailed.length) say(gathered);   // SD9e: the pool's own words
+    if (mailed.length) { sayMail(LOST_TEXT.mailed()); sendMail().catch(() => {}); }
+    return left.length;
+  }
+  if (mail) retryMail(LOST_FIRST_MS);   // what an earlier sitting left owed
+
   /** WB9f: the floor's piece a key names - resting, not yet taken - or null. */
   function pieceAt(key) {
     if (typeof key !== 'string' || !floor.length) return null;
@@ -454,7 +604,8 @@ export function createSpoilsPool({
     },
     spew({ day, seed, level, at, bearing, acct = '', keep = null, claims = null, roll = null }) {
       if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it
-      rec = { day };
+      if (rec) gatherFloor();   // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one
+      rec = { day, acct };
       t0 = now(); lastT = t0; from = [...at];
       const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)
       launches = spewLaunches(seededRng(((seed >>> 0) ^ 0x5a5a) >>> 0), list.length, bearing);
@@ -507,8 +658,10 @@ export function createSpoilsPool({
       const ids = new Set([...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id));
       if (!ids.size) return 0;
       const all = recordsOf(read(STORE_KEY));
-      const left = all.filter((r) => !(r && ids.has(r.id)));
-      if (left.length !== all.length) { if (left.length) keep(STORE_KEY, left); else { try { store?.remove(STORE_KEY); } catch { /* nothing to lose */ } } }
+      // LOST-SPOILS: a record still owing the mailbox stays, its pack's part held - nothing of it handed again
+      const left = all.flatMap((r) => (!(r && ids.has(r.id)) ? [r] : mailOf(r).length ? [{ ...r, pieces: [] }] : []));
+      const cleared = all.filter((r) => r && ids.has(r.id)).length;
+      if (cleared) { if (left.length) keep(STORE_KEY, left); else { try { store?.remove(STORE_KEY); } catch { /* nothing to lose */ } } }
       for (const id of ids) {
         held.delete(id);
         const a = ackOnSave.get(id);
@@ -519,7 +672,7 @@ export function createSpoilsPool({
           said(a.day, a.acct);
         }
       }
-      return all.length - left.length;
+      return cleared;
     },
     /** One frame: the pieces leave on their schedule, fly, clatter and rest - and stay where they rest until pressed
      *  (GATE-UX: never taken underfoot). WB9f: `onRest(pos, tier, kind)` is told of each piece the frame it comes to
@@ -600,16 +753,11 @@ export function createSpoilsPool({
       glow.draw(lines, proj, view, eye, seconds, fog);
       return glow.drawn > 0;
     },
-    /** Out of the court: whatever is still on its floor (or in the air) goes into the pack - the record stands until a
-     *  save holds them. */
-    gather() {
-      const left = floor.filter((f) => !f.taken).length;
-      floor.forEach((f) => takeOne(f));
-      if (spewId) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack now
-      rec = null; floor = []; launches = [];
-      if (left) say(gathered);   // SD9e: the pool's own words
-      return left;
-    },
+    /** Out of the court: whatever is still on its floor goes into the pack, its items to the mailbox where it takes post
+     *  (LOST-SPOILS, `gatherFloor`). Answers how many pieces were left. */
+    gather: gatherFloor,
+    /** LOST-SPOILS: what is owed to the mailbox sent now (the host's, the tests') - answers how many records still owe. */
+    mailOwed: () => sendMail(),
     /** What the pool holds, for the tests and the stats. */
     state: () => ({ day: rec?.day ?? null, pieces: floor.map((f) => ({ kind: f.piece.kind, tier: f.piece.tier, left: f.left, rest: f.fly.rest, taken: f.taken, pos: [...f.fly.pos], icon: !!f.batchIcon, h: f.h })) }),
   };

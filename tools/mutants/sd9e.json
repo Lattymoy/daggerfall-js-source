@@ -155,8 +155,8 @@
   {
     "name": "SD9E-the-gates-words",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      if (left) say(gathered);",
-    "new": "      if (left) say(SPOILS_TEXT.gathered);",
+    "old": "    if (left.length > mailed.length) say(gathered);",
+    "new": "    if (left.length > mailed.length) say(SPOILS_TEXT.gathered);",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]

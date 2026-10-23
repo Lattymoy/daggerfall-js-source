@@ -1842,7 +1842,8 @@ already keeps a receipt until a slot's spoils are said spent (`spent {s}`).
   over the realm's real collider with its pillars); once a fight; never off another slot's receipt; rolled at the
   level the fight admitted or mine, the lower. A fighter the realm counted in with no receipt `SD_RECEIPT_WAIT_MS` into
   the fall is told so, once; a watcher is told nothing (`net/superDungeon/sdFightLink.js` `counted` - the realm counted me in this
-  fight, fallen or not). Leaving the Hour gathers whatever is still on the floor.
+  fight, fallen or not). Leaving the Hour gathers whatever is still on the floor. LOST-SPOILS (2026-10-22): its items go
+  to the mailbox, where it takes post, the gold to the purse (`06-Systems/Accounts-And-Cloud-Saves-Arc.md`).
 - **The pool** (`scenes/spoilsPool.js`): the burst takes a `roll` as the grant does, and a pool says its own words
   gathering (`gathered` - the Hour's said in the chat, SD11c). The Hour's pool keeps its own keys (`SD_SPOILS_KEYS`),
   its crash records (eight), each piece's own picture and the loot piles' words; a spent receipt is said to the hub as

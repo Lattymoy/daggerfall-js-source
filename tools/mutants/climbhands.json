@@ -634,8 +634,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-hands-over-the-weapon",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "handsLane && _climbLower >= CLIMB_HANDS_AFTER ? (camNow?.climb ?? null) : null",
-    "new": "handsLane ? (camNow?.climb ?? null) : null",
+    "old": "handsLane && _climbLower >= CLIMB_HANDS_AFTER && !castTakesHands ? (camNow?.climb ?? null) : null",
+    "new": "handsLane && !castTakesHands ? (camNow?.climb ?? null) : null",
     "tests": [
       "test/player/climb/climbhands.test.js",
       "test/player/climb/auditclimbhands.test.js"

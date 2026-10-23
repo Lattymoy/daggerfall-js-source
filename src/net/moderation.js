@@ -106,7 +106,17 @@ export function resolveTarget(session, name) {
 export async function runModCommand(cmd, { session, links, mute, refusal }) {
   const who = resolveTarget(session, cmd.name);
   if ('error' in who) return who.error;
-  const minutes = cmd.op === 'unmute' ? 0 : (cmd.minutes ?? MUTE_DEFAULT_MIN);
+  return muteNamed(who, cmd.op === 'unmute' ? 0 : (cmd.minutes ?? MUTE_DEFAULT_MIN), { links, mute, refusal });
+}
+
+/**
+ * THE MUTE ITSELF, for an account already named - the command's after it has found one, and STAFF-PANEL2-CHATMENU's
+ * (scenes/chatSafetyHost.js): a chat line's menu names the speaker by the account the relay stamped on the line, so
+ * there is no name to resolve. The same answer and the same refusal as /mute.
+ * @param {{ sub: string, name: string }} who @param {number} minutes  0 lifts it
+ * @param {{ links: Iterable<any>, mute: (sub: string, minutes: number) => Promise<any>, refusal: (e: string) => string }} io
+ */
+export async function muteNamed(who, minutes, { links, mute, refusal }) {
   const r = await mute(who.sub, minutes);
   if (!r?.ok) return refusal(r?.error ?? 'server');
   // THE ROW IS ALREADY WRITTEN, so a missing order (a service with no

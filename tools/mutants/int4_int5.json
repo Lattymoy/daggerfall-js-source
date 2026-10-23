@@ -56,8 +56,8 @@
   {
     "name": "INT4-the-dupe-moves",
     "file": "server-account/src/realm.js",
-    "old": "  const why = twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  if (why) return { error: why };\n",
-    "new": "  const why = twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  void why;\n",
+    "old": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  if (why) return { error: why };\n",
+    "new": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  void why;\n",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]

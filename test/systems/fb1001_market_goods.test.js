@@ -118,7 +118,7 @@ test('MARKET-ANY law: a looted weapon and armour list from the pack; bound (a De
 // ─── THE SERVICE ─────────────────────────────────────────────────────
 
 async function stand() {
-  const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on', MODERATOR_HANDLES: 'Asynian' });
+  const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on', MODERATOR_HANDLES: 'Asynian', DEVELOPER_HANDLES: 'Lattymoy' });   // STAFF-PANEL2-FIX: a pull is a developer's
   const raw = s.env.DB._raw;
   const record = (who) => {
     const row = raw.prepare('SELECT obj, seq FROM realm_characters WHERE id = ?').get(who.character);
@@ -289,7 +289,8 @@ test('MARKET-ANY service: cancelled, expired or removed, the piece comes back to
   const l3 = (await s.list(eve, 0)).body.listing;
   assert.equal((await s.call('/v1/market/report', { listing: l3.id }, ann.secret)).status, 200);
   assert.equal((await s.read(asy, 'goods')).body.rows[0].reports, 1);
-  assert.equal((await s.call('/v1/market/remove', { listing: l3.id }, asy.secret)).status, 200);
+  assert.equal((await s.call('/v1/market/remove', { listing: l3.id }, asy.secret)).status, 403, 'STAFF-PANEL2-FIX: a pull is an Admin\'s, never a Moderator\'s');
+  assert.equal((await s.call('/v1/market/remove', { listing: l3.id }, (await s.registered('Lattymoy')).secret)).status, 200);
   assert.equal((await s.read(eve, 'mine')).body.road[0]?.id, l3.id);
   assert.equal((await s.collect(eve, l3.id)).status, 200);
   assert.equal(s.record(eve).save.items.length, 2, 'both pieces home, none twice');

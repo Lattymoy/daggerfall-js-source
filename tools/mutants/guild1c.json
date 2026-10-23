@@ -56,8 +56,8 @@
   {
     "name": "GUILD1c-no-guildout-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban']);",
+    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);",
+    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "GUILD1c-guild-line-refused-by-the-law",
     "file": "src/net/wire.js",
-    "old": "export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'guild']);",
-    "new": "export const CHAT_LINE_CHANNELS = Object.freeze(['party']);",
+    "old": "export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'guild', 'staff']);",
+    "new": "export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'staff']);",
     "tests": [
       "test/net/guild1c.test.js"
     ]

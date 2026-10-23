@@ -59,7 +59,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // ROAD-G G2: an arr
 import { knockedDown } from '../systems/blowEffects.js';   // TELL6e: knocked down, no swing
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { targetAimPoint, missileAimDirection } from '../characters/enemy/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
-import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook, playerBlowCameToNothing } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook, playerBlowCameToNothing, staffFrozen } from '../characters/playerEntity.js';
 import { heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js';   // AUDIT SETS L3: a guard's blow the arrest flow holds back
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
@@ -5285,7 +5285,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // return, WeaponManager (:235-239) does ShowWeapons(false) and
     // takes no swing. Declared above `walkMode` because the motor and
     // the weapon rig are two sibling blocks.
-    const paralyzed = entityIsParalyzed(playerEntity);
+    const paralyzed = entityIsParalyzed(playerEntity) || staffFrozen();   // STAFF-PANEL5-FREEZE: a staff freeze holds the motor as paralysis does
     // A6: FrictionMotor.GroundedMovement's head-dip guard reads
     // IsParalyzed itself (:90-93) - the zeroed input bag below is
     // the movement half of the same law, not this one.

@@ -38,8 +38,8 @@ test('AUDIT 39 #59: the two above-ground hosts gate the motor and the weapon on 
   for (const [name, s] of HOSTS) {
     assert.match(s, /import \{ isInvisible, entityIsParalyzed(?:, concealBits)? \} from '\.\.\/systems\/effects\.js';/,
       `${name}: the read-time fold (DaggerfallEntity.IsParalyzed + the FreeAction immunity)`);
-    assert.match(s, /const paralyzed = entityIsParalyzed\(playerEntity\);/,
-      `${name}: one read per frame, above the motor and the weapon rig`);
+    assert.match(s, /const paralyzed = entityIsParalyzed\(playerEntity\)(?: \|\| staffFrozen\(\))?;/,
+      `${name}: one read per frame, above the motor and the weapon rig (STAFF-PANEL5-FREEZE: a staff freeze folded in beside it)`);
     // AUDIT 64 F3 (review): the stride gate is no longer a host-side
     // `moving` term. DFU silences the frozen player's footsteps
     // THROUGH IsStandingStill: FrictionMotor.GroundedMovement zeroes
@@ -96,8 +96,8 @@ test('AUDIT 39r: the THIRD above-ground host - worldModes\' interior arm - reads
   // interior rig was handed no flag at all.
   assert.match(WORLD_MODES, /import \{ entityIsParalyzed \} from '\.\.\/systems\/effects\.js';/,
     'the read-time fold, the other two hosts\' own import');
-  assert.ok(WORLD_MODES.includes("const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);"),
-    'one fold: the dungeon context underground, the entity above it');
+  assert.ok(WORLD_MODES.includes("const paralyzed = staffFrozen() || ((mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity));"),
+    'one fold: the dungeon context underground, the entity above it (STAFF-PANEL5-FREEZE: a staff freeze before both)');
   assert.ok(!WORLD_MODES.includes("(dungeonCtx.playerParalyzed?.() ?? false) : false;"), 'the hardcoded false is gone');
   // AUDIT 64 F3 (review): see the note in the #59 pin above - the
   // stride gate is IsStandingStill (PlayerFootsteps.cs:264-265), and

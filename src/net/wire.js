@@ -74,6 +74,10 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                                                       to its target's hub sockets so their own client carries it to every room it holds
 //                                                       - each socket's first word of the order (its `muted` or `banned` after it)
 //                    {t:'slowed', ms}                   SAFE6: a new voice's public line refused for its pace - `ms` until the next one
+//                    {t:'smsg', mi}                     STAFF-PANEL5-MESSAGE: a staff message `mi` waits for this account - made only from
+//                                                       the service's signed 'smsg' order at the hub's door, to that account's own hub
+//                                                       sockets whose hello said `sm` (the box); the game reads the words off the
+//                                                       account service with its own session (server/src/staffMessage.js)
 //                    {t:'event', kind, at}              EVENT1: the server-wide live event now, to every hub socket when it is staged
 //                                                       or ended; a late joiner reads it off the hub welcome's `ev` ({kind, at}, absent: none)
 //                    {t:'home', l:[{m, u, d, i}]}       QUEST-HOME: homes that moved - town m's buildings u homes now, d none, i the
@@ -675,7 +679,7 @@ export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM, ...Array.from(
 /** CHAT-CHAN: the channels a LINE may name inside a room (`{t:'chat', text, ch}`). A party's line is said on the hub
  *  link and heard by the party's members alone; a line naming anything else is refused whole - it is never allowed to
  *  fall through to the room's own fan, where a party line said to an old or a confused relay would reach everyone. */
-export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'guild']);   // GUILD1c: a guild's line, said on the hub link and heard by the guild's members online alone
+export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'guild', 'staff']);   // GUILD1c: a guild's line, said on the hub link and heard by the guild's members online alone   // STAFF-PANEL5-FREEZE: a staff chat thread's nudge, said on the hub link by its player and heard by the thread's members alone (server/src/staffFreeze.js) - the line itself is the account service's
 /** CHAT-CHAN: the hub's budget for PARTY lines, lines a second across every party - apart from CHAT_ROOM_HZ_MAX,
  *  which AUDIT CHAT A2 priced for a line whose fan is EVERYONE online. A party line's fan is its party (PARTY_MAX seats,
  *  their tabs), so priced out of the World's budget one talkative party would silence the World channel, and a busy
@@ -1578,7 +1582,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world246';   // world246: SEA VENTURES (2026-10-22, world241 on its branch, then world242 and world245 - renumbered past SD-THROUGH's world241, LEASE1's world242, PARTY-PING's world243, SPAWN-THIN's world244 and AUDIT PISTOLET's world245 at the merges; the owner: "Build ever single bit of this and dont return until its perfected" - the Eltheric Ocean's ventures; bible/03-World/Eltheric-Ocean.md SEA-VAULTS and the sections after it; NOT YET DEPLOYED): the hub reads a vault of the deep by its cell (`wdun` keys `"e<cx>,<cy>"` - wdunHall, wdunRoomKey, WDUN_SEA_RELAY_MIN) and keeps a treasure fleet's flagship sunk for its sailing (`fk`, `fd` - SEA-EVENTS), refuses an instance of an isle's dungeon (seaRoomCell), a fall at another's hand signs its room and its killer's character (net/wild/wildReceipt.js `m`, `kc` - SEA-BOUNTY: the service's word on a kill at sea; a receipt up to 512 long, DUEL_REF_RECEIPT_MAX), and the referee judges a broadside between captains in the open sea (SHIP-PVP - net/sea/seaRef.js: a captain's `helm`, `shot` and `board` in, the `hull` a shot landed, a `wreck` and its signed receipt `wc` out - net/wild/wildReceipt.js `n1`; relaySupportsSeaPvp). An older client never sends a sea key, and an older relay is never asked one.
+export const RELAY_VERSION = 'world247';   // world247: STAFF-PANEL5 (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design"; NOT YET DEPLOYED) - the staff panel's relay half, one release: a hidden staff spectator's follow (staffFollow.js), Message on screen's nudge (`smsg`), the Staff Panel's counts (staffFeeds.js), a cut staff member's sockets closed (`staffcut`), hidden staff named by nobody (`hide`, staffHidden.js), and freeze player with its staff chat (`freeze`, `staffline`, staffFreeze.js)
+// world246: SEA VENTURES (2026-10-22, world241 on its branch, then world242 and world245 - renumbered past SD-THROUGH's world241, LEASE1's world242, PARTY-PING's world243, SPAWN-THIN's world244 and AUDIT PISTOLET's world245 at the merges; the owner: "Build ever single bit of this and dont return until its perfected" - the Eltheric Ocean's ventures; bible/03-World/Eltheric-Ocean.md SEA-VAULTS and the sections after it; NOT YET DEPLOYED): the hub reads a vault of the deep by its cell (`wdun` keys `"e<cx>,<cy>"` - wdunHall, wdunRoomKey, WDUN_SEA_RELAY_MIN) and keeps a treasure fleet's flagship sunk for its sailing (`fk`, `fd` - SEA-EVENTS), refuses an instance of an isle's dungeon (seaRoomCell), a fall at another's hand signs its room and its killer's character (net/wild/wildReceipt.js `m`, `kc` - SEA-BOUNTY: the service's word on a kill at sea; a receipt up to 512 long, DUEL_REF_RECEIPT_MAX), and the referee judges a broadside between captains in the open sea (SHIP-PVP - net/sea/seaRef.js: a captain's `helm`, `shot` and `board` in, the `hull` a shot landed, a `wreck` and its signed receipt `wc` out - net/wild/wildReceipt.js `n1`; relaySupportsSeaPvp). An older client never sends a sea key, and an older relay is never asked one.
 // world245: AUDIT PISTOLET (2026-10-22, world242 on its branch, renumbered past LEASE1's world242, PARTY-PING's world243 and SPAWN-THIN's world244 at the merge; the owner: "Now lets do a comprehensive audit on everything"; bible/01-Overview/audits/Audit-Pistolet.md C7/D1, A1; NOT YET DEPLOYED) - the siege referee's arms know the Dwarven Pistolet (net/siege/siegeRef.js SIEGE_PISTOLET: its top, and a shot is a bow's blow), and the duel's roll takes `off` for a shot as for a swing (combat/duelCombat.js), so a pair's off-hand shot at a player lands DUAL's share. The PISTOLET branch edited the relay's graph under world237 (world241 at its merges) without a bump. Client and relay move together: an older relay rolls an off-hand shot whole.
 // world244: SPAWN-THIN (2026-10-19, world224 on its branch, then world242, renumbered past PARTY-PING's world243 at the merge; bible/06-Systems/Systems-Arc.md; NOT YET DEPLOYED): the overworld keep drops a quarter of the spawn band (net/overworldLaw.js OW_SPAWN_KEEP), so a cell and a client agree which ruins stand.
 // world243: PARTY-PING (2026-10-18, the owner: ping something for the party; NOT YET DEPLOYED): validPartyPose carries `pg`, a look's point for the party. A relay before this field strips it and the socket stays open.
@@ -2382,6 +2387,8 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (Number.isSafeInteger(m.gl) && m.gl >= 1 && m.gl <= GROUND_LAW_WIRE_MAX) hello.gl = m.gl;
     if (Number.isSafeInteger(m.gv) && m.gv >= 1 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX) hello.gv = m.gv;   // GRANT-DOOR: the grants this build stands on - read as GROUND-GATE's `gl` is
     if (m.ls === 1) hello.ls = 1;   // LEASE1: this build hands its hub's lease to the room (net/roomLease.js) - 1 or nothing, the `w2` law
+    if (m.sm === 1) hello.sm = 1;   // STAFF-PANEL5-MESSAGE: this build shows a staff message's box (net/staffMessages.js) - 1 or nothing, the `w2` law: a hub socket without it is "old game, not shown"
+    if (m.fv === 1) hello.fv = 1;   // STAFF-PANEL5-FREEZE: this build shows the freeze screen (net/staffChat.js) - 1 or nothing; a frozen account's socket from a build without it is closed with the reload words
     return hello;
   }
   if (m.t === 'pose') {
@@ -3199,6 +3206,13 @@ export function validPartyPose(p) {
   // SCALE5d: `ly` - the layer of the place I stand in (wire.js isLayered), so a mate who comes asks for mine; omitted for
   //   the place itself and refused alone when out of its law
   if (Number.isInteger(p.ly) && p.ly >= 1 && p.ly < LAYERS_MAX) out.ly = p.ly;
+  // STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", Invisible follow - the where note): `rk` - the room I stand
+  //   in, a cell's or a world room's (a dungeon's, a building's, an instance's) as the game names it, so a staff spectator
+  //   joins that very room (its layout and size included) without asking my game. The hub keeps it beside the pose and
+  //   fans it to nobody; omitted for any other room, and refused alone when out of its law. STAFF-PANEL5-FOLLOW-FIX (the
+  //   relay review's finding 2; mob: "ANY player ANYWHERE (homes too)"): and a private one - a home, a boat's cabin, a
+  //   caravan (privateInterior.js privateInteriorOf) - so a follow and a silent /tp reach it too
+  if (isWorldRoom(p.rk) || isCellRoom(p.rk) || privateInteriorOf(p.rk)) out.rk = p.rk;
   // PARTY-PING: `pg` - a look's point for the party, {k place, x y z metres, at the sender's stamp}. Omitted when
   //   there is none. A relay from before this field strips it and closes nothing (an unknown pose field is dropped).
   if (p.pg && typeof p.pg === 'object' && !Array.isArray(p.pg)

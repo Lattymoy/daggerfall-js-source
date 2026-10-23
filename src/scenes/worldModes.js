@@ -59,7 +59,7 @@ import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28:
 import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendAmmoFor, takeOneInto, isSummoned } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { targetAimPoint, missileAimDirection } from '../characters/enemy/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
-import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, staffFrozen } from '../characters/playerEntity.js';
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
 import { offHandQuickslot, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS4: the off-hand cell's press, on THIS mode's own rig   // QS6: the off hand's swap question, and the hold machine this mode's frame drives
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
@@ -10524,7 +10524,7 @@ export function createWorldModes(host) {
     // (FrictionMotor :75-81, AcrobatMotor :135-141, WeaponManager
     // :235-239), which is the fold world.js and exterior.js took; the
     // dungeon arm keeps its context read, the same answer one seam over.
-    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity);
+    const paralyzed = staffFrozen() || ((mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity));   // STAFF-PANEL5-FREEZE: a staff freeze holds the motor as paralysis does
     // A6: FrictionMotor.GroundedMovement's head-dip guard reads
     // IsParalyzed itself (:90-93) - the zeroed input bag below is
     // the movement half of the same law, not this one.

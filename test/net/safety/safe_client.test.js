@@ -4,6 +4,7 @@
 // that drops a blocked account's requests, a line's own menu in the chat panel, the host module's commands and the code
 // of conduct's gate, and the card itself - each driven headless.
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { OnlineSession } from '../../../src/net/online.js';
 import { ChatLog } from '../../../src/net/chat.js';
@@ -151,6 +152,32 @@ test('SAFE1 + SAFE3 A LINE\'S OWN MENU: the speaker\'s name pressed opens the ho
   assert.equal(all(root, 'dfchat-linemenu').length, 0, 'a row run closes the menu');
 });
 
+test('STAFF-PANEL2-CHATMENU A LINE MENU\'S SECOND LEVEL: a row with its own `menu` opens that level in place of this one and runs nothing; a row\'s `title` is its tooltip; a row of the last level runs and closes the menu (mutants: a level that closes; the tooltip dropped)', () => {
+  const log = new ChatLog({ now: () => 10_000 });
+  const doc = fakeDocument();
+  const ran = [];
+  const panel = createChatPanel({ log, onSend: () => true, doc, win: fakeWindow(), touch: false, lineActions: () => [
+    { label: 'Ban…', title: 'The player can see this.', menu: [{ label: '7 days', menu: [{ label: 'Confirm', run: () => ran.push('ban') }] }] },
+    { label: 'Block', run: () => ran.push('block') },
+  ] });
+  log.push('world', { id: 'p2', name: 'Troll', text: 'gross', at: 1, sub: 'acct-tro', sg: SG });
+  panel.open();
+  panel.render?.();
+  const root = doc.body.children.find((c) => String(c.className).startsWith('dfchat'));
+  all(root, 'dfchat-name').find((n) => n.textContent === 'Troll').fire('click');
+  const [menu] = all(root, 'dfchat-linemenu');
+  assert.deepEqual(menu.children.map((b) => [b.textContent, b.title]), [['Ban…', 'The player can see this.'], ['Block', undefined]]);
+  menu.children[0].fire('click');
+  assert.deepEqual(all(root, 'dfchat-linemenu'), [menu], 'the same menu, still open');
+  assert.deepEqual(menu.children.map((b) => b.textContent), ['7 days']);
+  menu.children[0].fire('click');
+  assert.deepEqual(menu.children.map((b) => b.textContent), ['Confirm']);
+  assert.deepEqual(ran, [], 'nothing runs on the way');
+  menu.children[0].fire('click');
+  assert.deepEqual(ran, ['ban']);
+  assert.equal(all(root, 'dfchat-linemenu').length, 0, 'the last level\'s row closes it');
+});
+
 /** A host over a real log, fake links and a fake account service - every request recorded. An answer may be a status's
  *  `[status, body]`, or a function of the request's body; `peers` the rooms' players; `opts` the host's own seams. */
 function hostRig({ conduct = true, blocks = [], answers: more = {}, peers = [['p2', { id: 'p2', name: 'Troll', sub: 'acct-tro' }]], opts = {} } = {}) {
@@ -202,6 +229,137 @@ test('SAFE1 THE HOST\'S BLOCK: the list is read at the start and the log hears t
   await settle(); await settle();
   assert.deepEqual(r.asked.at(-1), { path: '/v1/safety/unblock', body: { target: 'acct-tro' } });
   assert.deepEqual(r.host.lineActions({ text: 'x', system: true }), []);
+});
+
+test('STAFF-PANEL2 STAFF REPORT NOTHING FROM CHAT: an Admin\'s or a Moderator\'s line menu has no Report row - while a player, and a Dungeon Master (no moderation), keep every reason (mutant: the staff check dropped)', () => {
+  const line = { id: 'p2', name: 'Troll', text: 'gross', at: 2, sub: 'acct-tro', sg: SG };
+  const player = hostRig().host.lineActions(line);
+  assert.equal(player.length, REPORT_REASONS.length + 1);
+  assert.equal(hostRig({ opts: { glyphs: () => ['dm', 'sprout'] } }).host.lineActions(line).length, REPORT_REASONS.length + 1, 'a Dungeon Master moderates nothing');
+  for (const g of ['dev', 'mod', 'shadowfang']) {
+    const staff = hostRig({ opts: { glyphs: () => [g] } }).host.lineActions(line);
+    assert.equal(staff.some((x) => /^Report/.test(x.label)), false, g);
+    assert.equal(staff.at(-1).label, 'Block', `${g}: Block stays, last`);
+  }
+});
+
+const STAFF_LINE = { id: 'p2', name: 'Troll', text: 'gross', at: 2, sub: 'acct-tro', sg: SG };
+const staffRig = (glyphs, more = {}) => hostRig({ ...more, opts: { glyphs: () => glyphs, ...(more.opts ?? {}) } });
+const rowOf = (rows, label) => rows.find((x) => x.label === label);
+
+test('STAFF-PANEL2-CHATMENU THE ACTS BY ROLE (design 327-334): an Admin gets Follow, TP, Message, Mute, Freeze, Ban, Notes, Watch; a Moderator the same less TP and Freeze; Shadow Fang a Moderator\'s with TP; Follow only with the staff hook, TP only with /tp\'s door; each says whether the player can see it (mutants: Freeze for a Moderator; TP for a Moderator; Follow without the hook)', () => {
+  assert.deepEqual(hostNs.staffLineActs(['dev']), ['follow', 'tp', 'message', 'mute', 'freeze', 'ban', 'notes', 'watch']);
+  assert.deepEqual(hostNs.staffLineActs(['mod']), ['follow', 'message', 'mute', 'ban', 'notes', 'watch']);
+  assert.deepEqual(hostNs.staffLineActs(['shadowfang']), ['follow', 'tp', 'message', 'mute', 'ban', 'notes', 'watch']);
+  assert.deepEqual(hostNs.staffLineActs(['dev', 'mod']), hostNs.staffLineActs(['dev']));
+  for (const g of [[], ['dm'], ['sprout', 'laurel'], null, 'dev']) assert.deepEqual(hostNs.staffLineActs(g), [], JSON.stringify(g));
+  const seams = { follow: () => () => {}, teleport: () => {} };
+  const labels = (glyphs, opts = seams) => staffRig(glyphs, { opts }).host.lineActions(STAFF_LINE).map((x) => x.label);
+  assert.deepEqual(labels(['dev']), ['Follow', 'TP', 'Message on screen', 'Mute…', 'Freeze', 'Ban…', 'Notes', 'Watch', 'Block']);
+  assert.deepEqual(labels(['mod']), ['Follow', 'Message on screen', 'Mute…', 'Ban…', 'Notes', 'Watch', 'Block']);
+  assert.deepEqual(labels(['shadowfang']), ['Follow', 'TP', 'Message on screen', 'Mute…', 'Ban…', 'Notes', 'Watch', 'Block']);
+  assert.deepEqual(labels(['dev'], {}), ['Message on screen', 'Mute…', 'Freeze', 'Ban…', 'Notes', 'Watch', 'Block'], 'no hook, no Follow; no door, no TP');
+  assert.deepEqual(labels(['dev'], { follow: () => null, teleport: () => {} }).slice(0, 1), ['TP'], 'a hook that is not there hides Follow');
+  const rows = staffRig(['dev'], { opts: seams }).host.lineActions(STAFF_LINE);
+  const seen = 'The player can see this.', unseen = 'The player does not see this.';
+  assert.deepEqual(rows.slice(0, -1).map((x) => [x.label, x.title]), [['Follow', unseen], ['TP', seen], ['Message on screen', seen], ['Mute…', seen], ['Freeze', seen], ['Ban…', seen], ['Notes', unseen], ['Watch', unseen]]);
+  assert.deepEqual(staffRig(['dev'], { opts: seams }).host.lineActions({ ...STAFF_LINE, sub: 'x' }).map((x) => x.label), ['Block'], 'an account the wire\'s law cannot name gets no act');
+});
+
+test('STAFF-PANEL2-CHATMENU MUTE: a second level of 30 min, 1 hour, 1 day, 7 days; each asks MOD1\'s /v1/mod/mute for the LINE\'S ACCOUNT - never the name, which here is two accounts - carries the order to every room and says it as /mute does, refusals too (mutants: the name asked; the order not carried; the length lost)', async () => {
+  const peers = [['p2', { id: 'p2', name: 'Troll', sub: 'acct-tro' }], ['p7', { id: 'p7', name: 'Troll', sub: 'acct-other' }]];
+  const r = staffRig(['mod'], { peers, answers: { '/v1/mod/mute': (b) => ({ ok: true, target: b.target, name: 'Troll', until: 1, order: orderOf({ o: 'mute', s: b.target, mu: 1 }) }) } });
+  const mute = rowOf(r.host.lineActions(STAFF_LINE), 'Mute…');
+  assert.equal(mute.run, undefined, 'a level, not an act');
+  assert.deepEqual(mute.menu.map((x) => x.label), ['30 min', '1 hour', '1 day', '7 days']);
+  assert.deepEqual(hostNs.STAFF_MUTE_MINUTES, [30, 60, 1440, 10080]);
+  mute.menu[2].run();
+  await settle(); await settle();
+  assert.deepEqual(r.asked.at(-1), { path: '/v1/mod/mute', body: { target: 'acct-tro', minutes: 1440 } });
+  assert.deepEqual(r.links.map((l) => [l.mute.length, l.ban.length]), [[1, 0], [1, 0]], 'carried to every room as a mute');
+  assert.match(r.log.tab(r.log.active).messages.at(-1).text, /^Troll is muted for 1,?440 minutes\.$/);
+  const no = staffRig(['mod'], { answers: { '/v1/mod/mute': [403, { error: 'not-moderator' }] } });
+  rowOf(no.host.lineActions(STAFF_LINE), 'Mute…').menu[0].run();
+  await settle(); await settle();
+  assert.equal(no.log.tab(no.log.active).messages.at(-1).text, acctNs.accountRefusalText('not-moderator'));
+  assert.equal(no.links[0].mute.length, 0);
+});
+
+test('STAFF-PANEL2-CHATMENU BAN: a second level of 1 day, 7 days, 30 days, for good, then a confirm; only the confirm asks SAFE4\'s /v1/mod/ban, for the line\'s account (`#id`), and carries the order; a reason goes through the field as /ban\'s own words; a refusal is said as /ban says it (mutants: a ban without the confirm; the length lost; for good timed; the reason\'s command by name)', async () => {
+  const peers = [['p2', { id: 'p2', name: 'Troll', sub: 'acct-tro' }], ['p7', { id: 'p7', name: 'Troll', sub: 'acct-other' }]];   // the name is two accounts here
+  const r = staffRig(['mod'], { peers, answers: { '/v1/mod/ban': (b) => ({ ok: true, name: 'Troll', until: 2e9, order: orderOf({ o: 'ban', s: b.target, bn: 2e9 }) }) } });
+  const ban = rowOf(r.host.lineActions(STAFF_LINE), 'Ban…');
+  assert.deepEqual(ban.menu.map((x) => x.label), ['1 day', '7 days', '30 days', 'For good']);
+  assert.ok(ban.menu.every((x) => Array.isArray(x.menu) && x.run === undefined), 'a length is a level too: nothing is asked before the confirm');
+  assert.equal(r.asked.length, 0);
+  const week = ban.menu[1].menu;
+  assert.deepEqual(week.map((x) => x.label), ['Confirm: ban Troll for 7 days', 'Ban with a reason (typed in chat)']);
+  week[0].run();
+  await settle(); await settle();
+  assert.deepEqual(r.asked.at(-1), { path: '/v1/mod/ban', body: { target: 'acct-tro', days: 7 } });
+  assert.deepEqual(r.links.map((l) => [l.mute.length, l.ban.length]), [[0, 1], [0, 1]], 'carried to every room as a ban');
+  assert.match(r.log.tab(r.log.active).messages.at(-1).text, /^Troll is banned until /);
+  const good = ban.menu[3].menu;
+  assert.equal(good[0].label, 'Confirm: ban Troll for good');
+  good[0].run();
+  await settle(); await settle();
+  assert.deepEqual(r.asked.at(-1).body, { target: 'acct-tro', days: 0 });
+  // the reason: SAFE4's /ban by the account in the field, focused - and what the moderator sends is that command
+  const field = { put: [], focused: 0, restore(text) { this.put.push(text); return true; }, input: { focus: () => { field.focused++; } } };
+  const w = staffRig(['dev'], { opts: { panel: () => field }, answers: { '/v1/mod/ban': { ok: true, name: 'Troll', until: 2e9 } } });
+  const wBan = rowOf(w.host.lineActions(STAFF_LINE), 'Ban…');
+  wBan.menu[1].menu[1].run();
+  wBan.menu[3].menu[1].run();
+  assert.deepEqual(field.put, ['/ban #acct-tro 7: ', '/ban #acct-tro perm: ']);
+  assert.equal(field.focused, 2);
+  assert.equal(w.asked.length, 0, 'nothing asked until it is sent');
+  assert.equal(w.host.onSend('world', `${field.put[0]}spam bot`), true);
+  await settle(); await settle();
+  assert.deepEqual(w.asked.at(-1), { path: '/v1/mod/ban', body: { target: 'acct-tro', days: 7, reason: 'spam bot' } });
+  const busy = staffRig(['dev'], { opts: { panel: () => ({ restore: () => false }) } });
+  rowOf(busy.host.lineActions(STAFF_LINE), 'Ban…').menu[0].menu[1].run();
+  assert.equal(busy.log.tab(busy.log.active).messages.at(-1).text, 'Type /ban #acct-tro 1: and the reason, then press Enter.', 'a field already in use is never written over');
+  const no = staffRig(['mod'], { answers: { '/v1/mod/ban': [403, { error: 'protected' }] } });
+  rowOf(no.host.lineActions(STAFF_LINE), 'Ban…').menu[0].menu[0].run();
+  await settle(); await settle();
+  assert.equal(no.log.tab(no.log.active).messages.at(-1).text, 'Moderators cannot be banned.');
+});
+
+test('STAFF-PANEL2-CHATMENU THE STAFF PANEL\'S ACTS: Freeze, Message on screen, Notes and Watch are handed to the Staff Panel extension by the line\'s account - { dfoStaff: \'act\', act, sub, name } to the page\'s own origin, never \'*\' - and nothing else happens here; no origin, nothing posted (mutants: posted to \'*\'; the name for the account)', () => {
+  const posted = [];
+  const win = (origin) => ({ ...fakeWindow(), location: { origin }, postMessage: (m, o) => posted.push([m, o]) });
+  const r = staffRig(['dev'], { opts: { win: win('https://game.test') } });
+  const rows = r.host.lineActions(STAFF_LINE);
+  for (const label of ['Freeze', 'Message on screen', 'Notes', 'Watch']) rowOf(rows, label).run();
+  assert.deepEqual(posted, ['freeze', 'message', 'notes', 'watch'].map((act) => [{ dfoStaff: 'act', act, sub: 'acct-tro', name: 'Troll' }, 'https://game.test']));
+  assert.equal(r.asked.length, 0, 'the game asks the service nothing for them');
+  assert.match(r.log.tab(r.log.active).messages.at(-1).text, /^Staff Panel: Watch Troll\. Nothing opens without the Staff Panel extension\.$/);
+  posted.length = 0;
+  for (const o of ['', 'null', undefined]) rowOf(staffRig(['mod'], { opts: { win: win(o) } }).host.lineActions(STAFF_LINE), 'Notes').run();
+  assert.deepEqual(posted, [], 'no origin to name, nothing posted');
+});
+
+test('STAFF-PANEL2-CHATMENU FOLLOW AND TP: Follow calls the staff hook with the line\'s account; TP asks /tp\'s door for the socket the relay stamped on the line, and refuses as /tp does when a room here holds that socket under another account (mutants: Follow by name; TP by name; the socket check dropped)', async () => {
+  const followed = [], tps = [];
+  const opts = { follow: () => (sub) => { followed.push(sub); }, teleport: (id) => tps.push(id) };
+  const r = staffRig(['dev'], { opts });
+  const rows = r.host.lineActions(STAFF_LINE);
+  rowOf(rows, 'Follow').run();
+  rowOf(rows, 'TP').run();
+  await settle();
+  assert.deepEqual([followed, tps], [['acct-tro'], ['p2']]);
+  const fail = staffRig(['mod'], { opts: { follow: () => () => { throw new Error('Follow needs the Staff Panel.'); } } });
+  rowOf(fail.host.lineActions(STAFF_LINE), 'Follow').run();
+  await settle(); await settle();
+  assert.equal(fail.log.tab(fail.log.active).messages.at(-1).text, 'Follow needs the Staff Panel.');
+  const moved = staffRig(['shadowfang'], { peers: [['p2', { id: 'p2', name: 'Troll', sub: 'acct-new' }]], opts });
+  tps.length = 0;
+  rowOf(moved.host.lineActions(STAFF_LINE), 'TP').run();
+  assert.deepEqual(tps, []);
+  assert.equal(moved.log.tab(moved.log.active).messages.at(-1).text, 'That player is not online.');
+  assert.equal(rowOf(staffRig(['dev'], { opts }).host.lineActions({ ...STAFF_LINE, id: '' }), 'TP'), undefined, 'no socket on the line, no TP');
+  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /createChatSafetyHost\(\{[^\n]*, glyphs: \(\) => _staffGlyphs, teleport: \(id\) => runStaffCommand\(chatLog\?\.active, \{ cmd: 'tp', player: \{ id \} \}\) \}\);/, 'world.js: my glyphs as issued, and TP through /tp\'s own door by the socket');
 });
 
 test('SAFE3 THE HOST\'S REPORT: a line\'s own Report carries that line and the stamped lines before it with the reason chosen; /report <name> carries everything the account said here; a report that mutes hands back an order, carried to every room by its kind (mutants: the order dropped; carried to the wrong door)', async () => {
@@ -363,6 +521,24 @@ test('AUDIT SAFE CLIENT-2 + RELAY-3 THE PAGE IS BANNED: the hub says the ban\'s 
   assert.deepEqual([hub.s.barred, trade.s.barred, late.s.barred], [false, false, false]);
   assert.equal(hub.s.rejoin(CHAT_WORLD_ROOM, chatNs.CHAT_REJOIN_MS), true);
   assert.match(log.tab(log.active).messages.at(-1).text, /Your ban was lifted/);
+});
+
+test('STAFF-PANEL5-CUT-FIX A STAFF MEMBER CUT OFF: the hub hands the cut\'s order (`law`) - read as its own kind, carried to every room by the ban\'s door (where a room closes the account\'s sockets it postdates, server/src/index.js `_banFrame`), and the token the minter holds let go, so no room opens on one from before the cut; nothing latched, nothing said (mutants: the kind unread; carried by the mute\'s door; the token kept)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const now = () => 1_000_000;
+  const hub = welcomedSession(FakeWS, sockets, CHAT_WORLD_ROOM, { now }), trade = welcomedSession(FakeWS, sockets, 'chat:trade', { now });
+  const log = new ChatLog({ now });
+  let forgot = 0;
+  const host = createChatSafetyHost({ log: () => log, links: () => [hub.s, trade.s], storage: { getItem: () => null }, doc: fakeDocument(), touch: false, register: () => () => {}, win: fakeWindow(), minter: () => ({ forget() { forgot++; } }), now });
+  await host.start();
+  const order = orderOf({ o: 'staffcut', s: 'acct-me', i: 1, e: 61 });
+  assert.equal(orderKindOf(order), 'staffcut');
+  const said = log.tab(log.active)?.messages.length ?? 0;
+  hub.ws.receive({ t: 'law', order });
+  assert.deepEqual(JSON.parse(trade.ws.sent.at(-1)), { t: 'ban', order }, 'carried by the ban\'s door');
+  assert.equal(forgot, 1, 'the token from before the cut let go');
+  assert.deepEqual([hub.s.barred, trade.s.barred], [false, false], 'nothing latched: each room closes what it must');
+  assert.equal(log.tab(log.active)?.messages.length ?? 0, said, 'nothing said');
 });
 
 test('AUDIT SAFE CLIENT-2 THE MINTER LETS GO OF A TOKEN MINTED BEFORE THE BAN: the host\'s word (`forget`), and a mint the service refuses as `banned` - no room is handed the old token after, though TOKEN_REUSE_MS has not run (mutants: forget a no-op; a refused mint keeping the held token)', async () => {

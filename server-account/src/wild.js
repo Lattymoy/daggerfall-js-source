@@ -63,6 +63,7 @@ import { giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';
 import { prepareRealmRecord, seizeRealmRecord, realmAtOf, realmActFirst, recordMovedOf, mustChange, dropIfUnnamed, dropObjects, realmSaveTextOf, holdRefusal, REALM_ID_RE } from './realm.js';
 import { ledgerKeyOf } from './judge.js';
 import { piecesBarred, knownCopySteps } from './ledger.js';
+import { isFrozen } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: a fall naming a frozen account
 import { seaKillSteps } from './seaBounty.js';   // SEA-BOUNTY: a kill at sea, written with its fall
 
 /** How long a fall's row is kept (its receipt's hour, and the room's remains' ten minutes past its respawn's two). */
@@ -137,6 +138,9 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
       seize = true;
     }
   } else if (typeof body?.n !== 'string' || !WILD_NONCE_RE.test(body.n)) return { error: 'nonce' };
+  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "A frozen player can still be killed and robbed"): a fall
+  // that names a frozen account takes nothing - its own (the freeze gate shuts its door already) or a killer's filing
+  if (fallen !== player.id && isFrozen(await ctx.db.prepare('SELECT frozen_until FROM players WHERE id = ?1').bind(fallen).first(), ctx.nowS)) return { error: 'fallen-frozen' };
   const room = typeof body?.room === 'string' && body.room.length <= WILD_ROOM_MAX && streamsFoes(body.room) ? body.room : null;
   if (!room) return { error: 'room' };
   const at = seize ? null : realmAtOf(body?.realm);

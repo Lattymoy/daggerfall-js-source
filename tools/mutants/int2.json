@@ -39,8 +39,8 @@
   {
     "name": "INT2-the-bound-worth",
     "file": "server-account/src/judge.js",
-    "old": "      goods += liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it);",
-    "new": "      goods += liquid > 0 ? liquid : itemWorth(it);",
+    "old": "liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it));",
+    "new": "liquid > 0 ? liquid : itemWorth(it));",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -104,7 +104,7 @@
   {
     "name": "INT5-the-write-unwitnessed",
     "file": "server-account/src/realm.js",
-    "old": ".bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),",
+    "old": ".bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
     "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
     "tests": [
       "test/server/int2_judge.test.js"

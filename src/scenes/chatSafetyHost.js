@@ -30,7 +30,9 @@ import { PUBLIC_TABS } from '../net/safety/chatStamp.js';   // AUDIT SAFE CLIENT
 import { sanitizeName } from '../net/wire.js';   // AUDIT SAFE CLIENT-3: a name compared as MOD1 compares one
 import { ID_RE } from '../net/identityToken.js';   // AUDIT SAFE DOC-4: an account named by its id (`#id`)
 import { parseChatLine, expandShortcodes } from '../net/chatCommands.js';
-import { safetyBlocks, safetyBlock, safetyUnblock, safetyReport, safetyConduct, modBan, modUnban, modStrikes, modCases, modCase, modDismiss, accountRefusalText, storedSession, serviceBase } from '../net/accountClient.js';
+import { safetyBlocks, safetyBlock, safetyUnblock, safetyReport, safetyConduct, modBan, modUnban, modStrikes, modCases, modCase, modDismiss, muteAccount, accountRefusalText, storedSession, serviceBase } from '../net/accountClient.js';
+import { muteNamed } from '../net/moderation.js';   // STAFF-PANEL2-CHATMENU: a line menu's Mute is MOD1's
+import { STAFF_TP_ERROR_TEXT } from '../net/staffTeleport.js';   // STAFF-PANEL2-CHATMENU: and its TP refused as /tp is
 import { appStorage } from '../systems/appStorage.js';
 import { createConductCard } from '../ui/conductCard.js';
 import { registerOverlay } from '../ui/enhanced/enhancedOverlays.js';
@@ -96,12 +98,52 @@ const verdictText = (ai) => (ai && typeof ai === 'object'
   : '');
 
 /**
+ * STAFF-PANEL2-CHATMENU (2026-10-22, mob: "remove the report buttons iunch for admin and mods as well", "chat they arnt
+ * usefu for us", "replace them follow mute freeze tp ban and other things we use for players", "in chat"): THE ACTS A
+ * STAFF MEMBER'S CHAT LINE MENU OFFERS IN PLACE OF REPORT, by their own glyphs as the service last issued them - the
+ * design's in-game card. An Admin is a Developer (`dev`): Follow, TP, Message, Mute, Freeze, Ban, Notes, Watch. A
+ * Moderator wears the shield (`mod`) or Shadow Fang (`shadowfang`, which moderates - server-account titles.js
+ * MOD_TIERS): the same less TP and Freeze, and Shadow Fang keeps the TP its staff commands already give it (TP is
+ * "Admin and Shadow Fang only"). Anyone else, a Dungeon Master included: none, and Report stays. The rows only open a
+ * door: the account service, the relay and the Staff Panel each check the role again.
+ * @param {unknown} glyphs @returns {string[]}
+ */
+export function staffLineActs(glyphs) {
+  const g = Array.isArray(glyphs) ? glyphs : [];
+  const admin = g.includes('dev'), fang = g.includes('shadowfang');
+  if (!admin && !fang && !g.includes('mod')) return [];
+  return ['follow', ...(admin || fang ? ['tp'] : []), 'message', 'mute', ...(admin ? ['freeze'] : []), 'ban', 'notes', 'watch'];
+}
+/** STAFF-PANEL2-CHATMENU: a line menu's mute lengths, minutes (30 min, 1 h, 1 day, 7 days - MOD1's bound, MUTE_MAX_MIN). */
+export const STAFF_MUTE_MINUTES = Object.freeze([30, 60, 24 * 60, 7 * 24 * 60]);
+/** STAFF-PANEL2-CHATMENU: and its ban lengths, days - 0 for good (SAFE4's /ban perm). */
+export const STAFF_BAN_DAYS = Object.freeze([1, 7, 30, 0]);
+/** STAFF-PANEL2-CHATMENU: the acts the player can see happen to them (TP: design, "the player can see this"). */
+const STAFF_SEEN = Object.freeze(['tp', 'message', 'mute', 'freeze', 'ban']);
+const STAFF_LABEL = Object.freeze({
+  follow: () => t('net.staffMenu.follow', 'Follow'), tp: () => t('net.staffMenu.tp', 'TP'), message: () => t('net.staffMenu.message', 'Message on screen'),
+  mute: () => t('net.staffMenu.mute', 'Mute…'), freeze: () => t('net.staffMenu.freeze', 'Freeze'), ban: () => t('net.staffMenu.ban', 'Ban…'),
+  notes: () => t('net.staffMenu.notes', 'Notes'), watch: () => t('net.staffMenu.watch', 'Watch'),
+});
+/** A mute's or a ban's length as a row reads it, from minutes (0 for good). @param {number} min */
+const spanText = (min) => (min === 0 ? t('net.staffMenu.forGood', 'For good')
+  : min % 1440 === 0 ? t('net.staffMenu.days', '{n, plural, one {# day} other {# days}}', { n: min / 1440 })
+    : min % 60 === 0 ? t('net.staffMenu.hours', '{n, plural, one {# hour} other {# hours}}', { n: min / 60 })
+      : t('net.staffMenu.minutes', '{n} min', { n: min }));
+
+/**
  * @param {object} o
  * @param {() => any} o.log  the chat log (net/chat.js ChatLog), or null before the chat starts
  * @param {() => any[]} o.links  every room this page holds - the chat's links and the presence session
  * @param {() => any} [o.social]  the hub's social picture (net/social.js SocialState), or null
  * @param {() => any} [o.minter]  AUDIT SAFE CLIENT-2: the page's token minter (accountClient.js accountTokenMinter), or null
  * @param {() => any} [o.panel]  AUDIT SAFE CLIENT-12: the chat panel (ui/chatPanel.js), or null
+ * @param {() => unknown} [o.glyphs]  STAFF-PANEL2-CHATMENU: my own glyphs as the service last issued them (world.js
+ *   _staffGlyphs) - an Admin's or a Moderator's line menu carries their acts in place of Report (staffLineActs)
+ * @param {() => ((sub: string) => unknown) | null} [o.follow]  STAFF-PANEL2-CHATMENU: the game staff hook's follow
+ *   (net/staffHook.js), or null - no hook, no Follow row
+ * @param {((id: string) => void) | null} [o.teleport]  STAFF-PANEL2-CHATMENU: /tp to a player's socket id (world.js
+ *   runStaffCommand), or null - none, no TP row
  * @param {boolean} [o.touch]
  * @param {Document} [o.doc]
  * @param {any} [o.win]  the window the code's card reads its Escape on
@@ -112,7 +154,7 @@ const verdictText = (ai) => (ai && typeof ai === 'object'
  * @param {(fn: () => void, ms: number) => any} [o.setTimer]  AUDIT SAFE CLIENT-8: the block list's retry clock
  * @param {(h: any) => void} [o.clearTimer]
  */
-export function createChatSafetyHost({ log, links, social = () => null, minter = () => null, panel = () => null, touch = isTouchDevice(), doc = globalThis.document, win = globalThis, register = registerOverlay,
+export function createChatSafetyHost({ log, links, social = () => null, minter = () => null, panel = () => null, glyphs = () => [], follow = () => null, teleport = null, touch = isTouchDevice(), doc = globalThis.document, win = globalThis, register = registerOverlay,
   fetch = (u, i) => globalThis.fetch(u, i), storage = null, now = () => Date.now(), setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = (h) => clearTimeout(h) }) {
   /** @type {Map<string, string>} sub -> the name it was blocked under (the service's: the account's own) */
   const blocked = new Map();
@@ -151,8 +193,9 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
   const carry = (order) => {
     const kind = orderKindOf(order);
     if (!kind) return 0;
+    if (kind === 'staffcut') try { minter()?.forget?.(); } catch { /* each room's own close holds without it */ }   // STAFF-PANEL5-CUT-FIX: a staff cut - the token held from before it opens no room more
     let n = 0;
-    for (const l of allLinks()) if (kind === 'ban' ? l?.sendBanOrder?.(order) : l?.sendMuteOrder?.(order)) n++;
+    for (const l of allLinks()) if (kind === 'mute' ? l?.sendMuteOrder?.(order) : l?.sendBanOrder?.(order)) n++;
     return n;
   };
   const adoptList = (list) => {
@@ -329,6 +372,61 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
     return named.why === 'many' ? { error: named.error } : { name: typed };
   };
 
+  /** STAFF-PANEL2: an Admin or a Moderator - their line menu carries no Report. */
+  const staff = () => staffLineActs(glyphs()).length > 0;
+  /** STAFF-PANEL2-CHATMENU: an act the game holds no power for (Freeze, Message on screen, Notes, Watch), HANDED to the
+   *  Staff Panel extension on this page, which holds the staff session the game never sees: it opens its own frame with
+   *  the player filled in, and that frame confirms and sends (design: "In-page clicks only open the panel's own frame").
+   *  To the page's own origin only, never '*'. */
+  const hand = (act, sub, name) => {
+    const origin = win?.location?.origin;
+    if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function') return;
+    win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);
+    sayActive(t('net.staffMenu.handed', 'Staff Panel: {act} {name}. Nothing opens without the Staff Panel extension.', { act: STAFF_LABEL[act](), name }));
+  };
+  /** STAFF-PANEL2-CHATMENU: MOD1's mute, by the account - said as /mute says it, refusals too. */
+  const muteFor = async (sub, name, minutes) => {
+    const a = io();
+    const mute = (s, m) => (a ? muteAccount(a, s, m) : Promise.resolve({ ok: false, error: 'auth' }));
+    sayActive(await muteNamed({ sub, name }, minutes, { links: allLinks(), mute, refusal: accountRefusalText }).catch(() => accountRefusalText('server')));
+  };
+  /** STAFF-PANEL2-CHATMENU: a ban's last step - confirm it as it stands, or put SAFE4's /ban in the field by the account
+   *  (`#id`) so the reason the banned player is shown is typed there, the command's own way. */
+  const banLevel = (sub, name, days) => {
+    const cmd = `/ban #${sub} ${days || 'perm'}: `;
+    return [
+      { label: days ? t('net.staffMenu.banConfirm', 'Confirm: ban {name} for {span}', { name, span: spanText(days * 1440) }) : t('net.staffMenu.banConfirmForGood', 'Confirm: ban {name} for good', { name }),
+        title: t('net.staffMenu.seen', 'The player can see this.'), run: () => { void host.command(log()?.active, { op: 'ban', name: `#${sub}`, days }); } },
+      { label: t('net.staffMenu.banWhy', 'Ban with a reason (typed in chat)'), run: () => {
+        const p = panel();
+        if (p?.restore?.(cmd) === true) p.input?.focus?.();
+        else sayActive(t('net.staffMenu.banType', 'Type {cmd} and the reason, then press Enter.', { cmd: cmd.trim() }));
+      } },
+    ];
+  };
+  /** STAFF-PANEL2-CHATMENU: /tp to the socket the relay stamped on the line beside the account - refused, as /tp refuses
+   *  a player who is not there, when a room here holds that socket under another account. */
+  const tpTo = (line) => {
+    for (const l of allLinks()) { const p = l?.peers?.get?.(line.id); if (typeof p?.sub === 'string' && p.sub !== line.sub) { sayActive(STAFF_TP_ERROR_TEXT.offline); return; } }
+    teleport?.(line.id);
+  };
+  /** STAFF-PANEL2-CHATMENU: a staff member's rows for one spoken line, each act by the line's ACCOUNT (`sub`, the relay's
+   *  word beside the line), never by the name it showed (design weak spot "In-game cards match players by name"). A
+   *  tooltip says whether the player can see it. */
+  const staffRows = (line, name) => {
+    const sub = line.sub;
+    if (!ID_RE.test(sub)) return [];
+    const f = follow();
+    return staffLineActs(glyphs()).map((act) => {
+      const row = { label: STAFF_LABEL[act](), title: STAFF_SEEN.includes(act) ? t('net.staffMenu.seen', 'The player can see this.') : t('net.staffMenu.unseen', 'The player does not see this.') };
+      if (act === 'follow') return typeof f === 'function' ? { ...row, run: () => { void Promise.resolve().then(() => f(sub)).catch((e) => sayActive(String(e?.message ?? e))); } } : null;
+      if (act === 'tp') return typeof teleport === 'function' && typeof line.id === 'string' && line.id ? { ...row, run: () => tpTo(line) } : null;
+      if (act === 'mute') return { ...row, menu: STAFF_MUTE_MINUTES.map((m) => ({ label: spanText(m), title: row.title, run: () => { void muteFor(sub, name, m); } })) };
+      if (act === 'ban') return { ...row, menu: STAFF_BAN_DAYS.map((d) => ({ label: spanText(d * 1440), title: row.title, menu: banLevel(sub, name, d) })) };
+      return { ...row, run: () => hand(act, sub, name) };
+    }).filter(Boolean);
+  };
+
   const host = {
     hears,
     /** The chat started: the log hears through the block list, every room's word is wired, and the list is read. */
@@ -340,9 +438,13 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
     },
     /** AUDIT SAFE CLIENT-13: a room the host made after the chat started (the arena's hall and its watching sockets,
      *  scenes/arena/arenaOnline.js through world.js makeHall) - wired, carried to and left on a ban as the chat's own are.
+     *  STAFF-PANEL5-FREEZE-FIX (round two, a review: every room but the hub's is a lease room, so a new hall link that held
+     *  no lease was heard in nothing with the door on - its one queue word lost while the hall said queued): it takes the
+     *  page's newest lease at once, as the sailing cabin's lane does (net/roomLease.js), and the hub's next as every link.
      *  Answers the link. */
     adoptLink(link) {
       if (!link) return link;
+      for (const x of links()) link.leaseFrom?.(x);
       extra.add(link);
       wire(link);
       return link;
@@ -356,14 +458,19 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
       if (agreedHere && !issued.conduct) return;
       agreed = issued.conduct;
     },
-    /** A spoken line's menu: Report it (a reason each) and Block or Unblock its speaker. */
+    /** A spoken line's menu: Report it (a reason each) and Block or Unblock its speaker. STAFF-PANEL2 (2026-10-22, mob:
+     *  "remove the report buttons iunch for admin and mods as well", "chat they arnt usefu for us"): an Admin or a
+     *  Moderator (`staff`) gets no Report - they act on a player, not report them. STAFF-PANEL2-CHATMENU: and gets the
+     *  acts they use on players instead (staffRows), then Block. */
     lineActions(line) {
       if (!line?.sub || line.mine || line.system) return [];
       const name = String(line.name ?? '');
-      const rows = REPORT_REASONS.map((reason) => ({
+      /** @type {any[]} */
+      const rows = staff() ? [] : REPORT_REASONS.map((reason) => ({
         label: t('net.safety.reportAs', 'Report: {reason}', { reason: reportReasonLabel(reason) }),
         run: () => { void report(line.sub, name, reason, log()?.reportLines?.(line.sub, { seq: line.seq }) ?? []); },
       }));
+      rows.push(...staffRows(line, name));
       rows.push(blocked.has(line.sub)
         ? { label: t('net.safety.unblockLabel', 'Unblock'), run: () => { void unblock(line.sub, name); } }
         : { label: t('net.safety.blockLabel', 'Block'), run: () => { void block(line.sub, name); } });

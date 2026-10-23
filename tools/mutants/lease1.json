@@ -12,12 +12,13 @@
   {
     "name": "LEASE1-the-law-time-unread",
     "file": "server/src/index.js",
-    "old": "const law = r.at > (b.lt ?? b.gio ?? 0);",
-    "new": "const law = true;",
+    "old": "&& r.at > (b.lt ?? b.gio ?? 0);",
+    "new": "&& true;",
     "why": "an older lease lifts a newer order's mute",
     "tests": [
       "test/net/lease1.test.js"
-    ]
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): a pass is never the newer word (`!r.p &&`) ahead of the time."
   },
   {
     "name": "LEASE1-the-carried-order-unstamped",
@@ -43,12 +44,13 @@
   {
     "name": "LEASE1-minted-in-any-room",
     "file": "server/src/index.js",
-    "old": "if (!isSocialRoom(room)) return;\n      const l = await mintLease",
-    "new": "const l = await mintLease",
+    "old": "if (!isSocialRoom(room)) return;\n      if (a.vid && isChannelShard(room) &&",
+    "new": "if (a.vid && isChannelShard(room) &&",
     "why": "a channel mints leases",
     "tests": [
       "test/net/lease1.test.js"
-    ]
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX (re-aimed by content): a hub shard's ask goes to its bus now, the line after the room's check. STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): the shard's forward waits on a bus that takes its hand-ups (`!this._upRetry`)."
   },
   {
     "name": "LEASE1-read-in-any-room",
@@ -93,10 +95,10 @@
   },
   {
     "name": "LEASE1-the-freeze-unread",
-    "file": "server/src/index.js",
-    "old": "if (a.fz && a.fz > Math.floor(Date.now() / 1000) && m.t !== 'ping') return;",
-    "new": "",
-    "why": "a frozen socket heard",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (frozenAt(a, nowS) && m.t !== 'ping') {",
+    "new": "if (m.t === 'never') {",
+    "why": "a frozen socket heard (STAFF-PANEL5-FREEZE: the gate moved to server/src/staffFreeze.js frozenFrame)",
     "tests": [
       "test/net/lease1.test.js"
     ]
@@ -144,12 +146,13 @@
   {
     "name": "LEASE1-the-life-unchecked",
     "file": "src/net/roomLease.js",
-    "old": "|| c.u !== c.a + LEASE_LIFE_S) return null;",
-    "new": ") return null;",
+    "old": "|| c.u !== c.a + LEASE_LIFE_S ||",
+    "new": "||",
     "why": "a lease with any life read",
     "tests": [
       "test/net/lease1.test.js"
-    ]
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): a pass's mark (`p`) checked after the life."
   },
   {
     "name": "LEASE1-the-lapse-unread",
@@ -508,10 +511,11 @@
     "file": "server/src/index.js",
     "old": ": !a.id || !leaseRoom(a.key ?? this._busKey)) return a;",
     "new": ": !a.id || isSocialRoom(a.key ?? this._busKey)) return a;",
-    "why": "a room no lease binds turns an old build away at its frame",
+    "why": "a room no lease binds turns an old build away at its frame - STAFF-PANEL5-FREEZE-FIX: EQUIVALENT now. Every room but the hub's is a lease room (net/roomLease.js leaseRoom), so `!leaseRoom(k)` is `isSocialRoom(k)` for every key a socket carries, and a town is bound on purpose (lease1.test.js: 'a town is a lease room: turned away'). The hub's own frame unbound stays pinned by LEASE1-a-hubs-frame-bound.",
     "tests": [
       "test/net/lease1.test.js"
-    ]
+    ],
+    "equivalent": true
   },
   {
     "name": "LEASE1-a-hubs-frame-bound",
@@ -526,12 +530,13 @@
   {
     "name": "LEASE1-a-hub-bound",
     "file": "src/net/roomLease.js",
-    "old": "export const leaseRoom = (key) => !isSocialRoom(key) && (isChatRoom(key) || streamsFoes(key));",
-    "new": "export const leaseRoom = (key) => isChatRoom(key) || streamsFoes(key);",
+    "old": "export const leaseRoom = (key) => typeof key === 'string' && !isSocialRoom(key);",
+    "new": "export const leaseRoom = (key) => typeof key === 'string';",
     "why": "the hub binds its own sockets",
     "tests": [
       "test/net/lease1.test.js"
-    ]
+    ],
+    "note": "STAFF-PANEL5-FREEZE-FIX (re-aimed by content): every room but the hub's is a lease room now."
   },
   {
     "name": "LEASE1-the-mute-unsaid",
@@ -545,10 +550,10 @@
   },
   {
     "name": "LEASE1-the-ping-dropped",
-    "file": "server/src/index.js",
-    "old": "if (a.fz && a.fz > Math.floor(Date.now() / 1000) && m.t !== 'ping') return;",
-    "new": "if (a.fz && a.fz > Math.floor(Date.now() / 1000)) return;",
-    "why": "a frozen socket's ping unanswered",
+    "file": "server/src/staffFreeze.js",
+    "old": "if (frozenAt(a, nowS) && m.t !== 'ping') {",
+    "new": "if (frozenAt(a, nowS)) {",
+    "why": "a frozen socket's ping unanswered (STAFF-PANEL5-FREEZE: the gate moved to server/src/staffFreeze.js frozenFrame)",
     "tests": [
       "test/net/lease1.test.js"
     ]

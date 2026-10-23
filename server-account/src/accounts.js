@@ -39,7 +39,7 @@ import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE-EMAIL: a username is never an address
 import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
 import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
-import { wardrobeOf, equipRefusal, canModerate, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
 import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
@@ -364,6 +364,10 @@ export async function closeAllSessions({ db }, playerId) {
   return { revoked: r?.meta?.changes ?? 0 };
 }
 
+/** STAFF-PANEL2-FIX (design doc, Weak spots: "a password change ends staff sessions too"): every staff panel session of
+ *  the account (staff.js) ended - a password changed or recovered is somebody who may have held the old one. */
+export const closeStaffSessions = ({ db }, playerId) => db.prepare('DELETE FROM staff_sessions WHERE player_id = ?').bind(playerId).run();
+
 /** The device list a player sees. No secrets and no hashes leave here -
  *  a hash is a credential's shadow and there is no reason to ship one. */
 export async function devicesOf({ db }, playerId) {
@@ -396,7 +400,7 @@ export const isMuted = (row, nowS) => mutedUntil(row) > nowS;
  * `muted_by` is written beside it, so a mute always says who did it -
  * a power with no record is a power nobody can review.
  */
-export async function muteAccount({ db, nowS }, actor, env, { target, minutes }) {
+export async function muteAccount({ db, nowS }, actor, env, { target, minutes, also = null }) {
   if (!canModerate(actor, env)) return { error: 'not-moderator' };
   if (typeof target !== 'string' || !ID_RE.test(target)) return { error: 'no-player' };
   if (!Number.isSafeInteger(minutes) || minutes < 0 || minutes > MUTE_MAX_MIN) return { error: 'bad-minutes' };
@@ -405,9 +409,19 @@ export async function muteAccount({ db, nowS }, actor, env, { target, minutes })
   if (!row) return { error: 'no-player' };
   if (canModerate(row, env)) return { error: 'protected' };
   const until = minutes ? nowS + minutes * 60 : null;
-  await db.prepare('UPDATE players SET muted_until = ?, muted_by = ? WHERE id = ?')
-    .bind(until, until ? actor.id : null, target).run();
-  return { ok: true, target, name: displayName(row), until: until ?? 0 };
+  // STAFF-PANEL2-FIX (design doc, Weak spots: "A Moderator can lift an Admin's ban" - "Store who set each sanction;
+  // lifting an Admin's needs an Admin"): a mute an Admin set (`mute_admin`, 0156) is lifted or cut short by an Admin
+  // alone, and stays the Admin's when another moderator lengthens it
+  const adminHeld = row.mute_admin === 1 && isMuted(row, nowS);
+  const admin = isDeveloper(actor, env);
+  if (adminHeld && !admin && (until ?? 0) < Number(row.muted_until)) return { error: 'admin-sanction' };
+  const write = db.prepare('UPDATE players SET muted_until = ?, muted_by = ?, mute_admin = ? WHERE id = ?')
+    .bind(until, until ? actor.id : null, until ? (admin || adminHeld ? 1 : 0) : null, target);
+  const done = { ok: true, target, name: displayName(row), until: until ?? 0 };
+  // STAFF-PANEL2-FIX: `also(answer)`, the caller's own statements for this write's batch (safety.js modAct: the act's
+  // record and its case closed, so they land with the mute or none does); without it the one write, as before
+  await (also ? db.batch([write, ...also(done)]) : write.run());
+  return done;
 }
 
 /**
@@ -465,6 +479,7 @@ export async function creditPlay({ db, nowS }, playerId, sessionId = null) {
          ELSE 0 END,
        played_at = MAX(COALESCE(played_at, ?1), ?1)
      WHERE id = ?3 AND COALESCE(banned_until, 0) <= ?1
+       AND COALESCE(frozen_until, 0) <= ?1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)
        AND (?4 IS NULL OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))
      RETURNING played_s`,
   ).bind(nowS, PLAY_GRACE_S, playerId, sessionId).first();
@@ -891,6 +906,7 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
   // again, not that it was wrong - the caller has already shown a code, so the word leaks nothing
   if (!spent.meta.changes) return { error: 'codes-moved' };
   await closeAllSessions({ db }, player.id);
+  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too
   await clearRate({ db }, `recover:${lc}`);
   const session = await openSession({ db, subtle, rand, nowS }, player.id, null);
   // AUDIT RECOVERY-SET B6: and the handle as the row holds it - the saved file names the account, not its typing
@@ -915,6 +931,7 @@ export async function changePassword({ db, subtle, rand, nowS }, player, session
   const pw = await hashPassword(password, { subtle, rand });
   await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(pw, player.id).run();
   await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id).run();
+  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: and every staff panel session
   return { ok: true };
 }
 

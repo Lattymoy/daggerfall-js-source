@@ -295,13 +295,16 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, wa?: [number, 0|1], hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, wa?: [number, 0|1], hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
  *   t  the title WORN, absent for none (ACC3)
  *   g  the glyphs TRUE of this player, absent for none (ACC3)
  *   mu muted until, epoch seconds, absent when not muted (MOD1)
+ *   fz frozen until, epoch seconds, absent when not frozen (STAFF-PANEL5-FREEZE:
+ *      a staff freeze rides the signature as a mute does, so a reload never
+ *      sheds it - every room reads it off the token at the hello)
  *   lv the Renown of the character the client named at the
  *      mint, absent when it named none (RENOWN1)
  *   gi gt gm  that character's guild - its id, its tag and its
@@ -332,10 +335,20 @@ export function nameIsIssuable(name) {
  *      absent before its first judged checkpoint and from a service
  *      before INT7. Every referee's clip of a blow between players
  *      (net/siege/siegeRef.js siegeBlowMax, net/arena/arenaLaw.js arenaBlowCap)
+ *   hd 1 on a HIDDEN STAFF SPECTATOR's token (STAFF-PANEL5-HIDDEN, mob: "true
+ *      invis not lattys invis"), absent on every other: an Admin's or a
+ *      Moderator's while they hold a live staff session with Hide me on.
+ *      Its `s` is then a subject minted for that session, never the
+ *      account's id, so it takes no seat of the account's; the relay
+ *      passes such a socket on to nobody (server/src/staffHidden.js)
  *   hn hc hb hg  that realm character's HOUSE (LEGACY7, net/houseLaw.js):
  *      the line's surname, the member's given name, 1 for a Bloodline,
  *      the generation's numeral - `hn` or none of them; absent for a
  *      character of no line and from a service before LEGACY7
+ *   hd 1 for a hidden staff spectator's socket (STAFF-PANEL5), absent
+ *      for every player
+ *   fo the account a hidden spectator follows (STAFF-PANEL5-FOLLOW),
+ *      beside `hd` alone
  */
 /** ARENA4: the rating's bounds on a token (net/arena/arenaLaw.js ARENA_ELO_MIN and ARENA_ELO_MAX, pinned - written here, not
  *  imported, so the token module stays the leaf every end reads). */
@@ -411,6 +424,9 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // mute that is already over is not a mute and the minter must not say
   // one is.
   if (c.mu !== undefined && (!Number.isSafeInteger(c.mu) || c.mu <= c.i)) return false;
+  // STAFF-PANEL5-FREEZE (design doc "DFO Staff Panel: design", Weak spots: "A reload sheds a freeze"): THE FREEZE RIDES IT
+  // TOO, the mute's law - absent when not frozen, and present it ends after the token was issued
+  if (c.fz !== undefined && (!Number.isSafeInteger(c.fz) || c.fz <= c.i)) return false;
   // RENOWN1: the level, optional the same way - absent from a token minted
   // without a character (an older build) - and within the cap when there.
   if (c.lv !== undefined && !renownIssuable(c.lv)) return false;
@@ -429,6 +445,11 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused
   if (c.wa !== undefined && !(c.rc === 1 && armsIssuable(c.wa))) return false;
   if (!houseClaimOk(c)) return false;   // LEGACY7: the house - absent for none, each field of its shape or refused
+  // STAFF-PANEL5 (design doc "DFO Staff Panel: design", Invisible follow; the hidden builder's claim and the follow
+  // builder's): `hd` 1 a hidden staff spectator's socket, minted only by the account service's staff doors - absent for
+  // every player; `fo` the account a hidden spectator follows, beside `hd` alone and never its own subject
+  if (c.hd !== undefined && c.hd !== 1) return false;
+  if (c.fo !== undefined && !(c.hd === 1 && typeof c.fo === 'string' && ID_RE.test(c.fo) && c.fo !== c.s)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
   if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
@@ -452,7 +473,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], hn?:string, hc?:string, hb?:1, hg?:number}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -467,6 +488,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.ts !== undefined) claims.ts = who.ts;   // SEAT1c: a seat title's claim - beside its title alone (claimsValid)
   if (who?.g !== undefined && who.g.length) claims.g = who.g;
   if (who?.mu !== undefined) claims.mu = who.mu;   // MOD1: only while muted - an unmuted player mints the bytes they always did
+  if (who?.fz !== undefined) claims.fz = who.fz;   // STAFF-PANEL5-FREEZE: only while frozen - an unfrozen player mints the bytes they always did
   if (who?.lv !== undefined) claims.lv = who.lv;   // RENOWN1: only when the client named its character
   // GUILD1c: only while that character is in a guild - all three, and a partial set is refused below, not trimmed
   if (who?.gi !== undefined || who?.gt !== undefined || who?.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });
@@ -481,6 +503,8 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.wa !== undefined) claims.wa = who.wa;   // INT7: only for a realm character judged since - before one, the bytes as before
   // LEGACY7: only for a realm character of a Project Legacy line - a character of none, the bytes as before
   if (who?.hn !== undefined) { claims.hn = who.hn; for (const k of /** @type {const} */ (['hc', 'hb', 'hg'])) if (who[k] !== undefined) claims[k] = who[k]; }
+  if (who?.hd !== undefined) claims.hd = who.hd;   // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did
+  if (who?.fo !== undefined) claims.fo = who.fo;   // STAFF-PANEL5-FOLLOW: the account it follows, beside `hd` alone
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
   // it too, but at the player's machine, where the only thing anyone
   // learns is that online is broken.
@@ -583,11 +607,13 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban']);   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
 export const ORDER_TTL_S = 60;
+/** STAFF-PANEL5-HIDDEN: a hide order's every key. */
+const HIDE_ORDER_KEYS = Object.freeze(['o', 's', 'hd', 'i', 'e']);
 
 /** `{o:'mute', s, mu, i, e}` - `mu` 0 is "unmuted" - or `{o:'renown', s,
  *  lv, i, e}` (RENOWN1), or `{o:'guild', s, gi?, gt?, gm?, i, e}` and
@@ -634,6 +660,22 @@ export function orderValid(c) {
   // SAFE4: a ban carries its end (`bn`, epoch seconds - 0 lifted) and no other kind's fields; no other kind carries a ban's
   if (c.o !== 'ban' && c.bn !== undefined) return false;
   if (c.o === 'ban' && (!Number.isSafeInteger(c.bn) || c.bn < 0 || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake || !noRemains || !noHome || !noEg)) return false;
+  // STAFF-PANEL5-MESSAGE: a staff message's order carries its id (`mi`) and no other kind's fields; no other kind carries a `mi`
+  if (c.o !== 'smsg' && c.mi !== undefined) return false;
+  if (c.o === 'smsg' && (typeof c.mi !== 'string' || !ID_RE.test(c.mi) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || c.bn !== undefined || !noGuild || !noSiege || !noStake || !noRemains || !noHome || !noEg)) return false;
+  // STAFF-PANEL2-FIX: a staff cut names its account and carries nothing else
+  if (c.o === 'staffcut' && (c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake || !noRemains || !noHome || !noEg)) return false;
+  // STAFF-PANEL5-HIDDEN: a hide order is `{o:'hide', s, hd: 0, i, e}` - the hidden subject `s` hidden no longer - and carries
+  // nothing else; no other kind carries an `hd`
+  if (c.o !== 'hide' && c.hd !== undefined) return false;
+  if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;
+  // STAFF-PANEL5-FREEZE: a freeze carries its end (`fz`, epoch seconds - 0 lifted) and a staff line's nudge its line (`sl`,
+  // the account service's row id), each that and nothing else; no other kind carries either
+  const staffField = STAFF_ORDER_FIELDS[/** @type {'freeze'|'staffline'} */ (c.o)];
+  if (staffField) {
+    if (!Object.keys(c).every((k) => k === 'o' || k === 's' || k === 'i' || k === 'e' || k === staffField)) return false;
+    if (!Number.isSafeInteger(c[staffField]) || c[staffField] < (c.o === 'freeze' ? 0 : 1)) return false;
+  } else if (c.fz !== undefined || c.sl !== undefined) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -909,6 +951,50 @@ export async function mintBanOrder({ s, bn }, privateKey, { subtle, nowS, ttlS =
   return sealClaims(claims, privateKey, subtle);
 }
 
+/** STAFF-PANEL5-MESSAGE (2026-10-22, mob: Message on screen; design doc "DFO Staff Panel: design"): MINT A STAFF MESSAGE'S
+ *  ORDER - message `mi`, which the account service stored for account `s` (staff_messages), is waiting. The words never ride
+ *  it: the hub hands `s`'s own sockets a nudge (`{t:'smsg', mi}`), and the game reads the message off the service with its
+ *  own session (design doc, Weak spots: "the relay only sends a 'new staff message' nudge"). */
+export async function mintStaffMessageOrder({ s, mi }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStaffMessageOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'smsg', s, mi, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintStaffMessageOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** STAFF-PANEL2-FIX (design doc "DFO Staff Panel: design", Weak spots: "Cutting off a staff member misses most doors"):
+ *  MINT A STAFF CUT ORDER - account `s` was cut off the staff by an owner (server-account/src/staff.js /v1/staff/cut).
+ *  The relay's hub closes each of the account's sockets whose token was minted before it (server/src/index.js
+ *  `_takeOrder`), so the staff glyphs that token carried go with them. Pushed through the service's door alone, never
+ *  carried by a client. */
+export async function mintStaffCutOrder({ s }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStaffCutOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'staffcut', s, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintStaffCutOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** STAFF-PANEL5-FREEZE: each staff order kind's one field - a freeze's end, a staff line's id. */
+export const STAFF_ORDER_FIELDS = Object.freeze({ freeze: 'fz', staffline: 'sl' });
+/** STAFF-PANEL5-FREEZE (design doc "DFO Staff Panel: design", Freeze player): MINT A FREEZE ORDER - account `s` is frozen
+ *  until `fz` (epoch seconds; 0 lifted), signed by the service that wrote the freeze. The account service pushes it to
+ *  the relay's law door; the hub keeps it in a stored book of its own (server/src/staffFreeze.js), as a ban's. */
+export async function mintFreezeOrder({ s, fz }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintFreezeOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'freeze', s, fz, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintFreezeOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+/** STAFF-PANEL5-FREEZE (Weak spots: "Freeze chat and Message on screen have nowhere to be stored"): MINT A STAFF LINE'S
+ *  NUDGE - staff wrote line `sl` in account `s`'s staff chat thread. The line itself is the account service's; the relay
+ *  carries only this, to the thread's members online, whose games read the line from the service. */
+export async function mintStaffLineOrder({ s, sl }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStaffLineOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'staffline', s, sl, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintStaffLineOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
 /** RENOWN1: MINT A RENOWN ORDER - `lv` the Renown level `s`'s
  *  character has now reached, signed by the service that derived it. */
 export async function mintRenownOrder({ s, lv }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
@@ -937,6 +1023,17 @@ export async function mintGuildOutOrder({ s, gi, gm }, privateKey, { subtle, now
   const claims = { o: 'guildout', s, gi, i: nowS, e: nowS + ttlS };
   if (gm !== undefined) claims.gm = gm;
   if (!orderValid(claims)) throw new TypeError('mintGuildOutOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** STAFF-PANEL5-HIDDEN: MINT A HIDE ORDER - the hidden staff subject `s` (a staff session's, never an account's id) is
+ *  hidden no longer: Show myself was pressed, or the staff session that hid it ended. The account service pushes it to the
+ *  relay's law door (sanctions.js pushLaw); the hub closes that subject's hidden sockets rather than show them
+ *  (server/src/staffHidden.js hiddenLapse). */
+export async function mintHideOrder({ s }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintHideOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'hide', s, hd: 0, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintHideOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
 

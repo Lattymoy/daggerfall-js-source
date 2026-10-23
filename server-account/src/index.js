@@ -59,6 +59,8 @@
 //   POST /v1/safety/block { target }                 -> { ok, blocks }   /v1/safety/unblock { target } the same
 //   POST /v1/safety/report { target, reason, note?, lines: [{ tab, sub, name, at, text, sg }] } -> { ok, case, repeat?, muted?, order? }   (SAFE3: every line's stamp checked)
 //   POST /v1/safety/conduct { v }                    -> { ok, conduct }   (SAFE7: the code of conduct agreed)
+//   POST /v1/safety/staff-messages {}                -> { ok, messages: [{ id, from, text, at }] }   (STAFF-PANEL5-MESSAGE: staff's, waiting)
+//   POST /v1/safety/staff-message-ok { id }          -> { ok, marked }   (STAFF-PANEL5-MESSAGE: the player pressed OK)
 //   POST /v1/mod/ban { target?, name?, days, reason? } -> { ok, target, name, until, reason, order }   (SAFE4: a moderator's; days 0 for good)
 //   POST /v1/mod/unban { target?, name? }            -> { ok, target, name, until: 0, order }
 //   POST /v1/mod/strikes { target?, name? }          -> { ok, target, name, strikes, next, mutedUntil, bannedUntil, banReason, history }
@@ -230,18 +232,21 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, muteAccount, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
 import { takeGrantMeasure, GRANT_FEED_PATH } from './grants.js';   // GRANT2: the spawn grants' measure, the relay's door in
 import { GRANT_MEASURE_SIG_HEADER, GRANT_MEASURE_MAX_BYTES } from '../../src/net/grantMeasure.js';
+import { takeNetFeed, NET_FEED_PATH } from './staffNet.js';   // STAFF-PANEL5-FEEDS: the relay's net feed, its door in
+import { takeReactionFeed, REACTION_FEED_PATH } from './staffReactions.js';   // STAFF-PANEL5-FEEDS: the bot check's episodes, their door in
+import { STAFF_FEED_SIG_HEADER, STAFF_FEED_MAX_BYTES } from '../../server/src/staffFeedLaw.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
 import { seaBountyBoard, seaBountyPost, seaBountyCollect } from './seaBounty.js';   // SEA-BOUNTY: a freeport's bounty board on the open sea's killers
 import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's season boards
@@ -255,6 +260,8 @@ import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
 import { BUSY_RETRY_AFTER_S } from '../../src/net/busyLaw.js';   // BUSY-GATE: how long an overload answer tells a client to stand back
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { postBoxOf, readPost, claimPost, deletePost } from './post.js';   // SERVER-POST: the server's post
+import { mailLostSpoils } from './lostSpoils.js';   // LOST-SPOILS: a boss's floor's leftovers into the post
+import { LOST_BODY_MAX } from '../../src/net/lostLaw.js';
 import { sendReport, myReports, reportInbox, readReport, closeReport } from './reports.js';   // PRIVATE-REPORT: a player's private report
 import { REPORT_BODY_BYTES } from '../../src/net/reportLaw.js';
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
@@ -335,9 +342,13 @@ import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   /
 import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
 import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
-import { blocksOf, blockAccount, unblockAccount, fileReport, agreeConduct, conductAgreed, takeFeed, bannedAnswer, resolveCase, modCases, modCase, modDismiss, REPORT_BODY_MAX } from './safety.js';   // SAFE1-SAFE7: the chat's safety
-import { banAccount, unbanAccount, strikesLook, isBanned, actionStatement, lawOrder, pushLaw } from './sanctions.js';   // SAFE4: the record, the ladder and the ban
-import { staffRoute, STAFF_STATUS, STAFF_SESSION_HEADER } from './staff.js';   // STAFF-PANEL1: the staff panel's sign-in, sessions, roles and audit log
+import { blocksOf, blockAccount, unblockAccount, fileReport, agreeConduct, conductAgreed, takeFeed, bannedAnswer, modCases, modCase, modDismiss, modAct, REPORT_BODY_MAX } from './safety.js';   // SAFE1-SAFE7: the chat's safety
+import { strikesLook, isBanned } from './sanctions.js';   // SAFE4: the record, the ladder and the ban
+import { freezeRefusal, frozenAnswer, playerStaffChat, isFrozen, STAFF_CHAT_ROUTES, STAFF_CHAT_STATUS } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: the freeze gate and the player's staff chat
+import { staffRoute, STAFF_STATUS, STAFF_SESSION_HEADER, auditStatement } from './staff.js';   // STAFF-PANEL1: the staff panel's sign-in, sessions, roles and audit log
+import { staffMessagesFor, staffMessageOk } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: the game's two doors
+import { hiddenToken, takeHiddenSeen } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: a hidden staff member's token, and a private home it entered
+import { HIDDEN_SEEN_PATH, HIDDEN_SEEN_MAX_BYTES, HIDDEN_SEEN_SIG_HEADER } from '../../src/net/hiddenSeen.js';
 import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';   // SAFE8: the moderators' queue in Discord
 import { FEED_MAX_BYTES, FEED_SIG_HEADER } from '../../src/net/safety/chatFeed.js';   // SAFE5: the relay's feed of public lines
 import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
@@ -416,7 +427,7 @@ const overloaded = (origin) => {
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
 /** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
  *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
-const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, 'fallen-frozen': 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -429,7 +440,8 @@ const CARDS_STATUS = Object.freeze({ 'cards-closed': 503, 'ranked-needs-account'
 /** PRIVATE-REPORT: a report's refusals that are not a bad request (400, the default). */
 const REPORT_STATUS = Object.freeze({ 'report-rate': 429, 'report-full': 409, 'no-report': 404, 'not-report-reader': 403 });
 /** SERVER-POST: the post's own refusals; a claim's realm words are REALM_STATUS's. */
-const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
+const POST_STATUS = Object.freeze({ 'no-post': 404, 'post-no-item': 409, 'post-claimed': 409, 'post-unclaimed': 409, 'realm-only': 403, 'realm-needed': 409, server: 503,
+  'lost-pieces': 400, 'lost-item': 400, 'lost-no-kill': 409, 'lost-spent': 409, 'lost-full': 409 });   // AUDIT SERVER-POST: a batch D1 dropped is the service's failure, counted as one
 const REALM_STATUS = Object.freeze({
   ...JUDGE_STATUS,   // INT3/INT4
   'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409, 'too-many-characters': 409, auth: 401,   // SESSION-SIGN E3: a checkpoint's session gone
@@ -527,7 +539,11 @@ const MARKS_STATUS = Object.freeze({
  *  developer's act) 403, no such note 404, the author's notes full 409, the hour's acts spent 429, a bad shape 400. */
 /** SAFE1, SAFE3, SAFE7: the chat safety's refusals by status - the rest 400. */
 const SAFETY_STATUS = Object.freeze({ 'no-player': 404, 'no-case': 404, 'report-unwitnessed': 403, 'report-closed': 503, 'conduct-stale': 409, 'blocks-full': 409, rate: 429,
-  'not-moderator': 403, protected: 403, ambiguous: 409 });
+  'not-moderator': 403, protected: 403, ambiguous: 409,
+  // STAFF-PANEL2-FIX (safety.js modAct): the bounds, a case another act took or closed or another staff member holds, a
+  // spawn case (a developer's), an Admin's sanction (an Admin's to lift), a press's id of the wrong shape
+  'bad-minutes': 400, 'bad-days': 400, 'not-banned': 400, 'case-acted': 409, 'case-closed': 409, 'staff-claimed': 409, 'not-developer': 403, 'admin-sanction': 403,
+  'bad-click': 400 });
 const BOARD_STATUS = Object.freeze({
   'board-need-account': 403, 'board-closed': 403, 'muted': 403, 'not-moderator': 403, 'not-developer': 403, 'own-note': 403,
   'guild-rank': 403, 'guilds-need-account': 403,
@@ -617,9 +633,10 @@ const PROF_STATUS = Object.freeze({
  *  moved, one's own goods) 409, the hour's acts spent 429, a bad shape 400 (the default). */
 const MARKET_STATUS = Object.freeze({
   ...JUDGE_STATUS,   // INT3/INT4
-  'prof-need-account': 403, 'market-closed': 403, 'not-moderator': 403,
+  'prof-need-account': 403, 'market-closed': 403, 'not-moderator': 403, 'not-developer': 403,   // STAFF-PANEL2-FIX: a pull is a developer's
   'market-gone': 404,
   'marks-short': 409, 'marks-full': 409, 'stores-full': 409, 'stores-short': 409, 'market-own': 409, 'market-short': 409,
+  'market-seller-frozen': 409,   // STAFF-PANEL5-FREEZE: a frozen seller's goods sell nothing while the freeze stands
   'market-no-road': 409, 'market-price-moved': 409, 'market-seller-full': 409, 'market-listings-max': 409, 'market-orders-max': 409,
   'market-not-yours': 409, 'market-listed': 409, 'market-order-full': 409, 'market-elsewhere': 409, 'market-other-character': 409,
   'market-on-road': 409, 'market-courier-dear': 409,   // GLOBAL-MARKET: a fill from afar whose courier would take all its pay
@@ -894,6 +911,25 @@ const service = {
         return 'error' in r ? no(r.error, r.error === 'grant-signature' ? 401 : 400, origin) : json(r, 202, origin);
       }
 
+      // STAFF-PANEL5-FEEDS (staffNet.js, staffReactions.js): THE RELAY'S TWO STAFF FEEDS - its players over a limit and the bot
+      // check's episodes, each proven by its signature over the exact bytes (the grant feed's kind of door), never a session
+      if (path === NET_FEED_PATH || path === REACTION_FEED_PATH) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const bytes = await readCapped(request, STAFF_FEED_MAX_BYTES);
+        if (!bytes) return no('too-large', 413, origin);
+        const r = await (path === NET_FEED_PATH ? takeNetFeed : takeReactionFeed)(ctx, env, new Uint8Array(bytes), request.headers.get(STAFF_FEED_SIG_HEADER));
+        return 'error' in r ? no(r.error, r.error === 'feed-signature' ? 401 : 400, origin) : json(r, 202, origin);
+      }
+      // STAFF-PANEL5-HIDDEN (staffHidden.js): A HIDDEN STAFF SUBJECT ENTERED A PRIVATE HOME - the relay's note, proven by its
+      // signature over the exact bytes (the grants' measure's kind of door), written to the staff audit log
+      if (path === HIDDEN_SEEN_PATH) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const bytes = await readCapped(request, HIDDEN_SEEN_MAX_BYTES);
+        if (!bytes) return no('too-large', 413, origin);
+        const r = await takeHiddenSeen(ctx, env, new Uint8Array(bytes), request.headers.get(HIDDEN_SEEN_SIG_HEADER));
+        return 'error' in r ? no(r.error, r.error === 'seen-signature' ? 401 : 400, origin) : json(r, 202, origin);
+      }
+
       // SAFE5 + SAFE8: THE TWO DOORS THE CHAT'S SAFETY OPENS TO A STRANGER - the relay's feed and Discord's interactions.
       // Neither is JSON a session carries; each is proven by a signature over its exact bytes, checked before a byte is read.
       if (SAFE_OPEN_ROUTES.has(path)) {
@@ -968,9 +1004,10 @@ const service = {
       // REALM P2.1: a trade's half carries two offers of up to sixteen records each - a JSON route past 4 KiB. AUDIT LEGACY
       // III O2/P1: and a line's record, to its own bound (legacy.js LINEAGE_BODY_MAX) - read at 4 KiB, a played founder's
       // first save was refused, and the realm held the founding copy for good
-      // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES)
+      // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES). LOST-SPOILS: and a floor's leftovers,
+      // to theirs (lostLaw.js LOST_BODY_MAX - the largest spoils send past 4 KiB)
       const body = request.method === 'POST'
-        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : path === '/v1/post/lost' ? LOST_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines
       if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (!body) return no('body', 400, origin);
       // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
@@ -1030,6 +1067,12 @@ const service = {
       if (!who) return no('auth', 401, origin);
       // SAFE4: A BANNED ACCOUNT ACTS IN NOTHING - no token (so no room), no save, no trade - and is told until when, and why,
       // on every door; it may still sign out
+      // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "Freeze blocks only some routes"): ONE FREEZE GATE BESIDE
+      // THE BAN'S (asked first, so a banned account hears its ban) - a frozen account opens nothing but signing out, its own account, the realm doors that load the character it
+      // looks around as, its relay token and the staff chat. Refused here, it is minted no pass; under a pass minted before
+      // the freeze, the checkpoint and the beat ask it in their own statements (realm.js, accounts.js creditPlay)
+      const frozen = !isBanned(who.player, nowS) && freezeRefusal(path, request.method === 'GET' && !!realmSlot, who.player, nowS);
+      if (frozen) return json(frozen, 403, origin);
       if (isBanned(who.player, nowS) && path !== '/v1/auth/logout') return json(bannedAnswer(who.player), 403, origin);
       // SESSION-SIGN: the next pass, after the ban (a banned account pays its lookup - AUDIT PLAN-1000 E6) and off the
       // primary's own answer alone (a replica's may stand before a sign-out - E5)
@@ -1104,6 +1147,11 @@ const service = {
         // cannot vouch for them. Said plainly rather than by minting
         // something the relay will refuse.
         if (!key) return no('no-signing-key', 503, origin);
+        // STAFF-PANEL5-HIDDEN (staffHidden.js): A HIDDEN STAFF MEMBER'S TOKEN IS THE SPECTATOR'S - `hd`, a subject of their
+        // staff session's and no badge, written in the staff audit log - while an Admin or a Moderator holds a live staff
+        // session with Hide me on. Every other account reads nothing more here.
+        const hidden = await hiddenToken(ctx, env, who.player, key);
+        if (hidden) return hidden.error ? no(hidden.error, 409, origin) : json(hidden, 200, origin);   // STAFF-PANEL5-HIDDEN-FIX: a lapsed hidden session mints nothing, never a visible token
         // ═══ ACC3: THE BADGE RIDES IN THE TOKEN ══════════════════
         //
         // A title and a glyph are read off the SIGNED claims and never
@@ -1158,6 +1206,9 @@ const service = {
         // every room reads it off the signature at the hello. Only while
         // it runs: a mute that has ended is simply absent.
         const mu = isMuted(who.player, nowS) ? mutedUntil(who.player) : undefined;
+        // STAFF-PANEL5-FREEZE: AND A FREEZE, the mute's law (design doc Weak spots: "A reload sheds a freeze") - only while it
+        // stands, so an unfrozen player mints the bytes they always did
+        const fz = isFrozen(who.player, nowS) ? who.player.frozen_until : undefined;
         // RENOWN1: AND THE LEVEL, when the client names the character it is
         // bringing online - that character's, derived from its track now
         // (1 for a character that has earned nothing yet). The client's
@@ -1206,7 +1257,7 @@ const service = {
         // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
         // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
         // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
-        const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}) };
+        const signed = { s: who.player.id, n: nameWorn.name, k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}), ...(wa ? { wa } : {}), ...(fz ? { fz } : {}) };
         let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
         // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
         // a house that would take it past either is left unsaid, never the rest
@@ -1224,6 +1275,7 @@ const service = {
           glyphs: wardrobe.g,
           ...(wardrobe.gx ? { glyphsOff: wardrobe.gx } : {}),   // GLYPH-WEAR: the ones my own name leaves out, absent for none
           mutedUntil: mu ?? 0,
+          frozenUntil: fz ?? 0,   // STAFF-PANEL5-FREEZE: the freeze the token carries - the game's freeze screen (net/staffChat.js)
           conduct: conductAgreed(who.player),   // SAFE7: whether the code of conduct as it stands is agreed - the client asks before a first line when not
           level: lv ?? null,
           xp: track ? track.xp : null,
@@ -2140,38 +2192,23 @@ const service = {
         // are ALREADY holding the target hear it now. So a service with
         // no signing key still mutes - it just cannot tell live rooms,
         // and says so rather than pretending.
-        const r = await muteAccount(ctx, who.player, env, { target: body.target, minutes: body.minutes });
-        if (r.error) {
-          const status = r.error === 'not-moderator' || r.error === 'protected' ? 403 : r.error === 'no-player' ? 404 : 400;
-          return no(r.error, status, origin);
-        }
-        const key = await signingKey(env, subtle);
-        const order = key ? await mintOrder({ s: r.target, mu: r.until }, key, { subtle, nowS }) : null;
         // SAFE4: the act kept in the record for good, and the order pushed to the relay's door - the hub hands it to the
-        // target's own client, which reaches the rooms the moderator's does not hold
-        // AUDIT SAFE SERVICE-11: the act in the mute's own batch would need MOD1's muteAccount opened up; it is the next
-        // statement, and a mute whose record failed to write is said in the log by the throw it makes
-        await actionStatement(db, { target: r.target, kind: r.until ? 'mute' : 'unmute', until: r.until || null, actor: who.player.id, actorName: displayName(who.player), at: nowS }).run();
-        // AUDIT SAFE SERVICE-2: a moderator's mute closes the account's open case - as the moderator's act
-        if (r.until) await resolveCase(db, { target: r.target, status: 'actioned', by: displayName(who.player), resolution: `muted until ${new Date(r.until * 1000).toISOString().slice(0, 16).replace('T', ' ')} UTC (in the game)`, nowS }).run();
-        await pushLaw(env, (u, i) => globalThis.fetch(u, i), order);
-        return json({ ...r, order }, 200, origin);
+        // target's own client, which reaches the rooms the moderator's does not hold. AUDIT SAFE SERVICE-2: a moderator's
+        // mute closes the account's open case - as the moderator's act. STAFF-PANEL2-FIX: all of it safety.js modAct's, the
+        // code every door shares - one sanction a case, and a case another staff member holds in the panel is theirs
+        const r = await modAct(ctx, who.player, env, { act: 'mute', target: body.target, minutes: body.minutes, from: 'in the game' });
+        return 'error' in r ? no(r.error, SAFETY_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
       // SAFE4 (bible/11-Multiplayer/Chat-Safety-Arc.md section 5): A MODERATOR'S BAN, UNBAN AND LOOK - sanctions.js. A ban's
       // order goes back to the moderator's client to carry to its rooms (MOD1's carrier) and to the relay's door.
+      // STAFF-PANEL2-FIX: the ban and the unban are safety.js modAct's, as the mute is
       if ((path === '/v1/mod/ban' || path === '/v1/mod/unban' || path === '/v1/mod/strikes') && request.method === 'POST') {
         const who2 = { target: body.target, name: body.name };
         const r = path === '/v1/mod/strikes' ? await strikesLook(ctx, who.player, env, who2)
-          : path === '/v1/mod/ban' ? await banAccount(ctx, who.player, env, { ...who2, days: body.days, reason: body.reason })
-            : await unbanAccount(ctx, who.player, env, who2);
-        if ('error' in r) return no(r.error, r.error === 'not-moderator' || r.error === 'protected' ? 403 : r.error === 'no-player' ? 404 : r.error === 'ambiguous' ? 409 : 400, origin);
-        if (path === '/v1/mod/strikes') return json(r, 200, origin);
-        // AUDIT SAFE SERVICE-2: a moderator's ban closes the account's open case - as the moderator's act
-        if (path === '/v1/mod/ban') await resolveCase(db, { target: r.target, status: 'actioned', by: displayName(who.player), resolution: 'banned (in the game)', nowS }).run();
-        const order = await lawOrder(env, subtle, nowS, { s: r.target, bn: r.until });
-        await pushLaw(env, (u, i) => globalThis.fetch(u, i), order);
-        return json({ ...r, order }, 200, origin);
+          : path === '/v1/mod/ban' ? await modAct(ctx, who.player, env, { act: 'ban', ...who2, days: body.days, reason: body.reason, from: 'in the game' })
+            : await modAct(ctx, who.player, env, { act: 'unban', ...who2, from: 'in the game' });
+        return 'error' in r ? no(r.error, SAFETY_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
       }
 
       // AUDIT SAFE DOC-4 (bible/11-Multiplayer/Chat-Safety-Arc.md section 9): THE CASES, READ IN THE GAME - a moderator's
@@ -2194,6 +2231,8 @@ const service = {
           '/v1/safety/unblock': () => unblockAccount(ctx, who.player, { target: body.target }),
           '/v1/safety/report': () => fileReport(ctx, who.player, env, body),
           '/v1/safety/conduct': () => agreeConduct(ctx, who.player, { v: body.v }),
+          '/v1/safety/staff-messages': () => staffMessagesFor(ctx, who.player),   // STAFF-PANEL5-MESSAGE: Message on screen, read by the player's own game
+          '/v1/safety/staff-message-ok': () => staffMessageOk(ctx, who.player, body),   // ...and its OK (their game's word, never proof)
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
@@ -2215,6 +2254,13 @@ const service = {
         // caller who is not one - the credential is good, the right is not theirs, as the save wall reads it.
         const r = await grantCustomsPass(ctx, who.player, env, { name: body.name, account: body.account, revoke: body.revoke });
         return r.error ? no(r.error, PASS_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
+      }
+
+      // STAFF-PANEL5-FREEZE (staffFreeze.js): THE PLAYER'S OWN STAFF CHAT THREAD - read, and a line of theirs in it
+      if (STAFF_CHAT_ROUTES.includes(path)) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await playerStaffChat(ctx, env, path, body, who.player, auditStatement);
+        return 'error' in r ? no(r.error, STAFF_CHAT_STATUS[/** @type {keyof typeof STAFF_CHAT_STATUS} */ (r.error)] ?? 400, origin) : json(r, 200, origin);
       }
 
       // SCALE4c: ONE HEARTBEAT - the beat, the letterbox and a town's board, whichever the body names, each part answered
@@ -2313,6 +2359,7 @@ const service = {
           '/v1/post/read': () => readPost(ctx, who.player, body.id),
           '/v1/post/claim': () => claimPost({ ...ctx, bucket: env.SAVES }, who.player, { id: body.id, character: body.character, realm: body.realm }),   // the realm record is in R2
           '/v1/post/delete': () => deletePost(ctx, who.player, body.id),
+          '/v1/post/lost': () => mailLostSpoils(ctx, who.player, { day: body.day, pieces: body.pieces }),   // LOST-SPOILS: the Lost and Found's (lostSpoils.js)
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
@@ -2508,6 +2555,7 @@ const service = {
             // the write still needs the lease)
             if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);
             if (r.error === 'banned') return json(bannedAnswer(r.player), 403, origin);   // E3: a ban under a pass, at once
+            if (r.error === 'frozen') return json(frozenAnswer(r.player), 403, origin);   // STAFF-PANEL5-FREEZE: a freeze under a pass, the same
             return answer(r);
           }
           if (request.method === 'GET') {

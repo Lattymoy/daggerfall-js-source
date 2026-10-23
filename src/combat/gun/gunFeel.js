@@ -136,17 +136,18 @@ export const GUN_FEEL = Object.freeze({
  * Its own fields beside GUN_FEEL's shape:
  *   - `scale` - the pose is NATIVE: one art pixel to one pixel of the 320-wide surface (the strip is a WEAPON*.CIF
  *     record's size), times this. The rig turns it into `widthPct` off the art's own measured anchor.
- *   - `widget` - Weapon Widget's Bob and Inertia, TUNED for this weapon on the lab's panel. The game keeps the player's
- *     own module SWITCHES (and forces Inertia on, the Thunderlock's FIELD-GUN8 departure) and takes these MAGNITUDES:
- *     combat/gun/gunViewmodel.js gunWidgetSettings(null, PISTOLET_FEEL.widget). A departure, named there.
+ *   - `widget` - Weapon Widget's Bob and Inertia, TUNED for this weapon on the lab's panel. The game takes the panel's
+ *     own settings - these MAGNITUDES, its three modules on - with the player's own Offset and Bob SWITCHES over them
+ *     (combat/gun/pistolViewmodel.js PISTOL_PANEL, pistolWidgetSettings; PISTOL-PORT, AUDIT PISTOL-PORT D8).
  *   - `sfx` - the three picks, file stems in public/sfx; systems/pistolet.js PISTOLET_SFX_FILES is built from them.
  *   - `alphaCut` - the 1-bit cut the strip is hardened at (the screen quad's 0.5).
  * `roomShake` and `flashRange` are the two judgements GUN_FEEL states as judgements, scaled: the lab's shake is 20 to the
  * Thunderlock's 30, so its room shake is 2 to the Thunderlock's 3; a pistol's flash throws a torch's 14 where the
  * rifle's throws 20.
  */
-/** The reload's second clack lands this long before the gun is ready - the lab's 420ms. One number for the single gun's
- *  voice (combat/weapon/weaponRig.js) and the pair's (combat/gun/gunPair.js) - AUDIT PISTOLET B6: it was two literals. */
+/** The reload's second clack lands this long before the gun is ready - the lab's 420ms. One number for the Thunderlock's
+ *  voice (combat/weapon/weaponRig.js) and the Pistolet's, the page's own (combat/gun/pistolViewmodel.js
+ *  pistolReloadVoice) - AUDIT PISTOLET B6: it was two literals. */
 export const RELOAD_CLOSE_LEAD = 0.42;
 
 export const PISTOLET_FEEL = Object.freeze({
@@ -168,7 +169,8 @@ export const PISTOLET_FEEL = Object.freeze({
     'Inertia.Scale': 2, 'Inertia.Speed': 2, 'Inertia.ForwardDepth': 0, 'Inertia.ForwardSpeed': 1,
   }),
 });
-/** The Pistolet's frame clock and reload, in the machine's units (GUN_TICK_SECONDS's pair). */
+/** The Pistolet's frame clock and reload in seconds (GUN_TICK_SECONDS's pair) - the cadence its machines run at
+ *  (combat/gun/pistolPair.js, built from PISTOLET_FEEL's fps and reloadMs), named for what reads it in seconds. */
 export const PISTOLET_TICK_SECONDS = 1 / PISTOLET_FEEL.fps;
 export const PISTOLET_COOLDOWN_SECONDS = PISTOLET_FEEL.reloadMs / 1000;
 

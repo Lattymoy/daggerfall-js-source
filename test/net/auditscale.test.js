@@ -214,7 +214,7 @@ test('AUDIT SCALE D2: the clock\'s moment in seconds - scheduled() hands runCron
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n, 1);
 });
 
-test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute and forty-one an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1; STAFF-PANEL1; CRAFT-WRITS; AUDIT SEA VENTURES B5) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job (mutants: TOWNECON-AUDIT2-SVC3-kept-read-each-minute)', async () => {
+test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute and fifty an hour (AUDIT LW-II-2 S3; EG-ZM; REZ-BLOODLINE AUDIT R1; STAFF-PANEL1; CRAFT-WRITS; AUDIT SEA VENTURES B5; STAFF-PANEL3-REALM; STAFF-PANEL5) - each job asks once and, its page short, never again; the Motherlodes are not picked behind `dev`; a metrics write that throws costs no job (mutants: TOWNECON-AUDIT2-SVC3-kept-read-each-minute)', async () => {
   clock(T0);
   const svc = await standService({ SEATS_OPEN: 'on', PROFESSIONS_OPEN: 'on' });
   _resetCronForTests();
@@ -248,8 +248,14 @@ test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute a
   // swept - one statement, its page short (cron.js staff-audit) - thirty-five
   // PIN MOVED (CRAFT-WRITS, Professions-Arc.md section 49): an unfilled crafting writ swept the day after its own - one
   // statement, its page short - thirty-six with STAFF-PANEL1's (renumbered at the merge), and the sea's five (AUDIT SEA VENTURES B5) - forty-one
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['craft-writs', 1], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['sea', 5], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6], ['staff-audit', 1]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 41);   // PIN MOVED (AUDIT SEA VENTURES B5: the sea's five sweeps - a kill past the Wanted window, a wreck past its hour, a bounty claimed, a sum paid and a prize ended past their keeping, seaBounty.js seaSweeps; YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
+  // PIN MOVED (STAFF-PANEL3-REALM, STAFF-PANEL4-CENSUS): a staff removal past its 30 days swept - one statement, its page
+  // short (cron.js staff-evidence) - forty-two; the census's day sum and its backfill ask nothing outside their quiet
+  // hour, and the backfill nothing while CENSUS_BACKFILL is not 'on'
+  // PIN MOVED (STAFF-PANEL5): a staff message past its keep (one), the relay's net rows, Monster watch's rows and both
+  // feeds' batch ids (four, one per table), the timed encounters past 14 days (one), and the freeze's staff chat - threads closed, lines past 90
+  // days (two) - each page short: fifty
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['craft-writs', 1], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['sea', 5], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6], ['staff-audit', 1], ['staff-evidence', 1], ['census-day', 0], ['census-backfill', 0], ['staff-messages', 1], ['staff-feeds', 4], ['reactions', 1], ['staff-chat', 2]]);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 50);   // PIN MOVED (STAFF-PANEL5: Message on screen, the feeds, the staff chat; STAFF-PANEL3-REALM: a staff removal past its 30 days; AUDIT SEA VENTURES B5: the sea's five sweeps - a kill past the Wanted window, a wreck past its hour, a bounty claimed, a sum paid and a prize ended past their keeping, seaBounty.js seaSweeps; YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();

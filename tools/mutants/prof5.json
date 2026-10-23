@@ -495,8 +495,8 @@
   {
     "name": "PROF5-svc-own-bought",
     "file": "server-account/src/market.js",
-    "old": "  if (l.seller === me) return { error: 'market-own' };\n  // HOME-VENDOR: a trader's piece is bought at its trader alone",
-    "new": "  // HOME-VENDOR: a trader's piece is bought at its trader alone",
+    "old": "  if (l.seller === me) return { error: 'market-own' };\n  // STAFF-PANEL3-REALM: a seller held or banned sells nothing",
+    "new": "  // STAFF-PANEL3-REALM: a seller held or banned sells nothing",
     "tests": [
       "test/net/prof5_service.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "PROF5-svc-anyone-removes",
     "file": "server-account/src/market.js",
-    "old": "  if (!canModerate(player, env)) return { error: 'not-moderator' };\n  if (!idOk(id)) return { error: 'bad-listing' };\n  const r = await",
-    "new": "  if (!idOk(id)) return { error: 'bad-listing' };\n  const r = await",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n  /** @type {(how: { target",
+    "new": "  /** @type {(how: { target",
     "tests": [
       "test/net/prof5_service.test.js"
     ]

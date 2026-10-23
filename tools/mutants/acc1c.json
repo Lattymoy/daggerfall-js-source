@@ -103,8 +103,8 @@
   {
     "name": "ACC1c-11-recovering-leaves-the-thief-signed-in",
     "file": "server-account/src/accounts.js",
-    "old": "  await closeAllSessions({ db }, player.id);\n  await clearRate({ db }, `recover:${lc}`);",
-    "new": "  await clearRate({ db }, `recover:${lc}`);",
+    "old": "  await closeAllSessions({ db }, player.id);\n  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
+    "new": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
     "tests": [
       "test/server/accountworker.test.js"
     ],

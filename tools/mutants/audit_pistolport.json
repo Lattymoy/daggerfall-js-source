@@ -1,0 +1,468 @@
+[
+ {
+  "name": "AP-A2-two-hits-one-update",
+  "file": "src/combat/playerWeapon.js",
+  "old": "      evs.push('hit');\n      break;\n",
+  "new": "      evs.push('hit');\n",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A2-later-shot-first",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    if (due.length === 2 && due[0] === p.last) due.reverse();   // the earlier shot first - `last` fired most recently\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A2-queue-dropped",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    this._pistolHits.push(...due);\n",
+  "new": "    this._pistolHits.push(...due.slice(0, 1));\n",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A6-stowed-pistol-fires",
+  "file": "src/combat/playerWeapon.js",
+  "old": "      if (!p.hands().includes(h)) continue;\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A3-reload-stays-with-the-hand",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    if (was && ((R && R === was.L && R !== was.R) || (L && L === was.R && L !== was.L))) [this.pistols.R, this.pistols.L] = [this.pistols.L, this.pistols.R];\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A9-mirror-left-mid-shot",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    m.state = 'Idle'; m.frame = 0; m.cooldownUntil = Math.max(this._classicCooldown, m.now); this.strike = null;",
+  "new": "    m.cooldownUntil = Math.max(this._classicCooldown, m.now);",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A9-put-by-never-runs",
+  "file": "src/combat/playerWeapon.js",
+  "old": "      if (this.pistols) this._pistolsPutBy();\n",
+  "new": "      if (this.pistols) { this._pistolsAway = this.pistols; this.pistols = null; }\n",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-C1-reload-erased",
+  "file": "src/combat/playerWeapon.js",
+  "old": "m.cooldownUntil = Math.max(this._classicCooldown, m.now);",
+  "new": "m.cooldownUntil = m.now;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-C1-owed-never-kept",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    if (!this.pistols) this._classicCooldown = this.machine.cooldownUntil;   // AUDIT PISTOL-PORT C1: kept for the weapon put by\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-C4-the-last-weapons-tick",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    m.tick = 1 / p.R.fps; m.hitFrame = p.R.hitFrame;   // AUDIT PISTOL-PORT C4: the pistols' own frame clock - the arm's flash runs on it\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A5-firing-pistols-owe-nothing",
+  "file": "src/combat/playerWeapon.js",
+  "old": "p[h].state === 'Firing' && p[h].frame < p[h].hitFrame",
+  "new": "false",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A5-queued-hits-owe-nothing",
+  "file": "src/combat/playerWeapon.js",
+  "old": "return p ? this._pistolHits.length + p.hands()",
+  "new": "return p ? p.hands()",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ],
+  "equivalent": true,
+  "why": "a hit is queued only when both pistols hit in one step, so both are mid-shot and no pistol is loaded to pull - a queued hit's Pellet cannot be raced; the term says what the shot owes"
+ },
+ {
+  "name": "AP-A1-arm-gate-on-idle-alone",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "(m.state === 'Idle' || !!playerWeapon.pistols)",
+  "new": "m.state === 'Idle'",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A5-pellets-one-at-a-time",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "<= playerWeapon.pistolShotsDue() + (_heldHit ? 1 : 0);",
+  "new": "<= 0;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A5-click-door-ungated",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "      if (armCannotDraw() || pelletsOwed()) return;",
+  "new": "      if (armCannotDraw()) return;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A5-gesture-door-ungated",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": " && !actTool() && !pelletsOwed();",
+  "new": " && !actTool();",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-A7-balance-off-the-pulls",
+  "file": "test/combat/pistolet_law.test.js",
+  "old": "n += pw.update(1 / 60).filter((e) => e === 'hit').length;",
+  "new": "pw.update(1 / 60); n = n;",
+  "tests": [
+   "test/combat/pistolet_law.test.js"
+  ]
+ },
+ {
+  "name": "AP-D1-hit-never-rearmed",
+  "file": "src/combat/gun/gunMachine.js",
+  "old": "m.state = 'Firing'; m.frame = 0; m._t = 0; m._hitThisShot = false; m.shots++;",
+  "new": "m.state = 'Firing'; m.frame = 0; m._t = 0; m.shots++;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D1-hit-on-the-first-frame",
+  "file": "src/combat/gun/gunMachine.js",
+  "old": "if (!m._hitThisShot && m.frame >= m.hitFrame)",
+  "new": "if (!m._hitThisShot && m.frame >= 0)",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D1-reload-skipped",
+  "file": "src/combat/gun/gunMachine.js",
+  "old": "if (m._cool >= m.cooldownMs) { m.state = 'Idle'; event = 'ready'; }",
+  "new": "if (m._cool >= 0) { m.state = 'Idle'; event = 'ready'; }",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D1-a-shot-replaced",
+  "file": "src/combat/gun/gunMachine.js",
+  "old": "if (m.state !== 'Idle') return false;   // the one-shot cannot be replaced",
+  "new": "if (m.state === 'Cooling') return false;   // the one-shot cannot be replaced",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D9-left-rig-never-flipped",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "flip: flipOf(h), idle:",
+  "new": "flip: false, idle:",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js",
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D9-reload-dips-both",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "shown: machines[h].state !== 'Cooling' && !away,",
+  "new": "shown: !PISTOL_HANDS.some((x) => machines[x].state === 'Cooling') && !away,",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D9-sliding-needs-every",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "pistols.hands().some((h) => Math.abs(hands[h].rig.offsetCurrent[1])",
+  "new": "pistols.hands().every((h) => Math.abs(hands[h].rig.offsetCurrent[1])",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-no-room-kick",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "        audio.playOneShot(sfx.fire, feel.sfxVolume, gunPitch(undefined, feel));\n        betterAmbience.weaponKick?.(feel.roomShake);\n        _tlFlashClock = 0;",
+  "new": "        audio.playOneShot(sfx.fire, feel.sfxVolume, gunPitch(undefined, feel));\n        _tlFlashClock = 0;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-offset-switch-ignored",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "offset: !!switches.offset, bob:",
+  "new": "offset: true, bob:",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-rigs-stepped-right-handed",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "feel, switches: readWidgetSettings(), frame, leftHanded: handedFlip(),",
+  "new": "feel, switches: readWidgetSettings(), frame, leftHanded: false,",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-picture-mirrored-by-hand",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "const flip = hand ? pistols.flipOf(playerWeapon.pistols, hand, handedFlip()) : handedFlip();",
+  "new": "const flip = hand ? hand === 'L' : handedFlip();",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-frame-look-ignored",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "      screenRect, motion, look,\n",
+  "new": "      screenRect, motion, look: [0, 0],\n",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js",
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-lane-look-ignored",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "look: frame?.look ?? [0, 0],",
+  "new": "look: [0, 0],",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-panel-inertia-off",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "'Modules.Inertia': true, ...PISTOLET_FEEL.widget,",
+  "new": "'Modules.Inertia': false, ...PISTOLET_FEEL.widget,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-lane-speed-fixed",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "liveSpeed, cursorActive, hiddenTarget: feel.hiddenTarget,",
+  "new": "liveSpeed: 50, cursorActive, hiddenTarget: feel.hiddenTarget,",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-frame-speed-ignored",
+  "file": "src/combat/gun/pistolViewmodel.js",
+  "old": "hiddenTarget: away ? awayTarget : hiddenTarget, liveSpeed,",
+  "new": "hiddenTarget: away ? awayTarget : hiddenTarget, liveSpeed: 50,",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D11-pistols-not-ranged",
+  "file": "src/combat/playerWeapon.js",
+  "old": "    m.ranged = true;\n",
+  "new": "",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-B4-light-a-frame-late",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "glow: (pistols) => Math.max(0, ...pistols.hands().map((h) => glowOf(pistols, h))),",
+  "new": "glow: (pistols) => Math.max(0, ...pistols.hands().map((h) => muzzleGlow(hands[h].firing, hands[h].frame))),",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-B4-light-from-the-last-pull",
+  "file": "src/combat/gun/pistolLane.js",
+  "old": "brightest: (pistols) => pistols.hands().reduce(",
+  "new": "brightest: (pistols) => pistols.last ?? pistols.lead ?? pistols.hands().reduce(",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-ARM-clacks-off-the-machine-alone",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "      if (!_heldHit) pistols.voice(",
+  "new": "      if (true) pistols.voice(",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D12-arm-off-last-alone",
+  "file": "src/combat/weapon/weaponRig.js",
+  "old": "const h = p.hands().includes(p.last) ? p.last : p.lead, g = p[h];",
+  "new": "const h = p.last ?? p.lead, g = p[h];",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-B6-crouch-at-the-walk",
+  "file": "src/combat/gun/gunViewmodel.js",
+  "old": "(crouching ? crouchSpeed(liveSpeed) : base)",
+  "new": "base",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-B1-strafe-needs-a-walk",
+  "file": "src/combat/gun/gunViewmodel.js",
+  "old": "const moving = walking || strafe !== 0;",
+  "new": "const moving = walking;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js",
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-B1-no-diagonal",
+  "file": "src/combat/gun/gunViewmodel.js",
+  "old": "const axis = walking && strafe !== 0 ? speed * DIAGONAL_FACTOR : speed;",
+  "new": "const axis = speed;",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-B1-never-airborne",
+  "file": "src/combat/gun/gunViewmodel.js",
+  "old": "grounded: vertical === null, crouching,",
+  "new": "grounded: true, crouching,",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js",
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-B8-ratio-of-the-step",
+  "file": "src/combat/gun/gunViewmodel.js",
+  "old": "speedRatio: base > 0 ? stateSpeed / base : 1,",
+  "new": "speedRatio: base > 0 ? speed / base : 1,",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-page-never-guards",
+  "file": "src/tools/pistolLab.js",
+  "old": "machines: pair, drawn, guard: state.guard,",
+  "new": "machines: pair, drawn, guard: false,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-guard-height-unscaled",
+  "file": "src/tools/pistolLab.js",
+  "old": "heightPx: art.anchor.h * state.scale, flip:",
+  "new": "heightPx: art.anchor.h, flip:",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-clacks-swapped",
+  "file": "src/tools/pistolLab.js",
+  "old": "play(kind === 'open' ? state.sfxOpen : state.sfxClose, gain)",
+  "new": "play(kind === 'open' ? state.sfxClose : state.sfxOpen, gain)",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-dip-to-the-holster",
+  "file": "src/tools/pistolLab.js",
+  "old": "cursorActive, hiddenTarget: [0, state.drop],",
+  "new": "cursorActive, hiddenTarget: [0, 1],",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-panel-inertia-ignored",
+  "file": "src/tools/pistolLab.js",
+  "old": "'Modules.Inertia': state.modInertia,",
+  "new": "'Modules.Inertia': false,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-page-look-ignored",
+  "file": "src/tools/pistolLab.js",
+  "old": "    motion, look, liveSpeed: state.spd,",
+  "new": "    motion, look: [0, 0], liveSpeed: state.spd,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-page-strafe-ignored",
+  "file": "src/tools/pistolLab.js",
+  "old": "strafe: Number(state.strafe),",
+  "new": "strafe: 0,",
+  "tests": [
+   "test/combat/gun/pistolport.test.js"
+  ]
+ },
+ {
+  "name": "AP-D7-jump-flat",
+  "file": "src/tools/pistolLab.js",
+  "old": "JUMP_SPEED - GRAVITY * t : null",
+  "new": "0 : null",
+  "tests": [
+   "test/combat/gun/pistolport_audit.test.js",
+   "test/combat/gun/pistolport.test.js"
+  ]
+ }
+]

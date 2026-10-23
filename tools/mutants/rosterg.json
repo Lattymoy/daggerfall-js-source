@@ -12,7 +12,7 @@
   {
     "name": "G2-channel-join-not-said",
     "file": "server/src/index.js",
-    "old": "        this._fanRoster(ws, said);   // SCALE5a: the index walked in place, by a method of its own; SCALE5b: the second wire's batched\n",
+    "old": "if (!who.hid) this._fanRoster(ws, said);",
     "new": "",
     "tests": [
       "test/net/rosterg.test.js",

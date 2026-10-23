@@ -34,8 +34,6 @@ export {
 export {
   HANDS_MODE, FLURRY_WINDOW, GUARD, strikeHandOf, guardStep, guardOffset, otherHand,
 } from '../combat/twoHands/handsLaw.js';
-import { createGunMachine } from './gunLab.js';
-import { HANDS_MODE, strikeHandOf, otherHand } from '../combat/twoHands/handsLaw.js';
 
 // THE STRIP AND ITS CUT ARE THE GAME'S NOW (PISTOLET, 2026-10-21). They were written here while this page was the only
 // thing that had them; combat/gun/pistolStrip.js is their home since the Dwarven Pistolet became a weapon, and the lab
@@ -71,91 +69,85 @@ export const PISTOL_OPENING = Object.freeze({
   light: PISTOLET_FEEL.flashLight,   // AUDIT PISTOLET B5: the muzzle light's opening, the feel's own
 });
 
-/** How the trigger is pulled with a pistol in each hand. */
-export const PAIR_TRIGGER = Object.freeze({
-  /** One pistol, DFU's one used hand - the gun lab's own case. */
-  Single: 'single',
-  /** The game's flurry (strikeHandOf): the lead opens, a pull inside
-   *  FLURRY_WINDOW of the last shot is the other hand's. */
-  Alternate: 'alternate',
-  /** Both barrels on one pull. */
-  Volley: 'volley',
-  /** Each hand its own button: the left mouse button the right hand,
-   *  the right button the left. */
-  PerHand: 'perHand',
+// PISTOL-PORT: THE FRAME IS THE GAME'S NOW (combat/gun/pistolViewmodel.js) - each hand's spring, guard, picture, rig, rect
+// and reload clacks, the draw order and the panel's settings - FIELD-GUN12's arrow: the page runs it, never restates it.
+export {
+  PISTOL_HANDS, PISTOL_PANEL, createPistolHands, pistolHandFired, pistolHandsStep, pistolReloadVoice, pistolHandRect,
+  pistolDrawOrder, pistolWidgetSettings,
+} from '../combat/gun/pistolViewmodel.js';
+// PISTOL-PORT: THE PAIR IS THE GAME'S NOW (combat/gun/pistolPair.js) - the Dwarven Pistolet fires on it - and the page
+// reads it back from there.
+export { PAIR_TRIGGER, createPair } from '../combat/gun/pistolPair.js';
+
+// AUDIT PISTOL-PORT D7: THE PAGE'S WIRING, IN A MODULE. The page composes no frame, but it does say what its panel feeds
+// the game's: and while that lived in the page's own <script>, nothing the suite runs could see it - the port's pins ran
+// a transcription of it, and a page that stopped guarding, clacked the wrong clip or dipped to the wrong depth passed.
+// So the page's opening state and the three calls it makes from its panel are here, and the page and the port's pins
+// both run them.
+import { SFX_CANDIDATES } from './gunLab.js';
+import { gunMotion } from '../combat/gun/gunViewmodel.js';
+import { pistolHandsStep, pistolReloadVoice, pistolHandRect, pistolWidgetSettings } from '../combat/gun/pistolViewmodel.js';
+import { PAIR_TRIGGER } from '../combat/gun/pistolPair.js';
+import { JUMP_SPEED, GRAVITY } from '../player/motor.js';
+
+/** The panel the page opens on, as its `state`: every number the opening row's (PISTOL_OPENING), each sound pick proven
+ *  among the candidates. */
+export function pistolPageState() {
+  const O = PISTOL_OPENING, W = O.widget;
+  const pickOf = (slot, name) => {
+    if (!SFX_CANDIDATES[slot].some(([n]) => n === name)) throw new Error(`no ${slot} clip ${name}`);
+    return name;
+  };
+  return {
+    trigger: PAIR_TRIGGER.Alternate, lead: 'R', guard: true,
+    scale: O.scale, offset: O.offset, raise: O.raise,
+    fps: O.fps, cool: O.reloadMs, hit: O.hitFrame, auto: false,
+    kick: O.kick, back: O.back, stiff: O.stiff, damp: O.damp,
+    shake: O.shake, shakeRot: O.shakeRot, shakeFreq: O.shakeFreq, shakeDecay: O.shakeDecay,
+    sfxFire: pickOf('fire', O.sfxFire), sfxOpen: pickOf('reload-open', O.sfxOpen), sfxClose: pickOf('reload-close', O.sfxClose),
+    sfxVol: O.sfxVol, sfxVary: O.sfxVary, sfxOn: true,
+    drop: O.drop, offsetSpeed: W['Offset.Speed'], modOffset: true,
+    modBob: true, bobLength: W['Bob.Length'], bobSizeX: W['Bob.SizeX'], bobSizeY: W['Bob.SizeY'],
+    bobSpeedMove: W['Bob.SpeedMove'], bobSpeedState: W['Bob.SpeedState'], bobShape: W['Bob.Shape'], bobIdle: W['Bob.BobWhileIdle'],
+    modInertia: true, inScale: W['Inertia.Scale'], inSpeed: W['Inertia.Speed'], inFwd: W['Inertia.ForwardDepth'], inFwdSpeed: W['Inertia.ForwardSpeed'],
+    walk: false, strafe: 0, run: false, crouch: false, spd: 50,
+    alphaCut: O.alphaCut, light: O.light, room: 0.62, grid: false,
+  };
+}
+
+/** The panel's Weapon Widget settings - past Diverse Weapons' preset, as the game lays the Pistolet's own (AUDIT
+ *  PISTOLET B2; pistolViewmodel.js pistolWidgetSettings). */
+export const pistolPageSettings = (state) => pistolWidgetSettings({
+  'Modules.Offset': state.modOffset, 'Modules.Bob': state.modBob, 'Modules.Inertia': state.modInertia,
+  'Offset.Speed': state.offsetSpeed,
+  'Bob.Length': state.bobLength, 'Bob.SizeX': state.bobSizeX, 'Bob.SizeY': state.bobSizeY,
+  'Bob.SpeedMove': state.bobSpeedMove, 'Bob.SpeedState': state.bobSpeedState,
+  'Bob.Shape': state.bobShape, 'Bob.BobWhileIdle': state.bobIdle,
+  'Inertia.Scale': state.inScale, 'Inertia.Speed': state.inSpeed,
+  'Inertia.ForwardDepth': state.inFwd, 'Inertia.ForwardSpeed': state.inFwdSpeed,
 });
 
-/**
- * THE PAIR. Two of the gun lab's machines - one shot, six frames, a
- * reload each - and the rule for which one a pull fires.
- *
- * Alternate RUNS the game's flurry law (handsLaw.strikeHandOf, the one
- * the dual wielder's swords obey): the lead opens, and a pull while the
- * last shot is still in flight or inside FLURRY_WINDOW of it ending is
- * the other hand's. ONE DEPARTURE, the gun's: a sword can always swing,
- * a pistol mid-reload cannot fire, so when the hand the law names is
- * not loaded the pull falls to the other hand if it is - the trigger
- * finds the loaded pistol rather than clicking on an empty one. Pinned,
- * so it is a decision and not an accident.
- *
- * `t` is the pair's own clock (seconds), advanced by `step`; `sinceLast`
- * is 0 while a shot's frames still play (the hand is mid-blow, which is
- * the flurry's case) and the seconds since they ended after.
- */
-export function createPair({ trigger = PAIR_TRIGGER.Alternate, lead = 'R', fps, cooldownMs, hitFrame } = {}) {
-  const opts = { fps, cooldownMs, hitFrame };
-  const pair = {
-    trigger, lead,
-    R: createGunMachine(opts), L: createGunMachine(opts),
-    t: 0, last: null, lastEnd: -Infinity,
-    /** The hands in the order they fired, most recent last - the
-     *  draw order (Two-Hands: the striking hand is drawn over the other). */
-    order: ['L', 'R'],
-    lastShot: null,
-  };
-  const loaded = (h) => pair[h].state === 'Idle';
-  const sinceLast = () => (pair.last && pair[pair.last].state === 'Firing' ? 0 : pair.t - pair.lastEnd);
-  const shoot = (h, info) => {
-    if (!pair[h].fire()) return false;
-    pair.last = h;
-    pair.order = [otherHand(h), h];
-    pair.lastShot = { hand: h, ...info };
-    return true;
-  };
-  /** The hands that would fire on a pull of `button` (0 left mouse,
-   *  2 right), as the law answers - before the loaded check. */
-  pair.pick = (button = 0) => {
-    if (pair.trigger === PAIR_TRIGGER.Single) return [pair.lead];
-    if (pair.trigger === PAIR_TRIGGER.Volley) return [pair.lead, otherHand(pair.lead)];
-    if (pair.trigger === PAIR_TRIGGER.PerHand) return [button === 2 ? 'L' : 'R'];
-    return [strikeHandOf({ mode: HANDS_MODE.Dual, lead: pair.lead, last: pair.last, sinceLast: sinceLast() }).hand];
-  };
-  /** A pull of the trigger. Answers the hands that fired. */
-  pair.pull = (button = 0) => {
-    const fired = [];
-    if (pair.trigger === PAIR_TRIGGER.Alternate) {
-      const s = strikeHandOf({ mode: HANDS_MODE.Dual, lead: pair.lead, last: pair.last, sinceLast: sinceLast() });
-      // the gun's departure: the named hand is empty, the other is loaded
-      const h = loaded(s.hand) ? s.hand : (loaded(otherHand(s.hand)) ? otherHand(s.hand) : null);
-      if (h && shoot(h, { off: h !== pair.lead, flurry: s.flurry })) fired.push(h);
-      return fired;
-    }
-    for (const h of pair.pick(button)) if (shoot(h, { off: h !== pair.lead, flurry: false })) fired.push(h);
-    return fired;
-  };
-  /** Both machines, one clock. Answers each hand's event ('hit',
-   *  'ready' or null) and records when a shot's frames end. */
-  pair.step = (dt) => {
-    pair.t += dt;
-    const out = {};
-    for (const h of ['R', 'L']) {
-      const wasFiring = pair[h].state === 'Firing';
-      out[h] = pair[h].step(dt);
-      if (wasFiring && pair[h].state !== 'Firing' && pair.last === h) pair.lastEnd = pair.t;
-    }
-    return out;
-  };
-  /** The hands drawn: one in Single, both otherwise. */
-  pair.hands = () => (pair.trigger === PAIR_TRIGGER.Single ? [pair.lead] : ['R', 'L']);
-  return pair;
+/** AUDIT PISTOL-PORT B1: a jump as the game's motor makes one - the eye's climb `t` seconds in (JUMP_SPEED up, GRAVITY
+ *  down), null once it has landed. */
+export const pistolJumpClimb = (t) => (t >= 0 && t < 2 * JUMP_SPEED / GRAVITY ? JUMP_SPEED - GRAVITY * t : null);
+
+/** ONE FRAME OF THE PAGE'S HANDS: each hand's reload clacks, then the game's frame (pistolHandsStep), fed from the panel -
+ *  `play(clip, gain)` the page's player. Answers the motion, which the page's room sways on too. */
+export function pistolPageStep(hands, pair, state, dt, { drawn, scrub = -1, look = [0, 0], cursorActive = false, screen, vertical = null, play = () => {} }) {
+  pistolReloadVoice(hands, pair, state.cool, (kind, gain) => play(kind === 'open' ? state.sfxOpen : state.sfxClose, gain));
+  const motion = gunMotion({ walking: state.walk, strafe: Number(state.strafe), running: state.run, crouching: state.crouch, liveSpeed: state.spd, vertical });
+  pistolHandsStep(hands, dt, {
+    machines: pair, drawn, guard: state.guard, spring: { stiff: state.stiff, damp: state.damp, back: state.back },
+    restFrame: scrub >= 0 ? scrub : 0, settings: pistolPageSettings(state), screenRect: screen,
+    motion, look, liveSpeed: state.spd, cursorActive, hiddenTarget: [0, state.drop],
+  });
+  return motion;
 }
+
+/** Where the page draws hand `h`: the game's rect (pistolHandRect) at the panel's pose, the art at native size times the
+ *  panel's scale, the left hand in the mirror. */
+export const pistolPageRect = (hands, h, state, art, canvas) => pistolHandRect(hands, h, {
+  canvasW: canvas.width, canvasH: canvas.height, anchor: art.anchor, union: art.union,
+  widthPct: nativeWidthPct(art.anchor.w, state.scale), offset: state.offset, raise: state.raise,
+  heightPx: art.anchor.h * state.scale, flip: h === 'L',
+});

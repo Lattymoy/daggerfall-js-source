@@ -60,6 +60,7 @@ import { safetyMinute, safetySweep } from './safetyClock.js';   // SAFE5 + SAFE8
 import { sweepGuildNotes } from './guildBoard.js';
 import { sweepHarvests } from './professions.js';
 import { sweepCraftWrits } from './craftWrits.js';   // CRAFT-WRITS: an unfilled crafting writ the day after its own
+import { retryFreezePushes, sweepStaffChat } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: a freeze's push again, the staff chat's sweep
 import { SESSION_IDLE_S } from './accounts.js';
 import { storeArenaChampion, ARENA_CHAMPION_CLOCK_S } from './arena.js';
 import { iliacChampionClock } from './iliac.js';   // CARDS10: Iliac Hand's season #1, counted the arena's way
@@ -79,6 +80,10 @@ import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's 
 import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
 import { settleStaleYards } from './decor.js';   // YARD-SNAP: a town's yards built again where a write left them stale
 import { STAFF_AUDIT_KEEP_S } from './staff.js';   // STAFF-PANEL1: the audit log's month
+import { censusDay, censusBackfill } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the census's day and its one backfill, off peak
+import { STAFF_MESSAGE_KEEP_S } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: a staff message's month
+import { STAFF_FEED_KEEP_S } from './staffNet.js';   // STAFF-PANEL5-FEEDS: the relay's net feed's day
+import { REACT_KEEP_S } from './staffReactions.js';   // STAFF-PANEL5-FEEDS: the bot check's 14 days
 
 /** The two schedules - wrangler.toml's [triggers] crons name exactly these (test/server/scale4b.test.js holds the two to
  *  each other). The hour's minute is off the hour, where every other Worker's cron lands. */
@@ -116,6 +121,10 @@ const deleted = async (/** @type {any} */ db, /** @type {string} */ sql, /** @ty
   const r = await db.prepare(sql).bind(cutoff, SWEEP_ROWS).run();
   return Number(r?.meta?.changes ?? 0);
 };
+
+/** STAFF-PANEL5-FEEDS: the staff feeds' tables, each swept past STAFF_FEED_KEEP_S (`?1`), a page (`?2`) at a time. */
+const STAFF_FEED_SWEEPS = Object.freeze(['staff_net_rows', 'staff_foe_rows', 'staff_net_batches', 'reaction_batches']
+  .map((t) => `DELETE FROM ${t} WHERE rowid IN (SELECT rowid FROM ${t} WHERE at < ?1 LIMIT ?2)`));
 
 /** MOTHERLODES: the day this isolate has seen picked - asked once a day here, not every minute (the pick itself is the
  *  day's first ask, and every later one only reads it back). */
@@ -171,7 +180,10 @@ export const MINUTE_JOBS = Object.freeze([
   ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],
   // SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): the reviewer reads the relay's feed and the reported cases,
   // and each case's card goes to the moderators' channel - nothing a request waits on (safetyClock.js)
-  ['safety', (ctx, env) => safetyMinute(ctx, env)],
+  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "A failed push leaves a freeze or unfreeze unapplied"): and a
+  // freeze or unfreeze the relay's door did not take, pushed again with a fresh order - the sanctions' own minute, so no
+  // job's share of the firing shrinks (AUDIT SCALE A2); nothing asked while no door is set
+  ['safety', async (ctx, env) => (await safetyMinute(ctx, env)) + (await retryFreezePushes(ctx, env))],
   ['motherlodes', async (ctx, env) => {
     const day = utcDay(ctx.nowS);
     if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;
@@ -252,6 +264,32 @@ export const HOUR_JOBS = Object.freeze([
   // its trigger refuses a delete of any newer (migration 0144)
   ['staff-audit', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM staff_audit WHERE id IN (SELECT id FROM staff_audit WHERE at < ?1 LIMIT ?2)', ctx.nowS - STAFF_AUDIT_KEEP_S), SWEEP_ROWS)],
+  // STAFF-PANEL3-REALM (design doc "Remove items": "keeps the item for 30 days so it can be put back"): a removal past its
+  // 30 days goes, kept or put back (staffRealm.js EVIDENCE_KEEP_S is its `until`); the ledger's mark on the piece stays
+  ['staff-evidence', (ctx) => rounds(() => deleted(ctx.db,
+    'DELETE FROM staff_evidence WHERE id IN (SELECT id FROM staff_evidence WHERE until <= ?1 LIMIT ?2)', ctx.nowS), SWEEP_ROWS)],
+  // STAFF-PANEL4-CENSUS (design doc, Server load: "add up server totals by deltas or on demand, off-peak"): each kind's
+  // count summed once a UTC day at the census's quiet hour (the trend), and - only with CENSUS_BACKFILL 'on', only in
+  // its quiet hours, once - a latest tally for every character no checkpoint has tallied (staffCensus.js)
+  ['census-day', (ctx) => censusDay(ctx)],
+  ['census-backfill', (ctx, env) => censusBackfill(ctx, env)],
+  // STAFF-PANEL5-MESSAGE (design doc: "Each new table gets a retention"): a staff message's row past STAFF_MESSAGE_KEEP_S
+  ['staff-messages', (ctx) => rounds(() => deleted(ctx.db,
+    'DELETE FROM staff_messages WHERE id IN (SELECT id FROM staff_messages WHERE at < ?1 LIMIT ?2)', ctx.nowS - STAFF_MESSAGE_KEEP_S), SWEEP_ROWS)],
+  // STAFF-PANEL5-FEEDS (staffNet.js): the relay's net feed past its day - the panel reads its latest windows alone - and the
+  // bot check's batch ids past theirs (a resent batch comes within STAFF_FEED_AGE_MAX_MS)
+  ['staff-feeds', async (ctx) => {
+    let n = 0;
+    for (const sql of STAFF_FEED_SWEEPS) n += await rounds(() => deleted(ctx.db, sql, ctx.nowS - STAFF_FEED_KEEP_S), SWEEP_ROWS, ctx.budget);
+    return n;
+  }],
+  // STAFF-PANEL5-FEEDS (staffReactions.js; design doc, Bot check: "kept 14 days unless staff keep an account's rows as
+  // evidence"): an episode past REACT_KEEP_S, unless kept still
+  ['reactions', (ctx) => rounds(() => deleted(ctx.db,
+    `DELETE FROM encounter_reactions WHERE id IN (SELECT id FROM encounter_reactions WHERE at < ?1 AND (keep_until IS NULL OR keep_until < ?1 + ${REACT_KEEP_S}) LIMIT ?2)`, ctx.nowS - REACT_KEEP_S), SWEEP_ROWS, ctx.budget)],
+  // STAFF-PANEL5-FREEZE (staffFreeze.js): a freeze's thread whose freeze ran out closed, and the staff chat's lines past
+  // STAFF_LINES_KEEP_S (90 days)
+  ['staff-chat', (ctx) => rounds(() => sweepStaffChat(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],
 ]);
 
 /** The jobs a schedule runs - none for a schedule this service does not keep (said, so a trigger renamed in

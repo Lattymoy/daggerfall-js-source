@@ -1,9 +1,10 @@
 [
   {
     "name": "AUTOHOLD-a-contested-claim-struck",
+    "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
-    "old": "    steps.push(...copyRows(db, keys, claimant, nowS), ...chargeSteps(db, claimant, keys, nowS, { strike: false }));",
-    "new": "    steps.push(...copyRows(db, keys, claimant, nowS), ...chargeSteps(db, claimant, keys, nowS));",
+    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }));",
+    "new": "      ...chargeSteps(db, claimant, keys, nowS));",
     "tests": [
       "test/server/autohold.test.js",
       "test/systems/item/int4_itemids.test.js"
@@ -525,8 +526,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-by-a-route",
     "file": "server-account/src/realm.js",
-    "old": "  const why = twice.length ? 'piece-dupe' : leaving.length ?",
-    "new": "  const why = leaving.length ?",
+    "old": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ?",
+    "new": "  const why = take ? null : leaving.length ?",
     "tests": [
       "test/server/autohold.test.js"
     ]

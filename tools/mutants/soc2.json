@@ -57,7 +57,7 @@
   {
     "name": "C7-unchanged-pose-resent",
     "file": "src/net/online.js",
-    "old": "if (!urgent && !force && this._lastParty === s) return false;",
+    "old": "else if (!urgent && !force && this._lastParty === s) return false;",
     "new": "",
     "tests": [
       "test/net/soc2_session.test.js"

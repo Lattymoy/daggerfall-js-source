@@ -77,6 +77,8 @@ export class PostBox {
     this.version = 0;
     this.at = 0;
     this.busy = false;
+    /** LOST-SPOILS: a Claim all under way - one claim after another, the window's buttons down until it ends */
+    this.claimingAll = false;
     /** @type {Set<string>|null} */ this._known = null;
     /** @type {Promise<any>|null} */ this._looking = null;
     /** AUDIT SERVER-POST: this sitting's own changes to the box (a piece opened, claimed, thrown away), counted - a look
@@ -282,6 +284,31 @@ export class PostBox {
       return { ok: false, error: r?.error ?? 'server' };
     } finally {
       this.busy = false;
+      this._changed();
+    }
+  }
+
+  /**
+   * LOST-SPOILS: CLAIM EVERY ITEM WAITING - a boss's floor's leftovers come a piece an item (net/lostLaw.js) - one claim
+   * after another, each its own realm act as a press of Claim is, stopping at the first refusal the next would meet too
+   * (a piece claimed meanwhile, or gone, is passed over). Answers `{ ok, items }`, what landed, or `{ ok: false, error,
+   * items }`.
+   */
+  async claimAll() {
+    if (this.busy || this.claimingAll) return { ok: false, error: 'busy', items: [] };
+    this.claimingAll = true; this._changed();
+    /** @type {any[]} */
+    const items = [];
+    try {
+      for (const id of this.post.filter((p) => p.item && !p.claimed).map((p) => p.id)) {
+        const r = await this.claim(id);
+        if (r.ok) { items.push(r.item); continue; }
+        if (r.error === 'post-claimed' || r.error === 'no-post') continue;
+        return { ok: false, error: r.error, items };
+      }
+      return { ok: true, items };
+    } finally {
+      this.claimingAll = false;
       this._changed();
     }
   }

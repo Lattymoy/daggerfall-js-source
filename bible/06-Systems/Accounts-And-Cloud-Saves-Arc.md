@@ -5907,3 +5907,148 @@ when the tenth is taken (`bible/11-Multiplayer/Elite-Gates.md` section 31, SPIRE
 the character's name and near names refused) and `tools/mutants/egeco_honours.json` SPIRE-FIRST-serveride-not-granted and
 SPIRE-FIRST-NAME-the-character-listed (dead). A handle list takes the account's handle, never a name off the herald,
 which since NAME-AS may be a character's (`bible/11-Multiplayer/Elite-Gates.md` section 31, SPIRE-FIRST-NAME).
+
+## LOST-SPOILS — the Lost and Found: what a boss's floor still holds goes to the mailbox (2026-10-22, acct173)
+
+The owner: "So I want to utilize the mailbox as a way to obtain lost items/loot if not picked up from a boss. For
+example, the oblivion gates. Abyss dungeons, elite breaches ,etc". Read against the code first, nothing on a boss's
+floor was lost. Leaving the Burning Court, the Last Moment's arena or an Elite Breach's Redoubt gathered every piece
+still on the floor into the pack (`scenes/spoilsPool.js` gather), and the crash's record covered the rest (WB5,
+`11-Multiplayer/World-Bosses.md` section 7). Two questions went back:
+
+- Should the mailbox take the floor's leftovers in the pack's place, or stand behind the pack as a safety net for the
+  rare true losses? The owner: **"Mail the leftovers"**.
+- Should an Elite Breach's Reliquaries, which a death or a bad end throws away, be mailed too? The owner: **"No, keep
+  the risk"**. The Spire's one-life stake stands (`11-Multiplayer/Elite-Gates.md` section 16.3).
+
+Not a DFU member: Daggerfall Unity has no boss spoils and no post. Port-Ledger A, the ONLINE row.
+
+### What the player sees
+
+- **Leaving a floor** (the way home, a death, a disconnect, the day's end, the Hour's collapse, leaving the Spire)
+  sends each ITEM still there, or still in the air, to the server's post, one piece an item. Each comes from the
+  **Lost and Found**, under *Left in the Burning Court*, *Left at the Last Moment* or *Left at a Redoubt*, with a body
+  that says where it was left and that a claim puts it in the pack of the online character being played. The gold goes
+  to the purse, as ever.
+- **The chat says it** at once (`spoils.lost.mailed`: *What you left on the floor will wait for you in your mailbox,
+  beside the hourglass in the pause menu.*). When the send lands the box looks again, so the envelope counts the pieces
+  and the world tab gives the post's own notice.
+- **Claim all.** The mailbox window shows *Claim all (N)* above the list while two or more items wait
+  (`net/serverPost.js` PostBox.claimAll). It claims one after another, each its own realm act as a press of Claim is.
+  A piece claimed meanwhile is passed over, and it stops at the first refusal the next claim would meet too, saying what
+  landed. Its buttons are down while it runs. The window is the post's own design (SERVER-POST, `10-UI/UI-Arc.md`), not
+  a DFU layout, so it cites that record.
+- **A first ember brings its book.** A claimed piece goes into the pack by a spoil's own door (`scenes/world.js`
+  takeGateSpoil), so a first Sigil Stone from the Lost and Found brings *On the Burning Doors* as the floor's does
+  (WB12c).
+- **When the mailbox cannot take post, the floor goes into the pack as before.** That is a box not known to take it (a
+  guest's - the post is a registered account's; signed out; not yet looked at this sitting), another account's spoils
+  on this device, or a crash record this device could not keep. So is a send the service refuses for good, or one not
+  landed after LOST_OWED_MAX_MS (eight days): *What you left on the floor could not be sent to your mailbox, so it is in
+  your pack.* (`spoils.lost.back`).
+
+Where: the court's pool (the Oblivion Gate) and the Hour's (the Brass Remnant, and an Elite Breach's Redoubts, which EG-E
+throws there). Unchanged: spoils given straight into the pack with no floor (a receipt that comes outside its court, a
+Redoubt claimed away from its hall, a Reliquary), and the raids', the serpent's and the stars' pools, which have no
+floor.
+
+### The pool (`scenes/spoilsPool.js`)
+
+- **ONE WRITE.** The hand-off rewrites the spew's crash record once. Its `pieces` become the ones the pack holds (pressed,
+  and gathered now), and the rest its `mail` (`{ i, piece }`, each piece's place in the spoils as rolled, which is the
+  service's once-a-piece key), with the account and when (`acct`, `mailAt`). The mailed pieces leave the floor and never
+  touch the pack. A crash between two writes could have handed a piece to both; this way the crash's door (recoverSpoils)
+  hands the pack's part alone, and the next sitting sends the mail.
+- **Sent, and asked again** (`mailOwed`): each record's pieces in one send, on its own account's session alone (the
+  pool's `me`, AUDIT SD II's law for the spent words). A yes lets them go. A refusal that will never be a yes
+  (`net/lostLaw.js` LOST_FINAL: no mailbox, a send's shape, the item law, past the window, the account's bound, a body
+  past its bound, a service from before the route) gives them to the pack: the record first, then the pack, held for the
+  next save. Anything else (no session, offline, the service's own failure, a kill not yet recorded) is asked again on
+  the pool's own timer: LOST_RETRY_MS (30 s) on, twice as long after each round that owed something and landed nothing,
+  to LOST_RETRY_MAX_MS (30 minutes). Found while reviewing: a flat 30 s would ask a kill the service never records
+  (a receipt its own claim refused) some 23,000 times in the window, where this asks a few hundred. A pool first asks
+  LOST_FIRST_MS (20 s) after it is made, for what an earlier sitting left owed. Pieces another character left wait for
+  that character to stand up.
+- **Only onto a record the device holds.** A crash record kept in the sitting's memory alone (a full quota, a private
+  window - AUDIT WB A6) dies with the tab, and its receipt is given again (AUDIT WBX S5). A floor owed to the mailbox on
+  one could be lost, or met twice, so it goes to the pack, as ever.
+- **A record owing the mailbox outlives what would end it.** The save that holds its pack's part leaves it with `pieces`
+  empty and its mail still owed. The records' cap neither counts it nor lets it go.
+- **A new burst over a floor not yet left gathers that floor first.** FOUND building this, and fixed with it: an Elite
+  Breach's next Redoubt threw its spoils over the last one's. The leftovers were then on no floor and in no pack, their
+  record never held, and the next boot handed back the whole of it, pressed pieces too. Now they go where leaving would
+  send them: the mailbox, or the pack.
+
+### The service (`server-account/src/lostSpoils.js`, `POST /v1/post/lost`)
+
+- **A registered account's alone**, the post's wall (`post-needs-account`).
+- **Under a kill the service recorded.** The client rolls the spoils (the roll reads the player's mods and prefs as well
+  as the seed - `systems/gate/gateSpoils.js`), so the service cannot roll them again. What it can say is that a fall
+  happened, to this account, and paid: the kill row the relay's receipt made. That is `gate_kills (day, account)`,
+  `sd_kills (slot, account)`, or `eg_redoubts (b, account, w)` with `paid = 1` - a Redoubt taken twice in a week pays
+  its gold alone. A send names its kill by the pool's own day (`net/lostLaw.js` lostKillOf). No row is `lost-no-kill`,
+  asked again, since the receipt's own claim may still be on its way. A row older than LOST_WINDOW_S (eight days, a day
+  past a receipt's week) is `lost-spent`.
+- **Once a piece.** A piece's batch is its kill and its place (`lost-gate-<day>-<i>`, `lost-sd-<slot>-<i>`,
+  `lost-eg-<breach>-<w>-<i>`), under 0093's one-a-batch index. What is already there is answered as sent BEFORE any
+  other check, so a send that landed with its answer lost is never refused later (past the window, past the bound) into
+  a second copy in the pack. A place is under LOST_INDEX_MAX (32), so no kill holds more.
+- **The shape and the law.** Places none twice; an item the box can name (`postItemHead`); no crafted `provenance`; a
+  checkpoint's `uid` dropped, so the post's piece is a new one to the ledger (INT4); every item judged by the item law
+  (`itemFindings`, the checkpoint's own - `lost-item`, the whole send refused).
+- **The bounds.** An item's record within LOST_ITEM_BYTES (4 KiB). The route's body is read to LOST_BODY_MAX (32 KiB);
+  every other route reads 4 KiB (`service.js` MAX_BODY_BYTES), and the largest spoils send 4.4 KB - found while
+  building, measured over the gate's portent nights, the Brass Remnant's and a Valkynaz's Redoubt. An account's
+  unclaimed Lost and Found pieces stop at LOST_WAITING_MAX (150), past which a floor goes to the pack (`lost-full`).
+- **Its words are the service's** (`LOST_WORDS`, `LOST_SENDER`), as the Spire's letters' are (`eg.js` EG_STAKE_POST): the
+  service writes them, and the client reads them off the box.
+
+### The claim is charged to the budget (INT5)
+
+A Lost and Found piece is claimed as any gift is (`post.js` claimPost, the guild vault's take), but its gain is never
+WITNESSED. `prepareRealmRecord` takes `witness: false` for a `lost-` batch, and the budget charges the piece as it
+charges that piece taken off the floor - the allowance the kill's receipt filled (`grantSpoils`). Witnessed, the mailbox
+would have been a road past the budget: a modified client could take a piece off the floor and mail it too, and the
+mailed copy would cost nothing. The developers' gifts, which the service mints, are witnessed as before. A piece claimed
+into another of the account's characters than the one that fought is that character's gain, charged to its own bucket
+(measured, not enforced - `BUDGET_DEFAULT.enforce`).
+
+### The four hosts
+
+`scenes/world.js` builds the door (`net/lostSpoils.js` lostSpoilsMail, over its post box, its lines in the chat) and
+hands it to the court's pool and the Hour's. `scenes/dungeonContext.js` and `scenes/worldModes.js` stand those floors
+through the world host's pools (the press, the plaque) and need nothing of their own. `scenes/exterior.js`, the fixed
+city, stands no boss floor. bootWorld takes ten logical lines (36,255 at the merge of main, under its 36,256).
+
+### Versions, words, pins
+
+- acct173 (acct168 on its branch, renumbered past STAFF-PANEL1's acct168, CRAFT-PAYS' acct169, PISTOLET's acct170, AUDIT COLLECTIONS-II's acct171 and SEA VENTURES' acct172 at the merge). No migration (server_post as it stands) and no relay change (the relay bundles none of these files). PIN
+  MOVED: the account version's pins (20 test files, among them the history `auditscale2_acct.test.js` holds them to) and its ten
+  version records, re-aimed by content, each dead - GATEKEYS-the-empty-var-back once its own test was green, which asked
+  first that the deploy carry the new files: the account Worker now bundles `src/net/lostLaw.js`, and through it `systems/superDungeon/sdSpoils.js`, `systems/eliteGates/egSpoils.js` and
+  `systems/eliteGates/egLordArms.js` (the floor's day-key parsers live there - ONE EXPORT), so the account deploy's path
+  filter (`.github/workflows/account-deploy.yml`) names all four, or a change to them would never deploy.
+- Nine new strings, drafted in the thirteen whole languages (`tools/l10nInSession.mjs`): the pool's two
+  (`spoils.lost.mailed`, `spoils.lost.back`), the window's two (`post.claimAll`, `post.claimedAll`), and a sentence for
+  each word the route can say (`account.refusal.lostPieces`, `lostItem`, `lostNoKill`, `lostSpent`, `lostFull` -
+  `test/server/accountflow.test.js` ACC1e walks the service for them; the pool turns each into its own line). The
+  drafting languages wait for them as for every new key.
+- Port-Ledger A: the ONLINE row names the law, the door and the service's file (LOST-SPOILS, beside MAIL1).
+- Pins: `test/server/lostspoils_service.test.js` (5), `test/scenes/lostspoils_pool.test.js` (7) and
+  `test/net/lostspoils_client.test.js` (4). The client's includes the whole road over the real service: a gate's receipt
+  claimed, its floor left, each item in the mailbox, the envelope counting them, and Claim all into the realm record.
+  Every floor in them is the game's own roll; 72,152 rolled pieces were judged by the item law while building, and none
+  was refused.
+- PIN MOVED: SERVER-POST's wiring pin (`test/net/serverpost_client.test.js`) - the claimed item's door is takeGateSpoil.
+- Mutants: `tools/mutants/lostspoils.json`, 37, all dead. Re-aimed by content, each dead: `int2.json` INT5-the-write-unwitnessed
+  and `fb1014_summonrepair.json` SUMMON-REPAIR-the-gold-unwitnessed (the `witness` bind); `serverpost.json`
+  SERVERPOST-the-dropped-batch-a-refusal (the status map's new row); `wb5.json` WB5-the-gather-leaving-pieces and
+  WB5-the-record-without-its-pieces, `auditwb_spoils.json` AUDWB-A7-one-slot and AUDWB-A7-unbounded, `auditraid.json`
+  RAID-R8a-records-cap-shared, `raid4b.json` RAID4b-pool-keys-ignored and `sd9e.json` SD9E-the-gates-words (the
+  pool's gather and its records' cap, moved into their own functions).
+- Found and left, not this slice's: two records aimed at `scenes/spoilsPool.js` SURVIVE their pins on main as here,
+  measured on a clean checkout of main - `audit_wb9.json` AUDIT-WB9-flown-over-the-collider-alone (the flight over the
+  kept floor's plane) and `wb12d.json` WB12d-the-gold-s-dress-moved-by-r (the second ember's picture drawn off the seed).
+  Every other record aimed at the files this slice changed (109) is dead.
+- Left, said: not seen in a running game client against a deployed service (the client's pin runs the whole road over
+  the real Worker); the Lost and Found's own words are English, as the developers' post is.

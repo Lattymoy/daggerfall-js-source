@@ -302,8 +302,8 @@
   {
     "name": "SCALE5c-hello-count-unmoved",
     "file": "server/src/index.js",
-    "old": "    this._busCountMoved();\n    this._fanRoster(vws,",
-    "new": "    this._fanRoster(vws,",
+    "old": "    this._busCountMoved();\n    if (!a.hid) this._fanRoster(vws,",
+    "new": "    if (!a.hid) this._fanRoster(vws,",
     "tests": [
       "test/net/scale5c.test.js"
     ],

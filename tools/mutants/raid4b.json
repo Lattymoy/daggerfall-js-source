@@ -533,8 +533,8 @@
   {
     "name": "RAID4b-pool-keys-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  me = () => null,\n}) {\n  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
-    "new": "  me = () => null,\n}) {\n  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
+    "old": "  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
+    "new": "  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]

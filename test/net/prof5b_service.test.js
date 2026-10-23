@@ -218,7 +218,8 @@ test('PROF5b service: an auction with no bid closes unsold and its piece comes b
   assert.equal((await s.call('/v1/market/report', { listing: r.id }, ann.secret)).status, 200);
   const view = await s.read(mod, 'auctions');
   assert.equal(view.body.rows.find((x) => x.id === r.id).reports, 1, 'counted for the moderators');
-  assert.equal((await s.call('/v1/market/remove', { listing: r.id }, mod.secret)).status, 200);
+  assert.equal((await s.call('/v1/market/remove', { listing: r.id }, mod.secret)).status, 403, 'STAFF-PANEL2-FIX: a pull is an Admin\'s, never a Moderator\'s');
+  assert.equal((await s.call('/v1/market/remove', { listing: r.id }, mac.secret)).status, 200, 'a developer\'s');
   assert.equal(s.balance(ann), 10_000 - 200);
   await s.read(ann, 'mine');
   assert.equal(s.balance(ann), 10_000, 'the voided bid returned');

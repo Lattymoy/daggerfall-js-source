@@ -220,6 +220,15 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
       return;
     }
     if (!b.post.length) { empty('Your mailbox is empty.'); return; }
+    // LOST-SPOILS: a boss's floor's leftovers come a piece an item - claimed together (net/serverPost.js PostBox.claimAll)
+    const waiting = b.post.filter((/** @type {any} */ p) => p.item && !p.claimed).length;
+    if (waiting >= 2) {
+      const row = el('div', 'pm-foot pm-claimrow');
+      const all = keyed(button('pm-claimall', b.claimingAll ? 'Claiming...' : t('post.claimAll', 'Claim all ({n})', { n: waiting }), () => claimAllNow()), 'claimall');
+      if (b.busy || b.claimingAll) all.disabled = true;
+      row.append(all);
+      view.append(row);
+    }
     const list = el('div', 'pm-list');
     for (const p of b.post) {
       const row = /** @type {any} */ (keyed(el('button', `pm-row${p.read ? '' : ' unread'}${p.item && !p.claimed ? ' gift' : ''}`), p.id));
@@ -262,7 +271,7 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
       else {
         const claim = keyed(button('pm-claim', b.busy ? 'Claiming...' : 'Claim', () => claimOne(head.id)), 'claim');
         claim.setAttribute('aria-label', `Claim ${head.item.name}`);
-        if (b.busy) claim.disabled = true;
+        if (b.busy || b.claimingAll) claim.disabled = true;   // LOST-SPOILS: nor while a Claim all runs
         card.append(claim);
       }
       piece.append(card);
@@ -321,6 +330,20 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     const r = await going;
     if (r.ok) { tell(`${r.item?.name ?? 'The item'} is in your pack.`, true); focusTo = 'back'; }
     else tell(postRefusalText(r.error));
+    draw(true);
+  };
+  /** LOST-SPOILS: every item waiting, claimed one after another - what landed said, and where it stopped. */
+  const claimAllNow = async () => {
+    const b = box();
+    if (!b || b.busy || b.claimingAll) return;
+    tell('');
+    const going = b.claimAll();
+    focusTo = 'claimall';
+    draw(true);
+    const r = await going;
+    const n = r.items?.length ?? 0;
+    if (r.ok) tell(t('post.claimedAll', '{n, plural, one {# item is} other {# items are}} in your pack.', { n }), true);
+    else tell(n ? `${t('post.claimedAll', '{n, plural, one {# item is} other {# items are}} in your pack.', { n })} ${postRefusalText(r.error)}` : postRefusalText(r.error));
     draw(true);
   };
   const throwOne = async (/** @type {string} */ id) => {

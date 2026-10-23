@@ -121,7 +121,9 @@ test('A6: a technique is the LEAD hand\'s - with the lead reloading it waits, ne
 });
 
 test('A4: THE RECORD\'S BALANCE, MEASURED IN THE GAME - shots a minute through the machine, damage through the impact a shot lands on: a pair under x1.25 the Thunderlock (bible/05-Combat/Dwarven-Pistolet.md "The balance")', () => {
-  const count = (pw, seconds) => { let n = 0; runFor(pw, seconds, () => { if (pw.machine.state === 'Idle' && pw._attack('StrikeDown')) n++; }); return n; };
+  // AUDIT PISTOL-PORT A7: through the game's own doors - the trigger pulled every frame (each gun's machine decides what
+  // fires: a pair's second pistol leaves mid-shot) and the HITS the hosts are handed counted, never the pulls
+  const count = (pw, seconds) => { let n = 0; for (let t = 0; t < seconds; t += 1 / 60) { pw._attack('StrikeDown'); n += pw.update(1 / 60).filter((e) => e === 'hit').length; } return n; };
   const pairShots = count(pairWeapon(createPistolet(), createPistolet()), 60);
   const oneShots = count(pairWeapon(createPistolet(), null), 60);
   const rifleShots = count(pairWeapon(createThunderlock(), null), 60);

@@ -233,10 +233,17 @@ export function damageShieldPool(entity, dmg) {
  */
 let _damageVeto = null;
 const _staff = { god: false, fly: false };   // STAFF1: the staff's switches (setStaffPowers, below) - declared above their readers (BOOT-TDZ)
+/** STAFF-PANEL5-FREEZE (net/staffChat.js; design doc "DFO Staff Panel: design", Freeze player): STAFF FROZE THIS PLAYER until
+ *  then (epoch seconds) - the relay's word, never saved. While it stands the motor is held as paralysis holds it (every
+ *  host's paralysis gate ORs `staffFrozen()`) and no blow is delivered (the veto's door below): mob, "the player can only
+ *  look around". Only this screen's - the relay and the account service hold a game that ignores it. */
+let _frozenUntil = 0;
+export function setStaffFrozen(/** @type {unknown} */ until) { _frozenUntil = Number.isSafeInteger(until) && /** @type {number} */ (until) > 0 ? /** @type {number} */ (until) : 0; }
+export const staffFrozen = (nowS = Date.now() / 1000) => _frozenUntil > nowS;
 export function registerPlayerDamageVeto(fn) { _damageVeto = typeof fn === 'function' ? fn : null; }
 /** For a caller that needs to know a blow would be withheld before it
  *  spends anything on delivering one. */
-export const playerDamageWithheld = () => { if (_staff.god) return true; try { return !!_damageVeto?.(); } catch { return false; } };   // STAFF1: /god withholds every blow at the veto's own door
+export const playerDamageWithheld = () => { if (_staff.god || staffFrozen()) return true; try { return !!_damageVeto?.(); } catch { return false; } };   // STAFF1: /god withholds every blow at the veto's own door; STAFF-PANEL5-FREEZE: and so does a staff freeze
 
 /** STAFF1 (net/staffCommands.js): THE STAFF'S OWN TWO SWITCHES - /god (no blow delivered: the veto's door above, so a
  *  caller asking before it spends a blow is told too) and /fly (levitation without the spell: every host's motor-flag

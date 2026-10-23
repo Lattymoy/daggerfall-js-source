@@ -29,13 +29,16 @@
 // is redrawn by the clock besides, so an answer Discord gave up on still ends in the true card. DISMISS voids the
 // case's automatic mutes and lifts one still running (sanctions.js voidAutoMutes). /mod names an account by its id
 // FIRST (DISCORD-1: an account id is a valid handle, so a decoy named after the reported player's id took the ban).
+// STAFF-PANEL2-FIX: every press and /mod act is safety.js modAct's - the code the staff panel and the game's moderators
+// share - so a case another staff member holds in the panel, a case another act already took (one sanction a case), a
+// spawn case (an Admin's) and an Admin's sanction (an Admin's to lift) are refused here as at every other door.
 // ═══════════════════════════════════════════════════════════════════
 
-import { muteAccount, displayName, isMuted } from './accounts.js';
+import { displayName, isMuted } from './accounts.js';
 import { canModerate } from './titles.js';
 import { importPublicKey, ID_RE } from '../../src/net/identityToken.js';
-import { actionStatement, banAccount, unbanAccount, findAccount, strikesLook, lawOrder, pushLaw, reasonOf, muteMinutesOk, strikesOf, isBanned, bannedUntil, voidAutoMutes } from './sanctions.js';
-import { resolveCase, CASE_CLAIM_S } from './safety.js';
+import { findAccount, strikesLook, pushLaw, strikesOf, isBanned, bannedUntil } from './sanctions.js';
+import { CASE_CLAIM_S, modAct, CLICK_RE } from './safety.js';
 import { usageOf } from './discordCommands.js';
 import { GRANT_CASE_TAB } from './grants.js';   // FOE-BOUNDS: a spawn grants' case is its count's, not the chat reviewer's (read at a card's call, never at load)
 import { LADDER_BAN_AT, ladderMinutes, BAN_FOREVER, banUntil, reportReasonLabel } from '../../src/net/safety/safetyLaw.js';
@@ -235,47 +238,22 @@ async function actorOf(db, env, discordId, nowS) {
 /** The order to the relay's door, pushed after Discord is answered where the Worker allows (DISCORD-4). */
 const pushAfter = (io, env, order) => { const p = pushLaw(env, io.fetchFn, order); if (io.later) io.later(p); return p; };
 
-/**
- * A MUTE, a moderator's from Discord: MOD1's muteAccount (the authority and the bounds), its act in the record, and the
- * order pushed to the relay's door. A case's button (`keepLonger`) never shortens a mute that stands longer (DISCORD-5):
- * its act is recorded at the longer end and the mute stands. Answers the mute's end or `{ error }`.
- */
-async function muteFrom(ctx, env, io, actor, row, minutes, reason, caseId, keepLonger = false) {
-  if (!muteMinutesOk(minutes)) return { error: 'bad-minutes' };
-  const actorName = `${displayName(actor)} (Discord)`;
-  if (keepLonger && minutes && isMuted(row, ctx.nowS) && Number(row.muted_until) >= ctx.nowS + minutes * 60) {
-    if (canModerate(row, env)) return { error: 'protected' };
-    await actionStatement(ctx.db, { target: row.id, kind: 'mute', until: Number(row.muted_until), reason: reasonOf(reason), actor: actor.id, actorName, caseId, at: ctx.nowS }).run();
-    return { ok: true, until: Number(row.muted_until), kept: true };
-  }
-  const r = await muteAccount(ctx, actor, env, { target: row.id, minutes });
-  if (r.error) return r;
-  await actionStatement(ctx.db, { target: row.id, kind: minutes ? 'mute' : 'unmute', until: r.until || null, reason: reasonOf(reason), actor: actor.id, actorName, caseId, at: ctx.nowS }).run();
-  pushAfter(io, env, await lawOrder(env, ctx.subtle, ctx.nowS, { s: row.id, mu: r.until }));
-  return r;
-}
-
-/** A BAN (or an unban), a moderator's from Discord - sanctions.js, then the order pushed. */
-async function banFrom(ctx, env, io, actor, row, days, reason, caseId, keepLonger = false) {
-  const r = days === null
-    ? await unbanAccount(ctx, actor, env, { target: row.id, actorName: `${displayName(actor)} (Discord)` })
-    : await banAccount(ctx, actor, env, { target: row.id, days, reason, caseId, actorName: `${displayName(actor)} (Discord)`, keepLonger });
-  if (r.error) return r;
-  pushAfter(io, env, await lawOrder(env, ctx.subtle, ctx.nowS, { s: row.id, bn: r.until }));
-  return r;
-}
-
 /** The words a refusal says to a moderator in Discord. */
 const REFUSED = Object.freeze({
   'not-moderator': 'You are not a moderator in the game.', protected: 'Moderators cannot be muted or banned.', 'no-player': 'Nobody has that name.',
   ambiguous: 'More than one guest has that name - use the account id.', 'bad-minutes': 'A mute is 1 to 10080 minutes.', 'bad-days': 'A ban is 0 (for good) to 365 days.',
   'not-banned': 'That account is not banned.',
+  // STAFF-PANEL2-FIX (safety.js modAct)
+  'staff-claimed': 'Another staff member has this case in the staff panel.', 'case-acted': 'Another moderator is acting on this case now.',
+  'case-closed': 'That case is already closed.', 'not-developer': 'Only an Admin can act on a spawn case.',
+  'admin-sanction': 'An Admin set this - only an Admin can lift or shorten it.',
 });
 const refusedText = (e) => REFUSED[/** @type {keyof typeof REFUSED} */ (e)] ?? `Refused: ${e}.`;
 /** A case's card as it stands, drawn in place of the pressed one. */
 const redraw = async (ctx, caseId) => ({ type: 7, data: await cardOf(ctx.db, caseId, ctx.nowS) });
 
-/** A press of a card's button: the case claimed, the act, the case resolved, the card redrawn in place. */
+/** A press of a card's button: the case claimed, the act (safety.js modAct, which resolves the case), the card redrawn
+ *  in place. */
 async function onPress(ctx, env, body, actor, io) {
   const m = /^safe:(m30|m1d|m7d|b30|dis):([0-9a-f]{16})$/.exec(String(body?.data?.custom_id ?? ''));
   if (!m) return say('That button is not one of the safety cards\'.');
@@ -284,31 +262,23 @@ async function onPress(ctx, env, body, actor, io) {
   if (!c) return say('That case is gone.');
   if (c.status !== 'open') return redraw(ctx, caseId);
   // THE CLAIM: one press acts; another inside CASE_CLAIM_S is shown the card as it stands
-  const claimed = await ctx.db.prepare("UPDATE mod_cases SET claimed_at = ?2 WHERE id = ?1 AND status = 'open' AND (claimed_at IS NULL OR claimed_at < ?3)")
+  const claimed = await ctx.db.prepare('UPDATE mod_cases SET claimed_at = ?2 WHERE id = ?1 AND status = \'open\' AND (claimed_at IS NULL OR claimed_at < ?3)')
     .bind(caseId, ctx.nowS, ctx.nowS - CASE_CLAIM_S).run();
   if (!claimed?.meta?.changes) return redraw(ctx, caseId);
   const release = () => ctx.db.prepare('UPDATE mod_cases SET claimed_at = NULL WHERE id = ?1').bind(caseId).run();
-  const row = await ctx.db.prepare('SELECT * FROM players WHERE id = ?1').bind(c.target).first();
-  if (!row) { await release(); return say('That account is gone.'); }
   const a = CARD_ACTS[/** @type {keyof typeof CARD_ACTS} */ (act)];
-  const by = `${displayName(actor)} (Discord)`;
-  let resolution, status = 'actioned';
-  if ('minutes' in a) {
-    const r = await muteFrom(ctx, env, io, actor, row, a.minutes, `case ${caseId}`, caseId, true);
-    if ('error' in r) { await release(); return say(refusedText(r.error)); }
-    resolution = r.kept ? `muted (a longer mute stands, until ${when(r.until)})` : `muted ${minutesWord(a.minutes)}`;
-  } else if ('days' in a) {
-    const r = await banFrom(ctx, env, io, actor, row, a.days, `case ${caseId}`, caseId, true);
-    if ('error' in r) { await release(); return say(refusedText(r.error)); }
-    resolution = r.until > banUntil(a.days, ctx.nowS) ? `banned (a longer ban stands, ${banWord(r.until)})` : `banned ${a.days} days`;
-  } else {
-    await actionStatement(ctx.db, { target: row.id, kind: 'dismiss', actor: actor.id, actorName: by, caseId, at: ctx.nowS }).run();
-    const order = await voidAutoMutes(ctx, env, { caseId, row, actor, actorName: by });
-    if (order) pushAfter(io, env, order);
-    resolution = 'no action';
-    status = 'dismissed';
-  }
-  await resolveCase(ctx.db, { caseId, status, by: displayName(actor), resolution, nowS: ctx.nowS }).run();
+  const { nowS } = ctx;
+  /** @type {any} */
+  const ask = 'minutes' in a
+    ? { act: 'mute', minutes: a.minutes, resolution: (/** @type {any} */ r) => (r.kept ? `muted (a longer mute stands, until ${when(r.until)})` : `muted ${minutesWord(a.minutes)}`) }
+    : 'days' in a
+      ? { act: 'ban', days: a.days, resolution: (/** @type {any} */ r) => (r.until > banUntil(a.days, nowS) ? `banned (a longer ban stands, ${banWord(r.until)})` : `banned ${a.days} days`) }
+      : { act: 'dismiss' };
+  // the interaction's own id is the press's one-time id
+  const click = typeof body?.id === 'string' && CLICK_RE.test(body.id) ? body.id : null;
+  const r = await modAct(ctx, actor, env, { ...ask, target: c.target, caseId, click, reason: `case ${caseId}`, actorName: `${displayName(actor)} (Discord)`, from: 'Discord', keepLonger: true },
+    { push: (o) => { pushAfter(io, env, o); } });   // DISCORD-4: handed to `later`, never awaited before the answer
+  if ('error' in r) { await release(); return r.error === 'no-player' ? say('That account is gone.') : say(refusedText(r.error)); }
   return redraw(ctx, caseId);
 }
 
@@ -327,7 +297,8 @@ async function onCommand(ctx, env, body, actor, io) {
   if ('error' in row) return say(refusedText(row.error));
   const name = displayName(row);
   const reason = optionOf(sub, 'reason');
-  const closed = (resolution) => resolveCase(ctx.db, { target: row.id, status: 'actioned', by: displayName(actor), resolution, nowS: ctx.nowS }).run();
+  const by = `${displayName(actor)} (Discord)`;
+  const push = (/** @type {string} */ o) => { pushAfter(io, env, o); };   // DISCORD-4: never awaited before the answer
   switch (sub?.name) {
     case 'lookup': {
       const r = await strikesLook(ctx, actor, env, { target: row.id });
@@ -338,16 +309,16 @@ async function onCommand(ctx, env, body, actor, io) {
     }
     case 'mute': case 'unmute': {
       const minutes = sub.name === 'unmute' ? 0 : Number(optionOf(sub, 'minutes') ?? ladderMinutes(await strikesOf(ctx.db, row.id, ctx.nowS)));
-      const r = await muteFrom(ctx, env, io, actor, row, minutes, reason, null);
+      // a mute closes the account's open chat case, as the moderator's act (DISCORD-11)
+      const r = await modAct(ctx, actor, env, { act: 'mute', target: row.id, minutes, reason, actorName: by, from: 'Discord', resolution: () => `muted ${minutesWord(minutes)} (/mod)` }, { push });
       if ('error' in r) return say(refusedText(r.error));
-      if (minutes) await closed(`muted ${minutesWord(minutes)} (/mod)`);
       return say(minutes ? `${md(name)} is muted for ${minutesWord(minutes)}.` : `${md(name)} can chat again.`);
     }
     case 'ban': case 'unban': {
       const days = sub.name === 'unban' ? null : Number(optionOf(sub, 'days') ?? 30);
-      const r = await banFrom(ctx, env, io, actor, row, days, reason, null);
+      const r = await modAct(ctx, actor, env, days === null ? { act: 'unban', target: row.id, actorName: by, from: 'Discord' }
+        : { act: 'ban', target: row.id, days, reason, actorName: by, from: 'Discord', resolution: (/** @type {any} */ x) => `banned ${banWord(x.until)} (/mod)` }, { push });
       if ('error' in r) return say(refusedText(r.error));
-      if (days !== null) await closed(`banned ${banWord(r.until)} (/mod)`);
       return say(days === null ? `${md(name)} is unbanned.` : `${md(name)} is banned ${banWord(r.until)}.`);
     }
     default: return say(usageOf('mod'));   // DISCORD-CODE: the declared subcommands, named (discordCommands.js)

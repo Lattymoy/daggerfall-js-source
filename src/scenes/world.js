@@ -361,7 +361,7 @@ import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a ques
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
 import { registerSpirePotionLaw, registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW (two restoring potions a hall); Iron Footing on the spans
 import { accountEg } from '../net/accountClient.js';   // EG-PLAY: the Weir Keys, the open, the admission, the claims
-import { registerPlayerDeathSave } from '../characters/playerEntity.js';   // EG-FULL: the fall's death save (the witness's damage mod rides main's import of registerPlayerDamageMod, below) (EG-H2: the Spire's Levitate ward is the one ward's, by the made level's law)
+import { registerPlayerDeathSave, staffFrozen } from '../characters/playerEntity.js';   // EG-FULL: the fall's death save (the witness's damage mod rides main's import of registerPlayerDamageMod, below) (EG-H2: the Spire's Levitate ward is the one ward's, by the made level's law)
 import { registerMadeLevelHere, madeRuleHere, madeSaysHere } from '../systems/madeLevel.js';   // EG-H2 (Elite-Gates.md section 24): THE MADE LEVEL'S RULES - every per-level door below asks the one law
 import { registerJumpForgiveness } from '../player/motor.js';   // EG-H2 (section 10.8): THE FORGIVENESS - the Spire's jump buffer and late press, the made level's law's
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS, SD_ARENA_FLOORS, arenaHolds } from '../world/superDungeon/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
@@ -861,6 +861,8 @@ import {
 import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: online, Project Legacy's lines are the realm's
 import { reclaimFromDevice, reclaimLines, crossLeveling, LEVELING_CROSS_LINE } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot; LEVEL-ONLINE-3: the realm's one leveling
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
+import { createStaffMessages } from '../net/staffMessages.js';   // STAFF-PANEL5-MESSAGE: Message on screen, the game's half
+import { createStaffFreezeHost } from './staffFreezeHost.js';   // STAFF-PANEL5-FREEZE: the staff freeze's screen and the Staff tab
 import { skyClassicMinutes, wallMsForSkyMinutes, skyMinutesPerMsAt } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { WILD_DATA_MAX, WILD_ITEMS_MAX, POSE_RIDE } from '../net/wire.js';   // INT9 (AUDIT): a deposit's chunks, bounded by the wire's frame; COATS3D: POSE_RIDE - a peer on a horse rides the 3D one
@@ -910,6 +912,7 @@ import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
 import { PostBox, postNoticeText } from '../net/serverPost.js';   // SERVER-POST: the server's post the pause face's mailbox draws
+import { lostSpoilsMail } from '../net/lostSpoils.js';   // LOST-SPOILS: a boss's floor's leftovers to the mailbox
 import { GuildBook } from '../net/guild/guildBook.js';   // GUILD1b: the guild the Guild tab draws
 import { sellProceeds } from '../systems/tradeModes.js';   // GUILD-LETTER: a withdrawal weighed as the trade window weighs a sale
 import { realmLetterOfCredit } from '../net/realm/realmGoldLaw.js';   // GUILD-LETTER: the letter the service writes on a realm record, one maker
@@ -1053,7 +1056,8 @@ import { createDread, createDreadStorm, dreadLight, dreadCloudGlow, DREAD_KEY_DI
 import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event, a dev's live event
 import { createSunbaby, sunbabyLight, SUNBABY_WEATHER, sunbabyKey, createSunbabyRain } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's sky of flowers, the clear day and the light under it; SUNBABY2: the wrath's key light and its fireballs
 import { relayKnowsLiveEvent } from '../net/wire.js';   // SUNBABY1: a word staged only on a relay that knows it
-import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer } from '../net/staffTeleport.js';
+import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer, staffTpLine } from '../net/staffTeleport.js';   // STAFF-PANEL5-FOLLOW: and the line a /tp @player ends on
+import { staffFollowOnPage } from './staffFollowHost.js';   // STAFF-PANEL5-FOLLOW: the game's staff hook (net/staffHook.js) and the host's half of a follow
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom, privateInteriorOf } from '../net/privateInterior.js';
 import { createInstanceDoor } from './instanceDoor.js';   // INSTANCES: public or an instance, at the door (bible/11-Multiplayer/Instances.md)
 // TESTBUILD: every player may use the staff's /god (/godmode), /fly, /heal, /tp - god mode also lifts the zone's travel law and makes map journeys instant
@@ -20120,7 +20124,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // the reset always found it null and always ended the run. This snapshot is taken the moment death starts
   // (the presenter above, and the frame below as a backstop) and the reset reads IT, not the cleared live state.
   let _deathWasOnline = null;
-  let chatLog = null, chatPanel = null, chatLinks = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession)
+  let chatLog = null, chatPanel = null, chatLinks = null, staffHost = null;   // CHAT1: the log, the panel, one channel session per tab (Map tabId -> OnlineSession); STAFF-PANEL5-FREEZE: the staff freeze and chat (scenes/staffFreezeHost.js)
   // ONE-SEAT (Mac: "the player can only have one character only at a time. Like they shouldnt be able to open multiple
   // tabs and join as different characters"): THIS TAB'S HOLD ON THE PLAYER'S ONE SEAT. Two arms say it is lost: the
   // hub's (it closed this tab's link - another tab or device of the account claimed; the sessions' own `superseded`)
@@ -20152,7 +20156,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let bountyHost = null;   // BOUNTY1: made below, beside the party's marks; read late by the maps, the pose and the boards
   let social = null, _partyComposedAt = -Infinity, _partyPose = null;   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
   let partyPing = null, _partyPingTry = -Infinity;   // PARTY-PING: the look's point, wired below
-  const chatSafety = createChatSafetyHost({ log: () => chatLog, links: () => [...(chatLinks?.values?.() ?? []), online].filter(Boolean), social: () => social, minter: () => identityMinter, panel: () => chatPanel });   // SAFE1-SAFE7 (bible/11-Multiplayer/Chat-Safety-Arc.md) - AUDIT SAFE CLIENT-2: the minter a ban lets go of; CLIENT-12: the field a slowed line goes back to
+  const chatSafety = createChatSafetyHost({ log: () => chatLog, links: () => [...(chatLinks?.values?.() ?? []), online].filter(Boolean), social: () => social, minter: () => identityMinter, panel: () => chatPanel, glyphs: () => _staffGlyphs, teleport: (id) => runStaffCommand(chatLog?.active, { cmd: 'tp', player: { id } }) });   // STAFF-PANEL2: an Admin's (developer) or a Moderator's chat lines carry no Report; STAFF-PANEL2-CHATMENU: their acts instead, TP by the line's socket through /tp's own door   // SAFE1-SAFE7 (bible/11-Multiplayer/Chat-Safety-Arc.md) - AUDIT SAFE CLIENT-2: the minter a ban lets go of; CLIENT-12: the field a slowed line goes back to
   /** CONCEAL-MATE: a peer in my party - the test player/socialPick.js openPeers is handed, so a concealed mate stays
    *  open to the F key, the Nearby list, a page and a gift. A declaration: the street's pick reads it from above. */
   function isPartyMate(id) { return !!social?.party && social.isPartyPeer(id); }
@@ -20694,9 +20698,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     // Put the observer at the snapshot while frozen so streaming and the
     // multiplayer room load near the target, then ask again before final placement.
-    const preview = staffLanding(d);
-    if (!capsuleFits(player.collider, preview, player.height)) throw new Error('The target landing is blocked. Exact teleport was not completed.');
-    modes?.setPlayerLocalPosition?.(preview);
+    const preview = d.pos ? staffLanding(d) : null;   // STAFF-PANEL5-FOLLOW: a where note's place names no spot - staff stand where it put them
+    if (preview && !capsuleFits(player.collider, preview, player.height)) throw new Error('The target landing is blocked. Exact teleport was not completed.');
+    if (preview) modes?.setPlayerLocalPosition?.(preview);
     playerSpawned = true;
     if (d.kind !== 'abyss') ohAbyss?.onRespawnerComplete();
     if (d.boat) {
@@ -20735,7 +20739,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try {
       let preparedKey = null;
       return await followStaffPlayer(name, {
-        ask: (target) => client.ask(target),
+        ask: (target) => client.ask({ ...(typeof name === 'string' ? target : { id: name.id }), nt: 1 }),   // STAFF-PANEL5-FOLLOW: answered from the hub's where note where the relay lets it; STAFF-PANEL2-CHATMENU: a chat line's TP (`{ id }`) asks for the socket the relay stamped on the line, never a name (net/staffTeleport.js stays the relay's law, untouched)
         allowed,
         prepare: async (dest) => {
           const key = staffDestinationKey(dest);
@@ -20791,7 +20795,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     } else if (c.player != null) {
       if (worldMoveBusy() || modes?.transitioning) { say('You cannot teleport right now.'); return; }
       if (!staffTeleportClient) { say('Exact player teleport requires an online connection.'); return; }
-      teleportToStaffPlayer(c.player).then((who) => say(`Teleported to ${who.name}'s exact position.`))
+      teleportToStaffPlayer(c.player).then((who) => { say(staffTpLine(who)); staffFollow.follow(who.acct); })   // STAFF-PANEL5-FOLLOW: a TP follows on from their view (mob, 06:01Z) - where a Staff Panel mints the follow
         .catch((e) => { console.error('[staff] player teleport:', e); say(e.message || 'The player teleport failed.'); });
       return;
     } else {
@@ -21336,6 +21340,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     chatLinks = new Map();
     redChat = (line) => { if (!chatLog) return false; chatLog.pushAll({ text: line.text, at: line.at, red: true }); return true; };   // CROWN2: the seats' red lines
     chatLog.push(chatLog.active, { text: CHAT_GREETING_TEXT, system: true }, { quiet: true });   // CHAT-HELP: every join, the player's alone, no badge
+    staffHost = createStaffFreezeHost(chatLog, socialLink, online, staffHost);   // STAFF-PANEL5-FREEZE (scenes/staffFreezeHost.js): the screen and the Staff tab
     // MOD1: A MUTE IS SAID ONCE. An order reaches every room this client
     // holds, so the same notice can arrive two or three times at once;
     // `mutedNotices` passes the first and the next real event.
@@ -21372,6 +21377,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       link.onGuildGone = guildGone;   // GUILD1c: a room took my guild off - the hub's word on a removal most of all
       if (tab.room) link.join(channelLinkRoom(tab.room));   // CHAT-CHAN: the Region tab's room waits for the region and the relay (chatRegionFrame); SCALE5c: the hub link its own shard
       chatLinks.set(tab.id, link);
+      staffHost.wire(link);   // STAFF-PANEL5-FREEZE: its `frozen`, and the hub's staff nudge
       if (tab.room === SOCIAL_ROOM) {
         relayCfgLink = link;   // SCALE5b: a relay setting goes down the hub's link, and its answer comes back to the tab that asked
         link.onRelayCfg = (m) => chatLog.push(relayCfgTab ?? tab.id, { text: m.error ? `Relay: ${m.error}.` : `Relay: ${m.k} is now ${m.v === '' ? 'unset' : m.v}.`, system: true });
@@ -21380,6 +21386,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const client = createStaffTeleportClient({ send: (m) => link.sendStaffTeleport(m), capture: staffDestination });
         staffTeleportClient = client;
         link.onStaffTeleport = (m) => client.receive(m);
+        link.onStaffMessage = createStaffMessages(chatLog).heard;   // STAFF-PANEL5-MESSAGE: a staff message waits - the box, its OK, and its copy on the Staff tab (net/staffMessages.js)
       }
       if (tab.room === SOCIAL_ROOM) link.onGate = (g) => gateLink?.word(g);   // WB3b: the hub's word of a kill, and a fighter's receipt outside the court
       if (tab.room === SOCIAL_ROOM) link.onEg = (w, room) => egClient?.word(w, room);   // EG-PLAY: the hub's call to my company, and its refusal of an open
@@ -21446,6 +21453,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           if (!modes?.openPauseAt?.(at)) hudCtx.togglePause({ at });
           return true;
         } }
+        if (staffHost?.claims(tabId)) return staffHost.send(tabId, text);   // STAFF-PANEL5-FREEZE: the Staff tab's line goes to the service; a freeze shuts every other tab, the commands below too
         // EG-PLAY: `/breach` - answer an Elite Breach's call; `/breach rehearse` - the day's Rehearsal; `/breach home` - a
         // Redoubt's way home. Local, never sent as chat. AUDIT EG V (c, L7-1): its words WHOLE (net/chatCommands.js
         // breachCommandOf) - `/breach pick 2`, `vote yes`, `buy tonic` - where a one-word door read each as no command
@@ -21827,7 +21835,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       onPost: (event) => { chatLog.push(tab.id, { text: postNoticeText(event), system: true }); },
       character: () => characterIdOf(playerEntity),
       realm: realmSession && { act: (o) => realmGoldAct({ session: realmSession, checkpoint: () => onlineCheckpoint(), ...o }), abandon: (why) => realmSession.abandon(why) },   // offline, none: no claim
-      pack: { add: (rec) => { addItem((playerEntity.items ??= []), setItemFields(rec), 'back'); }, changed: () => { saveSoon.changed(); } },
+      pack: { add: (rec) => { playerEntity.items ??= []; takeGateSpoil({ kind: 'item', item: setItemFields(rec) }); }, changed: () => { saveSoon.changed(); } },   // LOST-SPOILS: a spoil's own door - a first ember from the Lost and Found brings its book
     });
     heartbeat.add('post', whileLive(postBox.heartbeatPart(), () => performance.now() - _mailFrameAt < FRAME_LIVE_MS));
     // GUILD1b: THE CHARACTER'S GUILD, over the account service (GUILD1a's door). Its gold is the save's: the purse first,
@@ -22358,6 +22366,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const b = siegeSession?.active() ? siegeSession : royalSession;
     return !!b?.active() && b.side() === 'watch' && !!online?.room && online.room === b.room();
   };
+  // STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", Invisible follow): THE STAFF HOOK - a follow the Staff Panel
+  // starts on this page (net/staffHook.js), and what the scene does with it (scenes/staffFollowHost.js)
+  const staffFollow = staffFollowOnPage({ main: () => online, prepare: (d) => prepareStaffDestination(d, () => staffFollow.locked()), mode: () => modes?.mode ?? 'exterior', pixel: () => state.current, toScene: (p) => onlineToScene(p) });
   registerFreeFlight(() => spectatingHere());   // AUDIT-SEATS G4: the spectator's camera is free - the motor's own flight over the town
   /** AUDIT-SEATS G4: where the spectator stood when its camera went free, in the wire's frame (the floating origin moves
    *  under a flight) - the watching ended out on the street, it is set back on its feet there, no fall billed; ended any
@@ -23851,8 +23862,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  AUDIT WBX2 M1: made online or not - it is also the keeper of the crash's records, which a save that lands clears
    *  (AUDIT WBX S3), and the crash's door hands a record back offline too: made online alone, a boot offline gave the same
    *  spoils again at every boot, since no save could ever clear their record. */
+  /** LOST-SPOILS (net/lostSpoils.js): what a boss's floor still holds as I leave goes to the mailbox - the court's and the
+   *  Hour's pools (the Brass Remnant's arena and a breach's Redoubts); its lines in the chat, beside the post's own. */
+  const lostMail = lostSpoilsMail({ box: () => postBox, say: (text) => chatNotice(text) });
   const spoilsPool = createSpoilsPool({
-    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, mail: lostMail,
     ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },
     now: () => Date.now() + _sharedOffsetMs,
     take: takeGateSpoil,
@@ -23915,7 +23929,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     sdVoice.frame();
   };
   const sdSpoilsPool = createSpoilsPool({
-    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, mail: lostMail,
     ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },   // the Hour's own floors and pillars
     // AUDIT SD II (L6 F14): what the floor still held, gathered as I leave, said in the chat - over the screen it took the
     // place of the way home's line, or the cast-out's, a frame after it was said
@@ -25868,6 +25882,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       px: px.x, py: px.y,
       in: mode === 'dungeon' ? 1 : mode === 'interior' ? 2 : 0,
       ...(online?.layer ? { ly: online.layer } : {}),   // SCALE5d: the layer of the place I stand in, so a mate who comes asks for it
+      ...(online?.room ? { rk: online.room } : {}),   // STAFF-PANEL5-FOLLOW: the room I stand in - a cell's or a world room's alone (net/wire.js validPartyPose), the staff's to read, never fanned
       loc: ident?.kind === 'dungeon' ? (ident.name ?? '') : (loc?.name ?? ''),
       // AUDIT SOC B5: fatigue in the DIGITS a sheet shows (ui/charsheet.js: the stored pool is x FATIGUE_MULTIPLIER) - a
       // member's card said 3200/6400 where their own sheet said 50/100
@@ -25934,6 +25949,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ...(_walkLead && socialLink()?.partyWalkOk ? { tw: _walkLead } : {}),   // TV8: my walk while I lead one
       ...(_walkTs != null && socialLink()?.partyWalkOk ? { ts: _walkTs } : {}),   // TV8: when my journey last stopped for a reason of mine
       ...(social?.leads?.() && mode === 'exterior' && walkMode && playerSpawned && !worldMoveBusy() ? partyFeetOf(player.pos) : {}),
+      ...(!social?.party && mode === 'exterior' && walkMode && playerSpawned && !worldMoveBusy() && partyFeetOf(player.pos)),   // STAFF-PANEL5-FOLLOW: and outside a party, so a staff /tp lands on my feet without asking my game
       ...partyFxField(),   // PARTY-BUFFS: my live spell effects, for the party's cards (net/partyBuffs.js)
       ...(bountyHost?.poseField() ?? {}),   // BOUNTY1: my bounties - the shared, the held and today's cleared (validPartyPose `bq`)
       ...(partyPing?.poseField() ?? {}),   // PARTY-PING: the look's point, while the route is still worth saying (validPartyPose `pg`)
@@ -27883,7 +27899,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     social.setClockOffset(hub?.clockRead ? hub.clockOffsetMs : (online?.clockOffsetMs ?? 0));
     partyWalkFrame(nowMs);   // TV8: the party's walk - the leader's halts, a member's steps
     partyMapFrame(nowMs);   // PARTY-MAP: Shared Cartography's batches
-    if (!social.party) return;
+    // STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", Invisible follow): outside a party my pose goes on as my
+    // where note, at the note's own pace (net/online.js sendParty, `solo`) - the hub keeps it for staff alone
+    if (socialLink()) socialLink().solo = !social.party;
     // PARTY-PING: a ping sends on the frame it is pressed. A refused one asks again on the pose's own clock -
     // never every frame, which would reset partyGate's refill (wire.js tokenGate stamps `at` on a refusal).
     const pingNow = !!partyPing?.unsent();
@@ -28910,6 +28928,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
+    if (staffFollow.frame()) key = null;   // STAFF-PANEL5-FOLLOW: a follow's body stands in no room - the hook's hidden links watch (above HALO-THIN's word, which stands over WAGONS2-VISIT's close and the join: test/net/halothin.test.js, test/systems/wagons2_visit.test.js)
     online.haloWhole = !!duelMgr.duel || _serpentFight;   // HALO-THIN (net/online.js haloPoseDue): a halo hears my pose when it is due - every pose while a referee may stand in one (a duel's bout is refereed in the room my opponent is heard through, a serpent's trail in the fight's); never the open zone's - its referee holds me by the zone word, which my own cell's socket alone says (AUDIT B F4)
     if (!modes?.caravanVisit) caravanVisitLink.close();   // WAGONS2-VISIT: no visit, no listener - closed before my primary joins the cell it heard (never replaced by my own id)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
@@ -32676,7 +32695,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // Touch (exteriorFoes.js readySpell), so the landed paralysis
     // was inert here. Declared above `walkMode` because the motor and
     // the weapon rig are two sibling blocks.
-    const paralyzed = entityIsParalyzed(playerEntity);
+    const paralyzed = entityIsParalyzed(playerEntity) || staffFrozen();   // STAFF-PANEL5-FREEZE: a staff freeze holds the motor as paralysis does
     // A6: FrictionMotor.GroundedMovement's head-dip guard reads
     // IsParalyzed itself (:90-93) - the zeroed input bag below is
     // the movement half of the same law, not this one.
@@ -33187,6 +33206,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
         if (townTalk.overlay instanceof DeathScreen) townTalk.overlay.tiltView(cam);   // DEATH3: the enhanced fall looks up at the sky
         if (_driverSeat && player.transportMode === TRANSPORT_MODES.Cart && !(townTalk.overlay instanceof DeathScreen)) cam.pos = [_driverSeat.feet[0], _driverSeat.feet[1] + SEATED_EYE_HEIGHT, _driverSeat.feet[2]];   // WAGONS3: on my bench (last frame's seat until the wagon steps) - the picks below aim from the eye on the screen
+        staffFollow.eye(player, cam);   // STAFF-PANEL5-FOLLOW: a follow's camera - the target's eyes and their facing
         climbFeel.frame(dt, _overlayHeld || _seasonHeld);   // CLIMB4: the climb's camera, off the frame's motor - AUDIT CLIMB-ARC F2/F4: held while the motor is
         // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
         // DFU's ActivateCenterObject: the readied spell fires on its

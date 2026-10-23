@@ -72,6 +72,8 @@ export const CHAT_TABS = Object.freeze([
   Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Only your guild', hidden: true, peekAll: true }),
   Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Players near enough to hear you. Speak in character here, and put out-of-character remarks in (( )).' }),
 ]);
+/** STAFF-PANEL5-FREEZE: the word on a line's Copy button (a line's `copy`, ChatLog._line). */
+export const copyText = () => t('net.chat.copy', 'Copy');
 /** CHAT-CHAN: how long the player must stand in another region before the Region tab moves to its channel, ms - a
  *  walk along a border is not a churn of sockets. The first region is joined at once. */
 export const CHAT_REGION_HOLD_MS = 5000;
@@ -227,9 +229,12 @@ export function findLines(tabs, query) {
   return [...out.values()].sort((a, b) => a.seq - b.seq);
 }
 
+/** A tab as the log keeps it, from its row (CHAT_TABS's shape). */
+const tabOf = (t) => ({ id: t.id, label: t.label, room: t.room, link: t.link !== false, hint: t.hint ?? '', place: null, messages: [], unread: 0, pings: 0, shown: t.hidden !== true, peekAll: t.peekAll === true });
+
 export class ChatLog {
   constructor({ tabs = CHAT_TABS, keep = CHAT_KEEP, now = () => Date.now() } = {}) {
-    this.tabs = tabs.map((t) => ({ id: t.id, label: t.label, room: t.room, link: t.link !== false, hint: t.hint ?? '', place: null, messages: [], unread: 0, pings: 0, shown: t.hidden !== true, peekAll: t.peekAll === true }));
+    this.tabs = tabs.map(tabOf);
     /** PING1: the player's own name, set by the host (a line naming it with an @ is a ping); '' pings nobody. */
     this.self = '';
     /** PING1: the newest pinging line's seq - the host's alert sounds when it moves (0: none yet). */
@@ -311,7 +316,7 @@ export class ChatLog {
   /** The line's record, or null for nothing to say. DICE1: `roll` is a roll the RELAY made (the host hands it from the
    *  frame type, `onRoll`, never from a chat line) - kept only when the dice's law holds, and then the line's words are
    *  the dice's (rollText), its kind 'roll'. */
-  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false, sub = null, sg = null, raw = null } = {}, tabId) {
+  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false, sub = null, sg = null, raw = null, copy = null } = {}, tabId) {
     const rolled = roll && validRoll(roll) ? { n: roll.n, m: roll.m, k: roll.k, dice: [...roll.dice], total: roll.total } : null;
     if (roll && !rolled) return null;
     if (rolled) text = rollText(rolled);
@@ -344,7 +349,9 @@ export class ChatLog {
     // two differ (net/online.js: the client's own pass of the mask is not the relay's) - what a report carries
     const stamp = typeof sg === 'string' && sg ? { sg, ...(typeof raw === 'string' && raw && raw !== text ? { raw } : {}) } : {};
     const said = !sys && typeof sub === 'string' && sub ? { sub, ...stamp } : {};
-    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}), ...said };
+    // STAFF-PANEL5-FREEZE: `copy`, words a game's line offers to copy (the Staff tab's Discord invite) - a system line's alone
+    const copied = sys && typeof copy === 'string' && copy ? { copy } : {};
+    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}), ...said, ...copied };
   }
 
   /** SAFE1: AN ACCOUNT'S LINES TAKEN BACK - every line `sub` said, off every tab, the moment it is blocked: a block hides
@@ -393,6 +400,15 @@ export class ChatLog {
   _keepOn(tab, line) {
     tab.messages.push(line);
     if (tab.messages.length > this._keep) tab.messages.splice(0, tab.messages.length - this._keep);
+  }
+
+  /** STAFF-PANEL5-FREEZE: a tab its host adds after the bar's own rows (the Staff tab, net/staffChat.js STAFF_TAB_ROW) -
+   *  once, and before the panel is made, which draws the tabs the log holds then. */
+  addTab(row) {
+    if (this.tab(row.id)) return false;
+    this.tabs.push(tabOf(row));
+    this.version++;
+    return true;
   }
 
   /** CHAT-P: a tab on the bar or off it (the Party tab, while the player sits in a party). A tab taken off stops
