@@ -213,6 +213,9 @@ export function createSeatTab(host, ui) {
   // and gifts are the Charter's (net/townSeatBook.js dressed `charterSeat`); `town` the seat town the board stands in
   const town = host.seat;
   const seat = town?.charterSeat ?? town;
+  // AUDIT DOMAINS C1: whether the CHARTER's own town stands on the coast (a Harbour's work) - the board's town's word only
+  // where the board is the Charter's; a holding's coast is not its Charter's (Alik'ra's raised a Harbour at inland Berbaaqnia)
+  const port = town === seat && host.port === true;
   const nameOf = host.nameOf ?? (() => null);
   const banner = host.banner ?? (() => null);
   let data = null, error = null, loading = false;
@@ -647,10 +650,10 @@ export function createSeatTab(host, ui) {
       // SEAT2b (Seats-Arc 7.9): the works and the stockpile - a holder's Officers and guildmaster begin a project here
       if (holder && forts) {
         drawSeatWorks(panel(null, 'seat-workspanel'), {
-          forts, seat, port: host.port === true, busy: ui.busy(),
+          forts, seat, port, busy: ui.busy(),
           lever: ruling,
           nameOf: host.countName ?? ((k) => k),
-          onBegin: (work) => act(() => book.fortFund(seat, work, host.port === true)),
+          onBegin: (work) => act(() => book.fortFund(seat, work, port)),
         });
       }
       // DOMAIN1 (Domains.md 5): a member's gift - to the stockpile where the guild holds this seat, to its Siege Camp where

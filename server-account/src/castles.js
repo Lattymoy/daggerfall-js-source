@@ -46,7 +46,7 @@ import { guildActorOf } from './guilds.js';
 import { marksOpenFor } from './marks.js';
 import { seatsOpenFor } from './townSeats.js';
 import { MARKS_MAX, MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
-import { CASTLE_PRICE, CASTLE_POWERS, castleMay, castleRegionOk, castleSaleRefund, castleLostRefund, castleOffers } from '../../src/net/castleLaw.js';
+import { CASTLE_PRICE, CASTLE_POWERS, castleMay, castleRegionOk, castleKeyOk, castleSaleRefund, castleLostRefund, castleOffers } from '../../src/net/castleLaw.js';
 
 const INSERT_LINE = 'INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)';
 /** The castle acts' own bucket - a Guildmaster's few presses. */
@@ -82,9 +82,9 @@ export async function releaseCastles(db, nowS, g = null) {
   return gone;
 }
 
-/** A guild's castles as its members read them - `[{ region, key, epoch, paid, boughtAt }]` - after the release. */
-export async function castlesOf(db, g, nowS) {
-  await releaseCastles(db, nowS, g);
+/** A guild's castles as its members read them - `[{ region, key, epoch, paid, boughtAt }]` - read after the release
+ *  (castleViewOf, its one caller, releases every castle first). */
+export async function castlesOf(db, g) {
   const { results = [] } = await db.prepare('SELECT region, key, epoch, paid, bought_at FROM guild_castles WHERE guild_id = ? ORDER BY region').bind(g).all();
   return results.map((r) => ({ region: Number(r.region), key: Number(r.key), epoch: r.epoch, paid: Number(r.paid), boughtAt: Number(r.bought_at) }));
 }
@@ -97,9 +97,13 @@ export async function castleOffersOf(db, g) {
   return castleOffers(holds.map((h) => ({ key: Number(h.key), region: Number(h.region), tier: h.tier })), kept.map((k) => Number(k.region)))
     .map((o) => ({ ...o, price: CASTLE_PRICE }));
 }
-/** The castle part of a guild's view: its castles and, to its Guildmaster, the ones it may buy. */
+/** The castle part of a guild's view: its castles and, to its Guildmaster, the ones it may buy - every castle whose guild
+ *  lost its region released first (AUDIT DOMAINS S2: the offers read every guild's castles, so a crown's new holder was
+ *  offered nothing until the old holder's own view released it - and an old holder that took the crown back unread kept
+ *  a castle law 3 had taken from it). */
 export async function castleViewOf(db, g, rank, nowS) {
-  const castles = await castlesOf(db, g, nowS);
+  await releaseCastles(db, nowS);
+  const castles = await castlesOf(db, g);
   return { castles, castleOffers: castleMay(rank, 'buy') ? await castleOffersOf(db, g) : [] };
 }
 
@@ -124,13 +128,15 @@ export async function buyCastle(ctx, player, { character, region, rid } = {}) {
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
   const g = a.me.guild_id;
-  const prior = await db.prepare('SELECT region FROM guild_castles WHERE guild_id = ?1 AND buyer = ?2 AND rid = ?3').bind(g, player.id, rid).first();
-  if (prior) return { ok: true, repeat: true, region: Number(prior.region), ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };
+  // AUDIT DOMAINS S5: a purchase asked again is known by its burn line, which outlives the castle - its row goes with a
+  // sale or a release, and the request asked again after it bought anew and failed on the line's key (a 500)
+  if (await db.prepare('SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, `${rid}:castle`).first()) return { ok: true, repeat: true, region, ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };
   if (!castleRegionOk(region)) return { error: 'castle-none' };
   if (!castleMay(Number(a.me.rank), 'buy')) return { error: 'guild-rank' };
   await releaseCastles(db, nowS);   // a castle whose guild lost the region is free again before anyone asks for it
   const hold = await db.prepare("SELECT key FROM town_seat_holds WHERE guild_id = ?1 AND region = ?2 AND tier = 'crown'").bind(g, region).first();
   if (!hold) return { error: 'castle-not-held' };
+  if (!castleKeyOk(Number(hold.key))) return { error: 'castle-none' };   // AUDIT DOMAINS R2: a castle the relay admits its guild to
   if (await db.prepare('SELECT 1 FROM guild_castles WHERE region = ?').bind(region).first()) return { error: 'castle-taken' };
   if (await overRate(ctx, `castle:${player.id}`, CASTLE_OPS_HOUR, 3600)) return { error: 'guild-rate' };
   const nonce = mintId(rand), epoch = mintEpoch(rand);
@@ -140,7 +146,8 @@ export async function buyCastle(ctx, player, { character, region, rid } = {}) {
       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9
       WHERE EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10 AND guild_id = ?3 AND rank IN (${CASTLE_POWERS.buy.join(', ')}))
         AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?2 AND guild_id = ?3 AND region = ?1 AND tier = 'crown')
-        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4`)
+        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4
+        AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?7 AND rid = ?8 || ':castle')`)
       .bind(region, Number(hold.key), g, CASTLE_PRICE, epoch, nowS, player.id, rid, nonce, Number(a.me.rid)),
     // the silver, burnt off the row this request wrote
     db.prepare(`${INSERT_LINE} SELECT 'guild', guild_id, 'burn', NULL, 'castle', paid, ?3, bought_at, buyer, ?4, rid || ':castle'
@@ -167,7 +174,9 @@ export async function sellCastle(ctx, player, { character, region, rid } = {}) {
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
   const g = a.me.guild_id, line = `${rid}:castle-sale`;
-  if (await db.prepare('SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, line).first()) return { ok: true, repeat: true, region, ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };
+  // AUDIT DOMAINS C3: a sale asked again says what came home, as the sale did - the window words its answer by `back`
+  const done = await db.prepare('SELECT amount FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, line).first();
+  if (done) return { ok: true, repeat: true, region, back: Number(done.amount), ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };
   if (!castleRegionOk(region)) return { error: 'castle-none' };
   if (!castleMay(Number(a.me.rank), 'sell')) return { error: 'guild-rank' };
   await releaseCastles(db, nowS, g);   // a castle already lost with its region is released at the lost share, never sold
@@ -176,9 +185,13 @@ export async function sellCastle(ctx, player, { character, region, rid } = {}) {
   if (await overRate(ctx, `castle:${player.id}`, CASTLE_OPS_HOUR, 3600)) return { error: 'guild-rate' };
   const back = castleSaleRefund(Number(c.paid));
   await db.batch([
-    // THE DECISION: the Guildmaster still, the castle still the guild's - the share home, as much as the treasury holds room for
+    // THE DECISION: the Guildmaster still, the castle still the guild's and its region still held (AUDIT DOMAINS S6: a crown
+    // lost between the release above and this batch is the lost share's, never the sale's) - the share home, as much as
+    // the treasury holds room for, and never a line of nothing (AUDIT DOMAINS S4: a full treasury's zero broke the
+    // ledger's CHECK and the sale answered 500; now it is refused `marks-full`, the castle kept)
     db.prepare(`${INSERT_LINE} SELECT 'mint', NULL, 'guild', ?1, 'castle-sale', MIN(?3, ?4 - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0)), ?5, ?6, ?7, ?8, ?9
-      WHERE EXISTS (SELECT 1 FROM guild_castles WHERE region = ?2 AND guild_id = ?1)
+      WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1 AND ${HELD_SQL('c')})
+        AND MIN(?3, ?4 - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0)) > 0
         AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10 AND guild_id = ?1 AND rank IN (${CASTLE_POWERS.sell.join(', ')}))
         AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?7 AND rid = ?9)`)
       .bind(g, region, back, MARKS_MAX, utcDay(nowS), nowS, player.id, displayName(player), line, Number(a.me.rid)),
@@ -187,6 +200,7 @@ export async function sellCastle(ctx, player, { character, region, rid } = {}) {
   ]);
   const sold = await db.prepare('SELECT amount FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, line).first();
   if (!sold) {
+    await releaseCastles(db, nowS, g);   // the region lost meanwhile: released at the lost share, never sold
     if (await db.prepare('SELECT 1 FROM guild_castles WHERE region = ?1 AND guild_id = ?2').bind(region, g).first()) return { error: 'marks-full' };
     return { error: 'castle-not-yours' };
   }

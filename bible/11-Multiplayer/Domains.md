@@ -172,8 +172,9 @@ Considered and NOT done:
   in twenty test files and `server-account/wrangler.toml`. Mutant records re-aimed by content (12, all dead): the versions', BOARD-UI's read order, the host's
   ceiling.
 - **Version and deploy**: the account service `acct182` (acct181 on its branch, renumbered past KETCH's at the merge; migration 0167 - 0166 on its branch; `src/net/seatGiftLaw.js` in the account
-  deploy's path filter). No relay change. DEPLOY ORDER: the account service, then the site. World-Wide's branch also
-  takes acct181 (WW-R): whichever merges second renumbers.
+  deploy's path filter). No relay change. DEPLOY ORDER: the account service, then the site. KETCH reached main first
+  with acct181, world255 and migration 0166, and this branch renumbered past it at its merge; World-Wide's branch, which
+  also took acct181 (WW-R), renumbers past acct182 at its own.
 
 ## 6. DOMAIN2 - the castle (BUILT, 2026-10-24)
 
@@ -191,8 +192,9 @@ Considered and NOT done:
   the row only where the buyer is still the Guildmaster, the guild still holds the region's crown Charter, no castle
   stands on the region and the silver is there; the burn written off the row's nonce (`castle`); the EPOCH minted there
   - four bytes of the service's own dice - and never again. **Give up** (`/v1/guilds/castle/sell`): the share home first
-  (`castle-sale`, what the treasury has room for), the row deleted off that line. **The release** (`releaseCastles`,
-  SETTLED ON READ): every read of a guild's castles, every castle act - a castle whose guild no longer holds its
+  (`castle-sale`, what the treasury has room for, never a line of nothing - a full treasury is refused `marks-full`, the
+  castle kept; only while the region is still held), the row deleted off that line. **The release** (`releaseCastles`,
+  SETTLED ON READ and at every Turning): every guild's view, every castle act and every Turning - a castle whose guild no longer holds its
   region's crown Charter, by any road, is released: half its price home (`castle-lost`, what the room allows), written
   off the row itself and the row deleted in the same batch, so it happens once. The guild's view (`guilds.js` viewOf)
   carries `castles` (`{ region, key, epoch, paid, boughtAt }`, every member's - the epoch the door keys its room by) and,
@@ -202,9 +204,10 @@ Considered and NOT done:
 - **The room** (`net/instanceRoom.js`): a castle is an instance OWNED BY A GUILD - its owner the guild's digest
   (`instanceGuildOwnerOf`, `instance:guild:<id>`, a hash domain of its own, so no account's digest is ever a guild's),
   `dungeon:m<castle>.i<guild>.<epoch>`. `instanceAdmission` grows a `guild` arm, after staff and the owner: a socket whose
-  VERIFIED token names the guild whose digest owns the room. A member's party guest is not admitted (the party arm asks
+  VERIFIED token names the guild whose digest owns the room - A CASTLE'S ROOM ALONE (`CASTLE_MAP_IDS`, the three crown
+  cities' own dungeons, whole; the service sells no castle at any other key, `castleLaw.js` castleKeyOk). A member's party guest is not admitted (the party arm asks
   the hub with the room's owner digest, which no account's party holds) - one owner a castle.
-- **The relay** (`server/src/index.js`, world255, `GUILD_INSTANCE_RELAY_MIN`): `_instanceHello` hands the token's guild
+- **The relay** (`server/src/index.js`, world256, `GUILD_INSTANCE_RELAY_MIN`): `_instanceHello` hands the token's guild
   to the door, and a socket let in as the castle's guild is marked (`ig`, the guild it came in as). The moment its
   attachment wears another guild or none - a removal or a disbanding carried in, a join elsewhere, a shard's hello: every
   road writes the attachment through `_setAttach` - it is refused out (`_instanceGuildOut`, deferred so the write's caller
@@ -228,16 +231,20 @@ Considered and NOT done:
   36,297 -> 36,280, the halls' dressing out); `scenes/worldModes.js` - the room's instance handed to the throne room's
   dressing, one argument on a line it had; `scenes/dungeonContext.js` and `scenes/exterior.js` - FLAGGED, nothing to
   wire: neither stands a castle online.
-- **Recorded, not closed**: a released castle's room key still admits its old guild if a member keeps the key (the relay
-  holds no castle table); nothing in it stands for a guild that holds no castle (the throne room reads the service's
-  castle), its epoch is never offered again, and its memory lapses (`INSTANCE_TTL_MS`). A member removed while inside,
-  whose own client never carries the removal, stays until it leaves or its token's next hello.
+- **Recorded, not closed**: the relay holds no castle table, so a crown castle's room keyed by a guild's digest admits
+  that guild at any epoch - a released castle's old key while a member keeps it, and a modified client's made-up epoch
+  for a guild that keeps none: a private copy of a crown city's castle, never of any other room (AUDIT DOMAINS R2).
+  Nothing in it stands for a guild that holds no castle (the throne room reads the service's castle), its epoch is never
+  offered again, and its memory lapses (`INSTANCE_TTL_MS`). A member removed while inside, whose own client never carries
+  the removal, stays until it leaves or its token's next hello. Staff inspecting a guild's castle see no throne room's
+  pieces (they are no member), and the throne room asks the instance's epoch, not its owner (a quest's epoch matching
+  one in 2^32).
 - **Pins**: `test/net/domain2_castles.test.js` (10: the law; a castle bought; who may buy, the crown lost between the read
   and the write; goes with the region, the sale, the Season's wipe; the switches; the law of the room; at the relay - a
   member, another guild, no guild, a party guest, a member who leaves; the door; the throne room; the window's words).
   Mutants `tools/mutants/domain2.json` (20, all dead; a twenty-first - the release's own guard against a second line -
   survived, because the line is written off the row the same batch deletes: the guard was redundant and went). PIN MOVED:
-  the relay's version in forty-three test files and the law's row (`relayversion.test.js` world255), the schema's tables
+  the relay's version in forty-three test files and the law's row (`relayversion.test.js` world255, world256 at the merge past KETCH), the schema's tables
   (`accountworker.test.js`), the faucets (`marks1.test.js`: `castle-sale` and `castle-lost`, silver home that a
   purchase burnt), the halls' source (`seathall_client.test.js`, `crownhall.test.js`: `seatHallHost.js`). Re-aimed by
   content: soc1's, CROWN-HALL's two and SEAT-HALL's two (the halls' host), HOST-SPLIT's ceiling, INSTANCES' two, SEAT2a2's
@@ -246,8 +253,9 @@ Considered and NOT done:
   (`GUILD_VAULT_HALL_SLOTS`), and the guild's banners at the castle's door in the city. The castle's throne room stands
   its guild's banners, roster board and vault chest; the shelf and the door's banners are open.
 - **Version and deploy**: the relay `world256` (world255 on its branch, renumbered past KETCH's at the merge), the account service `acct182` (DOMAIN1's, one release; migration 0168;
-  `src/net/castleLaw.js` in the account deploy's path filter). DEPLOY ORDER: the relay first (world255), then the account
-  service, then the site. World-Wide's branch also takes world255 and acct181: whichever merges second renumbers.
+  `src/net/castleLaw.js` in the account deploy's path filter). DEPLOY ORDER: the relay first (world256), then the account
+  service, then the site. World-Wide's branch, which also took world255 and acct181, renumbers past world256 and acct182
+  at its merge.
 
 ## 7. DOMAIN3 - the region's Charter (BUILT, 2026-10-24)
 
@@ -265,8 +273,10 @@ Considered and NOT done:
   THAT REGION, the crown in a crown's (`net/domainLaw.js` domainSeats). DEPARTURE from section 3's "`world_witness` kind
   `domain`": its own table, `town_domain_witness` - `world_witness` names its kinds in a CHECK, and a new kind would
   rebuild the service's largest table (its lean column, triggers and indexes) for some hundred rows. An answer the
-  region's confirmation already says is never written (LEAN-WITNESS's reasoning: it changes nothing the law judges), so
-  the rows stay three a region and the dissenters, read whole a minute an isolate (`DOMAIN_ROWS_KEPT_S`).
+  region's confirmation already says is written only while fewer than a dozen do (`DOMAIN_AGREEING_KEPT`; AUDIT DOMAINS
+  S3: kept at the bare three, one confirming witness lost - deleted, or ignored a week - left the confirmation to the
+  first three dissenters), so the rows stay a dozen a region and the dissenters, read whole a minute an isolate
+  (`DOMAIN_ROWS_KEPT_S`).
 - **When it rules** (`server-account/wrangler.toml` `DOMAINS_WEEK = "6"`, `domainLaw.js` domainsWeekOf / domainsRule):
   seat week 6, Season 1's first. Safe whenever this merges: before 2026-11-01, Season 0's last Turning wipes every Charter
   and the law opens on an empty board; after it, the week's pledges at a holding claim nothing at its Turning, and any
@@ -277,7 +287,9 @@ Considered and NOT done:
 - **The service, by region** (each read `domainsFor` - no read at all where the law does not rule): THE PLEDGE a region's
   Charter alone (`seatInfluence.js` pledgeSeat, refused `seat-not-charter`); THE WATCH a tick in a holding's own pixel
   counted at its Charter (claimWatch); THE HOMES a counting member's home anywhere in the region, by the home's own
-  region, five a guild a region as before (gatherStandings); THE BAILIWICK every Notice Board of a region with a seat of
+  region, five a guild a region as before - at a region's seat of power alone (a region with none confirmed counts its
+  seats' own towns), and for every reader of a week's standings: the board, the Turning, a Tourney's dead heat,
+  Tribute's room (gatherStandings' `domains`, AUDIT DOMAINS S1); THE BAILIWICK every Notice Board of a region with a seat of
   power its Charter's - the Tithe of a sale, an order filled and an auction closed (in a read or by the minute's clock),
   the Levy of a harvest, a Bounty's camp (`seatHolding.js` bailiwickSeats, the region law's week handed through
   `market.js`, `cron.js` and `professions.js`). A gate's kill, Renown, an Orc camp and a gift (DOMAIN1) already counted
@@ -315,7 +327,7 @@ Considered and NOT done:
   list's word; the book; the words and the map; a holding under its Charter). Mutants `tools/mutants/domain3.json` (37).
   PIN MOVED: the faucets (`marks1.test.js`: `domain-fold`), the hard-coded English (`l10n4_hardcoded.test.js`: the seat
   law 180 -> 177, the Charter's names routed), the schema's tables (`accountworker.test.js`: `town_domain_witness`).
-- **Version and deploy**: the account service `acct182` (DOMAIN1's and DOMAIN2's, one release; migration 0169;
+- **Version and deploy**: the account service `acct182` (DOMAIN1's and DOMAIN2's, one release - acct181 on its branch, renumbered past KETCH's at the merge; migration 0169 - 0168 on its branch;
   `src/net/domainLaw.js` in the account deploy's path filter). The relay is untouched. DEPLOY ORDER: the account service,
   then the site - an older page reports no seat of power, and its seats read as they did.
 
@@ -335,8 +347,8 @@ own). Cyrodiil holds no Charter and no castle - the open zone's (WW-C2).
 | A gift of looted, bought-with-gold or save-edited units | The Stores' spendable units alone (own and bought); the bag's counted units alone, by the `spend` order |
 | A gift paid twice | Nothing is paid; a writ's delivery stays barred to the guild's own takers |
 | A gift's influence counted twice | One row a gift; the influence keyed on it (`ref`) |
-| A castle bought and kept after the region falls | SETTLED ON READ: every read of a guild's castles and every castle act releases it first, so no view, door or purchase ever sees it held (`releaseCastles`) |
-| A guild's castle entered by a stranger | The relay's `guild` arm reads the token's verified guild; nobody else is admitted |
+| A castle bought and kept after the region falls | Released by every guild's view, every castle act and every Turning (`releaseCastles`), so no view, door or purchase ever sees it held, and a crown retaken unread keeps no castle |
+| A guild's castle entered by a stranger | The relay's `guild` arm reads the token's verified guild, at a castle's room alone (`CASTLE_MAP_IDS`); nobody else is admitted; the door offers the castle at its dungeon's door alone |
 | A released castle's room key reused by its old guild | Its epoch is never offered again; the room admits only the guild its key names, nothing in it stands for a guild that holds no castle, and its memory lapses (`INSTANCE_TTL_MS`). Recorded, not closed: the relay holds no castle table |
 | A region law that moves a live Charter by hand | `DOMAINS_WEEK` at a Season's start; the fold is one rule, read at every Turning that opens a region-law week (a region confirmed late folds at its next) |
 | A seat of power witnessed wrong - three colluding accounts, or a modded MAPS.BSA | The seats' own witnesses and ignored list; a dissent after the confirmation is written and disputes it; a region's Charter must be a confirmed seat of that region, the crown in a crown's. Recorded, not closed: no strike of its own |
@@ -359,3 +371,39 @@ own). Cyrodiil holds no Charter and no castle - the open zone's (WW-C2).
   the town economy.
 - **TESA** stands the capitals. DOMAIN4 adds their castles' interiors and doors once #1184 is on main, reading its
   capitals' table (`world/tamrielCapitals.js`), never a second copy.
+
+## 12. AUDIT DOMAINS (2026-10-24)
+
+The owner: *"Audit this amd ensure perfection."* Three cold readers, each handed the code and not the author's view - the
+account service's money and SQL, the relay's castle admission, the client - read DOMAIN0-3 at `184ad9254`, and probed
+what they found; every finding was then traced by hand before a line moved. And the branch met main: KETCH had taken
+world255, acct181 and migration 0166, so the merge renumbered this branch to world256, acct182 and migrations 0167-0169
+(every pin, the version mutants, the law's row, bootWorld's ceiling 36,387 -> 36,370 on main's count).
+
+| | Finding | Verdict |
+|---|---|---|
+| S1 | The region's homes were counted on the board alone - the Turning, a Tourney's dead heat and Tribute's room read the seat's own town; and the board counted them at every seat of a region the law ruled, a seat of power or not | FIXED: gatherStandings is handed the week's seats of power, and counts the region's homes at a region's seat of power alone, for every reader |
+| S2 | A castle was released by its own guild's read alone - a crown's new holder was offered nothing, and an old holder that retook the crown unread kept its castle | FIXED: every guild's view releases every castle first, and every Turning releases after its batch |
+| S3 | The seat of power's confirmation rested on its bare three rows - one confirming witness deleted or ignored a week, and three dissenters flipped the region (a Turning in that week folded the real Charter away) | FIXED: agreeing answers kept to a dozen a region (`DOMAIN_AGREEING_KEPT`) |
+| S4 | A castle given up with a full treasury answered 500 (a line of 0 broke the ledger's CHECK) | FIXED: never a line of nothing - `marks-full`, the castle kept |
+| S5 | A purchase asked again after its castle was sold or released answered 500 | FIXED: the repeat is known by its burn line, which outlives the row |
+| S6 | A castle act raced the Turning (a crown about to lapse bought at full price), and a sale raced the crown's loss (85% where the loss pays 50%) | FIXED: castle acts wait while another holds the Turning (`seats-settling`); the sale's decision asks the crown still held |
+| S7 | The fold's target was read off the hold row's region, which a seat's witnesses may since have moved - an undefined target would fail every Turning after | FIXED: the registry's region, the one the Charters were read by |
+| R1 | Every building door of a crown city offered the castle (a building's site carries its town's map id, the castle's), and opened a guild's copy of the shop | FIXED: a castle is offered at a dungeon's door alone |
+| R2 | The relay's `guild` arm admitted any room a guild's digest owned - a modified client opened its whole guild a private copy of any dungeon or building | FIXED: castles' rooms alone (`CASTLE_MAP_IDS`), the service selling none at another key. RECORDED: any epoch of a crown castle's room (section 6) |
+| R3 | The door asked the main link alone whether the relay admits a guild, where the instances ask the world link too | FIXED. RECORDED: a save in the castle loaded before the guild's view is read lands in the public castle |
+| R4 | The throne room asks a guild castle's epoch and not its owner; staff see no pieces there | RECORDED (section 6): one in 2^32, and staff are no member |
+| R5 | A socket already gone (a replacement's close) could be refused out a second time | FIXED |
+| C1 | A holding's board raised a Harbour on its Charter by the holding's own coast - Alik'ra's built one at inland Berbaaqnia | FIXED: the Charter's own town's coast alone |
+| C2 | The Seat tab's header and the map's box put a translated Charter's name in an English line | FIXED: `seat.info.held` / `.unheld`, the thirteen whole languages. RECORDED: the Chronicle's lines stay English sentences (section 7) |
+| C3 | A sale asked again said "0 silver came home" | FIXED: the repeat carries `back` |
+| C4 | A castle's row beside a quest and a full party made a tenth row no key chose | FIXED: nine rows at most (`INSTANCE_ROWS_MAX`) |
+| C5 | The castle buttons' busy word, and the castle's and the Siege Camp's numbers, in English | FIXED: `social.guild.castle.wait`; numbers in the player's own grouping (`formatNumber`) |
+
+Pins: `test/net/domain2_castles.test.js` (11 - the castle's holes; the door's nine rows, a shop's door, the castle's room
+alone, a gone socket) and `test/net/domain3_regions.test.js` (11 - the dozen agreeing answers and the flip they stop; a
+region with no seat of power; every standings reader; the fold's region; the Charter's coast; the info line). Mutants
+`tools/mutants/audit_domains.json` (20, all dead); DOMAIN1-3's own sets run again after the fixes, and eleven records
+re-aimed by content. One re-aimed record survived its run - SEAT2b-works-inland-port: SEAT2b's own test read an inland
+board only with a reader who has no lever - and `test/net/seat2b_client.test.js` now reads it as the holder's
+Guildmaster (no Harbour lever), which kills it.

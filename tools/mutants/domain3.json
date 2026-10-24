@@ -101,11 +101,12 @@
   {
     "name": "DOMAIN3-witness-agreeing-written",
     "file": "server-account/src/domains.js",
-    "old": "  if (said === d.key) return 'agreed';\n",
-    "new": "",
+    "old": "if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
+    "new": "if (domainFacts(rows, ignored).get(d.region) === d.key) return 'agreed';",
     "tests": [
       "test/net/domain3_regions.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): an agreeing answer is kept to a dozen (S3): the mutant writes none past the confirmation, as before the audit."
   },
   {
     "name": "DOMAIN3-facts-ignored",
@@ -209,11 +210,12 @@
   {
     "name": "DOMAIN3-wipe-folds-nothing",
     "file": "server-account/src/seatTurning.js",
-    "old": "domainsRule(week + 1, domainsWeek) && seasonEndingAt(week, zero)?.n !== 0 ?",
-    "new": "domainsRule(week + 1, domainsWeek) ?",
+    "old": "const domains = lawNext && seasonEndingAt(week, zero)?.n !== 0 ? ruled : null;",
+    "new": "const domains = lawNext ? ruled : null;",
     "tests": [
       "test/net/domain3_regions.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the Turning reads the seats of power for its own week too (S1)."
   },
   {
     "name": "DOMAIN3-turning-week-threaded",

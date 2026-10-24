@@ -10,7 +10,7 @@
 // Drawn into a host the Seat tab hands it (ui/seatTab.js), its acts through the tab's own one-at-a-time door.
 import { FORT_WORKS, fortMayRaise, fortMaxTier, fortTierRow, fortWorkLine } from '../net/fortLaw.js';
 import { giftChoices } from '../net/seatGiftLaw.js';   // DOMAIN1: what a member may give
-import { t } from '../systems/textManager.js';   // DOMAIN1: the gifts' words in the player's language
+import { t, formatNumber } from '../systems/textManager.js';   // DOMAIN1: the gifts' words in the player's language
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -144,7 +144,7 @@ export function drawSeatGifts(host, { gifts, stores, bag, counts = {}, nameOf = 
   if (gifts.place === 'camp') {
     const held = (gifts.contents ?? []).filter(([, q]) => q > 0);
     box.append(el('p', 'notice-seat-works-stock', held.length
-      ? t('seat.gift.campHolds', 'The Siege Camp holds: {list}.', { list: held.map(([k, q]) => `${Number(q).toLocaleString('en-US')} ${nameOf(k, q)}`).join(', ') })
+      ? t('seat.gift.campHolds', 'The Siege Camp holds: {list}.', { list: held.map(([k, q]) => `${formatNumber(Number(q))} ${nameOf(k, q)}`).join(', ') })   // AUDIT DOMAINS C5: the player's own grouping
       : t('seat.gift.campEmpty', 'The Siege Camp is empty.')));
   }
   for (const g of gifts.recent ?? []) box.append(el('p', 'notice-seat-gift-recent', giftLine(g, nameOf)));

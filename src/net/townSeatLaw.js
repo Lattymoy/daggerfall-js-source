@@ -188,8 +188,9 @@ export function siegeCalledClause(battle, nowMs) {
 /** The map's line for a seat, in its box: "The Charter of Anticlere: unheld" (SEAT1c: "held by the Silver Hand <SH>"). */
 export function seatInfoLine(seat, holder = null) {
   if (seat?.charterSeat) return holdingWords(seat, true);   // DOMAIN3: a holding's box names its Charter and the Charter's holder
-  const c = charterName(seat);
-  return `${c[0].toUpperCase()}${c.slice(1)}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;
+  // AUDIT DOMAINS C2: through the text core whole - the Charter's name is the player's language now, and its line was English
+  const c = charterName(seat), charter = `${c[0].toUpperCase()}${c.slice(1)}`;
+  return holder ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) }) : t('seat.info.unheld', '{charter}: unheld', { charter });
 }
 
 /** THE MAP'S MARKS (SEAT0 3.3): the unheld ring's stone grey; each crown's metal; a free land's green. */

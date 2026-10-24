@@ -22,10 +22,14 @@
 // a key the seats' registry confirms as a seat OF THAT REGION, the crown
 // in a crown's (domainLaw.js domainSeats). The same witnesses as a seat's:
 // a registered account a week old, never one the seats' law ignores, its
-// first answer standing. ITS OWN TABLE (migration 0169): an answer that
-// agrees with the region's confirmation changes nothing the law judges
-// (LEAN-WITNESS's own reasoning, leanWitness.js), so it is never written -
-// three rows a region and the dissenters, read whole a minute an isolate.
+// first answer standing. ITS OWN TABLE (migration 0169), kept small: an
+// answer that agrees with the region's confirmation is written only while
+// fewer than DOMAIN_AGREEING_KEPT do (AUDIT DOMAINS S3: kept at the bare
+// three, one confirming witness lost - an account deleted, or one the
+// seats' law ignores for a week - left the confirmation to the first three
+// dissenters, and a Turning in that week folded the real Charter away), so
+// the rows stay a dozen a region and the dissenters, read whole a minute an
+// isolate.
 //
 // Behind SEATS_OPEN, as every seat route. EVERY CLOCK IS AN ARGUMENT, as
 // in accounts.js.
@@ -40,6 +44,9 @@ import { DB_ROOT } from './service.js';
 export const DOMAIN_ROWS_SQL = 'SELECT region, account, report, at FROM town_domain_witness';
 /** How long one isolate keeps the rows - the seats' own minute (townSeats.js SEAT_ROWS_KEPT_S). */
 export const DOMAIN_ROWS_KEPT_S = 60;
+/** AUDIT DOMAINS S3: the agreeing answers a region keeps - four times the three that confirm, so the confirmation outlasts
+ *  any few of its witnesses gone; one more agreeing answer past them changes nothing the law judges. */
+export const DOMAIN_AGREEING_KEPT = 12;
 
 /** The database binding -> the rows this isolate last read `{ at, rows }`, and its writes counted (a read begun before a
  *  write here is never kept). */
@@ -104,7 +111,8 @@ export async function domainsBoard(db, nowS, env, week) {
 /**
  * A SEAT OF POWER WITNESSED - asked beside the seat the client stands in (`seat`, already counted by witnessSeat), the
  * region's seat of power as its MAPS.BSA ranks it (`raw`, `{ region, key }`). Answers 'counted', 'agreed' (the region's
- * confirmation already says it - nothing written), or 'bad-domain' (not the seat's own region, or no report).
+ * confirmation already says it, and DOMAIN_AGREEING_KEPT answers with it - nothing written), or 'bad-domain' (not the
+ * seat's own region, or no report).
  * @param {{db: any, nowS: number}} ctx
  */
 export async function witnessDomain({ db, nowS }, player, seat, raw) {
@@ -112,8 +120,9 @@ export async function witnessDomain({ db, nowS }, player, seat, raw) {
   const d = domainReportOf(raw);
   if (!s || !d || d.region !== s.region) return 'bad-domain';
   const report = domainReportText(d);
-  const said = domainFacts(await domainRowsOf(db, nowS, false), await seatIgnored(db, nowS)).get(d.region);
-  if (said === d.key) return 'agreed';
+  const [rows, ignored] = await Promise.all([domainRowsOf(db, nowS, false), seatIgnored(db, nowS)]);
+  const agreeing = rows.filter((r) => r.key === String(d.region) && r.report === report && !ignored.has(r.account)).length;
+  if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';
   const put = await db.prepare('INSERT OR IGNORE INTO town_domain_witness (region, account, report, at) VALUES (?, ?, ?, ?)')
     .bind(d.region, player.id, report, nowS).run();
   if (Number(put?.meta?.changes) !== 0) { const root = rootOf(db); domainRowsKept.delete(root); domainRowWrites.set(root, (domainRowWrites.get(root) ?? 0) + 1); }

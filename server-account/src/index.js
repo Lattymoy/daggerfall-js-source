@@ -524,6 +524,7 @@ const GUILD_STATUS = Object.freeze({
   // DOMAIN2: a castle - the seats' switch shut, no castle there, the region's crown not the guild's, another's castle, none
   // of the guild's to give up, the treasury short
   'seats-closed': 403, 'bad-rid': 400, 'castle-none': 404, 'castle-not-held': 409, 'castle-taken': 409, 'castle-not-yours': 404, 'guild-marks-short': 409,
+  'seats-settling': 503,   // AUDIT DOMAINS S6: a castle act while another holds the Turning - asked again in a moment
 });
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
  *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
@@ -1853,6 +1854,7 @@ const service = {
         }
         if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
         if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
+        const castleAct = (f) => async (c, p, b) => (seatsOpenFor(p, env) && (await settleDueOnce(c.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))).pending ? { error: 'seats-settling' } : f(c, p, b));
         const act = {
           '/v1/guilds/found': foundGuild, '/v1/guilds/invite': inviteToGuild, '/v1/guilds/answer': answerInvite,
           '/v1/guilds/leave': leaveGuild, '/v1/guilds/remove': removeFromGuild, '/v1/guilds/rank': rankGuildMember,
@@ -1866,8 +1868,10 @@ const service = {
           // GUILD2a: a new name, for a price; GUILD2b: the vault - a piece in and out on the realm record, the grants
           '/v1/guilds/rename': renameGuild, '/v1/guilds/vault': vaultOf, '/v1/guilds/vault/put': vaultPut, '/v1/guilds/vault/take': vaultTake,
           '/v1/guilds/vault/grant': vaultGrant,
-          // DOMAIN2 (Domains.md 6): the region's castle, bought in silver by its holder's Guildmaster and given up
-          '/v1/guilds/castle/buy': buyCastle, '/v1/guilds/castle/sell': sellCastle,
+          // DOMAIN2 (Domains.md 6): the region's castle, bought in silver by its holder's Guildmaster and given up - AUDIT
+          // DOMAINS S6: after the Turnings due, as every seat act is (a castle bought in the minutes a week has turned
+          // unsettled bought a crown that Turning was about to lapse, and lost half its price at once)
+          '/v1/guilds/castle/buy': castleAct(buyCastle), '/v1/guilds/castle/sell': castleAct(sellCastle),
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);   // REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show

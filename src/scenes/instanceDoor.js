@@ -116,9 +116,11 @@ export function createInstanceDoor(deps) {
     const owners = await partyOwners();
     return partnerInstances(deps.members?.() ?? [], siteBase(site), (acct) => owners.get(acct) ?? null);
   }
-  /** DOMAIN2: my guild's castle at `site` as the door keys it - `{ owner, epoch }`, the guild's digest - or null. */
+  /** DOMAIN2: my guild's castle at `site` as the door keys it - `{ owner, epoch }`, the guild's digest - or null. A castle
+   *  is a DUNGEON (AUDIT DOMAINS R1: a building's site carries its town's map id, which is the crown seat's key and so the
+   *  castle's - every shop and tavern door of the crown city offered the castle, and opened a guild's copy of the shop). */
   async function castleHere(site) {
-    const c = deps.castle?.(site) ?? null;
+    const c = site?.siteType === SITE_TYPES.Dungeon ? deps.castle?.(site) ?? null : null;
     const owner = c?.guild ? await instanceGuildOwnerOf(c.guild) : null;
     return owner && c.epoch ? { owner, epoch: c.epoch } : null;
   }

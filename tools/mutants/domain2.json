@@ -38,11 +38,12 @@
   {
     "name": "DOMAIN2-a-kept-castle-offered",
     "file": "src/net/castleLaw.js",
-    "old": "castleRegionOk(h.region) && !taken.has(h.region))",
-    "new": "castleRegionOk(h.region))",
+    "old": "castleRegionOk(h.region) && castleKeyOk(h.key) && !taken.has(h.region))",
+    "new": "castleRegionOk(h.region) && castleKeyOk(h.key))",
     "tests": [
       "test/net/domain2_castles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the offer asks the castle's key too (R2)."
   },
   {
     "name": "DOMAIN2-no-crown-asked",
@@ -65,11 +66,12 @@
   {
     "name": "DOMAIN2-the-silver-unasked",
     "file": "server-account/src/castles.js",
-    "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4`)",
-    "new": "        AND 1`)",
+    "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4\n",
+    "new": "        AND 1\n",
     "tests": [
       "test/net/domain2_castles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the purchase's decision asks its burn line unwritten after it (S5)."
   },
   {
     "name": "DOMAIN2-never-released",
@@ -110,11 +112,12 @@
   {
     "name": "DOMAIN2-no-guild-arm",
     "file": "src/net/instanceRoom.js",
-    "old": "  if (guild != null && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';\n",
+    "old": "  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';   // a castle's, whole (AUDIT DOMAINS R2)\n",
     "new": "",
     "tests": [
       "test/net/domain2_castles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the guild arm a castle's room alone (R2)."
   },
   {
     "name": "DOMAIN2-the-relay-asks-no-guild",

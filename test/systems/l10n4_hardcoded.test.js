@@ -166,7 +166,7 @@ const HARDCODED = {
   'src/net/tideLaw.js': 21,
   'src/net/townEconBook.js': 5,   // AUDIT TOWN-ECON 2 SVC-1: a developer's `/town audit` and `/town strike` - their usage and the audit's lines, a developer's words (as npcHallBook.js's `/hall` and townSeatBook.js's `/seat`), never a player's
   'src/net/townSeatBook.js': 37,
-  'src/net/townSeatLaw.js': 177,
+  'src/net/townSeatLaw.js': 176,   // AUDIT DOMAINS C2: the seat's info line through the text core whole
   'src/net/tradeSession.js': 44,
   'src/net/vendorLaw.js': 9,
   'src/net/wedSession.js': 21,

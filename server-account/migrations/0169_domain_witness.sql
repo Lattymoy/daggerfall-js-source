@@ -9,7 +9,8 @@
 -- domainReportText, `[region, key]`), its first answer standing (the witnesses' INSERT OR IGNORE, as a seat's). Its own
 -- table, not `world_witness`'s kind: that table names its kinds in a CHECK, and a new kind would rebuild the service's
 -- largest table - its lean column, triggers and indexes - for some hundred rows. An answer that agrees with the region's
--- confirmation is never written (domains.js witnessDomain), so the rows stay three a region and the dissenters.
+-- confirmation is written only while fewer than a dozen do (domains.js witnessDomain, DOMAIN_AGREEING_KEPT), so the rows
+-- stay a dozen a region and the dissenters.
 CREATE TABLE IF NOT EXISTS town_domain_witness (
   region   INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),
   account  TEXT NOT NULL,

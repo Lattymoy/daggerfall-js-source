@@ -41,6 +41,12 @@ export const INSTANCE_TAG_SOURCE = '\\.i[0-9a-f]{16}\\.[0-9a-f]{8}';
 export const GUILD_INSTANCE_RELAY_MIN = 256;
 /** Does the relay whose welcome said `v` admit a guild's instance? */
 export const relaySupportsGuildInstances = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GUILD_INSTANCE_RELAY_MIN; };
+/** DOMAIN2 (AUDIT DOMAINS R2): THE ROOMS A GUILD MAY OWN - the castles', each a crown city's own dungeon whole (its key the
+ *  crown seat's, the city's own location: Sentinel's, Wayrest's and Daggerfall's - world/dungeon/dungeonTextures.js
+ *  MAIN_STORY_DUNGEON_IDS, measured on the freeware's MAPS.BSA). The `guild` arm admits these alone: it admitted any room
+ *  a guild's digest owned, so a modified client opened its whole guild a private copy of any dungeon or building. */
+export const CASTLE_MAP_IDS = Object.freeze([6634853, 630439035, 1291010263]);
+const GUILD_ROOMS = new Set(CASTLE_MAP_IDS.map((k) => `dungeon:m${k}`));
 /** The relay that admits an instance (net/wire.js RELAY_VERSION world208 - world206 then world207 on its branch, renumbered past SERPENT5's and ONE-BODY's at the merges): an older one keeps no memory for the key, gates
  *  nobody out of it, and drops the party pose's `ins` - so no page offers an instance until its relay says this. */
 export const INSTANCE_RELAY_MIN = 208;
@@ -112,7 +118,7 @@ export function instanceOfWord(word) {
 /**
  * THE RELAY'S DOOR: by what right may the account `subject` (the token's verified subject - never a hello field) stand in
  * the instance room `key`? 'staff', 'owner', 'guild' (DOMAIN2: `guild` the guild the verified token names, whose digest
- * owns the room - a castle's), or 'party' - asked of `kin(subject, owner)`, the hub's word (partyHoldsOwner), a member of
+ * owns the room - a castle's, CASTLE_MAP_IDS' alone), or 'party' - asked of `kin(subject, owner)`, the hub's word (partyHoldsOwner), a member of
  * the owner's party, whom the room asks again while it stays. Null for none, and for anything but an instance's key.
  */
 export async function instanceAdmission(key, subject, { staff = false, kin = null, guild = null } = {}) {
@@ -120,7 +126,7 @@ export async function instanceAdmission(key, subject, { staff = false, kin = nul
   if (!r || !identity(subject)) return null;
   if (staff) return 'staff';
   if (r.owner === await instanceOwnerOf(subject)) return 'owner';
-  if (guild != null && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';
+  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';   // a castle's, whole (AUDIT DOMAINS R2)
   return typeof kin === 'function' && await kin(subject, r.owner) ? 'party' : null;
 }
 /** May the account `subject` stand in the instance room `key`? (instanceAdmission's yes or no.) */

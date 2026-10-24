@@ -18,7 +18,7 @@ import { seatReportText, seatWeekOf, seatWeekStartMs, SEAT_MEMBER_WAIT_S, SEAT_W
 import {
   domainsWeekOf, domainsRule, domainReportOf, domainReportText, parseDomainReport, domainSeats, charterSeats, charterUnder,
 } from '../../src/net/domainLaw.js';
-import { confirmedDomains, domainFacts, witnessDomain, DOMAIN_ROWS_KEPT_S } from '../../server-account/src/domains.js';
+import { confirmedDomains, domainFacts, witnessDomain, DOMAIN_ROWS_KEPT_S, DOMAIN_AGREEING_KEPT } from '../../server-account/src/domains.js';
 import { titheAt, levyAt } from '../../server-account/src/seatHolding.js';
 import { settleWeek } from '../../server-account/src/seatTurning.js';
 import { readFileSync } from 'node:fs';
@@ -123,7 +123,7 @@ test('DOMAIN3 THE SEAT OF POWER as every client derives it: a region\'s seat ran
   // 37 of the seats of power their region's hub - Wrothgaria for Newing and Aldcester for Koegria the two that are not
 });
 
-test('DOMAIN3 THE WITNESS: the client standing in a seat town reports its region\'s seat of power beside the seat; three agreeing confirm it - a confirmed seat of that region; an answer the confirmation already says is never written; a report of another region, or a young account\'s, counts nothing (mutants: the region tie; the agreeing write; the ignored; the young)', async (t) => {
+test('DOMAIN3 THE WITNESS: the client standing in a seat town reports its region\'s seat of power beside the seat; three agreeing confirm it - a confirmed seat of that region; an agreeing answer kept to a dozen, so no few witnesses lost flip it (AUDIT DOMAINS S3); a report of another region, or a young account\'s, counts nothing (mutants: the region tie; the agreeing write; the ignored; the young)', async (t) => {
   const s = await stood(t);
   const ws = [];
   for (const h of ['Wit1', 'Wit2', 'Wit3', 'Wit4']) {
@@ -142,14 +142,32 @@ test('DOMAIN3 THE WITNESS: the client standing in a seat town reports its region
   await report(ws[2], RIPMORE, { region: 21, key: ANTICLERE.key });
   const d = await confirmedDomains(s.svc.env.DB, T0);
   assert.deepEqual([...d].map(([r, x]) => [r, x.key, x.name]), [[21, ANTICLERE.key, 'Anticlere']]);
-  assert.equal((await report(ws[3], ANTICLERE, { region: 21, key: ANTICLERE.key })).body.domain, 'agreed');
-  assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM town_domain_witness').get().n, 3, 'an agreeing answer is never written');
+  // AUDIT DOMAINS S3: an agreeing answer is kept while fewer than DOMAIN_AGREEING_KEPT stand - never the bare three, which
+  // one confirming witness lost (deleted, or ignored a week) left to the first three dissenters
+  assert.equal((await report(ws[3], ANTICLERE, { region: 21, key: ANTICLERE.key })).body.domain, 'counted');
+  const count = () => s.raw.prepare('SELECT COUNT(*) AS n FROM town_domain_witness').get().n;
+  assert.equal(count(), 4);
+  for (let i = 0; i < DOMAIN_AGREEING_KEPT - 4; i++) {
+    const g = await s.svc.guest();
+    s.raw.prepare('INSERT INTO town_domain_witness (region, account, report, at) VALUES (21, ?, ?, ?)').run(g.id, domainReportText({ region: 21, key: ANTICLERE.key }), T0);
+  }
+  const late = await s.svc.guest();
+  assert.equal(await witnessDomain({ db: s.svc.env.DB, nowS: T0 + DOMAIN_ROWS_KEPT_S }, { id: late.id }, RIPMORE, { region: 21, key: ANTICLERE.key }), 'agreed');
+  assert.equal(count(), DOMAIN_AGREEING_KEPT, 'past a dozen an agreeing answer changes nothing the law judges, and is not written');
   // the facts, pure: an ignored account's answers left out; a region's answers that name another region's never confirm
   const rows = ['a', 'b', 'c'].map((account, i) => ({ key: '21', account, report: '[21,3021]', at: i }));
   assert.deepEqual([...domainFacts(rows)], [[21, 3021]]);
   assert.deepEqual([...domainFacts(rows, new Set(['a']))], []);
   assert.deepEqual([...domainFacts(rows.map((r) => ({ ...r, key: '22' })))], [], 'a fact keyed by one region naming another');
-  assert.equal(await witnessDomain({ db: s.svc.env.DB, nowS: T0 }, { id: ws[3].id }, RIPMORE, { region: 21, key: RIPMORE.key }), 'counted', 'a dissent after the confirmation is written - the dispute\'s row');
+  const dissent = await s.svc.guest();
+  assert.equal(await witnessDomain({ db: s.svc.env.DB, nowS: T0 + DOMAIN_ROWS_KEPT_S }, { id: dissent.id }, RIPMORE, { region: 21, key: RIPMORE.key }), 'counted', 'a dissent after the confirmation is written - the dispute\'s row');
+  assert.equal(count(), DOMAIN_AGREEING_KEPT + 1);
+  // S3, pure: a fourth agreeing answer kept, the first confirmer ignored and three dissenters after - the fact stands
+  const kept = [...['a', 'b', 'c', 'd'].map((account, i) => ({ key: '21', account, report: '[21,3021]', at: i })),
+    ...['x', 'y', 'z'].map((account, i) => ({ key: '21', account, report: '[21,3022]', at: 10 + i }))];
+  assert.deepEqual([...domainFacts(kept, new Set(['a']))], [[21, 3021]]);
+  assert.deepEqual([...domainFacts(kept.filter((r) => r.account !== 'd'), new Set(['a']))], [[21, 3022]], 'at the bare three it flipped');
+  assert.equal(DOMAIN_AGREEING_KEPT, 12);
   assert.equal(DOMAIN_ROWS_KEPT_S, 60);
 });
 
@@ -166,7 +184,7 @@ test('DOMAIN3 THE PLEDGE BY REGION: where the region law rules, a holding is ref
   assert.equal((await later.pledge(eo.gm, RIPMORE.key)).status, 200, 'the week before the law: the seat law');
 });
 
-test('DOMAIN3 A HOLDING COUNTS FOR ITS CHARTER: a Watch tick in a holding\'s own pixel counts at the region\'s Charter; a member\'s home anywhere in the region counts in the Charter\'s standings; under the seat law neither does (mutants: the Watch\'s Charter; the homes\' region)', async (t) => {
+test('DOMAIN3 A HOLDING COUNTS FOR ITS CHARTER: a Watch tick in a holding\'s own pixel counts at the region\'s Charter; a member\'s home anywhere in the region counts in the Charter\'s standings; under the seat law neither does (mutants: the Watch\'s Charter; the homes\' region; a region with no seat of power; every reader handed the law)', async (t) => {
   for (const ruled of [true, false]) {
     const s = await stood(t, ruled ? { DOMAINS_WEEK: String(W) } : {});
     s.domain(21, ANTICLERE.key);
@@ -182,7 +200,24 @@ test('DOMAIN3 A HOLDING COUNTS FOR ITS CHARTER: a Watch tick in a holding\'s own
     const st = (await s.standings(sh.gm, ANTICLERE)).standings[0];
     const homeDays = Math.floor((T0 - seatWeekStartMs(W) / 1000) / DAY);
     assert.equal(st.influence, (ruled ? 2 : 1) + (ruled ? homeDays * 25 : 0), `ruled ${ruled}: ${JSON.stringify(st)}`);
+    if (!ruled) continue;
+    // AUDIT DOMAINS S1: a region with no seat of power confirmed keeps the seat law - its seats count their own town's homes
+    const gp = await s.guild('Glenn', 'Glen Watch', 'GW');
+    assert.equal((await s.pledge(gp.gm, GLENPOINT.key)).status, 200);
+    const go = await s.member(gp, 'GlenOwner');
+    await s.watch(go, GLENPOINT);
+    s.raw.prepare(`INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at)
+      VALUES (9999, 7, ?, ?, ?, 18, 'private', 1000, ?)`).run(go.id, go.character, go.handle, T0 - 30 * DAY);
+    assert.equal((await s.standings(gp.gm, GLENPOINT)).standings[0].influence, 1, 'a home elsewhere in a region with no seat of power counts nothing');
   }
+  // AUDIT DOMAINS S1: every reader of a week's standings counts the region's homes as the board does - the Turning's settle,
+  // a Tourney's dead heat, Tribute's room - each handed the region law's seats of power for that week
+  const turning = src('server-account/src/seatTurning.js');
+  assert.ok(turning.includes('const list = await gatherStandings(db, seat, week, atS, counted, lawNow ? ruled : null);'));
+  assert.ok(src('server-account/src/seatSiege.js').includes('!!seasonOf(w, zero), await domainsFor(db, nowS, env, w));'));
+  assert.ok(src('server-account/src/seatSiege.js').includes('const applied = !r && await applyResult(db, b, c, nowS, zero, env);'));
+  assert.ok(src('server-account/src/seatInfluence.js').includes('seasonZeroOf(env?.SEASON_ZERO_WEEK)), await domainsFor(db, nowS, env, week))).find((x) => x.guild === gid);'));
+  assert.ok(src('server-account/src/seatInfluence.js').includes('const region = domains?.get?.(seat.region)?.key === seat.key;'));
 });
 
 test('DOMAIN3 THE BAILIWICK IS THE REGION: a board nearer a holding pays the Charter\'s Tithe, a harvest there its Levy - and under the seat law the holding\'s own, unheld (mutants: the Charters read; the region law\'s week unthreaded at a sale, an auction, an order, the clock, a harvest)', async (t) => {
@@ -240,6 +275,8 @@ test('DOMAIN3 THE FOLD: the Turning before the first region-law week releases a 
   // the region law's week reaches every Turning: the minute's clock's and every seat route's
   const turning = src('server-account/src/seatTurning.js');
   assert.ok(turning.includes('const r = await settleWeek(db, w, nowS, zero, domainsWeek);'));
+  // AUDIT DOMAINS S7: the fold's target read off the registry's region, the one the Charters were read by
+  assert.ok(turning.includes('into = domains.get(registry.get(key).region).key'));
   assert.ok(turning.includes('return { settled: await settleDue(db, nowS, zero, domainsWeek), pending: false };'));
   assert.ok(src('server-account/src/cron.js').includes('settleDueOnce(ctx.db, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))'));
   assert.ok(src('server-account/src/index.js').includes('settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))'));
@@ -318,6 +355,9 @@ test('DOMAIN3 THE WORDS AND THE MAP: a seat of power\'s Charter named for its re
   assert.equal(seatArrivalLine(town), 'Ripmore, in the Charter of Anticlere, held by Silver Hand <SH>.');
   assert.equal(seatArrivalLine({ ...town, charterSeat: { ...charter, holder: null } }), 'Ripmore, in the Charter of Anticlere. Its Charter is unheld.');
   assert.equal(seatInfoLine(town, null), 'Ripmore, in the Charter of Anticlere: held by Silver Hand <SH>');
+  // AUDIT DOMAINS C2: the seat's own line through the text core whole, its English as it was
+  assert.deepEqual([seatInfoLine(charter, SH), seatInfoLine(charter, null)], ['The Charter of Anticlere: held by Silver Hand <SH>', 'The Charter of Anticlere: unheld']);
+  assert.match(src('src/net/townSeatLaw.js'), /return holder \? t\('seat\.info\.held', '\{charter\}: held by \{guild\}', \{ charter, guild: guildWords\(holder\) \}\) : t\('seat\.info\.unheld', '\{charter\}: unheld', \{ charter \}\);/);
   assert.equal(seatMapMark(town).fill, seatMapMark(charter).fill);
   assert.notEqual(seatMapMark(town).fill, null);
   assert.equal(bailiwickOf(LISTED, 21, RIPMORE.pixel).key, ANTICLERE.key, 'the holding skipped');
@@ -341,4 +381,8 @@ test('DOMAIN3 A HOLDING LIVES UNDER ITS CHARTER: its shops give the Charter hold
   const tab = src('src/ui/seatTab.js');
   assert.match(tab, /  const town = host\.seat;\n  const seat = town\?\.charterSeat \?\? town;/);
   assert.match(tab, /if \(town !== seat\) who\.append\(el\('p', 'seat-holding', holdingTabLine\(town\)\)\);/);
+  // AUDIT DOMAINS C1: a Harbour is the Charter's own town's coast - never a holding's (Alik'ra's raised one at inland Berbaaqnia)
+  assert.match(tab, /  const port = town === seat && host\.port === true;/);
+  assert.match(tab, /forts, seat, port, busy: ui\.busy\(\),/);
+  assert.match(tab, /onBegin: \(work\) => act\(\(\) => book\.fortFund\(seat, work, port\)\),/);
 });

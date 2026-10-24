@@ -321,12 +321,12 @@
   {
     "name": "TIDE-inf-counted",
     "file": "server-account/src/seatInfluence.js",
-    "old": "  const list = await gatherStandings(db, seat, week, nowS, !!season, (await domainsFor(db, nowS, env, week)) != null);",
-    "new": "  const list = await gatherStandings(db, seat, week, nowS, false, (await domainsFor(db, nowS, env, week)) != null);",
+    "old": "  const list = await gatherStandings(db, seat, week, nowS, !!season, await domainsFor(db, nowS, env, week));",
+    "new": "  const list = await gatherStandings(db, seat, week, nowS, false, await domainsFor(db, nowS, env, week));",
     "tests": [
       "test/net/tide_service.test.js"
     ],
-    "note": "Re-aimed by content (DOMAIN3): the standings read the region's homes where the region law rules."
+    "note": "Re-aimed by content (AUDIT DOMAINS): the standings handed the region law's seats of power (S1). Re-aimed by content (DOMAIN3): the standings read the region's homes where the region law rules."
   },
   {
     "name": "TIDE-inf-tides",
@@ -378,12 +378,13 @@
   {
     "name": "TIDE-tu-gather",
     "file": "server-account/src/seatTurning.js",
-    "old": "    const list = await gatherStandings(db, seat, week, atS, counted);",
-    "new": "    const list = await gatherStandings(db, seat, week, atS);",
+    "old": "    const list = await gatherStandings(db, seat, week, atS, counted, lawNow ? ruled : null);",
+    "new": "    const list = await gatherStandings(db, seat, week, atS, false, lawNow ? ruled : null);",
     "tests": [
       "test/net/season1_service.test.js",
       "test/net/tide_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the Turning's standings handed the region law's seats of power (S1); the Tides unrolled."
   },
   {
     "name": "TIDE-tab-line",

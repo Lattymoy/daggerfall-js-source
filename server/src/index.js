@@ -11230,7 +11230,7 @@ export class Room {
     if (this._instanceGuildRefused.has(ws)) return;
     this._instanceGuildRefused.add(ws);
     Promise.resolve().then(async () => {
-      if (this._dead.has(ws) || !this.state.getWebSockets().includes(ws)) return;
+      if (this._dead.has(ws) || this._gone.has(ws) || !this.state.getWebSockets().includes(ws)) return;   // AUDIT DOMAINS R5: one already gone (a replacement's close) is refused no second time
       this._refuse(ws, INSTANCE_DOOR_WORD);
       await this._reap();
     }).catch((e) => console.warn('[instance] guild out', e?.message ?? e));

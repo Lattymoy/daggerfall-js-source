@@ -488,9 +488,12 @@ export async function allIn(db, ids, sql, before = [], after = []) {
   return out;
 }
 /** Each pledged guild's week at a seat (standingsOf), the rows gathered. Exported for the Turning (seatTurning.js).
- *  SEASON1 part two: `counted` whether a Season is counted that week - the Tides roll only then. DOMAIN3: `region` the
- *  region law rules - the homes counted are the region's, every seat town of it the Charter's holding. */
-export async function gatherStandings(db, seat, week, nowS, counted = false, region = false) {
+ *  SEASON1 part two: `counted` whether a Season is counted that week - the Tides roll only then. DOMAIN3: `domains` the
+ *  region law's seats of power that week (domains.js domainsFor; null where it does not rule) - at a region's seat of
+ *  power the homes counted are the whole region's, every seat town of it the Charter's holding; anywhere else the town's.
+ *  Every reader of a week's standings hands it: the board, the Turning, a Tourney's dead heat, Tribute's room. */
+export async function gatherStandings(db, seat, week, nowS, counted = false, domains = null) {
+  const region = domains?.get?.(seat.region)?.key === seat.key;
   const guilds = [...(await seatGuildsOf(db, seat.key, week)).keys()];
   if (!guilds.length) return [];
   // AUDIT-SEATS S11: summed in SQL - one row a guild, account, source, region and game or UTC day (its amount the sum, `n`
@@ -527,7 +530,7 @@ export async function readStandings({ db, nowS }, player, env, { key, character 
   if (!seat) return { error: 'seat-unconfirmed' };
   const week = weekAt(nowS);
   const season = seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK));   // SEASON1: the Season counted, and its Tides
-  const list = await gatherStandings(db, seat, week, nowS, !!season, (await domainsFor(db, nowS, env, week)) != null);   // DOMAIN3: the region's homes
+  const list = await gatherStandings(db, seat, week, nowS, !!season, await domainsFor(db, nowS, env, week));   // DOMAIN3: the region's homes at its seat of power
   // SEAT1c: the Legacy each guild carried in, the holder and its defence, the week's battle here, the Chronicle
   const { results: legacyRows = [] } = await db.prepare('SELECT guild_id, amount FROM town_seat_legacy WHERE week = ? AND key = ?').bind(week, key).all();
   const legacy = new Map(legacyRows.map((l) => [l.guild_id, Number(l.amount)]));
@@ -735,7 +738,7 @@ export async function payTribute({ db, nowS }, player, env, { character, key, ma
   if (!seat) return { error: 'seat-unconfirmed' };
   const gid = a.me.guild_id;
   if ((await pledgeIn(db, week, gid, seat.region)) !== key) return { error: 'seat-no-pledge' };
-  const s = (await gatherStandings(db, seat, week, nowS, !!seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK)))).find((x) => x.guild === gid);
+  const s = (await gatherStandings(db, seat, week, nowS, !!seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK)), await domainsFor(db, nowS, env, week))).find((x) => x.guild === gid);   // DOMAIN3: the room as the standings count it
   const room = s ? tributeRoom(s.others, s.tribute) : 0;
   if (marks / TRIBUTE_MARKS_PER_INFLUENCE > room) return { error: 'seat-tribute-cap' };   // the room is the standings' to say (mine.tributeRoom)
   try {

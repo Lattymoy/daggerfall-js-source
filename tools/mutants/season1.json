@@ -534,11 +534,12 @@
   {
     "name": "SEASON1-sg-apply-zero",
     "file": "server-account/src/seatSiege.js",
-    "old": "await applyResult(db, b, c, nowS, zero);",
-    "new": "await applyResult(db, b, c, nowS, null);",
+    "old": "await applyResult(db, b, c, nowS, zero, env);",
+    "new": "await applyResult(db, b, c, nowS, null, env);",
     "tests": [
       "test/net/season1_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the result is handed the region law's week too (S1)."
   },
   {
     "name": "SEASON1-pol-zero",

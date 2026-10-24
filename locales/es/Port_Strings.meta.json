@@ -32609,6 +32609,16 @@
   "tr": "53a664d9c5af",
   "by": "claude-in-session"
  },
+ "seat.info.held": {
+  "en": "ce47a0ad1608",
+  "tr": "7be41c661253",
+  "by": "claude-in-session"
+ },
+ "seat.info.unheld": {
+  "en": "fb799b9909b4",
+  "tr": "c655982787c4",
+  "by": "claude-in-session"
+ },
  "serpent.honour.aura": {
   "en": "55dc3cb1ee75",
   "tr": "a8f72839081c",
@@ -32797,6 +32807,11 @@
  "social.guild.castle.sold": {
   "en": "88916a1237bd",
   "tr": "78b942373da7",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.wait": {
+  "en": "5de59211db2b",
+  "tr": "60b25c9ecb1d",
   "by": "claude-in-session"
  },
  "social.guild.close": {

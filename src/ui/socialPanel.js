@@ -73,7 +73,7 @@ import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the
 import { CASTLE_PRICE, castleMay, castleLostRefund, castleSaleRefund } from '../net/castleLaw.js';   // DOMAIN2: the castle's price, power and refunds
 import { wagonItemName } from '../systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { t } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language
+import { t, formatNumber } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language; AUDIT DOMAINS C5: a castle's numbers
 import { storeFilterAccepts, storeRarityAccepts, storeQuery, storeFilterOptions, storeRarityOptions } from './storeFilter.js';   // GUILD-UX: the stores' one filter
 import { showItemHover, hideItemHover } from './enhanced/enhancedInventory.js';   // GUILD-UX: the pack's one item card
 import { playerEntity } from '../characters/playerEntity.js';   // GUILD-UX: the card's comparison is against what I wear
@@ -324,6 +324,7 @@ export const guildCastleText = Object.freeze({
   buy: (city) => t('social.guild.castle.buy', 'Buy Castle {city}', { city }),
   short: () => t('social.guild.castle.short', 'the treasury holds too little silver'),
   bought: (city) => t('social.guild.castle.bought', "Castle {city} is your guild's. Choose it at the castle's door.", { city }),
+  wait: () => t('social.guild.castle.wait', 'a moment'),   // AUDIT DOMAINS C5: a castle button held while an act is out
 });
 /** AUDIT GUILD1d R13: the hall's sale in words - the service's own sum (the deed share and its pieces' half). */
 export const guildHallSoldText = (r) => `The hall is sold. ${Number(r?.data?.back ?? 0).toLocaleString('en-US')} gold went back into the treasury.`;
@@ -1468,7 +1469,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const guildCastleNodes = (g, v, me) => {
     const castles = Array.isArray(v.castles) ? v.castles : [], offers = Array.isArray(v.castleOffers) ? v.castleOffers : [];
     const out = [el('div', 'dfsocial-sec', guildCastleText.head())];
-    const n = (x) => Number(x ?? 0).toLocaleString('en-US');
+    const n = (x) => formatNumber(Number(x ?? 0));   // AUDIT DOMAINS C5: in the player's own grouping, inside the player's own words
     if (!castles.length && !offers.length) { out.push(el('div', 'dfsocial-note', guildCastleText.none())); return out; }
     for (const c of castles) {
       const city = REGION_NAMES[c.region] ?? '';
@@ -1476,8 +1477,8 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       out.push(el('div', 'dfsocial-note', guildCastleText.rule(city, n(castleLostRefund(c.paid)), n(castleSaleRefund(c.paid)))));
       if (castleMay(me, 'sell')) {
         const acts = el('div', 'dfsocial-acts'), key = `castle-sell-${c.region}`;
-        acts.append(armed(key) ? btn(guildCastleText.sellSure(n(castleSaleRefund(c.paid))), { warn: true, enabled: !g.busy, why: 'a moment', run: () => guildDo(g.sellCastle(c.region), (r) => guildCastleText.sold(n(r?.data?.back))) })
-          : btn(guildCastleText.sell(), { enabled: !g.busy, why: 'a moment', run: () => arm(key) }));
+        acts.append(armed(key) ? btn(guildCastleText.sellSure(n(castleSaleRefund(c.paid))), { warn: true, enabled: !g.busy, why: guildCastleText.wait(), run: () => guildDo(g.sellCastle(c.region), (r) => guildCastleText.sold(n(r?.data?.back))) })
+          : btn(guildCastleText.sell(), { enabled: !g.busy, why: guildCastleText.wait(), run: () => arm(key) }));
         out.push(acts);
       }
     }
@@ -1485,7 +1486,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       const city = REGION_NAMES[o.region] ?? '', has = Number(v.marks ?? 0);
       out.push(el('div', 'dfsocial-note', guildCastleText.offer(city, n(o.price), n(has))));
       const acts = el('div', 'dfsocial-acts');
-      acts.append(btn(guildCastleText.buy(city), { enabled: !g.busy && has >= o.price, why: g.busy ? 'a moment' : guildCastleText.short(), run: () => guildDo(g.buyCastle(o.region), guildCastleText.bought(city)) }));
+      acts.append(btn(guildCastleText.buy(city), { enabled: !g.busy && has >= o.price, why: g.busy ? guildCastleText.wait() : guildCastleText.short(), run: () => guildDo(g.buyCastle(o.region), guildCastleText.bought(city)) }));
       out.push(acts);
     }
     return out;
