@@ -566,15 +566,18 @@ test('STORAGE: the footer\'s Storage button takes no height - the bag button\'s 
 // STORAGE: THE SELECTOR'S LOOK (the side window's tab strip). It wears the pile tabs' look; every tab is at least 32px tall
 // and a finger's 44 under a coarse pointer; the strip wraps on a narrow pane rather than overflowing; a tab that cannot open
 // now is dim and says not-allowed (while still taking the press, which says why); the lit one is lit.
-test('STORAGE: the selector\'s tabs are 32px tall and a finger\'s 44 under a coarse pointer, the strip wraps, a tab that cannot open is dim and says not-allowed, the lit one is lit (mutants: the 44 unwritten; the wrap unwritten; the dim unwritten; the cursor unwritten; the lit one unlit)', () => {
+test('STORAGE: the selector\'s tabs are 32px tall and a finger\'s 44 under a coarse pointer, the strip one row of equal tabs, a tab that cannot open is dim and says not-allowed, the lit one is lit (mutants: the 44 unwritten; the wrap unwritten; the dim unwritten; the cursor unwritten; the lit one unlit)', () => {
   for (const env of EVERY) {
     const at = `${env.w}px ${env.pointer}`;
     const tab = styleAt(env, PIECE.tab);
     assert.equal(px(tab['min-height']), env.pointer === 'coarse' ? 44 : 32, `${at}: a tab 32 tall, a finger's 44`);
     assert.equal(tab.opacity, undefined, `${at}: a usable tab is not dim`);
     const strip = styleAt(env, PIECE.strip);
-    assert.deepEqual([strip.display, strip['flex-wrap']], ['flex', 'wrap'], `${at}: the strip wraps rather than overflowing`);
-    assert.equal(strip['max-width'], '100%', `${at}: and stays inside its pane`);
+    // REVIEW (seen in the playground, 2026-10-24: in the side window's narrow pane the strip wrapped two tabs and one - Wagon,
+    // Materials Bag, then Guild Vault alone): ONE ROW of equal tabs, a long name wrapping inside its own tab
+    assert.deepEqual([strip.display, strip['grid-auto-flow'], strip['grid-auto-columns']], ['grid', 'column', 'minmax(0, 1fr)'], `${at}: one row of equal tabs`);
+    assert.deepEqual([strip.width, strip['max-width']], ['100%', '100%'], `${at}: across its pane, and inside it`);
+    assert.deepEqual([tab['white-space'], tab['justify-content'], tab['text-align']], ['normal', 'center', 'center'], `${at}: a long name wraps inside its tab, centred`);
     assert.equal(styleAt(env, PIECE.tabDim).opacity, '0.45', `${at}: a tab that cannot open is dim`);
     const lit = styleAt(env, PIECE.tabLit);
     assert.notEqual(lit.color, tab.color, `${at}: the lit tab wears its own colour`);
