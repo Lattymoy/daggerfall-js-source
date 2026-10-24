@@ -1,0 +1,233 @@
+[
+  {
+    "name": "START1-brisien-back-at-game-start",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "export const GAME_START_QUESTS = Object.freeze(['S0000977', BAY_START_QUEST]);",
+    "new": "export const GAME_START_QUESTS = Object.freeze(['S0000977', '_BRISIEN']);",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js",
+      "test/systems/quest/audit24_questseams.test.js",
+      "test/ui/tut1_tutorials.test.js",
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "START1-start-not-protected",
+    "file": "src/systems/quest/machine.js",
+    "old": "export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN', ...START_QUESTS]);",
+    "new": "export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-start-not-main-quest",
+    "file": "src/systems/quest/questLists.js",
+    "old": "questName === '_BRISIEN' || isStartQuestName(questName);",
+    "new": "questName === '_BRISIEN';",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js",
+      "test/ui/enhanced/enhancedPause.test.js"
+    ]
+  },
+  {
+    "name": "START1-start-name-case-sensitive",
+    "file": "src/systems/starts/starts.js",
+    "old": "  return START_QUESTS.some((s) => s.toUpperCase() === n);",
+    "new": "  return START_QUESTS.some((s) => s === String(questName ?? ''));",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-brisien-patch-dropped",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "  _BRISIEN: () => [{ old: '\\tpc at PiratesHold set _exitstarter_ \\n\\tsay 1025 \\n', new: '\\tpc at PiratesHold set _exitstarter_ \\n', count: 1 }],",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-family-dropped",
+    "file": "src/systems/questlines/qlFamilies.js",
+    "old": "  MainQuest: Object.freeze([...START_QUESTS]),\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js",
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "START1-layer-pops-at-the-start",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": " && !isStartQuestName(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');",
+    "new": " && meta?.scope !== 'init') noteFirstUse('questlines');",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "START1-pack-glob-dropped",
+    "file": "src/scenes/quest/questData.js",
+    "old": "  ...import.meta.glob('../../systems/starts/quests/*.txt', { query: '?raw', import: 'default' }),\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-node-twin-dir-dropped",
+    "file": "test/qlSources.mjs",
+    "old": "  ['starts', 'src/systems/starts/quests'],",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js",
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "START1-watch-on-the-letter-dropped",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\t_commission_ used do _opened_\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-city-half-of-the-gate-dropped",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\twhen _opened_ and _incity_\n",
+    "new": "\twhen _opened_\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-gate-read-as-or",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\twhen _opened_ and _incity_\n",
+    "new": "\twhen _opened_ or _incity_\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-city-watch-on-the-hold",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\tpc at _daggerfall_ set _incity_\n",
+    "new": "\tpc at _hold_ set _incity_\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-placement-dropped",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\tplace item _commission_ at _hold_\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-wake-second-page-dropped",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\tsay 1020\n\tsay 1021\n",
+    "new": "\tsay 1020\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-found-entry-dropped",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\tlog 1011 step 1\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-reveal-dropped",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\treveal _daggerfall_\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-hold-unrevealed",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\treveal _hold_\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-opener-misnamed",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "\tstart quest _BRISIEN\n",
+    "new": "\tstart quest _BRISIEM\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-a-clock-added",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "Place _daggerfall_ permanent DaggerfallCity1\n",
+    "new": "Place _daggerfall_ permanent DaggerfallCity1\n\nClock _late_ 30.00:00 0 flag 1 range 0 1\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-sheet-find-unmarked",
+    "file": "src/systems/questlines/sheets/mainQuest.json",
+    "old": "\"done\":{\"any\":[{\"task\":\"_found_\"},{\"task\":\"_opened_\"}]},\"mark\":\"_hold_\"}",
+    "new": "\"done\":{\"any\":[{\"task\":\"_found_\"},{\"task\":\"_opened_\"}]}}",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-sheet-order-open-at-once",
+    "file": "src/systems/questlines/sheets/mainQuest.json",
+    "old": "\"open\":{\"task\":\"_opened_\"},\"done\":{\"task\":\"_reported_\"}",
+    "new": "\"done\":{\"task\":\"_reported_\"}",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-sheet-wait-dropped",
+    "file": "src/systems/questlines/sheets/mainQuest.json",
+    "old": "{\"id\":\"wait\",\"text\":\"Wait for the Emperor's agent in Daggerfall to send for you\",\"done\":{\"any\":[{\"task\":\"_invitepc_\"},{\"task\":\"_meetladyb_\"}]}},",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-welcome-says-nothing-of-the-commission",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "      'You awaken in a small cave after a shipwreck. The sealed commission you carried may have washed in here too. Find it, then the way out. The main story begins when you open it.',",
+    "new": "      'You awaken in a small cave. Take what you need from your pack, find the way out and make for the nearest town.',",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START1-letter-past-one-box",
+    "file": "src/systems/starts/quests/_STARTIB.txt",
+    "old": "<ce>                    Uriel Septim VII\n",
+    "new": " Long live the Emperor, and long live the Empire.\n By Our own hand, under Our own seal.\n Given at the Imperial City, in 3E 405.\n For the Blades, and for no other eyes.\n<ce>                    Uriel Septim VII\n",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  }
+]
