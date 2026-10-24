@@ -25,7 +25,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { rangeLift, provinceByKey } from './tamrielGeography.js';
 import { provinceKeyAt, coastDistanceAt } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
-import { bayToPicture, inBay, BAY_W, BAY_H } from './tamrielFrame.js';
+import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay } from './tamrielFrame.js';
 import { CLIMATES } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each province's zones, each its own climate and air
 
@@ -96,6 +96,16 @@ export function tamrielClimateAt(x, y) {
   return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;
 }
 
+/** AUDIT TESA-BIOME Z4: whether a pixel (px, py)'s 3x3 of climates (ECOTONE1, the host's climates3x3) reads its neighbour
+ *  (x, y) - a Bay pixel the Bay's own map alone, as ever; a pixel past the Bay the continent's frame, so a border between
+ *  two zones blends (the nature's patchy fade, the ground's neighbour archives) as the Bay's own climates' borders do,
+ *  where every neighbour past the Bay had worn the pixel's own and each border was the pixel's straight edge. */
+export function climateNeighbourIn(px, py, x, y) {
+  if (inBay(px, py)) return inBay(x, y);
+  const f = tamrielFrameInBay();
+  return x >= f.x0 && y >= f.y0 && x < f.x0 + f.w && y < f.y0 + f.h;
+}
+
 /** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: a
  *  lattice hash of small bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. */
 export function tamrielLargeMap(x, y) {
@@ -143,5 +153,9 @@ export function groundClimateIndex(bayClimateIndex) {
  *  lore's air is not its ground's (Morrowind's grey volcanic ground, its warm air), else its ground's climate. The air
  *  law's map reads it (systems/weather/airGround.js); the ground, the textures and the tables never do. */
 export function groundAirClimateIndex(bayClimateIndex) {
-  return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : tamrielBiomeAt(x, y)?.air ?? tamrielClimateAt(x, y));
+  return (x, y) => {
+    if (inBay(x, y)) return bayClimateIndex(x, y);
+    const zone = tamrielBiomeAt(x, y);   // AUDIT TESA-BIOME Z7: the zone read once
+    return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);
+  };
 }

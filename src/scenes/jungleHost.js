@@ -56,7 +56,7 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
   const hs = createHazeState();
   const u = new Float32Array(8), skyU = new Float32Array(4), colour = new Float32Array(3);
   const _t = [0, 0, 0], _eye = [0, 0, 0], _abs = [0, 0, 0], _nine = new Array(9), _floorNine = new Array(9);
-  const _floor = { px: NaN, py: NaN, nine: /** @type {any[]|null} */ (null) };   // BANTHA2: floorClaims' last pixel and its 3x3
+  const _floor = { px: NaN, py: NaN, field: /** @type {any} */ (null), nine: /** @type {any[]|null} */ (null) };   // BANTHA2: floorClaims' last pixel and its 3x3
   const _w = { px: 0, py: 0, lx: 0, lz: 0 };
   let clock = 0;
   /** the pixel a scene point stands in and where in it (m, x east and z north - the layout's frame), in one scratch
@@ -118,8 +118,10 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
      *  jungleFloorHost.js). Asked a grass blade at a time - one scratch, nothing made. */
     floorClaims(x, z) {
       const w = where(x, z);
-      // the placer asks a cell's blades in a run, most in one pixel: its 3x3 read once a pixel (the field never moves)
-      if (w.px !== _floor.px || w.py !== _floor.py) { _floor.px = w.px; _floor.py = w.py; _floor.nine = jungleNine(fieldNow(), w.px, w.py, _floorNine); }
+      // the placer asks a cell's blades in a run, most in one pixel: its 3x3 read once a pixel and a field (AUDIT TESA-BIOME
+      // J: the field is made again when the zones' stamp moves - the trace landing - and the old one's 3x3 is not this one's)
+      const f = fieldNow();
+      if (w.px !== _floor.px || w.py !== _floor.py || f !== _floor.field) { _floor.px = w.px; _floor.py = w.py; _floor.field = f; _floor.nine = jungleNine(f, w.px, w.py, _floorNine); }
       const nine = _floor.nine;
       if (!nine) return false;
       const share = jungleShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz));

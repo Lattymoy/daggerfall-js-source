@@ -287,6 +287,15 @@ test('TESA7 the host\'s ask: the roll\'s place stood once in the index under the
   assert.notEqual(moved, loc);
   assert.equal(moved.country.type, T.TownHamlet, 'the climate moved, the kind with it');
   assert.equal(h.d.index.get('2200,-360'), moved);
+  // AUDIT TESA-BIOME P13: a pixel that stops standing a place leaves the index - no stale place stays (a zone's climate with
+  // no countryside, the trace landing)
+  const genBefore = h.gen();
+  h.d.climate = () => 999;
+  assert.equal(h.countryLocationAt(2200, -360), null, 'nothing stands there now');
+  assert.equal(h.d.index.has('2200,-360'), false, 'the old place gone from the index');
+  assert.equal(h.gen(), genBefore + 1, 'and the index\'s generation moved');
+  h.d.climate = () => 226;
+  assert.ok(h.countryLocationAt(2200, -360), 'stood again');
   for (const [o, what] of [[{ water: new Set(['5,-5']) }, 'water'], [{ wet: new Set(['5,-5']) }, 'the sea\'s edge']]) {
     const g = host(o);
     assert.equal(g.countryLocationAt(5, -5), null, what);

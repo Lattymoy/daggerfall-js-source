@@ -323,7 +323,7 @@ test('WA1 the quests under the port\'s machine: every line a known action, and a
 
 test('WA1 the host: the events where DFU raises them, the coroutine\'s clock, the action registered whatever the switch says, the quest gate, the ship\'s fade', () => {
   const w = hostText('src/scenes/world.js');
-  const ft = w.slice(w.indexOf('async function fastTravelTo('), w.indexOf('// P-slice: the ABOVE-GROUND QUICKSAVE'));
+  const ft = w.slice(w.indexOf('async function fastTravelTo('), w.indexOf('\n  }\n', w.indexOf('async function fastTravelTo(')) + 4);   // AUDIT TESA-BIOME P4: fastTravelTo to its own close - the quick save's comment moved out of the host at TESA's merge, and the window had run on through every module after it
   const pre = ft.indexOf('warmAshesPreTravel({ oceanPixels: computed.oceanPixels ?? 0, travelShip: !!opts.travelShip })');
   assert.ok(pre > ft.indexOf('deductGold(playerEntity,'), 'RaiseOnPreFastTravelEvent follows DeductFastTravelGold (:326-328)');
   assert.ok(pre < ft.indexOf('await _teleportToPixel('), '...and precedes the teleport');

@@ -57,9 +57,9 @@ const smoothstep = (a, b, v) => {
  * (banthaArea.js banthaAreaHas, the owner's area); a pixel off the map is outside - unless `beyond` answers it (TESA-BIOME:
  * the continent past the Bay, Cyrodiil's jungle).
  * @param {{ width: number, height: number, insideAt?: (x: number, y: number) => boolean,
- *   beyond?: ((x: number, y: number) => boolean)|null, reach?: number }} o
+ *   beyond?: ((x: number, y: number) => boolean)|null, reach?: number, beyondMax?: number }} o   `beyondMax` the far maps' cap (JUNGLE_BEYOND_MAX; the pins' seam)
  */
-export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = null, reach = JUNGLE_FIELD_REACH }) {
+export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = null, reach = JUNGLE_FIELD_REACH, beyondMax = JUNGLE_BEYOND_MAX }) {
   const side = new Uint8Array(width * height).fill(2);   // 2 not yet read, 1 the jungle's, 0 not
   const dist = new Float32Array(width * height).fill(NaN);
   const farSide = new Map(), farDist = new Map();   // TESA-BIOME: the pixels past the map `beyond` answers, kept
@@ -72,7 +72,7 @@ export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = 
       const k = farKey(x, y);
       let v = farSide.get(k);
       if (v === undefined) {
-        if (farSide.size >= JUNGLE_BEYOND_MAX) farSide.clear();
+        if (farSide.size >= beyondMax) farSide.clear();
         farSide.set(k, v = beyond(x, y) ? 1 : 0);
       }
       return v;
@@ -105,7 +105,7 @@ export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = 
         for (let k = -r + 1; k <= r - 1; k++) { best = toOther(me, x, y, -r, k, best); best = toOther(me, x, y, r, k, best); }
       }
       if (off) {   // TESA-BIOME: the same float32 the map's typed array keeps (LAY-8)
-        if (farDist.size >= JUNGLE_BEYOND_MAX) farDist.clear();
+        if (farDist.size >= beyondMax) farDist.clear();
         const v = Math.fround(me ? best : -best);
         farDist.set(i, v);
         return v;

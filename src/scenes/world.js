@@ -290,7 +290,7 @@ import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the pl
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
-import { groundWoods, groundClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
+import { groundWoods, groundClimateIndex, climateNeighbourIn } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
 import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
 import { faunaBandAt, installTamrielFauna } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
@@ -1652,13 +1652,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // nature follow is one law for a world.
   const ecotones = climateBlendOn();
   /** ECOTONE1: a pixel's 3x3 of climates (getWorldClimateSettings), indexed (dz + 1) * 3 + (dx + 1) - dx east, dz north
-   *  (the map row py - dz) - a neighbour off the map wearing the pixel's own (`own`, its settings). */
+   *  (the map row py - dz) - a neighbour off the map wearing the pixel's own (`own`, its settings): the Bay's map for a Bay
+   *  pixel, the continent's frame past it (tamrielGround.js climateNeighbourIn). */
   const climates3x3 = (px, py, own) => {
     const out = new Array(9);
     for (let dz = -1; dz <= 1; dz++) {
       for (let dx = -1; dx <= 1; dx++) {
         const x = px + dx, y = py - dz;
-        out[(dz + 1) * 3 + dx + 1] = (dx === 0 && dz === 0) || x < 0 || y < 0 || x >= MAP_W || y >= MAP_H ? own : getWorldClimateSettings(maps.getClimateIndex(x, y));
+        out[(dz + 1) * 3 + dx + 1] = (dx === 0 && dz === 0) || !climateNeighbourIn(px, py, x, y) ? own : getWorldClimateSettings(maps.getClimateIndex(x, y));   // AUDIT TESA-BIOME Z4: past the Bay the continent's frame
       }
     }
     return out;

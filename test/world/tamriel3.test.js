@@ -20,7 +20,7 @@ import {
 } from '../../src/world/tamriel/tamrielFrame.js';
 import { provinceAt, coastDistance, PROVINCES, CITIES, provinceByKey } from '../../src/world/tamriel/tamrielGeography.js';
 import { authoredHeightByte, tamrielHeightByte, tamrielClimateAt, dropGroundCache, groundCacheSize, SHORE_BYTE } from '../../src/world/tamriel/tamrielGround.js';
-import { BIOMES, biomeAtPicture } from '../../src/world/tamriel/tamrielBiomes.js';   // TESA-BIOME: the zones the climate reads
+import { tamrielBiomeAt } from '../../src/world/tamriel/tamrielBiomes.js';   // TESA-BIOME: the zones the climate reads
 import { rasterizeTamriel, PROVINCE_NONE } from '../../src/world/tamriel/tamrielRaster.js';
 import { tracedChains, placeCity, buildTamrielInk, tamrielInkFor, CITY_SNAP_PX } from '../../src/ui/tamrielInk.js';
 import { RACE_TEMPLATES } from '../../src/systems/races.js';
@@ -271,14 +271,16 @@ test('TAMRIEL3 ground: with a trace set the height law and the climate read the 
   assert.ok(tamrielHeightByte(-2, 100) >= SHORE_BYTE);
   // PIN MOVED (TESA-BIOME, bible/03-World/Tamriel-Biomes.md): the climate is the picture's province's ZONE's - its land the
   // trace's, its zone the nearest seed of that province (world/tamriel/tamrielBiomes.js)
-  const zoneClimate = (x, y) => { const [qx, qy] = bayToPicture(x + 0.5, y + 0.5); return biomeAtPicture(provinceKeyAt(qx, qy), qx, qy)?.climate; };
-  assert.equal(tamrielClimateAt(-2, 100), zoneClimate(-2, 100));
-  assert.ok(BIOMES.some((b) => b.province === 'HighRock' && b.climate === tamrielClimateAt(-2, 100)), 'one of High Rock\'s zones');
-  assert.equal(tamrielClimateAt(720, 1440), zoneClimate(720, 1440), 'the picture\'s Hammerfell is a zone of Hammerfell\'s');
-  assert.ok(BIOMES.some((b) => b.province === 'Hammerfell' && b.climate === tamrielClimateAt(720, 1440)));
+  // AUDIT TESA-BIOME P6: named - the fixture's west of the Bay is Northpoint's coast, its south Hammerfell's Abecean coast,
+  // its Imperial remainder the Jerall's highlands (the seeds stood on the fixture's land)
+  assert.equal(tamrielBiomeAt(-2, 100)?.key, 'highRockNorthpoint');
+  assert.equal(tamrielClimateAt(-2, 100), CLIMATES.Woodlands, 'one of High Rock\'s zones');
+  assert.equal(tamrielBiomeAt(720, 1440)?.key, 'hammerfellCoast');
+  assert.equal(tamrielClimateAt(720, 1440), CLIMATES.Subtropical, 'the picture\'s Hammerfell is a zone of Hammerfell\'s');
   assert.notEqual(provinceByKey('Hammerfell').climate, CLIMATES.Woodlands);
   assert.equal(tamrielClimateAt(Math.round((20 - 50) * 18), Math.round((100 - 40) * 18)), CLIMATES.Ocean, 'the fixture\'s sea');
-  assert.equal(tamrielClimateAt(Math.round((160 - 50) * 18), Math.round((60 - 40) * 18)), zoneClimate(Math.round((160 - 50) * 18), Math.round((60 - 40) * 18)), 'the Imperial remainder: a zone of Cyrodiil\'s');
+  assert.equal(tamrielBiomeAt(Math.round((160 - 50) * 18), Math.round((60 - 40) * 18))?.key, 'cyrodiilJerall');
+  assert.equal(tamrielClimateAt(Math.round((160 - 50) * 18), Math.round((60 - 40) * 18)), CLIMATES.MountainWoods, 'the Imperial remainder: a zone of Cyrodiil\'s');
   const r = rasterizeTamriel({ cell: 18 });
   assert.equal(r.width, 320); assert.equal(r.height, 200, 'one cell a picture pixel at the live scale');
   assert.equal(r.province[100 * 320 + 20], PROVINCE_NONE);

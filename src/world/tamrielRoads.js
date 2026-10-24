@@ -32,6 +32,7 @@ import { WATER_BYTE } from './roadsProducer.js';
 import { GENERATOR_VERSION } from './roadsCache.js';
 import { countryStandsAt } from './tamrielCountry.js';
 import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js';
+import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 
 /** The regions' law's version - its cache's key moves with it. */
 export const TAMRIEL_ROADS_VERSION = 2;   // TESA15: a region's places in its answer, Arena's dungeons routed round
@@ -209,7 +210,7 @@ export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, ga
   const mix = (v) => { h = Math.imul(h ^ (v >>> 0), 16777619) >>> 0; };
   for (let i = 0; i < woodsBytes.length; i += 7) mix(woodsBytes[i] + i);
   if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);
-  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS]);
+  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again
   for (let i = 0; i < text.length; i++) mix(text.charCodeAt(i));
   return `${woodsBytes.length}:${fit ? `${fit.ox},${fit.oy},${fit.ppu}` : 'none'}:${h.toString(36)}`;
 }

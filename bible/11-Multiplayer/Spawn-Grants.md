@@ -137,7 +137,7 @@ fields:
 | `q` | the room it was minted for, which readers match to the frame's cell |
 | `a` | the owner's account (the token's `s`). Only the relay reads it, on a carry or a handover |
 | `k` | its kind (section 4.9) |
-| `p` | the map pixel the relay read off the owner's pose at the mint |
+| `p` | the map pixel the relay read off the owner's pose at the mint - the world's (`net/wire.js` worldPixelOk: past the Bay and on the Eltheric Ocean too; AUDIT TESA-BIOME F2, `net/grantLaw.js` validGrant had read the Bay's 1000 x 500 alone, so no grant past it stood) |
 | `m` | the world minute at the mint (sharedClassicMinutes): day or night is everyone's |
 | `l`, `r` | the owner's signed level (`cl`) and Renown (`lv`) |
 | `n` | how many foes it stands: an encounter's party, a camp's group |
@@ -580,7 +580,7 @@ and GRANT_STRIP), each the plan's condition for its own (sections 4.10 and 4.11)
 - **GRANT8** (section 4.10). Departure: **the relay holds no map; the grant's SEED rolls the species.** While
   `grantRoll` is on the relay answers an encounter's ask with `encr` (grantKindRolled; never asked by name), an
   encounter's bounds and marks. Its owner stands each member's species as the seed rolls it - chooseRandomEnemy at the
-  grant's pixel's climate (the owner's own CLIMATE.PAK), its world minute's day or night and its owner's signed level, from
+  grant's pixel's climate (the owner's own CLIMATE.PAK; past the Bay its zone's band first - TESA-BIOME, `systems/tamrielFauna.js` faunaBandAt), its world minute's day or night and its owner's signed level, from
   the member's species die (scenes/grantHost.js grantSpecies) - in place of its own roll; a reader rolls the same from
   its own map and refuses any other species (`dice`), in a location's rect or out of one (the owner's place, which a
   reader cannot see). Neither owner nor forger chooses the species, every machine confirms it, and no Merkle root is

@@ -396,8 +396,13 @@ export function coastDistance(x, y) {
 /** The mountains' lift at a picture-grid point: the strongest range whose band holds it, 0..1 (its gain at the
  *  spine, nothing at the band's edge); 0 off every band. */
 export function rangeLift(x, y) {
+  return rangeLiftBy(x, y);
+}
+/** TESA-BIOME (AUDIT TESA-BIOME Z6): rangeLift over the ranges `keep` answers true of (by name) - every range without it. */
+export function rangeLiftBy(x, y, keep = null) {
   let lift = 0;
   for (const rg of MOUNTAIN_RANGES) {
+    if (keep && !keep(rg.name)) continue;
     let d = Infinity;
     for (let i = 0; i + 1 < rg.pts.length; i++) {
       const dd = segmentDistance(x, y, rg.pts[i][0], rg.pts[i][1], rg.pts[i + 1][0], rg.pts[i + 1][1]);

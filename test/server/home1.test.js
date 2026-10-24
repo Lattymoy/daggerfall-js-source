@@ -487,7 +487,11 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   const homesAt = w.indexOf("const homesApi = params.has('online') ? accountHomes(");
   assert.ok(homesAt > 0 && homesAt < w.indexOf("  status('loading data');") && homesAt < w.indexOf('const onlineHomes = homesApi ? createOnlineHomes('), 'online alone, and built before any quest can ask');   // HOME-RENT: the service's door kept for a home's rooms too
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, test/net/fb1014_questhome.test.js): every town's homes, the boot's read beside the towns asked
-  assert.ok(w.indexOf('const onlineHomes = ') < w.indexOf('isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,'));
+  // AUDIT TESA-BIOME P5: in one file - the quest world (scenes/questWorld.js) is handed onlineHomes by value at its
+  // construction, so the host declares it before it builds the quest world; the read itself stands in the quest world
+  const host = src('src/scenes/world.js');
+  assert.ok(host.indexOf('const onlineHomes = ') > 0 && host.indexOf('const onlineHomes = ') < host.indexOf('const { questWorld } = createQuestWorld({'), 'declared before the quest world is built');
+  assert.ok(src('src/scenes/questWorld.js').includes('isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,'));
   assert.match(w, /townMapId: \(dfLoc\.mapTableData\?\.mapId \?\? 0\) >>> 0,/, 'the door\'s own town');
   assert.match(w, /onlineHomes\?\.ensure\(_musicLoc\?\.mapTableData\?\.mapId\);/, 'the town asked on arrival');
   assert.match(w, /partyNames: \(\) => \(social\?\.others\?\.\(\) \?\? \[\]\)\.map\(\(m\) => m\.name\)/);

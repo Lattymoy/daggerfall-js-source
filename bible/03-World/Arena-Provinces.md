@@ -1160,7 +1160,8 @@ lore accurate and have lore accurate fauna attached. As detailed as possible."* 
 What it moves here: the ground past the Bay is a province's ZONE's climate, not the province's (`tamrielGround.js`
 tamrielClimateAt over `world/tamriel/tamrielBiomes.js`), so the countryside's and the lairs' rolls (TESA7, TESA8 - the
 Bay's own count of each kind on a climate) read the zone's - a hamlet of the Rainforest's in the Nibenay, of the Desert's
-in the Alik'r - and so do the capitals' climate swaps; the Imperial City stands in the jungle. The capitals, the places and
+in the Alik'r - and so do the capitals' climate swaps; the Imperial City stands in the Nibenay Valley's grassland
+(Woodlands), ringed by the jungle (AUDIT TESA-BIOME, `01-Overview/audits/Audit-Tesa-Biome.md`). The capitals, the places and
 the roads are otherwise as they were.
 
 ## Pins
@@ -1332,7 +1333,7 @@ no harbour, `country`, none off the grid); the ground (the dry-plateau law under
 source (the door, the rows before they go, the rates' water law, Arena's first, the probe, the deed rules) and run
 (stood once under the province's bank, the clamp's region's without a province, a moved climate cloned again, water, an
 Arena road and the sea's edge none, a road painted late takes it out, the door shut none) and the build's order
-(Arena's, else the country's, the Bay its own). Mutants `tools/mutants/tesa7.json` (66, all dead). PIN MOVED:
+(Arena's, else the country's, the Bay its own). Mutants `tools/mutants/tesa7.json` (65, all dead - AUDIT TESA-BIOME P13: TESA7-host-not-deleted had survived until tesa7_country pinned a pixel that stops standing a place). PIN MOVED:
 `test/systems/naval/auditcaptsea.test.js`, `test/systems/houses.test.js`, `test/world/housecontainers.test.js` and `test/tesa2_arena.test.js` (the
 deed's one reading: nor a country place's), `test/tesa2_arena.test.js` (the build past the Bay: Arena's, else the
 country's), `test/world/fb0929h_spawnplate.test.js` and `test/world/spawneddungeons.test.js` (their harnesses lift

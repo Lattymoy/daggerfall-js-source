@@ -109,6 +109,26 @@ export function grantSpeciesOf(c, fauna = null) {
   return set;
 }
 
+/** What a seed cannot rebuild left aside, what it bounds: a rolled kind's species from its pixel's tables, a levelled
+ *  kind's class foe at the owner's signed level or under, GRANT_LEVEL_SLACK aside (a guest's 0 says none), the watch's a
+ *  watchman - 'dice', or null. `climateAt` a map pixel's climate (null: no species law), `faunaAt` its zone's band past
+ *  the Bay (TESA-BIOME: the zone's tables before the climate's - AUDIT TESA-BIOME P2 pins it here, out of the host). Pure.
+ *  @param {any} gr @param {any} r @param {((px: number, py: number) => number)|null} climateAt
+ *  @param {(px: number, py: number) => ReadonlyArray<number>|null} faunaAt */
+export function grantDiceRefusal(gr, r, climateAt, faunaAt = () => null) {
+  if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';   // GRANT4: the watch's grant stands the watch alone
+  if (gr.k === 'encr' && climateAt) {   // GRANT8: its seed's species exactly - out of a location's rect or in one (its owner's place, which a reader cannot see)
+    const c = climateAt(gr.p[0], gr.p[1]), z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];   // TESA-BIOME: and its zone's band
+    if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';
+  }
+  if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
+  if (ROLLED_KINDS.has(gr.k) && climateAt) {
+    const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]), faunaAt(gr.p[0], gr.p[1]));
+    if (set && !set.has(r.t)) return 'dice';
+  }
+  return null;
+}
+
 /** The relay's public half, from the account service's open route - null when it cannot be had. */
 async function relayKeyOf({ subtle }) {
   const res = await fetch(`${serviceBase(appStorage())}/v1/relaykey`);   // the storage seam, never the browser's own (a PIN)
@@ -388,22 +408,7 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
       ?? twice(from, g, i, r.i);
     return why ? note(from, why) : null;
   }
-  /** What a seed cannot rebuild left aside, what it bounds: a rolled kind's species from its pixel's tables, a levelled
-   *  kind's class foe at the owner's signed level or under, GRANT_LEVEL_SLACK aside (a guest's 0 says none), the watch's
-   *  a watchman. */
-  function diceRefusal(gr, r) {
-    if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';   // GRANT4: the watch's grant stands the watch alone
-    if (gr.k === 'encr' && climateAt) {   // GRANT8: its seed's species exactly - out of a location's rect or in one (its owner's place, which a reader cannot see)
-      const c = climateAt(gr.p[0], gr.p[1]), z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];   // TESA-BIOME: and its zone's band
-      if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';
-    }
-    if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
-    if (ROLLED_KINDS.has(gr.k) && climateAt) {
-      const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]), faunaAt(gr.p[0], gr.p[1]));
-      if (set && !set.has(r.t)) return 'dice';
-    }
-    return null;
-  }
+  const diceRefusal = (gr, r) => grantDiceRefusal(gr, r, climateAt, faunaAt);
   function twice(from, g, i, seq) {
     const k = `${from}|${g}|${i}`, was = members.get(k);
     members.set(k, seq);
