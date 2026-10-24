@@ -1,0 +1,155 @@
+[
+  {
+    "name": "KTD-the-way-back-not-the-way-there",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const dungeonToDeck = dungeonToRealm;",
+    "new": "export const dungeonToDeck = realmToDungeon;",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-cage-at-the-top-unfed",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "if (!on || !Number.isFinite(t)) return KT_LIFT.y0;",
+    "new": "if (!on || !Number.isFinite(t)) return KT_LIFT.y1;",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-wait-at-the-top-skipped",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "  if (u < 2 * W + R) return KT_LIFT.y1;\n",
+    "new": "  if (u < W + R + 0.01) return KT_LIFT.y1;\n",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-yard-short-of-the-first-top",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const KT_YARD = Object.freeze({ x0: KT_LIFT.x + 6.2, x1: 21.4,",
+    "new": "export const KT_YARD = Object.freeze({ x0: KT_LIFT.x + 6.2, x1: 19.4,",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-line-post-off-the-top",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const KT_LINE = Object.freeze({ x: KT_LIFT.x, z: KT_LIFT.z + 4.8, r: 1.4 });",
+    "new": "export const KT_LINE = Object.freeze({ x: KT_LIFT.x, z: KT_LIFT.z + 6.8, r: 1.4 });",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-rigging-not-descending",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: true }),",
+    "new": "Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: false }),",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-a-resonator-on-a-seam",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "const a = Math.PI / 8 + (k * Math.PI) / 2; return Object.freeze([KT_BRIDGE.x + Math.sin(a) * 19",
+    "new": "const a = (k * Math.PI) / 2; return Object.freeze([KT_BRIDGE.x + Math.sin(a) * 19",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-a-cradle-off-the-core",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const KT_BRIDGE_CRADLES = Object.freeze([Object.freeze([-4, 189]), Object.freeze([4, 189])]);",
+    "new": "export const KT_BRIDGE_CRADLES = Object.freeze([Object.freeze([-4, 182]), Object.freeze([4, 189])]);",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-appetite-unbounded",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const engineNeeds = (n) => 3 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2);",
+    "new": "export const engineNeeds = (n) => 3 + Math.ceil(Math.max(1, n | 0) / 2);",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-two-lanes-of-a-row-at-once",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const hammerPhase = (ri, li) => (ri * 0.5 + li * 1.0) % KT_HAMMER.cycle;",
+    "new": "export const hammerPhase = (ri, li) => (ri * 0.5 + li * 0) % KT_HAMMER.cycle;",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-a-landing-counted-twice",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "for (let k = k0; k <= k1; k++) { const at = phase + k * cycle; if (at > t0 && at <= t1) fn(at); }",
+    "new": "for (let k = k0; k <= k1; k++) { const at = phase + k * cycle; if (at >= t0 && at <= t1) fn(at); }",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-gallery-hazards-in-the-hold",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "  if (hold) {\n    const A = KT_ARCS;",
+    "new": "  if (hold || gallery) {\n    const A = KT_ARCS;",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-hold-read-as-the-gallery",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'hold';",
+    "new": "if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'gallery';",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-shaft-read-as-the-waist",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "&& y > KT_LIFT.y0 - 1 && y < KT_LIFT.y1 - 1) return 'lift';",
+    "new": "&& y > KT_LIFT.y0 - 1 && y < KT_LIFT.y0 + 1) return 'lift';",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-set-down-in-the-gust",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "export const KT_LINE_LAND_M = 2.5;",
+    "new": "export const KT_LINE_LAND_M = 0.6;",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-facing-the-bow",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "yaw: Math.atan2(dx, dz) });",
+    "new": "yaw: Math.PI });",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  },
+  {
+    "name": "KTD-the-streaks-about-x-0",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "    const x = C.x + (rnd() * 2 - 1) * SD_BREATH.halfX,",
+    "new": "    const x = (rnd() * 2 - 1) * SD_BREATH.halfX,",
+    "tests": [
+      "test/net/ketch/ketch_deck.test.js"
+    ]
+  }
+]

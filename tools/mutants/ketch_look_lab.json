@@ -1,0 +1,83 @@
+[
+  {
+    "name": "KTL-the-bolt-swapped-by-the-clock",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "const n = a.meshes.length, k = hazardStrike('arc', j, t) + j;",
+    "new": "const n = a.meshes.length, k = Math.floor(t * 16.7);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-cage-casts",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "D.cage = draw(g(P.cage), { noShadow: true });",
+    "new": "D.cage = draw(g(P.cage));",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-a-lurching-section-casts",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "d.noShadow = !(p.solid && p.dy === 0 && p.shake === 0);",
+    "new": "d.noShadow = !(p.solid && p.dy === 0);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-a-falling-section-casts",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "d.noShadow = !(p.solid && p.dy === 0 && p.shake === 0);",
+    "new": "d.noShadow = false;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-shudder-fast",
+    "file": "src/world/ketch/ketchPose.js",
+    "old": "export const KT_SECTION_LURCH_HZ = 1.5;",
+    "new": "export const KT_SECTION_LURCH_HZ = 6.9;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-strike-counted-off-the-landing",
+    "file": "src/world/ketch/ketchPose.js",
+    "old": "  return Math.floor((t - hazardPhase(kind, j)) / H.cycle);",
+    "new": "  return Math.floor((t - hazardPhase(kind, j) + 0.5) / H.cycle);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-lab-in-colour",
+    "file": "src/tools/ketchLabViews.js",
+    "old": "    grey: p.has('grey'),",
+    "new": "    grey: false,",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-sky-off-by-default",
+    "file": "src/tools/ketchLabViews.js",
+    "old": "    sky: p.get('sky') !== '0',",
+    "new": "    sky: p.get('sky') === '1',",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  },
+  {
+    "name": "KTL-top-out-in-the-shaft",
+    "file": "src/tools/ketchLabViews.js",
+    "old": "'top-out': Object.freeze({ at: Object.freeze([12.6, 17.7, 53.6]), yaw: 55, pitch: -8 }),",
+    "new": "'top-out': Object.freeze({ at: Object.freeze([9, 17.7, 57]), yaw: 55, pitch: -8 }),",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  }
+]

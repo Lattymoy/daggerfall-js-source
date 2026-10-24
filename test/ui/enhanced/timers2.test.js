@@ -91,7 +91,7 @@ test('TIMERS2 the bar: All and a button for each group with a row, each its coun
   const root = view.root;
   const chips = () => all(root, 'tm-chip');
   assert.deepEqual(chips().map((c) => [all(c, 'tm-chip-name')[0].textContent, all(c, 'tm-chip-n')[0].textContent, c.attrs['aria-pressed'], c.className.split(' ').includes('live')]), [
-    ['All', '7', 'true', true], ['World', '3', 'false', false], ['Raids', '2', 'false', true], ['Resets', '2', 'false', false],   // the gate's omen and the next, the serpent's rising
+    ['All', '8', 'true', true], ['World', '4', 'false', false], ['Raids', '2', 'false', true], ['Resets', '2', 'false', false],   // the gate's omen and the next, the serpent's rising; PIN MOVED (KETCH): and the Sky-Ketch's one row, every moment
   ]);
   const raids = chips()[2];
   raids.focus(); press(raids);

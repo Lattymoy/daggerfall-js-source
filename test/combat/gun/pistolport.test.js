@@ -23,8 +23,7 @@ import { createGunMachine } from '../../../src/combat/gun/gunMachine.js';
 import { gunMotion } from '../../../src/combat/gun/gunViewmodel.js';
 import { LookFilter } from '../../../src/player/lookFilter.js';
 import { PISTOLET_FEEL, RELOAD_CLOSE_LEAD, armGunPose } from '../../../src/combat/gun/gunFeel.js';
-import { cutStrip } from '../../../src/combat/gun/pistoletArt.js';
-import { unionBox } from '../../../src/combat/gun/gunSheet.js';
+import { pistolFrameSet } from '../../../src/combat/gun/pistoletArt.js';
 import { createPistolet } from '../../../src/systems/pistolet.js';
 import { PlayerWeapon } from '../../../src/combat/playerWeapon.js';
 import { OFF_HAND_BLOW } from '../../../src/combat/twoHands/handsLaw.js';
@@ -78,8 +77,9 @@ const TURN = 0.02;
 /** THE PAGE'S FRAME, as pistol-proto.html runs it: its pair, its hands, its order of calls - on the strip's own boxes. */
 function pageRun(kind, dts) {
   const strip = readPng(readFileSync(new URL('../../../public/art/pistol-frames.png', import.meta.url)));
-  const { boxes } = cutStrip(strip);
-  const anchor = boxes[0], union = unionBox(boxes);
+  // PIN MOVED (PISTOL-EDGE, 2026-10-24): the page's art is the frame set the game's loader draws (combat/gun/pistolStrip.js
+  // pistolFrameSet) - the rest frame's own box, and the union of the frames with their forearms carried past the cut
+  const { anchor, union } = pistolFrameSet(strip);
   // AUDIT PISTOL-PORT D7: THE PAGE'S OWN WIRING, from the state it opens on (pistolLab.js) - never a transcription of it
   const state = LAB.pistolPageState();
   state.trigger = kind === 'single' ? PAIR_TRIGGER.Single : PAIR_TRIGGER.Alternate;

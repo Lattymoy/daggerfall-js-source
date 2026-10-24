@@ -1,0 +1,219 @@
+[
+  {
+    "name": "KTX-the-floor-an-older-relay",
+    "file": "src/net/wire.js",
+    "old": "export const KT_RELAY_MIN = 255;",
+    "new": "export const KT_RELAY_MIN = 254;",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-a-stranger-let-in",
+    "file": "server/src/index.js",
+    "old": "right = kin ? 'party' : null; }",
+    "new": "right = 'party'; void kin; }",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-the-ship-untold",
+    "file": "server/src/index.js",
+    "old": "    if (!this._send(ws, JSON.stringify({ t: 'kt', ...voyageStateOf(V, now) }))) return false;",
+    "new": "    if (!this._send(ws, JSON.stringify({ t: 'kt', k: 'no', m: 0, n: voyageStateOf(V, now).n }))) return false;",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-a-pose-unstamped",
+    "file": "server/src/index.js",
+    "old": "...(isSdRoom(a.key) || isKetchRoom(a.key) ? { pAt: now } : {})",
+    "new": "...(isSdRoom(a.key) ? { pAt: now } : {})",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-the-ninth-let-in",
+    "file": "server/src/index.js",
+    "old": "    let no = ketchAdmits(key, who.subject, right, V.crew, now);",
+    "new": "    let no = ketchAdmits(key, who.subject, right, V.crew.slice(1), now);",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-the-wire-refusing-its-words",
+    "file": "src/net/wire.js",
+    "old": "  if (m.t === 'kt') {   // KETCH: a word aboard a crew's ship",
+    "new": "  if (m.t === 'ktx') {   // KETCH: a word aboard a crew's ship",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-an-in-with-no-brain-number",
+    "file": "server/src/index.js",
+    "old": "    if (w.k === 'in' && !(w.bv >= KT_BRAIN_MIN)) {",
+    "new": "    if (w.k === 'in' && w.bv < KT_BRAIN_MIN) {",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-the-beat-unarmed",
+    "file": "server/src/index.js",
+    "old": "    await this._ktSave(V, now, fresh);\n    await this._ktArm(now);\n    return null;",
+    "new": "    await this._ktSave(V, now, fresh);\n    return null;",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-the-receipt-to-every-socket",
+    "file": "server/src/index.js",
+    "old": "const r = b.id && b.sub ? V.rc[b.sub] : null; if (r)",
+    "new": "const r = b.id && b.sub ? Object.values(V.rc)[0] : null; if (r)",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-a-late-hello-untold",
+    "file": "server/src/index.js",
+    "old": "    const r = sub ? V.rc?.[sub] : null;",
+    "new": "    const r = sub ? null : V.rc;",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-a-ship-outliving-its-voyage",
+    "file": "server/src/index.js",
+    "old": "    if (now >= ketchVoyageOf(V.n).endAt) {",
+    "new": "    if (now >= ketchVoyageOf(V.n).endAt + 1e12) {",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-full-ship-frees-no-place",
+    "file": "server/src/index.js",
+    "old": "if (no === 'full' && r && (await this._ktFreePlace(V, r.owner, now)))",
+    "new": "if (no === 'full' && r && false && (await this._ktFreePlace(V, r.owner, now)))",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-member-of-the-party-freed",
+    "file": "server/src/index.js",
+    "old": "(await this._instanceKinOf(sub, owner, now)) !== false) continue;",
+    "new": "(await this._instanceKinOf(sub, owner, now)) === null) continue;",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-captain-freed",
+    "file": "server/src/index.js",
+    "old": "if ((await instanceOwnerOf(sub)) === owner || (await this._instanceKinOf",
+    "new": "if ((await this._instanceKinOf",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-refused-word-written",
+    "file": "server/src/index.js",
+    "old": "await this._ktSave(V, now, out.length > 0 && w.k !== 'hit'",
+    "new": "await this._ktSave(V, now, w.k !== 'hit'",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-stage-left-to-the-checkpoint",
+    "file": "server/src/index.js",
+    "old": "await this._ktSave(V, now, V.sg !== sg);",
+    "new": "await this._ktSave(V, now, false);",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-her-record-outliving-her",
+    "file": "server/src/index.js",
+    "old": "      await this.state.storage.delete(KT_VOYAGE_KEY);   // AUDIT KETCH L1-11",
+    "new": "      // AUDIT KETCH L1-11",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-beat-never-resting",
+    "file": "server/src/index.js",
+    "old": "    if (here && voyageLive(V)) { await this.state.storage.setAlarm(now + BRAIN_TICK_MS); return true; }",
+    "new": "    if (here) { await this.state.storage.setAlarm(now + BRAIN_TICK_MS); return true; }",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-hub-never-told",
+    "file": "server/src/index.js",
+    "old": "      await this._ktTellHub(V, now);\n    })().finally(() => { this._ktFalling = null; });",
+    "new": "    })().finally(() => { this._ktFalling = null; });",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-spent-receipt-handed-again",
+    "file": "server/src/index.js",
+    "old": "    if (v.spent === true) return;\n    this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));",
+    "new": "    this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-ships-room-keeping-a-spent-word",
+    "file": "server/src/index.js",
+    "old": "      if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n      try { await this._ktSpent(",
+    "new": "      if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n      try { await this._ktSpent(",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ]
+  },
+  {
+    "name": "KTX-the-hubs-receipt-unheard",
+    "file": "src/net/online.js",
+    "old": "if (r && ((room === this.room && isKetchRoom(room)) || (r.k === 'rcpt' && isSocialRoom(room)))) this._deliver('kt'",
+    "new": "if (r && room === this.room && isKetchRoom(room)) this._deliver('kt'",
+    "tests": [
+      "test/net/ketch/ketch_online.test.js"
+    ]
+  },
+  {
+    "name": "KTX-spent-from-a-ship",
+    "file": "src/net/online.js",
+    "old": "if (!w || !this.acct || !this.ktOk || !isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;",
+    "new": "if (!w || !this.acct || !this.ktOk || this.status !== 'open' || !this._ws) return false;",
+    "tests": [
+      "test/net/ketch/ketch_online.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-member-s-own-frame-first",
+    "file": "server/src/index.js",
+    "old": "      if (all.length) this._fanFrames(all.splice(0), (b) => b.id);   // AUDIT SHIP 7",
+    "new": "      if (false) this._fanFrames(all.splice(0), (b) => b.id);   // AUDIT SHIP 7",
+    "tests": [
+      "test/net/ketch/ketch_relay.test.js"
+    ],
+    "note": "AUDIT SHIP 7: a joiner's own fight state would be said before the fight's `wf` that resets it."
+  }
+]

@@ -106,6 +106,14 @@ SERPENT_DISCORD_ROLE = ""
 # role (GATE_DISCORD_ROLE); name one here to give the Abyss Dungeon
 # its own.
 SD_DISCORD_ROLE = ""
+# ═══ KETCH: THE ROLE THE SKY-KETCH'S SIGHTING PINGS ══════════════════
+#
+# The Discord id of the opt-in role the hub pings when the Sky-Ketch is
+# sighted over Daggerfall (src/net/ketch/ketchHerald.js) - once a week,
+# two hours before she keeps station; her arrival and her weighing
+# anchor ping nobody. EMPTY IS A LEGAL STATE: the gate's role
+# (GATE_DISCORD_ROLE) is pinged; name one here to give the Ketch its own.
+KT_DISCORD_ROLE = ""
 # ═══ HERALD-CARDS: THE THREAD EACH EVENT POSTS TO ═══════════════════
 #
 # Every herald post is a card (src/net/herald/heraldCard.js) - Dagon's
@@ -122,12 +130,14 @@ SD_DISCORD_ROLE = ""
 # forum post with no thread, and a refused post is let go.
 # Each is also a setting a developer changes at run time, with no
 # deploy: `/relay gateThread <id>`, `/relay serpentThread <id>`,
-# `/relay sdThread <id>`, `/relay egThread <id>` (src/net/relayCfg.js).
+# `/relay sdThread <id>`, `/relay egThread <id>`, `/relay ktThread <id>`
+# (src/net/relayCfg.js - KETCH: the Sky-Ketch's cards).
 # EMPTY IS A LEGAL STATE: one channel, as before.
 GATE_DISCORD_THREAD = ""
 SERPENT_DISCORD_THREAD = ""
 SD_DISCORD_THREAD = ""
 EG_DISCORD_THREAD = ""
+KT_DISCORD_THREAD = ""
 # ═══ SAFE5: THE REVIEWER'S FEED ═════════════════════════════════════
 #
 # Where the public channels' lines are posted for the account service's

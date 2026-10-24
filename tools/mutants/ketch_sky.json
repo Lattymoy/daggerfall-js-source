@@ -1,0 +1,110 @@
+[
+  {
+    "name": "KTY-she-comes-from-the-west",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "return { v, phase: v.phase, dx: S.approach * s,",
+    "new": "return { v, phase: v.phase, dx: -S.approach * s,",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-the-lift-down-while-sighted",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "(1 - smooth((u - S.turnFrom) / (1 - S.turnFrom))), lift: 0, moving: true };",
+    "new": "(1 - smooth((u - S.turnFrom) / (1 - S.turnFrom))), lift: 1, moving: true };",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-she-never-leaves",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "  if (-dx > S.far) return null;",
+    "new": "  if (-dx > S.far * 1e9) return null;",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-the-turn-the-wrong-way",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "  out[0] = c; out[2] = -s; out[5] = 1; out[8] = s; out[10] = c; out[15] = 1;",
+    "new": "  out[0] = c; out[2] = s; out[5] = 1; out[8] = -s; out[10] = c; out[15] = 1;",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-her-middle-forgotten",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "const ox = O[0], oy = O[1], oz = O[2] + KT_SKY.centre;",
+    "new": "const ox = O[0], oy = O[1], oz = O[2];",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-her-collider-while-she-moves",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "      standCollider(place.still && pose.phase === 'docked');",
+    "new": "      standCollider(place.still);",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-laid-every-frame",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "    if (want ? same(M, colliderAt) : colliderAt === null) return;",
+    "new": "    if (want ? false : colliderAt === null) return;",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-the-lift-drawn-up-yet-drawn",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "if (place.pose.lift > 0.01 && lift && chain)",
+    "new": "if (lift && chain)",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-a-ride-at-once",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "if (t - standAt >= KT_BOARD_HOLD_MS) { standAt = -1; needOut = true; onBoard(); }",
+    "new": "if (t - standAt >= 0) { standAt = -1; needOut = true; onBoard(); }",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-set-down-and-straight-back-up",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "      if (inLift && !needOut && mayBoard()) {",
+    "new": "      if (inLift && mayBoard()) {",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-a-ride-while-refused",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "      if (inLift && !needOut && mayBoard()) {",
+    "new": "      if (inLift && !needOut) {",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  },
+  {
+    "name": "KTY-a-refused-ride-counted-again",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "{ standAt = -1; needOut = true; onBoard(); }",
+    "new": "{ standAt = -1; onBoard(); }",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ]
+  }
+]

@@ -1,0 +1,249 @@
+[
+  {
+    "name": "KTL-the-day-haze-thick",
+    "file": "src/world/ketch/ketchShip.js",
+    "old": "export const KT_AIR_FOG = Object.freeze({ mode: 'exp', density: 0.0016,",
+    "new": "export const KT_AIR_FOG = Object.freeze({ mode: 'exp', density: 0.0028,",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-night-under-the-floor",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "night: Object.freeze({ ambient: f3(0.25, 0.27, 0.34),",
+    "new": "night: Object.freeze({ ambient: f3(0.2, 0.27, 0.34),",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js",
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-twilight-a-step",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "out.w = Math.max(0, 1 - Math.abs(h - mid) / half);",
+    "new": "out.w = Math.abs(h - mid) < half ? 1 : 0;",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-day-by-the-daylight-alone",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "out.day = noon > 0 ? smooth(daylightScale(minute) / noon / KT_DAY_FULL) : 0;",
+    "new": "out.day = noon > 0 ? Math.min(1, daylightScale(minute) / noon) : 0;",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-sun-from-under-the-horizon",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "const up = smooth(elev / KT_SUN_LOW.rise), share = D.share * W.day;",
+    "new": "const up = 1, share = D.share * W.day;",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-low-sun-the-days",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "lerp3(out.sunColor, ketchSunColor(elev, _sun), T.sun, W.w);",
+    "new": "lerp3(out.sunColor, D.sun, T.sun, W.w);",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-equator-the-skys",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "out.tri.equator[i] = out.ambient[i] * KT_TRI.equator;",
+    "new": "out.tri.equator[i] = out.ambient[i];",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js",
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-no-bounce",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "out.tri.ground[i] = (out.sunColor[i] * out.sunScale + N.key[i] * out.key.scale) * KT_TRI.bounce;",
+    "new": "out.tri.ground[i] = 0;",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-below-sunlit",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "    out.sunScale = 0; out.key.scale = 0; out.fog.density = B.density; out.lamps = B.lamps;",
+    "new": "    out.sunScale = 0.5; out.key.scale = 0; out.fog.density = B.density; out.lamps = B.lamps;",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-below-haze-dark-brown",
+    "file": "src/world/ketch/ketchShip.js",
+    "old": "export const KT_BELOW_FOG = Object.freeze({ mode: 'exp', density: 0.012, color: Object.freeze([0.16, 0.12, 0.08]) });",
+    "new": "export const KT_BELOW_FOG = Object.freeze({ mode: 'exp', density: 0.012, color: Object.freeze([0.1, 0.08, 0.05]) });",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-cabin-the-decks",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "    if (zone === 'cabin') {",
+    "new": "    if (zone === 'no cabin') {",
+    "tests": [
+      "test/world/ketch/ketch_atmos.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-grade-off-the-lane",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  if (renderer.lightingLane) renderer.setSceneGrade?.(L.grade);",
+    "new": "  renderer.setSceneGrade?.(L.grade);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-key-from-no-moon",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "const m = moon && moon.scale > 0 ? Math.min(1, moon.scale / MOONLIGHT.masser) : 0, k0 = L.key.scale;",
+    "new": "const m = moon && moon.scale > 0 ? Math.min(1, moon.scale / MOONLIGHT.masser) : 1, k0 = L.key.scale;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-key-off-the-moons-bearing",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  if (m > 0) { L.key.dir[0] = moon.dir[0]; L.key.dir[1] = moon.dir[1]; L.key.dir[2] = moon.dir[2]; }",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-gain-on-every-lamp",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "for (const l of lamps()) if (l.zone === zone) { const c = zone === 'deck' ? KT_LAMP.color : KT_LAMP.below;",
+    "new": "for (const l of lamps()) if (true) { const c = zone === 'deck' ? KT_LAMP.color : KT_LAMP.below;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-no-gain",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "      deck?.lampGain(L.lamps, L.zone);",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-a-rows-lamp-in-its-heads-stroke",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  rowDz: 1.8, wayOnZ: 62.5,",
+    "new": "  rowDz: 1.2, wayOnZ: 62.5,",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-middle-lamp-over-the-stair",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "middleZ: Object.freeze([112, 126, 100]),",
+    "new": "middleZ: Object.freeze([112, 119, 126]),",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-street-minute-on-the-ship",
+    "file": "src/scenes/world.js",
+    "old": "sky.draw(yaw, pitch, fov, aspect, vp, minuteNow(), playerTicker.classicMinutes, skyMinutes());",
+    "new": "sky.draw(yaw, pitch, fov, aspect, vp);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-retime-the-old-clocks",
+    "file": "src/scenes/shared.js",
+    "old": "      if (extra) { extra.classicMinutes = classicMinutes; extra.skyMinutes = skyMinutes; extra.pos = null; }",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-lamps-gain-unmarked",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "return [...up.map((p) => L(p, KT_LAMP.color, KT_LAMP.range, 'deck')),",
+    "new": "return [...up.map((p) => L(p, KT_LAMP.color, KT_LAMP.range, 'below')),",
+    "tests": [
+      "test/world/ketch_model.test.js",
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-lamps-in-the-ships-mesh",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  for (const p of [...up, ...below, ...cabin]) lamp(LK, p);",
+    "new": "  for (const p of [...up, ...below, ...cabin]) lamp(K, p);",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-cabin-lamps-below",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "...cabin.map((p) => L(p, KT_LAMP.below, KT_LAMP.rangeBelow, 'cabin'))];",
+    "new": "...cabin.map((p) => L(p, KT_LAMP.below, KT_LAMP.rangeBelow, 'below'))];",
+    "tests": [
+      "test/world/ketch_model.test.js",
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-no-way-on-lamp",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  for (const z of [HL.wayOnZ, ...KT_HAMMER.rows.map((r) => r + HL.rowDz)]) below.push([0, gCeil - HL.drop, z, gCeil]);",
+    "new": "  for (const z of [...KT_HAMMER.rows.map((r) => r + HL.rowDz)]) below.push([0, gCeil - HL.drop, z, gCeil]);",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-draw-retimes-nothing",
+    "file": "src/scenes/shared.js",
+    "old": "      if (minuteOfDay != null) this.retime(minuteOfDay, classicMinutes, skyMinutes);",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-moon-unclouded",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "_moon = moonlightTerm(skyState({ minuteOfDay: ((m % 1440) + 1440) % 1440, weather, classicMinutes: m, skyMinutes: m }));",
+    "new": "_moon = moonlightTerm(skyState({ minuteOfDay: ((m % 1440) + 1440) % 1440, weather: 'sunny', classicMinutes: m, skyMinutes: m }));",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-host-reads-no-moon",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "      const L = ketchFrameLook(eye, minute, !!renderer?.lightingLane, moon());",
+    "new": "      const L = ketchFrameLook(eye, minute, !!renderer?.lightingLane, null);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  }
+]

@@ -28,6 +28,22 @@ section 44, GATHER-FEEL), built by `tools/gatherSfx.mjs` from the same kit and t
 parry, a splash and a lock's click, which the acts borrowed; it has no axe in wood, no pick on stone, no leaves and no
 tree coming down.
 
+The `horse-*.wav` files are ours outright as well: the horse's snorts, blows, breaths and spook, and its hooves on grass,
+in snow and in water (bible/08-Audio/Audio.md HORSE-VOICE), built by `tools/horseSfx.mjs` from the same kit and the same
+bake. DAGGER.SND has one neigh, two clops on hard ground and the cart; it has no snort, no breath and no hoof on soft
+ground.
+
+The `sea-*`, `shore-*`, `wild-*` and `town-*` files are the soundscape's (SOUNDSCAPE, bible/08-Audio/Audio.md): the
+deck's air at sea, the surf on a shore, the wild's voices and a town's smithies. Two kinds. OURS: the hull's slaps, the
+timbers' and the ropes' creaks, the canvas luffing, the spray, a wave breaking, the owls and the wolves, built by
+`tools/soundscapeSfx.mjs` from the same kit and the same bake - DAGGER.SND has splashes, a bell and a lap of water, and
+no hull, no rigging, no surf, no owl and no wolf. RECORDED, each **CC0** (public domain) from
+[OpenGameArt](https://opengameart.org) - the gulls, a crow, the frogs and two anvils, whose character a synthesiser
+does badly - fetched from each page's own file and baked by `tools/soundscapeSfxInstall.mjs` (re-run it to rebuild them
+from the same sources). The soundscape's beds (the swell, the wash, the rigging, the surf, the marsh) are made at run
+time and ship no file (`src/systems/soundscape/soundBeds.js`); a town's murmur and its tavern are made at run time out
+of the player's own DAGGER.SND people.
+
 The `spell-heal.wav` file is the heal spell's landing (IMPACTFX, HEAL-FILE): the project owner's chosen heal sound
 (`02_Heal_02.wav`), softened for the game - its top tilted down 4.5 dB from 4.5 kHz and rolled off over 9 kHz, a soft
 diffuse bloom mixed under it, its sparkle's flicker evened out with a slow 3:1 compressor, a 25 ms fade in and a
@@ -109,4 +125,49 @@ over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be f
 | `gather-clean.wav` | gathering: a clean finish | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - two soft bell notes a fourth apart (E6, A6) (GATHER-FEEL) |
 | `gather-haul.wav` | gathering: the goods into the bag | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a leather satchel's thump, its flap, the goods settling (GATHER-FEEL) |
 | `gather-rank.wav` | gathering: a rank risen | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - three bell notes rising (C6, E6, G6) and a fourth above them (GATHER-FEEL) |
+| `horse-snort-1.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a forceful breath out through the nose's two bands (300 Hz, 1.6 kHz), fluttering at ~32 Hz |
+| `horse-snort-2.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade lower and longer |
+| `horse-snort-3.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade higher and shorter |
+| `horse-blow-1.wav` | horse: the long blow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the relaxed "brrr": a pulse train slowing 27 -> 21 Hz through the nose's bands, a breath under it |
+| `horse-blow-2.wav` | horse: the long blow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, quicker and shorter |
+| `horse-breath-1.wav` | horse: a gallop's breath | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - one short hard exhale and the effort's low grunt |
+| `horse-breath-2.wav` | horse: a gallop's breath | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, lower |
+| `horse-breath-3.wav` | horse: a gallop's breath | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, higher and shorter |
+| `horse-spook.wav` | horse: the spook | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a sharp snort and a harder one on its heels, higher and quicker in the flutter |
+| `horse-soft-slow.wav` | horse: hooves on grass, slow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a dull thump, the turf's swish, a clod; HorseClop's own 1.508 s and four falls |
+| `horse-soft-fast.wav` | horse: hooves on grass, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's 2.606 s and its falls |
+| `horse-snow-slow.wav` | horse: hooves in snow, slow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crackle of grains packing (1.2-3.5 kHz) over a muffled thump; HorseClop's cadence |
+| `horse-snow-fast.wav` | horse: hooves in snow, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's cadence |
+| `horse-water-slow.wav` | horse: hooves in shallow water, slow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a splash and its drops, a low plop; HorseClop's cadence |
+| `horse-water-fast.wav` | horse: hooves in shallow water, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's cadence |
+| `sea-slap-1.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
+| `sea-slap-2.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
+| `sea-slap-3.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
+| `sea-creak-1.wav` | sea: the timbers working | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a slow stick-slip groan through a hull's low bands (150 to 940 Hz), swelling and easing |
+| `sea-creak-2.wav` | sea: the timbers working | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a slow stick-slip groan through a hull's low bands (150 to 940 Hz), swelling and easing |
+| `sea-rope-1.wav` | sea: a rope in its block | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a quicker, higher stick-slip creak (690 to 1800 Hz) and the sheave's tick as it stops |
+| `sea-rope-2.wav` | sea: a rope in its block | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a quicker, higher stick-slip creak (690 to 1800 Hz) and the sheave's tick as it stops |
+| `sea-luff-1.wav` | sea: canvas luffing | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - flaps of a sail's band at uneven gaps, a low whump under each and a ripple after it |
+| `sea-luff-2.wav` | sea: canvas luffing | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - flaps of a sail's band at uneven gaps, a low whump under each and a ripple after it |
+| `sea-spray-1.wav` | sea: spray over the bow | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crest's crack, a long hiss of water falling back losing its top, drops after |
+| `sea-spray-2.wav` | sea: spray over the bow | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crest's crack, a long hiss of water falling back losing its top, drops after |
+| `shore-crash-1.wav` | shore: a wave breaking | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the roar rising as the wave curls (its top opening out), the crash, the foam running back with fizz in it |
+| `shore-crash-2.wav` | shore: a wave breaking | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the roar rising as the wave curls (its top opening out), the crash, the foam running back with fizz in it |
+| `wild-owl-1.wav` | wild: an owl at night | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a tawny's hoot and its tremolo (470 Hz) - sines sliding down with a breath of their band |
+| `wild-owl-2.wav` | wild: an owl at night | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a deeper owl's slow triple call (315 Hz) - sines sliding down with a breath of their band |
+| `wild-howl-1.wav` | wild: a wolf far off | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a howl gliding 360 to 640 Hz, held with a 5 Hz vibrato and falling away, overtones and a breath, the hills' two darker echoes |
+| `wild-howl-2.wav` | wild: a wolf far off | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a howl gliding 330 to 590 Hz, held with a 5 Hz vibrato and falling away, overtones and a breath, the hills' two darker echoes |
+| `sea-gull-1.wav` | sea: a gull | [Seagull Ambient 1.wav](https://opengameart.org/content/solo-seagull-sound-effects) | Rango Mango | CC0 | a herring gull's long call, three falling cries - the coast's own sound |
+| `sea-gull-2.wav` | sea: a gull | [Seagull Ambient 2.wav](https://opengameart.org/content/solo-seagull-sound-effects) | Rango Mango | CC0 | two short cries, a bird passing |
+| `sea-gull-3.wav` | sea: a gull | [Seagull Ambient 3.wav](https://opengameart.org/content/solo-seagull-sound-effects) | Rango Mango | CC0 | one cry, higher |
+| `sea-gull-4.wav` | sea: a gull | [Seagull Ambient 5.wav](https://opengameart.org/content/solo-seagull-sound-effects) | Rango Mango | CC0 | a laughing call, the one a harbour is full of |
+| `sea-gull-5.wav` | sea: a gull | [Seagull Ambient 6.wav](https://opengameart.org/content/solo-seagull-sound-effects) | Rango Mango | CC0 | a single mew |
+| `sea-gull-6.wav` | sea: a gull | [Seagull Big Ambient.wav](https://opengameart.org/content/solo-seagull-sound-effects) | Rango Mango | CC0 | a bigger bird's bark, low among the others |
+| `wild-crow-1.wav` | wild: a crow | [crow_0.ogg](https://opengameart.org/content/crow) | fvcalderan | CC0 | a crow's caw, dry: the hills and the woods by day |
+| `wild-frog-1.wav` | wild: a frog | [croak_01_0.mp3](https://opengameart.org/content/frog-croaks) | EZduzziteh | CC0 | a frog's croak, a marsh's night |
+| `wild-frog-2.wav` | wild: a frog | [croak_02.mp3](https://opengameart.org/content/frog-croaks) | EZduzziteh | CC0 | a short one, for a chorus |
+| `wild-frog-3.wav` | wild: a frog | [croak_03.mp3](https://opengameart.org/content/frog-croaks) | EZduzziteh | CC0 | a long rattling croak |
+| `wild-frog-4.wav` | wild: a frog | [croak_04.mp3](https://opengameart.org/content/frog-croaks) | EZduzziteh | CC0 | a deeper one |
+| `town-anvil-1.wav` | town: a smithy | [blacksmithhammer.wav](https://opengameart.org/content/blacksmiths-hammer) | VishwaJai | CC0 | one hammer blow on an anvil, ringing - a smithy at work |
+| `town-anvil-2.wav` | town: a smithy | [forger_0.ogg](https://opengameart.org/content/hammer-on-anvil) | themightyglider | CC0 | a run of blows on an anvil, a smith's rhythm |
 | `spell-heal.wav` | heal impact | `02_Heal_02.wav`, supplied by the project owner (2026-10-05) | TO FILL IN | TO FILL IN | the heal the player picked as perfect, softened and smoothed; kept at 22050 Hz 16-bit so its shimmer survives |

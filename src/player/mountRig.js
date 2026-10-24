@@ -46,6 +46,8 @@ import { setPitchFloorProvider } from './lookFilter.js';   // RR2: PitchMaxLimit
 import { uiCanvas, onUiScreen } from '../ui/uiScreen.js';   // RETRO-UI: the horse in the pillarbox (TransportManager's CustomScreenRect)
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { fpLightingOn } from '../combat/fpsWeapon.js';   // HORSE-LIT: the first-person lighting switch the weapon's tint rides
+import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // HORSE-VOICE: the port's own sounds, the enhanced skin's ES1 switch
+import { createHorseVoice, hoofClipFor, installHorseSounds } from '../systems/horse/horseVoice.js';   // HORSE-VOICE: the horse's voices and its hooves on the ground under it
 
 /**
  * @param deps {
@@ -71,8 +73,14 @@ export function createMountRig({
   // rides at DFU's own 1.
   ridingVolumeScale = () => 1,
   horseCart = null,   // HCC: () => the Horse Cart and Cargo runtime, or null - TrailingWagonTransportWindow's gate and route
+  // HORSE-VOICE (systems/horse/horseVoice.js): the host's reads the horse's voices and hooves take, each null where the
+  // host cannot say - the ground's kind under the rider (systems/footsteps.js pickFootstepKind: none, DFU's clop), foes in
+  // sight (encounters.js areEnemiesNearby: none, no spook), horse care's breath (upkeepRuntime.js bar: none, no breath of
+  // its own but a long gallop's) - and the switch the port's own sounds ride
+  surfaceKind = null, foesNear = null, horseBreath = null, soundsOn = enhancedSoundsOn,
 }) {
   const animator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
+  const voice = createHorseVoice();   // HORSE-VOICE: the voices said on the neigh's clock, the gallop's breath, the spook
   // RR2: the terrain ring (EnhancedRiding.cs:26-31) and the pitch floor the
   // component sets (`PitchMaxLimit = terrainAngle + 18`, :288) - registered
   // for as long as this rig stands; off the mount, the owner's floor
@@ -123,6 +131,7 @@ export function createMountRig({
    */
   function setMode(mode) {
     player.setTransportMode(mode);   // F-E3: the height action rides with the mode
+    voice.mount(isRiding(mode));   // HORSE-VOICE: a mount's whinny is the next voice; a dismount drops a spook's neigh not yet said
     // DISC29-F (Skibbster on Discord: the gallop kept playing inside a building entered at speed): UpdateMode's first
     // act on EVERY change is "stop any riding sounds playing" (TransportManager.cs:332-336). The loop re-arms itself
     // at each clip's end, and the one thing that stopped it was this component's next frame - which a door never
@@ -211,8 +220,19 @@ export function createMountRig({
         walking: !!player.rideWalking,   // HORSE-WALK: the walk's slow clop and its slower nod
         soundVolume: ridingVolumeScale(),   // AUDIT-TO1 J1: 0 for the length of an accelerated journey
       });
-      if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
-      audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
+      // HORSE-VOICE: with the port's own sounds on, the neigh's moment says a voice of the horse's mood and the hooves
+      // follow the ground - off, DFU's neigh and clop exactly
+      const voiced = !!soundsOn() && isRiding(player.transportMode);
+      if (voiced) {
+        installHorseSounds(audio);
+        const shots = voice.update(dt, { neigh: r.neigh, clip: r.clip, moving: r.playing && !player.standing, running: player.isRunning, pitch: r.pitch, paused: ridePaused, breath: horseBreath?.()?.amount ?? null, foesNear });
+        for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale(), s.pitch);
+      } else {
+        voice.hush();   // AUDIT SOUNDSCAPE H1: nothing owed from before is said when the voices come back
+        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
+      }
+      if (voiced) audio.setLoop('riding', r.playing ? hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume, pitch: r.pitch });
+      else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
       // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
       // game is paused - `!GameManager.IsGamePaused` sits in the same
       // condition as the Repaint test. Under an open window DFU shows

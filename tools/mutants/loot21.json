@@ -2,8 +2,8 @@
   {
     "name": "LOOT21-late-finds-rolled-early",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    if (find.late === true) continue;   // LOOT21: a late find is the door's last roll (rollLateFinds)\n",
-    "new": "",
+    "old": "    if (find.late === true || find.final === true) continue;   // LOOT21",
+    "new": "    if (find.final === true) continue;   // LOOT21",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LOOT21-every-find-rolled-late",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    if (find.late !== true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 &&",
-    "new": "    const chance = uniqueFindChance(find, source);\n    if (chance > 0 &&",
+    "old": "    if (find.late !== true || find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 &&",
+    "new": "    if (find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 &&",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LOOT21-a-draw-for-nothing",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    if (chance > 0 && rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));",
-    "new": "    if (rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));",
+    "old": "    if (find.late !== true || find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 && rolls() * 1000 < chance)",
+    "new": "    if (find.late !== true || find.final === true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (rolls() * 1000 < chance)",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]

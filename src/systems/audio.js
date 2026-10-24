@@ -941,6 +941,13 @@ export class AudioEngine {
 
   /** Per-frame listener sync from the camera (position + forward), in SCENE coordinates - `_listener` keeps them so;
    *  the handedness is turned at the one door into WebAudio (audioFrame). */
+  /** SOUNDSCAPE: where the ear stands and faces, as the host's last setListener put it - the scene's frame (a module
+   *  that places its sounds about the listener reads it here rather than being handed it again). */
+  listenerPose() {
+    const L = this._listener;
+    return { pos: [L.x, L.y, L.z], fwd: [L.fx, L.fy, L.fz] };
+  }
+
   setListener(pos, forward) {
     const L = this._listener;
     [L.x, L.y, L.z] = pos; [L.fx, L.fy, L.fz] = forward;

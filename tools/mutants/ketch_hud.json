@@ -1,0 +1,119 @@
+[
+  {
+    "name": "KTU-the-wave-unsaid",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "    else { line = KT_HUD_TEXT.wave(V.wv);",
+    "new": "    else { line = KT_HUD_TEXT.waiting;",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-cells-the-cradles",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "sub = cl ? KT_HUD_TEXT.cells(cl.bk, cl.nd) : '';",
+    "new": "sub = cl ? KT_HUD_TEXT.cells(cl.cr.filter((c) => c === 1).length, cl.nd) : '';",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-forks-uncounted",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "sub = KT_HUD_TEXT.forks(ws.fk.c.filter((q) => q[2] > 0).length);",
+    "new": "sub = KT_HUD_TEXT.forks(0);",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-carry-line-always",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "    carry: carrying ? KT_HUD_TEXT.carry : '',",
+    "new": "    carry: KT_HUD_TEXT.carry,",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-clock-never-low",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "    low: !docked || left <= KT_HUD_LOW_MS,",
+    "new": "    low: false,",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-ward-unsaid",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "wardedText: ws.ward ? KT_BAR_TEXT.warded : undefined,",
+    "new": "wardedText: undefined,",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-song-uncounted",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "callout = { text: KT_BAR_TEXT.song(left, ws.fk.c.length,",
+    "new": "callout = { text: KT_BAR_TEXT.song(0, ws.fk.c.length,",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-the-marks-moved",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "frac, marks: [...KW_PHASE_AT],",
+    "new": "frac, marks: [0.5, 0.25],",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-rebuilt-each-frame",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "  if (!node) {\n    if (!want || !doc?.createElement) return;",
+    "new": "  if (want) {\n    if (!want || !doc?.createElement) return;",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTU-shown-with-the-hud-hidden",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "  const want = !hidden && !!model;",
+    "new": "  const want = !!model;",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-voyages-end-unread",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "toGone = Number.isFinite(endAt) ? endAt - now : Infinity;",
+    "new": "toGone = Infinity;",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-crew-said-aboard",
+    "file": "src/ui/ketch/ketchHud.js",
+    "old": "'Crew: {n} of {max}'",
+    "new": "'Crew aboard: {n} of {max}'",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-card-left-out-of-the-key",
+    "file": "src/ui/gate/gateMapMark.js",
+    "old": "|${m.label}|${tipKey(m.tip)}` : '');",
+    "new": "|${m.label}` : '');",
+    "tests": [
+      "test/ui/ketch_hud.test.js"
+    ]
+  }
+]

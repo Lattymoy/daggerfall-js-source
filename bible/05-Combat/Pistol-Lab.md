@@ -155,6 +155,14 @@ B1 B2 B6):
   `pistolPageRect`): the page calls them, and the port's pins run them on the page's own opening state. Its keys, its
   mouse and its canvas size are the page's alone, and `tools/pistolPortProbe.mjs` drives them in Chromium.
 
+## The frame set (PISTOL-EDGE, 2026-10-24)
+
+The page cut its own frames out of the strip until PISTOL-EDGE. It now draws `combat/gun/pistolStrip.js`
+`pistolFrameSet`, the same call the game's loader makes: the six cells cut at the panel's alpha cut, each forearm carried
+past the canvas along the arm's lean, the anchor the rest frame's own box, and the union of the bled frames. The page
+and the game draw one set of pictures. The reason is in `Dwarven-Pistolet.md` "PISTOL-EDGE": the frames ended at their
+canvas, and the owner's Bob and Inertia carried that edge into the screen whenever the Walk or Strafe box was ticked.
+
 ## Running it, and its own deploy
 
     npx vite                # then open /pistol-proto.html

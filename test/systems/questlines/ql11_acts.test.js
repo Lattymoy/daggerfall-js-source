@@ -157,6 +157,8 @@ test('QL11 THE SWEEP, both ways: every kind has a producer in src/; every produc
     'herb-gathered': ['src/scenes/herbHost.js', 'src/systems/foraging/foragingInstall.js'],
     'heart-star-held': ['src/net/starfall/starClaims.js'],   // T-A: the Heart-Star held, beside its `star-held` in one turn (test/net/starfall/star7_claims.test.js)
     'hour-broken': ['src/net/superDungeon/sdClaims.js'],
+    'ketch-boarded': ['src/scenes/ketch/ketchClient.js'],   // KETCH: the anchor-lift ridden up (test/scenes/ketch/ketch_client.test.js drives it)
+    'ketch-cell-banked': ['src/scenes/ketch/ketchClient.js'],   // KETCH: my cell set, the ship's room's word
     'ore-mined': ['src/scenes/mineHost.js'],
     'piece-crafted': ['src/net/profBook.js'],
     'piece-reforged': ['src/systems/reforge.js'],
@@ -170,6 +172,7 @@ test('QL11 THE SWEEP, both ways: every kind has a producer in src/; every produc
     'star-held': ['src/net/starfall/starClaims.js'],   // STAR8: a fallen star's receipt the service counted (STAR7's carrier - test/net/starfall/star7_claims.test.js)
     'star-taken': ['src/net/firmament/firmamentBook.js'],
     'valkynaz-felled': ['src/scenes/eliteGates/egClient.js'],
+    'warden-felled': ['src/net/ketch/ketchClaims.js'],   // KETCH: the Tonal Warden's k1 receipt the service counted (test/net/ketch/ketch_claims.test.js)
     'wood-chopped': ['src/scenes/treeHost.js', 'src/systems/foraging/foragingInstall.js'],
     'wyrd-met': ['src/scenes/witchesHost.js'],   // AUDIT STAR8 T1: a Wyrd Sister's window opened, the festival's own module (test/scenes/witch1_host.test.js drives it)
   });
@@ -198,7 +201,7 @@ test('QL11 the kinds: ACT_IDS is the leaf\'s keys, frozen; each kind lower-case 
   assert.ok(Object.isFrozen(ACT_KINDS) && Object.isFrozen(ACT_IDS));
   for (const k of ACT_IDS) assert.match(k, /^[a-z]+(-[a-z]+)*$/, k);
   for (const k of ACT_IDS) assert.ok(typeof ACT_KINDS[k] === 'string' && ACT_KINDS[k].length > 0, `${k} has its family`);
-  assert.equal(ACT_IDS.length, 26);   // PIN MOVED (STAR8): and star-held, a fallen star held; PIN MOVED (AUDIT STAR8 T1): and wyrd-met, a Wyrd Sister's window; PIN MOVED (T-A): and heart-star-held, the Heart-Star held
+  assert.equal(ACT_IDS.length, 29);   // PIN MOVED (STAR8): and star-held, a fallen star held; PIN MOVED (AUDIT STAR8 T1): and wyrd-met, a Wyrd Sister's window; PIN MOVED (T-A): and heart-star-held, the Heart-Star held; PIN MOVED (KETCH): and the sky-ketch's three - boarded, a cell banked, the Warden felled
   assert.equal(ACT_KINDS['heart-star-held'], ACT_KINDS['star-held'], 'T-A: the Heart-Star\'s act the endgame\'s, as its star\'s - one family, so the festival\'s finds hear the two as one deed');
   assert.ok(!Object.hasOwn(ACT_KINDS, 'wagon-hauled'), 'no feature sells a wagon\'s load (qlActs.js says why)');
   assert.ok(Object.hasOwn(ACT_KINDS, 'valkynaz-felled'), 'the Weir Road\'s third step waits on it');

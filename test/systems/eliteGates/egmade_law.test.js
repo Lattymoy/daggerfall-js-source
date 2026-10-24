@@ -37,6 +37,8 @@ import { createEgClient } from '../../../src/scenes/eliteGates/egClient.js';
 import { egBreachNew, egEnter, egStateOf } from '../../../src/net/eliteGates/egBrain.js';
 import { validEgOut } from '../../../src/net/wire.js';
 import { realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
+import { ketchShipLocation } from '../../../src/world/ketch/ketchShip.js';   // PIN MOVED (KETCH): the sky-ketch, a fourth made level
+import { KT_WORDS } from '../../../src/systems/ketch/ketchWords.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 /** The world host's word, for a test: the made level under the player is `lv` (and its feet on traversal ground or not). */
@@ -48,8 +50,9 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
   assert.equal(madeLevelOf(sdRealmLocation({ s: 3 })), 'hour');
   assert.equal(madeLevelOf(sdRealmLocation({ s: 0 })), 'hour', 'any slot is an Hour - slot zero too');
   assert.equal(madeLevelOf(egHallLocation({ b: '0123456789abcdef', seed: 9, c: 2 })), 'spire');
+  assert.equal(madeLevelOf(ketchShipLocation({ n: 0, owner: '0123456789abcdef' })), 'ketch', 'PIN MOVED (KETCH): a crew\'s ship');
   for (const loc of [null, undefined, {}, { name: 'Old Maze', dungeon: { recordElement: { header: { locationId: 99 } } } }, { ...sdRealmLocation({ s: 3 }), sdRealm: null }]) assert.equal(madeLevelOf(loc), null);
-  assert.deepEqual([...MADE_LEVELS], ['court', 'hour', 'spire']);
+  assert.deepEqual([...MADE_LEVELS], ['court', 'hour', 'spire', 'ketch']);   // PIN MOVED (KETCH)
   const none = Object.fromEntries(MADE_LEVEL_RULE_KEYS.map((k) => [k, k === 'jumpBuffer' || k === 'latePress' ? 0 : null]));
   // PIN MOVED (EG-PERFECT, 2026-10-18): the running leap refused on the Spire's spans and the Hour's Steps (`runLeap` -
   // test/player/egperfect_runleap.test.js runs it on the real motor)
@@ -58,6 +61,9 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
     hour: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned', runLeap: 'refused', resurrect: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' },
     spire: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', potions: 'counted', levitate: 'banned', slowfall: 'banned',
       techFlight: 'refused', jumpBuffer: 0.12, latePress: 0.12, runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
+    // PIN MOVED (KETCH, bible/11-Multiplayer/Sky-Ketch.md section 3): the Hour's row for the deck, the Spire's for flight, a death a fall
+    ketch: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned', slowfall: 'banned',
+      techFlight: 'refused', runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
   });
   for (const lv of MADE_LEVELS) { assert.ok(Object.isFrozen(MADE_LEVEL_RULES[lv])); assert.deepEqual(Object.keys(MADE_LEVEL_RULES[lv]), [...MADE_LEVEL_RULE_KEYS], lv); }
   assert.deepEqual([EG_JUMP_BUFFER_S, EG_LATE_PRESS_S], [0.12, 0.12], 'section 10.8: 0.12 s each');
@@ -65,6 +71,8 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
     court: { save: COURT_TEXT.noSave, rest: COURT_TEXT.noRest, automap: COURT_TEXT.noMap, mark: COURT_TEXT.noMark, unstuck: COURT_TEXT.noUnstuck },
     hour: { save: SD_REALM_TEXT.noSave, rest: SD_REALM_TEXT.noRest, automap: SD_REALM_TEXT.noMap, mark: SD_REALM_TEXT.noMark, recall: SD_REALM_TEXT.noRecall },
     spire: { save: EG_HALL_TEXT.noSave, rest: EG_HALL_TEXT.noRest, automap: EG_HALL_TEXT.noMap, mark: EG_TEXT.noRecall, recall: EG_TEXT.noRecall, unstuck: `${EG_TEXT.noRecall} The way home stands at a Redoubt.`, techFlight: EG_NO_FLIGHT_TEXT },
+    // PIN MOVED (KETCH): her own words, read in the player's language when she refuses (systems/ketch/ketchWords.js)
+    ketch: { save: KT_WORDS.noSave, rest: KT_WORDS.noRest, automap: KT_WORDS.noMap, mark: KT_WORDS.noMark, recall: KT_WORDS.noRecall, unstuck: KT_WORDS.noUnstuck, techFlight: KT_WORDS.noFlight },
   });
   assert.deepEqual([madeLevelRule(null, 'save'), madeLevelRule('arena', 'save'), madeLevelRule('spire', 'nope'), madeLevelRule(null, 'jumpBuffer'), madeLevelRule('court', 'latePress')], [null, null, null, 0, 0]);
   assert.deepEqual([madeLevelSays(null, 'save'), madeLevelSays('court', 'recall'), madeLevelSays('spire', 'regen')], ['', '', '']);

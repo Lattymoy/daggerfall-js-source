@@ -302,8 +302,8 @@
   {
     "name": "EGROAR-spire-dripping",
     "file": "src/scenes/dungeonContext.js",
-    "old": "&& !_sdRealm && !_egHall) sceneAmbience.update(dt, {",
-    "new": "&& !_sdRealm) sceneAmbience.update(dt, {",
+    "old": "&& !_sdRealm && !_egHall && !_ketch) sceneAmbience.update(dt, {",
+    "new": "&& !_sdRealm && !_ketch) sceneAmbience.update(dt, {",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]

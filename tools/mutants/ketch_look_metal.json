@@ -1,0 +1,173 @@
+[
+  {
+    "name": "KTM2-a-dwarven-step-off-the-table",
+    "file": "src/world/ketch/ketchLook.js",
+    "old": "dwarven: ramp([159, 158, 156, 154, 152, 150, 148],",
+    "new": "dwarven: ramp([159, 158, 156, 154, 152, 150, 143],",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-two-indices-one-colour",
+    "file": "src/world/ketch/ketchLook.js",
+    "old": "steel: ramp([223, 220, 95, 93, 91, 89, 87, 85], [[12, 12, 14],",
+    "new": "steel: ramp([223, 220, 95, 93, 91, 89, 87, 85], [[32, 22, 14],",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-no-index-image",
+    "file": "src/world/ketch/ketchArt.js",
+    "old": "const rec = (albedo, emission, ramps) => ({ albedo, emission, index: quantizeIndexed(albedo, ramps) });",
+    "new": "const rec = (albedo, emission, ramps) => ({ albedo, emission, index: new Uint8Array(albedo.colors.length / 4) });",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-kit-writes-no-index",
+    "file": "src/world/superDungeon/sdPixelKit.js",
+    "old": "    out[t] = best.i;",
+    "new": "    out[t] = 0;",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-resolved-to-the-fallback",
+    "file": "src/world/ketch/ketchArt.js",
+    "old": "      albedo.colors[j + k] = now;",
+    "new": "      albedo.colors[j + k] = was;",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-glow-on-the-old-colour",
+    "file": "src/world/ketch/ketchArt.js",
+    "old": "emission.colors[j + k] = was > 0 ? Math.min(255, Math.round((e[j + k] * now) / was)) : 0;",
+    "new": "emission.colors[j + k] = e[j + k];",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-net-as-bright-as-the-sky",
+    "file": "src/world/ketch/ketchArt.js",
+    "old": "putTexel(albedo, x, y, knot ? step(Dw, 1) : u === 0 || v === 0 ? step(Dw, 3) : step(Dw, 2));",
+    "new": "putTexel(albedo, x, y, knot ? step(Dw, 4) : u === 0 || v === 0 ? step(Dw, 6) : step(Dw, 5));",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-fence-mesh",
+    "file": "src/world/ketch/ketchArt.js",
+    "old": "export const KT_NET_M = 1.5;",
+    "new": "export const KT_NET_M = 1;",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-hold-in-strakes",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  wall(R.inner, [HD.x0, HD.z0], [HD.x0, HD.z1], hy, hc, [1, 0, 0]);",
+    "new": "  wall(R.hull, [HD.x0, HD.z0], [HD.x0, HD.z1], hy, hc, [1, 0, 0]);",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-warden-iron",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "  const dyed = changeDyeBitmap(bitmap, DYE_COLORS.Dwarven, DYE_TARGETS.WeaponsAndArmor);",
+    "new": "  const dyed = changeDyeBitmap(bitmap, DYE_COLORS.Iron, DYE_TARGETS.WeaponsAndArmor);",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-darks-left-iron",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "  for (let i = 0; i < data.length; i++) { const m = KT_WARDEN_DARKS[data[i]]; if (m !== undefined) data[i] = m; }",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-wash-kept",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "export const KT_WARDEN_LOOK = Object.freeze({ mobile: 36, scale: 2.6, tint: null,",
+    "new": "export const KT_WARDEN_LOOK = Object.freeze({ mobile: 36, scale: 2.6, tint: Object.freeze([1.0, 0.86, 0.5]),",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-fallback-over-the-palette",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  if (!renderer?.uploadTexture || (_artUp === renderer && (rgb == null || rgb === _artPal))) return;",
+    "new": "  if (!renderer?.uploadTexture || (_artUp === renderer && rgb === _artPal)) return;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-palette-every-time",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  _palette ??= (async () => {",
+    "new": "  _palette = (async () => {",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-header-read-as-colour",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "const h = pal.headerLength; return pal.paletteBuffer.slice(h, h + 768);",
+    "new": "return pal.paletteBuffer.slice(0, 768);",
+    "tests": [
+      "test/world/ketch/kt_look_palette.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-vane-uncut",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "(Object.freeze([KT_REC.net, KT_REC.vane]));",
+    "new": "(Object.freeze([KT_REC.net]));",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-classic-unscaled",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "    for (let i = 0; i < 3; i++) { L.ambient[i] *= k; L.tri.sky[i] *= k; L.tri.equator[i] *= k; L.tri.ground[i] *= k; }",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-classic-lamps-unscaled",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "    L.sunScale *= k; L.key.scale *= k; L.lamps *= L.classic.lamps;",
+    "new": "    L.sunScale *= k; L.key.scale *= k;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM2-the-classic-on-the-lane",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  if (!lane) {   // the classic set",
+    "new": "  if (true) {   // the classic set",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  }
+]

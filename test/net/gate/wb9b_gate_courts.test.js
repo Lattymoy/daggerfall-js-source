@@ -347,7 +347,7 @@ test('WB9b the seams, by source: the world host refills one arena a frame from t
   const wm = read('src/scenes/worldModes.js');
   // WB14b (PIN MOVED): the court is stood by scenes/gate/gateStand.js, out of the host - the night's walkways
   assert.match(read('src/scenes/gate/gateStand.js'), /for \(const sl of walkSlabs\(plan\.pt\)\) ctx\.dynamicDraws\.push\(\{ gpu: slabMesh, object: \{ matrix: slabMatrix\(sl, fl\?\.xa \?\? NO_XA, fl\?\.now \?\? 0\) \}, slab: sl \}\);/);
-  const moved = wm.indexOf('if (d.slab) slabMatrix(d.slab, _floor?.xa ?? NO_XA, _floor?.now ?? 0, d.object.matrix);'), begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
+  const moved = wm.indexOf('if (d.slab) slabMatrix(d.slab, _floor?.xa ?? NO_XA, _floor?.now ?? 0, d.object.matrix);'), begin = wm.indexOf('renderer.beginFrame(proj, view, _ktLook?.sunDir ?? INTERIOR_LIGHT_DIR, WORLD_FRAME);');   // PIN MOVED (KETCH): the dungeon arm's frame, on a ship's deck in the sun's own direction
   assert.ok(moved > 0 && moved < begin, 'the stones moved before the frame\'s draws');
   const gc = read('src/scenes/gate/gateCourt.js');
   assert.match(gc, /_mark\.court = nearestCourt\(mx, mz\); mark = _mark;/);

@@ -95,15 +95,36 @@ export function pistolReloadVoice(hands, machines, cooldownMs, play) {
 /**
  * WHERE A HAND IS DRAWN - the page's draw block: the guard's lowering, a share of the pistol's own drawn height
  * (`heightPx`, design pixels), added to the hand's kick after the mod's floor, through the game's one gun frame
- * (gunViewmodel.js gunFrameRect) at the art's pose, right-aligned, the left hand in the mirror.
+ * (gunViewmodel.js gunFrameRect) at the art's pose, right-aligned, the left hand in the mirror - and held to its corner
+ * (holdToCorner).
  */
 export function pistolHandRect(hands, h, { canvasW, canvasH, anchor, union, widthPct, offset, raise, heightPx, flip = h === 'L' }) {
   const s = hands[h];
   const [, guardY] = guardOffset(s.guard, flip ? 'left' : 'right', { height: heightPx });
-  return gunFrameRect({
+  return holdToCorner(gunFrameRect({
     canvasW, canvasH, anchor, union, rig: s.rig, kick: { x: s.kick.x, y: s.kick.y + guardY }, flip,
     widthPct, align: ALIGN.Right, offset, raise,
-  });
+  }), canvasW, canvasH, flip);
+}
+
+/**
+ * PISTOL-EDGE (2026-10-24; bible/05-Combat/Dwarven-Pistolet.md "PISTOL-EDGE"): THE ART'S FAR EDGES NEVER ENTER THE SCREEN.
+ * The strip's forearm is carried past its cut (combat/gun/pistolStrip.js bleedArm), PISTOL_BLEED texels to the corner's
+ * side and below - the most the owner's Bob and Inertia carry a pistol in play is some sixty of those (a strafe with the
+ * mouse turning) - so the motion is the owner's, untouched, for all of it. A flick of the mouse can carry the art past
+ * that (a spin measured 187 texels at 1280x800); there the pistol is held so the bled art's far side stays on the
+ * screen's side - its right edge at the screen's right (the left hand's mirror: its left at 0), its bottom at the
+ * bottom - so what a flick reveals is forearm, never the end of the picture. Moves the anchor's rect with it, so the
+ * muzzle is read where the gun is drawn. Pure; answers the frame it was handed, moved.
+ * @param {{ rect: {x: number, y: number, w: number, h: number}, anchorRect: {x: number, y: number, w: number, h: number} }} fr
+ */
+export function holdToCorner(fr, canvasW, canvasH, flip = false) {
+  const { rect, anchorRect } = fr;
+  const dx = flip ? Math.min(0, -rect.x) : Math.max(0, canvasW - (rect.x + rect.w));
+  const dy = Math.max(0, canvasH - (rect.y + rect.h));
+  if (dx) { rect.x += dx; anchorRect.x += dx; }
+  if (dy) { rect.y += dy; anchorRect.y += dy; }
+  return fr;
 }
 
 /** The order the drawn hands are painted in - the pair's own (`order`, the hand that fired last, last). */

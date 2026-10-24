@@ -138,8 +138,8 @@
 
 <script type="module">
 import {
-  PISTOL_STRIP, stripCellRect, hardenAlpha, createPair,
-  contentBox, unionBox, muzzleLight, createScreenShake, SFX_CANDIDATES, createSfxPlayer,
+  PISTOL_STRIP, pistolFrameSet, cropImage, createPair,
+  muzzleLight, createScreenShake, SFX_CANDIDATES, createSfxPlayer,
   createPistolHands, pistolHandFired, pistolDrawOrder,
   pistolPageState, pistolPageStep, pistolPageRect, pistolJumpClimb,   // AUDIT PISTOL-PORT D7: the page's wiring, a module the pins run
 } from '/src/tools/pistolLab.js';
@@ -174,42 +174,37 @@ const bind = (id, after = () => {}) => {
 
 // ── THE ART ──────────────────────────────────────────────────────────
 // Cut at a fixed stride and hardened to 1 bit here rather than shipped
-// pre-cut, so the alpha cut is live. `frames` are six canvases on ONE
-// box (the union), `anchor` the rest frame's own box inside it.
+// pre-cut, so the alpha cut is live. PISTOL-EDGE: the GAME'S frame set
+// (combat/gun/pistolStrip.js pistolFrameSet, the loader's own) - each
+// forearm carried on past its canvas's cut along the arm's lean, so a
+// strafe or a turn never shows where the picture ends. `frames` are six
+// canvases on ONE box (the union of the bled frames), `anchor` the rest
+// frame's own box inside it, as the owner drew it.
 let art = null;
 const stripImg = new Image();
 
-function bakeOne(i) {
-  const r = stripCellRect(i);
+function canvasOf(img) {
   const cv = document.createElement('canvas');
-  cv.width = r.w; cv.height = r.h;
-  const c = cv.getContext('2d', { willReadFrequently: true });
-  c.imageSmoothingEnabled = false;
-  c.drawImage(stripImg, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
-  const img = c.getImageData(0, 0, r.w, r.h);
-  hardenAlpha(img, state.alphaCut);
-  c.putImageData(img, 0, 0);
-  let soft = 0;
-  for (let p = 3; p < img.data.length; p += 4) if (img.data[p] !== 0 && img.data[p] !== 255) soft++;
-  return { cv, box: contentBox(img), soft };
-}
-
-function crop(cv, box) {
-  const out = document.createElement('canvas');
-  out.width = box.w; out.height = box.h;
-  const c = out.getContext('2d');
-  c.imageSmoothingEnabled = false;
-  c.drawImage(cv, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
-  return out;
+  cv.width = img.width; cv.height = img.height;
+  const c = cv.getContext('2d');
+  const out = c.createImageData(img.width, img.height);
+  out.data.set(img.data);
+  c.putImageData(out, 0, 0);
+  return cv;
 }
 
 function rebuild() {
   if (!stripImg.complete || !stripImg.naturalWidth) return;
-  const baked = Array.from({ length: PISTOL_STRIP.frames }, (_, i) => bakeOne(i));
-  const union = unionBox(baked.map((b) => b.box));
-  const anchor = baked[0].box;   // frame 1: the pistol at rest, no flash
-  art = { frames: baked.map((b) => crop(b.cv, union)), union, anchor, soft: baked.reduce((n, b) => n + b.soft, 0) };
-  $('note').textContent = `strip ${stripImg.naturalWidth}x${stripImg.naturalHeight}, ${PISTOL_STRIP.frames} frames of ${PISTOL_STRIP.cellW}x${PISTOL_STRIP.cellH} — pistol ${anchor.w}x${anchor.h}, with flash ${union.w}x${union.h}`;
+  const cv = document.createElement('canvas');
+  cv.width = stripImg.naturalWidth; cv.height = stripImg.naturalHeight;
+  const c = cv.getContext('2d', { willReadFrequently: true });
+  c.imageSmoothingEnabled = false;
+  c.drawImage(stripImg, 0, 0);
+  const set = pistolFrameSet(c.getImageData(0, 0, cv.width, cv.height), state.alphaCut);
+  if (!set?.union) return;
+  const { union, anchor } = set;
+  art = { frames: set.bled.map((f) => canvasOf(cropImage(f, union))), union, anchor, soft: set.soft };
+  $('note').textContent = `strip ${stripImg.naturalWidth}x${stripImg.naturalHeight}, ${PISTOL_STRIP.frames} frames of ${PISTOL_STRIP.cellW}x${PISTOL_STRIP.cellH} — pistol ${anchor.w}x${anchor.h}, drawn ${union.w}x${union.h} with its arm carried on`;
 }
 stripImg.onload = rebuild;
 stripImg.onerror = () => { $('note').textContent = `art/${PISTOL_STRIP.file} did not load`; };

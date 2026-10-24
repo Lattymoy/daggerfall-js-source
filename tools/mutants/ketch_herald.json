@@ -1,0 +1,74 @@
+[
+  {
+    "name": "KTH-the-arrival-pinging",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    family: 'ketch', moment: 'Arrived',\n",
+    "new": "    family: 'ketch', moment: 'Arrived', role: '123456789012345678',\n",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-family-another",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff,",
+    "new": "ketch: Object.freeze({ name: 'The Ketch', colour: 0x7cc4ff,",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-her-colour-not-her-ring",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff,",
+    "new": "ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4fe,",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-gate-role-first",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "export const ketchHeraldRole = (own, gate) => heraldRole(own) ?? heraldRole(gate);",
+    "new": "export const ketchHeraldRole = (own, gate) => heraldRole(gate) ?? heraldRole(own);",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-floor-an-older-relay",
+    "file": "src/net/relayCfg.js",
+    "old": "ktRole: 255, ktThread: 255 });",
+    "new": "ktRole: 255, ktThread: 254 });",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-the-sighting-owed-before-its-instant",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    return { n: v.n, k: name, i: k, at: Math.max(now, at) };",
+    "new": "    return { n: v.n, k: name, i: k, at: now };",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-a-passed-window-posted",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "    if (now >= until) continue;   // its window gone - let go",
+    "new": "    if (now >= until && until < 0) continue;   // its window gone - let go",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  },
+  {
+    "name": "KTH-a-posted-moment-owed-again",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "if (v.n < P.n || (v.n === P.n && k <= P.k)) continue;",
+    "new": "if (v.n < P.n || (v.n === P.n && k < P.k)) continue;",
+    "tests": [
+      "test/net/ketch/ketch_herald.test.js"
+    ]
+  }
+]

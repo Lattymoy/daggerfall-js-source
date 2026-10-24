@@ -447,7 +447,7 @@ test('RW1 view V10: THE FOUR HOSTS, the interior arm - the view out is asked onc
   assert.ok(lamps > vo, 'the room\'s lamps after it - its own beginFrame takes no tier the room asked for (DISC15)');
   assert.ok(begin > lamps, 'painted right after the interior\'s beginFrame');
   assert.equal(wm.split('renderer.setGlassView(').length - 1, 1, 'one arm paints it');
-  const dungeonBegin = wm.indexOf('      renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
+  const dungeonBegin = wm.indexOf('      renderer.beginFrame(proj, view, _ktLook?.sunDir ?? INTERIOR_LIGHT_DIR, WORLD_FRAME);');   // PIN MOVED (KETCH): on a ship's deck, the sun's own direction
   assert.ok(dungeonBegin > 0 && dungeonBegin < vo, 'the dungeon arm stands above it and returns before it');
   assert.ok(!rd('src/scenes/dungeonContext.js').includes('outsideViewFrame') && !rd('src/scenes/dungeonContext.js').includes('setGlassView'), 'the dungeon host draws no view out');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

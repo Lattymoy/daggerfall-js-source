@@ -202,8 +202,8 @@
   {
     "name": "SD3-two-seats",
     "file": "server/src/index.js",
-    "old": "if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
-    "new": "if ((isGateRoom(a.key) || isBattleRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
+    "old": "if ((isGateRoom(a.key) || isBattleRoom(a.key) || isSdRoom(a.key) || isKetchRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
+    "new": "if ((isGateRoom(a.key) || isBattleRoom(a.key) || isKetchRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],

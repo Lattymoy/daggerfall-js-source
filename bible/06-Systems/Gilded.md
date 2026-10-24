@@ -402,3 +402,44 @@ pellets, the gun era paid in arrows, the toll forgetting its weapon. Re-aimed by
 `gilded2.json` GILDED2-the-thunderlock-for-every-record, `pistolet.json` GF-two-draws, GF-unloaded, GF-half-weight-back,
 SE-era-dropped and SE-era-for-any-template. Retired from `pistolet.json` with the code they mutated: GF-second-gun-never,
 GF-share-flipped, GF-pellets-off-the-raw-draw, GF-pistolet-never-handed (45 records now). The four lists: 105, all dead.
+
+## 10. Rarer, and the guns only the Ketch's - Volendrung's Echo and the Ketchmaster's Word (GILDED-RARER, KETCH, 2026-10-24)
+
+The owner: *"Reduce the drop rate of gilded weapons across the board and ensure any gun drop is rare, only found within
+this activity"* - the Rourken airship's raid (`11-Multiplayer/Sky-Ketch.md`), which drops *"both guns with a gilded
+version of each gun"*.
+
+**Every Gilded drop rarer** (`systems/gilded.js`; the numbers sections 2, 7 and 9 give are history from here):
+
+| Record | Its door | Was | Now |
+|---|---|---|---|
+| The Hourlock | the Brass Remnant's earned receipts (`GILDED_CHANCE`) | one in fifty | **one in a hundred** |
+| The Dragonfire Oath | the gate Warden's spoils (`GATE_GILDED_CHANCE`) - a gate every two hours | one in a hundred | **one in two hundred and fifty** |
+| The Sunken Sovereign | a dealing ship's serpent hoard (`SERPENT_GILDED_CHANCE`) - a serpent every four hours | one in a hundred | **one in two hundred and fifty** |
+
+**The rung's fourth and fifth records are the guns** - the only Gilded records that mint one, and the only door that
+mints them the Tonal Warden's hold (`systems/ketch/ketchSpoils.js` - the last draws of a member's share, so no roll before
+them moves; `KETCH_GILDED_CHANCE`, **one in a hundred each**, each its own draw; a share a week an account):
+
+| | Volendrung's Echo | The Ketchmaster's Word |
+|---|---|---|
+| Make | a **Dwarven Thunderlock** (560), the gun's own mint (`createThunderlock`) | a **Dwarven Pistolet** (562), the gun's own mint (`createPistolet`) |
+| Lines | the Hourlock's as a gun: +40% damage, +15 Agility, +30 Archery, +10 shock a shot | +40% damage, +15 Speed, +30 Archery, +10 shock a shot |
+| Power | **Hammerfall** - a shot that lands rings on: every OTHER foe within 3.5 m of the one it struck takes half the shot as shock, by its resistance | **Broadside** - a shot that lands marks the foe 2.5 s: the next blow of the other hand on it (a second pistol, a blade) strikes 60% harder, and the mark is spent |
+| Lore | the Rourken threw Volendrung and built where it fell; their gunwrights tuned this one to the note the Hammer sang in its flight, and gilded it for the steersman bound to her helm (AUDIT KETCH L5-8: "for the Ketch's master", where the book and its drop make it the Warden's) | the Mzunthar's master wore it at her hip the day the Dwemer vanished and gave her last order with it in her hand; its coil never wound down (AUDIT KETCH L5-7: it promised constructs that lowered their arms to it - the game has none) |
+
+Both every line at the Legendary band's top and no higher, KNOWN, priced over their make by their lines and
+GILDED_WORTH, lawful on the wire exactly (one number off a forgery), never salvaged, reforged or made, in the codex at the
+rung's foot each with its own hint ("Said to ride the Dwarven airship over Daggerfall, once in a long while").
+**Hammerfall's reach is the door's**: a body the relay runs (an Elite hall's lords, the gate's Warden, the Ketch's own
+constructs) is no record of `playerDoor` - its neighbours are not the door's, so a shot on one rings nothing and owes
+nothing (Dragonfire's B1 owes its own burn to the struck body's claim; Hammerfall strikes only the others). **Broadside's
+mark is the gilded pistol's**: the answering weapon carries no power of it, an estimate reads it and spends nothing.
+
+**The law and the service.** Two records the item law never saw: law 13 (`systems/item/itemLaw.js` ITEM_LAW_VERSION) and
+the account service acct180 with them (`server-account/src/service.js`).
+
+**The pins.** `test/systems/ketch/ketch_gilded.test.js` (the records, the mint, the wire, Hammerfall, Broadside),
+`test/systems/ketch/ketch_spoils.test.js` (the guns' and the Gilded's chances, the share's order), and PIN MOVED in
+`gilded2_world.test.js` (the five records; the drops one in two hundred and fifty). **The mutants:**
+`tools/mutants/ketch_gilded.json` and `tools/mutants/ketch_spoils.json`, every one dead.

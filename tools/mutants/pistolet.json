@@ -1,421 +1,422 @@
 [
- {
-  "name": "PLD-install-registers-nothing",
-  "file": "src/systems/pistolet.js",
-  "old": "  return addVendorTextures(PISTOLET_ICON_FILES.map(",
-  "new": "  return 0 && addVendorTextures(PISTOLET_ICON_FILES.map(",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-install-not-a-stand-in",
-  "file": "src/systems/pistolet.js",
-  "old": "fileName: file, standIn: true, offset, load",
-  "new": "fileName: file, standIn: false, offset, load",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-install-drops-the-offsets",
-  "file": "src/systems/pistolet.js",
-  "old": "fileName: file, standIn: true, offset, load",
-  "new": "fileName: file, standIn: true, offset: null, load",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-gilded-right-doll-plain",
-  "file": "src/systems/pistolet.js",
-  "old": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.gildedDoll;",
-  "new": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.doll;",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-gilded-left-doll-file-right-offset",
-  "file": "src/systems/pistolet.js",
-  "old": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
-  "new": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-left-doll-file-right-offset",
-  "file": "src/systems/pistolet.js",
-  "old": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
-  "new": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-condition-unclamped",
-  "file": "src/systems/pistolet.js",
-  "old": "item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));",
-  "new": "item.currentCondition = condition;",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-not-dwarven",
-  "file": "src/systems/pistolet.js",
-  "old": "export function createPistolet({ material = 4,",
-  "new": "export function createPistolet({ material = 3,",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PLD-offset-right-6px",
-  "file": "src/systems/pistolet.js",
-  "old": "right: Object.freeze({ x: 200 + 17, y: 8 + 89 })",
-  "new": "right: Object.freeze({ x: 200 + 17, y: 8 + 93 })",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "GF-two-draws",
-  "file": "src/systems/thunderlock.js",
-  "old": "    const n = FIND_PELLETS.min",
-  "new": "    rolls(); const n = FIND_PELLETS.min",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "GF-unloaded",
-  "file": "src/systems/thunderlock.js",
-  "old": "    return [createPellets(n)];",
-  "new": "    return [];",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/thunderlock.test.js"
-  ]
- },
- {
-  "name": "GF-half-weight-back",
-  "file": "src/systems/thunderlock.js",
-  "old": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n",
-  "new": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n  weight: 0.5,\n",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "SE-era-dropped",
-  "file": "src/systems/gilded.js",
-  "old": "  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;",
-  "new": "  return r;",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "SE-era-for-any-template",
-  "file": "src/systems/gilded.js",
-  "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
-  "new": "e.id === r?.id",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "SE-law-not-moved",
-  "file": "src/systems/item/itemLaw.js",
-  "old": "export const ITEM_LAW_VERSION = 12;",
-  "new": "export const ITEM_LAW_VERSION = 9;",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/tech1_roster.test.js"
-  ]
- },
- {
-  "name": "OH-shot-whole",
-  "file": "src/combat/arrowFlight.js",
-  "old": "  const off = !!playerWeapon?.isOffHandItem?.(m.weapon);",
-  "new": "  const off = false;",
-  "tests": [
-   "test/combat/pistolet_law.test.js"
-  ]
- },
- {
-  "name": "OH-no-share",
-  "file": "src/combat/arrowFlight.js",
-  "old": "    ...(off ? OFF_HAND_BLOW : {}),\n    backstabChance",
-  "new": "    backstabChance",
-  "tests": [
-   "test/combat/pistolet_law.test.js"
-  ]
- },
- {
-  "name": "OH-duel-melee-only",
-  "file": "src/combat/duelCombat.js",
-  "old": "const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
-  "new": "const off = d.by === 'melee' && d.off === true;",
-  "tests": [
-   "test/combat/pistolet_law.test.js"
-  ]
- },
- {
-  "name": "OH-lead-read-as-off",
-  "file": "src/combat/playerWeapon.js",
-  "old": "item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');",
-  "new": "item === this.handItem(this.leadHand);",
-  "tests": [
-   "test/combat/pistolet_law.test.js"
-  ]
- },
- {
-  "name": "OH-tally-unweighed",
-  "file": "src/scenes/world.js",
-  "old": "tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);   // AUDIT PISTOLET A2",
-  "new": "tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);   // AUDIT PISTOLET A2",
-  "tests": [
-   "test/combat/twohands.test.js"
-  ]
- },
- {
-  "name": "HL-enchanted-pistolet-no-pair",
-  "file": "src/combat/twoHands/handsLaw.js",
-  "old": "export const DUAL_GUN_TYPES = Object.freeze([19, 20]);",
-  "new": "export const DUAL_GUN_TYPES = Object.freeze([19]);",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/combat/twohands.test.js"
-  ]
- },
- {
-  "name": "WR-flash-rifle-reach",
-  "file": "src/combat/weapon/weaponRig.js",
-  "old": "? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;\n",
-  "new": "? -1 : 1; entity._thunderlockFlashRange = GUN_FEEL.flashRange;\n",
-  "tests": [
-   "test/combat/weapon/pistoletRig.test.js"
-  ]
- },
- {
-  "name": "WR-resting-pistol-flashes",
-  "file": "src/combat/weapon/weaponRig.js",
-  "old": "const glow = muzzleGlow(shot.record === 1, shot.frame);",
-  "new": "const glow = muzzleGlow(m.state !== 'Idle', m.frame);",
-  "tests": [
-   "test/combat/weapon/pistoletRig.test.js"
-  ]
- },
- {
-  "name": "WR-pair-wears-one-art",
-  "file": "src/combat/weapon/weaponRig.js",
-  "old": "const art = artFor(playerWeapon.handItem(h));",
-  "new": "const art = artFor(playerWeapon.weapon);",
-  "tests": [
-   "test/combat/weapon/pistoletRig.test.js"
-  ]
- },
- {
-  "name": "WR-pistolet-loads-the-rifle",
-  "file": "src/combat/weapon/weaponRig.js",
-  "old": "      (isPistoletType(type)\n        ? loadPistoletArt(",
-  "new": "      (false\n        ? loadPistoletArt(",
-  "tests": [
-   "test/combat/weapon/pistoletRig.test.js"
-  ]
- },
- {
-  "name": "GLOW-design-pixels",
-  "file": "src/combat/weapon/weaponRig.js",
-  "old": "art: art.native ? [art.native.w, art.native.h] : [art.unionBox.w, art.unionBox.h]",
-  "new": "art: [art.unionBox.w, art.unionBox.h]",
-  "tests": [
-   "test/systems/weaponglow1.test.js"
-  ]
- },
- {
-  "name": "PA-gilded-keep-of-the-rest-frame",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "gilded ? gildFrame(rgba, pistoletGildKeep(rgba))",
-  "new": "gilded ? gildFrame(rgba, pistoletGildKeep(cropped[0]))",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PA-enchanted-is-plain",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;",
-  "new": "const type = WEAPON_TYPES.Pistolet;",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PA-sleeve-gilded",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "((c === 'g' || c === '#' || c === '?') && !sleeve[i])",
-  "new": "(c === 'g' || c === '#' || c === '?')",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PA-muzzle-off-the-wrong-frame",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "const muzzle = flashPoint(cropped[1]);",
-  "new": "const muzzle = flashPoint(cropped[0]) ?? { x: 0.5, y: 0.5 };",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PA-luma-lower",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "export const FLASH_LUMA = 215;",
-  "new": "export const FLASH_LUMA = 150;",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "FM-flame-gilded",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "keep[i] = !flame[i] && (",
-  "new": "keep[i] = (",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "FM-glow-unbounded",
-  "file": "src/combat/gun/pistoletArt.js",
-  "old": "(j) => data[j * 4] >= 245 && luma(j) >= 150",
-  "new": "(j) => luma(j) >= 150",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "PAT-right-hand-unflipped-point",
-  "file": "tools/pistoletArt.mjs",
-  "old": "point && (flip ? [level.width - point[0], point[1]] : point)",
-  "new": "point",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "OWM-pistol-rake-zero",
-  "file": "src/characters/ownModels/ownWeaponModels.js",
-  "old": "const PISTOL_GRIP_RAKE = 12;",
-  "new": "const PISTOL_GRIP_RAKE = 0;",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "OWM-pistol-on-the-rifle-grip",
-  "file": "src/characters/ownModels/ownWeaponModels.js",
-  "old": "    attitude: PISTOL_GRIP_ATTITUDE,",
-  "new": "    attitude: GUN_GRIP_ATTITUDE,",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "OFF-part-bare",
-  "file": "src/combat/fpArm.js",
-  "old": "bytes: main.bytes, ...(main.preTransform ? { preTransform: main.preTransform } : {}) }]",
-  "new": "bytes: main.bytes }]",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "TL-light-side-ignored",
-  "file": "src/systems/thunderlock.js",
-  "old": "const side = entity._thunderlockFlashSide === -1 ? -1 : 1;",
-  "new": "const side = 1;",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/thunderlock.test.js"
-  ]
- },
- {
-  "name": "SR-pistolet-no-top",
-  "file": "src/net/siege/siegeRef.js",
-  "old": " : w === SIEGE_PISTOLET.template ? SIEGE_PISTOLET.max",
-  "new": "",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/pvpref_law.test.js",
-   "test/net/arena/int7_arms.test.js",
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "SR-pistolet-top-off-by-one",
-  "file": "src/net/siege/siegeRef.js",
-  "old": "export const SIEGE_PISTOLET = Object.freeze({ template: 562, max: 15 });",
-  "new": "export const SIEGE_PISTOLET = Object.freeze({ template: 562, max: 16 });",
-  "tests": [
-   "test/systems/pistolet.test.js",
-   "test/systems/pvpref_law.test.js",
-   "test/net/arena/int7_arms.test.js",
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "GV-preset-over-the-tuning",
-  "file": "src/combat/gun/gunViewmodel.js",
-  "old": "{ ...widgetDefaults(), ...tuning }), { preset: false });",
-  "new": "{ ...widgetDefaults(), ...tuning }), { preset: true });",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "LL-pistol-unclaimed",
-  "file": "src/systems/thunderlock.js",
-  "old": "templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],",
-  "new": "templates: [THUNDERLOCK_TEMPLATE],",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "NM-metal-twice",
-  "file": "src/systems/item/itemInfo.js",
-  "old": "|| namesItsMetal(item, material)) return name;",
-  "new": ") return name;",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "NM-the-whole-name-asked",
-  "file": "src/systems/item/itemInfo.js",
-  "old": "String(templateText(templateByIndex(item?.templateIndex)) ?? '').toLowerCase().startsWith(",
-  "new": "String(itemNameParts(item).name ?? '').toLowerCase().startsWith(",
-  "tests": [
-   "test/systems/pistolet_pins.test.js"
-  ]
- },
- {
-  "name": "WR-pair-wears-the-held-glow",
-  "file": "src/combat/weapon/weaponRig.js",
-  "old": "const elementGlow = hand ? glowOf(playerWeapon.handItem(hand)) : heldGlowNow();",
-  "new": "const elementGlow = heldGlowNow();",
-  "tests": [
-   "test/combat/weapon/pistoletRig.test.js"
-  ]
- }
+  {
+    "name": "PLD-install-registers-nothing",
+    "file": "src/systems/pistolet.js",
+    "old": "  return addVendorTextures(PISTOLET_ICON_FILES.map(",
+    "new": "  return 0 && addVendorTextures(PISTOLET_ICON_FILES.map(",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-install-not-a-stand-in",
+    "file": "src/systems/pistolet.js",
+    "old": "fileName: file, standIn: true, offset, load",
+    "new": "fileName: file, standIn: false, offset, load",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-install-drops-the-offsets",
+    "file": "src/systems/pistolet.js",
+    "old": "fileName: file, standIn: true, offset, load",
+    "new": "fileName: file, standIn: true, offset: null, load",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-gilded-right-doll-plain",
+    "file": "src/systems/pistolet.js",
+    "old": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.gildedDoll;",
+    "new": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.doll;",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-gilded-left-doll-file-right-offset",
+    "file": "src/systems/pistolet.js",
+    "old": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
+    "new": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-left-doll-file-right-offset",
+    "file": "src/systems/pistolet.js",
+    "old": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
+    "new": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-condition-unclamped",
+    "file": "src/systems/pistolet.js",
+    "old": "item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));",
+    "new": "item.currentCondition = condition;",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-not-dwarven",
+    "file": "src/systems/pistolet.js",
+    "old": "export function createPistolet({ material = 4,",
+    "new": "export function createPistolet({ material = 3,",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PLD-offset-right-6px",
+    "file": "src/systems/pistolet.js",
+    "old": "right: Object.freeze({ x: 200 + 17, y: 8 + 89 })",
+    "new": "right: Object.freeze({ x: 200 + 17, y: 8 + 93 })",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "GF-two-draws",
+    "file": "src/systems/thunderlock.js",
+    "old": "    rolls();\n    return [];",
+    "new": "    rolls(); rolls();\n    return [];",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "GF-unloaded",
+    "file": "src/systems/thunderlock.js",
+    "old": "  mint: (rolls = Math.random) => [createPellets(pelletFindStack(rolls))],",
+    "new": "  mint: (rolls = Math.random) => [],",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "GF-half-weight-back",
+    "file": "src/systems/thunderlock.js",
+    "old": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n",
+    "new": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n  weight: 0.5,\n",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "SE-era-dropped",
+    "file": "src/systems/gilded.js",
+    "old": "  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;",
+    "new": "  return r;",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "SE-era-for-any-template",
+    "file": "src/systems/gilded.js",
+    "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
+    "new": "e.id === r?.id",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "SE-law-not-moved",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "export const ITEM_LAW_VERSION = 13;",
+    "new": "export const ITEM_LAW_VERSION = 9;",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/tech1_roster.test.js"
+    ],
+    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair)."
+  },
+  {
+    "name": "OH-shot-whole",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  const off = !!playerWeapon?.isOffHandItem?.(m.weapon);",
+    "new": "  const off = false;",
+    "tests": [
+      "test/combat/pistolet_law.test.js"
+    ]
+  },
+  {
+    "name": "OH-no-share",
+    "file": "src/combat/arrowFlight.js",
+    "old": "    ...(off ? OFF_HAND_BLOW : {}),\n    backstabChance",
+    "new": "    backstabChance",
+    "tests": [
+      "test/combat/pistolet_law.test.js"
+    ]
+  },
+  {
+    "name": "OH-duel-melee-only",
+    "file": "src/combat/duelCombat.js",
+    "old": "const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
+    "new": "const off = d.by === 'melee' && d.off === true;",
+    "tests": [
+      "test/combat/pistolet_law.test.js"
+    ]
+  },
+  {
+    "name": "OH-lead-read-as-off",
+    "file": "src/combat/playerWeapon.js",
+    "old": "item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');",
+    "new": "item === this.handItem(this.leadHand);",
+    "tests": [
+      "test/combat/pistolet_law.test.js"
+    ]
+  },
+  {
+    "name": "OH-tally-unweighed",
+    "file": "src/scenes/world.js",
+    "old": "tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);   // AUDIT PISTOLET A2",
+    "new": "tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);   // AUDIT PISTOLET A2",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "HL-enchanted-pistolet-no-pair",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "export const DUAL_GUN_TYPES = Object.freeze([19, 20]);",
+    "new": "export const DUAL_GUN_TYPES = Object.freeze([19]);",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "WR-flash-rifle-reach",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;\n",
+    "new": "? -1 : 1; entity._thunderlockFlashRange = GUN_FEEL.flashRange;\n",
+    "tests": [
+      "test/combat/weapon/pistoletRig.test.js"
+    ]
+  },
+  {
+    "name": "WR-resting-pistol-flashes",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const glow = muzzleGlow(shot.record === 1, shot.frame);",
+    "new": "const glow = muzzleGlow(m.state !== 'Idle', m.frame);",
+    "tests": [
+      "test/combat/weapon/pistoletRig.test.js"
+    ]
+  },
+  {
+    "name": "WR-pair-wears-one-art",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const art = artFor(playerWeapon.handItem(h));",
+    "new": "const art = artFor(playerWeapon.weapon);",
+    "tests": [
+      "test/combat/weapon/pistoletRig.test.js"
+    ]
+  },
+  {
+    "name": "WR-pistolet-loads-the-rifle",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      (isPistoletType(type)\n        ? loadPistoletArt(",
+    "new": "      (false\n        ? loadPistoletArt(",
+    "tests": [
+      "test/combat/weapon/pistoletRig.test.js"
+    ]
+  },
+  {
+    "name": "GLOW-design-pixels",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "art: art.native ? [art.native.w, art.native.h] : [art.unionBox.w, art.unionBox.h]",
+    "new": "art: [art.unionBox.w, art.unionBox.h]",
+    "tests": [
+      "test/systems/weaponglow1.test.js"
+    ]
+  },
+  {
+    "name": "PA-gilded-keep-of-the-rest-frame",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "gilded ? gildFrame(own, pistoletGildKeep(own))",
+    "new": "gilded ? gildFrame(own, pistoletGildKeep(cells[0]))",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PA-enchanted-is-plain",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;",
+    "new": "const type = WEAPON_TYPES.Pistolet;",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PA-sleeve-gilded",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "((c === 'g' || c === '#' || c === '?') && !sleeve[i])",
+    "new": "(c === 'g' || c === '#' || c === '?')",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PA-muzzle-off-the-wrong-frame",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "muzzle: flashPoint(cropImage(bled[1], union))",
+    "new": "muzzle: flashPoint(cropImage(bled[0], union)) ?? { x: 0.5, y: 0.5 }",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PA-luma-lower",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "export const FLASH_LUMA = 215;",
+    "new": "export const FLASH_LUMA = 150;",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "FM-flame-gilded",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "keep[i] = !flame[i] && (",
+    "new": "keep[i] = (",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "FM-glow-unbounded",
+    "file": "src/combat/gun/pistoletArt.js",
+    "old": "(j) => data[j * 4] >= 245 && luma(j) >= 150",
+    "new": "(j) => luma(j) >= 150",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PAT-right-hand-unflipped-point",
+    "file": "tools/pistoletArt.mjs",
+    "old": "point && (flip ? [level.width - point[0], point[1]] : point)",
+    "new": "point",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "OWM-pistol-rake-zero",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "const PISTOL_GRIP_RAKE = 12;",
+    "new": "const PISTOL_GRIP_RAKE = 0;",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "OWM-pistol-on-the-rifle-grip",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "    attitude: PISTOL_GRIP_ATTITUDE,",
+    "new": "    attitude: GUN_GRIP_ATTITUDE,",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "OFF-part-bare",
+    "file": "src/combat/fpArm.js",
+    "old": "bytes: main.bytes, ...(main.preTransform ? { preTransform: main.preTransform } : {}) }]",
+    "new": "bytes: main.bytes }]",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "TL-light-side-ignored",
+    "file": "src/systems/thunderlock.js",
+    "old": "const side = entity._thunderlockFlashSide === -1 ? -1 : 1;",
+    "new": "const side = 1;",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "SR-pistolet-no-top",
+    "file": "src/net/siege/siegeRef.js",
+    "old": " : w === SIEGE_PISTOLET.template ? SIEGE_PISTOLET.max",
+    "new": "",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pvpref_law.test.js",
+      "test/net/arena/int7_arms.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "SR-pistolet-top-off-by-one",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "export const SIEGE_PISTOLET = Object.freeze({ template: 562, max: 15 });",
+    "new": "export const SIEGE_PISTOLET = Object.freeze({ template: 562, max: 16 });",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/pvpref_law.test.js",
+      "test/net/arena/int7_arms.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "GV-preset-over-the-tuning",
+    "file": "src/combat/gun/gunViewmodel.js",
+    "old": "{ ...widgetDefaults(), ...tuning }), { preset: false });",
+    "new": "{ ...widgetDefaults(), ...tuning }), { preset: true });",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "LL-pistol-unclaimed",
+    "file": "src/systems/thunderlock.js",
+    "old": "templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],",
+    "new": "templates: [THUNDERLOCK_TEMPLATE],",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "NM-metal-twice",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "|| namesItsMetal(item, material)) return name;",
+    "new": ") return name;",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "NM-the-whole-name-asked",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "String(templateText(templateByIndex(item?.templateIndex)) ?? '').toLowerCase().startsWith(",
+    "new": "String(itemNameParts(item).name ?? '').toLowerCase().startsWith(",
+    "tests": [
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "WR-pair-wears-the-held-glow",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const elementGlow = hand ? glowOf(playerWeapon.handItem(hand)) : heldGlowNow();",
+    "new": "const elementGlow = heldGlowNow();",
+    "tests": [
+      "test/combat/weapon/pistoletRig.test.js"
+    ]
+  }
 ]

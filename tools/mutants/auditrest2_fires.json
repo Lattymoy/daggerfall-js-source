@@ -322,8 +322,8 @@
   {
     "name": "AUDITREST2-F-fires-on-the-arena-sand",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const firePlan = isGateArena(dfLocation) || isArenaFloor(dfLocation) ? null : dungeonFirePlan({",
-    "new": "const firePlan = isGateArena(dfLocation) ? null : dungeonFirePlan({",
+    "old": "const firePlan = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _ketch ? null : dungeonFirePlan({",
+    "new": "const firePlan = isGateArena(dfLocation) || _ketch ? null : dungeonFirePlan({",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ],

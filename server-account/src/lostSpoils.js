@@ -35,6 +35,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { itemFindings } from '../../src/systems/item/itemLaw.js';
 import { LOST_BATCH, LOST_WINDOW_S, LOST_WAITING_MAX, lostKillOf, lostBatchOf, lostPiecesOf } from '../../src/net/lostLaw.js';
+import { isGunTemplate } from '../../src/characters/thunderlockIds.js';
+import { GILDED, HOURLOCK, DRAGONFIRE_OATH } from '../../src/systems/gilded.js';
 
 /** Who the Lost and Found's pieces are from, as the box shows them (src/net/postLaw.js postHead's 40). */
 export const LOST_SENDER = 'Lost and Found';
@@ -48,6 +50,12 @@ export const LOST_WORDS = Object.freeze({
   sd: words('Left at the Last Moment', 'the arena floor of the Last Moment'),
   eg: words('Left at a Redoubt', 'beside a Redoubt\'s beacon in the Battlespire'),
 });
+
+/** AUDIT SHIP C1: WHAT A DOOR CAN HAVE LEFT - the one Gilded its spoils roll (gateSpoils.js the Oath, sdSpoils.js the
+ *  Hourlock, a Redoubt none) and never a gun, the Sky-Ketch's alone (Gilded.md section 10: "a gun is minted nowhere else"). */
+export const LOST_GILDED = Object.freeze({ gate: DRAGONFIRE_OATH.id, sd: HOURLOCK.id, eg: null });
+export const lostLeftBy = (/** @type {{ kind: string }} */ kill, /** @type {any} */ item) => !isGunTemplate(item?.templateIndex)
+  && ((item?.gilded == null && item?.rarity !== GILDED) || item?.gilded === LOST_GILDED[kill.kind]);
 
 /** The kill's row for this account, as the service recorded it: its `at`, or null. A Redoubt's only where it paid. */
 async function killAt(db, account, kill) {
@@ -72,7 +80,7 @@ export async function mailLostSpoils({ db, nowS }, reader, { day, pieces } = {})
   if (!kill) return { error: 'lost-pieces' };
   const asked = lostPiecesOf(pieces);
   if ('error' in asked) return asked;
-  for (const p of asked.pieces) if (itemFindings(p.item).length) return { error: 'lost-item', i: p.i };
+  for (const p of asked.pieces) if (itemFindings(p.item).length || !lostLeftBy(kill, p.item)) return { error: 'lost-item', i: p.i };
   // WHAT IS ALREADY THERE is sent, whatever else is so now - asked first, so a send that landed is never refused later
   const batches = asked.pieces.map((p) => lostBatchOf(kill, p.i));
   const { results: had = [] } = await db.prepare('SELECT batch FROM server_post WHERE to_id = ?1 AND batch IN (SELECT value FROM json_each(?2))')

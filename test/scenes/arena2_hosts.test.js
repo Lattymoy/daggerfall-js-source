@@ -20,7 +20,7 @@ test('ARENA2 hosts - world.js: one driver, ticked before the modal return, its s
   assert.match(W, /const arenaBouts = createArenaBouts\(\{/);
   const tick = W.indexOf('    arenaFrame(dt);   // ARENA2');
   assert.ok(tick > 0);
-  assert.ok(tick < W.indexOf('if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({'), 'ticked before the music and the modal return below it');   // SD13 (PIN MOVED): the Hour's score asked first
+  assert.ok(tick < W.indexOf('if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({'), 'ticked before the music and the modal return below it');   // SD13 (PIN MOVED): the Hour's score asked first
   assert.match(W, /if \(mode === 'dungeon'\) return modes\?\.arenaFloorStage\?\.\(\) \?\? modes\?\.arenaPitStage\?\.\(\) \?\? null;/, 'in the instance its stage (ARENA-FIX 4: in the undercroft the pit\'s)');
   assert.match(W, /if \(mode !== 'exterior' \|\| !walkMode \|\| !playerSpawned \|\| !arenaCityPixel\(\)\) return null;/);
   assert.match(W, /if \(ex\?\.open && ex\.hour !== _arenaHourRun\) \{ _arenaHourRun = ex\.hour; arenaBouts\.ask\(\{ where: 'city', kind: 'exhibition', ex \}\); \}/, 'the hour\'s bout, once an hour');
@@ -34,7 +34,7 @@ test('ARENA2 hosts - world.js: one driver, ticked before the modal return, its s
 test('ARENA2 hosts - world.js: the crowd drawn in both passes, the music held, the duel\'s law, my ring, the doors handed the modes', () => {
   assert.match(W, /for \(const b of arenaBouts\.batches\(\)\) \{ if \(cullOn && billboardOutside\(b\)\) continue; allBatches\.push\(b\); \}/);
   assert.match(W, /\.\.\.\(\(modes\?\.mode \?\? 'exterior'\) === 'dungeon' \? arenaBouts\.batches\(\) : \[\]\)\]/);
-  assert.match(W, /if \(!hourScoreFrame\(\) && !gateScoreFrame\(\) && !arenaScoreFrame\(\)\) musicDirector\.update\(\{/);   // SD13 (PIN MOVED): the Hour's score asked first
+  assert.match(W, /if \(!hourScoreFrame\(\) && !gateScoreFrame\(\) && !arenaScoreFrame\(\) && !soundscape\.scoreFrame\(\)\) musicDirector\.update\(\{/);   // SD13 (PIN MOVED): the Hour's score asked first; SOUNDSCAPE (PIN MOVED): the sea's songs after the arena's
   assert.match(W, /for \(const song of Object\.values\(arenaScoreSongs\(\)\)\) music\.registerSong\(song\.name, song\);/);
   assert.match(W, /function duelEnemyNear\(\) \{ return !!duelMgr\?\.live \|\| arenaBouts\.holds\(\); \}/, 'no rest, no travel, no journey in my bout');
   assert.match(W, /if \(!player\.arena\) player\.arena = arenaBouts\.ring\(\);[^\n]*\/\/ ARENA2/, 'online');   // HOTFIX 1003i: the stands' rail after it on its line
@@ -67,7 +67,7 @@ test('ARENA2 hosts - dungeonContext.js wired (what the sand will not allow); ARE
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(ARENA_TEXT\.refuse\.save\); return false; \}/);
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ hudText\.add\(ARENA_TEXT\.refuse\.map\); return; \}/);
   assert.match(D, /savingPrevented: \(\) => madeLevelRule\(_made, 'save'\) === 'refused' \|\| isArenaFloor\(dfLocation\),/);   // SD5a (PIN MOVED): and the Shattered Hour beside them; PIN MOVED (EG-H2): the made levels' saves are their law's (systems/madeLevel.js), the sand's beside them
-  assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)(?: && !_sdRealm)?(?: && !_egHall)?\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');   // SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire
+  assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)(?: && !_sdRealm)?(?: && !_egHall)?(?: && !_ketch)?\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');   // SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire; KETCH (PIN MOVED): nor aboard the sky-ketch
   assert.match(X, /\/\/ ARENA-FIX 12 \(2026-10-02\): WIRED - THE FOUR HOSTS\./);
   assert.match(X, /const arenaBouts = createArenaBouts\(\{/, 'one driver');
   assert.match(X, /arenaHerald: \(\) => arenaHerald\(\),/, 'the Herald\'s choice through the mode machine');
