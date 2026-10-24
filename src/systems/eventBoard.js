@@ -28,7 +28,7 @@
 // PURE: no globals, no clock of its own; the host hands the source (`now`, the relay's), the door hands the notes. Not a
 // DFU member - DFU has no shared events. Ledger A (EVENTS1).
 import { eventTimerRows } from './eventTimers.js';
-import { PIXEL_M, gateTimes } from '../net/gate/gateLaw.js';
+import { PIXEL_M, gateTimes, gateLaneOf } from '../net/gate/gateLaw.js';
 import { serpentTimes, serpentBossOf } from '../net/serpent/serpentLaw.js';
 import { starTimes } from '../net/starfall/starfallLaw.js';
 import { STAR_WARN_MS } from './starfall/starfallClient.js';
@@ -175,9 +175,11 @@ function raidRow(r, now, src, soonMs) {
 function timerRow(r, src) {
   const row = { id: r.id, kind: r.kind, title: r.title, where: r.where, detail: r.detail, live: r.live, at: r.at, way: null, since: NaN, announce: true };
   if (r.kind === 'gate') {
-    const T = gateTimes(idNumber(r.id)), site = src?.gate?.site;
+    // WW2: a lane past the Bay's gate is its own source's (`gates`, found by its number), the Bay's the one it always was
+    const n = idNumber(r.id), g = gateLaneOf(n) ? src?.gates?.find((x) => x?.site?.day === n) : src?.gate;
+    const T = gateTimes(n), site = g?.site;
     Object.assign(row, { title: r.live ? EVENT_BOARD_TEXT.gateOpen() : EVENT_BOARD_TEXT.gateOpens(), detail: r.live ? EVENT_BOARD_TEXT.gateLive() : EVENT_BOARD_TEXT.gateSoon(), since: r.live ? T.openAt : T.omenAt });
-    if (r.where && src?.gate?.place) { row.where = EVENT_BOARD_TEXT.near(src.gate.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
+    if (r.where && g?.place) { row.where = EVENT_BOARD_TEXT.near(g.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
   } else if (r.kind === 'serpent') {
     const day = idNumber(r.id), T = serpentTimes(day), boss = serpentBossOf(day).name, site = src?.serpent?.site;
     Object.assign(row, { title: r.live ? EVENT_BOARD_TEXT.serpentHunts(boss) : EVENT_BOARD_TEXT.serpentRises(boss), detail: r.live ? EVENT_BOARD_TEXT.serpentLive() : EVENT_BOARD_TEXT.serpentSoon(), since: r.live ? T.riseAt : T.omenAt });

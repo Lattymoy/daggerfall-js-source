@@ -32,6 +32,7 @@ import { seededRng } from '../wind/wind.js';
 import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
 import { NATIVE_PER_M } from '../travel/travelDungeons.js';
+import { worldPixelKey, WORLD_PIXEL_KEYS } from '../../world/worldWide/worldGrid.js';   // WW1: one key a pixel of the whole world
 import { CITY_COURT_BLOCKS } from './census.js';
 import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 
@@ -89,12 +90,13 @@ export const PATROL_RISK = 0.5;
 /** The farthest a traveller's home can be from a town and still be read for visitors or the roads (map pixels). */
 export const TRIP_REACH_PX = 18;
 /** OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): the key a host keeps a
- *  `townsNear(px, py, r)` answer by - a number, one a pixel and a reach (any reach, and a pixel up to half a map past
- *  its 1000 x 500 either way),
+ *  `townsNear(px, py, r)` answer by - a number, one a pixel and a reach (any reach, and any pixel of the world's grid:
+ *  WW1, world/worldWide/worldGrid.js worldPixelKey - the first key held half a map past the Bay's 1000 x 500 and two
+ *  pixels of the land past it shared one),
  *  where it was a template string a call: a way's inns ask it at every pixel of the way (innsAlong) - and how many the
  *  host keeps. 512 was fewer than one long way's pixels, so the book was cleared inside a single trip's inns and asked
  *  again cold; a journey on the Overworld brings a town's roads in every few seconds. */
-export const livingNearKey = (px, py, r) => (r * 1024 + (py + 256)) * 2048 + (px + 512);
+export const livingNearKey = (px, py, r) => r * WORLD_PIXEL_KEYS + worldPixelKey(px, py);
 export const LIVING_NEAR_KEPT = 8192;
 /** LW6: the share of an adventurer's trips that are DIVES - into a dungeon in reach, when one is - and the reach
  *  (map pixels, nearest and farthest), and the hours inside (the clock's minutes, fewest and most). */
@@ -364,13 +366,14 @@ export function cycleOf(res, day, scale) {
 }
 
 /**
- * LW9: where the road's new traffic may be bound - a patrol keeps its own region, a noble goes to another court (a city
+ * LW9: where the road's new traffic may be bound - a patrol keeps its own region (WW1: its AREA - the region on the
+ * Bay, the province past it, world/worldWide/worldGrid.js), a noble goes to another court (a city
  * of CITY_COURT_BLOCKS), a minstrel to a town big enough for a tavern's crowd; the first's jobs anywhere their range
  * says.
  * @param {string} job @param {LwTown} home @param {LwTown} t
  */
 export function roadBound(job, home, t) {
-  if (job === 'patrol') return home.region == null || t.region === home.region;
+  if (job === 'patrol') return (home.area ?? home.region) == null || (t.area ?? t.region) === (home.area ?? home.region);
   if (job === 'noble') return t.type === 0 && (t.blocks | 0) >= CITY_COURT_BLOCKS;
   if (job === 'minstrel') return (t.blocks | 0) >= MARKET_BLOCKS;
   return true;

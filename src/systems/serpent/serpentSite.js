@@ -28,7 +28,7 @@ export const SITE_SLIDE = 0.16;
 export const SITE_SLIDE_STEP = 0.04;
 
 /** The map pixel a native point stands in (wire.js mapPixelOfWire's arithmetic). */
-export const sitePixelOfNative = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS)];
+export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];   // WW-C2: floored, as mapPixelOfWire
 /** Is every pixel within `r` of (px, py) open sea? */
 export function openAround(px, py, open, r = SITE_CLEAR_PX) {
   for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (!open(px + dx, py + dy)) return false;

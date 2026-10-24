@@ -1776,18 +1776,23 @@ function liftWorld(from, to) {
 test('AUDIT LEGACY III W1: THE LIVING WORLD\'S INDICES READ THE GAME\'S ROWS, AND AN ONLINE HOME IS NAMED - the boot emptied the rows before either index was built, so every town and dungeon index was empty (LW3\'s roads, LW6\'s deep) and every home of the line reached it with no town name: the rows go once BOTH indices stand, and a home is named off the boot\'s own complete table', async () => {
   const src = hostText('src/scenes/world.js');
   assert.equal((src.match(/_hubRows\.length = 0/g) ?? []).length, 1, 'emptied in one place');
-  assert.match(src, /const releaseHubRows = \(\) => \{ if \(_livingTowns && _livingDungeons\) _hubRows\.length = 0; \};/);
-  const body = liftWorld(/^  let _livingTowns = null;$/, /^    return _livingDungeons;$/) + '\n  };';
-  const make = new Function('_hubRows', 'populatesWanderingNpcs', 'longitudeLatitudeToMapPixel', 'getWorldClimateSettings', 'maps', 'hasPort', 'LOCATION_TYPES',
-    `${body}\nreturn { towns: livingTownsIndex, dungeons: livingDungeonsIndex };`);
-  const row = (name, mapId, locationType, x) => ({ name, regionIndex: 17, mapTableData: { mapId, locationType, longitude: x, latitude: 1 }, exterior: { exteriorData: { width: 2, height: 2 } } });
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the indices read the world's registry (scenes/livingWorld/livingIndex.js),
+  // which takes the rows at the boot - so the rows go there, AFTER the registry has them, and both indices are built from
+  // it whenever they are first asked, in either order. The boot's own lines, lifted and run over the real modules.
+  const boot = liftWorld(/^  const worldPlaces = createWorldPlaces\(\);$/, /^  _hubRows\.length = 0;$/);
+  const { createWorldPlaces } = await import('../../../src/world/worldWide/worldPlaces.js');
+  const { bayPlaceRows, BAY_SOURCE } = await import('../../../src/world/worldWide/bayPlaces.js');
+  const { createLivingIndex } = await import('../../../src/scenes/livingWorld/livingIndex.js');
+  const make = new Function('_hubRows', 'createWorldPlaces', 'bayPlaceRows', 'BAY_SOURCE', 'hasPort', `${boot}\nreturn worldPlaces;`);
+  // MapsFile's longitude and latitude for a pixel (LongitudeLatitudeToMapPixel's inverse - 128 units a pixel, latitude counted from the south)
+  const row = (name, mapId, locationType, x) => ({ name, regionIndex: 17, mapTableData: { mapId, locationType, longitude: x * 128, latitude: (499 - 1) * 128 }, exterior: { exteriorData: { width: 2, height: 2 } } });
   for (const order of [['towns', 'dungeons'], ['dungeons', 'towns']]) {
     const rows = [row('Gothway Garden', 5001, LOCATION_TYPES.TownCity, 1), row('Castle Necromoghan', 6001, LOCATION_TYPES.DungeonLabyrinth, 2)];
-    const idx = make(rows, (t) => t === LOCATION_TYPES.TownCity, (lon, lat) => ({ x: lon, y: lat }), () => ({ people: 1 }), { getClimateIndex: () => 0 }, () => false, LOCATION_TYPES);
+    const places = make(rows, createWorldPlaces, bayPlaceRows, BAY_SOURCE, () => false);
+    assert.equal(rows.length, 0, 'let go at the boot, once the registry has them');
+    const idx = createLivingIndex({ places, populated: (t) => t === LOCATION_TYPES.TownCity, peopleAt: () => 1 });
     assert.equal(idx[order[0]]().size, 1, `${order[0]} first: built from the rows`);
-    assert.equal(rows.length, 2, 'kept for the other');
     assert.equal(idx[order[1]]().size, 1, `${order[1]} second: built from the rows too`);
-    assert.equal(rows.length, 0, 'let go once both stand');
   }
   // a home of the account, as the line is handed it - ACCOUNT-HOMES (2026-10-06, PIN MOVED: "mine alone", this realm
   // character's rows, before): a home is its account's, every member's, so every row of the account's list is the line's

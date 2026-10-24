@@ -190,6 +190,6 @@ test('SEA-TRADE the host module: a port town\'s lanes counted off the map\'s lan
   assert.equal(off.bandAt(port), null);
   assert.equal(off.seaDeal(port), false);
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: \(\) => \(_lanesReady && mapDict \? laneNet\(\) : null\) \}\);/);
+  assert.match(w, /locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.bay\(\) : null\) \}\);/);   // PIN MOVED (WW3): the Bay's lanes - SEA-TRADE's ticks are the Bay's (WW7)
   assert.match(rd('src/scenes/townEconHost.js'), /seaDeal: \(port\) => \(book && portTown\(port\) != null \? book\.seaDeal\(port\.px, port\.py\) : false\),/);
 });

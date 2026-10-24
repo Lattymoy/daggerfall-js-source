@@ -26,7 +26,8 @@ test('SD1: the numbers - two days standing, three minutes collapsing, two hours 
   assert.equal(SD_COOLDOWN_MS, 2 * H);
   assert.equal(SD_FIRST_RISE_MS, 10 * M);
   assert.equal(SD_CENSUS_MIN, 2);
-  assert.equal(SD_REGION_COUNT, REGION_NAMES.length, 'pinned equal to MAPS.BSA\'s regions (not imported: the relay\'s graph)');
+  assert.equal(SD_REGION_COUNT, 62, 'pinned equal to MAPS.BSA\'s regions (not imported: the relay\'s graph)');   // PIN MOVED (WW-R): the Bay's - REGION_NAMES holds the provinces' after them
+  assert.equal(REGION_NAMES[SD_REGION_COUNT - 1], 'Cybiades');
   assert.equal(SD_SALT, 0x5d01);
   assert.equal(SD_SLOT_MAX, 999_999_999);
   assert.deepEqual([...SD_PHASES], ['risen', 'found', 'fell', 'gone']);

@@ -20,29 +20,32 @@
   {
     "name": "JAN1-an-empty-table-restores-empty",
     "file": "src/systems/save/save.js",
-    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1",
-    "new": "  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1",
+    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? padRegionTable(snap.bankAccounts.map((a) => ({ ...a })), blankAccount) : createBankAccounts();",
+    "new": "  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));",
     "tests": [
       "test/systems/jan1_fixes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "JAN1-the-houses-restore-empty",
     "file": "src/systems/save/save.js",
-    "old": "  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);",
+    "old": "  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map((h) => ({ ...h })), blankHouse) : createHouses(entity.bankAccounts.length);",
     "new": "  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));",
     "tests": [
       "test/systems/jan1_fixes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "JAN1-a-saved-table-is-thrown-away",
     "file": "src/systems/save/save.js",
-    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1",
-    "new": "  entity.bankAccounts = createBankAccounts();   // B1",
+    "old": "  entity.bankAccounts = snap.bankAccounts?.length ? padRegionTable(snap.bankAccounts.map((a) => ({ ...a })), blankAccount) : createBankAccounts();",
+    "new": "  entity.bankAccounts = createBankAccounts();",
     "tests": [
       "test/systems/jan1_fixes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "JAN1-NaN-is-a-value",

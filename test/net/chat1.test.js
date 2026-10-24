@@ -54,8 +54,8 @@ test('CHAT1 / AUDIT CHAT: the wire - the constants once and literally, one home 
   assert.equal(CHAT_MAX, 240); assert.equal(CHAT_HZ_MAX, 2); assert.equal(CHAT_STRIKES_MAX, 20); assert.equal(CHAT_SOCKETS_MAX, 2048);
   assert.equal(CHAT_HELLO_HZ_MAX, 50); assert.equal(CHAT_ROOM_HZ_MAX, 20);
   assert.equal(CHAT_WORLD_ROOM, 'chat:world');
-  // CHAT-CHAN: the World channel and the 62 region channels, ENUMERATED - the whitelist stays a list (AUDIT CHAT A1)
-  assert.deepEqual([...CHAT_ROOMS], ['chat:world', ...Array.from({ length: 62 }, (_, i) => `chat:region.${i}`), ...Array.from({ length: 16 }, (_, k) => `chat:world.${k}`), ...Array.from({ length: 62 * 4 }, (_, i) => `chat:region.${Math.floor(i / 4)}.${i % 4}`),
+  // CHAT-CHAN: the World channel and the 62 region channels, ENUMERATED - the whitelist stays a list (AUDIT CHAT A1); PIN MOVED (WW-R, bible/03-World/World-Wide.md): and the provinces' nine
+  assert.deepEqual([...CHAT_ROOMS], ['chat:world', ...Array.from({ length: 71 }, (_, i) => `chat:region.${i}`), ...Array.from({ length: 16 }, (_, k) => `chat:world.${k}`), ...Array.from({ length: 71 * 4 }, (_, i) => `chat:region.${Math.floor(i / 4)}.${i % 4}`),
     ...['en', 'de', 'fr', 'es', 'pt', 'it', 'nl', 'pl', 'ru', 'fi', 'sv', 'tr', 'ja', 'zh', 'ko'].map((c) => `chat:lang.${c}`), 'chat:trade', 'chat:lfg'], 'the whitelist: the World channel and one per politic region (PIN MOVED, SCALE5c: and the hub\'s sixteen shards; part two: and each region\'s four; CHAT-LANG: and one per language; CHAT-TRADE: and the Trade and LFG channels)');
   for (const k of ['sanitizeChat', 'isChatRoom', 'chatGate']) assert.equal(relay[k], { sanitizeChat, isChatRoom, chatGate }[k], `${k}: the same function object at both ends`);
   assert.equal(relay.CHAT_MAX, CHAT_MAX); assert.equal(relay.CHAT_ROOMS, CHAT_ROOMS);

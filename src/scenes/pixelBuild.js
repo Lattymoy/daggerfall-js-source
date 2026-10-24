@@ -40,7 +40,8 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { gothwayNorthSpots, isGothwayGarden } from '../systems/gothwayBoards.js';
 import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
-import { hasPort, maskMapId } from '../systems/travel/travelPorts.js';
+import { hasPort } from '../systems/travel/travelPorts.js';
+import { portIdOf } from '../world/worldWide/worldPorts.js';   // WW3: a port's one number
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { HOLD_FLATS, HOLD_MODELS, holdFireLights, holdModelMatrix, PRIVATEERS_HOLD_BLOCK } from '../world/worldOfDaggerfall/wodPrivateersHold.js';
 import { HOME_LOOK_BUILD_WAIT_MS, homeLookRemap } from '../world/homeLook.js';
@@ -110,7 +111,7 @@ export function createPixelBuild(host) {
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, jungle, labGrass, landform, livingArmOf, livingAshore,
     livingBaseRate, livingCarriedOf, livingChapterOf, livingCrews, livingCycleOf, livingDeadAt, livingFlatOf,
-    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
+    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownAt, livingTripsOf, loadGroundSet, lookOfHome,
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
@@ -812,12 +813,11 @@ export function createPixelBuild(host) {
           const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
           return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
         };
-        // AUDIT-TESA A2-3: the index is keyed by the Bay's pixel id (y * 1000 + x) - past the Bay a key aliases a Bay row
-        const livingTown = (onTheBay(px, py) ? livingTownsIndex().get(py * 1000 + px) : null) ?? {
+        const livingTown = livingTownAt(px, py) ?? {
           mapId: (dfLocation.mapTableData?.mapId ?? 0) >>> 0, name: dfLocation.name, px, py,
           type: dfLocation.mapTableData?.locationType, region: dfLocation.regionIndex, people: climate?.people,
           blocks: loc.width * loc.height, port: hasPort(dfLocation.mapTableData?.mapId),
-        };   // LW3: the roads' own record of the town (the same row the trips read), a mod's town its own
+        };   // LW3: the roads' own record of the town (the same row the trips read - WW1: the world's registry's, wherever it stands), a mod's town its own
         population = livingWorldOn() ? new LivingTown(nav, {
           town: livingTown,
           buildings: buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
@@ -863,7 +863,7 @@ export function createPixelBuild(host) {
             return !(Number.isFinite(hit) && hit < len - 0.25);
           },
           harbour: () => {   // LW5: its harbour's berth in the location's frame (the dock of a port with no Ship building)
-            const b = host.harbourBook.get(`port:${maskMapId(livingTown.mapId)}`)?.harbour?.berths?.[0];
+            const b = host.harbourBook.get(`port:${portIdOf(livingTown)}`)?.harbour?.berths?.[0];   // WW3: its port id, the world's key past the Bay
             if (!b) return null;
             const tr = host.state.pixelTranslation(px, py);
             return { x: b.pos[0] - locOrigin[0] - tr[0], z: b.pos[1] - locOrigin[2] - tr[2] };

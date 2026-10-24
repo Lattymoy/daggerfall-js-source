@@ -47,6 +47,7 @@ import {
   dateString, dateFromClassicMinutes,   // AUDIT 64 F28: GetLoanDueDateString's two halves
 } from './gameDate.js';
 import { localizedText, getLocalizedRegionName } from './textManager.js';   // L10N3d: the status box's words; L10N3e: the region names shown
+import { REGION_NAMES } from '../formats/mapsTables.js';   // WW-R: the Bay's regions and the provinces'
 
 /** TransactionResult (:29-51). The values ARE TEXT.RSC record ids for
  *  everything the bank says out loud - 0282-0299 is one contiguous
@@ -139,19 +140,29 @@ export const houseSellPrice = (meshRadius) => Math.trunc(housePrice(meshRadius) 
 /** MapFileReader.RegionCount - four BSA records per region, which is
  *  62 in the shipping MAPS.BSA. The accounts array is sized from the
  *  reader where one is in scope and from this where none is; a save
- *  restores its own length either way. */
-export const BANK_REGION_COUNT = 62;
+ *  restores its own length either way. WW-R (bible/03-World/World-Wide.md
+ *  WW-R): and the provinces' past the Bay after the Bay's (formats/mapsTables.js
+ *  REGION_NAMES) - a save's 62 padded on its restore (padRegionTable). */
+export const BANK_REGION_COUNT = REGION_NAMES.length;
+
+/** WW-R: a region table (the accounts, the houses) a save restored shorter than the world's regions, padded with the
+ *  new regions' blank rows - each its own region's (`make(regionIndex)`). The rows it held are kept as they were.
+ *  @template T @param {T[]} rows @param {(regionIndex: number) => T} make */
+export function padRegionTable(rows, make) {
+  for (let i = rows.length; i < BANK_REGION_COUNT; i++) rows.push(make(i));
+  return rows;
+}
 
 export function createBankAccounts(regionCount = BANK_REGION_COUNT) {
-  return Array.from({ length: regionCount }, (_, regionIndex) => ({
-    regionIndex, accountGold: 0, loanTotal: 0, loanDueDate: 0, hasDefaulted: false,
-  }));
+  return Array.from({ length: regionCount }, (_, regionIndex) => blankAccount(regionIndex));
 }
+/** One region's account, opened empty. @param {number} regionIndex */
+export const blankAccount = (regionIndex) => ({ regionIndex, accountGold: 0, loanTotal: 0, loanDueDate: 0, hasDefaulted: false });
 export function createHouses(regionCount) {
-  return Array.from({ length: regionCount }, (_, regionIndex) => ({
-    regionIndex, location: '', mapId: 0, buildingKey: 0,
-  }));
+  return Array.from({ length: regionCount }, (_, regionIndex) => blankHouse(regionIndex));
 }
+/** One region's house record, none owned. @param {number} regionIndex */
+export const blankHouse = (regionIndex) => ({ regionIndex, location: '', mapId: 0, buildingKey: 0 });
 
 /**
  * H1 - THE HOUSE REGISTRY GOES LIVE. `createHouses` has minted the

@@ -35,14 +35,16 @@
 import { sdPhase, sdNameOf, sdWhere, sdFoundLine, sdFadeLine, SD_COLLAPSE_MS, SD_FADE_GRACE_MS } from './sdLaw.js';
 import { HERALD_FELL_KEEP_MS } from '../gate/gateHerald.js';
 import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
-import { REGION_NAMES } from '../../formats/mapsTables.js';
+import { REGION_NAMES, BAY_REGION_COUNT } from '../../formats/mapsTables.js';
 
 /** @typedef {import('../wire.js').SdRecord} SdRecord */
 /** @typedef {{ rise: number, found: number, end: number }} SdHeraldState */
 /** @typedef {'rise'|'found'|'fell'|'fade'} SdHeraldKind */
 
-/** The record's region as the chat names it - its name, or '' for the Bay's great cities (-1) and anything unknown. */
-export const sdRegionName = (r) => (Number.isSafeInteger(r) && r >= 0 ? REGION_NAMES[r] ?? '' : '');
+/** The record's region as the chat names it - its name, or '' for the Bay's great cities (-1) and anything unknown. WW-R:
+ *  the census's regions alone, the Bay's 62 (wire.js SD_REGION_COUNT) - REGION_NAMES holds the provinces past them, and a
+ *  record naming one is nothing the census stood. */
+export const sdRegionName = (r) => (Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT ? REGION_NAMES[r] : '');
 
 /** A slot's name as the herald may say it: its name when that needs no city, else null. The city is every client's own
  *  (systems/superDungeon/sdSite.js), so a name with one is asked of sdNameOf with a mark no name holds, and the mark found in it. */

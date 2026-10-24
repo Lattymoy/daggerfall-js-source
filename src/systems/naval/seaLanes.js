@@ -29,6 +29,7 @@ import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL } from './navalShips.js';
 import { nativeOfPixel, NATIVE_PIXEL } from '../seaRaiders.js';
+import { worldPixelKey, worldPixelOfKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';   // WW3: a lane's pixels the world's
 
 /** How far from its town a port's roadstead may lie (map pixels), and how many ports a port runs packets to, within how
  *  far of it (map pixels between roadsteads: about 25 km). */
@@ -60,11 +61,12 @@ export const LANE_LINEAGE = 24;
 const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
 
 /** The water's way between two map pixels, 8 neighbours with no corner cut past land, or null (none within LANE_SEARCH,
- *  or longer than LANE_PATH_PX). `water(px, py)` the map's own. */
+ *  or longer than LANE_PATH_PX). `water(px, py)` the lane's own - WW3 (bible/03-World/World-Wide.md): on the world's
+ *  grid, keyed by the world's key (world/worldWide/worldGrid.js), so a lane past the Bay's map is walked as the Bay's
+ *  are; a Bay lane's water is the Bay's alone (scenes/naval/worldLanes.js), so its way is the one it always was. */
 export function lanePixels(from, to, water) {
-  const W = 1000, H = 500;
   if (!water(from.x, from.y) || !water(to.x, to.y)) return null;
-  const key = (x, y) => y * W + x;
+  const key = worldPixelKey;
   const g = new Map([[key(from.x, from.y), 0]]), came = new Map(), shut = new Set();
   const h = (x, y) => Math.hypot(x - to.x, y - to.y);
   // the open list a binary heap on f: [f, x, y]
@@ -95,7 +97,7 @@ export function lanePixels(from, to, water) {
     const gk = g.get(k);
     if (x === to.x && y === to.y) {
       const path = [{ x, y }];
-      for (let c = came.get(k); c != null; c = came.get(c)) path.push({ x: c % W, y: Math.floor(c / W) });
+      for (let c = came.get(k); c != null; c = came.get(c)) { const [cx, cy] = worldPixelOfKey(c); path.push({ x: cx, y: cy }); }
       return path.reverse();
     }
     expanded++;
@@ -103,7 +105,7 @@ export function lanePixels(from, to, water) {
       for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= W || ny >= H || !water(nx, ny)) continue;
+        if (!inWorldGrid(nx, ny) || !water(nx, ny)) continue;
         if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue;   // no corner cut past land
         const ng = gk + (dx && dy ? Math.SQRT2 : 1);
         const nk = key(nx, ny);

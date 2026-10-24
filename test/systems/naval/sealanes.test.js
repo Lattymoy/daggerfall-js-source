@@ -37,6 +37,9 @@ import { findHarbour, alongside } from '../../../src/systems/naval/shipLife.js';
 import { hash32 } from '../../../src/world/spawnedDungeons.js';
 import { mulberry32 } from '../../../src/combat/blood/bloodArt.js';
 import { sea } from '../../navalSea.mjs';
+import { createWorldLanes } from '../../../src/scenes/naval/worldLanes.js';
+import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
@@ -408,14 +411,19 @@ function feedOn({ at = { x: 200, y: 200 }, clock = 1.7e12 } = {}) {
   const PORTS = FEED_PORTS;
   const S = 40;   // native units a scene metre (SCENE_MAP_RATIO)
   const origin = nativeOfPixel(at.x, at.y);
-  const calls = { liners: [], ways: 0 };
+  const calls = { liners: [], ways: 0, water: 0 };
   const env = {
-    tvWater: (px, py) => water(px, py), maps: { getClimateIndex: (px, py) => (open(px, py) ? OCEAN : 1), getRegion: (ri) => ({ mapNames: PORTS.map((p) => p.name) }) },
+    tvWater: (px, py) => { calls.water++; return water(px, py); }, maps: { getClimateIndex: (px, py) => (open(px, py) ? OCEAN : 1), getRegion: (ri) => ({ mapNames: PORTS.map((p) => p.name) }) },
     CLIMATES: { Ocean: OCEAN }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, pixelOfNative,
     PORT_LOCATION_IDS: [...PORTS.map((p) => p.id), PORTS[0].id, 5],   // a repeat, and an id the map has not
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 1, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),
-    laneNetwork, laneWay: (...a) => { calls.ways++; return laneWay(...a); }, packetsAt, LANE_PATH_PX, LANE_MAX_PX,
+    // PIN MOVED (WW3, bible/03-World/World-Wide.md): the lanes are the world's book (scenes/naval/worldLanes.js) - the Bay's off
+    // the map's directory, none past the Bay here (the world's ports empty, its land not standing); a way sounded is one
+    // that read the water
+    createWorldLanes: (o) => { const wl = createWorldLanes(o); return { ...wl, way: (l) => { const was = calls.water, w = wl.way(l); if (calls.water > was) calls.ways++; return w; } }; },
+    worldPorts: createWorldPorts({ places: createWorldPlaces(), openSea: () => false }), tamrielLand: false,
+    packetsAt, LANE_PATH_PX, LANE_MAX_PX,
     performance: { now: () => env.t }, t: 10000,
     naval: { enabled: true, liners: (list) => calls.liners.push({ list }) },
     playerTravelPixel: () => ({ ...at }), player: { feetAt: () => [NATIVE_PIXEL / 2 / S, 0, NATIVE_PIXEL / 2 / S] }, raidNowMs: () => clock,
@@ -439,7 +447,8 @@ test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, ever
   const clock = ((v - p0.phase) * period + 2 * leg + LANE_DWELL_S + 10) * 1000;
   const f = feedOn({ clock });
   assert.deepEqual(f.laneNet().map((l) => [l.key, l.a.name, l.b.name, l.a.region]), [['199200-199225', 'Glenpoint', 'Wayrest', 1]], 'the map\'s ports: the far harbour too far for a lane, the lake\'s towns none (its water no ocean\'s)');
-  assert.match(WORLD, /town = \{ id: summary\.id, loc, x: p\.x \+ dx, y: p\.y \+ dy, name: maps\.getRegion\(summary\.regionIndex\)\?\.mapNames\?\.\[summary\.mapIndex\] \?\? null \};/, 'the harbour\'s town by its name');
+  // PIN MOVED (WW3, bible/03-World/World-Wide.md): past the Bay the registry's port, its id the world's key (worldPorts.js portIdOf)
+  assert.match(WORLD, /town = \{ id: summary \? summary\.id : portIdOf\(beyond\), loc, x: p\.x \+ dx, y: p\.y \+ dy, name: summary \? maps\.getRegion\(summary\.regionIndex\)\?\.mapNames\?\.\[summary\.mapIndex\] \?\? null : beyond\.name \};/, 'the harbour\'s town by its name');
   f.laneShips();
   assert.equal(f.calls.liners.length, 1);
   const { list } = f.calls.liners[0];   // AUDIT BAY A6 PIN MOVED: her phase on the clock sails her - the clock's second was the host's to time a dwell by

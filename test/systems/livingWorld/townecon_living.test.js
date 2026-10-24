@@ -164,7 +164,7 @@ test('TOWN-ECON TE3 the host: the band frozen a town a day for the market days (
   assert.equal(host.marketBandOf({ mapId: 11 }, 700), 'Booming', 'frozen for the day');
   assert.equal(host.marketBandOf({ mapId: 11 }, 701), 'Destitute', 'the next day read again');
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /townsIn: \(region\) => livingTownsOfRegion\(region\), marketBandOf: townEcon\.marketBandOf,/);
+  assert.match(w, /townsIn: livingIndex\.townsIn, marketBandOf: townEcon\.marketBandOf,/);   // PIN MOVED (WW1): an area's towns the living world's index's
   assert.match(src('src/scenes/pixelBuild.js'), /econBandOf: \(\) => townEcon\.bandOf\(livingTown\.mapId\),/);
   assert.match(src('src/scenes/world.js'), /\n\s*townEcon, townPlacesFor, townSeats, verges,/, 'AUDIT TOWN-ECON 2 REC-4: the pixel builder handed the town economy (mutants: TOWNECON-AUDIT2-REC4-pixelbuild-unhanded)');
 });

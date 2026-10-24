@@ -53,7 +53,7 @@ import { accountKind, overRate } from './accounts.js';
 import { isDeveloper } from './titles.js';
 import { witnessOf } from './townSeats.js';
 import { chaptersOpenFor } from './npcRoll.js';
-import { witnessedFact, factConfirmed, regionOk } from '../../src/net/nodeLaw.js';
+import { witnessedFact, factConfirmed, bayRegionOk } from '../../src/net/nodeLaw.js';
 import { seatIgnoredAccounts, SEAT_WITNESSES_AUDIT, SEAT_WITNESS_IGNORED_S, SEAT_WITNESS_UNMATCHED_MAX } from '../../src/net/townSeatLaw.js';
 import { exactRows, mayBeIgnored, witnessRow, unmatchedSql, strikeWitness, LEAN_ROWS } from './leanWitness.js';   // LEAN-WITNESS
 import {
@@ -251,7 +251,7 @@ export async function allRegionChapters(db, nowS, rows = undefined) {
  */
 export async function listHalls({ db, nowS }, dev, env, { region } = {}) {
   if (!isDeveloper(dev, env)) return { error: 'not-developer' };
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   const { towns, ignored } = hallFacts(await regionRows(db, region), nowS);
   return {
     region,

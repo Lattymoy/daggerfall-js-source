@@ -1,0 +1,134 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// WW3 (2026-10-24, bible/03-World/World-Wide.md WW3): THE WORLD'S PORTS - the harbours past the Bay, off the world's
+// registry (world/worldWide/worldPlaces.js), as every sea system reads a port.
+//
+// The Bay's ports are Travel Options' list and Daggerfall's PortTownAndUnknown byte (systems/travel/travelPorts.js,
+// systems/portPlaces.js portTownByData), read by the host as they always were: every Bay lane, packet, board and
+// harbour is the one it was. Past the Bay a port is a place its PROVIDER says is one (a list's row's `port` - TESA's
+// places), and stands a sea system's port as the Bay's do:
+//  - IS A PORT TOWN (`at`): the place on the pixel, its provider's word that it is a port - the host's port test
+//    (csaIsPortTown's, by data alone, as the Bay's byte is read) past the Bay.
+//  - A PORT OF THE SEA (`list`): a port town of the port's own kinds (systems/portPlaces.js isPortTownType - a city, a
+//    town, a village) that the OPEN SEA bears on (net/fortLaw.js seaBears, the shipyard's and the harbour board's law) -
+//    the lanes' ports, the board's and the director's nearest.
+//  - ITS ID (`portIdOf`): a port's one number wherever it stands - the Bay's masked map id (Travel Options' and the map
+//    directory's, its pixel id: what the lanes and the living world's sailors always filed a Bay port by) on the Bay, and
+//    the world's key past it, PORT_ID_WORLD on (worldGrid.js worldPixelKey - the grid's north-west keys are small, so they
+//    stand past every masked id, which is 20 bits), so a lane's key and seed are its two ports' and never another's.
+// A port past the Bay has no Bay region (-1) and no crown (the Bay's three crowns' writ is the Bay's - decision 5, the
+// provinces as regions the owner's call); it has its area and its theatre.
+//
+// Pure: the registry and the sea's one law in, ports out. Not a DFU member. Ledger A (WW3).
+// ═══════════════════════════════════════════════════════════════════
+import { worldPixelKey, areaAt } from './worldGrid.js';
+import { inBay } from '../tamriel/tamrielFrame.js';
+import { isPortTownType } from '../../systems/portPlaces.js';
+import { maskMapId } from '../../systems/travel/travelPorts.js';
+import { seaBears } from '../../net/fortLaw.js';
+import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
+
+/** @typedef {{ id: number, mapId: number, key: string, name: string, px: number, py: number, region: number, area: number,
+ *   theatre: number, crown: null }} WorldPort - a port past the Bay, in the shape the host's port lists hand the sea */
+
+/** The compass's eight ways, east first, turning north (map y runs south). */
+export const COMPASS_WAYS = Object.freeze(['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east']);
+
+/** Where the port ids past the Bay begin: past every masked map id (MapsFile's low 20 bits, travelPorts.js maskMapId). */
+export const PORT_ID_WORLD = 1 << 20;
+/** A port's one number: the Bay's masked map id on the Bay, PORT_ID_WORLD and the world's key past it.
+ *  @param {{ mapId: number, px: number, py: number }} p a place, a living town, a port */
+export const portIdOf = (p) => (inBay(p.px, p.py) ? maskMapId(p.mapId) : PORT_ID_WORLD + worldPixelKey(p.px, p.py));
+
+/** A DF location's port id (its harbour's key - the harbour book's `port:<id>`): its map table's pixel and map id, as
+ *  portIdOf reads a place. @param {any} loc */
+export function portIdOfLocation(loc) {
+  const md = loc?.mapTableData;
+  if (!md) return 0;
+  const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
+  return portIdOf({ mapId: md.mapId ?? 0, px: p.x, py: p.y });
+}
+
+/**
+ * The ports past the Bay: every LISTED place outside the Bay's rectangle its provider calls a port, of a port town's
+ * kind, that the open sea (`openSea(x, y)` - the host's one open-sea law) bears on; the registry's order.
+ * @param {import('./worldPlaces.js').WorldPlaces} places @param {(x: number, y: number) => boolean} openSea
+ * @returns {WorldPort[]}
+ */
+export function beyondPorts(places, openSea) {
+  /** @type {WorldPort[]} */ const out = [];
+  for (const p of places.all()) {
+    if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;
+    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: p.name, px: p.px, py: p.py, region: -1, area: p.area, theatre: p.theatre, crown: null });
+  }
+  return out;
+}
+
+/**
+ * The world's ports past the Bay, kept by the registry's generation and the land's picture (`land()` - a version that
+ * moves when the open sea's ground does). `regionAt` the Bay's region under a pixel (the host's).
+ * @param {{ places: import('./worldPlaces.js').WorldPlaces, openSea: (x: number, y: number) => boolean, land?: () => number,
+ *   regionAt?: (x: number, y: number) => number }} o
+ */
+export function createWorldPorts({ places, openSea, land = () => 0, regionAt = () => -1 }) {
+  let gen = -1, ver = -1;
+  /** @type {WorldPort[]} */ let list = [];
+  /** @type {{ bay: any[], list: WorldPort[], all: any[] }|null} */ let joined = null;
+  /** @param {number} px @param {number} py @returns {WorldPort|null} */
+  const nearest = (px, py) => {
+    let best = null, d = Infinity;
+    for (const q of list) { const e = Math.max(Math.abs(q.px - px), Math.abs(q.py - py)); if (e < d) { d = e; best = q; } }
+    return best;
+  };
+  const fresh = () => {
+    if (places.generation() === gen && land() === ver) return;
+    gen = places.generation(); ver = land();
+    list = beyondPorts(places, openSea);
+  };
+  return {
+    /** The ports of the sea past the Bay. */
+    list: () => { fresh(); return list; },
+    /** Moves whenever the list may have (a reader that keeps an answer off it keeps it by this). */
+    version: () => { fresh(); return `${gen}.${ver}`; },
+    /** The Bay's own list (`bay`, the host's - the same array every time it is asked) with the ports past the Bay after
+     *  it: the one array while neither moves. @param {any[]} bay */
+    withBay(bay) {
+      fresh();
+      if (!list.length) return bay;
+      if (joined?.bay !== bay || joined.list !== list) joined = { bay, list, all: [...bay, ...list] };
+      return joined.all;
+    },
+    /** The nearest port of `bayPorts` and the ports past the Bay to a pixel, by the crow's flight, named and the way to it
+     *  as a compass reads it (map y runs south) - or null where the nearest is unnamed.
+     *  @param {{ x: number, y: number }} here @param {Array<{ name: string|null, px: number, py: number }>} bayPorts */
+    nearestNamed(here, bayPorts) {
+      fresh();
+      let best = null, bestD = Infinity;
+      for (const ps of [bayPorts, list]) for (const q of ps) { const d = Math.hypot(q.px - here.x, q.py - here.y); if (d < bestD) { bestD = d; best = q; } }
+      if (!best?.name) return null;
+      const turn = Math.atan2(here.y - best.py, best.px - here.x) / (Math.PI / 4);
+      return { name: best.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8] };
+    },
+    /** Whether the place on a pixel past the Bay is a port town by its provider's word (the Bay's own answer is the
+     *  host's - the game's data). @param {number} px @param {number} py */
+    at: (px, py) => !inBay(px, py) && !!places.at(px, py)?.port,
+    /** The nearest port of the sea past the Bay to a pixel, Chebyshev, in map pixels - or null for none.
+     *  @param {number} px @param {number} py */
+    nearestPx(px, py) {
+      fresh();
+      const q = nearest(px, py);
+      return q ? Math.max(Math.abs(q.px - px), Math.abs(q.py - py)) : null;
+    },
+    /** THE WATERS' AREA - whose people sail them (a ship's names, a crew's): on the Bay its region, as always; past it
+     *  the province's district under the pixel, and at sea (no province under it) the nearest port's - or -1.
+     *  @param {number} px @param {number} py */
+    seaAreaAt(px, py) {
+      const a = areaAt(px, py, regionAt);
+      if (a >= 0 || inBay(px, py)) return a;
+      fresh();
+      return nearest(px, py)?.area ?? -1;
+    },
+  };
+}
+
+/** @typedef {ReturnType<typeof createWorldPorts>} WorldPorts */

@@ -4,7 +4,7 @@
 import { privateInteriorOf } from './privateInterior.js';
 import { boatUid, readSailingCabin } from './boatIdentity.js';
 import { instanceOfWord, instanceOf, instanceWord } from './instanceRoom.js';   // INSTANCES (the audit): a place's instance, where the player stands in one
-import { validPartyPose } from './wire.js';   // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it
+import { validPartyPose, gatePixelOk } from './wire.js';   // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it; WW2: a gate's pixel, its lane's map
 import { t } from '../systems/textManager.js';   // STAFF-PANEL5-FOLLOW-FIX: a finished /tp's line in the player's language (L10N4)
 export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
 export const STAFF_TP_TIMEOUT_MS = 8000;
@@ -75,7 +75,7 @@ export function validStaffDestination(d) {
   }
   if (d.kind === 'gate') {
     const g = d.gate;
-    if (!g || !integer(g.day) || !integer(g.px, 999) || !integer(g.py, 499) || !point(g.spot, 2) || (g.near != null && g.near !== '' && !label(g.near))) return null;
+    if (!g || !integer(g.day) || !gatePixelOk(g.day, g.px, g.py) || !point(g.spot, 2) || (g.near != null && g.near !== '' && !label(g.near))) return null;   // WW2: a gate past the Bay stands on a world pixel
     return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '' } };
   }
   if (d.kind === 'abyss') {

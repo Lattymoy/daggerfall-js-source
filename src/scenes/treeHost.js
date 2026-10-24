@@ -85,11 +85,12 @@ export const axeHandFrame = (swing) => (swing > 0 ? { state: 'StrikeDownRight', 
  * FOREST1 (AUDIT FOREST1 F3): under Real forests a flat carries how wooded its tile is (`wood`), and the day's trees
  * stand at the woods' own (FOREST.woods and over) wherever the pixel has any - the plains' lone trees stand only where
  * a pixel has no wood at all. DFU's scatter carries no `wood`, and every flat of it is the nearest's to take.
- * @param {{ px: number, py: number, day: number, climate: number, confirmed?: boolean,
+ * WW-C1: `region` - the pixel's, a forest province's richness on confirmed ground (net/nodeLaw.js nodeSlots).
+ * @param {{ px: number, py: number, day: number, climate: number, region?: number|null, confirmed?: boolean,
  *   forest?: { trees: Array<{ id: number, group: string, i: number, x: number, y: number, z: number, wood?: number }> }|null,
  *   rocks?: number[][] }} p
  */
-export function standTrees({ px, py, day, climate, confirmed = false, forest = null, rocks = [] }) {
+export function standTrees({ px, py, day, climate, region = null, confirmed = false, forest = null, rocks = [] }) {
   const out = [];
   const all = forest?.trees ?? [];
   if (!WOOD_TABLES[climate] || !all.length) return out;
@@ -98,7 +99,7 @@ export function standTrees({ px, py, day, climate, confirmed = false, forest = n
   // flat, not once a flat a tree (JUNGLE-WOODS: the jungle's 48 trees a day over its ~5,400 tree flats)
   const flats = (woods.length ? woods : all).filter((f) => !insideRocks(rocks, f.x, f.z));
   const claimed = new Set();
-  for (const t of trees({ x: px, y: py, day, climate, confirmed })) {
+  for (const t of trees({ x: px, y: py, day, climate, region, confirmed })) {
     const lx = t.u * TERRAIN_SIZE, lz = t.v * TERRAIN_SIZE;
     let best = null, bestD = Infinity;
     for (const f of flats) {
@@ -186,7 +187,7 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
     id: 'tree',
     professions: Object.freeze(['logging']),
     nodesOf({ px, py, day, info, confirmed, entry, near }) {
-      return standTrees({ px, py, day, climate: info.climate, confirmed, forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });   // NODE-CLEAR; ROCK-NEAR
+      return standTrees({ px, py, day, climate: info.climate, region: info.region, confirmed, forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });   // NODE-CLEAR; ROCK-NEAR
     },
     /** A standing tree is the forest's own flat: the node adds none. */
     flatsOf: () => [],

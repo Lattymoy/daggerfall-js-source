@@ -32254,6 +32254,11 @@
   "tr": "fec8e73cb77b",
   "by": "claude-in-session"
  },
+ "starfall.member.wroth": {
+  "en": "35d23f081794",
+  "tr": "b7fffff9ee77",
+  "by": "claude-in-session"
+ },
  "starfall.region.fell": {
   "en": "0ea04481a065",
   "tr": "816b082eb847",
@@ -33140,7 +33145,7 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body1": {
-  "en": "5160bd8ee6d8",
+  "en": "2e428dbee71a",
   "tr": "518a04e14481",
   "by": "claude-in-session"
  },
@@ -33160,7 +33165,7 @@
   "by": "claude-in-session"
  },
  "wild.companion.away": {
-  "en": "488eae2a81a1",
+  "en": "e439e9485112",
   "tr": "1c6077164ef6",
   "by": "claude-in-session"
  },
@@ -33170,7 +33175,7 @@
   "by": "claude-in-session"
  },
  "wild.companion.stays": {
-  "en": "137d146989f7",
+  "en": "6c05e1093cfc",
   "tr": "0d265b335bde",
   "by": "claude-in-session"
  },
@@ -33190,8 +33195,8 @@
   "by": "claude-in-session"
  },
  "wild.death.burntLate": {
-  "en": "05a7c22ebbdc",
-  "tr": "5265fa109a83",
+  "en": "3e9a3346bd89",
+  "tr": "92d65a2334f6",
   "by": "claude-in-session"
  },
  "wild.death.kept": {
@@ -33265,18 +33270,18 @@
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "7211df45b4d5",
+  "en": "006e183d3d6a",
   "tr": "54ebbb9e22a3",
   "by": "claude-in-session"
  },
  "wild.zone.revenantOne": {
-  "en": "12c92d26a8f9",
-  "tr": "694e7ca40fee",
+  "en": "2020690a9d2c",
+  "tr": "11afb8df58c5",
   "by": "claude-in-session"
  },
  "wild.zone.unstuckOut": {
-  "en": "23aa54c8359e",
-  "tr": "e353868f94f2",
+  "en": "83c6a3eab9ec",
+  "tr": "9b0905d74053",
   "by": "claude-in-session"
  }
 }

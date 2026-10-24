@@ -23,7 +23,10 @@ import { lwSeed, lwRng, textSeed, rollInt, pickOf } from './seed.js';
 import { NATIVE_PIXEL } from './trips.js';
 import { DAY_MIN } from './dayPlan.js';
 import { residentName } from './census.js';
-import { getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { GENDERS } from '../../characters/nameHelper.js';
+import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's on the Bay
+import { isBayArea, inWorldGrid, theatreAt, theatreOfArea, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
+import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
 import { CARAVAN_QUALITY, purseOf } from './caravanDoor.js';
 
@@ -64,9 +67,10 @@ export const BAND_NOUNS = Object.freeze(['Hand', 'Wolves', 'Knives', 'Crows', 'C
 const HIDE = 0x68696465, BAND = 0x62616e64, ROUT = 0x726f7574;   // 'hide', 'band', 'rout'
 
 /**
- * @typedef {{ key: string, region: number, i: number, px: number, py: number, x: number, z: number, a: number, b: number,
+ * @typedef {{ key: string, area: number, i: number, px: number, py: number, x: number, z: number, a: number, b: number,
  *   patrolled: boolean, top: number }} Hideout - `x`/`z` native (the ways' frame), `a`/`b` its leg's towns' map ids,
- *   `top` its region's greatest town's blocks
+ *   `top` its region's greatest town's blocks; WW1 `area` the bands' grouping (world/worldWide/worldGrid.js - the region
+ *   on the Bay, so its key `O<region>.<i>` is the one a save's routs name; a province's district past it)
  * @typedef {{ key: string, hideout: Hideout, gen: number, heir: number, formedT: number, name: string, level: number,
  *   people: { id: string, name: string, cls: number, level: number, gender: number, sex: string }[] }} Band
  */
@@ -79,12 +83,14 @@ const cheb = (a, b) => Math.max(Math.abs(a.px - b.px), Math.abs(a.py - b.py));
 
 /**
  * THE HIDEOUTS of a region - its bands' places - or undefined while a road one needs is not planned yet (the network's
- * own: asked again). `world.townsIn(region)` its towns; `routeOf`, `townsNear`, `dryAt` the trips' world's.
- * @param {number} region @param {{ townsIn?: (region: number) => any[], routeOf: (a: any, b: any) => any, townsNear: (px: number, py: number, r: number) => any[], dryAt?: (nx: number, nz: number) => boolean }} world
+ * own: asked again). `world.townsIn(area)` its towns; `routeOf`, `townsNear`, `dryAt` the trips' world's. WW1: of an
+ * AREA (world/worldWide/worldGrid.js) - a region on the Bay, the same number and the same bands; a province's district
+ * past it.
+ * @param {number} area @param {{ townsIn?: (area: number) => any[], routeOf: (a: any, b: any) => any, townsNear: (px: number, py: number, r: number) => any[], dryAt?: (nx: number, nz: number) => boolean }} world
  * @returns {Hideout[] | undefined}
  */
-export function hideoutsOf(region, world) {
-  const towns = [...(world.townsIn?.(region) ?? [])].sort((p, q) => p.mapId - q.mapId);
+export function hideoutsOf(area, world) {
+  const towns = [...(world.townsIn?.(area) ?? [])].sort((p, q) => p.mapId - q.mapId);
   const n = bandCount(towns.length);
   if (!n) return [];
   const big = towns.filter((t) => (t.blocks | 0) >= BAND_TOWN_BLOCKS);
@@ -103,21 +109,22 @@ export function hideoutsOf(region, world) {
   const out = [];
   const taken = new Set();
   for (let i = 0; i < Math.min(n, legs.length); i++) {
-    let k = lwSeed(region >>> 0, i, HIDE) % legs.length;
+    let k = lwSeed(area >>> 0, i, HIDE) % legs.length;
     while (taken.has(k)) k = (k + 1) % legs.length;
     taken.add(k);
     const [a, b] = legs[k];
     const plan = world.routeOf(a, b);
     if (plan === undefined) return undefined;   // not planned yet: asked again
-    const at = plan?.pixels?.length ? hideoutOff(plan.pixels, lwSeed(region >>> 0, i, HIDE, 1), world) : null;
+    const at = plan?.pixels?.length ? hideoutOff(plan.pixels, lwSeed(area >>> 0, i, HIDE, 1), world, isBayArea(area) ? BAY_THEATRE : theatreOfArea(area)) : null;
     if (!at) continue;
-    out.push({ key: `O${region >>> 0}.${i}`, region: region >>> 0, i, ...at, ...pixelNative(at.px, at.py), a: a.mapId, b: b.mapId, patrolled, top });
+    out.push({ key: `O${area >>> 0}.${i}`, area: area >>> 0, i, ...at, ...pixelNative(at.px, at.py), a: a.mapId, b: b.mapId, patrolled, top });
   }
   return out;
 }
 
-/** A point HIDEOUT_OFF_PX off the middle of a road's pixels, to the seed's side - dry, on no town; null none. */
-function hideoutOff(pixels, seed, world) {
+/** A point HIDEOUT_OFF_PX off the middle of a road's pixels, to the seed's side - dry, on no town, in the band's own
+ *  `theatre` (world/worldWide/worldGrid.js); null none. */
+function hideoutOff(pixels, seed, world, theatre = BAY_THEATRE) {
   const mid = Math.floor(pixels.length / 2);
   const off = HIDEOUT_OFF_PX[seed % 2], side = (seed >>> 1) % 2 ? 1 : -1;
   for (const shift of [0, 1, -1, 2, -2]) {
@@ -128,7 +135,7 @@ function hideoutOff(pixels, seed, world) {
     for (const d of [off, HIDEOUT_OFF_PX[0] + HIDEOUT_OFF_PX[1] - off]) {
       for (const s of [side, -side]) {
         const px = p.x + perp.x * d * s, py = p.y + perp.y * d * s;
-        if (px < 0 || py < 0 || px > 999 || py > 499) continue;
+        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;   // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)
         if (world.townsNear(px, py, 0).length) continue;
         const c = pixelNative(px, py);
         if (world.dryAt && !world.dryAt(c.x, c.z)) continue;
@@ -177,10 +184,10 @@ export function genAt(h, t) {
 /**
  * THE BAND at a hideout at minute `t` for this character - or null while its hideout stands empty (the dice's vacancy,
  * or the character's own: a rout by their hand, `routs` the character's `routed` tales by key `<hideout>@<gen>.<heir>`).
- * @param {Hideout} h @param {number} t @param {Map<string, { t: number }> | null} [routs] @param {(region: number) => number} [bankOf]
+ * @param {Hideout} h @param {number} t @param {Map<string, { t: number }> | null} [routs] @param {(area: number) => number} [bankOf]
  * @returns {Band | null}
  */
-export function outlawBandAt(h, t, routs = null, bankOf = getNameBankOfRegion) {
+export function outlawBandAt(h, t, routs = null, bankOf = nameBankOfArea) {
   const g = genAt(h, t);
   if (g.vacant) return null;
   let heir = 0, formedT = g.formedT;
@@ -204,8 +211,8 @@ export function outlawBandName(key, leader) {
 }
 
 /** A band's people, minted off its key: BAND_SIZE of OUTLAW_CLASSES, the leader first and the strongest, at levels by
- *  its region's greatest town. @param {Hideout} h @param {string} key @param {(region: number) => number} bankOf */
-export function bandPeople(h, key, bankOf = getNameBankOfRegion) {
+ *  its region's greatest town. @param {Hideout} h @param {string} key @param {(area: number) => number} bankOf */
+export function bandPeople(h, key, bankOf = nameBankOfArea) {
   const rng = lwRng(textSeed(key), BAND);
   const n = rollInt(rng, BAND_SIZE[0], BAND_SIZE[1]);
   const base = Math.max(2, Math.min(14, 2 + Math.floor((h.top | 0) / 6)));
@@ -215,7 +222,7 @@ export function bandPeople(h, key, bankOf = getNameBankOfRegion) {
     const gender = female ? GENDERS.Female : GENDERS.Male;
     const cls = i === 0 ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue]) : pickOf(rng, OUTLAW_CLASSES);
     const level = Math.max(1, base + (i === 0 ? 3 : rollInt(rng, -1, 2)));
-    out.push({ id: `${key}.${i}`, name: residentName(lwSeed(textSeed(key), i, 0x6e6d), bankOf(h.region), gender), cls, level, gender, sex: female ? 'female' : 'male' });
+    out.push({ id: `${key}.${i}`, name: residentName(lwSeed(textSeed(key), i, 0x6e6d), bankOf(h.area), gender), cls, level, gender, sex: female ? 'female' : 'male' });
   }
   return out;
 }

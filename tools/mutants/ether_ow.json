@@ -183,12 +183,12 @@
   {
     "name": "EOW-raiders-bay-alone",
     "file": "src/scenes/world.js",
-    "old": "    if (!onBayOrEther(px, py) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
+    "old": "    if (!onWorldSea(px, py, tamrielLand) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "new": "    if (px < 0 || py < 0 || px >= 1000 || py >= 500 || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
-    "note": "The raiders are born on the Bay's map alone."
+    "note": "The raiders are born on the Bay's map alone. Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "EOW-raid-sea-truncated",

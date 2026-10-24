@@ -10,10 +10,10 @@
 // WHAT THE ZONE IS: every pixel of the sea's box (world/ethericSea.js inEther) but VEILHAVEN'S PEACE - the Veil, the way
 // home (`inVeil`), the water within ETHER_PEACE_PX of Veilhaven's own pixel, where the crossing makes its landfall, and
 // the way between them (her rows, ETHER_PEACE_PX either side, east of her to the Veil - AUDIT SEA VENTURES C2).
-// The rest of the sea, its isles, their towns and their ruins, is the Wrothgarian Mountains' law (systems/wild/wildZone.js
-// - the live flag, the fights the relay referees, the death's drop and the remains, the strangers, the foes four times
-// as strong and their loot by the ring), with the sea's DEPTH BANDS for the mountains' four rings: the Shallows the
-// foothills' +25%, the Reaches +50%, the Deep Aether +75%, the Abyss the heart's twice. The deeper, the deadlier and the
+// The rest of the sea, its isles, their towns and their ruins, is the open zone's law (systems/wild/wildZone.js - Cyrodiil's
+// since WW-C2, the Wrothgarian Mountains' before: the live flag, the fights the relay referees, the death's drop and the
+// remains, the strangers, the foes four times as strong and their loot by the ring), with the sea's DEPTH BANDS for the
+// zone's four rings: the Shallows the outer ring's +25%, the Reaches +50%, the Deep Aether +75%, the Abyss the heart's twice. The deeper, the deadlier and the
 // richer - the sea's own law already (its ships' levels, its holds' tiers), now its foes' and its players' too.
 //
 // ONLINE ALONE, as the mountains are: offline the sea is the captain's own. The world host asks it each frame, beside
@@ -21,9 +21,9 @@
 // wildRingAtPlace).
 //
 // THIS FILE IS A LEAF of the zone: the sea's law (pure, worker-safe - world/ethericSea.js imports formats/ alone) and the
-// zone's words on this ground, registered with wildZone.js so the mountains' leaf imports nothing of the sea.
+// zone's words on this ground, registered with wildZone.js so the zone's leaf imports nothing of the sea.
 // ═══════════════════════════════════════════════════════════════════
-import { BANDS, ETHER_WORD, inEther, inVeil, etherBandAt, veilhaven, islesNear } from '../../world/ethericSea.js';
+import { BANDS, ETHER_WORD, ETHER_SEA_NAME, inEther, inVeil, etherBandAt, veilhaven, islesNear } from '../../world/ethericSea.js';
 import { WILD_RINGS, wildRingAt, wildRingLoot, registerZoneWords } from './wildZone.js';
 import { t } from '../textManager.js';
 
@@ -136,7 +136,7 @@ export const ETHER_WILD_TEXT = Object.freeze({
 // The zone's words on this ground: wildZone.js zoneWord/zoneName/zoneRingName answer them while the player stands here.
 // A word is a string where WILD_TEXT's is one (read here, at the first ask of each: a getter keeps the language's).
 registerZoneWords(ETHER_KIND, {
-  name: `${ETHER_WORD} Ocean`,   // as WILD_NAME is said: the sentence brings its own "the" ("until you leave the {zone}")
+  name: ETHER_SEA_NAME,   // WW-C2: with its article, as a name is said in the zone's sentences ("until you leave {zone}" - Cyrodiil takes none)
   ringName: etherRingName,
   get enter() { return ETHER_WILD_TEXT.enter(); },
   get leave() { return ETHER_WILD_TEXT.leave(); },

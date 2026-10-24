@@ -93,8 +93,9 @@ function liftedDeepCleared({ ohAbyss = null, map, tBuild, memo = new Map() }) {
   const m = /  const livingDeepCleared = (\(loc, stops, entry\) => \{\n[\s\S]*?\n  \});\n/.exec(w);
   assert.ok(m, 'world.js livingDeepCleared');
   const byId = new Map(map.dungeons.map((d) => [d.mapId, d]));
-  return new Function('livingWorldOn', 'params', 'ohAbyss', 'livingDungeonsIndex', '_livingDungeonById', 'skyMinutes', 'divesIn', 'DIVE_CLEAR_MIN', 'livingTripWorld', 'PERSON_MOVE_SPEED', 'livingBaseRate', '_livingTripMemo', 'deepClearedOf', 'deepRouteOf', `return ${m[1]};`)(
-    () => true, { has: () => false }, ohAbyss, () => {}, byId, () => tBuild, divesIn, DIVE_CLEAR_MIN, map.world, CALENDAR_MPM, () => 1, memo, clearedOf, routeOf);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the dungeon by its map id the living world's index's (scenes/livingWorld/livingIndex.js)
+  return new Function('livingWorldOn', 'params', 'ohAbyss', 'livingIndex', 'skyMinutes', 'divesIn', 'DIVE_CLEAR_MIN', 'livingTripWorld', 'PERSON_MOVE_SPEED', 'livingBaseRate', '_livingTripMemo', 'deepClearedOf', 'deepRouteOf', `return ${m[1]};`)(
+    () => true, { has: () => false }, ohAbyss, { dungeonOfId: (id) => byId.get(id) ?? null }, () => tBuild, divesIn, DIVE_CLEAR_MIN, map.world, CALENDAR_MPM, () => 1, memo, clearedOf, routeOf);
 }
 
 test('AUDIT LW-II-2 D1: LEAD ON to a stop 140 m away keeps the company beside the player after a frame - left behind is measured from its nearest standing member, never from where it goes; walked away from, it is let go (mutants: the destination, the farthest)', async () => {

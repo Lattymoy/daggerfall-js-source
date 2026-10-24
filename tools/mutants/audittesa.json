@@ -300,20 +300,23 @@
   {
     "name": "AUDIT-TESA-A2-3-living-alias",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const livingTown = (onTheBay(px, py) ? livingTownsIndex().get(py * 1000 + px) : null) ??",
-    "new": "const livingTown = livingTownsIndex().get(py * 1000 + px) ??",
+    "old": "const livingTown = livingTownAt(px, py) ?? {",
+    "new": "const livingTown = livingTownAt(px % 1000, py % 500) ?? {",
     "tests": [
       "test/audit_tesa.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129). The living towns are WW1's world-keyed index now: the mutant brings the Bay row's alias back."
   },
   {
     "name": "AUDIT-TESA-A2-3-port-alias",
-    "file": "src/scenes/world.js",
-    "old": "if (!onTheBay(p.x + dx, p.y + dy) || !csaIsPortTown(p.x + dx, p.y + dy)) continue;",
-    "new": "if (!csaIsPortTown(p.x + dx, p.y + dy)) continue;",
+    "file": "src/systems/map/mapDirectory.js",
+    "old": "  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;",
+    "new": "  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;",
     "tests": [
-      "test/audit_tesa.test.js"
-    ]
+      "test/audit_tesa.test.js",
+      "test/world/worldWide/ww3_sea.test.js"
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129). The harbour's loop leans on WW3's directory bound (mapDirectory.js locationSummaryAt) for the Bay's rows alone."
   },
   {
     "name": "AUDIT-TESA-A2-3-summary-undiscovered",

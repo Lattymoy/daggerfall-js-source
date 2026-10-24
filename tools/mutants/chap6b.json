@@ -421,11 +421,12 @@
   {
     "name": "CHAP6B-BACK-BODY-SIDE",
     "file": "server-account/src/npcChapters.js",
-    "old": "!regionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };",
-    "new": "!regionOk(region)) return { error: 'body' };",
+    "old": "!bayRegionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };",
+    "new": "!bayRegionOk(region)) return { error: 'body' };",
     "tests": [
       "test/net/chap6b_backing.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP6B-BACK-SEASON",

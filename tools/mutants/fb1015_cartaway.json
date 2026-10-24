@@ -174,11 +174,11 @@
   {
     "name": "CART-AWAY-the-host-says-nothing",
     "file": "src/scenes/world.js",
-    "old": ", ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),",
+    "old": ", ...wildFallWords(hccOn(), hccRuntime.getSaveData(), cyrodiilMask()) }),",
     "new": " }),",
     "tests": [
       "test/systems/fb1015_cartaway.test.js"
     ],
-    "note": "AUDIT FB1019f B2 (re-aimed): the fallen's own ask says its words through wildFallWords (systems/wild/wildDeath.js), the wagon's among them."
+    "note": "AUDIT FB1019f B2 (re-aimed): the fallen's own ask says its words through wildFallWords (systems/wild/wildDeath.js), the wagon's among them. RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (cyrodiilMask)."
   }
 ]

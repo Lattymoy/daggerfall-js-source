@@ -3,9 +3,9 @@
  "rows": [
   {
    "file": "src/net/gate/gateLaw.js",
-   "has": "export const gameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
+   "has": "export const gameDayAt = (nowMs, lane = 0) => Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
    "clock": "event",
-   "why": "the gate's day - its number, its room, its marks"
+   "why": "the gate's day - its number, its room, its marks; WW2: a lane's, its stagger behind the Bay's (gateAt and the herald read it)"
   },
   {
    "file": "src/net/gate/gateLaw.js",

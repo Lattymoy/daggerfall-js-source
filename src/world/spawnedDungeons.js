@@ -177,7 +177,7 @@ export function spawnGroundDry(woods, px, py, kernelOf = sampleKernel) {
 export function createSpawnGround(woods) {
   const dry = new Map();
   return (px, py) => {
-    const key = py * 1000 + px;
+    const key = `${px},${py}`;   // WW-C2: a world map pixel's (a hall past the Bay's) - `y * 1000 + x` met another pixel past x 999
     let d = dry.get(key);
     if (d === undefined) dry.set(key, d = spawnGroundDry(woods, px, py));
     return d;
@@ -213,10 +213,10 @@ export const pickTemplate = (templates, salt, px, py) => (templates?.length ? te
  * property of WHERE it stands - region, politic, climate (`where`, from the host, which owns the map files).
  * `locationIndex` is -1: the quest machine and the music read it as "a real table row", and this is none.
  * @param {object} template a real, non-main-story location with hasDungeon
- * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean}} o
+ * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean, mapId?:number|null}} o
  */
-export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false }) {
-  const mapId = spawnedMapId(salt, px, py);
+export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false, mapId: id = null }) {
+  const mapId = id ?? spawnedMapId(salt, px, py);   // WW-C2: a zone hall's own id (net/wire.js spawnedHallMapId - a world pixel's lane), the Bay's spawns' salt and pixel
   const ll = mapPixelToLongitudeLatitude(px, py);
   return {
     ...template,

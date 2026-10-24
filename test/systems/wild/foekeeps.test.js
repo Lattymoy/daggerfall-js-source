@@ -56,11 +56,12 @@ test('AUDIT FOE-KEEPS P4 THE WORDS READ WHEN SAID: the mountains\' entry and chi
   tm.patchLocaleTable('de', 'Port_Strings', tm.loadStringTableCsv(rd('locales/de/Port_Strings.csv')));
   try {
     tm.setLocale('de');
-    assert.equal(WILD_TEXT.enter, 'Du betrittst Wrothgarian Mountains, eine offene PvP-Zone. Gegner sind hier viermal so stark. Tötet dich ein anderer Spieler, lässt du fallen, was du trägst.');
-    assert.match(WILD_TEXT.chipTip, /^Wrothgarian Mountains: Andere Spieler dürfen dich angreifen\..*Tötet dich ein anderer Spieler, lässt du fallen, was du trägst\.$/);
+    // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the zone Cyrodiil (WW-C2), named bare in every language
+    assert.equal(WILD_TEXT.enter, 'Du betrittst Cyrodiil, eine offene PvP-Zone. Gegner sind hier viermal so stark. Tötet dich ein anderer Spieler, lässt du fallen, was du trägst.');
+    assert.match(WILD_TEXT.chipTip, /^Cyrodiil: Andere Spieler dürfen dich angreifen\..*Tötet dich ein anderer Spieler, lässt du fallen, was du trägst\.$/);
     assert.equal(WILD_TEXT.deathKept(), 'Nichts fällt zu Boden. Was du trägst, fällt nur, wenn dich ein Spieler tötet.');   // PIN MOVED (AUDIT FOE-KEEPS O1)
   } finally { tm.setLocale(tm.BASE_LOCALE); }
-  assert.match(WILD_TEXT.enter, /^You enter the Wrothgarian Mountains/, 'English again');
+  assert.match(WILD_TEXT.enter, /^You enter Cyrodiil/, 'English again');
 });
 
 test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, wildZoneMap.js ZONE_RULES, the tutorial): the mountains and the sea say a player\'s kill drops what you carry, never any death; a foe\'s death says you keep it, a player\'s does not (mutants: the kept line unsaid; said at a kill)', () => {
@@ -69,7 +70,7 @@ test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, 
     assert.match(w, kill, name);
     assert.doesNotMatch(w, /can lose what you carry|If you die, you drop/, `${name}: never any death`);
   }
-  assert.match(WILD_TEXT.enter, /^You enter the Wrothgarian Mountains, an open PvP zone\./);
+  assert.match(WILD_TEXT.enter, /^You enter Cyrodiil, an open PvP zone\./);   // PIN MOVED (WORLD-WIDE folded into TESA, #1184)
   assert.ok(ZONE_RULES.some((l) => l.startsWith('If another player kills you, what you carry drops')), 'the zone map\'s legend');
   assert.ok(rd('src/systems/tutorialCatalogue.js').includes("t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops"), 'the tutorial page');   // PIN MOVED (AUDIT FOE-KEEPS O4): both zones, the cart only while with you, the tenths
   setWildDeath({ killer: null, dropped: 0 });

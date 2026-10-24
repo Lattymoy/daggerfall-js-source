@@ -217,7 +217,7 @@ test('PROF1 service: the witnessed pixel - three accounts a week old agreeing co
   const liar = await s.seated('Eve');
   const r = await s.call('/v1/prof/harvest', harvestBody(liar, p, { region: DAGGERFALL }), liar.secret);
   assert.deepEqual([r.status, r.body], [409, { error: 'prof-pixel' }], 'the confirmed answer stands');
-  assert.deepEqual((await s.call('/v1/prof/pixels', { character: liar.character, pixels: [[1000, 1]] }, liar.secret)).body, { error: 'bad-pixels' });
+  assert.deepEqual((await s.call('/v1/prof/pixels', { character: liar.character, pixels: [[8192, 1]] }, liar.secret)).body, { error: 'bad-pixels' });   // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): past the world's grid - a province's pixel past the Bay's map is ground
 });
 
 // ─── WITHDRAW TO THE PACK ────────────────────────────────────────────

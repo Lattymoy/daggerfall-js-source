@@ -76,20 +76,22 @@
   {
     "name": "CHAP4C-TEXT-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
-    "new": "if (!words || !c || !isRollFaction(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !bayRegionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "new": "if (!words || !c || !isRollFaction(c.f) || !bayRegionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
     "tests": [
       "test/net/chap4c_titles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP4C-TEXT-REGION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
+    "old": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !bayRegionOk(c.region)) return null;\n  if (title === 'seasonmaster')",
     "new": "if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f)) return null;\n  if (title === 'seasonmaster')",
     "tests": [
       "test/net/chap4c_titles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP4C-OF-HIDDEN",

@@ -26,8 +26,9 @@
 import { rangeLift, provinceByKey } from './tamrielGeography.js';
 import { provinceKeyAt, coastDistanceAt } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
 import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay } from './tamrielFrame.js';
-import { CLIMATES } from '../../formats/mapsTables.js';
+import { CLIMATES, regionOfTheatre } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each province's zones, each its own climate and air
+import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). */
 export const SHORE_BYTE = 5;
@@ -158,4 +159,23 @@ export function groundAirClimateIndex(bayClimateIndex) {
     const zone = tamrielBiomeAt(x, y);   // AUDIT TESA-BIOME Z7: the zone read once
     return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);
   };
+}
+
+/** WW-R (bible/03-World/World-Wide.md WW-R): THE POLITIC MAP PAST THE BAY - a province's land its region's politic
+ *  (128 + its region, formats/mapsTables.js regionOfTheatre: MapsFile.getRegionIndexAt reads the province's region off
+ *  it, as it reads a Bay region off POLITIC.PAK), the sea about it the PAK's own answer off its map (no region's); the
+ *  Bay to the byte. @param {(x: number, y: number) => number} bayPoliticIndex */
+export function groundPoliticIndex(bayPoliticIndex) {
+  return (x, y) => {
+    if (inBay(x, y)) return bayPoliticIndex(x, y);
+    const r = regionOfTheatre(theatreAt(x, y));
+    return r >= 0 ? 128 + r : bayPoliticIndex(x, y);
+  };
+}
+
+/** The maps' readers composed over the continent's ground (TAMRIEL2's climate, WW-R's politic) - the Bay's to the byte.
+ *  @param {{ getClimateIndex: (x: number, y: number) => number, getPoliticIndex: (x: number, y: number) => number }} maps */
+export function groundMaps(maps) {
+  maps.getClimateIndex = groundClimateIndex(maps.getClimateIndex.bind(maps));
+  maps.getPoliticIndex = groundPoliticIndex(maps.getPoliticIndex.bind(maps));
 }

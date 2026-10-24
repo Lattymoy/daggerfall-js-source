@@ -529,11 +529,11 @@ test('AUDIT OW4 D5/D3 host: every write to the index after the boot\'s fill bump
   const ledger = createSpawnLedger(), index = new Map(), unroaded = new Set();
   let clock = 0;
   const env = new Function('d', `let _locIndexGen = 0; const { params, spawnsDungeon, _spawnSalt, maps, CLIMATES, _spawnGround, terrainGen, pathFreePixel, _spawnLedger, _spawnClock, _insideSpawn,
-    locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow, wildMaskOf, wildInside, wildHallStand } = d; ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, enter: _spawnSeen, gen: () => _locIndexGen };`)({
+    locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow, cyrodiilMask, wildInside, zoneHalls } = d; ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, enter: _spawnSeen, gen: () => _locIndexGen };`)({
     params: { has: () => true }, spawnsDungeon: () => true, _spawnSalt: 1, maps: { getClimateIndex: () => 231 }, CLIMATES, _spawnGround: () => true, terrainGen: { roads: () => ({}) },
     pathFreePixel: () => true, _spawnLedger: ledger, _spawnClock: () => clock, _insideSpawn: () => false, locationIndex: index,
     _spawnCloneAt: (x, y) => spawnLoc(x, y), _spawnUnroaded: unroaded, owSayRow: () => {},
-    wildMaskOf: () => null, wildInside: () => false, wildHallStand: () => null,   // PVPDUNGEONS: no open zone here - the spawner's own pixel
+    cyrodiilMask: () => null, wildInside: () => false, zoneHalls: { standOf: () => null },   // PVPDUNGEONS: no open zone here - the spawner's own pixel (PIN MOVED, WW-C2: the zone's mask Cyrodiil's, its halls scenes/zoneHallsHost.js)
   });
   assert.equal(env.at(7, 8).name, 'Old Keep (7,8)');
   assert.deepEqual([env.gen(), index.has('7,8')], [1, true], 'stood: bumped');

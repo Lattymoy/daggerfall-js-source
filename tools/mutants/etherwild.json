@@ -74,11 +74,12 @@
   {
     "name": "ETHER-WILD-name-with-article",
     "file": "src/systems/wild/etherWild.js",
-    "old": "  name: `${ETHER_WORD} Ocean`,",
-    "new": "  name: `the ${ETHER_WORD} Ocean`,",
+    "old": "  name: ETHER_SEA_NAME,",
+    "new": "  name: `${ETHER_WORD} Ocean`,",
     "tests": [
       "test/systems/wild/etherwild.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the sea's name now carries its article (the zone's sentences bring none) - the mutation drops it."
   },
   {
     "name": "ETHER-WILD-band-names-swapped",
@@ -119,11 +120,12 @@
   {
     "name": "ETHER-WILD-companion-says-mountains",
     "file": "src/systems/wild/wildZone.js",
-    "old": "until you leave the {zone}.', { zone: zoneName(),",
-    "new": "until you leave the {zone}.', { zone: WILD_NAME,",
+    "old": "until you leave {zone}.', { zone: zoneName(),",
+    "new": "until you leave {zone}.', { zone: WILD_NAME,",
     "tests": [
       "test/systems/wild/etherwild.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the sentence brings no article now."
   },
   {
     "name": "ETHER-WILD-death-forgets-ground",

@@ -16,6 +16,7 @@
 
 import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
 import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
+import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
 
 /** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
  *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
@@ -251,6 +252,9 @@ export function discoveredBuildings(locationId) {
 // HasDiscoveredLocation masks it (:875-882). The guild map reveals
 // write it; the travel map's hidden-dungeon law will read it (its own
 // ledger row).
+// AUDIT WW F1: never a zone hall's - a hall is always known (its door in every map's ink, scenes/world.js
+// wildHallSummaries), stands a day, and its id is the halls' lane (net/wire.js isHallMapId), whose low 20 bits masked
+// would name a Bay place: so a hall is neither filed nor found here.
 let _locations = new Map();   // (mapId & 0xfffff) -> { regionName, locationName }
 let _locationsGen = 0;   // AUDIT DEEP2 B-3: bumped whenever the set changes - a cache of what is named keys on it
 
@@ -259,6 +263,7 @@ export const discoveryGeneration = () => _locationsGen;
 
 /** DiscoverLocation's store write (:869-890, the summary columns). */
 export function discoverLocation(mapId, info = {}) {
+  if (isHallMapId(mapId)) return false;
   const key = mapId & 0xfffff;
   if (_locations.has(key)) return false;
   _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });
@@ -268,7 +273,7 @@ export function discoverLocation(mapId, info = {}) {
 
 /** HasDiscoveredLocation (:875-882). */
 export function hasDiscoveredLocationId(mapId) {
-  return _locations.has(mapId & 0xfffff);
+  return !isHallMapId(mapId) && _locations.has(mapId & 0xfffff);
 }
 
 /** DiscoverRandomLocation (PlayerGPS.cs:892-910), the pure law:

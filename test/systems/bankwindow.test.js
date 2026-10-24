@@ -372,5 +372,5 @@ test('B2: the host consumes the banking route that has been dead since G8', () =
   // the save carries them
   const save = readFileSync(join(root, 'src/systems/save/save.js'), 'utf8');   // TIDY2: one path, so a move rewrites it
   assert.match(save, /snap\.bankAccounts =/);
-  assert.match(save, /entity\.bankAccounts = snap\.bankAccounts\?\.length \? snap\.bankAccounts\.map\(\(a\) => \(\{ \.\.\.a \}\)\) : createBankAccounts\(\);/, 'JAN1: no accounts saved is the full table');
+  assert.match(save, /entity\.bankAccounts = snap\.bankAccounts\?\.length \? padRegionTable\(snap\.bankAccounts\.map\(\(a\) => \(\{ \.\.\.a \}\)\), blankAccount\) : createBankAccounts\(\);/, 'JAN1: no accounts saved is the full table');   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): a save's table padded to the provinces' regions
 });

@@ -55,7 +55,7 @@ import { questBlockOnOwnClock } from '../quest/questStamps.js';   // TIME3: an o
 import { alignSurvival, ALIGN_GRACE_MINUTES, savedNotes } from '../survival/needs.js';   // SURV7: the needs' markers on the load arm; AUDIT SURV-BOONS C3: the boons said; AUDIT C&C N6: and the stages
 import { saneSaveClock } from '../offlineCopy.js';   // AUDIT LIVED1b F3: the envelope's clocks, read once - the doors' law too
 import { isMembershipStore } from '../guild/guilds.js';   // V2e: the two-book membership store rides the save whole
-import { createBankAccounts, createHouses, LOAN_AMNESTY } from '../banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
+import { createBankAccounts, createHouses, LOAN_AMNESTY, padRegionTable, blankAccount, blankHouse } from '../banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
 import { setItemFields } from '../item/itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
 import { restoreKnightlyOrderFlags } from '../knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../../formats/factionFile.js';   // the membership book's key IS the guild group
@@ -885,9 +885,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
   // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank
   // reader threw by DFU's own ValidateRegion law. No accounts saved is no accounts opened: the full table, as a new game.
-  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1
+  entity.bankAccounts = snap.bankAccounts?.length ? padRegionTable(snap.bankAccounts.map((a) => ({ ...a })), blankAccount) : createBankAccounts();   // B1; WW-R: a save's 62 padded to the provinces' regions
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
-  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
+  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map((h) => ({ ...h })), blankHouse) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.boatCabinLink = readBankCabinLink(snap.boatCabinLink);
   if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;   // RESTORE: its customs mark, or none

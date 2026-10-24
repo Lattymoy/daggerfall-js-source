@@ -60,5 +60,10 @@ test('PVP-BLOOD THE ZONE\'S HALLS (AUDIT FB1018 L3-5): in a dungeon a room\'s pe
   assert.match(fair, /return modes\?\.mode === 'dungeon' \|\| wildAtWire\(duelWorldOf\(peerId\)\);/);
   assert.match(src, /const nativeFrame = overworld \|\| !!privateInteriorOf\(key\);/, 'the frames the pose is sent in: a dungeon\'s is its own');
   // the cause, executed: a dungeon's own coordinates (blocks at 51.2 m, a few either side of its centre) are the map's corner
-  for (const [x, z] of [[0, 0], [307.2, 307.2], [-307.2, -307.2], [100, -300]]) assert.deepEqual({ ...worldCoordToMapPixel(x, z), x: Math.abs(worldCoordToMapPixel(x, z).x) }, { x: 0, y: 499 });
+  // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the conversion is FLOORED past the Bay's west and south edges, so
+  // the corner is its four pixels about the map's (0, 0) - truncation folded both sides onto one
+  for (const [x, z] of [[0, 0], [307.2, 307.2], [-307.2, -307.2], [100, -300]]) {
+    const p = worldCoordToMapPixel(x, z);
+    assert.ok([-1, 0].includes(p.x) && [499, 500].includes(p.y), `${x},${z} -> ${p.x},${p.y}: the map's corner`);
+  }
 });

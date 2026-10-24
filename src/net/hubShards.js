@@ -44,7 +44,7 @@ export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRo
  *  is, and the region's own channel is that region's bus - its lines, its travellers' marks and its census, run over a
  *  ShardSocket for each shard's socket as the hub's bus runs its own. */
 export const REGION_SHARDS = 4;
-export const REGION_CHANNELS = 62;
+export const REGION_CHANNELS = 71;   // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)
 const REGION_BUS_RE = /^chat:region\.(\d{1,2})$/;
 const REGION_SHARD_RE = /^chat:region\.(\d{1,2})\.(\d{1,2})$/;
 const canon = (d, n) => String(Number(d)) === d && Number(d) < n;

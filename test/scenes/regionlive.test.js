@@ -51,7 +51,7 @@ test('RP1: the NPC race is a live read, not a boot constant', () => {
   const tt = read('src/scenes/townTalk.js');
   assert.equal(/const npcRace = REGION_RACES\[/.test(tt), false,
     'the `const` computed at construction is gone');
-  assert.match(tt, /const npcRaceNow = \(\) => \(REGION_RACES\[regionNow\(\)\] === 1 \? 'Redguard' : 'Breton'\);/);
+  assert.match(tt, /const npcRaceNow = \(\) => REGION_PEOPLE\[regionNow\(\)\] \?\? 'Breton';/);   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): each region's people, a province's its own
   // both %oth expansions read it at CALL time - they are the consumers
   // that made the staleness visible in play (a Redguard region's oaths
   // spoken by Bretons, or the reverse).

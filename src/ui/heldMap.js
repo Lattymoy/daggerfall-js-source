@@ -83,7 +83,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
+import { REGION_NAMES, longitudeLatitudeToMapPixel, patchRegionIndex } from '../formats/mapsFile.js';
+import { summaryPixel } from './overworldModel.js';   // WW-C2: a place's own pixel where it carries one (a zone hall past the Bay)
 import { locationSummaryAt } from '../systems/map/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel/travel.js';
 import { guildFastTravel } from '../systems/guild/guildVariants.js';   // TP1: GuildManager.FastTravel
@@ -102,7 +103,7 @@ import { noticeHold, noticeRelease } from './enhanced/enhancedNotice.js';   // E
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travel/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from './travel/travelMapWindow.js';   // MAP-KEY: the classic's filter flip and its dots' colours
-import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
+import { readGateMark, gateMarkKey, readGateMarks, gateMarksKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
 import { SERPENT_RING_MAP_CSS, SERPENT_LEGEND_TEXT } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
 import { SD_RING_MAP_CSS, SD_LEGEND_TEXT } from './superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's ring once it is found, in its omen's brass
 import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMark.js';   // EG-F: my company's Elite arch, in its gold
@@ -577,7 +578,7 @@ export class HeldMapWindow {
     }
     this._inks = null;     // MAP-KEY: each kind's ink once a palette answers (_markInks)
     this._keySig = '';     // MAP-KEY: what the key last said, so it is rebuilt only when that changes
-    // WILD2: THE ZONE MAP - the world sheet held to the Wrothgarian Mountains, its rings filled and its legend beside it
+    // WILD2: THE ZONE MAP - the world sheet held to the zone (WW-C2: Cyrodiil's), its rings filled and its legend beside it
     // (ui/wild/wildZoneMap.js); `_zoneLegend` the legend's element while it stands, `_zoneRing` the ring it was built for
     this._zoneMap = false; this._zoneLegend = null; this._zoneRing = -1;
     this.teleportationTravel = false;    // one-shot, cleared on close
@@ -685,6 +686,9 @@ export class HeldMapWindow {
     this._travKey = '';
     // WB1: the gate's ring - the host's `gate` read on the party's own poll; null while no gate is marked
     this._gate = null;
+    // WW2: the rings of the gates past the Bay - the host's `gates`, every lane's but the Bay's, read as the gate's is
+    this._gates = [];
+    this._gatesKey = '';
     this._gateKey = '';
     // SERPENT1: the sea serpent's ring - the host's `serpent`, read as the gate's is
     this._serpent = null;
@@ -1325,27 +1329,26 @@ export class HeldMapWindow {
           // TAMRIEL1: past the Bay's own fit the sheet is on the continent, and the Bay's ink thins for it
           continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),
           marksLayer: synced.layer,   // MAP-PAN: one blit of the marks, or null and they are inked here
-          // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
-          // around it"): the open zone's fog and red line, under the marks (ui/wild/wildMapInk.js)
-          // WILD2: and its four rings - their lines and bonuses here, filled and named on the zone map
-          underMarks: (c) => {
-            const ink = this._wildInk();
-            if (!ink) return;
-            const zone = this._zoneInk();
-            if (this._zoneMap && zone) paintZoneMapStatic(c, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
-            paintWildZone(c, env.view, ink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
-            if (zone && !this._zoneMap) paintWildRings(c, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
-          },
         });
         // TAMRIEL1: the continent round the Bay, AFTER the Bay's ink (which clears the canvas first) and clipped to
-        // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay
-        if (this._tamriel && !this._zoneMap) {
+        // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay. WW-C2: and
+        // on the zone map whatever the switch - the zone is Cyrodiil's, on the continent
+        if (this._tamriel || this._zoneMap) {
           const bayFit = this._bayFit();
           // TESA13: the roads past the Bay under the Bay's band and filters, and the countryside's and the lairs' marks off the
           // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
           paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
             band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
             tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }), stamp: pastBayStamp })), dpr: env.dpr });
+        }
+        // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
+        // around it"): the open zone's fog and red line (ui/wild/wildMapInk.js) - WILD2: and its four rings, their lines and
+        // bonuses here, filled and named on the zone map. WW-C2: over the continent's ink, which is Cyrodiil's ground
+        {
+          const ink = this._wildInk(), zone = ink ? this._zoneInk() : null;
+          if (ink && this._zoneMap && zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
+          if (ink) paintWildZone(ctx, env.view, ink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
+          if (zone && !this._zoneMap) paintWildRings(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
         }
         // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
         const zone = this._zoneMap ? this._zoneInk() : null;
@@ -1364,6 +1367,7 @@ export class HeldMapWindow {
             color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,
           })),
           gate: this._gate,   // WB1
+          gates: this._gates,   // WW2
           serpent: this._serpent,   // SERPENT1
           sd: this._sd,   // SD2c
           arch: this._arch,   // EG-F
@@ -2074,6 +2078,11 @@ export class HeldMapWindow {
     const gateKey = gateMarkKey(gate);
     let gateMoved = false;
     if (gateKey !== this._gateKey) { this._gateKey = gateKey; this._gate = gate; gateMoved = true; this._dirty = true; }
+    // WW2: and every lane's past the Bay, over the continent's frame while it is shown
+    const f = this._tamriel ? tamrielFrameInBay() : null;
+    const gates = readGateMarks(this.deps.gates, f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height });
+    const gatesKey = gateMarksKey(gates);
+    if (gatesKey !== this._gatesKey) { this._gatesKey = gatesKey; this._gates = gates; gateMoved = true; this._dirty = true; }
     // SERPENT1: the sea serpent's ring rides the same poll, on its own key
     const serpent = readGateMark(this.deps.serpent, this._size);
     const serpentKey = gateMarkKey(serpent);
@@ -2159,7 +2168,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2176,7 +2185,7 @@ export class HeldMapWindow {
         leg.append(k, el('span', 'hmlegtext', word));
       }
     }
-    if (this._gate) {   // WB1: the ring explains itself too, while there is one
+    if (this._gate || this._gates.length) {   // WB1: the ring explains itself too, while there is one (WW2: or one past the Bay)
       const dot = el('span', 'hmlegdot');
       dot.style.background = GATE_RING_CSS;
       leg.append(dot, el('span', 'hmlegtext', GATE_LEGEND_TEXT));
@@ -2386,7 +2395,7 @@ export class HeldMapWindow {
       const open = el('button', 'act hmkeyflt on hmkeyzone', 'Zone map');
       open.type = 'button'; open.tabIndex = -1;
       open.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
-      open.title = 'Open the Wrothgarian Mountains map, with its four rings and their loot';
+      open.title = 'Open the Cyrodiil map, with its four rings and their loot';   // WW-C2
       open.onclick = () => { if (this._top || this._info || this._phase !== 'map') return; this._openZoneMap(); };
       kinds.append(open);
       row.append(kinds);
@@ -2561,7 +2570,7 @@ export class HeldMapWindow {
     const [mx, my] = toMap(this._view, sx, sy);
     // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
     const least = GATE_RING_MIN_PX / this._view.scale;
-    for (const g of [this._gate, this._serpent, this._sd, this._arch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
+    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
   }
 
@@ -2572,7 +2581,7 @@ export class HeldMapWindow {
     let best = null, bestD = Infinity;
     if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
     const scale = this._view.scale;
-    for (const g of [this._gate, this._serpent, this._sd, this._arch]) {   // EG-F: and my company's arch
+    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch]) {   // EG-F: and my company's arch; WW2: and the gates past the Bay
       if (!g) continue;
       const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
       const r = Math.max(GATE_RING_MIN_PX, g.r * scale);
@@ -2900,7 +2909,7 @@ export class HeldMapWindow {
   _pickOf(selected) {
     if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name };
     const { summary } = selected;
-    const pos = getPixelFromPixelID(summary.id);
+    const pos = summaryPixel(summary);   // WW-C2: a zone hall's own pixel past the Bay
     return {
       pixel: pos,
       name: selected.name,
@@ -3037,7 +3046,7 @@ export class HeldMapWindow {
     const st = this._panelState;
     if (!st?.opts || !this._selected) return;
     const sel = this._selected;
-    const dest = sel.coords ? { x: Math.floor(sel.x), y: Math.floor(sel.y) } : getPixelFromPixelID(sel.summary.id);
+    const dest = sel.coords ? { x: Math.floor(sel.x), y: Math.floor(sel.y) } : summaryPixel(sel.summary);
     // IT1: the mod's popup bills its own calculator's trip (systems/immersiveTravel.js itTrip) - DFU's fast travel,
     // never walked, never Travel Options' scaled fare nor online's half
     if (st.it) {
