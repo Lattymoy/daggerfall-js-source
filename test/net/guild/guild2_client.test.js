@@ -433,19 +433,19 @@ test('GUILD-PANE 3 the Vault page in a guild caravan: the reach the host hands (
     await t.go('vault');
     return t;
   };
-  const inGuild = await open({ modes: { caravanRoom: {}, caravanVisit: null }, items: carried('guild') });
+  const inGuild = await open({ modes: { caravanRoom: {}, caravanVisit: null, myCaravanDecor: () => ({ v: 1, p: [] }) }, items: carried('guild') });
   assert.equal(texts(inGuild.panel.root).includes(GUILD_VAULT_REACH_TEXT), false, 'no note in a guild caravan');
   assert.equal(button(inGuild.panel.root, 'Take').disabled, false);
   assert.equal(button(inGuild.panel.root, 'Put in').disabled, false);
   button(inGuild.panel.root, 'Put in').fire('click');
   await settle(); await settle();
   assert.equal(inGuild.calls.filter((c) => c[0] === 'vaultPut').length, 1, 'a put goes through the book');
-  const visiting = await open({ modes: { caravanRoom: {}, caravanVisit: { entry: 'guild', guild: 'HND' } }, items: carried('private') });
+  const visiting = await open({ modes: { caravanRoom: {}, myCaravanDecor: () => null, caravanVisit: { entry: 'guild', guild: 'HND' } }, items: carried('private') });
   assert.equal(button(visiting.panel.root, 'Take').disabled, false, 'a guildmate\'s guild caravan');
   for (const [name, where] of [
-    ['a party caravan of mine', { modes: { caravanRoom: {}, caravanVisit: null }, items: carried('party') }],
-    ['a party caravan I visit', { modes: { caravanRoom: {}, caravanVisit: { entry: 'party', guild: 'HND' } }, items: carried('guild') }],
-    ['another guild\'s', { modes: { caravanRoom: {}, caravanVisit: { entry: 'guild', guild: 'OTH' } }, items: carried('guild') }],
+    ['a party caravan of mine', { modes: { caravanRoom: {}, caravanVisit: null, myCaravanDecor: () => ({ v: 1, p: [] }) }, items: carried('party') }],
+    ['a party caravan I visit', { modes: { caravanRoom: {}, myCaravanDecor: () => null, caravanVisit: { entry: 'party', guild: 'HND' } }, items: carried('guild') }],
+    ['another guild\'s', { modes: { caravanRoom: {}, myCaravanDecor: () => null, caravanVisit: { entry: 'guild', guild: 'OTH' } }, items: carried('guild') }],
     ['the road', { modes: { caravanRoom: null, caravanVisit: null }, items: carried('guild') }],
   ]) {
     const away = await open(where);

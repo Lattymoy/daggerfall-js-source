@@ -129,7 +129,8 @@ import {
 import { bagStoreRefusal, bagMayLeave } from '../../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
 import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 import { BAG_KG_LIMIT } from '../../net/bagLaw.js';
-import { vaultStandingText, vaultMayTake } from '../../net/guild/guildVaultLaw.js';   // GUILD-PANE: the standing line's words, the Social page's own
+import { vaultStandingText, vaultMayTake } from '../../net/guild/guildVaultLaw.js';
+import { takeVaultPaneWanted } from '../guildVaultOpener.js';   // GUILD-PANE OPEN: the guild window's word - open on the vault   // GUILD-PANE: the standing line's words, the Social page's own
 import { STORE_FILTER_KINDS, STORE_BULK_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
 import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
@@ -4790,7 +4791,10 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   refresh();
   render();
   // GUILD-PANE: a pack opened before the guild was known still finds it - the guild looked at again once, the button drawn when it is there
-  { const door = vaultDoor(); if (door) { const was = door.shown(); Promise.resolve(door.warm()).then(() => { if (host && door.shown() !== was) { refresh(); render(); } }, () => {}); } }
+  // GUILD-PANE OPEN: and a pack the guild window's "Open in pack" pressed for opens on the vault - its word taken once
+  // (ui/guildVaultOpener.js), spent whether or not there is a vault to show; a guild not yet known opens it when it is
+  { const door = vaultDoor(); let want = takeVaultPaneWanted(); const toVault = () => { if (want && vaultDoorShown()) { want = false; if (!session.usingVault) toggleVault(); } };
+    if (door) { const was = door.shown(); toVault(); Promise.resolve(door.warm()).then(() => { if (!host) return; toVault(); if (door.shown() !== was) { refresh(); render(); } }, () => {}); } }
   // HB1: the hotbar comes up under the pack as a drop target (a no-op
   // while the player wears the diamond instead).
   setHotbarDropMode('pack', true, d.entity ?? null);

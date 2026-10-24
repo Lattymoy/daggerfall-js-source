@@ -75,6 +75,7 @@ import { t } from '../systems/textManager.js';   // GUILD-UX: the storage pages'
 import { storeFilterAccepts, storeRarityAccepts, storeQuery, storeFilterOptions, storeRarityOptions } from './storeFilter.js';   // GUILD-UX: the stores' one filter
 import { showItemHover, hideItemHover } from './enhanced/enhancedInventory.js';   // GUILD-UX: the pack's one item card
 import { playerEntity } from '../characters/playerEntity.js';   // GUILD-UX: the card's comparison is against what I wear
+import { openVaultInPack, vaultPaneBound } from './guildVaultOpener.js';   // GUILD-PANE OPEN: the Vault page's Open in pack
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT SUGGESTIONS-1019 L4-4: the card is the enhanced skin's
 import { itemLongName } from '../systems/item/itemInfo.js';   // AUDIT SUGGESTIONS-1019 L4-6: a row named as the pack names the piece
 import { LOOSE_ORIGIN } from '../net/bagLaw.js';   // AUDIT SUGGESTIONS-1019 L4-1: the loose units the service's room counts
@@ -1752,6 +1753,14 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const st = vv?.me ?? v.vault?.me ?? null;
     out.push(el('div', 'dfsocial-sec', `Vault (${vv?.items?.length ?? v.vault?.used ?? 0}/${vv?.max ?? v.vault?.max ?? GUILD_VAULT_SLOTS})`));
     out.push(el('div', 'dfsocial-note', `Your standing: ${vaultStandingText(st)}${st?.level === 'withdraw' && st.limit ? ` - ${Number(st.taken ?? 0)} of ${st.limit} taken today` : ''}.`));
+    // GUILD-PANE OPEN (Travis: "go ahead and add that open in pack button"): the vault beside the pack - this window goes
+    // down and the pack key is pressed, the pack told to open on the vault (ui/guildVaultOpener.js). The enhanced skin's
+    // pack alone has the vault's pane, and an unbound pack key has no press to make: no button for either
+    if (isEnhanced() && vaultPaneBound()) {
+      const toPack = el('div', 'dfsocial-acts');
+      toPack.append(btn(t('social.vault.openPack', 'Open in pack'), { run: () => { closePanel(); openVaultInPack(); } }));
+      out.push(toPack);
+    }
     // AUDIT GUILD2 M1: the town is read at the press and on the live pass, never once at the build - a page left open
     // on the road kept Take alive and sent takes out of town
     const reachNow = () => g.pack?.reach?.() !== false;

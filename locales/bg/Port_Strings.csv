@@ -6398,6 +6398,7 @@ social.stores.units,"Бройки (оставете празно за всичк
 social.vault.anItem,"предмет"
 social.vault.find,"Търси предмет"
 social.vault.noMatch,"Нито един предмет в трезора не отговаря."
+social.vault.openPack,"Отвори в багажа"
 social.vault.page,"Страница от багажа"
 social.vault.rarity,"Рядкост"
 social.vault.reach,"Можете да ползвате трезора във всеки град или в гилдиен керван. Разглеждайте го тук; слагайте и вземайте предмети в града или в гилдиен керван."

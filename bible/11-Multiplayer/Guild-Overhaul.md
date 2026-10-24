@@ -417,6 +417,21 @@ with a column set to itself (`UPDATE guild_members SET vault_day = vault_day WHE
 brakes are the 50 (100 with a hall) slots, shared by everyone, and the guildmaster's `none`, which stops a member putting in
 but not taking back what she did.
 
+*Open in pack* (2026-10-24). Travis, after the guild window (GUILD-WINDOW) landed: "go ahead and add that open in pack
+button and lets see how it functions". The Vault page carries **Open in pack** on the enhanced skin, whose pack alone has
+the pane. Pressed, the window goes down and the Inventory action's key is pressed (`ui/guildVaultOpener.js`
+openVaultInPack, the level-up row's way: `ui/levelUp/levelUpOpener.js`), so each host opens its own pack in its own
+slot - the street's, an interior's, a dungeon's - and no host grows. The press leaves the pack a word, taken once as it
+mounts (`takeVaultPaneWanted`, `ui/enhanced/enhancedInventory.js`): open on the vault. The word is spent whether or not
+a vault stands to show, and let go after `VAULT_PANE_WANT_MS` (3 s), so a pack opened by hand later is never the
+vault's. An unbound Inventory key presses nothing, and the page shows no button.
+
+*Review (Claude, before sign-off).* R2-1: a pane piece is taken only while the current view still holds it (a row
+drawn before a read, or a card left open, kept its slot, and the book takes by the slot as the current view holds
+it). R2-2: a row's view is keyed by its record too - a slot emptied and filled in the same second with a stack of the
+same count kept the old piece's view (AUDIT GUILD2 G1's case, on the client). R3-1: a guest's own caravan door is never
+read; "my own caravan" is the room `modes.myCaravanDecor()` answers for, and it answers null on any visit.
+
 ### The threats, and the answers
 
 | Threat | Answer |
@@ -435,7 +450,7 @@ but not taking back what she did.
 `test/ui/guildpane.test.js` (slices 1 and 2: the pane mounted over a real `GuildBook` over the real Worker - the button, the
 rows, reading and errors, the filter, the repaint, isolation, the moves and every refusal); `test/net/guild2_service.test.js`
 (`mine`, own-back, the races) and `test/net/guild/guild2_client.test.js` (Take back on the Social page, `vaultPutRefusal`);
-`tools/mutants/guildpane.json`.
+`test/ui/guildpane_open.test.js` (Open in pack: the opener, the button); `tools/mutants/guildpane.json`.
 
 | Host | GUILD-PANE |
 |---|---|

@@ -936,5 +936,77 @@
     "tests": [
       "test/ui/guildpane.test.js"
     ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-no-word-left",
+    "file": "src/ui/guildVaultOpener.js",
+    "old": "  _wantedAt = now();\n",
+    "new": "\n",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-the-word-taken-twice",
+    "file": "src/ui/guildVaultOpener.js",
+    "old": "  _wantedAt = null;\n  return at",
+    "new": "  return at",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-a-stale-word-honoured",
+    "file": "src/ui/guildVaultOpener.js",
+    "old": "now - at <= VAULT_PANE_WANT_MS",
+    "new": "true",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-the-key-unpressed",
+    "file": "src/ui/guildVaultOpener.js",
+    "old": "if (defer) setTimeout(press, 0); else press();",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-the-window-left-up",
+    "file": "src/ui/socialPanel.js",
+    "old": "run: () => { closePanel(); openVaultInPack(); }",
+    "new": "run: () => { openVaultInPack(); }",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-the-button-on-the-classic-skin",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (isEnhanced() && vaultPaneBound()) {",
+    "new": "if (vaultPaneBound()) {",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-the-word-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "let want = takeVaultPaneWanted();",
+    "new": "let want = false;",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-OPEN-every-pack-on-the-vault",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "let want = takeVaultPaneWanted();",
+    "new": "let want = (takeVaultPaneWanted(), true);",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
   }
 ]
