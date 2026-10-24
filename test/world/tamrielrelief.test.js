@@ -130,7 +130,7 @@ test('TAMRIEL-RELIEF the wiring, by source: the data its own chunk (no static im
   assert.match(read('src/scenes/tamrielRoadsHost.js'), /const trace = tamrielTrace\(\), fit = tamrielFit\(\);/, 'the roads worker takes the installed trace whole');
   assert.match(read('src/world/tamrielRoads.js'), /if \(trace\?\.relief\) for \(let i = 0; i < trace\.relief\.length; i \+= 7\) mix\(trace\.relief\[i\] \* 131 \+ i\);/);
   assert.match(read('src/world/tamriel/tamrielGround.js'), /if \(reliefStands\(\)\) \{\n\s+const ease = Math\.min\(1, coastDistanceAt\(px, py\) \/ RELIEF_COAST_REACH\);/);
-  assert.match(read('src/world/tamriel/tamrielBiomes.js'), /export const BIOMES_VERSION = 3;/);
+  assert.match(read('src/world/tamriel/tamrielBiomes.js'), /export const BIOMES_VERSION = [34];/);   // IC-RING moved it on
   assert.ok(existsSync(join(ROOT, SOURCE)), 'the owner\'s heightmap is committed as the bake\'s source');
 });
 

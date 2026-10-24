@@ -172,7 +172,7 @@ export const SOLITUDE_DISTRICTS = Object.freeze({
  *  span in pixels, its slices' names and the slice each of its models is carried by - one pixel, its name and its carrier
  *  where it has none. */
 export const CAPITALS = Object.freeze([
-  Object.freeze({ key: 'imperial-city', tag: 'IC', name: 'Imperial City', province: 'Imperial', at: Object.freeze([178, 96]), shore: false, plan: IMPERIAL_CITY_PLAN, districts: IMPERIAL_DISTRICTS,
+  Object.freeze({ key: 'imperial-city', tag: 'IC', name: 'Imperial City', province: 'Imperial', at: Object.freeze([171, 99]), shore: false, plan: IMPERIAL_CITY_PLAN, districts: IMPERIAL_DISTRICTS,
     span: IMPERIAL_SPAN, sliceNames: IMPERIAL_SLICE_NAMES, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
     anchor: Object.freeze([12, 12]), markers: Object.freeze([[150, 0], [-150, 0], [0, 150], [0, -150]]), blocks: IMPERIAL_BLOCKS, models: Object.freeze(Object.values(IMPERIAL_MODELS)) }),

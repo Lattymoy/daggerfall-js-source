@@ -110,7 +110,7 @@ test('TESA11 the slices: nine, each its district\'s name (the centre the city\'s
 test('TESA11 the pixel law over nine: the centre the nearest pixel all nine of whose pixels are the Imperial Province\'s land; every slice on its pixel, the centre\'s pin Arena\'s place of its name', () => {
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
   const at = capitalPixel(IC);
-  assert.deepEqual(at, { px: 2177, py: 612 });
+  assert.deepEqual(at, { px: 2069, py: 658 });   // PIN MOVED (IC-RING): the middle of Lake Rumare's ring, (2177, 612) on its east rim before
   for (let sy = 0; sy < 3; sy++) for (let sx = 0; sx < 3; sx++) {
     const o = capitalOnPixel(at.px + sx - 1, at.py + sy - 1);
     assert.deepEqual([o.cap, o.k, o.s, [...o.slice], o.centre], [IC, 0, sy * 3 + sx, [sx, sy], at]);
@@ -118,15 +118,15 @@ test('TESA11 the pixel law over nine: the centre the nearest pixel all nine of w
   assert.equal(capitalOnPixel(at.px + 2, at.py), null);
   assert.equal(capitalOnPixel(at.px, at.py - 2), null);
   assert.deepEqual(capitalPin({ name: 'Imperial City', province: 'Imperial' }), at);
-  // a picture whose Imperial land begins at column 179, east of the point's: the Bay's pixels of column 178 another
+  // a picture whose Imperial land begins at column 172, east of the point's: the Bay's pixels of column 171 another
   // province's - the centre moves east till all nine stand on the Imperial land, one past the single pixel's law
   const w = 320, h = 200, land = new Uint8Array(w * h).fill(1), province = new Uint8Array(w * h).fill(9);
-  for (let y = 0; y < h; y++) for (let x = 0; x < 179; x++) province[y * w + x] = 3;
+  for (let y = 0; y < h; y++) for (let x = 0; x < 172; x++) province[y * w + x] = 3;
   setTamrielTrace({ w, h, land, province });
-  const first = 2185;   // the first Bay pixel whose centre is column 179's: (2185.5 + 589) / 15.5 = 179
-  assert.deepEqual([Math.floor((first - 1 + 0.5 + 589) / 15.5), Math.floor((first + 0.5 + 589) / 15.5)], [178, 179]);
-  assert.deepEqual(capitalPixel(IC), { px: first + 1, py: 612 }, 'its west slice on the land\'s first pixel');
-  assert.deepEqual(capitalPixel({ ...IC, span: 1 }), { px: first, py: 612 }, 'one pixel: the first');
+  const first = 2077;   // the first Bay pixel whose centre is column 172's: (2077.5 + 589) / 15.5 = 172.03 (PIN MOVED, IC-RING: 2185 and 179 before)
+  assert.deepEqual([Math.floor((first - 1 + 0.5 + 589) / 15.5), Math.floor((first + 0.5 + 589) / 15.5)], [171, 172]);
+  assert.deepEqual(capitalPixel(IC), { px: first + 1, py: 658 }, 'its west slice on the land\'s first pixel');
+  assert.deepEqual(capitalPixel({ ...IC, span: 1 }), { px: first, py: 658 }, 'one pixel: the first');
 });
 
 test('TESA11 Arena\'s places off the city\'s pixels: a place whose point falls on a reserved pixel stands on the nearest free one; the pinned place on the centre; no reserve, no change', () => {

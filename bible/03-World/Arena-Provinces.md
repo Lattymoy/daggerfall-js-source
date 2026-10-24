@@ -533,7 +533,7 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
 
 - **Where** (`world/tamrielCapitals.js` capitalPixel, capitalOnPixel): the capital's point on Daggerfall's map of Tamriel
   (TAMRIEL1's CITIES, `world/tamriel/tamrielGeography.js` - the port's own reading of the picture) on the live fit: the Imperial
-  City's (178, 96) is Bay pixel (2177, 612) on the freeware's fit. Every client's the same pixel, Arena attached or not.
+  City's (171, 99) is Bay pixel (2069, 658) on the freeware's fit (IC-RING, below: (178, 96) and (2177, 612) before). Every client's the same pixel, Arena attached or not.
   With Arena attached, Arena's place of the capital's name and province stands on it too (`world/arenaPlaces.js`
   standArenaPixels' `pinned`, capitalPin: before any other place takes it, `pinned: true`), so Arena's roads (TESA4), its
   map ink and a portal's end all lead to the city the port built (TESA-NO-FAST: no journey from the map). The fit moving (the trace landing after a pixel built)
@@ -1164,6 +1164,29 @@ in the Alik'r - and so do the capitals' climate swaps; the Imperial City stands 
 (Woodlands), ringed by the jungle (AUDIT TESA-BIOME, `01-Overview/audits/Audit-Tesa-Biome.md`). The capitals, the places and
 the roads are otherwise as they were.
 
+## IC-RING - the Imperial City in the middle of Lake Rumare's ring (2026-10-24)
+
+The owner: *"the imperial city is wrongly placed. Should be placed in the middle of the circle river type landmark."*
+Daggerfall's map draws Lake Rumare as a ring of water in the Imperial Province (the trace's 49-pixel lake, picture x
+163-177, y 95-101, its isle inside, open to the south toward the 11-pixel lake), and TAMRIEL1's point for the city,
+(178, 96), stood on the ring's east rim - Bay pixel (2177, 612) on the freeware's fit, the lake at its west door.
+
+- **The point** (`world/tamriel/tamrielGeography.js` CITIES and `world/tamrielCapitals.js` CAPITALS, one point in both):
+  (171, 99), the middle of the ring's isle (its land x 167-175, y 97-101) - Bay pixel (2069, 658) on the freeware's fit,
+  the nine pixels well inside the isle. The authored shape draws no ring; the capital's pixel law takes the point there as
+  it took the old one.
+- **The valley with it** (`world/tamriel/tamrielBiomes.js`): the city is the Nibenay Valley's seed, and the Nibenay
+  Jungle's five hearts ringed the old point - moved with the city (-7, +3), the one that fell in the trace's lake
+  ((181, 111)) at (183, 110) - so the grassland is round Lake Rumare and the jungle round it still. BIOMES_VERSION 4.
+- **What moves with it:** the roads past the Bay (the capital's gates are its nodes; laid again), the city's pin for
+  Arena's place of its name, its map mark, and AUDIT-TESA A3-2's road end on the lake (the city no longer stands at the
+  water).
+
+PINS MOVED: `test/tesa10_capitals.test.js` (the pixel, the host's ask, the sweep: (2069, 658) and (1315, 495) on the
+pins' second fit), `test/tesa11_imperial.test.js` (the pixel law over nine, the west-slice fixture at column 172),
+`test/world/tesabiome_biomes.test.js` (the four-pixel fixture at the new corner, read on the Nibenay's zones;
+BIOMES_VERSION 4), `test/world/tamrielrelief.test.js` (the version).
+
 ## Pins
 
 `test/tesa15_mapfidelity.test.js` (14, TESA15): the layer's tiles (a whole install, an add's own tiles, another layer, the
@@ -1266,7 +1289,7 @@ and `tesa2.json` (1) re-aimed by content, each judged dead again.
 
 `test/tesa10_capitals.test.js` (14, TESA10): the id (the capitals' lane after the lairs', the ordinal in the low 20 with
 0x80000, a place the port made, nothing past it, the index past the lairs'); the pixel (TAMRIEL1's own point, its centre
-on the live fit - (2177, 612) on the freeware's - one capital a pixel, kept a fit and moved with it) and the pin (Arena's
+on the live fit - (2069, 658) on the freeware's since IC-RING, (2177, 612) before - one capital a pixel, kept a fit and moved with it) and the pin (Arena's
 place of the capital's name and province, no other, nor a capital not yet built); standArenaPixels' `pinned` (the pinned
 place first on its pixel, the place that had it moved to the next, a pin on the Bay ignored, no pin no change, the
 installed set wired to capitalPin); the plan (the lake ring, the four corner gardens, the heart's four, 26 classic blocks
