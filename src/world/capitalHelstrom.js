@@ -3,11 +3,12 @@
 // signatures (world/capitalPlans.js HELSTROM says where each stands) - the Great Xanmeer, a stepped pyramid of mossy
 // stone with its stairs and its shrine; the Hist on its isle in the canal, twisted, sap-gilt, its crown of leaves; the
 // boardwalks over the canal; the palisade of sharpened logs round the city with its watchtowers on stilts - in metres,
-// drawn as the map reads (+z south), every model's origin Helstrom's anchor on its ground. Shapes of the port's own in
-// the spirit of the marsh city. No game data.
+// drawn as the map reads (+z south), every model's origin Helstrom's anchor on its ground. TESA-LORE: the Hist grown
+// greater, its standing stones round it on its isle. Shapes of the port's own in the spirit of the marsh city. No game
+// data.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, hall, pyramid, wallRun, blob, limb, jitter } from './capitalShapes.js';
-import { HELSTROM } from './capitalPlans.js';
+import { HELSTROM, histStones } from './capitalPlans.js';
 
 const MOSS = art(CAPITAL_ART.mossStone), BARK = art(CAPITAL_ART.bark), LEAVES = art(CAPITAL_ART.leaves), GOLD = art(CAPITAL_ART.gold);
 const TIMBER = art(CAPITAL_ART.timber), DARK = art(CAPITAL_ART.dark);
@@ -37,7 +38,8 @@ export function buildXanmeer(H = HELSTROM) {
 
 /**
  * THE HIST: its trunk twisting up in four turns from its roots on the isle, its boughs out from its top, its crown of
- * leaves, and the sap gilt on its bark.
+ * leaves, and the sap gilt on its bark; TESA-LORE: its standing stones in a ring about it, each a mossy pillar under a
+ * capstone.
  */
 export function buildHist(H = HELSTROM) {
   const mb = new MeshBuilder(), T = H.hist, seg = 4, pts = [];
@@ -62,6 +64,10 @@ export function buildHist(H = HELSTROM) {
   for (let i = 0; i < 9; i++) {
     const t = 0.15 + 0.7 * jitter(0xe30, i), a = jitter(0xe31, i) * Math.PI * 2, p = pts[Math.min(seg - 1, Math.floor(t * seg))], r = T.r * (1 - t * 0.55) + 0.2;
     blob(mb, GOLD, p[0] + Math.cos(a) * r, -1 + T.h * t, p[2] + Math.sin(a) * r, 0.9, 1.6, 0.9, { n: 6, rings: 4, rough: 0.1, seed: 0xe40 + i });
+  }
+  for (const [x, z] of histStones(T)) {
+    hall(mb, MOSS, x, z, T.stoneW, T.stoneW, -1, T.stoneH, 0.25);
+    hall(mb, MOSS, x, z, T.stoneW + 0.8, T.stoneW + 0.8, T.stoneH, T.stoneH + 0.7, 0.25);
   }
   return mb.build();
 }

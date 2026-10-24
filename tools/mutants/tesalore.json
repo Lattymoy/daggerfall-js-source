@@ -369,5 +369,159 @@
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
+  },
+  {
+    "name": "TESA-LORE-platforms-empty",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    for (let i = 0; i < F.huts; i++) { const a = ((i + 0.5) / F.huts) * Math.PI * 2, d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-fork-decks",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    translated(mb, x, y, z, () => { cap(mb, TIMBER, 12, F.forkDeck, 0); cap(mb, TIMBER, 12, F.forkDeck, -0.6, -1); ledge(mb, TIMBER, 12, F.forkDeck, F.forkDeck - 0.3, -0.6, 0); });\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-forks-empty",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    for (const s of [1, -1]) hideHut(mb, x + Math.cos(a) * s * F.forkDeck * 0.55, y, z + Math.sin(a) * s * F.forkDeck * 0.55, F.hutR * 0.85, F.hutH * 0.85);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-walkway",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    mb.quad(TIMBER, d[0], d[1], d[2], d[3], outward(d[0], d[1], d[2], [0, -1e4, 0]), [[0, 0], [1, 0], [1, -0.5], [0, -0.5]]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-walkway-in-steps",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "levels[i] + (levels[i + 1] - levels[i]) * f];",
+    "new": "levels[i]];",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-cane-one-sided",
+    "file": "src/world/capitalPlans.js",
+    "old": "for (const s of [1, -1]) out.push([s * (x0 + x1) / 2, z, x1 - x0, E.bedD]);",
+    "new": "for (const s of [1]) out.push([s * (x0 + x1) / 2, z, x1 - x0, E.bedD]);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-cane-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (estateBeds().some(([x, z, w, d]) => inBox(dx, dz, x, z, w, d))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-estate-gate-shut",
+    "file": "src/world/capitalTorval.js",
+    "old": "  gatedRun(mb, SAND, sw, se, E.thick, E.h, h, E.gate, E.gateH);",
+    "new": "  hall(mb, SAND, P.x, P.z + h, 2 * h, E.thick, -1, E.h, 0.25);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-canopy",
+    "file": "src/world/capitalTorval.js",
+    "old": "  pyramid(mb, CLOTH, P.x, qz, 2.9, 3.9, y + 2.9, 1.3);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-estate-paved",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return Math.abs(dx - P.x) < E.path ? 3 : 2;",
+    "new": "  return 3;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-temple-moonless",
+    "file": "src/world/capitalTorval.js",
+    "old": "    crescent(mb, M.x + dx, top + M.drumH + h - 0.2, M.z, r * 0.16);   // TESA-LORE: each moon's own over its dome\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js",
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-minarets-moonless",
+    "file": "src/world/capitalTorval.js",
+    "old": "  crescent(mb, x, h + 0.8 + r * 1.3 - 0.2, z, 1.1);   // TESA-LORE: its moon, where a spike stood\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-estate-uninstalled",
+    "file": "src/world/capitalModels.js",
+    "old": "    [CAPITAL_MODELS.maneEstate]: () => buildManeEstate(),   // TESA-LORE\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-helstrom-paved-over",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return Math.abs(dx) < X.paved && Math.abs(dz) < X.paved ? 3 : 1;   // TESA-LORE: the heart-mud, paved at the Xanmeer's foot",
+    "new": "  return 3;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-standing-stones",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "  for (const [x, z] of histStones(T)) {",
+    "new": "  for (const [x, z] of []) {",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-stones-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (histStones().some(([x, z]) => inBox(dx, dz, x, z, H.stoneW + 1, H.stoneW + 1))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-hist-small",
+    "file": "src/world/capitalPlans.js",
+    "old": "isle: 40, r: 9, h: 64, crown: 30,",
+    "new": "isle: 40, r: 7, h: 44, crown: 22,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
   }
 ]

@@ -13,7 +13,10 @@ import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js
 import { buildCastleDour, buildBluePalace } from '../src/world/capitalSolitude.js';
 import { MOURNHOLD, MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS } from '../src/world/capitalPlans.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar } from '../src/world/capitalMournhold.js';
-import { ALINOR, ALINOR_PLAN, ALINOR_BLOCKS } from '../src/world/capitalPlans.js';
+import { ALINOR, ALINOR_PLAN, ALINOR_BLOCKS, FALINESTI, TORVAL, TORVAL_PLAN, TORVAL_BLOCKS, estateBeds, HELSTROM, HELSTROM_BLOCKS, histStones } from '../src/world/capitalPlans.js';
+import { buildManeEstate, buildManePalace, buildTwoMoonsTemple } from '../src/world/capitalTorval.js';
+import { buildHist } from '../src/world/capitalHelstrom.js';
+import { buildGrahtOak, spiralAt, spiralInner, limbForks } from '../src/world/capitalFalinesti.js';
 import { buildAlinorPalace, buildAlinorBridges, buildAlinorWall, alinorStairY, alinorTowers } from '../src/world/capitalAlinor.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
@@ -40,6 +43,11 @@ const crosses = (m, p, q) => {
     if (k >= 0 && k <= 1) return true;
   }
   return false;
+};
+/** Does the segment p-q cross a face of the model whose normal faces up - a floor one stands on? */
+const crossesUp = (m, p, q) => {
+  const up = { ...m, indices: m.indices.filter((_, i, ix) => m.normals[ix[i - (i % 3)] * 3 + 1] > 0.5) };
+  return crosses(up, p, q);
 };
 const P3 = (b, r, y) => { const [x, z] = polar(b, r); return [x, y, z]; };
 const capOf = (key) => CAPITALS.find((c) => c.key === key);
@@ -272,4 +280,105 @@ test('TESA-LORE Alinor\'s river: "a great river runs through Alinor\'s southern 
     assert.equal(crosses(wall, [x - 6, 2, R.z0 - 40], [x + 6, 2, R.z0 - 40]), true, 'walled north of it');
     assert.ok(alinorTowers().some(([tx, tz]) => tx === x && tz > R.z0 && tz < mid) && alinorTowers().some(([tx, tz]) => tx === x && tz < R.z1 && tz > mid), 'a tower on either bank');
   }
+});
+
+// ── FALINESTI ───────────────────────────────────────────────────
+
+/** A model's triangles of one picture, each its three corners. */
+const trisOf = (m, record) => {
+  const out = [];
+  for (const sm of m.subMeshes) if (sm.textureRecord === record) for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i += 3) out.push([0, 1, 2].map((k) => [0, 1, 2].map((a) => m.positions[m.indices[i + k] * 3 + a])));
+  return out;
+};
+
+test('TESA-LORE Falinesti, the city in the boughs (UESP: "Bosmer live ... coaxing the living wood into pathways winding around hide structures nestled in hollows"): hide houses on every platform and at every limb\'s fork on its deck; the walkway winding up the trunk from the ground to the highest platform, a turn a level, walkable', () => {
+  const F = FALINESTI, m = buildGrahtOak(), hide = trisOf(m, CAPITAL_ART.hide);
+  sane(m);
+  const housesAt = (pred) => hide.filter((t) => t.every(pred)).length;
+  for (const y of F.platforms) assert.ok(housesAt((p) => p[1] >= y - 0.01 && p[1] <= y + F.hutH + 0.01) >= F.huts * 8, `the houses on the platform at ${y}`);
+  const forks = limbForks();
+  assert.equal(forks.length, F.limbs);
+  for (const [x, y, z] of forks) {
+    assert.equal(crosses(m, [x, y + 0.3, z], [x, y - 0.9, z]), true, `a deck at the fork ${x.toFixed(0)},${z.toFixed(0)}`);
+    assert.ok(housesAt((p) => Math.hypot(p[0] - x, p[2] - z) < F.forkDeck && p[1] >= y - 0.01) >= 16, 'its two houses on it');
+  }
+  assert.deepEqual(spiralAt(0), [0, 0], 'from the ground');
+  F.platforms.forEach((y, k) => assert.ok(Math.abs(spiralAt((k + 1) / F.platforms.length)[1] - y) < 1e-9 && Math.abs(spiralAt((k + 1) / F.platforms.length)[0] - (k + 1) * Math.PI * 2) < 1e-9, `a turn to the platform at ${y}`));
+  for (let i = 1; i < 40; i++) {
+    const [a, y] = spiralAt(i / 40), r = spiralInner(y) + F.spiral.w / 2;
+    assert.equal(crossesUp(m, [Math.cos(a) * r, y + 0.6, Math.sin(a) * r], [Math.cos(a) * r, y - 0.6, Math.sin(a) * r]), true, `the walkway's floor at ${y.toFixed(1)}`);
+  }
+  let steep = 0;
+  for (const [a, b, c] of trisOf(m, CAPITAL_ART.timber)) {
+    const u = b.map((v, k) => v - a[k]), w = c.map((v, k) => v - a[k]), n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+    if (Math.abs(n[1]) > 0.5 * Math.hypot(...n)) steep = Math.max(steep, Math.hypot(n[0], n[2]) / Math.abs(n[1]));
+  }
+  assert.ok(steep < 0.6, `its decks walkable: ${steep.toFixed(2)}`);
+});
+
+// ── TORVAL ──────────────────────────────────────────────────────
+
+test('TESA-LORE Torval\'s estate (UESP: "the Mane\'s palaces stand among gardens of sugarcane laid out in symmetry, where the Mane meditates on a palanquin"): the palace\'s own blocks walled, its one gate south; the cane beds mirrored about the palace\'s axis, closed, off the palace and the palanquin, the estate\'s grass and its axis path between; the palanquin on its dais north of the palace, under its canopy', () => {
+  const to = capOf('torval'), T = TORVAL, E = T.estate, P = T.palace, Q = T.palanquin, own = TORVAL_BLOCKS.P0, beds = estateBeds();
+  assert.ok(beds.length >= 20);
+  const key = (b) => b.map((v) => v.toFixed(3)).join();
+  const set = new Set(beds.map(key));
+  for (const [x, z, w, d] of beds) {
+    assert.ok(set.has(key([-x, z, w, d])), `the mirror of ${x.toFixed(0)},${z.toFixed(0)}`);
+    assert.ok(Math.abs(x - P.x) + w / 2 < E.half && Math.abs(z - P.z) + d / 2 < E.half, 'within the wall');
+    assert.ok(Math.abs(x - P.x) - w / 2 > P.w / 2 + P.minaretR || Math.abs(z - P.z) - d / 2 > P.d / 2 + P.minaretR, 'off the palace');
+    assert.ok(Math.abs(x - P.x) - w / 2 > Q.dais / 2 || Math.abs(z - P.z - Q.dz) - d / 2 > Q.dais / 2, 'off the palanquin');
+    assert.equal(own.closed(x, z), true, 'a bed closed');
+  }
+  const [bx, bz, , bd] = beds[0];
+  assert.equal(own.closed(bx, bz + bd / 2 + (E.pitch - bd) / 2), false, 'the way between two beds open');
+  assert.deepEqual([own.tile(bx, bz + E.pitch / 2), own.tile(P.x, P.z + P.d / 2 + 10), own.tile(P.x, P.z + E.half + 10)], [2, 3, 3], 'the estate\'s grass, its axis path, the city\'s stone past its wall');
+  const m = buildManeEstate(), cellOf = (x, z) => TORVAL_PLAN[Math.floor(z / BLOCK_M + to.anchor[1])]?.[Math.floor(x / BLOCK_M + to.anchor[0])];
+  sane(m);
+  for (let i = 0; i < m.positions.length; i += 3) assert.ok(/^P\d$/.test(cellOf(m.positions[i], m.positions[i + 2])), 'the estate on the palace\'s own blocks');
+  const g = E.gateH / 2, sz = P.z + E.half;
+  assert.equal(crosses(m, [P.x, g, sz - 3], [P.x, g, sz + 3]), false, 'its gate south');
+  for (const [a, b] of [[[P.x + 40, g, sz - 3], [P.x + 40, g, sz + 3]], [[P.x - E.half - 3, g, P.z], [P.x - E.half + 3, g, P.z]], [[P.x + E.half - 3, g, P.z], [P.x + E.half + 3, g, P.z]], [[P.x, g, P.z - E.half - 3], [P.x, g, P.z - E.half + 3]]]) assert.equal(crosses(m, a, b), true, 'walled elsewhere');
+  assert.equal(own.closed(P.x, P.z + Q.dz), true, 'the palanquin\'s dais');
+  assert.ok(Q.dz < -(P.d / 2 + P.minaretR), 'north of the palace');
+  assert.equal(crosses(m, [P.x, Q.daisH + 5, P.z + Q.dz], [P.x, Q.daisH + 3, P.z + Q.dz]), true, 'its canopy');
+  assert.ok(m.subMeshes.some((sm) => sm.textureRecord === CAPITAL_ART.cane) && m.subMeshes.some((sm) => sm.textureRecord === CAPITAL_ART.cloth));
+  assert.ok(to.models.includes(CAPITAL_MODELS.maneEstate));
+  _resetCapitals();
+  installCapitals({ addTextures: () => 0 });
+  assert.ok(customModelFor(CAPITAL_MODELS.maneEstate)?.positions?.length > 0, 'installed');
+});
+
+test('TESA-LORE Torval\'s moons: a gilt crescent over every dome of the palace, its minarets and the Temple of the Two Moons - none a spike', () => {
+  const T = TORVAL, P = T.palace, M = T.temple, top = M.tiers.length * M.tierH;
+  const goldOver = (m, x, z, y, r) => { const g = trisOf(m, CAPITAL_ART.gold).filter((t) => t.every((p) => Math.hypot(p[0] - x, p[2] - z) < r * 1.4 && p[1] > y - 0.5)); return g.length; };
+  const pal = buildManePalace(), tem = buildTwoMoonsTemple();
+  assert.ok(goldOver(pal, P.x, P.z, P.h + P.drumH + P.domeH - 0.4, 2.6) >= 50, 'the palace\'s dome');
+  for (const sx of [1, -1]) for (const sz of [1, -1]) assert.ok(goldOver(pal, P.x + sx * (P.w / 2 + P.minaretR * 0.4), P.z + sz * (P.d / 2 + P.minaretR * 0.4), P.minaretH + 0.8 + P.minaretR * 1.3 - 0.2, 1.1) >= 50, 'a minaret\'s');
+  for (const [dx, r, h] of [M.masser, M.secunda]) assert.ok(goldOver(tem, M.x + dx, M.z, top + M.drumH + h - 0.2, r * 0.16) >= 50, 'each moon\'s dome');
+  // a crescent's horns stand off its axis: the palace's highest gilt is not on it
+  let hi = null;
+  for (const t of trisOf(pal, CAPITAL_ART.gold)) for (const p of t) if (!hi || p[1] > hi[1]) hi = p;
+  assert.ok(Math.hypot(hi[0] - P.x, hi[2] - P.z) > 1.5, 'its horns, not a point');
+});
+
+// ── HELSTROM ────────────────────────────────────────────────────
+
+test('TESA-LORE Helstrom in the heart-mud (UESP: "the marsh of Helstrom is very dense and heavily consumed by Heart-Mud"): its own ground the mud but the paving at the Xanmeer\'s foot; the Hist grown greater, its standing stones ringed about it on its isle - closed, the way between open', () => {
+  const H = HELSTROM, X = H.xanmeer, own = HELSTROM_BLOCKS.X0, T = H.hist;
+  assert.deepEqual([own.tile(X.paved + 10, -X.paved - 10), own.tile(0, X.tiers[0] / 2 + 6), own.tile(T.x, T.z), own.tile(150, 150)], [1, 3, 2, 0], 'the mud, the paving, the isle, the canal');
+  assert.ok(T.h >= 60 && T.crown >= 30, 'grown from its 44 m');
+  const m = buildHist(), stones = histStones();
+  sane(m);
+  assert.equal(stones.length, T.stones);
+  for (const [x, z] of stones) {
+    assert.ok(Math.hypot(x - T.x, z - T.z) + T.stoneW < T.isle, 'on its isle');
+    assert.equal(own.closed(x, z), true, 'a stone');
+    assert.equal(crosses(m, [x - 3, T.stoneH / 2, z], [x + 3, T.stoneH / 2, z]), true, 'its pillar');
+  }
+  const [ax, az] = stones[0], [bx, bz] = stones[1];
+  assert.equal(own.closed((ax + bx) / 2, (az + bz) / 2), false, 'the way between');
+  let top = 1;
+  for (let i = 1; i < m.positions.length; i += 3) if (m.positions[i] > m.positions[top]) top = i;
+  assert.ok(m.positions[top] > T.h, 'its crown over its trunk\'s height');
 });

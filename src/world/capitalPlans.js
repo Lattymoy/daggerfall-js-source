@@ -123,13 +123,19 @@ export const ALINOR_DISTRICTS = cells({
 // ---------------------------------------------------------------- Falinesti
 
 /** FALINESTI'S MEASURES, metres from its anchor (the Great Graht-Oak's axis): the trunk's levels, its roots, its
- *  limbs, the crown of leaves over the whole city, the platforms round the trunk. */
+ *  limbs, the crown of leaves over the whole city, the platforms round the trunk. TESA-LORE (UESP's Falinesti and its
+ *  graht-oaks): "the city sits in the boughs" - "in their mighty boughs, Bosmer live alongside the ape-like Imga ...
+ *  coaxing the living wood into pathways winding around hide structures nestled in hollows": a fourth platform, the
+ *  walkway winding up the trunk from the ground to the highest (`spiral`), hide houses on every platform (`huts`) and at
+ *  every limb's fork on a deck of its own (`forkDeck`). */
 export const FALINESTI = Object.freeze({
   trunk: Object.freeze([[-3, 34], [20, 28], [60, 22], [100, 18], [140, 15], [170, 12]]),
   roots: 10, rootOut: 64,
   limbs: 9, limbFrom: Object.freeze([100, 150]), limbOut: Object.freeze([95, 140]), limbTop: Object.freeze([150, 185]),
   crown: Object.freeze({ y: 178, r: 160, blobs: 26 }),
-  platforms: Object.freeze([30, 62, 94]), platformW: 8,
+  platforms: Object.freeze([30, 62, 94, 126]), platformW: 12,
+  spiral: Object.freeze({ gap: 2.5, w: 4, rail: 1.1, steps: 48 }),
+  huts: 6, hutR: 3, hutH: 5, hutAt: 8.2, forkDeck: 7.5,
   foot: 40, soil: 70,
 });
 const falinestiTile = (dx, dz) => (Math.hypot(dx, dz) < FALINESTI.soil ? 1 : 2);
@@ -156,17 +162,41 @@ export const FALINESTI_DISTRICTS = cells({
 // ---------------------------------------------------------------- Torval
 
 /** TORVAL'S MEASURES, metres from its anchor (between the Mane's Palace and the Temple of the Two Moons): the palace
- *  north, the temple's terraces south with Masser's dome and Secunda's, the quay on Topal Bay, the sandstone walls. */
+ *  north, the temple's terraces south with Masser's dome and Secunda's, the quay on Topal Bay, the sandstone walls.
+ *  TESA-LORE (UESP's Torval): "the Mane's palaces stand among gardens of sugarcane laid out in symmetry, where the Mane
+ *  meditates on a palanquin", the estates kept from outsiders, moon sugar being sacred - the palace's own four blocks a
+ *  walled estate (`estate`: its wall, its gate south to the temple) of sugarcane in beds mirrored about the palace's axis
+ *  (`estateBeds`), the Mane's palanquin on its dais on that axis north of the palace (`palanquin`). */
 export const TORVAL = Object.freeze({
   palace: Object.freeze({ x: 0, z: -102.4, w: 64, d: 52, h: 18, domeR: 18, drumH: 6, domeH: 22, minaretR: 3.5, minaretH: 42 }),
   temple: Object.freeze({ x: 0, z: 102.4, tiers: Object.freeze([70, 54, 40]), tierH: 4, masser: Object.freeze([-9, 11, 13]), secunda: Object.freeze([12, 7, 9]), drumH: 5 }),
+  estate: Object.freeze({ half: 98, h: 4, thick: 1.2, gate: 12, gateH: 6, path: 4, bedH: 2.8, bedD: 6, pitch: 15 }),
+  palanquin: Object.freeze({ dz: -66, dais: 10, daisH: 1.2 }),
   quay: Object.freeze({ edge: 368, piers: Object.freeze([-260, -120, 120, 260]), pierTo: 440, pierW: 6, deck: 1.2 }),
   wall: Object.freeze({ west: -329.2, east: 329.2, north: -226.8, south: 364, thick: 5, h: 12, gate: 10, gateH: 8, tower: 9, towerH: 17, every: 115 }),
 });
-const torvalTile = (dx, dz) => (dz >= TORVAL.quay.edge ? 0 : 3);
+/** TESA-LORE: the estate's cane beds, each [its middle x, its middle z, its length along x, its depth along z] - beside the
+ *  palace east and west in rows the estate's length, and north of it either side of the palanquin's way; every one with
+ *  its mirror across the palace's axis. */
+export function estateBeds(T = TORVAL) {
+  const E = T.estate, P = T.palace, out = [], x0 = P.w / 2 + P.minaretR * 2 + 4, x1 = E.half - 6, n0 = T.palanquin.dais / 2 + E.path, n1 = x0 - E.path;
+  for (let z = P.z - E.half + 10; z <= P.z + E.half - 10; z += E.pitch) for (const s of [1, -1]) out.push([s * (x0 + x1) / 2, z, x1 - x0, E.bedD]);
+  for (let z = P.z - E.half + 10; z + E.bedD / 2 < P.z - P.d / 2 - P.minaretR * 2 - 2; z += E.pitch) for (const s of [1, -1]) out.push([s * (n0 + n1) / 2, z, n1 - n0, E.bedD]);
+  return out;
+}
+/** The estate's ground: grass inside its wall, its paths stone - the way from its gate up the palace's axis, and round the
+ *  beds. */
+function torvalTile(dx, dz) {
+  if (dz >= TORVAL.quay.edge) return 0;
+  const E = TORVAL.estate, P = TORVAL.palace;
+  if (Math.abs(dx - P.x) >= E.half - 1 || Math.abs(dz - P.z) >= E.half - 1) return 3;
+  return Math.abs(dx - P.x) < E.path ? 3 : 2;
+}
 function torvalClosed(dx, dz) {
-  const P = TORVAL.palace, T = TORVAL.temple;
+  const P = TORVAL.palace, T = TORVAL.temple, Q = TORVAL.palanquin;
   if (inBox(dx, dz, P.x, P.z, P.w + 2 * P.minaretR, P.d + 2 * P.minaretR)) return true;
+  if (inBox(dx, dz, P.x, P.z + Q.dz, Q.dais, Q.dais)) return true;
+  if (estateBeds().some(([x, z, w, d]) => inBox(dx, dz, x, z, w, d))) return true;
   return inBox(dx, dz, T.x, T.z, T.tiers[0], T.tiers[0]);
 }
 export const TORVAL_BLOCKS = ownBlocks('TO', ['P0', 'P1', 'P2', 'P3', 'M0', 'M1', 'M2', 'M3', 'Q0', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5'], torvalTile, torvalClosed);
@@ -192,22 +222,29 @@ export const TORVAL_DISTRICTS = cells({
 // ---------------------------------------------------------------- Helstrom
 
 /** HELSTROM'S MEASURES, metres from its anchor (the Great Xanmeer's axis): the stepped pyramid and its shrine, the Hist
- *  on its isle in the canal, the boardwalks over the canal, the palisade round the city with its watchtowers. */
+ *  on its isle in the canal, the boardwalks over the canal, the palisade round the city with its watchtowers. TESA-LORE
+ *  (UESP's Helstrom): "found in the impenetrable center of Black Marsh"; "the marsh of Helstrom is very dense and heavily
+ *  consumed by Heart-Mud, which is reportedly very dark in color" - the city's own ground the heart-mud but the paving at
+ *  the Xanmeer's foot (`paved`); the Hist the heart of an Argonian city, grown greater (it stood 44 m) and ringed on its
+ *  isle by standing stones (`stones`). */
 export const HELSTROM = Object.freeze({
-  xanmeer: Object.freeze({ tiers: Object.freeze([84, 68, 52, 36, 20]), tierH: 6, shrine: 14, shrineH: 8, stair: 8 }),
-  hist: Object.freeze({ x: -51.2, z: 153.6, isle: 40, r: 7, h: 44, crown: 22 }),
+  xanmeer: Object.freeze({ tiers: Object.freeze([84, 68, 52, 36, 20]), tierH: 6, shrine: 14, shrineH: 8, stair: 8, paved: 58 }),
+  hist: Object.freeze({ x: -51.2, z: 153.6, isle: 40, r: 9, h: 64, crown: 30, stones: 8, stoneR: 27, stoneW: 2.4, stoneH: 6 }),
   canal: Object.freeze({ z0: 102.4, z1: 204.8 }),
   walks: Object.freeze([-153.6, 153.6]), walkW: 6, walkDeck: 0.8,
   palisade: Object.freeze({ west: -327.2, east: 327.2, north: -224.8, south: 429.6, h: 6, gate: 10, tooth: 0.8, tower: 6, towerH: 12 }),
 });
 function helstromTile(dx, dz) {
-  const H = HELSTROM.hist;
+  const H = HELSTROM.hist, X = HELSTROM.xanmeer;
   if (dz > HELSTROM.canal.z0 && dz < HELSTROM.canal.z1) return Math.hypot(dx - H.x, dz - H.z) < H.isle ? 2 : 0;
-  return 3;
+  return Math.abs(dx) < X.paved && Math.abs(dz) < X.paved ? 3 : 1;   // TESA-LORE: the heart-mud, paved at the Xanmeer's foot
 }
+/** TESA-LORE: the Hist's standing stones on its isle, each [x, z]. */
+export const histStones = (H = HELSTROM.hist) => Array.from({ length: H.stones }, (_, i) => { const a = ((i + 0.5) / H.stones) * Math.PI * 2; return [H.x + Math.cos(a) * H.stoneR, H.z + Math.sin(a) * H.stoneR]; });
 function helstromClosed(dx, dz) {
   const X = HELSTROM.xanmeer, H = HELSTROM.hist;
   if (Math.abs(dx) < X.tiers[0] / 2 && Math.abs(dz) < X.tiers[0] / 2) return true;
+  if (histStones().some(([x, z]) => inBox(dx, dz, x, z, H.stoneW + 1, H.stoneW + 1))) return true;
   return Math.hypot(dx - H.x, dz - H.z) < H.r + 2;
 }
 export const HELSTROM_BLOCKS = ownBlocks('HE', ['X0', 'X1', 'X2', 'X3', 'H0'], helstromTile, helstromClosed);

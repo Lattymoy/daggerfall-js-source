@@ -198,15 +198,21 @@ test('TESA10c Torval: the palace\'s dome over its roof and its four minarets; th
   const T = TORVAL, palace = buildManePalace(), temple = buildTwoMoonsTemple(), quay = buildTorvalQuay(), wall = buildTorvalWall();
   for (const m of [palace, temple, quay, wall]) sane(m);
   const P = T.palace, pb = bounds(palace);
-  assert.ok(Math.abs(pb.hi[1] - Math.max(P.h + P.drumH + P.domeH - 0.4 + 6, P.minaretH + 0.8 + P.minaretR * 1.3 - 0.2 + 2.4)) < 1e-3);
+  // PIN MOVED (TESA-LORE): the domes' finials crescent moons - the palace's the top, over its dome's axis
+  const domeTop = P.h + P.drumH + P.domeH - 0.4;
+  assert.ok(pb.hi[1] > domeTop + 2.6 && pb.hi[1] < domeTop + 2.6 * 1.4, `its moon over its dome: ${pb.hi[1].toFixed(2)}`);
+  let ptop = 1;
+  for (let i = 1; i < palace.positions.length; i += 3) if (palace.positions[i] > palace.positions[ptop]) ptop = i;
+  assert.ok(Math.hypot(palace.positions[ptop - 1] - P.x, palace.positions[ptop + 1] - P.z) < 2.6 * 1.3, 'over its dome, not a minaret');
   assert.ok(T.temple.masser[1] > T.temple.secunda[1] && T.temple.masser[2] > T.temple.secunda[2]);
   const M = T.temple, top = M.tiers.length * M.tierH;
   assert.equal(crosses(temple, [M.x, top / 2 + 3, M.z - M.tiers[0] / 2 - 9], [M.x, top / 2 - 6, M.z - M.tiers[0] / 2 - 9]), true, 'the stair north');
-  assert.ok(Math.abs(bounds(temple).hi[1] - (top + M.drumH + M.masser[2])) < 1e-3, 'Masser\'s the top');
-  let hi = 0;
-  for (let i = 1; i < temple.positions.length; i += 3) if (temple.positions[i] > temple.positions[hi * 3 + 1]) hi = (i - 1) / 3;
-  const owner = temple.subMeshes.find((sm) => { for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i++) if (temple.indices[i] === hi) return true; return false; });
-  assert.equal(owner.textureRecord, CAPITAL_ART.terracotta, 'Masser red');
+  const tt = bounds(temple).hi[1], mt = top + M.drumH + M.masser[2];
+  assert.ok(tt > mt && tt < mt + M.masser[1] * 0.16 * 1.4, 'Masser\'s moon the top (PIN MOVED, TESA-LORE: its crescent over its dome)');
+  let hi = -1;
+  const red = temple.subMeshes.find((sm) => sm.textureRecord === CAPITAL_ART.terracotta);
+  for (let i = red.startIndex; i < red.startIndex + red.primitiveCount * 3; i++) { const v = temple.indices[i]; if (hi < 0 || temple.positions[v * 3 + 1] > temple.positions[hi * 3 + 1]) hi = v; }
+  assert.ok(Math.abs(temple.positions[hi * 3 + 1] - mt) < 1e-3, 'Masser red, the highest dome');
   assert.ok(temple.positions[hi * 3] < M.x, 'Masser west of Secunda');
   const W = T.wall, midZ = (W.south + W.north) / 2, g = W.gateH / 2;
   assert.equal(crosses(wall, [0, g, W.north - 6], [0, g, W.north + 6]), false);

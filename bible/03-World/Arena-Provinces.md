@@ -665,6 +665,9 @@ mossy stone). No game data.
   shore (1922, 1704), the sea south. Tested on TAMRIEL1's shape where no trace is set: each on its own province's
   land, the shore capitals beside the sea, no two on one.
 - **Measured**: their landmarks draw in the stand-in view as laid. Not yet seen in the game.
+- **Moved by TESA-LORE** (below): Falinesti's city into its boughs (the walkway up the trunk, hide houses on its
+  platforms and its limbs' forks); Torval's palace in its walled estate of sugarcane with the Mane's palanquin, crescent
+  moons on its domes; Helstrom in the heart-mud, its Hist grown greater among standing stones.
 - **Moved by TESA-LORE** (below): Alinor's Crystal Tower retired (Summerset's, not Alinor's); its palace on three
   terraces with a grand stair; a river across its south under two bridges, out to the sea in the east.
 - **Moved by TESA-LORE** (below): Mournhold onto Tribunal's plan - the Temple Courtyard and the High Fane north, the
@@ -1041,10 +1044,37 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     tower on either bank (`alinorRiverGaps`). The Merchants' Ward is the row north of it; the quay - Alinor Harbour -
     the far bank, reached by the bridges. The houses, the tavern, the CUST block and the thieves' block of the row the
     river took went with it, the thieves' block into the Merchants' Ward.
+- **Falinesti** (`world/capitalPlans.js` FALINESTI; `world/capitalFalinesti.js`). UESP: "the city sits in the boughs of
+  a giant Elden Tree"; of the graht-oaks, "in their mighty boughs, Bosmer live alongside the ape-like Imga in a mobile
+  ecosystem, coaxing the living wood into pathways winding around hide structures nestled in hollows". TESA10c's oak held
+  three bare platforms over a city on the ground; the city is in its boughs now:
+  - **The walkway** winding up the trunk from the ground - a turn a level (`spiralAt`), its inner edge clear of the
+    bark (`spiralInner`), its deck, outer face and rail - to each platform and on to a fourth (30, 62, 94, 126 m; 12 m
+    wide now). Walkable throughout; where it rises from the ground it runs through the buttress roots, as living wood.
+  - **Hide houses** (`hideHut`: a cone of hide on its poles - the new picture `hide`, tanned panels stitched) six on
+    every platform, clear of the walkway's landing, and two on a timber deck at every limb's fork (`limbForks`, 130 to
+    175 m up, under the crown). Daggerfall's blocks stay at its foot - the engine's city - the oak's own above them.
+- **Torval** (`world/capitalPlans.js` TORVAL, `estateBeds`; `world/capitalTorval.js`). UESP: "its ruler's palaces stand
+  among gardens of sugarcane laid out in symmetry, where the Mane meditates on a palanquin", the estates kept from
+  outsiders, moon sugar being sacred. TESA10c's palace stood bare on its blocks:
+  - **The Mane's estate** (`buildManeEstate`, model 910154): the palace's four blocks walled in low sandstone, one gate
+    south to the temple; its ground grass (the estate's own tile law) with the palace's axis paved; sugarcane (the new
+    picture `cane`) in beds mirrored about that axis - twelve rows a side beside the palace and four a side north of it
+    - closed to the walkers, the ways between them open; the Mane's palanquin on its dais on the axis north of the
+    palace, its litter, posts, carrying poles and canopy of cloth.
+  - **The moons**: a gilt crescent (`crescent`, two arcs crossed, thick at the foot and thin at the horns) where a spike
+    stood on the palace's dome and its four minarets, and one on each of the Temple of the Two Moons' domes, Masser's
+    and Secunda's - the Khajiit's moons over their own temple.
+- **Helstrom** (`world/capitalPlans.js` HELSTROM, `histStones`; `world/capitalHelstrom.js`). UESP: "found in the
+  impenetrable center of Black Marsh"; "the marsh of Helstrom is very dense and heavily consumed by Heart-Mud, which is
+  reportedly very dark in color". The city's own ground is the heart-mud now (Daggerfall's dirt, record 1, the marsh's
+  dark ground) but the paving at the Xanmeer's foot (58 m about it); the Hist, the heart of an Argonian city, grown from
+  44 m to 64 m (its trunk 9 m, its crown 30 m) and ringed on its isle by eight standing stones of mossy stone under
+  their capstones, closed, the ways between them open.
 
 ## Pins
 
-`test/tesalore_capitals.test.js` (9, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
+`test/tesalore_capitals.test.js` (13, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
 and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
 other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
 ring each with its figure, Talos the tallest over the middle, the eight below him; the court paved, closed at its plinths
@@ -1060,15 +1090,22 @@ the palace's two doors); Alinor (no Crystal Tower in its models or CAPITAL_MODEL
 closed whole, the street round them open; the stair walkable, on its slope, clear above, the terraces beside it; the
 palace's door at its head) and its river (a row of water across the city to the sea, the city and the quay its banks;
 two bridges bank to bank, the water clear under their arches, walkable; the walls open at the river, walled north of it,
-a tower on either bank). Mutants `tools/mutants/tesalore.json` (41, all dead; the watch towers' own ground rule survived
-as the wall band's twin and went; the bridges' flat deck survived a first pin, which was made the arch's own). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
+a tower on either bank); Falinesti in its boughs (hide houses on every platform and on every fork's deck, the walkway
+from the ground a turn a level, its floor facing up at every sample, its decks walkable); Torval's estate (its beds
+mirrored, within its wall, off the palace and the palanquin, closed with the ways between open; its grass, its axis
+path; the estate wholly on the palace's own blocks, its gate south, walled elsewhere; the palanquin's dais and canopy;
+installed) and its moons (gilt over the palace's dome, its four minarets and both temple domes, the palace's horns off
+its axis); Helstrom in the heart-mud (the mud, the paving, the isle, the canal; the Hist grown; its stones on its isle,
+closed, their pillars, the way between open; its crown over its trunk). Mutants `tools/mutants/tesalore.json` (58, all
+dead; the watch towers' own ground rule survived as the wall band's twin and went; the bridges' flat deck survived a
+first pin, made the arch's own; the walkway's top survived a first pin through its underside, made the floor's own). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
 blocks, the college's district, the Hall of the Dead's cell), `test/tesa10c_capitals.test.js` (Mournhold's middle cells,
 its districts, its closed ground, its first own block's law, its plaza's ring, statue and porch - the porch's pin made
 specific: it passed with the porch turned; Alinor's palace's top on its terraces, the Crystal Tower's pins retired with
-it, its closed ground) and `test/audit_tesa.test.js` (Mournhold's start markers, through A6-1's own
+it, its closed ground; Torval's palace and temple tops their crescents') and `test/audit_tesa.test.js` (Mournhold's start markers, through A6-1's own
 law); `tools/mutants/tesa10.json`'s curtain-gate record and `tesa10c.json`'s five Mournhold records re-aimed (two
-renamed, `statue-open` and `fane-porch-turned`) and two of Alinor's, its `crystal-no-tip` deleted with its law, all
-judged dead but the plaza's recorded equivalent;
+renamed, `statue-open` and `fane-porch-turned`) and two of Alinor's, its `crystal-no-tip` deleted with its law, and two of
+Torval's (its quay's water, its dome's finial), all judged dead but the plaza's recorded equivalent;
 `test/tesa11_imperial.test.js` (the Prison's bearing, the slices' names, the Arboretum's grass off the court, the city
 wall's reach to its watch towers); `tools/mutants/tesa11.json`'s slice-names record re-aimed by content, judged dead.
 

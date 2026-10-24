@@ -80,7 +80,7 @@ export const CAPITAL_MODELS = Object.freeze({
   mournholdPlaza: 910120, highFane: 910121, mournholdPalace: 910122, greatBazaar: 910123, mournholdWall: 910124,
   alinorPalace: 910130, alinorHarbour: 910132, alinorWall: 910133, alinorBridges: 910134,   // TESA-LORE: the Crystal Tower's 910131 retired with it
   grahtOak: 910140,
-  manePalace: 910150, twoMoonsTemple: 910151, torvalQuay: 910152, torvalWall: 910153,
+  manePalace: 910150, twoMoonsTemple: 910151, torvalQuay: 910152, torvalWall: 910153, maneEstate: 910154,   // TESA-LORE: the estate
   xanmeer: 910160, hist: 910161, helstromWalks: 910162, palisade: 910163,
 });
 /** RMB geometry: a block's side in its own units and in metres, its ground tiles, its automap cells. */
@@ -190,7 +190,7 @@ export const CAPITALS = Object.freeze([
     anchor: Object.freeze([4, 4]), markers: Object.freeze([[80, 0], [-80, 0], [0, 80], [0, -80]]), blocks: FALINESTI_BLOCKS, models: Object.freeze([CAPITAL_MODELS.grahtOak]) }),
   Object.freeze({ key: 'torval', tag: 'TO', name: 'Torval', province: 'Elsweyr', at: Object.freeze([156, 168]), shore: true, plan: TORVAL_PLAN, districts: TORVAL_DISTRICTS,
     gates: Object.freeze(['N', 'E', 'W']),   // TESA14: its landward sides (the quay on Topal Bay, south)
-    anchor: Object.freeze([4, 3]), markers: Object.freeze([[0, 20], [-60, 20], [60, 20], [100, 340]]), blocks: TORVAL_BLOCKS, models: Object.freeze([CAPITAL_MODELS.manePalace, CAPITAL_MODELS.twoMoonsTemple, CAPITAL_MODELS.torvalQuay, CAPITAL_MODELS.torvalWall]) }),
+    anchor: Object.freeze([4, 3]), markers: Object.freeze([[0, 20], [-60, 20], [60, 20], [100, 340]]), blocks: TORVAL_BLOCKS, models: Object.freeze([CAPITAL_MODELS.manePalace, CAPITAL_MODELS.twoMoonsTemple, CAPITAL_MODELS.torvalQuay, CAPITAL_MODELS.torvalWall, CAPITAL_MODELS.maneEstate]) }),
   Object.freeze({ key: 'helstrom', tag: 'HE', name: 'Helstrom', province: 'BlackMarsh', at: Object.freeze([254, 128]), shore: false, plan: HELSTROM_PLAN, districts: HELSTROM_DISTRICTS,
     gates: Object.freeze(['N', 'S']),   // TESA14: the palisade's north and south gates
     anchor: Object.freeze([4, 3]), markers: Object.freeze([[70, 0], [-70, 0], [0, 70], [0, -70]]), blocks: HELSTROM_BLOCKS, models: Object.freeze([CAPITAL_MODELS.xanmeer, CAPITAL_MODELS.hist, CAPITAL_MODELS.helstromWalks, CAPITAL_MODELS.palisade]) }),

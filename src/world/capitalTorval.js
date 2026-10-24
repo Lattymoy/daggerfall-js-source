@@ -3,13 +3,30 @@
 // signatures (world/capitalPlans.js TORVAL says where each stands) - the Mane's Palace under its great dome with its four
 // minarets, the Temple of the Two Moons on its terraces with Masser's dome and Secunda's, the quay on Topal Bay, the
 // sandstone walls with their domed towers - in metres, drawn as the map reads (+z south), every model's origin Torval's
-// anchor on its ground. Shapes of the port's own in the spirit of the city's look. No game data.
+// anchor on its ground. TESA-LORE: the palace's estate of sugarcane in mirrored beds within its own wall, the Mane's
+// palanquin on its dais, and a gilt crescent moon on every dome. Shapes of the port's own in the spirit of the city's
+// look. No game data.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ledge, translated, gatedRun, hall, crenels, darkDoor, dome, squareTower, outward } from './capitalShapes.js';
-import { TORVAL } from './capitalPlans.js';
+import { CAPITAL_ART, art, taper, ledge, translated, gatedRun, hall, crenels, darkDoor, dome, squareTower, outward, limb, pyramid } from './capitalShapes.js';
+import { TORVAL, estateBeds } from './capitalPlans.js';
 
 const SAND = art(CAPITAL_ART.sandstone), TERRA = art(CAPITAL_ART.terracotta), GOLD = art(CAPITAL_ART.gold), MARBLE = art(CAPITAL_ART.marble);
-const DARK = art(CAPITAL_ART.dark), TIMBER = art(CAPITAL_ART.timber);
+const DARK = art(CAPITAL_ART.dark), TIMBER = art(CAPITAL_ART.timber), CANE = art(CAPITAL_ART.cane), CLOTH = art(CAPITAL_ART.cloth);
+
+/**
+ * TESA-LORE: A CRESCENT MOON of gilt at (x, y, z) - the Khajiit's moons over their domes: a short shaft, then an arc of
+ * radius `r` opening upward, thick at its foot and thin at its horns, twice (crossed), so it reads from every side.
+ */
+export function crescent(mb, x, y, z, r, tex = GOLD) {
+  taper(mb, tex, 6, r * 0.12, y, r * 0.08, y + r * 0.5, { vRepeat: 1 });
+  const cy = y + r * 1.3, n = 8, a0 = Math.PI * 1.05, a1 = Math.PI * 1.95;
+  for (const [ux, uz] of [[1, 0], [0, 1]]) {
+    for (let i = 0; i < n; i++) {
+      const t0 = i / n, t1 = (i + 1) / n, b0 = a0 + (a1 - a0) * t0, b1 = a0 + (a1 - a0) * t1, th = (t) => r * (0.06 + 0.16 * Math.sin(Math.PI * t));
+      limb(mb, tex, [x + ux * Math.cos(b0) * r, cy + Math.sin(b0) * r, z + uz * Math.cos(b0) * r], [x + ux * Math.cos(b1) * r, cy + Math.sin(b1) * r, z + uz * Math.cos(b1) * r], th(t0), th(t1), { n: 5 });
+    }
+  }
+}
 
 /** A minaret at (x, z): its slender shaft, a balcony's ledge two-thirds up, its small dome and gilt finial. */
 export function minaret(mb, x, z, r, h, { wall = SAND, roof = TERRA } = {}) {
@@ -19,7 +36,7 @@ export function minaret(mb, x, z, r, h, { wall = SAND, roof = TERRA } = {}) {
     ledge(mb, wall, 10, r * 0.85 + 0.4, r * 0.85, h, h + 0.8);
   });
   dome(mb, roof, x, h + 0.8, z, r, r * 1.3, { n: 10, rings: 5, onion: 0.35 });
-  translated(mb, x, h + 0.8 + r * 1.3 - 0.2, z, () => taper(mb, GOLD, 6, 0.3, 0, 0.02, 2.4, { vRepeat: 1 }));
+  crescent(mb, x, h + 0.8 + r * 1.3 - 0.2, z, 1.1);   // TESA-LORE: its moon, where a spike stood
 }
 
 /**
@@ -35,7 +52,7 @@ export function buildManePalace(T = TORVAL) {
     ledge(mb, GOLD, 16, P.domeR + 0.5, P.domeR, P.h + P.drumH - 0.8, P.h + P.drumH);
   });
   dome(mb, TERRA, P.x, P.h + P.drumH, P.z, P.domeR, P.domeH, { n: 16, rings: 7, onion: 0.3 });
-  translated(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, () => taper(mb, GOLD, 8, 0.8, 0, 0.03, 6, { vRepeat: 2 }));
+  crescent(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, 2.6);   // TESA-LORE: its moon, where a spike stood
   for (const sx of [1, -1]) for (const sz of [1, -1]) minaret(mb, P.x + sx * (P.w / 2 + P.minaretR * 0.4), P.z + sz * (P.d / 2 + P.minaretR * 0.4), P.minaretR, P.minaretH);
   darkDoor(mb, DARK, P.x, P.z + P.d / 2, 6, 9, [0, 1]);
   return mb.build();
@@ -52,12 +69,37 @@ export function buildTwoMoonsTemple(T = TORVAL) {
   for (const [[dx, r, h], tex] of [[M.masser, TERRA], [M.secunda, MARBLE]]) {
     translated(mb, M.x + dx, 0, M.z, () => taper(mb, SAND, 14, r, top, r, top + M.drumH, { vRepeat: 4 }));
     dome(mb, tex, M.x + dx, top + M.drumH, M.z, r, h, { n: 14, rings: 6 });
+    crescent(mb, M.x + dx, top + M.drumH + h - 0.2, M.z, r * 0.16);   // TESA-LORE: each moon's own over its dome
   }
   // the stair: a ramp from the ground to the top terrace's north edge
   const w = 8, z0 = M.z - M.tiers[0] / 2 - 18, z1 = M.z - M.tiers[M.tiers.length - 1] / 2;
   const a = [M.x - w / 2, 0, z0], b = [M.x + w / 2, 0, z0], c = [M.x + w / 2, top, z1], d = [M.x - w / 2, top, z1];
   mb.quad(SAND, a, b, c, d, outward(a, b, c, [M.x, 0, M.z]), [[0, 0], [2, 0], [2, -8], [0, -8]]);
   for (const s of [1, -1]) mb.tri(SAND, [M.x + s * w / 2, 0, z0], [M.x + s * w / 2, 0, z1], [M.x + s * w / 2, top, z1], [s, 0, 0]);
+  return mb.build();
+}
+
+/**
+ * TESA-LORE: THE MANE'S ESTATE - "the Mane's palaces stand among gardens of sugarcane laid out in symmetry, where the
+ * Mane meditates on a palanquin" (UESP): its own low wall of sandstone round the palace's four blocks, its one gate south
+ * to the temple; its sugarcane in beds mirrored about the palace's axis (`estateBeds`); the palanquin on its dais on the
+ * axis north of the palace - its litter, its four posts, its canopy of cloth, its poles fore and aft.
+ */
+export function buildManeEstate(T = TORVAL) {
+  const mb = new MeshBuilder(), E = T.estate, P = T.palace, h = E.half;
+  const ne = [P.x + h, P.z - h], nw = [P.x - h, P.z - h], sw = [P.x - h, P.z + h], se = [P.x + h, P.z + h];
+  for (const [p, q] of [[ne, nw], [nw, sw], [se, ne]]) { hall(mb, SAND, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2, Math.abs(q[0] - p[0]) + E.thick, Math.abs(q[1] - p[1]) + E.thick, -1, E.h, 0.25); }
+  gatedRun(mb, SAND, sw, se, E.thick, E.h, h, E.gate, E.gateH);
+  for (const [x, z, w, d] of estateBeds(T)) hall(mb, CANE, x, z, w, d, -0.3, E.bedH, 0.3);
+  const Q = T.palanquin, qz = P.z + Q.dz;
+  hall(mb, SAND, P.x, qz, Q.dais, Q.dais, -1, Q.daisH, 0.25);
+  const y = Q.daisH;
+  hall(mb, TIMBER, P.x, qz, 2.4, 3.4, y + 0.6, y + 1.3, 0.5);
+  for (const sx of [1, -1]) {
+    for (const sz of [1, -1]) mb.box(TIMBER, [P.x + sx * 1.05, y + 2.1, qz + sz * 1.55], [0.18, 1.6, 0.18], 0.5);
+    mb.box(TIMBER, [P.x + sx * 0.9, y + 0.9, qz], [0.16, 0.16, 6.4], 0.5);   // its carrying poles
+  }
+  pyramid(mb, CLOTH, P.x, qz, 2.9, 3.9, y + 2.9, 1.3);
   return mb.build();
 }
 

@@ -19,7 +19,7 @@ import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour,
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
 import { buildGrahtOak } from './capitalFalinesti.js';
-import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall } from './capitalTorval.js';
+import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall, buildManeEstate } from './capitalTorval.js';
 import { buildXanmeer, buildHist, buildHelstromWalks, buildPalisade } from './capitalHelstrom.js';
 
 export { CAPITAL_ARCHIVE, CAPITAL_ART };
@@ -98,6 +98,12 @@ export function capitalArt() {
   out.set(CAPITAL_ART.terracotta, picture((x, y) => (y % 5 === 0 ? [120, 54, 30] : mix([184, 86, 44], [222, 128, 70], glaze(x, y)))));
   const moss = noise(0x8101, 8), stone = ashlar(0x3f66, [92, 104, 84], [48, 56, 44], 14, 28, 0.5);
   out.set(CAPITAL_ART.mossStone, picture((x, y) => { const i = (y * CAPITAL_ART_SIZE + x) * 4, c = [stone.data[i], stone.data[i + 1], stone.data[i + 2]]; return moss(x, y) > 0.55 ? mix(c, [40, 96, 36], 0.4) : c; }));
+  // TESA-LORE: tanned hide in panels, their seams stitched
+  const tan = noise(0x8201, 10);
+  out.set(CAPITAL_ART.hide, picture((x, y) => ((x % 21 === 0 && y % 3 !== 0) || (y % 32 === 0 && x % 3 !== 0) ? [92, 66, 40] : mix([150, 112, 72], [196, 158, 110], tan(x, y)))));
+  // TESA-LORE: sugarcane - its stalks close-set, their nodes pale, leaves dark between
+  const stalk = noise(0x8301, 16);
+  out.set(CAPITAL_ART.cane, picture((x, y) => { const s = x % 6; return s === 0 ? [46, 82, 30] : (y + (Math.floor(x / 6) * 7)) % 13 === 0 ? [188, 196, 120] : mix([110, 150, 64], [160, 190, 96], stalk(x, y) * 0.6 + (s === 3 ? 0.3 : 0)); }));
   return out;
 }
 
@@ -205,6 +211,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.twoMoonsTemple]: () => buildTwoMoonsTemple(),
     [CAPITAL_MODELS.torvalQuay]: () => buildTorvalQuay(),
     [CAPITAL_MODELS.torvalWall]: () => buildTorvalWall(),
+    [CAPITAL_MODELS.maneEstate]: () => buildManeEstate(),   // TESA-LORE
     [CAPITAL_MODELS.xanmeer]: () => buildXanmeer(),
     [CAPITAL_MODELS.hist]: () => buildHist(),
     [CAPITAL_MODELS.helstromWalks]: () => buildHelstromWalks(),

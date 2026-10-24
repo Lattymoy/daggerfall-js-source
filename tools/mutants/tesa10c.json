@@ -110,8 +110,8 @@
   {
     "name": "TESA10c-torval-quay-dry",
     "file": "src/world/capitalPlans.js",
-    "old": "const torvalTile = (dx, dz) => (dz >= TORVAL.quay.edge ? 0 : 3);",
-    "new": "const torvalTile = () => 3;",
+    "old": "  if (dz >= TORVAL.quay.edge) return 0;\n",
+    "new": "",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "TESA10c-palace-dome-low",
     "file": "src/world/capitalTorval.js",
-    "old": "  translated(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, () => taper(mb, GOLD, 8, 0.8, 0, 0.03, 6, { vRepeat: 2 }));",
-    "new": "  translated(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, () => taper(mb, GOLD, 8, 0.8, 0, 0.03, 2, { vRepeat: 2 }));",
+    "old": "  crescent(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, 2.6);   // TESA-LORE: its moon, where a spike stood",
+    "new": "  crescent(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, 1);   // TESA-LORE: its moon, where a spike stood",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
