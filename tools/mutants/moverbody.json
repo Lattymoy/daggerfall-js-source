@@ -212,15 +212,15 @@
   {
     "name": "VOID-DUNGEON-the-enter-marker-first",
     "file": "src/scenes/dungeonContext.js",
-    "old": "dungeonVoidRescue(collider, () => api.startSpawn({ preferEnterMarker: false }) ?? api.startSpawn(), _sdRealm || _egHall)",
-    "new": "dungeonVoidRescue(collider, () => api.startSpawn(), _sdRealm || _egHall)",
+    "old": "dungeonVoidRescue(collider, () => api.startSpawn({ preferEnterMarker: false }) ?? api.startSpawn(), _sdRealm || _egHall || _ketch)",
+    "new": "dungeonVoidRescue(collider, () => api.startSpawn(), _sdRealm || _egHall || _ketch)",
     "tests": ["test/world/fb1019f_moverbody.test.js"]
   },
   {
     "name": "VOID-DUNGEON-the-breach-rescued",
     "file": "src/scenes/dungeonContext.js",
-    "old": "api.startSpawn(), _sdRealm || _egHall)",
-    "new": "api.startSpawn(), _sdRealm)",
+    "old": "api.startSpawn(), _sdRealm || _egHall || _ketch)",
+    "new": "api.startSpawn(), _sdRealm || _ketch)",
     "tests": ["test/world/fb1019f_moverbody.test.js"]
   },
   {

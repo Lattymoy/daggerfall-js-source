@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import {
   surfReach, breakerAt, surfGain, surfEdgeGain, lapGain, wildVoicesFor, marshGain, murmurGain, smithAtWork, tavernGain, createWorldAir, ensureTownBeds,
   SURF, LAP, MARSH, MURMUR, MURMUR_TWIN, MURMUR_WEATHER, SMITHY, TAVERN, BREAKER_CURL_S, BREAKER_PERIOD, CRASH_REACH, CRASH_PEAK_S, SURF_REF,
-  TOWN_WILD_GAP, TOWN_WILD_FAR, WORLD_FAR, WILD,
+  TOWN_WILD_GAP, TOWN_WILD_FAR, WORLD_AIR_FAR, WILD,
 } from '../../../src/systems/soundscape/worldAir.js';
 import { SCAPE_SFX } from '../../../src/systems/soundscape/soundscapeSfx.js';
 import { _resetMade } from '../../../src/systems/soundscape/soundJobs.js';
@@ -144,7 +144,7 @@ test('WORLD-AIR THE DRIVER\'S SHORE: the surf a bed AT the edge when its bearing
   assert.equal(e.beds.has(SURF.name), false, 'never flat and at the edge at once');
   const crashes = e.shots.filter((s) => SCAPE_SFX.shoreCrash.includes(s.clip));
   assert.ok(crashes.length >= 3 && crashes.length <= 9, `a wave every 5 to 11 s: ${crashes.length}`);
-  assert.ok(crashes.every((s) => s.pos[0] === 30 && s.far === WORLD_FAR));
+  assert.ok(crashes.every((s) => s.pos[0] === 30 && s.far === WORLD_AIR_FAR));
   e.shots.length = 0;
   assert.equal(CRASH_REACH, 90);
   run(air, 30, { ...LAND, shore: { dist: 120, dir: [1, 0] } });
@@ -197,7 +197,7 @@ test('WORLD-AIR THE DRIVER\'S WILD: a woodland night\'s owls near and wolves far
   const owls = e.shots.filter((s) => SCAPE_SFX.owl.includes(s.clip)), wolves = e.shots.filter((s) => SCAPE_SFX.howl.includes(s.clip));
   assert.ok(owls.length >= 6, `owls: ${owls.length}`);
   assert.ok(wolves.length >= 2, `wolves: ${wolves.length}`);
-  for (const s of owls) assert.ok(Math.hypot(s.pos[0], s.pos[2]) <= 55 && s.far === WORLD_FAR && s.volume <= 0.32);
+  for (const s of owls) assert.ok(Math.hypot(s.pos[0], s.pos[2]) <= 55 && s.far === WORLD_AIR_FAR && s.volume <= 0.32);
   for (const s of wolves) assert.ok(Math.hypot(s.pos[0], s.pos[2]) >= 160 && Math.hypot(s.pos[0], s.pos[2]) <= 420 && s.refDistance === 60);
   assert.equal(e.beds.has(MARSH.name), false, 'no marsh in the woods');
   e.shots.length = 0;
@@ -251,7 +251,7 @@ test('WORLD-AIR THE DRIVER\'S TOWN: the murmur and the tavern made of the player
   assert.equal(e.beds.has(MURMUR.name) || e.beds3d.has(TAVERN.name), false, 'out of town, none of it');
   runAt(e, air, 2, { ...LAND, inTown: true, hour: 12, shore: { dist: 10, dir: [1, 0] } });
   air.stop();
-  assert.deepEqual([[...e.beds.keys()], [...e.beds3d.keys()], e.faded], [[], [], [WORLD_FAR]]);
+  assert.deepEqual([[...e.beds.keys()], [...e.beds3d.keys()], e.faded], [[], [], [WORLD_AIR_FAR]]);
 });
 
 test('WORLD-AIR A PAUSE (AUDIT SOUNDSCAPE W7): a pause holds every clock - the wild\'s voices, the waves, the smith\'s bouts and every call queued - nothing played under it, the queue never bunched on the unpause; a smith\'s queued run let go the moment he stops (mutants: the wild\'s clock run under a pause; the smith at work under one; the queue\'s clock run; the smith\'s queue kept)', () => {

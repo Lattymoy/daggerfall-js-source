@@ -1582,7 +1582,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world254';   // world254: AUDIT FOE-KEEPS (2026-10-24, the owner, asked: "Credit the last player"; bible/01-Overview/audits/Audit-Foe-Keeps.md E2; NOT YET DEPLOYED): the zone word carries `dd` 1 - a fighter's word that it left the zone dying, which the referee did not see - and the relay names the last fair player to strike it within WILD_REF.creditMs its killer (net/wild/wildRef.js wildCredit, server/src/index.js _wildCredit): a fall made, said and signed as a blow's. A relay before it drops the field and credits nobody, as before
+export const RELAY_VERSION = 'world255';   // world255: KETCH (2026-10-24, world253 on its branch, renumbered past ROCKET1's world253 and AUDIT FOE-KEEPS' world254 at the merge; the owner: "A proper dwarven airship flies in once a week over the skies of daggerfall, and you, along with other players venture into it in a raid like format", "Make the dwarven event 8 player"; bible/11-Multiplayer/Sky-Ketch.md section 10; NOT YET DEPLOYED) - one frame, `kt` (validKetchIn, validKetchOut), in a crew's ship's room `kt:<voyage>.<owner>` alone: the Worker mints one only while its voyage holds its crews (net/ketch/ketchLaw.js ketchRoomHolds), the room admits its captain, staff and the captain's party (INSTANCES' kin) to KT_CREW_MAX, and runs the voyage (net/ketch/ketchBrain.js) and its Tonal Warden on the boss seam; the receipts are `y1` (net/ketch/ketchReceipt.js). A page boards only once its relay says KT_RELAY_MIN.
+// world254: AUDIT FOE-KEEPS (2026-10-24, the owner, asked: "Credit the last player"; bible/01-Overview/audits/Audit-Foe-Keeps.md E2; NOT YET DEPLOYED): the zone word carries `dd` 1 - a fighter's word that it left the zone dying, which the referee did not see - and the relay names the last fair player to strike it within WILD_REF.creditMs its killer (net/wild/wildRef.js wildCredit, server/src/index.js _wildCredit): a fall made, said and signed as a blow's. A relay before it drops the field and credits nobody, as before
 // world253: ROCKET1 (2026-10-23, the owner: "when I type /event rocket I want mounds to appear and shoot poop up from the ground and a horse to fart across the sky neighing and then smaller horses farting across the sky"; bible/11-Multiplayer/Rocket-Event.md; NOT YET DEPLOYED) - LIVE_EVENTS gains its third word, `rocket` (LIVE_EVENT_RELAY_MIN 253): the hub stages it, keeps it and says it as it says the dread and the sun baby. An older relay answers the word 'bad stage' and closes the socket, so a client sends `/event rocket` only through this one (relayKnowsLiveEvent); a client that does not know the word shows no event. Deploy the relay first, then the site.
 // world252: DECK-POSE (2026-10-23, world248 on its branch - renumbered past AUDIT EG-FALL's world248 and STAFF-PANEL5-MONSTERS' world249 at one merge, and past HERALD-CARDS' world250 and AUDIT MIXED-PAIR / SPELL-HAND's world251 at the next; the owner: "Players on board the ship jitter while sailing instead of staying put. Other players also slide when on board your ship/npc ships"; NOT YET DEPLOYED) - validPose carries `ab`, a place aboard a boat (validAboard: her owner, which of their boats, the feet in her frame), so a reader plays a passenger's place on a deck out with their walk. A relay before this field strips it and the reader falls back to the foes frame's `ab`, as before.
 // world251: AUDIT MIXED-PAIR / SPELL-HAND (2026-10-23, world249 on its branch - renumbered past STAFF-PANEL5-MONSTERS' world249 and HERALD-CARDS' world250 at the merge; the owner: "Audit this and ensure perfection", of MIXED-PAIR and SPELL-HAND - bible/01-Overview/audits/Audit-Mixed-Pair-Spell-Hand.md L4-3; bible/05-Combat/Two-Hands.md; NOT YET DEPLOYED): validPose carries `ah` - a pair's LEFT hand struck last - so the others draw a pair in both hands and play each strike with the hand that made it (net/peer/peerBodies.js peerHandsOf). A relay before this field strips it and the socket stays open: an older relay's peers play every strike with the right hand's weapon, as before.
@@ -2201,7 +2202,7 @@ export function inRangeOf(roomKey, from) {
   return (to) => !!to && Math.max(Math.abs(fx - Math.floor(to.x / PIXEL_UNITS)), Math.abs(fy - Math.floor(to.z / PIXEL_UNITS))) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'stage'|'mute'|'ban'|'renown'|'guild'|'guildout'|'home'|'world'|'foes'|'own'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'wed'|'park'|'caravan'|'look'|'gate'|'grant'|'siege'|'arena'|'raid'|'raidtowns'|'rite'|'star'|'ow'|'trav'|'amap'|'stp'|'cfg'|'find'|'serpent'|'sd'|'kt'|'eg'|'wild'|'wdun'|'holdem'|'iliac'|'gambit'|'lease', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/net/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -2328,6 +2329,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'star before hello' };
     const r = validStarIn(m);
     return r ? { t: 'star', ...r } : { error: 'bad star' };
+  }
+  if (m.t === 'kt') {   // KETCH: a word aboard a crew's ship - projected by validKetchIn; the ship's director (net/ketch/ketchBrain.js) judges it
+    if (!hasHello) return { error: 'kt before hello' };
+    const r = validKetchIn(m);
+    return r ? { t: 'kt', ...r } : { error: 'bad kt' };
   }
   if (m.t === 'eg') {   // EG-PLAY: a word on an Elite Breach - the open to the hub, a member's admission, door and blows to its room - projected by validEgIn; the hub and the room's director (net/eliteGates/egBrain.js) judge it
     if (!hasHello) return { error: 'eg before hello' };
@@ -6781,4 +6787,155 @@ export function validEgOpenTell(v) {
   if (!intIn(b.seed, 0, 0xffffffff) || !gateMs(b.op) || !co || !site || !co.some((t) => t[0] === b.s)) return null;
   const wg = Array.isArray(b.wg) && b.wg.length <= 3 && b.wg.every((x) => intIn(x, 0, 31)) ? [...b.wg] : [];
   return { b: b.b, ez: b.ez, s: b.s, o: sanitizeName(b.o), ew: b.ew, rh: b.rh, seed: b.seed, op: b.op, co, site, wg };
+}
+
+// ── KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md section 10): THE SKY-KETCH'S WORDS ──────────────────────────
+// One frame type, `kt`, in a crew's ship's room alone (`kt:<voyage>.<owner>` - net/ketch/ketchLaw.js; anywhere else
+// junk), behind its relay version: a relay before it closes the socket on a frame it does not know, so no page boards
+// until its relay says KT_RELAY_MIN. Each blow on it is the Spire's FULL shape stamp (egBlowW, above), with the Ketch's
+// two own fields: `a` the Warden's blow (its table's number) and `jp` 1 for one a jump lets pass.
+/** The relay that keeps ships (RELAY_VERSION world255 - world253 on its branch). */
+export const KT_RELAY_MIN = 255;
+export const relaySupportsKetch = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= KT_RELAY_MIN; };
+/** What a member may say: its `in` to the bridge's fight, a blow (`hit`), a cell taken, set, let go or knocked from its
+ *  hands, and its body's word (`vt`). */
+export const KT_IN_KINDS = Object.freeze(['in', 'hit', 'pick', 'bank', 'drop', 'hurt', 'vt', 'spent']);   // AUDIT KETCH L1-2: `spent`, a voyage's share given - to the hub alone
+/** What the room says (a page drops any other kind). */
+export const KT_OUT_KINDS = Object.freeze(['st', 'nb', 'mv', 'bl', 'hp', 'dn', 'sg', 'cl', 'wave', 'wk', 'drop', 'pick', 'bank', 'wf', 'ws', 'whp', 'ph', 'ward', 'rs', 'fk', 'fkh', 'fkb', 'stun', 'sec', 'lost', 'wl', 'fell', 'rcpt', 'no', 'bd']);
+/** The fight's brain, by number (the Hour's SD_BRAIN_V law): said on every `in`, refused below KT_BRAIN_MIN. */
+export const KT_BRAIN_V = 1;
+export const KT_BRAIN_MIN = 1;
+/** The ship's words' own bucket - the gate's fight's (its four blows a second, a swing's bodies under one `q`, the cells'
+ *  words), the relay's deeper. */
+export const KT_HZ = 16;
+export const ketchGate = (bucket, nowMs) => tokenGate(bucket, nowMs, KT_HZ);
+export const ketchRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, KT_HZ, KT_HZ + 4);
+/** The ship's bounds the wire reads (net/ketch/ketchDeck.js and ketchBrain.js - the wire imports no law, so they are pinned
+ *  equal there): a deck coordinate's; a body's number; a cradle's, a socket's; the crew's. */
+export const KT_XZ_MAX = 400;
+export const KT_BODY_ID_MAX = 99_999;
+export const KT_CELL_SPOT_MAX = 13;
+export const KT_CREW_WIRE_MAX = 8;
+export const KT_KIND_MAX = 4;
+export const KT_HP_MAX = 99_999_999;
+/** The receipt on the wire - a `y1` (net/ketch/ketchReceipt.js KT_RECEIPT_MAX, pinned equal), signed or not. */
+export const KT_RECEIPT_WIRE_MAX = 560;
+const KT_RECEIPT_RE = /^y1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
+/** Why a ship refuses an `in` or a word, by the number on the wire - the voyage gone, the fight over, a game whose brain
+ *  is older. The page says each in the player's language (net/ketch/ketchLink.js KT_LINK_TEXT.no, in this order). */
+export const KT_NO_WORDS = Object.freeze(['gone', 'over', 'older']);
+/** A member's word, projected - or null. */
+export function validKetchIn(m) {
+  if (!m || typeof m !== 'object' || !KT_IN_KINDS.includes(m.k)) return null;
+  if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;
+  if (m.k === 'in') return intIn(m.lv, 1, GATE_LV_WIRE_MAX) ? { k: 'in', lv: m.lv, ...(intIn(m.bv, 0, 999) ? { bv: m.bv } : {}) } : null;
+  if (m.k === 'drop' || m.k === 'hurt') return { k: m.k };
+  if (m.k === 'pick') return intIn(m.c, 0, KT_CELL_SPOT_MAX) ? { k: 'pick', c: m.c } : intIn(m.l, 1, 1e9) ? { k: 'pick', l: m.l } : null;
+  if (m.k === 'bank') return intIn(m.s, 0, KT_CELL_SPOT_MAX) ? { k: 'bank', s: m.s } : null;
+  if (m.k === 'spent') return intIn(m.n, 0, KT_VOYAGE_N_MAX) ? { k: 'spent', n: m.n } : null;
+  if (!intIn(m.o, 1, KT_BODY_ID_MAX) || !intIn(m.q, 0, GATE_SEQ_MAX) || !finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX || (m.r !== 0 && m.r !== 1 && m.r !== 2)) return null;
+  return { k: 'hit', o: m.o, q: m.q, d: m.d, r: m.r };
+}
+const ktXZ = (v) => finite(v) && Math.abs(v) <= KT_XZ_MAX;
+const ktMs = (v) => Number.isSafeInteger(v) && v >= 0;
+const ktMv = (m) => (m && typeof m === 'object' && intIn(m.o, 1, KT_BODY_ID_MAX) && [m.x, m.z, m.tx, m.tz].every(ktXZ) && finite(m.v) && m.v >= 0 && m.v <= 20 && ktMs(m.at)
+  ? { k: 'mv', o: m.o, x: m.x, z: m.z, tx: m.tx, tz: m.tz, v: m.v, at: m.at } : null);
+const ktBlow = (m) => { const b = egBlowW(m); if (!b) return null; if (m.a != null && !intIn(m.a, 0, 15)) return null; return { ...b, ...(m.a != null ? { a: m.a } : {}), ...(m.jp === 1 ? { jp: 1 } : {}) }; };
+const ktBody = (b) => (Array.isArray(b) && b.length >= 8 && intIn(b[0], 1, KT_BODY_ID_MAX) && intIn(b[1], 0, KT_KIND_MAX) && ktXZ(b[2]) && ktXZ(b[3]) && ktXZ(b[4]) && finite(b[5]) && Math.abs(b[5]) <= 8 && intIn(b[6], 0, KT_HP_MAX) && intIn(b[7], 0, KT_HP_MAX)
+  ? [b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8] === 0 ? 0 : 1, ktMs(b[9]) ? b[9] : 0] : null);
+const ktCells = (m) => {
+  const spots = (a, n) => Array.isArray(a) && a.length === n && a.every((v) => v === 1 || ktMs(v));
+  if (!m || typeof m !== 'object' || !spots(m.cr, 6) || !spots(m.br, 2) || !Array.isArray(m.lo) || m.lo.length > 32 || !Array.isArray(m.ca) || m.ca.length > KT_CREW_WIRE_MAX) return null;
+  if (!m.lo.every((l) => Array.isArray(l) && l.length === 5 && intIn(l[0], 1, 1e9) && ktXZ(l[1]) && ktXZ(l[2]) && ktXZ(l[3]) && ktMs(l[4]))) return null;
+  if (!m.ca.every((c) => Array.isArray(c) && typeof c[0] === 'string' && ID_RE.test(c[0]) && intIn(c[1], 1, 1e9))) return null;
+  if (!intIn(m.bk, 0, 7) || !intIn(m.nd, 0, 7) || !Array.isArray(m.sk) || m.sk.length !== 7 || !m.sk.every((v) => v === 0 || v === 1)) return null;
+  return { k: 'cl', cr: [...m.cr], br: [...m.br], lo: m.lo.map((l) => [...l]), ca: m.ca.map((c) => [c[0], c[1]]), bk: m.bk, nd: m.nd, sk: [...m.sk] };
+};
+const ktWardenState = (m) => {
+  if (!m || typeof m !== 'object' || !intIn(m.fi, 1, 1e9) || !intIn(m.ph, 1, 3) || !intIn(m.h, 0, KT_HP_MAX) || !intIn(m.m, 0, KT_HP_MAX) || !ktMs(m.op)) return null;
+  const W = m.wd;
+  if (!W || !ktXZ(W.x) || !ktXZ(W.z) || !finite(W.yw)) return null;
+  const mv = W.mv ? ktMv({ ...W.mv, o: 1 }) : null;
+  const bl = Array.isArray(m.bl) && m.bl.length <= 32 ? m.bl.map(ktBlow) : null;
+  if (!bl || !bl.every(Boolean) || !Array.isArray(m.rs) || m.rs.length !== 4 || !m.rs.every((v) => v === 0 || v === 1)) return null;
+  const fk = m.fk == null ? null : (intIn(m.fk.i, 1, 1e9) && ktMs(m.fk.at) && intIn(m.fk.m, 0, KT_HP_MAX) && Array.isArray(m.fk.c) && m.fk.c.length <= 7 && m.fk.c.every((q) => Array.isArray(q) && ktXZ(q[0]) && ktXZ(q[1]) && intIn(q[2], 0, KT_HP_MAX)) ? { i: m.fk.i, at: m.fk.at, m: m.fk.m, c: m.fk.c.map((q) => [q[0], q[1], q[2]]) } : undefined);
+  if (fk === undefined) return null;
+  const sec = Array.isArray(m.sec) && m.sec.length <= 8 && m.sec.every((s) => Array.isArray(s) && intIn(s[0], 0, 7) && ktMs(s[1]) && ktMs(s[2])) ? m.sec.map((s) => [s[0], s[1], s[2]]) : null;
+  if (!sec) return null;
+  return {
+    k: 'ws', fi: m.fi, ph: m.ph, h: m.h, m: m.m, op: m.op, ou: ktMs(m.ou) ? m.ou : 0, wd: { x: W.x, z: W.z, yw: W.yw, mv }, bl, ward: m.ward === 1 ? 1 : 0, rs: [...m.rs],
+    da: ktMs(m.da) ? m.da : 0, su: ktMs(m.su) ? m.su : 0, sa: ktMs(m.sa) ? m.sa : 0, fk, sec, ends: ktMs(m.ends) ? m.ends : 0, ended: ktMs(m.ended) ? m.ended : 0,
+    n: intIn(m.n, 0, KT_CREW_WIRE_MAX) ? m.n : 0, fell: m.fell && ktMs(m.fell.at) ? { at: m.fell.at, top: Array.isArray(m.fell.top) ? m.fell.top.filter((x) => typeof x === 'string').slice(0, 3).map(sanitizeName) : [], n: intIn(m.fell.n, 0, KT_CREW_WIRE_MAX) ? m.fell.n : 0 } : null,
+    lost: ktMs(m.lost) ? m.lost : 0, ...(m.me === 1 ? { me: 1 } : {}),
+  };
+};
+/** The room's word, projected for the page - or null. */
+export function validKetchOut(m) {
+  if (!m || typeof m !== 'object' || !KT_OUT_KINDS.includes(m.k)) return null;
+  const name = (v) => (typeof v === 'string' && v.length <= 48 ? sanitizeName(v) : '');
+  switch (m.k) {
+    case 'bd': return { k: 'bd' };
+    case 'no': return intIn(m.m, 0, KT_NO_WORDS.length - 1) ? { k: 'no', m: m.m } : null;
+    case 'rcpt': return typeof m.r === 'string' && m.r.length <= KT_RECEIPT_WIRE_MAX && KT_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
+    case 'nb': { const b = ktBody(m.b); return b && ktMs(m.up) ? { k: 'nb', b, up: m.up, wk: m.wk === 0 ? 0 : 1 } : null; }
+    case 'mv': return ktMv(m);
+    case 'bl': { const b = ktBlow(m.b); return b ? { k: 'bl', b } : null; }
+    case 'hp': return Array.isArray(m.h) && m.h.length <= 64 && m.h.every((e) => Array.isArray(e) && intIn(e[0], 1, KT_BODY_ID_MAX) && intIn(e[1], 0, KT_HP_MAX)) ? { k: 'hp', h: m.h.map((e) => [e[0], e[1]]) } : null;
+    case 'dn': return intIn(m.o, 1, KT_BODY_ID_MAX) && ktMs(m.at) ? { k: 'dn', o: m.o, n: name(m.n), at: m.at } : null;
+    case 'wk': return intIn(m.o, 1, KT_BODY_ID_MAX) && ktMs(m.at) ? { k: 'wk', o: m.o, at: m.at } : null;
+    case 'sg': return intIn(m.sg, 0, 5) && ktMs(m.at) ? { k: 'sg', sg: m.sg, at: m.at, ...(m.by != null ? { by: name(m.by) } : {}) } : null;
+    case 'wave': return intIn(m.w, 1, 3) && ktMs(m.at) ? { k: 'wave', w: m.w, at: m.at } : null;
+    case 'cl': return ktCells(m);
+    case 'drop': case 'pick': case 'bank': return typeof m.s === 'string' && ID_RE.test(m.s) && ktMs(m.at) ? { k: m.k, s: m.s, n: name(m.n), at: m.at, ...(m.k === 'drop' && typeof m.why === 'string' && /^[a-z]{1,8}$/.test(m.why) ? { why: m.why } : {}), ...(m.k === 'bank' && intIn(m.sk, 0, KT_CELL_SPOT_MAX) ? { sk: m.sk } : {}) } : null;
+    case 'wf': return intIn(m.fi, 1, 1e9) && ktMs(m.at) ? { k: 'wf', fi: m.fi, at: m.at } : null;
+    case 'ws': return ktWardenState(m);
+    case 'whp': return intIn(m.h, 0, KT_HP_MAX) && intIn(m.m, 0, KT_HP_MAX) ? { k: 'whp', h: m.h, m: m.m } : null;
+    case 'ph': return intIn(m.n, 2, 3) && ktMs(m.at) && ktMs(m.up) ? { k: 'ph', n: m.n, at: m.at, up: m.up } : null;
+    case 'ward': return (m.on === 0 || m.on === 1) && ktMs(m.at) ? { k: 'ward', on: m.on, at: m.at, ...(ktMs(m.stun) ? { stun: m.stun } : {}) } : null;
+    case 'rs': return Array.isArray(m.rs) && m.rs.length === 4 && m.rs.every((v) => v === 0 || v === 1) && ktMs(m.at) ? { k: 'rs', rs: [...m.rs], at: m.at } : null;
+    case 'fk': return intIn(m.i, 1, 1e9) && ktMs(m.at) && intIn(m.m, 0, KT_HP_MAX) && Array.isArray(m.c) && m.c.length <= 7 && m.c.every((q) => Array.isArray(q) && ktXZ(q[0]) && ktXZ(q[1])) ? { k: 'fk', i: m.i, at: m.at, m: m.m, c: m.c.map((q) => [q[0], q[1]]) } : null;
+    case 'fkh': return intIn(m.i, 1, 1e9) && Array.isArray(m.h) && m.h.length <= 7 && m.h.every((v) => intIn(v, 0, KT_HP_MAX)) ? { k: 'fkh', i: m.i, h: [...m.h] } : null;
+    case 'fkb': return intIn(m.i, 1, 1e9) && intIn(m.c, 0, 6) && ktMs(m.at) ? { k: 'fkb', i: m.i, c: m.c, n: name(m.n), at: m.at } : null;
+    case 'stun': return ktMs(m.until) && ktMs(m.at) ? { k: 'stun', until: m.until, at: m.at } : null;
+    case 'sec': return Array.isArray(m.s) && m.s.length <= 8 && m.s.every((s) => Array.isArray(s) && intIn(s[0], 0, 7) && ktMs(s[1]) && ktMs(s[2])) ? { k: 'sec', s: m.s.map((s) => [s[0], s[1], s[2]]) } : null;
+    case 'lost': case 'wl': return ktMs(m.at) ? { k: m.k, at: m.at } : null;
+    case 'fell': return ktMs(m.at) ? { k: 'fell', at: m.at, top: Array.isArray(m.top) ? m.top.filter((x) => typeof x === 'string').slice(0, 3).map(sanitizeName) : [], n: intIn(m.n, 0, KT_CREW_WIRE_MAX) ? m.n : 0 } : null;
+    case 'st': {
+      if (!intIn(m.n, 0, 0xffffffff) || !intIn(m.sg, 0, 5) || !ktMs(m.sga) || !Array.isArray(m.cr) || m.cr.length > KT_CREW_WIRE_MAX) return null;
+      if (!m.cr.every((c) => Array.isArray(c) && typeof c[0] === 'string' && ID_RE.test(c[0]))) return null;
+      const bd = Array.isArray(m.bd) && m.bd.length <= 64 ? m.bd.map(ktBody) : null;
+      const mv = Array.isArray(m.mv) && m.mv.length <= 64 ? m.mv.map(ktMv) : null;
+      const bl = Array.isArray(m.bl) && m.bl.length <= 64 ? m.bl.map(ktBlow) : null;
+      const cl = ktCells(m.cl), ws = m.ws == null ? null : ktWardenState(m.ws);
+      if (!bd || !bd.every(Boolean) || !mv || !mv.every(Boolean) || !bl || !bl.every(Boolean) || !cl || (m.ws != null && !ws)) return null;
+      return {
+        k: 'st', n: m.n, sg: m.sg, sga: m.sga, cr: m.cr.map((c) => [c[0], name(c[1])]), bd, mv, bl, wv: intIn(m.wv, 0, 3) ? m.wv : 0, cl,
+        br: m.br && ktMs(m.br.at) ? { at: m.br.at, by: name(m.br.by) } : null, ws,
+        fell: m.fell && ktMs(m.fell.at) ? { at: m.fell.at, top: Array.isArray(m.fell.top) ? m.fell.top.filter((x) => typeof x === 'string').slice(0, 3).map(sanitizeName) : [], n: intIn(m.fell.n, 0, KT_CREW_WIRE_MAX) ? m.fell.n : 0 } : null,
+      };
+    }
+    default: return null;
+  }
+}
+/** Where a ship's room keeps its voyage (net/ketch/ketchBrain.js newVoyage's record - outside every swept prefix). */
+export const KT_VOYAGE_KEY = 'ktvoyage';
+/** AUDIT KETCH L1-2 (an earner off the ship at the fall, who never boarded her again, lost its receipt - every other
+ *  event's are kept at the hub): WHERE THE HUB KEEPS AN EARNER'S KETCH RECEIPT - its latest voyage's, `{ n, r, e }`, or
+ *  `{ n, spent: true, e }` once its account says that voyage's share is given (`kt` `spent`, on the hub's socket) - for
+ *  the receipt's life, handed at its account's next hello (the Hour's SD9a, rung for rung). */
+export const KT_RC_PREFIX = 'ktrc:';
+export const ketchReceiptKey = (sub) => `${KT_RC_PREFIX}${sub}`;
+/** The hub's internal door a ship's room tells its fall's receipts at, and how long it waits to tell again. */
+export const KT_INTERNAL_RC = '/internal/ketch/rc';
+export const KT_TELL_RETRY_MS = 30_000;
+/** The most a voyage's number is on the wire (two centuries of Saturdays). */
+export const KT_VOYAGE_N_MAX = 10_000;
+/** A ship's receipts as told to the hub - its voyage and `[account, receipt]` each, the wire's own receipts alone -
+ *  projected, or null. */
+export function validKtRcTell(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const b = /** @type {any} */ (v);
+  if (!intIn(b.n, 0, KT_VOYAGE_N_MAX) || !Array.isArray(b.rc)) return null;
+  const rc = b.rc.slice(0, KT_CREW_WIRE_MAX).filter((e) => Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string' && e[1].length <= KT_RECEIPT_WIRE_MAX && KT_RECEIPT_RE.test(e[1])).map((e) => [e[0], e[1]]);
+  return { n: b.n, rc };
 }

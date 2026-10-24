@@ -117,8 +117,10 @@ import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  GUNS-UNFOUND moved it to 12: the Hourlock is lawful as the gilded Dwarven Long Bow it is minted as from law 12 on, and
  *  as the Thunderlock minted before (systems/gilded.js HOURLOCK_GUN_ERA); the Sunken Sovereign as the Ebony Saber it is
  *  minted as again, and as the Pistolet minted between (SOVEREIGN_PISTOLET_ERA) - so a finding a law of 11 made against
- *  a bow Hourlock is a finding to ask again. */
-export const ITEM_LAW_VERSION = 12;
+ *  a bow Hourlock is a finding to ask again. KETCH moved it to 13: the Gilded rung's Ketch pair (systems/gilded.js -
+ *  Volendrung's Echo, a gilded Dwarven Thunderlock, and the Ketchmaster's Word, a gilded Dwarven Pistolet) are lawful from
+ *  it on, so a finding a law of 12 made against either is a finding to ask again. */
+export const ITEM_LAW_VERSION = 13;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));

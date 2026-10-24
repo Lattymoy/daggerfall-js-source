@@ -210,7 +210,7 @@ test('the shimmer cools the metal and lights the highlights, and touches no tran
   for (let i = 3; i < px.length; i += 4) assert.equal(px[i], before[i], 'alpha is never written');
 });
 
-test('THE RAREST THING IN THE GAME: impossible below its tier, and never for sale - GUNS-UNFOUND: and found no more, its find its Pellets alone', () => {
+test('THE RAREST THING IN THE GAME: impossible below its tier, and never for sale - GUNS-UNFOUND: and found no more; PELLETS-SCARCE: its find mints nothing, the Pellet its own', () => {
   const find = uniqueFinds().find((f) => f.id === 'dwarven-thunderlock');
   assert.ok(find, 'it registers itself with the loot ladder rather than the ladder naming it');
   // BASE ZERO. A rat in a shallow crypt cannot drop it at any luck -
@@ -236,36 +236,38 @@ test('THE RAREST THING IN THE GAME: impossible below its tier, and never for sal
   // PIN MOVED (PISTOLET, AUDIT PISTOLET): the find's draw under GUN_SHARE is the Thunderlock's, at or over it the
   // Pistolet's (systems/thunderlock.js setSecondGun) - this one draws in the Thunderlock's half
   // PIN MOVED (GUNS-UNFOUND, the owner: "remove the thunderlock and pistolet from the loot pool ... Ammo should still
-  // drop"): no gun at any draw - the find mints its Pellets alone
+  // drop"): no gun at any draw - the find minted its Pellets alone. PIN MOVED (PELLETS-SCARCE, 2026-10-24, the owner:
+  // "only have ammo has a rare resource drop"): and now not those - its one draw kept (law 9), the Pellet the Dwemer
+  // find's (test/systems/pelletsscarce.test.js)
   for (const v of [0, 0.25, 0.5, 0.75, 0.9999]) {
-    const minted = find.mint(() => v);
-    assert.equal(minted.length, 1, `${v}: the Pellets alone`);
-    assert.ok(!minted.some(isThunderlock) && isPellet(minted[0]), `${v}: no gun`);
-    assert.ok(minted[0].stackCount >= 6 && minted[0].stackCount <= 18);
+    let n = 0;
+    const minted = find.mint(() => { n++; return v; });
+    assert.deepEqual([minted, n], [[], 1], `${v}: one draw, nothing minted`);
   }
 
   // NOT FOR SALE, and it takes no code: a shelf is built from DFU's
   // own group enum table, and a custom template is not in it.
   // PIN MOVED (SHOP-PELLETS, 2026-10-07, Mac: "allowing the purchase of
-  // the ammunition in stores"): the counter sells its SHOT now
-  // (shopStock.js shopPelletStack), through the pellet's one mint - and
-  // the shelf still knows nothing of the GUN, and no shelf of any shop,
-  // stocked whole, carries one.
+  // the ammunition in stores"): the counter sold its SHOT. PIN MOVED
+  // (PELLETS-SCARCE, 2026-10-24): and no more - the shelf names nothing of
+  // the gun or its shot, and no shelf of any shop, stocked whole, carries
+  // either.
   const shelf = readFileSync('src/systems/shopStock.js', 'utf8');
   assert.ok(!/createThunderlock|THUNDERLOCK_TEMPLATE|isThunderlock/.test(shelf), 'the shop stock never names the gun');
-  assert.match(shelf, /import \{ createPellets \} from '\.\/thunderlock\.js';/, 'only its shot');
+  assert.ok(!/from '\.\/thunderlock\.js'/.test(shelf), 'nor its shot');
   assert.ok(!GROUP_TEMPLATE_INDICES.Weapons?.includes(THUNDERLOCK_TEMPLATE),
     'and it is not in the Weapons enum a shelf draws from');
   for (const buildingType of Object.keys(SHOP_ITEM_GROUPS).map(Number)) {
     for (const quality of [1, 20]) {
       const all = stockShopShelf({ buildingType, quality }, { level: 30 }, { rolls: () => 0 });
-      assert.ok(!all.some(isThunderlock), `building ${buildingType} at quality ${quality}: no gun on the shelf`);
+      assert.ok(!all.some(isThunderlock) && !all.some(isPellet), `building ${buildingType} at quality ${quality}: no gun on the shelf, nor its shot`);
     }
   }
 });
 
 test('the find adds to a list rather than promoting one, and claims its own legendary', () => {
-  // a roll that always lands: the find is added - PIN MOVED (GUNS-UNFOUND): its ammunition alone, the gun never
+  // a roll that always lands: the find is added - PIN MOVED (GUNS-UNFOUND): its ammunition alone, the gun never;
+  // PIN MOVED (PELLETS-SCARCE): the ammunition the Dwemer find's, the door's last draw
   const items = [];
   const always = () => 0;
   rollLootRarity(items, { kind: 'pile', tier: 8, boss: true, luck: 100 }, { rolls: always, luck: 100 });

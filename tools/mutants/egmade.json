@@ -47,7 +47,7 @@
   {
     "name": "EGMADE-any-word-a-level",
     "file": "src/systems/madeLevel.js",
-    "old": "return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'} */ (v) : null;",
+    "old": "return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'|'ketch'} */ (v) : null;",
     "new": "return /** @type {any} */ (v);",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"

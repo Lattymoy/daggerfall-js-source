@@ -12,7 +12,6 @@ import {
 } from '../../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { OIL_TEMPLATE } from '../../src/systems/inventory.js';   // AUDIT 58: the oil-bottle stack clause
-import { PELLET_TEMPLATE } from '../../src/characters/thunderlockIds.js';   // SHOP-PELLETS: the counter's shot
 
 test('itemTemplates: the 288-row table + group enum mapping + material values', () => {
   assert.equal(ITEM_TEMPLATES.length, 288);
@@ -46,17 +45,17 @@ test('shopStock: the stock law - rarity gate, chance, gender swap, horse+cart', 
   // rolls always 0 -> every Dice100 passes -> a weaponsmith at quality
   // 21 stocks EVERY weapon and armor template (rarity <= 21 always)
   const all = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 21 }, { level: 1 }, { rolls: () => 0 });
-  const weaponCount = all.filter((it) => it.group === 'Weapons' && it.templateIndex !== PELLET_TEMPLATE).length;   // PIN MOVED (SHOP-PELLETS): DFU's own weapons - the counter's Dwemer Pellets beside them are the port's (shopstock_pellets below)
+  const weaponCount = all.filter((it) => it.group === 'Weapons').length;   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): DFU's own weapons alone again - no counter carries the Dwemer Pellet (test/systems/pelletsscarce.test.js)
   const armorCount = all.filter((it) => it.group === 'Armor').length;
   assert.equal(weaponCount, GROUP_TEMPLATE_INDICES.Weapons.length);
   assert.equal(armorCount, GROUP_TEMPLATE_INDICES.Armor.length);
   for (const it of all) assert.ok(it.value >= 1, `every shelf item carries a value: ${JSON.stringify(it)}`);
   // rolls always ~1 -> nothing stocks (chance*5*(21-rarity)/100 < 100)
   const none = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 21 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.deepEqual(none.map((it) => it.templateIndex), [131, PELLET_TEMPLATE], 'PIN MOVED (SHOP-PELLETS): nothing of DFU\'s - the counter\'s pellets alone, from no roll; PIN MOVED (SHOP-ARROWS): and its quiver (Arrow, 131) before them');
+  assert.deepEqual(none.map((it) => it.templateIndex), [131], 'nothing of DFU\'s - PIN MOVED (SHOP-ARROWS): the counter\'s quiver (Arrow, 131) alone, from no roll; PIN MOVED (PELLETS-SCARCE, 2026-10-24): the Dwemer Pellets SHOP-PELLETS laid after it are gone');
   // the rarity gate: quality 1 refuses templates rarer than 1
   const q1 = stockShopShelf({ buildingType: BUILDING_TYPES.WeaponSmith, quality: 1 }, { level: 1 }, { rolls: () => 0 });
-  for (const it of q1.filter((x) => x.templateIndex !== PELLET_TEMPLATE)) {   // PIN MOVED (SHOP-PELLETS): the stock law's - the counter's shot stands outside it, in every tier
+  for (const it of q1) {   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): every piece the stock law's again - the counter's shot, which stood outside it, is gone
     const t = ITEM_TEMPLATES[it.templateIndex];
     assert.ok(t.rarity <= 1, `${t.name} rarity ${t.rarity} on a quality-1 shelf`);
   }
@@ -64,7 +63,7 @@ test('shopStock: the stock law - rarity gate, chance, gender swap, horse+cart', 
   const gs = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 5 }, { level: 1 }, { rolls: () => 0.999 });
   // PIN MOVED (MERCHANT-YARDS, 2026-10-10): no horse, no cart and no wagon - the town's Stable and Wagon Yard sell them
   // (test/world/merchantyards1.test.js holds what they sell); DFU's general store shelved the horse and the cart first
-  assert.deepEqual(gs.map((it) => it.templateIndex), [277, 541, 531, 131, PELLET_TEMPLATE, 83]);   // PIN MOVED (SHOP-ARROWS, 2026-10-11): the counter's quiver (Arrow, 131) before the pellets   // PIN MOVED (WAGONS1, 2026-10-09): the Open Wagon and the Caravan had stood beside the cart
+  assert.deepEqual(gs.map((it) => it.templateIndex), [277, 541, 531, 131, 83]);   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): no Dwemer Pellets (561) between the quiver and the healing supply   // PIN MOVED (SHOP-ARROWS, 2026-10-11): the counter's quiver (Arrow, 131) before the pellets   // PIN MOVED (WAGONS1, 2026-10-09): the Open Wagon and the Caravan had stood beside the cart
   assert.equal(gs.some((it) => it.group === 'Transportation' || it.templateIndex === TRANSPORT_HORSE || it.templateIndex === TRANSPORT_SMALL_CART), false, 'MERCHANT-YARDS: nothing of the Transportation group');   // PIN MOVED (SHOP-PELLETS, 2026-10-07): and the counter's Dwemer Pellets (561), after DFU's draws and the provisions, before the healing supply   // PIN MOVED (ENDLESS PROVISIONS, 2026-10-04): the counter's Campfire Kit (541) and Rations (531), every tier, before the healing supply   // POTION-COMMON: and its day of Potions of Healing (the Glass Bottle, 83) at the shelf's end   // AUDIT-RR2 G10: AddItem merges the three same-message books into one stack (ItemCollection.cs:224-228, :710)
   assert.equal(gs[0].stackCount, 3);   // PIN MOVED (MERCHANT-YARDS): the books first now; (WAGONS1): two wagons had stood before them
   // the gender swap: a female player sees WomensClothing at the clothier

@@ -218,8 +218,8 @@
   {
     "name": "SD11b-L7M1-the-gate-before-the-token",
     "file": "server/src/index.js",
-    "old": "if (!battle && !floor && !realmRoom && !instRoom) {",
-    "new": "if (!battle && !floor && !instRoom) {",
+    "old": "if (!battle && !floor && !realmRoom && !instRoom && !ktRoom) {",
+    "new": "if (!battle && !floor && !instRoom && !ktRoom) {",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD11b-L7M2-the-realm-unsigned",
     "file": "server/src/index.js",
-    "old": "const charLv = (isCellRoom(a.key) || realmRoom) && Number.isSafeInteger(who.cl)",
-    "new": "const charLv = isCellRoom(a.key) && Number.isSafeInteger(who.cl)",
+    "old": "const charLv = (isCellRoom(a.key) || realmRoom || ktRoom) && Number.isSafeInteger(who.cl)",
+    "new": "const charLv = (isCellRoom(a.key) || ktRoom) && Number.isSafeInteger(who.cl)",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]

@@ -21,7 +21,7 @@ import { PACK_KIND } from '../../src/systems/translationPacks.js';
 import {
   parseLocalizedBook, readAllLines, localizedBookName, openLocalizedBookFile, localizedBookExists, localizedBookHeader, BOOK_DOCUMENT,
 } from '../../src/systems/localizedBook.js';
-import { bookTitle, getRandomBookID, localizedBookMeetsConditions, setBookGlobalVars, createBook, getBookFileName } from '../../src/systems/books.js';
+import { bookTitle, getRandomBookID, localizedBookMeetsConditions, setBookGlobalVars, createBook, getBookFileName, SHELF_BOOK_IDS } from '../../src/systems/books.js';
 import { BOOK_ID_TITLES } from '../../src/systems/booksData.js';
 import { bookshelfTitles, populateBookshelf } from '../../src/systems/bookshelf.js';
 import { resolveItemName, expandItemInfo, getBookAuthor } from '../../src/systems/item/itemInfo.js';
@@ -282,8 +282,9 @@ test('L10N3f books: GetBookTitle - the -LOC title wherever a title is shown (the
   assert.equal(item.name, createBook(42).name, 'and keeps the template\'s name - the title is read where it is shown');
   assert.equal(getBookFileName(42), 'BOK00042.TXT');
   // the shelf's Start filter keeps a titled book in any language
-  const ids = [...BOOK_ID_TITLES.keys()];
-  const onto42 = () => (ids.indexOf(42) + 0.5) / ids.length;
+  // PIN MOVED (GUN-LORE, KETCH): the roll aimed at the shelf's own draw (the classic books and the port's - two more port books moved
+  // the classic list's index off the shelf's)
+  const onto42 = () => (SHELF_BOOK_IDS.indexOf(42) + 0.5) / SHELF_BOOK_IDS.length;
   assert.deepEqual(populateBookshelf(onto42), Array(10).fill(42));
   // a pack replaced: its own title, not one kept from before
   tm.setLocaleDocuments('fr', [[`${BOOK_DOCUMENT}:BOK00042`, LOC_42.replace('Title: Le Livre des Essais', 'Title: Le Second Livre')]]);

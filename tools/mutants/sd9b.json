@@ -137,8 +137,8 @@
   {
     "name": "SD9B-the-inspect-card-without",
     "file": "server-account/src/index.js",
-    "old": ", sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id) }",
-    "new": ", stars: await starRecordOf(ctx, body.id) }",
+    "old": ", sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
+    "new": ", stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]

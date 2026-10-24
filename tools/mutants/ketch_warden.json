@@ -1,0 +1,245 @@
+[
+  {
+    "name": "KTW-the-phases-moved",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "export const KW_PHASE_AT = Object.freeze([0.65, 0.35]);",
+    "new": "export const KW_PHASE_AT = Object.freeze([0.7, 0.35]);",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-fork-for-every-living",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "KW_FORKS[0] + Math.floor(Math.max(0, n) / 2)",
+    "new": "KW_FORKS[0] + Math.max(0, n)",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-end-a-minute-early",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "export const KW_ENDS_MS = 14 * 60_000;",
+    "new": "export const KW_ENDS_MS = 13 * 60_000;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-ninth-seated",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "if (Object.keys(f.players).length >= KT_CREW_MAX && !freeSeat(f, present)) return false;",
+    "new": "if (Object.keys(f.players).length > KT_CREW_MAX && !freeSeat(f, present)) return false;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-late-fighter-a-whole-share",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  f.hp += share * frac;",
+    "new": "  f.hp += share;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-struck-asleep",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "export const wardenOpen = (f, now) => !over(f, now) && now >= f.op && !f.ward",
+    "new": "export const wardenOpen = (f, now) => !over(f, now) && !f.ward",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-melee-blow-from-across-the-bridge",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, W.x, W.z) - KW_BODY.r > MELEE_REACH + POSE_SLACK) return 0;",
+    "new": "  if (r === HIT_KINDS.Melee && pose.x > 1e9) return 0;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-floor-ignored",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "Math.max(0, f.hp - floorOf(f))",
+    "new": "Math.max(0, f.hp)",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-no-sentries-asked",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "    f.want.push('sentry', 'sentry');",
+    "new": "    void f.want;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-resonator-put-right-twice",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "if (f.phase !== 2 || !f.ward || !Number.isInteger(k) || f.rs[k] !== 0) return out;",
+    "new": "if (f.phase !== 2 || !f.ward || !Number.isInteger(k)) return out;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-stun-not-heavier",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "const got = spend(d * (now < f.stunUntil ? KW_STUN_HIT_X : 1),",
+    "new": "const got = spend(d * 1,",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-forks-off-the-core",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  const [r0, r1] = KT_FORK_RING, W = f.wd,",
+    "new": "  const [r0, r1] = [16, 22], W = f.wd,",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-song-breaking-with-a-fork-standing",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  if (X.c.every((o) => o.h <= 0)) {",
+    "new": "  if (X.c.some((o) => o.h <= 0)) {",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-heal-missing",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "f.hp = Math.min(f.max, f.hp + KW_SONG_HEAL * f.max);",
+    "new": "f.hp = Math.min(f.max, f.hp);",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-one-section-at-a-time",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "export const KW_SECTION_FALLS = 2;",
+    "new": "export const KW_SECTION_FALLS = 1;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-warning-skipped",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "    f.sec.push({ k, at: now + KW_SECTION_WARN_MS,",
+    "new": "    f.sec.push({ k, at: now,",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-turn-never-coming",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  if (f.ended || now >= f.endsAt - E.wu) {",
+    "new": "  if (f.ended || now >= f.endsAt + 1e12) {",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-its-blows-every-beat",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "} else if (now >= f.clockAt) { f.clockAt += KW_END_EVERY_MS; clockBlow(f, E, f.clockAt, out); }",
+    "new": "} else { f.clockAt += KW_END_EVERY_MS; clockBlow(f, E, f.clockAt, out); }",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-wait-shortened",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "if ((f.emptySince != null && now - f.emptySince >= KW_LOST_MS)",
+    "new": "if ((f.emptySince != null && now - f.emptySince >= KW_LOST_MS / 2)",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-dead-counted-standing",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  const here = bodies.filter((b) => !b.dead && f.players[b.sub] && onBridge(b.x, b.z, 1.5)",
+    "new": "  const here = bodies.filter((b) => f.players[b.sub] && onBridge(b.x, b.z, 1.5)",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-fire-counted",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "    if (a.el != null || a.jp) continue;",
+    "new": "    if (a.jp) continue;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-wave-counted",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "    if (a.el != null || a.jp) continue;",
+    "new": "    if (a.el != null) continue;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-song-broken-still-landing",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "const share = a.a === KW_BLOWS.song.a ? (a.sg || (f.fk && f.fk.i === a.i) ? Math.min(1, a.p) : 0) : Math.min(1, a.p);",
+    "new": "const share = Math.min(1, a.p);",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-seam-bypassing-the-purse",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "applyWardenHit(f, sub, d, r, pose, now, o.spend ?? ((x) => x))",
+    "new": "applyWardenHit(f, sub, d, r, pose, now, (x) => x)",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-song-never-marked-sung",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "if (song) song.sg = 1;",
+    "new": "if (song) song.sg = 0;",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-forks-damage-not-dealt",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  p.dealt += got;   // a part in the fight, as the gate's crystals are",
+    "new": "  // a part in the fight, as the gate's crystals are",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-forks-of-nobody",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  const who = here.length ? here.map((b) => b.sub) : Object.keys(f.players).filter((s) => !f.players[s].retired);",
+    "new": "  const who = here.map((b) => b.sub);",
+    "tests": [
+      "test/net/ketch/ketch_warden.test.js"
+    ]
+  }
+]

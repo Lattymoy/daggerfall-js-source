@@ -214,7 +214,7 @@ export function ensureTownBeds(engine, opts) {
  *   taverns: number[][], paused: boolean }} WorldFrame
  */
 /** The name the wild's far shots are played under (audio.js fadeFar). */
-export const WORLD_FAR = 'worldAir';
+export const WORLD_AIR_FAR = 'worldAir';
 const WILD_CLIPS = Object.freeze({ crow: SCAPE_SFX.crow, owl: SCAPE_SFX.owl, howl: SCAPE_SFX.howl, jackal: SCAPE_SFX.howl, frog: SCAPE_SFX.frog });
 const WILD_PITCH = Object.freeze({ crow: [0.9, 1.1], owl: [0.94, 1.06], howl: [0.9, 1.05], jackal: [1.25, 1.45], frog: [0.85, 1.2] });
 
@@ -244,7 +244,7 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
   let due = [];
   let t = 0;
   const play3d = (clip, pos, volume, { pitch = 1, ref = 10, max = 500 } = {}) => {
-    try { engine.play3d(clip, pos, volume, { refDistance: ref, maxDistance: max, pitch, far: WORLD_FAR }); } catch { /* a sound is never the walk */ }
+    try { engine.play3d(clip, pos, volume, { refDistance: ref, maxDistance: max, pitch, far: WORLD_AIR_FAR }); } catch { /* a sound is never the walk */ }
   };
   const bed = (name, clip, volume, pitch = 1) => {
     try { engine.setBed(name, volume > 0.002 ? clip : null, { volume, pitch }); } catch { /* not yet */ }
@@ -343,7 +343,7 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
       try {
         for (const name of [SURF.name, LAP.name, MARSH.name, MURMUR.name, MURMUR_TWIN.name]) engine.setBed(name, null);
         for (const name of [SURF.name, TAVERN.name]) engine.setBed3d(name, null, null);
-        engine.fadeFar?.(WORLD_FAR);
+        engine.fadeFar?.(WORLD_AIR_FAR);
       } catch { /* nothing left to stop */ }
     },
   };

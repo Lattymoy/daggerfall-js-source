@@ -101,8 +101,8 @@
  {
   "name": "STAR6-no-star-kind",
   "file": "src/ui/enhanced/enhancedTimers.js",
-  "old": "['gate', 'serpent', 'super', 'star', 'elite', 'raid',",
-  "new": "['gate', 'serpent', 'super', 'elite', 'raid',",
+  "old": "['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid',",
+  "new": "['gate', 'serpent', 'super', 'ketch', 'elite', 'raid',",
   "tests": [
    "test/systems/starfall/star6_words.test.js"
   ]

@@ -1,0 +1,445 @@
+[
+  {
+    "name": "KTB-wave-one-a-sphere-short",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (w === 1) return { sphere: 2 + c, sentry: 0, captain: 0 };",
+    "new": "if (w === 1) return { sphere: 1 + c, sentry: 0, captain: 0 };",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-captain-missing",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "return { sphere: Math.ceil(c / 2), sentry: 0, captain: 1 };",
+    "new": "return { sphere: Math.ceil(c / 2), sentry: 0, captain: 0 };",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-appetite-by-the-whole-ship",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "V.cells.need = engineNeeds(n);",
+    "new": "V.cells.need = engineNeeds(8);",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-member-taken-twice",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "  if (known) { if (name) known.name = String(name).slice(0, 24); known.seenAt = now; return false; }",
+    "new": "  if (known && known.lv < 0) { if (name) known.name = String(name).slice(0, 24); known.seenAt = now; return false; }",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-purse-empty",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "dealt: 0, clipped: 0, bucket: BUCKET_DEPTH_X * dpsRef(level), bucketAt: now,",
+    "new": "dealt: 0, clipped: 0, bucket: 0, bucketAt: now,",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-first-wave-at-once",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (V.crew.length && (inWaist || (W.firstAt && now - W.firstAt >= KT_WATCH_WAIT_MS))) startWave(V, 1, n, now, rng, out);",
+    "new": "if (V.crew.length) startWave(V, 1, n, now, rng, out);",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-wave-while-the-last-stands",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "    } else if (!standing) {",
+    "new": "    } else if (standing || !standing) {",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-wardens-awake",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "spawn(V, 'warden', 'landing', x, z, Math.PI, now, out, { wake: false, rise: 0 });",
+    "new": "spawn(V, 'warden', 'landing', x, z, Math.PI, now, out, { wake: true, rise: 0 });",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-wake-line-ignored",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "&& q.z >= KT_WARDEN_WAKE_Z))",
+    "new": "&& q.z >= -1e9))",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-struck-warden-unsaid",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "    if (!wasAwake && B.wake) out.push({ k: 'wk', o: B.id, at: now });",
+    "new": "    if (!wasAwake && B.wake) void out;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-hold-opened-with-one-standing",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (!W.some((B) => B.h > 0)) {",
+    "new": "if (W.some((B) => B.h <= 0)) {",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-cell-from-across-the-hold",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (!cr || !cr.ready || dist(at.x, at.z, spot[0], spot[1]) > KT_REACH + 0.6) return out;",
+    "new": "if (!cr || !cr.ready || !spot) return out;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-second-cell-in-full-hands",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "    if (!at || C.carry[sub]) return out;",
+    "new": "    if (!at) return out;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-socket-fed-twice",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (V.sg !== KT_STAGE.engine || !spot || C.sk[m.s] ||",
+    "new": "if (V.sg !== KT_STAGE.engine || !spot ||",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-cradle-never-charging",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "for (const c of [...C.cr, ...C.br]) if (!c.ready && now >= c.backAt) { c.ready = 1; c.backAt = 0; moved = true; }",
+    "new": "for (const c of [...C.cr, ...C.br]) if (!c.ready && now < 0) { c.ready = 1; c.backAt = 0; moved = true; }",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-struck-carrier-keeping-its-cell",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (m.k === 'drop' || m.k === 'hurt') { dropCell(V, sub, at, now, m.k === 'hurt' ? 'struck' : 'let', out); return out; }",
+    "new": "if (m.k === 'drop') { dropCell(V, sub, at, now, 'let', out); return out; }",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-dropped-cell-lying-forever",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "  C.lo = C.lo.filter((l) => now < l.until);",
+    "new": "  C.lo = C.lo.filter((l) => l.until > 0);",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-cell-carried-up-the-stair",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "else if (c.on === 'hold' ? zone !== 'hold' : zone !== 'bridge') dropCell(V, b.sub, null, now, 'left', out);",
+    "new": "else if (c.on === 'hold' ? zone === null : zone === null) dropCell(V, b.sub, null, now, 'left', out);",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-spiders-bound-ignored",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "room = Math.max(0, spidersMaxFor(n) - alive);",
+    "new": "room = KT_SPIDERS_AT_ONCE + 0 * alive;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-hold-left-standing",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }",
+    "new": "      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 1e12) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-engine-fed-one-short",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "    if (V.cells.banked >= V.cells.need) {",
+    "new": "    if (V.cells.banked >= V.cells.need - 1) {",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-bridge-from-the-course",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "live.find((q) => (q.zone === 'gangway' || q.zone === 'bridge') && now",
+    "new": "live.find((q) => (q.zone === 'sailwalk' || q.zone === 'gangway' || q.zone === 'bridge') && now",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-its-first-unnamed",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "V.bridge = { at: now, by: V.players[first.sub]?.name ?? '' };",
+    "new": "V.bridge = { at: now, by: '' };",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-in-from-the-gangway",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (V.sg !== KT_STAGE.bridge || !at || deckZoneAt(at.x, at.y, at.z) !== 'bridge') return out;",
+    "new": "if (V.sg !== KT_STAGE.bridge || !at) return out;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-bridge-cells-without-the-ward",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "discord = V.sg === KT_STAGE.bridge && zone === 'bridge' && !!V.wf?.ward;",
+    "new": "discord = V.sg === KT_STAGE.bridge && zone === 'bridge' && !!V.wf;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-resonator-set-twice",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (!V.wf || !spot || V.wf.rs[k] !== 0 ||",
+    "new": "if (!V.wf || !spot ||",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-cell-taken-up-afresh-where-it-lies",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "C.carry[sub] = { id: l.id, on: l.on, x: l.ox ?? at.x, z: l.oz ?? at.z, at: l.oa ?? now };",
+    "new": "C.carry[sub] = { id: l.id, on: l.on, x: at.x, z: at.z, at: now };",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-hold-kept-shut-on-wardens-taken-off",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "if (!W.some((B) => B.h > 0)) {",
+    "new": "if (W.length && !W.some((B) => B.h > 0)) {",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-fall-leaving-a-carrier-its-cell",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "      V.cells.carry = {}; V.cells.lo = [];",
+    "new": "      V.cells.lo = [];",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-lost-fight-kept",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "    if (f.lost) {\n",
+    "new": "    if (f.lost && f.fell) {\n",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-its-bridge-cells-left-lying",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "V.cells.lo = V.cells.lo.filter((l) => l.on !== 'bridge');",
+    "new": "V.cells.lo = V.cells.lo.filter((l) => !!l.on);",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-cradle-said-charged",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "cr: C.cr.map((c) => (c.ready ? 1 : c.backAt))",
+    "new": "cr: C.cr.map((c) => (c.ready ? 1 : 1))",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-cells-said-every-beat",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "  if (key === V.cells.sent) return;",
+    "new": "  if (key === null) return;",
+    "equivalent": true,
+    "why": "Every caller of cellsFrame says the cells only after it moved them: a pick adds a carrier, a bank or a drop takes one away, the beat calls it only when a cradle refilled or a loose cell went out (`moved || C.lo.length !== before`), and the engine's stage sets `need` from 0 to its count - so the word always differs from the last one said and the dedupe guard is never the branch taken.",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-resonators-past-the-wire",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "export const KT_RESONATOR0 = 10;",
+    "new": "export const KT_RESONATOR0 = 11;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-kind-the-wire-refuses",
+    "file": "src/net/wire.js",
+    "old": "export const KT_KIND_MAX = 4;",
+    "new": "export const KT_KIND_MAX = 3;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-construct-numbered-among-the-forks",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "export const KT_BODY_ID0 = 1000;",
+    "new": "export const KT_BODY_ID0 = 100;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-present-member-freed",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "return V.crew.filter((s) => !present.has(s) && now",
+    "new": "return V.crew.filter((s) => now",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-place-keep-forgotten",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "(V.players[s]?.seenAt ?? 0) >= KT_PLACE_KEEP_MS",
+    "new": "(V.players[s]?.seenAt ?? 0) >= 0",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-part-in-the-fight-freed",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": " && !(V.wf?.players?.[s] && hasPart(V.wf.players[s])));",
+    "new": ");",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-freed-place-keeps-its-seat",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "  if (V.wf?.players?.[sub]) freeSeat(V.wf, new Set(Object.keys(V.wf.players).filter((s) => s !== sub)));",
+    "new": "",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-cell-banked-in-the-hold-at-a-warp",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "KT_HOLD.y) > 2.5 || far(spot)) return out;",
+    "new": "KT_HOLD.y) > 2.5) return out;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-resonator-set-at-a-warp",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "V.wf.rs[k] !== 0 || dist(at.x, at.z, spot[0], spot[1]) > KT_REACH + 0.6 || far(spot)) return out;",
+    "new": "V.wf.rs[k] !== 0 || dist(at.x, at.z, spot[0], spot[1]) > KT_REACH + 0.6) return out;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-bridge-before-the-lift",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "const first = now - V.sgAt >= KT_SAILWALK_LEAST_MS ?",
+    "new": "const first = true ?",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-main-top-unseen",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "V.players[q.sub].topAt = now;",
+    "new": "V.players[q.sub].topAt = 0;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-carrier-at-a-runners-pace",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "(KT_FAST_RUN_MPS * (carrying ? KT_CARRY_PACE : 1))",
+    "new": "(KT_FAST_RUN_MPS * 1)",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-the-voyages-figures-read",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "  return b && b.fs != null ? { ...b, fs: q?.bf?.s ?? 0, fd: q?.bf?.d ?? 0 } : b;",
+    "new": "  return b;",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-fall-before-the-fight-unmarked",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "    if (q && !q.bf && p.bd?.fs != null) q.bf = { s: 0, d: 0 };",
+    "new": "",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-spot-in-the-tower",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "[-6, 56], [2.5, 56], [0, 30], [0, 42]]",
+    "new": "[-6, 56], [6, 56], [0, 30], [0, 42]]",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  },
+  {
+    "name": "KTB-a-spawn-in-a-cradle",
+    "file": "src/net/ketch/ketchBrain.js",
+    "old": "KT_BRIDGE.z + (z - KT_BRIDGE.z) * 0.62, 1.0))));",
+    "new": "KT_BRIDGE.z + (z - KT_BRIDGE.z) * 0.62, 0))));",
+    "tests": [
+      "test/net/ketch/ketch_brain.test.js"
+    ]
+  }
+]

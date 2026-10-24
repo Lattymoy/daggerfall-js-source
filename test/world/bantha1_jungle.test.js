@@ -527,7 +527,8 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
   const MODE_FRAMES_ONLY = new Set(['render/courtCrystals.js', 'render/gate/gateTelegraph.js', 'render/gate/gateFx.js', 'render/deadlands.js',
     'render/eliteGates/egMistPass.js', 'render/eliteGates/egMotes.js', 'render/eliteGates/egLightPass.js', 'render/eliteGates/egLinePass.js',
     'render/superDungeon/sdBeam.js', 'render/superDungeon/sdPillarPass.js', 'render/superDungeon/sdStompWall.js', 'render/superDungeon/sdRiftPass.js',
-    'render/superDungeon/sdMotes.js', 'render/superDungeon/sdHalo.js', 'render/superDungeon/sdArenaGlow.js', 'render/superDungeon/sdStepsPass.js']);
+    'render/superDungeon/sdMotes.js', 'render/superDungeon/sdHalo.js', 'render/superDungeon/sdArenaGlow.js', 'render/superDungeon/sdStepsPass.js',
+    'render/ketch/ktGaugePass.js']);   // KETCH-LOOK KL3: her gauges, drawn in the dungeon arm's frame on her decks alone
   const fogged = [], unhazed = [], bare = [];
   for (const f of walk(join(ROOT, 'src'))) {
     const rel = f.slice(join(ROOT, 'src').length + 1).split('\\').join('/'), s = readFileSync(f, 'utf8');

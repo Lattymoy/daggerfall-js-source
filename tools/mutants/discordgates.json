@@ -218,8 +218,8 @@
   {
     "name": "DISCORD-GATES-the-herald-ignores-its-door",
     "file": "server/src/index.js",
-    "old": "this._herald = hook ? { hook, threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) } : null;",
-    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) };",
+    "old": "this._herald = hook ? { hook, threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')), ktRole: ketchHeraldRole(role('ktRole'), role('gateRole')) } : null;",
+    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')), ktRole: ketchHeraldRole(role('ktRole'), role('gateRole')) };",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ],

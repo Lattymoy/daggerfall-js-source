@@ -371,7 +371,8 @@ test('HORSE-VOICE THE RIG\'S READS (AUDIT SOUNDSCAPE P5): the rig run on the sha
   assert.ok(blown.calls.shots.filter(([c]) => HORSE_SFX.breath.includes(c) || HORSE_SFX.blow.includes(c)).length >= 3, 'short of breath at the walk: blowing');
   const fresh = rig({ soundsOn: () => true, running: false, horseBreath: () => ({ amount: 0.9, low: false }) });
   fresh.frames(12 * 60);
-  assert.equal(fresh.calls.shots.filter(([c]) => HORSE_SFX.breath.includes(c) || HORSE_SFX.blow.includes(c)).length, 0, 'its breath whole: none');
+  // a calm horse's moments on DFU's clock may say a blow (HORSE_MOODS.calm) - the blown horse's heavy breaths are its own
+  assert.equal(fresh.calls.shots.filter(([c]) => HORSE_SFX.breath.includes(c)).length, 0, 'its breath whole: no heavy breaths');
   const spooked = rig({ soundsOn: () => true, foesNear: () => true });
   spooked.frames(60);
   assert.ok(spooked.calls.shots.some(([c]) => c === HORSE_SFX.spook), 'foes about: the spook');

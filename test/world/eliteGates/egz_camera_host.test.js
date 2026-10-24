@@ -181,7 +181,7 @@ test('EG-ZN THE PASS ON THE REAL RENDERER (scenes/worldModes.js egOccludeFrame a
   assert.equal(base2, base, 'the failed builds left nothing behind');
   // the host's frame: the pass after the cull and the frame's beginFrame, before the dynamic draws
   const W = WM, cullAt = W.indexOf('if (isEgHall(dungeonLoc)) dungeonCtx.egSpanCull?.(proj, view);'), passAt = W.indexOf('if (isEgHall(dungeonLoc)) egOccludeFrame(mwv, dt);'), loopAt = W.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(');
-  assert.ok(W.lastIndexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);', passAt) > W.lastIndexOf('\n    if (mode === \'dungeon\') {', passAt), 'after the dungeon arm\'s beginFrame');
+  assert.ok(W.lastIndexOf('renderer.beginFrame(proj, view, _ktLook?.sunDir ?? INTERIOR_LIGHT_DIR, WORLD_FRAME);', passAt) /* PIN MOVED (KETCH): the dungeon arm's frame in a deck's sun */ > W.lastIndexOf('\n    if (mode === \'dungeon\') {', passAt), 'after the dungeon arm\'s beginFrame');
   assert.ok(cullAt > 0 && passAt > cullAt && loopAt > passAt, 'the cull, the pass, then the dynamic draws');
 });
 

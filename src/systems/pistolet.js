@@ -12,18 +12,18 @@
 //   - ONE-HANDED (characters/equipTable.js answers Either), so a second one in the other hand is a pair
 //     (combat/twoHands/handsLaw.js DUAL_GUN_TYPES) - and a pair of guns reloads hand by hand (combat/playerWeapon.js);
 //   - it spends the THUNDERLOCK'S PELLET (characters/thunderlockIds.js ammoTemplateFor), so it has no ammunition of its own
-//     and the shops' Pellets (systems/shopStock.js) feed both guns;
+//     and one find of Pellets feeds both guns (PELLETS-SCARCE: no shop sells them - systems/thunderlock.js);
 //   - the owner's lab numbers (combat/gun/gunFeel.js PISTOLET_FEEL), and art drawn at Daggerfall's own scale.
 //
 // THE INDEX is 562, the next past the Thunderlock's pair - past DFU's 288 and Climates & Calories' 530-541, so
 // registerCustomTemplates takes it and the frozen DFU table stays what it is.
 
-import { registerCustomTemplates, mintCondition, setItemFields, registerOwnItemImage } from './item/itemTemplates.js';
+import { registerCustomTemplates, mintCondition, setItemFields, registerOwnItemImage, registerTemplateLore } from './item/itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
 import { SKILLS } from './skills.js';
 import { APP_ROOT } from './appRoot.js';
 import { PISTOLET_FEEL } from '../combat/gun/gunFeel.js';
-import { WEAPON_GROUP } from './thunderlock.js';   // the Pellet's home - one gun's laws, the other's to read
+import { WEAPON_GROUP, GUN_LORE } from './thunderlock.js';   // the Pellet's home - one gun's laws, the other's to read; GUN-LORE: the family's words
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';   // the slot a hand's weapon is worn in
 import { PISTOLET_TEMPLATE, PISTOLET_ARCHIVE, PISTOLET_SPAN } from '../characters/thunderlockIds.js';
 
@@ -55,6 +55,8 @@ export const PISTOLET_TEMPLATES = Object.freeze([{
 registerCustomTemplates(PISTOLET_TEMPLATES);
 
 export const isPistolet = (item) => item?.templateIndex === PISTOLET_TEMPLATE;
+// GUN-LORE: what it is, under its name (systems/thunderlock.js GUN_LORE - the family's words, one home)
+registerTemplateLore(PISTOLET_TEMPLATE, GUN_LORE.pistolet);
 
 /** The skill a hit with it is scored on - the Thunderlock's, for the Thunderlock's reason (characters/weapons.js). */
 export const PISTOLET_SKILL = SKILLS.Archery;

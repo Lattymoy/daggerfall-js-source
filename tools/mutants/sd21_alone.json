@@ -2,8 +2,8 @@
   {
     "name": "SD21-the-Hour-admitted",
     "file": "src/systems/madeLevel.js",
-    "old": "portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
-    "new": "portalStone: 'refused', companions: null, regen: 'off', levitate: 'banned',",
+    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
+    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: null, regen: 'off', levitate: 'banned',",
     "tests": [
       "test/scenes/sd21_alone.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "SD21-the-Hours-cards-drawn",
     "file": "src/systems/madeLevel.js",
-    "old": "companions: 'out', regen: 'off', levitate: 'banned',",
-    "new": "companions: 'in', regen: 'off', levitate: 'banned',",
+    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
+    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'in', regen: 'off', levitate: 'banned',",
     "tests": [
       "test/scenes/sd21_alone.test.js"
     ]

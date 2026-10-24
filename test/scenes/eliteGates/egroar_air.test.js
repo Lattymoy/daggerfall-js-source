@@ -158,7 +158,7 @@ test('EG-ROAR THE WIRING: the breach client plays the air from the score\'s own 
   assert.match(C, /away\(\) \{[^\n]*\bair\.stop\(\);/, 'and on away()');
   assert.match(C, /const air = createEgAir\(audio\);/);
   const D = readFileSync(new URL('../../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(D, /&& !_sdRealm && !_egHall\) sceneAmbience\.update\(dt, \{/, 'no drip in the Spire');
+  assert.match(D, /&& !_sdRealm && !_egHall && !_ketch\) sceneAmbience\.update\(dt, \{/, 'no drip in the Spire');   // PIN MOVED (KETCH): nor on a ship in the sky
   const A = readFileSync(new URL('../../../src/scenes/eliteGates/egAir.js', import.meta.url), 'utf8');
   assert.match(A, /import \{ layBed \} from '\.\.\/superDungeon\/sdAir\.js';/);
   assert.ok(!/function layBed/.test(A), 'one home');

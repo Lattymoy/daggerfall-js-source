@@ -64,7 +64,7 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
   // Thunderlock's mint draws its own), and with every draw a find, still no stone
   let drawn = 0;
   LR.rollUniqueFinds({ kind: 'corpse', tier: 21, boss: true, luck: 50 }, () => { drawn++; return 0.999; });
-  assert.equal(drawn, finds.filter((f) => !f.late).length);
+  assert.equal(drawn, finds.filter((f) => !f.late && !f.final).length);   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): a final find (the Dwemer Pellet's) is the door's last draw, never rollUniqueFinds'
   assert.ok(!LR.rollUniqueFinds({ kind: 'corpse', tier: 21, boss: true, luck: 50 }, () => 0).some((it) => isWelkyndStone(it) || isVarlaStone(it)));
   // rollLateFinds rolls them alone, the Welkynd first
   drawn = 0;
@@ -86,6 +86,7 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
   // the gem arc's - off here (a tier with no chance takes no draw), so the stones are this replay's last two draws;
   // test/tech1_roster holds the technique pass the door's very last
   LR._setTechniqueForTests({});
+  LR._holdFinalFindsForTests(true);   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): the Dwemer Pellet's final find is the door's draw after the technique's - held off here as the technique is; test/systems/pelletsscarce.test.js holds it the door's very last
   try {
     for (let seed = 1; seed < 30; seed++) {
       const base = lcg(seed);
@@ -105,13 +106,14 @@ test('LOOT21: the finds - late, from tier 6 and tier 10, never in rollUniqueFind
     LR._setWeaponSocketsForTests(null);
     LR.registerGemFind(rollGemFind);
     LR._setTechniqueForTests(null);
+    LR._holdFinalFindsForTests(false);
   }
   // off: nothing
   _resetForTests();
   setPref('lootRarity', false);
   const offList = [createWeapon(120, 1)];
   LR.rollLootRarity(offList, src, { rolls: () => 0 });
-  assert.equal(offList.length, 1);
+  assert.ok(!offList.some((it) => isWelkyndStone(it) || isVarlaStone(it)) && offList.slice(1).every((it) => /Pellet/.test(it.name)), 'no stone');   // PIN MOVED (AUDIT SHIP C2): the switch off still drops the Pellet's final find - a find, not a tier - and nothing else
   _resetForTests();
 });
 

@@ -38,8 +38,8 @@
   {
     "name": "SEA-SCORE-a-level-moved",
     "file": "src/systems/soundscape/seaScore.js",
-    "old": "export const SEA_LEVEL = Object.freeze({ calm: 2.8,",
-    "new": "export const SEA_LEVEL = Object.freeze({ calm: 2.6,",
+    "old": "export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.8,",
+    "new": "export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.6,",
     "tests": [
       "test/systems/soundscape/seascore.test.js"
     ]

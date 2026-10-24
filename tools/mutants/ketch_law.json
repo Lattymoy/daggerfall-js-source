@@ -1,0 +1,146 @@
+[
+  {
+    "name": "KTL-the-epoch-moved",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const KT_EPOCH_MS = Date.UTC(2026, 9, 25);",
+    "new": "export const KT_EPOCH_MS = Date.UTC(2026, 9, 24);",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-a-round-of-nine-hours",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const KT_EVERY_MS = 10 * 3600 * 1000;",
+    "new": "export const KT_EVERY_MS = 9 * 3600 * 1000;",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-station-shortened",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const KT_STATION_MS = 7 * 3600 * 1000;",
+    "new": "export const KT_STATION_MS = 6 * 3600 * 1000;",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-sighting-late",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "const n = Math.floor((t - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
+    "new": "const n = Math.floor((t - KT_EPOCH_MS) / KT_EVERY_MS);",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-station-end-inclusive",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "t < v.departAt ? 'docked'",
+    "new": "t <= v.departAt ? 'docked'",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-away-naming-the-voyage-gone",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "if (t >= v.endAt) return { ...ketchVoyageOf(n + 1), phase: 'away' };",
+    "new": "if (t >= v.endAt) return { ...ketchVoyageOf(n), phase: 'away' };",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-boarding-through-the-last-minutes",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.departAt; };",
+    "new": "export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.endAt; };",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-holding-before-the-arrival",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.endAt; };",
+    "new": "export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return now >= v.sightAt && now < v.endAt; };",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-voyage-in-decimal",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "n.toString(16).padStart(KT_VOYAGE_HEX, '0')",
+    "new": "n.toString(10).padStart(KT_VOYAGE_HEX, '0')",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-an-owner-of-fifteen",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "const OWNER_RE = new RegExp(`^[0-9a-f]{${KT_OWNER_HEX}}$`);",
+    "new": "const OWNER_RE = new RegExp(`^[0-9a-f]{${KT_OWNER_HEX - 1},${KT_OWNER_HEX}}$`);",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-minting-a-gone-voyage",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const ketchRoomHolds = (key, now) => { const r = ketchRoomOf(key); return !!r && ketchHolds(r.n, now); };",
+    "new": "export const ketchRoomHolds = (key, now) => { const r = ketchRoomOf(key); return !!r && now === now; };",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-the-ninth-let-in",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "if (crew.length >= KT_CREW_MAX) return 'full';",
+    "new": "if (crew.length > KT_CREW_MAX) return 'full';",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-a-member-refused-in-the-last-minutes",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "if (crew.includes(sub)) return null;",
+    "new": "if (crew.includes(sub) && ketchBoards(r.n, now)) return null;",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-a-newcomer-while-she-weighs-anchor",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "if (!ketchBoards(r.n, now)) return 'closed';",
+    "new": "if (!ketchHolds(r.n, now)) return 'closed';",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-no-right-let-in",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "if (!right) return 'crew';",
+    "new": "if (right === 'none') return 'crew';",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  },
+  {
+    "name": "KTL-staff-the-ninth",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  if (crew.length >= KT_CREW_MAX) return 'full';",
+    "new": "  if (crew.length >= KT_CREW_MAX && right !== 'staff') return 'full';",
+    "tests": [
+      "test/net/ketch/ketch_law.test.js"
+    ]
+  }
+]

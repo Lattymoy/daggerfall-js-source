@@ -13,9 +13,9 @@ import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  seaState, swellAt, swellBed, washBed, riggingBed, luffs, gullsAbout, sprayChance, creakGap, ropeGap, watchBells, bellStrokes,
+  seaState, seaSwellAt, swellBed, washBed, riggingBed, luffs, gullsAbout, sprayChance, creakGap, ropeGap, watchBells, bellStrokes,
   createSeaAir, SEA_BEDS, SEA_FAR, SWELL_WAVES, SWELL_CREST, SEA_STATE_FLOOR, SEA_WEATHER, BELL_CLIP, BELL_PITCH, BELL_MIN_REAL_S, CREAK_GAP_S, ROPE_GAP_S,
-  LUFF_GAP_S, GULL_GAP_S, GULL_PAIR, LUFF_WAY, LUFF_WIND, SPRAY_WAY, SPRAY_STATE, BELL_STROKE_S, BELL_PAIR_S, NORMAL_PACE, BELL_MAX_PACE, PACE_TAU_S,
+  LUFF_GAP_S, GULL_GAP_S, GULL_PAIR, LUFF_WAY, LUFF_WIND, SPRAY_WAY, SPRAY_STATE, BELL_STROKE_S, BELL_PAIR_S, NORMAL_PACE, BELL_MAX_PACE, BELL_PACE_TAU_S,
 } from '../../../src/systems/soundscape/seaAir.js';
 import { SCAPE_SFX } from '../../../src/systems/soundscape/soundscapeSfx.js';
 import { _resetMade } from '../../../src/systems/soundscape/soundJobs.js';
@@ -53,9 +53,9 @@ test('SEA-AIR THE SWELL\'S CLOCK: three long waves (8.3, 12.7 and 5.1 s) whose s
   assert.equal(SWELL_CREST, 0.72, 'a slap as the swell rises through 0.72');
   assert.ok(near(SWELL_WAVES.reduce((a, [, s]) => a + s, 0), 1));
   const expect = (t) => 0.5 + 0.5 * (0.55 * Math.sin((2 * Math.PI * t) / 8.3) + 0.3 * Math.sin((2 * Math.PI * t) / 12.7 + 1.3) + 0.15 * Math.sin((2 * Math.PI * t) / 5.1 + 0.4));
-  for (const t of [0, 1.7, 4.2, 9.9, 33.3, 120]) assert.ok(near(swellAt(t), expect(t)), `t ${t}`);
-  let lo = 1, hi = 0, crests = 0, was = swellAt(0);
-  for (let t = 0.05; t < 600; t += 0.05) { const v = swellAt(t); lo = Math.min(lo, v); hi = Math.max(hi, v); if (was < SWELL_CREST && v >= SWELL_CREST) crests++; was = v; }
+  for (const t of [0, 1.7, 4.2, 9.9, 33.3, 120]) assert.ok(near(seaSwellAt(t), expect(t)), `t ${t}`);
+  let lo = 1, hi = 0, crests = 0, was = seaSwellAt(0);
+  for (let t = 0.05; t < 600; t += 0.05) { const v = seaSwellAt(t); lo = Math.min(lo, v); hi = Math.max(hi, v); if (was < SWELL_CREST && v >= SWELL_CREST) crests++; was = v; }
   assert.ok(lo >= 0 && hi <= 1 && hi > SWELL_CREST && lo < 0.2, `${lo} ${hi}`);
   assert.ok(crests > 40 && crests < 110, `a crest every 5 to 15 s over ten minutes: ${crests}`);
 });
@@ -63,7 +63,7 @@ test('SEA-AIR THE SWELL\'S CLOCK: three long waves (8.3, 12.7 and 5.1 s) whose s
 test('SEA-AIR THE BEDS: the swell from its floor in a calm to its gale\'s, riding the swell; the wash nothing until she has way and all of it at full way; the rigging nothing below a strong wind, a storm adding its own, breathing with the gust (mutants: the swell\'s depth; the wash\'s threshold; the rigging\'s threshold; the storm\'s share)', () => {
   const { min, max, depth } = SEA_BEDS.swell;
   assert.deepEqual([min, max, depth], [0.15, 0.78, 0.55], 'AUDIT SOUNDSCAPE S6: levelled against the mod\'s hull loops');
-  const t = 3.1, s = swellAt(t);
+  const t = 3.1, s = seaSwellAt(t);
   assert.ok(near(swellBed(0, t).volume, min * (1 - depth + depth * s)));
   assert.ok(near(swellBed(1, t).volume, max * (1 - depth + depth * s)));
   assert.ok(swellBed(0.6, 0).pitch > swellBed(0.1, 0).pitch, 'a heavier sea rolls deeper and wider');
@@ -73,7 +73,7 @@ test('SEA-AIR THE BEDS: the swell from its floor in a calm to its gale\'s, ridin
   assert.equal(washBed(0.3, 0.5, 2).volume, 0, 'steerage way is not yet a wash');
   assert.equal(washBed(SEA_BEDS.wash.from, 0.5, 2).volume, 0, 'the threshold itself is silent');
   assert.ok(washBed(SEA_BEDS.wash.full, 1, 1.7).volume > washBed(3, 1, 1.7).volume && washBed(3, 1, 1.7).volume > 0);
-  assert.ok(near(washBed(SEA_BEDS.wash.full, 1, 1.7).volume, SEA_BEDS.wash.max * (0.75 + 0.25 * swellAt(0))), 'full way: the max, riding the swell a beat behind');
+  assert.ok(near(washBed(SEA_BEDS.wash.full, 1, 1.7).volume, SEA_BEDS.wash.max * (0.75 + 0.25 * seaSwellAt(0))), 'full way: the max, riding the swell a beat behind');
   assert.equal(riggingBed(0.5, 1, 'sunny').volume, 0, 'a fresh breeze does not moan in the lines');
   assert.ok(riggingBed(0.5, 1, 'thunder').volume > 0, 'a storm does');
   assert.ok(near(riggingBed(1, 1, 'sunny').volume, SEA_BEDS.rigging.max), 'a full gale at its height: the max');
@@ -113,7 +113,7 @@ test('SEA-AIR THE WATCH BELLS: one at the half hour after a watch begins (the wa
   assert.deepEqual(bellStrokes(8).length, 8);
   assert.deepEqual(bellStrokes(0), []);
   assert.deepEqual([BELL_CLIP, BELL_PITCH, BELL_MIN_REAL_S, BELL_STROKE_S, BELL_PAIR_S], [107, 1.22, 60, 0.42, 1.15]);
-  assert.deepEqual([NORMAL_PACE, BELL_MAX_PACE, PACE_TAU_S], [0.2, 0.5, 3], 'DFU\'s 12 to 1 is 0.2 of the world\'s minutes a real second');
+  assert.deepEqual([NORMAL_PACE, BELL_MAX_PACE, BELL_PACE_TAU_S], [0.2, 0.5, 3], 'DFU\'s 12 to 1 is 0.2 of the world\'s minutes a real second');
 });
 
 // ── the driver ────────────────────────────────────────────────────────

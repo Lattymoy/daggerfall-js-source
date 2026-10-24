@@ -44,6 +44,7 @@ export const HERALD_FAMILIES = Object.freeze({
   serpent: Object.freeze({ name: 'The Sea Serpent', colour: 0x3fd6c6, thread: 'serpentThread' }),
   abyss: Object.freeze({ name: 'The Abyss Dungeon', colour: 0xe8b24a, thread: 'sdThread' }),
   spire: Object.freeze({ name: 'The Battlespire', colour: 0xffd56a, thread: 'egThread' }),
+  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff, thread: 'ktThread' }),   // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)
 });
 /** @typedef {keyof typeof HERALD_FAMILIES} HeraldFamily */
 /** A family's colour as a stylesheet writes it ('#e2554c'). */

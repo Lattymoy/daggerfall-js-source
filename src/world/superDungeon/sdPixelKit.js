@@ -101,6 +101,30 @@ export function quantize(img, palette) {
   }
   return img;
 }
+/** KETCH-LOOK KL2 (bible/11-Multiplayer/Sky-Ketch-Look.md section 2, the palette contract): `quantize` over INDEXED ramps -
+ *  each `{ idx, fallback }`, an ART_PAL index a step and the port's own colour for it. Every texel forced to its nearest
+ *  step's fallback (squared distance in sRGB) and that step's index written beside it: the picture stays drawable with no
+ *  game data, and the index image resolves through the player's own palette at upload. Returns the index image (one byte
+ *  a texel, the picture's row order). The Hour's `quantize` is untouched. */
+export function quantizeIndexed(img, ramps) {
+  const c = img.colors, n = c.length / 4, out = new Uint8Array(n), cache = new Map();
+  const steps = ramps.flatMap((r) => r.idx.map((i, k) => ({ i, p: r.fallback[k] })));
+  for (let t = 0, j = 0; t < n; t++, j += 4) {
+    const key = (c[j] << 16) | (c[j + 1] << 8) | c[j + 2];
+    let best = cache.get(key);
+    if (!best) {
+      let d = Infinity;
+      for (const s of steps) {
+        const e = (s.p[0] - c[j]) ** 2 + (s.p[1] - c[j + 1]) ** 2 + (s.p[2] - c[j + 2]) ** 2;
+        if (e < d) { d = e; best = s; }
+      }
+      cache.set(key, best);
+    }
+    c[j] = best.p[0]; c[j + 1] = best.p[1]; c[j + 2] = best.p[2];
+    out[t] = best.i;
+  }
+  return out;
+}
 /** How many texels of `img` are not in `palette` (the law's own check). */
 export function offPalette(img, palette) {
   const keys = new Set(palette.map((p) => (p[0] << 16) | (p[1] << 8) | p[2]));

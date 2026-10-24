@@ -106,7 +106,7 @@ test('SEA-SET THE RECORDS: nine in the places\' order - the seven body pieces, a
 });
 
 test('SEA-SET MINTED AND CHECKED: each record mints Adamantium, Aetheric, known, its set\'s sigil fresh at Faint (the saber\'s with its blow), passes the wire\'s check and item law 11; an affix past its record, another set\'s sigil or another make is no item (mutants: the material; the check; the law\'s records)', () => {
-  assert.equal(ITEM_LAW_VERSION, 12);   // PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED: law 11 (10 on its branch, renumbered past PISTOLET's at the merge)
+  assert.equal(ITEM_LAW_VERSION, 13);   // PIN MOVED (KETCH): law 13 - the Gilded rung's Ketch pair (Volendrung's Echo, the Ketchmaster's Word) lawful; PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED: law 11 (10 on its branch, renumbered past PISTOLET's at the merge)
   for (const r of ELTHERIC_SET_PIECES) {
     const it = mintAetheric(r);
     assert.equal(it.material, aethericMaterial(r));

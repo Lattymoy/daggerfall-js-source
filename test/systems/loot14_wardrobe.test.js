@@ -34,8 +34,10 @@ import { goldStack, isGoldPieces } from '../../src/systems/inventory.js';
 import { mintPiece } from '../../src/systems/smithItems.js';
 import { isWelkyndStone, isVarlaStone } from '../../src/systems/ayleidStones.js';   // LOOT21: imported, the late finds are registered - as the game's worldTick.js has them
 
-const on = () => { _resetForTests(); setPref('lootRarity', true); };
-const off = () => { _resetForTests(); setPref('lootRarity', false); };
+// PIN MOVED (PELLETS-SCARCE, 2026-10-24): the Dwemer Pellet's final find is the door's draw after every pass these laws
+// read - held off here (test/systems/pelletsscarce.test.js holds it the door's very last)
+const on = () => { _resetForTests(); setPref('lootRarity', true); LR._holdFinalFindsForTests(true); };
+const off = () => { _resetForTests(); setPref('lootRarity', false); LR._holdFinalFindsForTests(false); };
 const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };
 const garment = (templateIndex, extra = {}) => ({
   ...mintCondition({ group: templateIndex >= 182 ? 'WomensClothing' : 'MensClothing', templateIndex, name: 'garment', flags: 0 }), ...extra,

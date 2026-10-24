@@ -67,7 +67,7 @@ test('ARENA2 hosts - dungeonContext.js wired (what the sand will not allow); ARE
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(ARENA_TEXT\.refuse\.save\); return false; \}/);
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ hudText\.add\(ARENA_TEXT\.refuse\.map\); return; \}/);
   assert.match(D, /savingPrevented: \(\) => madeLevelRule\(_made, 'save'\) === 'refused' \|\| isArenaFloor\(dfLocation\),/);   // SD5a (PIN MOVED): and the Shattered Hour beside them; PIN MOVED (EG-H2): the made levels' saves are their law's (systems/madeLevel.js), the sand's beside them
-  assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)(?: && !_sdRealm)?(?: && !_egHall)?\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');   // SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire
+  assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)(?: && !_sdRealm)?(?: && !_egHall)?(?: && !_ketch)?\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');   // SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire; KETCH (PIN MOVED): nor aboard the sky-ketch
   assert.match(X, /\/\/ ARENA-FIX 12 \(2026-10-02\): WIRED - THE FOUR HOSTS\./);
   assert.match(X, /const arenaBouts = createArenaBouts\(\{/, 'one driver');
   assert.match(X, /arenaHerald: \(\) => arenaHerald\(\),/, 'the Herald\'s choice through the mode machine');

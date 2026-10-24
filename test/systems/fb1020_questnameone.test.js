@@ -70,8 +70,8 @@ test('QUEST-NAME-ONE: every questline giver named by `ql name` is answered to by
       givers.push({ f, sym: m[1], given: m[2].replace(/_/g, ' '), personLine: personLine.trim(), words: src.slice(0, src.indexOf('QBN:')) });
     }
   }
-  assert.equal(givers.length, 16, 'the sixteen steps a named giver gives');
-  assert.deepEqual([...new Set(givers.map((g) => g.given))].sort(), ['Corvane Tull', 'Hamid al-Rasheen', 'Prior Anselm Vey', 'Ysolde Marnhel']);
+  assert.equal(givers.length, 20, 'the twenty steps a named giver gives');   // PIN MOVED (KETCH): the Sky-Ketch's four, Imrah Bel-Tavir's
+  assert.deepEqual([...new Set(givers.map((g) => g.given))].sort(), ['Corvane Tull', 'Hamid al-Rasheen', 'Imrah Bel-Tavir', 'Prior Anselm Vey', 'Ysolde Marnhel']);
   for (const g of givers) {
     const person = personOf(g.personLine, [`ql name ${g.sym} ${g.given.replace(/ /g, '_')}`]);
     assert.equal(person.displayName, g.given, `${g.f}: the quest's own name, over the one it drew`);

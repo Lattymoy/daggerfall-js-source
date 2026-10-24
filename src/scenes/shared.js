@@ -322,6 +322,7 @@ export function createSkyController(gl, params) {
   const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds (CLK1: game minutes x WIND_SECONDS_PER_MINUTE)
   let weatherAt = null;     // the mod's real-second clock (DS1, 1:1 - BLBSkybox reads Time.deltaTime)
   let lastMin = null;       // CLK1: the game minute the presentation last walked to
+  const lastUse = { index: null, night: true, extra: null }, retimed = {};   // KETCH-LOOK KL1: the street's last use (retime)
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
   // AUDIT 24 (the seven-slice sweep): this Map had no eviction at all.
@@ -601,6 +602,7 @@ export function createSkyController(gl, params) {
      *  and the classic clock too (`extra`), for the clouds and the moons;
      *  it is synchronous - numbers into uniforms, nothing to load. */
     use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
+      lastUse.index = skyIndex; lastUse.night = showNightSky; lastUse.extra = extra;   // KETCH-LOOK KL1: what retime takes again
       if (sunbabyOn && extra) extra = { ...extra, violence: extra.weather, cells: null, cloudBase: null, approach: 0 };   // SUNBABY1: the clear day, whole
       if (enhancedSky || dynamic) {
         const now = (typeof performance !== 'undefined' ? performance.now() : 0);
@@ -769,9 +771,24 @@ export function createSkyController(gl, params) {
         });
       }
     },
+    /** KETCH-LOOK KL1 (bible/11-Multiplayer/Sky-Ketch-Look.md section 14): THE SKY'S CLOCK OFF THE STREET. A made level
+     *  that draws the world's sky (the Sky-Ketch's decks, the Arena's floor - the dungeon arm's `host.drawSky`, through
+     *  `draw`'s clocks) runs no exterior frame, so its sky stood at the minute the player left the street while the hour
+     *  turned under it (online, twelve game hours a real one: a raid's sun stood at its boarding while her decks went to
+     *  dusk). The last `use` again on the clocks now - its sky index, its night sky, its weather as the street last
+     *  handed them. Before any `use`, nothing. */
+    retime(minuteOfDay, classicMinutes, skyMinutes) {
+      if (lastUse.index === null) return;
+      const extra = lastUse.extra ? Object.assign(retimed, lastUse.extra) : null;
+      if (extra) { extra.classicMinutes = classicMinutes; extra.skyMinutes = skyMinutes; extra.pos = null; }   // AUDIT SHIP A7: the street's feet are the player's live array - in a made level its coordinates, the clouds' field moved to them; it stays where the street left it
+      this.use(lastUse.index, minuteOfDay, lastUse.night, extra);
+    },
     /** VC3: `viewport` is the host's world rect [x, y, w, h] in pixels,
-     *  restored after the clouds' map is marched (a render target). */
-    draw(yaw, pitch, fovY, aspect, viewport = [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight]) {
+     *  restored after the clouds' map is marched (a render target). KETCH-LOOK KL1: a made level's door hands the clocks
+     *  too (`minuteOfDay`, `classicMinutes`, `skyMinutes`) - the sky retimed to them first; the street's frame, whose
+     *  `use` has run, hands none. */
+    draw(yaw, pitch, fovY, aspect, viewport = [0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight], minuteOfDay = null, classicMinutes = 0, skyMinutes = classicMinutes) {
+      if (minuteOfDay != null) this.retime(minuteOfDay, classicMinutes, skyMinutes);
       // VC6d: the sky and its cloud march are the one heavy pass the
       // renderer does not run, so they mark their own span and hand the
       // frame back to the world's - `?perf=zones` and nothing otherwise.

@@ -13,7 +13,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   seaScoreSongs, seaScoreFor, createSeaScore, tune, SEA_SONGS, SEA_SCORE_SILENCE, SEA_CALM_WAY, SEA_SCORE_HOLD_MS,
-  SEA_FIGHT_TAIL_MS, SEA_SCORE_SETTLE_MS, seaSongMs, SEA_SHAPE, SEA_PROGRAMS, SEA_CHANNELS, SEA_MIX, SEA_KIT_LEVEL, SEA_VOICES, SEA_KIT, SEA_LEVEL,
+  SEA_FIGHT_TAIL_MS, SEA_SCORE_SETTLE_MS, seaSongMs, SEA_SHAPE, SEA_PROGRAMS, SEA_CHANNELS, SEA_MIX, SEA_KIT_LEVEL, SEA_VOICES, SEA_KIT, SEA_SONG_LEVEL,
   SEA_TUNES, SEA_CHORDS,
 } from '../../../src/systems/soundscape/seaScore.js';
 import { gateScoreSongs, midiNote, SCORE_TPQ } from '../../../src/systems/gate/gateScore.js';
@@ -46,7 +46,7 @@ test('SEA-SCORE THE SONGS: six, by their own names - eight and three, beside eve
     calm: { bpm: 84, bars: 64, beats: 3 }, open: { bpm: 100, bars: 48, beats: 4 }, storm: { bpm: 126, bars: 48, beats: 4 },
     night: { bpm: 66, bars: 32, beats: 3 }, port: { bpm: 156, bars: 64, beats: 3 }, fight: { bpm: 144, bars: 48, beats: 4 },
   });
-  assert.deepEqual({ ...SEA_LEVEL }, { calm: 2.8, open: 2, storm: 2.1, night: 2.4, port: 2.1, fight: 1.95 });
+  assert.deepEqual({ ...SEA_SONG_LEVEL }, { calm: 2.8, open: 2, storm: 2.1, night: 2.4, port: 2.1, fight: 1.95 });
   const names = new Set();
   for (const k of KEYS) {
     const s = songs[k], { bpm, bars, beats } = SEA_SHAPE[k];
@@ -59,7 +59,7 @@ test('SEA-SCORE THE SONGS: six, by their own names - eight and three, beside eve
     assert.ok(Math.abs(s.secondsPerTick - 60 / (bpm * SCORE_TPQ)) < 1e-12);
     assert.equal(s.seamless, true, 'loops on its bar line');
     assert.equal(s.press, null, 'unpressed: a helm\'s songs stand where the day songs stand, not over them');
-    assert.equal(songLevel(s), SEA_LEVEL[k], `${k}'s level, inside the player's range`);
+    assert.equal(songLevel(s), SEA_SONG_LEVEL[k], `${k}'s level, inside the player's range`);
     const n = notesOf(s);
     assert.ok(n.every((e) => e.tick >= 0 && e.tick < s.durationTicks && e.tick + e.duration <= s.durationTicks), `${k}: nothing past its end`);
     assert.ok(n.every((e) => e.velocity >= 1 && e.velocity <= 127 && e.duration >= 1 && e.note >= 0 && e.note <= 127));

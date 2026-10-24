@@ -169,6 +169,8 @@ let _struck = new WeakSet();             // the foes my blows have landed on (Fi
 let _undertow = new WeakMap();           // GILDED2: a foe -> the Undertow's landed blows on it (its stacks, at most the power's max), until when they hold, and when the last landed (its kill heals - TOLL_REFUND_S's bound; AUDIT WORLD-REWARDS B2: a foe's own, so a swing that strikes two heals for each it fells)
 /** GILDED2: a foe's Undertow stacks now - none once the tide lets it go (AUDIT WORLD-REWARDS B4). */
 const undertowStacks = (foe, now) => { const u = _undertow.get(foe); return u && now < u.until ? u.n : 0; };
+/** @type {WeakMap<object, { by: any, pct: number, until: number }>} */
+let _broadside = new WeakMap();          // KETCH: a foe -> the Broadside's mark on it: the pistol that called it, how much the answer strikes harder, and until when
 /** GILDED1: THE HOUR TOLLS - is this weapon's next landed shot its toll? Its landed shots are counted on the strike
  *  (lootStrike, after the blow), so the blow asks before the count moves: shots one and two ring nothing, the third tolls. */
 const tollDue = (weapon, p) => !!weapon && (_tolls.get(weapon) ?? 0) === p.every - 1;
@@ -234,6 +236,11 @@ export function lootBlow(weapon, damage, attacker, target, info) {
   for (const a of linesOf(weapon, 'elemental')) flat += Math.floor(a.value * elementShare(target, a.param));
   // LOOT5: the powers that ride this blow
   const now = _now();
+  // KETCH: BROADSIDE'S ANSWER - a foe the Ketchmaster's Word marked takes the other hand's next blow harder, whatever that
+  // hand holds (the mark is the gilded pistol's; the answering weapon carries no power of it), and the mark is spent by a
+  // blow that lands (an estimate spends nothing)
+  const mark = _broadside.get(target);
+  if (mark && now < mark.until && weapon !== mark.by) { pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }
   for (const { power: p } of blowPowers(attacker, weapon)) {
     switch (p.kind) {
       case 'bane': if (target.affinity !== 'Human' && p.foes.includes(target.careerIndex)) pct += p.pct; break;   // a class foe's career index is its class's, never a monster's
@@ -281,6 +288,8 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
       case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now, weapon }; } break;   // GILDED1
       case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name); break;   // GILDED2
       case 'undertow': if (weapon && whole) _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: now + p.seconds, at: now }); break;   // GILDED2
+      case 'hammerfall': if (ranged(weapon)) ring(target, (damage * p.share) / 100, p.metres, p.name); break;   // KETCH: Volendrung's Echo - the shot rings on
+      case 'broadside': if (ranged(weapon)) _broadside.set(target, { by: weapon, pct: p.pct, until: now + p.seconds }); break;   // KETCH: the Ketchmaster's Word calls the mark
       default: break;
     }
   }
@@ -338,6 +347,17 @@ function dragonfire(target, amount, metres, group, word) {
   const struck = recordOf(door, target);
   if (!struck?.ai?.feet) return;
   for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN
+}
+/** KETCH: Hammerfall - every other foe within `metres` of the struck one takes `amount` as shock (its resistance's share of
+ *  it), each its number risen: Earthshaker's reach on a shot, in the shot's own element. */
+function ring(target, amount, metres, word) {
+  const door = playerDoor();
+  const struck = recordOf(door, target);
+  if (!struck?.ai?.feet || !(amount > 0)) return;
+  for (const f of near(door, struck.ai.feet, metres, target)) {
+    const n = Math.floor(amount * elementShare(f.entity, 'shock'));
+    if (n > 0) reachOn(door, f, n, word);   // CHAIN-SEEN
+  }
 }
 /** Earthshaker: every other foe within `metres` of the struck one takes `amount` - each its number risen. */
 function quake(target, amount, metres, word) {
@@ -640,6 +660,7 @@ export function lootHudChips(entity, now = _now()) {
 export function _resetLootPowersForTests() {
   _carry = new WeakMap(); _resetPlayerHealForTests(); _s = freshState(); _hexed = new WeakMap(); _struck = new WeakSet(); _tolls = new WeakMap(); _lastToll = null;
   _undertow = new WeakMap();   // GILDED2
+  _broadside = new WeakMap();   // KETCH
   _say = (line) => { hudText(line); };
 }
 export function _setLootPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }

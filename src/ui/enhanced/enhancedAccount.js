@@ -37,6 +37,7 @@ import { raidRecordText } from '../../net/raid/raidClaims.js';   // RAID4: and i
 import { t, localizedTable, intlLocale } from '../../systems/textManager.js';   // L10N4: the card's words in the player's language, read when it is drawn
 import { serpentRecordText } from '../../net/serpent/serpentClaims.js';   // AUDIT SERPENT D4: and its serpents-slain row
 import { sdRecordText } from '../../net/superDungeon/sdClaims.js';   // SD9b: and its Hours-broken row
+import { ketchRecordText } from '../../net/ketch/ketchClaims.js';   // KETCH: and its voyages-sailed row
 import { starRecordText } from '../../net/starfall/starClaims.js';   // STAR7: and its stars-held row
 
 /** RENOWN-CHAR (Mac: "Can we make renown per character again"): the card's Renown tracks as the service sends them -
@@ -672,6 +673,10 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       // (net/starfall/starClaims.js carries the receipts). A service from before it says nothing.
       const stars = starRecordText(flow.account.stars);
       if (stars) row(t('account.card.stars', 'Stars held'), stars);
+      // KETCH: the voyages this account sailed to the Tonal Warden's fall - each a receipt the relay signed and this service
+      // counted once a voyage (net/ketch/ketchClaims.js carries the receipts). A service from before it says nothing.
+      const voyages = ketchRecordText(flow.account.ketch);
+      if (voyages) row(t('account.card.voyages', 'Voyages sailed'), voyages);
       // MARKS1: the account's Marks - the server's currency, struck for acts a server witnessed (PROF0 10.5). Null where
       // Marks are not this account's (a guest, the service's switch), and a service from before it says nothing.
       if (Number.isSafeInteger(flow.account.marks)) row(t('account.card.silver', 'Silver'), marksText(flow.account.marks));

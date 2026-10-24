@@ -9,7 +9,7 @@
 //
 //   THE BEDS (named beds on the engine, made by systems/soundscape/soundBeds.js): the SWELL, the open sea's body, its
 //     level the SEA STATE's (the wind and the weather - `seaState`) and its gain rising and falling on the swell's own
-//     clock (`swellAt`: three long waves summed, 5 to 13 s, so no two swells are alike); the WASH, the water running
+//     clock (`seaSwellAt`: three long waves summed, 5 to 13 s, so no two swells are alike); the WASH, the water running
 //     past her hull, rising with her way and riding the swell a beat behind; the RIGGING, the wind moaning in the
 //     lines, only in a strong wind or a storm, breathing with its gusts.
 //   THE EVENTS (one-shots of the port's own, systems/soundscape/soundscapeSfx.js): a wave SLAPPING the hull as a swell
@@ -46,7 +46,7 @@ export const SEA_FAR = 'seaAir';
 
 /** The swell's three long waves: [period s, share, phase] - their sum's shares are 1. */
 export const SWELL_WAVES = Object.freeze([Object.freeze([8.3, 0.55, 0]), Object.freeze([12.7, 0.3, 1.3]), Object.freeze([5.1, 0.15, 0.4])]);
-/** A swell CRESTS as `swellAt` rises through this - a slap's moment. */
+/** A swell CRESTS as `seaSwellAt` rises through this - a slap's moment. */
 export const SWELL_CREST = 0.72;
 
 /** What the weather adds to the sea a wind makes: a rain's squalls and a storm's seas. */
@@ -63,16 +63,19 @@ export function seaState(wind, weather) {
 }
 
 /** The swell at `t` seconds, 0..1: the three waves summed. Pure. */
-export function swellAt(t) {
+export function seaSwellAt(t) {
   let v = 0;
-  for (const [period, share, phase] of SWELL_WAVES) v += share * Math.sin((2 * Math.PI * t) / period + phase);
+  for (const [period, share, phase] of SWELL_WAVES) {
+    const omega = (2 * Math.PI) / period;   // the wave's radians a second (ONCRASH1's sweep: no sum stepped by a whole turn)
+    v += share * Math.sin(omega * t + phase);
+  }
   return clamp01(0.5 + 0.5 * v);
 }
 
 /** The swell bed's gain and pitch for a sea of `state` at `t`. Pure. */
 export function swellBed(state, t) {
   const { min, max, depth } = SEA_BEDS.swell;
-  const s = swellAt(t);
+  const s = seaSwellAt(t);
   return { volume: (min + (max - min) * clamp01(state)) * (1 - depth + depth * s), pitch: 0.9 + 0.1 * clamp01(state) + 0.06 * (s - 0.5) };
 }
 
@@ -80,7 +83,7 @@ export function swellBed(state, t) {
 export function washBed(way, state, t) {
   const { max, from, full } = SEA_BEDS.wash;
   const w = smooth(from, full, way);
-  return { volume: max * w * (0.75 + 0.25 * swellAt(t - 1.7)) * (0.8 + 0.2 * clamp01(state)), pitch: 0.85 + 0.3 * clamp01(way / full) };
+  return { volume: max * w * (0.75 + 0.25 * seaSwellAt(t - 1.7)) * (0.8 + 0.2 * clamp01(state)), pitch: 0.85 + 0.3 * clamp01(way / full) };
 }
 
 /** The rigging bed's gain and pitch for a `wind` (0..1) gusting `gust` (0..1) in `weather`. Pure. */
@@ -138,7 +141,7 @@ export const BELL_MIN_REAL_S = 60;
 export const NORMAL_PACE = 0.2;
 export const BELL_MAX_PACE = 0.5;
 /** How fast the pace's reading follows the clock (s): a few seconds of it. */
-export const PACE_TAU_S = 3;
+export const BELL_PACE_TAU_S = 3;
 /** Daggerfall's bell (DAGGER.SND 107 - the arena's call and the naval host's struck colours), a little higher: a
  *  ship's bell is a small one. */
 export const BELL_CLIP = 107;
@@ -213,7 +216,7 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
       if (s.paused || step === 0) return;
       const bow = headingOf(s), starboard = rightOf(bow);
       // a swell cresting: a slap port or starboard, a second in a heavy sea, and spray over the bow at speed
-      const sw = swellAt(t);
+      const sw = seaSwellAt(t);
       if (lastSwell != null && lastSwell < SWELL_CREST && sw >= SWELL_CREST) {
         const side = rand() < 0.5 ? -1 : 1;
         play(pick(rand, SCAPE_SFX.seaSlap), at(s.ear, [starboard, side * between(rand, 2.5, 4)], [UP, -1.6]), 0.25 + 0.5 * state, { pitch: between(rand, 0.9, 1.1), ref: 3, max: 60 });
@@ -258,7 +261,7 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
       if (Number.isFinite(minute)) {
         if (lastMinute != null) {
           const dm = ((minute - lastMinute) % 1440 + 1440 + 720) % 1440 - 720;   // the minutes this frame moved, the wrap taken
-          if (Math.abs(dm) <= 30) pace += (dm / step - pace) * Math.min(1, step / PACE_TAU_S);
+          if (Math.abs(dm) <= 30) pace += (dm / step - pace) * Math.min(1, step / BELL_PACE_TAU_S);
         }
         const half = Math.floor(minute / 30);
         // the minute of the day wraps at midnight: the half hour after 23:30 is 00:00, struck as the watch's eight

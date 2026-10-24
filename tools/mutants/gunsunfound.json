@@ -2,20 +2,21 @@
   {
     "name": "GU-gun-found-again",
     "file": "src/systems/thunderlock.js",
-    "old": "    return [createPellets(n)];",
-    "new": "    return [createThunderlock(), createPellets(n)];",
+    "old": "    rolls();\n    return [];",
+    "new": "    rolls();\n    return [createThunderlock()];",
     "tests": [
       "test/systems/pistolet.test.js",
-      "test/systems/thunderlock.test.js"
+      "test/systems/thunderlock.test.js",
+      "test/systems/pelletsscarce.test.js"
     ]
   },
   {
     "name": "GU-pellets-miscounted",
     "file": "src/systems/thunderlock.js",
-    "old": "Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1))",
-    "new": "Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min))",
+    "old": "Math.floor(rolls() * (PELLET_FIND_STACK.max - PELLET_FIND_STACK.min + 1))",
+    "new": "Math.floor(rolls() * (PELLET_FIND_STACK.max - PELLET_FIND_STACK.min))",
     "tests": [
-      "test/systems/pistolet.test.js"
+      "test/systems/pelletsscarce.test.js"
     ]
   },
   {

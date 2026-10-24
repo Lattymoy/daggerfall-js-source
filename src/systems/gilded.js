@@ -76,6 +76,22 @@
 // minted under either before stays LAWFUL as its record's era
 // (HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA), read through gildedRecordOf as
 // AUDIT PISTOLET's saber era was. bible/06-Systems/Gilded.md section 9.
+//
+// ═══ GILDED-RARER AND THE KETCH'S TWO (2026-10-24) ══════════════════
+//
+// The owner: "Reduce the drop rate of gilded weapons across the board and
+// ensure any gun drop is rare, only found within this activity" - the
+// Dwarven airship's raid (bible/11-Multiplayer/Sky-Ketch.md), which drops
+// "both guns with a gilded version of each gun". Every Gilded drop is
+// rarer: the Hourlock one Remnant in a hundred (was fifty), the Dragonfire
+// Oath one Warden in two hundred and fifty (was a hundred: a gate opens
+// every two hours), the Sunken Sovereign one dealing ship's hoard in two
+// hundred and fifty (was a hundred: a serpent every four). And the rung's
+// fourth and fifth records are the guns, each its own: VOLENDRUNGS_ECHO, a
+// gilded Thunderlock, and THE_KETCHMASTERS_WORD, a gilded Pistolet - each
+// one earner's spoils in a hundred off the Ketch's Tonal Warden, the last
+// draws of those spoils (systems/ketch/ketchSpoils.js). A gun is minted
+// nowhere else. bible/06-Systems/Gilded.md section 10.
 // ═══════════════════════════════════════════════════════════════════
 
 import { WEAPON_MATERIALS, WEAPONS } from '../characters/weapons.js';
@@ -91,13 +107,18 @@ import { SKILLS } from './skills.js';
 export const GILDED = 'gilded';
 /** What a Gilded piece adds to its price, over its make and its affixes - the Aetheric's 2500 five times over. */
 export const GILDED_WORTH = 12500;
-/** The share of the Brass Remnant's earned receipts whose spoils carry the Hourlock: one in fifty. */
-export const GILDED_CHANCE = 1 / 50;
-/** GILDED2: the share of the gate Warden's spoils that carry the Dragonfire Oath - one in a hundred (a gate every two hours). */
-export const GATE_GILDED_CHANCE = 1 / 100;
-/** GILDED2: the share of a dealing ship's serpent hoards that carry the Sunken Sovereign - one in a hundred (a serpent every
- *  four hours, a ship that stood never). */
-export const SERPENT_GILDED_CHANCE = 1 / 100;
+/** The share of the Brass Remnant's earned receipts whose spoils carry the Hourlock: one in a hundred (GILDED-RARER; it was
+ *  one in fifty). */
+export const GILDED_CHANCE = 1 / 100;
+/** GILDED2: the share of the gate Warden's spoils that carry the Dragonfire Oath - one in two hundred and fifty (a gate every
+ *  two hours; GILDED-RARER - it was one in a hundred). */
+export const GATE_GILDED_CHANCE = 1 / 250;
+/** GILDED2: the share of a dealing ship's serpent hoards that carry the Sunken Sovereign - one in two hundred and fifty (a
+ *  serpent every four hours, a ship that stood never; GILDED-RARER - it was one in a hundred). */
+export const SERPENT_GILDED_CHANCE = 1 / 250;
+/** KETCH: the share of the Tonal Warden's earned receipts whose spoils carry each of the Ketch's two - Volendrung's Echo and
+ *  the Ketchmaster's Word, each its own draw: one in a hundred apiece (a voyage a week, one receipt an account a voyage). */
+export const KETCH_GILDED_CHANCE = 1 / 100;
 
 /** THE HOUR TOLLS - the Hourlock's power (systems/loot/lootPowers.js does it, kind 'toll'). `every` landed shots, the last
  *  strikes `pct`% harder; `refund`: a foe it fells gives its shot back (GUNS-UNFOUND: an arrow off the bow, a pellet off
@@ -128,6 +149,25 @@ export const UNDERTOW = Object.freeze({
   name: 'Undertow', kind: 'undertow', pct: 10, max: 5, seconds: 6, heal: 10,
   brief: '+10%/hit on a foe; kills heal',   // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Each hit drags the foe deeper: +10% damage to your next hits on it for 6 s, up to +50%. A kill heals you for 10% of your health',
+});
+
+/** KETCH: HAMMERFALL - Volendrung's Echo's power (systems/loot/lootPowers.js, kind 'hammerfall'). A shot of it that LANDS
+ *  rings on: every OTHER foe within `metres` of the one it struck takes `share`% of the shot as shock - the note the Rourken
+ *  tuned to the Hammer's flight, struck again where it falls. Earthshaker's reach (a melee blow's) on a shot, in the shot's
+ *  own element. Read once at import, frozen. */
+export const HAMMERFALL = Object.freeze({
+  name: 'Hammerfall', kind: 'hammerfall', share: 50, metres: 3.5,
+  brief: 'Hits ring 50% shock within 3.5m',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  text: 'Each shot that lands rings on: every other foe within 3.5 m of the one it struck takes half the shot as shock',
+});
+/** KETCH: BROADSIDE - the Ketchmaster's Word's power (systems/loot/lootPowers.js, kind 'broadside'). A shot of it that LANDS
+ *  marks the foe for `seconds`: the next blow of the OTHER hand on it - a second pistol's shot, a blade's cut - strikes
+ *  `pct`% harder, and the mark is spent. The Ketch's boarding drill: one pistol calls the mark, the other answers. Read
+ *  once at import, frozen. */
+export const BROADSIDE = Object.freeze({
+  name: 'Broadside', kind: 'broadside', pct: 60, seconds: 2.5,
+  brief: 'Hit marks: other hand +60% on it',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  text: 'Each shot that lands marks the foe for 2.5 s: the next blow of your other hand on it strikes 60% harder',
 });
 
 /** A record's line, frozen. */
@@ -208,12 +248,54 @@ export const SOVEREIGN_PISTOLET_ERA = Object.freeze({
   ...SUNKEN_SOVEREIGN,
   templateIndex: PISTOLET_TEMPLATE,
   affixes: Object.freeze(SUNKEN_SOVEREIGN.affixes.map((a) => (a.id === 'skill' ? Object.freeze({ ...a, param: SKILLS.Archery }) : a))),
-  lore: 'A Sentinel admiral\'s pistolet, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the pistol, and the sea never touched its gilding, nor wet its powder.',
+  lore: 'A Sentinel admiral\'s pistolet, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the pistol, and the sea never touched its gilding, nor stilled its coil.',
 });
 
-/** EVERY GILDED RECORD - the Hourlock, then (GILDED2) the gate's and the serpent's; the one list every reader asks. */
+/** KETCH (2026-10-24): VOLENDRUNG'S ECHO - a Gilded Dwarven Thunderlock, the Tonal Warden's (bible/11-Multiplayer/
+ *  Sky-Ketch.md). The Rourken threw Volendrung, the Hammer of Might, out of Morrowind and built their city where it fell; their
+ *  gunwrights tuned this one's thunder-coil to the note the Hammer sang in its flight. Its lines the Legendary band's top -
+ *  the Hourlock's own as a gun (+40% damage, +15 Agility, +30 Archery, +10 shock a shot); its power HAMMERFALL. */
+export const VOLENDRUNGS_ECHO = Object.freeze({
+  id: 'volendrungs-echo',
+  name: 'Volendrung\'s Echo',
+  group: 'Weapons',
+  templateIndex: THUNDERLOCK_TEMPLATE,
+  material: WEAPON_MATERIALS.Dwarven,
+  affixes: Object.freeze([
+    line('damage', 40),
+    line('stat', 15, 'agility'),
+    line('skill', 30, SKILLS.Archery),
+    line('elemental', 10, 'shock'),
+  ]),
+  power: HAMMERFALL,
+  lore: 'The Rourken threw Volendrung out of Morrowind and built where it fell. Their gunwrights tuned this one to the note the Hammer sang in its flight, and gilded it for the steersman they bound to her helm. Every shot still carries the echo.',
+  hint: 'Said to ride the Dwarven airship over Daggerfall, once in a long while',
+});
+/** KETCH (2026-10-24): THE KETCHMASTER'S WORD - a Gilded Dwarven Pistolet, the Tonal Warden's. The Mzunthar's master carried
+ *  it at her hip on the day the Dwemer vanished; it is said to have been in her hand, and her word the last the ship
+ *  obeyed. Its lines the band's top for a one-handed gun (+40% damage, +15 Speed, +30 Archery, +10 shock a shot); its power
+ *  BROADSIDE - which a second pistol, or a blade, in the other hand answers. */
+export const KETCHMASTERS_WORD = Object.freeze({
+  id: 'the-ketchmasters-word',
+  name: 'The Ketchmaster\'s Word',
+  group: 'Weapons',
+  templateIndex: PISTOLET_TEMPLATE,
+  material: WEAPON_MATERIALS.Dwarven,
+  affixes: Object.freeze([
+    line('damage', 40),
+    line('stat', 15, 'speed'),
+    line('skill', 30, SKILLS.Archery),
+    line('elemental', 10, 'shock'),
+  ]),
+  power: BROADSIDE,
+  lore: 'The Mzunthar\'s master wore it at her hip on the day the Dwemer vanished, and gave her last order with it in her hand. Its coil has never wound down.',
+  hint: 'Said to ride the Dwarven airship over Daggerfall, once in a long while',
+});
+
+/** EVERY GILDED RECORD - the Hourlock, then (GILDED2) the gate's and the serpent's, then (KETCH) the airship's two guns; the
+ *  one list every reader asks. */
 /** @type {readonly GildedRecord[]} */
-export const GILDED_RECORDS = Object.freeze([HOURLOCK, DRAGONFIRE_OATH, SUNKEN_SOVEREIGN]);
+export const GILDED_RECORDS = Object.freeze([HOURLOCK, DRAGONFIRE_OATH, SUNKEN_SOVEREIGN, VOLENDRUNGS_ECHO, KETCHMASTERS_WORD]);
 export const gildedById = (id) => GILDED_RECORDS.find((r) => r.id === id) ?? null;
 /** GUNS-UNFOUND: the eras a record's id was minted under before its record moved - each lawful as minted, none minted now. */
 export const GILDED_ERAS = Object.freeze([HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA]);
@@ -230,15 +312,15 @@ registerGildedRecords({ powerOf: (id) => gildedById(id)?.power ?? null, loreOf: 
 
 /** @typedef {{ id: string, name: string, group: string, templateIndex: number, material: number, affixes: readonly any[], power: any, lore: string, hint?: string }} GildedRecord */
 /**
- * Mint a record as an item: a DFU weapon's own mint (CreateWeapon - its make's value, its span and its condition) -
- * GUNS-UNFOUND: every record's now; a gun era's piece by its gun's own (systems/thunderlock.js createThunderlock,
- * systems/pistolet.js createPistolet - its condition from the weapons' one pool at its make), the shape a save holds -
+ * Mint a record as an item: a DFU weapon's own mint (CreateWeapon - its make's value, its span and its condition), or a
+ * gun's by its gun's own (systems/thunderlock.js createThunderlock, systems/pistolet.js createPistolet - its condition from
+ * the weapons' one pool at its make): KETCH's two guns, and a gun era's piece (GUNS-UNFOUND) - the shape a save holds -
  * its name, its tier, its lines (a copy), KNOWN, and its price. A fresh item every call.
  * @param {GildedRecord} r
  */
 export function mintGilded(r) {
   const item = r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })
-    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era
+    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era; KETCH: the Ketchmaster's Word
     : createWeapon(r.templateIndex, r.material);
   const affixes = r.affixes.filter(validAffix).map((a) => ({ ...a }));
   item.name = r.name;
@@ -263,6 +345,13 @@ export function rollDragonfireOath(rolls = Math.random) {
 /** GILDED2: a dealing ship's serpent hoard's last roll - null most times; else the Sunken Sovereign. One draw, always. */
 export function rollSunkenSovereign(rolls = Math.random) {
   return rolls() < SERPENT_GILDED_CHANCE ? mintGilded(SUNKEN_SOVEREIGN) : null;
+}
+/** KETCH: the Tonal Warden's spoils' two last rolls - each null most times, else its gun: Volendrung's Echo, then the
+ *  Ketchmaster's Word. Two draws, always, in that order. */
+export function rollKetchGilded(rolls = Math.random) {
+  const echo = rolls() < KETCH_GILDED_CHANCE ? mintGilded(VOLENDRUNGS_ECHO) : null;
+  const word = rolls() < KETCH_GILDED_CHANCE ? mintGilded(KETCHMASTERS_WORD) : null;
+  return [echo, word].filter(Boolean);
 }
 
 /** The fields a static roll keeps off itself: every mark another door lays on a piece (a sigil, a Legendary's or an

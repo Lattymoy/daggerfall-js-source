@@ -120,7 +120,7 @@ export const SEA_KIT = Object.freeze({
 });
 /** Each song over the player's own level (songPlayer.js songLevel; the game's songs stand at 1), so the sea sits
  *  where DFU's day songs sit at the same MusicVolume (tools/seaScoreProbe.mjs measures both) - never a boss's level. */
-export const SEA_LEVEL = Object.freeze({ calm: 2.8, open: 2, storm: 2.1, night: 2.4, port: 2.1, fight: 1.95 });
+export const SEA_SONG_LEVEL = Object.freeze({ calm: 2.8, open: 2, storm: 2.1, night: 2.4, port: 2.1, fight: 1.95 });
 
 const PITCH = Object.freeze({ C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 });
 /** The chords, as pitch classes from the root: [root, third, fifth]. */
@@ -271,7 +271,7 @@ function makeSong(key, write) {
   events.sort((a, b) => a.tick - b.tick || RANK[a.type] - RANK[b.type]);
   return {
     name: SEA_SONGS[key], press: null, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: length,
-    seamless: true, level: SEA_LEVEL[key], voices: VOICES_BY_CHANNEL, kit: SEA_KIT,
+    seamless: true, level: SEA_SONG_LEVEL[key], voices: VOICES_BY_CHANNEL, kit: SEA_KIT,
   };
 }
 

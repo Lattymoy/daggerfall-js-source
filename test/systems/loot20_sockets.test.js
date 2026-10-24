@@ -36,8 +36,10 @@ import { withDom } from '../invdrag.mjs';
 import { rollGemFind } from '../../src/systems/gems.js';   // GEM2: the gem find, held off and put back
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const on = () => { _resetForTests(); setPref('lootRarity', true); LR._setSocketForTests(null); LR._setCurseForTests(Infinity); };
-const off = () => { _resetForTests(); setPref('lootRarity', false); LR._setSocketForTests(null); LR._setCurseForTests(null); };
+// PIN MOVED (PELLETS-SCARCE, 2026-10-24): the Dwemer Pellet's final find is the door's draw after every pass these laws
+// read - held off here (test/systems/pelletsscarce.test.js holds it the door's very last)
+const on = () => { _resetForTests(); setPref('lootRarity', true); LR._setSocketForTests(null); LR._setCurseForTests(Infinity); LR._holdFinalFindsForTests(true); };
+const off = () => { _resetForTests(); setPref('lootRarity', false); LR._setSocketForTests(null); LR._setCurseForTests(null); LR._holdFinalFindsForTests(false); };
 const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };
 const mulberry = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const known = (it) => Object.assign(it, { isIdentified: true });

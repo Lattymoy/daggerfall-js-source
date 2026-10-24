@@ -1,0 +1,200 @@
+[
+  {
+    "name": "KTR-another-boss-believed",
+    "file": "src/net/ketch/ketchReceipt.js",
+    "old": "  if (c.b !== KT_RECEIPT_BOSS) return false;",
+    "new": "  if (typeof c.b !== 'string') return false;",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-ship-unread",
+    "file": "src/net/ketch/ketchReceipt.js",
+    "old": "  if (typeof c.o !== 'string' || !/^[0-9a-f]{16}$/.test(c.o)) return false;",
+    "new": "  if (typeof c.o !== 'string') return false;",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-an-expired-one-good",
+    "file": "src/net/ketch/ketchReceipt.js",
+    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
+    "new": "  if (nowS >= claims.e + 1e9) return { ok: false, why: 'expired' };",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-an-hour-receipt-let-through",
+    "file": "src/net/ketch/ketchReceipt.js",
+    "old": "  if (v !== KT_RECEIPT_V) return { ok: false, why: 'version' };",
+    "new": "  if (!v) return { ok: false, why: 'version' };",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-week-keyed-by-ship",
+    "file": "server-account/migrations/0166_ketch_voyages.sql",
+    "old": "  PRIMARY KEY (voyage, account),",
+    "new": "  PRIMARY KEY (voyage, account, owner),",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-ship-not-compared",
+    "file": "server-account/src/ketch.js",
+    "old": "  return k?.owner === c.o ? { recorded: false, why: 'claimed'",
+    "new": "  return k?.owner != null ? { recorded: false, why: 'claimed'",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-another-receipt-claimed",
+    "file": "server-account/src/ketch.js",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };",
+    "new": "  if (!c.s) return { error: 'not-yours' };",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-guest-unsaid",
+    "file": "server-account/src/ketch.js",
+    "old": "guest = !player.handle ? { guest: true } : {};",
+    "new": "guest = {};",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/ketch/claim',   // KETCH: a Tonal Warden's receipt - the Ketchmaster's hold, once a voyage an account\n",
+    "new": "",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-cards-without-the-voyages",
+    "file": "server-account/src/index.js",
+    "old": "stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown:",
+    "new": "stars: await starRecordOf(ctx, who.player.id), renown:",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-a-knock-with-no-session",
+    "file": "src/net/accountClient.js",
+    "old": "    claim: async (receipt, cid) => { const i = io(); return i ? claimKetchReceipt(i, receipt, cid) : { ok: false, error: 'no-session' }; },",
+    "new": "    claim: async (receipt, cid) => { const i = io() ?? { fetch, base: serviceBase(storage), secret: '' }; return i ? claimKetchReceipt(i, receipt, cid) : { ok: false, error: 'no-session' }; },",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-taken-one-paid",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "        if (d && d.share === true) {",
+    "new": "        if (d && d.share !== undefined) {",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-an-unsigned-one-kept",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "return c && (t == null || c.e > t) ? c : null;",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-another-offered",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "        if (!mine || c?.s !== mine) continue;",
+    "new": "        if (!mine) continue;",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTR-the-line-said-at-none",
+    "file": "src/ui/profileWindow.js",
+    "old": "  const n = record && typeof record === 'object' ? record.ketch?.sailed : null;\n  return Number.isSafeInteger(n) && n > 0 ?",
+    "new": "  const n = record && typeof record === 'object' ? record.ketch?.sailed : null;\n  return Number.isSafeInteger(n) && n >= 0 ?",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-a-claimed-share-paid-to-any-device",
+    "file": "server-account/src/ketch.js",
+    "old": "why: 'claimed', share: mine != null && k.cid === mine,",
+    "new": "why: 'claimed', share: true,",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-the-claim-id-unwritten",
+    "file": "server-account/src/ketch.js",
+    "old": "c.m ? JSON.stringify(c.m) : null, mine),",
+    "new": "c.m ? JSON.stringify(c.m) : null, null),",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-the-fill-unguarded",
+    "file": "server-account/src/ketch.js",
+    "old": "WHERE voyage = ?5 AND account = ?1 AND nonce = ?6)', c.d, nonce),",
+    "new": "WHERE voyage = ?5 AND account = ?1 AND ?6 = ?6)', c.d, nonce),",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-the-act-said-only-at-recorded",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }",
+    "new": "if (d.recorded === true) noteAct('warden-felled');",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-the-act-said-at-every-share",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }",
+    "new": "noteAct('warden-felled');",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-the-claim-id-minted-at-every-offer",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "try { answer = await claim(r, e.cid); }",
+    "new": "try { answer = await claim(r, cid()); }",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  },
+  {
+    "name": "KTA-the-watchs-letter",
+    "file": "src/net/ketch/ketchReceipt.js",
+    "old": "export const KT_RECEIPT_V = 'y1';",
+    "new": "export const KT_RECEIPT_V = 'k1';",
+    "tests": [
+      "test/server/ketch_claim.test.js"
+    ]
+  }
+]
