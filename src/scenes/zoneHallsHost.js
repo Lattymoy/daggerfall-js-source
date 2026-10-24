@@ -46,7 +46,7 @@ export function createZoneHalls({ maps, woods, places, locationIndex, isMainStor
   };
   let templates = /** @type {any[]|null} */ (null);
   /** The pixels a hall stands on in the index - taken off by the host when the day moves on. */
-  const keys = new Set();
+  const stood = new Set();
   /** The hall on this pixel today over the zone's `mask`, stood in the index (a clone of a real dungeon - never a
    *  graveyard's - on the halls' own lane of map ids, net/wire.js spawnedHallMapId, always elite, its tier on it), or null. */
   const standOf = (mask, px, py) => {
@@ -66,9 +66,9 @@ export function createZoneHalls({ maps, woods, places, locationIndex, isMainStor
     loc.wildHallDay = day;
     loc.name = `Elite ${template.name} (${px},${py})`;
     locationIndex.set(key, loc);
-    keys.add(key);
+    stood.add(key);
     indexMoved();
     return loc;
   };
-  return { free, activeOf, standOf, keys };
+  return { free, activeOf, standOf, keys: stood };
 }
