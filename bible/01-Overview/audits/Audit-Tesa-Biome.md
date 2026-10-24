@@ -118,10 +118,14 @@ Every finding was reproduced on the branch before its fix.
 
 ## The mutants
 
-`tools/mutants/tesabiome.json` rewritten against the code as it now stands, lane P's adversarial records folded in: **83,
+`tools/mutants/tesabiome.json` rewritten against the code as it now stands, lane P's adversarial records folded in, and J1's: **84,
 all dead**. Five survived its first run; each was answered - `keepOthers` in the peaks law was dead code (the lift is a
 max, and a named range answers first) and is gone; the hearts' rule, the far field's float32, a used V barred in the
-fallback and the cover's order each have a pin that kills it. Five records elsewhere re-aimed by content and judged dead:
+fallback and the cover's order each have a pin that kills it. Seven records elsewhere re-aimed by content and judged dead:
 `grant3.json` GRANT3-species-unchecked and GRANT3-level-law-off, `grant4.json` GRANT4-watch-grant-any-species and
-GRANT8-reader-unchecked (the species law moved out of the grant host, `grantDiceRefusal`), and `tesa14.json`
-TESA14-the-print-blind-to-the-nodes.
+GRANT8-reader-unchecked (the species law moved out of the grant host, `grantDiceRefusal`), `tesa14.json`
+TESA14-the-print-blind-to-the-nodes, `bantha2.json` BANTHA2-FLOOR-the-3x3-kept-across-pixels (J1's line) and
+`soc1.json` S38-version-not-bumped (world255).
+
+**The relay.** F2's `validGrant` is the relay's law, so RELAY_VERSION moves to world255 (`test/net/relayversion.test.js`'s
+row; no file joins the bundle) - NOT YET DEPLOYED: until the relay is deployed, a grant past the Bay is refused as before.

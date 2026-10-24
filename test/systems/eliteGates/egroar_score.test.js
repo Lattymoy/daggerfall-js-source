@@ -12,7 +12,7 @@ import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SongPlayer, songVoices, songKit, unisonCents, VOICE_RANGE, KIT_RANGE, SONG_FLOOR_HZ,
+  SongPlayer, songVoices, songKit, songTone, heldBody, unisonCents, VOICE_RANGE, KIT_RANGE, SONG_FLOOR_HZ,
 } from '../../../src/systems/song/songPlayer.js';
 import { noteToHz, percussionSpec } from '../../../src/systems/gmSynth.js';
 import {
@@ -22,7 +22,7 @@ import { midiNote, SCORE_TPQ } from '../../../src/systems/gate/gateScore.js';
 
 /** A recording AudioContext: every node made, its params' writes, its connections. */
 function recCtx() {
-  const made = { osc: [], gain: [], pan: [], src: [], biquad: [], comp: [], shaper: [] };
+  const made = { osc: [], gain: [], pan: [], src: [], biquad: [], comp: [], shaper: [], delay: [] };
   const param = (v = 0) => { const p = { value: v, writes: [] }; for (const k of ['setValueAtTime', 'linearRampToValueAtTime', 'exponentialRampToValueAtTime']) p[k] = (x, t) => { p.writes.push([k, x, t]); p.value = x; }; p.cancelScheduledValues = () => {}; return p; };
   const node = (kind, extra) => { const n = { kind, to: [], connect(d) { n.to.push(d); return d; }, disconnect() { n.to = []; }, start(t) { n.started = t; }, stop(t) { n.stopped = t; }, ...extra }; made[kind]?.push(n); return n; };
   const ctx = {
@@ -32,9 +32,10 @@ function recCtx() {
     createStereoPanner: () => node('pan', { pan: param() }),
     createBufferSource: () => node('src', { buffer: null }),
     createBuffer: (c, n) => ({ getChannelData: () => new Float32Array(n) }),
-    createBiquadFilter: () => node('biquad', { type: '', frequency: param(), Q: param() }),
+    createBiquadFilter: () => node('biquad', { type: '', frequency: param(), Q: param(), gain: param() }),
     createDynamicsCompressor: () => node('comp', Object.fromEntries(['threshold', 'knee', 'ratio', 'attack', 'release'].map((k) => [k, param()]))),
     createWaveShaper: () => node('shaper', { curve: null }),
+    createDelay: () => node('delay', { delayTime: param() }),   // INTRO3c: the ensemble's
   };
   return ctx;
 }
@@ -163,4 +164,164 @@ test('EG-ROAR THE WRITING (egScore.js): the halls climb in four eights - the spi
   // the count's clock
   const clock = inBars(S.count, 9, 3, 4).filter((e) => e.note === 76 || e.note === 77).map((e) => e.tick - 12 * SCORE_TPQ);
   assert.deepEqual(clock, [0, 1, 2, 3, 4, 5, 6, 7].map((i) => i * SCORE_TPQ / 2), 'a tick every eighth');
+});
+
+test('INTRO3c THE VIBRATO (songPlayer.js _vibrato, VOICE_RANGE): a voice with `vibrato` runs a sine LFO per copy into the pair’s detune - carrier and modulator both - at `vibRate` with each copy 6% faster than the last, the depth setting in from nothing over the attack and a quarter second; one without runs none; the fields held to their ranges', () => {
+  const plain = playOne({ voices: { 0: { unison: 2, cents: 4 } } });
+  assert.equal(plain.ctx.made.osc.length, 4, 'two pairs, no LFO');
+  const { ctx } = playOne({ voices: { 0: { unison: 2, cents: 4, attack: 0.1, vibrato: 12, vibRate: 5 } } });
+  const lfos = ctx.made.osc.filter((o) => o.frequency.value < 20);
+  assert.equal(ctx.made.osc.length, 6, 'two pairs and an LFO each');
+  assert.deepEqual(lfos.map((o) => +o.frequency.value.toFixed(3)).sort((a, b) => a - b), [4.85, 5.15], 'each copy’s rate its own, 6% a step about vibRate');
+  for (const lfo of lfos) {
+    assert.equal(lfo.type, 'sine');
+    assert.equal(lfo.to.length, 1, 'through one depth gain');
+    const depth = lfo.to[0];
+    const detunes = ctx.made.osc.filter((o) => o !== lfo && o.frequency.value >= 20).map((o) => o.detune);
+    assert.equal(depth.to.length, 2, 'into the carrier’s detune and the modulator’s');
+    assert.ok(depth.to.every((d) => detunes.includes(d)), 'the detunes of a pair');
+    const [set, ramp] = depth.gain.writes;
+    assert.deepEqual(set.slice(0, 2), ['setValueAtTime', 0], 'from nothing');
+    assert.equal(ramp[0], 'linearRampToValueAtTime'); assert.equal(ramp[1], 12, 'to the depth in cents');
+    assert.ok(Math.abs((ramp[2] - set[2]) - (0.1 + 0.25)) < 1e-9, 'over the attack and a quarter second');
+    assert.ok(Number.isFinite(lfo.started) && Number.isFinite(lfo.stopped), 'started with the note, stopped with it');
+  }
+  const held = songVoices({ voices: { 0: { vibrato: 90, vibRate: 0.1 }, 1: { vibrato: -3 } } });
+  assert.deepEqual(held[0], { vibrato: 50, vibRate: 0.5 }); assert.deepEqual(held[1], { vibrato: 0 });
+});
+
+test('INTRO3c THE BITE (songPlayer.js _breath, VOICE_RANGE): a voice with `noise` runs the player’s noise, looped, through a wide band-pass two and a half times up from the note (600 Hz to 5 kHz) into what the copies play into, at that share AS THE NOTE STARTS and fading to a sixteenth over the attack and 0.3 s - a bow’s start, not a hiss under the note; one without runs none', () => {
+  const plain = playOne({ voices: { 0: { unison: 2, cents: 4 } } });
+  assert.equal(plain.ctx.made.src.length, 0, 'no noise under a plain voice');
+  const { ctx } = playOne({ note: 69, voices: { 0: { unison: 2, cents: 4, spread: 0.5, attack: 0.1, noise: 0.3 } } });
+  assert.equal(ctx.made.src.length, 1, 'one band of noise a note, not a copy');
+  const [src] = ctx.made.src;
+  assert.equal(src.loop, true, 'looped: the buffer is a second long, a note is not');
+  const [bp] = src.to; assert.equal(bp.kind, 'biquad'); assert.equal(bp.type, 'bandpass'); assert.equal(bp.frequency.value, 1100, 'A4 440 x 2.5'); assert.equal(bp.Q.value, 0.6);
+  const [g] = bp.to;
+  const [set, fade] = g.gain.writes;
+  assert.deepEqual(set.slice(0, 2), ['setValueAtTime', 0.3], 'at the share as the note starts');
+  assert.equal(fade[0], 'exponentialRampToValueAtTime'); assert.ok(Math.abs(fade[1] - 0.3 / 16) < 1e-12, 'to a sixteenth');
+  assert.ok(Math.abs((fade[2] - set[2]) - (0.1 + 0.3)) < 1e-9, 'over the attack and 0.3 s');
+  const sides = ctx.made.gain.filter((n) => n.gain.writes.some(([k, v]) => k === 'exponentialRampToValueAtTime' && v === 0.0001));
+  assert.equal(g.to.length, 2, 'into both envelope sides of a spread FM unison');
+  assert.ok(g.to.every((side) => sides.includes(side)), 'the envelope sides, not the output');
+  assert.ok(Number.isFinite(src.started) && Number.isFinite(src.stopped), 'started with the note, stopped with it');
+  const low = playOne({ note: 36, voices: { 0: { noise: 0.2 } } }).ctx.made.src[0].to[0].frequency.value, high = playOne({ note: 108, voices: { 0: { noise: 0.2 } } }).ctx.made.src[0].to[0].frequency.value;
+  assert.equal(low, 600); assert.equal(high, 5000);
+  assert.deepEqual(songVoices({ voices: { 0: { noise: 3 } } })[0], { noise: 1 });
+  // a bowed voice's bite plays into its low-pass, coloured as the copies are
+  const bowed = playOne({ note: 69, voices: { 0: { saw: 1, unison: 2, cents: 4, spread: 0.5, noise: 0.2 } } });
+  const lows = bowed.ctx.made.biquad.filter((b) => b.type === 'lowpass');
+  assert.equal(bowed.ctx.made.src[0].to[0].to[0].to.length, 2); assert.ok(bowed.ctx.made.src[0].to[0].to[0].to.every((n) => lows.includes(n)), 'into the two low-passes');
+});
+
+test('INTRO3c THE BOWED VOICE (songPlayer.js _bow, VOICE_RANGE): a voice with `saw` plays sawtooth copies - no modulator, no index - into a low-pass a side whose cutoff is `cutoff` times the note at full velocity and seven tenths of that at none, opening from half over the attack and 80 ms and settling to 85% through the decay, `cutQ` its resonance; the vibrato moves the one oscillator; a bend’s map still counts two detunes a copy; an FM voice is as it was', () => {
+  const { ctx, p } = playOne({ note: 69, voices: { 0: { saw: 1, cutoff: 8, cutQ: 1.2, unison: 2, cents: 4, spread: 0.5, attack: 0.1, decay: 0.2, vibrato: 10 } } });
+  const saws = ctx.made.osc.filter((o) => o.type === 'sawtooth'), sines = ctx.made.osc.filter((o) => o.type === 'sine');
+  assert.equal(saws.length, 2, 'a sawtooth a copy'); assert.equal(sines.length, 2, 'the two vibrato LFOs and no modulators');
+  const lows = ctx.made.biquad.filter((b) => b.type === 'lowpass');
+  assert.equal(lows.length, 2, 'a low-pass a side');
+  for (const lp of lows) {
+    assert.equal(lp.Q.value, 1.2);
+    const fc = 440 * 8 * (0.7 + 0.3 * 100 / 127);
+    const [set, open, settle] = lp.frequency.writes;
+    assert.deepEqual([set[0], open[0], settle[0]], ['setValueAtTime', 'linearRampToValueAtTime', 'exponentialRampToValueAtTime']);
+    assert.ok(Math.abs(set[1] - fc * 0.5) < 1e-9 && Math.abs(open[1] - fc) < 1e-9 && Math.abs(settle[1] - fc * 0.85) < 1e-9, 'half, the cutoff, 85%');
+    assert.ok(Math.abs((open[2] - set[2]) - 0.18) < 1e-9, 'open over the attack and 80 ms');
+    assert.ok(Math.abs((settle[2] - set[2]) - 0.3) < 1e-9, 'settled through the decay');
+    assert.equal(lp.to.length, 1); assert.equal(lp.to[0].kind, 'gain', 'into an envelope side');
+  }
+  for (const saw of saws) assert.ok(lows.includes(saw.to[0]), 'each copy into a low-pass');
+  for (const lfo of sines) assert.equal(lfo.to[0].to.length, 1, 'the vibrato into the one oscillator’s detune');
+  const v = p._voices.at(-1); assert.equal(v.detunes.length, 4, 'two detunes a copy'); assert.deepEqual(v.offs, [-4, -4, 4, 4]);
+  const soft = playOne({ note: 69, voices: { 0: { saw: 1, cutoff: 8 } } }); soft.p.stop();
+  const quiet = (() => { const ctx2 = (() => { const r = playOne({ voices: { 0: { saw: 1, cutoff: 8 } } }); return r.ctx; })(); return ctx2; })();
+  assert.ok(quiet.made.biquad.some((b) => b.type === 'lowpass'), 'a bowed voice with no cutQ still bows (Q 0.8 unnamed)');
+  assert.equal(quiet.made.biquad.find((b) => b.type === 'lowpass').Q.value, 0.8);
+  const fm = playOne({ voices: { 0: { unison: 2, cents: 4 } } });
+  assert.equal(fm.ctx.made.osc.filter((o) => o.type === 'sine').length, 4, 'an FM voice: two pairs'); assert.equal(fm.ctx.made.biquad.filter((b) => b.type === 'lowpass').length, 0, 'and no low-pass');
+  assert.deepEqual(songVoices({ voices: { 0: { saw: 2, cutoff: 100, cutQ: 0.1 } } })[0], { saw: 1, cutoff: 64, cutQ: 0.3 }, 'held to their ranges');
+});
+
+test('INTRO3c THE INDEX FLOOR (songPlayer.js, VOICE_RANGE): an FM voice’s index settles to `idxFloor` of itself - a horn holds its brightness - and to 12% unnamed, as the bank always did', () => {
+  const depthOf = (voices) => { const { ctx } = playOne({ note: 60, voices }); const g = ctx.made.gain.find((n) => n.gain.writes[0]?.[1] > 100 && n.gain.writes[1]?.[0] === 'exponentialRampToValueAtTime'); return [g.gain.writes[0][1], g.gain.writes[1][1]]; };
+  const hz = 440 * Math.pow(2, (60 - 69) / 12);
+  const [d0, floor] = depthOf({ 0: { index: 3, idxDecay: 1, idxFloor: 0.5 } });
+  assert.ok(Math.abs(d0 - 3 * hz) < 1e-9 && Math.abs(floor - 1.5 * hz) < 1e-9, 'half of itself');
+  const [, plain] = depthOf({ 0: { index: 3, idxDecay: 1 } });
+  assert.ok(Math.abs(plain - 0.36 * hz) < 1e-9, '12% unnamed');
+  assert.deepEqual(songVoices({ voices: { 0: { idxFloor: 2 } } })[0], { idxFloor: 1 });
+});
+
+test('INTRO3c THE BODY, THE AIR AND THE ENSEMBLE (songPlayer.js _insert, heldBody): a voiced channel plays through its body’s resonances in turn, its air shelf at 5 kHz and three slow-swept delays beside the dry sound, into the song’s level; built once a song a channel and dropped for the next song, whose plain channel goes straight to the level; the body held to its ranges, the bad entries dropped', () => {
+  const { ctx, p } = playOne({ voices: { 0: { body: [[450, 7, 0.8], [2700, 8, 1]], air: -8, ensemble: 0.45, ensembleRate: 0.7, ensembleMs: 12 } } });
+  const chGain = p._chGains[0];
+  const chain = []; let n = chGain.to[0]; while (n && n.kind === 'biquad') { chain.push([n.type, n.frequency.value, n.gain.value, n.Q.value]); n = n.to[0]; }
+  assert.deepEqual(chain, [['peaking', 450, 7, 0.8], ['peaking', 2700, 8, 1], ['highshelf', 5000, -8, 0]], 'the body in turn, then the air');
+  const dry = n; assert.equal(dry.kind, 'gain'); assert.ok(Math.abs(dry.gain.value - (1 - 0.35 * 0.45)) < 1e-12, 'the dry share');
+  const out = dry.to[0]; assert.equal(out, p._chInserts[0].last);
+  assert.equal(out.to[0], p._level, 'into the song’s level');
+  const delays = ctx.made.delay; assert.equal(delays.length, 3);
+  assert.deepEqual(delays.map((d) => +d.delayTime.value.toFixed(5)), [0.012, +(0.012 * 1.37).toFixed(5), +(0.012 * 1.83).toFixed(5)], 'the three lengths');
+  const lfos = p._chInserts[0].lfos; assert.equal(lfos.length, 3);
+  assert.deepEqual(lfos.map((o) => +o.frequency.value.toFixed(4)), [0.7, +(0.7 * 0.79).toFixed(4), +(0.7 * 1.31).toFixed(4)], 'the three rates');
+  lfos.forEach((lfo, i) => { const sweep = lfo.to[0]; assert.ok(Math.abs(sweep.gain.value - delays[i].delayTime.value * 0.2) < 1e-12, 'a fifth of the length'); assert.equal(sweep.to[0], delays[i].delayTime); assert.ok(Number.isFinite(lfo.started)); });
+  for (const d of delays) { const wet = d.to[0]; assert.ok(Math.abs(wet.gain.value - 0.28 * 0.45) < 1e-12); assert.equal(wet.to[0], out); }
+  // the next song, plain: the chains dropped, its channel straight to the level
+  p.play({ secondsPerTick: 0.001, durationTicks: 400, events: [{ tick: 0, type: 'programChange', channel: 0, program: 61 }, { tick: 0, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 200 }] });
+  clearInterval(p._timer); p._timer = null;
+  assert.ok(lfos.every((o) => Number.isFinite(o.stopped)), 'the sweeps stopped');
+  assert.equal(p._chInserts, null); assert.equal(p._chGains[0].to[0], p._level, 'straight to the level');
+  assert.deepEqual(heldBody([[450, 7, 0.8], [20, 30, 0.1], 'x', [600, 3, 1, 'extra'], [1, 2]]), [[450, 7, 0.8], [40, 24, 0.3], [600, 3, 1]], 'held, the bad dropped, the first four read');
+  assert.equal(heldBody([]), null); assert.equal(heldBody('x'), null);
+  assert.deepEqual(songVoices({ voices: { 0: { body: [[450, 7, 0.8]] } } })[0], { body: [[450, 7, 0.8]] }, 'a body alone is a voice');
+  assert.deepEqual(songVoices({ voices: { 0: { air: -40, ensemble: 2, ensembleRate: 9, ensembleMs: 0 } } })[0], { air: -30, ensemble: 1, ensembleRate: 4, ensembleMs: 1 });
+});
+
+test('INTRO3c THE TONE (songPlayer.js _routeTone, songTone): a song with `tone` plays its fader through a low shelf, its bands in turn and a high shelf into the master; the next song without one plays straight in again; a song that names none is untouched; the shelves and the bands held', () => {
+  const song = (tone) => ({ secondsPerTick: 0.001, durationTicks: 400, events: [{ tick: 0, type: 'programChange', channel: 0, program: 61 }, { tick: 0, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 200 }], ...(tone ? { tone } : {}) });
+  const ctx = recCtx(), p = new SongPlayer(ctx);
+  p.play(song(null)); clearInterval(p._timer); p._timer = null;
+  assert.equal(p._tone, null); assert.deepEqual(p._fader.to, [p._master], 'a song without a tone: the graph as it always was');
+  p.play(song({ low: [60, -2], bands: [[100, 5, 1.2], [3150, 4, 0.9]], high: [5000, 4] })); clearInterval(p._timer); p._timer = null;
+  const chain = []; let n = p._fader.to[0]; while (n && n.kind === 'biquad') { chain.push([n.type, n.frequency.value, n.gain.value, n.Q.value]); n = n.to[0]; }
+  assert.deepEqual(chain, [['lowshelf', 60, -2, 0], ['peaking', 100, 5, 1.2], ['peaking', 3150, 4, 0.9], ['highshelf', 5000, 4, 0]]);
+  assert.equal(n, p._master, 'into the master'); assert.equal(p._tone.length, 4);
+  const was = p._tone;
+  p.play(song(null)); clearInterval(p._timer); p._timer = null;
+  assert.equal(p._tone, null); assert.deepEqual(p._fader.to, [p._master], 'straight in again'); assert.ok(was.every((f) => f.to.length === 0), 'the old chain let go');
+  assert.equal(songTone({}), null); assert.equal(songTone({ tone: { bands: 'x', low: [1] } }), null);
+  assert.deepEqual(songTone({ tone: { low: [5, -40], high: [30000, 40], bands: [[100, 5, 1.2]] } }), { bands: [[100, 5, 1.2]], low: [20, -24], high: [16000, 24] });
+});
+
+test('INTRO3c THE BOW’S ARC AND THE SWAY (songPlayer.js, VOICE_RANGE): a held note with `arc` dips after the attack, swells to its sustain at 55% of its length and eases before the release; a note too short for one holds as before; a voice with `sway` runs a slow sine per copy into the copy’s own gain about 1, each copy a fifth faster a step; the fields held', () => {
+  // a long note: duration 1200 ticks x 0.001 s = 1.2 s; attack 0.1, decay 0.2, sustain 0.5 (fmSpec's)
+  const long = (voices, duration = 1200) => { const ctx = recCtx(), p = new SongPlayer(ctx); p.play({ secondsPerTick: 0.001, durationTicks: 2000, events: [{ tick: 0, type: 'programChange', channel: 0, program: 48 }, { tick: 0, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration }], voices, press: { out: 2 } }); clearInterval(p._timer); p._timer = null; return { ctx, p }; };
+  const env = (ctx) => ctx.made.gain.find((n) => n.gain.writes.length >= 5 && n.gain.writes[0][0] === 'setValueAtTime' && n.gain.writes[0][1] === 0.0001).gain.writes;
+  const arced = env(long({ 0: { attack: 0.1, decay: 0.2, sustain: 0.5, arc: 0.5 } }).ctx);
+  assert.equal(arced.length, 6, 'set, attack, dip, crest, ease, release');
+  const [, atk, dip, crest, ease, rel] = arced;
+  const peak = atk[1], sustain = peak * 0.5;
+  assert.ok(Math.abs(dip[1] - sustain * 0.8) < 1e-9 && dip[0] === 'exponentialRampToValueAtTime', 'dips to 1 - 0.4 arc after the attack');
+  assert.ok(Math.abs(crest[1] - sustain) < 1e-9 && Math.abs(crest[2] - (arced[0][2] + 0.55 * 1.2)) < 1e-9, 'the crest at 55% of the note');
+  assert.ok(Math.abs(ease[1] - sustain * 0.7) < 1e-9 && Math.abs(ease[2] - (arced[0][2] + 1.2)) < 1e-9, 'eases to 1 - 0.6 arc by the release');
+  assert.equal(rel[1], 0.0001);
+  const plain = env(long({ 0: { attack: 0.1, decay: 0.2, sustain: 0.5 } }).ctx);
+  assert.equal(plain.length, 5); assert.deepEqual([plain[2][1], plain[3][0], plain[3][1]], [sustain, 'setValueAtTime', sustain], 'no arc: the sustain holds');
+  const short = env(long({ 0: { attack: 0.1, decay: 0.2, sustain: 0.5, arc: 0.5 } }, 400).ctx);
+  assert.equal(short.length, 5, 'a note too short for an arc (its sustain under a quarter second) holds');
+  // the sway
+  const { ctx, p } = long({ 0: { unison: 2, cents: 4, sway: 0.5, swayRate: 0.4 } });
+  const lfos = ctx.made.osc.filter((o) => o.frequency.value < 20);
+  assert.deepEqual(lfos.map((o) => +o.frequency.value.toFixed(4)).sort((a, b) => a - b), [+(0.4 * 0.895).toFixed(4), +(0.4 * 1.105).toFixed(4)], 'a copy’s own rate, a fifth a step');
+  for (const lfo of lfos) {
+    const depth = lfo.to[0]; assert.ok(Math.abs(depth.gain.value - 0.15) < 1e-12, '0.3 x sway');
+    const copyGain = ctx.made.gain.find((g) => g.gain === depth.to[0]); assert.ok(copyGain, 'into a copy’s own gain'); assert.equal(copyGain.gain.value, 1);
+    assert.ok(ctx.made.osc.some((o) => o.frequency.value >= 20 && o.to[0] === copyGain), 'the copy plays through it');
+    assert.ok(Number.isFinite(lfo.started));
+  }
+  assert.equal(ctx.made.osc.length, 6, 'two pairs and a sway each');
+  assert.ok(lfos.every((o) => Number.isFinite(o.stopped)), 'stopped with the note'); p.stop();
+  assert.deepEqual(songVoices({ voices: { 0: { arc: 2, sway: -1, swayRate: 9 } } })[0], { arc: 1, sway: 0, swayRate: 2 });
 });

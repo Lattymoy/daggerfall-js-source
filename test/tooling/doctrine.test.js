@@ -48,11 +48,12 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/icons/icon-512.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512-maskable.png', 'TI2: home-screen icon (maskable), drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   // INTRO2 (2026-09-18): restored at Mac's explicit request. The credit
-  // marks and score are the identical U65 assets, not ARENA2-derived data.
-  // Credit marks identify their respective projects; no new rights claimed.
+  // marks are the identical U65 assets, not ARENA2-derived data. Credit
+  // marks identify their respective projects; no new rights claimed.
+  // INTRO3 (2026-10-14): the score's recording left with its row - the theme
+  // is written as notes (src/systems/introScore.js).
   ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
   ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
-  ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
   ['src/assets/branding/dfo-online.png', 'BR5: Mac\'s supplied DFO Online logo, 2026-10-11, his own file with alpha, cut to its painted bounds with every pixel inside unchanged; no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -

@@ -745,5 +745,14 @@
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
+  },
+  {
+    "name": "TESA-BIOME-84-floor-kept-across-fields",
+    "file": "src/scenes/jungleHost.js",
+    "old": "w.py !== _floor.py || f !== _floor.field) {",
+    "new": "w.py !== _floor.py) {",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
   }
 ]

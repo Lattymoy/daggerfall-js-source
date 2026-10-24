@@ -1,0 +1,74 @@
+[
+  {
+    "name": "STAR-CLEAR-the-stars-left-out-of-the-set",
+    "file": "src/world/gate/gateClearance.js",
+    "old": ", ...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];",
+    "new": "];",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-a-star's-reach-the-arch's",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];",
+    "new": "...membersFrom(stars, 's', 'star:', EG_ARCH_ROCK_M)];",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-the-stars-never-remake-the-set",
+    "file": "src/world/gate/gateClearance.js",
+    "old": "    if (gate !== g || arches !== a || stars !== s) {",
+    "new": "    if (gate !== g || arches !== a) {",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-the-host-never-hands-its-stars",
+    "file": "src/scenes/world.js",
+    "old": "egClient?.archClears() ?? null, starfall?.starClears() ?? null);",
+    "new": "egClient?.archClears() ?? null, null);",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-from-the-omen-alone",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt",
+    "new": "t >= s.times.omenAt && t < s.times.goneAt",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-kept-past-its-going",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt",
+    "new": "t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt + STAR_WARN_MS",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-a-new-list-every-ask",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "      if (key !== clears.key) clears.list = key ?",
+    "new": "      clears.list = key ?",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  },
+  {
+    "name": "STAR-CLEAR-read-again-every-ask",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "      if (Math.abs(t - clears.at) < 1000) return clears.list;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/starclear.test.js"
+    ]
+  }
+]
