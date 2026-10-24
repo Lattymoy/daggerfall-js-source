@@ -40,8 +40,10 @@ const gateWords = (error) => (error === 'vault-reach' ? t('social.vault.reach', 
 const stackOf = (item) => (Number.isSafeInteger(item?.stackCount) && item.stackCount >= 1 ? item.stackCount : 1);
 const refused = (error, text = null) => ({ ok: false, error, text: text ?? gateWords(error) });
 
-/** A row's key: the slot, when its piece was put there and how many - a slot emptied and filled again is another row. */
-const rowKey = (row) => `${row.slot}|${row.at}|${row.count}`;
+/** A row's key: the slot, when its piece was put there, how many, and the piece itself - a slot emptied and filled again is
+ *  another row. REVIEW R2-2: the record too (AUDIT GUILD2 G1's law on the service): a slot emptied and filled in the same
+ *  second with a stack of the same count kept the old piece's view, drawn under the old name, its take the new piece. */
+const rowKey = (row) => `${row.slot}|${row.at}|${row.count}|${JSON.stringify(row.rec ?? null)}`;
 
 /**
  * THE DOOR: `book` the guild book (or a function answering it - the host's book is made late), whose vault the pane shows.
@@ -170,6 +172,9 @@ export function createGuildVaultDoor({ book }) {
     /** The gates a take passes before the book is asked, as a refusal `{ ok: false, error, text }` - or null: it may go. Synchronous, so a press is answered in the frame it is made. */
     takeGate(item, count = null) {
       if (!door.view() || door.slotOf(item) == null) return refused('guild-vault-empty');
+      // REVIEW R2-1: and still the shelf's - a row drawn before a read (the poll's gap) or a card left open keeps its slot, and
+      // the book takes by the slot as the CURRENT view holds it: a slot emptied and filled again is another piece, never this one
+      if (!door.items().includes(item)) return refused('guild-vault-moved');
       if (!door.reach()) return refused('vault-reach');
       if (door.busy()) return refused('vault-busy');
       if (!door.mine(item)) {

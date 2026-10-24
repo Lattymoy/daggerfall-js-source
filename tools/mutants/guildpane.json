@@ -317,7 +317,7 @@
   {
     "name": "GUILD-PANE-1-door-row-key",
     "file": "src/scenes/guildVaultHost.js",
-    "old": "const rowKey = (row) => `${row.slot}|${row.at}|${row.count}`;",
+    "old": "const rowKey = (row) => `${row.slot}|${row.at}|${row.count}|${JSON.stringify(row.rec ?? null)}`;",
     "new": "const rowKey = (row) => `${row.slot}`;",
     "tests": [
       "test/ui/guildpane.test.js"
@@ -371,8 +371,8 @@
   {
     "name": "GUILD-PANE-2-take-reach",
     "file": "src/scenes/guildVaultHost.js",
-    "old": "if (!door.view() || door.slotOf(item) == null) return refused('guild-vault-empty');\n      if (!door.reach()) return refused('vault-reach');",
-    "new": "if (!door.view() || door.slotOf(item) == null) return refused('guild-vault-empty');",
+    "old": "if (!door.items().includes(item)) return refused('guild-vault-moved');\n      if (!door.reach()) return refused('vault-reach');",
+    "new": "if (!door.items().includes(item)) return refused('guild-vault-moved');",
     "tests": [
       "test/ui/guildpane.test.js"
     ]
@@ -926,6 +926,24 @@
     "new": "filter((it) => it);",
     "tests": [
       "test/net/guild/guild2_client.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R2-1-a-stale-row-takes",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "if (!door.items().includes(item)) return refused('guild-vault-moved');",
+    "new": "",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R2-2-a-row-keyed-without-its-piece",
+    "file": "src/scenes/guildVaultHost.js",
+    "old": "`${row.slot}|${row.at}|${row.count}|${JSON.stringify(row.rec ?? null)}`",
+    "new": "`${row.slot}|${row.at}|${row.count}`",
+    "tests": [
+      "test/ui/guildpane.test.js"
     ]
   }
 ]
