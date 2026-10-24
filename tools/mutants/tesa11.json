@@ -145,8 +145,8 @@
   {
     "name": "TESA11-slice-names-shifted",
     "file": "src/world/imperialCity.js",
-    "old": "  'Elven Gardens District', 'Prison District', 'Market District',",
-    "new": "  'Prison District', 'Elven Gardens District', 'Market District',",
+    "old": "  'Elven Gardens District', 'Market District', 'Prison District',",
+    "new": "  'Market District', 'Elven Gardens District', 'Prison District',",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]

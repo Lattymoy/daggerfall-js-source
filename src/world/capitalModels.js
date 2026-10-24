@@ -14,7 +14,7 @@ import { registerPortBlock, installWorldDataReplacement } from '../formats/world
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITAL_MODELS, capitalPortBlocks, BLOCK_M } from './tamrielCapitals.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
-import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge } from './capitalImperial.js';   // TESA11
+import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildCrystalTower, buildAlinorHarbour, buildAlinorWall } from './capitalAlinor.js';
@@ -185,6 +185,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.university]: () => buildArcaneUniversity(),
     [CAPITAL_MODELS.waterfront]: () => buildWaterfront(),
     [CAPITAL_MODELS.talosBridge]: () => buildTalosBridge(),
+    [CAPITAL_MODELS.nineDivines]: () => buildNineDivines(),   // TESA-LORE
     [CAPITAL_MODELS.solitudeArch]: () => buildSolitudeArch(),
     [CAPITAL_MODELS.bluePalace]: () => buildBluePalace(),
     [CAPITAL_MODELS.solitudeWall]: () => buildSolitudeWall(),

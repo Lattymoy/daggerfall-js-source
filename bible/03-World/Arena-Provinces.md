@@ -739,6 +739,9 @@ at 317 m); Solitude and the other five stand as they were.
   plaza (west); the Imperial Prison (north, a bastion to 64 m); the Arcane University (south-east, its walls, its hall and
   a spire to 120 m); the Waterfront (its piers and lights); Talos Bridge. Twelve models (910200 to 910211), their
   pictures CAPITAL_ARCHIVE's. No game data.
+- **Moved by TESA-LORE** (below): the Prison to the isle's north-eastern shore (bearing 45, the lore's), so the north
+  row's slices read Elven Gardens District, Market District, Prison District; the city wall's watch towers and the
+  Arboretum's Nine Divines added.
 - **The host** (`scenes/world.js` capitalLocationAt): a slice stood once on its pixel and again when it moves; the
   terrain job carries the slice's `flattenAt`.
 - **Seen** (a stand-in view of the twelve over the plan's ground, scratch): the wheel, the districts behind their walls,
@@ -943,7 +946,50 @@ the countryside's 226,068 places or the lairs.
 - **The countryside and the lairs, the rest** - their places on the classic travel map (TESA13 inks them on the held
   map), a discovery law of their own (TESA13's departure), and quest sites in them.
 
+## TESA-LORE - the capitals refined toward the lore (2026-10-24)
+
+The owner, of the capitals TESA10 to TESA11 built: *"polishing and refining each capital city design and bringing them
+more in line with lore and the mainline games"* (worked beside TESA13 and TESA14 on one branch, so named apart from
+their numbers). Each capital read again against the lore - UESP's pages on the city and on the games that show it
+(Oblivion's, Skyrim's, Tribunal's, Online's), read through a search, the site turning the port's own fetch away - and
+each place the port's city stood apart from that reading moved to it. The shapes stay the port's own (TESA10's law: never
+another game's mesh or level design), the districts Daggerfall's blocks, the pictures CAPITAL_ARCHIVE's. Daggerfall
+Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overview/Port-Ledger.md`).
+
+- **The Imperial City** (`world/imperialCity.js`, `world/capitalImperial.js`):
+  - **The Prison on the isle's north-eastern shore** - UESP: "a fortified district northeast of the main city walls
+    serving as the Imperial Legion's headquarters and city prison", "found on the northeastern shore of City Isle". TESA11
+    stood it north of north-east (bearing 12, "no source the port can read gives ... the Prison's bearing finer than
+    'beside the Market'"); it stands at 45 now, in the north-east pixel - that slice is the Prison District, the north one
+    the Market District (the Market's north half), the city wall's gate to it and its causeway on the bearing.
+  - **The watch towers** - the city wall's six, where the district walls meet it (UESP's sewers: the North Watch Tower
+    between the Elven Gardens and the Market, the North-East between the Market and the Arena District, the South-East
+    between the Arena District and the Arboretum, the South-West between the Temple District and Talos Plaza, the
+    North-West between Talos Plaza and the Elven Gardens): `watchTower` on `watchTowersAt`, a drum of 18 m radius over a
+    batter to 70 m, a parapet of merlons and a turret under a slate cone, in the ten-degree tower's stead - the wall band
+    the city's own holds their ground.
+  - **The Arboretum's Nine Divines** - UESP: "the city park, and features statues of the Nine Divines including a statue
+    of Talos in the center". A paved court (46 m about the sector's middle, bearing 150 at 600 m; its cells the city's
+    own, its plinths closed); eight robed figures of marble on their plinths in a ring of 28 m, each facing the middle in
+    one of four poses (`divineFigure`: hands before it, an arm raised, both raised, a staff); Talos at the middle
+    armoured on a stepped plinth, his gilt sword raised, his shield on his arm, facing the White-Gold Tower; a kerb round
+    the court open toward the palace gate. Model 910212 (`nineDivines`), carried by the south slice.
+  - **Read again and kept** - the six districts on their sectors (UESP: the Elven Gardens north-west, the Market
+    north-east, Talos Plaza west, the Temple District south-west; the Arena District and the Arboretum between them, by
+    the watch towers they share), the Arcane University south-east ("a fortified district southeast of the main city
+    walls"), Talos Plaza's statue ("a dragon statue at its center"), Talos Bridge west toward Weye. The Waterfront's
+    compass is still unread: TESA11's placing stands.
+
 ## Pins
+
+`test/tesalore_capitals.test.js` (3, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
+and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
+other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
+ring each with its figure, Talos the tallest over the middle, the eight below him; the court paved, closed at its plinths
+and open between, treeless, the city's own; installed, carried in its pixel). Mutants `tools/mutants/tesalore.json` (14,
+all dead; the watch towers' own ground rule survived as the wall band's twin and went). PIN MOVED:
+`test/tesa11_imperial.test.js` (the Prison's bearing, the slices' names, the Arboretum's grass off the court, the city
+wall's reach to its watch towers); `tools/mutants/tesa11.json`'s slice-names record re-aimed by content, judged dead.
 
 `test/tesa14_roads.test.js` (18, TESA14): the builder's obstacles and `owns` (a neighbours' edge the first end's, a
 bridge either end's, a link its first end's, a spur its node's), nearestWithin the brute force's lists and primEdges a

@@ -11,10 +11,12 @@
 // White-Gold Tower on Green Emperor Way, the emperors' tombs round it, inside the palace wall; round that, within the city
 // wall, the six districts on their sectors (bearings clockwise from north) - the Market District to the north-east, the
 // Arena District east, the Arboretum south-east, the Temple District south-west, Talos Plaza west, the Elven Gardens
-// north-west - each walled from the next with a gate between; outside the walls on the isle the Prison District (the
-// Imperial Prison and the Legion's headquarters, beside the Market - north of north-east here, so it stands in the north
-// pixel), the Arcane University south-east (the Mages Guild's), and the Waterfront on the lake's south shore (no source
-// the port can read gives its compass; recorded as the port's placing); Talos Bridge west to the mainland. Each district
+// north-west - each walled from the next with a gate between, a great watch tower where its walls meet the city's (the
+// North, North-East, South-East, South, South-West and North-West Watch Towers); outside the walls on the isle the Prison
+// District (the Imperial Prison and the Legion's headquarters on the isle's north-eastern shore - TESA-LORE: it stood north of
+// north-east, the lore's is north-east), the Arcane University south-east (the Mages Guild's), and the Waterfront on the
+// lake's south shore (no source the port can read gives its compass; recorded as the port's placing); Talos Bridge west to
+// the mainland. In the Arboretum, the city's park, the statues of the Nine Divines round Talos's at their middle (TESA-LORE). Each district
 // is Daggerfall's blocks of its trade (IMPERIAL_MIX) - the Market's shops, the Arena District's Fighters Guild, the Temple
 // District's temples, Talos Plaza's and the Elven Gardens' houses, the University's Mages Guild, the Waterfront's Thieves
 // Guild - round the port's own landmarks (world/capitalImperial.js). No game data, and no other game's level: shapes and a
@@ -44,8 +46,9 @@ export const IMPERIAL = Object.freeze({
   tombs: Object.freeze({ r: 192, n: 8, w: 16, h: 12 }),
   /** The palace wall round Green Emperor Way, a gate to each district (its sector's middle). */
   palaceWall: Object.freeze({ r: 300, thick: 5, h: 14, towerR: 5, towerH: 20, gate: 10, gateH: 9, sides: 72 }),
-  /** The city wall, a tower every `towerEvery` degrees, its gates (`gates`: bearings). */
-  cityWall: Object.freeze({ r: 900, thick: 9, h: 26, towerR: 12, towerH: 38, gate: 16, gateH: 16, towerEvery: 10, gates: Object.freeze([12, 135, 172, 270]) }),
+  /** The city wall, a tower every `towerEvery` degrees, its gates (`gates`: bearings); TESA-LORE: its watch towers (`watchR`,
+   *  `watchH`) where the district walls meet it. */
+  cityWall: Object.freeze({ r: 900, thick: 9, h: 26, towerR: 12, towerH: 38, gate: 16, gateH: 16, towerEvery: 10, gates: Object.freeze([45, 135, 172, 270]), watchR: 18, watchH: 70 }),
   /** The walls between the districts, from the palace wall to the city wall at each sector's edge, a gate at the middle. */
   districtWall: Object.freeze({ thick: 4, h: 12, gate: 10, gateH: 8 }),
   /** City Isle's shore round the city wall. */
@@ -54,10 +57,13 @@ export const IMPERIAL = Object.freeze({
   colosseum: Object.freeze({ b: 90, r: 640, rx: 74, rz: 58, h: 38, tiers: 3, floor: Object.freeze([46, 32]) }),
   temple: Object.freeze({ b: 222, r: 680, w: 44, l: 96, h: 28, domeR: 17, towerS: 10, towerH: 48 }),
   statue: Object.freeze({ b: 270, r: 640, plinth: 14, plaza: 46 }),
-  prison: Object.freeze({ b: 12, r: 1080, half: 96, h: 16, tower: 12, bastionR: 16, bastionH: 64 }),
+  prison: Object.freeze({ b: 45, r: 1080, half: 96, h: 16, tower: 12, bastionR: 16, bastionH: 64 }),
   university: Object.freeze({ b: 135, r: 1180, half: 150, h: 12, tower: 9, spireR: 15, spireH: 120, hall: 46 }),
   waterfront: Object.freeze({ b0: 162, b1: 198, r1: 1100, piers: Object.freeze([167, 175, 185, 193]), pierTo: 1190, pierW: 8, deck: 1.2, lightR: 5, lightH: 26 }),
   bridge: Object.freeze({ b: 270, w: 14, deck: 5, parapet: 1.2, pier: 24 }),
+  /** TESA-LORE: the Arboretum's statues of the Nine Divines - eight on their plinths in a ring facing Talos's at the middle
+   *  of a round paved court, on the sector's middle bearing. */
+  divines: Object.freeze({ b: 150, r: 600, court: 46, ring: 28, plinth: 3.6, plinthH: 2.6, figure: 6.5, talosPlinth: 9, talosPlinthH: 5.4, talos: 11 }),
   causeway: 18,
 });
 
@@ -71,7 +77,7 @@ export const IMPERIAL_SECTORS = Object.freeze(/** @type {Array<readonly [string,
 /** The nine slices' names, row by row from the north-west (a slice's index sy * 3 + sx): each the district that holds it
  *  most, the centre the city's own name - the location a pixel stands, its loading screen's and its quests'. */
 export const IMPERIAL_SLICE_NAMES = Object.freeze([
-  'Elven Gardens District', 'Prison District', 'Market District',
+  'Elven Gardens District', 'Market District', 'Prison District',   // TESA-LORE: the Prison north-east, the Market's north half
   'Talos Plaza District', 'Imperial City', 'Arena District',
   'Temple District', 'Waterfront District', 'Arboretum',
 ]);
@@ -91,11 +97,13 @@ export const IMPERIAL_MIX = Object.freeze({
 export const IMPERIAL_MODELS = Object.freeze({
   whiteGoldTower: 910200, palaceWall: 910201, tombs: 910202, cityWall: 910203, districtWalls: 910204, colosseum: 910205,
   templeOfTheOne: 910206, talosStatue: 910207, prison: 910208, university: 910209, waterfront: 910210, talosBridge: 910211,
+  nineDivines: 910212,   // TESA-LORE
 });
 export const IMPERIAL_CARRY = Object.freeze({
   [IMPERIAL_MODELS.whiteGoldTower]: 4, [IMPERIAL_MODELS.palaceWall]: 4, [IMPERIAL_MODELS.tombs]: 4, [IMPERIAL_MODELS.cityWall]: 4,
   [IMPERIAL_MODELS.districtWalls]: 4, [IMPERIAL_MODELS.colosseum]: 5, [IMPERIAL_MODELS.templeOfTheOne]: 6, [IMPERIAL_MODELS.talosStatue]: 3,
-  [IMPERIAL_MODELS.prison]: 1, [IMPERIAL_MODELS.university]: 8, [IMPERIAL_MODELS.waterfront]: 7, [IMPERIAL_MODELS.talosBridge]: 3,
+  [IMPERIAL_MODELS.prison]: 2, [IMPERIAL_MODELS.university]: 8, [IMPERIAL_MODELS.waterfront]: 7, [IMPERIAL_MODELS.talosBridge]: 3,
+  [IMPERIAL_MODELS.nineDivines]: 7,   // TESA-LORE: the Prison in the north-east pixel; the Divines in the south one
 });
 
 // ---------------------------------------------------------------- the geometry
@@ -144,6 +152,12 @@ const rectBox = (x0, z0, x1, z1, c, h) => x1 >= c[0] - h && x0 <= c[0] + h && z1
 
 /** The district walls' lines: at each sector's edge, from the palace wall to the city wall. */
 export const districtWallLines = (I = IMPERIAL) => IMPERIAL_SECTORS.map(([, b]) => [polar(b, I.palaceWall.r), polar(b, I.cityWall.r)]);
+/** TESA-LORE: the watch towers' feet - where each district wall meets the city wall. */
+export const watchTowersAt = (I = IMPERIAL) => IMPERIAL_SECTORS.map(([, b]) => polar(b, I.cityWall.r));
+/** TESA-LORE: the Divines' court's middle, and each of the eight's plinth about it (the first on the court's bearing out,
+ *  then round) - Talos's at the middle. */
+export const divinesAt = (I = IMPERIAL) => polar(I.divines.b, I.divines.r);
+export const divinePlinths = (I = IMPERIAL) => { const [x, z] = divinesAt(I); return Array.from({ length: 8 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring); return /** @type {[number, number]} */ ([x + dx, z + dz]); }); };
 /** The stone ways from the city's gates out over the isle: to the Prison, the University and the Waterfront. */
 export const causewayLines = (I = IMPERIAL) => [
   [polar(I.prison.b, I.cityWall.r), polar(I.prison.b, I.prison.r - I.prison.half)],
@@ -177,8 +191,9 @@ export function imperialDistrictAt(x, z, I = IMPERIAL) {
 }
 /**
  * WHERE THE CITY'S OWN STANDS, by a rectangle of the plan (x0, z0)-(x1, z1): Green Emperor Way to its wall; the city wall's
- * band and its towers; the district walls; the stone ways and Talos Bridge; the Colosseum, the Temple of the One, Talos
- * Plaza's statue; the Prison's grounds; the University's wall, its tower and its hall; the Waterfront's quay and piers -
+ * band and its towers (TESA-LORE: its watch towers within it); the district walls; the stone ways and Talos Bridge; the Colosseum, the
+ * Temple of the One, Talos Plaza's statue, the Divines' court (TESA-LORE); the Prison's grounds; the University's wall, its
+ * tower and its hall; the Waterfront's quay and piers -
  * each with the margin its towers and its walkers want. A cell any of them touches is a block of the city's own.
  */
 export function imperialReserved(x0, z0, x1, z1, I = IMPERIAL) {
@@ -188,6 +203,7 @@ export function imperialReserved(x0, z0, x1, z1, I = IMPERIAL) {
   const m = cw.thick / 2 + cw.towerR + 2;
   if (rmin < cw.r + m && rmax > cw.r - m) return true;
   if (districtWallLines(I).some(([a, b]) => segRect(a, b, x0, z0, x1, z1) < I.districtWall.thick / 2 + 3)) return true;
+  if (rectPoint(x0, z0, x1, z1, divinesAt(I)) < I.divines.court + 4) return true;   // TESA-LORE: the Divines' court
   if ([...causewayLines(I), bridgeLine(I)].some(([a, b], i) => segRect(a, b, x0, z0, x1, z1) < (i === 3 ? I.bridge.w : I.causeway) / 2 + 4)) return true;
   const C = I.colosseum, cc = polar(C.b, C.r);
   if (x1 >= cc[0] - C.rx - 6 && x0 <= cc[0] + C.rx + 6 && z1 >= cc[1] - C.rz - 6 && z0 <= cc[1] + C.rz + 6) return true;
@@ -258,14 +274,16 @@ export const IMPERIAL_DISTRICTS = Object.freeze(Object.fromEntries((() => {
 
 // ---------------------------------------------------------------- the ground's laws
 
-/** The tile at a point: the lake's water, the stone of the plaza, of Green Emperor Way, of the walls' feet, the streets,
- *  the ways, the grounds and the quay; the grass of the lawns, the Arboretum and the isle. Water 0, grass 2, stone 3. */
+/** The tile at a point: the lake's water, the stone of the plaza, of Green Emperor Way, of the walls' feet, the Divines'
+ *  court (TESA-LORE), the streets, the ways, the grounds and the quay; the grass of the lawns, the Arboretum and the isle.
+ *  Water 0, grass 2, stone 3. */
 export function imperialTile(x, z, I = IMPERIAL) {
   if (!imperialLand(x, z, I)) return 0;
   const r = Math.hypot(x, z);
   if (r < I.plaza || (r >= I.way.r0 && r <= I.way.r1)) return 3;
   if (r < I.palaceWall.r - 6) return 2;
   if (Math.abs(r - I.palaceWall.r) <= 8 || Math.abs(r - I.cityWall.r) <= 14) return 3;
+  if (Math.hypot(x - divinesAt(I)[0], z - divinesAt(I)[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court
   if ([...causewayLines(I), bridgeLine(I)].some(([a, b]) => pointSeg(x, z, a, b) <= I.causeway / 2)) return 3;
   const d = imperialDistrictAt(x, z, I);
   if (d === 'Arboretum' || d === 'City Isle' || d === 'Elven Gardens District') return 2;
@@ -273,7 +291,7 @@ export function imperialTile(x, z, I = IMPERIAL) {
 }
 /** The closed ground at a point (the walkers' navgrid; world/capitalModels.js capitalFootprint closes every face that
  *  stands): the solids' insides - the tower's plinth, the tombs, the Colosseum's stands, the Temple, the statue's plinth,
- *  the Bastion, the University's tower and hall. */
+ *  the Divines' plinths (TESA-LORE), the Bastion, the University's tower and hall. */
 export function imperialClosed(x, z, I = IMPERIAL) {
   if (Math.hypot(x, z) < I.tower.plinthR + 1) return true;
   for (let i = 0; i < I.tombs.n; i++) { const [tx, tz] = polar(22.5 + i * (360 / I.tombs.n), I.tombs.r); if (Math.abs(x - tx) < I.tombs.w / 2 + 0.5 && Math.abs(z - tz) < I.tombs.w / 2 + 0.5) return true; }
@@ -283,6 +301,10 @@ export function imperialClosed(x, z, I = IMPERIAL) {
   if (Math.abs(x - tx) < T.w / 2 + 0.5 && Math.abs(z - tz) < T.l / 2 + 0.5) return true;
   const [sx, sz] = polar(I.statue.b, I.statue.r);
   if (Math.abs(x - sx) < I.statue.plinth / 2 + 0.5 && Math.abs(z - sz) < I.statue.plinth / 2 + 0.5) return true;
+  // TESA-LORE: the Divines' plinths, Talos's at the middle
+  const D = I.divines, [ax, az] = divinesAt(I);
+  if (Math.abs(x - ax) < D.talosPlinth / 2 + 1.5 && Math.abs(z - az) < D.talosPlinth / 2 + 1.5) return true;
+  if (divinePlinths(I).some(([px, pz]) => Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5)) return true;
   const [px, pz] = prisonAt(I);
   if (Math.hypot(x - px, z - pz) < I.prison.bastionR + 1) return true;
   const [ux, uz] = universityTowerAt(I), [hx, hz] = universityHallAt(I);

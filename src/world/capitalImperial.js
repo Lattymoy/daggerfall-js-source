@@ -2,14 +2,15 @@
 // TESA11 (bible/03-World/Arena-Provinces.md TESA11) - THE IMPERIAL CITY'S LANDMARKS: the port's own models of the city's
 // canon (world/imperialCity.js IMPERIAL says where each stands) - the White-Gold Tower, 680 m to its spire, on Green
 // Emperor Way among the emperors' tombs inside the palace wall; the city wall round the six districts, a tower every ten
-// degrees and its four gates; the walls between the districts; the Arena District's Colosseum; the Temple of the One; the
-// dragon of Talos Plaza; the Imperial Prison and its Bastion; the Arcane University and its Arch-Mage's tower; the
-// Waterfront's quay, piers and light; Talos Bridge. In metres, drawn as the map reads (+z south), every model's origin the
+// degrees, its four gates and (TESA-LORE) its six watch towers where the district walls meet it; the walls between the
+// districts; the Arena District's Colosseum; the Temple of the One; the dragon of Talos Plaza; the Arboretum's Nine Divines
+// (TESA-LORE); the Imperial Prison and its Bastion; the Arcane University and its Arch-Mage's tower; the Waterfront's quay,
+// piers and light; Talos Bridge. In metres, drawn as the map reads (+z south), every model's origin the
 // city's middle on its ground (world/capitalModels.js turns them northward). Shapes of the port's own on the canon - no
 // game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, translated } from './capitalShapes.js';
-import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate } from './imperialCity.js';
+import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, translated, corner } from './capitalShapes.js';
+import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths } from './imperialCity.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
@@ -111,14 +112,32 @@ export function buildEmperorsTombs(T = IMPERIAL.tombs) {
 // ---------------------------------------------------------------- the walls
 
 /**
+ * TESA-LORE: A WATCH TOWER of the city wall at (x, z) - a great drum of stone (`watchR`, to `watchH`) over the wall's walk, a
+ * corbelled parapet of merlons round its top, a turret on it under a slate cone.
+ */
+export function watchTower(mb, x, z, W = IMPERIAL.cityWall) {
+  const r = W.watchR, h = W.watchH;
+  translated(mb, x, 0, z, () => {
+    taper(mb, STONE, 20, r + 1.5, -3, r, 6, { vRepeat: 6, uRepeat: 4 });   // its batter
+    taper(mb, STONE, 20, r, 6, r, h, { vRepeat: 6, uRepeat: 4 });
+    ledge(mb, STONE, 20, r + 1.4, r - 0.5, h, h + 2);
+    for (let i = 0; i < 20; i++) { const [mx, , mz] = corner(20, i + 0.5, r + 0.8, 0); mb.box(STONE, [mx, h + 2.9, mz], [1.6, 1.8, 1.6], 0.4); }
+    taper(mb, STONE, 16, r * 0.55, h + 2, r * 0.55, h + 12, { vRepeat: 6, uRepeat: 2 });
+    taper(mb, SLATE, 16, r * 0.55 + 1, h + 12, 0.05, h + 12 + r * 0.9, { vRepeat: 4, uRepeat: 2 });
+  });
+}
+
+/**
  * THE CITY WALL round the six districts: its chords between towers every `towerEvery` degrees, merlons out; a gate at
  * each of its bearings - to the Prison, the University, the Waterfront and Talos Bridge - between two towers, a lintel over
- * it.
+ * it; TESA-LORE: a watch tower where each district wall meets it, in the ten-degree tower's stead (the North, North-East,
+ * South-East, South, South-West and North-West Watch Towers).
  */
 export function buildCityWall(W = IMPERIAL.cityWall) {
-  const mb = new MeshBuilder(), half = gateDeg(W.gate, W.r);
+  const mb = new MeshBuilder(), half = gateDeg(W.gate, W.r), watch = new Set(IMPERIAL_SECTORS.map(([, b]) => b));
   for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }
-  for (let b = 0; b < 360; b += W.towerEvery) if (W.gates.every((g) => Math.abs(((b - g + 540) % 360) - 180) > half + gateDeg(W.towerR * 2 + 4, W.r))) { const [x, z] = polar(b, W.r); roundTower(mb, x, z, W.towerR, W.towerH); }
+  for (let b = 0; b < 360; b += W.towerEvery) if (!watch.has(b) && W.gates.every((g) => Math.abs(((b - g + 540) % 360) - 180) > half + gateDeg(W.towerR * 2 + 4, W.r))) { const [x, z] = polar(b, W.r); roundTower(mb, x, z, W.towerR, W.towerH); }
+  for (const [x, z] of watchTowersAt()) watchTower(mb, x, z, W);
   for (const g of W.gates) {
     const a = polar(g + half, W.r), c = polar(g - half, W.r);
     translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));
@@ -224,6 +243,71 @@ export function buildTalosStatue(S = IMPERIAL.statue) {
       const nrm = unit([u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]);
       mb.tri(BRONZE, root, a, b, nrm); mb.tri(BRONZE, root, a, b, nrm.map((q) => -q));
     }
+  }
+  return mb.build();
+}
+
+/** A figure's local frame at (x, z) facing `face` (a unit [x, z]): a point `f` forward, `s` to its right, `y` up. */
+const framed = (x, z, face) => (f, s, y) => [x + face[0] * f - face[1] * s, y, z + face[1] * f + face[0] * s];
+/**
+ * TESA-LORE: A DIVINE'S FIGURE, robed, `h` tall from `y`, at (x, z) facing `face` - its robe from its feet to its chest, its
+ * shoulders, its head, its arms by its `pose`: 0 its hands before it, 1 its right arm raised, 2 both raised in blessing, 3 a
+ * staff in its right hand.
+ */
+export function divineFigure(mb, tex, x, z, y, h, face, pose) {
+  const P = framed(x, z, face), k = h / 6.5;
+  translated(mb, x, y, z, () => {
+    taper(mb, tex, 10, 1.15 * k, 0, 0.62 * k, 3.9 * k, { vRepeat: 3 });   // the robe
+    taper(mb, tex, 10, 0.62 * k, 3.9 * k, 0.78 * k, 4.9 * k, { vRepeat: 2 });   // the chest to the shoulders
+    taper(mb, tex, 10, 0.78 * k, 4.9 * k, 0.3 * k, 5.25 * k, { vRepeat: 1 });
+  });
+  blob(mb, tex, x, y + 5.75 * k, z, 0.42 * k, 0.52 * k, 0.42 * k, { n: 8, rings: 5, rough: 0, seed: 0xd1 + pose });
+  const sh = (side) => P(0, side * 0.78 * k, y + 4.75 * k);
+  const hand = {
+    0: (side) => P(0.75 * k, side * 0.35 * k, y + 3.6 * k),
+    1: (side) => (side > 0 ? P(0.2 * k, 1.0 * k, y + 7.4 * k) : P(0.25 * k, -0.9 * k, y + 3.2 * k)),
+    2: (side) => P(0.6 * k, side * 1.6 * k, y + 6.6 * k),
+    3: (side) => (side > 0 ? P(0.55 * k, 0.95 * k, y + 3.9 * k) : P(0.7 * k, -0.4 * k, y + 3.7 * k)),
+  }[pose];
+  for (const side of [1, -1]) limb(mb, tex, sh(side), hand(side), 0.26 * k, 0.18 * k, { n: 6 });
+  if (pose === 3) limb(mb, tex, P(0.55 * k, 0.95 * k, y), P(0.55 * k, 0.95 * k, y + 7.2 * k), 0.12 * k, 0.12 * k, { n: 6 });   // the staff
+}
+
+/**
+ * TESA-LORE: THE ARBORETUM'S NINE DIVINES - the city's park, the statues of the Nine (UESP's Arboretum: "statues of the Nine
+ * Divines including a statue of Talos in the center"): eight robed figures of marble on their plinths in a ring, each
+ * facing the middle, where Talos stands armoured on a stepped plinth, his gilt sword raised, facing the White-Gold Tower;
+ * a low kerb round the court.
+ */
+export function buildNineDivines(I = IMPERIAL) {
+  const mb = new MeshBuilder(), D = I.divines, [cx, cz] = divinesAt(I);
+  divinePlinths(I).forEach(([x, z], i) => {
+    hall(mb, MARBLE, x, z, D.plinth + 1, D.plinth + 1, -1, 0.5, 0.25);
+    hall(mb, MARBLE, x, z, D.plinth, D.plinth, 0.5, D.plinthH, 0.25);
+    const face = unit([cx - x, 0, cz - z]);
+    divineFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);
+  });
+  // Talos at the middle, facing the tower: his stepped plinth, his legs, his armoured body, his head, his shield and sword
+  const tp = D.talosPlinth, ty = D.talosPlinthH, k = D.talos / 11, face = unit([-cx, -cz]), P = framed(cx, cz, face);
+  hall(mb, MARBLE, cx, cz, tp + 3, tp + 3, -1, ty * 0.35, 0.25);
+  hall(mb, MARBLE, cx, cz, tp, tp, ty * 0.35, ty, 0.25);
+  for (const side of [1, -1]) limb(mb, MARBLE, P(0, side * 0.75 * k, ty), P(0.2 * k, side * 0.7 * k, ty + 5 * k), 0.55 * k, 0.65 * k, { n: 8 });
+  translated(mb, cx, ty + 5 * k, cz, () => { taper(mb, MARBLE, 10, 1.3 * k, 0, 1.6 * k, 3.4 * k, { vRepeat: 2 }); taper(mb, MARBLE, 10, 1.6 * k, 3.4 * k, 0.5 * k, 4 * k, { vRepeat: 1 }); });
+  for (const side of [1, -1]) blob(mb, MARBLE, ...P(0, side * 1.7 * k, ty + 8.2 * k), 0.8 * k, 0.6 * k, 0.8 * k, { n: 8, rings: 4, rough: 0, seed: 0xd9 });   // his pauldrons
+  blob(mb, MARBLE, cx, ty + 9.7 * k, cz, 0.7 * k, 0.85 * k, 0.7 * k, { n: 8, rings: 5, rough: 0, seed: 0xda });
+  const swordHand = P(0.5 * k, 1.9 * k, ty + 11.2 * k);
+  limb(mb, MARBLE, P(0, 1.75 * k, ty + 8.2 * k), swordHand, 0.42 * k, 0.32 * k, { n: 6 });
+  limb(mb, GOLD, swordHand, P(0.9 * k, 2.2 * k, ty + 16.5 * k), 0.22 * k, 0.04 * k, { n: 4 });   // the blade, up
+  limb(mb, GOLD, P(0.5 * k, 1.3 * k, ty + 11.2 * k), P(0.5 * k, 2.5 * k, ty + 11.2 * k), 0.12 * k, 0.12 * k, { n: 4 });   // its guard
+  limb(mb, MARBLE, P(0, -1.75 * k, ty + 8.2 * k), P(1.1 * k, -1.4 * k, ty + 6.4 * k), 0.42 * k, 0.32 * k, { n: 6 });
+  const sc = P(1.4 * k, -1.3 * k, ty + 6.4 * k);
+  translated(mb, sc[0], sc[1] - 1.6 * k, sc[2], () => taper(mb, BRONZE, 10, 1.25 * k, 0, 1.25 * k, 3.2 * k, { vRepeat: 1 }));   // his shield
+  // the court's kerb, open toward the palace gate
+  const n = 48, gap = 12 / D.court;
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2, toTower = Math.atan2(-cz, -cx);
+    if (Math.abs(((am - toTower + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < gap) continue;
+    wallRun(mb, MARBLE, [cx + Math.cos(a1) * D.court, cz + Math.sin(a1) * D.court], [cx + Math.cos(a0) * D.court, cz + Math.sin(a0) * D.court], 0.8, 0.45, 0.5, 2);
   }
   return mb.build();
 }

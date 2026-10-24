@@ -1,0 +1,129 @@
+[
+  {
+    "name": "TESA-LORE-prison-north",
+    "file": "src/world/imperialCity.js",
+    "old": "  prison: Object.freeze({ b: 45,",
+    "new": "  prison: Object.freeze({ b: 12,",
+    "tests": [
+      "test/tesalore_capitals.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-prison-gate-old",
+    "file": "src/world/imperialCity.js",
+    "old": "gates: Object.freeze([45, 135, 172, 270])",
+    "new": "gates: Object.freeze([12, 135, 172, 270])",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-prison-carried-north",
+    "file": "src/world/imperialCity.js",
+    "old": "[IMPERIAL_MODELS.prison]: 2,",
+    "new": "[IMPERIAL_MODELS.prison]: 1,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-watch-towers-unbuilt",
+    "file": "src/world/capitalImperial.js",
+    "old": "  for (const [x, z] of watchTowersAt()) watchTower(mb, x, z, W);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-watch-towers-low",
+    "file": "src/world/imperialCity.js",
+    "old": "watchR: 18, watchH: 70",
+    "new": "watchR: 18, watchH: 40",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-court-unpaved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (Math.hypot(x - divinesAt(I)[0], z - divinesAt(I)[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-court-unreserved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (rectPoint(x0, z0, x1, z1, divinesAt(I)) < I.divines.court + 4) return true;   // TESA-LORE: the Divines' court\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divine-plinths-open",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (divinePlinths(I).some(([px, pz]) => Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-talos-plinth-open",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (Math.abs(x - ax) < D.talosPlinth / 2 + 1.5 && Math.abs(z - az) < D.talosPlinth / 2 + 1.5) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-seven-divines",
+    "file": "src/world/imperialCity.js",
+    "old": "Array.from({ length: 8 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring);",
+    "new": "Array.from({ length: 7 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divine-figures-gone",
+    "file": "src/world/capitalImperial.js",
+    "old": "    divineFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-talos-no-sword",
+    "file": "src/world/capitalImperial.js",
+    "old": "  limb(mb, GOLD, swordHand, P(0.9 * k, 2.2 * k, ty + 16.5 * k), 0.22 * k, 0.04 * k, { n: 4 });   // the blade, up\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divines-carried-centre",
+    "file": "src/world/imperialCity.js",
+    "old": "  [IMPERIAL_MODELS.nineDivines]: 7,",
+    "new": "  [IMPERIAL_MODELS.nineDivines]: 4,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divines-uninstalled",
+    "file": "src/world/capitalModels.js",
+    "old": "    [CAPITAL_MODELS.nineDivines]: () => buildNineDivines(),   // TESA-LORE\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  }
+]

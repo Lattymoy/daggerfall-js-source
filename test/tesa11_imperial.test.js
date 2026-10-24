@@ -83,16 +83,16 @@ test('TESA11 the districts on their sectors: Green Emperor Way inside the palace
   assert.equal(imperialDistrictAt(...polar(300, 960)), 'City Isle');
   assert.equal(imperialDistrictAt(...polar(300, 1100)), null, 'the lake');
   assert.ok(Math.abs(imperialBearing(...polar(123.4, 50)) - 123.4) < 1e-9 && Math.abs(imperialBearing(0, -5)) < 1e-9 && Math.abs(imperialBearing(5, 0) - 90) < 1e-9);
-  // the canon's own placings: the Prison beside the Market (north of north-east, in the north pixel), the University
-  // south-east, Talos Bridge west, the Waterfront south
-  assert.ok(IMPERIAL.prison.b < 45 && IMPERIAL.university.b === 135 && IMPERIAL.bridge.b === 270 && IMPERIAL.waterfront.b0 < 180 && IMPERIAL.waterfront.b1 > 180);
+  // the canon's own placings: the Prison on the isle's north-eastern shore (PIN MOVED, TESA-LORE: it stood north of
+  // north-east, in the north pixel), the University south-east, Talos Bridge west, the Waterfront south
+  assert.ok(IMPERIAL.prison.b === 45 && IMPERIAL.university.b === 135 && IMPERIAL.bridge.b === 270 && IMPERIAL.waterfront.b0 < 180 && IMPERIAL.waterfront.b1 > 180);
 });
 
 // ── THE SLICES ──────────────────────────────────────────────────
 
 test('TESA11 the slices: nine, each its district\'s name (the centre the city\'s own), its ordinal (the centre 0), its own map id and location index - every one a capital\'s, a place the port made', () => {
   assert.deepEqual([capitalSpan(IC), capitalCentre(IC), capitalSpan(CAPITALS[1]), capitalCentre(CAPITALS[1])], [3, 4, 1, 0]);
-  assert.deepEqual(IMPERIAL_SLICE_NAMES, ['Elven Gardens District', 'Prison District', 'Market District', 'Talos Plaza District', 'Imperial City', 'Arena District', 'Temple District', 'Waterfront District', 'Arboretum']);
+  assert.deepEqual(IMPERIAL_SLICE_NAMES, ['Elven Gardens District', 'Market District', 'Prison District', 'Talos Plaza District', 'Imperial City', 'Arena District', 'Temple District', 'Waterfront District', 'Arboretum']);   // PIN MOVED (TESA-LORE): the Prison north-east
   assert.deepEqual(Array.from({ length: 9 }, (_, s) => capitalSliceName(IC, s)), IMPERIAL_SLICE_NAMES);
   assert.equal(capitalSliceName(CAPITALS[1], 0), 'Solitude');
   assert.equal(capitalSliceName({ ...IC, sliceNames: Array(9).fill('Somewhere') }, 4), 'Imperial City', 'the centre the city\'s own name, whatever its slices are called');
@@ -180,7 +180,7 @@ test('TESA11 the ground\'s laws: the lake\'s water off the isle; the plaza\'s an
   assert.equal(imperialTile(...polar(10, 260)), 3, 'Green Emperor Way');
   assert.equal(imperialTile(...polar(10, 160)), 2, 'its lawns');
   assert.equal(imperialTile(...polar(50, 900)), 3, 'the city wall\'s foot');
-  assert.equal(imperialTile(...polar(150, 600)), 2, 'the Arboretum');
+  assert.equal(imperialTile(...polar(130, 600)), 2, 'the Arboretum');   // PIN MOVED (TESA-LORE): its middle the Divines' court
   assert.equal(imperialTile(...polar(45, 600)), 3, 'the Market\'s streets');
   assert.equal(imperialClosed(0, 0), true);
   assert.equal(imperialClosed(...polar(22.5, IMPERIAL.tombs.r)), true, 'a tomb');
@@ -306,7 +306,7 @@ test('TESA11 the walls: the city wall\'s four gates open under their lintels and
   }
   void mid;
   const { hi } = bounds(wall);
-  assert.ok(Math.max(hi[0], hi[2]) <= W.r + W.towerR + 1 && W.r + W.towerR < IMPERIAL.isle);
+  assert.ok(Math.max(hi[0], hi[2]) <= W.r + W.watchR + 4 && W.r + W.watchR + 4 < IMPERIAL.isle);   // PIN MOVED (TESA-LORE): its watch towers the widest
 });
 
 test('TESA11 the districts\' landmarks: the Colosseum\'s ways in open and its stands walled; the Temple of the One\'s dome over its roof and its towers over the dome; Talos Plaza\'s dragon on its plinth; the Prison\'s Bastion; the University\'s tower; the Waterfront\'s piers over the water; Talos Bridge to the city\'s west edge', () => {
