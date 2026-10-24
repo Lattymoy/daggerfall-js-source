@@ -61,7 +61,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 |---|---|---|
 | WW1 | The world's grid (the key, the theatres, the areas) and its places (the registry, the Bay's provider); the living world's towns and dungeons off it, grouped by area | BUILT (below) |
 | WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
-| WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | planned |
+| WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
@@ -296,3 +296,112 @@ read nothing, so the mark's mutant lived). Mutant records re-aimed by content in
 `tech1.json` and `wb14g.json`; `ww1.json`'s name bank record to `areaNameBank.js` - all dead.
 
 Section A, WW2 (OURS: DFU has no Oblivion Gate - the gate, its lanes and its scan past the Bay are the port's own).
+
+## WW3 - the sea, whole (BUILT, 2026-10-24)
+
+The Bay's ships sailed the Bay alone: its packets ran between Travel Options' harbours over the Bay's water, its raiders
+were born on the Bay's map (or the Eltheric Ocean's box), its port test read MapsFile's pixel ids, and a ship past the
+Bay was named by the Bay's people. WW3 puts the sea's systems on the world's ports and water; every Bay lane, packet,
+port, board and name is the one it was.
+
+### The map directory names the Bay's map alone (`systems/map/mapDirectory.js`)
+
+`locationSummaryAt` and `hasLocation` (ContentReader.HasLocation) answer null off the Bay's 1000 x 500. Off it,
+MapsFile's `y * 1000 + x` is ANOTHER pixel's id - (1003, 10) is (3, 11)'s, (-2, 10) is (998, 9)'s - so a ship past the
+Bay's edge was told it lay by a Bay port (the deed's "a port is near", the harbour sounded, the moored ships rolled), and
+the travel map named a Bay town on a pixel past the edge. DFU asks its directory of its own map alone; the port asks it
+of the world's, so the bound is the law's (Port-Ledger).
+
+### The world's ports (`world/worldWide/worldPorts.js`)
+
+- **A port past the Bay** is a place its PROVIDER calls a port (a registry row's `port` - TESA's places), of a port
+  town's kind (`systems/portPlaces.js isPortTownType`), that the OPEN SEA bears on (`net/fortLaw.js seaBears`, the
+  shipyard's and the harbour board's law, over the host's `openSea`). The Bay's ports stay the game's data (Travel
+  Options' list, the PortTownAndUnknown byte): a Bay place is never one of the registry's.
+- **One number a port** (`portIdOf`): the Bay's masked map id on the Bay (what the lanes, the harbour book and the living
+  world's sailors always filed a port by), and past it `PORT_ID_WORLD` (2^20, past every masked id) plus the world's
+  key - so a lane's key and seed are its two ports' wherever they stand, and no two ever meet (the grid's north-west keys
+  are small).
+- **Kept by the registry's generation and the land's picture**; `at` (a port town by its provider's word),
+  `nearestPx`, `nearestNamed` (the deed's nearest harbour and the way to it), `withBay` (the board's list: the Bay's, then
+  the world's - the one array while neither moves) and `seaAreaAt` (THE WATERS' AREA: the Bay's region on the Bay, a
+  province's district past it, at sea the nearest port's).
+- A port past the Bay has no Bay region (-1) and no crown (`crown: null`): the Bay's three crowns' writ is the Bay's
+  (decision 5 - the provinces as regions are the next slice, WW-R).
+
+### The world's lanes (`scenes/naval/worldLanes.js`)
+
+- **The Bay's lanes are the Bay's**: its ports (Travel Options' list off the map's directory, `bayLanePorts`), its water
+  (the host's `laneOpen`, the Bay's map alone), made once - every packet in the water she sailed, and the serpent's site
+  rolled over the same list in the same order (WW4 lanes the serpent).
+- **The lanes past the Bay** run between the world's ports over THE WORLD'S LANE WATER (`worldLaneWater`): the Bay's own
+  on the Bay, and past it the Ocean climate on water where the land past the Bay stands (the composed continent's
+  readers - TAMRIEL2), never the Eltheric Ocean's box (its isles keep their own ports), a native point by its pixel
+  FLOORED. Made again when the world's ports move. A lane past the Bay may cross the Bay's water; a Bay lane never
+  leaves it.
+- **One book**: `all()` the Bay's lanes and then the world's, each lane's way kept once (`way`) - the feed of packets
+  about the player, the living world's sailors and crews ashore, and the passage by sea read it. SEA-TRADE's port lanes
+  and the serpent read the Bay's (`bay()`): the Watch ticks are the Bay's until WW7.
+- **The lane search on the world's grid** (`systems/naval/seaLanes.js lanePixels`): keyed by the world's key and bounded
+  by the grid, so a lane past the map's edge is walked as the Bay's are - pinned step for step against the Bay's search
+  as it was.
+
+### The raiders' sea and the director's
+
+- **THE SEA'S GROUND** (`onWorldSea`): the Bay's map and the Eltheric Ocean's box (ETHER-OW's), and the world's grid past
+  them where the land past the Bay stands - the Warm Ashes raiders born there (the ocean's climate, every pixel about
+  them water) and sailing it (`tvRaidOpen`, `tvRaidSea`). AUDIT OW5b S5's raider born a pixel past the map's edge was
+  born on ground nothing streamed; past the Bay with its land standing, the ground streams, its climate and water the
+  composed continent's. The relay's overworld ledger keeps a raider by its cell, whatever the cell's sign (`OW_RAIDER_ID_RE`).
+- **The director** (`systems/naval/navalDirector.js`) already stood its ships in a ring about the player on any water; its
+  inputs are now the world's: the port near (`csaIsPortTown` past the Bay asks the world's ports), the port lain at and
+  the board (`navalPortList` with the world's ports), the waters' depth (`navalPortPx` with the world's nearest), and
+  the waters' area (`where().area`).
+- **The harbour past the Bay** (`navalHarbourNear`): the registry's port, its town the location the host's location index
+  holds on the pixel (the town its provider stood), its key the port's one number.
+
+### The waters' people (`systems/naval/navalShips.js shipNameBank`, `shipCrew.js`)
+
+A ship's captain and her hands are named by the waters' people: past the Bay the waters' area's province's
+(`characters/areaNameBank.js nameBankOfArea` - a Nord's in Skyrim's waters), on the Bay her region's as always. A packet
+is named by her home port's waters (`area` on the feed), another ship by the waters she is met in. The naval wire is
+unchanged (its `region` -1 past the Bay: "the reader's own", as an older build's word reads - each reader names her by
+its waters, the same waters for every player in her cell).
+
+### What stays the Bay's (recorded)
+
+- **The crowns.** A ship past the Bay flies the nearest Bay crown's colours and a crime at sea is charged as on the Bay
+  until the provinces are regions (WW-R).
+- **SEA-TRADE's Watch ticks** read the Bay's lanes (`net/watchReceipt.js watchPixelOk` is the Bay's - WW7).
+- **The serpent** sails the Bay's lanes (WW4).
+- **Deep Waters** (the sea floor's bake) is the Bay's - WOODS.WLD's own bathymetry; past the Bay a ship's draft is the
+  streamed water's.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired (the world's ports and lanes, the port test past the Bay, the board, the nearest port, the
+waters' area, the raiders' ground, the harbour past the Bay); `scenes/naval/navalHost.js` names by the waters' area.
+`scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` hold no sea of their own.
+bootWorld 36,233 -> 36,209 (24 logical lines out to the two modules; its ceiling down with them).
+
+### Pins and mutants
+
+`test/world/worldWide/ww3_sea.test.js` (9): the directory's bound; the lane search on the world's grid against the Bay's
+as it was; the world's ports (the port word, the kind, the sea's bearing, the Bay's own kept out, the one number past
+every masked id); the ports kept (generation, picture, the Bay's pixel never asked, the nearest, the way, the waters'
+area - a province's district, at sea the nearest port's); the lane water (the land's switch, the climate, the box, the
+floor) and the sea's ground; the world's lanes (the Bay's water for the Bay's alone, the world's for the world's, one
+book, a way kept once, made again when the ports move); the waters' people; the living world's ports by the one number;
+the wiring. Mutants `tools/mutants/ww3.json` (33, all dead).
+
+PINS MOVED: `fb0929h_deedport.test.js` (the port test and the nearest port past the Bay - its cases added),
+`field_csa2.test.js`, `lw5_ports.test.js` (the port's one number), `sealanes.test.js` and `auditbay_lanes.test.js` (the
+feed over the world's book; a way sounded counted by the water it read), `ethership.test.js` (the names' area),
+`fb1013c_porttowns.test.js`, `fb1014_inlandports.test.js` (the board's list with the world's), `townecon_sea.test.js`,
+`townecon.test.js` (SEA-TRADE the Bay's lanes), `ows3_raiders.test.js` (the sea's ground; its case past the Bay added),
+`ether_ow.test.js`. Mutant records re-aimed by content in `auditbay.json`, `ether_ow.json`, `ethership.json`,
+`fb0929h_deedport.json`, `ow5s.json`, `sealanes.json`, `shipcrew.json`, `hostsplit.json` - all dead.
+
+Section A, WW3 (OURS: DFU's sea is the Bay's; the world's ports, lanes and waters are the port's own, the Bay's answers
+SEA-LANES' and DFU's).
+

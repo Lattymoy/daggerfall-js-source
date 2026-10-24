@@ -19,7 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { livingNearKey, LIVING_NEAR_KEPT } from '../../systems/livingWorld/trips.js';
-import { maskMapId } from '../../systems/travel/travelPorts.js';
+import { portIdOf } from '../../world/worldWide/worldPorts.js';   // WW3: a port's one number, the Bay's masked id or the world's key
 
 /** LW6: the dungeons an adventurer dives - the game's own rows of a dungeon's kind, each with its dungeon's type. */
 export const LIVING_DIVE_TYPES = /** @type {Set<number>} */ (new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]));
@@ -115,10 +115,11 @@ export function createLivingIndex({ places, populated, peopleAt }) {
     },
     /** The towns within `r` pixels, sorted by map id. */
     townsNear: nearOf(townOf, townsNearKept),
-    /** LW5: the town a port id names (Travel Options' masked id), or null. @param {number} portId */
+    /** LW5: the town a port id names (Travel Options' masked id; WW3: the world's key past the Bay - worldPorts.js
+     *  portIdOf), or null. @param {number} portId */
     townOfPort: (portId) => {
       const all = townsIndex();
-      if (!byPort) { byPort = new Map(); for (const t of all.values()) if (t.port) byPort.set(maskMapId(t.mapId), t); }
+      if (!byPort) { byPort = new Map(); for (const t of all.values()) if (t.port) byPort.set(portIdOf(t), t); }
       return byPort.get(portId) ?? null;
     },
     /** Every listed dungeon, by its world pixel key. */

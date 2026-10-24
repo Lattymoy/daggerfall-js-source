@@ -40,7 +40,8 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { gothwayNorthSpots, isGothwayGarden } from '../systems/gothwayBoards.js';
 import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
-import { hasPort, maskMapId } from '../systems/travel/travelPorts.js';
+import { hasPort } from '../systems/travel/travelPorts.js';
+import { portIdOf } from '../world/worldWide/worldPorts.js';   // WW3: a port's one number
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { HOLD_FLATS, HOLD_MODELS, holdFireLights, holdModelMatrix, PRIVATEERS_HOLD_BLOCK } from '../world/worldOfDaggerfall/wodPrivateersHold.js';
 import { HOME_LOOK_BUILD_WAIT_MS, homeLookRemap } from '../world/homeLook.js';
@@ -857,7 +858,7 @@ export function createPixelBuild(host) {
             return !(Number.isFinite(hit) && hit < len - 0.25);
           },
           harbour: () => {   // LW5: its harbour's berth in the location's frame (the dock of a port with no Ship building)
-            const b = host.harbourBook.get(`port:${maskMapId(livingTown.mapId)}`)?.harbour?.berths?.[0];
+            const b = host.harbourBook.get(`port:${portIdOf(livingTown)}`)?.harbour?.berths?.[0];   // WW3: its port id, the world's key past the Bay
             if (!b) return null;
             const tr = host.state.pixelTranslation(px, py);
             return { x: b.pos[0] - locOrigin[0] - tr[0], z: b.pos[1] - locOrigin[2] - tr[2] };

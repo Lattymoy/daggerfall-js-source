@@ -66,7 +66,7 @@ import { questTracker } from '../ui/quest/questTracker.js';   // GUIDE5: the que
 import { marksOn, questMapMarks } from '../ui/quest/questMarks.js'; import { boatCompassPoints } from '../ui/boatMarks.js';   // GUIDE5: where the quests point, on the held map and the compass; BOAT-MARK: where my boats lie, on the compass
 import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
-import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
+import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt, terrainSampleHeightAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
@@ -135,6 +135,8 @@ import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/ou
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createLivingIndex } from './livingWorld/livingIndex.js';   // WW1: the living world's towns and dungeons, off the registry
+import { createWorldPorts, portIdOf, portIdOfLocation } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
+import { createWorldLanes, bayLanePorts, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -284,7 +286,7 @@ import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLan
 import { groundWoods, groundClimateIndex, tamrielClimateAt } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
-import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
+import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
 import { createLandforms, landformLiftField, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { ecotoneOwner } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/road/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { forestAt } from '../world/terrain/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
@@ -2042,7 +2044,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const townEcon = createTownEconHost({ online: isOnlinePage, townOf: (mapId) => _townOfMapId.get(mapId), seatAt: seatHere, nowMs: battleNowMs, chapters: chapterSheet, clockHeard: () => _sharedClockHeard,   // AUDIT TOWN-ECON LAW-2: the relay's clock, as every shared day is (AUDIT TOWN-ECON 2 CLI-6: a tick's life the relay's once heard); TE3: the chapters' patrons
     seats: () => (seatBook?.open === true ? seatBook.data?.seats ?? null : null), seatsHeard: () => !seatBook || seatBook.open != null, onBandsReady: () => _livingTripMemo.clear(),   // unread: nothing said of the area, never "no guild"; AUDIT TOWN-ECON 2 CLI-1: the market's band kept once the shares and the seats have answered, the trips planned before made again
     raidedAt: (px, py) => raidingPartiesOn() && raidState().raids.some((r) => r.px === px && r.py === py && raidActive(r, worldMinutes())), regionHere: () => { const p = playerTravelPixel(); try { return maps.getRegionIndexAt(p.x, p.y); } catch { return null; } },   // AUDIT TOWN-ECON 2 SVC-1: the `/town audit`'s region
-    locAt: (x, y) => locationIndex.get(`${x},${y}`)?.mapTableData ?? null, portLanes: () => (_lanesReady && mapDict ? laneNet() : null) });   // TE2: a Watch tick is kept where a town stands; SEA-TRADE: a port's town and its lanes (the lanes once they stand - BOOT-TDZ II)
+    locAt: (x, y) => locationIndex.get(`${x},${y}`)?.mapTableData ?? null, portLanes: () => (_lanesReady && mapDict ? worldLanes.bay() : null) });   // TE2: a Watch tick is kept where a town stands; SEA-TRADE: a port's town and its lanes (the lanes once they stand - BOOT-TDZ II)
   // SEASON1 part two: a Storm Season's slow sea, on every voyage this client reckons (systems/travel/travel.js) - online alone
   setSeaTide(seatBook ? (end) => (seatBook.tideAt(maps.getRegionIndexAt(end.x, end.y)) === 'storms' ? TIDE_EFFECTS.stormsSea : 1) : null);
   registerEntityFold(FESTIVE_FOLD, (e) => (e === playerEntity && seatEdicts.festive() ? festiveMods(STAT_KEYS_ORDER) : EMPTY_MODS));
@@ -3462,7 +3464,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // as the map unread does (lanesFrom: undefined, asked again; no crew ashore, no sailor's berth).
   let _lanesReady = false;
   const _livingLaneCounts = new Map();
-  const livingLaneWay = (lane) => { let way = _laneWays.get(lane.key); if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); } return way; };
+  const livingLaneWay = (lane) => worldLanes.way(lane);   // WW3: the world's lanes' one book of ways (scenes/naval/worldLanes.js)
   const livingLaneCount = (lane) => {
     let n = _livingLaneCounts.get(lane.key);
     if (n === undefined) { const way = livingLaneWay(lane); n = way ? packetsAt(lane, way, 0).length : 0; _livingLaneCounts.set(lane.key, n); }
@@ -3483,7 +3485,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!mapDict || (typeof _lanesReady !== 'undefined' && !_lanesReady)) return undefined;   // BOOT-TDZ II: the lanes not yet standing are the map unread (typeof: a lifted slice without the flag)
     let got = _livingLanesFrom.get(town.mapId);
     if (!got) {
-      const id = maskMapId(town.mapId);
+      const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it
       got = laneNet().filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
         const way = livingLaneWay(l), to = livingTownOfPort(l.a.id === id ? l.b.id : l.a.id);
         return way && to ? [{ to, len: way.len, key: l.key }] : [];
@@ -3496,7 +3498,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** Where one of a port's sailors is now ('home', 'sea', 'abroad'), null for anyone else or the ships not sailing. */
   const livingAshore = (town, res) => {
     if ((typeof _lanesReady !== 'undefined' && !_lanesReady) || res.job !== 'sailor' || res.town !== town?.mapId || !town?.port || !livingSailing()) return null;   // its own sailors: a visiting crew is the crews' own
-    const portId = maskMapId(town.mapId);
+    const portId = portIdOf(town);
     let book = _livingBerths.get(portId);
     if (!book) { book = { packets: portPackets(laneNet(), portId, livingLaneCount), sailors: livingSailorsOf(portId) }; _livingBerths.set(portId, book); }
     return sailorAt(berthOf(res, book.sailors, book.packets), portId, livingPacketAt).at;
@@ -3507,7 +3509,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if ((typeof _lanesReady !== 'undefined' && !_lanesReady) || !town?.port || !livingSailing()) return [];   // BOOT-TDZ II
     const nowS = raidNowMs() / 1000, t = skyMinutes(), rate = livingBaseRate();
     const day = Math.floor((t - 240) / 1440);
-    return crewsAshore(maskMapId(town.mapId), laneNet(), livingLaneCount, livingPacketAt, livingSailorsOf).flatMap((c) => {
+    return crewsAshore(portIdOf(town), laneNet(), livingLaneCount, livingPacketAt, livingSailorsOf).flatMap((c) => {
       const res = livingPlaceOf(c.res, livingCycleOf(c.res, day)).holder;   // LW7: the place's holder now - a newcomer after a death, none while it stands empty
       return res ? [{ res: res.id === c.res.id ? c.res : res, berth: c.berth, inT: t - Math.max(0, nowS - (c.until - LANE_DWELL_S)) * rate, outT: t + Math.max(0, c.until - nowS) * rate }] : [];
     });
@@ -4179,6 +4181,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  Ilessan Hills' blocks). Never a seat's members' harbour (hasPortFor's word is one guild's - every client stands the
    *  same shipyard), and never csaIsPortTown, declared below the stream (BOOT-TDZ). */
   const portOnSea = (dfLocation) => portTownOnSea(dfLocation, hasPort, openSea);
+  /** WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S PORTS PAST THE BAY (world/worldWide/worldPorts.js) - the places its
+   *  providers call ports, of a port town's kind, that the open sea bears on; the Bay's are the game's data, as above. */
+  const worldPorts = createWorldPorts({ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: (x, y) => maps.getRegionIndexAt(x, y) });
   const _yardMemo = new Map();   // mapId -> { sig, sites, ports }, the latest few towns
   const _yardBoxes = new Map();   // a registered model's local box, by id
   const palaceIn = (b) => {
@@ -7261,7 +7266,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** SHIPYARDS-FOUND: the first berth of the harbour the book has sounded off a town's shore - its scene point [x, z] -
    *  or null (none sounded yet, or a shore with no berth). */
   function docksBerthOf(dfLocation) {
-    try { return harbourBook.get(`port:${maskMapId(dfLocation.mapTableData?.mapId ?? 0)}`)?.harbour?.berths?.[0]?.pos ?? null; } catch { return null; }   // BOOT-TDZ: the book stands below the stream
+    try { return harbourBook.get(`port:${portIdOfLocation(dfLocation)}`)?.harbour?.berths?.[0]?.pos ?? null; } catch { return null; }   // BOOT-TDZ: the book stands below the stream; WW3: its port id (worldPorts.js), the world's key past the Bay
   }
   /** SHIPYARDS-FOUND: the town whose docks row is still to come - one whose harbour the book sounds (csaIsPortTown, the
    *  book's own test: AUDIT SHIPYARDS L3-2 - the shipyard's test, asked here, kept a seat's docks to a second visit and
@@ -8490,6 +8495,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const etherPortOf = (i) => ({ key: `${i.px},${i.py}`, name: i.name, px: i.px, py: i.py, region: ETHER_REGION, crown: null, ether: true });
   const csaIsPortTown = (x, y) => {
     if (etherSea && inEther(x, y)) return !!etherPortAt(x, y);   // ETHER-PORTS: an isle's port, past the Veil
+    if (!inBay(x, y)) return worldPorts.at(x, y);   // WW3: past the Bay, its provider's word (the directory names the Bay's map alone)
     const summary = travelLocationSummaryAt(mapDict, x, y);
     if (!summary) return false;
     if (hasPortFor(summary.id)) return true;   // SEAT2b part two: or a members' Harbour at a seat ("ships dock at the seat")
@@ -8508,18 +8514,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const turn = Math.atan2(here.y - isle.py, isle.px - here.x) / (Math.PI / 4);
       return { name: isle.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8], ether: true };
     }
-    let best = null, bestD = Infinity;
-    for (const id of PORT_LOCATION_IDS) {
-      const summary = mapDict?.get(id & 0x000fffff);
-      if (!summary) continue;
-      const at = getPixelFromPixelID(summary.id);
-      const d = Math.hypot(at.x - here.x, at.y - here.y);
-      if (d < bestD) { bestD = d; best = { summary, at }; }
-    }
-    const name = best ? maps.getRegion(best.summary.regionIndex)?.mapNames?.[best.summary.mapIndex] : null;
-    if (!name) return null;
-    const turn = Math.atan2(here.y - best.at.y, best.at.x - here.x) / (Math.PI / 4);
-    return { name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8] };
+    return worldPorts.nearestNamed(here, bayLanePorts(mapDict, maps, PORT_LOCATION_IDS) ?? []);   // WW3: the Bay's ports and the world's past it
   };
   /** OpenCargo: InventoryWindow.LootTarget = the cargo (a DaggerfallLoot, as the pack reads one: `cargoLootTarget`),
    *  and the pack opened over whatever the mode draws. */
@@ -9079,6 +9074,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _navalPorts ??= [...new Set(PORT_LOCATION_IDS)].map((id) => mapDict.get(id & 0x000fffff)).filter(Boolean).map((s) => getPixelFromPixelID(s.id));
     let d = Infinity;
     for (const q of _navalPorts) d = Math.min(d, Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)));
+    d = Math.min(d, worldPorts.nearestPx(p.x, p.y) ?? Infinity);   // WW3: and the world's ports past the Bay
     _navalPortPxAt = { key, d: Number.isFinite(d) ? d : null };
     return _navalPortPxAt.d;
   };
@@ -9093,7 +9089,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _navalPortList = null;
   const navalPortList = () => {
     if (!mapDict) return [];
-    if (_navalPortList) return _navalPortList;
+    if (_navalPortList) return worldPorts.withBay(_navalPortList);   // WW3: the world's ports past the Bay after the Bay's
     const out = new Map();
     for (const id of new Set(PORT_LOCATION_IDS)) {
       const s = mapDict.get(id & 0x000fffff);
@@ -9106,7 +9102,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       out.set(key, { key, name, px: at.x, py: at.y, region: s.regionIndex, crown: navalCrownOf(at.x, at.y, navalCapitals(), s.regionIndex).name });
     }
     _navalPortList = [...out.values()];
-    return _navalPortList;
+    return worldPorts.withBay(_navalPortList);
   };
   /** CAPT-BOARD: the map's port within a pixel of the player (the nearest), or null - asked once a pixel. FB1020c
    *  BERTH-RING (the field: the tutorial's "sail from one harbor to another" never registered): WITHIN SEA_RING - the
@@ -9153,9 +9149,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (loc?.exterior?.exteriorData) town = { id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH };   // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town
       for (let dy = -1; dy <= 1 && !town && !isle; dy++) for (let dx = -1; dx <= 1 && !town; dx++) {
         if (!csaIsPortTown(p.x + dx, p.y + dy)) continue;
-        const summary = travelLocationSummaryAt(mapDict, p.x + dx, p.y + dy);
-        const loc = summary ? maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex) : null;
-        if (loc?.exterior?.exteriorData) town = { id: summary.id, loc, x: p.x + dx, y: p.y + dy, name: maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null };
+        const summary = travelLocationSummaryAt(mapDict, p.x + dx, p.y + dy), beyond = summary ? null : worldPlaces.at(p.x + dx, p.y + dy);   // WW3: past the Bay, the registry's port
+        const loc = summary ? maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex) : beyond ? locationIndex.get(`${p.x + dx},${p.y + dy}`) : null;   // WW3: the town its provider stood
+        if (loc?.exterior?.exteriorData) town = { id: summary ? summary.id : portIdOf(beyond), loc, x: p.x + dx, y: p.y + dy, name: summary ? maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null : beyond.name };
       }
       _navalHarbourAt = { key, town };
     }
@@ -9527,7 +9523,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)],
     }),
     level: () => playerEntity.level ?? 1,
-    where: () => { const p = playerTravelPixel(); const nearPort = navalNearPort(); const ether = etherWatersHere(); return { px: p.x, py: p.y, region: _questRegionIndex(), day: Math.floor(worldMinutes() / 1440), nearPort, port: navalPortHere(), waters: ether ? 'ether' : watersOf({ nearPort, portPx: navalPortPx() }), ether, capitals: navalCapitals(), cityLights: isCityLightsOn(minuteNow()), night: isNight(minuteNow()) }; },   // ETHER-SEA: the Eltheric Ocean's band and depth, and whether she is in the Veil   // CAPT-BOARD: the port lain at (FB1020c BERTH-RING: a board port within SEA_RING, nearPort or not - navalHost.js inPortWaters)   // AUDIT WK-N5: the lanterns' hours and the dark's, apart - CAPT-WATERS: the deep waters
+    where: () => { const p = playerTravelPixel(); const nearPort = navalNearPort(); const ether = etherWatersHere(); return { px: p.x, py: p.y, region: _questRegionIndex(), area: worldPorts.seaAreaAt(p.x, p.y), day: Math.floor(worldMinutes() / 1440), nearPort, port: navalPortHere(), waters: ether ? 'ether' : watersOf({ nearPort, portPx: navalPortPx() }), ether, capitals: navalCapitals(), cityLights: isCityLightsOn(minuteNow()), night: isNight(minuteNow()) }; },   // ETHER-SEA: the Eltheric Ocean's band and depth, and whether she is in the Veil   // CAPT-BOARD: the port lain at (FB1020c BERTH-RING: a board port within SEA_RING, nearPort or not - navalHost.js inPortWaters)   // AUDIT WK-N5: the lanterns' hours and the dark's, apart - CAPT-WATERS: the deep waters
     say: (text, seconds) => townTalk.say(text, seconds),
     mid: (text, seconds) => setMidScreenText(text, seconds),
     shake: (amount) => betterAmbience.weaponKick(amount),   // FIELD-GUN6's door: a shake that is not a wound, under the player's own maxShake
@@ -24390,8 +24386,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     site: (day) => {
       if (!maps || !mapDict) return null;
       try {
-        const wayOf = (lane) => { let way = _laneWays.get(lane.key); if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); } return way; };
-        return findSerpentSite(day, { lanes: laneNet(), wayOf, open: laneOpen });
+        return findSerpentSite(day, { lanes: worldLanes.bay(), wayOf: worldLanes.way, open: laneOpen });   // WW3: the Bay's lanes - the serpent's site the one it always was
       } catch (e) { console.warn('[serpent] no site', e?.message ?? e); return null; }
     },
     say: (text) => eventNotice('serpent', text),   // EVENTS1
@@ -31835,7 +31830,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  and a column off it read the PAK's first for its climate: a raider was born a pixel past the map's edge. AUDIT
    *  ETHER-OW C2-3: past the Veil only where the sea fight stands her as a ship - the mod's raid boards the Bay's. */
   const tvRaidOpen = (px, py) => {
-    if (!onBayOrEther(px, py) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;
+    if (!onWorldSea(px, py, tamrielLand) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;   // WW3: and the sea past the Bay where its land stands (scenes/naval/worldLanes.js onWorldSea)
     if (inEther(px, py) && !navalRaidersOn()) return false;   // AUDIT ETHER-OW C2-3
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!tvWater(px + dx, py + dy)) return false;
     return true;
@@ -31846,7 +31841,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it all was water: a raider sailed off the world). */
   const tvRaidSea = (x, z) => {
     const px = Math.floor(x / RAID_NATIVE_PIXEL), py = 499 - Math.floor(z / RAID_NATIVE_PIXEL);
-    return onBayOrEther(px, py) && tvWater(px, py);
+    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);   // WW3
   };
   /** The raiders about the traveller at the shared clock, read again each TV_RAID_LIST_MS. */
   function travelViewRaiders() {
@@ -31981,8 +31976,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // short of her schedule's way, was let go beside the player once the place left a list of the near ones); it stands
   // and steers them (scenes/naval/navalHost.js liners).
   const LANE_LIST_MS = 2000, LANE_NEAR_PX = 4;
-  let _laneAt = -Infinity, _laneNet = null;
-  const _laneWays = new Map();
+  let _laneAt = -Infinity;
   /** A map pixel of the lanes' water - the Ocean climate's at the shore's byte - the lanes' and the roadsteads' water.
    *  NOT the open sea (FIELD BUGS 2026-10-14 INLAND-PORTS measured it): 331 pixels of the map's lakes carry the Ocean
    *  climate, so the towns on a lake run their packets on it - the lake harbours' own traffic, which stays (Mac,
@@ -31990,21 +31984,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  (none in 3,650 days); a reader that means the open sea asks `openSea`. */
   const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py) && maps.getClimateIndex(px, py) === CLIMATES.Ocean;
   const laneOpenNative = (x, z) => { if (!(x >= 0 && z >= 0 && x < 1000 * RAID_NATIVE_PIXEL && z < 500 * RAID_NATIVE_PIXEL)) return false; const p = pixelOfNative(x, z); return laneOpen(p.x, p.y); };
+  // WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S LANES (scenes/naval/worldLanes.js) - the Bay's, between its ports
+  // over its water, as they always were; and the sea's past it, between the world's ports (world/worldWide/worldPorts.js)
+  // over the continent's sea where its land stands - one book of both, each lane's way kept once
+  const worldLanes = createWorldLanes({ mapDict: () => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => tamrielLand });
   _lanesReady = true;   // BOOT-TDZ II: every binding the lanes read stands from here (raidNowMs above it)
-  /** The lanes of the whole map - every client's the same - made once. */
-  function laneNet() {
-    if (!_laneNet) {
-      const ports = [];
-      for (const id of new Set(PORT_LOCATION_IDS)) {
-        const summary = mapDict?.get(id & 0x000fffff);
-        if (!summary) continue;
-        const at = getPixelFromPixelID(summary.id);
-        ports.push({ id: summary.id, name: maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null, px: at.x, py: at.y, region: summary.regionIndex });   // AUDIT BAY A8: her names her home port's region's
-      }
-      _laneNet = laneNetwork(ports, laneOpen);
-    }
-    return _laneNet;
-  }
+  /** The lanes of the whole world - every client's the same: the Bay's, then the ones past it. */
+  function laneNet() { return worldLanes.all(); }
   function laneShips() {
     const t = performance.now();
     if (t - _laneAt < LANE_LIST_MS || !naval?.enabled || !mapDict) return;
@@ -32017,14 +32003,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // has a port within this
       const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
       if (!near(lane.a) && !near(lane.b)) continue;
-      let way = _laneWays.get(lane.key);
-      if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); }
+      const way = worldLanes.way(lane);
       if (!way) continue;
       const out = way.pts.map((q) => state.localFromWorld(q.x, q.z)), home = [...out].reverse();   // her legs in the scene (AUDIT BAY A6)
       for (const p of packetsAt(lane, way, ms)) {
         const [x, z] = state.localFromWorld(p.at.x, p.at.z);
         const [dx, dz] = state.localFromWorld(p.at.x + p.dir.x, p.at.z + p.dir.z);
-        list.push({ id: p.id, seed: p.seed, seeds: p.seeds, classId: p.cls.id, region: p.region, phase: p.phase, pos: [x, 0, z], yaw: Math.atan2(dx - x, dz - z),
+        list.push({ id: p.id, seed: p.seed, seeds: p.seeds, classId: p.cls.id, region: p.region, area: lane.a.area ?? -1, phase: p.phase, pos: [x, 0, z], yaw: Math.atan2(dx - x, dz - z),
           leg: p.leg === way.pts ? out : home, port: portOf(p.port), to: portOf(p.to), from: portOf(p.from) });
       }
     }

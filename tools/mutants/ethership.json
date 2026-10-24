@@ -246,11 +246,12 @@
   {
     "name": "SHIP-host-names",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown });",
-    "new": "    const names = shipNames(cls, spec.seed, { regionIndex: region, crown });",
+    "old": "    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown, area: spec.area ?? w.area ?? -1 });",
+    "new": "    const names = shipNames(cls, spec.seed, { regionIndex: region, crown, area: spec.area ?? w.area ?? -1 });",
     "tests": [
       "test/systems/naval/ethership.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "SHIP-host-flag",

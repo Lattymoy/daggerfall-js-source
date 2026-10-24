@@ -257,7 +257,7 @@ test('ETHER-SHIPS by source: the director told the sea (its band and its legend)
   assert.match(host, /const distress = relieving \|\| w\.ether \? null : distressAt\(crown\.name\);/);
   assert.match(host, /const watersCrown = \(\) => \{ const w = where\(\); return w\.ether \? null : crownOf/);
   assert.match(host, /if \(entry\.ether\) \{ chargeEther\(act, entry\); return; \}/);
-  assert.match(host, /const names = ether \? etherShipNames\(cls, spec\.seed\) : shipNames\(cls, spec\.seed, \{ regionIndex: region, crown \}\);/);
+  assert.match(host, /const names = ether \? etherShipNames\(cls, spec\.seed\) : shipNames\(cls, spec\.seed, \{ regionIndex: region, crown, area: spec\.area \?\? w\.area \?\? -1 \}\);/);
   assert.match(host, /const etherTier = \(entry\) => \(entry\.ether \? BANDS\.find\(\(b\) => b\.id === entry\.ether\)\?\.tier \?\? 0 : 0\);/, 'her hold the band\'s tiers richer');
   assert.match(host, /deps\.hold\?\.\(key, tier \+ \(entry\.deep \? DEEP_TIER : 0\) \+ etherTier\(entry\)\)/);
   assert.match(host, /deep: !!entry\.deep \|\| !!entry\.ether \}\);/, 'her casks the deep\'s');

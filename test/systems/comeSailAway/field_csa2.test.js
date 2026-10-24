@@ -228,7 +228,9 @@ test('FIELD-CSA2 on the retail data: the open Bay south of Daggerfall (209, 216)
   // is a port past the Veil (`etherSea && inEther(x, y)` first), so the sea, its law and an isle's port stand in scope - the
   // sea on, and an isle's port answering every pixel it is asked of, so a Bay pixel that asked it would read a port
   const { inEther } = await import('../../../src/world/ethericSea.js');
-  const isPortTown = new Function('travelLocationSummaryAt', 'mapDict', 'maps', 'hasPortFor', 'etherSea', 'inEther', 'etherPortAt', `${constOf('  const csaIsPortTown = (x, y) => {')}\nreturn csaIsPortTown;`)(locationSummaryAt, mapDict, maps, hasPortFor, true, inEther, () => ({}));
+  // PIN MOVED (WW3, bible/03-World/World-Wide.md): past the Bay the port test asks the world's ports (none registered here)
+  const { inBay } = await import('../../../src/world/tamriel/tamrielFrame.js');
+  const isPortTown = new Function('travelLocationSummaryAt', 'mapDict', 'maps', 'hasPortFor', 'etherSea', 'inEther', 'etherPortAt', 'inBay', 'worldPorts', `${constOf('  const csaIsPortTown = (x, y) => {')}\nreturn csaIsPortTown;`)(locationSummaryAt, mapDict, maps, hasPortFor, true, inEther, () => ({}), inBay, { at: () => false });
   assert.equal(isPortTown(207, 213), true, 'Daggerfall is a port');
   assert.equal(isPortTown(209, 216), false, 'the open Bay is none - the Bay\'s pixel never asks the sea\'s ports');
   // the Bay a pixel off the coast: every sample the sea's clamp (seen live too, the roads' pass and all: 34.000001

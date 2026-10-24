@@ -32,6 +32,8 @@
 
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW3: the waters' people past the Bay
+import { BAY_AREA_COUNT } from '../../world/worldWide/worldGrid.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 
@@ -558,6 +560,12 @@ export function crownOf(px, py, capitals = null, regionIndex = -1) {
   return best ?? CROWNS.find((k) => k.region === regionIndex) ?? CROWNS[0];
 }
 
+/** WW3 (bible/03-World/World-Wide.md WW3): the name bank of the waters a ship's people come from - past the Bay its
+ *  area's province's (characters/areaNameBank.js nameBankOfArea: a Nord's in Skyrim's waters), on the Bay its region's
+ *  as always (17, Daggerfall's, for none). @param {number} regionIndex @param {number} [area] */
+export const shipNameBank = (regionIndex, area = -1) => (Number.isInteger(area) && area >= BAY_AREA_COUNT ? nameBankOfArea(area)
+  : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17));
+
 /**
  * A ship's name and its captain's, from its seed: `{ name, captain, crown }`. Her name is SHIP-NAMES' (`shipNameOf`,
  * on its own stream: a navy ship's her crown's forms, a pirate's and a merchant's their trade's). The captain is
@@ -565,10 +573,11 @@ export function crownOf(px, py, capitals = null, regionIndex = -1) {
  * stood.
  * @param {any} shipClass
  * @param {number} seed
- * @param {{ regionIndex?: number, crown?: any }} [where] - the waters' region (the captain's name bank) and the crown
- *   a navy ship serves (crownOf's answer)
+ * @param {{ regionIndex?: number, crown?: any, area?: number }} [where] - the waters' region (the captain's name bank) and
+ *   the crown a navy ship serves (crownOf's answer); WW3: `area` the waters' past the Bay (world/worldWide/worldPorts.js
+ *   seaAreaAt), whose province's people name her captain (shipNameBank)
  */
-export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = null } = {}) {
+export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = null, area = -1 } = {}) {
   const rng = mulberry32((seed ^ 0x5eaf00d) >>> 0);
   rng();   // SHIP-NAMES: the draw the name took off this stream - her captain's draws are the ones they always were
   const crown = shipClass.faction === 'navy' ? crownIn ?? crownOf(0, 0, null, regionIndex) : null;
@@ -577,8 +586,7 @@ export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = 
   let captain;
   try {
     srand((seed >>> 0) || 1);
-    const bank = getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
-    captain = fullName(bank, rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
+    captain = fullName(shipNameBank(regionIndex, area), rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
   } finally { setSeed(saved); }
   return { name, captain, crown: crown?.name ?? null };
 }

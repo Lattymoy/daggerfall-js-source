@@ -278,7 +278,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/scenes/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - the hosts' wiring: the client, the call and the arch, the fight, the spans, the circle's host and its swap, the look drawn. |
 | `src/scenes/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - the hosts' wiring. |
 | `src/scenes/livingWorld/` | The living world in the hosts (`06-Systems/Living-World-II.md`): indoors, the roads, the watch, the deep's remains. |
-| `src/scenes/naval/` | Ships and the sea in the hosts: the naval host, the crew, the flames. |
+| `src/scenes/naval/` | Ships and the sea in the hosts: the naval host, the crew, the flames; the world's packet lanes, the Bay's and the sea's past it (`worldLanes.js`). |
 | `src/scenes/quest/` | Quests - the hosts' wiring. |
 | `src/scenes/starfall/` | The Starfall (`11-Multiplayer/Starfall.md`) - the hosts' wiring: the stars on a screen, their defense on the camp law, and a held star's rewards. |
 | `src/scenes/superDungeon/` | The Abyss Dungeon, the super dungeons (`11-Multiplayer/Super-Dungeons-Look.md`) - the hosts' wiring. |
@@ -415,7 +415,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/underwater/` | Under the water: its look, decorations, enemies and loot - its models and assembly. |
 | `src/world/water/` | The water's bed, corners and ripples - its models and assembly. |
 | `src/world/worldOfDaggerfall/` | The World of Daggerfall mod: the entry (`worldOfDaggerfall.js`), its locations' data, loader, pack and objects, Privateer's Hold, the spawner. |
-| `src/world/worldWide/` | The whole world's seam (`03-World/World-Wide.md`): the world pixel grid, its theatres and areas (`worldGrid.js`), the registry of places every system reads (`worldPlaces.js`) and the Bay's own rows into it (`bayPlaces.js`). |
+| `src/world/worldWide/` | The whole world's seam (`03-World/World-Wide.md`): the world pixel grid, its theatres and areas (`worldGrid.js`), the registry of places every system reads (`worldPlaces.js`), the Bay's own rows into it (`bayPlaces.js`) and the world's ports past the Bay (`worldPorts.js`). |
 
 ### The tests, `test/`
 

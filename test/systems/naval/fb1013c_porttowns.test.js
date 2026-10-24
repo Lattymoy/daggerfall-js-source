@@ -26,6 +26,10 @@ import { WoodsFile } from '../../../src/formats/woodsFile.js';
 import { buildMapDict } from '../../../src/systems/map/mapDirectory.js';
 import { isWaterPixel } from '../../../src/ui/overworldModel.js';
 import { crownOf } from '../../../src/systems/naval/navalShips.js';
+import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
+/** WW3: no port past the Bay - the Bay's list alone, the same array. */
+const NO_WORLD_PORTS = createWorldPorts({ places: createWorldPlaces(), openSea: () => false });
 
 const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 
@@ -39,9 +43,9 @@ function hostPorts({ dict, maps, here = { x: 0, y: 0 }, openSea = () => true }) 
   // all sea here unless a test hands its own; test/systems/naval/fb1014_inlandports.test.js asks it of a capital in the hills
   // eslint-disable-next-line no-new-func
   return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals',
-    'playerTravelPixel', 'etherSea', 'inEther', 'etherPortNear', 'etherPortOf', 'seaBears', 'openSea', 'boardPortAt',
+    'playerTravelPixel', 'etherSea', 'inEther', 'etherPortNear', 'etherPortOf', 'seaBears', 'openSea', 'boardPortAt', 'worldPorts',
     `${list[1]}\n${near[1]}\nreturn { navalPortList, navalPortHere };`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [],
-    () => here, false, () => false, () => null, () => null, seaBears, openSea, boardPortAt);   // PIN MOVED (FB1020c BERTH-RING): the port-here's ring is SEA_RING; PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): the port law's boardPortAt holds it
+    () => here, false, () => false, () => null, () => null, seaBears, openSea, boardPortAt, NO_WORLD_PORTS);   // PIN MOVED (WW3): the world's ports past the Bay after the Bay's (none here)   // PIN MOVED (FB1020c BERTH-RING): the port-here's ring is SEA_RING; PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): the port law's boardPortAt holds it
 }
 
 /** Eight of Travel Options' harbours, each given a kind of place: three towns, five that are no port of anyone's. */

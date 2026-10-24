@@ -173,10 +173,11 @@ test('LW5 the town reads the ships: a sailor at sea or ashore abroad is in no st
   assert.match(w, /const livingPacketAt = \(b\) => \{ const way = livingLaneWay\(b\.lane\); return way \? packetAt\(b\.lane, way, raidNowMs\(\), b\.k, b\.count\) : null; \};/);
   assert.match(w, /return res \? \[\{ res: res\.id === c\.res\.id \? c\.res : res, berth: c\.berth, inT: t - Math\.max\(0, nowS - \(c\.until - LANE_DWELL_S\)\) \* rate, outT: t \+ Math\.max\(0, c\.until - nowS\) \* rate \}\] : \[\];/);
   assert.match(w, /ashore: \(res\) => livingAshore\(livingTown, res\), crews: \(\) => livingCrews\(livingTown\),/);
-  assert.match(w, /const b = host\.harbourBook\.get\(`port:\$\{maskMapId\(livingTown\.mapId\)\}`\)\?\.harbour\?\.berths\?\.\[0\];/);
+  // PIN MOVED (WW3, bible/03-World/World-Wide.md): a port's one number (world/worldWide/worldPorts.js portIdOf - the Bay's masked id, the world's key past it)
+  assert.match(w, /const b = host\.harbourBook\.get\(`port:\$\{portIdOf\(livingTown\)\}`\)\?\.harbour\?\.berths\?\.\[0\];/);
   assert.match(w, /return \{ x: b\.pos\[0\] - locOrigin\[0\] - tr\[0\], z: b\.pos\[1\] - locOrigin\[2\] - tr\[2\] \};/);
   // PIN MOVED (WW1, bible/03-World/World-Wide.md): the town of a port the living world's index's (scenes/livingWorld/livingIndex.js)
   assert.match(w, /const livingTownOfPort = livingIndex\.townOfPort;/);
-  assert.match(readFileSync(new URL('../../../src/scenes/livingWorld/livingIndex.js', import.meta.url), 'utf8'), /if \(t\.port\) byPort\.set\(maskMapId\(t\.mapId\), t\);/);
+  assert.match(readFileSync(new URL('../../../src/scenes/livingWorld/livingIndex.js', import.meta.url), 'utf8'), /if \(t\.port\) byPort\.set\(portIdOf\(t\), t\);/);
   assert.equal(LANE_DWELL_S, 600);
 });
