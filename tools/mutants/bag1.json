@@ -689,7 +689,7 @@
   {
     "name": "AUDIT2-BAG1-U3-the-bag-button-an-act",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".pack-shell .packbar .bagbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;\n  font-size: 12px; }",
+    "old": ".pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;\n  font-size: 12px; }",
     "new": "",
     "tests": [
       "test/systems/golddrop.test.js"

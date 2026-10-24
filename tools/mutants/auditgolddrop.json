@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-GOLD-DROP-1-a-finger-gets-32px",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }",
-    "new": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; }",
+    "old": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after, .pack-shell .packbar .vaultbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }",
+    "new": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after, .pack-shell .packbar .vaultbtn::after { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; }",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
