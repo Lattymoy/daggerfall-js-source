@@ -393,7 +393,7 @@ const HARDCODED = {
   'src/systems/heatHaze.js': 6,
   'src/systems/homeRent.js': 20,
   'src/systems/homeWords.js': 2,
-  'src/systems/horse/horseCart.js': 26,
+  'src/systems/horse/horseCart.js': 29,   // STALE-PARK: the far-park warning's three - a console line through the runtime's injected `log`, which the scan reads as prose (it exempts `console.*` alone)
   'src/systems/horse/horseCartLaw.js': 47,
   'src/systems/horse/horseCoats.js': 3,
   'src/systems/iliac/iliacItems.js': 8,

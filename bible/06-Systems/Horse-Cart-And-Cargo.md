@@ -783,3 +783,32 @@ back) and the Caravan (2000 kg, a room inside) are the same template-93 item
 marked by kind. Each wagon is hitched at its own measured length, not 3.1 m
 (`horseCart.js` `hitchZ()`). The record, its departures and the four hosts are
 `06-Systems/Wagons.md`.
+
+
+## STALE-PARK - a dismount never parks the wagon where it used to trail (2026-10-22)
+
+A player's report: an encounter stopped an Overworld journey, they got off the wagon, turned round, and the wagon was
+gone; the Holdings card put it somewhere else. That exact sequence was not traced (nothing on the encounter's stop
+pauses the runtime or changes the transport), but the runtime held a defect with exactly that result.
+
+**Found.** A dismount parks the wagon at the trailing wagon's cached pose (`movingWorldX/Z`, CaptureBestAvailable
+DeploymentPose), else 2.5 m behind the player. ClearMovingPresentation tears the drawn wagon down and keeps the cache -
+the IL's too [IL_a794-IL_a844] - and ObserveTransportMode runs before the presentation step whose re-lay (`relayHitch`)
+would forget it. Two ways left the cache standing while the player went on:
+- **The host not ready.** `world.js`'s `ready()` is also false through a teleport and a fast travel (`_teleporting`,
+  `_traveling`), wider than DFU's TryGetGameManager, and both carry a driven wagon with the player. A dismount observed
+  on the first ready frame parked the wagon where it last trailed: 303 m back in the pin.
+- **A driven wagon not drawn.** ShowTrailingWagon turned off mid-drive: the same, from where it was last drawn.
+
+**The fix** (a departure from the IL, Port-Ledger A STALE-PARK). LateUpdate's not-ready branch forgets the cache with
+the presentation, and so does the presentation branch while the wagon is still driven but not drawn. A dismount (the
+transport no longer the cart) keeps the cache for the next frame's ObserveTransportMode, so a dismount still parks the
+wagon where its wheels stood. Both stale cases take the mod's own fallback, 2.5 m behind the player.
+
+**The warning.** A park further from the player than TELEPORT_DISTANCE (the mod's 20 m jump) is said in the console -
+`[TrailingWagon] A dismount parked the wagon N m from the player, ...`, with the cached pose's age or "behind the
+player" (`horseCart.js` `warnIfParkedFar`) - so the next report of a missing wagon names its path.
+
+**Verification.** `hcc_stale_park.test.js` (the two stale cases, the hotkey dismount unchanged, the warning) and
+`tools/mutants/stalepark.json` (five mutants, all dead). THE FOUR HOSTS: none changed - `world.js` and `exterior.js` run
+this runtime; `worldModes.js` and `dungeonContext.js` reach it only through its transition handlers.

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "STALE-PARK-not-ready-keeps-the-pose",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (!ready()) { clearPendingTransportModeRefresh(); clearMovingPresentation(); hasMovingWorldPose = false; destroyAllStationaryPresentations(); return; }",
+    "new": "    if (!ready()) { clearPendingTransportModeRefresh(); clearMovingPresentation(); destroyAllStationaryPresentations(); return; }",
+    "tests": [
+      "test/systems/horse/hcc_stale_park.test.js"
+    ]
+  },
+  {
+    "name": "STALE-PARK-hidden-wagon-keeps-the-pose",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); if (tm().get() === TRANSPORT.Cart) hasMovingWorldPose = false; }",
+    "new": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); }",
+    "tests": [
+      "test/systems/horse/hcc_stale_park.test.js"
+    ]
+  },
+  {
+    "name": "STALE-PARK-a-dismount-loses-its-pose",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); if (tm().get() === TRANSPORT.Cart) hasMovingWorldPose = false; }",
+    "new": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); hasMovingWorldPose = false; }",
+    "tests": [
+      "test/systems/horse/hcc_stale_park.test.js"
+    ]
+  },
+  {
+    "name": "STALE-PARK-far-park-never-said",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (!(metres > TELEPORT_DISTANCE)) return;",
+    "new": "    if (!(metres > TELEPORT_DISTANCE * 100)) return;",
+    "tests": [
+      "test/systems/horse/hcc_stale_park.test.js"
+    ]
+  },
+  {
+    "name": "STALE-PARK-every-park-said",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (!(metres > TELEPORT_DISTANCE)) return;",
+    "new": "    if (!(metres > 0)) return;",
+    "tests": [
+      "test/systems/horse/hcc_stale_park.test.js"
+    ]
+  }
+]
