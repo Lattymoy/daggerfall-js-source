@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { chromium, devices } from 'playwright';
 import { createServer } from 'vite';
-import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME } from '../src/ui/intro/introCue.js';
+import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, introTitleAt } from '../src/ui/intro/introCue.js';
 import { MENU_THEME_GAIN } from '../src/systems/introTheme.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
@@ -65,9 +65,14 @@ try {
   // useful live invariant is that the last pre-attack presentation is already
   // visibly descending and has not landed; exact opacity is covered by the
   // deterministic cue tests and frame-by-frame review render.
+  // INTRO3: so the frame is held to the cue AT ITS OWN TIME, not to a fixed
+  // opacity - the fade is the approach's first 0.125 s, and CI's frames (~0.4 s
+  // apart) put the last one inside it about a run in six (0.899 at 18.48 s).
+  const cue = before && introTitleAt(before.time);
   check('logo is still out in front of its landing before the musical attack',
-    before?.titleScale < 0.95 && before?.titleY === 0 && before?.titleOpacity > 0.9, {
-      time: before?.time, opacity: before?.titleOpacity, scale: before?.titleScale, y: before?.titleY,
+    cue && before.titleScale < 0.95 && before.titleY === 0 && before.titleOpacity > 0
+      && Math.abs(before.titleOpacity - cue.opacity) < 1e-9 && Math.abs(before.titleScale - cue.scale) < 1e-9, {
+      time: before?.time, opacity: before?.titleOpacity, scale: before?.titleScale, y: before?.titleY, cue,
     });
   check('first frame after the attack lands exactly at rest, sharp and centred',
     landed?.titleScale === 1 && landed?.titleBlur === 0 && landed?.titleY === 0 && landed?.titleOpacity === 1, landed?.time);
@@ -93,13 +98,15 @@ try {
   check('shared supplied logo loads in the main menu', await page.locator('.px-wordmark .brand-logo').evaluate((img, w) => img.complete && img.naturalWidth === w, LOGO_W));
   await shot(page, '07-main-menu');
   await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings/settings.js'); setValue('Controls', 'MusicVolume', 0); });
-  await page.waitForFunction(() => window.__intro.theme.gain.gain.value < 0.001);
+  // INTRO3: the volume is the song player's own law (songPlayer.js musicGain), as every song's is
+  await page.waitForFunction(() => window.__intro.theme.player._master.gain.value < 0.001);
   check('menu music obeys live volume settings', true);
   await closeAccount(page);
-  await page.locator('.px-menu button').filter({ hasText: /New Game/ }).first().click();
+  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+  await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
   await page.waitForSelector('#pick');
-  check('starting a game releases audio before the data picker', await page.evaluate(() => window.__intro.theme.disposed && !window.__intro.theme.context && !window.__intro.theme.source && !window.__intro.theme.buffer));
+  check('starting a game releases audio before the data picker', await page.evaluate(() => window.__intro.theme.disposed && !window.__intro.theme.context && !window.__intro.theme.source && !window.__intro.theme.player && !window.__intro.theme.song));
   await ctx.close();
 
   // Audio interruption is isolated from the sync measurement above: resume
@@ -176,8 +183,9 @@ try {
     await c.close();
   }
 
+  // INTRO3: the theme is written as notes - nothing is fetched - so the score is missing only where Web Audio is
   const failure = await browser.newContext(), fp = await failure.newPage(); follow(fp);
-  await fp.route('**/theme.mp3*', route => route.abort());
+  await fp.addInitScript(() => { delete window.AudioContext; delete window.webkitAudioContext; });
   await fp.goto(`${base}?introdebug`); await ready(fp); await fp.locator('.intro-begin').click();
   await fp.waitForFunction(() => window.__intro.state.phase === 'hold');
   check('missing score offers the final card with an explicit message', (await fp.locator('.intro-footer').textContent()).includes('couldn’t load'));
@@ -186,15 +194,11 @@ try {
   await failure.close();
 
   const slow = await browser.newContext(), sp = await slow.newPage(); follow(sp);
-  let release;
-  const blocked = new Promise(resolve => { release = resolve; });
-  await sp.route('**/theme.mp3*', async route => { await blocked; await route.continue().catch(() => {}); });
   await sp.goto(`${base}?introdebug`); await sp.waitForSelector('.intro-skip');
   await sp.locator('.intro-skip').click(); await sp.waitForSelector('#intro', { state: 'detached' });
-  check('skip works while audio is still loading', await sp.locator('.px-menu button').count() > 0);
-  release();
+  check('skip works before the film is ready', await sp.locator('.px-menu button').count() > 0);
   await sp.waitForFunction(() => window.__intro.theme.source !== null, null, { timeout: 30000 });
-  check('late audio joins the menu at the menu level', await sp.evaluate(gain => window.__intro.theme.level === gain, MENU_THEME_GAIN));
+  check('the skip\'s own tap starts the theme under the menu, at the menu level', await sp.evaluate(gain => window.__intro.theme.level === gain, MENU_THEME_GAIN));
   await slow.close();
   check('no uncaught page errors', errors.length === 0, errors);
 } catch (error) { check('probe completed', false, error.stack); }

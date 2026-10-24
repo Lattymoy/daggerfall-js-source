@@ -344,8 +344,8 @@
   {
     "name": "SD9E-the-court-pool-in-the-hour",
     "file": "src/scenes/world.js",
-    "old": "  const floorPool = () => (modes?.sdRealmSlot?.() != null || modes?.egHallBreach?.() != null ? sdSpoilsPool : spoilsPool);",
-    "new": "  const floorPool = () => (modes?.egHallBreach?.() != null ? sdSpoilsPool : spoilsPool);",
+    "old": "ketch.spoils : modes?.sdRealmSlot?.() != null || modes?.egHallBreach?.() != null ? sdSpoilsPool : spoilsPool);",
+    "new": "ketch.spoils : modes?.egHallBreach?.() != null ? sdSpoilsPool : spoilsPool);",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]

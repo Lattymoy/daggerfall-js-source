@@ -1,0 +1,162 @@
+-- KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md section 13): THE SKY-KETCH, step 4 of 4 - the line's end.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Imrah's letter,
+-- then her table, and one `ask`, the line's outcome: who is told what the Ketch's lodestone answers - the Mages Guild
+-- (the sheet's `guild`, the Guild's standing and her tuning-charm) or no one (`silence`, the steersman's hammer). Lore:
+-- canon - the Numidium, the Brass God, the Dwemer's great construct, raised by Tiber Septim and broken, its pieces lost
+-- about the Iliac Bay (the Daggerfall of 3E 417 is a game of the Brass God's pieces). The port's own - that the
+-- Mzunthar's lodestone, tuned to great masses of Dwemer brass, answers it: Imrah's reading, said as hers, never as the
+-- canon's word. Ysolde Marnhel (the Burning Doors) is the Guild's ear, as she is every line's of the Cycle - she wrote the
+-- book on the Doors; the player closed them (QLBD04/05). AUDIT KETCH L5-7, L5-8: no word promises what the game does not
+-- do or contradicts the canon - the charm's hum is Imrah's tale (the piece is a plain amulet), the hammer's metal the
+-- roll's (qlRewards.js baseOf), and the Brass God walked some five hundred years before (2E 896), so the ship was pulled
+-- once before; the porter came off the anchor-lift, never "last Loredas" (L5-3: the Ketch keeps the real week).
+Quest: QLSK04
+DisplayName: What the Lodestone Answers
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Imrah Bel-Tavir has gone home to Sentinel, her
+<ce>              question still unanswered.
+
+QuestComplete:  [1004]
+<ce>       "For the last of it," Imrah says, and counts out
+<ce>       _gold_ gold. "And for going up a chain I never
+<ce>                  could, in my place."
+
+QuestLogEntry:  [1010]
+%qdt:
+ Imrah Bel-Tavir has read the Sky-Ketch's lodestone,
+ and she knows what it follows. She wants my counsel
+ on who should be told before she writes it down.
+ She is at _tavern_ in __tavern_.
+
+Message:  1011
+%pcn,
+
+     I have it. I know what brought her down over
+ Daggerfall, and I wish I did not. Come to _tavern_
+ in __tavern_. Do not come aboard her first. Come
+ straight to me.
+
+<ce>                Imrah Bel-Tavir, Antiquarian
+
+Message:  1012
+<ce>       The porter will not meet your eye. "She burned
+<ce>       three letters before she sent this one," he says.
+
+Message:  1013
+<ce>       "Her lodestone is tuned to Dwemer brass, a great
+<ce>        deal of it, as a compass is tuned to the north.
+<ce>        Once before there was enough of it in one place
+<ce>        to pull her, when Tiber Septim's Brass God walked,
+<ce>        and it was broken before she could follow. Now
+<ce>        its pieces are pulling her again."
+<ce>
+<ce>       She turns her chart to you. Every line she has
+<ce>       drawn of the Ketch's course bends toward one
+<ce>       place under the Bay.
+<ce>
+<ce>       "The Numidium. Its pieces are somewhere under
+<ce>        these waters, and something is waking them, and
+<ce>                    the ship follows."
+
+Message:  1014
+The antiquarian? She has stopped drawing the sky. Now she draws the Bay.
+<--->
+Imrah Bel-Tavir will not say what she found. She looks like she has not slept in a week.
+<--->
+They say the brass ship is looking for something. They say it found it.
+
+Message:  1030
+<ce>       "Every king on this Bay would go to war for a
+<ce>        piece of the Brass God, and some of them already
+<ce>        are. If I write this, someone will read it. The
+<ce>        Mages Guild would want to know. Ysolde Marnhel
+<ce>        in Wayrest would want to know. Who do I tell,
+<ce>                          %pcf?"
+
+Message:  1031
+The Mages Guild. Write to Ysolde Marnhel.
+
+Message:  1032
+No one. Burn the chart.
+
+Message:  1040
+<ce>       Imrah nods and takes up her pen. "Ysolde, then.
+<ce>        She wrote the book on the Burning Doors. She
+<ce>        will know what to do with a door that opens
+<ce>                    the other way."
+<ce>
+<ce>       Then she takes a little brass charm from her own
+<ce>       neck, a tuning-fork no longer than a finger, and
+<ce>       hangs it on yours. "Rourken work. It hummed in
+<ce>        my hand the day she first came over the walls.
+<ce>                       Keep it."
+
+Message:  1041
+<ce>       Imrah holds the chart over the candle until it
+<ce>       catches, and watches it burn down to her fingers.
+<ce>
+<ce>       "Then no one," she says. From under her table
+<ce>       she lifts a war hammer, its head cut with the
+<ce>       Tonal Guard's marks. "From the bridge. A porter
+<ce>        brought it down off her anchor-lift and would
+<ce>        take no coin for it. I think the steersman
+<ce>        carried it. You have earned it more than I."
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %pcf occurs 1 time.
+--               %qdt occurs 1 time.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 3 times.
+--          __tavern_ occurs 2 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _imrah_ faction The_Mages_Guild female anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _imrah_ Imrah_Bel-Tavir
+	place npc _imrah_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _imrah_
+	say 1013
+	ask 1030 choices 1031 _toguild_ 1032 _tosilence_
+
+variable _toguild_
+variable _tosilence_
+
+_guildway_ task:
+	when _toguild_
+	say 1040
+	outcome _guild_
+	give pc _gold_
+	end quest
+
+_silenceway_ task:
+	when _tosilence_
+	say 1041
+	outcome _silence_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

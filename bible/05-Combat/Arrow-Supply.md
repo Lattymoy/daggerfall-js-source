@@ -134,7 +134,9 @@ draw when there is one. Pins moved, each marked PIN MOVED (SHOP-ARROWS):
 
 - `test/systems/shopstock.test.js`: the counter's list;
 - `test/systems/roada2_itemseconomy.test.js`: DFU's Range(1, 21) read off a shelf behind the counter;
-- `test/systems/shoppellets.test.js`: the Weapon Smith's counter is the next shelf plus the shot AND the quiver.
+- `test/systems/shoppellets.test.js` (RETIRED by PELLETS-SCARCE): the Weapon Smith's counter is the next shelf plus the shot AND the quiver.
+- (PELLETS-SCARCE, 2026-10-24: `shoppellets.test.js` is retired - no shelf sells the shot - and the counter's law
+  is the quiver's alone; `SHOP_ARROWS_MAX` sizes it, and `arrowsupply.test.js` pins it.)
 
 ## 5. The process laws, applied
 
@@ -157,3 +159,6 @@ draw when there is one. Pins moved, each marked PIN MOVED (SHOP-ARROWS):
   - SHOP-ARROWS: the three in section 4, and `test/systems/audit18_systems_items.test.js` (the Armorer's counter).
   - Mutant records re-aimed by content: `fieldgun14.json` (6, 7), `tech1.json` (a shaft untallied, the shot at plain
     speed), `shoppellets.json` (the two that read the counter's law).
+  - PELLETS-SCARCE (2026-10-24): `shoppellets.json` retired; its three records that read the counter's law (the weight
+    of weapons, the quality, a shop without weapons) live in `arrowsupply.json` now, killed by the quiver's pins, and
+    `SHOP-ARROWS-the-pellets-max` is `SHOP-ARROWS-the-counters-max-halved`.

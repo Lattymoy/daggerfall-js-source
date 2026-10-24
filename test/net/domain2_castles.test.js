@@ -197,8 +197,8 @@ test('DOMAIN2 THE LAW OF THE ROOM: a guild\'s digest is its own hash domain - ne
   assert.equal(await instanceAdmission(key, 'acct-gary', {}), null);
   assert.equal(await instanceAdmission(key, 'acct-gary', { kin: async () => true }), 'party', 'the party arm is the hub\'s word - the relay asks it with the owner\'s digest, which no account\'s party holds');
   assert.equal(await instanceAdmission(key, 'acct-ofelia', { guild: G, staff: true }), 'staff');
-  assert.equal(GUILD_INSTANCE_RELAY_MIN, 255);
-  assert.deepEqual([relaySupportsGuildInstances('world254'), relaySupportsGuildInstances('world255'), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);
+  assert.equal(GUILD_INSTANCE_RELAY_MIN, 256);   // PIN MOVED: world256, the castle's relay (world255 on its branch, renumbered past KETCH's at the merge)
+  assert.deepEqual([relaySupportsGuildInstances('world255'), relaySupportsGuildInstances('world256'), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);
 });
 
 test('DOMAIN2 AT THE RELAY: a castle\'s room admits its guild\'s members by their token\'s guild; another guild, no guild and a member\'s party guest are refused before anything is written; a member who leaves the guild while inside is refused out (mutants: the hello\'s guild; the mark; the refusal out)', async () => {

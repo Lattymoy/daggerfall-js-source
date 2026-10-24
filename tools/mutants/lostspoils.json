@@ -53,7 +53,7 @@
   {
     "name": "LOST-SPOILS-the-item-law-dropped",
     "file": "server-account/src/lostSpoils.js",
-    "old": "  for (const p of asked.pieces) if (itemFindings(p.item).length) return { error: 'lost-item', i: p.i };\n",
+    "old": "  for (const p of asked.pieces) if (itemFindings(p.item).length || !lostLeftBy(kill, p.item)) return { error: 'lost-item', i: p.i };\n",
     "new": "",
     "tests": [
       "test/server/lostspoils_service.test.js"
@@ -372,5 +372,25 @@
       "test/scenes/lostspoils_pool.test.js"
     ],
     "note": "The Hour's pool - the Brass Remnant's and a breach's Redoubts - would gather into the pack."
+  },
+  {
+    "name": "LOST-SPOILS-a-gun-mailed-under-any-kill",
+    "file": "server-account/src/lostSpoils.js",
+    "old": "=> !isGunTemplate(item?.templateIndex)\n",
+    "new": "=> true\n",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "AUDIT SHIP C1: a Thunderlock or a Pistolet - the Sky-Ketch's alone - would be mailed under an Hour's or a gate's kill."
+  },
+  {
+    "name": "LOST-SPOILS-any-Gilded-under-any-kill",
+    "file": "server-account/src/lostSpoils.js",
+    "old": " || item?.gilded === LOST_GILDED[kill.kind]);",
+    "new": " || item?.gilded != null);",
+    "tests": [
+      "test/server/lostspoils_service.test.js"
+    ],
+    "note": "AUDIT SHIP C1: Volendrung's Echo or the Ketchmaster's Word would be mailed under another door's kill."
   }
 ]

@@ -1,6 +1,8 @@
 // Frame-accurate DIRECTOR'S PREVIEW, not a claim about hardware playback.
 // Each PNG is the real intro DOM/WebGL renderer evaluated at frame / fps.
 // Source music begins at exactly zero; NO corrective offset or remux loop.
+// INTRO3: the music is the theme as the game plays it - rendered by the song
+// player and FM bank (tools/introScoreProbe.mjs --wav), from its tick 0.
 // Live synchronization and the tap/volume handoff are verified by introProbe.
 // Run: node tools/introCapture.mjs [output-directory]
 import assert from 'node:assert/strict';
@@ -12,7 +14,7 @@ import { TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
 const frames = `${out}/frames`;
-const fps = 30, duration = 26;
+const fps = 30, duration = 26, score = `${out}/theme-score.wav`;
 mkdirSync(frames, { recursive: true });
 const server = await createServer({ server: { port: 5202, strictPort: true }, logLevel: 'error' });
 await server.listen();
@@ -34,7 +36,8 @@ try {
   }
   assert.equal(readdirSync(frames).filter(name => name.endsWith('.png')).length, duration * fps,
     'the preview must contain every frame');
-  execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', String(fps), '-i', `${frames}/%05d.png`, '-i', 'src/assets/intro/theme.mp3', '-t', String(duration), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-af', 'volume=0.82', '-movflags', '+faststart', `${out}/daggerfall-intro-preview.mp4`]);
+  execFileSync('node', ['tools/introScoreProbe.mjs', '--seconds', String(duration + 1), '--wav', score], { stdio: 'inherit' });
+  execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', String(fps), '-i', `${frames}/%05d.png`, '-i', score, '-t', String(duration), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', `${out}/daggerfall-intro-preview.mp4`]);
   const media = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=codec_type,start_time,duration', '-of', 'json', `${out}/daggerfall-intro-preview.mp4`], { encoding: 'utf8' }));
   assert.deepEqual(media.streams.map(stream => stream.codec_type).sort(), ['audio', 'video']);
   assert.ok(media.streams.every(stream => Number(stream.start_time) === 0), 'picture and source score start together');

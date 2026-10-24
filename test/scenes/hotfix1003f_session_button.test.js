@@ -73,7 +73,7 @@ test('HOTFIX 1003j: my opponent on a relay\'s sand is the body inside my ring, b
 
 test('HOTFIX 1003l: the arena\'s floor draws the world\'s sky - after the opaque level, before the flats, the renderer told its programs ran (live: "the private sessions are missing the sky") (mutants: no sky; the shadows not told)', () => {
   const m = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(m, /drawArenaWall\(\); if \(isArenaFloor\(dungeonLoc\)\) host\.drawSky\?\.\(cam\.yaw, cam\.pitch/, 'the floor, and only the floor');
+  assert.match(m, /drawArenaWall\(\); if \(isArenaFloor\(dungeonLoc\) \|\| isKetchShip\(dungeonLoc\)\) host\.drawSky\?\.\(cam\.yaw, cam\.pitch/, 'the floor, and only the floor - and a sky-ketch\'s deck, in the open sky (KETCH, PIN MOVED)');
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /drawSky: \(yaw, pitch, fov, aspect, vp\) => \{ sky\.draw\(yaw, pitch, fov, aspect, vp\); renderer\.markForeignPass\(\); \}/, 'the sky drawn, the renderer\'s shadows told');
+  assert.match(w, /drawSky: \(yaw, pitch, fov, aspect, vp\) => \{ sky\.draw\(yaw, pitch, fov, aspect, vp, minuteNow\(\), playerTicker\.classicMinutes, skyMinutes\(\)\); renderer\.markForeignPass\(\); \}/, 'the sky drawn - on the clocks now (KETCH-LOOK KL1, PIN MOVED: it stood at the street\'s last minute) - the renderer\'s shadows told');
 });

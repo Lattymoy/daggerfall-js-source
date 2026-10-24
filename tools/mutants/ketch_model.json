@@ -1,0 +1,227 @@
+[
+  {
+    "name": "KTM-the-hold-a-deck-high",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  K.slabWithHoles(R.deck, HD.x0, HD.x1, HD.z0, HD.z1, hy, [], [0, 1, 0], true);",
+    "new": "  K.slabWithHoles(R.deck, HD.x0, HD.x1, HD.z0, HD.z1, hy + 6, [], [0, 1, 0], true);",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-yard-missing",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "    K.box(R.deck, yx0, Y.x1 + 0.6, Y.y - T, Y.y, Y.z - Y.halfW, Y.z + Y.halfW, { solid: true,",
+    "new": "    K.box(R.deck, yx0, Y.x1 + 0.6, Y.y - T, Y.y, Y.z - Y.halfW, Y.z + Y.halfW, { solid: false,",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-hatch-floored-over",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "KT_QUARTER_WALL.z, 0, [hatch, shaft], [0, 1, 0], true);",
+    "new": "KT_QUARTER_WALL.z, 0, [shaft], [0, 1, 0], true);",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-quarter-wall-missing",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  K.box(R.stone, KT_WAIST.x0, KT_WAIST.x1, 0, KT_QUARTER_WALL.h, KT_QUARTER_WALL.z, KT_QUARTER_WALL.z + 0.6, { skip: ['bottom'], solid: true });",
+    "new": "  K.box(R.stone, KT_WAIST.x0, KT_WAIST.x1, 0, KT_QUARTER_WALL.h, KT_QUARTER_WALL.z, KT_QUARTER_WALL.z + 0.6, { skip: ['bottom'], solid: false });",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-a-section-not-solid",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "    K.sector(R.deck, BC.x, BC.z, BC.core, BC.r, a0, a1, BC.y, 8, { solid: true,",
+    "new": "    K.sector(R.deck, BC.x, BC.z, BC.core, BC.r, a0, a1, BC.y, 8, { solid: false,",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-a-gap-past-the-envelope",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "const drift = [2.6, 2.8, 2.4, 3.0, 2.6, 2.8].map(",
+    "new": "const drift = [2.6, 2.8, 2.4, 3.4, 2.6, 2.8].map(",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-rigging-a-cliff",
+    "file": "src/net/ketch/ketchDeck.js",
+    "old": "const crumble = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8].map(",
+    "new": "const crumble = [2.6, 2.4, 2.8].map(",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-holds-gate-open-on-a-dead-lift",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "({ hold: !!runs && cageY <= KT_LIFT.y0 + 0.05,",
+    "new": "({ hold: cageY <= KT_LIFT.y0 + 0.05,",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-a-lost-cell-said-let-go",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      : why === 'left' ? t('ketch.link.dropped.left',",
+    "new": "      : why === 'never' ? t('ketch.link.dropped.left',",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-a-part-that-would-not-build-left-null",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "    if (!draws) return null;\n    const d = { gpu, object: { matrix: identity() }, hidden: !gpu,",
+    "new": "    if (!draws || !gpu) return null;\n    const d = { gpu, object: { matrix: identity() }, hidden: !gpu,",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-lamps-unsorted",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "while (j >= 0 && _lights[j]._near > l._near) {",
+    "new": "while (false && _lights[j]._near > l._near) {",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-labs-parts-left-out",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "      if (parts) {\n        add(parts.cage, T.cage);",
+    "new": "      if (false) {\n        add(parts.cage, T.cage);",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-rail-closed-round",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "    for (const [r0, r1] of railRuns(a0, a1)) {",
+    "new": "    for (const [r0, r1] of [[a0, a1]]) {",
+    "tests": [
+      "test/world/ketch_walk.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-net-uploaded-plain",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "...(KT_CUTOUT_RECS.includes(rec) ? [{ cutout: true }] : [])",
+    "new": "...[]",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-gallerys-ceiling-drawn-only",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  K.slabWithHoles(R.iron, G.x0, G.x1, G.z0, G.z1, ceil, [hatch], [0, -1, 0], true);",
+    "new": "  K.slabWithHoles(R.iron, G.x0, G.x1, G.z0, G.z1, ceil, [hatch], [0, -1, 0]);",
+    "tests": [
+      "test/world/ketch_walk.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-collar-a-plain-rail",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "L.y1, { h: KT_RAIL_H, net: KT_HIGH_NET, netRec: R.net, postRec: R.brass, barRec: R.brass });\n  }",
+    "new": "L.y1, { h: KT_RAIL_H, postRec: R.brass, barRec: R.brass });\n  }",
+    "tests": [
+      "test/world/ketch_walk.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-flight-read-by-its-zone-alone",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": " || (inHull && feetY < -0.3);",
+    "new": ";",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM-a-carriage-walked-through",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "gy, y - 0.2, z - 0.55, z + 0.55, { skip: ['bottom'], solid: true });",
+    "new": "gy, y - 0.2, z - 0.55, z + 0.55, { skip: ['bottom'] });",
+    "tests": [
+      "test/world/ketch_walk.test.js"
+    ]
+  },
+  {
+    "name": "KTM-a-chain-head-in-the-sky",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "const head = [KT_JACKSTAY.x, jackstayY(c.z), c.z], out = [];",
+    "new": "const head = [c.x - 2, c.y + 14, c.z], out = [];",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-mizzen-spar-short-of-the-line",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "vanes: Object.freeze([22, 38, KT_COURSE_SPEC.start.x]) }),",
+    "new": "vanes: Object.freeze([22, 38, 20]) }),",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-sill-square-to-the-deck",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "const at = (s, u) => [W.ax - uz * s * h + ux * u, W.az + ux * s * h + uz * u];",
+    "new": "const at = (s, u) => [W.ax + s * h, W.az - 1.3 + u];",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-cage-floor-at-its-zero",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "export const KT_CAGE_LIFT_M = 0.02;",
+    "new": "export const KT_CAGE_LIFT_M = 0;",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-stone-never-turned",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "yawAbout(D.lodestone.object.matrix, t * KT_LODESTONE.spin,",
+    "new": "yawAbout(D.lodestone.object.matrix, 0 * KT_LODESTONE.spin,",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTM-the-chain-to-the-old-end",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "{ const q = bosunLineAt(k / n); K.pipe(R.chain, p, q, 0.06, 4); p = q; }",
+    "new": "{ const q = bosunLineAt(k / n); if (k === n) { q[0] = KT_GANGWAY.ax; q[2] = KT_GANGWAY.az + 1; } K.pipe(R.chain, p, q, 0.06, 4); p = q; }",
+    "tests": [
+      "test/world/ketch_model.test.js"
+    ]
+  },
+  {
+    "name": "KTM-her-night-at-0.1",
+    "file": "src/world/ketch/ketchAtmos.js",
+    "old": "night: Object.freeze({ ambient: f3(0.25, 0.27, 0.34),",
+    "new": "night: Object.freeze({ ambient: f3(0.1, 0.1, 0.12),",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  }
+]

@@ -14,6 +14,8 @@
 //     Dungeons' gold-lit champions), the Weir Road (the Elite Breach). Online: every witness is a relay's receipt.
 //   THE HOUR THAT WAS NOT (4.2) - the Abyss Dungeon, from the Order of the Hour. Online.
 //   THE OLD COIL (4.3) - the Sea Serpent, from Sentinel's sailors. Online.
+//   THE SKY-KETCH (KETCH, bible/11-Multiplayer/Sky-Ketch.md section 13) - the Rourken sky-ketch over Daggerfall, from an
+//     antiquarian of Sentinel. Online: its witness is the Tonal Warden's receipt.
 //   THE INTRODUCTIONS (4.5) - a short line for each Tutorials group with a feature to go to: the crafts, the gear's own
 //     laws, the sea, the road, the tavern's tables, the Arena, the Bay's troubles, the Firmament. The Tutorials explain;
 //     an introduction gives a reason to go, and pays for it.
@@ -44,14 +46,14 @@ import { REVENANT_MIN_RENOWN } from '../revenant/revenant.js';   // AUDIT QUESTL
  *   `event` (STAR8) a seasonal line's live event, a need that holds only while it is staged: the line begins only then,
  *   and the window draws none not begun outside it (qlLineRunner.js rows - UI-Calm's law, nothing shown that cannot be
  *   taken)
- * @typedef {{ id: string, group: 'cycle'|'hour'|'coil'|'intro'|'festival', tier: number,
+ * @typedef {{ id: string, group: 'cycle'|'hour'|'coil'|'ketch'|'intro'|'festival', tier: number,
  *   title: () => string, lead: () => string, giver: () => string, opens: LineOpens, steps: ReadonlyArray<LineStep> }} Line
  */
 
 /** @param {Line} l @returns {Readonly<Line>} */
 const line = (l) => Object.freeze({ ...l, opens: Object.freeze({ ...l.opens }), steps: Object.freeze(l.steps.map((s) => Object.freeze({ ...s, ...(s.needs ? { needs: Object.freeze([...s.needs]) } : {}) }))) });
 
-/** The lines, in the window's order: the Cycle, the Hour, the Coil, the Festival's, then the introductions. */
+/** The lines, in the window's order: the Cycle, the Hour, the Ketch, the Coil, the Festival's, then the introductions. */
 export const QL_LINES = Object.freeze([
   line({
     id: 'burningDoors', group: 'cycle', tier: 3,
@@ -101,6 +103,19 @@ export const QL_LINES = Object.freeze([
     steps: [
       { quest: 'QLHR01', title: () => t('ql.step.QLHR01', 'Brass at Dusk') },
       { quest: 'QLHR02', title: () => t('ql.step.QLHR02', 'The Orrery of Endings') },
+    ],
+  }),
+  line({
+    id: 'skyKetch', group: 'ketch', tier: 4,
+    title: () => t('ql.line.skyKetch', 'The Sky-Ketch'),
+    lead: () => t('ql.line.skyKetch.lead', 'Every ten hours a Rourken ship of brass keeps station over Daggerfall. An antiquarian of Sentinel wants to know what brought her down.'),
+    giver: () => t('ql.line.skyKetch.giver', 'Imrah Bel-Tavir, Antiquarian of Sentinel'),
+    opens: { level: 12, online: true, account: true },
+    steps: [
+      { quest: 'QLSK01', title: () => t('ql.step.QLSK01', 'The Ketch That Never Lands') },
+      { quest: 'QLSK02', title: () => t('ql.step.QLSK02', 'The Starved Engine') },
+      { quest: 'QLSK03', title: () => t('ql.step.QLSK03', 'The Tonal Warden') },
+      { quest: 'QLSK04', title: () => t('ql.step.QLSK04', 'What the Lodestone Answers') },
     ],
   }),
   line({

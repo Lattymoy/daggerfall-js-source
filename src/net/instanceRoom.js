@@ -38,7 +38,7 @@ export const INSTANCE_EPOCH_HEX = 8;
 export const INSTANCE_TAG_SOURCE = '\\.i[0-9a-f]{16}\\.[0-9a-f]{8}';
 /** DOMAIN2: the relay that admits a guild's own instance - a castle's (instanceAdmission's `guild` arm): an older one
  *  refuses every member but staff, so no page offers a castle's instance until its relay says this. */
-export const GUILD_INSTANCE_RELAY_MIN = 255;
+export const GUILD_INSTANCE_RELAY_MIN = 256;
 /** Does the relay whose welcome said `v` admit a guild's instance? */
 export const relaySupportsGuildInstances = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GUILD_INSTANCE_RELAY_MIN; };
 /** The relay that admits an instance (net/wire.js RELAY_VERSION world208 - world206 then world207 on its branch, renumbered past SERPENT5's and ONE-BODY's at the merges): an older one keeps no memory for the key, gates

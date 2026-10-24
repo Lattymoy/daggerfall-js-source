@@ -84,6 +84,18 @@ export function runSpeedMult() {
   for (const fn of _runMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a Vestige is not the step's problem */ } }
   return k;
 }
+// KETCH (2026-10-24, bible/11-Multiplayer/Sky-Ketch.md section 6; a departure from DFU, Ledger A): THE BURDEN - a named
+// registry of modifiers on EVERY pace on foot (the walk, the run, the crouch, the sneak - never a mount's), read every step:
+// an aether cell carried in both hands slows its carrier whatever its pace. None registered, or each answering 1 (or no
+// number), is DFU's pace exactly.
+const _footMods = new Map();
+export function registerFootSpeedMod(name, fn) { if (typeof fn === 'function') _footMods.set(name, fn); else _footMods.delete(name); }
+/** The pace on foot's multiplier now - the product of every modifier's positive number (one that throws is none). */
+export function footSpeedMult() {
+  let k = 1;
+  for (const fn of _footMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a burden is not the step's problem */ } }
+  return k;
+}
 // HOTFIX 2026-08-17 (live mobile report: "jumping has me go in the
 // air but instantly snaps me to the ground"): the motor integrated
 // with RAW RENDER dt - DFU's physics runs in Unity's FixedUpdate at
@@ -3248,6 +3260,7 @@ export class PlayerMotor {
         : (this.crouching ? crouchSpeed(this.stats.speed) : this._refreshWalkSpeed());   // DW-D: GetBaseSpeed's walk arm is RefreshWalkSpeed
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
+    if (rideBase == null && _footMods.size) speed *= footSpeedMult();   // KETCH: the burden - an aether cell in both hands, on every pace on foot
     // AUDIT 64 F0 - UpdateSpeed's THIRD statement (PlayerMotor.cs
     // :383-389): `if (playerEnterExit.IsPlayerSwimming &&
     // !PlayerEntity.IsWaterWalking) speed = GetSwimSpeed(speed)`, over

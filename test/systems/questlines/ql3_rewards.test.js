@@ -181,7 +181,7 @@ test('QL3 the fit: never a piece the class may not equip, a weapon of the player
 // ---- the named pieces (REWARD-5) ----
 
 test('QL3 a named piece is made FROM its base (AUDIT QUESTLINES REWARD-5): every sheet\'s named piece names a base of its kind; the card is that template, the name the sheet\'s, no metal before it; a holder who cannot wear the base gets the card unnamed (mutants: name never set; the base ignored; the fit skipped for the named card; the metal prefix kept)', () => {
-  assert.equal(NAMED.length, 26, 'the questlines\' 26 named pieces');   // PIN MOVED (STAR8): the Thirteenth of Frostfall's three; PIN MOVED (AUDIT STAR8 T2): and the Heart-Star Ring
+  assert.equal(NAMED.length, 28, 'the questlines\' 28 named pieces');   // PIN MOVED (STAR8): the Thirteenth of Frostfall's three; PIN MOVED (AUDIT STAR8 T2): and the Heart-Star Ring; PIN MOVED (KETCH): and the Sky-Ketch's two - Bel-Tavir's Tuning-Charm, the Steersman's Hammer
   for (const { quest, named } of NAMED) {
     const base = namedBaseOf(named);
     assert.ok(base != null, `${quest} ${named.name}: base "${named.base}" is a ${named.kind} the roll makes`);

@@ -9,7 +9,7 @@
 //
 // ═══ ONE ROW A CASTLE, KEYED BY ITS REGION ══════════════════════════
 //
-// `guild_castles` (migration 0167): a region keeps one castle, so the
+// `guild_castles` (migration 0168): a region keeps one castle, so the
 // region is the row's key and a second buyer finds it taken in the very
 // statement that would write it. The row names the castle's key (its
 // crown seat's - a crown city's castle is its own location's dungeon),

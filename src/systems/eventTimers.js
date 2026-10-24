@@ -27,12 +27,14 @@ import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAY
 import { sdPhase, SD_COLLAPSE_MS } from '../net/superDungeon/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news
 import { egTimes } from '../net/eliteGates/egLaw.js';   // EG-F: an Elite Breach's clock - the company's own row
 import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js';   // EG-ZM: the Spire's boards keep the arena's season
+import { ketchVoyageAt } from '../net/ketch/ketchLaw.js';   // KETCH: the Sky-Ketch's voyage - the clock's alone
+import { t } from './textManager.js';
 
 const DAY_MS = 86_400_000;
 
 /** TIMERS2: the window's groups, in the order it draws them - each row's kind belongs to one. */
 export const TIMER_GROUPS = Object.freeze([
-  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star']) }),
+  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch']) }),
   Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),
   Object.freeze({ id: 'raids', kinds: Object.freeze(['raid']) }),
   Object.freeze({ id: 'seats', kinds: Object.freeze(['seat', 'battle']) }),
@@ -58,6 +60,17 @@ export function timerGroups(rows) {
 const BATTLE_TITLE = Object.freeze({ siege: (n) => `Siege of ${n}`, tourney: (n) => `Tourney at ${n}`, revolt: (n) => `Revolt at ${n}` });
 
 const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+/** KETCH (bible/11-Multiplayer/Sky-Ketch.md section 2): THE SKY-KETCH'S ROW - one a voyage, the host handing nothing: she is
+ *  sighted, arrives, keeps station and weighs anchor at the same instants for everyone, over the same fields. Its words
+ *  through the text core as the row is laid (L10N4). */
+function ketchRows(now, coming, live) {
+  const kv = ketchVoyageAt(now), kWhere = t('ketch.timers.where', 'Over Daggerfall');
+  if (kv.phase === 'away') coming(`ketch:${kv.n}`, 'ketch', t('ketch.timers.sighted', 'The Sky-Ketch is sighted'), kv.sightAt, kWhere, t('ketch.timers.sightedSub', 'She keeps station east of the city for seven hours'));
+  else if (kv.phase === 'sighted') coming(`ketch:${kv.n}`, 'ketch', t('ketch.timers.arrives', 'The Sky-Ketch arrives'), kv.at, kWhere, t('ketch.timers.arrivesSub', 'She is in the eastern sky. Her anchor-lift comes down when this runs out'));
+  else if (kv.phase === 'docked') live(`ketch:${kv.n}`, 'ketch', t('ketch.timers.station', 'The Sky-Ketch keeps station'), kv.departAt, kWhere, t('ketch.timers.stationSub', 'Her anchor-lift waits in the fields east of the city. It is drawn up when this runs out'));
+  else live(`ketch:${kv.n}`, 'ketch', t('ketch.timers.departing', 'The Sky-Ketch weighs anchor'), kv.endAt, kWhere, t('ketch.timers.departingSub', 'The crews aboard have until this runs out'));
+}
 
 /**
  * @param {{ now: number,
@@ -128,6 +141,9 @@ export function eventTimerRows(src) {
   // fallen star still undecided, to its deadline; the next fall, with the night's coven - handed in whole by the host, the
   // one that knows where the night's stars fall and which of them are held.
   for (const r of src?.stars ?? []) if (r?.kind === 'star' && typeof r.id === 'string' && Number.isFinite(r.at)) rows.push(r);
+
+  // ── THE SKY-KETCH (net/ketch/ketchLaw.js: a voyage every real Saturday, the clock's alone) ── KETCH: ketchRows
+  ketchRows(now, coming, live);
 
   // ── AN ELITE BREACH (net/eliteGates/egLaw.js egTimes: the call's opening, the open window, THE COUNT) ── EG-F (bible/11-Multiplayer/
   // Elite-Gates.md section 2, the Timers row): the company's alone (the host hands it only the call it holds) - a new kind

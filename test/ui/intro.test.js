@@ -2,8 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { IntroTheme, audibleContextTime, INTRO_THEME_GAIN, MENU_THEME_GAIN } from '../../src/systems/introTheme.js';
+import { readFileSync, existsSync } from 'node:fs';
+import { IntroTheme, audibleContextTime, INTRO_THEME_GAIN, MENU_THEME_GAIN, INTRO_WET, INTRO_HALL } from '../../src/systems/introTheme.js';
+import { introThemeSong } from '../../src/systems/introScore.js';
 import { introTitleAt, introFrameAt, introCameraAt, INTRO_CREDITS, TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, LANDSCAPE_HOLD_TIME, TITLE_DEPTH, TITLE_BLUR } from '../../src/ui/intro/introCue.js';
 import { introTerrainGrid } from '../../src/ui/intro/introLandscape.js';
 import { buildIliac, SEA_LEVEL, seaDistance, BALFIERA } from '../../src/ui/intro/introMap.js';
@@ -11,35 +12,22 @@ import { brandMark } from '../../src/ui/brandMark.js';
 
 const read = (p) => readFileSync(new URL('../../' + p, import.meta.url));
 
-test('INTRO2: supplied logo and Mac\u2019s remastered recording are byte-exact; timing cannot drift behind a replacement track', () => {
+test('INTRO2: the supplied logo is byte-exact', () => {
   // BR4 (2026-09-27) shipped Mac's earlier cut as he supplied it
   // (real alpha; INTRO2's JPEG had a black backing to screen away). BR5
   // (2026-10-11): his DFO Online logo, its 800 x 600 file cut to the 526 x 322
   // its paint covers - every pixel inside his, unchanged, and none outside
   // with any alpha.
   assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), 'd27cf6f8fa6b6147be5fb36bdb2ebbe9deb22823d456826394f7fa9aa9dbba25');
-  const track = read('src/assets/intro/theme.mp3');
-  assert.equal(createHash('sha256').update(track).digest('hex'), 'c8eb0eccf3265244c0f4424d26efee835d40cccf4e11a66744ec4b284d8392e3');
-
-  // BR1 forbids the old name on any shipped surface, and the supplied master
-  // carried it in its ID3 title. ONLY that title was rewritten: the tag is
-  // reassembled frame for frame and the MPEG payload behind it is Mac's file
-  // bit for bit, which is what this second hash exists to prove. A re-encode
-  // or a trim would move it, and the cue above is measured off this recording.
-  // BR4 retitled it the same way, and BR5 again, and this hash did not move.
-  const tag = 10 + ((track[6] & 0x7f) << 21 | (track[7] & 0x7f) << 14 | (track[8] & 0x7f) << 7 | (track[9] & 0x7f));
-  assert.equal(createHash('sha256').update(track.subarray(tag)).digest('hex'), '3a1bc066e12951a6450b04649a2ffaa0b614c0848b520d033c2448b155bf56d7');
-  const header = track.subarray(0, tag).toString('latin1');
-  assert.ok(header.includes('DFO Online Main Theme'), 'the track titles itself by the product\u2019s name');
-  // Spelled in parts, so this assertion is not itself a surface BR1 or BR4 must sweep.
-  const gone = ['Daggerfall', 'JS', 'JavaScript', 'Enhanced', 'Online'];
-  for (const name of [`${gone[0]} ${gone[1]}`, `${gone[0]}${gone[1]}`, `${gone[0]} ${gone[2]}`, `${gone[0]} ${gone[3]}`, `${gone[0]} ${gone[4]}`, gone[0]]) {
-    assert.ok(!header.includes(name), `the old name survives in the ID3 tag: ${name}`);
-  }
+  // INTRO3 (2026-10-14): the recorded master INTRO2 pinned here is gone - the
+  // theme is written as notes (systems/introScore.js; test/systems/intro3_score.test.js).
+  assert.equal(existsSync(new URL('../../src/assets/intro/theme.mp3', import.meta.url)), false);
 });
 
 test('INTRO2b: the logo lands on the 19 s beat at decoded sample 230016 / 12000; one frame earlier it is still out in front', () => {
-  const measured = 230016 / 12000; // reproduced by tools/introAudioCheck.mjs, independently of the cue
+  // INTRO2b measured it off the recording; INTRO3's score puts its impact bar there (systems/introScore.js), and
+  // tools/introScoreProbe.mjs hears it there through the game's own player
+  const measured = 230016 / 12000;
   assert.ok(measured > 19 && measured < 19.25, 'Mac\u2019s beat is the one around 19 seconds');
   assert.ok(Math.abs(TITLE_IMPACT_TIME - measured) < 1e-6);
   const before = introTitleAt(measured - 1 / 60), at = introTitleAt(measured + 1e-8);
@@ -138,8 +126,8 @@ test('INTRO2: audible clock uses the device timestamp, with a latency-aware fall
 });
 
 function audioRig() {
-  const events = [], sources = [];
-  let volume = 0.5, listener = null;
+  const events = [];
+  let listener = null;
   const gain = {
     value: 1,
     cancelAndHoldAtTime(t) { events.push(['hold', t]); },
@@ -148,20 +136,25 @@ function audioRig() {
   const ctx = {
     currentTime: 10, state: 'suspended', outputLatency: 0.1, destination: {},
     createGain: () => ({ gain, connect: () => events.push(['connectGain']), disconnect: () => events.push(['disconnectGain']) }),
-    decodeAudioData: async () => ({ duration: 164.5 }),
     resume() { events.push(['resume']); this.state = 'running'; return Promise.resolve(); },
     suspend() { this.state = 'suspended'; return Promise.resolve(); },
     close() { events.push(['close']); this.state = 'closed'; return Promise.resolve(); },
-    createBufferSource() {
-      const s = { loop: false, connect: () => {}, start: at => events.push(['start', at]), stop: () => events.push(['stop']), disconnect: () => events.push(['disconnectSource']) };
-      sources.push(s); return s;
-    },
   };
-  const theme = new IntroTheme({ makeContext: () => ctx, readVolume: () => volume, now: () => 10000,
-    fetcher: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(1) }),
+  // INTRO3: the game's song player, as IntroTheme drives it (systems/song/songPlayer.js: play sets the song's origin 0.06 s on)
+  const players = [];
+  const makePlayer = (context, destination, send) => {
+    const p = {
+      context, destination, send, songs: [],
+      play(song) { this.songs.push(song); this._originTime = context.currentTime + 0.06; events.push(['play']); return true; },
+      stop() { events.push(['stopPlayer']); },
+      resyncGain() { events.push(['resync']); },
+    };
+    players.push(p); return p;
+  };
+  const theme = new IntroTheme({ makeContext: () => ctx, makePlayer, now: () => 10000,
     subscribe: f => { listener = f; return () => { listener = null; events.push(['unsubscribe']); }; },
   });
-  return { theme, ctx, gain, events, sources, volume: (v) => { volume = v; listener?.('Controls', 'MusicVolume'); } };
+  return { theme, ctx, gain, events, players, volume: () => listener?.('Controls', 'MusicVolume') };
 }
 
 test('INTRO2: unlock is synchronous within the gesture, audio is scheduled once, and menu ducking never restarts it', async () => {
@@ -170,16 +163,20 @@ test('INTRO2: unlock is synchronous within the gesture, audio is scheduled once,
   assert.ok(r.events.some(e => e[0] === 'resume'), 'resume before the first await');
   await unlocked; await r.theme.prepare();
   assert.equal(r.theme.start(), true); assert.equal(r.theme.start(), true);
-  assert.equal(r.sources.length, 1); assert.equal(r.sources[0].loop, true);
-  assert.ok(Math.abs(r.gain.value - 0.5 * INTRO_THEME_GAIN) < 1e-9);
+  assert.equal(r.players.length, 1); assert.equal(r.events.filter(e => e[0] === 'play').length, 1);
+  // INTRO3: the theme the player is handed is the score itself, into this session's gain, and the film's time zero is
+  // the song's own tick 0 - the player's origin
+  assert.equal(r.players[0].songs[0], introThemeSong());
+  assert.equal(r.players[0].destination.gain, r.gain);
+  assert.equal(r.theme.startedAt, 10.06);
+  assert.equal(r.gain.value, INTRO_THEME_GAIN, 'the session gain is the film\u2019s level alone - the volume is the player\u2019s');
   r.theme.setLevel(MENU_THEME_GAIN, 1.1);
-  assert.deepEqual(r.events.at(-1), ['ramp', 0.5 * MENU_THEME_GAIN, 11.1]);
-  assert.equal(r.sources.length, 1); assert.equal(r.events.filter(e => e[0] === 'start').length, 1);
-  r.volume(0.2); assert.ok(Math.abs(r.gain.value - 0.2 * MENU_THEME_GAIN) < 1e-9);
-  r.volume(0); assert.equal(r.gain.value, 0, 'mute remains mute');
+  assert.deepEqual(r.events.at(-1), ['ramp', MENU_THEME_GAIN, 11.1]);
+  assert.equal(r.events.filter(e => e[0] === 'play').length, 1);
+  r.volume(); assert.deepEqual(r.events.at(-1), ['resync'], 'MusicVolume moves the player\u2019s master live');
   await r.theme.dispose(); await r.theme.dispose();
-  for (const event of ['close', 'stop', 'disconnectSource', 'disconnectGain', 'unsubscribe']) assert.equal(r.events.filter(e => e[0] === event).length, 1, event);
-  assert.equal(r.theme.buffer, null); assert.equal(r.theme.source, null);
+  for (const event of ['close', 'stopPlayer', 'disconnectGain', 'unsubscribe']) assert.equal(r.events.filter(e => e[0] === event).length, 1, event);
+  assert.equal(r.theme.song, null); assert.equal(r.theme.source, null); assert.equal(r.theme.player, null);
   assert.doesNotThrow(() => r.theme.time());
 });
 
@@ -192,13 +189,47 @@ test('INTRO2: suspension holds the picture; resume uses audio progress instead o
   await r.theme.dispose();
 });
 
-test('INTRO2: disposing during fetch prevents late audio and releases the loading context', async () => {
-  const r = audioRig(); let finish;
-  r.theme.fetcher = () => new Promise(resolve => { finish = resolve; });
-  const loading = r.theme.prepare(); await r.theme.dispose();
-  finish({ ok: true, arrayBuffer: async () => new ArrayBuffer(1) });
-  assert.equal(await loading, false); assert.equal(r.theme.start(), false);
-  assert.equal(r.theme.buffer, null); assert.equal(r.sources.length, 0);
+test('INTRO2: a session disposed before it is ready never sounds, and no Web Audio is a truthful failure', async () => {
+  const r = audioRig();
+  await r.theme.dispose();
+  assert.equal(await r.theme.prepare(), false); assert.equal(r.theme.start(), false);
+  assert.equal(r.players.length, 0); assert.equal(r.events.filter(e => e[0] === 'play').length, 0);
+  const none = new IntroTheme({ makeContext: () => null, subscribe: () => () => {} });
+  const warn = console.warn; console.warn = () => {};
+  try { assert.equal(await none.prepare(), false); } finally { console.warn = warn; }
+  assert.equal(none.start(), false);
+});
+
+test('INTRO3b: the hall - a context with a convolver puts one under the session gain and hands the player its send; one without plays dry; dispose lets the hall’s nodes go', async () => {
+  const r = audioRig();
+  await r.theme.unlock(); await r.theme.prepare();
+  assert.equal(r.theme.space, null, 'the rig’s context has no convolver: no hall, the theme dry');
+  assert.equal(r.players[0].send, null);
+  await r.theme.dispose();
+  const wired = [];
+  const node = (kind) => ({ kind, connect(to) { wired.push([kind, to.kind]); return to; }, disconnect() { wired.push([kind, 'off']); } });
+  const ctx = {
+    currentTime: 1, state: 'suspended', sampleRate: 8000, destination: { kind: 'destination' },
+    createGain: () => Object.assign(node('gain'), { gain: { value: 1, cancelAndHoldAtTime() {}, linearRampToValueAtTime() {} } }),
+    createConvolver: () => node('convolver'),
+    createBuffer: (channels, length, rate) => { const data = Array.from({ length: channels }, () => new Float32Array(length)); return { length, sampleRate: rate, numberOfChannels: channels, getChannelData: (c) => data[c] }; },
+    resume() { this.state = 'running'; return Promise.resolve(); }, suspend() { return Promise.resolve(); }, close() { return Promise.resolve(); },
+  };
+  const players = [];
+  const theme = new IntroTheme({ makeContext: () => ctx, makePlayer: (context, destination, send) => { const p = { destination, send, play() { return true; }, stop() {}, resyncGain() {} }; players.push(p); return p; }, subscribe: () => () => {} });
+  await theme.prepare();
+  assert.ok(theme.space, 'a hall');
+  assert.equal(players[0].send, theme.space.send, 'the player is handed the hall’s send');
+  assert.equal(players[0].destination, theme.gain);
+  assert.equal(theme.space.wet.gain.value, INTRO_WET);
+  assert.equal(theme.space.convolver.normalize, false, 'the impulse carries its own level - the tail is normalised to unit energy as it is built');
+  assert.equal(theme.space.convolver.buffer.sampleRate, 8000);
+  assert.equal(theme.space.convolver.buffer.length, Math.ceil((INTRO_HALL.reverbDelay + INTRO_HALL.decayTime) * 8000), 'the hall’s impulse is the preset’s length at the context’s rate');
+  assert.ok(theme.space.convolver.buffer.getChannelData(0).some((v) => v !== 0) && theme.space.convolver.buffer.getChannelData(1).some((v) => v !== 0), 'both channels of the impulse carry the hall');
+  assert.deepEqual(wired.filter(([, to]) => to !== 'off'), [['gain', 'destination'], ['gain', 'convolver'], ['convolver', 'gain'], ['gain', 'gain']], 'send -> convolver -> wet -> the session gain -> the destination');
+  await theme.dispose();
+  assert.equal(wired.filter(([, to]) => to === 'off').length, 4, 'the session gain and the hall’s three nodes let go');
+  assert.equal(theme.space, null);
 });
 
 test('INTRO2: the shared logo has accessible text and its exact natural aspect ratio', () => {

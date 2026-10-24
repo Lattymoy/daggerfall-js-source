@@ -742,6 +742,15 @@ held to `KIT_RANGE`). A voice may be a UNISON - `unison` pairs (1-4) `cents` apa
 one pair; a `spread` lays its copies in turn in two envelopes either side of the channel's place - with a SUB (`sub`, a
 sine an octave under in the note's own envelope); a bend reaches every copy with its spread kept. A drum may carry a
 CLICK (`click`, the beater's noise, 3.2 kHz, gone in 15 ms) and a BODY (`body` Hz, a skin's tone under a noise's crack).
+INTRO3c (2026-10-24) gave a voice a second source and a channel a chain: a BOWED voice (`saw` - sawtooth copies, the
+bowed string's own waveform, into a low-pass a side at `cutoff` times the note under the bow's pressure, `cutQ`; `_bow`),
+a BODY, AIR and ENSEMBLE a channel (`body`, up to four resonances [Hz, dB, Q]; `air`, a shelf at 5 kHz; `ensemble`,
+three slow-swept delays - the string machine's circuit; `_insert`), a VIBRATO (`vibrato` cents at `vibRate` Hz, a sine LFO
+a copy into its detune, each copy's rate its own; `_vibrato`), a BITE (`noise` - a band of noise as the note starts,
+fading to a sixteenth; `_breath`), the BOW'S ARC (`arc` - a held note's dip, crest and ease) and the SWAY (`sway` at
+`swayRate` - each copy's level breathing slowly, apart; `_sway`), an INDEX FLOOR (`idxFloor`, the share an FM index settles to) and a song's TONE
+(`tone` - bands and shelves between the fader and the master, a mix's match to a reference; `songTone`, `_routeTone`).
+`10-UI/UI-Arc.md` INTRO3c.
 A song that carries voices is high-passed at `SONG_FLOOR_HZ` (30 Hz) before its press - THE FLOOR: a 1:1 FM pair's first
 lower sideband lands on 0 Hz, an offset no speaker plays that the press answers by pressing the whole song (a quarter of
 the Spire's spiccato's energy stood under 40 Hz). Every song MIDI.BSA holds carries neither and plays the bank exactly as
@@ -920,3 +929,242 @@ court as in the Spire, are `11-Multiplayer/World-Bosses.md` section 28.
 Pins: `test/systems/gatemix_limiter.test.js` (4: the ceiling's law; the curve as the WaveShaper reads it; the trim
 against the spec's make-up; the graph - the listener into the limiter, the low-pass before it, an old context straight
 through). `tools/mutants/gatemix.json` (with section 28's: 36 dead, one equivalent as recorded).
+
+## SOUNDSCAPE (2026-10-24): the sea under a deck, the shore, the wild and the town - SEA-AIR and WORLD-AIR
+
+The owner: "I want to talk about enhancing sound and ambience, different music and ambience sounds for sailing, more
+varied horse sounds, amd whatever else we could improve"; then, asked, the owner chose recordings for what a synthesiser
+does badly and code for the rest (a mix: CC0 recordings for the animals and the gulls, the beds made in code), and all
+four parts. Four slices: SEA-AIR and WORLD-AIR here, SEA-SCORE and HORSE-VOICE below. Each is the port's own, behind
+Enhanced Sounds (ES1) on the enhanced skin, laid over DFU's ambience and never instead of it: the classic skin and the
+switch off hear exactly what DFU and the mods play. Ledger A (SOUNDSCAPE, SEA-SCORE, HORSE-VOICE).
+
+THE HOST HALF (`scenes/soundscapeHost.js`, HOST-SPLIT's shape). The world host builds it once beside the Deadlands' air,
+handed its own doors and objects as they are: the boat I sail or ride, the naval host's deck test (any ship's deck - a
+boat of mine at anchor off her helm, a sea ship's, a peer's - is the sea's: AUDIT SOUNDSCAPE S2), her heading's law
+(world.js boatForward, off her own rotation: S3), Come Sail Away's runtime, the naval host's battle word (the watch's own:
+M2), the map's open sea (world.js openSea - never a lake the map draws: W8), Deep Waters' player, PlayerGPS's own town
+test (`_isPlayerInTownStrict` - never a dungeon's, a graveyard's or a coven's rect: W1), the living towns' index and
+the building doors. It is called three times: `frame` on the exterior frame after the listener is set (its ear and its
+forward are the engine's `listenerPose`; the game's pause handed it), `stop` on every modal frame beside the wind's (a
+building, a dungeon, a cabin: silent, nothing left looping), and `scoreFrame` in the music's chain after the gate's, the
+Hour's and the arena's. What is dear to ask it keeps on its own clock (twice a second, or at once past 15 m walked):
+THE SHORE'S EDGE (`shoreEdge` - where the water changes, the sea deeper than 0.3 m meeting the shallows or the land,
+found from either side of it: a swimmer far out is at no edge, where the first cut had them "standing in it" with the
+surf at full - W3; asked on twelve bearings at each of seven rings out to 200 m, nearest ring first, every bearing that
+meets the change placed by halvings and the nearest kept; the edge a point at the sea's own surface, which stands while
+I walk - W9, W10), land near a map pixel for the gulls, the sea beside one for a far surf where Deep Waters is not
+standing, a port near, the town's size, and the smithies' and taverns' doors within 70 m - each at its own doorway, its
+door's centre 1.2 m out along its face (`foeSpacing.js` doorSpotsNear, the one home of a door's place: its building's
+placement was the building's middle, 7 to 13 m inside it - W2), its type off its block's own building list. The clips'
+loader is asked every frame and its own backoff decides (S7). THE FOUR HOSTS: world.js wires it; exterior.js FLAGGED
+(the fixed-city bench: no sea, no boats, no streamed shore); worldModes.js and dungeonContext.js silence it by the modal
+frame's return.
+
+THE BEDS THE PORT MAKES (`systems/soundscape/soundBeds.js`) - the swell, the wash past a hull, the wind in the rigging,
+the surf, the lap at a sand's edge and a marsh's insects - are FIELD-WIND1's way: seeded noise cut by chains of the wind
+bed's own sections (`systems/soundscape/bedDsp.js` `section` and `mulberry32`, moved out of `windAudio.js` for them,
+with a high-pass arm beside the two - the wind's bed byte for byte as before), each chain run twice and the second pass
+kept so the native loop has no seam, the layers summed and levelled to an RMS. A bed with nothing over 2.5 kHz is made
+at DAGGER.SND's 11025. None ships a file. They are MADE OFF THE MAIN THREAD (`systems/soundscape/soundJobs.js`, a module
+worker `soundWorker.js` spelled the way Vite bundles one, as the nav and the terrain workers are - AUDIT SOUNDSCAPE W4,
+S5): a bed is 15 to 50 ms of work warm and 70 to 170 ms cold, and the first cut made it in an idle callback, which on a
+busy page runs as one ordinary task and stalls the frame all the same - and a page with no idle callbacks made all
+three of a deck's inside its first frame. Where no worker can be had it is made in idle time, and with none of that at
+once; one at a time always; a maker that throws is given up for the session; the samples are let go once the engine
+holds its buffer. A town's two beds (`townBeds.js`) go the same door, their voices handed to the worker.
+
+SEA-AIR (`systems/soundscape/seaAir.js`), while I stand on any ship's deck in the open - over Come Sail Away's own two
+hull loops and its oars, never instead of them:
+- **The sea state** (`seaState`): a floor of 0.15 in a flat calm, seven tenths of the wind over it, a rain's 0.12, a
+  storm's 0.35, snow's 0.06. The wind is the sky's (windDrive's `strength01`) - the ear hears one wind, the one WIND3's
+  bed and the trees already say; her sailing reads Come Sail Away's own rolled wind (AUDIT SOUNDSCAPE S11, a choice).
+- **The beds**: the SWELL (0.15 in a calm to 0.78 in a gale, 0.55 of it riding the swell's own clock - `seaSwellAt`, three
+  long waves of 8.3, 12.7 and 5.1 s summed, so no two swells are alike); the WASH, nothing under 0.4 m/s of way and all
+  of 0.6 by 7, riding the swell a beat behind; the RIGGING, nothing below a 0.5 wind (a storm adds 0.3), all of 0.42 in
+  a full gale, breathing with the gust. AUDIT SOUNDSCAPE S6: the first cut's levels, a third of these, sat 16 to 24 dB
+  under the mod's own hull loops on the same bus, under 500 Hz where both live; now a moderate sea reads about -38 dBFS
+  at the ear and a gale about -34, beside DFU's rain loop's -40, still well under the mod's loops (-24 at the helm).
+- **Her way and her sails**: my helm's word at my helm; a boat I ride and do not steer - another player's - says them
+  by her own going (her root's speed, eased over 0.6 s, a step past 40 m/s a recentre or a snap, never her way) and her
+  masts' Animators (S4: a passenger heard her lying still and furled at six knots); a deck off any helm lies still.
+- **The events**: a wave SLAPPING her hull as a swell crests (0.72 rising), on her port or starboard side 2.5 to 4 m
+  off and under the rail, and in a heavy sea a second on her other side on its heels; the TIMBERS working (a mean gap
+  of 16 s in a calm to 3.2 s in a storm, drawn exponentially) and the ROPES in their blocks only with sail set (12 s in
+  a breeze to 3.5 in a gale; re-armed as the sails go up - S10); the canvas LUFFING aloft every 1.2 to 3.5 s while she
+  lies head to wind or has sail set and no way (under 0.8 m/s in more than a 0.25 wind), never sooner than 1.2 s after
+  the last flap however the law flickers (S8); SPRAY over her bow at a crest past 2.5 m/s through a sea over 0.3; GULLS
+  by day out of rain, storm and snow while land is within two map pixels, one every 7 to 26 s 25 to 70 m off over the
+  water, three calls in ten followed by a second; and THE WATCH BELLS (`watchBells`): each half hour of the world's
+  clock crossed at its own pace, one bell at the half hour after a watch begins (the watches turning at 0, 4, 8, 12, 16
+  and 20 o'clock), one more each half hour, eight as it ends, struck in pairs (0.42 s within a pair, 1.15 s between) on
+  Daggerfall's own bell (DAGGER.SND 107, the arena's call and the naval host's struck colours) at 1.22, on her deck 3 m
+  ahead of me along her bow. The pace is read off the clock itself - its minutes a real second, eased over 3 s - never
+  a dial (S9: online a crossing's dial moves no shared clock, and its bells fell silent at a pace the clock never ran):
+  none past 0.5 (two and a half times DFU's 12 to 1, so Come Sail Away's x5 rings none), none for a jump of the clock (a
+  load, a rest, a journey), never twice within a minute of real time, and midnight's eight across the minute's wrap.
+- Her bow, her sides and her bell are HERS, off her heading, never the camera's (S3: looking astern put the spray
+  astern, and the bell turned with the head); with no heading to be had, the ear's forward. Every event aboard is played
+  `far` (`audio.js` play3d), its offset from the ear held while it sounds, so it rides with the deck. The first frame
+  aboard plays nothing: every clock is seeded a gap away. A pause holds every clock - the bells' strokes due across one
+  fall at their own spacing after it, where the first cut rang them all on the unpause frame, 15 dB over one (S1).
+
+WORLD-AIR (`systems/soundscape/worldAir.js`), on land outdoors - over WeatherManager.SetAmbientEffects' four presets
+(`ambientEffects.js` presetForExterior: rain, a storm, a sunny day's two birds, a clear night's crickets, the same in
+the Alik'r as in a Wrothgarian pass), never instead of them:
+- **The shore.** The SURF a bed AT the water's edge (`setBed3d`, inverse from 12 m) - the host's own point at the sea's
+  surface, standing while I walk, its distance measured live - where its bearing is known, flat where it is not, never
+  both; out to 220 m, the last 40 eased to nothing; its waves on a breaker's clock - a period of 7 to 11 s, a third
+  shorter in a heavy sea, each curling up over 1.0 s from the surf's floor of 0.22, crashing and running back. The crash
+  is a one-shot of the port's own at the edge while it is within 90 m, once a wave, started so its own loudest (0.83 s
+  and 1.0 s into its two takes) falls on the bed's crash, where the first cut played it as the wave began and again a
+  second late (W5); its loudness the sea's alone, the distance the panner's, never both (W6). Close in (14 m) on a quiet
+  sea (under 0.45), a LAP under it.
+- **The wild**, by the climate under me (`WILD`, CLIMATE.PAK's) and the hour: the woods' crows by day and owls (18 to
+  55 m off, at 0.2 to 0.32 - a pure tone is louder than its peak says, and the first cut's owl sat 8 dB over the crow's
+  caw: W12) and a far wolf (160 to 420 m) by night; the mountains' wolves more often; the haunted woods' crows often;
+  the swamp's and the rainforest's frogs (a chorus of up to three at night) over a marsh's insects; the desert's far
+  howl at night, pitched up (1.25 to 1.45); nothing over the ocean (`wildVoicesFor`). Rain quiets the crows and the owls
+  and makes the frogs croak twice as often, the wolf still howling; a storm leaves only the frogs; snow and the winter
+  (where the climate has one - `soundscapeHost.js` winterIn) take the frogs; inside a town no wolf and no frog, the
+  rest three times further between and 1.6 times further off (far and seldom: W14).
+- **The town**, inside PlayerGPS's own town: its MURMUR by day (6.5 to 21.5 o'clock, rising to the busy hours 10 to 17),
+  as loud as the root of the town's size (16 blocks its whole), quieter in the rain (0.45), a storm (0.2) and snow
+  (0.6) - a bed built from the player's own DAGGER.SND people (AmbientPeople1-10, `arenaSound.js` synthBed on its own
+  seed, its top eased off: a square heard, not a crowd at the ear), never shipped, played as two loops of it, the
+  second a little lower and so a little longer, each at the whole's power over the root of two (W13: one 8 s loop of the
+  same fragments was a loop an ear finds); its SMITHIES at the anvil from 7 to 19, bouts of 3 to 9 blows at the
+  armourer's or the weaponsmith's door within 45 m with rests of 5 to 16 s; its TAVERNS' noise at the door within 35 m,
+  the same people darker through the wood, louder from 17 to 2 o'clock and asleep from 2 to 10 (0.03 - W13: four in the
+  morning was as loud as noon). A smith's queued run is let go the moment the smith stops - the evening, the door out of
+  reach.
+- A pause holds every clock - the wild's voices, the waves, the smith's bouts and every call queued (W7).
+
+THE CLIPS. Seventeen of the port's own (`tools/soundscapeSfx.mjs` -> `public/sfx/{sea,shore,wild}-*.wav`: the hull's
+slaps, the timbers' and the ropes' creaks, the canvas, the spray, a wave breaking, two owls, two wolves - the
+gathering's pieces moved into the shared kit for them, `tools/sfxSynth.mjs`, the gathering's thirty-six clips byte for
+byte as before); and thirteen CC0 recordings from OpenGameArt baked by `tools/soundscapeSfxInstall.mjs` (six gulls by
+Rango Mango, a crow by fvcalderan, four frogs by EZduzziteh - each croak, cut out of its take mid-sound, eased in over
+4 ms and out over 15 so neither edge clicks (W12, `tools/sndify.mjs` bake `edges`) - two anvils by VishwaJai and
+themightyglider; Freesound, the gun lab's source, is not reachable from this session's network). The decoder's door
+takes `CHROMIUM` as the probes do (`tools/sfxBake.mjs` withDecoder). Every row is in `public/sfx/SOURCES.md` and the
+doctrine allow-list. ONE LOADER (`systems/soundscape/clipInstall.js`) for these and the horse's: a first load that
+failed is asked again at 2 s, 8 s, 30 s and 2 min, then not at all; a file the server refuses is never asked for
+again; asked every frame with nothing to do it makes nothing (S7, H2, H6). Levels are set on numbers (the bake's
+peaks, the laws' gains, the levels measured through the engine); none of these sounds has been heard by ear.
+
+Pins: `test/systems/soundscape/seaair.test.js` (10), `soundbeds.test.js` (3), `soundjobs.test.js` (5),
+`worldair.test.js` (10), `test/scenes/soundscapehost.test.js` (10); `tools/mutants/soundscape.json` (135, all dead).
+The audit: `01-Overview/audits/Audit-Soundscape.md`.
+
+## SEA-SCORE (2026-10-24): a helm heard - the sea's own songs
+
+SEA-SCORE (the owner: "different music and ambience sounds for sailing"): THE SEA'S MUSIC (`systems/soundscape/seaScore.js`)
+- six songs for a helm by the same door as the Warden's, the Hour's and the arena's: made notes registered by name,
+seamless, played by the game's own player and FM bank, faded by DISC20-B and replaceable by a music pack. Daggerfall
+has none: SongManager's playlists know a dungeon, a building and the sky, never a ship, so a voyage heard the overland
+weather songs. SEACALM (6/8, D Dorian, the harp rolling under the flute), SEAOPEN (a shanty in G with the flat seventh
+borrowed - its F chord, F natural over it, G major elsewhere: AUDIT SOUNDSCAPE M7, where the first cut called it
+Mixolydian - the fiddle over the accordion's off-beats and a bodhran), SEASTORM (D Aeolian, the low strings driving,
+timpani, open-fifth brass, the choir - the weather, not a villain), SEANIGHT (3/4, A Dorian, sparse), SEAPORT (a jig in
+D, landfall) and SEAFIGHT (the swashbuckler's i - VII - VI - V and the minor iv under a snare's march; a sea fight had
+no music at all). They carry their own voices (EG-ROAR: the accordion's reeds tuned apart, a bowed fiddle on the
+violin's program - GM's fiddle is plucked in this bank - and THE DRIVE, the storm's and the fight's bowed eighths and
+the storm's sixteenths on a cello that speaks and stops inside its note: on the cello's own envelope every strike still
+sounded under the next three of its key, and copies of one pitch cancel and swell, so the storm's drive was quietest,
+with holes 18-20 dB deep inside each eighth, on its own tonic - M5). A key struck again ends the note before it there
+(`makeSong`). NO press: they stand where the day songs stand, never at a boss's level - each song's `level` set so,
+measured over the whole of each song through the same player (`tools/seaScoreProbe.mjs`, which renders MIDI.BSA's
+outdoor songs beside them, whole, when the player's ARENA2 is at hand - M4: the first cut measured each song's first
+30 s, 11 to 26 bars of 32 to 64, and never heard the storm's stabs or the fight's tutti), the open sea and landfall read
+-29.6 dBFS beside the day songs' -29.4 (SUNNYDAY -30.2), the storm -29.9, the fight -28.7, the still sea -31.4, the night
+-36.1 - inside Daggerfall's outdoor songs' -43.4 (GEERIE) to -28.2 (RAINING) - every peak at least 6.6 dB under the
+clip at the highest MusicVolume. On a MIDI device (MIDI-OUT1) each song's level rides the channels' CC7, which tops out
+at 127: past a MusicVolume of about 0.58 the still sea's loudest channels clamp and its mix flattens (the others from
+0.67 to 0.77), at the default 0.5 every level fits - FLAGGED (M6), as MIDI-OUT1 records for the made scores. THE LAW
+(`seaScore.js:"export function seaScoreFor(ctx) {"`): no helm, no score - but aboard in a sea fight, the fight's still
+(M1: "Grapples away!" and "Repel boarders!" let the helm go, and the deck fight, a sea fight's climax, played the
+overland song); a sea fight as the watch knows it (the naval host's `battle`: her guns run out, the crew called to them
+by WK-W2's alarm - by night only a ship the night's law shows, or one that comes for me - or a boarding; M2: the
+first cut's hostileNear started the fight's song for a dark pirate the watch had not sighted at 500 m), then a
+thunderstorm, then a port's approach, then the night, then a drift under SEA_CALM_WAY (2.5 m/s) or a fog, else the open
+sea - rain and snow at sea are the open sea's. THE HOLD (`seaScore.js:"export function createSeaScore() {"`): a song
+plays whole - its own length, never under SEA_SCORE_HOLD_MS (90 s) - and the law must have wanted another for
+SEA_SCORE_SETTLE_MS (20 s) on end before it changes (M3: a 90 s timer alone changed on the dot, at the calm line every
+90 s from the top, and the still sea's choir and the shanty's last tutti were never heard); a fight or a storm comes in
+at once; a fight's song outlives it by SEA_FIGHT_TAIL_MS (20 s, from its last word - at 12 s a ship at the edge of a
+hostile's reach restarted the fight's song seventeen times in five minutes), aboard off the helm too; a helm let go
+ashore lets the music go at once. THE HOST (`scenes/soundscapeHost.js` scoreFrame): the songs registered the first time a
+helm is taken; held before the director, after the gate's, the Hour's and the arena's; standing on a deck at no helm
+and in no fight is the director's; let go by a fade, never a cut. A GM device plays real patches: the fight's timpani
+fifth reaches G1 and the night's flute answer B3, under those instruments' own compass - the FM bank plays any key
+(M8, a NOTE). None has been heard by ear. `test/systems/soundscape/seascore.test.js` (6); `tools/mutants/seascore.json`
+(38, all dead).
+
+## HORSE-VOICE (2026-10-24): the horse heard - its moods, its breath, the ground under its hooves
+
+The owner: "more varied horse sounds". DFU's TransportManager gives a horse one voice, AnimalHorse (99), on a clock that re-rolls to 2-39 s and to 1-4 s on a mount, and one ground: HorseClop (97) slow, HorseClop2 (298) fast, HorseAndCart (104), whatever the hooves come down on (`systems/riding.js` RidingAnimator, every arm kept). Behind ES1 the horse is heard in that place (`systems/horse/horseVoice.js`); off, `player/mountRig.js` plays the classic two as it always has, its own lines as the else arm (`mountRig.js:"if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);"`). That arm is the port's older line kept verbatim, and it is not DFU's in two places this change leaves alone (AUDIT SOUNDSCAPE H5, FLAGGED for a change of its own): it neighs at a constant 0.6 through a Travel Options journey, where DFU's neigh rides RidingVolumeScale (TransportManager.cs:282), and under a pause, where DFU's `Time.time` stops. A departure with no DFU member behind it; Ledger A (HORSE-VOICE).
+
+- **The voices.** DFU's clock stays the clock: each moment it rolls says a voice of the horse's MOOD then. The first after a mount is a whinny (the neigh at 1.08). Foes in sight are the alarm, blown is tired, then the gallop, the walk (calm) and riding on, each mood's weights over the neigh (at one of 0.94, 1, 1.05 and 1.1) and the port's snorts and blows, never a clip twice running. Beside the clock, three of the port's own:
+  - **The gallop's breath:** past 8 s of gallop, or galloping with horse care's breath short, an exhale once a stride, a little uneven, harder as it runs on. The stride is the clop's: 0.52 s at pitch 1 over the loop's own pitch, so 0.43 s at the gallop's 1.2 (AUDIT SOUNDSCAPE H3).
+  - **The blown horse:** after a long gallop, or with horse care's breath under 0.4 (`upkeepRuntime.js` `bar`), heavy breaths at the walk and standing, every 2.2-3.4 s, a blow among them.
+  - **The spook:** foes about (`encounters.js` areEnemiesNearby, DFU's own question: a foe that sees the rider, or one unseen inside the classic spawn band - AUDIT SOUNDSCAPE H9; asked four times a second) give the alarm snort and, on its heels, a high neigh, never again within 30 s.
+  - A pause holds them all, and a moment of DFU's clock that falls inside one is said on the first frame after it, as DFU's `Time.time` would bring it (AUDIT SOUNDSCAPE H4). A ride heard on DFU's sounds a while (the switch off, the classic skin) owes nothing when the voices come back: no whinny for a mount long gone, no spook's neigh, no blowing for an old gallop (the rig's `hush`, H1). Each plays at DFU's RidingVolumeScale, which Travel Options' journey zeroes, so a journey silences them too.
+- **The hooves.** The ground is the stride's own answer, `footsteps.js` pickFootstepKind (the world host's PEER-FS1 cache; the fixed city takes the kind off its set's own ctx). Stone (a path, a road, a street, a bridge) keeps DFU's clop; the open ground is a duller fall in the grass, snow a crunch, the water's two arms a splash. The gait and its volume and pitch are DFU's. Each of the port's loops is cut to the classic clop's own length and falls (`tools/horseSfx.mjs` HOOF_CADENCE, measured off records 97 and 298), so a ride's beat is the game's on every ground. The cart keeps its rattle; a loop not loaded plays DFU's. Another player's hooves take their ground off their pose's `fk` (`net/remotePlayers.js`).
+- **The clips.** Fifteen of the port's own, the climb's way (`tools/horseSfx.mjs` -> `public/sfx/horse-*.wav`, DAGGER.SND's 11025 Hz 8-bit). Each is baked to a loudness target set against the classic clips it plays beside: HorseClop -18.3, HorseClop2 -11.0 and AnimalHorse -8.6 dBFS (loudest 50 ms), so grass sits a shade under the road and a snort well under the neigh. A first mix, set on numbers; none has been heard by ear. Loaded by the soundscape's loader (`systems/soundscape/clipInstall.js`): a clip the bus would not take is asked again at 2 s, 8 s, 30 s and 2 min, then not at all (AUDIT SOUNDSCAPE H2). The CC0 trot recording offered (OpenGameArt's "Horse Trotting") was not used: its falls overlap unevenly and no clean loop on DFU's beat could be cut from it.
+
+Pins: `test/systems/horse/horsevoice.test.js` (13); `tools/mutants/horsevoice.json` (49, all dead).
+
+## INTRO3 (2026-10-14): the main theme, written as notes - the film's and the menu's
+
+The owner: "With the main menu music, is there anyway to recreate it using the sound system daggerfall's music uses",
+then "you do it and it's for both". The front door's theme was a recording decoded by a session of its own; it is now
+a song made in code (`systems/introScore.js`, `DFOTHEME.HMI`) - the fourth after the Warden's score (WB7), the Arena's
+and the Hour's - transcribed from that recording bar by bar and played by `SongPlayer` and the FM bank for the film
+and the menu (`systems/introTheme.js`).
+
+- **Its tempo is the film's**: one tempo (128.76 BPM, 68 ticks of lead) that puts the cue sheet's cloud break (11.712 s)
+  and the logo's beat (19.168 s) on its bar lines, within 0.2 ms.
+- **Its volume is the player's own law**: MUSIC_GAIN under MusicVolume and the video mute, followed live; the session's
+  gain is the film's level (0.82) or the menu's (0.26) alone.
+- **Its loudness is the recording's**: a light press (`INTRO_PRESS`, 3:1 from -14 dB, ceiling -1 dBFS) at level 1 -
+  about -22 dBFS through the body at MusicVolume 0.5, the recording's rise and fall kept. Measured through the real
+  player: `tools/introScoreProbe.mjs`.
+- **Not here**: a music pack's replacement by name and MIDI-OUT1's device - the session plays before the music service
+  exists, on the FM bank. `10-UI/UI-Arc.md` INTRO3.
+
+**INTRO3b (2026-10-23, the owner: "too flat"): the theme is the second song to carry its own voices and kit**
+(`systems/introScore.js` `INTRO_VOICES`, `INTRO_KIT` - EG-ROAR's `songVoices`, `songKit`, after the Spire's). Measured
+against the recording's first 27 s, the dry render's spectral centre stood at 305 Hz to the recording's 521, its share
+from 2 kHz up 13 dB under, and its two channels all but one (L/R correlation 0.985 to 0.33). Now: the bowed sections
+ensembles (unison copies spread either side of their place, the FM index higher and slower to settle), the choir and the
+pad on odd harmonics, a halo of four tremolo violins on the choir's chord an octave up, the taiko and the toms with their
+beaters' clicks and the snare a crack over a skin, a suspended cymbal's wash, the low brass's braams, snare rolls and a
+CC7 swell into every turn - and THE HALL: the intro session hangs a concert hall's convolver under the player's master
+(`systems/introTheme.js` `introSpace`, its impulse from I3DL2 numbers through `reverbPresets.js` `reverbImpulse`, the
+first use of that builder outside the engine's zones), through the session's own gain so MusicVolume and the mute reach
+it. The film's 27 s measured after: 483 Hz, -14.7 dB from 2 kHz up, correlation 0.61, both landmarks at 0.0 ms, the peak
+-3.1 dBFS at the highest MusicVolume - the hall sums over the press, so the ceiling is measured there, not held by
+construction; the whole song as loud as the recording (-22.6 dBFS to its -22.4), correlation 0.63, 436 Hz, -15.0 dB, 9/9. `tools/introScoreProbe.mjs` pins the width and the presence beside the landmarks. The whole record is
+`10-UI/UI-Arc.md` INTRO3b.
+
+**INTRO3c (2026-10-24, the owner: "I dont like the high pitch whine"; "Its not natural"; "Now it just sounds like
+static. Stop band aid fixing"): the whine was the model.** Measured over the opening's held chord against the recording:
+two-operator FM at 1:1 put the chord's 4th and 6th harmonics as loud as its fundamentals with the 7th and the 9th 50 dB
+under them - isolated pure lines 6-12 cents wide, where a string section has a dense series with a plateau from the 5th
+and every partial 20-50 cents wide - and the render had no body (315-630 Hz 5-7 dB short) and no presence (2-3 kHz 8-10
+short). A vibrato widened the lines; a breath of noise under the notes was the static. So the intro's bed is BOWED
+(above): sawtooths under the bow's low-pass, each section through its body (the strings' bridge hill at 2.7 kHz, the
+choir's vowel at 650, 1050 and 2500), an air shelf and an ensemble, with a vibrato and a bite at most; the horn and the
+brass stay FM, the horn's index settling to half; the mix through THE TONE, the recording's third-octave curve against
+the render's. After: the chord's harmonics 0, -10, -21, -13, -17, -18, -18, -22, -25 dB, its partials 18-47 cents wide,
+the film within 3 dB of the recording's curve from 80 Hz to 10 kHz (a mean of 1.2), 483 Hz and -13.3 dB from 2 kHz up.
+The riser into each landmark (the owner: "still a high pitch whine in the build up leading to the title drop") was the
+Spire's inharmonic FM shimmer, its sidebands 14-17 dB over their surroundings through both build-ups; it is a suspended
+cymbal's roll on the kit now (`swellInto`, the ride under soft mallets), a band of noise with no line in it. The hum
+("too constant ... too overpowering") was the contrabass's pedal and the pad, flat sawtooths 7 dB over the recording's
+bass: every held voice has the bow's arc now (`arc`) and the bed sways (`sway`), the bass plays at the bank's gain with
+the low end's weight in the drums, and the opening's bass sits at the recording's (-16.3 dB to its -17.1).
+`tools/introScoreProbe.mjs` pins the chord's shape (`chordShape`), the build-up (`riserShape`) and the bass (`bassShape`) beside the width and the presence. The whole song: as loud as the recording (-22.9 dBFS to its -22.4), correlation 0.62,
+502 Hz, -13.1 dB, 11/11. The
+record is `10-UI/UI-Arc.md` INTRO3c.

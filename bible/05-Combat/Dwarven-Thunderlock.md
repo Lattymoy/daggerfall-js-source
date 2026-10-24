@@ -1879,6 +1879,9 @@ closed (an open cube capped facing out; the shipped gun and its twin with no bou
 
 ## SHOP-PELLETS (2026-10-07): the shot on the counter
 
+**Retired by PELLETS-SCARCE (2026-10-24, below):** no shelf sells the Pellet now. The counter's law
+(`shopAmmoStack`) stays, as the quiver's (`Arrow-Supply.md` section 4). What follows is the record of what shipped.
+
 Mac: "allowing the purchase of the ammunition in stores." Until now the gun arrived loaded (6-18 pellets with the find)
 and every pellet after that was a body's or a pile's - "a gun found with no ammunition is a gun that cannot be fired and
 cannot be bought shot for", as `thunderlock.test.js` put it.
@@ -1899,7 +1902,7 @@ stays a find: the shelf still names nothing of it, and `thunderlock.test.js` sto
 finds none.
 
 A departure of kind (Port-Ledger section A): a shelf carries a thing DFU's never does. **Pins**
-(`test/systems/shoppellets.test.js`, 3; `tools/mutants/shoppellets.json`, 7 dead) - and the four that enumerate a Weapon Smith's,
+(`test/systems/shoppellets.test.js`, 3; `tools/mutants/shoppellets.json`, 7 dead; both RETIRED by PELLETS-SCARCE) - and the four that enumerate a Weapon Smith's,
 an Armorer's or a General Store's shelf moved with it, each saying so.
 
 ## MW-GUN-FEEL (2026-10-07): the kick and the reload, under the Morrowind arm
@@ -2039,3 +2042,85 @@ their holds, the low ready lower still. PIN MOVED: the first-person test's aim i
 within 1.5) and its left hand is read by its fingers on the forend (it read the wrist, now under the picture's edge).
 `tools/mutants/riflestance.json`: 16 dead - the two new, `RIFLE-AIM-LOW-the-old-row` (the stance as it was: the pins
 fail on it) and `RIFLE-AIM-LOW-level` (the barrel level again).
+
+## GUN-LORE (2026-10-24): what the guns are, and how the shot works
+
+The owner: *"A proper lore pass on both weapons and how their projectiles work according to the dweamer"*.
+
+The guns had names and nothing else, and the Pellet had less: the name, a price and a stack. The lore now has one
+home, `systems/thunderlock.js` `GUN_LORE`, and every reader takes it from there.
+
+**Canon it stands on (UESP):** the Dwemer, the Deep Folk, who vanished at Red Mountain in the First Era. Their **tonal
+architecture** was the art of making the world answer a struck note (Kagrenac's tools, Keening and Sunder). The
+**Rourken** were the clan that would not join the Chimer: their lord threw the hammer **Volendrung** out of Morrowind
+and built **Volenfell** where it fell, in the Alik'r. **Aetherium** is the Dwemer's blue crystal. Nothing here
+contradicts a canon source, and nothing in DFU says anything about guns.
+
+**The port's own:** the guns are Rourken work. A gun's lock holds no flint and no powder but a **tonal coil**. The
+trigger frees its striker, the coil sings one note pitched to the **mote of aetherium** sealed in a Pellet's brass, the
+note unbinds the mote's charge, and the bead leaves the barrel as a ball of **bound lightning**. That is the shock orb
+every hit sees, and FIELD-GUN17's one colour for the orb and the flash is the lore's: the report is the note, the flash
+its light. A coil that has sung must be wound again by its key before it sings another note, and the reload's two
+clacks are the key turned and set. The Pistolet is a **boarding piece**, made for the decks of the Rourken sky-ketches.
+Its short coil winds slowly, so their marines carried them in braces of two, one singing while the other was wound:
+the pair's own law, said as history. The Pellets are found and never bought, because no forge in the Bay has made one
+since the Dwemer went. That is PELLETS-SCARCE's law in the world's words.
+
+**Where it is said:**
+- **The Info box**: `systems/item/itemTemplates.js` `registerTemplateLore` / `templateLore`. A template's words, read
+  for every item of it (a Common, a Gilded, a gun era's piece), are drawn as their own box under the item's name
+  (`ui/enhanced/enhancedInventory.js` `itemInfoBoxes`). The Thunderlock, the Pistolet and the Pellet each register
+  theirs.
+- **Two books** (`systems/portBooks.js`, in the BOK format's own bytes, at ids above every classic book's with low
+  bytes no classic book uses), both by Imrah Bel-Tavir, Antiquarian of Sentinel. ***Rourken Thunder*** (418), 8 pages:
+  Volendrung and Volenfell, tonal architecture, the coil, the bead and the lightning, the long gun and the short, why so
+  few survive (the foundry was aboard the sky-ketch), and counsel to anyone who finds one. ***The Ketch That Never
+  Lands*** (419), 8 pages: the sky-ketch *Mzunthar* (`bible/11-Multiplayer/Sky-Ketch.md`), its keel-song, why it still
+  sails, the anchor-lift that holds eight and will not rise for nine, its decks and the Tonal Warden on its bridge. Both
+  are on the shelves the port's books are on, and the Sky-Ketch questline hands them over.
+
+A departure of kind (Port-Ledger section A, GUN-LORE): the item Info box carries a box DFU's has no source for.
+
+**Pins** (`test/systems/gunlore.test.js`, 4): each template its own words for every item of it, and none for a DFU
+weapon; the words agree with the shot (a coil, one note, the aetherium thrown as lightning, wound again, no powder,
+no flint); the Info box draws them under the name; the books are lawful port books, eight closed pages each, saying
+what the shot and the ship are. `tools/mutants/gunlore.json`: 7 dead.
+
+## PELLETS-SCARCE (2026-10-24): no shelf sells the shot - it is found
+
+The owner: *"Remove their ammo from shops and only have ammo has a rare resource drop (not super duper rare but still
+rare)"*.
+
+- **No shelf.** SHOP-PELLETS' counter line is gone from `systems/shopStock.js`, with `SHOP_PELLETS_MAX`,
+  `shopPelletStack` and the shop stock's import of the Pellet's mint. Every other draw and stack on every shelf is what it
+  was, because that line drew no roll. The counter's law it used (`shopAmmoStack`) is the quiver's alone now. A smith
+  still buys shot back, as it buys any weapon.
+- **The old find's place, kept.** The Thunderlock's old find (`dwarven-thunderlock`) minted the Pellets since
+  GUNS-UNFOUND took the gun out of it. It stays registered at its weight, its tier and its place among the finds, and
+  its mint still takes its one draw, so every seeded list draws exactly what it drew (Loot-II-Arc law 9), but it hands
+  nothing over. Its curve was the gun's, a thousandth at best, and the shot is not the gun.
+- **The Dwemer find** (`dwemer-pellets`): a **final** find. `systems/loot/lootRarity.js` `rollFinalFinds` is the loot
+  door's very last draw, after the technique's (law 9 again: a new roll goes after every earlier one). It runs on its own
+  curve, `PELLET_FIND_WEIGHTS` (base 6, 2.5 a tier, cap 60, per mille): from source tier 1 (a rat's nest never), about
+  1% of lists at tier 1, 2% at tier 6, 3% at tier 10, 4% at tier 14 and 6% at most. A pile's x1.3 and a boss's x2.5 fall
+  under the same 6% cap, and Luck nudges it as it nudges every find. That is rare, a few lists in a hundred, but never
+  the gun's one in a thousand. It mints `PELLET_FIND_STACK`, 4 to 12, counted on one draw. `registerUniqueFind` takes a
+  find's own `weights` for this, and `final: true`.
+- **And the airship**: the Ketchmaster's hold pays every share 20 to 40 Pellets from the Ketch's own foundry
+  (`Sky-Ketch.md` section 9 - her constructs drop nothing: the relay runs them), and players trade them.
+- **Loot rarity off** (AUDIT SHIP C2, 2026-10-24): the Dwemer find is a find, not a tier, so the switch off still rolls the
+  final finds (`rollLootRarity`), the DFU list otherwise untouched. Before it, the switch off left no Pellet anywhere,
+  with the shelves selling none, and a gun owned offline starved.
+
+A departure of kind (Port-Ledger section A, PELLETS-SCARCE): an item DFU never had, found on the port's own curve.
+
+**Pins** (`test/systems/pelletsscarce.test.js`, 5): no shop of any kind, quality or shelf, at any draw, carries a
+Pellet, and the stock law names none; the old find kept, taking one draw and handing nothing over; the Dwemer find's
+curve, cap, boss and pile, tier 0 never, the stack from one draw, and a find under its tier costing a seed no draw; over
+29 seeds the door's last draw, with every earlier draw the seed's own; the switch off still dropping it (AUDIT SHIP C2). PIN MOVED: `shopstock.test.js`,
+`audit18_systems_items.test.js`, `arrowsupply.test.js`, `pistolet.test.js`, `thunderlock.test.js` (the old find mints
+nothing), `loot21_stones.test.js` and `tech1_roster.test.js` (each holds the final finds off where it compares two
+doors' draws). `test/systems/shoppellets.test.js` is RETIRED with its law. `tools/mutants/pelletsscarce.json`: 11
+dead (AUDIT SHIP C2's checked by hand). `shoppellets.json` is retired too: its three records that read the counter's law moved to `arrowsupply.json`,
+each re-aimed at the quiver's pins, and the rest went with the line they mutated. Re-aimed by content: `gunsunfound.json`
+(2), `pistolet.json` (2), `loot21.json` (3), `tech1.json` (1).

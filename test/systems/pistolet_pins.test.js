@@ -11,7 +11,9 @@ import {
 } from '../../src/systems/pistolet.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { mintGilded, SOVEREIGN_PISTOLET_ERA } from '../../src/systems/gilded.js';
-import { loadPistoletArt, pistoletGildKeep, flashMask, cutStrip } from '../../src/combat/gun/pistoletArt.js';
+import { loadPistoletArt, pistoletGildKeep, flashMask, cutStrip, pistolFrameSet, bleedArm } from '../../src/combat/gun/pistoletArt.js';
+import { cropImage } from '../../src/combat/gun/pistolStrip.js';
+import { PISTOLET_FEEL } from '../../src/combat/gun/gunFeel.js';
 import { gildFrame } from '../../src/combat/thunderlockArt.js';
 import { WEAPON_TYPES } from '../../src/combat/fpsWeapon.js';
 import { readPng } from '../../tools/pngIO.mjs';
@@ -74,11 +76,18 @@ test('D18 B3: the gilded art gilds EACH frame by its own keep - the pistol, neve
   assert.equal(magic.a.weaponType, WEAPON_TYPES.Pistolet_Magic, 'an enchanted Pistolet is type 20');
   assert.equal(gold.a.records[1].frames.length, 6);
   let flameKept = 0;
+  // PIN MOVED (PISTOL-EDGE): each frame is gilded on the owner's own canvas - where its keep reads the sleeve from the
+  // corner the forearm leaves by - and THEN carried past the cut along the rest frame's lean (pistolStrip.js bleedArm) and
+  // cropped to the union, as the plain is; the gold is the keep's on the canvas, and the bleed carries it on
+  const set = pistolFrameSet(readPng(readFileSync('public/art/pistol-frames.png')), PISTOLET_FEEL.alphaCut);
+  const firstOff = (a, b) => { if (a.length !== b.length) return -2; for (let k = 0; k < a.length; k++) if (a[k] !== b[k]) return k; return -1; };
   for (let i = 0; i < 6; i++) {
     const p = plain.ups.get(`pistolet:${i}`), g = gold.ups.get(`pistolet:gilded:${i}`);
     const crop = { width: p.width, height: p.height, data: Uint8ClampedArray.from(p.colors) };
-    const want = gildFrame({ width: crop.width, height: crop.height, data: Uint8ClampedArray.from(crop.data) }, pistoletGildKeep(crop));
-    assert.deepEqual(Array.from(g.colors), Array.from(want.data), `frame ${i + 1}: gilded by its own keep`);
+    const own = { width: set.cells[i].width, height: set.cells[i].height, data: Uint8ClampedArray.from(set.cells[i].data) };
+    const want = cropImage(bleedArm(gildFrame(own, pistoletGildKeep(own)), set.lean), set.union);
+    assert.equal(firstOff(g.colors, want.data), -1, `frame ${i + 1}: gilded by its own keep, then bled`);
+    assert.equal(firstOff(crop.data, cropImage(set.bled[i], set.union).data), -1, `frame ${i + 1}: the plain the bled cell`);
     const flame = flashMask(crop);
     for (let k = 0; k < flame.length; k++) {
       if (!flame[k]) continue;

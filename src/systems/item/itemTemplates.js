@@ -333,6 +333,16 @@ export function ownItemImage(item, { forPaperDoll = false } = {}) {
   return r && Number.isInteger(r.archive) && Number.isInteger(r.record) ? r : null;
 }
 
+/** GUN-LORE (2026-10-24, the owner: "A proper lore pass on both weapons and how their projectiles work according to the
+ *  dweamer"; bible/05-Combat/Dwarven-Thunderlock.md "GUN-LORE"): A TEMPLATE'S OWN WORDS - what a thing of the port's own
+ *  IS, said under its name in the Info box (ui/enhanced/enhancedInventory.js itemInfoBoxes) for every item of the
+ *  template, whatever its tier. DFU's templates have none to say (its weapons carry no description; a book's are its
+ *  pages), so only a home of the port's own registers one (systems/thunderlock.js, systems/pistolet.js). */
+const _templateLore = new Map();
+export function registerTemplateLore(templateIndex, text) { if (typeof text === 'string' && text) _templateLore.set(templateIndex, text); else _templateLore.delete(templateIndex); }
+/** The words an item's template says of itself, or null. */
+export const templateLore = (item) => _templateLore.get(item?.templateIndex) ?? null;
+
 export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;

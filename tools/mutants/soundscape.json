@@ -1,0 +1,1217 @@
+[
+  {
+    "name": "SEA-AIR-the-floor-dropped",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "export const SEA_STATE_FLOOR = 0.15;",
+    "new": "export const SEA_STATE_FLOOR = 0;",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-storms-share",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "thunder: 0.35, snow: 0.06",
+    "new": "thunder: 0.25, snow: 0.06",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-winds-share",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "SEA_STATE_FLOOR + 0.7 * clamp01(wind)",
+    "new": "SEA_STATE_FLOOR + 0.6 * clamp01(wind)",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-clamp",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "return clamp01(SEA_STATE_FLOOR + 0.7",
+    "new": "return (SEA_STATE_FLOOR + 0.7",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-a-waves-period",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "Object.freeze([8.3, 0.55, 0])",
+    "new": "Object.freeze([8.4, 0.55, 0])",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-a-share",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "Object.freeze([12.7, 0.3, 1.3])",
+    "new": "Object.freeze([12.7, 0.35, 1.3])",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-half-dropped",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "return clamp01(0.5 + 0.5 * v);",
+    "new": "return clamp01(0.5 * v);",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-swells-depth",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "min: 0.15, max: 0.78, depth: 0.55 })",
+    "new": "min: 0.15, max: 0.78, depth: 0.45 })",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-washs-threshold",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "max: 0.6, from: 0.4, full: 7 })",
+    "new": "max: 0.6, from: 0, full: 7 })",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-riggings-threshold",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "max: 0.42, from: 0.5 })",
+    "new": "max: 0.42, from: 0.4 })",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-riggings-storm",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "weather === 'thunder' ? 0.3 : weather === 'rain' ? 0.1 : 0",
+    "new": "weather === 'thunder' ? 0 : weather === 'rain' ? 0.1 : 0",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-irons-arm",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "!!sailsUp && (!!inIrons || (",
+    "new": "!!sailsUp && (false || (",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-gulls-rain",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "!night && weather !== 'rain' && ",
+    "new": "!night && ",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-sprays-way",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "export const SPRAY_WAY = 2.5;",
+    "new": "export const SPRAY_WAY = 2;",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-creaks-storm-gap",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "Object.freeze({ calm: 16, storm: 3.2 })",
+    "new": "Object.freeze({ calm: 16, storm: 4 })",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-ropes-furled",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "      if (s.sailsUp && (ropeIn -= step) <= 0) {",
+    "new": "      if ((ropeIn -= step) <= 0) {",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-watchs-length",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "const n = Math.floor((m % 240) / 30);",
+    "new": "const n = Math.floor((m % 210) / 30);",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-eight-at-the-turn",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "return n === 0 ? 8 : n;",
+    "new": "return n === 0 ? 0 : n;",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-pairs-gap",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "export const BELL_STROKE_S = 0.42;",
+    "new": "export const BELL_STROKE_S = 0.5;",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-wrap",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "((half - Math.floor(lastMinute / 30)) % 48 + 48) % 48 === 1",
+    "new": "half - Math.floor(lastMinute / 30) === 1",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-paces-gate",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "&& pace <= BELL_MAX_PACE && t - lastBellT",
+    "new": "&& t - lastBellT",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-jumps-gate",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "% 48 + 48) % 48 === 1 &&",
+    "new": "% 48 + 48) % 48 >= 1 &&",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-real-time-gap",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "t - lastBellT >= BELL_MIN_REAL_S) {",
+    "new": "true) {",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-clocks-unseeded",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "      if (!on) seed(s);\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-slaps-side",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "play(pick(rand, SCAPE_SFX.seaSlap), at(s.ear, [starboard, side * between(rand, 2.5, 4)], [UP, -1.6])",
+    "new": "play(pick(rand, SCAPE_SFX.seaSlap), at(s.ear, [bow, side * between(rand, 2.5, 4)], [UP, -1.6])",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-a-bed-never-let-go",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "        for (const spec of Object.values(SEA_BEDS)) engine.setBed(spec.name, null);\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-the-far-shots-kept",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "        engine.fadeFar?.(SEA_FAR);\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SEA-AIR-a-second-stop",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "      reset();\n      if (!on) return;\n",
+    "new": "      reset();\n",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-one-pass",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "for (let pass = 0; pass < 2; pass++) {",
+    "new": "for (let pass = 0; pass < 1; pass++) {",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-the-state-not-carried",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "        s[0] = x1; s[1] = x2; s[2] = y1; s[3] = y2;\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-a-beds-rate",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "'sea:swell': bed(12, 0x5ea5e11, 0.05, BED_RATE_LOW,",
+    "new": "'sea:swell': bed(12, 0x5ea5e11, 0.05, BED_RATE,",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-the-levelling",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "const k = acc > 0 ? spec.rms / Math.sqrt(acc / n) : 0;",
+    "new": "const k = 1;",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-the-seed-unused",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "const next = mulberry32(spec.seed);",
+    "new": "const next = mulberry32(1);",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-the-swells-low-pass",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "[['lowpass', 520, 0.7], ['lowpass', 380, 0.8], ['highpass', 40, 0.7]]",
+    "new": "[['lowpass', 5200, 0.7], ['lowpass', 3800, 0.8], ['highpass', 40, 0.7]]",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-the-riggings-fifth",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "[[['bandpass', 615, 16], ['bandpass', 615, 16]], 0.6]",
+    "new": "[[['bandpass', 550, 16], ['bandpass', 550, 16]], 0.6]",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-the-surfs-spray",
+    "file": "src/systems/soundscape/soundBeds.js",
+    "old": "['lowpass', 7000, 0.707]], 0.45]]),",
+    "new": "['lowpass', 7000, 0.707]], 0]]),",
+    "tests": [
+      "test/systems/soundscape/soundbeds.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-made-inside-the-frame",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "  const w = typeof worker === 'function' ? worker() : null;",
+    "new": "  const w = null;",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-two-at-once",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "  if (_failed.has(key) || _making != null) return false;",
+    "new": "  if (_failed.has(key)) return false;",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-nothing-made-answered-true",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "  if (!j) return false;",
+    "new": "  if (!j) return true;",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-reach",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "max: 0.3, reach: 220, full: 8, floor: 0.22 })",
+    "new": "max: 0.3, reach: 260, full: 8, floor: 0.22 })",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-full",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "reach: 220, full: 8, floor",
+    "new": "reach: 220, full: 10, floor",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-ease",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "return fall * Math.min(1, (SURF.reach - d) / 40);",
+    "new": "return fall;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-curls-length",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "export const BREAKER_CURL_S = 1.0;",
+    "new": "export const BREAKER_CURL_S = 1.2;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-floor",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "full: 8, floor: 0.22 })",
+    "new": "full: 8, floor: 0.3 })",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-a-climates-row",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "[CLIMATES.Woodlands]: Object.freeze({ day: [CROW], night: [OWL, WOLF], marsh: false }),",
+    "new": "[CLIMATES.Woodlands]: Object.freeze({ day: [CROW], night: [OWL], marsh: false }),",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-chorus",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const FROG_NIGHT = voice('frog', [1.5, 6], [5, 30], [-0.5, 0], [0.3, 0.55], 3);",
+    "new": "const FROG_NIGHT = voice('frog', [1.5, 6], [5, 30], [-0.5, 0], [0.3, 0.55], 1);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-deserts-day",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "[CLIMATES.Desert]: Object.freeze({ day: [], night: [JACKAL], marsh: false }),",
+    "new": "[CLIMATES.Desert]: Object.freeze({ day: [CROW], night: [JACKAL], marsh: false }),",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-rains-frogs",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "(frog && (weather === 'rain' || weather === 'thunder') ? 0.5 : 1)",
+    "new": "(1)",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-storms-wolf",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "    if (weather === 'thunder' && !frog) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-winters-frogs",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "if (frog && (winter || weather === 'snow')) continue;",
+    "new": "if (frog && weather === 'snow') continue;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-towns-gap",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "export const TOWN_WILD_GAP = 3;",
+    "new": "export const TOWN_WILD_GAP = 2;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-open",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "open: 6.5, close: 21.5",
+    "new": "open: 6, close: 21.5",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-busy-hours",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "busy: Object.freeze([10, 17])",
+    "new": "busy: Object.freeze([9, 17])",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-sizes-root",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const size = Math.sqrt(clamp01((Number(blocks) || 1) / MURMUR.blocks));",
+    "new": "const size = clamp01((Number(blocks) || 1) / MURMUR.blocks);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-rain",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "Object.freeze({ rain: 0.45, thunder: 0.2, snow: 0.6 })",
+    "new": "Object.freeze({ rain: 0.5, thunder: 0.2, snow: 0.6 })",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-smiths-day",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "reach: 45, open: 7, close: 19,",
+    "new": "reach: 45, open: 6, close: 19,",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-taverns-evening",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "evening: 17, late: 2",
+    "new": "evening: 18, late: 2",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-crashs-reach",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "export const CRASH_REACH = 90;",
+    "new": "export const CRASH_REACH = 200;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-both-beds-at-once",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "bed(SURF.name, SURF.bed, edge ? 0 : surfGain(dist, state, env));",
+    "new": "bed(SURF.name, SURF.bed, surfGain(dist, state, env));",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-wolfs-distance",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const WOLF = voice('howl', [90, 240], [160, 420], [10, 30], [0.4, 0.6]);",
+    "new": "const WOLF = voice('howl', [90, 240], [60, 420], [10, 30], [0.4, 0.6]);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-marshs-bed",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "      if (marsh > 0 ? ensureBed(engine, MARSH.bed) : true) bed(MARSH.name, MARSH.bed, marsh);\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-smith-at-night",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const smithy = w.inTown && smithAtWork(w.hour) ? near(",
+    "new": "const smithy = w.inTown ? near(",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-taverns-place",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "[tavern[0], tavern[1] + 1, tavern[2]]",
+    "new": "[tavern[0], tavern[1], tavern[2]]",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-murmur-out-of-town",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const towned = !!w.inTown && ensureTownBeds(engine);",
+    "new": "const towned = ensureTownBeds(engine);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-a-bed-left-at-stop",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "for (const name of [SURF.name, LAP.name, MARSH.name, MURMUR.name, MURMUR_TWIN.name]) engine.setBed(name, null);",
+    "new": "for (const name of [SURF.name, LAP.name, MARSH.name, MURMUR.name]) engine.setBed(name, null);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-AIR-the-smiths-queue-kept",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "if (due.length) due = due.filter((d) => d.kind !== 'anvil');",
+    "new": "if (due.length) due = due.filter(() => true);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-depths-threshold",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "export const SHORE_DEPTH = 0.3;",
+    "new": "export const SHORE_DEPTH = 0.1;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-halvings",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "      for (let k = 0; k < 5; k++) { const m = (lo + hi) / 2; if (deep(",
+    "new": "      for (let k = 0; k < 1; k++) { const m = (lo + hi) / 2; if (deep(",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-rings-order",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "Object.freeze([6, 14, 28, 50, 85, 130, 200])",
+    "new": "Object.freeze([200, 130, 85, 50, 28, 14, 6])",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-first-bearing-taken",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "if (!best || hi < best.dist) best = { dist: hi, dir };",
+    "new": "if (!best) best = { dist: hi, dir };",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-seas-side-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "  const here = deep(ear[0], ear[2]);",
+    "new": "  const here = (deep(ear[0], ear[2]), false);",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-ring",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "export const GULL_RING = 2;",
+    "new": "export const GULL_RING = 3;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-eight",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isSea(",
+    "new": "for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (isSea(",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-records-index",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "buildingDataList?.[entry?.recordIndex]?.buildingType",
+    "new": "buildingDataList?.[0]?.buildingType",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-deserts-winter",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "!!winter && climate !== CLIMATES.Desert && ",
+    "new": "!!winter && ",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-switch-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "if (!enhancedSoundsOn() || !Array.isArray(ear)",
+    "new": "if (!Array.isArray(ear)",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-deck-and-the-land-at-once",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "      sea.stop();\n      sailing = null;\n      let inTown",
+    "new": "      sailing = null;\n      let inTown",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-far-surf",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "coast ? { dist: SHORE_FAR_M, dir: null } : null",
+    "new": "null",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-songs-every-frame",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "if (!songsMade) { songsMade = true;",
+    "new": "if (true) { songsMade = true;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-hold-kept-ashore",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "        sailing = { sailing: !!helm, aboard: true,",
+    "new": "        sailing = { sailing: true, aboard: true,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-cut",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "if (held) { held = false; deps.music?.fadeOut?.(); }",
+    "new": "if (held) { held = false; deps.music?.stop?.(); }",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-a-smithy-taken-for-a-tavern",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "const list = SMITHIES.has(type) ? smithies : TAVERNS.has(type) ? taverns : null;",
+    "new": "const list = SMITHIES.has(type) ? taverns : TAVERNS.has(type) ? smithies : null;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-towns-size-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "blocks = p ? deps.towns?.()?.get(p.y * 1000 + p.x)?.blocks ?? 1 : 1;",
+    "new": "blocks = 1;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-stop-dropped",
+    "file": "src/scenes/world.js",
+    "old": "windAudio.stop(); soundscape.stop();   // WIND3",
+    "new": "windAudio.stop();   // WIND3",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "SOUNDSCAPE-HOST-the-score-ahead-of-the-gates",
+    "file": "src/scenes/world.js",
+    "old": "if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
+    "new": "if (!soundscape.scoreFrame() && !hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S1-the-clock-run-under-a-pause",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "      if (!s.paused) t += step;",
+    "new": "      t += step;",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S3-the-spray-off-the-camera",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "at(s.ear, [bow, 5], [UP, -1])",
+    "new": "at(s.ear, [flatOf(s.fwd), 5], [UP, -1])",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S3-the-bell-turning-with-the-head",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "at(c.ear, [headingOf(c), 3], [UP, 2.5])",
+    "new": "at(c.ear, [flatOf(c.fwd), 3], [UP, 2.5])",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S8-the-luff-at-each-return",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "} else luffIn = Math.max(0, LUFF_GAP_S[0] - (t - lastLuffT));",
+    "new": "} else luffIn = 0;",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-the-second-slap-gone",
+    "file": "src/systems/soundscape/seaAir.js",
+    "old": "        if (rand() < state) due.push(",
+    "new": "        if (rand() < 0) due.push(",
+    "tests": [
+      "test/systems/soundscape/seaair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W5-the-crash-at-the-beds-crash",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "due.push({ at: t + Math.max(0, BREAKER_CURL_S - CRASH_PEAK_S[k]),",
+    "new": "due.push({ at: t + BREAKER_CURL_S,",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W6-the-crash-attenuated-twice",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "play3d(SCAPE_SFX.shoreCrash[k], at, 0.35 + 0.5 * state,",
+    "new": "play3d(SCAPE_SFX.shoreCrash[k], at, (0.35 + 0.5 * state) * surfReach(dist),",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W7-the-wilds-clock-under-a-pause",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "        if (!w.paused) left -= step;",
+    "new": "        left -= step;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W7-the-smith-under-a-pause",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "      if (smithy && !w.paused) {",
+    "new": "      if (smithy) {",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W7-the-queues-clock-under-a-pause",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "      if (!w.paused) t += step;",
+    "new": "      t += step;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W9-the-edge-moving-with-me",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const edge = shore.at ?? (shore.dir ?",
+    "new": "const edge = (shore.dir ?",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W12-the-owl-as-loud-as-the-crow",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const OWL = voice('owl', [25, 60], [18, 55], [6, 12], [0.2, 0.32]);",
+    "new": "const OWL = voice('owl', [25, 60], [18, 55], [6, 12], [0.3, 0.5]);",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W13-one-loop",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "      bed(MURMUR_TWIN.name, MURMUR.key, murmur, MURMUR_TWIN.pitch);\n",
+    "new": "",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W13-the-tavern-never-sleeps",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "return inHours(h, TAVERN.late, TAVERN.opens) ? TAVERN.small : TAVERN.day;",
+    "new": "return TAVERN.day;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W14-the-wild-as-near-in-town",
+    "file": "src/systems/soundscape/worldAir.js",
+    "old": "const far = inTown ? TOWN_WILD_FAR : 1;",
+    "new": "const far = 1;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W12-the-frogs-unfaded",
+    "file": "tools/soundscapeSfxInstall.mjs",
+    "old": "      const pcm = bake(mono, rate, { peak: p.peak, maxSeconds: p.max, edges: p.edges ?? null });",
+    "new": "      const pcm = bake(mono, rate, { peak: p.peak, maxSeconds: p.max });",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W12-the-fade-the-wrong-way",
+    "file": "tools/sndify.mjs",
+    "old": "    for (let i = 0; i < a; i++) out[i] *= i / a;",
+    "new": "    for (let i = 0; i < a; i++) out[i] *= 1 - i / a;",
+    "tests": [
+      "test/systems/soundscape/worldair.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W10-the-surface-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "Number.isFinite(surface) ? surface : ear[1] - 1",
+    "new": "ear[1] - 1",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W2-the-door-inside-its-building",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "list.push([spot.pos[0] + (nx / l) * DOOR_OUT_M, spot.pos[1], spot.pos[2] + (nz / l) * DOOR_OUT_M]);",
+    "new": "list.push([spot.pos[0], spot.pos[1], spot.pos[2]]);",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W1-the-town-a-locations-rect",
+    "file": "src/scenes/world.js",
+    "old": "inTown: _isPlayerInTownStrict,",
+    "new": "inTown: () => !!playerInLocationRect?.(),",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S2-the-deck-test-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "      if (!aboard) { try { aboard = !!deps.aboard?.(); } catch { aboard = false; } }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S2-the-deck-test-unwired",
+    "file": "src/scenes/world.js",
+    "old": "aboard: () => !!naval?.aboard?.(), bow: boatForward,",
+    "new": "bow: boatForward,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S3-the-bow-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "const bow = boat?.GameObject?.rotation && deps.bow ? deps.bow(boat, 0) : null;",
+    "new": "const bow = null;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S4-the-passengers-way-my-idle-helms",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "const way = helm ? Number(helm.way) || 0 : boat && !f.paused ? wayOf(boat, dt) : boat ? rodeWay : 0;",
+    "new": "const way = helm ? Number(helm.way) || 0 : 0;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S4-her-sails-furled-whatever",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "const sailsUp = helm ? !!helm.sailsUp : sailsSet(boat);",
+    "new": "const sailsUp = !!helm?.sailsUp;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S4-a-jump-taken-for-way",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "if (v <= WAY_JUMP_MPS) rodeWay +=",
+    "new": "if (v >= 0) rodeWay +=",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S7-the-loader-asked-once",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "      installSoundscapeSounds(deps.audio);   // AUDIT SOUNDSCAPE S7",
+    "new": "      // installSoundscapeSounds(deps.audio);   AUDIT SOUNDSCAPE S7",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-M1-the-boarding-not-aboard",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "aboard: true, fight: !!deps.fight?.(),",
+    "new": "aboard: false, fight: !!deps.fight?.(),",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-M2-the-fight-on-hostileNear",
+    "file": "src/scenes/world.js",
+    "old": "fight: () => !!naval?.battle?.(),",
+    "new": "fight: navalHostileNear,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-M2-the-battle-unseen",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    battle: () => aiming || crewAlarm() || !!boarding,",
+    "new": "    battle: () => hostileNearMe(),",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-the-asking-every-five-seconds",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "export const ASK_EVERY_S = 0.5;",
+    "new": "export const ASK_EVERY_S = 5;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-the-walk-unasked",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "export const ASK_MOVED_M = 15;",
+    "new": "export const ASK_MOVED_M = 150;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-the-weaponsmith-not-a-smithy",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "const SMITHIES = new Set([BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]);",
+    "new": "const SMITHIES = new Set([BUILDING_TYPES.Armorer]);",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P2-the-wind-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "wind = f.wd?.on ? f.wd.strength01 : 0.35,",
+    "new": "wind = 0.35,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P2-the-winter-everywhere",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "winter: winterIn(f.climate, f.winter),",
+    "new": "winter: !!f.winter,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P2-the-land-near-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "nearLand: land, minute,",
+    "new": "nearLand: false, minute,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P2-the-port-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "      try { port = !!deps.csa?.IsNearPort?.(3); } catch { port = false; }",
+    "new": "      port = false;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P2-the-night-unread",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "night = isNight(minute),",
+    "new": "night = false,",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P2-the-town-always",
+    "file": "src/scenes/soundscapeHost.js",
+    "old": "      try { inTown = !!deps.inTown?.(); } catch { inTown = false; }",
+    "new": "      inTown = true;",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P4-the-pause-unwired",
+    "file": "src/scenes/world.js",
+    "old": "winter: season === SEASON.Winter, paused: gamePaused() });",
+    "new": "winter: season === SEASON.Winter, paused: false });",
+    "tests": [
+      "test/scenes/soundscapehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W4-the-worker-unspelled",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "? new Worker(new URL('./soundWorker.js', import.meta.url), { type: 'module' })",
+    "new": "? new WorkerCtor(new URL('./soundWorker.js', import.meta.url), { type: 'module' })",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W4-the-voices-copied",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "w.postMessage({ id, job: j }, (j.voices ?? []).map(",
+    "new": "w.postMessage({ id, job: j }, [].map(",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W4-the-workers-error-ignored",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "settle(p.key, () => { if (error) throw new Error(error); return samples ?? null; });",
+    "new": "settle(p.key, () => samples ?? null);",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W4-the-town-job-rerun-on-voices-gone",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "for (const { key, job } of jobs) if (!job.voices) settle(",
+    "new": "for (const { key, job } of jobs) settle(",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W4-the-thrower-asked-again",
+    "file": "src/systems/soundscape/soundJobs.js",
+    "old": "catch (err) { _failed.add(key); console.warn(",
+    "new": "catch (err) { console.warn(",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-W4-the-workers-transfer-dropped",
+    "file": "src/systems/soundscape/soundWorker.js",
+    "old": "postMessage({ id, samples }, samples ? [samples.buffer] : [])",
+    "new": "postMessage({ id, samples }, [])",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-S7-the-refusal-asked-again",
+    "file": "src/systems/soundscape/clipInstall.js",
+    "old": "        if (status >= 400 && status < 500) refused.add(key);",
+    "new": "        void status;",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-H2-retried-for-ever",
+    "file": "src/systems/soundscape/clipInstall.js",
+    "old": "      else gaveUp = true;",
+    "new": "      else nextAt = now();",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-H6-a-pass-every-frame",
+    "file": "src/systems/soundscape/clipInstall.js",
+    "old": "      if (gaveUp || finished() || !audio?.registerSound || now() < nextAt) return settled;",
+    "new": "      if (gaveUp || finished() || !audio?.registerSound) return settled;",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-the-bytes-dropped-before-they-stand",
+    "file": "src/systems/soundscape/clipInstall.js",
+    "old": "        if (!bytes.has(key)) bytes.set(key, await load(files[key]));",
+    "new": "        bytes.set(key, await load(files[key]));",
+    "tests": [
+      "test/systems/soundscape/soundjobs.test.js"
+    ]
+  }
+]

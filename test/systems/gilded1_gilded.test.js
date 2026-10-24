@@ -89,7 +89,8 @@ test('GILDED1 THE RUNG: the ladder\'s top - rank 6 over the Artifact\'s 5, gold 
 
 test('GILDED1 THE RECORD: one, a Dwarven Long Bow (GUNS-UNFOUND; a Thunderlock of the gun\'s own Dwarven make until then, its gun era) - +40% damage, +15 Agility, +30 Archery, +10 shock a shot: each line the Legendary band\'s TOP and no higher - its power The Hour Tolls, its lore; frozen whole (mutants: a line over the band\'s top; the power\'s every)', () => {
   // PIN MOVED (GILDED2, bible/06-Systems/Gilded.md section 7): the Hourlock first of three - the gate's and the serpent's after it
-  assert.equal(GILDED_RECORDS.length, 3);
+  // PIN MOVED (KETCH, 2026-10-24, Gilded.md section 10): of five - the airship's two guns after them
+  assert.equal(GILDED_RECORDS.length, 5);
   assert.equal(GILDED_RECORDS[0], HOURLOCK);
   assert.equal(gildedById('the-hourlock'), HOURLOCK);
   assert.equal(gildedById('the-hourlocks'), null);
@@ -188,9 +189,9 @@ test('GILDED1 NO DOOR ALTERS IT: the salvage, the Reforge, the hone, the item ma
 
 // ── the drop ──────────────────────────────────────────────────────────
 
-test('GILDED1 THE DROP: ONE draw, always - under GILDED_CHANCE the Hourlock, else nothing; one in fifty (mutants: the chance)', () => {
+test('GILDED1 THE DROP: ONE draw, always - under GILDED_CHANCE the Hourlock, else nothing; one in a hundred (mutants: the chance)', () => {
   on();
-  assert.equal(GILDED_CHANCE, 1 / 50);
+  assert.equal(GILDED_CHANCE, 1 / 100);   // PIN MOVED (GILDED-RARER, 2026-10-24, the owner: "Reduce the drop rate of gilded weapons across the board"): one in fifty, before
   const yes = counted(() => GILDED_CHANCE - 1e-9), no = counted(() => GILDED_CHANCE);
   const got = rollHourlock(yes.rolls);
   assert.equal(got?.gilded, 'the-hourlock');

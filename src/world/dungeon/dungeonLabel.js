@@ -12,7 +12,9 @@
 // AND NOT EVERY "DUNGEON" IS ONE: the places the port MADE as dungeons - the Burning Court (world/gate/gateArena.js), the
 // arena's floor (world/arena/arenaFloor.js) and its undercroft (world/arena/arenaCity.js), and SD5a's Shattered Hour
 // (world/superDungeon/sdRealm.js) - carry a dungeon so the dungeon host can stand them, and none is a Regular Dungeon to anyone
-// walking in. They have no label.
+// walking in. They have no label. KETCH (2026-10-24, the live run: the sky-ketch's deck said "Regular Dungeon, Small"):
+// nor has the Sky-Ketch (world/ketch/ketchShip.js) - nor an Elite Breach's hall (world/eliteGates/egHall.js), which no
+// list here named either.
 //
 // Not a DFU member. Ledger A (TIER1).
 import { dungeonLocationFor, SMALLER_DUNGEON_THRESHOLD, MEDIUM_DUNGEON_THRESHOLD } from '../smallerDungeons.js';
@@ -20,10 +22,12 @@ import { isArenaUndercroft } from '../arena/arenaCity.js';
 import { isGateArena } from '../gate/gateArena.js';
 import { isArenaFloor } from '../arena/arenaFloor.js';
 import { isSdRealm } from '../superDungeon/sdRealm.js';   // SD5a: the Shattered Hour, a made place
+import { isEgHall } from '../eliteGates/egHall.js';   // KETCH: an Elite Breach's hall, a made place
+import { isKetchShip } from '../ketch/ketchShip.js';   // KETCH: the Sky-Ketch, a made place
 import { dungeonTier, DUNGEON_TIER_TEXT, DUNGEON_SIZE_TEXT } from '../../systems/dungeon/dungeonTier.js';
 
 /** Is this a place the port made, standing in the dungeon host - no dungeon to tier? */
-export const madeDungeon = (loc) => isGateArena(loc) || isArenaFloor(loc) || isArenaUndercroft(loc) || isSdRealm(loc);
+export const madeDungeon = (loc) => isGateArena(loc) || isArenaFloor(loc) || isArenaUndercroft(loc) || isSdRealm(loc) || isEgHall(loc) || isKetchShip(loc);
 
 /** A BUILT dungeon's size class by its block count: 'small' (five or fewer), 'medium' (eight or fewer), 'large' - or
  *  null when it carries no blocks (a summary row, not a built location). */

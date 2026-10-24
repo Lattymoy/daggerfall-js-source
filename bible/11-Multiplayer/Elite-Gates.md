@@ -9539,7 +9539,8 @@ was DFU's dungeon drips and doors (`systems/ambientEffects.js`), a crypt's, over
 
 **What shipped.**
 - **A song's own voices** (`systems/song/songPlayer.js`): `songVoices`, `songKit`, `unisonCents`, `VOICE_RANGE`,
-  `KIT_RANGE`, `SONG_FLOOR_HZ`, `SongPlayer._drumLayers` and `_makeFloor` - unison pairs as loud as the one pair, a sub, a
+  `KIT_RANGE`, `SONG_FLOOR_HZ`, `SongPlayer._drumLayers` and `_makeFloor` (INTRO3c, 2026-10-24: the bowed voice `_bow`, a
+  channel's `_insert`, `_vibrato`, `_breath`, a song's `_routeTone` - `10-UI/UI-Arc.md` INTRO3c) - unison pairs as loud as the one pair, a sub, a
   spread laid either side of the channel, a drum's click and body, a bend keeping the spread, and THE FLOOR, a 30 Hz
   high-pass under a voiced song before its press (a 1:1 FM pair's first lower sideband lands on 0 Hz; a quarter of the
   spiccato's energy stood under 40 Hz, and the press answered it by pressing the whole song). Every song MIDI.BSA holds

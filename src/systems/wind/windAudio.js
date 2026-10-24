@@ -45,6 +45,7 @@
 import { audio as defaultAudio } from '../audio.js';
 import { enhancedSoundsOn } from '../enhancedSounds.js';   // ES1: the wind rides the one Enhanced sounds switch
 import { pageParam } from '../pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { section, mulberry32 } from '../soundscape/bedDsp.js';   // AUDIT SOUNDSCAPE W4: the bed's section and its die, moved to a leaf the beds' worker can import (one home)
 
 /** The loudest the wind ever is, as a loop gain (the rain loop plays at
  *  1, the birds at their clips' own level). */
@@ -83,26 +84,6 @@ export function windGain(strength01, gust = 1) {
 /** The pitch: a touch lower in a breeze, a touch higher in a gale. */
 export function windPitchFor(strength01) {
   return 0.92 + 0.16 * Math.max(0, Math.min(1, strength01));
-}
-
-/** A second-order section's coefficients (the audio EQ cookbook's band-pass at 0 dB peak, or low-pass), a0 divided
- *  out: [b0, b1, b2, a1, a2]. */
-function section(type, f0, q, fs) {
-  const w0 = (2 * Math.PI * f0) / fs, cos = Math.cos(w0), alpha = Math.sin(w0) / (2 * q), a0 = 1 + alpha;
-  const b = type === 'bandpass' ? [alpha, 0, -alpha] : [(1 - cos) / 2, 1 - cos, (1 - cos) / 2];
-  return [b[0] / a0, b[1] / a0, b[2] / a0, (-2 * cos) / a0, (1 - alpha) / a0];
-}
-
-/** mulberry32: a small seeded generator, [0, 1). */
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 /**

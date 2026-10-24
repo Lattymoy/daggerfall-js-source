@@ -455,7 +455,7 @@ test('S9 THE REWIND: my feet fallen to the void\'s floor one frame and on a chec
 
 test('S9 the hosts by source: the dungeon host hands the Steps the Hollow\'s Ending and the ghosts\' door; the world host draws the ghosts in the Hour\'s reads, fight or none; the lab stands the Steps\' knobs and draws their pass', () => {
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdSteps = _sdRealm \? createSdSteps\(\{ ending: sdMarksOf\(dfLocation\.sdRealm\)\[0\], renderer, audio \}\) : null;/);
+  assert.match(D, /const sdSteps = _sdRealm \? createSdSteps\(\{ ending: sdMarksOf\(dfLocation\.sdRealm\)\[0\], renderer, audio \}\) : _ketch \? createSdSteps\(\{ course: KT_COURSE, renderer, audio \}\) : null;/);   // PIN MOVED (KETCH): and the Sailwalk on a sky-ketch, the Hour's own course law on her frame
   assert.match(D, /sdStepsDraw: sdSteps \? \(proj, view, fog\) => sdSteps\.drawPass\(proj, view, fog\) : undefined,/);
   const W = read('src/scenes/world.js');
   assert.match(W, /function drawSdArenaReads\(proj, view, fog\) \{\n\s+const ghosts = !!modes\?\.dungeonCtx\?\.sdStepsDraw\?\.\(proj, view, fog\);[^\n]*\n\s+if \(!sdFightLink \|\| _sdReadsBroken \|\| modes\?\.sdRealmSlot\?\.\(\) == null\) return ghosts;/);

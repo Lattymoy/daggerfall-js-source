@@ -22,6 +22,8 @@ export const RELAY_CFG_VARS = Object.freeze({
   serpentThread: 'SERPENT_DISCORD_THREAD',
   sdThread: 'SD_DISCORD_THREAD',
   egThread: 'EG_DISCORD_THREAD',
+  ktRole: 'KT_DISCORD_ROLE',   // KETCH (net/ketch/ketchHerald.js): the role the Sky-Ketch's sighting pings - its own, else the gate's
+  ktThread: 'KT_DISCORD_THREAD',   // KETCH: and the thread her cards post to
   egDrain: 'EG_DRAIN',   // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN - 'on' shuts the Spire's road (no new breach) while a deploy drains it
   groundGate: 'GROUND_GATE',   // GROUND-GATE (bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): 'on' refuses a ground room's hello from a build on an older ground (net/wire.js GROUND_LAW) - off until the site serves the build that says it, since the relay deploys first
   grantMode: 'GRANT_MODE',   // GRANT2 (bible/11-Multiplayer/Spawn-Grants.md section 12): the spawn grants' law - 'measure' (and unset: net/grantLaw.js grantModeOf), 'enforce' (GRANT6), 'off'
@@ -44,7 +46,7 @@ export const RELAY_CFG_RELAY_MIN = 192;
 /** HERALD-CARDS: a setting newer than the frame, and the first relay that knows it - an older one finds no such name in
  *  its RELAY_CFG_KEYS and closes the hub link on the frame, so the client says it only to a relay at this or later
  *  (world250: world243 on its branch, renumbered at the merge - AUDIT HERALD-CARDS S1). */
-export const RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250 });
+export const RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255 });   // KETCH: world255's (world253 on its branch)
 /** Does the relay at version `v` take a setting - any (`k` unsaid), or that one? */
 export const relayCfgSupported = (v, k = null) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);
 /** May a player whose verified glyphs are `glyphs` set the relay's settings? The Developer's alone - a Dungeon Master's

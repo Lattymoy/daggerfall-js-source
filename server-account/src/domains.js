@@ -22,7 +22,7 @@
 // a key the seats' registry confirms as a seat OF THAT REGION, the crown
 // in a crown's (domainLaw.js domainSeats). The same witnesses as a seat's:
 // a registered account a week old, never one the seats' law ignores, its
-// first answer standing. ITS OWN TABLE (migration 0168): an answer that
+// first answer standing. ITS OWN TABLE (migration 0169): an answer that
 // agrees with the region's confirmation changes nothing the law judges
 // (LEAN-WITNESS's own reasoning, leanWitness.js), so it is never written -
 // three rows a region and the dissenters, read whole a minute an isolate.

@@ -213,7 +213,9 @@ test('AUDIT WBX2 M9 the sweep reads its cursors in one storage read (AUDIT RAID 
   // IV, the net group; Elite-Gates.md section 23): a breach's lapsed calls (`egcall:<sub>`) are swept too - their cursor joins it
   // PIN MOVED (STAR3, bible/11-Multiplayer/Starfall.md section 5): the hub keeps an account's star receipts under
   // `starrc:<sub>` (the raid's keep) - their cursor joins the one read
-  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc'\]\)\);/);
+  // PIN MOVED (AUDIT KETCH L1-2, bible/01-Overview/audits/Audit-Ketch.md): the hub keeps an earner's Ketch receipt under
+  // `ktrc:<sub>` (the Hour's keep) - its cursor joins the one read
+  assert.match(idx, /const cur = \(await this\.state\.storage\.get\(\['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc', 'sweep:ktrc'\]\)\);/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:starrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:egrc'\)/);
   assert.doesNotMatch(idx, /storage\.get\('sweep:egcall'\)/);

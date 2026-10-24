@@ -1,0 +1,102 @@
+[
+  {
+    "name": "PS-the-counters-line-restored",
+    "file": "src/systems/shopStock.js",
+    "old": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
+    "new": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); if (n > 0) add({ ...createWeapon(561, 0, () => 0), stackCount: n }); }",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-the-old-find-hands-pellets",
+    "file": "src/systems/thunderlock.js",
+    "old": "    rolls();\n    return [];",
+    "new": "    return [createPellets(4 + Math.floor(rolls() * 9))];",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-the-curve-the-guns",
+    "file": "src/systems/thunderlock.js",
+    "old": "id: 'dwemer-pellets', final: true, minTier: PELLET_FIND_MIN_TIER, weights: PELLET_FIND_WEIGHTS,",
+    "new": "id: 'dwemer-pellets', final: true, minTier: PELLET_FIND_MIN_TIER,",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-a-rats-nest",
+    "file": "src/systems/thunderlock.js",
+    "old": "export const PELLET_FIND_MIN_TIER = 1;",
+    "new": "export const PELLET_FIND_MIN_TIER = 0;",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-the-cap-lifted",
+    "file": "src/systems/thunderlock.js",
+    "old": "Object.freeze({ base: 6, perTier: 2.5, cap: 60 });",
+    "new": "Object.freeze({ base: 6, perTier: 2.5, cap: 600 });",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-not-final",
+    "file": "src/systems/thunderlock.js",
+    "old": "id: 'dwemer-pellets', final: true,",
+    "new": "id: 'dwemer-pellets', final: false,",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-a-finds-own-weights-ignored",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "const w = find.weights ?? UNIQUE_WEIGHTS;",
+    "new": "const w = UNIQUE_WEIGHTS;",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-rolled-before-the-technique",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  techniquePass(minted, rolls);   // TECH1: a weapon's technique",
+    "new": "  items.push(...rollFinalFinds({ ...source, luck }, rolls)); _holdFinalFindsForTests(true); techniquePass(minted, rolls); _holdFinalFindsForTests(false);   // TECH1: a weapon's technique",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-a-draw-for-nothing",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (find.final !== true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (chance > 0 && rolls()",
+    "new": "    if (find.final !== true) continue;\n    const chance = uniqueFindChance(find, source);\n    if (rolls()",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PS-the-stack-one-short",
+    "file": "src/systems/thunderlock.js",
+    "old": "PELLET_FIND_STACK.max - PELLET_FIND_STACK.min + 1)))",
+    "new": "PELLET_FIND_STACK.max - PELLET_FIND_STACK.min)))",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ]
+  },
+  {
+    "name": "PELLETS-SCARCE-the-switch-off-a-no-op-again",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (!lootRarityOn()) return (items.push(...rollFinalFinds({ ...source, luck }, rolls)), items);",
+    "new": "  if (!lootRarityOn()) return items;",
+    "tests": [
+      "test/systems/pelletsscarce.test.js"
+    ],
+    "note": "AUDIT SHIP C2: Loot rarity off, no Pellet would drop anywhere - the shelves sell none - and a gun owned offline starves."
+  }
+]

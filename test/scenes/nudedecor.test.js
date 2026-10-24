@@ -207,6 +207,9 @@ const NO_PERSON = Object.freeze({
   'src/scenes/gatherHost.js': 'gathering nodes',
   'src/scenes/hideouts.js': 'a band\'s camp fire (its people are the encounter pool\'s own)',   // LW12
   'src/scenes/hitEffects.js': 'hit splashes',
+  'src/scenes/ketch/ketchDeckHost.js': 'the sky-ketch\'s clouds round her deck and her engine\'s steam (KT_ARCHIVE) - never a person',   // KETCH
+  'src/scenes/ketch/ketchFight.js': 'the sky-ketch\'s Dwarven constructs as mobile units - never a person; the Warden is a construct too',   // KETCH
+  'src/tools/ketchLab.js': 'the lab\'s Tonal Warden (?warden), a Dwarven construct - never a person',   // KETCH-LOOK KL2
   'src/scenes/horseCartPool.js': 'the cart\'s horse',
   'src/scenes/hostMagic.js': 'spell missiles',
   'src/scenes/lefayMonumentHost.js': 'flowers thrown at Julian LeFay\'s monument (TEXTURE.254\'s roses)',   // LEFAY1

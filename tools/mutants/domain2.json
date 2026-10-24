@@ -137,11 +137,12 @@
   {
     "name": "DOMAIN2-the-relay-minimum",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 255;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 256;",
     "new": "export const GUILD_INSTANCE_RELAY_MIN = 208;",
     "tests": [
       "test/net/domain2_castles.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAINS x MAIN, at the merge): 256, the castle relay renumbered past KETCH's world255."
   },
   {
     "name": "DOMAIN2-no-castle-row",

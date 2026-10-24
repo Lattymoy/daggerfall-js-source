@@ -130,7 +130,7 @@ Considered and NOT done:
   decides, as every act of the writs (PROF1's law): the character still a member, the place still the guild's (held;
   or pledged this week), the units spendable in its Stores (`spendableSql`: own and bought, never gold's or loose), the
   own share what the bought units cannot cover; then the Stores spent bought first (`spendStatements`), the stockpile or
-  the camp filled, the row of the gift (`town_seat_gifts`, migration 0166 - the record and the idempotence). After it,
+  the camp filled, the row of the gift (`town_seat_gifts`, migration 0167 - the record and the idempotence). After it,
   the influence is a seat writ's delivery's (`creditSeatWrit`, keyed `gift:<player>:<rid>`): own units at their value,
   bought at Tribute's rate inside Tribute's share, only for a counting member (seven days in the guild, its account
   fighting for it this week), and the answer says whether it counted (`counted`, `why`). The answer reads the
@@ -171,7 +171,7 @@ Considered and NOT done:
   host's pixel set to seatPixelTest, and its answer pinned), `season1_service.test.js` (the wipe), the service's version
   in twenty test files and `server-account/wrangler.toml`. Mutant records re-aimed by content (12, all dead): the versions', BOARD-UI's read order, the host's
   ceiling.
-- **Version and deploy**: the account service `acct181` (migration 0166; `src/net/seatGiftLaw.js` in the account
+- **Version and deploy**: the account service `acct182` (acct181 on its branch, renumbered past KETCH's at the merge; migration 0167 - 0166 on its branch; `src/net/seatGiftLaw.js` in the account
   deploy's path filter). No relay change. DEPLOY ORDER: the account service, then the site. World-Wide's branch also
   takes acct181 (WW-R): whichever merges second renumbers.
 
@@ -185,7 +185,7 @@ Considered and NOT done:
   region is held (`CASTLE_SALE_SHARE` - `homeLaw.js` HOME_SALE_SHARE, one home), **half** home lost with the region
   (`CASTLE_LOST_SHARE`); the Guildmaster buys and gives up (`CASTLE_POWERS`); the castles a guild may buy - each crown
   it holds whose castle nobody keeps (`castleOffers`).
-- **The service** (`server-account/src/castles.js`, migration 0167 `guild_castles` - one row a castle, keyed by its
+- **The service** (`server-account/src/castles.js`, migration 0168 `guild_castles` - one row a castle, keyed by its
   REGION, so a second buyer finds it taken in the very statement that would write it; a guild that goes takes its castles
   with it). **Buy** (`POST /v1/guilds/castle/buy` `{ character, region, rid }`): one batch whose first statement writes
   the row only where the buyer is still the Guildmaster, the guild still holds the region's crown Charter, no castle
@@ -245,7 +245,7 @@ Considered and NOT done:
 - **Not built here** (section 3's "What it holds"): the vault's hall shelf while a guild keeps a castle
   (`GUILD_VAULT_HALL_SLOTS`), and the guild's banners at the castle's door in the city. The castle's throne room stands
   its guild's banners, roster board and vault chest; the shelf and the door's banners are open.
-- **Version and deploy**: the relay `world255`, the account service `acct181` (DOMAIN1's, one release; migration 0167;
+- **Version and deploy**: the relay `world256` (world255 on its branch, renumbered past KETCH's at the merge), the account service `acct182` (DOMAIN1's, one release; migration 0168;
   `src/net/castleLaw.js` in the account deploy's path filter). DEPLOY ORDER: the relay first (world255), then the account
   service, then the site. World-Wide's branch also takes world255 and acct181: whichever merges second renumbers.
 
@@ -256,7 +256,7 @@ Considered and NOT done:
   (`regionHubs.js` hubClaim), a seat whose kind claims no hub after every one that does, the lower key last. Measured on
   the freeware (2026-10-24): 322 seats, 39 regions, 37 seats of power their hub (Wrothgaria for Newing, Aldcester for
   Koegria the two that are not), 33 named for their region - section 1's count, derived the client's way.
-- **The witness** (`server-account/src/domains.js`, migration 0168): the client standing in a seat town reports, beside the
+- **The witness** (`server-account/src/domains.js`, migration 0169): the client standing in a seat town reports, beside the
   seat (`POST /v1/seats/witness` `{ seat, domain: { region, key } }`, `net/townSeatBook.js` witness off the derivation it
   is handed), its region's seat of power; three agreeing confirm it, the seats' own witnesses (a registered account a
   week old, never one the seats' law ignores - `townSeats.js` seatIgnored), each first answer standing, and a report
@@ -315,7 +315,7 @@ Considered and NOT done:
   list's word; the book; the words and the map; a holding under its Charter). Mutants `tools/mutants/domain3.json` (37).
   PIN MOVED: the faucets (`marks1.test.js`: `domain-fold`), the hard-coded English (`l10n4_hardcoded.test.js`: the seat
   law 180 -> 177, the Charter's names routed), the schema's tables (`accountworker.test.js`: `town_domain_witness`).
-- **Version and deploy**: the account service `acct181` (DOMAIN1's and DOMAIN2's, one release; migration 0168;
+- **Version and deploy**: the account service `acct182` (DOMAIN1's and DOMAIN2's, one release; migration 0169;
   `src/net/domainLaw.js` in the account deploy's path filter). The relay is untouched. DEPLOY ORDER: the account service,
   then the site - an older page reports no seat of power, and its seats read as they did.
 

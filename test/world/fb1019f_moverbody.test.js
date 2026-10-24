@@ -378,11 +378,11 @@ test('VOID-DUNGEON the law: the dungeon\'s record is made the first time it is a
   assert.equal(dungeonVoidRescue(new Collider(() => -Infinity), () => spot)(), null, 'no triangle');
 });
 
-test('VOID-DUNGEON the context: its record\'s spot is the start marker\'s landing, by the way in, else the enter marker\'s, and a realm of the Hour or an Elite Breach keeps none', () => {
+test('VOID-DUNGEON the context: its record\'s spot is the start marker\'s landing, by the way in, else the enter marker\'s, and a realm of the Hour, an Elite Breach or a sky-ketch keeps none', () => {
   const DC = rd('src/scenes/dungeonContext.js');
   const m = /\n {4}voidRescue: (dungeonVoidRescue\(collider, [^\n]*\)),\n/.exec(DC);
   assert.ok(m, 'the context keeps the record');
-  const entry = new Function('dungeonVoidRescue', 'collider', 'api', '_sdRealm', '_egHall', `return ${m[1]};`);   // eslint-disable-line no-new-func
+  const entry = new Function('dungeonVoidRescue', 'collider', 'api', '_sdRealm', '_egHall', '_ketch', `return ${m[1]};`);   // eslint-disable-line no-new-func
   const col = new Collider(() => -Infinity);
   const floor = mesh([[-6, -0.25, -6], [6, 0, 6]]);
   col.addMesh('dungeon', floor.positions, floor.indices, I);
@@ -392,6 +392,7 @@ test('VOID-DUNGEON the context: its record\'s spot is the start marker\'s landin
   assert.equal(entry(dungeonVoidRescue, col, api(null, null), false, false)(), null);
   assert.equal(entry(dungeonVoidRescue, col, api([1, 0, 1], null), true, false)(), null, 'the Hour casts its own void back');
   assert.equal(entry(dungeonVoidRescue, col, api([1, 0, 1], null), false, true)(), null, 'an Elite Breach casts its own void back');
+  assert.equal(entry(dungeonVoidRescue, col, api([1, 0, 1], null), false, false, true)(), null, 'PIN MOVED (KETCH): a sky-ketch casts its own void back - her nets');
 });
 
 test('VOID-DUNGEON the hosts: a body below everything the dungeon stands on - the lowering report\'s swimmer, swum on down out of the map - is stood again at the way in, its fall cleared, and told in the player\'s language; above that depth it is left alone (both dungeon hosts\' own frame lines, run)', () => {

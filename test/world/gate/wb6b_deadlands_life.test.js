@@ -346,10 +346,10 @@ test('WB6b the seams, by source: the world host keeps the Deadlands\' clock on t
   assert.match(gs, /if \(landMesh\) ctx\.dynamicDraws\.push\(\{ gpu: landMesh, object: \{ matrix: identity\(\) \} \}\);/);
   const shards = wm.indexOf('\n      if (isGateArena(dungeonLoc)) for (const d of dungeonCtx.dynamicDraws) if (d.shard) shardMatrix(d.shard, _deadS, d.object.matrix);');
   const clock = wm.indexOf('\n      const _deadS = isGateArena(dungeonLoc) ? (host.deadlandsSeconds?.() ?? performance.now() / 1000) : 0;');
-  const begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
+  const begin = wm.indexOf('renderer.beginFrame(proj, view, _ktLook?.sunDir ?? INTERIOR_LIGHT_DIR, WORLD_FRAME);');   // PIN MOVED (KETCH): the dungeon arm's frame, on a ship's deck in the sun's own direction
   assert.ok(clock > 0 && clock < shards && shards < begin, 'the shards moved before the frame\'s draws, which the shadows record');
   assert.match(wm, /const _cl = courtLighting\(deadlandsFlash\(_deadS\)\);/);
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /\n      if \(!isGateArena\(dfLocation\)(?: && !isArenaFloor\(dfLocation\))?(?: && !_sdRealm)?(?: && !_egHall)?\) sceneAmbience\.update\(dt, \{/, 'no drip, no door, no bird in the Deadlands');   // SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire
+  assert.match(dc, /\n      if \(!isGateArena\(dfLocation\)(?: && !isArenaFloor\(dfLocation\))?(?: && !_sdRealm)?(?: && !_egHall)?(?: && !_ketch)?\) sceneAmbience\.update\(dt, \{/, 'no drip, no door, no bird in the Deadlands');   // KETCH (PIN MOVED): nor aboard the sky-ketch; SD5a (PIN MOVED): nor in the Shattered Hour; EG-ROAR (PIN MOVED): nor in the Spire
   assert.ok(GATE_BLOCK_SIDE > 0);
 });

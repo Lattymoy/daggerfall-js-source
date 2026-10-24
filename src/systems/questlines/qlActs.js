@@ -52,6 +52,10 @@ export const ACT_KINDS = Object.freeze({
   'serpent-slain': 'endgame',   // the Sea Serpent slain
   'star-held': 'endgame',   // a fallen star held through its master's fall (the Starfall - STAR8)
   'heart-star-held': 'endgame',   // the Heart-Star held - the Witches' Night's last star; said in the same turn as its `star-held`, so the festival's finds count one deed (festivalClient.js ONE DEED, ONE FIND)
+  // KETCH (bible/11-Multiplayer/Sky-Ketch.md section 13): the sky-ketch's three (the last a receipt the service holds)
+  'ketch-boarded': 'endgame',   // the anchor-lift ridden up to the Sky-Ketch Mzunthar (the mode machine stood me aboard)
+  'ketch-cell-banked': 'endgame',   // an aether cell of mine set in the Starved Engine or a resonator (the ship's room said it)
+  'warden-felled': 'endgame',   // the Tonal Warden felled - its k1 receipt counted once (`recorded`)
 });
 export const ACT_IDS = Object.freeze(Object.keys(ACT_KINDS));
 

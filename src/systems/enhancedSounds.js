@@ -2,7 +2,7 @@
 // Sounds, add the wind noise to it"): ONE SWITCH FOR THE PORT'S OWN
 // SOUNDS - the ones Daggerfall never played and the enhanced skin adds.
 //
-// Three things ride it today:
+// What rides it:
 //   - the wind loop (systems/wind/windAudio.js, WIND3): a soft, steady wind
 //     under the enhanced outdoors, rising and falling with the wind's
 //     strength, silent indoors - a bed the port makes (FIELD-WIND1:
@@ -16,6 +16,13 @@
 //     boots on the wall, the haul over a sill, a leap's rush and the grit
 //     a failing grip lets go - eleven clips of the port's own
 //     (tools/climbSfx.mjs); Daggerfall's climber climbs in silence.
+//   - the horse's voices and its hooves (systems/horse/horseVoice.js, HORSE-VOICE): DFU's neigh clock saying a voice of
+//     the horse's mood (a mount's whinny, snorts, blows, the gallop's breath in its stride, a spook at foes), and the
+//     hooves on the ground under them - grass, snow, water (tools/horseSfx.mjs); a road keeps DFU's own clop.
+//   - the soundscape (scenes/soundscapeHost.js, SOUNDSCAPE): a deck's air at sea - the swell, the wash, the rigging, a
+//     hull's slaps, the timbers and the ropes, the canvas luffing, spray, gulls near land, the watch bells - and the
+//     sea's own songs at a helm (systems/soundscape/seaAir.js, seaScore.js); on land the surf on a shore, the wild's
+//     voices by climate and hour, a town's murmur, its smithies and its taverns (systems/soundscape/worldAir.js).
 //
 // The switch is the row `enhanced-sounds` on the Features home
 // (systems/features.js), its pref `soundEnhancements` (RF4: the shelf

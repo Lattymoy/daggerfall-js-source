@@ -113,7 +113,7 @@ const CATALOGUE = {
   'title:mastercairn': 'spire open', 'title:mastershade': 'spire open', 'title:masterwellhead': 'spire open', 'title:spirechampion': 'spire ranked',
   'title:spirefirst': 'spire retired', 'title:hourbreaker': 'abyss chance', 'title:hoursfirst': 'abyss retired', 'title:coilbreaker': 'serpent chance',
   'title:gatebreaker': 'broker open', 'title:doorwarden': 'questlines open', 'title:covenbane': 'questlines open', 'title:weirwalker': 'questlines open',
-  'title:hourwitness': 'questlines open', 'title:satakalwitness': 'questlines open', 'title:starwarden': 'questlines seasonal', 'title:witchwarden': 'festival seasonal',
+  'title:hourwitness': 'questlines open', 'title:satakalwitness': 'questlines open', 'title:skyfarer': 'questlines open' /* KETCH (PIN MOVED): the Sky-Ketch's line */, 'title:starwarden': 'questlines seasonal', 'title:witchwarden': 'festival seasonal',
   'title:hearthkeeper': 'festival seasonal', 'title:warden': 'seats open', 'title:protector': 'seats open', 'title:crowned': 'seats open',
   'title:keeper': 'seats open', 'title:champion': 'seats open', 'title:chaptermaster': 'chapters dormant', 'title:chapterofficer': 'chapters dormant',
   'title:formermaster': 'chapters dormant', 'title:highmaster': 'chapters dormant', 'title:seasonmaster': 'chapters dormant', 'title:grandchampion': 'ranked open',

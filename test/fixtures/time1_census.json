@@ -300,6 +300,12 @@
    "why": "the interior's night light"
   },
   {
+   "file": "src/scenes/worldModes.js",
+   "has": "ketchDeck.frameLook(mwv.eye, _dgLit, skyMinutes() % 1440)",
+   "clock": "sky",
+   "why": "KETCH: the sky-ketch's deck by the hour - her light, her haze, her sun"
+  },
+  {
    "file": "src/scenes/shared.js",
    "has": "entity, classicMinutes: worldMinutes(), dt, sinks, activity, realSeconds, raiseMinutes,",
    "clock": "event",
@@ -1232,6 +1238,18 @@
    "has": "arenaSeasonOf(Math.floor(wallMsForClassicMinutes(",
    "clock": "event",
    "why": "a voyage's game day as the realm's wall time - the season of the realm's eight weeks it falls in (SEA-SEASON, the arena's)"
+  },
+  {
+   "file": "src/scenes/ketch/ketchDeckHost.js",
+   "has": "export function ketchMoonNow(sky = skyMinutes(), weather = currentWeather()) {",
+   "clock": "sky",
+   "why": "KETCH-LOOK KL1: the moons over her decks - the world's own sky, its night key"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "drawSky: (yaw, pitch, fov, aspect, vp) => { sky.draw(yaw, pitch, fov, aspect, vp, minuteNow(), playerTicker.classicMinutes, skyMinutes());",
+   "clock": "sky",
+   "why": "KETCH-LOOK KL1: a made level's sky (the arena's floor, her decks) retimed to the sky's own hour"
   }
  ]
 }

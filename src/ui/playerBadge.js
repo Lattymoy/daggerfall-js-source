@@ -133,6 +133,7 @@ export const TITLE_TEXT = Object.freeze({
   hourwitness: 'Witness of the Hour',      // the Hour That Was Not
   satakalwitness: "Satakal's Witness",     // the Old Coil
   starwarden: 'Starwarden',                // STAR8: the Thirteenth of Frostfall
+  skyfarer: 'Skyfarer',                    // KETCH: the Sky-Ketch
   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL'S TWO - bought from a Wyrd Sister, and
   // earned by an account's Hearth Offerings giving 25 cakes; both held for good
   witchwarden: 'Witchwarden',
@@ -377,6 +378,7 @@ export const TITLE_RGBA = Object.freeze({
   // STAR8: the STARWARDEN - a falling star's streak at its deepest violet (render/starfall/starfallPass.js's fall), redder
   // than the Protector's blue and bluer than the Aegis's purple; the beacon's pale violet is the WikiMaid's lilac's
   starwarden: Object.freeze([0.471, 0.314, 1, 1]),           // #7850ff
+  skyfarer: Object.freeze([0.345, 0.847, 1, 1]),           // #58d8ff - the open sky's blue, brighter than her ring (#7cc4ff), which stood 32 from the Chaptermaster's: a title reads apart from every other title by more than 40
   witchwarden: WITCH_FIRE,     // WITCH1: the coven's green - the colour a face that cannot draw a gradient uses
   hearthkeeper: HEARTH_TALLOW,   // WITCH1: the tallow's amber
 });

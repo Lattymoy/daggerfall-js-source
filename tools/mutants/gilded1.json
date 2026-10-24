@@ -20,8 +20,8 @@
   {
     "name": "GILDED1-a-line-over-the-band",
     "file": "src/systems/gilded.js",
-    "old": "  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),",
-    "new": "  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 50),",
+    "old": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),",
+    "new": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 50),",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GILDED1-the-chance",
     "file": "src/systems/gilded.js",
-    "old": "export const GILDED_CHANCE = 1 / 50;",
-    "new": "export const GILDED_CHANCE = 1 / 20;",
+    "old": "export const GILDED_CHANCE = 1 / 100;",
+    "new": "export const GILDED_CHANCE = 1 / 50;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

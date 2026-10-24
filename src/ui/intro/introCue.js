@@ -1,5 +1,5 @@
 // INTRO2. Seconds in the DECODED recording, not an approximate tempo grid.
-// tools/introAudioCheck.mjs reproduces these landmarks from the shipped MP3.
+// tools/introScoreProbe.mjs hears these landmarks in the score (systems/introScore.js).
 // There is no capture correction or arbitrary lead.
 //
 // INTRO2b (Mac, 2026-09-18: "the logo needs to drop with the beat that
