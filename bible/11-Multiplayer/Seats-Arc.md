@@ -12,6 +12,11 @@ design of guild town control - SEAT1 (holding a seat) and SEAT2 (sieges) of THE 
 (`06-Systems/Online-Arc.md`, "THE HOLDINGS ARC") - written out before a line of it is built. Its companion is
 `06-Systems/Professions-Arc.md` (PROF0): the life skills, the materials, the Notice Board, the market and Marks.
 
+**DOMAIN3 (2026-10-24, `Domains.md` section 7): from the seat week `DOMAINS_WEEK` names (week 6, Season 1's first), the
+REGION is what a guild holds - one Charter a region, keyed by its seat of power, every other seat town of the region its
+holding (its Watch, homes and Notice Boards counted for that Charter). This page's per-seat law is the region law's
+history and its numbers, unchanged.**
+
 ## Mac's words
 
 - "So the 3 main castle hubs should be larger capture points, while every other location with a palace (must have)

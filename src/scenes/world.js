@@ -832,7 +832,7 @@ import { setHudRenown } from '../ui/hud/hudRenown.js';   // RENOWN4: my own Reno
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/region/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeon/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
-import { deriveTownSeats, seatAtMapId, seatPixelTest } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
+import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
@@ -1927,7 +1927,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const seatBook = _seatDoor
     ? createTownSeatBook({
       door: _seatDoor, storage: appStorage(), me: _seatDoor.me, character: () => characterIdOf(playerEntity),
-      isSeatPixel: seatPixelTest(townSeats),   // DOMAIN1 (HOST-SPLIT): the seats' own pixels, built in systems/town/townSeats.js
+      seats: townSeats,   // DOMAIN1 (HOST-SPLIT): the seats' own pixels, built in systems/town/townSeats.js; DOMAIN3: and each region's seat of power
       relayNowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null),   // a receipt's life is the relay's
       // CROWN2: a Pact broken early, said in red on every tab as the server's own line (RED1) - offered again while there is no chat yet
       onRed: (line) => (redChat ? redChat(line) : false),

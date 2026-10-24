@@ -83,6 +83,7 @@ on:
       - "src/net/repairLaw.js"
       - "src/net/hallLaw.js"
       - "src/net/castleLaw.js"
+      - "src/net/domainLaw.js"
       - "src/net/heraldryLaw.js"
       - "src/net/townSeatLaw.js"
       - "src/net/townEconLaw.js"

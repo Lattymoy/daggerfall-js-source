@@ -109,7 +109,7 @@ test('PROF5 law: the ledger\'s market kinds - the fee, the tax and the courier b
   // seat's fee given back) - none of them the market's. PIN MOVED (SILVER-WAYS): and a raid's, a guild deed's, a Motherlode's;
   // PIN MOVED (EG-E1): and a Redoubt's of the Elite Breach; PIN MOVED (STAR7): and a fallen star's
   assert.deepEqual(Object.entries(MARKS_KINDS).filter(([, w]) => w === 'mint').map(([k]) => k),
-    ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode', 'serpent', 'gather', 'find', 'eg', 'star', 'craft-writ'], 'the market strikes no Mark');   // PIN MOVED (CRAFT-WRITS): a crafting writ's pay, not the market's
+    ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode', 'serpent', 'gather', 'find', 'eg', 'star', 'castle-sale', 'castle-lost', 'domain-fold', 'craft-writ'], 'the market strikes no Mark');   // PIN MOVED (CRAFT-WRITS): a crafting writ's pay, not the market's; PIN MOVED (DOMAIN2, DOMAIN3): a castle's refunds and a folded Charter's fee, silver home that its purchase or claim burnt
   const sql = src('server-account/migrations/0032_market.sql');
   assert.match(sql, /src_kind TEXT NOT NULL CHECK \(src_kind IN \('mint', 'account', 'guild', 'escrow'\)\)/);
   assert.match(sql, /dst_kind TEXT NOT NULL CHECK \(dst_kind IN \('burn', 'account', 'guild', 'escrow'\)\)/);

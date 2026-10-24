@@ -25,7 +25,7 @@
 import { HALL_OF_RECORDS_SHUT } from '../systems/online/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
 import { accountRefusalText } from '../net/accountClient.js';
 import {
-  seatInfoLine, seatWeekLine, seatSpanWords, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
+  seatInfoLine, holdingTabLine, seatWeekLine, seatSpanWords, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
   SEAT_PLEDGE_WORDS, SEAT_PLEDGE_REGIONS_MAX, TRIBUTE_MARKS_PER_INFLUENCE, CLAIM_THRESHOLD, CLAIM_FEE, CONTESTED_MARGIN, ACCOUNT_SEAT_WEEK_CAP, SEAT_MEMBER_WAIT_S,
   seatHolderLine, seatBattleLine, seatClaimLine, chronicleLine, SEAT_RELINQUISH_WORDS,
   seatRuleLine, seatHoldingLines, edictLine, edictMayFollow, edictForTier, royalTourneyLines, EDICTS, seatTitheCap, SEAT_LEVER_RANKS, BOUNTY_MARKS,
@@ -198,7 +198,7 @@ export const seatGuideOpen = (seat, data) => !(data?.mine?.pledges ?? []).some((
 const SHUT = new Set(['seats-closed', 'no-session', 'auth', 'seat-unconfirmed']);
 
 /**
- * @param {{ seat: { key: number, name: string, region: number, tier: string },
+ * @param {{ seat: { key: number, name: string, region: number, tier: string, charterSeat?: any },
  *   book: ReturnType<typeof import('../net/townSeatBook.js').createTownSeatBook>,
  *   nameOf?: (key: number) => (string|null), banner?: (heraldry: any, width: number) => (Node|null),
  *   enterBattle?: (seat: any, fight: any) => boolean, enterRoyal?: (seat: any, royal: any, watch: boolean) => boolean,
@@ -208,7 +208,11 @@ const SHUT = new Set(['seats-closed', 'no-session', 'auth', 'seat-unconfirmed'])
  *   alive?: () => boolean }} ui
  */
 export function createSeatTab(host, ui) {
-  const { seat, book } = host;
+  const { book } = host;
+  // DOMAIN3 (Domains.md section 7): the board of a HOLDING speaks of its region's Charter - its standings, pledges, works
+  // and gifts are the Charter's (net/townSeatBook.js dressed `charterSeat`); `town` the seat town the board stands in
+  const town = host.seat;
+  const seat = town?.charterSeat ?? town;
   const nameOf = host.nameOf ?? (() => null);
   const banner = host.banner ?? (() => null);
   let data = null, error = null, loading = false;
@@ -544,6 +548,7 @@ export function createSeatTab(host, ui) {
       if (img) charter.append(img);
       const who = el('div', 'seat-who');
       who.append(el('p', 'seat-charter', seatInfoLine(seat, holder?.guild ?? null)));
+      if (town !== seat) who.append(el('p', 'seat-holding', holdingTabLine(town)));   // DOMAIN3: this town a holding of it
       charter.append(who);
       body.append(charter);
       /** PLAIN-UI (bible/10-UI/Plain-Words.md): WHAT THIS IS and the reader's next step (where the standings say it), then

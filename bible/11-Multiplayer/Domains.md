@@ -115,7 +115,7 @@ Considered and NOT done:
 | DOMAIN0 | This record | WRITTEN |
 | DOMAIN1 | Gifts: a member gives fortification materials from their Stores and their bag to the guild's stockpile or Siege Camp in the region - the service's act, its record, the board's form and its words | BUILT (section 5) |
 | DOMAIN2 | The castle: the law, the purchase, the release with the region, the guild's instance on the relay and at the door, the throne room's pieces in it, the Guild window's words | BUILT (section 6) |
-| DOMAIN3 | The region's Charter: the seat of power's witness, the pledge by region, the bailiwick the region, the Watch and the homes region-wide, the Turning and every read by region from `DOMAINS_WEEK`, the fold, the words and the map | planned |
+| DOMAIN3 | The region's Charter: the seat of power's witness, the pledge by region, the bailiwick the region, the Watch and the homes region-wide, the Turning and every read by region from `DOMAINS_WEEK`, the fold, the words and the map | BUILT (section 7) |
 | DOMAIN4 | Past the Bay, once World-Wide and TESA have merged: each province but Cyrodiil a crown Charter, its capital the seat of power (our own data - a table, never witnessed), the capitals' castle interiors and their siege fields; the regions' laws (`seatRegionOk` and the rest) to 69 | planned, waits on #1184 and World-Wide |
 
 ## 5. DOMAIN1 - a gift to the town (BUILT, 2026-10-24)
@@ -242,26 +242,82 @@ Considered and NOT done:
   purchase burnt), the halls' source (`seathall_client.test.js`, `crownhall.test.js`: `seatHallHost.js`). Re-aimed by
   content: soc1's, CROWN-HALL's two and SEAT-HALL's two (the halls' host), HOST-SPLIT's ceiling, INSTANCES' two, SEAT2a2's
   attach and STAFF-PANEL5-HIDDEN's door (the hello's `att`, the door's `guild`) - each run again, dead.
+- **Not built here** (section 3's "What it holds"): the vault's hall shelf while a guild keeps a castle
+  (`GUILD_VAULT_HALL_SLOTS`), and the guild's banners at the castle's door in the city. The castle's throne room stands
+  its guild's banners, roster board and vault chest; the shelf and the door's banners are open.
 - **Version and deploy**: the relay `world255`, the account service `acct181` (DOMAIN1's, one release; migration 0167;
   `src/net/castleLaw.js` in the account deploy's path filter). DEPLOY ORDER: the relay first (world255), then the account
   service, then the site. World-Wide's branch also takes world255 and acct181: whichever merges second renumbers.
 
-## 7. DOMAIN3 - the region's Charter (planned)
+## 7. DOMAIN3 - the region's Charter (BUILT, 2026-10-24)
 
-- **The seat of power**: `systems/town/townSeats.js` names each region's (`seatOfPower`, over the seats it already
-  derives, by `hubClaim`); the client reports its region's beside the seat it stands in (`POST /v1/seats/witness`
-  grows `domain`), the service keeps it as a witnessed fact (`world_witness` kind `domain`, key the region) and
-  `confirmedDomains()` answers region -> key, a key that is a confirmed seat of that region and, in a crown's region,
-  the crown.
-- **The law** (`townSeatLaw.js`): `domainsFrom(week, zero)` off `DOMAINS_WEEK`; the pledge's check (a region's Charter
-  alone); `bailiwickOf` the region's Charter; the Watch's and the homes' places the region's seat towns; the Turning's
-  plan unchanged in its numbers, read over the regions' Charters alone; the fold (above); the words.
-- **The service**: every seat route reads the region's Charter where it read a seat (`seatInfluence.js` the pledge and
-  the sources, `seatHolding.js` the Tithe, Levy and Bounty, `seatTurning.js` the settle and the fold); a migration for
-  the gifts' and the fold's rows.
-- **The client**: the board's Seat tab speaks of the region (the Charter, the standings, the holder, the works, the
-  gifts); the map rings the seat of power and marks the region's other seat towns in the holder's colours; the arrival
-  line; the members' discount by region.
+- **The seat of power, as every client derives it** (`systems/town/townSeats.js` deriveTownSeats `powers`, region -> key):
+  the region's seat whose location ranks first - the crown first in a crown's region, then HUB1's own claim
+  (`regionHubs.js` hubClaim), a seat whose kind claims no hub after every one that does, the lower key last. Measured on
+  the freeware (2026-10-24): 322 seats, 39 regions, 37 seats of power their hub (Wrothgaria for Newing, Aldcester for
+  Koegria the two that are not), 33 named for their region - section 1's count, derived the client's way.
+- **The witness** (`server-account/src/domains.js`, migration 0168): the client standing in a seat town reports, beside the
+  seat (`POST /v1/seats/witness` `{ seat, domain: { region, key } }`, `net/townSeatBook.js` witness off the derivation it
+  is handed), its region's seat of power; three agreeing confirm it, the seats' own witnesses (a registered account a
+  week old, never one the seats' law ignores - `townSeats.js` seatIgnored), each first answer standing, and a report
+  counted only where its seat's was and only for the region that seat stands in (`domain` the answer's word: `counted`,
+  `agreed`, `bad-domain`, `not-counted`). A region's Charter is the confirmed seat of power that is a confirmed seat OF
+  THAT REGION, the crown in a crown's (`net/domainLaw.js` domainSeats). DEPARTURE from section 3's "`world_witness` kind
+  `domain`": its own table, `town_domain_witness` - `world_witness` names its kinds in a CHECK, and a new kind would
+  rebuild the service's largest table (its lean column, triggers and indexes) for some hundred rows. An answer the
+  region's confirmation already says is never written (LEAN-WITNESS's reasoning: it changes nothing the law judges), so
+  the rows stay three a region and the dissenters, read whole a minute an isolate (`DOMAIN_ROWS_KEPT_S`).
+- **When it rules** (`server-account/wrangler.toml` `DOMAINS_WEEK = "6"`, `domainLaw.js` domainsWeekOf / domainsRule):
+  seat week 6, Season 1's first. Safe whenever this merges: before 2026-11-01, Season 0's last Turning wipes every Charter
+  and the law opens on an empty board; after it, the week's pledges at a holding claim nothing at its Turning, and any
+  Charter a Turning since gave a holding folds at the next. Empty keeps the seat law.
+- **The law** (`net/domainLaw.js`, pure): `charterSeats` - each region's seat of power, and every seat of a region with
+  none confirmed (it keeps the seat law until it has one); `charterOf` - the Charter a seat is held under; `chartersMarked`
+  - the seats' list's marks.
+- **The service, by region** (each read `domainsFor` - no read at all where the law does not rule): THE PLEDGE a region's
+  Charter alone (`seatInfluence.js` pledgeSeat, refused `seat-not-charter`); THE WATCH a tick in a holding's own pixel
+  counted at its Charter (claimWatch); THE HOMES a counting member's home anywhere in the region, by the home's own
+  region, five a guild a region as before (gatherStandings); THE BAILIWICK every Notice Board of a region with a seat of
+  power its Charter's - the Tithe of a sale, an order filled and an auction closed (in a read or by the minute's clock),
+  the Levy of a harvest, a Bounty's camp (`seatHolding.js` bailiwickSeats, the region law's week handed through
+  `market.js`, `cron.js` and `professions.js`). A gate's kill, Renown, an Orc camp and a gift (DOMAIN1) already counted
+  at the guild's pledged or held seat in the region, which is now its Charter.
+- **The Turning** (`seatTurning.js` settleWeek, `domainsWeek` handed from the config through settleDueOnce and settleDue):
+  a Turning that opens a region-law week claims a Charter at a seat of power alone, and FOLDS every Charter held at
+  another seat of a region whose seat of power is confirmed - its claim fee home where it began this Season
+  (`domain-fold`, the strike's refund), its coming Edict void, its building projects fallen, what they held and its
+  stockpile moved to the region's Charter's stockpile, its standing works left on a town that is no Charter now, the
+  Chronicle's `fold` line. Season 0's last Turning wipes instead and folds nothing. DEPARTURE from section 3's "at its
+  first Turning ... Pledges made for that week at a seat that is not its region's seat of power move": the fold is the
+  Turning BEFORE the first region-law week, so that week opens on Charters alone, and its pledges are made under the law
+  - none is left to move.
+- **The seats' list** (`/v1/seats/list`): `domains: { from, rule, seats: [[region, key]] }` where `DOMAINS_WEEK` is set,
+  and, while it rules, each seat of power marked `domain` and each holding with its Charter's key (`charter`).
+- **The client**: the seats' book dresses a holding in its Charter (`charterSeat`, as the list says it); a board's
+  bailiwick is read among the Charters (`townSeatLaw.js` bailiwickOf skips a holding), so its Tithe is the Charter's; a
+  holding's shops give the Charter holder's members their discount and its Market Day, its Curfew is the Charter's, its
+  arrival says the Charter's news and takes its Festival, and its streets keep that Festival (`systems/seatEdicts.js`,
+  `scenes/seatFestival.js`); the Seat tab at a holding's board speaks of the Charter, with a line saying so
+  (`ui/seatTab.js`); the arrival - "Ripmore, in the Charter of Anticlere, held by the Silver Hand <SH>." - and the map's
+  box name the Charter, and the map rings a holding in the Charter holder's colours. A seat of power's Charter is named
+  for its region ("the Charter of Koegria"); every Charter's name goes through the text core now (`seat.charter.crown`,
+  `.region`, `.town`), and nine strings were drafted in-session into the thirteen whole languages.
+- **The four hosts**: `scenes/world.js` - the book handed the seats this client derived (`seats: townSeats`, in the
+  entry that handed their pixels): no line added, bootWorld stands at 36,280; `scenes/worldModes.js` - nothing to wire;
+  `scenes/dungeonContext.js` and `scenes/exterior.js` - FLAGGED, nothing to wire.
+- **Recorded, not closed**: a town that is no seat has no Seat tab and gives no members' discount (its shops ask the
+  town's own seat, and it has none) - its board's Tithe, Levy and Bounty are the Charter's; the Chronicle's lines are
+  English sentences around a translated Charter's name, as they were; a region's seat-of-power reports have no strike of
+  their own (a developer clears them in D1 by hand); a region whose seat of power is confirmed mid-week claims nothing
+  that week at its holdings, where its guilds had pledged.
+- **Pins**: `test/net/domain3_regions.test.js` (11: the law; the seat of power derived; the witness; the pledge; a
+  holding's Watch and the region's homes; the bailiwick; the fold and the wipe; a holding's pledge at the fold and the
+  list's word; the book; the words and the map; a holding under its Charter). Mutants `tools/mutants/domain3.json` (37).
+  PIN MOVED: the faucets (`marks1.test.js`: `domain-fold`), the hard-coded English (`l10n4_hardcoded.test.js`: the seat
+  law 180 -> 177, the Charter's names routed), the schema's tables (`accountworker.test.js`: `town_domain_witness`).
+- **Version and deploy**: the account service `acct181` (DOMAIN1's and DOMAIN2's, one release; migration 0168;
+  `src/net/domainLaw.js` in the account deploy's path filter). The relay is untouched. DEPLOY ORDER: the account service,
+  then the site - an older page reports no seat of power, and its seats read as they did.
 
 ## 8. DOMAIN4 - past the Bay (planned)
 
@@ -282,7 +338,9 @@ own). Cyrodiil holds no Charter and no castle - the open zone's (WW-C2).
 | A castle bought and kept after the region falls | SETTLED ON READ: every read of a guild's castles and every castle act releases it first, so no view, door or purchase ever sees it held (`releaseCastles`) |
 | A guild's castle entered by a stranger | The relay's `guild` arm reads the token's verified guild; nobody else is admitted |
 | A released castle's room key reused by its old guild | Its epoch is never offered again; the room admits only the guild its key names, nothing in it stands for a guild that holds no castle, and its memory lapses (`INSTANCE_TTL_MS`). Recorded, not closed: the relay holds no castle table |
-| A region law that moves a live Charter by hand | `DOMAINS_WEEK` at a Season's start; the fold is one rule at one Turning |
+| A region law that moves a live Charter by hand | `DOMAINS_WEEK` at a Season's start; the fold is one rule, read at every Turning that opens a region-law week (a region confirmed late folds at its next) |
+| A seat of power witnessed wrong - three colluding accounts, or a modded MAPS.BSA | The seats' own witnesses and ignored list; a dissent after the confirmation is written and disputes it; a region's Charter must be a confirmed seat of that region, the crown in a crown's. Recorded, not closed: no strike of its own |
+| A holding's war counted at the holding | The pledge refuses it (`seat-not-charter`); its Watch, its homes and its board's Tithe, Levy and Bounty are its Charter's |
 | The provinces' laws written into the Bay's tables before World-Wide merges | DOMAIN4 waits on the merges; DOMAIN1-3 read the Bay's regions only |
 
 ## 10. The four hosts (THE FOUR HOSTS RULE)

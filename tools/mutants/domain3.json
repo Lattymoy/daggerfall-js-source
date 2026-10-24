@@ -1,0 +1,335 @@
+[
+  {
+    "name": "DOMAIN3-week-rule",
+    "file": "src/net/domainLaw.js",
+    "old": "&& week >= domainsWeek;",
+    "new": "&& week > domainsWeek;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-report-region",
+    "file": "src/net/domainLaw.js",
+    "old": "return seatRegionOk(region) && seatKeyOk(key) ? { region, key } : null;",
+    "new": "return seatKeyOk(key) ? { region, key } : null;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-canonical",
+    "file": "src/net/domainLaw.js",
+    "old": "return domain && domainReportText(domain) === text ? { domain } : null;",
+    "new": "return domain ? { domain } : null;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-seat-region",
+    "file": "src/net/domainLaw.js",
+    "old": "    if (!s || s.region !== region) continue;",
+    "new": "    if (!s) continue;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-crown",
+    "file": "src/net/domainLaw.js",
+    "old": "    if (Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) && s.tier !== 'crown') continue;\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-region-with-none",
+    "file": "src/net/domainLaw.js",
+    "old": "    if (!d || d.key === s.key) out.push(s);",
+    "new": "    if (d && d.key === s.key) out.push(s);",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-marks-power",
+    "file": "src/net/domainLaw.js",
+    "old": "k === s.key ? { ...s, domain: true } : { ...s, charter: k };",
+    "new": "k === s.key ? s : { ...s, charter: k };",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-power-crown-first",
+    "file": "src/systems/town/townSeats.js",
+    "old": "  if ((a.tier === 'crown') !== (b.tier === 'crown')) return a.tier === 'crown';\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-power-claimless-last",
+    "file": "src/systems/town/townSeats.js",
+    "old": "  if (!ca !== !cb) return !!ca;",
+    "new": "  if (!ca !== !cb) return !ca;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-power-key-tie",
+    "file": "src/systems/town/townSeats.js",
+    "old": "  return a.key < b.key;\n};",
+    "new": "  return a.key > b.key;\n};",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-witness-region-tie",
+    "file": "server-account/src/domains.js",
+    "old": "if (!s || !d || d.region !== s.region) return 'bad-domain';",
+    "new": "if (!s || !d) return 'bad-domain';",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-witness-agreeing-written",
+    "file": "server-account/src/domains.js",
+    "old": "  if (said === d.key) return 'agreed';\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-facts-ignored",
+    "file": "server-account/src/domains.js",
+    "old": "    if (ignored.has(r.account)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-facts-own-region",
+    "file": "server-account/src/domains.js",
+    "old": "if (factConfirmed(f) && f.domain?.region === Number(k)) out.set",
+    "new": "if (factConfirmed(f)) out.set",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-pledge-charter",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (charterUnder(seat, await domainsFor(db, nowS, env, week)).key !== key) return { error: 'seat-not-charter' };\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-watch-charter",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "    const seat = charterUnder(town, domains);",
+    "new": "    const seat = town;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-homes-region",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "WHERE h.${region ? 'region' : 'map_id'} = ?",
+    "new": "WHERE h.map_id = ?",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-bailiwick-service",
+    "file": "server-account/src/seatHolding.js",
+    "old": "  return charterSeats(seats, await domainsFor(db, nowS, env, weekAt(nowS)));",
+    "new": "  return [...seats];",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-tithe-sale-env",
+    "file": "server-account/src/market.js",
+    "old": "titheAt(db, nowS, from, rowBoard(l), env)",
+    "new": "titheAt(db, nowS, from, rowBoard(l))",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-levy-env",
+    "file": "server-account/src/professions.js",
+    "old": "levyAt(db, nowS, region, [n.x, n.y], env)",
+    "new": "levyAt(db, nowS, region, [n.x, n.y])",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-fold-refund",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) < ${MARKS_MAX}\n      LIMIT 1`).bind(key, utcDay(nowS), nowS, rid, floor));",
+    "new": "      WHERE h.key = ?1 AND h.since_week < ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) < ${MARKS_MAX}\n      LIMIT 1`).bind(key, utcDay(nowS), nowS, rid, floor));",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-fold-stockpile",
+    "file": "server-account/src/seatTurning.js",
+    "old": "SELECT ?2, material, qty FROM town_seat_stockpile WHERE key = ?1 AND qty > 0",
+    "new": "SELECT ?1, material, qty FROM town_seat_stockpile WHERE key = ?1 AND qty > 0",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-claims-at-charters",
+    "file": "server-account/src/seatTurning.js",
+    "old": "...holds.keys()])].filter((k) => charterKeys.has(k)).sort",
+    "new": "...holds.keys()])].filter((k) => registry.has(k)).sort",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-wipe-folds-nothing",
+    "file": "server-account/src/seatTurning.js",
+    "old": "domainsRule(week + 1, domainsWeek) && seasonEndingAt(week, zero)?.n !== 0 ?",
+    "new": "domainsRule(week + 1, domainsWeek) ?",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-turning-week-threaded",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    const r = await settleWeek(db, w, nowS, zero, domainsWeek);",
+    "new": "    const r = await settleWeek(db, w, nowS, zero);",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-list-marks",
+    "file": "server-account/src/index.js",
+    "old": "...(domains?.rule ? { seats: chartersMarked(board.seats, domains.seats) } : {}),",
+    "new": "...({}),",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-book-dress",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (c) out.charterSeat = c;\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-book-witness-domain",
+    "file": "src/net/townSeatBook.js",
+    "old": "door.witness(s, power == null ? undefined : { region: s.region, key: power })",
+    "new": "door.witness(s, undefined)",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-name-region",
+    "file": "src/net/townSeatLaw.js",
+    "old": "if (seat?.domain && REGION_NAMES[seat.region]) return",
+    "new": "if (false && REGION_NAMES[seat.region]) return",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-arrival-holding",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (seat?.charterSeat) return holdingWords(seat);   // DOMAIN3: a holding says its region's Charter\n",
+    "new": "",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-box-holding",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (seat?.charterSeat) return holdingWords(seat, true);",
+    "new": "  if (false) return holdingWords(seat, true);",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-ring-holding",
+    "file": "src/net/townSeatLaw.js",
+    "old": "const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null;",
+    "new": "const h = seat.holder?.guild?.heraldry ?? null;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-bailiwick-client",
+    "file": "src/net/townSeatLaw.js",
+    "old": "if (s.region !== region || /** @type {any} */ (s).charter != null) continue;",
+    "new": "if (s.region !== region) continue;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-shop-charter",
+    "file": "src/systems/seatEdicts.js",
+    "old": "    shopFactor: (b) => seatShopFactor(charterAt(b?.townMapId), host.guildId()),",
+    "new": "    shopFactor: (b) => seatShopFactor(host.seatAt(b?.townMapId), host.guildId()),",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-news-charter",
+    "file": "src/systems/seatEdicts.js",
+    "old": "      const seat = town?.charterSeat ?? town;",
+    "new": "      const seat = town;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-festival-stage",
+    "file": "src/scenes/seatFestival.js",
+    "old": "festivalRules(town?.charterSeat ?? town)",
+    "new": "festivalRules(town)",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN3-tab-seat",
+    "file": "src/ui/seatTab.js",
+    "old": "  const seat = town?.charterSeat ?? town;",
+    "new": "  const seat = town;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  }
+]

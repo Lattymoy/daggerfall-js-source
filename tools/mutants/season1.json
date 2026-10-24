@@ -421,21 +421,23 @@
   {
     "name": "SEASON1-tu-due-zero",
     "file": "server-account/src/seatTurning.js",
-    "old": "const r = await settleWeek(db, w, nowS, zero);",
-    "new": "const r = await settleWeek(db, w, nowS);",
+    "old": "const r = await settleWeek(db, w, nowS, zero, domainsWeek);",
+    "new": "const r = await settleWeek(db, w, nowS, null, domainsWeek);",
     "tests": [
       "test/net/season1_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the Turning is handed the region law's first week beside Season 0's."
   },
   {
     "name": "SEASON1-idx-settle-zero",
     "file": "server-account/src/index.js",
-    "old": "await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))",
-    "new": "await settleDueOnce(ctx.db, nowS)",
+    "old": "await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))",
+    "new": "await settleDueOnce(ctx.db, nowS, null, domainsWeekOf(env.DOMAINS_WEEK))",
     "tests": [
       "test/net/season1_service.test.js",
       "test/ui/seat1c_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the Turning is handed the region law's first week beside Season 0's."
   },
   {
     "name": "SEASON1-idx-badge-season",

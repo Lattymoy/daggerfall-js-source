@@ -42,7 +42,10 @@ export const ORC_CAMP_TEXT = 'The Orc Raids: your guild gains 50 influence at it
  */
 export function createSeatEdicts(host) {
   let festiveUntil = -Infinity;
-  const edictAt = (mapId) => host.seatAt(mapId)?.holder?.edict ?? null;
+  /** DOMAIN3: the Charter a town's shops, watch and news answer to - a holding's its region's (net/townSeatBook.js dressed
+   *  `charterSeat`), every other seat its own. */
+  const charterAt = (mapId) => { const s = host.seatAt(mapId); return s?.charterSeat ?? s ?? null; };
+  const edictAt = (mapId) => charterAt(mapId)?.holder?.edict ?? null;
   const curfew = () => edictAt(host.here()) === 'curfew';
   /** The seat whose bailiwick a map pixel in `region` lies in, dressed - null where the region holds none. */
   const bailiwick = (region, pixel) => bailiwickOf(host.seats() ?? [], region, pixel);
@@ -50,9 +53,10 @@ export function createSeatEdicts(host) {
   return {
     /** THE SHOP'S FACTOR (7.2, 7.6): what a seat town's shop asks this player, as a share of its price - its building's
      *  town (`b.townMapId`), 1 anywhere else. */
-    shopFactor: (b) => seatShopFactor(host.seatAt(b?.townMapId), host.guildId()),
+    shopFactor: (b) => seatShopFactor(charterAt(b?.townMapId), host.guildId()),
     /** THE ARRIVAL (7.3, 7.6): the town's news said after its line, and a Festival's buff taken for a game day. */
-    arrived(seat) {
+    arrived(town) {
+      const seat = town?.charterSeat ?? town;   // DOMAIN3: a holding's news is its Charter's
       const news = seatArrivalNews(seat);
       if (news) host.say?.(news, 5);
       if (seat?.holder?.edict === 'festival') {

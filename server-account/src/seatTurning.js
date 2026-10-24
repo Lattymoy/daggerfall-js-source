@@ -51,9 +51,11 @@ import { mustChange } from './realm.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import { seatWeekOf, seatWeekStartMs, seatKeyOk, turningPlan, seatGlyphsOf, seatTitleOf, SEAT_WEEK_MS, STANDING_START, placeBattles, atSiegeWindow, CROWN_SEAT_REGIONS, conscriptionDue,
-  fealtyReckoning, fealtyTribute, TITHE_CAP, seasonEndingAt, seasonStanding, seasonTitles, seasonOf, seasonRibbons, keptWholeSeason } from '../../src/net/townSeatLaw.js';
+  fealtyReckoning, fealtyTribute, TITHE_CAP, seasonEndingAt, seasonStanding, seasonTitles, seasonOf, seasonRibbons, keptWholeSeason, seasonFloor } from '../../src/net/townSeatLaw.js';
 import { tideAt } from '../../src/net/tideLaw.js';   // SEASON1 part two: the Tides
 import { MARKS_MAX } from '../../src/net/marksLaw.js';
+import { confirmedDomains } from './domains.js';   // DOMAIN3: the regions' seats of power, as the Turning reads them
+import { charterSeats, domainsRule } from '../../src/net/domainLaw.js';   // DOMAIN3: the Charters, and the week the region law rules
 
 /** SEASON1 (18: "At its end seats, influence, fortifications and history are wiped; Marks, the Stores and profession
  *  tracks are kept"): what Season 0's last Turning clears, after it has settled its own week. DECIDED: what money is
@@ -101,16 +103,23 @@ async function namesOf(db, ids) {
  * @param {number} week
  * @param {number} nowS
  * @param {number|null} [zero]
+ * @param {number|null} [domainsWeek] DOMAIN3: the seat week the region law first rules (domainLaw.js domainsWeekOf), or null
  */
-export async function settleWeek(db, week, nowS, zero = null) {
+export async function settleWeek(db, week, nowS, zero = null, domainsWeek = null) {
   if (await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(week).first()) return { settled: false };
   const atS = turningOf(week);
   const registry = await confirmedSeats(db, nowS, { fresh: true });   // D1-LOAD: the Turning reads the table as it stands
   const { results: pledgedKeys = [] } = await db.prepare('SELECT DISTINCT key FROM town_seat_pledges WHERE week = ?').bind(week).all();
   const { results: holdRows = [] } = await db.prepare('SELECT key, guild_id, region, tier, standing, truce_week, tithe, owed, since_week FROM town_seat_holds').all();
   const holds = new Map(holdRows.map((h) => [Number(h.key), h]));
-  const keys = [...new Set([...pledgedKeys.map((p) => Number(p.key)), ...holds.keys()])].filter((k) => registry.has(k)).sort((a, b) => a - b);
+  // DOMAIN3 (Domains.md section 7): THE TURNING THAT OPENS A REGION-LAW WEEK - the week after this one ruled by region -
+  // claims a Charter at a region's seat of power alone, and FOLDS every Charter held at another seat of a region whose seat
+  // of power is confirmed (below). Season 0's last Turning wipes every Charter instead, and folds nothing.
+  const domains = domainsRule(week + 1, domainsWeek) && seasonEndingAt(week, zero)?.n !== 0 ? await confirmedDomains(db, nowS, { fresh: true }) : null;
+  const charterKeys = new Set(charterSeats(registry.values(), domains).map((x) => x.key));
+  const keys = [...new Set([...pledgedKeys.map((p) => Number(p.key)), ...holds.keys()])].filter((k) => charterKeys.has(k)).sort((a, b) => a - b);
   const unregistered = holdRows.filter((h) => !registry.has(Number(h.key)));   // AUDIT-SEATS S4: lapsed at this Turning
+  const folded = holdRows.filter((h) => registry.has(Number(h.key)) && !charterKeys.has(Number(h.key)));   // DOMAIN3: the fold
   const { results: legacyRows = [] } = await db.prepare('SELECT key, guild_id, amount FROM town_seat_legacy WHERE week = ?').bind(week).all();
   const legacyOf = new Map(legacyRows.map((l) => [`${l.key}\n${l.guild_id}`, Number(l.amount)]));
   const next = week + 1;
@@ -385,6 +394,31 @@ export async function settleWeek(db, week, nowS, zero = null) {
     stmts.push(db.prepare("UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND week = ? AND state = 'proclaimed'").bind(Number(h.key), next));
     stmts.push(history(Number(h.key), 'unregistered', { guild: names.get(h.guild_id) ?? { name: '', tag: '' } }));
   }
+  // DOMAIN3 (Domains.md section 3, "If it opens later"): THE FOLD - a Charter held at a seat that is not its region's seat
+  // of power, released: its claim fee home where it began this Season (`domain-fold`, what the treasury has room for - the
+  // strike's refund, townSeats.js strikeSeat), its coming Edict void, its building projects fallen and what it held, with
+  // its stockpile, to the region's Charter's stockpile; its standing works stay on a town that is no Charter now
+  const floor = seasonFloor(week, zero);
+  for (const h of folded) {
+    const key = Number(h.key), into = domains?.get(Number(h.region))?.key, rid = `fold-${week}-${key}`;
+    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
+      SELECT 'mint', NULL, 'guild', h.guild_id, 'domain-fold', MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0)),
+        ?2, ?3, 'seats', 'The Turning', ?4
+      FROM town_seat_holds h JOIN marks_ledger l ON l.actor = 'seats' AND l.kind = 'seat-claim' AND l.src_id = h.guild_id
+        AND l.rid IN ('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-' || h.since_week || '-' || h.key)
+      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)
+        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) < ${MARKS_MAX}
+      LIMIT 1`).bind(key, utcDay(nowS), nowS, rid, floor));
+    stmts.push(db.prepare("UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND week = ? AND state = 'proclaimed'").bind(key, next));
+    stmts.push(db.prepare('DELETE FROM town_seat_holds WHERE key = ? AND guild_id = ?').bind(key, h.guild_id));
+    stmts.push(...fortsLapsedStatements(db, key, atS));
+    stmts.push(db.prepare(`INSERT INTO town_seat_stockpile (key, material, qty) SELECT ?2, material, qty FROM town_seat_stockpile WHERE key = ?1 AND qty > 0
+      ON CONFLICT (key, material) DO UPDATE SET qty = town_seat_stockpile.qty + excluded.qty`).bind(key, into));
+    stmts.push(db.prepare('DELETE FROM town_seat_stockpile WHERE key = ?').bind(key));
+    stmts.push(db.prepare(`INSERT INTO town_seat_history (key, week, kind, data, at)
+      SELECT ?1, ?2, 'fold', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`)
+      .bind(key, week, JSON.stringify({ guild: names.get(h.guild_id) ?? { name: '', tag: '' }, into }), nowS, rid));
+  }
   // AUDIT-SEATS S3 (17): THE BATTLES NO RESULT REACHED, void - after every payment the plan reckoned, so the escrow coming
   // home moves none of them; the void asked in its own write (a result that landed since the read rolls the settle back
   // whole, and the next read settles it again with the result in hand), each Sellsword's escrow home
@@ -408,7 +442,7 @@ export async function settleWeek(db, week, nowS, zero = null) {
   // crown's, "Keeper of <Town>, Season N" for a seat held the whole Season), over the Charters that stood its last week
   // through (none lapsed now); and the Chronicle's line at every one of them (Season 0's titles none, its lines wiped below)
   if (ending) {
-    const lapsed = new Set([...plan.upkeep.filter((u) => u.state === 'lapse' || u.state === 'revolt').map((u) => u.key), ...unregistered.map((h) => Number(h.key))]);   // AUDIT-SEATS S4
+    const lapsed = new Set([...plan.upkeep.filter((u) => u.state === 'lapse' || u.state === 'revolt').map((u) => u.key), ...unregistered.map((h) => Number(h.key)), ...folded.map((h) => Number(h.key))]);   // AUDIT-SEATS S4; DOMAIN3: the fold
     const stood = holdRows.filter((h) => !lapsed.has(Number(h.key))).map((h) => ({ key: Number(h.key), guild: h.guild_id, tier: h.tier, since: Number(h.since_week) }));
     const titles = seasonTitles(ending, stood);
     const masters = await guildmastersOf(db, [...new Set(titles.map((t) => t.guild))]);
@@ -472,13 +506,13 @@ export async function seatsBoard(db, seats, nowS) {
  * @param {number} nowS
  * @param {number|null} [zero] SEASON1: the week Season 0 began, or null
  */
-export async function settleDue(db, nowS, zero = null) {
+export async function settleDue(db, nowS, zero = null, domainsWeek = null) {   // DOMAIN3: `domainsWeek`, the region law's first week
   const current = weekAt(nowS);
   const last = (await db.prepare('SELECT MAX(week) AS w FROM town_seat_weeks').first())?.w;
   const from = Math.max(last == null ? current - 1 : Number(last) + 1, current - SETTLE_WEEKS_MAX);
   let n = 0;
   for (let w = from; w < current; w++) {
-    const r = await settleWeek(db, w, nowS, zero);
+    const r = await settleWeek(db, w, nowS, zero, domainsWeek);
     if (r.settled) n++;
     // AUDIT-SEATS S1: a week that failed is the first the next read settles - never one left behind under a later week
     // (the next read starts after the last settled, so a week past a failure would be skipped for good)
@@ -500,7 +534,7 @@ export const SETTLE_LEASE_S = 60;
  * holds the Turning. Nothing due costs the one read it always did - once a week an isolate, since PRIMARY-FOLD (weekKept.js).
  * @param {any} db @param {number} nowS @param {number|null} [zero]
  */
-export async function settleDueOnce(db, nowS, zero = null) {
+export async function settleDueOnce(db, nowS, zero = null, domainsWeek = null) {   // DOMAIN3: `domainsWeek`, the region law's first week
   if (weekSettled(db, 'seats', weekAt(nowS))) return { settled: 0, pending: false };   // PRIMARY-FOLD: this isolate read the week settled (weekKept.js)
   const last = (await db.prepare('SELECT MAX(week) AS w FROM town_seat_weeks').first())?.w;
   if (last != null && Number(last) + 1 >= weekAt(nowS)) { keepWeekSettled(db, 'seats', weekAt(nowS)); return { settled: 0, pending: false }; }
@@ -513,7 +547,7 @@ export async function settleDueOnce(db, nowS, zero = null) {
     ON CONFLICT (id) DO UPDATE SET holder = ?1, until = ?2 WHERE until <= ?3`).bind(holder, nowS + SETTLE_LEASE_S, nowS).run();
   if (!Number(took?.meta?.changes)) return { settled: 0, pending: true };
   try {
-    return { settled: await settleDue(db, nowS, zero), pending: false };
+    return { settled: await settleDue(db, nowS, zero, domainsWeek), pending: false };
   } finally {
     // a release that fails is the lease's own end, SETTLE_LEASE_S on - never the settle's answer lost
     try { await db.prepare('DELETE FROM town_seat_settling WHERE id = 1 AND holder = ?').bind(holder).run(); } catch { /* it runs out */ }

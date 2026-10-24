@@ -3259,6 +3259,11 @@
   "tr": "00138c731c3b",
   "by": "claude-in-session"
  },
+ "account.refusal.seatNotCharter": {
+  "en": "d853e100cf3f",
+  "tr": "908c3b45a955",
+  "by": "claude-in-session"
+ },
  "account.refusal.seatNotHeld": {
   "en": "e235509a4a4f",
   "tr": "1bb1a868dfef",
@@ -31634,6 +31639,21 @@
   "tr": "ca4c08c1dbae",
   "by": "claude-in-session"
  },
+ "seat.charter.crown": {
+  "en": "c18143a45936",
+  "tr": "2fa0d6cb3543",
+  "by": "claude-in-session"
+ },
+ "seat.charter.region": {
+  "en": "5aabb478b1ba",
+  "tr": "83938c5a2511",
+  "by": "claude-in-session"
+ },
+ "seat.charter.town": {
+  "en": "11d9b82eca1e",
+  "tr": "67557513c8c4",
+  "by": "claude-in-session"
+ },
  "seat.gift.campEmpty": {
   "en": "81f298ab8f30",
   "tr": "20a0572882c8",
@@ -31712,6 +31732,31 @@
  "seat.gift.uncounted": {
   "en": "3a28a1d3b78b",
   "tr": "d0b83d597897",
+  "by": "claude-in-session"
+ },
+ "seat.holding.boxHeld": {
+  "en": "8c26d85fef4a",
+  "tr": "e5039b6c1e0f",
+  "by": "claude-in-session"
+ },
+ "seat.holding.boxUnheld": {
+  "en": "9a758d14a327",
+  "tr": "ac3a401ed666",
+  "by": "claude-in-session"
+ },
+ "seat.holding.held": {
+  "en": "447a68be075e",
+  "tr": "72d0b81f2912",
+  "by": "claude-in-session"
+ },
+ "seat.holding.tab": {
+  "en": "c7b210b6ab29",
+  "tr": "9f3b3c3fd209",
+  "by": "claude-in-session"
+ },
+ "seat.holding.unheld": {
+  "en": "364a718e95d0",
+  "tr": "7e33d8ba2bad",
   "by": "claude-in-session"
  },
  "serpent.honour.aura": {

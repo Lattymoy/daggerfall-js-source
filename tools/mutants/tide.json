@@ -1,405 +1,406 @@
 [
- {
-  "name": "TIDE-salt",
-  "file": "src/net/tideLaw.js",
-  "old": "export const TIDE_SALT = 0x71de;",
-  "new": "export const TIDE_SALT = 0x71df;",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-w-calm",
-  "file": "src/net/tideLaw.js",
-  "old": "{ id: 'calm', name: 'Calm', weight: 40 }",
-  "new": "{ id: 'calm', name: 'Calm', weight: 45 }",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-w-harvest",
-  "file": "src/net/tideLaw.js",
-  "old": "{ id: 'harvest', name: 'Harvest', weight: 10 }",
-  "new": "{ id: 'harvest', name: 'Harvest', weight: 5 }",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-w-orcs",
-  "file": "src/net/tideLaw.js",
-  "old": "{ id: 'orcs', name: 'Orc Raids', weight: 10 }",
-  "new": "{ id: 'orcs', name: 'Orc Raids', weight: 5 }",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-w-revolt",
-  "file": "src/net/tideLaw.js",
-  "old": "{ id: 'revolt', name: 'Tax Revolt', weight: 5 }",
-  "new": "{ id: 'revolt', name: 'Tax Revolt', weight: 10 }",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-order",
-  "file": "src/net/tideLaw.js",
-  "old": "  Object.freeze({ id: 'plague', name: 'Plague', weight: 5 }),\n  Object.freeze({ id: 'orcs', name: 'Orc Raids', weight: 10 }),",
-  "new": "  Object.freeze({ id: 'orcs', name: 'Orc Raids', weight: 10 }),\n  Object.freeze({ id: 'plague', name: 'Plague', weight: 5 }),",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-lands",
-  "file": "src/net/tideLaw.js",
-  "old": "export const TIDE_LANDS = Object.freeze(['daggerfall', 'wayrest', 'sentinel', 'marches', 'free']);",
-  "new": "export const TIDE_LANDS = Object.freeze(['wayrest', 'daggerfall', 'sentinel', 'marches', 'free']);",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-mod",
-  "file": "src/net/tideLaw.js",
-  "old": "  let r = gateHash(TIDE_SALT, week, i) % 100;",
-  "new": "  let r = gateHash(TIDE_SALT, i, week) % 100;",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-walk",
-  "file": "src/net/tideLaw.js",
-  "old": "    if (r < t.weight) return t.id;",
-  "new": "    if (r <= t.weight) return t.id;",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-no-land",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (i < 0 || !Number.isSafeInteger(week)) return 'calm';",
-  "new": "  if (!Number.isSafeInteger(week)) return 'calm';",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-whole",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (i < 0 || !Number.isSafeInteger(week)) return 'calm';",
-  "new": "  if (i < 0) return 'calm';",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-land-march",
-  "file": "src/net/tideLaw.js",
-  "old": "kingdomOf(region) ?? (isMarch(region) ? 'marches' :",
-  "new": "kingdomOf(region) ?? (false ? 'marches' :",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-land-free",
-  "file": "src/net/tideLaw.js",
-  "old": "isFreeLand(region) ? 'free' : null);",
-  "new": "isFreeLand(region) ? 'marches' : null);",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-counted",
-  "file": "src/net/tideLaw.js",
-  "old": "export const tideAt = (week, region, counted) => (counted ? tideOf(week, tideLandOf(region)) : 'calm');",
-  "new": "export const tideAt = (week, region, counted) => tideOf(week, tideLandOf(region));",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-line-next",
-  "file": "src/net/tideLaw.js",
-  "old": "${next ? ` Next week: ${tideName(next)}.` : ''}",
-  "new": "",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/ui/tide_client.test.js"
-  ]
- },
- {
-  "name": "TIDE-line-none",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (!land || !now) return null;",
-  "new": "  if (!land) return null;",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-land-name",
-  "file": "src/net/tideLaw.js",
-  "old": "(KINGDOMS[land] ? `the Kingdom of ${KINGDOMS[land].name}` :",
-  "new": "(KINGDOMS[land] ? `${KINGDOMS[land].name}` :",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/ui/tide_client.test.js"
-  ]
- },
- {
-  "name": "TIDE-n-plague-watch",
-  "file": "src/net/tideLaw.js",
-  "old": "plagueWatch: 0.5, plagueFestival: 2,",
-  "new": "plagueWatch: 1, plagueFestival: 2,",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-n-plague-fest",
-  "file": "src/net/tideLaw.js",
-  "old": "plagueWatch: 0.5, plagueFestival: 2,",
-  "new": "plagueWatch: 0.5, plagueFestival: 1,",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-n-daedra",
-  "file": "src/net/tideLaw.js",
-  "old": "  daedraGates: 2,",
-  "new": "  daedraGates: 1,",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-n-wedding",
-  "file": "src/net/tideLaw.js",
-  "old": "weddingFestival: 0.5, weddingStanding: 3,",
-  "new": "weddingFestival: 1, weddingStanding: 2,",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-n-revolt",
-  "file": "src/net/tideLaw.js",
-  "old": "revoltTithe: 5, revoltStanding: -3,",
-  "new": "revoltTithe: 6, revoltStanding: -3,",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-acc-plague",
-  "file": "src/net/townSeatLaw.js",
-  "old": "* (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-  "new": "+ 1e-9);",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-acc-daedra",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
-  "new": "Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1));",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-cost-plague",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(tide === 'plague' ? TIDE_EFFECTS.plagueFestival : tide === 'wedding'",
-  "new": "(false ? TIDE_EFFECTS.plagueFestival : tide === 'wedding'",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-cost-wedding",
-  "file": "src/net/townSeatLaw.js",
-  "old": ": tide === 'wedding' ? TIDE_EFFECTS.weddingFestival : 1) : 1));",
-  "new": ": 1) : 1));",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-cost-festival",
-  "file": "src/net/townSeatLaw.js",
-  "old": "* (edict === 'festival' ? (tide === 'plague'",
-  "new": "* (true ? (tide === 'plague'",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-wed-row",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (tide === 'wedding') add('wedding', STANDING_CHANGES.wedding);",
-  "new": "",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/season1_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-revolt-row",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (tide === 'revolt' && tithe > TIDE_EFFECTS.revoltTithe) add('taxRevolt', STANDING_CHANGES.taxRevolt);",
-  "new": "  if (tide === 'revolt') add('taxRevolt', STANDING_CHANGES.taxRevolt);",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-plan-next",
-  "file": "src/net/townSeatLaw.js",
-  "old": ": edictCost(e, s.tier, s.holder.tideNext), has",
-  "new": ": edictCost(e, s.tier, s.holder.tide), has",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-plan-tide",
-  "file": "src/net/townSeatLaw.js",
-  "old": "tide: s.holder.tide ?? 'calm', shrine:",
-  "new": "shrine:",
-  "tests": [
-   "test/net/tide_law.test.js",
-   "test/net/season1_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-line-cost",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const cost = edictCost(edict, tier, tide);\n  return `${e.name}",
-  "new": "  const cost = edictCost(edict, tier);\n  return `${e.name}",
-  "tests": [
-   "test/net/tide_law.test.js"
-  ]
- },
- {
-  "name": "TIDE-inf-tide",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "freeLand: isFreeLand(seat.region), tide: tideAt(week, seat.region, counted),",
-  "new": "freeLand: isFreeLand(seat.region),",
-  "tests": [
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-inf-pass",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "accountSeatInfluence(v, freeLand ? FREE_LAND_WATCH_BONUS : 0, tide)",
-  "new": "accountSeatInfluence(v, freeLand ? FREE_LAND_WATCH_BONUS : 0)",
-  "tests": [
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-inf-counted",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  const list = await gatherStandings(db, seat, week, nowS, !!season);",
-  "new": "  const list = await gatherStandings(db, seat, week, nowS);",
-  "tests": [
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-inf-tides",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "return season || nextCounted ? { now: tideAt(week, seat.region, !!season), next:",
-  "new": "return null ? { now: tideAt(week, seat.region, !!season), next:",
-  "tests": [
-   "test/net/tide_service.test.js",
-   "test/ui/tide_client.test.js"
-  ]
- },
- {
-  "name": "TIDE-inf-next",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "next: tideAt(week + 1, seat.region, nextCounted) } : null;",
-  "new": "next: tideAt(week, seat.region, true) } : null;",
-  "tests": [
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-tu-counted",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  const counted = !!seasonOf(week, zero);   // SEASON1 part two",
-  "new": "  const counted = false;   // SEASON1 part two",
-  "tests": [
-   "test/net/tide_service.test.js",
-   "test/net/season1_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-tu-tide",
-  "file": "server-account/src/seatTurning.js",
-  "old": "        tide: tideAt(week, seat.region, counted), tideNext:",
-  "new": "        tide: 'calm', tideNext:",
-  "tests": [
-   "test/net/season1_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-tu-next",
-  "file": "server-account/src/seatTurning.js",
-  "old": "tideNext: tideAt(next, seat.region, !!seasonOf(next, zero)),",
-  "new": "tideNext: tideAt(week, seat.region, counted),",
-  "tests": [
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-tu-gather",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    const list = await gatherStandings(db, seat, week, atS, counted);",
-  "new": "    const list = await gatherStandings(db, seat, week, atS);",
-  "tests": [
-   "test/net/season1_service.test.js",
-   "test/net/tide_service.test.js"
-  ]
- },
- {
-  "name": "TIDE-tab-line",
-  "file": "src/ui/seatTab.js",
-  "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n",
-  "new": "",
-  "tests": [
-   "test/ui/tide_client.test.js"
-  ]
- },
- {
-  "name": "TIDE-tab-edict",
-  "file": "src/ui/seatTab.js",
-  "old": "edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm');",
-  "new": "edictLine(chosen, seat.tier);",
-  "tests": [
-   "test/ui/tide_client.test.js"
-  ]
- }
+  {
+    "name": "TIDE-salt",
+    "file": "src/net/tideLaw.js",
+    "old": "export const TIDE_SALT = 0x71de;",
+    "new": "export const TIDE_SALT = 0x71df;",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-w-calm",
+    "file": "src/net/tideLaw.js",
+    "old": "{ id: 'calm', name: 'Calm', weight: 40 }",
+    "new": "{ id: 'calm', name: 'Calm', weight: 45 }",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-w-harvest",
+    "file": "src/net/tideLaw.js",
+    "old": "{ id: 'harvest', name: 'Harvest', weight: 10 }",
+    "new": "{ id: 'harvest', name: 'Harvest', weight: 5 }",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-w-orcs",
+    "file": "src/net/tideLaw.js",
+    "old": "{ id: 'orcs', name: 'Orc Raids', weight: 10 }",
+    "new": "{ id: 'orcs', name: 'Orc Raids', weight: 5 }",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-w-revolt",
+    "file": "src/net/tideLaw.js",
+    "old": "{ id: 'revolt', name: 'Tax Revolt', weight: 5 }",
+    "new": "{ id: 'revolt', name: 'Tax Revolt', weight: 10 }",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-order",
+    "file": "src/net/tideLaw.js",
+    "old": "  Object.freeze({ id: 'plague', name: 'Plague', weight: 5 }),\n  Object.freeze({ id: 'orcs', name: 'Orc Raids', weight: 10 }),",
+    "new": "  Object.freeze({ id: 'orcs', name: 'Orc Raids', weight: 10 }),\n  Object.freeze({ id: 'plague', name: 'Plague', weight: 5 }),",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-lands",
+    "file": "src/net/tideLaw.js",
+    "old": "export const TIDE_LANDS = Object.freeze(['daggerfall', 'wayrest', 'sentinel', 'marches', 'free']);",
+    "new": "export const TIDE_LANDS = Object.freeze(['wayrest', 'daggerfall', 'sentinel', 'marches', 'free']);",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-mod",
+    "file": "src/net/tideLaw.js",
+    "old": "  let r = gateHash(TIDE_SALT, week, i) % 100;",
+    "new": "  let r = gateHash(TIDE_SALT, i, week) % 100;",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-walk",
+    "file": "src/net/tideLaw.js",
+    "old": "    if (r < t.weight) return t.id;",
+    "new": "    if (r <= t.weight) return t.id;",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-no-land",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (i < 0 || !Number.isSafeInteger(week)) return 'calm';",
+    "new": "  if (!Number.isSafeInteger(week)) return 'calm';",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-whole",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (i < 0 || !Number.isSafeInteger(week)) return 'calm';",
+    "new": "  if (i < 0) return 'calm';",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-land-march",
+    "file": "src/net/tideLaw.js",
+    "old": "kingdomOf(region) ?? (isMarch(region) ? 'marches' :",
+    "new": "kingdomOf(region) ?? (false ? 'marches' :",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-land-free",
+    "file": "src/net/tideLaw.js",
+    "old": "isFreeLand(region) ? 'free' : null);",
+    "new": "isFreeLand(region) ? 'marches' : null);",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-counted",
+    "file": "src/net/tideLaw.js",
+    "old": "export const tideAt = (week, region, counted) => (counted ? tideOf(week, tideLandOf(region)) : 'calm');",
+    "new": "export const tideAt = (week, region, counted) => tideOf(week, tideLandOf(region));",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-line-next",
+    "file": "src/net/tideLaw.js",
+    "old": "${next ? ` Next week: ${tideName(next)}.` : ''}",
+    "new": "",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/ui/tide_client.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-line-none",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (!land || !now) return null;",
+    "new": "  if (!land) return null;",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-land-name",
+    "file": "src/net/tideLaw.js",
+    "old": "(KINGDOMS[land] ? `the Kingdom of ${KINGDOMS[land].name}` :",
+    "new": "(KINGDOMS[land] ? `${KINGDOMS[land].name}` :",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/ui/tide_client.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-n-plague-watch",
+    "file": "src/net/tideLaw.js",
+    "old": "plagueWatch: 0.5, plagueFestival: 2,",
+    "new": "plagueWatch: 1, plagueFestival: 2,",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-n-plague-fest",
+    "file": "src/net/tideLaw.js",
+    "old": "plagueWatch: 0.5, plagueFestival: 2,",
+    "new": "plagueWatch: 0.5, plagueFestival: 1,",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-n-daedra",
+    "file": "src/net/tideLaw.js",
+    "old": "  daedraGates: 2,",
+    "new": "  daedraGates: 1,",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-n-wedding",
+    "file": "src/net/tideLaw.js",
+    "old": "weddingFestival: 0.5, weddingStanding: 3,",
+    "new": "weddingFestival: 1, weddingStanding: 2,",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-n-revolt",
+    "file": "src/net/tideLaw.js",
+    "old": "revoltTithe: 5, revoltStanding: -3,",
+    "new": "revoltTithe: 6, revoltStanding: -3,",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-acc-plague",
+    "file": "src/net/townSeatLaw.js",
+    "old": "* (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
+    "new": "+ 1e-9);",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-acc-daedra",
+    "file": "src/net/townSeatLaw.js",
+    "old": "Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
+    "new": "Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1));",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-cost-plague",
+    "file": "src/net/townSeatLaw.js",
+    "old": "(tide === 'plague' ? TIDE_EFFECTS.plagueFestival : tide === 'wedding'",
+    "new": "(false ? TIDE_EFFECTS.plagueFestival : tide === 'wedding'",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-cost-wedding",
+    "file": "src/net/townSeatLaw.js",
+    "old": ": tide === 'wedding' ? TIDE_EFFECTS.weddingFestival : 1) : 1));",
+    "new": ": 1) : 1));",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-cost-festival",
+    "file": "src/net/townSeatLaw.js",
+    "old": "* (edict === 'festival' ? (tide === 'plague'",
+    "new": "* (true ? (tide === 'plague'",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-wed-row",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (tide === 'wedding') add('wedding', STANDING_CHANGES.wedding);",
+    "new": "",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/season1_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-revolt-row",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (tide === 'revolt' && tithe > TIDE_EFFECTS.revoltTithe) add('taxRevolt', STANDING_CHANGES.taxRevolt);",
+    "new": "  if (tide === 'revolt') add('taxRevolt', STANDING_CHANGES.taxRevolt);",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-plan-next",
+    "file": "src/net/townSeatLaw.js",
+    "old": ": edictCost(e, s.tier, s.holder.tideNext), has",
+    "new": ": edictCost(e, s.tier, s.holder.tide), has",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-plan-tide",
+    "file": "src/net/townSeatLaw.js",
+    "old": "tide: s.holder.tide ?? 'calm', shrine:",
+    "new": "shrine:",
+    "tests": [
+      "test/net/tide_law.test.js",
+      "test/net/season1_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-line-cost",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const cost = edictCost(edict, tier, tide);\n  return `${e.name}",
+    "new": "  const cost = edictCost(edict, tier);\n  return `${e.name}",
+    "tests": [
+      "test/net/tide_law.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-inf-tide",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "freeLand: isFreeLand(seat.region), tide: tideAt(week, seat.region, counted),",
+    "new": "freeLand: isFreeLand(seat.region),",
+    "tests": [
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-inf-pass",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "accountSeatInfluence(v, freeLand ? FREE_LAND_WATCH_BONUS : 0, tide)",
+    "new": "accountSeatInfluence(v, freeLand ? FREE_LAND_WATCH_BONUS : 0)",
+    "tests": [
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-inf-counted",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  const list = await gatherStandings(db, seat, week, nowS, !!season, (await domainsFor(db, nowS, env, week)) != null);",
+    "new": "  const list = await gatherStandings(db, seat, week, nowS, false, (await domainsFor(db, nowS, env, week)) != null);",
+    "tests": [
+      "test/net/tide_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the standings read the region's homes where the region law rules."
+  },
+  {
+    "name": "TIDE-inf-tides",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "return season || nextCounted ? { now: tideAt(week, seat.region, !!season), next:",
+    "new": "return null ? { now: tideAt(week, seat.region, !!season), next:",
+    "tests": [
+      "test/net/tide_service.test.js",
+      "test/ui/tide_client.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-inf-next",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "next: tideAt(week + 1, seat.region, nextCounted) } : null;",
+    "new": "next: tideAt(week, seat.region, true) } : null;",
+    "tests": [
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-tu-counted",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  const counted = !!seasonOf(week, zero);   // SEASON1 part two",
+    "new": "  const counted = false;   // SEASON1 part two",
+    "tests": [
+      "test/net/tide_service.test.js",
+      "test/net/season1_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-tu-tide",
+    "file": "server-account/src/seatTurning.js",
+    "old": "        tide: tideAt(week, seat.region, counted), tideNext:",
+    "new": "        tide: 'calm', tideNext:",
+    "tests": [
+      "test/net/season1_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-tu-next",
+    "file": "server-account/src/seatTurning.js",
+    "old": "tideNext: tideAt(next, seat.region, !!seasonOf(next, zero)),",
+    "new": "tideNext: tideAt(week, seat.region, counted),",
+    "tests": [
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-tu-gather",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    const list = await gatherStandings(db, seat, week, atS, counted);",
+    "new": "    const list = await gatherStandings(db, seat, week, atS);",
+    "tests": [
+      "test/net/season1_service.test.js",
+      "test/net/tide_service.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-tab-line",
+    "file": "src/ui/seatTab.js",
+    "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n",
+    "new": "",
+    "tests": [
+      "test/ui/tide_client.test.js"
+    ]
+  },
+  {
+    "name": "TIDE-tab-edict",
+    "file": "src/ui/seatTab.js",
+    "old": "edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm');",
+    "new": "edictLine(chosen, seat.tier);",
+    "tests": [
+      "test/ui/tide_client.test.js"
+    ]
+  }
 ]

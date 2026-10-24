@@ -31,6 +31,7 @@ import { mintMarksRid } from './marksBook.js';
 import { tideAt } from './tideLaw.js';   // SEASON1 part two: the Tides
 import { fortWork, towersText } from './fortLaw.js';   // SEAT2b: the works; part two: the Watchtowers' word
 import { jittered } from './backoff.js';   // STORM-SHED: a failed claim's wait, jittered as every book's is
+import { seatPixelTest } from '../systems/town/townSeats.js';   // DOMAIN3: the Watch's pixels off the derivation the book is handed
 
 /** How long a list read is kept before the next is asked, ms. */
 export const SEAT_LIST_CACHE_MS = 5 * 60_000;
@@ -124,15 +125,18 @@ const giftViewOf = (d) => ({
  *   nowMs?: () => number,
  *   me?: () => (string|null), character?: () => (string|null), rid?: () => string,
  *   isSeatPixel?: (x: number, y: number) => boolean, relayNowS?: () => (number|null),
+ *   seats?: { list: any[], powers?: Map<number, number> }|null,
  *   onRed?: ((line: { text: string, at: number }) => boolean)|null,
  *   rand?: () => number, turnMs?: number, stores?: ((count: any) => void)|null,
  * }} deps SEAT1b: `me` the signed-in account's id, `character` the character standing here, `rid` a fresh request id
  *   (the Marks' own shape), `isSeatPixel` whether this client's own derivation holds a seat at a map pixel, `relayNowS`
  *   the relay's clock (null unheard - a receipt's life is the relay's); CROWN2: `onRed` says a red line (false: not yet);
  *   STORM-SHED: `rand` Math.random's shape, a failed Watch claim's jitter; DAY-TURN: `turnMs` this page's moment past
- *   midnight (net/dayTurn.js); DOMAIN1: `stores` the professions' book told a gift's Stores count (profBook.applyStore)
+ *   midnight (net/dayTurn.js); DOMAIN1: `stores` the professions' book told a gift's Stores count (profBook.applyStore);
+ *   DOMAIN3: `seats` this client's own derivation (systems/town/townSeats.js deriveTownSeats) - its seats' pixels (the
+ *   Watch's, where `isSeatPixel` is not handed) and each region's seat of power, reported beside a seat (`witness`)
  */
-export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null, rand = Math.random, turnMs = 0, stores = null }) {   // DOMAIN1: `stores(count)` the professions' book told a gift's Stores
+export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), seats = null, isSeatPixel = seats ? seatPixelTest(seats) : () => false, relayNowS = () => null, onRed = null, rand = Math.random, turnMs = 0, stores = null }) {   // DOMAIN1: `stores(count)` the professions' book told a gift's Stores
   const turnSpreadMs = Math.floor(rand() * SEAT_TURN_READ_SPREAD_MS);   // D1-LOAD: this client's share of the Turning's read
   /** CROWN2: the red lines already said, by id - read from the device once */
   let redSeen = null;
@@ -251,7 +255,8 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (r?.ok) {
         open = true; data = r.data;
         states = new Map((data?.seats ?? []).map((s) => [s.key, s.state]));
-        dress = new Map((data?.seats ?? []).map((s) => [s.key, { holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null }]));   // SEAT2b part two: its works standing
+        dress = new Map((data?.seats ?? []).map((s) => [s.key, { holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null,   // SEAT2b part two: its works standing
+          ...(s.domain ? { domain: true } : {}), ...(s.charter != null ? { charter: s.charter } : {}), listed: s }]));   // DOMAIN3: a seat of power, a holding's Charter
         sayRed(data?.red);   // CROWN2: the server's red lines, each said once
         return { data, error: null };
       }
@@ -271,7 +276,17 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     get data() { return data; },
     /** SEAT1c: a seat this client derived, dressed in what the service last said of it - its holder and this week's battle
      *  there (both null for an unheld, quiet one, or a seat not read yet). */
-    dressed: (seat) => (seat ? { ...seat, holder: dress.get(seat.key)?.holder ?? null, battle: dress.get(seat.key)?.battle ?? null, forts: dress.get(seat.key)?.forts ?? null } : null),   // SEAT2b part two: and its works
+    dressed: (seat) => {
+      if (!seat) return null;
+      const d = dress.get(seat.key);
+      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null };   // SEAT2b part two: and its works
+      // DOMAIN3 (Domains.md section 7): a seat of power named for its region; a HOLDING dressed in its Charter as the list
+      // says it (`charterSeat`) - its war, its Edicts and its members' discount are its Charter's
+      if (d?.domain) out.domain = true;
+      const c = d?.charter != null ? dress.get(d.charter)?.listed : null;
+      if (c) out.charterSeat = c;
+      return out;
+    },
     /** SEAT1c: the guildmaster gives up a Charter at its board - `{ ok, text }`, the list and standings read afresh after. */
     async relinquish(seat) {
       let r;
@@ -292,7 +307,9 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (t[String(s.key)] === dayNow()) return false;
       t[String(s.key)] = dayNow();
       writeReported(t);
-      try { await door.witness(s); } catch { /* the next day asks again */ }
+      // DOMAIN3: and the region's seat of power as this client's own MAPS.BSA ranks it (deriveTownSeats `powers`)
+      const power = seats?.powers?.get(s.region);
+      try { await door.witness(s, power == null ? undefined : { region: s.region, key: power }); } catch { /* the next day asks again */ }
       return true;
     },
     // ─── SEAT1d: THE HOLDER'S LEVERS, A BOUNTY'S CAMP ───────────────
