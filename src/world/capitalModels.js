@@ -55,56 +55,195 @@ function picture(fn, S = CAPITAL_ART_SIZE) {
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const c = fn(x, y); const i = (y * S + x) * 4; img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255; }
   return img;
 }
-/** Courses of ashlar: rows `rowH` texels high, joints dark, each stone's own shade. */
-function ashlar(seed, base, joint, rowH, stoneW, vary) {
-  const n = noise(seed, 8), r = rng(seed + 1), shades = Array.from({ length: 64 }, () => r());
-  return picture((x, y) => {
-    const row = Math.floor(y / rowH), xo = x + (row % 2) * (stoneW / 2), col = Math.floor(xo / stoneW) % 16;
-    if (y % rowH === 0 || xo % stoneW === 0) return joint;
-    return mix(base, mix(base, [255, 255, 255], 0.2), (shades[(row * 16 + col) % 64] - 0.5) * vary + n(x, y) * 0.25);
+// TESA-LORE (the owner: "ensure all new textures your adding fall in line with the detail of vanilla textures. Same
+// resolution and all") - DAGGERFALL'S OWN LOOK, BY ITS OWN NUMBERS. Measured on the freeware's 475 wall and ground
+// textures 64 texels wide (TEXTURE.002 to .099): a few dozen colours a picture (median 42, the middle half 27 to 60) and
+// every texel apart from its neighbour (the mean |dL| to the next texel: median 10.9, the middle half 7.8 to 14.6) -
+// painted pixel art off a palette's ramp, never a smooth gradient. So every picture here is a tone law (0 its ramp's
+// dark end, 1 its light) quantized to its material's ramp of 28 shades through a 4 x 4 ordered dither, each texel
+// with a grain of its own; masonry is laid stone by stone, each stone lit on its top and left edges and shadowed on its
+// bottom and right as Daggerfall's are.
+
+/** The 4 x 4 ordered dither's thresholds. */
+const BAYER = Object.freeze([0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]);
+/** A texel's own grain in [0, 1) - a hash of the picture's seed and the texel, the same on every client. */
+function grain01(seed, x, y) {
+  let h = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(x + 1, 0xc2b2ae35) ^ Math.imul(y + 1, 0x27d4eb2f);
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+/** A material's ramp: `n` shades through its stops (each an [r, g, b]), dark to light - a palette's row. */
+function ramp(stops, n = 28) {
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / (n - 1)) * (stops.length - 1), k = Math.min(stops.length - 2, Math.floor(t));
+    return mix(stops[k], stops[k + 1], t - k);
   });
 }
-/** The pictures, by record. Deterministic (fixed seeds): every client's city is the same stone. */
+/** A painted picture: `tone(x, y)` a value in [0, 1] (or [value, the ramp's index] where it paints from several ramps),
+ *  plus the texel's grain, dithered onto its ramp's shades. */
+function painted(ramps, tone, { seed = 1, grain = 0.06 } = {}) {
+  const R = Array.isArray(ramps[0][0]) ? ramps : [ramps];
+  return picture((x, y) => {
+    const v = tone(x, y), [t, k] = Array.isArray(v) ? v : [v, 0], shades = R[k];
+    const d = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5, g = (grain01(seed, x, y) - 0.5) * 2 * grain;
+    return shades[Math.min(shades.length - 1, Math.max(0, Math.floor((t + g) * (shades.length - 1) + 0.5 + d)))];
+  });
+}
+/** Lengths of random size in [lo, hi] that sum to `total` exactly (a course's stones, a wall's courses) - the last
+ *  folded into the one before where it would fall short. */
+function lengths(r, lo, hi, total = CAPITAL_ART_SIZE) {
+  const out = [];
+  let sum = 0;
+  while (sum < total) { const n = lo + Math.floor(r() * (hi - lo + 1)); out.push(n); sum += n; }
+  out[out.length - 1] -= sum - total;
+  if (out.length > 1 && out[out.length - 1] < lo) out[out.length - 2] += out.pop();
+  return out;
+}
+/**
+ * MASONRY, laid stone by stone and tiling both ways: courses `rows` [lo, hi] texels high, stones `stones` [lo, hi] wide,
+ * each course shifted its own way; a joint of `joint` texels; each stone its own shade, mottled, lit on its top and left
+ * edges and shadowed on its bottom and right, a chip here and there. Answers the tone law (and `at(x, y)`: the stone a
+ * texel is, or null in a joint).
+ */
+function masonry(seed, { rows = [10, 16], stones = [16, 28], joint = 1, mottle = 0.18, chips = 0.025 } = {}) {
+  const r = rng(seed), mot = noise(seed + 7, 8), courses = [];
+  let y0 = 0;
+  for (const h of lengths(r, rows[0], rows[1])) {
+    let x0 = 0;
+    const list = lengths(r, stones[0], stones[1]).map((w) => { const st = { x0, w, base: 0.38 + r() * 0.34 }; x0 += w; return st; });
+    courses.push({ y0, h, shift: Math.floor(r() * CAPITAL_ART_SIZE), list });
+    y0 += h;
+  }
+  const at = (x, y) => {
+    const c = courses.find((q) => y >= q.y0 && y < q.y0 + q.h), xs = (x + c.shift) % CAPITAL_ART_SIZE, st = c.list.find((q) => xs >= q.x0 && xs < q.x0 + q.w);
+    return { dy: y - c.y0, h: c.h, dx: xs - st.x0, w: st.w, base: st.base };
+  };
+  const tone = (x, y) => {
+    const { dy, h, dx, w, base } = at(x, y);
+    if (dy < joint || dx < joint) return 0.06 + mot(x, y) * 0.08;
+    let t = base + (mot(x, y) - 0.5) * 2 * mottle;
+    if (dy === joint) t += 0.24;
+    if (dx === joint) t += 0.12;
+    if (dy === h - 1) t -= 0.2;
+    if (dx === w - 1) t -= 0.14;
+    if (grain01(seed + 3, x, y) < chips) t -= 0.28;
+    return t;
+  };
+  return { tone, at };
+}
+/** SHINGLES (slate): rows `h` texels high (a divisor of the picture's side, so they tile), tiles `w` [lo, hi] wide staggered row to row - each its shade, its top lit,
+ *  its lower edge in its own shadow, the gaps dark. */
+function shingles(seed, { h = 8, w = [9, 14] } = {}) {
+  const r = rng(seed), rows = Array.from({ length: CAPITAL_ART_SIZE / h }, () => ({ shift: Math.floor(r() * CAPITAL_ART_SIZE), tiles: (() => { let x0 = 0; return lengths(r, w[0], w[1]).map((tw) => { const t = { x0, w: tw, base: 0.4 + r() * 0.3 }; x0 += tw; return t; }); })() }));
+  const mot = noise(seed + 5, 8);
+  return (x, y) => {
+    const row = rows[Math.floor(y / h)], dy = y % h, xs = (x + row.shift) % CAPITAL_ART_SIZE, t = row.tiles.find((q) => xs >= q.x0 && xs < q.x0 + q.w), dx = xs - t.x0;
+    if (dy === 0 || dx === 0) return 0.05;
+    let v = t.base + (mot(x, y) - 0.5) * 0.2;
+    if (dy === 1) v += 0.2;
+    if (dy >= h - 2) v -= 0.16;
+    if (dx === t.w - 1) v -= 0.1;
+    return v;
+  };
+}
+/** The cyclic distance between two texels' columns or rows, and its signed twin (the nearer way round). */
+const wrap = (d) => { const a = Math.abs(d) % CAPITAL_ART_SIZE; return Math.min(a, CAPITAL_ART_SIZE - a); };
+const toward = (d) => ((((d + CAPITAL_ART_SIZE / 2) % CAPITAL_ART_SIZE) + CAPITAL_ART_SIZE) % CAPITAL_ART_SIZE) - CAPITAL_ART_SIZE / 2;
+/** Cells about `n` seeded points, tiling: each texel's nearest point, its distance and the second nearest's. */
+function cells(seed, n) {
+  const r = rng(seed), pts = Array.from({ length: n }, () => [r() * CAPITAL_ART_SIZE, r() * CAPITAL_ART_SIZE, r()]);
+  return (x, y) => {
+    let a = Infinity, b = Infinity, k = 0;
+    pts.forEach(([px, py], i) => { const d = Math.hypot(wrap(x + 0.5 - px), wrap(y + 0.5 - py)); if (d < a) { b = a; a = d; k = i; } else if (d < b) b = d; });
+    return { d: a, edge: b - a, k, p: pts[k] };
+  };
+}
+
+/** The pictures, by record. Deterministic (fixed seeds): every client's city is the same stone. Every law tiles: its noise
+ *  sampled at whole multiples of the texel, its courses, rows and stripes dividing the picture's side. */
 export function capitalArt() {
   const out = new Map();
+  const stone = (record, seed, stops, o) => { const m = masonry(seed, o); out.set(record, painted(ramp(stops), m.tone, { seed })); return m; };
+  // marble: pale and veined, never a joint (the Tower's, the statues')
   const veins = noise(0x5a11, 6), cloud = noise(0x5a12, 3);
-  out.set(CAPITAL_ART.marble, picture((x, y) => mix([228, 224, 214], [192, 188, 180], cloud(x, y) * 0.5 + Math.max(0, 1 - Math.abs(veins(x, y) - 0.5) * 18) * 0.5)));
+  out.set(CAPITAL_ART.marble, painted(ramp([[164, 160, 152], [204, 200, 190], [232, 228, 218], [248, 246, 238]]), (x, y) => { const v = Math.abs(veins(x, y) - 0.5); return 0.62 + (cloud(x, y) - 0.5) * 0.4 - (v < 0.02 ? 0.42 : v < 0.05 ? 0.18 : 0); }, { seed: 0x5a13, grain: 0.07 }));
   const burnish = noise(0x6a1d, 4);
-  out.set(CAPITAL_ART.gold, picture((x, y) => mix([156, 112, 36], [236, 196, 92], 0.35 + burnish(x, y) * 0.55 + Math.sin(y / 3) * 0.08)));
-  out.set(CAPITAL_ART.wallStone, ashlar(0x3a11, [176, 168, 150], [96, 90, 80], 8, 16, 0.5));
-  const slate = noise(0x7001, 8);
-  out.set(CAPITAL_ART.roof, picture((x, y) => (y % 6 === 0 ? [44, 50, 58] : mix([62, 72, 84], [92, 102, 112], slate(x, y) + ((x + (Math.floor(y / 6) % 2) * 4) % 8 === 0 ? -0.4 : 0)))));
-  out.set(CAPITAL_ART.bridgeStone, ashlar(0x3b22, [150, 142, 128], [84, 78, 70], 16, 32, 0.4));
-  out.set(CAPITAL_ART.dark, picture(() => [22, 20, 18]));
-  const crag = noise(0x7a01, 5), fine = noise(0x7a02, 16), seam = noise(0x7a03, 4);
-  out.set(CAPITAL_ART.rock, picture((x, y) => (Math.abs(seam(x, y) - 0.5) < 0.025 ? [70, 66, 60] : mix([112, 106, 96], [168, 160, 146], crag(x, y) * 0.7 + fine(x, y) * 0.3))));
-  const blue = noise(0x7b01, 8);
-  out.set(CAPITAL_ART.blueSlate, picture((x, y) => (y % 6 === 0 ? [30, 44, 70] : mix([44, 72, 118], [84, 116, 162], blue(x, y) + ((x + (Math.floor(y / 6) % 2) * 4) % 8 === 0 ? -0.45 : 0)))));
-  const grain = noise(0x7c01, 12);
-  out.set(CAPITAL_ART.timber, picture((x, y) => (y % 8 === 0 ? [52, 36, 24] : mix([90, 62, 38], [136, 98, 62], grain(x * 0.25, y * 2) * 0.8 + ((x + Math.floor(y / 8) * 23) % 32 === 0 ? -0.5 : 0)))));
-  out.set(CAPITAL_ART.nordStone, ashlar(0x3c33, [118, 118, 114], [58, 58, 56], 10, 20, 0.45));
-  out.set(CAPITAL_ART.ochre, ashlar(0x3d44, [196, 150, 92], [120, 86, 52], 12, 24, 0.35));
-  const patina = noise(0x7d01, 6);
-  out.set(CAPITAL_ART.bronze, picture((x, y) => mix([120, 78, 40], [92, 146, 120], patina(x, y) * 0.8 + (y % 8 === 0 ? 0.2 : 0))));
-  out.set(CAPITAL_ART.cloth, picture((x) => (Math.floor(x / 8) % 2 ? [176, 46, 38] : [222, 186, 92])));
-  const facet = noise(0x7e01, 4);
-  out.set(CAPITAL_ART.crystal, picture((x, y) => mix([150, 210, 226], [236, 250, 255], facet(x, y) * 0.7 + (Math.abs(((x + y) % 32) - 16) < 1 ? 0.5 : 0))));
-  const furrow = noise(0x7f01, 10);
-  out.set(CAPITAL_ART.bark, picture((x, y) => mix([58, 42, 28], [112, 86, 58], furrow(x * 3, y * 0.4) * 0.9)));
-  const leaf = noise(0x7f02, 16), shade = noise(0x7f03, 4);
-  out.set(CAPITAL_ART.leaves, picture((x, y) => mix([34, 72, 26], [112, 156, 58], leaf(x, y) * 0.65 + shade(x, y) * 0.35)));
-  out.set(CAPITAL_ART.sandstone, ashlar(0x3e55, [212, 176, 124], [150, 118, 78], 10, 22, 0.3));
-  const glaze = noise(0x8001, 6);
-  out.set(CAPITAL_ART.terracotta, picture((x, y) => (y % 5 === 0 ? [120, 54, 30] : mix([184, 86, 44], [222, 128, 70], glaze(x, y)))));
-  const moss = noise(0x8101, 8), stone = ashlar(0x3f66, [92, 104, 84], [48, 56, 44], 14, 28, 0.5);
-  out.set(CAPITAL_ART.mossStone, picture((x, y) => { const i = (y * CAPITAL_ART_SIZE + x) * 4, c = [stone.data[i], stone.data[i + 1], stone.data[i + 2]]; return moss(x, y) > 0.55 ? mix(c, [40, 96, 36], 0.4) : c; }));
-  // TESA-LORE: tanned hide in panels, their seams stitched
-  const tan = noise(0x8201, 10);
-  out.set(CAPITAL_ART.hide, picture((x, y) => ((x % 21 === 0 && y % 3 !== 0) || (y % 32 === 0 && x % 3 !== 0) ? [92, 66, 40] : mix([150, 112, 72], [196, 158, 110], tan(x, y)))));
-  // TESA-LORE: sugarcane - its stalks close-set, their nodes pale, leaves dark between
+  out.set(CAPITAL_ART.gold, painted(ramp([[96, 62, 18], [160, 112, 36], [222, 178, 72], [252, 230, 146]]), (x, y) => 0.5 + (burnish(x, y) - 0.5) * 0.7 + Math.sin((y * Math.PI * 12) / CAPITAL_ART_SIZE) * 0.12, { seed: 0x6a1e, grain: 0.1 }));
+  stone(CAPITAL_ART.wallStone, 0x3a11, [[70, 64, 54], [118, 110, 96], [176, 168, 150], [212, 204, 188]], { rows: [11, 16], stones: [18, 30], mottle: 0.14 });
+  out.set(CAPITAL_ART.roof, painted(ramp([[26, 30, 36], [58, 66, 78], [92, 102, 114], [134, 144, 154]]), shingles(0x7001), { seed: 0x7002 }));
+  stone(CAPITAL_ART.bridgeStone, 0x3b22, [[48, 44, 38], [104, 98, 88], [150, 142, 128], [192, 184, 168]], { rows: [14, 21], stones: [24, 38] });
+  const murk = noise(0x5d01, 8);
+  out.set(CAPITAL_ART.dark, painted(ramp([[10, 9, 8], [22, 20, 18], [36, 33, 30]], 4), (x, y) => 0.35 + murk(x, y) * 0.3, { seed: 0x5d02, grain: 0.25 }));
+  const lumps = noise(0x7a01, 5), fine = noise(0x7a02, 16), seam = noise(0x7a03, 4);
+  out.set(CAPITAL_ART.rock, painted(ramp([[44, 40, 36], [98, 92, 82], [146, 138, 124], [190, 182, 166]]), (x, y) => (Math.abs(seam(x, y) - 0.5) < 0.022 ? 0.04 : 0.45 + (lumps(x, y) - lumps((x + 2) % 64, (y + 2) % 64)) * 2.2 + (fine(x, y) - 0.5) * 0.3), { seed: 0x7a04, grain: 0.08 }));
+  out.set(CAPITAL_ART.blueSlate, painted(ramp([[18, 28, 50], [42, 68, 112], [74, 106, 152], [120, 152, 192]]), shingles(0x7b01, { w: [8, 12] }), { seed: 0x7b02 }));
+  const grainT = noise(0x7c01, 4), r7 = rng(0x7c02), planks = (() => { let y0 = 0; return lengths(r7, 7, 10).map((h) => { const p = { y0, h, ends: [Math.floor(r7() * 64), Math.floor(r7() * 64)], base: 0.38 + r7() * 0.26 }; y0 += h; return p; }); })();
+  const knots = Array.from({ length: 4 }, () => [r7() * 64, r7() * 64]);
+  out.set(CAPITAL_ART.timber, painted(ramp([[38, 24, 14], [84, 56, 34], [128, 92, 58], [170, 128, 84]]), (x, y) => {
+    const p = planks.find((q) => y >= q.y0 && y < q.y0 + q.h), dy = y - p.y0;
+    if (dy === 0 || p.ends.includes(x)) return 0.04;
+    const knot = knots.some(([kx, ky]) => Math.hypot(wrap(x - kx) * 0.6, wrap(y - ky) * 1.4) < 1.8);
+    return p.base + (grainT(x, y * 4) - 0.5) * 0.5 + (dy === 1 ? 0.16 : 0) - (dy === p.h - 1 ? 0.14 : 0) - (knot ? 0.3 : 0);
+  }, { seed: 0x7c03 }));
+  stone(CAPITAL_ART.nordStone, 0x3c33, [[36, 36, 34], [78, 78, 74], [118, 118, 114], [156, 156, 150]], { rows: [9, 14], stones: [14, 26], mottle: 0.2, chips: 0.04 });
+  stone(CAPITAL_ART.ochre, 0x3d44, [[90, 62, 34], [156, 114, 66], [200, 154, 96], [234, 196, 138]], { rows: [11, 15], stones: [20, 30] });
+  const patina = noise(0x7d01, 6), pit = noise(0x7d02, 16);
+  out.set(CAPITAL_ART.bronze, painted([ramp([[46, 30, 16], [102, 66, 34], [146, 98, 52]], 18), ramp([[40, 72, 58], [84, 132, 108], [136, 182, 156]], 14)], (x, y) => [0.5 + (pit(x, y) - 0.5) * 0.7, patina(x * 2, y) > 0.64 ? 1 : 0], { seed: 0x7d03, grain: 0.1 }));
+  const fold = noise(0x7d11, 4);
+  out.set(CAPITAL_ART.cloth, painted([ramp([[104, 28, 20], [168, 50, 38], [212, 84, 64]], 18), ramp([[146, 112, 44], [196, 160, 80], [228, 200, 124]], 18)], (x, y) => [0.5 + ((x + y) & 1 ? 0.03 : -0.03) + (fold(x, y) - 0.5) * 0.5, Math.floor(x / 16) % 2], { seed: 0x7d12, grain: 0.06 }));
+  const facets = cells(0x7e01, 9);
+  out.set(CAPITAL_ART.crystal, painted(ramp([[70, 130, 156], [130, 196, 214], [196, 236, 246], [244, 252, 255]]), (x, y) => { const c = facets(x, y); return c.edge < 1.4 ? 0.98 : 0.3 + c.p[2] * 0.5 + (c.d / 24) * 0.15; }, { seed: 0x7e02, grain: 0.05 }));
+  const furrow = noise(0x7f01, 4);
+  out.set(CAPITAL_ART.bark, painted(ramp([[22, 15, 9], [56, 40, 26], [94, 70, 46], [134, 104, 72]]), (x, y) => { const f = furrow(x * 3, y); return f < 0.3 ? 0.1 : 0.2 + f * 0.6 + (f > 0.72 ? 0.1 : 0); }, { seed: 0x7f04, grain: 0.07 }));
+  const leafy = cells(0x7f02, 30);
+  out.set(CAPITAL_ART.leaves, painted(ramp([[16, 38, 14], [38, 76, 24], [76, 120, 40], [126, 164, 66], [176, 200, 104]]), (x, y) => { const c = leafy(x, y); return c.d > 5.2 ? 0.06 : 0.42 + c.p[2] * 0.22 + ((toward(c.p[0] - x - 0.5) + toward(c.p[1] - y - 0.5)) / 10) * 0.2; }, { seed: 0x7f03, grain: 0.06 }));
+  stone(CAPITAL_ART.sandstone, 0x3e55, [[118, 88, 54], [180, 146, 100], [214, 180, 128], [240, 214, 166]], { rows: [9, 13], stones: [16, 26], mottle: 0.14 });
+  const glaze = noise(0x8001, 6), r8 = rng(0x8002), tileShift = Array.from({ length: 8 }, () => Math.floor(r8() * 8));
+  out.set(CAPITAL_ART.terracotta, painted(ramp([[78, 30, 14], [150, 66, 32], [200, 104, 56], [234, 150, 96]]), (x, y) => {
+    const row = Math.floor(y / 8), dy = y % 8, dx = (x + tileShift[row]) % 8;
+    return 0.28 + 0.5 * Math.sin((Math.PI * (dx + 0.5)) / 8) - (dy < 2 ? 0.26 : 0) + (glaze(x, y) - 0.5) * 0.2;
+  }, { seed: 0x8003 }));
+  const moss = noise(0x8101, 8), mossStone = masonry(0x3f66, { rows: [12, 16], stones: [20, 30], mottle: 0.2 });
+  out.set(CAPITAL_ART.mossStone, painted([ramp([[30, 36, 28], [70, 80, 64], [102, 114, 92], [140, 150, 124]]), ramp([[18, 44, 14], [40, 86, 26], [78, 128, 44]], 16)], (x, y) => (moss(x, y) > 0.58 && mossStone.at(x, y).dy >= 1 ? [0.35 + moss(x, y) * 0.6, 1] : [mossStone.tone(x, y), 0]), { seed: 0x3f67 }));
+  // TESA-LORE: tanned hide in panels, their seams stitched, wrinkled
+  const tan = noise(0x8201, 10), crease = noise(0x8202, 6);
+  out.set(CAPITAL_ART.hide, painted(ramp([[70, 48, 28], [130, 96, 60], [176, 138, 92], [210, 176, 128]]), (x, y) => ((x % 16 === 0 && y % 3 !== 0) || (y % 32 === 0 && x % 3 !== 0) ? 0.06 : 0.45 + (tan(x, y) - 0.5) * 0.5 - (Math.abs(crease(x, y) - 0.5) < 0.03 ? 0.18 : 0)), { seed: 0x8203 }));
+  // TESA-LORE: sugarcane - close-set stalks, each lit on its left, its nodes ringed
   const stalk = noise(0x8301, 16);
-  out.set(CAPITAL_ART.cane, picture((x, y) => { const s = x % 6; return s === 0 ? [46, 82, 30] : (y + (Math.floor(x / 6) * 7)) % 13 === 0 ? [188, 196, 120] : mix([110, 150, 64], [160, 190, 96], stalk(x, y) * 0.6 + (s === 3 ? 0.3 : 0)); }));
+  out.set(CAPITAL_ART.cane, painted(ramp([[24, 48, 18], [70, 110, 42], [128, 168, 78], [192, 206, 128]]), (x, y) => {
+    const s = x % 8, k = Math.floor(x / 8), node = (y + k * 7) % 16;
+    if (s === 0) return 0.22;
+    return 0.62 - Math.abs(s - 3) * 0.05 + (node === 0 ? 0.18 : node === 1 ? -0.16 : 0) + (stalk(x, y) - 0.5) * 0.16;
+  }, { seed: 0x8302, grain: 0.05 }));
   return out;
+}
+
+/** TESA-LORE: a picture's span on a capital's faces, metres - Daggerfall's own texel density (`vanillaTexels`). */
+export const CAPITAL_TEXEL_METRES = 1.6;
+/**
+ * TESA-LORE: VANILLA'S TEXEL DENSITY. Measured on the freeware's ARCH3D models (34,982 faces, through MeshReader's own
+ * law): a wall under a 64 x 128 texture carries 40.9 texels a metre (its 64 texels across 1.6 m), a 64 x 64 wall 22.8, a
+ * floor 39 - the middle half of every face 22.5 to 41. The capitals' shapes laid their pictures at repeats of their own:
+ * most at 10.7 texels a metre, the White-Gold Tower at 5, the Graht-Oak's leaves at 3.6 - a quarter of the detail of the
+ * houses beside them. So every capital model's faces are mapped again as it is installed, each triangle on the axis
+ * plane its own face turns to most (a box projection in the world's metres - the MeshBuilder gives every triangle corners
+ * of its own), a 64-texel picture every CAPITAL_TEXEL_METRES: 40 texels a metre, and no less than 30.4 on a face tilted
+ * from its plane (the shapes' own coordinates stay the stand-in view's).
+ * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number> }} m @param {number} [metres]
+ */
+export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
+  const p = m.positions, ix = m.indices, uvs = new Float32Array((p.length / 3) * 2);
+  for (let t = 0; t < ix.length; t += 3) {
+    const [a, b, c] = [ix[t] * 3, ix[t + 1] * 3, ix[t + 2] * 3];
+    const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2], vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
+    const ax = Math.abs(uy * vz - uz * vy), ay = Math.abs(uz * vx - ux * vz), az = Math.abs(ux * vy - uy * vx);
+    for (const i of [a, b, c]) {
+      const [u, w] = ay >= ax && ay >= az ? [p[i], p[i + 2]] : ax >= az ? [p[i + 2], -p[i + 1]] : [p[i], -p[i + 1]];
+      uvs[(i / 3) * 2] = u / metres;
+      uvs[(i / 3) * 2 + 1] = w / metres;
+    }
+  }
+  return { ...m, uvs };
 }
 
 /**
@@ -217,7 +356,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.helstromWalks]: () => buildHelstromWalks(),
     [CAPITAL_MODELS.palisade]: () => buildPalisade(),
   };
-  for (const [id, build] of Object.entries(builds)) registerCustomModel(Number(id), () => northward(build()), () => true, { climateFree: true });
+  for (const [id, build] of Object.entries(builds)) registerCustomModel(Number(id), () => vanillaTexels(northward(build())), () => true, { climateFree: true });   // TESA-LORE: at vanilla's texel density
   let made = null;
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
   addTextures(Object.values(CAPITAL_ART).map((record) => ({ archive: CAPITAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `capital-${CAPITAL_ARCHIVE}_${record}`, build: async () => pictureOf(record) })));

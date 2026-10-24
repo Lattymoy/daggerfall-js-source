@@ -18,7 +18,7 @@ import { buildManeEstate, buildManePalace, buildTwoMoonsTemple } from '../src/wo
 import { buildHist } from '../src/world/capitalHelstrom.js';
 import { buildGrahtOak, spiralAt, spiralInner, limbForks } from '../src/world/capitalFalinesti.js';
 import { buildAlinorPalace, buildAlinorBridges, buildAlinorWall, alinorStairY, alinorTowers } from '../src/world/capitalAlinor.js';
-import { CAPITAL_ARCHIVE, CAPITAL_ART, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
+import { CAPITAL_ARCHIVE, CAPITAL_ART, CAPITAL_ART_SIZE, CAPITAL_TEXEL_METRES, capitalArt, vanillaTexels, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
 
 const sane = (m) => {
@@ -381,4 +381,62 @@ test('TESA-LORE Helstrom in the heart-mud (UESP: "the marsh of Helstrom is very 
   let top = 1;
   for (let i = 1; i < m.positions.length; i += 3) if (m.positions[i] > m.positions[top]) top = i;
   assert.ok(m.positions[top] > T.h, 'its crown over its trunk\'s height');
+});
+
+// ── THE PICTURES AND THEIR TEXELS ───────────────────────────────
+
+/** A picture's detail as the freeware's was measured: its distinct colours, the mean |dL| from a texel to the next on
+ *  its row, its luminance's spread - and, for its tiling, the mean |dL| across its wrap (its last column to its first,
+ *  its last row to its first) beside the strongest across any of its inner columns and rows (a joint, a seam of its own):
+ *  a picture that does not tile shows a seam stronger than any it paints. */
+const detail = (px, S = CAPITAL_ART_SIZE) => {
+  const L = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2], at = (x, y) => ((y % S) * S + (x % S)) * 4;
+  const set = new Set(), cols = new Float64Array(S), rows = new Float64Array(S);
+  let hf = 0, s = 0, s2 = 0;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const i = at(x, y), l = L(i), dx = Math.abs(l - L(at(x + 1, y))), dy = Math.abs(l - L(at(x, y + 1)));
+    set.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]); hf += dx; s += l; s2 += l * l; cols[x] += dx / S; rows[y] += dy / S;
+  }
+  const n = S * S, m = s / n;
+  return { colours: set.size, hf: hf / n, std: Math.sqrt(s2 / n - m * m), seam: [cols[S - 1], rows[S - 1]], inner: [Math.max(...cols.slice(0, S - 1)), Math.max(...rows.slice(0, S - 1))] };
+};
+
+test('TESA-LORE the capitals\' pictures at vanilla\'s detail (the owner: "fall in line with the detail of vanilla textures. Same resolution and all"): each 64 x 64 - the width of Daggerfall\'s wall and ground textures - and each but the doors\' dark within the freeware\'s own band (its 475 such textures, the tenth to the ninetieth percentile): 16 to 84 colours, a texel 5.4 to 18.4 from the next, a spread of 11.3 to 41.6; every one tiling without a seam', () => {
+  const art = capitalArt();
+  assert.equal(CAPITAL_ART_SIZE, 64);
+  for (const [name, record] of Object.entries(CAPITAL_ART)) {
+    const img = art.get(record);
+    assert.deepEqual([img.width, img.height], [64, 64], name);
+    const d = detail(img.data);
+    if (name !== 'dark') {
+      assert.ok(d.colours >= 16 && d.colours <= 84, `${name}: ${d.colours} colours`);
+      assert.ok(d.hf >= 5.4 && d.hf <= 18.4, `${name}: ${d.hf.toFixed(1)} from texel to texel`);
+      assert.ok(d.std >= 11.3 && d.std <= 41.6, `${name}: a spread of ${d.std.toFixed(1)}`);
+    }
+    for (const a of [0, 1]) assert.ok(d.seam[a] <= d.inner[a] + 1, `${name} tiles ${a ? 'down' : 'across'}: ${d.seam[a].toFixed(1)} over its wrap, ${d.inner[a].toFixed(1)} the strongest inside`);
+  }
+});
+
+test('TESA-LORE vanilla\'s texel density on every capital model (the freeware\'s ARCH3D faces: the middle half 22.5 to 41 texels a metre, a 64 x 128 wall 40.9): every face of every installed model 30.4 to 40 texels a metre, the box projection\'s law', () => {
+  const full = CAPITAL_ART_SIZE / CAPITAL_TEXEL_METRES;
+  assert.ok(Math.abs(full - 40) < 1e-9, 'a 64-texel picture across 1.6 m');
+  const quad = vanillaTexels({ positions: [0, 0, 0, 2, 0, 0, 2, 3, 0], indices: [0, 1, 2] });
+  assert.deepEqual([...quad.uvs].map((v) => +v.toFixed(4)), [0, 0, 1.25, 0, 1.25, -1.875], 'a wall facing z: x across, y up (negative v, MeshReader\'s)');
+  _resetCapitals();
+  installCapitals({ addTextures: () => 0 });
+  let faces = 0;
+  for (const id of Object.values(CAPITAL_MODELS)) {
+    const m = customModelFor(id);
+    for (let t = 0; t < m.indices.length; t += 3) {
+      const ix = [0, 1, 2].map((k) => m.indices[t + k]);
+      const P = ix.map((v) => [0, 1, 2].map((a) => m.positions[v * 3 + a])), U = ix.map((v) => [m.uvs[v * 2] * 64, m.uvs[v * 2 + 1] * 64]);
+      const e1 = P[1].map((x, k) => x - P[0][k]), e2 = P[2].map((x, k) => x - P[0][k]);
+      const wa = Math.hypot(e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]) / 2;
+      if (wa < 0.01) continue;
+      const ta = Math.abs((U[1][0] - U[0][0]) * (U[2][1] - U[0][1]) - (U[2][0] - U[0][0]) * (U[1][1] - U[0][1])) / 2, dens = Math.sqrt(ta / wa);
+      assert.ok(dens >= full * Math.sqrt(1 / Math.sqrt(3)) - 0.05 && dens <= full + 0.05, `model ${id}: ${dens.toFixed(2)} texels a metre`);
+      faces++;
+    }
+  }
+  assert.ok(faces > 100000, `${faces} faces`);
 });

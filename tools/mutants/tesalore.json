@@ -523,5 +523,59 @@
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
+  },
+  {
+    "name": "TESA-LORE-art-four-shades",
+    "file": "src/world/capitalModels.js",
+    "old": "function ramp(stops, n = 28) {",
+    "new": "function ramp(stops, n = 4) {",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-art-smooth",
+    "file": "src/world/capitalModels.js",
+    "old": "    return shades[Math.min(shades.length - 1, Math.max(0, Math.floor((t + g) * (shades.length - 1) + 0.5 + d)))];",
+    "new": "    return mix(shades[0], shades[shades.length - 1], t + g + d * 0);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-art-undithered-ungrained",
+    "file": "src/world/capitalModels.js",
+    "old": "const d = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5, g = (grain01(seed, x, y) - 0.5) * 2 * grain;",
+    "new": "const d = 0, g = 0;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-texels-unmapped",
+    "file": "src/world/capitalModels.js",
+    "old": "registerCustomModel(Number(id), () => vanillaTexels(northward(build())), () => true,",
+    "new": "registerCustomModel(Number(id), () => northward(build()), () => true,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-texels-coarse",
+    "file": "src/world/capitalModels.js",
+    "old": "export const CAPITAL_TEXEL_METRES = 1.6;",
+    "new": "export const CAPITAL_TEXEL_METRES = 6.4;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-texels-floor-flat",
+    "file": "src/world/capitalModels.js",
+    "old": "ay >= ax && ay >= az ? [p[i], p[i + 2]]",
+    "new": "ay >= ax && ay >= az ? [p[i], p[i]]",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
   }
 ]

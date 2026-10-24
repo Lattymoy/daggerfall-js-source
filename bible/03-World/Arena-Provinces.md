@@ -1071,10 +1071,35 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   dark ground) but the paving at the Xanmeer's foot (58 m about it); the Hist, the heart of an Argonian city, grown from
   44 m to 64 m (its trunk 9 m, its crown 30 m) and ringed on its isle by eight standing stones of mossy stone under
   their capstones, closed, the ways between them open.
+- **The pictures and their texels, at vanilla's detail** (`world/capitalModels.js` capitalArt, `vanillaTexels`; the
+  owner: *"ensure all new textures your adding fall in line with the detail of vanilla textures. Same resolution and
+  all"*). Measured on the freeware (the player's ARENA2; nothing of it kept):
+  - **Resolution**: Daggerfall's wall and ground textures are 64 texels wide - 1,087 records 64 x 64 and 521 64 x 128
+    of 6,713 (the rest flats and odd sizes). Every capital picture is 64 x 64, as it was.
+  - **Detail**: its 475 wall and ground textures 64 texels wide (TEXTURE.002 to .099) hold a few dozen colours a picture
+    (the tenth to the ninetieth percentile 16 to 84, median 42), each texel apart from the next on its row (mean |dL|
+    5.4 to 18.4, median 10.9), their luminance spread 11.3 to 41.6 - painted off a palette's ramp, every stone bevelled.
+    The capital pictures were smooth noise and flat masonry: marble 1.4 from texel to texel, gold 0.5, timber 1.1,
+    bronze 0.7; gold, bronze and the leaves 119 to 154 colours of gradient. All twenty-one are painted again in
+    Daggerfall's manner, not only the two this slice added (`hide`, `cane`): a tone law quantized to its material's
+    ramp of 28 shades (`ramp`) through a 4 x 4 ordered dither with a texel's own grain (`painted`); masonry laid stone by
+    stone (`masonry`: courses and stones of random length summing to the side, each stone its shade, mottled, lit on its
+    top and left edges, shadowed on its bottom and right, chipped here and there, the joints dark); slate and terracotta
+    in shingles and barrel tiles; timber in planks with grain and knots; crystal in facets; leaves in lit clusters; cane
+    in stalks ringed at their nodes. Every one of them within the freeware's band but the doors' dark; every law tiles
+    (noise at whole multiples of the texel, courses, rows and stripes dividing the side - the timber, bark, gold,
+    terracotta, hide and bronze laws did not, and do now).
+  - **Texel density**: the freeware's ARCH3D faces (34,982, through MeshReader's law) carry 40.9 texels a metre under a
+    64 x 128 wall texture, 22.8 under a 64 x 64 one, 39 on a floor - the middle half 22.5 to 41. The capitals' shapes laid
+    their pictures at repeats of their own: most faces 10.7 texels a metre, the White-Gold Tower's 5, the Graht-Oak's
+    leaves 3.6 - a quarter of the detail of Daggerfall's houses. Every capital model is mapped again as it is installed
+    (`vanillaTexels`, on the model door's build): each triangle on the axis plane its face turns to most, a picture every
+    `CAPITAL_TEXEL_METRES` (1.6 m) - 40 texels a metre, 30.4 the least on a face tilted from its plane. The shapes' own
+    texture coordinates stay the stand-in view's.
 
 ## Pins
 
-`test/tesalore_capitals.test.js` (13, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
+`test/tesalore_capitals.test.js` (15, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
 and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
 other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
 ring each with its figure, Talos the tallest over the middle, the eight below him; the court paved, closed at its plinths
@@ -1096,16 +1121,21 @@ mirrored, within its wall, off the palace and the palanquin, closed with the way
 path; the estate wholly on the palace's own blocks, its gate south, walled elsewhere; the palanquin's dais and canopy;
 installed) and its moons (gilt over the palace's dome, its four minarets and both temple domes, the palace's horns off
 its axis); Helstrom in the heart-mud (the mud, the paving, the isle, the canal; the Hist grown; its stones on its isle,
-closed, their pillars, the way between open; its crown over its trunk). Mutants `tools/mutants/tesalore.json` (58, all
-dead; the watch towers' own ground rule survived as the wall band's twin and went; the bridges' flat deck survived a
-first pin, made the arch's own; the walkway's top survived a first pin through its underside, made the floor's own). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
+closed, their pillars, the way between open; its crown over its trunk); the pictures at vanilla's detail (each 64 x 64;
+each but the doors' dark within the freeware's band of colours, texel-to-texel |dL| and spread; each tiling, its wrap no
+stronger than its strongest inner joint) and vanilla's texel density (the law on a wall; every face of every installed
+model 30.4 to 40 texels a metre). Mutants `tools/mutants/tesalore.json` (64, all dead; the watch towers' own ground rule
+survived as the wall band's twin and went; the bridges' flat deck survived a first pin, made the arch's own; the
+walkway's top survived a first pin through its underside, made the floor's own; the shingles' wrap shifted survived the
+seam pin - their own gaps hide it - and was not kept: tiling there rests on its construction). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
 blocks, the college's district, the Hall of the Dead's cell), `test/tesa10c_capitals.test.js` (Mournhold's middle cells,
 its districts, its closed ground, its first own block's law, its plaza's ring, statue and porch - the porch's pin made
 specific: it passed with the porch turned; Alinor's palace's top on its terraces, the Crystal Tower's pins retired with
 it, its closed ground; Torval's palace and temple tops their crescents') and `test/audit_tesa.test.js` (Mournhold's start markers, through A6-1's own
 law); `tools/mutants/tesa10.json`'s curtain-gate record and `tesa10c.json`'s five Mournhold records re-aimed (two
 renamed, `statue-open` and `fane-porch-turned`) and two of Alinor's, its `crystal-no-tip` deleted with its law, and two of
-Torval's (its quay's water, its dome's finial), all judged dead but the plaza's recorded equivalent;
+Torval's (its quay's water, its dome's finial), and `tesa10.json`'s marble, install and turning records after the
+pictures and the texel law, all judged dead but the plaza's recorded equivalent;
 `test/tesa11_imperial.test.js` (the Prison's bearing, the slices' names, the Arboretum's grass off the court, the city
 wall's reach to its watch towers); `tools/mutants/tesa11.json`'s slice-names record re-aimed by content, judged dead.
 
