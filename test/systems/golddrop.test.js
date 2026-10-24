@@ -233,6 +233,7 @@ const PIECE = {
   button: [...FOOTER, EL('div', 'packgold'), EL('button', 'act goldbtn')], field: [...FOOTER, EL('form', 'goldfield')],
   bagButton: [...FOOTER, EL('button', 'act bagbtn')],   // AUDIT2 BAG1 U3: the Materials Bag's door on a plain pack
   vaultButton: [...FOOTER, EL('button', 'act vaultbtn')],   // GUILD-PANE REVIEW R1-4: the Guild Vault's door beside it
+  storageButton: [...FOOTER, EL('button', 'act storagebtn')],   // STORAGE: the one door for the wagon, the bag and the vault
   wornRow: [...FOOTER.slice(0, -1), EL('div', 'pack'), EL('div', 'pack-main'), EL('section', 'charcol'), EL('section', 'equipped'),
     EL('div', 'wornmap'), EL('button', 'wornrow')],
 };
@@ -561,6 +562,24 @@ test('GUILD-PANE REVIEW R1-4: the footer\'s Guild Vault button takes no height -
     assert.equal(px(b['min-height']) + px(b['margin-top']) + px(b['margin-bottom']), 20, `${at}: its box the footer's 20px line`);
     assert.equal(b['padding-left'], env.w <= 520 ? '8px' : '12px', `${at}: the bag button's sides`);
     const after = styleAt(env, PIECE.vaultButton, 'after');
+    if (env.pointer !== 'coarse') { assert.equal(after.content, undefined, `${at}: no finger, no target`); continue; }
+    const border = px((b.border ?? '').split(' ')[0]);
+    assert.equal(px(b['min-height']) - 2 * border - px(after.top) - px(after.bottom), 44, `${at}: a finger's 44px`);
+  }
+});
+
+// STORAGE (part of GUILD-PANE; Travis: "I think we could just have that materials bag appear as "Storage" and have it show
+// that pane on the right where you can select Wagon, Materials Bag, or Guild Vault right?"): THE ONE STORAGE DOOR on the
+// footer is the bag button's case again (R1-4's, the vault's) - an .act's own height - and takes the same rules: drawn at
+// 32, sunk into the footer, a finger's 44 a target inside it.
+test('STORAGE: the footer\'s Storage button takes no height - the bag button\'s rules, its box the footer\'s 20px line, a finger\'s 44 a target inside the footer (mutants: the rules unwritten; the target cut to the drawing; the narrow sides)', () => {
+  for (const env of EVERY) {
+    const at = `${env.w}px ${env.pointer}`;
+    const b = styleAt(env, PIECE.storageButton);
+    assert.equal(px(b['min-height']), 32, `${at}: drawn at 32`);
+    assert.equal(px(b['min-height']) + px(b['margin-top']) + px(b['margin-bottom']), 20, `${at}: its box the footer's 20px line`);
+    assert.equal(b['padding-left'], env.w <= 520 ? '8px' : '12px', `${at}: the bag button's sides`);
+    const after = styleAt(env, PIECE.storageButton, 'after');
     if (env.pointer !== 'coarse') { assert.equal(after.content, undefined, `${at}: no finger, no target`); continue; }
     const border = px((b.border ?? '').split(' ')[0]);
     assert.equal(px(b['min-height']) - 2 * border - px(after.top) - px(after.bottom), 44, `${at}: a finger's 44px`);
