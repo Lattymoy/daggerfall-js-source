@@ -4,50 +4,76 @@
 // its own blocks' laws of the metres from the anchor (x east, z south) and its landmarks' measures
 // (world/tamrielCapitals.js lays them; world/capitalMournhold.js and its kin build the landmarks). Pure.
 
+import { hash32 } from './spawnedDungeons.js';
+
 const plan = (rows) => Object.freeze(rows.map((r) => Object.freeze(r.split(' '))));
 const cells = (o) => Object.freeze(Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Object.freeze(v.map((c) => Object.freeze(c)))])));
-/** A capital's own blocks: each code's name (`TESA<tag><code>.RMB`) under one tile law and one closed law. */
-const ownBlocks = (tag, codes, tile, closed) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}${code}.RMB`, tile, closed })])));
+/** A capital's own blocks: each code's name (`TESA<tag><code>.RMB`) under one tile law and one closed law (TESA-LORE: and
+ *  one tree law, where it plants any). */
+const ownBlocks = (tag, codes, tile, closed, tree = null) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}${code}.RMB`, tile, closed, ...(tree ? { tree } : {}) })])));
 const inBox = (dx, dz, x, z, w, d) => Math.abs(dx - x) < w / 2 && Math.abs(dz - z) < d / 2;
 
 // ---------------------------------------------------------------- Mournhold
 
-/** MOURNHOLD'S MEASURES, metres from its anchor (the grid's middle, Plaza Brindisi Dorom's): the plaza (its ring and
- *  its fountain and column), the High Fane east of it, the Royal Palace north of it, the Great Bazaar's stalls in the
- *  south-west, the walls of ochre stone round the city's six by six. */
+/** MOURNHOLD'S MEASURES, metres from its anchor (the grid's middle, the Royal Palace's) - TESA-LORE: Tribunal's city
+ *  (UESP): the Temple Courtyard "at the northern end of Mournhold", the High Fane at its centre; the Royal Palace that
+ *  "forms the center of the city"; Plaza Brindisi Dorom "the southernmost quadrant ... a public garden dominated by a
+ *  great statue at its center" - Almalexia in battle with Mehrunes Dagon - its gates west to Godsreach, east to the Great
+ *  Bazaar and north to the palace; the Great Bazaar's stalls before its shops in the east; the walls of ochre stone round
+ *  the city's six by six. (TESA10c stood the plaza at the middle, the palace north, the Fane east, the bazaar south-west.) */
 export const MOURNHOLD = Object.freeze({
-  plaza: Object.freeze({ r: 70, ring: 1.1, band: 1.2, gate: 8, fountain: 10, column: 1.8, columnH: 16 }),
-  fane: Object.freeze({ x: 204.8, z: 0, plinth: 64, plinthH: 5, drumR: 22, drumH: 19, domeH: 20, pavilion: 22, pavR: 7, pavH: 13, porch: 12 }),
-  palace: Object.freeze({ x: 0, z: -204.8, w: 70, d: 36, h: 16, domeR: 10, sideR: 7, tower: 4, towerH: 30 }),
-  bazaar: Object.freeze({ x: -204.8, z: 153.6, w: 190, d: 90, cols: 6, rows: 3, stall: 12, deep: 8, poles: 3.2 }),
+  plaza: Object.freeze({ x: 0, z: 204.8, r: 70, ring: 1.1, band: 1.2, gate: 8, path: 4, paved: 20 }),
+  statue: Object.freeze({ base: 17, plinth: 12, plinthH: 5, almalexia: 10, dagon: 13 }),
+  fane: Object.freeze({ x: 0, z: -204.8, plinth: 72, plinthH: 5, drumR: 25, drumH: 22, domeH: 24, pavilion: 25, pavR: 8, pavH: 15, porch: 14 }),
+  court: Object.freeze({ pools: Object.freeze([-55, 55]), poolZ: Object.freeze([-152, -112]), poolW: 16, braziers: Object.freeze([-22, 22]), brazierZ: Object.freeze([-150, -118]), brazierH: 6 }),
+  palace: Object.freeze({ x: 0, z: 0, w: 84, d: 56, h: 18, domeR: 12, sideR: 8, tower: 4.5, towerH: 34 }),
+  bazaar: Object.freeze({ x: 153.6, z: 102.4, w: 76, d: 186, cols: 2, rows: 7, stall: 12, deep: 8, poles: 3.2 }),
   wall: Object.freeze({ half: 330, thick: 5, h: 13, gate: 10, gateH: 9, tower: 6.5, towerH: 18, every: 110 }),
 });
-const mournholdTile = () => 3;
+/** The plaza's own ground: a garden's grass, paved round the statue, along its two axes and at its ring wall's foot. */
+function mournholdTile(dx, dz) {
+  const P = MOURNHOLD.plaza, x = dx - P.x, z = dz - P.z;
+  if (Math.abs(x) >= 102.4 || Math.abs(z) >= 102.4) return 3;
+  const r = Math.hypot(x, z);
+  return r < P.paved || Math.abs(x) < P.path || Math.abs(z) < P.path || Math.abs(r - P.r) < 3 ? 3 : 2;
+}
+/** The climate's own trees (scenery records - world/tamrielCapitals.js's gardens'), and the plans' hash's salt. */
+const TREES = Object.freeze([12, 15, 16, 18]);
+const SALT = 0x3a6e;
+/** The garden's trees: one tile in five of its grass off its hash, clear of the statue's court. */
+function mournholdTree(dx, dz) {
+  if (mournholdTile(dx, dz) !== 2 || Math.hypot(dx - MOURNHOLD.plaza.x, dz - MOURNHOLD.plaza.z) < MOURNHOLD.plaza.paved + 6) return -1;
+  const h = hash32(SALT, Math.floor(dx), Math.floor(dz), 9);
+  return h % 5 === 0 ? TREES[(h >>> 3) % TREES.length] : -1;
+}
 function mournholdClosed(dx, dz) {
-  const M = MOURNHOLD, P = M.plaza, r = Math.hypot(dx, dz);
-  if (r < P.fountain + 1) return true;
-  if (Math.abs(r - P.r) < P.band && Math.min(Math.abs(dx), Math.abs(dz)) > P.gate / 2) return true;
+  const M = MOURNHOLD, P = M.plaza, x = dx - P.x, z = dz - P.z, r = Math.hypot(x, z);
+  if (inBox(dx, dz, P.x, P.z, M.statue.plinth + 1, M.statue.plinth + 1)) return true;
+  if (Math.abs(r - P.r) < P.band && Math.min(Math.abs(x), Math.abs(z)) > P.gate / 2) return true;
   if (inBox(dx, dz, M.fane.x, M.fane.z, M.fane.plinth, M.fane.plinth)) return true;
+  if (M.court.pools.some((px) => inBox(dx, dz, px, (M.court.poolZ[0] + M.court.poolZ[1]) / 2, M.court.poolW, M.court.poolZ[1] - M.court.poolZ[0]))) return true;
   return inBox(dx, dz, M.palace.x, M.palace.z, M.palace.w, M.palace.d);
 }
-export const MOURNHOLD_BLOCKS = ownBlocks('MH', ['R0', 'R1', 'R2', 'R3', 'M0', 'M1', 'F0', 'F1', 'M2', 'M3', 'F2', 'F3', 'B0', 'B1'], mournholdTile, mournholdClosed);
+export const MOURNHOLD_BLOCKS = ownBlocks('MH', ['F0', 'F1', 'F2', 'F3', 'R0', 'R1', 'R2', 'R3', 'B0', 'P0', 'P1', 'B1', 'P2', 'P3'], mournholdTile, mournholdClosed, mournholdTree);
 export const MOURNHOLD_PLAN = plan([
   'G G G G G G G G',
-  'G RESI RESI R0 R1 RESI RESI G',
-  'G RESI TVRN R2 R3 MAGE LIBR G',
-  'G GENR ALCH M0 M1 F0 F1 G',
-  'G ARMR CUST M2 M3 F2 F3 G',
-  'G B0 B1 GEMS BANK TEMP FIGH G',
-  'G BOOK PAWN TVRN RESI THIE RESI G',
+  'G RESI TEMP F0 F1 RESI RESI G',
+  'G RESI RESI F2 F3 LIBR RESI G',
+  'G TVRN RESI R0 R1 GENR ARMR G',
+  'G MAGE RESI R2 R3 B0 ALCH G',
+  'G RESI LIBR P0 P1 B1 GEMS G',
+  'G BOOK FIGH P2 P3 BANK PAWN G',
   'G G G G G G G G',
 ]);
+/** TESA-LORE: Tribunal's districts - the Temple Courtyard across the north round the High Fane, the Royal Palace at the
+ *  middle, Godsreach west (its manors, its tavern, the Craftsmen's Hall and the Museum of Artifacts), the Great Bazaar
+ *  east, Plaza Brindisi Dorom south. */
 export const MOURNHOLD_DISTRICTS = cells({
-  'Royal Palace': [[3, 1], [4, 1], [3, 2], [4, 2]],
-  'Plaza Brindisi Dorom': [[3, 3], [4, 3], [3, 4], [4, 4]],
-  'Temple District': [[5, 3], [6, 3], [5, 4], [6, 4], [5, 5]],
-  'Great Bazaar': [[1, 5], [2, 5], [3, 5], [4, 5], [1, 3], [2, 3], [1, 4], [2, 4]],
-  'Godsreach': [[1, 1], [2, 1], [5, 1], [6, 1], [1, 2], [2, 2], [5, 2], [6, 2], [6, 5]],
-  'Craftsmen\'s Quarter': [[1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6]],
+  'Temple Courtyard': [[2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [3, 2], [4, 2], [5, 2], [6, 2]],
+  'Royal Palace': [[3, 3], [4, 3], [3, 4], [4, 4]],
+  'Godsreach': [[1, 1], [1, 2], [2, 2], [1, 3], [2, 3], [1, 4], [2, 4], [1, 5], [2, 5], [1, 6], [2, 6]],
+  'Great Bazaar': [[5, 3], [6, 3], [5, 4], [6, 4], [5, 5], [6, 5], [5, 6], [6, 6]],
+  'Plaza Brindisi Dorom': [[3, 5], [4, 5], [3, 6], [4, 6]],
 });
 
 // ---------------------------------------------------------------- Alinor

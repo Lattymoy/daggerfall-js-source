@@ -11,6 +11,8 @@ import {
 import { CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalModelCarriers, capitalDistrict, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_BLOCKS } from '../src/world/tamrielCapitals.js';
 import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js';
 import { buildCastleDour, buildBluePalace } from '../src/world/capitalSolitude.js';
+import { MOURNHOLD, MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS } from '../src/world/capitalPlans.js';
+import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar } from '../src/world/capitalMournhold.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
 
@@ -148,4 +150,65 @@ test('TESA-LORE Solitude\'s Avenues: the Bards College and the Hall of the Dead 
     const cx = Math.floor(pal.positions[i] / BLOCK_M + sol.anchor[0]), cy = Math.floor(pal.positions[i + 2] / BLOCK_M + sol.anchor[1]);
     assert.equal(P[cy][cx], 'L', `the palace over the Karth at ${cx},${cy}`);
   }
+});
+
+// ── MOURNHOLD ───────────────────────────────────────────────────
+
+test('TESA-LORE Mournhold on Tribunal\'s plan (UESP): the Temple Courtyard at the northern end round the High Fane, the Royal Palace "the center of the city", Godsreach west with its tavern and its museum, the Great Bazaar east before its shops, Plaza Brindisi Dorom "the southernmost quadrant" - the landmarks on their districts\' cells', () => {
+  const mh = capOf('mournhold'), D = MOURNHOLD_DISTRICTS, P = MOURNHOLD_PLAN, M = MOURNHOLD;
+  assert.ok(D['Temple Courtyard'].every(([, y]) => y <= 2), 'the courtyard north');
+  assert.deepEqual([...D['Royal Palace']].map((c) => [...c]).sort(), [[3, 3], [3, 4], [4, 3], [4, 4]], 'the palace the middle');
+  assert.ok(D.Godsreach.every(([x]) => x <= 2) && D['Great Bazaar'].every(([x]) => x >= 5), 'Godsreach west, the Bazaar east');
+  assert.ok(D['Plaza Brindisi Dorom'].every(([x, y]) => y >= 5 && x >= 3 && x <= 4), 'the plaza south');
+  assert.ok(D['Temple Courtyard'].some(([x, y]) => P[y][x] === 'TEMP'), 'the temple\'s block on the courtyard');
+  for (const kind of ['TVRN', 'LIBR']) assert.ok(D.Godsreach.some(([x, y]) => P[y][x] === kind), `Godsreach's ${kind}`);
+  const cellOf = (x, z) => [Math.floor(x / BLOCK_M + mh.anchor[0]), Math.floor(z / BLOCK_M + mh.anchor[1])];
+  assert.equal(capitalDistrict(mh, ...cellOf(M.fane.x, M.fane.z)), 'Temple Courtyard');
+  assert.equal(capitalDistrict(mh, ...cellOf(M.palace.x - 1, M.palace.z - 1)), 'Royal Palace');
+  assert.equal(capitalDistrict(mh, ...cellOf(M.plaza.x, M.plaza.z)), 'Plaza Brindisi Dorom');
+  const bz = buildGreatBazaar();
+  for (let i = 0; i < bz.positions.length; i += 3) assert.equal(capitalDistrict(mh, ...cellOf(bz.positions[i], bz.positions[i + 2])), 'Great Bazaar', 'the stalls the Bazaar\'s');
+  assert.ok(M.fane.z < M.palace.z && M.palace.z < M.plaza.z && M.fane.x === M.palace.x && M.palace.x === M.plaza.x, 'one way from the Fane through the palace to the plaza');
+});
+
+test('TESA-LORE Mournhold\'s Plaza Brindisi Dorom "a public garden dominated by a great statue at its center" (UESP) - "Almalexia in battle with Mehrunes Dagon": its grass, its paths, its trees, its plinth closed; Dagon west, his axe the statue\'s top, Almalexia east with Hopesfire gilt; the High Fane\'s porch south over the courtyard\'s pools and braziers; the palace\'s doors north and south', () => {
+  const M = MOURNHOLD, P = M.plaza, S = M.statue, own = MOURNHOLD_BLOCKS.P0;
+  assert.equal(own.tile(P.x + 40, P.z + 40), 2, 'the garden\'s grass');
+  assert.deepEqual([own.tile(P.x, P.z + 50), own.tile(P.x + 50, P.z), own.tile(P.x + 10, P.z + 10), own.tile(0, 0), own.tile(M.fane.x, M.fane.z + 60)], [3, 3, 3, 3, 3], 'its paths, its court, the stone beyond');
+  let trees = 0, grass = 0;
+  for (let x = -100; x < 100; x += 6.4) for (let z = P.z - 100; z < P.z + 100; z += 6.4) {
+    const t = own.tree(x, z);
+    if (own.tile(x, z) === 2) grass++;
+    if (t >= 0) { trees++; assert.equal(own.tile(x, z), 2); assert.ok(Math.hypot(x - P.x, z - P.z) >= P.paved); }
+  }
+  assert.ok(trees > grass / 12 && trees < grass / 3, `${trees} trees on ${grass} grass`);
+  assert.equal(own.tree(0, 0), -1, 'none off the garden');
+  assert.equal(own.closed(P.x, P.z), true, 'the plinth');
+  const m = buildMournholdPlaza();
+  sane(m);
+  let top = 1, west = 0, east = 0;
+  for (let i = 1; i < m.positions.length; i += 3) {
+    if (m.positions[i] > m.positions[top]) top = i;
+    if (m.positions[i] > S.plinthH + 7) { if (m.positions[i - 1] < P.x - 1) west++; if (m.positions[i - 1] > P.x + 1) east++; }
+  }
+  assert.ok(west > 0 && east > 0, 'two figures');
+  assert.ok(m.positions[top - 1] < P.x && m.positions[top] > S.plinthH + S.dagon + 2, 'Dagon\'s axe raised over all');
+  const gold = m.subMeshes.find((sm) => sm.textureRecord === CAPITAL_ART.gold);
+  assert.ok(gold, 'Hopesfire');
+  for (let i = gold.startIndex; i < gold.startIndex + gold.primitiveCount * 3; i++) assert.ok(m.positions[m.indices[i] * 3 + 1] > S.plinthH + S.almalexia * 0.9, 'raised high');
+  const F = M.fane, fane = buildHighFane(), C = M.court;
+  sane(fane);
+  assert.equal(crosses(fane, [F.x, 4, F.z + F.plinth / 2 + F.porch + 2], [F.x, 4, F.z + F.plinth / 2 + 2]), true, 'the porch south');
+  assert.equal(crosses(fane, [F.x - F.plinth / 2 - 6, 4, F.z], [F.x - F.plinth / 2 + 2, 4, F.z]), true, 'the plinth west');
+  for (const px of C.pools) {
+    const pz = (C.poolZ[0] + C.poolZ[1]) / 2;
+    assert.equal(own.closed(px, pz), true, 'a pool');
+    assert.equal(crosses(fane, [px, 1, pz], [px, 0, pz]), true, 'its water');
+  }
+  assert.equal(own.closed(0, (C.poolZ[0] + C.poolZ[1]) / 2), false, 'the way between the pools');
+  for (const bx of C.braziers) assert.equal(crosses(fane, [bx, C.brazierH + 1.4, C.brazierZ[0] - 3], [bx, C.brazierH + 1.4, C.brazierZ[0] + 3]), true, 'a brazier\'s flame');
+  const pal = buildMournholdPalace(), PL = M.palace;
+  sane(pal);
+  const door = (z, nz) => { for (let t = 0; t < pal.indices.length; t += 3) { const sm = pal.subMeshes.find((q) => t >= q.startIndex && t < q.startIndex + q.primitiveCount * 3); if (sm.textureRecord !== CAPITAL_ART.dark) continue; const zs = [0, 1, 2].map((k) => pal.positions[pal.indices[t + k] * 3 + 2]); if (zs.every((v) => Math.abs(v - z) < 0.2) && Math.sign(pal.normals[pal.indices[t] * 3 + 2]) === nz) return true; } return false; };
+  assert.ok(door(PL.z + PL.d / 2, 1) && door(PL.z - PL.d / 2, -1), 'its doors to the plaza and the courtyard');
 });

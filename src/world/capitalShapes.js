@@ -220,3 +220,28 @@ export function limb(mb, tex, p, q, r0, r1, { n = 8, vRepeat = 6 } = {}) {
     mb.quad(tex, at(p, r0, i), at(p, r0, i + 1), at(q, r1, i + 1), at(q, r1, i), nrm, [[i / n, 0], [(i + 1) / n, 0], [(i + 1) / n, -len / vRepeat], [i / n, -len / vRepeat]]);
   }
 }
+/** A figure's local frame at (x, z) facing `face` (a unit [x, z]): a point `f` forward, `s` to its right, `y` up. */
+export const framed = (x, z, face) => (f, s, y) => [x + face[0] * f - face[1] * s, y, z + face[1] * f + face[0] * s];
+/**
+ * TESA-LORE: A ROBED FIGURE (a statue's - the Imperial City's Divines, Mournhold's Almalexia), `h` tall from `y`, at (x, z)
+ * facing `face` - its robe from its feet to its chest, its shoulders, its head, its arms by its `pose`: 0 its hands before
+ * it, 1 its right arm raised, 2 both raised in blessing, 3 a staff in its right hand.
+ */
+export function robedFigure(mb, tex, x, z, y, h, face, pose) {
+  const P = framed(x, z, face), k = h / 6.5;
+  translated(mb, x, y, z, () => {
+    taper(mb, tex, 10, 1.15 * k, 0, 0.62 * k, 3.9 * k, { vRepeat: 3 });   // the robe
+    taper(mb, tex, 10, 0.62 * k, 3.9 * k, 0.78 * k, 4.9 * k, { vRepeat: 2 });   // the chest to the shoulders
+    taper(mb, tex, 10, 0.78 * k, 4.9 * k, 0.3 * k, 5.25 * k, { vRepeat: 1 });
+  });
+  blob(mb, tex, x, y + 5.75 * k, z, 0.42 * k, 0.52 * k, 0.42 * k, { n: 8, rings: 5, rough: 0, seed: 0xd1 + pose });
+  const sh = (side) => P(0, side * 0.78 * k, y + 4.75 * k);
+  const hand = {
+    0: (side) => P(0.75 * k, side * 0.35 * k, y + 3.6 * k),
+    1: (side) => (side > 0 ? P(0.2 * k, 1.0 * k, y + 7.4 * k) : P(0.25 * k, -0.9 * k, y + 3.2 * k)),
+    2: (side) => P(0.6 * k, side * 1.6 * k, y + 6.6 * k),
+    3: (side) => (side > 0 ? P(0.55 * k, 0.95 * k, y + 3.9 * k) : P(0.7 * k, -0.4 * k, y + 3.7 * k)),
+  }[pose];
+  for (const side of [1, -1]) limb(mb, tex, sh(side), hand(side), 0.26 * k, 0.18 * k, { n: 6 });
+  if (pose === 3) limb(mb, tex, P(0.55 * k, 0.95 * k, y), P(0.55 * k, 0.95 * k, y + 7.2 * k), 0.12 * k, 0.12 * k, { n: 6 });   // the staff
+}

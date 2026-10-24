@@ -38,17 +38,17 @@
   {
     "name": "TESA10c-blocks-one-name",
     "file": "src/world/capitalPlans.js",
-    "old": "const ownBlocks = (tag, codes, tile, closed) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}${code}.RMB`, tile, closed })])));",
-    "new": "const ownBlocks = (tag, codes, tile, closed) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}.RMB`, tile, closed })])));",
+    "old": "const ownBlocks = (tag, codes, tile, closed, tree = null) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}${code}.RMB`, tile, closed, ...(tree ? { tree } : {}) })])));",
+    "new": "const ownBlocks = (tag, codes, tile, closed, tree = null) => Object.freeze(Object.fromEntries(codes.map((code) => [code, Object.freeze({ name: `TESA${tag}.RMB`, tile, closed, ...(tree ? { tree } : {}) })])));",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
   },
   {
-    "name": "TESA10c-fountain-open",
+    "name": "TESA10c-statue-open",
     "file": "src/world/capitalPlans.js",
-    "old": "  if (r < P.fountain + 1) return true;",
-    "new": "  if (r < 0) return true;",
+    "old": "  if (inBox(dx, dz, P.x, P.z, M.statue.plinth + 1, M.statue.plinth + 1)) return true;",
+    "new": "  if (inBox(dx, dz, P.x, P.z, 0, 0)) return true;",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "TESA10c-plaza-gates-shut",
     "file": "src/world/capitalPlans.js",
-    "old": "  if (Math.abs(r - P.r) < P.band && Math.min(Math.abs(dx), Math.abs(dz)) > P.gate / 2) return true;",
+    "old": "  if (Math.abs(r - P.r) < P.band && Math.min(Math.abs(x), Math.abs(z)) > P.gate / 2) return true;",
     "new": "  if (Math.abs(r - P.r) < P.band) return true;",
     "tests": [
       "test/tesa10c_capitals.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "TESA10c-plaza-walled",
     "file": "src/world/capitalMournhold.js",
-    "old": "    if (skip || e <= s) continue;\n    wallRun(mb, MARBLE, [Math.cos(s) * P.r, Math.sin(s) * P.r]",
-    "new": "    if (e <= s) continue;\n    wallRun(mb, MARBLE, [Math.cos(s) * P.r, Math.sin(s) * P.r]",
+    "old": "    if (skip || e <= s) continue;\n    wallRun(mb, MARBLE, [P.x + Math.cos(s) * P.r, P.z + Math.sin(s) * P.r]",
+    "new": "    if (e <= s) continue;\n    wallRun(mb, MARBLE, [P.x + Math.cos(s) * P.r, P.z + Math.sin(s) * P.r]",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ],
@@ -191,10 +191,10 @@
     ]
   },
   {
-    "name": "TESA10c-fane-porch-east",
+    "name": "TESA10c-fane-porch-turned",
     "file": "src/world/capitalMournhold.js",
-    "old": "  const px = F.x - F.plinth / 2 - F.porch / 2;",
-    "new": "  const px = F.x + F.plinth / 2 + F.porch / 2;",
+    "old": "  const pz = F.z + F.plinth / 2 + F.porch / 2;",
+    "new": "  const pz = F.z - F.plinth / 2 - F.porch / 2;",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]

@@ -92,8 +92,9 @@ test('TESA10c the plans: 8 x 8 as a map reads; each own block once; every city c
   }
   for (const P of [ALINOR_PLAN, TORVAL_PLAN]) { assert.ok(P[7].every((c) => c === 'L')); assert.ok(P[6].slice(1, 7).every((c) => /^Q\d$/.test(c))); }
   assert.deepEqual(HELSTROM_PLAN[4], ['L', 'L', 'L', 'H0', 'L', 'L', 'L', 'L']);
-  assert.deepEqual([MOURNHOLD_PLAN[3][3], MOURNHOLD_PLAN[4][4], FALINESTI_PLAN[3][3], FALINESTI_PLAN[4][4]], ['M0', 'M3', 'T0', 'T3']);
-  assert.equal(capitalDistrict(capOf('mournhold'), 3, 3), 'Plaza Brindisi Dorom');
+  assert.deepEqual([MOURNHOLD_PLAN[3][3], MOURNHOLD_PLAN[4][4], FALINESTI_PLAN[3][3], FALINESTI_PLAN[4][4]], ['R0', 'R3', 'T0', 'T3']);   // PIN MOVED (TESA-LORE): Mournhold's palace at the middle
+  assert.equal(capitalDistrict(capOf('mournhold'), 3, 3), 'Royal Palace');
+  assert.equal(capitalDistrict(capOf('mournhold'), 3, 5), 'Plaza Brindisi Dorom');
   assert.equal(capitalDistrict(capOf('torval'), 5, 3), 'Temple of the Two Moons');
   assert.equal(capitalDistrict(capOf('helstrom'), 3, 4), 'The Hist');
 });
@@ -110,9 +111,11 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.deepEqual([tile('torval', 0, TORVAL.quay.edge - 1), tile('torval', 0, TORVAL.quay.edge + 1)], [3, 0]);
   assert.deepEqual([tile('helstrom', HELSTROM.hist.x, HELSTROM.hist.z), tile('helstrom', 150, 150), tile('helstrom', 0, 0)], [2, 0, 3]);
   assert.deepEqual([tile('falinesti', 10, 10), tile('falinesti', 90, 0)], [1, 2]);
-  assert.equal(closed('mournhold', 0, 0), true, 'the fountain');
-  assert.equal(closed('mournhold', Math.cos(0.3) * MOURNHOLD.plaza.r, Math.sin(0.3) * MOURNHOLD.plaza.r), true, 'the plaza\'s ring');
-  assert.equal(closed('mournhold', MOURNHOLD.plaza.r, 0), false, 'its gate');
+  const MP = MOURNHOLD.plaza;   // PIN MOVED (TESA-LORE): the palace at the middle, the plaza south of it
+  assert.equal(closed('mournhold', 0, 0), true, 'the palace');
+  assert.equal(closed('mournhold', MP.x, MP.z), true, 'the statue');
+  assert.equal(closed('mournhold', MP.x + Math.cos(0.3) * MP.r, MP.z + Math.sin(0.3) * MP.r), true, 'the plaza\'s ring');
+  assert.equal(closed('mournhold', MP.x + MP.r, MP.z), false, 'its gate');
   assert.equal(closed('mournhold', MOURNHOLD.fane.x, MOURNHOLD.fane.z + 20), true, 'the Fane');
   assert.equal(closed('mournhold', MOURNHOLD.palace.x, MOURNHOLD.palace.z), true, 'the palace');
   assert.equal(closed('alinor', 0, 0), true);
@@ -124,24 +127,25 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.equal(closed('falinesti', 0, 0), true, 'the oak');
   assert.equal(closed('falinesti', FALINESTI.foot + 1, 0), false);
   // a block's own metres to the anchor's, through the law every capital's blocks are laid by
-  const mh = capOf('mournhold'), [cx, r] = [3, 3], blk = b.find((x) => x.name === mh.blocks.M0.name);
+  const mh = capOf('mournhold'), [cx, r] = [3, 5], blk = b.find((x) => x.name === mh.blocks.P0.name);   // PIN MOVED (TESA-LORE): the plaza's first block
   const A = blk.json.RmbBlock.FldHeader.AutoMapData, T = blk.json.RmbBlock.FldHeader.GroundData.GroundTiles;
-  for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) { const [x, z] = autoCentre(ax, ay); assert.equal(A[ay * 64 + ax], mh.blocks.M0.closed(...anchorMetres(mh, cx, r, x, z)) ? CAPITAL_CLOSED_BYTE : 0); }   // PIN MOVED (AUDIT-TESA A6-5)
-  for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) { const [x, z] = tileCentre(tx, ty); assert.equal(T[ty * 16 + tx].TileBitfield, mh.blocks.M0.tile(...anchorMetres(mh, cx, r, x, z))); }
+  for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) { const [x, z] = autoCentre(ax, ay); assert.equal(A[ay * 64 + ax], mh.blocks.P0.closed(...anchorMetres(mh, cx, r, x, z)) ? CAPITAL_CLOSED_BYTE : 0); }   // PIN MOVED (AUDIT-TESA A6-5)
+  for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) { const [x, z] = tileCentre(tx, ty); assert.equal(T[ty * 16 + tx].TileBitfield, mh.blocks.P0.tile(...anchorMetres(mh, cx, r, x, z))); }
   void BLOCK_M;
 });
 
 // ── THE LANDMARKS ───────────────────────────────────────────────
 
-test('TESA10c Mournhold: the plaza\'s ring open on its axes round the fountain and the column\'s gilt figure; the High Fane\'s dome its highest, its porch west to the plaza; the palace\'s domes over its roof and its door to the plaza; the bazaar\'s stalls in their cells; the walls\' four gates open', () => {
+test('TESA10c Mournhold: the plaza\'s ring open on its axes round its statue (PIN MOVED, TESA-LORE: the plaza south of the palace, its fountain and column the statue of Almalexia and Dagon); the High Fane\'s dome its highest, its porch south to the courtyard; the palace\'s domes over its roof; the bazaar\'s stalls in their cells; the walls\' four gates open', () => {
   const M = MOURNHOLD, plaza = buildMournholdPlaza(), fane = buildHighFane(), palace = buildMournholdPalace(), bazaar = buildGreatBazaar(), wall = buildMournholdWall();
   for (const m of [plaza, fane, palace, bazaar, wall]) sane(m);
-  for (const [x, z] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) assert.equal(crosses(plaza, [x * (M.plaza.r - 3), 0.5, z * (M.plaza.r - 3)], [x * (M.plaza.r + 3), 0.5, z * (M.plaza.r + 3)]), false, `the plaza open ${x},${z}`);
-  assert.equal(crosses(plaza, [Math.cos(0.7) * (M.plaza.r - 3), 0.5, Math.sin(0.7) * (M.plaza.r - 3)], [Math.cos(0.7) * (M.plaza.r + 3), 0.5, Math.sin(0.7) * (M.plaza.r + 3)]), true, 'walled between');
-  assert.ok(bounds(plaza).hi[1] > 2.4 + M.plaza.columnH + 3, 'the figure on the column');
+  const PX = M.plaza.x, PZ = M.plaza.z;
+  for (const [x, z] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) assert.equal(crosses(plaza, [PX + x * (M.plaza.r - 3), 0.5, PZ + z * (M.plaza.r - 3)], [PX + x * (M.plaza.r + 3), 0.5, PZ + z * (M.plaza.r + 3)]), false, `the plaza open ${x},${z}`);
+  assert.equal(crosses(plaza, [PX + Math.cos(0.7) * (M.plaza.r - 3), 0.5, PZ + Math.sin(0.7) * (M.plaza.r - 3)], [PX + Math.cos(0.7) * (M.plaza.r + 3), 0.5, PZ + Math.sin(0.7) * (M.plaza.r + 3)]), true, 'walled between');
+  assert.ok(bounds(plaza).hi[1] > M.statue.plinthH + M.statue.dagon, 'the statue on its plinth');
   const fb = bounds(fane), F = M.fane;
   assert.ok(Math.abs(fb.hi[1] - (F.plinthH + F.drumH + F.domeH - 0.3 + 10)) < 1e-3, 'the lantern\'s tip its top');
-  assert.ok(fb.lo[0] < F.x - F.plinth / 2 - F.porch + 0.01, 'the porch west');
+  assert.equal(crosses(fane, [F.x, 4, F.z + F.plinth / 2 + F.porch + 2], [F.x, 4, F.z + F.plinth / 2 + 2]), true, 'the porch south');
   const pb = bounds(palace);
   assert.ok(pb.hi[1] > M.palace.h + M.palace.domeR, 'the domes over the roof');
   const bb = bounds(bazaar), B = M.bazaar;

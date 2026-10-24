@@ -9,7 +9,7 @@
 // city's middle on its ground (world/capitalModels.js turns them northward). Shapes of the port's own on the canon - no
 // game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, translated, corner } from './capitalShapes.js';
+import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
 import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths } from './imperialCity.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 
@@ -247,32 +247,6 @@ export function buildTalosStatue(S = IMPERIAL.statue) {
   return mb.build();
 }
 
-/** A figure's local frame at (x, z) facing `face` (a unit [x, z]): a point `f` forward, `s` to its right, `y` up. */
-const framed = (x, z, face) => (f, s, y) => [x + face[0] * f - face[1] * s, y, z + face[1] * f + face[0] * s];
-/**
- * TESA-LORE: A DIVINE'S FIGURE, robed, `h` tall from `y`, at (x, z) facing `face` - its robe from its feet to its chest, its
- * shoulders, its head, its arms by its `pose`: 0 its hands before it, 1 its right arm raised, 2 both raised in blessing, 3 a
- * staff in its right hand.
- */
-export function divineFigure(mb, tex, x, z, y, h, face, pose) {
-  const P = framed(x, z, face), k = h / 6.5;
-  translated(mb, x, y, z, () => {
-    taper(mb, tex, 10, 1.15 * k, 0, 0.62 * k, 3.9 * k, { vRepeat: 3 });   // the robe
-    taper(mb, tex, 10, 0.62 * k, 3.9 * k, 0.78 * k, 4.9 * k, { vRepeat: 2 });   // the chest to the shoulders
-    taper(mb, tex, 10, 0.78 * k, 4.9 * k, 0.3 * k, 5.25 * k, { vRepeat: 1 });
-  });
-  blob(mb, tex, x, y + 5.75 * k, z, 0.42 * k, 0.52 * k, 0.42 * k, { n: 8, rings: 5, rough: 0, seed: 0xd1 + pose });
-  const sh = (side) => P(0, side * 0.78 * k, y + 4.75 * k);
-  const hand = {
-    0: (side) => P(0.75 * k, side * 0.35 * k, y + 3.6 * k),
-    1: (side) => (side > 0 ? P(0.2 * k, 1.0 * k, y + 7.4 * k) : P(0.25 * k, -0.9 * k, y + 3.2 * k)),
-    2: (side) => P(0.6 * k, side * 1.6 * k, y + 6.6 * k),
-    3: (side) => (side > 0 ? P(0.55 * k, 0.95 * k, y + 3.9 * k) : P(0.7 * k, -0.4 * k, y + 3.7 * k)),
-  }[pose];
-  for (const side of [1, -1]) limb(mb, tex, sh(side), hand(side), 0.26 * k, 0.18 * k, { n: 6 });
-  if (pose === 3) limb(mb, tex, P(0.55 * k, 0.95 * k, y), P(0.55 * k, 0.95 * k, y + 7.2 * k), 0.12 * k, 0.12 * k, { n: 6 });   // the staff
-}
-
 /**
  * TESA-LORE: THE ARBORETUM'S NINE DIVINES - the city's park, the statues of the Nine (UESP's Arboretum: "statues of the Nine
  * Divines including a statue of Talos in the center"): eight robed figures of marble on their plinths in a ring, each
@@ -285,7 +259,7 @@ export function buildNineDivines(I = IMPERIAL) {
     hall(mb, MARBLE, x, z, D.plinth + 1, D.plinth + 1, -1, 0.5, 0.25);
     hall(mb, MARBLE, x, z, D.plinth, D.plinth, 0.5, D.plinthH, 0.25);
     const face = unit([cx - x, 0, cz - z]);
-    divineFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);
+    robedFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);
   });
   // Talos at the middle, facing the tower: his stepped plinth, his legs, his armoured body, his head, his shield and sword
   const tp = D.talosPlinth, ty = D.talosPlinthH, k = D.talos / 11, face = unit([-cx, -cz]), P = framed(cx, cz, face);

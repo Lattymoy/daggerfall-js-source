@@ -665,6 +665,9 @@ mossy stone). No game data.
   shore (1922, 1704), the sea south. Tested on TAMRIEL1's shape where no trace is set: each on its own province's
   land, the shore capitals beside the sea, no two on one.
 - **Measured**: their landmarks draw in the stand-in view as laid. Not yet seen in the game.
+- **Moved by TESA-LORE** (below): Mournhold onto Tribunal's plan - the Temple Courtyard and the High Fane north, the
+  palace at the middle, Godsreach west, the Great Bazaar east, Plaza Brindisi Dorom south a garden round the statue of
+  Almalexia and Mehrunes Dagon (its fountain and column retired).
 
 ## TESA10d - a capital on the map, Arena or none (2026-10-13)
 
@@ -973,7 +976,7 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   - **The Arboretum's Nine Divines** - UESP: "the city park, and features statues of the Nine Divines including a statue
     of Talos in the center". A paved court (46 m about the sector's middle, bearing 150 at 600 m; its cells the city's
     own, its plinths closed); eight robed figures of marble on their plinths in a ring of 28 m, each facing the middle in
-    one of four poses (`divineFigure`: hands before it, an arm raised, both raised, a staff); Talos at the middle
+    one of four poses (`world/capitalShapes.js` robedFigure: hands before it, an arm raised, both raised, a staff); Talos at the middle
     armoured on a stepped plinth, his gilt sword raised, his shield on his arm, facing the White-Gold Tower; a kerb round
     the court open toward the palace gate. Model 910212 (`nineDivines`), carried by the south slice.
   - **Read again and kept** - the six districts on their sectors (UESP: the Elven Gardens north-west, the Market
@@ -995,10 +998,32 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     Avenues', the Hall of the Dead beside the palace's terrace; the palace on its stack wholly over the river (kept).
   - **Read again and kept** - the Blue Palace at the arch's tip above the Karth, its arch from the city's west terrace,
     the docks and the East Empire Company's warehouse on the coast below the city, the main gate south (TESA14's road).
+- **Mournhold** (`world/capitalPlans.js` MOURNHOLD, MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS; `world/capitalMournhold.js`) -
+  on Tribunal's plan, the nearest in time to Daggerfall's (3E 427). UESP: the Temple "in the center of a large and
+  decorative courtyard, which lies at the northern end of Mournhold"; "the Royal Palace forms the center of the city";
+  Plaza Brindisi Dorom "the southernmost quadrant of Mournhold, a public garden dominated by a great statue at its
+  center", the statue "of Almalexia in battle with Mehrunes Dagon", its gates west to Godsreach, east to the Great
+  Bazaar, north to the palace; Godsreach's "manors, The Craftsmen's Hall, a tavern, and the Mournhold Museum of
+  Artifacts". TESA10c had the plaza at the middle, the palace north, the Fane east and the bazaar south-west.
+  - **The plan**: the Temple Courtyard across the north (its own blocks F0-F3 round the High Fane, the temple's block
+    of Daggerfall's on it), the Royal Palace on the middle four (R0-R3, the anchor its middle), Plaza Brindisi Dorom on
+    the south four (P0-P3), Godsreach the west two columns (a tavern, a library for the museum, the guilds' halls,
+    houses), the Great Bazaar the east two (its stalls on B0 and B1 before the shops). The ochre walls and their four
+    gates unmoved (TESA14's roads).
+  - **Plaza Brindisi Dorom**: its own ground a garden (grass, paved round the statue, along its two axes and at its ring
+    wall's foot), its trees one tile in five of its grass (the own blocks' `tree` law, ownBlocks' fifth argument);
+    the ring wall open on its four axes; the statue on a stepped plinth - Mehrunes Dagon on its west half (`dagonFigure`:
+    legs astride, horned, four arms, his axe raised the statue's top) facing Almalexia on its east (robedFigure, her arm
+    raised with Hopesfire gilt). Bronze both, 13 m and 10 m over a 5 m plinth.
+  - **The High Fane** in the courtyard's middle (its plinth 72 m, drum 25 m, dome to 61 m with its lantern), its porch
+    turned south to the courtyard and the palace; two long pools in marble kerbs either side of the way and four
+    braziers along it (closed where they stand, the way between open).
+  - **The Royal Palace** at the middle: a domed tower at each corner, its doors south to the plaza and north to the
+    courtyard. The start markers on the plaza's ways and the courtyard, off the palace.
 
 ## Pins
 
-`test/tesalore_capitals.test.js` (5, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
+`test/tesalore_capitals.test.js` (7, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
 and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
 other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
 ring each with its figure, Talos the tallest over the middle, the eight below him; the court paved, closed at its plinths
@@ -1006,9 +1031,17 @@ and open between, treeless, the city's own; installed, carried in its pixel); So
 main gate, its corners on the city's own and its district's, its west and north gates open in the model and the walkers'
 law, walled between and east, the temple before its north gate on its grounds, the keep's turrets under the Emperor's
 Tower) and its Avenues (the college and the Hall of the Dead theirs, the hall beside the terrace, the palace wholly over
-the river). Mutants `tools/mutants/tesalore.json` (20, all dead; the watch towers' own ground rule survived as the wall
-band's twin and went). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city blocks, the
-college's district, the Hall of the Dead's cell) and `tools/mutants/tesa10.json`'s curtain-gate record re-aimed;
+the river); Mournhold on Tribunal's plan (the districts by compass, the temple's block on the courtyard, Godsreach's
+tavern and library, the Fane, the palace and the plaza on their districts and one way, the stalls the Bazaar's) and its
+plaza (grass, paths and court, trees on grass alone and off the court, the plinth closed, two figures, Dagon's axe the
+top, Hopesfire raised; the Fane's porch south, the pools closed and their water, the way between open, the braziers;
+the palace's two doors). Mutants `tools/mutants/tesalore.json` (32, all dead; the watch towers' own ground rule survived
+as the wall band's twin and went). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
+blocks, the college's district, the Hall of the Dead's cell), `test/tesa10c_capitals.test.js` (Mournhold's middle cells,
+its districts, its closed ground, its first own block's law, its plaza's ring, statue and porch - the porch's pin made
+specific: it passed with the porch turned) and `test/audit_tesa.test.js` (Mournhold's start markers, through A6-1's own
+law); `tools/mutants/tesa10.json`'s curtain-gate record and `tesa10c.json`'s five Mournhold records re-aimed (two
+renamed, `statue-open` and `fane-porch-turned`), all judged dead but the plaza's recorded equivalent;
 `test/tesa11_imperial.test.js` (the Prison's bearing, the slices' names, the Arboretum's grass off the court, the city
 wall's reach to its watch towers); `tools/mutants/tesa11.json`'s slice-names record re-aimed by content, judged dead.
 

@@ -93,7 +93,7 @@
   {
     "name": "TESA-LORE-divine-figures-gone",
     "file": "src/world/capitalImperial.js",
-    "old": "    divineFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);\n",
+    "old": "    robedFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
@@ -175,6 +175,114 @@
     "name": "TESA-LORE-keep-no-turrets",
     "file": "src/world/capitalSolitude.js",
     "old": "  for (const sx of [1, -1]) for (const sz of [1, -1]) squareTower(mb, kx + sx * K.w / 2, kz + sz * K.d / 2, 6, K.h + 6, { wall: NORD, roof: ROOF, roofH: 5 });   // TESA-LORE: its corner turrets\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-fane-east-again",
+    "file": "src/world/capitalPlans.js",
+    "old": "  fane: Object.freeze({ x: 0, z: -204.8,",
+    "new": "  fane: Object.freeze({ x: 204.8, z: 0,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-plaza-middle-again",
+    "file": "src/world/capitalPlans.js",
+    "old": "  plaza: Object.freeze({ x: 0, z: 204.8,",
+    "new": "  plaza: Object.freeze({ x: 0, z: 0,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-temple-off-the-courtyard",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'G RESI TEMP F0 F1 RESI RESI G',",
+    "new": "  'G TEMP RESI F0 F1 RESI RESI G',",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-plaza-paved-over",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return r < P.paved || Math.abs(x) < P.path || Math.abs(z) < P.path || Math.abs(r - P.r) < 3 ? 3 : 2;",
+    "new": "  return 3;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-plaza-treeless",
+    "file": "src/world/capitalPlans.js",
+    "old": "mournholdTile, mournholdClosed, mournholdTree);",
+    "new": "mournholdTile, mournholdClosed);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-own-blocks-drop-trees",
+    "file": "src/world/capitalPlans.js",
+    "old": ", ...(tree ? { tree } : {}) })",
+    "new": " })",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-pools-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (M.court.pools.some((px) => inBox(dx, dz, px, (M.court.poolZ[0] + M.court.poolZ[1]) / 2, M.court.poolW, M.court.poolZ[1] - M.court.poolZ[0]))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-dagon",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  dagonFigure(mb, BRONZE, P.x - 3, P.z, y, S.dagon, [1, 0]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-hopesfire",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  limb(mb, GOLD, hand, [P.x + 3.2 - 2.4 * k, y + 9.2 * k, P.z - 1.1 * k], 0.14 * k, 0.03 * k, { n: 4 });   // Hopesfire\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-palace-no-north-door",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  darkDoor(mb, DARK, P.x, P.z - P.d / 2, 5, 7.5, [0, -1]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-bazaar-west",
+    "file": "src/world/capitalPlans.js",
+    "old": "  bazaar: Object.freeze({ x: 153.6,",
+    "new": "  bazaar: Object.freeze({ x: -153.6,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-braziers",
+    "file": "src/world/capitalMournhold.js",
+    "old": "    blob(mb, GOLD, bx, C.brazierH + 1.4, bz, 0.9, 1.1, 0.9, { n: 6, rings: 4, rough: 0.2, seed: 0xf1 + bx + bz });\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
