@@ -54,8 +54,8 @@ test('HERALD-CARDS the card: one embed - its family\'s name and colour, the titl
   const bare = heraldCard({ family: 'abyss', moment: 'M', title: 'T' }).embeds[0];
   assert.ok(!('description' in bare) && !('fields' in bare), 'no text, no fields: neither key');
   assert.equal(heraldCard({ family: 'nonesuch', moment: 'M', title: 'T' }).embeds[0].author.name, 'Dagon\'s Breach', 'a family the table lacks: the gate\'s, never a throw on the hub\'s alarm');
-  assert.deepEqual(Object.keys(HERALD_FAMILIES), ['gate', 'serpent', 'abyss', 'spire']);
-  assert.deepEqual(Object.values(HERALD_FAMILIES).map((f) => f.name), ['Dagon\'s Breach', 'The Sea Serpent', 'The Abyss Dungeon', 'The Battlespire']);
+  assert.deepEqual(Object.keys(HERALD_FAMILIES), ['gate', 'serpent', 'abyss', 'spire', 'ketch']);   // PIN MOVED (KETCH): the Sky-Ketch's family joins last
+  assert.deepEqual(Object.values(HERALD_FAMILIES).map((f) => f.name), ['Dagon\'s Breach', 'The Sea Serpent', 'The Abyss Dungeon', 'The Battlespire', 'The Sky-Ketch']);
 });
 
 test('HERALD-CARDS the bounds: every part of a card is cut to Discord\'s own bound, never refused - a body past one would be refused whole and let go (mutants: a bound lifted; the cut without its ellipsis)', () => {
@@ -162,12 +162,12 @@ async function withHub(fn, env) {
 
 test('HERALD-CARDS relay: each family posts to its own thread when the operator names one, else the gate\'s, else the channel itself - the gate\'s omen, the serpent\'s bells, the Abyss Dungeon\'s rise and the Spire\'s Redoubt each to theirs (mutants: every family to the gate\'s thread; a family\'s own thread ignored; the gate\'s not the fallback)', async () => {
   await withHub(async ({ r, posts }) => {
-    assert.deepEqual(r.room._heraldOf().threads, { gate: null, serpent: null, abyss: null, spire: null }, 'none named: the channel itself');
+    assert.deepEqual(r.room._heraldOf().threads, { gate: null, serpent: null, abyss: null, spire: null, ketch: null }, 'none named: the channel itself');   // PIN MOVED (KETCH): and the Sky-Ketch's
     await r.room._heraldSend(gateHerald.omenPost({ day: 538 }), 'gate');
     assert.equal(posts.at(-1).url, HOOK, 'as before');
   }, {});
   await withHub(async ({ r, posts }) => {
-    assert.deepEqual(r.room._heraldOf().threads, { gate: T_GATE, serpent: T_SEA, abyss: T_GATE, spire: T_EG });
+    assert.deepEqual(r.room._heraldOf().threads, { gate: T_GATE, serpent: T_SEA, abyss: T_GATE, spire: T_EG, ketch: T_GATE });   // PIN MOVED (KETCH): the Sky-Ketch's unnamed - the gate's
     await r.room._heraldSend(gateHerald.omenPost({ day: 538 }), 'gate');
     await r.room._heraldSend(serpentOmenPost({ day: 5 }), 'serpent');
     await r.room._heraldSend(sdHeraldPost('rise', { s: 3, r: 17, until: 1.8e12, next: 1.8e12 }), 'abyss');
@@ -201,7 +201,7 @@ test('HERALD-CARDS relay: a thread is a setting a developer changes at run time 
 });
 
 test('HERALD-CARDS the client says a thread setting only to a relay that knows it - an older one finds no such name and closes the hub link on the frame; the roles and every older setting as before (mutants: a thread said to world242; the floor read for every setting)', async () => {
-  assert.deepEqual(RELAY_CFG_KEY_MIN, { gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250 });
+  assert.deepEqual(RELAY_CFG_KEY_MIN, { gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255 });   // PIN MOVED (KETCH): the Sky-Ketch's role and thread, world253's
   assert.ok(relayCfgSupported(RELAY_VERSION, 'gateThread'), 'this relay knows them');
   assert.deepEqual([relayCfgSupported('world242'), relayCfgSupported('world242', 'gateThread'), relayCfgSupported('world250', 'egThread'), relayCfgSupported('world242', 'gateRole'), relayCfgSupported('world191', 'gateRole')], [true, false, true, true, false]);
   await quiet(() => {
@@ -297,6 +297,7 @@ test('AUDIT HERALD-CARDS S1: the threads\' floor is the relay that made them - t
   const law = readFileSync(new URL('../relayversion.test.js', import.meta.url), 'utf8');
   for (const [k, min] of Object.entries(RELAY_CFG_KEY_MIN)) {
     const row = law.split('\n').find((l) => l.startsWith(`  world${min}: '`)) ?? '';
-    assert.match(row, /HERALD-CARDS/, `${k}: world${min}'s row is HERALD-CARDS's`);
+    const own = k.startsWith('kt') ? /KETCH/ : /HERALD-CARDS/;   // PIN MOVED (KETCH): the Sky-Ketch's two settings are world255's, the relay that made them
+    assert.match(row, own, `${k}: world${min}'s row is the row of the relay that made it`);
   }
 });

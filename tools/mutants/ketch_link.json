@@ -1,0 +1,137 @@
+[
+  {
+    "name": "KTK-a-stage-word-unfolded",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "    case 'sg': return { ...s, sg: w.sg,",
+    "new": "    case 'sg': return { ...s, sg: s.sg,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-fall-unfolded",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "    case 'fell': return { ...s, fell: { at: w.at, top: w.top, n: w.n },",
+    "new": "    case 'fell': return { ...s, fell: s.fell,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-body-fall-unfolded",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "    case 'dn': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, h: 0,",
+    "new": "    case 'dn': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, h: B.h,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-wave-said-twice",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "once(`wave${state.n}.${w.w}`, KT_LINK_TEXT.wave[w.w]);",
+    "new": "say(KT_LINK_TEXT.wave[w.w]);",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-appetite-unsaid",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "else if (w.k === 'cl' && state.sg === KT_STAGE.engine && !was.cl?.nd && w.nd)",
+    "new": "else if (w.k === 'cl' && state.sg === KT_STAGE.engine && !was.cl?.nd && w.nd < 0)",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-fall-unsaid",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "once(`fell${state.n}`, KT_LINK_TEXT.fell(w.top));",
+    "new": "once(`fell${state.n}`, '');",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-joined-without-the-room-word",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      if (w.k === 'ws' && w.me === 1) { mine = w.fi; refused = null; }",
+    "new": "      if (w.k === 'ws') { mine = w.fi; refused = null; }",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-in-said-every-frame",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      return t - inAt >= KT_IN_RETRY_MS;",
+    "new": "      return t - inAt >= 0;",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-still-in-after-the-fall",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "!state.ws.lost && !state.ws.fell,",
+    "new": "!state.ws.lost,",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-older-game-forgotten",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "if (refused && (refused.m === 2 ||",
+    "new": "if (refused && (refused.m === 9 ||",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-body-blow-owed",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "for (const b of ws.bl ?? []) if (ktWholeBridge(b) &&",
+    "new": "for (const b of ws.bl ?? []) if (!!b &&",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-paid-blow-owed-again",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "    paid(i) { owed = owed.filter((o) => o.i !== i); },",
+    "new": "    paid(i) { void i; },",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-carrier-unread",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "return !!m && (state.cl?.ca ?? []).some((c) => c[0] === m); },",
+    "new": "return !!m && (state.cl?.ca ?? []).some((c) => c[0] === `${m}?`); },",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-a-voyage-begun-on-a-fragment",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "  if (s.n < 0) return s;   // nothing but a whole state starts a voyage",
+    "new": "  if (s.n < -1) return s;   // nothing but a whole state starts a voyage",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  },
+  {
+    "name": "KTK-the-cell-counted-one-behind",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "Math.min(state.cl?.nd ?? 0, (state.cl?.bk ?? 0) + 1)",
+    "new": "(state.cl?.bk ?? 0)",
+    "tests": [
+      "test/net/ketch/ketch_link.test.js"
+    ]
+  }
+]

@@ -50,111 +50,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, unit, knock, rough, bandSweep, rub, grit } from './sfxSynth.mjs';
+import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, unit, knock, rough, bandSweep, rub, grit, modes, burst, bubble, leaves, groan, splash, bellNote } from './sfxSynth.mjs';
 import { isMain } from './lib/isMain.mjs';
 import { FALL_S } from '../src/scenes/treeHost.js';   // the felled tree lies flat FALL_S after it begins to go: the fall's ground is struck then
 
 const OUT = 'public/sfx';
-/** The bake keeps nothing past its rate's top - a partial over this is left out rather than aliased. */
-const TOP_HZ = 4800;
-
-// ---- the pieces ---------------------------------------------------------------------------------------------------
-
-/** A struck body's modes: damped sines, `list` [[Hz, tau s, gain]] - wood's few and quickly gone, stone's brief and
- *  bright, metal's long. Each starts from rest (a sine), so a mode begins as a struck body does, and fades over the
- *  buffer's last 12 ms, so one still ringing at its end is never cut (a cut is a click). */
-function modes(len, list, { attackMs = 0.4 } = {}) {
-  const out = buf(len);
-  const fade = seconds(0.012);
-  for (const [f, tau, g] of list) {
-    if (f > TOP_HZ) continue;
-    const w = (2 * Math.PI * f) / RATE;
-    for (let i = 0; i < out.length; i++) out[i] += g * Math.sin(w * i) * attack(i, attackMs) * decay(i, tau) * Math.min(1, (out.length - i) / fade);
-  }
-  return out;
-}
-
-/** A burst of noise through a band, enveloped and scaled to a peak of 1: an edge's crack, a bite, a snap. */
-function burst(rand, { f0, q = 1, tau, attackMs = 0.2 }) {
-  const x = biquad(noise(seconds(tau * 9 + 0.004), rand), { type: 'bandpass', f0, q });
-  envelope(x, (i) => attack(i, attackMs) * decay(i, tau));
-  return unit(x);
-}
-
-/** A bubble: a sine whose pitch RISES as it rings (a bubble's resonance climbing as it shrinks toward the surface) from
- *  `from` toward `to` over `rise` s - water's "bloop". */
-function bubble(len, from, to, rise, tau, attackMs = 0.5) {
-  const out = buf(len);
-  let ph = 0;
-  for (let i = 0; i < out.length; i++) {
-    const f = to - (to - from) * Math.exp(-i / (rise * RATE));
-    ph += (2 * Math.PI * f) / RATE;
-    out[i] = Math.sin(ph) * attack(i, attackMs) * decay(i, tau);
-  }
-  return out;
-}
-
-/** Leaves: many short grains through a leaf's band (`lo`..`hi` Hz) at uneven times, each grain's loudness `env(u)` of
- *  where it falls in the span (0..1), a few of them louder - a rustle is a crackle, not a hiss. */
-function leaves(out, rand, { count, from, to, lo = 1800, hi = 4200, tauLo = 0.0005, tauHi = 0.002, gain = 0.4, q = 1.4, env = () => 1 }) {
-  for (let k = 0; k < count; k++) {
-    const u = rand();
-    const f0 = lo + (hi - lo) * rand();
-    const tau = tauLo + (tauHi - tauLo) * rand();
-    const g = biquad(noise(seconds(tau * 8), rand), { type: 'bandpass', f0, q });
-    envelope(g, (i) => attack(i, 0.1) * decay(i, tau));
-    const crackle = rand() < 0.15 ? 1.7 : 1;   // a leaf folding over, a twig: a few louder among the many
-    mix(out, unit(g), from + (to - from) * u, gain * crackle * (0.25 + 0.75 * rand()) * env(u));
-  }
-  return out;
-}
-
-/** Wood groaning, hide ripping: a stick-slip train - pulses at a rate `rate(u)` Hz (u the share of the span), each
- *  jittered by up to `jitter` of its gap and weighed by `env(u)`, ringing `bands` [[Hz, q, gain]], with the friction's
- *  breath under it. */
-function groan(rand, len, { rate, jitter = 0.25, bands, env, noiseGain = 0.12 }) {
-  const n = seconds(len);
-  const pulses = new Float32Array(n);
-  for (let t = 0.002; t < len;) {
-    const i = Math.round(t * RATE);
-    if (i < n) pulses[i] += (0.6 + 0.4 * rand()) * env(t / len);
-    t += (1 / Math.max(4, rate(t / len))) * (1 + jitter * (2 * rand() - 1));
-  }
-  const out = new Float32Array(n);
-  for (const [f0, q, g] of bands) {
-    const y = biquad(pulses, { type: 'bandpass', f0, q });
-    for (let i = 0; i < n; i++) out[i] += y[i] * g;
-  }
-  unit(out);
-  const breath = unit(biquad(noise(n, rand), { type: 'bandpass', f0: 900, q: 0.9 }));
-  for (let i = 0; i < n; i++) out[i] += breath[i] * noiseGain * env(i / n);
-  return unit(out);
-}
-
-/** A splash: water thrown up - noise whose top falls away as the drops scatter (a moving low-pass), a wet body under
- *  it, and `drops` little plips falling back within `dropsTo` s. */
-function splash(rand, { len = 0.35, from = 4200, to = 500, tau = 0.05, body = 0.5, drops = 6, dropsTo = 0.3 } = {}) {
-  const out = buf(len);
-  const n = seconds(len);
-  const x = noise(n, rand);
-  envelope(x, (i) => attack(i, 1.2) * decay(i, tau));
-  mix(out, unit(sweepLowpass(x, from, to, tau * 1.4)), 0, 1);
-  const b = biquad(noise(n, rand), { type: 'lowpass', f0: 380, q: 0.8 });
-  envelope(b, (i) => attack(i, 2) * decay(i, tau * 0.8));
-  mix(out, unit(b), 0, body);
-  for (let k = 0; k < drops; k++) {
-    const at = 0.03 + (dropsTo - 0.03) * Math.pow(rand(), 0.8);
-    const f = 900 + 1400 * rand();
-    mix(out, bubble(0.05, f, f * 1.5, 0.01, 0.008), at, 0.18 * (0.4 + 0.6 * rand()));
-  }
-  return unit(out);
-}
-
-/** A bell's note: its fundamental and three partials over it (an octave, a bell's 2.76, a breath-sharp twin that makes
- *  it shimmer), none past the bake's top. */
-function bellNote(f, tau, len = tau * 5) {
-  return unit(modes(len, [[f, tau, 1], [f * 1.0035, tau * 0.9, 0.3], [f * 2, tau * 0.45, 0.24], [f * 2.76, tau * 0.25, 0.1]], { attackMs: 1.5 }));
-}
 
 // ---- the clips: Logging -----------------------------------------------------------------------------------------
 

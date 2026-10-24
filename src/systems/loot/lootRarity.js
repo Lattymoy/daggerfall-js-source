@@ -382,7 +382,11 @@ export const UNIQUE_WEIGHTS = Object.freeze({ base: 0, perTier: 0.35, cap: 6 });
  * Register a find. `mint(rolls)` answers the ITEMS to add (a list, so
  * a weapon can arrive with the ammunition it would be useless
  * without); `minTier` is the source tier it first becomes possible at;
- * `weight` scales its own chance against the others.
+ * `weight` scales its own chance against the others. PELLETS-SCARCE: a
+ * find may carry `weights` of its own ({ base, perTier, cap }, per mille -
+ * UNIQUE_WEIGHTS' shape) where the rarest-in-the-game curve is not its
+ * rarity, and `final: true` rolls it in rollFinalFinds alone - the door's
+ * very last draw (law 9).
  */
 export function registerUniqueFind(find) {
   if (!find?.id || typeof find.mint !== 'function') return _uniqueFinds.length;
@@ -398,7 +402,7 @@ export function uniqueFindChance(find, { kind = 'corpse', tier = 0, boss = false
   if (!find || tier < (find.minTier ?? 4)) return 0;
   const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);
   const luckMod = (Math.max(0, Math.min(100, luck | 0)) - 50) * 0.02;   // a hundredth of the tier roll's - luck helps, it does not hand it over
-  const w = UNIQUE_WEIGHTS;
+  const w = find.weights ?? UNIQUE_WEIGHTS;   // PELLETS-SCARCE: a find's own curve
   return Math.max(0, Math.min(w.cap, (w.base + w.perTier * Math.max(0, tier)) * mult * (find.weight ?? 1) + luckMod));
 }
 
@@ -407,7 +411,7 @@ export function uniqueFindChance(find, { kind = 'corpse', tier = 0, boss = false
 export function rollUniqueFinds(source, rolls = Math.random) {
   const out = [];
   for (const find of _uniqueFinds) {
-    if (find.late === true) continue;   // LOOT21: a late find is the door's last roll (rollLateFinds)
+    if (find.late === true || find.final === true) continue;   // LOOT21: a late find is the door's last roll (rollLateFinds); PELLETS-SCARCE: a final find, its very last (rollFinalFinds)
     const chance = uniqueFindChance(find, source);
     if (chance <= 0) continue;
     if (rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));
@@ -422,7 +426,24 @@ export function rollUniqueFinds(source, rolls = Math.random) {
 export function rollLateFinds(source, rolls = Math.random) {
   const out = [];
   for (const find of _uniqueFinds) {
-    if (find.late !== true) continue;
+    if (find.late !== true || find.final === true) continue;
+    const chance = uniqueFindChance(find, source);
+    if (chance > 0 && rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));
+  }
+  return out;
+}
+/** PELLETS-SCARCE (bible/05-Combat/Dwarven-Thunderlock.md "PELLETS-SCARCE"): THE FINAL FINDS - a find registered `final`
+ *  rolls here, after the door's technique pass, which was its last draw (law 9: every draw a seed made before is the one
+ *  it was, and a find under its tier costs no draw). The Dwemer Pellet's find (systems/thunderlock.js) is its one.
+ *  Answers the items to add. */
+let _finalFindsOff = false;
+/** The test seam: the final finds held off (true) for a replay of the draws before them, or back on (false). */
+export function _holdFinalFindsForTests(off) { _finalFindsOff = !!off; }
+export function rollFinalFinds(source, rolls = Math.random) {
+  const out = [];
+  if (_finalFindsOff) return out;
+  for (const find of _uniqueFinds) {
+    if (find.final !== true) continue;
     const chance = uniqueFindChance(find, source);
     if (chance > 0 && rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));
   }
@@ -1130,12 +1151,12 @@ export function imprintLine(item) {
   return rec && p?.name ? `Imprint: ${p.name} (of ${rec.name})${p.brief ? ` - ${p.brief}` : ''}` : '';
 }
 /** AUDIT LOOT F1: WHETHER A POWER CAN WORK ON A PIECE - Chain Lightning arcs off an arrow (lootPowers.js lootStrike: a
- *  weapon of the Archery skill, the Thunderlock's too) and Earthshaker shakes off a melee blow (any other weapon); every
- *  other power works on any piece of its group. The imprint offers and the wire takes no power its piece could not use. */
+ *  weapon of the Archery skill, the Thunderlock's too) and Earthshaker shakes off a melee blow (any other weapon); KETCH's
+ *  Hammerfall and Broadside answer a shot alone, as the chain does; every other power works on any piece of its group. The imprint offers and the wire takes no power its piece could not use. */
 export function powerFits(item, power) {
   if (!item || !power) return false;
   const shoots = item.group === 'Weapons' && weaponSkillUsed(item.templateIndex) === SKILLS.Archery;
-  if (power.kind === 'chain') return shoots;
+  if (power.kind === 'chain' || power.kind === 'hammerfall' || power.kind === 'broadside') return shoots;   // KETCH: the Ketch's two ring and mark off a shot
   if (power.kind === 'quake') return item.group === 'Weapons' && !shoots;
   if (power.kind === 'hood') return hoodCapable(item);   // LOOT15: Unseen answers a hood, and a garment with none never raises one
   return true;
@@ -1304,11 +1325,12 @@ export function craftedRarityWorth(item) {
 }
 
 /** THE HOST DOOR. Roll every eligible item of a freshly generated list
- *  against the source; a no-op with the switch off or no source, so
- *  the DFU loot list is returned untouched. `luck` is the player's
+ *  against the source; a no-op with no source, and with the switch off
+ *  the DFU loot list untouched but for the final finds (the Pellet). `luck` is the player's
  *  live luck. Returns the list for chaining. */
 export function rollLootRarity(items, source, { rolls = Math.random, luck = 50, find: findIn = undefined } = {}) {   // PARTY-LOOT: `find` the roll's own finders' word (a room's base reads none of a player's)
-  if (!lootRarityOn() || !source || !Array.isArray(items)) return items;
+  if (!source || !Array.isArray(items)) return items;
+  if (!lootRarityOn()) return (items.push(...rollFinalFinds({ ...source, luck }, rolls)), items);   // AUDIT SHIP C2: the Pellet a find, not a tier - the switch off still drops it, the shelves selling none
   const find = findIn ?? legendaryFindMult();   // LOOT5: the finders' word, once for the list
   const minted = [];
   for (const it of items) {
@@ -1339,7 +1361,8 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50, 
   weaponSocketPass(minted, rolls);   // GEM1: the weapons' own sockets, after every draw before them (law 9)
   items.push(...(_gemFind?.({ ...source, luck }, rolls) ?? []));   // GEM2: and a graded gem, last of all (systems/gems.js)
   damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made, the gem's too (law 9)
-  techniquePass(minted, rolls);   // TECH1: a weapon's technique - the door's LAST draw, after even GEM2's find and TRUE-CURSE's damning (law 9: every draw above is the one it was)
+  techniquePass(minted, rolls);   // TECH1: a weapon's technique - after even GEM2's find and TRUE-CURSE's damning (law 9: every draw above is the one it was)
+  items.push(...rollFinalFinds({ ...source, luck }, rolls));   // PELLETS-SCARCE: the final finds - the Dwemer Pellet - the door's last draw now, after the technique's
   return items;
 }
 /** GEM2 (bible/06-Systems/Gem-Sockets.md section 4): THE WORLD'S GEM FIND - registered by systems/gems.js, which owns the

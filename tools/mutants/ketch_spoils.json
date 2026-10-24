@@ -1,0 +1,65 @@
+[
+  {
+    "name": "KTS-the-gold-unvaried",
+    "file": "src/systems/ketch/ketchSpoils.js",
+    "old": "(0.8 + 0.4 * rolls())",
+    "new": "(1 + 0 * rolls())",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTS-the-first-piece-rare-always",
+    "file": "src/systems/ketch/ketchSpoils.js",
+    "old": "rolls() < KT_SPOILS_LEGENDARY ? 'legendary' : 'rare'",
+    "new": "rolls() < 0 ? 'legendary' : 'rare'",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTS-the-pellets-one-short",
+    "file": "src/systems/ketch/ketchSpoils.js",
+    "old": "Math.floor(rolls() * (P.max - P.min + 1))",
+    "new": "Math.floor(rolls() * (P.max - P.min))",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTS-the-two-guns-one-draw",
+    "file": "src/systems/ketch/ketchSpoils.js",
+    "old": "  if (rolls() < KT_THUNDERLOCK_CHANCE) guns.push(createThunderlock());\n  if (rolls() < KT_PISTOLET_CHANCE) guns.push(createPistolet());",
+    "new": "  const gun = rolls();\n  if (gun < KT_THUNDERLOCK_CHANCE) guns.push(createThunderlock());\n  if (gun < KT_PISTOLET_CHANCE) guns.push(createPistolet());",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTS-the-gilded-at-the-old-chance",
+    "file": "src/systems/gilded.js",
+    "old": "export const KETCH_GILDED_CHANCE = 1 / 100;",
+    "new": "export const KETCH_GILDED_CHANCE = 1 / 40;",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTS-a-gun-every-share",
+    "file": "src/systems/ketch/ketchSpoils.js",
+    "old": "export const KT_THUNDERLOCK_CHANCE = 1 / 10;",
+    "new": "export const KT_THUNDERLOCK_CHANCE = 1;",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTS-the-pellets-after-the-gold",
+    "file": "src/systems/ketch/ketchSpoils.js",
+    "old": "    { kind: 'item', item: createPellets(s.pellets), tier: 'common', record: flat() },\n    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n",
+    "new": "    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n    { kind: 'item', item: createPellets(s.pellets), tier: 'common', record: flat() },\n",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  }
+]

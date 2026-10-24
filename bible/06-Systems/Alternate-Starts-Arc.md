@@ -243,12 +243,12 @@ OnStartGame now:
   the character where their story begins, its quest running - the page reloads into that save.
 - `?start=<key>` is the dev door for a headless character (`?class=`).
 
-The host grew by its wiring alone (`bootWorld` 36,112 -> 36,129 logical lines of 36,129 on TESA's count at the fold of
-WORLD-WIDE; 36,280 -> 36,297 of 36,298 before it): the host's construction, the
-page through the chargen door, the answer into OnStartGame, the realm's wait, `startLairAt` into the quest layer's
-seam, and the writ at the passage. `scenes/exterior.js` hands the commission (`initAtGameStart(HAND_START_QUEST)`).
-`scenes/worldModes.js` and `scenes/dungeonContext.js` begin nobody; the province's dungeon mounts the commission as
-every quest item is mounted.
+The host's wiring is 17 logical lines: the host's construction, the page through the chargen door, the answer into
+OnStartGame, the realm's wait, `startLairAt` into the quest layer's seam, and the writ at the passage. At the merge of
+TESA's head (its ceiling at its own count, 36,202) they were paid for by a cut, not a raise: Come Sail Away's loops'
+frame out to `scenes/csaAudio.js` (`01-Overview/Host-Split.md`, "START2's wiring"), `bootWorld` 36,202 -> 36,180.
+`scenes/exterior.js` hands the commission (`initAtGameStart(HAND_START_QUEST)`). `scenes/worldModes.js` and
+`scenes/dungeonContext.js` begin nobody; the province's dungeon mounts the commission as every quest item is mounted.
 
 ## 9. The quests
 

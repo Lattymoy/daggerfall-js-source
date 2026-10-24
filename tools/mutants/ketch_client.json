@@ -1,0 +1,101 @@
+[
+  {
+    "name": "KTC-kept-without-my-name",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "Array.isArray(w.cr) && w.cr.some((c) => c?.[0] === mine) ?",
+    "new": "Array.isArray(w.cr) ?",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-leader-over-the-ship-kept",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "typeof kept.o === 'string' && kept.o && (kept.p ?? null) === (party ?? null) ? { owner: kept.o } : { captain: leader ?? mine });",
+    "new": "typeof kept.o === 'string' && kept.o && (kept.p ?? null) === (party ?? null) && !leader ? { owner: kept.o } : { captain: leader ?? mine });",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-another-voyages-ship-ridden-to",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "(kept && kept.n === n && kept.a === mine",
+    "new": "(kept && kept.a === mine",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-share-kept-in-memory-alone",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "const keep = (list) => { memory = list; try { store?.set(KT_OWED_KEY, list); } catch { /* memory holds it */ } };",
+    "new": "const keep = (list) => { memory = list; };",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-thrown-share-kept",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "if (ok) { drop(e); say(KT_SPOILS_TEXT.spilled); }",
+    "new": "if (ok) { say(KT_SPOILS_TEXT.spilled); }",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-one-share-held",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "keep([...owed().filter((k) => !same(k, e)), e].slice(-KT_SHARES_OWED_MAX));",
+    "new": "keep([e]);",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-anothers-share-given",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "const mine = () => { const m = me(); return owed().filter((e) => !m || e.s === m); };",
+    "new": "const mine = () => owed();",
+    "tests": [
+      "test/scenes/ketch_shares.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-hours-pool-handed-again",
+    "file": "src/scenes/world.js",
+    "old": "  const floorPool = () => (modes?.ktShip?.() != null && ketch ? ketch.spoils :",
+    "new": "  const floorPool = () => (modes?.ktShip?.() != null && ketch ? sdSpoilsPool :",
+    "tests": [
+      "test/systems/ketch/ketch_spoils.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-reach-the-boxs",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "export const KT_PRESS_REACH = KT_REACH + 0.4;",
+    "new": "export const KT_PRESS_REACH = KT_REACH + 0.4 + 0.55 * Math.SQRT2;",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-let-go-said-whether-it-went",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };",
+    "new": "return (sendDrop(), { forced: false, letGoAt: t, say: 'letGo' });",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  },
+  {
+    "name": "KTC-an-empty-deck-kept",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "export const ketchShipUnheard = (V, sinceMs) => !(V?.n >= 0) && sinceMs > KT_DOOR_MS;",
+    "new": "export const ketchShipUnheard = (V, sinceMs) => !(V?.n >= 0) && sinceMs > Infinity;",
+    "tests": [
+      "test/scenes/ketch_client.test.js"
+    ]
+  }
+]

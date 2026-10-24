@@ -200,13 +200,13 @@
   {
     "name": "BAL9c-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 12;",
+    "old": "export const ITEM_LAW_VERSION = 13;",
     "new": "export const ITEM_LAW_VERSION = 2;",
     "tests": [
       "test/systems/tech1_roster.test.js",
       "test/systems/item/int1_itemlaw.test.js"
     ],
-    "note": "SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
+    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair). SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
   },
   {
     "name": "BAL9c-the-service-behind-the-law",

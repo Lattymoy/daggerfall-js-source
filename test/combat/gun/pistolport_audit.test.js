@@ -327,8 +327,10 @@ function frameAlone() {
 
 test('D9: THE LEFT HAND IS THE RIGHT IN THE GLASS - its rig steps flipped: a walk bobs the two pistols OUTWARD, each the other\'s mirror; a turn of the head lags both the SAME way across the screen (Two-Hands\' two sway rules) (mutant: the left rig never flipped)', () => {
   // read on the SCREEN, where the left hand's picture and rect are mirrored (the rig's own space is the mod's)
-  const W = 1280, box = { x: 0, y: 0, w: 120, h: 90 };
-  const xOf = (f, h) => VM.pistolHandRect(f.hands, h, { canvasW: W, canvasH: 800, anchor: box, union: box, widthPct: 0.3, offset: 0, raise: 0, heightPx: 90 }).rect;
+  // PIN MOVED (PISTOL-EDGE): the union reaches past the anchor's corner as the strip's does (pistolStrip.js bleedArm) - a
+  // union flush with the screen's corner is art that ends there, and holdToCorner holds such a picture still
+  const W = 1280, box = { x: 0, y: 0, w: 120, h: 90 }, union = { x: 0, y: 0, w: 120 + 96, h: 90 + 64 };
+  const xOf = (f, h) => VM.pistolHandRect(f.hands, h, { canvasW: W, canvasH: 800, anchor: box, union, widthPct: 0.3, offset: 0, raise: 0, heightPx: 90 }).rect;
   const walk = frameAlone();
   const restR = xOf(walk, 'R').x;
   let span = 0;

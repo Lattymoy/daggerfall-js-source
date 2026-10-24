@@ -2,8 +2,8 @@
   {
     "name": "TIMERS2-the-groups-reordered",
     "file": "src/systems/eventTimers.js",
-    "old": "  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star']) }),\n  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),",
-    "new": "  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),\n  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star']) }),",
+    "old": "  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch']) }),\n  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),",
+    "new": "  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),\n  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch']) }),",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TIMERS2-a-kind-in-two-groups",
     "file": "src/systems/eventTimers.js",
-    "old": "Object.freeze(['gate', 'serpent', 'super', 'star'])",
-    "new": "Object.freeze(['gate', 'serpent', 'super', 'star', 'elite'])",
+    "old": "Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch'])",
+    "new": "Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'elite'])",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]

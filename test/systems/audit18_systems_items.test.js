@@ -228,8 +228,8 @@ test('audit18 items: RandomizeArmorVariant verbatim, and the shelf takes its rol
   // the variant roll second (ApplyArmorSettings' tail).
   // .95 -> plate, .99 -> Dwarven (0x0204), .9 -> Range(1,4) = 3.
   const one = stockShopShelf({ buildingType: BUILDING_TYPES.Armorer, quality: 20 }, { level: 5, gender: 'male' }, { rolls: seq(0, 0.95, 0.99, 0.9, 0.999) });
-  assert.deepEqual(one.filter((i) => i.templateIndex !== PELLET_TEMPLATE && i.templateIndex !== 131), [{ group: 'Armor', templateIndex: 102, material: 0x0204, variant: 3, name: 'Cuirass', value: 4800, maxCondition: 12288, currentCondition: 12288 }]);   // AUDIT 23 (items-5): plate scales 4096 x 12/4   // PIN MOVED (SHOP-PELLETS): the Armorer's counter carries the gun's shot beside it, from no roll   // PIN MOVED (SHOP-ARROWS): and a quiver (Arrow, 131)
-  assert.deepEqual(one.filter((i) => i.templateIndex === PELLET_TEMPLATE).map((i) => i.stackCount), [14], 'and that shot drew nothing from the stream');
+  assert.deepEqual(one.filter((i) => i.templateIndex !== 131), [{ group: 'Armor', templateIndex: 102, material: 0x0204, variant: 3, name: 'Cuirass', value: 4800, maxCondition: 12288, currentCondition: 12288 }]);   // AUDIT 23 (items-5): plate scales 4096 x 12/4   // PIN MOVED (SHOP-ARROWS): the Armorer's counter carries a quiver (Arrow, 131) beside it, from no roll   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): and no Dwemer Pellet - SHOP-PELLETS' shot is off the counter
+  assert.deepEqual(one.filter((i) => i.templateIndex === PELLET_TEMPLATE), [], 'PELLETS-SCARCE: no shot on the counter');
   assert.deepEqual(one.filter((i) => i.templateIndex === 131).map((i) => i.stackCount), [29], 'SHOP-ARROWS: nor the quiver');
 });
 

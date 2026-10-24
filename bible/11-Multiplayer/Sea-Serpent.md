@@ -436,7 +436,7 @@ route `/v1/serpent/claim`):
   brings *On the Burning Doors* as a breach's does; and a ship that dealt finds a piece of **Sethrakul's Coilscale** -
   the serpent's own Aetheric set (`Sigil-Sets.md` section 6c) - a quarter of the time, rolled after everything above so
   every earlier hoard is what it was for its seed.
-- SERPENT5 (section 17): a ship that dealt finds **the Sunken Sovereign**, a Gilded saber, one hoard in a hundred - the
+- SERPENT5 (section 17): a ship that dealt finds **the Sunken Sovereign**, a Gilded saber, one hoard in a hundred (GILDED-RARER, 2026-10-24: one in two hundred and fifty - `06-Systems/Gilded.md` section 10) - the
   hoard's very last draw - and its first write may grant the title Coilbreaker and the aura The Maelstrom.
 
 Every piece is known, and the ladder's last pass is applied (LOOT2). It is rolled at the level the fight admitted (the

@@ -257,8 +257,9 @@ test('WB9f the seams, by source: the court stands the spoils and their words whe
   assert.match(w, /spoilName: \(key\) => floorPool\(\)\?\.nameOf\(key\) \?\? null,/);
   assert.match(w, /spoilContents: \(key\) => floorPool\(\)\?\.contentsOf\(key\) \?\? null,/);
   assert.match(w, /takeSpoil: \(key\) => !!floorPool\(\)\?\.pick\(key\),/);
-  // PIN MOVED (EG-E): the Spire's Redoubts throw into the Hour's pool - the court's anywhere but the Hour and the Spire
-  assert.match(w, /const floorPool = \(\) => \(modes\?\.sdRealmSlot\?\.\(\) != null \|\| modes\?\.egHallBreach\?\.\(\) != null \? sdSpoilsPool : spoilsPool\);/, 'the court\'s pool anywhere but the Hour and the Spire');
+  // PIN MOVED (EG-E): the Spire's Redoubts throw into the Hour's pool - the court's anywhere but the Hour and the Spire;
+  // PIN MOVED (KETCH): and the Ketchmaster's hold
+  assert.match(w, /const floorPool = \(\) => \(modes\?\.ktShip\?\.\(\) != null && ketch \? ketch\.spoils : modes\?\.sdRealmSlot\?\.\(\) != null \|\| modes\?\.egHallBreach\?\.\(\) != null \? sdSpoilsPool : spoilsPool\);/, 'the court\'s pool anywhere but the Hour, the Spire and the Ketch (PIN MOVED: AUDIT KETCH L2-3 - the Ketch its own)');
   assert.match(w, /itemName: \(item\) => lootPileName\(\[item\]\),/);
   const gc = read('src/scenes/gate/gateCourt.js');
   assert.match(gc, /spoils\?\.frame\(onSpoilRest\);/);

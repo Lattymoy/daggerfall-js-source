@@ -243,9 +243,9 @@
   },
   {
     "name": "SD11c-L5F1-unlaid",
-    "file": "src/scenes/world.js",
-    "old": "gates: profileGateLine(rec), raids: profileRaidLine(rec), serpents: profileSerpentLine(rec), hours: profileSdLine(rec) };",
-    "new": "gates: profileGateLine(rec) };",
+    "file": "src/ui/profileWindow.js",
+    "old": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record), raids: profileRaidLine(record), serpents: profileSerpentLine(record), hours: profileSdLine(record), stars: profileStarLine(record), voyages: profileKetchLine(record) });",
+    "new": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record) });",
     "tests": [
       "test/systems/sd11c_page.test.js",
       "test/net/gate/wb5b_gate_claim.test.js"

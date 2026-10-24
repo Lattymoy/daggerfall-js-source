@@ -272,12 +272,12 @@
   {
     "name": "SEA-SET-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 12;",
+    "old": "export const ITEM_LAW_VERSION = 13;",
     "new": "export const ITEM_LAW_VERSION = 10;",
     "tests": [
       "test/systems/sea/seaset.test.js",
       "test/systems/tech1_roster.test.js"
     ],
-    "note": "the Eltheric Tidemail's law (11 - 10 on its branch, renumbered past PISTOLET's at the merge): a law of 10 found every one of its nine records 'aetheric'"
+    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair). the Eltheric Tidemail's law (11 - 10 on its branch, renumbered past PISTOLET's at the merge): a law of 10 found every one of its nine records 'aetheric'"
   }
 ]

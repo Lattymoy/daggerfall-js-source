@@ -200,8 +200,8 @@
   {
     "name": "SD13-the-court-first",
     "file": "src/scenes/world.js",
-    "old": "if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
-    "new": "if (!gateScoreFrame() && !hourScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
+    "old": "if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
+    "new": "if (!gateScoreFrame() && !hourScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
     "tests": [
       "test/systems/superDungeon/sd13_score.test.js"
     ]

@@ -429,7 +429,8 @@ test('EG10 THE SWAP\'S FALLBACK, PLAYED: a build still in flight when the step i
 test('EG10 THE HOSTS WIRED: the mode machine builds the swap and hands the client its three doors; the stand of a portcullis is one function for the stand and the swap; the dungeon host stands a new circle\'s spans in the same level; the client asks the build at the rest and swaps before it falls back (mutants: any seam unwired)', () => {
   const E = readFileSync(new URL('../../../src/scenes/eliteGates/egClient.js', import.meta.url), 'utf8');
   assert.match(EC, /const egSwap = createEgSwap\(\);/);   // PIN MOVED (HOST-SPLIT, EG-LOOK): the circle's own module, the host wires it
-  assert.match(WM, /const egCircle = createEgCircleHost\(\{ renderer, host, wm: \{ get mode\(\) \{ return mode; \}, get dungeonCtx\(\) \{ return dungeonCtx; \}, get dungeonLoc\(\) \{ return dungeonLoc; \} \} \}\);/);
+  // PIN MOVED (KETCH): one view of the mode machine, the circle's and the sky-ketch's deck's (worldModes.js `_madeView`)
+  assert.match(WM, /const _madeView = \{ get mode\(\) \{ return mode; \}, get dungeonCtx\(\) \{ return dungeonCtx; \}, get dungeonLoc\(\) \{ return dungeonLoc; \}[^\n]*\};\n\s*const egCircle = createEgCircleHost\(\{ renderer, host, wm: _madeView \}\);/);
   assert.match(WM, /egPrebuild, egSwapCircle, egSwapDrop: \(\) => egSwap\.drop\(\),/);
   assert.match(EC, /if \(parts\) egGateStand\(ctx, spec\.h, parts\);/);
   assert.match(EC, /for \(const g of parts\.gates\) egGateStand\(ctx, g\.h, g\);/);

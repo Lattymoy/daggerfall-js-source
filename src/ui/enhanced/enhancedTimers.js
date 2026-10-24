@@ -22,7 +22,7 @@ import { t } from '../../systems/textManager.js';   // TIMERS2: the groups' word
 export const TIMER_DOOR_TEXT = Object.freeze({ board: 'Boards' });
 
 /** A row's kind -> its marker class (colour in the sheet). */
-export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']);   // SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found; STAR6: a fallen star's; TIMERS2: the Elite Breach's, in its arch's gold (it drew in no colour)
+export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset']);   // KETCH: the Sky-Ketch's; SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found; STAR6: a fallen star's; TIMERS2: the Elite Breach's, in its arch's gold (it drew in no colour)
 
 /** TIMERS2: a group's head (its title) and its button in the bar (a short word), in the player's language. */
 export const timerGroupTitle = (id) => ({
@@ -52,7 +52,7 @@ export function timersMark(doc, { onOpen, open = false }) {
   const b = doc.createElement('button');
   b.type = 'button';
   b.className = 'px-timersmark';
-  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, the Abyss Dungeon, the Starfall, raids, battles and resets');   // SD2c: its row; STAR6: the Starfall's
+  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, the Abyss Dungeon, the Starfall, the Sky-Ketch, raids, battles and resets');   // SD2c: its row; STAR6: the Starfall's; KETCH: the Sky-Ketch's
   b.setAttribute('aria-haspopup', 'dialog');   // AUDIT TIMERS1 UI-6
   b.setAttribute('aria-expanded', open ? 'true' : 'false');
   b.title = 'Timers';

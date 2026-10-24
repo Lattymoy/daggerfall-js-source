@@ -77,8 +77,8 @@
   {
     "name": "TECH1-the-pass-dropped",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  techniquePass(minted, rolls);   // TECH1: a weapon's technique - the door's LAST draw",
-    "new": "  void minted;   // TECH1: a weapon's technique - the door's LAST draw",
+    "old": "  techniquePass(minted, rolls);   // TECH1: a weapon's technique",
+    "new": "  void minted;   // TECH1: a weapon's technique",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -213,13 +213,13 @@
   {
     "name": "TECH1-law-the-version",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 12;",
+    "old": "export const ITEM_LAW_VERSION = 13;",
     "new": "export const ITEM_LAW_VERSION = 1;",
     "tests": [
       "test/systems/tech1_roster.test.js",
       "test/systems/item/int1_itemlaw.test.js"
     ],
-    "note": "SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
+    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair). SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
   },
   {
     "name": "TECH1-a-duel-struck",

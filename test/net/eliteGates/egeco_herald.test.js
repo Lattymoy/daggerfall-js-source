@@ -226,7 +226,7 @@ const quiet = (fn) => { const warn = console.warn; console.warn = () => {}; retu
 const ended = (b, hq) => ({ ...egBreachNew({ b, ez: 'z'.repeat(20), s: 'acct-0', o: 'Mac', ew: 0, rh: 0, seed: 1, op: T0, co: [['acct-0', 'Mac', 1]], site: { px: 1, py: 1, x: 0, y: 0, z: 0, yaw: 0 }, wg: [] }), end: 'home', endAt: T0, sg: 'end', hq });
 /** The hub and the world of rooms over a driven clock, Discord stubbed: `posts` every body sent, `discord.answer` what it
  *  says. The gate's, the serpent's and the Abyss Dungeon's heralds and director are theirs (discordgates.test.js,
- *  serpent2_herald.test.js, sdherald.test.js). */
+ *  serpent2_herald.test.js, sdherald.test.js, and the Sky-Ketch's ketch_herald.test.js). */
 async function withHub(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK } } = {}) {
   const realNow = Date.now, realFetch = globalThis.fetch;
   let clock = T0;
@@ -234,7 +234,7 @@ async function withHub(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK } } = {}) {
   const world = fakeRooms({ now: () => clock });
   const hub = world.room(SOCIAL_ROOM);
   Object.assign(hub.env, env);
-  hub.room._heraldBeat = async () => {}; hub.room._serpentHeraldBeat = async () => {}; hub.room._sdBeat = async () => {}; hub.room._sdHeraldBeat = async () => {};
+  hub.room._heraldBeat = async () => {}; hub.room._serpentHeraldBeat = async () => {}; hub.room._sdBeat = async () => {}; hub.room._sdHeraldBeat = async () => {}; hub.room._ktHeraldBeat = async () => {};   // KETCH-EVERY: the Sky-Ketch's too (ketch_herald.test.js) - every ten hours a voyage, its card would post among the Spire's
   hub.store.set('hub', 1);
   const posts = [];
   const discord = { answer: () => ({ ok: true, status: 204 }) };

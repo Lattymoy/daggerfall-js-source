@@ -14,6 +14,7 @@ import { PISTOLET_FEEL, GUN_FEEL, createRecoil, armGunPose } from '../../../src/
 import { fpArm } from '../../../src/combat/fpArm.js';
 import { applyRarity, addProcLine } from '../../../src/systems/loot/lootRarity.js';
 import { weaponElement } from '../../../src/systems/weaponGlow.js';
+import { PISTOL_BLEED } from '../../../src/combat/gun/pistoletArt.js';
 
 const idleOf = (q) => q.filter((x) => /:0$/.test(String(x.tex)));
 const firingOf = (q) => q.find((x) => !/:0$/.test(String(x.tex)));
@@ -23,8 +24,9 @@ test('the Pistolet draws ITS OWN strip, at its art\'s own pose (mutants: the rif
   assert.ok(uploads.some((n) => /^pistolet:\d$/.test(n)) && !uploads.some((n) => /thunderlock/.test(n)), `its six frames (${uploads.slice(0, 3)})`);
   const q = await frame();
   assert.equal(q.length, 1);
-  // the union box at native scale x the owner's 1.05, on a 320-wide screen: 88 x 1.05 design pixels wide
-  assert.ok(Math.abs(q[0].rect.w - 88 * PISTOLET_FEEL.scale * canvas.width / 320) < 1.5, `drawn ${q[0].rect.w.toFixed(1)} wide`);
+  // the union box at native scale x the owner's 1.05, on a 320-wide screen. PIN MOVED (PISTOL-EDGE): the union is the
+  // frames with their forearms carried past the cut (pistolStrip.js bleedArm) - the strip's 88 and PISTOL_BLEED.right more
+  assert.ok(Math.abs(q[0].rect.w - (88 + PISTOL_BLEED.right) * PISTOLET_FEEL.scale * canvas.width / 320) < 1.5, `drawn ${q[0].rect.w.toFixed(1)} wide`);
 });
 
 test('a pair: each hand its own item\'s art, the left in the mirror, the striking hand over the other; the resting one never flashes (mutants: one art; a fixed order; the resting pistol flashing)', async () => {

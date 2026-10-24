@@ -163,7 +163,7 @@ export function trimSilence(x, rate, { threshold = 0.004, head = 0.002, tail = 0
 }
 
 /** The whole pipe: float mono at any rate -> the classic file's bytes. */
-export function bake(mono, rate, { gain = 1, peak = 0.89, trim = true, maxSeconds = 0 } = {}) {
+export function bake(mono, rate, { gain = 1, peak = 0.89, trim = true, maxSeconds = 0, edges = null } = {}) {
   let x = trim ? trimSilence(mono, rate) : mono;
   if (maxSeconds > 0 && x.length > maxSeconds * rate) {
     // a hard length cap, faded out over its last 30ms so the cut is not
@@ -173,6 +173,15 @@ export function bake(mono, rate, { gain = 1, peak = 0.89, trim = true, maxSecond
     const fade = Math.min(n, Math.round(0.03 * rate));
     for (let i = 0; i < fade; i++) cut[n - fade + i] *= 1 - i / fade;
     x = cut;
+  }
+  if (edges) {
+    // AUDIT SOUNDSCAPE W12: `edges` [in, out] seconds - a recording that starts or stops mid-sound (a croak cut out of
+    // a take, its first and last 5 ms at a tenth to two fifths of its peak) eased in and out, so neither edge clicks
+    const out = x === mono ? new Float32Array(x) : x;
+    const a = Math.min(out.length, Math.round(edges[0] * rate)), b = Math.min(out.length, Math.round(edges[1] * rate));
+    for (let i = 0; i < a; i++) out[i] *= i / a;
+    for (let i = 0; i < b; i++) out[out.length - 1 - i] *= i / b;
+    x = out;
   }
   const gained = gain === 1 ? x : x.map((v) => v * gain);
   const filtered = lowpass(gained, DF_RATE * 0.45, rate);

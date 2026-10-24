@@ -1,0 +1,149 @@
+-- KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md section 13): THE SKY-KETCH, step 2 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Imrah's letter, and
+-- she waits at her tavern. The step waits on an aether cell of the player's own set in the Starved Engine or a
+-- resonator (`ql act ketch-cell-banked 1`, said by scenes/ketch/ketchClient.js when the ship's room says the cell was
+-- mine) - one, so every hand of a crew of eight can: a voyage banks the engine's seven at most and a resonator's each
+-- discord, never three cells a hand (AUDIT KETCH L5-4). Then her table, where she gives her other book - Rourken Thunder
+-- (systems/portBooks.js, id 418), on the guns the Ketch's hold is said to keep - by `get item` (a give is a quest's pay,
+-- qlLayer.js reward: AUDIT KETCH L5-2, its give showed the QuestComplete box twice) and pays. A visit before is answered and cleared (M0B30Y04's `_clearclick_`). Lore:
+-- canon - aetherium, the Dwemer's blue crystal, mined and fought over (the Aetherium Wars); the tonal architecture. The
+-- port's own - the cells, the Starved Engine, the arc-coils (Sky-Ketch.md section 6).
+Quest: QLSK02
+DisplayName: The Starved Engine
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Imrah Bel-Tavir has gone home to Sentinel. She
+<ce>                     left no word for you.
+
+QuestComplete:  [1004]
+<ce>       Imrah pays you _gold_ gold, and presses her other
+<ce>       book into your hands with it. "Read the part about
+<ce>              the beads. Then read it again."
+
+QuestLogEntry:  [1010]
+%qdt:
+ Imrah Bel-Tavir writes that the Sky-Ketch's engine
+ is starving. She asks me to carry an aether cell
+ from the cradles in her hold and set it with my
+ own hands in the engine or in one of the bridge's
+ resonators, and then to tell her of it at _tavern_
+ in __tavern_.
+
+Message:  1011
+%pcn,
+
+     A ship that size cannot hang in the air on a
+ song alone. The boatmen say she is starving, and if
+ they are right she is fed on aetherium, the blue
+ crystal the Dwemer went to war over.
+
+     Find her engine. Find what it eats, and feed it
+ with your own hands, once at least, so you will
+ know the weight of it. Then come to _tavern_ in
+ __tavern_. Bring nothing back with you. Not yet.
+
+<ce>                Imrah Bel-Tavir, Antiquarian
+
+Message:  1012
+<ce>       The porter in Sentinel's colors again. "She says
+<ce>         to carry it with both hands," he says, "and that
+<ce>                you will know what she means."
+
+Message:  1013
+<ce>       "Cells," Imrah says. "Glass and brass, with the
+<ce>        blue burning inside, and they knock out of your
+<ce>        hands at a touch." She shakes her head. "The
+<ce>        Rourken built a whole ship that a single blow
+<ce>        can rob of its supper. They never meant her to
+<ce>        be crewed by anyone who had to fight."
+<ce>
+<ce>       "The beads their guns throw are made the same
+<ce>        way, a mote of aetherium sealed in brass. If her
+<ce>        hold keeps guns, it keeps beads. My other book
+<ce>        is about both."
+
+Message:  1014
+The antiquarian? She asked me if I had ever lifted anything blue. Odd woman.
+<--->
+Imrah Bel-Tavir says the brass ship is starving. How can a ship starve?
+<--->
+They say the woman from Sentinel has a gun of the Dwemer in her room. They say she has never fired it.
+
+Message:  1015
+<ce>       "Her engine," Imrah says, without looking up.
+<ce>        "Feed it. A cell, with your own hands. Then
+<ce>                    come back to me."
+
+Message:  1016
+%qdt:
+ I have set an aether cell in the Sky-Ketch with my
+ own hands. Imrah Bel-Tavir is waiting to hear of it
+ at _tavern_ in __tavern_.
+
+Message:  1020
+<ce>       The cell seats with a sound like a struck bell,
+<ce>       and the whole ship hums a little louder for it.
+<ce>                Imrah will want to hear of this.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 4 times.
+--          __tavern_ occurs 3 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _thunder_ book key 418
+Item _gold_ gold range 500 to 900
+
+Person _imrah_ faction The_Mages_Guild female anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _imrah_ Imrah_Bel-Tavir
+	place npc _imrah_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_fed_ task:
+	ql act ketch-cell-banked 1
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _imrah_
+
+_notyet_ task:
+	when _clicked_ and not _fed_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _fed_
+	say 1013
+	get item _thunder_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

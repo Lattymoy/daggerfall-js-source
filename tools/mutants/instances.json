@@ -296,8 +296,8 @@
   {
     "name": "INSTANCES-GATE-BY-ROOM",
     "file": "server/src/index.js",
-    "old": "      if (!battle && !floor && !realmRoom && !instRoom) {",
-    "new": "      if (!battle && !floor && !realmRoom) {",
+    "old": "      if (!battle && !floor && !realmRoom && !instRoom && !ktRoom) {",
+    "new": "      if (!battle && !floor && !realmRoom && !ktRoom) {",
     "tests": [
       "test/net/instances2_relay.test.js"
     ],

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "KTW-two-stages-swapped",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "  () => t('ketch.stage.engine', 'The Starved Engine'),\n  () => t('ketch.stage.sailwalk', 'The Sailwalk'),",
+    "new": "  () => t('ketch.stage.sailwalk', 'The Sailwalk'),\n  () => t('ketch.stage.engine', 'The Starved Engine'),",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  },
+  {
+    "name": "KTW-the-docked-line-to-her-end",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "v.phase === 'docked' ? v.departAt - now",
+    "new": "v.phase === 'docked' ? v.endAt - now",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  },
+  {
+    "name": "KTW-minutes-rounded-down",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "const m = Math.max(0, Math.ceil(ms / 60000))",
+    "new": "const m = Math.max(0, Math.floor(ms / 60000))",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-refusal-unread",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "if (en === err) return KT_REFUSE_WORDS",
+    "new": "if (en === err && k === 'gone') return KT_REFUSE_WORDS",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-word-read-at-import",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "  get name() { return t('ketch.name', 'The Sky-Ketch Mzunthar'); },",
+    "new": "  name: t('ketch.name', 'The Sky-Ketch Mzunthar'),",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-phase-off-by-one",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "export const ketchPhaseName = (n) => PHASE_NAMES[n - 1]?.() ?? '';",
+    "new": "export const ketchPhaseName = (n) => PHASE_NAMES[n]?.() ?? '';",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  },
+  {
+    "name": "KTW-a-blow-named-off-the-prototype",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "export const ketchBlowName = (key) => (Object.hasOwn(BLOW_NAMES, key) ?",
+    "new": "export const ketchBlowName = (key) => (key in BLOW_NAMES ?",
+    "tests": [
+      "test/systems/ketch/ketch_words.test.js"
+    ]
+  }
+]

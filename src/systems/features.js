@@ -805,8 +805,10 @@ export const FEATURES = Object.freeze([
     group: 'sound',   // FT18: was world
     get title() { return t('features.enhancedSounds.title', 'Enhanced sounds'); },
     get note() { return t('features.enhancedSounds.note', 'New sounds on the enhanced UI: wind outdoors that rises and falls with its strength and goes quiet '
-      + 'indoors, a coin clink when you take or store items in the enhanced inventory, your hands and boots on stone '
-      + 'when you climb, and the axe, the pick, the leaves, the knife and the net when you gather.'); },
+      + 'indoors, a coin clink in the enhanced inventory, hands and boots on stone when you climb, the tools when you '
+      + 'gather, a horse that snorts and breathes, its hooves changing with the ground, the sea under a deck with its '
+      + 'bells and its own music at the helm, surf on the shore, the wild by region and hour, and a town\'s street, '
+      + 'smithies and taverns.'); },   // AUDIT SOUNDSCAPE P1: under FT15's 450 - the rest is bible/08-Audio/Audio.md's
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it

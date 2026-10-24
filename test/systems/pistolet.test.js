@@ -67,25 +67,23 @@ test('the item: the owner’s name and numbers, one-handed, Archery, the Pellet,
   assert.equal(getItemHands(createThunderlock()), ITEM_HANDS.Both, 'the Thunderlock stays two-handed');
 });
 
-test('the rarity: GUNS-UNFOUND - the one gun find mints its Pellets alone, from its one draw, at its old weight and tier; no Pistolet is found, nor ever on a shelf', () => {
+test('the rarity: GUNS-UNFOUND - the one gun find keeps its place and mints nothing (PELLETS-SCARCE: the Pellet its own find); no Pistolet is found, nor ever on a shelf', () => {
   // PIN MOVED (GUNS-UNFOUND, the owner: "remove the thunderlock and pistolet from the loot pool ... Ammo should still
   // drop"): the find PISTOLET split between the guns (GUN_SHARE) mints no gun now. It stays one find at the old weight
-  // and tier - AUDIT PISTOLET's (A5, A8, C2, C3, D6) one roll and one mint draw, so no seed's earlier draw moves
+  // and tier - AUDIT PISTOLET's (A5, A8, C2, C3, D6) one roll and one mint draw, so no seed's earlier draw moves.
+  // PIN MOVED (PELLETS-SCARCE, 2026-10-24, the owner: "only have ammo has a rare resource drop"): its draw still taken,
+  // its Pellets now the Dwemer find's (test/systems/pelletsscarce.test.js) - it hands nothing over
   const finds = uniqueFinds();
   const gun = finds.filter((f) => f.id === 'dwarven-thunderlock' || f.id === 'dwarven-pistolet');
   assert.deepEqual(gun.map((f) => f.id), ['dwarven-thunderlock'], 'one find - no second roll to move a seed');
   assert.equal(gun[0].weight, 1, 'the old weight: the chance, its cap and its Luck the Thunderlock’s own');
   assert.equal(gun[0].minTier, 4);
-  // one draw counts the Pellets - the mint draws exactly what it always drew, and mints nothing else
   const once = (v) => { let n = 0; return { rolls: () => { n++; return v; }, get n() { return n; } }; };
-  for (const [v, pellets] of [[0, 6], [0.4999, 12], [0.5, 12], [0.9999, 18], [0.25, 9], [0.75, 15]]) {
+  for (const v of [0, 0.4999, 0.5, 0.9999, 0.25, 0.75]) {
     const d = once(v);
     const found = gun[0].mint(d.rolls);
-    assert.equal(d.n, 1, `${v}: one draw`);
-    assert.equal(found.length, 1, `${v}: the Pellets alone`);
-    assert.ok(!found.some((it) => isGunTemplate(it.templateIndex)), `${v}: no gun`);
-    assert.equal(found[0].templateIndex, PELLET_TEMPLATE);
-    assert.equal(found[0].stackCount, pellets, `${v}: ${pellets} Pellets - the ammunition still drops`);
+    assert.equal(d.n, 1, `${v}: one draw, as it always drew`);
+    assert.deepEqual(found, [], `${v}: nothing - neither a gun nor its shot`);
   }
   const shelf = readFileSync('src/systems/shopStock.js', 'utf8');
   assert.ok(!/createPistolet|PISTOLET_TEMPLATE|isPistolet/.test(shelf), 'the shop stock never names it');
@@ -438,7 +436,7 @@ test('GUNS-UNFOUND (AUDIT PISTOLET A7 C1 D8\'s way): a Sunken Sovereign minted a
   assert.deepEqual(itemFindings(hybrid), ['gilded'], 'a saber with the Archery line');
   const hybrid2 = { ...pistol, affixes: saber.affixes.map((a) => ({ ...a })) };
   assert.deepEqual(itemFindings(hybrid2), ['gilded'], 'a pistol with the Long Blade line');
-  assert.equal(ITEM_LAW_VERSION, 12, 'the law that knows both - a finding a law of 9 made is asked again');   // PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED (SEA-SET, at the merge into SEA VENTURES): law 11 - PISTOLET's 10 and the Eltheric Tidemail's nine records
+  assert.equal(ITEM_LAW_VERSION, 13, 'the law that knows both - a finding a law of 9 made is asked again');   // PIN MOVED (KETCH): law 13 - the Gilded rung's Ketch pair (Volendrung's Echo, the Ketchmaster's Word) lawful; PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED (SEA-SET, at the merge into SEA VENTURES): law 11 - PISTOLET's 10 and the Eltheric Tidemail's nine records
 });
 
 test('the pair is equipped through the equip law - one in each hand - and the player weapon reads it as a gun pair', () => {

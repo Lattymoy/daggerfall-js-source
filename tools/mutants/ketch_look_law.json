@@ -1,0 +1,407 @@
+[
+  {
+    "name": "KTL3-awake-from-the-hello",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.sailwalk ? KT_SHIP.awake : KT_SHIP.asleep;",
+    "new": "out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.watch ? KT_SHIP.awake : KT_SHIP.asleep;",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-singing-after-the-fall",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "now >= (ws.op ?? Infinity) && !ws.fell && !ws.lost;",
+    "new": "now >= (ws.op ?? Infinity) && !ws.lost;",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-appetite-of-the-need-alone",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "clamp01(out.banked / out.need)",
+    "new": "clamp01(1 / out.need)",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-taken-cradle-full",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 - (v - now) / ms));",
+    "new": "const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 + 0 * ms));",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-forks-unread",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "for (const q of ws?.fk?.c ?? []) {",
+    "new": "for (const q of []) {",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-section-warned-while-gone",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "else { out.secGone[k] = 1;",
+    "new": "else { out.secWarn[k] = 1; out.secGone[k] = 1;",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-lifts-part-off-its-round",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "L.phase < W + R ? KT_LIFT_PART.rising",
+    "new": "L.phase < W + R ? KT_LIFT_PART.top",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-record-made-anew",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "  for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
+    "new": "  out.sockets = new Uint8Array(KT_SOCKETS.length); for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-hatch-one-sided",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "join: Object.freeze(['decks', 'below']), r: KT_PVS_HATCH_M }),",
+    "new": "join: Object.freeze(['decks']), r: KT_PVS_HATCH_M }),",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js",
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-no-hold-at-the-edge",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "  if (keep && view !== keep) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-door-rule-dropped",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "p[2] - d.at[2]) <= (d.r ?? KT_PVS_DOOR_M))",
+    "new": "p[2] - d.at[2]) <= 0)",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js",
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-group-culled-in-its-own-zone",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "for (const d of _grouped) d.culled = _eyed && !_seen.has(d.group);",
+    "new": "for (const d of _grouped) d.culled = _eyed;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-an-ungrouped-draw-culled",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "    if (o.group) { d.group = o.group; d.culled = false; _grouped.push(d); }",
+    "new": "    { d.group = o.group ?? KT_GROUP.decks; d.culled = false; _grouped.push(d); }",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-eye-never-the-bodys",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "pose(V, t, now, body = null, carried = NONE, eye = body?.pos ?? null) {",
+    "new": "pose(V, t, now, body = null, carried = NONE, eye = null) {",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-halos-on-the-lane",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "K()?.halos?.(renderer?.lightingLane ? NONE : ketchHalosInto(_halos, lamps));",
+    "new": "K()?.halos?.(ketchHalosInto(_halos, lamps));",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-lit-thing-at-a-lamps-size",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "glow = !!L.carried, k =",
+    "new": "glow = false, k =",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-halo-slots-made-anew",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "h = out[n] ?? (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] })",
+    "new": "h = (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] })",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-draw-left-out-of-the-cull",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "      mine = draws.slice(from);",
+    "new": "      mine = draws.slice(from + 1);",
+    "tests": [
+      "test/scenes/ketch_steps_cull.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-ghosts-drawn-while-culled",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "      if (!draws || culled || !renderer?.gl) return false;",
+    "new": "      if (!draws || !renderer?.gl) return false;",
+    "tests": [
+      "test/scenes/ketch_steps_cull.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-law-stopped-while-culled",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "      if (seen !== undefined) cull(!seen);\n      if (!draws) return null;",
+    "new": "      if (seen !== undefined) cull(!seen);\n      if (!draws || culled) return null;",
+    "tests": [
+      "test/scenes/ketch_steps_cull.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-word-forgotten-between-rides",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "      if (seen !== undefined) cull(!seen);",
+    "new": "      cull(seen === false);",
+    "tests": [
+      "test/scenes/ketch_steps_cull.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-dial-the-other-way",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "const needle = KT_DIAL.from + KT_DIAL.sweep * Math.max(0, Math.min(1, a));",
+    "new": "const needle = KT_DIAL.from + KT_DIAL.sweep * (1 - Math.max(0, Math.min(1, a)));",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-red-at-the-full-end",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "inSweep <= KT_DIAL.red) return P.red;",
+    "new": "inSweep >= KT_DIAL.sweep - KT_DIAL.red && inSweep <= KT_DIAL.sweep) return P.red;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-glass-from-the-top",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "return v <= top ? P.signal : P.dark;",
+    "new": "return v >= -top ? P.signal : P.dark;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-lamps-from-the-right",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "return i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
+    "new": "return n - 1 - i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-ring-counter-clockwise",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "const th = Math.atan2(u, v), turned =",
+    "new": "const th = Math.atan2(-u, v), turned =",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-share-unclamped",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "return Math.abs(u - (-1 + 2 * Math.max(0, Math.min(1, a)))) < 0.12 ? P.signal : P.dark;",
+    "new": "return Math.abs(u - (-1 + 2 * a)) < 0.12 ? P.signal : P.dark;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-meaning-lost-to-the-kind",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning;",
+    "new": "out[o + 9] = kind;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-field-off-its-slot",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "out[o + 10] = a; out[o + 11] = b;",
+    "new": "out[o + 10] = b; out[o + 11] = a;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-fragment-off-its-twin",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "    if (abs(u) > 0.7 || abs(v) > 0.92) return 2;",
+    "new": "    if (abs(u) > 0.75 || abs(v) > 0.92) return 2;",
+    "tests": [
+      "test/render/ketch/kt_gauge_pass.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-gauges-off-their-list",
+    "file": "src/render/ketch/ktGaugePass.js",
+    "old": "    this.prog = buildProgram(gl, vs, fs, 'kt gauge');",
+    "new": "    this.prog = buildProgram(gl, vs, fs + ' ', 'kt gauge');",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-cradle-knob-unread",
+    "file": "src/tools/ketchLabLink.js",
+    "old": "spotAt(cr[j] ?? (j === 2 ? 10 : 1), now0)",
+    "new": "spotAt(j === 2 ? 10 : 1, now0)",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-sections-moment-turned",
+    "file": "src/tools/ketchLabLink.js",
+    "old": "const at = now + Math.round(s * 1000); return { k: clamp(Math.round(k), 0, 7), at,",
+    "new": "const at = now - Math.round(s * 1000); return { k: clamp(Math.round(k), 0, 7), at,",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-halos-never-drawn",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "      if (_halos.length && (halo ??= haloDoor?.() ?? null)?.draw(proj, view, _halos, fog, SD_HALO_GAIN.classic)) drew = true;",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-halos-kept-past-the-ship",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "      _halos = Object.freeze([]);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-a-lab-blow-unfloored",
+    "file": "src/tools/ketchLabLink.js",
+    "old": "const wu = egFloorWindup(Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1)), s);",
+    "new": "const wu = Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1));",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  },
+  {
+    "name": "KTL3-the-lab-waves-left-off",
+    "file": "src/tools/ketchLabLink.js",
+    "old": "  if (A.wave) { const V = A.wave;",
+    "new": "  if (false) { const V = A.wave;",
+    "tests": [
+      "test/world/ketch/ketch_lab.test.js"
+    ]
+  },
+  {
+    "name": "KTSHIP-the-held-view-alone",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "  if (here && here !== view) for (const g of KT_PVS[here]) out.add(g);",
+    "new": "",
+    "tests": [
+      "test/world/ketch/ketch_states.test.js"
+    ],
+    "note": "AUDIT SHIP A2: off the lift into the hold with the decks' view held, the hold's cradles, sockets, arcs and gate would vanish."
+  },
+  {
+    "name": "KTSHIP-the-hatch-at-the-door-reach",
+    "file": "src/world/ketch/ketchStates.js",
+    "old": "export const KT_PVS_HATCH_M = 14;",
+    "new": "export const KT_PVS_HATCH_M = 6;",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ],
+    "note": "AUDIT SHIP A3: the gallery's hammers would pop in at the hatch's lip, seen down the stair from the waist."
+  },
+  {
+    "name": "KTSHIP-her-fallback-art-held",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "    if (again) { renderer.releaseTexture?.(KT_ARCHIVE, rec); renderer.evictEmissionTexture?.(`${KT_ARCHIVE}_${rec}`); }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ],
+    "note": "AUDIT SHIP A1: the renderer's cache would answer her palette's upload with her fallback's pictures - ART_PAL never on the GPU."
+  },
+  {
+    "name": "KTSHIP-the-bounce-before-the-moon",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  for (let i = 0; i < 3; i++) L.tri.ground[i] = Math.max(0, L.tri.ground[i] - L.key.color[i] * k0 * (1 - m) * KT_TRI.bounce);",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ],
+    "note": "AUDIT SHIP A6: a moonless night would bounce moonlight off her ceilings and her belly."
+  },
+  {
+    "name": "KTSHIP-the-halo-at-the-gain",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "(c ? Math.min(L.color[j], c[j]) : L.color[j]) * k",
+    "new": "L.color[j] * k",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ],
+    "note": "AUDIT SHIP A5: the classic cabin's halos would burn white, at its lamps' 7.6 gain."
+  },
+  {
+    "name": "KTSHIP-her-lamps-dark-outside",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "      if (lamps) r.drawMesh(lamps, M, null, { noShadow: true });\n",
+    "new": "",
+    "tests": [
+      "test/scenes/ketch_sky.test.js"
+    ],
+    "note": "AUDIT SHIP A4: seen from Daggerfall at night she would carry no lit lamp."
+  },
+  {
+    "name": "KTSHIP-the-street-feet-retimed",
+    "file": "src/scenes/shared.js",
+    "old": " extra.skyMinutes = skyMinutes; extra.pos = null; }",
+    "new": " extra.skyMinutes = skyMinutes; }",
+    "tests": [
+      "test/scenes/ketch_deck_host.test.js"
+    ],
+    "note": "AUDIT SHIP A7: on the ship the clouds' camera would read the made level's coordinates - the field jumping at boarding."
+  }
+]

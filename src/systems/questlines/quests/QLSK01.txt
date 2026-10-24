@@ -1,0 +1,155 @@
+-- KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md section 13): THE SKY-KETCH, step 1 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: Imrah Bel-Tavir's letter is the offer (QLWR01's shape), and her book with it - The Ketch That Never
+-- Lands (systems/portBooks.js, id 419), handed over as the letter is in the pack (`have _letter_ set _book_`, QLIW02's
+-- shape) by `get item`, never `give pc` - a give is a quest's pay (qlLayer.js reward: AUDIT KETCH L5-2, the book's give
+-- showed the QuestComplete box, "Imrah counts ... gold into your hand", at the letter, and marked the quest paid). The
+-- Ketch keeps the real week (net/ketch/ketchLaw.js), never the online calendar's Loredas, so no line names a day (AUDIT
+-- KETCH L5-3). The step waits on the anchor-lift ridden up (`ql act ketch-boarded 1`, said by
+-- scenes/ketch/ketchClient.js as the mode machine stands the player aboard), then her table, where she pays; a visit
+-- before is answered and cleared (M0B30Y04's `_clearclick_`). Lore: canon - the Rourken, the clan that would not join
+-- the Chimer, threw Volendrung and built where it fell; the Dwemer vanished, every one, in a day. The port's own - the
+-- Mzunthar, Imrah, the anchor-lift (Sky-Ketch.md section 1).
+Quest: QLSK01
+DisplayName: The Ketch That Never Lands
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Imrah Bel-Tavir has gone home to Sentinel. She
+<ce>                     left no word for you.
+
+QuestComplete:  [1004]
+<ce>       Imrah counts _gold_ gold into your hand. "For your
+<ce>          eyes. Mine are not what they were, and they
+<ce>                  were never any good at chains."
+
+QuestLogEntry:  [1010]
+%qdt:
+ A letter from Imrah Bel-Tavir, an antiquarian of
+ Sentinel, with her book on the brass ship that
+ comes to keep station over Daggerfall. She asks me
+ to ride its anchor-lift up from the fields east of
+ the city, and then to find her at _tavern_ in
+ __tavern_ and tell her what is on its deck.
+
+Message:  1011
+%pcn,
+
+     They tell me you have seen the shape over
+ Daggerfall. I have watched it from Sentinel for a
+ year and from Daggerfall's walls for a month, and I
+ am too old to climb a chain.
+
+     While she keeps station she lets down her
+ anchor-lift to the fields east of the city. Ride it
+ up, with friends you trust, and then come and tell
+ me what is on her deck. My book says what the
+ boatmen say. I want what is true. I am at _tavern_,
+ in __tavern_.
+
+<ce>                Imrah Bel-Tavir, Antiquarian
+
+Message:  1012
+<ce>       A porter in Sentinel's colors hands you a letter
+<ce>       and a slim book bound in brass-colored cloth.
+<ce>       "From the antiquarian," he says. "She said you
+<ce>                    would want both."
+
+Message:  1013
+<ce>       Imrah's table is covered in charts of the sky,
+<ce>       each with the same shape inked on it, a little
+<ce>       further east on every sheet.
+<ce>
+<ce>       "Constructs on her weather deck? Spheres that
+<ce>        unfold?" She writes it down. "Then the boatmen
+<ce>        were right about that, too. Rourken work. The
+<ce>        clan that would not kneel with the others, and
+<ce>        built where their lord's hammer fell."
+
+Message:  1014
+The antiquarian? She draws the sky all day and never looks at the street.
+<--->
+Imrah Bel-Tavir came up from Sentinel to watch the brass ship. She pays well for stories about it.
+<--->
+They say a woman from Sentinel wrote a book about the ship in the sky. They say she has never been aboard.
+
+Message:  1015
+<ce>       Imrah looks up from her charts. "Her anchor-lift
+<ce>        comes down while she keeps station, east of the
+<ce>        city. Ride it, and then come and tell me."
+
+Message:  1016
+%qdt:
+ I have ridden the anchor-lift up to the Sky-Ketch.
+ Imrah Bel-Tavir is waiting to hear of it at
+ _tavern_ in __tavern_.
+
+Message:  1020
+<ce>       You stand on the deck of a ship in the sky, the
+<ce>       fields of Daggerfall far below the rail. Imrah
+<ce>                 will want to hear of this.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 4 times.
+--          __tavern_ occurs 3 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _guide_ book key 419
+Item _gold_ gold range 500 to 900
+
+Person _imrah_ faction The_Mages_Guild female anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _imrah_ Imrah_Bel-Tavir
+	place npc _imrah_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	have _letter_ set _book_
+	log 1010 step 0
+	start timer _wait_
+
+_book_ task:
+	get item _guide_
+
+_boarded_ task:
+	ql act ketch-boarded 1
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _imrah_
+
+_notyet_ task:
+	when _clicked_ and not _boarded_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _boarded_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

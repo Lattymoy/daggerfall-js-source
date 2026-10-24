@@ -1,0 +1,92 @@
+[
+  {
+    "name": "KTG-the-echo-a-bow",
+    "file": "src/systems/gilded.js",
+    "old": "  templateIndex: THUNDERLOCK_TEMPLATE,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),\n    line('elemental', 10, 'shock'),\n  ]),\n  power: HAMMERFALL,",
+    "new": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),\n    line('elemental', 10, 'shock'),\n  ]),\n  power: HAMMERFALL,",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-word-over-the-band",
+    "file": "src/systems/gilded.js",
+    "old": "  templateIndex: PISTOLET_TEMPLATE,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),",
+    "new": "  templateIndex: PISTOLET_TEMPLATE,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 41),",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-a-mint-the-wire-refuses",
+    "file": "src/systems/gilded.js",
+    "old": ": r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })",
+    "new": ": r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material - 1 })",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-struck-one-rung",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  for (const f of near(door, struck.ai.feet, metres, target)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "new": "  for (const f of near(door, struck.ai.feet, metres, null)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-reach-unbounded",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  for (const f of near(door, struck.ai.feet, metres, target)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "new": "  for (const f of near(door, struck.ai.feet, metres * 10, target)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-resistance-ignored",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "new": "    const n = Math.floor(amount);",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-word-answering-itself",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "if (mark && now < mark.until && weapon !== mark.by) {",
+    "new": "if (mark && now < mark.until) {",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-mark-never-spent",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }",
+    "new": "pct += mark.pct; if (!info?.estimate && !mark) _broadside.delete(target); }",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-mark-everlasting",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "if (mark && now < mark.until && weapon !== mark.by) {",
+    "new": "if (mark && weapon !== mark.by) {",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  },
+  {
+    "name": "KTG-the-estimate-spending-it",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }",
+    "new": "pct += mark.pct; _broadside.delete(target); }",
+    "tests": [
+      "test/systems/ketch/ketch_gilded.test.js"
+    ]
+  }
+]

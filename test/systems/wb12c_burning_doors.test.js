@@ -27,7 +27,7 @@ const LAST = () => 0.999999;   // a draw's last id
 test('WB12c the book: id 417 - above every classic id, its low byte no classic book\'s, under 0xffff - template 277, its title its name, priced by the classic law for its title (463) without moving the generator (mutants: the generator left moved; the title unknown; the price the template\'s)', () => {
   const classic = [...BOOK_ID_TITLES.keys()];
   assert.equal(BURNING_DOORS_ID, 417);
-  assert.deepEqual([...PORT_BOOK_IDS], [417]);
+  assert.deepEqual([...PORT_BOOK_IDS], [417, 418, 419]);   // PIN MOVED (GUN-LORE, KETCH, 2026-10-24): Rourken Thunder (418) and The Ketch That Never Lands (419) after it (test/systems/gunlore.test.js holds them)
   assert.ok(classic.every((id) => id < 417 && (id & 0xff) !== (417 & 0xff)), 'its filename (the low byte\'s) no classic book\'s');
   assert.ok(417 <= 0xffff);
   srand(12345);
@@ -93,23 +93,25 @@ test('WB12c its text is the bible\'s appendix, word for word (the bible is the t
 });
 
 test('WB12c on the shelves: a bookseller\'s, a general store\'s and a pawnshop\'s shelves and a library\'s draw it at the odds of any other book; a house, the dungeon\'s loot and a quest keep the classic draw (mutants: the shop\'s draw classic; the house\'s the shelf\'s; the library\'s classic; the port books off the shelf)', () => {
-  assert.equal(SHELF_BOOK_IDS.length, BOOK_ID_TITLES.size + 1);
-  assert.equal(SHELF_BOOK_IDS.filter((id) => id === 417).length, 1);
-  assert.equal(getShelfBookID(LAST), 417, 'its share of the draw is one id\'s');
-  assert.notEqual(getRandomBookID(LAST), 417);
-  assert.equal(createShelfBook(LAST).message, 417);
-  assert.notEqual(createRandomBook(LAST).message, 417, 'loot, houses, biographies and quests: the classic draw');
-  assert.ok(populateBookshelf(LAST).every((id) => id === 417), 'a library\'s shelf');
-  const count = (fn) => { let books = 0, port = 0; for (let s = 1; s <= 200; s++) for (const it of fn(seededRng(s))) if (it.group === 'Books') { books++; if (it.message === 417) port++; } return [books, port]; };
+  // PIN MOVED (GUN-LORE, KETCH, 2026-10-24): three port books on the shelf - each its one id's share; the draw's last is the
+  // last of them (419), and every one of them is a port book's
+  assert.equal(SHELF_BOOK_IDS.length, BOOK_ID_TITLES.size + 3);
+  for (const id of [417, 418, 419]) assert.equal(SHELF_BOOK_IDS.filter((x) => x === id).length, 1, `${id}: one id's share`);
+  assert.equal(getShelfBookID(LAST), 419, 'its share of the draw is one id\'s');
+  assert.ok(!isPortBook(getRandomBookID(LAST)));
+  assert.equal(createShelfBook(LAST).message, 419);
+  assert.ok(!isPortBook(createRandomBook(LAST).message), 'loot, houses, biographies and quests: the classic draw');
+  assert.ok(populateBookshelf(LAST).every((id) => id === 419), 'a library\'s shelf');
+  const count = (fn) => { let books = 0, port = 0; for (let s = 1; s <= 200; s++) for (const it of fn(seededRng(s))) if (it.group === 'Books') { books++; if (isPortBook(it.message)) port++; } return [books, port]; };
   for (const t of ['Bookseller', 'GeneralStore', 'PawnShop']) {
     const [books, port] = count((r) => stockShopShelf({ buildingType: BUILDING_TYPES[t], quality: 10 }, { level: 5 }, { rolls: r, torchesFromItems: false }));
-    assert.ok(port > 0 && port < books / 40, `${t}: ${port} of ${books}`);
+    assert.ok(port > 0 && port < (3 * books) / 40, `${t}: ${port} of ${books}`);   // PIN MOVED (GUN-LORE, KETCH): three ids' share
   }
   // a house's container (models 4-10 and 11-14 keep books): some 1,300 books, where the shelf's odds would put it ~14 times
   let books = 0, port = 0;
   for (let seed = 1; seed <= 3000; seed++) {
     const r = seededRng(seed);
-    for (const it of stockHouseContainer({ buildingType: BUILDING_TYPES.House1, record: 4 }, { level: 5 }, { rolls: r, contRand: () => Math.floor(r() * 32768) })) if (it.group === 'Books') { books++; if (it.message === 417) port++; }
+    for (const it of stockHouseContainer({ buildingType: BUILDING_TYPES.House1, record: 4 }, { level: 5 }, { rolls: r, contRand: () => Math.floor(r() * 32768) })) if (it.group === 'Books') { books++; if (isPortBook(it.message)) port++; }
   }
   assert.ok(books > 1000, `${books} books in the houses`);
   assert.equal(port, 0, 'never in a house');
