@@ -17,7 +17,8 @@
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace } from '../../characters/mobile/mobilePerson.js';
-import { fullName, nameBankOfArea, GENDERS } from '../../characters/nameHelper.js';
+import { fullName, GENDERS } from '../../characters/nameHelper.js';
+import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's bank on the Bay
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';

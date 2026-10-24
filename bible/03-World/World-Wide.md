@@ -60,7 +60,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | Slice | What | Status |
 |---|---|---|
 | WW1 | The world's grid (the key, the theatres, the areas) and its places (the registry, the Bay's provider); the living world's towns and dungeons off it, grouped by area | BUILT (below) |
-| WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | planned |
+| WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | planned |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
@@ -180,3 +180,119 @@ host seams in their new homes; mutant records re-aimed in `owhitch.json`, `audit
 
 Section A, WW1 (OURS: DFU's world is the Bay; the registry, the theatres and the areas are the port's own, the Bay's
 answers DFU's).
+
+Follow-up, 2026-10-24 (with WW2): `nameBankOfArea` moved out of `characters/nameHelper.js` into
+`characters/areaNameBank.js` - the account Worker bundles `nameHelper.js`, and an import of the world's grid there pulled
+the continent's geography into it (`test/server/accountdeploy.test.js` ACC1-CI caught it); the Code Map gained
+`src/world/worldWide/`. `theatreName` answers '' for the Bay (its names are its regions') - a hard-coded English name
+there was a sentence no player's language had (L10N4).
+
+## WW2 - the gates of every theatre (BUILT, 2026-10-24)
+
+The owner's "more than once at a time", for the Oblivion Gate: a gate a game day in EVERY theatre that holds ground
+for one, each with its own omen, ring, room, receipts and herald, the Bay's the gate it always was.
+
+### The lanes (`net/gate/gateLaw.js`)
+
+- **A LANE A THEATRE.** `GATE_LANES` is `THEATRE_COUNT` (10, pinned; not imported - the law is the relay's and its
+  graph stays flat). Lane 0 is the Bay's.
+- **A GATE'S NUMBER.** Everything that names a gate - its room `gate:<n>`, its receipt's `d`, the account service's
+  gate_kills row, the marks' rid, a chapter's ref, the spoils' keys - names it by one number: `gateNumber(day, lane)` =
+  day + lane x `GATE_LANE_SPAN` (100,000,000). On the Bay's lane the number IS the day, so every record already written
+  is the Bay gate's and keeps its shape; the room law's nine digits hold every lane's for 99,999,999 days.
+  `gateDayOf`, `gateLaneOf`; `isGateDay` takes a number (no lane past the last theatre).
+- **THE STAGGER.** Lane t's day runs `GATE_LANE_STAGGER` (144 classic minutes, twelve real) behind lane t - 1's:
+  `gameDayAt(nowMs, lane)`, `gateBaseMinute`, `gateTimes(n)` and `gateAt(nowMs, lane)` are each lane's own. A game
+  day's ten gates open across 108 of its 120 real minutes, two or three standing (omen to wrath) at once - measured,
+  not assumed - so a player can ride from one to the next.
+- **THE ORDER.** Across lanes a number is not an order (lane 1's day 900 opens before the Bay's day 901, a hundred
+  million past it): `gateOrder(a, b)` weighs by opening. The hub's rite ledger and a cell's ledger keep "the latest
+  gate" by it.
+- **THE MARKS.** `gateIndex` steps each lane `GATE_LANE_INDEX_STEP` (14) places on, so no two gates of one game day, or
+  of two that touch, stand at one place of the marks' cycle; the Bay's index is its own. A lane's draw of its districts
+  (`pickGateRegion`) reads the same index - its own bag.
+- **THE BAY'S LANE IS THE LAW BEFORE WW2**, pinned to the millisecond over three days and every edge: its instants,
+  `gateAt`, `gameDayAt` and the herald's omen owed (`heraldOmenDue`), against the old law written out in the test.
+
+### The site past the Bay (`systems/gate/theatreGateSite.js`)
+
+THE SAME LAW, TOWN BY TOWN. The Bay's scan (`systems/gate/gateSite.js`) walks every pixel of its map; a theatre is six
+times the Bay's, and every suitable pixel lies in a town's ring, so `scanTheatreGate` walks the rings - each listed
+town's 72 pixels - and asks the registry for the places about each: land (the one water law), no place on the pixel or
+its eight neighbours, a fast-travel town two to four pixels off naming it (the nearest, the first listed on a tie), no
+spawned dungeon, grouped by AREA (a province's district). Over the Bay's own places it finds the Bay scan's every list
+pixel for pixel - pinned on a synthetic map and on ARENA2 (43 regions, 53,381 pixels, a hundred sites, no difference).
+`findTheatreGateSite` answers `findGateSite`'s shape: `region` null past the Bay, `area`, `theatre`, its place
+"Town, Province". The Bay's lane keeps its own scan (its shape is the clearing's, Starfall's and the Abyss dungeon's).
+
+The ground past the Bay is the composed continent's (`tamrielClimateAt`, `groundWoods`) whatever the land switch says,
+so every client finds the same site; the towns are the registry's listed places of a town's type (TESA's providers).
+A theatre's scan is made once a registry generation and once a picture (`tamrielLandVersion`).
+
+### The host's gates (`scenes/gate/gateLanes.js`, wired by `scenes/world.js`)
+
+- `createTheatreGateScans` - a scan a theatre, and `theatres()`, the theatres past the Bay with ground for a gate.
+- `createGateLanes` - ONE OMEN A LANE (`systems/gate/gateOmen.js` takes its `lane`), each saying its own lines: a lane
+  past the Bay's on its own event card (`gate:<n>`), the Bay's as they always were. `frame`, `current` and `mapMark`
+  answer the Bay's lane, so every reader of them is unchanged; `standing`, `sky`, `cageSite` and `nearCurrent` the
+  NEAREST gate's to the player (one stone, one sky, one Broker, one rite circle at a time); `mapMarks` and `currents`
+  every lane's; `siteOf(n)` and `markOf(n)` a gate's by its number.
+- A lane past the Bay stands only while the registry holds its theatre's towns with ground AND the relay keeps the
+  lanes on both links (`online.js` `gateLanesOk`, world254): an older relay closes the socket on a site word past the
+  Bay's map.
+- The map's rings (`ui/heldMap.js`, `ui/ink/inkMap.js`, `ui/gate/gateMapMark.js` `readGateMarks` over the continent's
+  frame), the timers' rows (`systems/eventTimers.js` - a lane's row from its omen, named where it stands; nine coming
+  with no place would bury the Bay's), the event board (`systems/eventBoard.js` - a lane's row by its number), the staff
+  teleport's gate note (`net/staffTeleport.js`, `gatePixelOk`).
+- The client says each lane's site past the Bay once a socket and GATE (`online.js` `sendGateSite`), from its omen on.
+
+### The relay (world254) and the account service (acct180)
+
+- The hub keeps a fall, a site's agreement, a herald's state and a rite A LANE (`net/wire.js` `gateLaneKey` - the
+  Bay's under its own key, as always), and an account's receipt a lane (`gateReceiptKey(sub, lane)` - a hello reads
+  every lane's in one ask). The herald beats every lane against its own state, and posts a lane past the Bay's omen
+  only once accounts agree where it stands. The wire carries a lane past the Bay's pixel as a world pixel
+  (`gatePixelOk`: the site word, the rite's word in and out); `GATE_LANES_RELAY_MIN` 254.
+- The account service: a gate past the Bay is its own gate_kills row (its number) and credits no seat
+  (`server-account/src/accounts.js` - no region stored; `seatInfluence.js` creditGate `'beyond-the-bay'`).
+
+DEPLOY ORDER: the relay first (world254), then the account service (acct180), then the site. A client on an older
+relay stands the Bay's lane alone.
+
+### What stays the Bay's (recorded)
+
+- **The seats.** A seat is a Bay region's (decision 5); a gate past the Bay credits none.
+- **The clearing** (`world/gate/gateClearance.js`) is World of Daggerfall's rock kept off the gate - the mod's rock
+  stands on the Bay alone, so the clearing reads the Bay's lane alone.
+- **Starfall's covens and the Abyss dungeon** read the Bay's scan until WW5.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired (the lanes, the theatres' scans, each lane's site to the hub, a seat's gate the Bay's lane's).
+`scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` hold no gate omen of their own - the gate's
+stone, pool and breach read the world host's `standing`, unchanged in shape.
+
+### Pins and mutants
+
+`test/world/worldWide/ww2_gates.test.js` (12): the lanes' law and both ends' copies; the Bay's lane against the old law
+to the millisecond; the stagger, each lane's today, gate and omen owed, two or three at once; the order across lanes and
+the marks' cycle; the hub's keys; the wire's pixels and the lanes' relay; the theatre scan equal to the Bay scan
+(synthetic, and ARENA2); a theatre past the Bay (Skyrim's authored cities, a town at its border); the theatres' scans
+(generation, picture); the host's gates (the lanes, the nearest, the relay's gate); the wiring. Mutants
+`tools/mutants/ww2.json` (32: 31 dead, the ring's inner bound equivalent as recorded - every town is a place, so the
+neighbours' test refuses its ring's first pixels).
+
+PINS MOVED: the relay and account versions (world254, acct180) in their pin files; `test/net/relayversion.test.js` the
+world254 law (no file joins the bundle); `test/fixtures/time1_census.json` the lane day's clock;
+`audit0929_gate.test.js` (the marks' card once a gate), `discordgates.test.js` (each lane's site said),
+`wb12d_rite_world.test.js` (the rite's circle at the nearest gate), `auditwb_world.test.js`, `wb1_gate_omen.test.js`,
+`events1_board_ui.test.js` (a lane's lines on its own card), `eventtip.test.js`, `fb1004e_overworld.test.js` (the
+rings past the Bay), `gateclear.test.js` (the Bay's lane's site), `tamriel3.test.js` (the picture's version);
+`auditwbx2.test.js` M3 reads the mark after the hello that reads it (SCALE2b's "none held" had made its hello between
+read nothing, so the mark's mutant lived). Mutant records re-aimed by content in `audit0929_gate.json`,
+`auditwb_relay.json`, `auditwbx2.json`, `discordgates.json`, `events1.json`, `gatecollapse.json`, `seat1b.json`,
+`wb1.json`, `wb12d.json`, `wb14b.json` and `wb3.json`; the version records in `bal9.json`, `br5.json`,
+`crafthold.json`, `fb1004d_knight_house.json`, `gatekeys.json`, `hackedgold.json`, `nameas.json`, `soc1.json`,
+`tech1.json` and `wb14g.json`; `ww1.json`'s name bank record to `areaNameBank.js` - all dead.
+
+Section A, WW2 (OURS: DFU has no Oblivion Gate - the gate, its lanes and its scan past the Bay are the port's own).

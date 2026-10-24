@@ -1,0 +1,292 @@
+[
+  {
+    "name": "WW2-the-lanes-span",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const gateNumber = (day, lane = 0) => day + lane * GATE_LANE_SPAN;",
+    "new": "export const gateNumber = (day, lane = 0) => day + lane * (GATE_LANE_SPAN - 1);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lane-read",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const gateLaneOf = (n) => Math.floor(n / GATE_LANE_SPAN);",
+    "new": "export const gateLaneOf = (n) => Math.round(n / GATE_LANE_SPAN);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-a-lane-past-the-last",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "n >= 0 && gateLaneOf(n) < GATE_LANES &&",
+    "new": "n >= 0 && gateLaneOf(n) <= GATE_LANES &&",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-stagger-on-the-bays-lane",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "gateDayOf(n) * GATE_DAY_MINUTES + gateLaneOf(n) * GATE_LANE_STAGGER;",
+    "new": "gateDayOf(n) * GATE_DAY_MINUTES + (gateLaneOf(n) + 1) * GATE_LANE_STAGGER;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-day-read-off-the-gate",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "  const today = gameDayAt(nowMs, lane);\n",
+    "new": "  const today = gateDayOf(gateAt(nowMs, lane).day);\n",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-no-stagger",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const GATE_LANE_STAGGER = 144;",
+    "new": "export const GATE_LANE_STAGGER = 0;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lanes-today-the-bays",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
+    "new": "Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-heralds-lane",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "    const n = gateNumber(d, lane);\n",
+    "new": "    const n = gateNumber(d, 0);\n",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-order-by-number",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const gateOrder = (a, b) => (gateTimes(a).openAt - gateTimes(b).openAt) || (a - b);",
+    "new": "export const gateOrder = (a, b) => (a - b);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lane-step",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "export const GATE_LANE_INDEX_STEP = 14;",
+    "new": "export const GATE_LANE_INDEX_STEP = 0;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-bays-receipt-key-renamed",
+    "file": "src/net/wire.js",
+    "old": "(lane ? `gaterc:${sub}.${lane}` : `gaterc:${sub}`)",
+    "new": "`gaterc:${sub}.${lane}`",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-a-lanes-key-the-bays",
+    "file": "src/net/wire.js",
+    "old": "export const gateLaneKey = (key, lane = 0) => (lane ? `${key}:${lane}` : key);",
+    "new": "export const gateLaneKey = (key, lane = 0) => key;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-a-site-word-of-the-wrong-lane",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "(day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day)",
+    "new": "(day === gateAt(nowMs).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS).day)",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-worlds-pixel-refused",
+    "file": "src/net/wire.js",
+    "old": ": worldPixelOk(px) && worldPixelOk(py));",
+    "new": ": intIn(px, 0, 999) && intIn(py, 0, 499));",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lanes-relay",
+    "file": "src/net/wire.js",
+    "old": "export const GATE_LANES_RELAY_MIN = 254;",
+    "new": "export const GATE_LANES_RELAY_MIN = 253;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-rings-inner-bound",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "      if (d < GATE_TOWN_MIN_PX) continue;\n",
+    "new": "      if (d < GATE_TOWN_MIN_PX - 1) continue;\n",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ],
+    "equivalent": true,
+    "why": "Every town the ring is drawn about is a place of the registry on its own pixel, so the neighbours' test already refuses each pixel one off it - the Bay scan's location mask does the same for its ring; the bound keeps the law's words (GATE_TOWN_MIN_PX) where the reader looks for them."
+  },
+  {
+    "name": "WW2-the-neighbours-test",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "near = !!placeAt(x + dx, y + dy);",
+    "new": "near = !!placeAt(x, y);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-nearest-town",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "if (!b || d < b.d) best.set(k, { d, t });",
+    "new": "if (!b || d <= b.d) best.set(k, { d, t });",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-spawned-dungeon",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) continue;",
+    "new": "if (near || wet(x, y)) continue;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-water",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) continue;",
+    "new": "if (near || spawnsDungeon(spawnSalt, x, y)) continue;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-another-theatres-pixel",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "if (!inWorldGrid(x, y) || !inTheatre(x, y)) continue;",
+    "new": "if (!inWorldGrid(x, y)) continue;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lanes-bag",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "const area = pickGateRegion(n, theatreGateAreas(scan));",
+    "new": "const area = pickGateRegion(0, theatreGateAreas(scan));",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-region-past-the-bay",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "day: n, region: isBayArea(area) ? area : null,",
+    "new": "day: n, region: area,",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-scans-generation",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "if (places.generation() !== gen || land() !== ver)",
+    "new": "if (land() !== ver)",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-scans-picture",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "if (places.generation() !== gen || land() !== ver)",
+    "new": "if (places.generation() !== gen)",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lanes-ungated",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);",
+    "new": "const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-nearest-by-lane",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "if (d < bestD || !best) { best = v; bestD = d; }",
+    "new": "if (!best) { best = v; bestD = d; }",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-a-lanes-line-on-the-bays-card",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "const sayOf = (/** @type {string} */ text) => say(text, t.day);",
+    "new": "const sayOf = (/** @type {string} */ text) => say(text);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-lanes-links",
+    "file": "src/scenes/world.js",
+    "old": "lanesOk: () => !!online?.gateLanesOk && !!socialLink()?.gateLanesOk,",
+    "new": "lanesOk: () => true,",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-site-said-per-gate",
+    "file": "src/scenes/world.js",
+    "old": "if (lane && c.site) socialLink()?.sendGateSite?.(c.site.day,",
+    "new": "if (false && lane && c.site) socialLink()?.sendGateSite?.(c.site.day,",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-hubs-lane-receipt",
+    "file": "server/src/index.js",
+    "old": "    const k = gateReceiptKey(sub, gateLaneOf(day));",
+    "new": "    const k = gateReceiptKey(sub);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "WW2-the-seats-lane",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (gateLaneOf(day) !== 0) return { counted: false, why: 'beyond-the-bay' };",
+    "new": "  if (false) return { counted: false, why: 'beyond-the-bay' };",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  }
+]

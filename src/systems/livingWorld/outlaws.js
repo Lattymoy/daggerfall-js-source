@@ -23,7 +23,8 @@ import { lwSeed, lwRng, textSeed, rollInt, pickOf } from './seed.js';
 import { NATIVE_PIXEL } from './trips.js';
 import { DAY_MIN } from './dayPlan.js';
 import { residentName } from './census.js';
-import { nameBankOfArea, GENDERS } from '../../characters/nameHelper.js';   // WW1: an area's people - the region's on the Bay
+import { GENDERS } from '../../characters/nameHelper.js';
+import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's on the Bay
 import { isBayArea, inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';

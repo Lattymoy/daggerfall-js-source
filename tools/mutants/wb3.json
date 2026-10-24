@@ -502,8 +502,8 @@
   {
     "name": "WB3-the-hub-hello-told-nothing",
     "file": "server/src/index.js",
-    "old": "if (g && gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g }));",
-    "new": "if (g && false) this._send(ws, JSON.stringify({ t: 'gate', ...g }));",
+    "old": "for (const g of await this._gateFellsOf()) if (gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g }));",
+    "new": "for (const g of await this._gateFellsOf()) if (false) this._send(ws, JSON.stringify({ t: 'gate', ...g }));",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]

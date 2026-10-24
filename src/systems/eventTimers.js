@@ -62,6 +62,7 @@ const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 /**
  * @param {{ now: number,
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
+ *           gates?: Array<{ lane: number, place?: string|null }> | null,
  *           serpent?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
  *           sd?: { rec: any, name?: string|null, place?: string|null, site?: { cityName?: string, px?: number, py?: number } | null } | null,
  *           stars?: Array<{ id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null }> | null,
@@ -84,12 +85,24 @@ export function eventTimerRows(src) {
   const phase = gatePhase(t, now, fell);
   const place = src?.gate?.place ? `Near ${src.gate.place}` : null;
   // (gateLaw's words: 'sealed' is the risen gate not yet open, 'closed' the gate shut for the night)
+  /** A gate's row from its omen to its collapse - the Bay's, and WW2 each lane's past it, in the same words. */
+  const gateRows = (/** @type {ReturnType<typeof gateAt>} */ g, /** @type {string} */ ph, /** @type {string|null} */ where) => {
+    if (ph === 'omen' || ph === 'rising' || ph === 'sealed') coming(`gate:${g.day}`, 'gate', 'Dagon\'s Breach opens', g.openAt, where, 'The omen is in the sky');
+    else if (ph === 'open') live(`gate:${g.day}`, 'gate', 'Dagon\'s Breach open', g.sealAt, where, 'Seals when this runs out. Get inside');
+    else if (ph === 'closed') { live(`gate:${g.day}`, 'gate', 'Dagon\'s Breach sealed', g.wrathAt, where, 'Collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
+  };
   if (phase === 'quiet') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, null, 'Its omen burns in the sky 15 minutes before');
-  else if (phase === 'omen' || phase === 'rising' || phase === 'sealed') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, place, 'The omen is in the sky');
-  else if (phase === 'open') live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach open', t.sealAt, place, 'Seals when this runs out. Get inside');
-  else if (phase === 'closed') { live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach sealed', t.wrathAt, place, 'Collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
+  else gateRows(t, phase, place);
   // ...and the gate after it, once this one is under way
   if (phase !== 'quiet') coming(`gate:${t.day + GATE_EVERY_DAYS}`, 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
+  // WW2 (bible/03-World/World-Wide.md): AND EVERY LANE'S PAST THE BAY that has found its site (`gates` - the host's), from
+  // its omen to its collapse, named where it stands - a province's gate has no row before its omen (nine of them coming,
+  // each with no place to go, would bury the Bay's)
+  for (const g of src?.gates ?? []) {
+    if (!g || !Number.isInteger(g.lane) || g.lane <= 0 || !g.place) continue;
+    const lt = gateAt(now, g.lane);
+    gateRows(lt, gatePhase(lt, now, src?.gate?.fellAt?.(lt.day) ?? null), `Near ${g.place}`);
+  }
 
   // ── THE SEA SERPENT (serpentLaw: every other game day at the dawn watch - every four real hours: the bells, the
   // rising, its dive) ── SERPENT-TIMERS (2026-10-04, the owner: "This needs to happen" -

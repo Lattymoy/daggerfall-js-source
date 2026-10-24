@@ -18,7 +18,8 @@ import { PROVINCE_OF_ID, setTamrielTrace } from '../../../src/world/tamriel/tamr
 import { CITIES, PROVINCES } from '../../../src/world/tamriel/tamrielGeography.js';
 import { pictureToBay, inBay, setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { REGION_NAMES, REGION_RACES, LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
-import { getNameBankOfRegion, nameBankOfArea, BANK_TYPES } from '../../../src/characters/nameHelper.js';
+import { getNameBankOfRegion, BANK_TYPES } from '../../../src/characters/nameHelper.js';
+import { nameBankOfArea } from '../../../src/characters/areaNameBank.js';
 import { walkerRace, raceOfPeople } from '../../../src/characters/mobile/mobilePerson.js';
 import { hideoutsOf } from '../../../src/systems/livingWorld/outlaws.js';
 import { roadBound } from '../../../src/systems/livingWorld/trips.js';
@@ -67,7 +68,7 @@ test('WW1 the theatres: the Iliac Bay one, and each province beyond the Bay\'s r
     assert.equal(theatreAt(bx, by), THEATRE_KEYS.indexOf(c.province), `${c.name}, ${c.province}`);
   }
   assert.ok(past > 50, `the authored cities beyond the Bay (${past})`);
-  assert.equal(theatreName(BAY_THEATRE), 'the Iliac Bay');
+  assert.equal(theatreName(BAY_THEATRE), '', 'the Bay\'s names are its regions\'');
   assert.equal(theatreName(THEATRE_KEYS.indexOf('Skyrim')), 'Skyrim');
   assert.equal(theatreAt(-WORLD_PIXEL_SPAN + 1, -WORLD_PIXEL_SPAN + 1), -1, 'off the continent: none');
 });

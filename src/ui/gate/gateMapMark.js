@@ -35,6 +35,27 @@ export function readGateMark(fn, size) {
   return { day: Number.isFinite(m.day) ? m.day : 0, cx, cy, r, label: String(m.label ?? GATE_LEGEND_TEXT).slice(0, 80), phase: String(m.phase ?? ''), tip: readTip(m.tip) };
 }
 
+/** WW2 (bible/03-World/World-Wide.md): THE RINGS OF THE GATES PAST THE BAY - the host's `gates` (scenes/gate/gateLanes.js
+ *  mapMarks: a ring a lane, the Bay's own is `gate`), each read as one ring is (readGateMark), over the box the sheet
+ *  pans (`box` {x0, y0, w, h} - the continent's frame, TAMRIEL1's, the Bay's own rectangle while it is not shown), and
+ *  at most GATE_MARKS_MAX of them.
+ *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
+export function readGateMarks(fn, box) {
+  let list = null;
+  try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const m of list.slice(0, GATE_MARKS_MAX)) {
+    const g = readGateMark(() => (m && typeof m === 'object' ? { ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 } : null), { width: box.w, height: box.h });
+    if (g) out.push({ ...g, cx: g.cx + box.x0, cy: g.cy + box.y0 });
+  }
+  return out;
+}
+/** WW2: the most rings past the Bay a sheet reads - every lane's but the Bay's. */
+export const GATE_MARKS_MAX = 9;
+/** WW2: what the held map repaints on for the rings past the Bay - each ring's own key. */
+export const gateMarksKey = (list) => list.map(gateMarkKey).join(';');
+
 /** What the held map repaints on: the ring AND its words (the countdown ticks each second). */
 export const gateMarkKey = (m) => (m ? `${m.day}|${m.cx.toFixed(3)}|${m.cy.toFixed(3)}|${m.r}|${m.phase}|${m.label}` : '');
 /** What the classic page repaints on: the ring alone - it draws no words, and a whole-page rebuild a second for a

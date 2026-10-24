@@ -73,7 +73,7 @@
   },
   {
     "name": "WW1-imperial-bank",
-    "file": "src/characters/nameHelper.js",
+    "file": "src/characters/areaNameBank.js",
     "old": "  return race === 'Imperial' ? BANK_TYPES.Imperial : getNameBank(race ?? 'Breton');",
     "new": "  return getNameBank(race ?? 'Breton');",
     "tests": [

@@ -65,8 +65,9 @@ export const THEATRE_COUNT = 10;
 export const THEATRE_KEYS = Object.freeze(['IliacBay', ...Array.from({ length: THEATRE_COUNT - 1 }, (_, i) => PROVINCE_OF_ID[/** @type {1} */ (i + 1)])]);
 const THEATRE_OF_PROVINCE = new Map(THEATRE_KEYS.map((k, t) => [k, t]));
 
-/** A theatre's name, as a player reads it: "the Iliac Bay", "Skyrim". @param {number} t */
-export const theatreName = (t) => (t === BAY_THEATRE ? 'the Iliac Bay' : provinceByKey(THEATRE_KEYS[t])?.name ?? '');
+/** A theatre past the Bay's name, as a player reads it: its province's ("Skyrim"); the Bay's own names are its regions'
+ *  (none here). @param {number} t */
+export const theatreName = (t) => (t === BAY_THEATRE ? '' : provinceByKey(THEATRE_KEYS[t])?.name ?? '');
 
 /** The theatre a pixel stands in: the Bay's on the Bay's own map, else the province the picture (or the authored
  *  shape, untraced) puts the pixel's centre in; -1 at sea past the Bay and off the continent.

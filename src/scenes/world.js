@@ -280,8 +280,8 @@ import { createGroundSets } from './groundSets.js';   // OW-HITCH: a ground set 
 import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
-import { fitBayToPicture } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it
-import { groundWoods, groundClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
+import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
+import { groundWoods, groundClimateIndex, tamrielClimateAt } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
@@ -347,7 +347,8 @@ import { elementalResistanceChance, ELEMENTS, BODY_CAPSULE_RADIUS, EFFECT_FLAGS,
 import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, spawnedMapId, pathFreePixel, createSpawnGround, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
-import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
@@ -458,7 +459,7 @@ import { breachBookFor, BREACH_BOOK_TEXT } from '../systems/breachBook.js';   //
 import { bossPlace } from '../world/gate/gateBoss.js';   // AUDIT WBX F3: where he fell - a charge's head, a leap's flight - frozen by the link's fold   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { itemIconColor32 } from '../ui/item/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
 import { setCourtRules } from '../systems/courtRules.js';   // WBX6: the court's laws, switched by the frame
-import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, gateLaneOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { createGateCrowd, gateCrowdMax, crowdKept } from '../net/gate/gateCrowd.js';   // GATE-CROWD: the card's count draws the nearest of a crowd (CROWD-WIDE: everywhere a stranger cannot fight me)
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
 import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
@@ -16796,6 +16797,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // WB1: THE OBLIVION GATE'S RING - a function for the party's reason (the countdown moves while the map stands
       // open); null offline and while no gate is marked, and both maps draw nothing
       gate: () => gateOmen?.mapMark() ?? null,
+      gates: () => gateOmen?.mapMarks() ?? [],   // WW2: every lane's ring past the Bay
       // EVENT-TIP (Mac: "add a tooltip to the map for these type of events"): THE TOWNS UNDER ATTACK - every raid
       // running now on the raids' own clock, at its town, with the card a hover asks for (ui/eventMapMarks.js). A
       // function for the gate's reason; none while the mod is off. The enhanced map alone draws them.
@@ -17071,6 +17073,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         now,
         pixel: playerTravelPixel(),
         gate: { place: gateOmen?.current?.()?.site?.place ?? null, site: gateOmen?.current?.()?.site ?? null, fellAt: (day) => gateLink?.fellAt?.(day) ?? null },
+        gates: (gateOmen?.currents() ?? []).filter((x) => x.lane && x.c.site).map(({ lane, c }) => ({ lane, place: c.site.place, site: c.site })),   // WW2: every lane's past the Bay that found its site
         // SERPENT-TIMERS: the sea serpent - the port it lies off as the omen found it, and its kill at this machine's site
         serpent: { place: serpentOmen?.current?.()?.site?.near ?? null, site: serpentOmen?.current?.()?.site ?? null, fellAt: (day) => { const site = serpentOmen?.current?.()?.site; return site && site.day === day ? serpentLink?.fellAt?.(day, site) ?? null : null; } },
         // SD2c: the Super dungeon - the hub's record, its name and its city (the row's own law asks the phase: a row once found)
@@ -23603,7 +23606,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateSeatWord = (r) => {
     const c = readReceipt(r);
     let site = null;
-    try { site = c && _gateScan ? findGateSite(c.d, _gateScan) : null; } catch { site = null; }
+    try { site = c && _gateScan && gateLaneOf(c.d) === 0 ? findGateSite(c.d, _gateScan) : null; } catch { site = null; }   // WW2: the Bay's lane's alone - a seat is the Bay's, and no gate past it is one's
     const character = characterIdOf(playerEntity);
     // SILVER-WAYS: the claiming character always - its guild's deed asks it, where the scan has not found the region
     return site ? { region: site.region, character } : character ? { character } : null;
@@ -23797,7 +23800,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
-    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null, boss: gateBossOf(day).name, top: f.top })); },   // WB13b: no place found - "in the wilds"
+    onFell: (day, f) => { const site = gateOmen?.siteOf?.(day); eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null, boss: gateBossOf(day).name, top: f.top })); },   // WB13b: no place found - "in the wilds"
     onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
     onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(gateRefusalText(why)); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court; GATE-RELOAD: in what its word means (an outdated game is told to reload, never that an open gate is closed)
     place: bossPlace, watches: () => !!online?.courtWatchOk,   // AUDIT WBX F3: his fall frozen where he fell, as the court draws him; AUDIT PLAN-1000 G3: a watcher only on a relay that says `me`
@@ -24240,21 +24243,32 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** AUDIT EG III (lane4 #10): the Spire's lights a frame - one list, refilled. */
   const _egLightList = [], NO_EG_LIGHTS = Object.freeze([]);
   let _omenClockAt = null;   // AUDIT WB C4: when the relay's clock was first read this session (the omen's fallback wait)
-  const gateOmen = params.has('online') ? createGateOmen({
-    now: () => Date.now() + _sharedOffsetMs,
-    site: (day) => {
+  // WW2 (bible/03-World/World-Wide.md): A GATE A GAME DAY IN EVERY THEATRE (scenes/gate/gateLanes.js) - the Bay's lane the
+  // gate it always was, off the Bay's own scan; a theatre past the Bay's off the world's registry, its ground the
+  // composed continent's whatever the land switch says (every client finds the same site)
+  let _gateGround = null;
+  const theatreGates = params.has('online') ? createTheatreGateScans({
+    places: worldPlaces, spawnSalt: _spawnSalt, land: tamrielLandVersion,
+    wet: (x, y) => gateSeaPixel(tamrielClimateAt(x, y), (woods.isTamrielGround ? woods : (_gateGround ??= groundWoods(woods))).getHeightMapValue(x, y)),
+  }) : null;
+  const gateOmen = params.has('online') ? createGateLanes({
+    omen: {
+      now: () => Date.now() + _sharedOffsetMs,
+      say: (text, n) => eventNotice('gate', text, Number.isSafeInteger(n) && gateLaneOf(n) ? `gate:${n}` : null),   // EVENTS1: in the event board's news - every screen's, as the chat's every tab was; WW2: a lane past the Bay's lines on its own gate's card
+      localTime: eventLocalTime,
+      fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
+      // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
+      // (its word of a kill comes just behind) - or, a hub that never answers, eight seconds on the relay's clock alone
+      ready: () => { if (!online?.clockRead) { _omenClockAt = null; return false; } if (_omenClockAt == null) { _omenClockAt = performance.now(); warmGateScan(); } return !!socialLink()?.clockRead || performance.now() - _omenClockAt > 8000; },
+      settleMs: OMEN_SETTLE_MS,
+      riteBroken: (day, s) => !!riteHost?.isBroken(day, s?.px, s?.py),   // AUDIT WB12d (C8): the hub's word came first - its order is no order
+      riteReady: () => !!online?.riteOk,   // AUDIT WB12d (L5): a relay that keeps the rite
+    },
+    bayGateSite: (day) => {
       if (!maps) return null;
       try { const scan = gateScanOf(); return scan ? findGateSite(day, scan) : null; } catch (e) { console.warn('[gate] no site', e?.message ?? e); return null; }
     },
-    say: (text) => eventNotice('gate', text),   // EVENTS1: in the event board's news - every screen's, as the chat's every tab was
-    localTime: eventLocalTime,
-    fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
-    // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
-    // (its word of a kill comes just behind) - or, a hub that never answers, eight seconds on the relay's clock alone
-    ready: () => { if (!online?.clockRead) { _omenClockAt = null; return false; } if (_omenClockAt == null) { _omenClockAt = performance.now(); warmGateScan(); } return !!socialLink()?.clockRead || performance.now() - _omenClockAt > 8000; },
-    settleMs: OMEN_SETTLE_MS,
-    riteBroken: (day, s) => !!riteHost?.isBroken(day, s?.px, s?.py),   // AUDIT WB12d (C8): the hub's word came first - its order is no order
-    riteReady: () => !!online?.riteOk,   // AUDIT WB12d (L5): a relay that keeps the rite
+    scans: theatreGates, lanesOk: () => !!online?.gateLanesOk && !!socialLink()?.gateLanesOk, here: () => playerTravelPixel(),
   }) : null;
   /** GATE-CLEAR: THE CLEARING World of Daggerfall keeps its rock off (world/gate/gateClearance.js, the streamer's sweep far
    *  above) - the site of the gate the clock is about (net/gate/gateLaw.js gateAt: from the last gate's collapse to this
@@ -24283,6 +24297,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const reportGateSite = () => {
     const s = _gateClearNow() ? _gateClearOf.site : null;
     if (s) socialLink()?.sendGateSite?.(s.day, s.px, s.py, s.place);
+    // WW2: and each lane's past the Bay, from its omen on - the hub's herald posts such a gate only where accounts agree on it
+    for (const { lane, c } of gateOmen?.currents() ?? []) if (lane && c.site) socialLink()?.sendGateSite?.(c.site.day, c.site.px, c.site.py, c.site.place);
   };
   /** AUDIT SD II (L5 F4): THE SPENT WORDS A POOL STILL OWES THE HUB (scenes/spoilsPool.js `resendSpent`) - said again
    *  every few seconds while the hub's link stands: a word that could not go (the link between sockets, its bucket spent)
@@ -24592,7 +24608,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     collider: () => collider,   // AUDIT WB12d (G4): its altar, casket and braziers stand in the world
     onBare: (x0, z0, x1, z1) => labGrassField?.invalidate(x0, z0, x1, z1),   // AUDIT WB12d (G2): the grass placed again round its burned earth
     now: () => Date.now() + _sharedOffsetMs,
-    omen: () => gateOmen.current(),
+    omen: () => gateOmen.nearCurrent(),   // WW2: the nearest gate's - its circle stands where the player is
     fellAt: (day) => gateLink?.fellAt(day) ?? null,   // AUDIT WB12d (R7): an early kill's collapse ends the circle too
     pixelTranslation: (px, py, out) => state.pixelTranslation(px, py, out),
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn triangles' height - what a placed thing stands on
@@ -25715,7 +25731,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const gateCompassMark = () => {
     const g = gateOmen?.standing();
-    const mark = g ? gateOmen.mapMark() : null;
+    const mark = g ? gateOmen.markOf(g.day) : null;   // WW2: the standing gate's own ring - the nearest's, whatever its lane
     if (!g || !mark || (modes?.mode ?? 'exterior') !== 'exterior') return null;
     const p = playerTravelPixel();
     return insideGateRing(mark, p.x, p.y) ? gateSceneXZ(g, state.pixelTranslation(g.px, g.py)) : null;
@@ -27596,8 +27612,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const noticeSdCard = () => sdNoticeCard(sdHost?.mapMark() ?? null, sdHost?.hollow()?.site?.cityName ?? '');
   /** NOTICE1: the server's word on the Oblivion Gate while it stands - the map's own mark (WB1), under the red seal. */
   const noticeGateCard = () => {
-    const mark = gateOmen?.mapMark?.();
-    const near = gateOmen?.current?.()?.site?.near;
+    const c = gateOmen?.nearCurrent?.();   // WW2: the nearest gate's - a board past the Bay tells of its own province's
+    const mark = c?.t ? gateOmen.markOf(c.t.day) : null;
+    const near = c?.site?.near;
     if (!mark || !near) return null;
     // WB13b: where, then the countdown's state ("Near Copperham. Opens in 4:07.") - the subject is the name
     const state = String(mark.label ?? '').replace(/^Dagon's Breach(?: - )?/, '');
@@ -30020,7 +30037,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     gateArenaSite: (g) => {
       const ci = maps.getClimateIndex(g.px, g.py);
       const climateType = getWorldClimateSettings(ci).climateType;
-      const site = gateOmen?.current?.()?.site;
+      const site = gateOmen?.siteOf?.(g.day);   // WW2: the gate's own, whatever its lane
       const mine = site?.day === g.day;
       return { climateBase: climateType, season: INTERIOR_SEASON, climate: { worldClimate: ci, climateType }, regionIndex: mine ? site.region : -1, regionName: mine ? site.regionName : '' };
     },

@@ -355,7 +355,7 @@ test('WB1 the ink: the ring in map pixels, never under ten paper pixels, with it
 
 test('WB1 the seams: online alone, the omen before the dead return, both maps handed the ring, the compass its mark', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /const gateOmen = params\.has\('online'\) \? createGateOmen\(/, 'offline there is no gate');
+  assert.match(world, /const gateOmen = params\.has\('online'\) \? createGateLanes\(/, 'offline there is no gate');   // PIN MOVED (WW2): the omen a lane at a time (scenes/gate/gateLanes.js)
   const frame = world.slice(world.indexOf('const onlineFrame = (now, dt) => {'));
   const dead = frame.indexOf('if (townTalk.overlay instanceof DeathScreen');
   assert.ok(frame.indexOf('gateFrame();') > 0 && frame.indexOf('gateFrame();') < dead, 'the omen speaks to the dead too');

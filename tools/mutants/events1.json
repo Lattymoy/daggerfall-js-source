@@ -793,7 +793,7 @@
  {
   "name": "EVENTS1-the-gate-in-the-chat",
   "file": "src/scenes/world.js",
-  "old": "say: (text) => eventNotice('gate', text),   // EVENTS1",
+  "old": "say: (text, n) => eventNotice('gate', text, Number.isSafeInteger(n) && gateLaneOf(n) ? `gate:${n}` : null),   // EVENTS1",
   "new": "say: (text) => chatNotice(text),   // EVENTS1",
   "tests": [
    "test/ui/events1_board_ui.test.js",

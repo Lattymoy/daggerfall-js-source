@@ -707,7 +707,7 @@
   {
     "name": "WB12d-the-line-unsaid",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "if ((line === 'omen' || line === 'rise') && riteDay !== t.day) { riteDay = t.day; if (riteReady() && !riteBroken(t.day, s)) say(riteOmenLine()); }",
+    "old": "        if ((line === 'omen' || line === 'rise') && riteDay !== t.day) { riteDay = t.day; if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine()); }",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -925,8 +925,8 @@
   {
     "name": "AUDIT-WB12d-the-agreed-site-unread",
     "file": "server/src/index.js",
-    "old": "riteHelpersBy(await this._riteOf(), d, agreedGateSite(await this._gateSiteOf(), d))",
-    "new": "riteHelpersBy(await this._riteOf(), d, null)",
+    "old": "riteHelpersBy(await this._riteOf(gateLaneOf(d)), d, agreedGateSite(await this._gateSiteOf(gateLaneOf(d)), d))",
+    "new": "riteHelpersBy(await this._riteOf(gateLaneOf(d)), d, null)",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js"
     ]
@@ -970,8 +970,8 @@
   {
     "name": "AUDIT-WB12d-said-twice",
     "file": "server/src/index.js",
-    "old": "    let r = this._riteHub;\n",
-    "new": "    let r = await Promise.resolve(this._riteHub);\n",
+    "old": "    let r = this._riteHubs.get(lane) ?? null;\n",
+    "new": "    let r = await Promise.resolve(this._riteHubs.get(lane) ?? null);\n",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js"
     ]
@@ -1024,7 +1024,7 @@
   {
     "name": "AUDIT-WB12d-yesterday-folded-into-today",
     "file": "server/src/index.js",
-    "old": "    if (!this._riteLed || this._riteLed.d < day) this._riteLed = { d: day, c: {} };",
+    "old": "    if (!this._riteLed || gateOrder(this._riteLed.d, day) < 0) this._riteLed = { d: day, c: {} };",
     "new": "    if (!this._riteLed) this._riteLed = { d: day, c: {} };",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js"
@@ -1558,8 +1558,8 @@
   {
     "name": "AUDIT-WB12d-the-order-over-a-broken-rite",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "if (riteReady() && !riteBroken(t.day, s)) say(riteOmenLine());",
-    "new": "say(riteOmenLine());",
+    "old": "if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());",
+    "new": "sayOf(riteOmenLine());",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2200,7 +2200,7 @@
   {
     "name": "AUDIT-WB12d-T-relay-older-day-word",
     "file": "server/src/index.js",
-    "old": "    if (this._riteLed && this._riteLed.d > day) return null;\n",
+    "old": "    if (this._riteLed && gateOrder(this._riteLed.d, day) > 0) return null;\n",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
@@ -2379,8 +2379,8 @@
   {
     "name": "AUDIT-WB12d-T-relay-herald-rite-unarmed",
     "file": "server/src/index.js",
-    "old": "    st.riteOwe = { d };\n    await this.state.storage.put({ herald: st, hub: 1 });\n    await this._hubArm(now);",
-    "new": "    st.riteOwe = { d };\n    await this.state.storage.put({ herald: st, hub: 1 });",
+    "old": "    st.riteOwe = { d };\n    await this.state.storage.put({ [gateLaneKey('herald', lane)]: st, hub: 1 });\n    await this._hubArm(now);",
+    "new": "    st.riteOwe = { d };\n    await this.state.storage.put({ [gateLaneKey('herald', lane)]: st, hub: 1 });",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/wb12d_rite_law.test.js",
@@ -2477,8 +2477,8 @@
   {
     "name": "AUDIT-WB12d-T-wire-out-at-zero",
     "file": "src/net/wire.js",
-    "old": "!Number.isSafeInteger(m.at) || m.at <= 0) return null;\n  if (m.k === 'cl')",
-    "new": "!Number.isSafeInteger(m.at) || m.at < 0) return null;\n  if (m.k === 'cl')",
+    "old": "!Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
+    "new": "!Number.isSafeInteger(m.at) || m.at < 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",
@@ -2852,8 +2852,8 @@
   {
     "name": "AUDIT-WB12d-T-wire-in-last-column-refused",
     "file": "src/net/wire.js",
-    "old": "if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || (m.s !== 0 && m.s !== 1)",
-    "new": "if (!intIn(m.px, 0, 998) || !intIn(m.py, 0, 499) || (m.s !== 0 && m.s !== 1)",
+    "old": "(gateLaneWire(d) === 0 ? intIn(px, 0, 999) && intIn(py, 0, 499) : worldPixelOk(px) && worldPixelOk(py))",
+    "new": "(gateLaneWire(d) === 0 ? intIn(px, 0, 998) && intIn(py, 0, 499) : worldPixelOk(px) && worldPixelOk(py))",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",
@@ -2864,8 +2864,8 @@
   {
     "name": "AUDIT-WB12d-T-wire-out-day-unchecked",
     "file": "src/net/wire.js",
-    "old": "  if (!Number.isSafeInteger(m.d) || m.d < 0 || !intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;\n  if (m.k === 'cl')",
-    "new": "  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;\n  if (m.k === 'cl')",
+    "old": "  if (!Number.isSafeInteger(m.d) || m.d < 0 || !gatePixelOk(m.d, m.px, m.py) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
+    "new": "  if (!gatePixelOk(m.d, m.px, m.py) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel\n  if (m.k === 'cl')",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",
@@ -3163,8 +3163,8 @@
   {
     "name": "MERGE-WB12d-the-rite-s-row-takes-the-region",
     "file": "server-account/src/accounts.js",
-    "old": "nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
-    "new": "nowS, seatRegionOk(region) ? region : null, embers, c.m",
+    "old": "nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
+    "new": "nowS, gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],
@@ -3182,8 +3182,8 @@
   {
     "name": "MERGE-WB12d-the-row-without-its-embers",
     "file": "server-account/src/accounts.js",
-    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
-    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
+    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
+    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],

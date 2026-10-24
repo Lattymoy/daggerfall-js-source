@@ -102,7 +102,7 @@ import { noticeHold, noticeRelease } from './enhanced/enhancedNotice.js';   // E
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travel/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from './travel/travelMapWindow.js';   // MAP-KEY: the classic's filter flip and its dots' colours
-import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
+import { readGateMark, gateMarkKey, readGateMarks, gateMarksKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
 import { SERPENT_RING_MAP_CSS, SERPENT_LEGEND_TEXT } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
 import { SD_RING_MAP_CSS, SD_LEGEND_TEXT } from './superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's ring once it is found, in its omen's brass
 import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMark.js';   // EG-F: my company's Elite arch, in its gold
@@ -681,6 +681,9 @@ export class HeldMapWindow {
     this._travKey = '';
     // WB1: the gate's ring - the host's `gate` read on the party's own poll; null while no gate is marked
     this._gate = null;
+    // WW2: the rings of the gates past the Bay - the host's `gates`, every lane's but the Bay's, read as the gate's is
+    this._gates = [];
+    this._gatesKey = '';
     this._gateKey = '';
     // SERPENT1: the sea serpent's ring - the host's `serpent`, read as the gate's is
     this._serpent = null;
@@ -1352,6 +1355,7 @@ export class HeldMapWindow {
             color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,
           })),
           gate: this._gate,   // WB1
+          gates: this._gates,   // WW2
           serpent: this._serpent,   // SERPENT1
           sd: this._sd,   // SD2c
           arch: this._arch,   // EG-F
@@ -2059,6 +2063,11 @@ export class HeldMapWindow {
     const gateKey = gateMarkKey(gate);
     let gateMoved = false;
     if (gateKey !== this._gateKey) { this._gateKey = gateKey; this._gate = gate; gateMoved = true; this._dirty = true; }
+    // WW2: and every lane's past the Bay, over the continent's frame while it is shown
+    const f = this._tamriel ? tamrielFrameInBay() : null;
+    const gates = readGateMarks(this.deps.gates, f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height });
+    const gatesKey = gateMarksKey(gates);
+    if (gatesKey !== this._gatesKey) { this._gatesKey = gatesKey; this._gates = gates; gateMoved = true; this._dirty = true; }
     // SERPENT1: the sea serpent's ring rides the same poll, on its own key
     const serpent = readGateMark(this.deps.serpent, this._size);
     const serpentKey = gateMarkKey(serpent);
@@ -2144,7 +2153,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sd && !this._arch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2161,7 +2170,7 @@ export class HeldMapWindow {
         leg.append(k, el('span', 'hmlegtext', word));
       }
     }
-    if (this._gate) {   // WB1: the ring explains itself too, while there is one
+    if (this._gate || this._gates.length) {   // WB1: the ring explains itself too, while there is one (WW2: or one past the Bay)
       const dot = el('span', 'hmlegdot');
       dot.style.background = GATE_RING_CSS;
       leg.append(dot, el('span', 'hmlegtext', GATE_LEGEND_TEXT));
@@ -2546,7 +2555,7 @@ export class HeldMapWindow {
     const [mx, my] = toMap(this._view, sx, sy);
     // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
     const least = GATE_RING_MIN_PX / this._view.scale;
-    for (const g of [this._gate, this._serpent, this._sd, this._arch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
+    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
   }
 
@@ -2557,7 +2566,7 @@ export class HeldMapWindow {
     let best = null, bestD = Infinity;
     if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
     const scale = this._view.scale;
-    for (const g of [this._gate, this._serpent, this._sd, this._arch]) {   // EG-F: and my company's arch
+    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch]) {   // EG-F: and my company's arch; WW2: and the gates past the Bay
       if (!g) continue;
       const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
       const r = Math.max(GATE_RING_MIN_PX, g.r * scale);

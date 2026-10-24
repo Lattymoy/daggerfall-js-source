@@ -47,7 +47,7 @@
   {
     "name": "WB14b-the-portents-unsaid-in-the-chat",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "          if (pt) say(pt);\n",
+    "old": "          if (pt) sayOf(pt);\n",
     "new": "\n",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"

@@ -1582,7 +1582,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world253';   // world253: ROCKET1 (2026-10-23, the owner: "when I type /event rocket I want mounds to appear and shoot poop up from the ground and a horse to fart across the sky neighing and then smaller horses farting across the sky"; bible/11-Multiplayer/Rocket-Event.md; NOT YET DEPLOYED) - LIVE_EVENTS gains its third word, `rocket` (LIVE_EVENT_RELAY_MIN 253): the hub stages it, keeps it and says it as it says the dread and the sun baby. An older relay answers the word 'bad stage' and closes the socket, so a client sends `/event rocket` only through this one (relayKnowsLiveEvent); a client that does not know the word shows no event. Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world254';   // world254: WW2 (2026-10-24, the owner: "we can expand world events to happen more than once at a time since the world will be massive"; bible/03-World/World-Wide.md WW2; NOT YET DEPLOYED) - THE GATES OF EVERY THEATRE: a gate a game day on each lane (net/gate/gateLaw.js - the Bay's lane 0 the gate it always was, a lane past the Bay a province's), a gate named by its NUMBER (its game day on the Bay's lane, day + lane * GATE_LANE_SPAN past it - so every room key, receipt and record keeps its shape); the hub keeps a lane's fall, site, herald, rite circles and each account's receipt under its own key (gateLaneKey, gateReceiptKey's lane), a site word and a rite's word past the Bay a world pixel (gatePixelOk), and the herald posts a lane past the Bay's omen only where the players agree on its site. A client stands no lane past the Bay's and says no site past its map to an older relay (relaySupportsGateLanes, GATE_LANES_RELAY_MIN 254): it closes the socket on one. Deploy the relay first, then the site.
+// world253: ROCKET1 (2026-10-23, the owner: "when I type /event rocket I want mounds to appear and shoot poop up from the ground and a horse to fart across the sky neighing and then smaller horses farting across the sky"; bible/11-Multiplayer/Rocket-Event.md; NOT YET DEPLOYED) - LIVE_EVENTS gains its third word, `rocket` (LIVE_EVENT_RELAY_MIN 253): the hub stages it, keeps it and says it as it says the dread and the sun baby. An older relay answers the word 'bad stage' and closes the socket, so a client sends `/event rocket` only through this one (relayKnowsLiveEvent); a client that does not know the word shows no event. Deploy the relay first, then the site.
 // world252: DECK-POSE (2026-10-23, world248 on its branch - renumbered past AUDIT EG-FALL's world248 and STAFF-PANEL5-MONSTERS' world249 at one merge, and past HERALD-CARDS' world250 and AUDIT MIXED-PAIR / SPELL-HAND's world251 at the next; the owner: "Players on board the ship jitter while sailing instead of staying put. Other players also slide when on board your ship/npc ships"; NOT YET DEPLOYED) - validPose carries `ab`, a place aboard a boat (validAboard: her owner, which of their boats, the feet in her frame), so a reader plays a passenger's place on a deck out with their walk. A relay before this field strips it and the reader falls back to the foes frame's `ab`, as before.
 // world251: AUDIT MIXED-PAIR / SPELL-HAND (2026-10-23, world249 on its branch - renumbered past STAFF-PANEL5-MONSTERS' world249 and HERALD-CARDS' world250 at the merge; the owner: "Audit this and ensure perfection", of MIXED-PAIR and SPELL-HAND - bible/01-Overview/audits/Audit-Mixed-Pair-Spell-Hand.md L4-3; bible/05-Combat/Two-Hands.md; NOT YET DEPLOYED): validPose carries `ah` - a pair's LEFT hand struck last - so the others draw a pair in both hands and play each strike with the hand that made it (net/peer/peerBodies.js peerHandsOf). A relay before this field strips it and the socket stays open: an older relay's peers play every strike with the right hand's weapon, as before.
 // world250: HERALD-CARDS (2026-10-22, world243 on its branch - renumbered past PARTY-PING's world243, SPAWN-THIN's world244, AUDIT PISTOLET's world245, SEA VENTURES' world246, STAFF-PANEL5's world247, AUDIT EG-FALL's world248 and STAFF-PANEL5-MONSTERS' world249 at the merge; the owner: "I want to overhaul our discord world event notification system to be more organized"; net/herald/heraldCard.js; NOT YET DEPLOYED) - every herald's Discord post is one card of its family (Dagon's Breach, the Sea Serpent, the Abyss Dungeon, the Battlespire): its colour, the moment's title, its facts as fields, the moment its footer; content only when it pings. Each family may post to a thread of its own of the world events' channel - the relay settings gateThread, serpentThread, sdThread and egThread (vars GATE_DISCORD_THREAD and the rest), the gate's thread else, the channel itself with none. net/herald/heraldCard.js joins the bundle. No frame changes shape; the client says a thread setting only to a relay at world243 or later (relayCfg.js RELAY_CFG_KEY_MIN).
@@ -4971,8 +4972,27 @@ export const gatePlaceWire = (s) => String(s ?? '').replace(/[^A-Za-z0-9 ',-]/g,
 export const GATE_INTERNAL_FELL = '/internal/gate/fell';
 /** AUDIT WB A10: how soon a court whose hub did not answer the kill tells it again. */
 export const GATE_TELL_RETRY_MS = 5000;
-/** AUDIT WB A4: the hub's key for an account's last receipt - kept for the receipt's own life and handed to its next hello. */
-export const gateReceiptKey = (sub) => `gaterc:${sub}`;
+/** AUDIT WB A4: the hub's key for an account's last receipt - kept for the receipt's own life and handed to its next hello.
+ *  WW2: one a LANE (net/gate/gateLaw.js gateLaneOf - a theatre's gates, bible/03-World/World-Wide.md): the Bay's lane's
+ *  key is the one it always was, and a lane past the Bay keeps its own - two gates of one game day are two receipts, and
+ *  one fought on another lane never stands over the other's. */
+export const gateReceiptKey = (sub, lane = 0) => (lane ? `gaterc:${sub}.${lane}` : `gaterc:${sub}`);
+/** WW2: a hub record kept a lane (the fall, the site, the herald's state, the rite's circles): the Bay's lane's under its
+ *  own key, as it always was, and a lane past the Bay's under `<key>:<lane>`. */
+export const gateLaneKey = (key, lane = 0) => (lane ? `${key}:${lane}` : key);
+/** WW2: how many lanes the gates run on, and how far apart their numbers are (net/gate/gateLaw.js GATE_LANES and
+ *  GATE_LANE_SPAN, pinned equal - the law imports this file, so not the other way). */
+export const GATE_LANES_WIRE = 10;
+export const GATE_LANE_SPAN_WIRE = 100_000_000;
+/** WW2: the lane a gate's number names (gateLaw.js gateLaneOf, pinned equal). */
+export const gateLaneWire = (d) => Math.floor(d / GATE_LANE_SPAN_WIRE);
+/** WW2: A GATE'S MAP PIXEL ON THE WIRE - on the Bay's lane the Bay's own map (0..999, 0..499, as it always was); on a
+ *  lane past the Bay a pixel of the world (TV-BEYOND: worldPixelOk). @param {number} d the gate's number */
+export const gatePixelOk = (d, px, py) => (gateLaneWire(d) === 0 ? intIn(px, 0, 999) && intIn(py, 0, 499) : worldPixelOk(px) && worldPixelOk(py));
+/** WW2: the first relay that runs the lanes - the rooms past the Bay's lane, their site words, their hub records - an older
+ *  one closes the socket on a site word past the Bay's map, so a client sends none to it and stands no lane but the Bay's. */
+export const GATE_LANES_RELAY_MIN = 254;
+export const relaySupportsGateLanes = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GATE_LANES_RELAY_MIN; };
 /** AUDIT WBX2 M4: how long the hub keeps a court fighter's receipt from its account's hellos - the court's own floor
  *  spends it, and says so (`spent`), within a second or two; a tab of theirs in town, or another device, that said hello
  *  first gave the same spoils again. Past it the kept copy is handed as any other (a court tab that died before its
@@ -5028,7 +5048,7 @@ export function validGateIn(m) {
     return h.every(Boolean) && new Set(h.map((t) => t[0])).size === h.length ? { k: 'heal', h } : null;
   }
   if (m.k === 'site') {   // DISCORD-GATES: the day, the gate's map pixel and its place, as gatePlaceWire leaves it
-    if (!Number.isSafeInteger(m.d) || m.d < 0 || !intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || typeof m.pl !== 'string') return null;
+    if (!Number.isSafeInteger(m.d) || m.d < 0 || !gatePixelOk(m.d, m.px, m.py) || typeof m.pl !== 'string') return null;   // WW2: a lane past the Bay's a world pixel
     return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, px: m.px, py: m.py, pl: m.pl } : null;
   }
   if (!Number.isSafeInteger(m.q) || m.q < 0 || m.q > GATE_SEQ_MAX) return null;
@@ -5495,7 +5515,7 @@ export const riteRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RITE_HZ
  *  (net/gate/gateRite.js riteRosterFell - the Broker's cage opens); a word from before it, with no `c`, says 0 - or null. */
 export function validRiteIn(m) {
   if (!m || typeof m !== 'object' || !Number.isSafeInteger(m.d) || m.d < 0) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || (m.s !== 0 && m.s !== 1) || (m.f !== 0 && m.f !== 1)) return null;
+  if (!gatePixelOk(m.d, m.px, m.py) || (m.s !== 0 && m.s !== 1) || (m.f !== 0 && m.f !== 1)) return null;   // WW2: a lane past the Bay's a world pixel
   const c = m.c === undefined ? 0 : m.c;
   if (c !== 0 && c !== 1) return null;
   return { d: m.d, px: m.px, py: m.py, s: m.s, f: m.f, c };
@@ -5513,7 +5533,7 @@ export const RITE_COUNT_MAX = 64;
  *  than it names, never more than a rite counts. */
 export function validRiteOut(m) {
   if (!m || typeof m !== 'object' || !RITE_OUT_KINDS.includes(m.k)) return null;
-  if (!Number.isSafeInteger(m.d) || m.d < 0 || !intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;
+  if (!Number.isSafeInteger(m.d) || m.d < 0 || !gatePixelOk(m.d, m.px, m.py) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel
   if (m.k === 'cl') return { k: 'cl', d: m.d, px: m.px, py: m.py, at: m.at };
   const by = Array.isArray(m.by) ? m.by.filter((n) => typeof n === 'string' && n).slice(0, RITE_BY_MAX).map(sanitizeName) : [];   // AUDIT WB12d (L8): junk never hides a name
   const n = intIn(m.n, by.length, RITE_COUNT_MAX) ? m.n : by.length;

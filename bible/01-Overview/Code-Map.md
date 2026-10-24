@@ -415,6 +415,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/underwater/` | Under the water: its look, decorations, enemies and loot - its models and assembly. |
 | `src/world/water/` | The water's bed, corners and ripples - its models and assembly. |
 | `src/world/worldOfDaggerfall/` | The World of Daggerfall mod: the entry (`worldOfDaggerfall.js`), its locations' data, loader, pack and objects, Privateer's Hold, the spawner. |
+| `src/world/worldWide/` | The whole world's seam (`03-World/World-Wide.md`): the world pixel grid, its theatres and areas (`worldGrid.js`), the registry of places every system reads (`worldPlaces.js`) and the Bay's own rows into it (`bayPlaces.js`). |
 
 ### The tests, `test/`
 

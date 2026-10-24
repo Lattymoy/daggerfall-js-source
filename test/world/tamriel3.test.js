@@ -409,7 +409,7 @@ test('TAMRIEL3 door: `?tamrieltrace=off` keeps the authored shape, and nothing e
 test('TAMRIEL3 host: the world host traces the two files after the travel art, fits the Bay by the one water law over the composed reads, installs both through the client, resets the stream\'s frame, and logs the fit; a missing file leaves the authored shape and says so; the held map\'s static key carries the version', () => {
   const src = read('src/scenes/world.js');
   assert.match(src, /import \{ preloadTamrielTrace \} from '\.\.\/ui\/tamrielTrace\.js';/);
-  assert.match(src, /import \{ fitBayToPicture \} from '\.\.\/world\/tamriel\/tamrielLand\.js';/);
+  assert.match(src, /import \{ fitBayToPicture, tamrielLandVersion \} from '\.\.\/world\/tamriel\/tamrielLand\.js';/);   // PIN MOVED (WW2): and the picture's version, for a theatre's gate scan
   const i = src.indexOf('if (tamrielTraceOn()) {');
   assert.ok(i > 0);
   const block = src.slice(i, src.indexOf('preloadTravelControlArt({', i));

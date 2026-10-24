@@ -330,7 +330,8 @@ test('DISCORD-GATES client: the game says where it found the gate to the hub - o
   assert.equal(off.sites().length, 0);
   // the scene: the clearing's own site, off the gate's frame
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const reportGateSite = \(\) => \{\n\s*const s = _gateClearNow\(\) \? _gateClearOf\.site : null;\n\s*if \(s\) socialLink\(\)\?\.sendGateSite\?\.\(s\.day, s\.px, s\.py, s\.place\);\n\s*\};/);
+  // PIN MOVED (WW2, bible/03-World/World-Wide.md): and each lane's past the Bay, from its omen on
+  assert.match(w, /const reportGateSite = \(\) => \{\n\s*const s = _gateClearNow\(\) \? _gateClearOf\.site : null;\n\s*if \(s\) socialLink\(\)\?\.sendGateSite\?\.\(s\.day, s\.px, s\.py, s\.place\);\n[^\n]*\n\s*for \(const \{ lane, c \} of gateOmen\?\.currents\(\) \?\? \[\]\) if \(lane && c\.site\) socialLink\(\)\?\.sendGateSite\?\.\(c\.site\.day, c\.site\.px, c\.site\.py, c\.site\.place\);\n\s*\};/);
   assert.match(w, /gateClaims\?\.tick\(\);[^\n]*\n\s*if \(gateOmen\) reportGateSite\(\);/, 'on the gate\'s frame, online');
 });
 

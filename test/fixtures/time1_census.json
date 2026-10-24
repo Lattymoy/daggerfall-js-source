@@ -9,6 +9,12 @@
   },
   {
    "file": "src/net/gate/gateLaw.js",
+   "has": "let day = Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
+   "clock": "event",
+   "why": "WW2: a lane's gate day - the Bay's the game day, a lane past it its stagger behind"
+  },
+  {
+   "file": "src/net/gate/gateLaw.js",
    "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
    "clock": "event",
    "why": "the gate's phases as relay ms"
